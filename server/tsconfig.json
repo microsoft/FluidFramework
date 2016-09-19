@@ -1,6 +1,7 @@
 {
-    "files": [
-        "src/index.ts"
+    "exclude": [
+        "node_modules",
+        "dist"
     ],
     "compilerOptions": {
         "target": "es5",
