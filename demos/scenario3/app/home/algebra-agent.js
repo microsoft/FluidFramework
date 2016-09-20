@@ -10,13 +10,15 @@ var algebraAgent = (function(){  // jshint ignore:line
         if (text.length == 0)
             return null;
 
-        app.showNotification("Monitoring", text);            
+        //app.showNotification("Monitoring", text);
         
-        if (text.search("3𝑥=8") != -1)
+        if (text.search("3𝑥=8") != -1) {
             return " √";
+        }
 
-        if (text.search("𝑥=\,8-3\.") != -1)
+        if (text.search("𝑥=\,8-3\.") != -1) {
             return " √";
+        }
 
         return null;
     }
@@ -27,14 +29,15 @@ var algebraAgent = (function(){  // jshint ignore:line
             
         var insertedRange = null;
         if (contentControls.items.length == 0) {
-            if (checkMark == null)
+            if (checkMark == null) {
                 return;
+            }
 
             insertedRange = paragraph.insertText(checkMark, Word.InsertLocation.end);
             insertedRange.insertContentControl();
         } else {
             if (checkMark == null) {
-                contentControls.items[0].clear();       
+                contentControls.items[0].clear();
             } else {
                 insertedRange = contentControls.items[0].insertText(checkMark, Word.InsertLocation.replace);
             }
@@ -80,7 +83,7 @@ var algebraAgent = (function(){  // jshint ignore:line
     
     self.beginMonitoring = function () {
         setInterval(function () { worker(); }, 1000);
-        app.showNotification("Monitoring", "Monitoring started");
+        //app.showNotification("Monitoring", "Monitoring started");
     }
     
     return self;

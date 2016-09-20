@@ -41,11 +41,11 @@ var kn = (function(){  // jshint ignore:line
         },
 
         "0E5AFE02-B875-42C2-BA3A-EA5C3285E5CC" : {
-            "ooxmlUrl" : "/content/colinear.xml"
+            "ooxmlUrl" : "-- bad -- url --"
         },
 
         "7F4AA69B-D793-4B11-BC45-218522FA9244" : {
-
+            "ooxmlUrl" : "/content/Colinear.xml"
         },
     };
 
@@ -114,7 +114,7 @@ var kn = (function(){  // jshint ignore:line
     function onContentRetrieved(data, status, jsXHR) {
         Word.run(function (context) {
             context.document.body.insertOoxml(data, Word.InsertLocation.replace);
-            //algebraAgent.beginMonitoring();
+            algebraAgent.beginMonitoring();
         });
     }
 
