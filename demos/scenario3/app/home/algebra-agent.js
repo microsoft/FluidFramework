@@ -8,21 +8,20 @@ var algebraAgent = (function(){  // jshint ignore:line
 
     //////////////////////////////////////////////////////// validateContentWithService
     // Send the text to the service to be validated.
-    function validateContentWithService(text) {
-        if (text.length == 0)
-            return null;
+    function validateContentWithService(text, callback) {
+        var retValue = null;
 
-        app.showNotification("Monitoring", text);
-        
-        if (text.search("3𝑥=8") != -1) {
-            return " √";
+        if (text.length != 0) {
+            if (text.search("3𝑥=8") != -1) {
+                retValue = " √";
+            }
+
+            if (text.search("𝑥=\,8-3\.") != -1) {
+                retValue =  " √";
+            }            
         }
 
-        if (text.search("𝑥=\,8-3\.") != -1) {
-            return " √";
-        }
-
-        return null;
+        callback(retValue);
     }
 
     //////////////////////////////////////////////////////// insertContentControl
@@ -62,9 +61,10 @@ var algebraAgent = (function(){  // jshint ignore:line
     //////////////////////////////////////////////////////// reactToParagraphText
     // Get the text of the paragrph and see if we wish to react to it. 
     function reactToParagraphText(paragraph, contentControls, context) {
-        var checkMark = validateContentWithService(paragraph.text);
-
-        reactWithValidationResult(paragraph, contentControls, checkMark, context);
+        validateContentWithService(paragraph.text, 
+            function (checkMark) {
+                reactWithValidationResult(paragraph, contentControls, checkMark, context);                
+            });
     }
 
     //////////////////////////////////////////////////////// reactToParagraph
