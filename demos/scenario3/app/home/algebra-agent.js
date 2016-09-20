@@ -6,7 +6,9 @@ var algebraAgent = (function(){  // jshint ignore:line
 
     var counter = 0;
 
-    function checkRawContent(text) {
+    //////////////////////////////////////////////////////// validateContentWithService
+    // Send the text to the service to be validated.
+    function validateContentWithService(text) {
         if (text.length == 0)
             return null;
 
@@ -23,9 +25,11 @@ var algebraAgent = (function(){  // jshint ignore:line
         return null;
     }
 
+    //////////////////////////////////////////////////////// reactToParagraphText
+    // Get the text of the paragrph and see if we wish to react to it.
     function reactToParagraphText(paragraph, contentControls) {
         var paragraphText = paragraph.text; 
-        var checkMark = checkRawContent(paragraphText);
+        var checkMark = validateContentWithService(paragraphText);
             
         var insertedRange = null;
         if (contentControls.items.length == 0) {
@@ -44,6 +48,9 @@ var algebraAgent = (function(){  // jshint ignore:line
         }
     }
 
+    //////////////////////////////////////////////////////// reactToParagraph
+    // Retrieves the content controls within the paragraph (to see if we already have 
+    // a check-mark here) and call into the next layer
     function reactToParagraph(paragraph, context) {
         var contentControls = paragraph.contentControls;
         context.load(contentControls, '');
@@ -57,6 +64,8 @@ var algebraAgent = (function(){  // jshint ignore:line
         );
     }
 
+    //////////////////////////////////////////////////////// reactToSelectionParagraphs
+    // Currently we only care about the first paragraph in the selection (usually just an IP)
     function reactToSelectionParagraphs(paragraphs, context) {
         var paragraph = paragraphs.items[0];
         context.load(paragraph, 'text');
@@ -66,6 +75,8 @@ var algebraAgent = (function(){  // jshint ignore:line
         );
     }    
 
+    //////////////////////////////////////////////////////// reactToCurrentSelection
+    // Get the paragraphs contained in the current selection and react 
     function reactToCurrentSelection(context) {
         var paragraphs = context.document.getSelection().paragraphs;
 
@@ -76,7 +87,7 @@ var algebraAgent = (function(){  // jshint ignore:line
         );
     }
     
-
+    //////////////////////////////////////////////////////// worker
     function worker() {
         Word.run(reactToCurrentSelection);            
     }
