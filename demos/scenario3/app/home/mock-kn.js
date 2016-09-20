@@ -138,7 +138,7 @@ var kn = (function(){  // jshint ignore:line
     }
 
     var _problemSetContentRequest;
-    ///////////////////////////////////////////// onProblemSetChosen
+    ///////////////////////////////////////////// prepareDocumentForProblemSet
     function prepareDocumentForProblemSet(problemSetRef) {
         var problemSet = problemSets[problemSetRef.id];
         var ooxmlUrl = problemSet.ooxmlUrl;

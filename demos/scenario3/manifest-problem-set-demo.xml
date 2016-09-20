@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<OfficeApp xmlns="http://schemas.microsoft.com/office/appforoffice/1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="TaskPaneApp">
+<OfficeApp xmlns="http://schemas.microsoft.com/office/appforoffice/1.1" 
+  xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0" 
+  xmlns:ov="http://schemas.microsoft.com/office/taskpaneappversionoverrides"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+  xsi:type="TaskPaneApp">
   <Id>1bf500e3-0c60-4527-aa9e-717418559c34</Id>
   <Version>1.0.0.0</Version>
   <ProviderName>AliT</ProviderName>
@@ -13,4 +17,77 @@
     <SourceLocation DefaultValue="https://localhost:8443/app/home/home.html"/>
   </DefaultSettings>
   <Permissions>ReadWriteDocument</Permissions>
+  <VersionOverrides xmlns="http://schemas.microsoft.com/office/taskpaneappversionoverrides" xsi:type="VersionOverridesV1_0">
+    <Hosts>
+      <Host xsi:type="Document">
+        <DesktopFormFactor>
+          <FunctionFile resid="FunctionFile.Url" />
+          <ExtensionPoint xsi:type="PrimaryCommandSurface">
+            <CustomTab id="ConversionAgent.Tab">
+              <Label resid="TabLabel" />
+              <Group id="ConversionAgent.Tab.Generalize">
+                <Label resid="GroupLabel" />
+                <Icon>
+                  <bt:Image size="16" resid="icon-16" />
+                  <bt:Image size="32" resid="icon-32" />
+                  <bt:Image size="80" resid="icon-80" />
+                </Icon>
+                <Control xsi:type="Button" id="ProblemSet.ShowHomework">
+                  <Label resid="TaskPaneLabel" />
+                  <Supertip>
+                    <Title resid="Label" />
+                    <Description resid="Tooltip" />
+                  </Supertip>
+                  <Icon>
+                    <bt:Image size="16" resid="icon-16" />
+                    <bt:Image size="32" resid="icon-32" />
+                    <bt:Image size="80" resid="icon-80" />
+                  </Icon>
+                  <Action xsi:type="ShowTaskpane">
+                    <SourceLocation resid="HomeWorkPane.Url"/>
+                  </Action>
+                </Control>
+
+                <Control xsi:type="Button" id="ConversionAgent.FunctionButton">
+                  <Label resid="Label" />
+                  <Supertip>
+                    <Title resid="Label" />
+                    <Description resid="Tooltip" />
+                  </Supertip>
+                  <Icon>
+                    <bt:Image size="16" resid="icon-16" />
+                    <bt:Image size="32" resid="icon-32" />
+                    <bt:Image size="80" resid="icon-80" />
+                  </Icon>
+                  <Action xsi:type="ExecuteFunction">
+                    <FunctionName>doConversion</FunctionName>
+                  </Action>
+                </Control>                          
+              </Group>
+            </CustomTab>
+          </ExtensionPoint>
+        </DesktopFormFactor>
+      </Host>
+    </Hosts>
+    <Resources>
+      <bt:Images>
+        <bt:Image id="icon-16" DefaultValue="https://localhost:8443/images/icon-16.png" />
+        <bt:Image id="icon-32" DefaultValue="https://localhost:8443/images/icon-32.png" />
+        <bt:Image id="icon-80" DefaultValue="https://localhost:8443/images/icon-80.png" />
+      </bt:Images>
+      <bt:Urls>
+        <bt:Url id="FunctionFile.Url" DefaultValue="https://localhost:8443/app/FunctionFile.html" />
+        <bt:Url id="HomeWorkPane.Url" DefaultValue="https://localhost:8443/app/home/home.html" />
+      </bt:Urls>
+      <bt:ShortStrings>
+        <bt:String id="GroupLabel" DefaultValue="Conversions" />
+        <bt:String id="Label" DefaultValue="Convert" />
+        <bt:String id="TaskPaneLabel" DefaultValue="Show homework" />
+        <bt:String id="TabLabel" DefaultValue="Algebra Agents" />
+      </bt:ShortStrings>
+      <bt:LongStrings>
+        <bt:String id="Tooltip" DefaultValue="Convert simple measurements" />
+      </bt:LongStrings>
+    </Resources>
+  </VersionOverrides>  
 </OfficeApp>
