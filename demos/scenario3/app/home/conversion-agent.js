@@ -104,7 +104,6 @@ var conversionAgent = (function(){  // jshint ignore:line
             feetContentControl.insertText(quotient + "", Word.InsertLocation.replace);
             inchesContentControl.insertText(rem + "", Word.InsertLocation.replace);
 
-            // context.document.getSelection().insertText(quotient + "", Word.InsertLocation.end);
             context.sync();
         });
     }
