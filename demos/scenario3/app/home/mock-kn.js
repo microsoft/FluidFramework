@@ -111,26 +111,32 @@ var kn = (function(){  // jshint ignore:line
         unorderedList.append(li);
     };
 
+    ///////////////////////////////////////////// insertContent
+    function insertContent(data, context) {
+        // Insert the content
+        context.document.body.insertOoxml(data, Word.InsertLocation.replace);
+
+        // Move the cursor to the end
+        context.document.body.select(Word.SelectionMode.end);
+    }    
+
     function onRequestFailed(xhr, status, error) {
-        app.showNotification(status, "An error occurred contacting the MRO api.");
+        app.showNotification(status, "An error occurred retrieving the problem set.");
     };
-  
+
     function onContentRetrieved(data, status, jsXHR) {
         Word.run(function (context) {
-            // Insert the content
-            context.document.body.insertOoxml(data, Word.InsertLocation.replace);
-
-            // Move the cursor to the end
-            context.document.body.select(Word.SelectionMode.end);
+            insertContent(data, context);
+            algebraAgent.stopMonitoring(); // Stop any previous instances first
             algebraAgent.beginMonitoring();
         });
     }
 
-    var _request;
+    var _problemSetContentRequest;
     ///////////////////////////////////////////// onProblemSetChosen
     function prepareDocumentForProblemSet(problemSetRef) {        
         var requestSettings = { url: problemSets[problemSetRef.id].ooxmlUrl, dataType: "text" };
-        _request = jQuery.ajax(requestSettings)
+        _problemSetContentRequest = jQuery.ajax(requestSettings)
             .success(onContentRetrieved)
             .error(onRequestFailed);
     }        

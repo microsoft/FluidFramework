@@ -81,9 +81,16 @@ var algebraAgent = (function(){  // jshint ignore:line
         Word.run(reactToCurrentSelection);            
     }
     
+    var _interval = null;
     self.beginMonitoring = function () {
-        setInterval(function () { worker(); }, 1000);
+        _interval = setInterval(function () { worker(); }, 1000);
         //app.showNotification("Monitoring", "Monitoring started");
+    }
+
+    self.stopMonitoring = function () {
+        if (_interval != null) {
+            clearInterval(_interval);
+        }
     }
     
     return self;
