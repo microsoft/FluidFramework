@@ -1,0 +1,9 @@
+{
+  "name": "problem-set-demo",
+  "version": "0.1.0",
+  "dependencies": {
+    "microsoft.office.js": "*",
+    "jquery": "~1.9.1",
+    "office-ui-fabric": "*"
+  }
+}

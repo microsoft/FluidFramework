@@ -1,0 +1,105 @@
+/*****************************************************************/
+/********************** Office CSS library ***********************/
+/********************** Version: 1.0.2.0 *************************/
+/*****************************************************************/
+
+/******************************************************************
+Base
+******************************************************************/
+body {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    height: 100%;
+    max-height: 100%;
+}
+
+/******************************************************************
+Typography
+******************************************************************/
+body {
+    font-family: "Segoe WP", "Segoe UI", "Arial", sans-serif;
+    font-size: 12px;
+    color: #262626;
+}
+
+h1 {
+    font-family: "Segoe WP Light", "Segoe UI", "Arial", sans-serif;
+    font-size: 22px;
+    line-height: 26px;
+    font-weight: 500;
+}
+
+h2, h3, h4, h5, h6, th {
+    font-family: "Segoe WP Semibold", "Segoe UI", "Arial", sans-serif;
+}
+
+h2 {
+    font-size: 18px;
+    line-height: 22px;
+    font-weight: 600;
+}
+
+h3, h4, h5, h6 {
+    font-size: 13px;
+    line-height: 16px;
+}
+
+h3 {
+    font-weight: 600;
+}
+
+h4, h5, h6 {
+    font-weight: normal;
+}
+
+form, input, select, button, textarea {
+    font-family: "Segoe WP", "Segoe UI", "Arial", sans-serif;
+    font-size: 12px;
+    line-height: 16px;
+}
+
+/******************************************************************
+General
+******************************************************************/
+a {
+    color: #336699;
+    text-decoration: none;
+}
+
+    a:focus, a:hover, a:active {
+        text-decoration: underline;
+    }
+
+ul {
+    margin-left: 1.4em;
+    padding: 0;
+}
+
+hr {
+    border: none;
+    height: 1px;
+    color: #ebebeb;
+    background-color: #ebebeb;
+    clear: both;
+}
+
+img {
+    border: none;
+}
+
+blockquote {
+    margin-left: 1.4em;
+}
+
+/******************************************************************
+Scrollbars
+******************************************************************/
+body {
+    scrollbar-base-color: white;
+    scrollbar-arrow-color: #ababab;
+    scrollbar-highlight-color: #ababab;
+    scrollbar-darkshadow-color: white;
+    scrollbar-track-color: white;
+    scrollbar-face-color: white;
+}

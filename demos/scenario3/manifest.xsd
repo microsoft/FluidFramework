@@ -1,0 +1,1288 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema id="OfficeAppManifest" elementFormDefault="qualified" version="1.1"
+    targetNamespace="http://schemas.microsoft.com/office/appforoffice/1.1"
+    xmlns="http://schemas.microsoft.com/office/appforoffice/1.1"
+    xmlns:ver="http://schemas.microsoft.com/office/appforoffice/1.1"
+    xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:simpleType name="NonEmptyString">
+    <xs:annotation>
+      <xs:documentation>
+        Defines a string that cannot be empty and can be unbounded.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:minLength value="1"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="ShortString">
+    <xs:annotation>
+      <xs:documentation>
+        Defines a string that must contain between 1 and 125 characters.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:minLength value="1"/>
+      <xs:maxLength value="125"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="LongString">
+    <xs:annotation>
+      <xs:documentation>
+        Defines a string that must contain between 1 and 250 characters.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:minLength value="1"/>
+      <xs:maxLength value="250"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="URL">
+    <xs:annotation>
+      <xs:documentation>
+        Defines a string that holds a Uniform Resource Locator and that must contain between 1 and 2048 characters.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:anyURI">
+      <xs:minLength value="1"/>
+      <xs:maxLength value="2048"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:complexType name="LocaleOverride">
+    <xs:annotation>
+      <xs:documentation>
+        Defines the support for multiple locales for unbounded strings.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:attribute name="Locale" type="CultureName" use="required">
+      <xs:annotation>
+        <xs:documentation>Specifies the culture name of the locale for this override.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="Value" type="NonEmptyString" use="required">
+      <xs:annotation>
+        <xs:documentation>Specifies value of the setting expressed for the specified locale.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="ShortLocaleOverride">
+    <xs:annotation>
+      <xs:documentation>
+        Defines the support for multiple locales for short strings.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:attribute name="Locale" type="CultureName" use="required">
+      <xs:annotation>
+        <xs:documentation>Specifies the culture name of the locale for this override.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="Value" type="ShortString" use="required">
+      <xs:annotation>
+        <xs:documentation>Specifies value of the setting expressed for the specified locale.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="LongLocaleOverride">
+    <xs:annotation>
+      <xs:documentation>
+        Defines the support for multiple locales for long strings.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:attribute name="Locale" type="CultureName" use="required">
+      <xs:annotation>
+        <xs:documentation>Specifies the culture name of the locale for this override.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="Value" type="LongString" use="required">
+      <xs:annotation>
+        <xs:documentation>Specifies value of the setting expressed for the specified locale.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="URLLocaleOverride">
+    <xs:annotation>
+      <xs:documentation>
+        Defines the support for multiple locales for URL strings.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:attribute name="Locale" type="CultureName" use="required">
+      <xs:annotation>
+        <xs:documentation>Specifies the culture name of the locale for this override.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="Value" type="URL" use="required">
+      <xs:annotation>
+        <xs:documentation>Specifies value of the setting expressed for the specified locale.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="LocaleAwareSetting">
+    <xs:annotation>
+      <xs:documentation>
+        Defines a setting that is unbounded, locale-aware, and that can be specified for a locale different than the default.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="Override" type="LocaleOverride" minOccurs="0" maxOccurs="unbounded">
+        <xs:annotation>
+          <xs:documentation>Provides a way to specify the value of this setting for an additional locale.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+    <xs:attribute name="DefaultValue" type="NonEmptyString" use="required">
+      <xs:annotation>
+        <xs:documentation>
+          Specifies the default value for this setting, expressed for the locale specified in the <b>DefaultLocale</b> element.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="ShortLocaleAwareSetting">
+    <xs:annotation>
+      <xs:documentation>
+        Defines a setting that is a short string, locale-aware, and that can be specified for a locale different than the default.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="Override" type="ShortLocaleOverride" minOccurs="0" maxOccurs="unbounded">
+        <xs:annotation>
+          <xs:documentation>Provides a way to specify the value of this setting for an additional locale.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+    <xs:attribute name="DefaultValue" type="ShortString" use="required">
+      <xs:annotation>
+        <xs:documentation>
+          Specifies the default value for this setting, expressed for the locale specified in the <b>DefaultLocale</b> element.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="LongLocaleAwareSetting">
+    <xs:annotation>
+      <xs:documentation>
+        Defines a setting that is a long string, locale-aware, and that can be specified for a locale different than the default.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="Override" type="LongLocaleOverride" minOccurs="0" maxOccurs="unbounded">
+        <xs:annotation>
+          <xs:documentation>Provides a way to specify the value of this setting for an additional locale.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+    <xs:attribute name="DefaultValue" type="LongString" use="required">
+      <xs:annotation>
+        <xs:documentation>
+          Specifies the default value for this setting, expressed for the locale specified in the <b>DefaultLocale</b> element.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="URLLocaleAwareSetting">
+    <xs:annotation>
+      <xs:documentation>
+        Defines a URL setting that is locale-aware and that can be specified for a locale different than the default.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="Override" type="URLLocaleOverride" minOccurs="0" maxOccurs="unbounded">
+        <xs:annotation>
+          <xs:documentation>Provides a way to specify the value of this setting for an additional locale.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+    <xs:attribute name="DefaultValue" type="URL" use="required">
+      <xs:annotation>
+        <xs:documentation>
+          Specifies the default value for this setting, expressed for the locale specified in the <b>DefaultLocale</b> element.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <xs:simpleType name="UUID">
+    <xs:annotation>
+      <xs:documentation>The supported representations of a URN UUID or GUID.</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:pattern value="(urn:uuid:)?[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}|\{[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="AlternateId">
+    <xs:annotation>
+      <xs:documentation>Defines an alternate ID type as defined by the Office Store.</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:pattern value=".{5,12}\\WA[0-9]{9}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="CultureName">
+    <xs:annotation>
+      <xs:documentation>Represents the culture name of the language used in the string that it is qualifying.</xs:documentation>
+    </xs:annotation>
+    <!-- The culture names follow the BCP 47 standard. -->
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[a-zA-Z]{2,3}-[a-zA-Z0-9]{3,8}(-[a-zA-Z]{2,3})?|[a-zA-Z]{2,3}(-[a-zA-Z]{2,3}(_tradnl|\.pseudo|-[a-zA-Z]{4,8})?)?"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="Version">
+    <xs:annotation>
+      <xs:documentation>
+        Defines the format for the <b>Version</b> element.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:pattern value="([0-9]{1,5})(\.[0-9]{1,5}){0,3}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="ShortVersion">
+    <xs:annotation>
+      <xs:documentation>
+        Defines the format for the Short Version element.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:pattern value="([0-9]{1,5})\.([0-9]{1,5})"/>
+    </xs:restriction>
+  </xs:simpleType>
+  
+  <xs:complexType name="ContentAppSettings">
+    <xs:annotation>
+      <xs:documentation>
+        Defines the settings applicable to a content app.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="SourceLocation" type="URLLocaleAwareSetting" minOccurs="1" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation>Specifies the list of source file locations for this content app.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="RequestedWidth" minOccurs="0" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation>Specifies the desired width in pixels for the initial content placeholder, which should be between 32 and 1000.</xs:documentation>
+        </xs:annotation>
+        <xs:simpleType>
+          <xs:restriction base="xs:integer">
+            <xs:minInclusive value="32"/>
+            <xs:maxInclusive value="1000"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element name="RequestedHeight" minOccurs="0" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation>Specifies the desired height in pixels for the initial content placeholder, which should be between 32 and 1000.</xs:documentation>
+        </xs:annotation>
+        <xs:simpleType>
+          <xs:restriction base="xs:integer">
+            <xs:minInclusive value="32"/>
+            <xs:maxInclusive value="1000"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="TaskPaneAppSettings">
+    <xs:annotation>
+      <xs:documentation>
+        Defines the settings applicable to a task pane app.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="SourceLocation" type="URLLocaleAwareSetting" minOccurs="1" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation>Specifies the list of source file locations for this task pane app.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="ItemReadDesktopMailAppSettings">
+    <xs:annotation>
+      <xs:documentation>
+        Defines the form factor-aware settings applicable to mail apps when running on a desktop computer.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="SourceLocation" type="URLLocaleAwareSetting" minOccurs="1" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation>Specifies the list of source file locations for this desktop mail app.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="RequestedHeight" minOccurs="1" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation>Specifies the desired height, in pixels, of this mail app when running on a desktop computer, which is a value between 32 and 450.</xs:documentation>
+        </xs:annotation>
+        <xs:simpleType>
+          <xs:restriction base="xs:integer">
+            <xs:minInclusive value="32"/>
+            <xs:maxInclusive value="450"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="ItemReadTabletMailAppSettings">
+    <xs:annotation>
+      <xs:documentation>
+        Defines the form factor-aware settings applicable to mail apps when running on a tablet computer.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="SourceLocation" type="URLLocaleAwareSetting" minOccurs="1" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation>Specifies the list of source file locations for this tablet mail app.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="RequestedHeight" minOccurs="1" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation>Specifies the desired height, in pixels, of this mail app when running on a tablet computer, which is a value between 32 and 450.</xs:documentation>
+        </xs:annotation>
+        <xs:simpleType>
+          <xs:restriction base="xs:integer">
+            <xs:minInclusive value="32"/>
+            <xs:maxInclusive value="450"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="ItemReadPhoneMailAppSettings">
+    <xs:annotation>
+      <xs:documentation>
+        Defines the form factor-aware settings applicable to mail apps when running on a smartphone.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="SourceLocation" type="URLLocaleAwareSetting" minOccurs="1" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation>Specifies the list of source file locations for this phone mail app.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="ItemEditMailAppSettings">
+    <xs:annotation>
+      <xs:documentation>
+        Defines the form factor-aware settings applicable to mail apps when running in a compose form.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="SourceLocation" type="URLLocaleAwareSetting" minOccurs="1" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation>Specifies the list of source file locations for this desktop mail app.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="FormType" abstract="true">
+    <xs:annotation>
+      <xs:documentation>
+        Generic type for specifying UX settings in different forms.
+      </xs:documentation>
+    </xs:annotation>
+  </xs:complexType>
+
+  <xs:complexType name="ItemRead">
+    <xs:annotation>
+      <xs:documentation>
+        UX settings for the read form type.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:complexContent>
+      <xs:extension base="FormType">
+        <xs:sequence>
+          <xs:element name="DesktopSettings" type="ItemReadDesktopMailAppSettings" minOccurs="1" maxOccurs="1">
+            <xs:annotation>
+              <xs:documentation>
+                Specifies control settings that apply when this mail app is used on a desktop computer.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:element>
+          <xs:element name="TabletSettings" type="ItemReadTabletMailAppSettings" minOccurs="0" maxOccurs="1">
+            <xs:annotation>
+              <xs:documentation>Specifies control settings that apply when this mail app is used on a tablet.</xs:documentation>
+            </xs:annotation>
+          </xs:element>
+          <xs:element name="PhoneSettings" type="ItemReadPhoneMailAppSettings" minOccurs="0" maxOccurs="1">
+            <xs:annotation>
+              <xs:documentation>Specifies control settings that apply when this mail app is used on a phone.</xs:documentation>
+            </xs:annotation>
+          </xs:element>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="ItemEdit">
+    <xs:annotation>
+      <xs:documentation>UX settings for the compose and edit form types.</xs:documentation>
+    </xs:annotation>
+    <xs:complexContent>
+      <xs:extension base="FormType">
+        <xs:sequence>
+          <xs:element name="DesktopSettings" type="ItemEditMailAppSettings" minOccurs="1" maxOccurs="1">
+            <xs:annotation>
+              <xs:documentation>
+                Specifies control settings that apply when this mail app is used on a desktop computer.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:element>
+          <xs:element name="TabletSettings" type="ItemEditMailAppSettings" minOccurs="0" maxOccurs="1">
+            <xs:annotation>
+              <xs:documentation>Specifies control settings that apply when this mail app is used on a tablet.</xs:documentation>
+            </xs:annotation>
+          </xs:element>
+          <xs:element name="PhoneSettings" type="ItemEditMailAppSettings" minOccurs="0" maxOccurs="1">
+            <xs:annotation>
+              <xs:documentation>Specifies control settings that apply when this mail app is used on a phone.</xs:documentation>
+            </xs:annotation>
+          </xs:element>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="FormSettings">
+    <xs:annotation>
+      <xs:documentation>
+        Defines the UX settings for the app, such as source location, points of integration and app pane size.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="Form" type="FormType" minOccurs="1" maxOccurs="2">
+        <xs:annotation>
+          <xs:documentation>
+            UX settings for a specific form type.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="Rule" abstract="true">
+    <xs:annotation>
+      <xs:documentation>
+        An abstract type that specifies the conditions for the host application to activate this mail app.
+      </xs:documentation>
+    </xs:annotation>
+  </xs:complexType>
+
+  <xs:simpleType name="ItemFormType">
+    <xs:annotation>
+      <xs:documentation>
+        Defines the form type to activate the app in.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="Read">
+        <xs:annotation>
+          <xs:documentation>
+            Specifies that the app should activate in read forms.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="Edit">
+        <xs:annotation>
+          <xs:documentation>
+            Specifies that the app should activate in compose forms.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="ReadOrEdit">
+        <xs:annotation>
+          <xs:documentation>
+            Specifies that the app should activate in read and compose forms.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:complexType name="ItemIs">
+    <xs:annotation>
+      <xs:documentation>
+        Defines a rule that evaluates to true if the selected item is of the specified type.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:complexContent>
+      <xs:extension base="Rule">
+        <xs:attribute name="ItemType" type="ItemType" use="required">
+          <xs:annotation>
+            <xs:documentation>Specifies the item type to match.</xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="FormType" type="ItemFormType" use="required">
+          <xs:annotation>
+            <xs:documentation>Specifies whether the app should appear in read or edit form for the item.</xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="ItemClass" type="NonEmptyString" use="optional">
+          <xs:annotation>
+            <xs:documentation>Specifies the item message class to match.</xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="IncludeSubClasses" type="xs:boolean" use="optional">
+          <xs:annotation>
+            <xs:documentation>Specifies whether the rule should evaluate to true if the item is of a subclass of the specified message class; the default is false.</xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:simpleType name="ItemType">
+    <xs:annotation>
+      <xs:documentation>
+        Defines the different types of items that are used in <b>ItemIs</b> rules.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="Message">
+        <xs:annotation>
+          <xs:documentation>
+            Defines the mail message item type.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="Appointment">
+        <xs:annotation>
+          <xs:documentation>
+            Defines the appointment item type.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="KnownEntityType">
+    <xs:annotation>
+      <xs:documentation>
+        Defines names for the text patterns that can be recognized and extracted from the item subject and body, or that can be used in <b>ItemHasKnownEntity</b> rules.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="MeetingSuggestion">
+        <xs:annotation>
+          <xs:documentation>
+            Text that is identified by pattern recognition to reference an event or a meeting.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="TaskSuggestion">
+        <xs:annotation>
+          <xs:documentation>
+            Text that is identified by pattern recognition to contain an actionable phrase.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="Address">
+        <xs:annotation>
+          <xs:documentation>
+            Text that is identified by pattern recognition to reference a postal address in the United States.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="Url">
+        <xs:annotation>
+          <xs:documentation>
+            Text that is identified by pattern recognition to contain a file name or web address URL.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="PhoneNumber">
+        <xs:annotation>
+          <xs:documentation>
+            A series of digits that is identified by pattern recognition as a telephone number in North America.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="EmailAddress">
+        <xs:annotation>
+          <xs:documentation>
+            Text that is identified by pattern recognition to contain an SMTP format email address.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="Contact">
+        <xs:annotation>
+          <xs:documentation>
+            Text that is identified by pattern recognition to contain contact information.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:complexType name="ItemHasKnownEntity">
+    <xs:annotation>
+      <xs:documentation>
+        Defines a rule that evaluates to true if the item contains text of the specified entity type in its subject or body.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:complexContent>
+      <xs:extension base="Rule">
+        <xs:attribute name="EntityType" type="KnownEntityType" use="required">
+          <xs:annotation>
+            <xs:documentation>Specifies the type of entity that must be found for the rule to evaluate to true.</xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="RegExFilter" type="NonEmptyString" use="optional">
+          <xs:annotation>
+            <xs:documentation>Specifies a regular expression to run against this entity for activation.</xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="FilterName" type="NonEmptyString" use="optional">
+          <xs:annotation>
+            <xs:documentation>Specifies the name of the regular expression filter, so that it is subsequently possible to refer to it by code.</xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="IgnoreCase" type="xs:boolean" use="optional">
+          <xs:annotation>
+            <xs:documentation>
+              Specifies to ignore case when running the regular expression specified by the <b>RegExFilter</b> attribute.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:simpleType name="PropertyName">
+    <xs:annotation>
+      <xs:documentation>
+        Defines property names that can be used with the <b>ItemHasRegularExpressionMatch</b> rule.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="Subject">
+        <xs:annotation>
+          <xs:documentation>
+            Evaluates the regular expression against the item subject.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="BodyAsPlaintext">
+        <xs:annotation>
+          <xs:documentation>
+            Evaluates the regular expression against the item body in plain text.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="BodyAsHTML">
+        <xs:annotation>
+          <xs:documentation>
+            Evaluates the regular expression against the item body if the body is available in HTML.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="SenderSMTPAddress">
+        <xs:annotation>
+          <xs:documentation>
+            Evaluates the regular expression against the SMTP address of the item sender.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+    </xs:restriction>
+  </xs:simpleType>
+
+
+  <xs:complexType name="ItemHasRegularExpressionMatch">
+    <xs:annotation>
+      <xs:documentation>
+        Defines a rule that evaluates to true if a match for the specified regular expression can be found in the specified property of the item.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:complexContent>
+      <xs:extension base="Rule">
+        <xs:attribute name="RegExName" type="NonEmptyString" use="required">
+          <xs:annotation>
+            <xs:documentation>Specifies the name of the regular expression, so that it is subsequently possible to refer to it by code.</xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="RegExValue" type="NonEmptyString" use="required">
+          <xs:annotation>
+            <xs:documentation>Specifies the regular expression to match.</xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="PropertyName" type="PropertyName" use="required">
+          <xs:annotation>
+            <xs:documentation>Specifies the name of the property in which to look for matches.</xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="IgnoreCase" type="xs:boolean" use="optional">
+          <xs:annotation>
+            <xs:documentation>Specifies to ignore the case when executing the regular expression.</xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="ItemHasAttachment">
+    <xs:annotation>
+      <xs:documentation>
+        Defines a rule that evaluates to true if the item contains an attachment.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:complexContent>
+      <xs:extension base="Rule">
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:simpleType name="LogicalOperator">
+    <xs:annotation>
+      <xs:documentation>
+        Defines logical operators that allow combining multiple rules into a rule collection.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="And">
+        <xs:annotation>
+          <xs:documentation>
+            The binary logical operator that returns true if both operands are true, and returns false otherwise.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="Or">
+        <xs:annotation>
+          <xs:documentation>
+            The binary logical operator that returns true if one or both operands are true, and returns false otherwise.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:complexType name="RuleCollection">
+    <xs:annotation>
+      <xs:documentation>
+        Defines a collection of rules and the logical operator to use when evaluating them.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:complexContent>
+      <xs:extension base="Rule">
+        <xs:sequence>
+          <xs:element name="Rule" type="Rule" minOccurs="1" maxOccurs="unbounded">
+            <xs:annotation>
+              <xs:documentation>Specifies the list of rules that this collection contains.</xs:documentation>
+            </xs:annotation>
+          </xs:element>
+        </xs:sequence>
+        <xs:attribute name="Mode" type="LogicalOperator" use="required">
+          <xs:annotation>
+            <xs:documentation>Specifies the logical operator to use when evaluating this rule collection.</xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="AppDomains">
+    <xs:annotation>
+      <xs:documentation>
+        Defines additional domains that the app may use to load its pages.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence minOccurs="1" maxOccurs="unbounded">
+      <xs:element name="AppDomain" type="LongString">
+        <xs:annotation>
+          <xs:documentation>
+            Defines a domain that will be used to load one or more app pages.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="OfficeApp" abstract="true">
+    <xs:annotation>
+      <xs:documentation>
+        An abstract type that defines an app for Office.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="Id" type="UUID" minOccurs="1" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation>Specifies the unique ID of the app.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="AlternateId" type="AlternateId" minOccurs="0" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation>Specifies the alternate ID for the app as issued by the Office Store.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="Version" type="Version" minOccurs="1" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation>Specifies the version of the app.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="ProviderName" type="ShortString" minOccurs="1" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation>Specifies the name of the individual or company that developed the app.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="DefaultLocale" type="CultureName" minOccurs="1" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation>Specifies the default culture name of the locale used by strings in this manifest.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="DisplayName" type="ShortLocaleAwareSetting" minOccurs="1" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation>Specifies a short name for the app.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="Description" type="LongLocaleAwareSetting" minOccurs="1" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation>Specifies a more verbose description of the app.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="IconUrl" type="URLLocaleAwareSetting" minOccurs="0" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation>Specifies the URL of the image that is used to represent the app.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="HighResolutionIconUrl" type="URLLocaleAwareSetting" minOccurs="0" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation>Specifies the URL of the image that is used to represent the app on high dpi screens.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="SupportUrl" type="URLLocaleAwareSetting" minOccurs="0" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation>Specifies the URL of a page that provides support information for the app.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="AppDomains" type="AppDomains" minOccurs="0" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation>Specifies additional domains that this app will use to load pages.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="Hosts" type="Hosts" minOccurs="0" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation>Specifies the Office client application where the app for Office will activate.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="Host">
+    <xs:attribute name="Name" type="ShortString" use="required"/>
+  </xs:complexType>
+  
+  <xs:complexType name="Hosts">
+    <xs:annotation>
+      <xs:documentation>
+        Specifies the Office client Host type where an app for Office will be activated.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence minOccurs="1" maxOccurs="unbounded">
+      <xs:element name="Host" type="Host">
+        <xs:annotation>
+          <xs:documentation>
+            Specifies an individual Office application type where the app should activate, such as "document", "workbook", "presentation", "project", "mailbox".
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+  
+  <xs:complexType name="Requirements">
+    <xs:annotation>
+      <xs:documentation>
+        Specifies the minimum named subsets of the JavaScript API for Office that the app for Office requires in order to activate.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:choice minOccurs="1" maxOccurs="1">
+    <xs:sequence>
+      <xs:element name="Sets" type="Sets" minOccurs="1" maxOccurs="1"/>
+      <xs:element name="Methods" type="Methods" minOccurs="0" maxOccurs="1"/>
+    </xs:sequence>
+      <xs:sequence>
+        <xs:element name="Methods" type="Methods" minOccurs="1" maxOccurs="1"/>
+        <xs:element name="Sets" type="Sets" minOccurs="0" maxOccurs="1"/>
+      </xs:sequence>
+    </xs:choice>
+  </xs:complexType>
+
+  <xs:complexType name="Sets">
+    <xs:annotation>
+      <xs:documentation>
+        Specifies the list of required API sets of the JavaScript API for Office that the app for Office requires in order to activate.
+        Default version is inherited in child elements unless overriten by said child elements.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence minOccurs="1" maxOccurs="unbounded">
+      <xs:element name="Set" type="VersionedRequirement">
+        <xs:annotation>
+          <xs:documentation>
+            Specifies an individual set from the JavaScript API for Office that the app requires in order to activate.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+    <xs:attribute name="DefaultMinVersion" type="ShortVersion" default="1.1"/>
+  </xs:complexType>
+
+  <xs:complexType name="VersionedRequirement">
+    <xs:attribute name="MinVersion" type="ShortVersion" use="optional"/>
+    <xs:attribute name="Name" type="ShortString" use="required"/>
+  </xs:complexType>
+
+  <xs:complexType name="Methods">
+    <xs:annotation>
+      <xs:documentation>
+        Specifies the list of required APIs of the JavaScript API for Office that the app for Office requires in order to activate.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence minOccurs="1" maxOccurs="unbounded">
+      <xs:element name="Method" type="Requirement">
+        <xs:annotation>
+          <xs:documentation>
+            Specifies an individual method from the JavaScript API for Office that the app requires in order to activate.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+  
+  <xs:complexType name="Requirement">
+    <xs:attribute name="Name" type="LongString" use="required"/>
+  </xs:complexType>
+
+  <xs:complexType name="MailAppRequirements">
+    <xs:annotation>
+      <xs:documentation>
+        Specifies the minimum named subsets of the JavaScript API for Office that the Mail App requires in order to activate.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="Sets" type="Sets" minOccurs="1" maxOccurs="1"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="ContentApp">
+    <xs:annotation>
+      <xs:documentation>
+        Defines a content app that is placed in-line with document content to provide a richer web-based experience.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:complexContent>
+      <xs:extension base="OfficeApp">
+        <xs:sequence>
+          <xs:element name="Requirements" type="Requirements" minOccurs="0" maxOccurs="1">
+            <xs:annotation>
+              <xs:documentation>Specifies the minimum set of JavaScript API for Office requirements that the app for Office needs to activate</xs:documentation>
+            </xs:annotation>
+          </xs:element>
+          <xs:element name="DefaultSettings" type="ContentAppSettings" minOccurs="1" maxOccurs="1">
+            <xs:annotation>
+              <xs:documentation>Specifies control settings that are applied whenever the content app is used.</xs:documentation>
+            </xs:annotation>
+          </xs:element>
+          <xs:element name="Permissions" minOccurs="1" maxOccurs="1">
+            <xs:annotation>
+              <xs:documentation>Controls the subset of the API that may be available to this content app at runtime; the developer should request permissions based on "least privilege".</xs:documentation>
+            </xs:annotation>
+            <xs:simpleType>
+              <xs:restriction base="xs:string">
+                <xs:enumeration value="Restricted">
+                  <xs:annotation>
+                    <xs:documentation>
+                      Permission that applies to all content apps, enables activation, and allows use of the <b>Settings</b> object API.
+                    </xs:documentation>
+                  </xs:annotation>
+                </xs:enumeration>
+                <xs:enumeration value="ReadDocument">
+                  <xs:annotation>
+                    <xs:documentation>
+                      Includes the <b>Restricted</b> permission, and also enables the content app to use the <b>getSelectedDataAsync</b> method to read from the document.
+                    </xs:documentation>
+                  </xs:annotation>
+                </xs:enumeration>
+                <xs:enumeration value="WriteDocument">
+                  <xs:annotation>
+                    <xs:documentation>
+                      Includes the <b>Restricted</b> permission, and also enables the content app to use the <b>setSelectedDataAsync</b> method to write to the document.
+                    </xs:documentation>
+                  </xs:annotation>
+                </xs:enumeration>
+                <xs:enumeration value="ReadWriteDocument">
+                  <xs:annotation>
+                    <xs:documentation>
+                      Includes the <b>ReadDocument</b> and <b>WriteDocument</b> permissions, and also enables the content app to use all write methods, manage bindings, and subscribe to events.
+                    </xs:documentation>
+                  </xs:annotation>
+                </xs:enumeration>
+                <xs:enumeration value="ReadAllDocument">
+                  <xs:annotation>
+                    <xs:documentation>
+                      Includes the <b>Restricted</b> and <b>ReadAllDocument</b> permission, and also enables the content app to use the <b>getFileAsync</b> method to obtain a copy of the entire document.
+                    </xs:documentation>
+                  </xs:annotation>
+                </xs:enumeration>
+          </xs:restriction>
+            </xs:simpleType>
+          </xs:element>
+          <xs:element name="AllowSnapshot" type="xs:boolean" minOccurs="0" maxOccurs="1">
+            <xs:annotation>
+              <xs:documentation>Specifies whether a snapshot image of this content app is saved when the hosting document is saved.</xs:documentation>
+            </xs:annotation>
+          </xs:element>
+          <xs:any id="ContentAppVersionOverrides" minOccurs="0" maxOccurs="1" namespace="http://schemas.microsoft.com/office/contentappversionoverrides" processContents="lax">
+            <xs:annotation>
+              <xs:documentation>Contains elements for use in future versions of the app platform as they release. These elements may be overrides to previously defined elements or new elements.</xs:documentation>
+            </xs:annotation>
+          </xs:any>
+          <xs:any id="ContentAppSignature" minOccurs="0" maxOccurs="1" namespace="http://www.w3.org/2000/09/xmldsig#" processContents="lax">
+            <xs:annotation>
+              <xs:documentation>Reserved to store the app manifest digital signature.</xs:documentation>
+            </xs:annotation>
+          </xs:any>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="Dictionary">
+    <xs:annotation>
+      <xs:documentation>
+        Defines settings for an app that implements additional dictionary support.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="TargetDialects" type="TargetDialects" minOccurs="1" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation>Defines the dialect(s) supported in this dictionary.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="QueryUri" type="URLLocaleAwareSetting" minOccurs="1" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation>Specifies the URL of the endpoint for the dictionary query service.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="CitationText" type="ShortLocaleAwareSetting" minOccurs="1" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation>Specifies the citation boilerplate text for this dictionary.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="DictionaryName" type="ShortLocaleAwareSetting" minOccurs="1" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation>Specifies the name of this dictionary.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="DictionaryHomePage" type="URLLocaleAwareSetting" minOccurs="1" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation>Specifies the URL of the home page for the dictionary.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="TargetDialects">
+    <xs:annotation>
+      <xs:documentation>
+        Defines the dialect(s) supported this dictionary.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence minOccurs="1" maxOccurs="unbounded">
+      <xs:element name="TargetDialect" type="CultureName">
+        <xs:annotation>
+          <xs:documentation>
+            Defines a dialect supported by this dictionary, represented as a culture name string.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="TaskPaneApp">
+    <xs:annotation>
+      <xs:documentation>
+        Defines an app that is displayed in a task pane to enhance the viewing and authoring experience.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:complexContent>
+      <xs:extension base="OfficeApp">
+        <xs:sequence>
+          <xs:element name="Requirements" type="Requirements" minOccurs="0" maxOccurs="1">
+            <xs:annotation>
+              <xs:documentation>Specifies the minimum set of JavaScript API for Office requirements that the app for Office needs to activate</xs:documentation>
+            </xs:annotation>
+          </xs:element>
+          <xs:element name="DefaultSettings" type="TaskPaneAppSettings" minOccurs="1" maxOccurs="1">
+            <xs:annotation>
+              <xs:documentation>Specifies control settings that are applied whenever this task pane app is used.</xs:documentation>
+            </xs:annotation>
+          </xs:element>
+          <xs:element name="Permissions" minOccurs="1" maxOccurs="1">
+            <xs:annotation>
+              <xs:documentation>Controls the subset of the API that may be available to this task pane app at runtime; the developer should request permissions based on "least privilege".</xs:documentation>
+            </xs:annotation>
+            <xs:simpleType>
+              <xs:restriction base="xs:string">
+                <xs:enumeration value="Restricted">
+                  <xs:annotation>
+                    <xs:documentation>
+                      Permission that applies to all task pane apps, enables activation and allows use of the <b>Settings</b> object.
+                    </xs:documentation>
+                  </xs:annotation>
+                </xs:enumeration>
+                <xs:enumeration value="ReadDocument">
+                  <xs:annotation>
+                    <xs:documentation>
+                      Includes the <b>Restricted</b> permission, and also enables the task pane app to use the <b>getSelectedAsync</b> method to read from the document.
+                    </xs:documentation>
+                  </xs:annotation>
+                </xs:enumeration>
+                <xs:enumeration value="ReadAllDocument">
+                  <xs:annotation>
+                    <xs:documentation>
+                      Includes the <b>Restricted</b> and <b>ReadDocument</b> permission, and also enables the task pane app to use the API to obtain a copy of the entire document.
+                    </xs:documentation>
+                  </xs:annotation>
+                </xs:enumeration>
+                <xs:enumeration value="WriteDocument">
+                  <xs:annotation>
+                    <xs:documentation>
+                      Includes the <b>Restricted</b> permission, and also enables the task pane app to use the <b>setSelectedDataAsync</b> method to write to the document.
+                    </xs:documentation>
+                  </xs:annotation>
+                </xs:enumeration>
+                <xs:enumeration value="ReadWriteDocument">
+                  <xs:annotation>
+                    <xs:documentation>
+                      Includes the <b>ReadAllDocument</b> and <b>WriteDocument</b> permissions, and also enables the task pane app to use all write methods, manage bindings, and subscribe to events.
+                    </xs:documentation>
+                  </xs:annotation>
+                </xs:enumeration>
+              </xs:restriction>
+            </xs:simpleType>
+          </xs:element>
+          <xs:element name="Dictionary" type="Dictionary" minOccurs="0" maxOccurs="1">
+            <xs:annotation>
+              <xs:documentation>Specifies control settings that apply to a task pane app that implements additional dictionary support.</xs:documentation>
+            </xs:annotation>
+          </xs:element>
+          <xs:any id="TaskPaneAppVersionOverrides" minOccurs="0" maxOccurs="1" namespace="http://schemas.microsoft.com/office/taskpaneappversionoverrides" processContents="lax">
+            <xs:annotation>
+              <xs:documentation>Contains elements for use in future versions of the app platform as they release. These elements may be overrides to previously defined elements or new elements.</xs:documentation>
+            </xs:annotation>
+          </xs:any>          
+          <xs:any id="TaskPaneAppSignature" minOccurs="0" maxOccurs="1" namespace="http://www.w3.org/2000/09/xmldsig#" processContents="lax">
+            <xs:annotation>
+              <xs:documentation>Reserved to store the app manifest digital signature.</xs:documentation>
+            </xs:annotation>
+          </xs:any>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="MailApp">
+    <xs:annotation>
+      <xs:documentation>
+        Defines an app activated according to rules and displayed adjacent to the selected item to enhance the reading experience.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:complexContent>
+      <xs:extension base="OfficeApp">
+        <xs:sequence>
+          <xs:element name="Requirements" type="MailAppRequirements" minOccurs="1" maxOccurs="1">
+            <xs:annotation>
+              <xs:documentation>Specifies the minimum set of JavaScript API for Office requirements that the app for Office needs to activate</xs:documentation>
+            </xs:annotation>
+          </xs:element>
+          <xs:element name="FormSettings" type="FormSettings" minOccurs="1" maxOccurs="1">
+            <xs:annotation>
+              <xs:documentation>Specifies control settings that apply when displaying this mail app.</xs:documentation>
+            </xs:annotation>
+          </xs:element>
+          <xs:element name="Permissions" minOccurs="0" maxOccurs="1">
+            <xs:annotation>
+              <xs:documentation>Controls the subset of the API that may be available to this mail app at runtime; the developer should request permissions based on "least privilege".</xs:documentation>
+            </xs:annotation>
+            <xs:simpleType>
+              <xs:restriction base="xs:string">
+                <xs:enumeration value="Restricted">
+                  <xs:annotation>
+                    <xs:documentation>
+                      Permission that applies to all mail apps, enables the <b>ItemIs</b> and <b>ItemHasKnownEntity</b> activation rules, enables use of the <b>Settings</b> object and a subset of the JavaScript API for Office.
+                    </xs:documentation>
+                  </xs:annotation>
+                </xs:enumeration>
+                <xs:enumeration value="ReadItem">
+                  <xs:annotation>
+                    <xs:documentation>
+                      Applies to the selected item and includes the <b>Restricted</b> permission and enables the mail app to use all the well-known entities and regular expression activation rules, to read all properties, and to write custom properties.
+                    </xs:documentation>
+                  </xs:annotation>
+                </xs:enumeration>
+                <xs:enumeration value="ReadWriteItem">
+                  <xs:annotation>
+                    <xs:documentation>
+                      Applies to the selected item and includes the <b>ReadItem</b> permission and enables the mail app to use all the well-known entities and regular expression activation rules, to read all properties, to write properties in compose forms, and to write custom properties.
+                    </xs:documentation>
+                  </xs:annotation>
+                </xs:enumeration>
+                <xs:enumeration value="ReadWriteMailbox">
+                  <xs:annotation>
+                    <xs:documentation>
+                      Includes all of the <b>ReadWriteItem</b> permissions and also enables the mail app to use the <b>makeEWSRequestAsync</b> method to read and write all properties of any item in the user's mailbox.
+                    </xs:documentation>
+                  </xs:annotation>
+                </xs:enumeration>
+              </xs:restriction>
+            </xs:simpleType>
+          </xs:element>
+          <xs:element name="Rule" type="Rule" minOccurs="1" maxOccurs="1">
+            <xs:annotation>
+              <xs:documentation>Specifies the activation rule that should be evaluated for this mail app.</xs:documentation>
+            </xs:annotation>
+          </xs:element>
+          <xs:element name="DisableEntityHighlighting" type="xs:boolean" minOccurs="0" maxOccurs="1">
+            <xs:annotation>
+              <xs:documentation>Specifies whether entity highlighting should be turned off for this mail app.</xs:documentation>
+            </xs:annotation>
+          </xs:element>
+          <xs:any id="MailAppVersionOverrides" minOccurs="0" maxOccurs="1" namespace="http://schemas.microsoft.com/office/mailappversionoverrides" processContents="lax">
+            <xs:annotation>
+              <xs:documentation>Contains elements for use in future versions of the app platform as they release. These elements may be overrides to previously defined elements or new elements.</xs:documentation>
+            </xs:annotation>
+          </xs:any>
+          <xs:any id="MailAppSignature" minOccurs="0" maxOccurs="1" namespace="http://www.w3.org/2000/09/xmldsig#" processContents="lax">
+            <xs:annotation>
+              <xs:documentation>Reserved to store the app manifest digital signature.</xs:documentation>
+            </xs:annotation>
+          </xs:any>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:element name="OfficeApp" type="OfficeApp">
+    <xs:annotation>
+      <xs:documentation>The root element in the manifest of an app for Office.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+</xs:schema>
