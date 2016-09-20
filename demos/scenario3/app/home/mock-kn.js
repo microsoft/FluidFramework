@@ -95,7 +95,7 @@ var kn = (function(){  // jshint ignore:line
         }
 
         li.click(function () {
-            onProblemSetChosen(problemSetRef);
+            prepareDocumentForProblemSet(problemSetRef);
         });
 
         spanPrimary.text(problemSetRef.title);
@@ -117,14 +117,18 @@ var kn = (function(){  // jshint ignore:line
   
     function onContentRetrieved(data, status, jsXHR) {
         Word.run(function (context) {
+            // Insert the content
             context.document.body.insertOoxml(data, Word.InsertLocation.replace);
+
+            // Move the cursor to the end
+            context.document.body.select(Word.SelectionMode.end);
             algebraAgent.beginMonitoring();
         });
     }
 
     var _request;
     ///////////////////////////////////////////// onProblemSetChosen
-    function onProblemSetChosen(problemSetRef) {        
+    function prepareDocumentForProblemSet(problemSetRef) {        
         var requestSettings = { url: problemSets[problemSetRef.id].ooxmlUrl, dataType: "text" };
         _request = jQuery.ajax(requestSettings)
             .success(onContentRetrieved)
