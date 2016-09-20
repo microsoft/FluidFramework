@@ -1,0 +1,268 @@
+/* Copyright (c) Microsoft. All rights reserved. Licensed under the MIT license. See LICENSE in the project root for license information. */
+/**
+ * Office UI Fabric 2.6.1
+ * The front-end framework for building experiences for Office 365.
+ **/
+/*Sasssssssss*/
+/*
+  Your use of the content in the files referenced here are subject to the terms of the license at http://aka.ms/fabric-font-license
+*/
+.ms-ListItem {
+  color: #333333;
+  font-family: 'Segoe UI Regular WestEuropean', 'Segoe UI', Tahoma, Arial, sans-serif;
+  font-size: 14px;
+  font-weight: normal;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  box-shadow: none;
+  *zoom: 1;
+  padding: 9px 28px 3px;
+  position: relative;
+  display: block;
+}
+
+.ms-ListItem:before,
+.ms-ListItem:after {
+  display: table;
+  content: '';
+  line-height: 0;
+}
+
+.ms-ListItem:after {
+  clear: both;
+}
+
+.ms-ListItem-primaryText,
+.ms-ListItem-secondaryText,
+.ms-ListItem-tertiaryText {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: block;
+}
+
+.ms-ListItem-primaryText {
+  color: #212121;
+  font-family: 'Segoe UI Semilight WestEuropean', 'Segoe UI Semilight', 'Segoe UI', Tahoma, Arial, sans-serif;
+  font-size: 21px;
+  padding-right: 80px;
+  position: relative;
+  top: -4px;
+}
+
+.ms-ListItem-secondaryText {
+  color: #333333;
+  font-family: 'Segoe UI Regular WestEuropean', 'Segoe UI', Tahoma, Arial, sans-serif;
+  font-size: 14px;
+  line-height: 25px;
+  position: relative;
+  top: -7px;
+  padding-right: 30px;
+}
+
+.ms-ListItem-tertiaryText {
+  color: #767676;
+  font-family: 'Segoe UI Semilight WestEuropean', 'Segoe UI Semilight', 'Segoe UI', Tahoma, Arial, sans-serif;
+  font-size: 14px;
+  position: relative;
+  top: -9px;
+  margin-bottom: -4px;
+  padding-right: 30px;
+}
+
+.ms-ListItem-metaText {
+  color: #333333;
+  font-family: 'Segoe UI Semilight WestEuropean', 'Segoe UI Semilight', 'Segoe UI', Tahoma, Arial, sans-serif;
+  font-size: 11px;
+  position: absolute;
+  right: 30px;
+  top: 39px;
+}
+
+.ms-ListItem-image {
+  float: left;
+  height: 70px;
+  margin-left: -8px;
+  margin-right: 10px;
+  width: 70px;
+}
+
+.ms-ListItem-selectionTarget {
+  display: none;
+}
+
+.ms-ListItem-actions {
+  max-width: 80px;
+  position: absolute;
+  right: 30px;
+  text-align: right;
+  top: 10px;
+}
+
+.ms-ListItem-action {
+  color: #a6a6a6;
+  display: inline-block;
+  font-size: 15px;
+  position: relative;
+  text-align: center;
+  top: 3px;
+  cursor: pointer;
+  height: 16px;
+  width: 16px;
+}
+
+.ms-ListItem-action .ms-Icon {
+  vertical-align: top;
+}
+
+.ms-ListItem-action:hover {
+  color: #666666;
+  outline: 1px solid transparent;
+}
+
+.ms-ListItem.is-unread {
+  border-left: 3px solid #0078d7;
+  padding-left: 27px;
+}
+
+.ms-ListItem.is-unread .ms-ListItem-secondaryText,
+.ms-ListItem.is-unread .ms-ListItem-metaText {
+  color: #0078d7;
+  font-family: 'Segoe UI Semibold WestEuropean', 'Segoe UI Semibold', 'Segoe UI', Tahoma, Arial, sans-serif;
+}
+
+.ms-ListItem.is-unseen:after {
+  border-right: 10px solid transparent;
+  border-top: 10px solid #0078d7;
+  left: 0;
+  position: absolute;
+  top: 0;
+}
+
+.ms-ListItem.is-selectable .ms-ListItem-selectionTarget {
+  display: block;
+  height: 20px;
+  left: 6px;
+  position: absolute;
+  top: 13px;
+  width: 20px;
+}
+
+.ms-ListItem.is-selectable .ms-ListItem-image {
+  margin-left: 0;
+}
+
+.ms-ListItem.is-selectable:hover {
+  background-color: #eaeaea;
+  cursor: pointer;
+  outline: 1px solid transparent;
+}
+
+.ms-ListItem.is-selectable:hover:before {
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-font-smoothing: antialiased;
+  display: inline-block;
+  font-family: 'Office365Icons';
+  font-style: normal;
+  font-weight: normal;
+  line-height: 1;
+  speak: none;
+  position: absolute;
+  top: 12px;
+  left: 6px;
+  height: 15px;
+  width: 15px;
+  border: 1px solid #767676;
+}
+
+.ms-ListItem.is-selected:before {
+  border: 1px solid transparent;
+}
+
+.ms-ListItem.is-selected:before,
+.ms-ListItem.is-selected:hover:before {
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-font-smoothing: antialiased;
+  display: inline-block;
+  font-family: 'Office365Icons';
+  font-style: normal;
+  font-weight: normal;
+  line-height: 1;
+  speak: none;
+  content: '\e041';
+  font-size: 15px;
+  color: #767676;
+  position: absolute;
+  top: 12px;
+  left: 6px;
+}
+
+.ms-ListItem.is-selected:hover {
+  background-color: #c7e0f4;
+  outline: 1px solid transparent;
+}
+
+.ms-ListItem.ms-ListItem--document {
+  padding: 0;
+}
+
+.ms-ListItem.ms-ListItem--document .ms-ListItem-itemIcon {
+  width: 70px;
+  height: 70px;
+  float: left;
+  text-align: center;
+}
+
+.ms-ListItem.ms-ListItem--document .ms-ListItem-itemIcon .ms-Icon {
+  font-size: 38px;
+  line-height: 70px;
+  color: #666666;
+}
+
+.ms-ListItem.ms-ListItem--document .ms-ListItem-primaryText {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  padding-top: 15px;
+  padding-right: 0;
+  position: static;
+}
+
+.ms-ListItem.ms-ListItem--document .ms-ListItem-secondaryText {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #666666;
+  font-family: 'Segoe UI Regular WestEuropean', 'Segoe UI', Tahoma, Arial, sans-serif;
+  font-size: 11px;
+  padding-top: 6px;
+}
+
+.ms-List {
+  color: #333333;
+  font-family: 'Segoe UI Regular WestEuropean', 'Segoe UI', Tahoma, Arial, sans-serif;
+  font-size: 14px;
+  font-weight: normal;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  box-shadow: none;
+  list-style-type: none;
+}
+
+@media (min-width: 480px) {
+  .ms-List.ms-List--grid .ms-ListItem {
+    width: 33.33333333333333%;
+    float: left;
+    border-width: 0 1px 1px 0;
+  }
+
+  .ms-List.ms-List--grid .ms-ListItem:nth-child(3n) {
+    border-width: 0 0 1px 0;
+  }
+}

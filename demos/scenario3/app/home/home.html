@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Problem Set Demo</title>
+
+    <link rel="stylesheet" href="../../content/Office.css" type="text/css" />
+    <link rel="stylesheet" href="../../content/fabric.min.css">
+    <link rel="stylesheet" href="../../content/fabric.components.min.css">
+    <link rel="stylesheet" href="../../content/SearchBox.css" type="text/css" />
+    <link rel="stylesheet" href="../../content/List.css" type="text/css" />
+    <link rel="stylesheet" href="../App.css" type="text/css" />
+    <link rel="stylesheet" href="Home.css" type="text/css" />
+
+    <script src="//ajax.aspnetcdn.com/ajax/jQuery/jquery-1.9.1.min.js"></script>
+    <script src="//appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+    <script src="../../scripts/MicrosoftAjax.js"></script>
+    <script src="../../scripts/SearchBox.js"></script>
+    <script src="../App.js"></script>
+    <script src="algebra-agent.js"></script>
+    <script src="mock-kn.js"></script>
+    <script src="Home.js"></script>
+  </head>
+
+<body>
+  <div id="content-header">
+    <div class="padding">
+      <h1>Lakeside Highschool</h1>
+    </div>
+  </div>
+  <div id="content-main">
+    <div class="padding">
+
+      <!-- Our search box is being replaced by TellMe -->
+      <!--<div class="ms-SearchBox">
+        <input id="mainSearchBox" class="ms-SearchBox-field">
+        <label class="ms-SearchBox-label"><i class="ms-SearchBox-icon ms-Icon ms-Icon--search"></i>Search</label>
+        <button class="ms-SearchBox-closeButton"><i class="ms-Icon ms-Icon--x"></i></button>
+        <div class="ms-SearchBox-CandidateList">
+          <ul class="ms-List"></ul>
+        </div>
+      </div>-->
+      <div id="results-div" class="results-list">
+        <ul id="results-ul" class="ms-List"></ul>
+      </div>
+      <div id="debug-status"></div>
+    </div>
+  </div>
+</body>
+
+</html>

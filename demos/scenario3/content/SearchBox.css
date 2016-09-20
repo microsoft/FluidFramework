@@ -1,0 +1,134 @@
+/* Copyright (c) Microsoft. All rights reserved. Licensed under the MIT license. See LICENSE in the project root for license information. */
+/**
+ * Fabric 1.0.0
+ * The front-end framework for building experiences for Office 365.
+ **/
+.ms-Label {
+  color: #333333;
+  font-family: 'Segoe UI Regular WestEuropean', 'Segoe UI', 'Segoe WP', Tahoma, Arial, sans-serif;
+  font-size: 12px;
+  font-weight: normal;
+  margin: 0;
+  padding: 0;
+  box-shadow: none;
+  box-sizing: border-box;
+  display: block;
+  padding: 5px 0;
+}
+
+.ms-Label.is-required:after {
+  content: ' *';
+  color: #a80000;
+}
+
+.ms-Label.is-disabled {
+  color: #a6a6a6;
+}
+
+.ms-SearchBox {
+  color: #333333;
+  font-family: 'Segoe UI Regular WestEuropean', 'Segoe UI', 'Segoe WP', Tahoma, Arial, sans-serif;
+  font-size: 14px;
+  font-weight: normal;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  box-shadow: none;
+  position: relative;
+  margin-bottom: 10px;
+  display: inline-block;
+}
+
+.ms-SearchBox.is-disabled .ms-SearchBox-label {
+  color: #a6a6a6;
+}
+
+.ms-SearchBox.is-disabled .ms-SearchBox-icon {
+  color: #c8c8c8;
+}
+
+.ms-SearchBox.is-disabled .ms-SearchBox-field {
+  background-color: #f4f4f4;
+  border-color: #f4f4f4;
+  pointer-events: none;
+  cursor: default;
+}
+
+.ms-SearchBox.is-active .ms-SearchBox-closeButton {
+  display: block;
+  outline: 1px solid transparent;
+}
+
+.ms-SearchBox-field {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  box-shadow: none;
+  border: 1px solid #71afe5;
+  border-radius: 0;
+  font-family: 'Segoe UI Semilight WestEuropean', 'Segoe UI Semilight', 'Segoe WP Semilight', 'Segoe UI', 'Segoe WP', Tahoma, Arial, sans-serif;
+  font-size: 14px;
+  color: #000000;
+  height: 32px;
+  padding: 6px 3px 7px 10px;
+  width: 280px;
+}
+
+.ms-SearchBox-field:hover {
+  border-color: #0078d7;
+  background-color: #c7e0f4;
+}
+
+.ms-SearchBox-field:hover + .ms-SearchBox-label {
+  color: #000000;
+}
+
+.ms-SearchBox-field:hover + .ms-SearchBox-label .ms-Icon {
+  color: #333333;
+}
+
+.ms-SearchBox-field:focus {
+  padding: 6px 32px 7px 10px;
+  border-color: #0078d7;
+  background-color: #c7e0f4;
+}
+
+.ms-SearchBox-closeButton {
+  border: none;
+  cursor: pointer;
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: 32px;
+  width: 32px;
+  background-color: #0078d7;
+  text-align: center;
+  display: none;
+  font-size: 17px;
+  color: #ffffff;
+}
+
+.ms-SearchBox-label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding-left: 8px;
+  line-height: 32px;
+  color: #666666;
+}
+
+.ms-SearchBox-icon {
+  margin-right: 7px;
+  font-size: 17px;
+  color: #767676;
+}
+
+.ms-SearchBox-CandidateList
+{
+    border: 1px solid;
+    display: none; /* visibility:  managed by JQuery*/
+    margin-top: 2px;
+    margin-left: 8px;
+    border-color: #0078d7;
+    width:312px;
+}

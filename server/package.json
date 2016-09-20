@@ -4,15 +4,28 @@
   "description": "A README.md file is intended to quickly orient readers to what your project can do.  New to Markdown? [Learn more](https://go.microsoft.com/fwlink/p/?LinkId=524306&clcid=0x409)",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node ./dist/www"
   },
   "repository": {
     "type": "git",
     "url": "https://offnet.visualstudio.com/_git/officenet"
   },
   "author": "",
+  "dependencies": {
+    "body-parser": "~1.13.2",
+    "cookie-parser": "~1.3.5",
+    "debug": "~2.2.0",
+    "express": "~4.13.1",
+    "hjs": "~0.0.6",
+    "less-middleware": "1.0.x",
+    "morgan": "~1.6.1",
+    "serve-favicon": "~2.3.0"
+  },
   "devDependencies": {
     "gulp": "^3.9.1",
-    "gulp-typescript": "^2.13.6"
+    "gulp-plumber": "^1.1.0",
+    "gulp-typescript": "^2.13.6",
+    "typings": "^1.3.3"
   }
 }
