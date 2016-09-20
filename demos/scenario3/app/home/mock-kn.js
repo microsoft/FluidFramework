@@ -37,15 +37,18 @@ var kn = (function(){  // jshint ignore:line
     // The actual contents of the problem set, including representations 
     var problemSets = {
         "B7FDBF00-5C78-43F7-AF88-5EB4C81C725D" : {
-            "ooxmlUrl" : "/content/solveForX.xml"
+            "ooxmlUrl" : "/content/solveForX.xml",
+            "agent": algebraAgent
         },
 
         "0E5AFE02-B875-42C2-BA3A-EA5C3285E5CC" : {
-            "ooxmlUrl" : "/content/snake.xml"
+            "ooxmlUrl" : "/content/snake.xml",
+            "agent" : null
         },
 
         "7F4AA69B-D793-4B11-BC45-218522FA9244" : {
-            "ooxmlUrl" : "/content/Colinear.xml"
+            "ooxmlUrl" : "/content/Colinear.xml",
+            "agent" : null            
         },
     };
 
@@ -124,20 +127,26 @@ var kn = (function(){  // jshint ignore:line
         app.showNotification(status, "An error occurred retrieving the problem set.");
     };
 
-    function onContentRetrieved(data, status, jsXHR) {
+    function onContentRetrieved(data, problemSet) {
         Word.run(function (context) {
             insertContent(data, context);
-            algebraAgent.stopMonitoring(); // Stop any previous instances first
-            algebraAgent.beginMonitoring();
+            if (problemSet.agent != null) {
+                problemSet.agent.stopMonitoring(); // Stop any previous instances first
+                problemSet.agent.beginMonitoring();
+            }
         });
     }
 
     var _problemSetContentRequest;
-    ///////////////////////////////////////////// onProblemSetChosen
-    function prepareDocumentForProblemSet(problemSetRef) {        
-        var requestSettings = { url: problemSets[problemSetRef.id].ooxmlUrl, dataType: "text" };
+    ///////////////////////////////////////////// prepareDocumentForProblemSet
+    function prepareDocumentForProblemSet(problemSetRef) {
+        var problemSet = problemSets[problemSetRef.id];
+        var ooxmlUrl = problemSet.ooxmlUrl;
+        var requestSettings = { url: ooxmlUrl, dataType: "text" };
         _problemSetContentRequest = jQuery.ajax(requestSettings)
-            .success(onContentRetrieved)
+            .success(function (data, status, jsXHR) {
+                onContentRetrieved(data, problemSet);
+            })
             .error(onRequestFailed);
     }        
 
