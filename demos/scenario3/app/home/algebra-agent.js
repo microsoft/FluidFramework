@@ -35,27 +35,36 @@ var algebraAgent = (function(){  // jshint ignore:line
         contentControl.appearance = 'hidden';        
     }
 
-    //////////////////////////////////////////////////////// reactToParagraphText
-    // Get the text of the paragrph and see if we wish to react to it. 
-    function reactToParagraphText(paragraph, contentControls, context) {
-        var paragraphText = paragraph.text; 
+    //////////////////////////////////////////////////////// reactWithValidationResult
+    function reactWithValidationResult(paragraph, contentControls, checkMark, context) {
         var originalSelection = context.document.getSelection();
-        var checkMark = validateContentWithService(paragraphText);
         var haveContentControl = contentControls.items.length > 0;
         var needContentcontrol = checkMark != null;  
 
         if (needContentcontrol) {
             if (!haveContentControl) {
                 insertContentControl(paragraph, checkMark);
+            } else {
+                return;
             }
         } else {
             if (haveContentControl) {
             contentControls.items[0].delete(false /* keepContent*/);
+            } else {
+                return;
             }
         }
 
         originalSelection.select();
-        context.sync();
+        context.sync();        
+    }
+
+    //////////////////////////////////////////////////////// reactToParagraphText
+    // Get the text of the paragrph and see if we wish to react to it. 
+    function reactToParagraphText(paragraph, contentControls, context) {
+        var checkMark = validateContentWithService(paragraph.text);
+
+        reactWithValidationResult(paragraph, contentControls, checkMark, context);
     }
 
     //////////////////////////////////////////////////////// reactToParagraph
