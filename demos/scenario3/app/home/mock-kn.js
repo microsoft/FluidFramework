@@ -9,17 +9,17 @@ var kn = (function(){  // jshint ignore:line
         {
             "id" : "B7FDBF00-5C78-43F7-AF88-5EB4C81C725D",
             "title" : "Solve for X",
-            "className" : "AP Algebra",
+            "className" : "Algebra",
             "description": "Simple algebraic equations",
             "due": "Oct 18th",
-            "isNew": false
+            "isNew": true
         },
 
         {
             "id": "0E5AFE02-B875-42C2-BA3A-EA5C3285E5CC",
-            "title" : "League of the Iroquois",
-            "className" : "History",
-            "description": "How and why the league of the Iroquois formed?",
+            "title" : "Quotients and Remainders",
+            "className" : "Algebra",
+            "description": "Does the snake fit the box?",
             "due": "Oct 25th",
             "isNew": true
         },
@@ -27,7 +27,7 @@ var kn = (function(){  // jshint ignore:line
         {
             "id" : "7F4AA69B-D793-4B11-BC45-218522FA9244",
             "title" : "Colinear points",
-            "className" : "AP Algebra",
+            "className" : "Algebra",
             "description": "Slope equation",
             "due": "Nov 2nd",
             "isNew": true
@@ -41,7 +41,7 @@ var kn = (function(){  // jshint ignore:line
         },
 
         "0E5AFE02-B875-42C2-BA3A-EA5C3285E5CC" : {
-            "ooxmlUrl" : "-- bad -- url --"
+            "ooxmlUrl" : "/content/snake.xml"
         },
 
         "7F4AA69B-D793-4B11-BC45-218522FA9244" : {
