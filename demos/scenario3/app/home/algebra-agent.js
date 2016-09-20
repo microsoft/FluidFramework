@@ -39,12 +39,17 @@ var algebraAgent = (function(){  // jshint ignore:line
             }
 
             insertedRange = paragraph.insertText(checkMark, Word.InsertLocation.end);
-            insertedRange.insertContentControl();
+            insertedRange.font.color = 'green';
+            var contentControl = insertedRange.insertContentControl();
+            contentControl.appearance = 'hidden';
         } else {
             if (checkMark == null) {
-                contentControls.items[0].clear();
+                contentControls.items[0].delete(false /* keepContent*/);
             } else {
-                insertedRange = contentControls.items[0].insertText(checkMark, Word.InsertLocation.replace);
+                // The content control is here, and we do wish to put a checkMark in.
+                // Assume it's the check mark
+                // insertedRange = contentControls.items[0].insertText(checkMark, Word.InsertLocation.replace);
+                return false;
             }
         }
 
@@ -56,7 +61,7 @@ var algebraAgent = (function(){  // jshint ignore:line
     // a check-mark here) and call into the next layer
     function reactToParagraph(paragraph, context) {
         var contentControls = paragraph.contentControls;
-        context.load(contentControls, '');
+        context.load(contentControls, 'text');
         context.sync().then(function () {
             var originalSelection = context.document.getSelection();
 
