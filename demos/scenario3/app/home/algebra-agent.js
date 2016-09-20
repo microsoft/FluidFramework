@@ -26,7 +26,8 @@ var algebraAgent = (function(){  // jshint ignore:line
     }
 
     //////////////////////////////////////////////////////// reactToParagraphText
-    // Get the text of the paragrph and see if we wish to react to it.
+    // Get the text of the paragrph and see if we wish to react to it. Returns a boolean
+    // to indicate whether it did anything
     function reactToParagraphText(paragraph, contentControls) {
         var paragraphText = paragraph.text; 
         var checkMark = validateContentWithService(paragraphText);
@@ -34,7 +35,7 @@ var algebraAgent = (function(){  // jshint ignore:line
         var insertedRange = null;
         if (contentControls.items.length == 0) {
             if (checkMark == null) {
-                return;
+                return false;
             }
 
             insertedRange = paragraph.insertText(checkMark, Word.InsertLocation.end);
@@ -46,6 +47,8 @@ var algebraAgent = (function(){  // jshint ignore:line
                 insertedRange = contentControls.items[0].insertText(checkMark, Word.InsertLocation.replace);
             }
         }
+
+        return true;
     }
 
     //////////////////////////////////////////////////////// reactToParagraph
@@ -57,9 +60,14 @@ var algebraAgent = (function(){  // jshint ignore:line
         context.sync().then(function () {
             var originalSelection = context.document.getSelection();
 
-            reactToParagraphText(paragraph, contentControls);
-            originalSelection.select();
-            context.sync();
+            var didReact = reactToParagraphText(paragraph, contentControls);
+
+            // There's really no functional harm in re-selecting the original or sync'ing the context
+            // but it will add a little visual glitch as the selection redraws. Avoid it.
+            if (didReact) {
+                originalSelection.select();
+                context.sync();
+                }
             }
         );
     }
