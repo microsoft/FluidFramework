@@ -6,7 +6,7 @@ var tsProject = ts.createProject("tsconfig.json");
 gulp.task("default", function () {
     var errors = false;
 
-    return tsProject.src()
+    return gulp.src(['src/**/*.ts', 'typings/index.d.ts'])
         .pipe(plumber(function() { errors = true; } ))      
         .pipe(ts(tsProject))        
         .js.pipe(gulp.dest("dist"))
