@@ -51,9 +51,10 @@ var kn = (function(){  // jshint ignore:line
 
     ////////////////////////////////////////////////// searchForEntities
     self.searchForEntities = function (searchValue) {
-        var matchingProblemSets = [];
 
-        if (searchValue.length != 0) {
+        if (searchValue != null && searchValue.length != 0) {
+            var matchingProblemSets = [];
+    
             $.each(problemSetReferences, function (index, problemSetRef) {
                 if (problemSetRef.title.toLowerCase().search(searchValue) != -1 ||
                 problemSetRef.className.toLowerCase().search(searchValue) != -1 ||
@@ -61,9 +62,12 @@ var kn = (function(){  // jshint ignore:line
                     matchingProblemSets.push(problemSetRef);
                 }
             });
-        }
 
-        return matchingProblemSets;
+            return matchingProblemSets;
+        }
+        else {
+            return problemSetReferences;
+        }
     };
 
     ////////////////////////////////////////////////// renderEntityInList

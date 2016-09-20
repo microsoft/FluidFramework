@@ -27,9 +27,18 @@ function onSearchChanged(eventArgs) {
 
 ///////////////////////////////////////////// onDocumentReady
 function onDocumentReady() {
-      app.initialize();
-      $(".ms-SearchBox").SearchBox();
-      $("#mainSearchBox").change(onSearchChanged);
+    app.initialize();
+    $(".ms-SearchBox").SearchBox();
+
+    // Our search is being replaced by TellMe. Instead of searching, populate the list
+    // immediately.
+    // $("#mainSearchBox").change(onSearchChanged);
+
+    var allEntities = kn.searchForEntities(null /*searchValue*/);
+    var $resultsDiv = $(document).find("#results-div"); 
+    var $ul = $(document).find("#results-ul");
+    populateEntitiesList($ul, allEntities);
+    $resultsDiv.slideDown();  
 }
 
 ///////////////////////////////////////////// main
