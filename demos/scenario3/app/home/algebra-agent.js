@@ -12,7 +12,7 @@ var algebraAgent = (function(){  // jshint ignore:line
         if (text.length == 0)
             return null;
 
-        //app.showNotification("Monitoring", text);
+        app.showNotification("Monitoring", text);
         
         if (text.search("3𝑥=8") != -1) {
             return " √";
@@ -25,35 +25,37 @@ var algebraAgent = (function(){  // jshint ignore:line
         return null;
     }
 
-    //////////////////////////////////////////////////////// reactToParagraphText
-    // Get the text of the paragrph and see if we wish to react to it. Returns a boolean
-    // to indicate whether it did anything
-    function reactToParagraphText(paragraph, contentControls) {
-        var paragraphText = paragraph.text; 
-        var checkMark = validateContentWithService(paragraphText);
-            
-        var insertedRange = null;
-        if (contentControls.items.length == 0) {
-            if (checkMark == null) {
-                return false;
-            }
+    //////////////////////////////////////////////////////// insertContentControl
+    // Insert a content control at the end of paragraph, and put the content of 
+    // checkMark in it
+    function insertContentControl(paragraph, checkMark) {
+        var insertedRange = paragraph.insertText(checkMark, Word.InsertLocation.end);
+        insertedRange.font.color = 'green';
+        var contentControl = insertedRange.insertContentControl();
+        contentControl.appearance = 'hidden';        
+    }
 
-            insertedRange = paragraph.insertText(checkMark, Word.InsertLocation.end);
-            insertedRange.font.color = 'green';
-            var contentControl = insertedRange.insertContentControl();
-            contentControl.appearance = 'hidden';
+    //////////////////////////////////////////////////////// reactToParagraphText
+    // Get the text of the paragrph and see if we wish to react to it. 
+    function reactToParagraphText(paragraph, contentControls, context) {
+        var paragraphText = paragraph.text; 
+        var originalSelection = context.document.getSelection();
+        var checkMark = validateContentWithService(paragraphText);
+        var haveContentControl = contentControls.items.length > 0;
+        var needContentcontrol = checkMark != null;  
+
+        if (needContentcontrol) {
+            if (!haveContentControl) {
+                insertContentControl(paragraph, checkMark);
+            }
         } else {
-            if (checkMark == null) {
-                contentControls.items[0].delete(false /* keepContent*/);
-            } else {
-                // The content control is here, and we do wish to put a checkMark in.
-                // Assume it's the check mark
-                // insertedRange = contentControls.items[0].insertText(checkMark, Word.InsertLocation.replace);
-                return false;
+            if (haveContentControl) {
+            contentControls.items[0].delete(false /* keepContent*/);
             }
         }
 
-        return true;
+        originalSelection.select();
+        context.sync();
     }
 
     //////////////////////////////////////////////////////// reactToParagraph
@@ -63,16 +65,7 @@ var algebraAgent = (function(){  // jshint ignore:line
         var contentControls = paragraph.contentControls;
         context.load(contentControls, 'text');
         context.sync().then(function () {
-            var originalSelection = context.document.getSelection();
-
-            var didReact = reactToParagraphText(paragraph, contentControls);
-
-            // There's really no functional harm in re-selecting the original or sync'ing the context
-            // but it will add a little visual glitch as the selection redraws. Avoid it.
-            if (didReact) {
-                originalSelection.select();
-                context.sync();
-                }
+            reactToParagraphText(paragraph, contentControls, context);
             }
         );
     }
