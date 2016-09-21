@@ -23,9 +23,13 @@
     "serve-favicon": "~2.3.0"
   },
   "devDependencies": {
+    "browserify": "^13.1.0",
     "gulp": "^3.9.1",
+    "gulp-clean": "^0.3.2",
     "gulp-plumber": "^1.1.0",
     "gulp-typescript": "^2.13.6",
-    "typings": "^1.3.3"
+    "tsify": "^1.0.7",
+    "typings": "^1.3.3",
+    "vinyl-source-stream": "^1.1.0"
   }
 }

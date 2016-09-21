@@ -1,5 +1,6 @@
 # Compiled TypeScript
-dist/
+dist
+public/dist
 
 # Logs
 logs

@@ -7,5 +7,6 @@
   <body>
     <h1>{{ title }}</h1>
     <p>Welcome to {{ title }}</p>
+    <script src="dist/host.js"></script>
   </body>
 </html>
