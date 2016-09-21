@@ -23,6 +23,12 @@ app.use(cookieParser());
 app.use(require('less-middleware')(path.join(__dirname, '../public')));
 app.use(express.static(path.join(__dirname, '../public')));
 
+// enable CORS headers for all routes for now
+app.use((request, response, next) => {
+    response.header("Access-Control-Allow-Origin", "*");
+    response.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+    next();    
+});
 app.use('/', routes);
 app.use('/users', users);
 
