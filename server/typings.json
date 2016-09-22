@@ -1,5 +1,10 @@
 {
   "globalDependencies": {
     "node": "registry:env/node#4.0.0+20160918225031"
+  },
+  "dependencies": {
+    "documentdb": "registry:npm/documentdb#1.8.0+20160622193850",
+    "es6-promise": "registry:npm/es6-promise#3.0.0+20160723033700",
+    "express": "registry:npm/express#4.14.0+20160911114220"
   }
 }

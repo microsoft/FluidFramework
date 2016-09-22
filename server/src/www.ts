@@ -1,9 +1,14 @@
 #!/usr/bin/env node
 
+// Load in configuration first before resolving other modules
+import * as path from 'path';
+var nconf = require('nconf');
+// Setup the configuration system - pull arguments, then environment variables
+nconf.argv().env().file(path.join(__dirname, '../config.json')).use('memory');
+
 /**
  * Module dependencies.
  */
-
 var app = require('./app');
 var debug = require('debug')('tmp:server');
 var http = require('http');

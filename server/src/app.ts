@@ -7,6 +7,7 @@ var bodyParser = require('body-parser');
 
 var routes = require('./routes/index');
 var users = require('./routes/users');
+import * as knowledgeRoute from './routes/knowledge';
 
 var app = express();
 
@@ -31,16 +32,12 @@ app.use((request, response, next) => {
 });
 app.use('/', routes);
 app.use('/users', users);
-
-// Let TypeScript know Express adds in a status code to errors
-interface Error{
-    status?: number;
-}
+app.use('/knowledge', knowledgeRoute);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
   var err = new Error('Not Found');
-  err.status = 404;
+  (<any> err).status = 404;
   next(err);
 });
 
