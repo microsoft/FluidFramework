@@ -1900,7 +1900,7 @@ namespace Maths {
     }
 
     function combineCoeffs(env: Environment, opArg: { sgn: number }) {
-        var aLeft = <Constant>env["al"];
+        var aLeft = <Constant>(env["al"]||Constants.makeInt(0));
         var aRight = <Constant>env["ar"];
         var bLeft = <Constant>env["bl"];
         var bRight = <Constant>env["br"];
@@ -2004,15 +2004,15 @@ namespace Maths {
         }
     }
 
-    var diagB = false;
+   var diagB = false;
     // TODO: find correct place to check for divide by zero
-    function simplifyExpr(expr: Expr): Expr {
+    function simplifyExpr(expr: Expr, diagIndent = ""): Expr {
         var delta = true;
         while (delta) {
             delta = false;
             if (diagB) {
-                var tex = exprToTexParens(expr);
-                console.log("simplifying " + tex);
+                let tex = exprToTexParens(expr);
+                console.log(diagIndent + "simplifying " + tex);
             }
             var operand1: Expr;
             var operand2: Expr;
@@ -2030,7 +2030,7 @@ namespace Maths {
                         return Constants.negate(unex.operand1);
                     }
                     else {
-                        operand1 = simplifyExpr(unex.operand1);
+                        operand1 = simplifyExpr(unex.operand1, diagIndent + "  ");
                         if (operand1 != unex.operand1) {
                             delta = true;
                             expr = <Unop>{ type: ExprType.UNOP, op: unex.op, operand1: operand1 };
@@ -2096,6 +2096,8 @@ namespace Maths {
                         { pattern: "?al:const?x-?bl:const=?ar:const?x+?br:const", template: "?as?x=?bs", exec: combineCoeffs, param: { sgn: 1 } },
                         { pattern: "?al:const?x+?bl:const=?ar:const?x-?br:const", template: "?as?x=?bs", exec: combineCoeffs, param: { sgn: 2 } },
                         { pattern: "?al:const?x+?bl:const=?ar:const?x+?br:const", template: "?as?x=?bs", exec: combineCoeffs, param: { sgn: 3 } },
+                        { pattern: "?bl:const=?ar:const?x+?br:const", template: "?as?x=?bs", exec: combineCoeffs, param: { sgn: 3 } },
+                        { pattern: "?bl:const=?ar:const?x-?br:const", template: "?as?x=?bs", exec: combineCoeffs, param: { sgn: 2 } },
                     ], binex, () => { return {}; }, info);
                     if (result) {
                         if (diagB) {
@@ -2108,8 +2110,8 @@ namespace Maths {
                         if (diagB) {
                             console.log("no match");
                         }
-                        operand1 = simplifyExpr(binex.operand1);
-                        operand2 = simplifyExpr(binex.operand2);
+                        operand1 = simplifyExpr(binex.operand1, diagIndent + "  ");
+                        operand2 = simplifyExpr(binex.operand2, diagIndent + "  ");
                         if ((operand1 != binex.operand1) || (operand2 != binex.operand2)) {
                             delta = true;
                             expr = <Binop>{ type: ExprType.BINOP, op: binex.op, operand1: operand1, operand2: operand2 };
@@ -2117,6 +2119,10 @@ namespace Maths {
                     }
                     break;
             }
+        }
+        if (diagB) {
+            let tex = exprToTexParens(expr);
+            console.log(diagIndent + "simplifying " + tex);
         }
         return expr;
     }
@@ -2437,24 +2443,30 @@ namespace Maths {
             console.log(tex);
         }
         else {
-            console.log("(3) hmmm...");
-        }
+            console.log("(3) hmmm...");}
     }
 
     export function createChecker(axiomText: string, varName: string) {
         var axiom = parseExpr(lexInput(axiomText));
         var v = { type: ExprType.VARIABLE, text: varName };
         var axiomSoln = simplifyExpr(axiom);
-        console.log(exprToTex(axiomSoln));
+        //console.log(exprToTex(axiomSoln));
         axiomSoln = solve(axiomSoln, v);
-        console.log(exprToTex(axiomSoln));
+        //console.log(exprToTex(axiomSoln));
         return {
             axiom: axiomSoln,
             axiomText: axiomText,
             v: v,
             check: (text) => {
-                var e = parseExpr(lexInput(text));
-                return (!containsError(e)) && equivalent(e, axiomSoln, v);
+                var answer = false;
+                try {
+                    var e = parseExpr(lexInput(text));
+                    answer = (!containsError(e)) && equivalent(e, axiomSoln, v); 
+                }
+                catch (exception) {
+                    answer = false;
+                }
+                return answer;
             }
         };
 
@@ -2473,6 +2485,8 @@ export function createChecker(axiomText: string, varName: string): Checker {
 }
 
 function runTests() {
+    // 1/(a+1)=5/4
+    // -1/(a+1)=-5/4
     Maths.testSolve();
     Maths.testLCD();
     Maths.testMatch();

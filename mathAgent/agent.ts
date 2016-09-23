@@ -1472,6 +1472,7 @@ namespace Maths {
         return (e.type == ExprType.BINOP) && ((<Binop>e).op == Operator.MUL);
     }
 
+    var diagNorm = true;
 
     // assume left and right sides linear in v
     // eliminate fractions then simplify both sides
@@ -1481,6 +1482,9 @@ namespace Maths {
             { pattern: "a/b=c", template: "a=bc" },
             { pattern: "a=c/d", template: "ad=c" }], eqn);
         if (result) {
+            if (diagNorm) {
+                console.log("normalized to " + exprToTexParens(result));
+            }
             eqn = result;
         }
         return simplifyExpr(eqn);
@@ -1900,7 +1904,7 @@ namespace Maths {
     }
 
     function combineCoeffs(env: Environment, opArg: { sgn: number }) {
-        var aLeft = <Constant>env["al"];
+        var aLeft = <Constant>(env["al"]||Constants.makeInt(0));
         var aRight = <Constant>env["ar"];
         var bLeft = <Constant>env["bl"];
         var bRight = <Constant>env["br"];
@@ -2004,15 +2008,15 @@ namespace Maths {
         }
     }
 
-    var diagB = false;
+    var diagB = true;
     // TODO: find correct place to check for divide by zero
-    function simplifyExpr(expr: Expr): Expr {
+    function simplifyExpr(expr: Expr, diagIndent = ""): Expr {
         var delta = true;
         while (delta) {
             delta = false;
             if (diagB) {
-                var tex = exprToTexParens(expr);
-                console.log("simplifying " + tex);
+                let tex = exprToTexParens(expr);
+                console.log(diagIndent + "simplifying " + tex);
             }
             var operand1: Expr;
             var operand2: Expr;
@@ -2030,7 +2034,7 @@ namespace Maths {
                         return Constants.negate(unex.operand1);
                     }
                     else {
-                        operand1 = simplifyExpr(unex.operand1);
+                        operand1 = simplifyExpr(unex.operand1, diagIndent + "  ");
                         if (operand1 != unex.operand1) {
                             delta = true;
                             expr = <Unop>{ type: ExprType.UNOP, op: unex.op, operand1: operand1 };
@@ -2096,6 +2100,8 @@ namespace Maths {
                         { pattern: "?al:const?x-?bl:const=?ar:const?x+?br:const", template: "?as?x=?bs", exec: combineCoeffs, param: { sgn: 1 } },
                         { pattern: "?al:const?x+?bl:const=?ar:const?x-?br:const", template: "?as?x=?bs", exec: combineCoeffs, param: { sgn: 2 } },
                         { pattern: "?al:const?x+?bl:const=?ar:const?x+?br:const", template: "?as?x=?bs", exec: combineCoeffs, param: { sgn: 3 } },
+                        { pattern: "?bl:const=?ar:const?x+?br:const", template: "?as?x=?bs" , exec: combineCoeffs, param: {sgn: 3 }},
+                        { pattern: "?bl:const=?ar:const?x-?br:const", template: "?as?x=?bs" , exec: combineCoeffs, param: {sgn: 2 }},
                     ], binex, () => { return {}; }, info);
                     if (result) {
                         if (diagB) {
@@ -2108,8 +2114,8 @@ namespace Maths {
                         if (diagB) {
                             console.log("no match");
                         }
-                        operand1 = simplifyExpr(binex.operand1);
-                        operand2 = simplifyExpr(binex.operand2);
+                        operand1 = simplifyExpr(binex.operand1, diagIndent + "  ");
+                        operand2 = simplifyExpr(binex.operand2, diagIndent + "  ");
                         if ((operand1 != binex.operand1) || (operand2 != binex.operand2)) {
                             delta = true;
                             expr = <Binop>{ type: ExprType.BINOP, op: binex.op, operand1: operand1, operand2: operand2 };
@@ -2117,6 +2123,10 @@ namespace Maths {
                     }
                     break;
             }
+        }
+        if (diagB) {
+            let tex = exprToTexParens(expr);
+            console.log(diagIndent + "simplifying " + tex);
         }
         return expr;
     }
@@ -2350,7 +2360,12 @@ namespace Maths {
         var x = { type: ExprType.VARIABLE, text: "x" };
         //testEqn("x+x+5x-3=2x-2", true, x);
         //testEqn("x-3+5x+x=2x-1-1",true, x);
-        testEqn("x-d-3+c-yx+zx=2x-2", true, x);
+        //testEqn("x-d-3+c-yx+zx=2x-2", true, x);
+        //testEqn("1/(a+1)=5/4",true, a);
+        testEqn("-1/(a+1)=-5/4",true, a);
+        //testEqn("0=5a+1",true, a);
+        //testEqn("5a+1=0",true, a);
+        //testEqn("4a-16=14a-14", true, a);
         return;
         /*
         testEqn("6-6a=4a+8", true, a);
@@ -2471,6 +2486,8 @@ export interface Checker {
 export function createChecker(axiomText: string, varName: string): Checker {
     return Maths.createChecker(axiomText, varName);
 }
+
+Maths.testSolve();
 
 function runTests() {
     Maths.testSolve();
