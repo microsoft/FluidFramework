@@ -8,6 +8,7 @@ var bodyParser = require('body-parser');
 var routes = require('./routes/index');
 var users = require('./routes/users');
 import * as knowledgeRoute from './routes/knowledge';
+import * as documents from './routes/documents';
 
 var app = express();
 
@@ -33,6 +34,7 @@ app.use((request, response, next) => {
 app.use('/', routes);
 app.use('/users', users);
 app.use('/knowledge', knowledgeRoute);
+app.use('/documents', documents);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

@@ -1,5 +1,8 @@
 {
-    "documentDB": "AccountEndpoint=https://officenet.documents.azure.com:443/;AccountKey=P8Ynaoa5nQLdwq97n7UZ0XI4Rq61ELKKTXt8a9sSkyb77NJdCSTxov76uVdEQDKzBwDQV04277BzYn7tLaBRXQ==;",
+    "documentDB": {
+        "endpoint": "https://officenet.documents.azure.com:443/",
+        "key": "P8Ynaoa5nQLdwq97n7UZ0XI4Rq61ELKKTXt8a9sSkyb77NJdCSTxov76uVdEQDKzBwDQV04277BzYn7tLaBRXQ==" 
+    },
     "blob": {
         "name": "officenet",
         "key": "74sWUSWijrNfAe5gKp7jH+2uVsbPNSjNiBLC01BIMa7T2RimQNX0n8F1+hNPys/wUVb9827qiaipWlQslghWfA=="

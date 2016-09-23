@@ -1,6 +1,4 @@
 import * as express from 'express';
-
-// import * as storage from 'azure-storage';
 var nconf = require('nconf');
 var storage = require('azure-storage');
 var promisify = require('es6-promisify');
