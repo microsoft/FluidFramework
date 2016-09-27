@@ -1,10 +1,17 @@
 {{<page_layout}}
     {{$page_content}}
         <div class="text-center">
-        <h1>{{ title }}</h1>
-        <p>Welcome to {{ title }}</p>
+            <h1>{{ title }}</h1>
+            <p>Welcome to {{ title }}</p>
         </div>
         
+        <hr/>
+
+        <h2>Data Sources</h2>
+        <ul class="list-unstyled">
+            <li><a href="/calendar">Calendar</a></li>
+        </ul>
+
         {{^user}}
           {{<login_control}}{{/login_control}}
         {{/user}}                        
