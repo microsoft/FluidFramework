@@ -1,10 +1,18 @@
 {
   "globalDependencies": {
-    "node": "registry:env/node#4.0.0+20160918225031"
+    "connect-redis": "registry:dt/connect-redis#0.0.0+20160305170114",
+    "express-session": "registry:dt/express-session#0.0.0+20160819134112",
+    "nconf": "registry:dt/nconf#0.0.0+20160724073144",
+    "node": "registry:env/node#4.0.0+20160918225031",
+    "passport": "registry:dt/passport#0.2.0+20160720063208"
   },
   "dependencies": {
     "documentdb": "registry:npm/documentdb#1.8.0+20160622193850",
     "es6-promise": "registry:npm/es6-promise#3.0.0+20160723033700",
-    "express": "registry:npm/express#4.14.0+20160911114220"
+    "express": "registry:npm/express#4.14.0+20160911114220",
+    "lodash": "registry:npm/lodash#4.0.0+20160723033700",
+    "node-uuid": "registry:npm/node-uuid#1.4.7+20160723033700",
+    "redis": "registry:npm/redis#2.6.0+20160901110043",
+    "request": "registry:npm/request#2.69.0+20160428223725"
   }
 }

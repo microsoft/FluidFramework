@@ -1,0 +1,36 @@
+{{<layout}}
+    {{$content}}
+        <header>            
+            <nav class="navbar navbar-inverse navbar-static-top" id="top" role="banner">
+                <div class="container">
+                    <!-- Brand and toggle get grouped for better mobile display -->
+                    <div class="navbar-header">
+                        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#edera-navbar-collapse" aria-expanded="false">
+                            <span class="sr-only">Toggle navigation</span>
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                        </button>
+                        <a class="navbar-brand" href="/">ProNet</a>
+                    </div>
+
+                    <!-- Collect the nav links, forms, and other content for toggling -->
+                    <div class="collapse navbar-collapse" id="edera-navbar-collapse">
+                        <ul class="nav navbar-nav">
+                            <!-- Add new links here -->
+                            <!-- <li><a href="/explorer">API Explorer</a></li> -->                                                    
+                        </ul>
+                        <ul class="nav navbar-nav navbar-right">                        
+                            {{<user_profile}}
+                            {{/user_profile}}
+                        </ul>
+                    </div>
+                </div>
+            </nav>            
+        </header>
+        
+        <div class="container">
+            {{$page_content}}{{/page_content}}
+        </div>  
+    {{/content}}   
+{{/layout}}

@@ -1,10 +1,26 @@
 {
     "documentDB": {
         "endpoint": "https://officenet.documents.azure.com:443/",
-        "key": "P8Ynaoa5nQLdwq97n7UZ0XI4Rq61ELKKTXt8a9sSkyb77NJdCSTxov76uVdEQDKzBwDQV04277BzYn7tLaBRXQ==" 
+        "key": "P8Ynaoa5nQLdwq97n7UZ0XI4Rq61ELKKTXt8a9sSkyb77NJdCSTxov76uVdEQDKzBwDQV04277BzYn7tLaBRXQ=="
     },
     "blob": {
         "name": "officenet",
         "key": "74sWUSWijrNfAe5gKp7jH+2uVsbPNSjNiBLC01BIMa7T2RimQNX0n8F1+hNPys/wUVb9827qiaipWlQslghWfA=="
+    },
+    "login": {
+        "google": {
+            "clientId": "524624176735-h3q4h2qcaan90je2toqhnm81p3sfov3i.apps.googleusercontent.com",
+            "secret": "mz8Mkp2KhvlRiBCJ4PrjeUri"
+        },
+        "microsoft": {
+            "clientId": "21cb74b2-af24-40de-ab28-3e66d3e784ee",
+            "secret": "eJ6nFDx12LMqG2hYA5QVTaZ"
+        }
+    },
+    "redis": {
+        "host": "officenet.redis.cache.windows.net",
+        "pass": "fq90fO6bAac7JBMwn3ymIqzHpqgFtTBUd2+E0Obm75M=",
+        "port": 6380,
+        "tls": true
     }
 }

@@ -1,0 +1,17 @@
+{{<page_layout}}
+    {{$page_content}}
+        <ul>            
+        {{#viewModel}}
+            <li>{{provider}}
+            <ul>
+            {{#items}}
+                <li>
+                    {{summary}}: {{start}} to {{end}}
+                </li>
+            {{/items}}
+            </ul>
+        {{/viewModel}}
+            </li>
+        </ul>                     
+    {{/page_content}}            
+{{/page_layout}}

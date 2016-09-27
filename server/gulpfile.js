@@ -6,6 +6,8 @@ var plumber = require('gulp-plumber');
 var ts = require("gulp-typescript");
 var tsProject = ts.createProject("tsconfig.json");
 var clean = require("gulp-clean");
+var sourcemaps = require('gulp-sourcemaps');
+var relativeSourcemapsSource = require('gulp-relative-sourcemaps-source');
 
 // Cleans up generated files
 gulp.task("clean", function() {
@@ -19,8 +21,12 @@ gulp.task("build", function () {
 
     return gulp.src(['src/**/*.ts', 'typings/index.d.ts'])
         .pipe(plumber(function() { errors = true; } ))      
-        .pipe(ts(tsProject))        
-        .js.pipe(gulp.dest("dist"))
+        .pipe(sourcemaps.init())
+        .pipe(ts(tsProject))
+        .js
+        .pipe(relativeSourcemapsSource({dest: 'dist'}))        
+        .pipe(sourcemaps.write('.', { includeContent: false, sourceRoot: '.' }))    
+        .pipe(gulp.dest("dist"))
         .on('end', function() {
             if (errors) {
                 console.error("Build failed");

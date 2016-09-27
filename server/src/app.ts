@@ -1,20 +1,184 @@
-var express = require('express');
+import * as express from 'express';
+var expressSession = require('express-session'); 
 var path = require('path');
 var favicon = require('serve-favicon');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
-
-var routes = require('./routes/index');
-var users = require('./routes/users');
+var passportOpenIdConnect = require('passport-openidconnect');
+var google = require('passport-google-oauth');
+import * as siteRoute from './routes/site';
+import * as usersRoute from './routes/users';
+import * as authRoute from './routes/auth';
+import * as connectRoute from './routes/connect';
 import * as knowledgeRoute from './routes/knowledge';
-import * as documents from './routes/documents';
+import * as documentsRoute from './routes/documents';
+import * as calendarRoute from './routes/calendar';
 
+import * as passport from 'passport';
+import * as connectRedis from 'connect-redis';
+import * as nconf from 'nconf';
+import * as redis from 'redis';
+import * as request from 'request';
+import * as accounts from './accounts';
+
+// initialize session store - if redis is configured we will use it - otherwise will default to the memory store
+var sessionStore;
+if (nconf.get('redis')) {
+    console.log("Using redis for session storage");
+    var RedisStore = connectRedis(expressSession);
+
+    var options: any = {
+        auth_pass: nconf.get("redis:pass")
+    };
+    if (nconf.get('redis:tls')) {
+        options.tls = {
+            servername: nconf.get("redis:host")
+        }
+    }
+
+    var redisClient = redis.createClient(
+        nconf.get("redis:port"),
+        nconf.get("redis:host"),
+        options);
+
+    // Azure seems to lose our Redis client - we ping it to keep it alive.    
+    setInterval(() => {
+        redisClient.ping((error, result) => {
+            if (error) {
+                console.log("Ping error: " + error);
+            }
+        });
+    }, 60 * 1000);
+
+    sessionStore = new RedisStore({ client: redisClient });
+}
+else {
+    console.log("Using memory for session storage");
+    sessionStore = new expressSession.MemoryStore();
+}
+
+// Express app configuration
 var app = express();
 
 // view engine setup
 app.set('views', path.join(__dirname, '../views'));
 app.set('view engine', 'hjs');
+
+// Right now we simply pass through the entire stored user object to the session storage for that user
+passport.serializeUser((user, done) => {
+    done(null, user.user.id);
+});
+
+passport.deserializeUser((id, done) => {
+    accounts.getUser(id).then((user) => done(null, user), (error) => done(error, null));
+});
+
+function completeAuthentication(
+    provider: string,
+    providerId: string,
+    accessToken: string,
+    refreshToken: string,
+    details: accounts.IUserDetails,
+    done: (error: any, user?: any) => void) {
+
+    var userP = accounts.createOrGetUser(provider, providerId, accessToken, refreshToken, details);
+    userP.then(
+        (user) => {
+            done(null, user);
+        },
+        (error) => {
+            done(error, null);            
+        });
+}
+
+function connectAccount(
+    provider: string,
+    providerId: string,
+    accessToken: string,
+    refreshToken: string,
+    userId: string,
+    done: (error: any, user?: any) => void) {
+    
+    let linkP = accounts.linkAccount(provider, providerId, accessToken, refreshToken, userId);
+    linkP.then(
+        (user) => {
+            done(null, user);
+        },
+        (error) => {
+            console.log(error);
+            done(error, null);            
+        });
+}
+
+var googleConfiguration = nconf.get("login:google");
+passport.use(
+    new google.OAuth2Strategy({
+        clientID: googleConfiguration.clientId,
+        clientSecret: googleConfiguration.secret,
+        callbackURL: '/auth/google/callback',
+        passReqToCallback: true
+    },
+    (req, accessToken, refreshToken, params, profile, done) => {                
+        if (!req.user) {
+            console.log("Google / Not logged in");
+            completeAuthentication(
+                'google', 
+                profile.id, 
+                accessToken, 
+                refreshToken, 
+                { 
+                    displayName: profile.displayName,
+                    name: profile.name
+                },
+                done);
+        }
+        else {
+            console.log("Google / Logged in");     
+            connectAccount('google', profile.id, accessToken, refreshToken, req.user.user.id, done);            
+        }             
+    }));
+
+var microsoftConfiguration = nconf.get("login:microsoft");
+passport.use(
+    new passportOpenIdConnect.Strategy({
+        authorizationURL: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
+        tokenURL: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
+        callbackURL: '/auth/microsoft/callback',
+        clientID: microsoftConfiguration.clientId,        
+        clientSecret: microsoftConfiguration.secret,
+        skipUserProfile: true,
+        passReqToCallback: true                 
+    },
+    (req, iss, sub, profile, jwtClaims, accessToken, refreshToken, params, done) => {
+        if (!req.user) {
+            console.log("Microsoft / Not Logged In")
+
+            // use request to load in the user profile
+            request.get('https://graph.microsoft.com/v1.0/me', { auth: { 'bearer': accessToken }, json: true }, (error, response, body) => {
+                console.log('User profile information');
+                console.log(JSON.stringify(body, null, 2));            
+
+                completeAuthentication(
+                    'microsoft', 
+                    sub, 
+                    accessToken, 
+                    refreshToken, 
+                    { 
+                        displayName: body.displayName,
+                        name: {
+                            familyName: body.surname,
+                            givenName: body.givenName
+                        }
+                    },
+                    done);                  
+            });
+        }
+        else {            
+            console.log("Microsoft / Logged In");
+            connectAccount('microsoft', sub, accessToken, refreshToken, req.user.user.id, done);
+        }                        
+    }));
 
 // uncomment after placing your favicon in /public
 //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
@@ -22,25 +186,41 @@ app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
+app.use(expressSession({ secret: 'bAq0XuQWqoAZzaAkQT5EXPCHBkeIEZqi', resave: false, saveUninitialized: false, store: sessionStore }));
 app.use(require('less-middleware')(path.join(__dirname, '../public')));
 app.use(express.static(path.join(__dirname, '../public')));
+// The below is to check to make sure the session is available (redis could have gone down for instance) and if
+// not return an error
+app.use((request, response, next) => {
+    if (!request.session) {
+        return next(new Error('Session not available'))
+    }
+    else {
+        next() // otherwise continue 
+    }
+});
+app.use(passport.initialize());
+app.use(passport.session());
 
 // enable CORS headers for all routes for now
 app.use((request, response, next) => {
     response.header("Access-Control-Allow-Origin", "*");
     response.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
-    next();    
+    next();
 });
-app.use('/', routes);
-app.use('/users', users);
+app.use('/', siteRoute);
+app.use('/auth', authRoute);
+app.use('/connect', connectRoute);
+app.use('/users', usersRoute);
 app.use('/knowledge', knowledgeRoute);
-app.use('/documents', documents);
+app.use('/documents', documentsRoute);
+app.use('/calendar', calendarRoute);
 
 // catch 404 and forward to error handler
-app.use(function(req, res, next) {
-  var err = new Error('Not Found');
-  (<any> err).status = 404;
-  next(err);
+app.use(function (req, res, next) {
+    var err = new Error('Not Found');
+    (<any>err).status = 404;
+    next(err);
 });
 
 // error handlers
@@ -48,23 +228,23 @@ app.use(function(req, res, next) {
 // development error handler
 // will print stacktrace
 if (app.get('env') === 'development') {
-  app.use(function(err, req, res, next) {
-    res.status(err.status || 500);
-    res.render('error', {
-      message: err.message,
-      error: err
+    app.use(function (err, req, res, next) {
+        res.status(err.status || 500);
+        res.render('error', {
+            message: err.message,
+            error: err
+        });
     });
-  });
 }
 
 // production error handler
 // no stacktraces leaked to user
-app.use(function(err, req, res, next) {
-  res.status(err.status || 500);
-  res.render('error', {
-    message: err.message,
-    error: {}
-  });
+app.use(function (err, req, res, next) {
+    res.status(err.status || 500);
+    res.render('error', {
+        message: err.message,
+        error: {}
+    });
 });
 
 

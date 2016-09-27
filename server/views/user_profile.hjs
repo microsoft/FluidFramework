@@ -1,0 +1,13 @@
+<li class="dropdown">
+    {{#user}}
+        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">{{ user.details.displayName }}</a>
+        <ul class="dropdown-menu">
+            <li><a href="/profile">Profile</a></li>
+            <li role="separator" class="divider"></li>
+            <li><a href="/logout">Logout</a></li>
+        </ul>
+    {{/user}}
+    {{^user}}
+        <a href="/login" role="button">Login</a>
+    {{/user}}
+</li>

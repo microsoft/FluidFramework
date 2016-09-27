@@ -1,0 +1,20 @@
+{{<page_layout}}
+    {{$page_content}} 
+        <h2>Connected accounts</h2>
+        <ul class="list-unstyled">       
+        {{#viewModel}} 
+            <li>
+                <h3>
+                    {{details.name}}
+                    {{#details.connected}}
+                        <a href="{{details.disconnect}}" class="btn btn-danger">Disconnect</a>
+                    {{/details.connected}}
+                    {{^details.connected}}
+                        <a href="{{details.connect}}" class="btn btn-primary">Connect</a>
+                    {{/details.connected}}                     
+                </h3>
+            </li>
+        {{/viewModel}}
+        </ul>                
+    {{/page_content}}            
+{{/page_layout}}  

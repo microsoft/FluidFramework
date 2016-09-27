@@ -1,0 +1,6 @@
+<div class="row">
+    <div class="col-sm-8 col-md-4 col-sm-offset-2 col-md-offset-4">                
+        <a class="btn btn-primary btn-lg btn-block" href="/auth/microsoft" role="button">Login with Microsoft</a>                           
+        <a class="btn btn-danger btn-lg btn-block" href="/auth/google" role="button">Login with Google</a>
+    </div>
+</div>        
