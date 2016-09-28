@@ -10,7 +10,7 @@
                         <a href="{{details.disconnect}}" class="btn btn-danger">Disconnect</a>
                     {{/details.connected}}
                     {{^details.connected}}
-                        <a href="{{details.connect}}" class="btn btn-primary">Connect</a>
+                        <a href="{{details.connect}}" class="btn btn-primary">Connect</a>                        
                     {{/details.connected}}                     
                 </h3>
             </li>

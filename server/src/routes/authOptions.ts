@@ -14,6 +14,7 @@ export let microsoft = {
         'offline_access',
         'profile',
         'email',
+        'User.Read',
         'User.ReadBasic.All',
         'Calendars.ReadWrite',
         'Contacts.Read'

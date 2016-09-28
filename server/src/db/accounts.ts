@@ -18,6 +18,9 @@ export interface IAccount {
     // Access information for the account
     accessToken: string,
 
+    // Access token expiration time
+    expiration: string,
+
     // Used to refresh access to the account
     refreshToken: string,
 
@@ -42,6 +45,7 @@ export function linkAccount(
     provider: string,
     providerId: string,
     accessToken: string,
+    expiration: string,
     refreshToken: string,
     userId: string) {
 
@@ -50,6 +54,7 @@ export function linkAccount(
         provider: provider,
         providerId: providerId,
         accessToken: accessToken,
+        expiration: expiration,
         refreshToken: refreshToken,
         userId: userId
     };

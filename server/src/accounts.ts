@@ -2,6 +2,10 @@ import * as accounts from './db/accounts';
 import * as users from './db/users';
 import { Promise } from 'es6-promise';
 import * as _ from 'lodash';
+import * as moment from 'moment';
+import * as request from 'request'; 
+import * as nconf from 'nconf';
+var google = require('googleapis');
 
 // re-export the database user details
 export import IUserDetails = users.IUserDetails;
@@ -15,12 +19,22 @@ export interface IUser {
 }
 
 /**
+ * Wrapper structure to store access tokens
+ */
+export interface ITokens {
+    access: string;
+    expiration: string;
+    refresh: string
+}
+
+/**
  * Gets or creates a new user
  */
 export function createOrGetUser(
     provider: string,
     providerId: string,
     accessToken: string,
+    expiration: string,
     refreshToken: string,
     details: IUserDetails): Promise<any> {
 
@@ -31,13 +45,14 @@ export function createOrGetUser(
             // Create a user first and then link this account to it
             let newUserP = users.putUser(details);
             userIdP = newUserP.then((newUser) => {
-                return accounts.linkAccount(provider, providerId, accessToken, refreshToken, newUser.id).then((account) => newUser.id);
+                return accounts.linkAccount(provider, providerId, accessToken, expiration, refreshToken, newUser.id).then((account) => newUser.id);
             })
         }
         else {
             // Get the user but also go and update the refresh and access token at this point
             account.accessToken = accessToken;
             account.refreshToken = refreshToken;
+            account.expiration = expiration;
 
             var updateAccountP = accounts.updateAccount(account);
 
@@ -58,6 +73,7 @@ export function linkAccount(
     provider: string,
     providerId: string,
     accessToken: string,
+    expiration: string,
     refreshToken: string,
     userId: string): Promise<any> {
 
@@ -68,7 +84,7 @@ export function linkAccount(
             throw { msg: "Account already linked" };
         }
         else {
-            var linkP = accounts.linkAccount(provider, providerId, accessToken, refreshToken, userId);
+            var linkP = accounts.linkAccount(provider, providerId, accessToken, expiration, refreshToken, userId);
             return linkP.then(() => getUser(userId));
         }
     })
@@ -100,4 +116,78 @@ export function getUser(userId: string): Promise<IUser> {
             }
         });
     });
+}
+
+export function getTokenExpiration(expires: number): string {
+    var expiration = moment().add(expires, "seconds");
+    return expiration.utc().toISOString();
+}
+
+function refreshTokens(account: accounts.IAccount): Promise<ITokens> {
+    var udpatedAccountP = new Promise((resolve, reject) => {
+        // TODO should consolidate the account specific behavior behind an interface
+        if (account.provider === "microsoft") {
+            var microsoftConfiguration = nconf.get("login:microsoft");
+            request.post('https://login.microsoftonline.com/common/oauth2/v2.0/token', { json: true, form: {
+                grant_type: 'refresh_token',            
+                client_id: microsoftConfiguration.clientId,
+                client_secret: microsoftConfiguration.secret,
+                refresh_token: account.refreshToken            
+            }}, (error, response, body) => {
+                if (error) {
+                    reject(error);
+                }
+                else {                    
+                    console.log(body);
+                    account.accessToken = body.access_token;                    
+                    account.expiration = getTokenExpiration(body.expires_in);                    
+                    resolve(account);
+                }
+            });
+        }
+        else if (account.provider === 'google') {
+            var googleConfig = nconf.get("login:google");
+            var oauth2Client = new google.auth.OAuth2(googleConfig.clientId, googleConfig.secret, '/auth/google');;
+
+            // Retrieve tokens via token exchange explained above or set them:
+            oauth2Client.setCredentials({ access_token: account.accessToken, refresh_token: account.refreshToken });
+            oauth2Client.refreshAccessToken((error, tokens) => {
+                if (error) {
+                    reject(error);
+                }
+                else {                    
+                    account.accessToken = tokens.access_token;
+                    account.expiration = moment(tokens.expiry_date).utc().toISOString();
+                    account.refreshToken = tokens.refresh_token;
+                    resolve(account);
+                }
+            });
+        }
+        else {
+            throw { error: "Unknown Provider" };        
+        }
+    });
+
+    // Get the updated account information and then use it to update the DB and then return the tokens back
+    return udpatedAccountP.then((updatedAccount: accounts.IAccount) => {        
+        return accounts.updateAccount(updatedAccount).then(() => {            
+            return { access: updatedAccount.accessToken, expiration: updatedAccount.expiration, refresh: updatedAccount.refreshToken }
+        });        
+    });
+}
+
+/**
+ * Retrieves the access tokens for the given account
+ */
+export function getTokens(account: accounts.IAccount): Promise<ITokens> {
+    var now = moment();
+    var expiration = moment(account.expiration);
+
+    var diff = expiration.diff(now);        
+    if (now.isAfter(expiration)) {                         
+        return refreshTokens(account);
+    }
+    else {
+        return Promise.resolve({ access: account.accessToken, expiration: account.expiration, refresh: account.refreshToken });
+    }
 }

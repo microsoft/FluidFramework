@@ -4,14 +4,14 @@
             <h1>{{ title }}</h1>
             <p>Welcome to {{ title }}</p>
         </div>
-        
         <hr/>
 
-        <h2>Data Sources</h2>
-        <ul class="list-unstyled">
-            <li><a href="/calendar">Calendar</a></li>
-        </ul>
-
+        {{#user}}        
+            <h2>Data Sources</h2>
+            <ul class="list-unstyled">
+                <li><a href="/calendar">Calendar</a></li>
+            </ul>
+        {{/user}}
         {{^user}}
           {{<login_control}}{{/login_control}}
         {{/user}}                        

@@ -17,6 +17,7 @@ import * as calendarRoute from './routes/calendar';
 
 import * as passport from 'passport';
 import * as connectRedis from 'connect-redis';
+import * as moment from 'moment';
 import * as nconf from 'nconf';
 import * as redis from 'redis';
 import * as request from 'request';
@@ -81,11 +82,13 @@ function completeAuthentication(
     provider: string,
     providerId: string,
     accessToken: string,
+    expires: number,
     refreshToken: string,
     details: accounts.IUserDetails,
     done: (error: any, user?: any) => void) {
 
-    var userP = accounts.createOrGetUser(provider, providerId, accessToken, refreshToken, details);
+    let expiration = accounts.getTokenExpiration(expires);        
+    var userP = accounts.createOrGetUser(provider, providerId, accessToken, expiration, refreshToken, details);
     userP.then(
         (user) => {
             done(null, user);
@@ -99,11 +102,13 @@ function connectAccount(
     provider: string,
     providerId: string,
     accessToken: string,
+    expires: number,
     refreshToken: string,
     userId: string,
     done: (error: any, user?: any) => void) {
     
-    let linkP = accounts.linkAccount(provider, providerId, accessToken, refreshToken, userId);
+    let expiration = accounts.getTokenExpiration(expires);
+    let linkP = accounts.linkAccount(provider, providerId, accessToken, expiration, refreshToken, userId);
     linkP.then(
         (user) => {
             done(null, user);
@@ -122,13 +127,13 @@ passport.use(
         callbackURL: '/auth/google/callback',
         passReqToCallback: true
     },
-    (req, accessToken, refreshToken, params, profile, done) => {                
+    (req, accessToken, refreshToken, params, profile, done) => {        
         if (!req.user) {
-            console.log("Google / Not logged in");
             completeAuthentication(
                 'google', 
                 profile.id, 
-                accessToken, 
+                accessToken,
+                params.expires_in,
                 refreshToken, 
                 { 
                     displayName: profile.displayName,
@@ -137,8 +142,7 @@ passport.use(
                 done);
         }
         else {
-            console.log("Google / Logged in");     
-            connectAccount('google', profile.id, accessToken, refreshToken, req.user.user.id, done);            
+            connectAccount('google', profile.id, accessToken, params.expires_in,refreshToken, req.user.user.id, done);            
         }             
     }));
 
@@ -154,9 +158,8 @@ passport.use(
         passReqToCallback: true                 
     },
     (req, iss, sub, profile, jwtClaims, accessToken, refreshToken, params, done) => {
-        if (!req.user) {
-            console.log("Microsoft / Not Logged In")
-
+        console.log(params);
+        if (!req.user) {            
             // use request to load in the user profile
             request.get('https://graph.microsoft.com/v1.0/me', { auth: { 'bearer': accessToken }, json: true }, (error, response, body) => {
                 console.log('User profile information');
@@ -166,7 +169,8 @@ passport.use(
                     'microsoft', 
                     sub, 
                     accessToken, 
-                    refreshToken, 
+                    params.expires_in,
+                    refreshToken,                     
                     { 
                         displayName: body.displayName,
                         name: {
@@ -177,9 +181,8 @@ passport.use(
                     done);                  
             });
         }
-        else {            
-            console.log("Microsoft / Logged In");
-            connectAccount('microsoft', sub, accessToken, refreshToken, req.user.user.id, done);
+        else {
+            connectAccount('microsoft', sub, accessToken, params.expires_in, refreshToken, req.user.user.id, done);
         }                        
     }));
 
