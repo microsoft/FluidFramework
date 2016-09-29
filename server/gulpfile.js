@@ -7,7 +7,7 @@ var ts = require("gulp-typescript");
 var tsProject = ts.createProject("tsconfig.json");
 var clean = require("gulp-clean");
 var sourcemaps = require('gulp-sourcemaps');
-var relativeSourcemapsSource = require('gulp-relative-sourcemaps-source');
+var path = require('path');
 
 // Cleans up generated files
 gulp.task("clean", function() {
@@ -24,8 +24,9 @@ gulp.task("build", function () {
         .pipe(sourcemaps.init())
         .pipe(ts(tsProject))
         .js
-        .pipe(relativeSourcemapsSource({dest: 'dist'}))        
-        .pipe(sourcemaps.write('.', { includeContent: false, sourceRoot: '.' }))    
+        .pipe(sourcemaps.write('.', { includeContent: false, sourceRoot: function(file) {                         
+            return path.join(file.cwd, './src'); 
+        } }))    
         .pipe(gulp.dest("dist"))
         .on('end', function() {
             if (errors) {
