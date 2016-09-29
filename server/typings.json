@@ -8,8 +8,7 @@
   },
   "dependencies": {
     "documentdb": "registry:npm/documentdb#1.8.0+20160622193850",
-    "es6-promise": "registry:npm/es6-promise#3.0.0+20160723033700",
-    "express": "registry:npm/express#4.14.0+20160911114220",
+    "express": "registry:npm/express#4.14.0+20160925001530",
     "lodash": "registry:npm/lodash#4.0.0+20160723033700",
     "node-uuid": "registry:npm/node-uuid#1.4.7+20160723033700",
     "redis": "registry:npm/redis#2.6.0+20160901110043",
