@@ -20,3 +20,21 @@ export let microsoft = {
         'Contacts.Read'
     ]
 }
+
+export let facebook = {
+    scope: [
+        'public_profile',
+        'email',
+        'user_friends',
+        'user_about_me',
+        'publish_actions'
+    ]
+}
+
+export let linkedin = {
+    scope: [
+        'r_basicprofile',
+        'r_emailaddress',
+        'w_share'
+    ]
+}

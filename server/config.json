@@ -15,6 +15,14 @@
         "microsoft": {
             "clientId": "21cb74b2-af24-40de-ab28-3e66d3e784ee",
             "secret": "eJ6nFDx12LMqG2hYA5QVTaZ"
+        },
+        "facebook": {
+            "clientId": "918082261669887",
+            "secret": "1ea3af66925be148ab4ceead7fa4aeeb"
+        },
+        "linkedin": {
+            "clientId": "757lz94v2lbuat",
+            "secret": "rfPjuuEiMK1Bk97e"
         }
     },
     "redis": {

@@ -8,6 +8,7 @@
     <title>{{ title }}</title>
     
     <link href="//ajax.aspnetcdn.com/ajax/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="/stylesheets/style.css" rel="stylesheet" />
     
     {{$styles}}{{/styles}}
 </head>

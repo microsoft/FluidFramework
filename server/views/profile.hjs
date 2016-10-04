@@ -11,7 +11,7 @@
                     {{/details.connected}}
                     {{^details.connected}}
                         <a href="{{details.connect}}" class="btn btn-primary">Connect</a>                        
-                    {{/details.connected}}                     
+                    {{/details.connected}}
                 </h3>
             </li>
         {{/viewModel}}
