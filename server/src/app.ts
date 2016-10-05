@@ -9,14 +9,16 @@ var passportOpenIdConnect = require('passport-openidconnect');
 var google = require('passport-google-oauth');
 var facebook = require('passport-facebook');
 var linkedin = require('passport-linkedin');
+
 import * as siteRoute from './routes/site';
 import * as usersRoute from './routes/users';
 import * as authRoute from './routes/auth';
 import * as connectRoute from './routes/connect';
 import * as knowledgeRoute from './routes/knowledge';
 import * as documentsRoute from './routes/documents';
-import * as calendarRoute from './routes/calendar';
+import * as calendarsRoute from './routes/calendars';
 import * as browserRoute from './routes/browser';
+import * as viewsRoute from './routes/views';
 
 import * as passport from 'passport';
 import * as connectRedis from 'connect-redis';
@@ -279,8 +281,9 @@ app.use('/connect', connectRoute);
 app.use('/users', usersRoute);
 app.use('/knowledge', knowledgeRoute);
 app.use('/documents', documentsRoute);
-app.use('/calendar', calendarRoute);
+app.use('/calendars', calendarsRoute);
 app.use('/browser', browserRoute);
+app.use('/views', viewsRoute);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

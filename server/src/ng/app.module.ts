@@ -5,6 +5,7 @@ import { HttpModule } from '@angular/http';
 
 import { AppComponent } from './app.component';
 import { DocumentComponent } from './document.component';
+import { InteractiveDocumentFrameComponent } from './interactive-document-frame.component';
 
 @NgModule({
     imports: [
@@ -14,7 +15,8 @@ import { DocumentComponent } from './document.component';
     ],
     declarations: [
         AppComponent,
-        DocumentComponent
+        DocumentComponent,
+        InteractiveDocumentFrameComponent
     ],
     bootstrap: [AppComponent]
 })
