@@ -20,6 +20,8 @@ class CalendarEvent implements ViewModel {
     _links: { [rel: string]: Link };
 
     constructor(self: string, public summary: string, public start: string, public end: string) {
+        this.start = moment(start).toISOString();
+        this.end = moment(end).toISOString();
         this._links = { "self": { href: self } };
     }
 }
