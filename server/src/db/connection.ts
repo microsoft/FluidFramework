@@ -116,4 +116,14 @@ class Collection<T> {
             return getResults();
         })
     }
+
+    getAll(): Promise<T[]> {
+        let collectionUrl = getCollectionUrl(this.name);
+
+        return this._collectionP.then(() => {
+            let queryIterator = client.readDocuments(collectionUrl);
+            let readDocuments = promisify(queryIterator.toArray, queryIterator);
+            return readDocuments();
+        })
+    }
 }

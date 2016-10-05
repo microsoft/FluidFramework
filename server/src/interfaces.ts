@@ -18,7 +18,15 @@ export interface ViewModel extends Resource {
     _type: string;
 }
 
-export interface View {
+export interface IView extends Resource {
+    // The type of interactive document the view can render
+    type: string; 
+
+    // URL for the view of the data
+    url: string;
+}
+
+export interface IViews extends Resource {
 }
 
 export interface Host {

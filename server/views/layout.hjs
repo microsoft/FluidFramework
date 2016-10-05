@@ -17,7 +17,8 @@
 
     <!-- Scripts -->
     <script src="//ajax.aspnetcdn.com/ajax/jQuery/jquery-1.12.4.min.js"></script>
-    <script src="//ajax.aspnetcdn.com/ajax/bootstrap/3.3.7/bootstrap.min.js"></script>        
+    <script src="//ajax.aspnetcdn.com/ajax/bootstrap/3.3.7/bootstrap.min.js"></script>
+    <script src="/dist/api/api.js"></script>        
     {{$scripts}}{{/scripts}}    
 </body>
 </html>

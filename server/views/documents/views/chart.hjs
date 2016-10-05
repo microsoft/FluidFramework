@@ -1,0 +1,29 @@
+{{<layout}}
+    {{$content}}        
+        <div id="chart"></div>
+    {{/content}}
+    {{$scripts}}        
+        <script src="//edera.cloudapp.net/javascripts/api/ivy.js"></script>        
+        <script>            
+            var doc = new pronet.InteractiveDocument(window, window.parent);
+            doc.connect();            
+           
+            // Initialize the API
+            var host = new ivy.Host({
+                base: 'https://edera.cloudapp.net',
+            secret: "IvyBearerToken"
+            });
+
+            // Create a chart
+            var chart = new ivy.IvyChart(host, document.getElementById("chart"));
+
+            // To change the output format
+            chart.setRenderer(1 /* 0 is Image, 1 is Svg, 2 is Canvas - In TypeScript this is a const enum */);
+        
+            doc.addListener(function(data) {
+                console.log("I got some chart data!");
+                chart.setConfiguration(data);
+            });
+        </script>        
+    {{/scripts}}
+{{/layout}}

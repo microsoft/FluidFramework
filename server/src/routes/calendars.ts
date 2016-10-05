@@ -133,4 +133,14 @@ router.get('/', (req: express.Request, response: express.Response) => {
     });
 });
 
+router.get('/views', (req: express.Request, response: express.Response) => {
+    response.render(
+        'calendar',
+        {
+            title: 'ProNet',
+            user: (<any> req).user,
+            partials: defaultPartials
+        });
+});
+
 export = router;

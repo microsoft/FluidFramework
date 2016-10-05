@@ -36,7 +36,7 @@ gulp.task("build", function () {
         })
 });
 
-// Creates client side JavaScript files
+// Site app
 gulp.task("browserify", function() {
     return browserify({
             basedir: '.',
@@ -51,4 +51,20 @@ gulp.task("browserify", function() {
         .pipe(gulp.dest("public/dist/ng"))
 });
 
-gulp.task("default", ["build", "browserify"]);
+// Client side Interactive Document API
+gulp.task("api", function() {
+    return browserify({
+            basedir: '.',
+            debug: true,
+            entries: ['src/api/index.ts'],
+            cache: {},
+            packageCache: {},
+            standalone: 'pronet'
+        })        
+        .plugin(tsify)        
+        .bundle()        
+        .pipe(source('api.js'))
+        .pipe(gulp.dest("public/dist/api"))
+});
+
+gulp.task("default", ["build", "browserify", "api"]);
