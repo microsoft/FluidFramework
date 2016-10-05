@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+        "module" :"none",
+        "target": "es5",
+        "noImplicitAny": false,
+        "sourceMap": true,
+        "outDir": "../../server/public/html/cal"
+    },
+    "files": [
+        "driver.ts",
+        "moment.d.ts",
+        "jquery.d.ts",
+        "fullcalendar.d.ts"
+    ]
+}
