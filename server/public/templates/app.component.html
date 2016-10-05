@@ -1,0 +1,14 @@
+<div>
+    <div class="row">
+        <div class="col-xs-12">
+            <div class="input-group">
+                <input type="text" class="form-control" [(ngModel)]="url" placeholder="Interactive document URL...">
+                <span class="input-group-btn">
+                    <button class="btn btn-default" type="button" (click)="document.load(url)">Go</button>
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <interactive-document #document></interactive-document>
+</div>

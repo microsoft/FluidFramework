@@ -1,6 +1,7 @@
 {
   "globalDependencies": {
     "connect-redis": "registry:dt/connect-redis#0.0.0+20160305170114",
+    "core-js": "registry:dt/core-js#0.0.0+20160914114559",
     "express-session": "registry:dt/express-session#0.0.0+20160819134112",
     "nconf": "registry:dt/nconf#0.0.0+20160724073144",
     "node": "registry:env/node#4.0.0+20160918225031",

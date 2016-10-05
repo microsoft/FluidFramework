@@ -10,7 +10,11 @@ var router = express.Router();
 
 router.get('/google', ensureLoggedIn(), passport.authorize('google', authOptions.google));
 
-router.get('/microsoft', ensureLoggedIn(), passport.authorize('openidconnect', authOptions.microsoft))
+router.get('/facebook', ensureLoggedIn(), passport.authorize('facebook', authOptions.facebook));
+
+router.get('/microsoft', ensureLoggedIn(), passport.authorize('openidconnect', authOptions.microsoft));
+
+router.get('/linkedin', ensureLoggedIn(), passport.authorize('linkedin', authOptions.linkedin));
   
 router.get('/remove/:id', ensureLoggedIn(), (request, response) => {
     let id = request.params.id;

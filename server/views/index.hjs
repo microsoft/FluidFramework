@@ -8,8 +8,8 @@
 
         {{#user}}        
             <h2>Data Sources</h2>
-            <ul class="list-unstyled">
-                <li><a href="/calendar">Calendar</a></li>
+            <ul class="list-unstyled">                
+                <li><a href="/browser">Browser</a></li>
             </ul>
         {{/user}}
         {{^user}}

@@ -25,7 +25,9 @@ router.get('/profile', ensureLoggedIn(), (request, response) => {
     // Create base view model that we will update as we find more information
     var providers = {
         "google": { name: "Google", connected: false, connect: "/connect/google" },
-        "microsoft": { name: "Microsoft", connected: false, connect: "/connect/microsoft" }
+        "microsoft": { name: "Microsoft", connected: false, connect: "/connect/microsoft" },
+        "facebook": { name: "Facebook", connected: false, connect: "/connect/facebook" },
+        "linkedin": { name: "LinkedIn", connected: false, connect: "/connect/linkedin" }
     };
 
     // Update based on the connected accounts

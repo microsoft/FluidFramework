@@ -41,14 +41,14 @@ gulp.task("browserify", function() {
     return browserify({
             basedir: '.',
             debug: true,
-            entries: ['src/host.ts'],
+            entries: ['src/ng/main.ts'],
             cache: {},
             packageCache: {}
-        })
-        .plugin(tsify)
-        .bundle()
-        .pipe(source('host.js'))
-        .pipe(gulp.dest("public/dist"))
+        })        
+        .plugin(tsify)        
+        .bundle()        
+        .pipe(source('main.js'))
+        .pipe(gulp.dest("public/dist/ng"))
 });
 
 gulp.task("default", ["build", "browserify"]);

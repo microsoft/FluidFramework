@@ -1,0 +1,8 @@
+{{<page_layout}}
+    {{$page_content}}     
+        <my-app>Loading...</my-app>                
+    {{/page_content}}            
+    {{$scripts}}
+      <script src="dist/ng/main.js"></script>
+    {{/scripts}}
+{{/page_layout}}

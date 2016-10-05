@@ -6,10 +6,50 @@ import { Promise } from 'es6-promise';
 import { IUser } from '../accounts';
 import * as nconf from 'nconf';
 import { defaultPartials } from './partials';
+import { Link, ViewModel } from '../interfaces';
 var google = require('googleapis');
 var googleAuth = require('google-auth-library');
 
 var router = express.Router();
+
+/**
+ * View model representing an event on a calendar
+ */
+class CalendarEvent implements ViewModel {
+    _type = "https://graph.microsoft.com/models/calendar/event";
+    _links: { [rel: string]: Link };
+
+    constructor(self: string, public summary: string, public start: string, public end: string) {
+        this._links = { "self": { href: self } };
+    }
+}
+
+/**
+ * View model representing a single calendar
+ */
+class CalendarViewModel implements ViewModel {
+    _links: { [rel: string]: Link };
+    _embedded: { [rel: string]: ViewModel[] };
+    _type = "https://graph.microsoft.com/models/calendar";
+
+    constructor(self: string, events: CalendarEvent[]) {
+        this._embedded = { "item": events };
+        this._links = { "self": { href: self } };
+    }
+}
+
+/**
+ * View model representing a collection of calendars
+ */
+class CalendarsViewModel implements ViewModel {
+    _type = "https://graph.microsoft.com/models/calendars";
+    _links: { [rel: string]: Link } = { "self": { href: "/calendars" } };
+    _embedded: { [rel: string]: ViewModel[] };
+
+    constructor(calendars: CalendarViewModel[]) {
+        this._embedded = { "item": calendars };
+    }
+}
 
 router.get('/', (req: express.Request, response: express.Response) => {
     let user = <IUser>(<any>req).user;
@@ -21,34 +61,33 @@ router.get('/', (req: express.Request, response: express.Response) => {
     let now = moment();
     let nextWeek = now.clone().add(7, 'days');
 
-    var resultPromises = [];
+    var resultPromises: Promise<CalendarViewModel>[] = [];
     for (let account of user.accounts) {
         if (account.provider === 'microsoft') {
-            var microsoftCalendarP = new Promise((resolve, reject) => {
+            var microsoftCalendarP = new Promise<ViewModel>((resolve, reject) => {
                 return accounts.getTokens(account).then((tokens) => {
                     let url = `https://graph.microsoft.com/v1.0/me/calendar/calendarView?StartDateTime=${now.toISOString()}&endDateTime=${nextWeek.toISOString()}`;
                     request.get(
                         url,
-                        { auth: { 'bearer': tokens.access }, json: true }, (error, response, body) => {                            
+                        { auth: { 'bearer': tokens.access }, json: true }, (error, response, body) => {
                             if (error) {
-                                reject(error);
+                                return reject(error);
                             }
-                            else {                                                         
-                                var microsoftResults = body.value.map((item) => ({
-                                    summary: item.subject, 
-                                    start: item.start.dateTime,
-                                    end: item.end.dateTime
-                                }));
-                                resolve({ provider: 'Microsoft', items: microsoftResults });
+                            else {
+                                var microsoftResults = body.value.map((item) => 
+                                    new CalendarEvent(`/calendars/microsoft/${item.id}`, item.subject, item.start.dateTime, item.end.dateTime));                                
+                                let viewModel = new CalendarViewModel('/calendars/microsoft', microsoftResults);
+
+                                return resolve(viewModel);
                             }
                         });
-                    })
-                })                
+                })
+            })
             resultPromises.push(microsoftCalendarP);
         }
-        else if (account.provider === 'google') {            
-            var googleCalendarP = new Promise((resolve, reject) => {                
-                return accounts.getTokens(account).then((tokens) => {                    
+        else if (account.provider === 'google') {
+            var googleCalendarP = new Promise<ViewModel>((resolve, reject) => {
+                return accounts.getTokens(account).then((tokens) => {
                     let calendar = google.calendar('v3');
                     var OAuth2 = google.auth.OAuth2;
                     var googleConfig = nconf.get("login:google");
@@ -67,37 +106,31 @@ router.get('/', (req: express.Request, response: express.Response) => {
                         maxResults: 10,
                         singleEvents: true,
                         orderBy: 'startTime'
-                    }, function (err, response) {
-                        if (err) {                        
+                    }, (err, response) => {
+                        if (err) {
                             return reject(err);
                         }
-                        else {
-                            var googleCalendarItems = response.items.map((item) => ({ 
-                                summary: item.summary, 
-                                start: item.start.dateTime,
-                                end: item.end.dateTime
-                            }));                            
-                            resolve({ provider: 'Google', items: googleCalendarItems });                        
-                        }                    
-                    }); 
-                });           
+                        else {                                                        
+                            var googleResults = response.items.map((item) => 
+                                    new CalendarEvent(`/calendars/google/${item.id}`, item.summary, item.start.dateTime, item.end.dateTime));                                
+                            let viewModel = new CalendarViewModel('/calendars/google', googleResults);
+
+                            return resolve(viewModel);
+                        }
+                    });
+                });
             });
 
             resultPromises.push(googleCalendarP);
-        }            
+        }
     }
 
-    Promise.all(resultPromises).then((results) => {           
-        response.render(
-            'calendar',
-            {
-                user: user,
-                partials: defaultPartials,
-                viewModel: results
-            });
+    Promise.all(resultPromises).then((calendars) => {
+        let viewModel = new CalendarsViewModel(calendars);
+        response.json(viewModel);
     }, (error) => {
         response.status(400).json(error);
-    });    
+    });
 });
 
 export = router;

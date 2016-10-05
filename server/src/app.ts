@@ -7,6 +7,8 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var passportOpenIdConnect = require('passport-openidconnect');
 var google = require('passport-google-oauth');
+var facebook = require('passport-facebook');
+var linkedin = require('passport-linkedin');
 import * as siteRoute from './routes/site';
 import * as usersRoute from './routes/users';
 import * as authRoute from './routes/auth';
@@ -14,6 +16,7 @@ import * as connectRoute from './routes/connect';
 import * as knowledgeRoute from './routes/knowledge';
 import * as documentsRoute from './routes/documents';
 import * as calendarRoute from './routes/calendar';
+import * as browserRoute from './routes/browser';
 
 import * as passport from 'passport';
 import * as connectRedis from 'connect-redis';
@@ -119,6 +122,62 @@ function connectAccount(
         });
 }
 
+var linkedinConfiguration = nconf.get("login:linkedin");
+passport.use(
+    new linkedin({
+        consumerKey: linkedinConfiguration.clientId,
+        consumerSecret: linkedinConfiguration.secret,
+        callbackURL: "/auth/linkedin/callback",
+        profileFields: ['id', 'first-name', 'last-name', 'email-address', 'headline'],        
+        passReqToCallback: true
+    },
+    (req, accessToken, refreshToken, params, profile, done) => {
+        if (!req.user) {
+            completeAuthentication(
+                'linkedin', 
+                profile.id, 
+                accessToken,
+                params.expires_in,
+                refreshToken, 
+                { 
+                    displayName: profile.displayName,
+                    name: profile.name
+                },
+                done);
+        }
+        else {
+            connectAccount('linkedin', profile.id, accessToken, params.expires_in,refreshToken, req.user.user.id, done);
+        }
+    }));
+
+var facebookConfiguration = nconf.get("login:facebook");
+passport.use(
+    new facebook({
+        clientID: facebookConfiguration.clientId,
+        clientSecret: facebookConfiguration.secret,
+        callbackURL: "/auth/facebook/callback",
+        profileFields: ['id', 'displayName', 'email', 'name', 'gender'],
+        passReqToCallback: true
+    },
+    (req, accessToken, refreshToken, params, profile, done) => {
+        if (!req.user) {
+            completeAuthentication(
+                'facebook', 
+                profile.id, 
+                accessToken,
+                params.expires_in,
+                refreshToken, 
+                { 
+                    displayName: profile.displayName,
+                    name: profile.name
+                },
+                done);
+        }
+        else {
+            connectAccount('facebook', profile.id, accessToken, params.expires_in,refreshToken, req.user.user.id, done);
+        }
+    }));
+
 var googleConfiguration = nconf.get("login:google");
 passport.use(
     new google.OAuth2Strategy({
@@ -221,6 +280,7 @@ app.use('/users', usersRoute);
 app.use('/knowledge', knowledgeRoute);
 app.use('/documents', documentsRoute);
 app.use('/calendar', calendarRoute);
+app.use('/browser', browserRoute);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

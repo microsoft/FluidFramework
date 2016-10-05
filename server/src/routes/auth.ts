@@ -13,6 +13,14 @@ router.get(
     '/microsoft',
     passport.authenticate('openidconnect', authOptions.microsoft));
 
+router.get(
+    '/facebook',
+    passport.authenticate('facebook', authOptions.facebook));
+
+router.get(
+    '/linkedin',
+    passport.authenticate('linkedin', authOptions.linkedin));
+
 // the callback after google has authenticated the user
 router.get(
     '/google/callback',
@@ -24,6 +32,20 @@ router.get(
 router.get(
     '/microsoft/callback',
     passport.authenticate('openidconnect', {
+        successRedirect: '/',
+        failureRedirect: '/'
+    }));
+
+router.get(
+    '/facebook/callback',
+    passport.authenticate('facebook', {
+        successRedirect: '/',
+        failureRedirect: '/'
+    }));
+
+router.get(
+    '/linkedin/callback',
+    passport.authenticate('linkedin', {
         successRedirect: '/',
         failureRedirect: '/'
     }));
