@@ -76,8 +76,10 @@ router.get('/', (req: express.Request, response: express.Response) => {
                                 return reject(error);
                             }
                             else {
+                                // MSFT strings are in UTC but don't place the UTC marker in the date string - convert to this format to standardize the input
+                                // to CalendarEvent
                                 var microsoftResults = body.value.map((item) => 
-                                    new CalendarEvent(`/calendars/microsoft/${item.id}`, item.subject, item.start.dateTime, item.end.dateTime));                                
+                                    new CalendarEvent(`/calendars/microsoft/${item.id}`, item.subject, moment.utc(item.start.dateTime).toISOString(), moment.utc(item.end.dateTime).toISOString()));                                
                                 let viewModel = new CalendarViewModel('/calendars/microsoft', microsoftResults);
 
                                 return resolve(viewModel);
