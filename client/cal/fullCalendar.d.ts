@@ -5,6 +5,7 @@
 
 /// <reference path="jquery.d.ts"/>
 /// <reference path="moment.d.ts"/>
+/// <reference path="qtip2.d.ts" />
 
 declare namespace FullCalendar {
     export interface Calendar {
@@ -130,7 +131,7 @@ declare namespace FullCalendar {
         eventBackgroundColor?: string;
         eventBorderColor?: string;
         eventTextColor?: string;
-        eventRender?: (event: EventObject, element: HTMLDivElement, view: ViewObject) => void;
+        eventRender?: (event: EventObject, element: JQuery, view: ViewObject) => void;
         eventAfterRender?: (event: EventObject, element: HTMLDivElement, view: ViewObject) => void;
         eventAfterAllRender?: (view: ViewObject) => void;
         eventDestroy?: (event: EventObject, element: JQuery, view: ViewObject) => void;
@@ -216,6 +217,8 @@ declare namespace FullCalendar {
         borderColor?: string;
         textColor?: string;
         rendering?: string;
+        location?: string;
+        responseStatus?: string;
     }
 
     export interface ViewObject extends Timespan {

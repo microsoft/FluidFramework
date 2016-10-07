@@ -3,7 +3,7 @@
         "module" :"none",
         "target": "es5",
         "noImplicitAny": false,
-        "sourceMap": true,
+        "sourceMap": false,
         "outDir": "../../server/public/html/cal"
     },
     "files": [
