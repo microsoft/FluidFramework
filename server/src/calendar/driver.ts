@@ -5,11 +5,13 @@ var qtip = require('qtip2');
 
 $(document).ready(() => { 
     if (pnhost) {
-        console.log("host is defined");        
-    }
-    else {        
-        console.log("host is not defined");
-    }
+        pnhost.listServices().then((services) => {
+            console.log('Supported services:');
+            for (let service of services) {
+                console.log(service);
+            }
+        });              
+    }    
 
     $.ajax("/calendars", {
         cache: false, 

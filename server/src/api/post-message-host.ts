@@ -1,7 +1,7 @@
 import * as postMessageSockets from '../post-message-sockets/index';
 import { Promise } from 'es6-promise';
 import { IHost } from './host';
-import { IEchoService } from './interfaces';
+import { IEchoService, ITableService } from './interfaces';
 import * as _ from 'lodash';
 
 class PostMessageEcho implements IEchoService {
@@ -10,6 +10,12 @@ class PostMessageEcho implements IEchoService {
 
     echo(data: string): Promise<string> {
         return this._socket.send(data);
+    }
+}
+
+class TableService implements ITableService {
+    createTable(): Promise<ITable> {
+                
     }
 }
 
@@ -29,15 +35,19 @@ export class PostMessageHost implements IHost {
         this._host = postMessageSockets.getOrCreateHost(this._window);
         // TODO for security we may need to define a set of allowed hosts - especially if the iframe conveys secret information to the host
         this._socketP = this._host.connect(window.parent, '*');
-        this._interfacesP = this._socketP.then((socket) => {            
+        this._interfacesP = this._socketP.then((socket) => {
+            // Make an init call to the server to get the initial entry points. 
+            // Create the service stubs based on those entry points - should have a name, an id, list of methods (?)
+            // Create a function to implement those methods that then's on the promise and can interpret whether or not to create new objects
+
             return { "echo": new PostMessageEcho(socket) };
-        });
+        });         
     }
 
     /**
      * Retrieves the list of interfaces supported by the host
      */
-    listInterfaces(): Promise<string[]> {
+    listServices(): Promise<string[]> {
         return this._interfacesP.then((interfaces) => {
             return _.keys(interfaces);
         });      
@@ -46,7 +56,7 @@ export class PostMessageHost implements IHost {
     /**
      * Detects if the given interface is supported - if so returns a reference to it
      */
-    queryInterface<T>(name: string): Promise<T> {
+    getService<T>(name: string): Promise<T> {
         // does this call need to give me back something I can route from?
         return this._interfacesP.then((interfaces) => {
             let iface = interfaces[name];

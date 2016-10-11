@@ -9,6 +9,7 @@ export interface IEchoService {
  * Host service to provide access to table functionality
  */
 export interface ITableService {
+    createTable(): Promise<ITable>;
 }
 
 /**
