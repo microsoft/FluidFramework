@@ -3,7 +3,6 @@ import { InteractiveDocumentViewService } from './interactive-document-view.serv
 import { InteractiveDocumentService } from './interactive-document.service';
 import { ViewModel, IViews, IView, Resource } from '../interfaces';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
-import { InteractiveDocumentHost } from '../api/index';
 
 @Component({
     selector: 'interactive-document-frame',
@@ -12,26 +11,14 @@ import { InteractiveDocumentHost } from '../api/index';
 })
 export class InteractiveDocumentFrameComponent implements AfterViewInit {
     @Input()
-    document: ViewModel;
+    url: string;
 
-    @Input()
-    view: IView;
-
-    private _interactiveDocumentHost: InteractiveDocumentHost;
-
-    constructor(private elementRef: ElementRef) {
+    constructor(private elementRef: ElementRef, private sanitizer: DomSanitizer) {
     }
 
     ngAfterViewInit() {
-        // Get the iframe and begin the connection
+        // Load in the bound view                
         let iframe = this.elementRef.nativeElement.querySelector('iframe');
-        this._interactiveDocumentHost = new InteractiveDocumentHost(window, iframe.contentWindow);
-        this._interactiveDocumentHost.connect();
-
-        // Load in the view
-        iframe.setAttribute('src', this.view.url);
-
-        // Pass the view model to the view
-        this._interactiveDocumentHost.send(this.document);
+        iframe.setAttribute('src', this.url);
     }
 }

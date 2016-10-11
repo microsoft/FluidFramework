@@ -1,12 +1,3 @@
 <div *ngIf="loaded">
-    <interactive-document-frame [view]="view" [document]="document"></interactive-document-frame>
-
-    <h3>Document JSON</h3>
-<pre>
-{{ document | json }}
-</pre>
-    <h3>Views JSON</h3>
-<pre>
-{{ views | json }}
-</pre>    
+    <interactive-document-frame [url]="url"></interactive-document-frame>
 </div>

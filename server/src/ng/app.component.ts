@@ -6,5 +6,5 @@ import { Component } from '@angular/core';
     styleUrls: ['stylesheets/app.component.css']
 })
 export class AppComponent {
-    url = "/documents/test-chart"
+    url = "/documents/calendar"
 }

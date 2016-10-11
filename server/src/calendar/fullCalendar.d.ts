@@ -1,11 +1,9 @@
-﻿// Type definitions for FullCalendar 2.7.2
+﻿// Note contains modifications to typings file - should create a PR with the updates
+
+// Type definitions for FullCalendar 2.7.2
 // Project: http://fullcalendar.io/
 // Definitions by: Neil Stalker <https://github.com/nestalk>, Marcelo Camargo <https://github.com/hasellcamargo>
 // Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
-
-/// <reference path="jquery.d.ts"/>
-/// <reference path="moment.d.ts"/>
-/// <reference path="qtip2.d.ts" />
 
 declare namespace FullCalendar {
     export interface Calendar {

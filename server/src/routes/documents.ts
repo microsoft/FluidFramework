@@ -4,9 +4,17 @@ import { defaultPartials } from './partials';
 
 var router = express.Router();
 
-router.get('/views/chart', (request: express.Request, response: express.Response) => {
+router.get('/chart', (request: express.Request, response: express.Response) => {
     response.render(
-        'documents/views/chart',
+        'documents/chart',
+        {
+            partials: defaultPartials
+        });
+});
+
+router.get('/calendar', (request: express.Request, response: express.Response) => {
+    response.render(
+        'documents/calendar',
         {
             partials: defaultPartials
         });

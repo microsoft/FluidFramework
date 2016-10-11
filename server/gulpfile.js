@@ -67,4 +67,19 @@ gulp.task("api", function() {
         .pipe(gulp.dest("public/dist/api"))
 });
 
-gulp.task("default", ["build", "browserify", "api"]);
+// Calendar app
+gulp.task("calendar", function() {
+    return browserify({
+            basedir: '.',
+            debug: true,
+            entries: ['src/calendar/driver.ts'],
+            cache: {},
+            packageCache: {}
+        })        
+        .plugin(tsify)        
+        .bundle()        
+        .pipe(source('driver.js'))
+        .pipe(gulp.dest("public/dist/views/calendar"))
+});
+
+gulp.task("default", ["build", "browserify", "api", "calendar"]);

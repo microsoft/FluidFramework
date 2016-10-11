@@ -1,0 +1,20 @@
+{{<layout}}
+    {{$content}}        
+        <div id="chart"></div>
+    {{/content}}
+    {{$scripts}}
+        <script>
+            var echoInterfaceP = pronet.pnhost.queryInterface("echo");
+            echoInterfaceP.then(function(echoInterface) {
+                console.log('found it!');
+                echoInterface.echo("hello!").then(
+                    function (response) { console.log("Resposne: " + response) },
+                    function (error) { console.log(error) });
+            },
+            function(error) {
+                console.log(error);
+                console.log('uh oh...');
+            }); 
+        </script>                        
+    {{/scripts}}
+{{/layout}}

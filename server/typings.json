@@ -3,9 +3,12 @@
     "connect-redis": "registry:dt/connect-redis#0.0.0+20160305170114",
     "core-js": "registry:dt/core-js#0.0.0+20160914114559",
     "express-session": "registry:dt/express-session#0.0.0+20160819134112",
+    "jquery": "registry:dt/jquery#1.10.0+20160929162922",
+    "moment": "registry:dt/moment#2.11.1+20161010105546",
     "nconf": "registry:dt/nconf#0.0.0+20160724073144",
     "node": "registry:env/node#4.0.0+20160918225031",
-    "passport": "registry:dt/passport#0.2.0+20160720063208"
+    "passport": "registry:dt/passport#0.2.0+20160720063208",
+    "qtip2": "registry:dt/qtip2#2.2.1+20160317120654"
   },
   "dependencies": {
     "documentdb": "registry:npm/documentdb#1.8.0+20160622193850",

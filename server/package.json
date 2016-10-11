@@ -38,10 +38,12 @@
     "es6-promisify": "^4.1.0",
     "express": "~4.13.1",
     "express-session": "^1.14.1",
+    "fullcalendar": "^3.0.1",
     "google-auth-library": "^0.9.8",
     "googleapis": "^13.0.0",
     "gulp-sourcemaps": "^1.6.0",
     "hjs": "~0.0.6",
+    "jquery": "^3.1.1",
     "less-middleware": "1.0.x",
     "lodash": "^4.16.1",
     "moment": "^2.15.1",
@@ -53,6 +55,7 @@
     "passport-google-oauth": "^1.0.0",
     "passport-linkedin": "^1.0.0",
     "passport-openidconnect": "0.0.1",
+    "qtip2": "^3.0.3",
     "redis": "^2.6.2",
     "reflect-metadata": "^0.1.8",
     "request": "^2.75.0",
@@ -80,7 +83,15 @@
       "browserify-shim"
     ]
   },
-  "browserify-shim": {    
-    "../api/index": "global:pronet"
+  "browser": {
+    "jquery": "./node_modules/jquery/dist/jquery.js"    
+  },
+  "browserify-shim": {
+    "jquery": "jQuery",
+    "qtip2": {
+      "depends": [
+        "jquery:jQuery"
+      ]
+    }
   }
 }

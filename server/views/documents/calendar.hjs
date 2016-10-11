@@ -1,0 +1,8 @@
+<head>
+    <link rel='stylesheet' href='/node_modules/fullcalendar/dist/fullcalendar.css' />
+    <link rel='stylesheet' href='/node_modules/qtip2/dist/jquery.qtip.css' />
+    <script src='/dist/views/calendar/driver.js'></script>                
+</head>
+<body>
+    <div id='calendar'></div>
+</body>
