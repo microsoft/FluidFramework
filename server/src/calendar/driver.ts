@@ -1,8 +1,22 @@
 import * as $ from 'jquery';
 import * as _ from 'lodash';
-import { pnhost, IEchoService, EchoServiceName, ITableService, TableServiceName } from '../api/index';
+import { pnhost, IEchoService, EchoServiceName, ITableService, TableServiceName, ITableListener } from '../api/index';
 var fullcalendar = require('fullcalendar');
 var qtip = require('qtip2');
+
+class TableListener implements ITableListener {    
+    rowsChanged(rows: any[]): Promise<void> {
+        console.log('rows changed:');
+        console.log(JSON.stringify(rows, null, 2));
+        return Promise.resolve();        
+    }
+
+    rowsSelected(rows: any[]): Promise<void> {
+        console.log('rows selected:');
+        console.log(JSON.stringify(rows, null, 2));
+        return Promise.resolve();
+    }
+}
 
 $(document).ready(() => {
     let tableServiceP: Promise<ITableService>;
@@ -44,6 +58,9 @@ $(document).ready(() => {
                             }
 
                             table.loadData(columns, rows);
+
+                            // Listen for updates
+                            table.addListener(new TableListener());
                         });
                     })
                 });

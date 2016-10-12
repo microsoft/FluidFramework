@@ -4,35 +4,7 @@ import { IHost } from './host';
 import { IEchoService, ITableService, ITable } from './interfaces';
 import * as _ from 'lodash';
 import { IHostMessage, IHostMethodMessage, MessageType, MethodResultType, IInitResult, IHostMethodResult, IHostMethodValueResult, IHostMethodObjectResult } from './messages';
-
-class RemoteService {
-    constructor(socket: postMessageSockets.IPostMessageSocket, objectId: number, methods: string[]) {
-        // Bind all the defined methods to the object
-        for (let method of methods) {
-            this[method] = RemoteService.CreateRemoteMethod(socket, objectId, method);
-        }
-    }
-
-    private static CreateRemoteMethod(socket: postMessageSockets.IPostMessageSocket, objectId: number, method: string): (...args: any[]) => Promise<any> {
-        return (...args: any[]) => {
-            let methodMessage: IHostMethodMessage = {
-                type: MessageType.Method,
-                objectId: objectId,
-                methodName: method,
-                args: args
-            };
-            return socket.send<IHostMethodMessage, IHostMethodResult>(methodMessage).then((result) => {
-                if (result.type === MethodResultType.Value) {
-                    return (<IHostMethodValueResult>result).value;
-                }
-                else {
-                    let objectResult = <IHostMethodObjectResult>result;
-                    return new RemoteService(socket, objectResult.value.objectId, objectResult.value.methods);
-                }
-            });
-        };
-    }
-}
+import { RemoteObjectManager, RemoteService } from './remote-object-manager';
 
 /**
  * PostMessage implementation of the IHost interface. This hosts assumes it can connect to its
@@ -42,6 +14,7 @@ export class PostMessageHost implements IHost {
     private _host: postMessageSockets.IPostMessageHost;
     private _socketP: Promise<postMessageSockets.IPostMessageSocket>;
     private _interfacesP: Promise<{ [name: string]: RemoteService }>;
+    private _manager = new RemoteObjectManager();
 
     constructor(private _window: Window) {
     }
@@ -50,13 +23,23 @@ export class PostMessageHost implements IHost {
         this._host = postMessageSockets.getOrCreateHost(this._window);
         // TODO for security we may need to define a set of allowed hosts - especially if the iframe conveys secret information to the host
         this._socketP = this._host.connect(window.parent, '*');
+
+        // Listen to incoming connections and dispatch to the manager
+        this._socketP.then((socket) => {
+            // I should probably do this automatically
+            socket.addEventListener((message) => {
+                return this._manager.dispatch(message as IHostMethodMessage, socket);
+            })
+        })
+
+        // Retrieve the available interfaces
         this._interfacesP = this._socketP.then((socket) => {
             let initMessage: IHostMessage = { type: MessageType.Init };
             return socket.send<IHostMessage, IInitResult>(initMessage).then((result) => {
                 let services: { [name: string]: RemoteService } = {};
                 for (let name in result.services) {
                     let serviceDefinition = result.services[name];
-                    services[name] = new RemoteService(socket, serviceDefinition.objectId, serviceDefinition.methods);
+                    services[name] = new RemoteService(this._manager, socket, serviceDefinition.objectId, serviceDefinition.methods);
                 }
 
                 return services;

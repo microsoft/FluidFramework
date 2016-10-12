@@ -45,5 +45,5 @@ export interface IHostMethodMessage extends IHostMessage {
     methodName: string;
 
     // arguments to pass to the method
-    args: any[];
+    args: IHostMethodResult[];
 }

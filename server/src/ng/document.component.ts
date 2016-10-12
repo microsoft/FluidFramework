@@ -11,6 +11,7 @@ import {
     ColumnMode,
     SelectionType
 } from 'angular2-data-table';
+import * as _ from 'lodash';
 
 interface Table {
     options: TableOptions;
@@ -20,7 +21,7 @@ interface Table {
 class Table implements ITable {
     options: TableOptions;
     rows: any[];
-    selections: any[] = [];
+    selection: any[];
     private _listeners: ITableListener[] = [];
     
     loadData(columns: string[], rows: any[]): Promise<void> {
@@ -41,9 +42,18 @@ class Table implements ITable {
         return Promise.resolve();
     }
 
-    onSelectionChange(event: any) {
-        console.log('something was selected');
-        console.log(JSON.stringify(event));
+    onSelectionChange(event: any) { 
+        this.selection = event;      
+        for (let listener of this._listeners) {
+            listener.rowsSelected(event);
+        }        
+    }
+
+    onSelectionDeleted() {
+        this.rows = _.filter(this.rows, (row) => _.includes(this.selection, row));
+        for (let listener of this._listeners) {
+            listener.rowsChanged(this.rows);
+        }
     }
 
     addListener(listener: ITableListener): Promise<void> {   
