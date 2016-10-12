@@ -9,8 +9,8 @@
             [options]='table.options'             
             (onSelectionChange)='table.onSelectionChange($event)'>
         </datatable>
-        <div *ngFor="let selection of table.selections">
-            {{selection}}
-        </div>        
+        <div *ngIf="table.selection.length > 0">
+            <button (click)='table.onSelectionDeleted()'>Delete</button>
+        </div>
     </div>
 </div>

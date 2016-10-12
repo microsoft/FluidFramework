@@ -21,7 +21,7 @@ interface Table {
 class Table implements ITable {
     options: TableOptions;
     rows: any[];
-    selection: any[];
+    selection: any[] = [];
     private _listeners: ITableListener[] = [];
     
     loadData(columns: string[], rows: any[]): Promise<void> {
@@ -50,7 +50,7 @@ class Table implements ITable {
     }
 
     onSelectionDeleted() {
-        this.rows = _.filter(this.rows, (row) => _.includes(this.selection, row));
+        this.rows = _.filter(this.rows, (row) => !_.includes(this.selection, row));
         for (let listener of this._listeners) {
             listener.rowsChanged(this.rows);
         }
