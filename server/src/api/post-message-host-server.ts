@@ -2,6 +2,16 @@ import * as postMessageSockets from '../post-message-sockets/index';
 import { Promise } from 'es6-promise';
 import { ITable, ITableService } from './interfaces';
 import * as _ from 'lodash';
+import {
+    IHostMethodResult,
+    IWrappedService,
+    IHostMethodValueResult,
+    IHostMethodObjectResult,
+    MethodResultType,
+    IHostMessage,
+    MessageType,
+    IHostMethodMessage
+} from './messages';
 
 /**
  * This can be the actual interface that will be provided to the serverf
@@ -13,38 +23,78 @@ class TableService implements ITableService {
 }
 
 class ServiceWrapper {
-    constructor(service: any) {
-        // Walk the service and find all the methods on it. We'll identify them by name.        
+    private static _nextObjectId = 0;
+
+    public id: number;
+
+    public methods: string[] = [];
+
+    constructor(private _host: PostMessageHostServer, private _service: any) {
+        this.id = ServiceWrapper.GetNextObjectId();
+
+        let test = _.forOwn(_service, (value, key) => {
+            if (_.isFunction(value)) {
+                this.methods.push(key);
+            }
+        });
     }
 
-    dispatch(message: IHostMessage) {
-        // Convert from the incoming message to the wrapped service message. 
+    private static GetNextObjectId() {
+        return ServiceWrapper._nextObjectId++;
+    }
 
-        // Then on the promise
+    dispatch(methodName: string, args: any[]): Promise<IHostMethodResult> {
+        if (!_.isFunction(this._service[methodName])) {
+            return Promise.reject({ message: `${methodName} is not a function` });
+        }
 
-        // For return types that are objects create another wrapper around them. create
-        // an ID for them, etc...                
+        let method = this._service[methodName] as Function;
+        let resultP = method.apply(this._service, args) as Promise<any>;
+
+        return resultP.then((result) => {
+            if (_.isPlainObject(result)) {
+                // TODO if we recieve the same object consider looking it back up
+                let wrappedObject = this._host.wrapService(result);
+                return <IHostMethodObjectResult>{
+                    type: MethodResultType.Object,
+                    value: {
+                        objectId: wrappedObject.id,
+                        methods: wrappedObject.methods
+                    }
+                };
+            }
+            else {
+                return <IHostMethodValueResult>{
+                    type: MethodResultType.Value,
+                    value: result
+                };
+            }
+        });
     }
 }
 
 export class PostMessageHostServer {
     private _host: postMessageSockets.IPostMessageHost;
 
-    private _services: { [name: string]: any } = {};
+    private _services: { [name: string]: IWrappedService } = {};
 
-    // This server should define some core capabilities and then expose access to them via some messaging protocol flow...
-
-    // I want to add things that implement the given interface but are agnostic to the transport protocol
+    private _objectWrap: { [key: number]: ServiceWrapper } = {};
 
     constructor(private _window: Window) {
     }
 
+    wrapService(service: any): ServiceWrapper {
+        // We create an object wrapper for the service to marshal calls and responses over the postMessage channel
+        let objectWrap = new ServiceWrapper(this, service);
+        this._objectWrap[objectWrap.id] = objectWrap;
+
+        return objectWrap;
+    }
+
     addService(name: string, service: any) {
-        this._services[name] = service;
-
-        // Provide a unique identifier for the service object
-
-        // I should walk the method on the service and provider wrappers for them
+        // We create an object wrapper for the service to marshal calls and responses over the postMessage channel
+        let objectWrap = this.wrapService(service);
+        this._services[name] = { objectId: objectWrap.id, methods: objectWrap.methods };
     }
 
     start() {
@@ -52,42 +102,21 @@ export class PostMessageHostServer {
         this._host.listen((connection) => {
             console.log('Received a new connection');
 
-            // TODO I need some way to return the messages
-
             connection.addEventListener((message: IHostMessage) => {
                 if (message.type === MessageType.Init) {
-                    // The init message will be called first - the host will return back the supported services           
+                    return Promise.resolve({ services: this._services });
                 }
                 else {
-                    // The client is looking to invoke a method on one of the provided services
-                    // Lookup the object id - and invoke the method
+                    let hostMethodMessage = message as IHostMethodMessage;
+                    let objectWrap = this._objectWrap[hostMethodMessage.objectId];
+                    if (!objectWrap) {
+                        return Promise.reject({ message: "Object not found" });
+                    }
+                    else {
+                        return objectWrap.dispatch(hostMethodMessage.methodName, hostMethodMessage.args);
+                    }
                 }
-
-                return Promise.reject("not implemented");
             })
         });
     }
-}
-
-export enum MessageType {
-    // Initialization message to the host
-    Init,
-
-    // Method invocation on the host
-    Method
-}
-
-export interface IHostMessage {
-    type: MessageType;
-}
-
-export interface IHostMethodMessage extends IHostMessage {
-    // Target object identifier
-    objectId: number;
-
-    // method name to invoke
-    methodName: string;
-
-    // arguments to pass to the method
-    args: any[];
 }
