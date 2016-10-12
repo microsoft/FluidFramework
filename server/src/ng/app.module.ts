@@ -6,12 +6,14 @@ import { HttpModule } from '@angular/http';
 import { AppComponent } from './app.component';
 import { DocumentComponent } from './document.component';
 import { InteractiveDocumentFrameComponent } from './interactive-document-frame.component';
+import { Angular2DataTableModule } from 'angular2-data-table';
 
 @NgModule({
     imports: [
         BrowserModule, 
         FormsModule,
-        HttpModule
+        HttpModule,
+        Angular2DataTableModule
     ],
     declarations: [
         AppComponent,
