@@ -2,12 +2,12 @@ import { Component, Input, OnChanges, SimpleChanges, OnInit } from '@angular/cor
 import { InteractiveDocumentViewService } from './interactive-document-view.service';
 import { InteractiveDocumentService } from './interactive-document.service';
 import { ViewModel, IViews, IView, Resource } from '../interfaces';
-import { PostMessageHostServer, EchoServiceName, TableServiceName, ITableService, ITable } from '../api/index';
+import { PostMessageHostServer, EchoServiceName, TableServiceName, ITableService, ITable, ITableListener } from '../api/index';
 import * as services from '../services/index';
 import {
     Angular2DataTableModule,
     TableOptions,
-    TableColumn,
+    TableColumn,    
     ColumnMode,
     SelectionType
 } from 'angular2-data-table';
@@ -21,6 +21,7 @@ class Table implements ITable {
     options: TableOptions;
     rows: any[];
     selections: any[] = [];
+    private _listeners: ITableListener[] = [];
     
     loadData(columns: string[], rows: any[]): Promise<void> {
         console.log('load data');
@@ -43,6 +44,11 @@ class Table implements ITable {
     onSelectionChange(event: any) {
         console.log('something was selected');
         console.log(JSON.stringify(event));
+    }
+
+    addListener(listener: ITableListener): Promise<void> {   
+        this._listeners.push(listener);
+        return Promise.resolve();     
     }
 }
 
