@@ -13,7 +13,11 @@ export var TableServiceName = "table";
  * Host service to provide access to table functionality
  */
 export interface ITableService {
-    createTable(): Promise<ITable>;
+    createTable(): Promise<ITable>;    
+}
+
+export interface ITableListener {
+    rowsChanged(rows: any[]);    
 }
 
 /**
@@ -21,4 +25,6 @@ export interface ITableService {
  */
 export interface ITable {
     loadData(columns: string[], rows: any[]): Promise<void>;
+
+    addListener(listener: ITableListener): Promise<void>;
 }
