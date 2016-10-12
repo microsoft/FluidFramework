@@ -45,7 +45,7 @@ router.get('/', (req: express.Request, response: express.Response) => {
         if (account.provider === 'microsoft') {
             var microsoftCalendarP = new Promise<Calendar>((resolve, reject) => {
                 return accounts.getTokens(account).then((tokens) => {
-                    let url = `https://graph.microsoft.com/v1.0/me/calendar/calendarView?StartDateTime=${now.toISOString()}&endDateTime=${nextWeek.toISOString()}`;
+                    let url = `https://graph.microsoft.com/v1.0/me/calendar/calendarView?$top=25&StartDateTime=${now.toISOString()}&endDateTime=${nextWeek.toISOString()}`;
                     request.get(
                         url,
                         { auth: { 'bearer': tokens.access }, json: true }, (error, response, body) => {
@@ -59,7 +59,7 @@ router.get('/', (req: express.Request, response: express.Response) => {
                                     let loc = item.location? item.location.displayName : "";
                                     return makeCalendarEvent(item.subject, moment.utc(item.start.dateTime).toISOString(), 
                                                       moment.utc(item.end.dateTime).toISOString(),`/calendars/microsoft/${item.id}`,
-                                                      item.responseStatus.response, loc);
+                                                      loc, item.responseStatus.response);
                                 });
 
                                 let calModel = makeCalendar("Microsoft", microsoftResults, '/calendars/microsoft');
