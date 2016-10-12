@@ -1,22 +1,54 @@
 import * as $ from 'jquery';
-import { pnhost } from '../api/index';
+import * as _ from 'lodash';
+import { pnhost, IEchoService, EchoServiceName, ITableService, TableServiceName } from '../api/index';
 var fullcalendar = require('fullcalendar');
 var qtip = require('qtip2');
 
-$(document).ready(() => { 
+$(document).ready(() => {
+    let tableServiceP: Promise<ITableService>;
     if (pnhost) {
-        pnhost.listServices().then((services) => {
-            console.log('Supported services:');
-            for (let service of services) {
-                console.log(service);
-            }
-        });              
-    }    
+        tableServiceP = pnhost.listServices().then((services) => {
+            return _.includes(services, TableServiceName) ? pnhost.getService(TableServiceName) : Promise.resolve(null);
+        });
+    }
+    else {
+        tableServiceP = Promise.resolve(null);
+    }
 
     $.ajax("/calendars", {
         cache: false, 
         dataType: "json",
         success: (calData: Calendar[]) => {
+            if (pnhost) {
+                $("#buttons").append($('<button id="load-table">Export to Table</button>'));
+                $("#load-table").click(() => {
+                    tableServiceP.then((tableService) => {
+                        if (!tableService) {
+                            return;
+                        }
+
+                        tableService.createTable().then((table) => {
+                            let columns = ['provider', 'title', 'location', 'start', 'end', 'responseStatus'];
+                            let rows: any[] = [];
+                            for (let calendar of calData) {
+                                for (let event of calendar.events) {
+                                    rows.push({
+                                        provider: calendar.sourceName,
+                                        title: event.title,
+                                        location: event.location,
+                                        start: event.start,
+                                        end: event.end,
+                                        responseStatus: event.responseStatus
+                                    })
+                                }
+                            }
+
+                            table.loadData(columns, rows);
+                        });
+                    })
+                });
+            }            
+
             // page is now ready, initialize the calendar...
             var fcOptions = <FullCalendar.Options>{
                 minTime: "07:00:00",

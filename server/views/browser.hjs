@@ -1,4 +1,8 @@
 {{<page_layout}}
+    {{$styles}}
+        <link rel="stylesheet" type="text/css" href="/node_modules/angular2-data-table/release/datatable.css" />
+        <link rel="stylesheet" type="text/css" href="/node_modules/angular2-data-table/release/material.css" />        
+    {{/styles}}
     {{$page_content}}     
         <my-app>Loading...</my-app>                
     {{/page_content}}            

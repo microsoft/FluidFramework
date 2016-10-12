@@ -24,6 +24,7 @@
     "@angular/router": "^3.0.1",
     "@angular/upgrade": "^2.0.1",
     "angular-in-memory-web-api": "^0.1.1",
+    "angular2-data-table": "^0.9.3",
     "azure-storage": "^1.3.1",
     "body-parser": "~1.13.2",
     "bootstrap": "^3.3.7",
@@ -84,7 +85,7 @@
     ]
   },
   "browser": {
-    "jquery": "./node_modules/jquery/dist/jquery.js"    
+    "jquery": "./node_modules/jquery/dist/jquery.js"
   },
   "browserify-shim": {
     "jquery": "jQuery",

@@ -2,18 +2,64 @@ import { Component, Input, OnChanges, SimpleChanges, OnInit } from '@angular/cor
 import { InteractiveDocumentViewService } from './interactive-document-view.service';
 import { InteractiveDocumentService } from './interactive-document.service';
 import { ViewModel, IViews, IView, Resource } from '../interfaces';
-import { PostMessageHostServer } from '../api/index';
+import { PostMessageHostServer, EchoServiceName, TableServiceName, ITableService, ITable } from '../api/index';
+import * as services from '../services/index';
+import {
+    Angular2DataTableModule,
+    TableOptions,
+    TableColumn,
+    ColumnMode
+} from 'angular2-data-table';
+
+interface Table {
+    options: TableOptions;
+    rows: any[];
+}
+
+class Table implements ITable {
+    options: TableOptions;
+    rows: any[];
+    
+    loadData(columns: string[], rows: any[]): Promise<void> {
+        console.log('load data');
+        let columnOptions = columns.map((column) => new TableColumn({prop: column}));
+
+        this.options = new TableOptions({
+            columnMode: ColumnMode.force,
+            headerHeight: 50,
+            footerHeight: 50,
+            rowHeight: 'auto',
+            columns: columnOptions
+        });
+
+        this.rows = rows;
+
+        return Promise.resolve();
+    }
+}
+
+class TableService implements ITableService {
+    tables: ITable[] = [];
+
+    createTable(): Promise<ITable> {
+        let table = new Table();
+        this.tables.push(table);
+        return Promise.resolve(table);
+    }
+}
 
 @Component({
     selector: 'interactive-document',
     templateUrl: 'templates/document.component.html',
     providers: [InteractiveDocumentService, InteractiveDocumentViewService]
 })
-export class DocumentComponent implements OnInit {    
+export class DocumentComponent implements OnInit {
     // Loading flag for the document    
     loaded: boolean = false;
 
     url: string;
+
+    tableService = new TableService();
 
     // The hosting server - this should probably be a shared angular service but keeping simple for now
     private _server = new PostMessageHostServer(window);
@@ -24,7 +70,9 @@ export class DocumentComponent implements OnInit {
     }
 
     ngOnInit() {
-        this._server.start();        
+        this._server.addService(EchoServiceName, new services.BrowserEchoService());
+        this._server.addService(TableServiceName, this.tableService);
+        this._server.start();
     }
 
     load(url: string): void {

@@ -32,7 +32,7 @@ class ServiceWrapper {
     constructor(private _host: PostMessageHostServer, private _service: any) {
         this.id = ServiceWrapper.GetNextObjectId();
 
-        let test = _.forOwn(_service, (value, key) => {
+        let test = _.forIn(_service, (value, key) => {
             if (_.isFunction(value)) {
                 this.methods.push(key);
             }
@@ -52,7 +52,7 @@ class ServiceWrapper {
         let resultP = method.apply(this._service, args) as Promise<any>;
 
         return resultP.then((result) => {
-            if (_.isPlainObject(result)) {
+            if (_.isObject(result) && !_.isArray(result)) {
                 // TODO if we recieve the same object consider looking it back up
                 let wrappedObject = this._host.wrapService(result);
                 return <IHostMethodObjectResult>{
