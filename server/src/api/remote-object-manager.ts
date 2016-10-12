@@ -10,6 +10,8 @@ import { Promise } from 'es6-promise';
 import * as _ from 'lodash';
 import * as postMessageSockets from '../post-message-sockets/index';
 
+// TODO encapsulate the socket behavior within the host so it can handle the loss of the socket, etc...
+
 export class ServiceWrapper {
     public methods: string[] = [];
 

@@ -13,11 +13,13 @@ var googleAuth = require('google-auth-library');
 
 var router = express.Router();
 
-function makeCalendarEvent(title: string, start: string, end: string, url?: string, location?: string, responseStatus?: string) {
+function makeCalendarEvent(id: string, title: string, start: string, end: string, self: string, location?: string, responseStatus?: string) {
     return <CalendarEvent>{
+        id: id,
         title: title,
         start: moment(start).toISOString(),
         end: moment(end).toISOString(),
+        self: self,
         responseStatus: responseStatus ? responseStatus : "unknown",
         location: location,
     }
@@ -56,10 +58,10 @@ router.get('/', (req: express.Request, response: express.Response) => {
                                 // MSFT strings are in UTC but don't place the UTC marker in the date string - convert to this format to standardize the input
                                 // to CalendarEvent
                                 var microsoftResults: CalendarEvent[] = body.value.map((item) => {
-                                    let loc = item.location? item.location.displayName : "";
-                                    return makeCalendarEvent(item.subject, moment.utc(item.start.dateTime).toISOString(), 
-                                                      moment.utc(item.end.dateTime).toISOString(),`/calendars/microsoft/${item.id}`,
-                                                      loc, item.responseStatus.response);
+                                    let loc = item.location ? item.location.displayName : "";
+                                    return makeCalendarEvent(item.id, item.subject, moment.utc(item.start.dateTime).toISOString(),
+                                        moment.utc(item.end.dateTime).toISOString(), `/calendars/microsoft/${item.id}`,
+                                        loc, item.responseStatus.response);
                                 });
 
                                 let calModel = makeCalendar("Microsoft", microsoftResults, '/calendars/microsoft');
@@ -98,7 +100,7 @@ router.get('/', (req: express.Request, response: express.Response) => {
                         }
                         else {                                                        
                             var googleResults = <CalendarEvent[]>response.items.map((item) => 
-                                    makeCalendarEvent(item.summary, item.start.dateTime, item.end.dateTime, 
+                                    makeCalendarEvent(item.id, item.summary, item.start.dateTime, item.end.dateTime, 
                                     `/calendars/google/${item.id}`,"", item.status));                                
                             let cal = makeCalendar("Google", googleResults, '/calendars/google');
 
@@ -117,6 +119,11 @@ router.get('/', (req: express.Request, response: express.Response) => {
     }, (error) => {
         response.status(400).json(error);
     });
+});
+
+router.delete('/:provider/:id', (req: express.Request, response: express.Response) => {
+    console.log(`Deleteing ${req.params['provider']} ${req.params['id']}`);
+    response.status(204).end();
 });
 
 router.get('/views', (req: express.Request, response: express.Response) => {

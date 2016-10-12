@@ -4,16 +4,30 @@ import { pnhost, IEchoService, EchoServiceName, ITableService, TableServiceName,
 var fullcalendar = require('fullcalendar');
 var qtip = require('qtip2');
 
+// TODO better wrap this into some kind of model structure
+var rowsModel: any[] = [];
+
 class TableListener implements ITableListener {    
     rowsChanged(rows: any[]): Promise<void> {
-        console.log('rows changed:');
-        console.log(JSON.stringify(rows, null, 2));
-        return Promise.resolve();        
+        // compute the difference between the existing rowsModel and the updates
+        let deletedRows = _.filter(rowsModel, (rowModel) => _.find(rows, (row) => row.id === rowModel.id) === undefined);
+        $('#calendar').fullCalendar('removeEvents', (event) => {
+            return _.find(deletedRows, (deletedRow) => deletedRow.id === event.id);
+        });
+
+        // iterate over the deletedRows URLs and delete them
+        for (let deletedRow of deletedRows) {
+            $.ajax(deletedRow.self, { method: "DELETE" });
+            console.log(`DELETE: ${deletedRow.self}`);
+        }
+
+        // Update the model with the changed rows
+        rowsModel = rows;
+
+        return Promise.resolve();
     }
 
     rowsSelected(rows: any[]): Promise<void> {
-        console.log('rows selected:');
-        console.log(JSON.stringify(rows, null, 2));
         return Promise.resolve();
     }
 }
@@ -30,11 +44,11 @@ $(document).ready(() => {
     }
 
     $.ajax("/calendars", {
-        cache: false, 
+        cache: false,
         dataType: "json",
         success: (calData: Calendar[]) => {
             if (pnhost) {
-                $("#buttons").append($('<button id="load-table">Export to Table</button>'));
+                $("#buttons").append($('<button id="load-table">Export to Table</button><button id="save">Save</button>'));
                 $("#load-table").click(() => {
                     tableServiceP.then((tableService) => {
                         if (!tableService) {
@@ -42,29 +56,30 @@ $(document).ready(() => {
                         }
 
                         tableService.createTable().then((table) => {
-                            let columns = ['provider', 'title', 'location', 'start', 'end', 'responseStatus'];
-                            let rows: any[] = [{ 'provider': 'test', 'title': 'test', 'location': 'test', 'start': 'test', 'end': 'test', 'responseStatus': 'test' }];
+                            let columns = ['provider', 'title', 'location', 'start', 'end', 'responseStatus'];                            
                             for (let calendar of calData) {
                                 for (let event of calendar.events) {
-                                    rows.push({
+                                    rowsModel.push({
+                                        id: event.id,
                                         provider: calendar.sourceName,
                                         title: event.title,
                                         location: event.location,
                                         start: event.start,
                                         end: event.end,
-                                        responseStatus: event.responseStatus
+                                        responseStatus: event.responseStatus,
+                                        self: event.self
                                     })
                                 }
                             }
 
-                            table.loadData(columns, rows);
+                            table.loadData(columns, rowsModel);
 
                             // Listen for updates
                             table.addListener(new TableListener());
                         });
                     })
                 });
-            }            
+            }
 
             // page is now ready, initialize the calendar...
             var fcOptions = <FullCalendar.Options>{
@@ -74,10 +89,10 @@ $(document).ready(() => {
                 height: "auto",
                 eventRender: (event, element) => {
                     var content = event.title;
-                    if (event.location && (event.location.length>0)) {
+                    if (event.location && (event.location.length > 0)) {
                         content += ("<br/>" + event.location);
                     }
-                    if (event.responseStatus && (event.responseStatus.length>0)) {
+                    if (event.responseStatus && (event.responseStatus.length > 0)) {
                         content += ("<br/>" + event.responseStatus);
                     }
                     var qtipOptions: QTip2.QTipOptions = {
@@ -94,17 +109,18 @@ $(document).ready(() => {
             var events: FullCalendar.EventObject[] = [];
             for (var ncal = calData.length, ical = 0; ical < ncal; ical++) {
                 var cal = calData[ical];
-                var borderColor = (ical==0)?"black":"darkblue";
-                var color = (ical==0)?"purple":"green";
-        
+                var borderColor = (ical == 0) ? "black" : "darkblue";
+                var color = (ical == 0) ? "purple" : "green";
+
                 for (var nevent = cal.events.length, iev = 0; iev < nevent; iev++) {
                     let ev = cal.events[iev];
                     events.push({
+                        id: ev.id,
                         title: ev.title,
                         color: color,
                         borderColor: borderColor,
                         location: ev.location,
-                        responseStatus: ev.responseStatus,
+                        responseStatus: ev.responseStatus,                        
                         start: new Date(ev.start),
                         end: new Date(ev.end),
                     });
