@@ -3,10 +3,14 @@
 </div>
 <div *ngFor="let table of tableService.tables">
     <div *ngIf="table.rows">
-        <datatable
-            class='material striped'
-            [rows]='table.rows'
-            [options]='table.options'>
+        <datatable 
+            class='material striped' 
+            [rows]='table.rows' 
+            [options]='table.options'             
+            (onSelectionChange)='table.onSelectionChange($event)'>
         </datatable>
+        <div *ngFor="let selection of table.selections">
+            {{selection}}
+        </div>        
     </div>
 </div>

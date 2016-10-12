@@ -8,7 +8,8 @@ import {
     Angular2DataTableModule,
     TableOptions,
     TableColumn,
-    ColumnMode
+    ColumnMode,
+    SelectionType
 } from 'angular2-data-table';
 
 interface Table {
@@ -19,6 +20,7 @@ interface Table {
 class Table implements ITable {
     options: TableOptions;
     rows: any[];
+    selections: any[] = [];
     
     loadData(columns: string[], rows: any[]): Promise<void> {
         console.log('load data');
@@ -29,12 +31,18 @@ class Table implements ITable {
             headerHeight: 50,
             footerHeight: 50,
             rowHeight: 'auto',
+            selectionType: SelectionType.multi,
             columns: columnOptions
         });
 
         this.rows = rows;
 
         return Promise.resolve();
+    }
+
+    onSelectionChange(event: any) {
+        console.log('something was selected');
+        console.log(JSON.stringify(event));
     }
 }
 

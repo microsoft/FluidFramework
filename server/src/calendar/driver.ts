@@ -29,7 +29,7 @@ $(document).ready(() => {
 
                         tableService.createTable().then((table) => {
                             let columns = ['provider', 'title', 'location', 'start', 'end', 'responseStatus'];
-                            let rows: any[] = [];
+                            let rows: any[] = [{ 'provider': 'test', 'title': 'test', 'location': 'test', 'start': 'test', 'end': 'test', 'responseStatus': 'test' }];
                             for (let calendar of calData) {
                                 for (let event of calendar.events) {
                                     rows.push({
