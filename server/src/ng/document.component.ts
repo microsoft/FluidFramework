@@ -2,14 +2,16 @@ import { Component, Input, OnChanges, SimpleChanges, OnInit } from '@angular/cor
 import { InteractiveDocumentViewService } from './interactive-document-view.service';
 import { InteractiveDocumentService } from './interactive-document.service';
 import { ViewModel, IViews, IView, Resource } from '../interfaces';
-import { PostMessageHostServer, EchoServiceName, TableServiceName, ITableService, ITable } from '../api/index';
+import { PostMessageHostServer, EchoServiceName, TableServiceName, ITableService, ITable, ITableListener } from '../api/index';
 import * as services from '../services/index';
 import {
     Angular2DataTableModule,
     TableOptions,
-    TableColumn,
-    ColumnMode
+    TableColumn,    
+    ColumnMode,
+    SelectionType
 } from 'angular2-data-table';
+import * as _ from 'lodash';
 
 interface Table {
     options: TableOptions;
@@ -19,6 +21,8 @@ interface Table {
 class Table implements ITable {
     options: TableOptions;
     rows: any[];
+    selection: any[] = [];
+    private _listeners: ITableListener[] = [];
     
     loadData(columns: string[], rows: any[]): Promise<void> {
         console.log('load data');
@@ -29,12 +33,32 @@ class Table implements ITable {
             headerHeight: 50,
             footerHeight: 50,
             rowHeight: 'auto',
+            selectionType: SelectionType.multi,
             columns: columnOptions
         });
 
         this.rows = rows;
 
         return Promise.resolve();
+    }
+
+    onSelectionChange(event: any) { 
+        this.selection = event;      
+        for (let listener of this._listeners) {
+            listener.rowsSelected(event);
+        }        
+    }
+
+    onSelectionDeleted() {
+        this.rows = _.filter(this.rows, (row) => !_.includes(this.selection, row));
+        for (let listener of this._listeners) {
+            listener.rowsChanged(this.rows);
+        }
+    }
+
+    addListener(listener: ITableListener): Promise<void> {   
+        this._listeners.push(listener);
+        return Promise.resolve();     
     }
 }
 

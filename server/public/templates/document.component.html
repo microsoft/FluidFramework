@@ -3,10 +3,14 @@
 </div>
 <div *ngFor="let table of tableService.tables">
     <div *ngIf="table.rows">
-        <datatable
-            class='material striped'
-            [rows]='table.rows'
-            [options]='table.options'>
+        <datatable 
+            class='material striped' 
+            [rows]='table.rows' 
+            [options]='table.options'             
+            (onSelectionChange)='table.onSelectionChange($event)'>
         </datatable>
+        <div *ngIf="table.selection.length > 0">
+            <button (click)='table.onSelectionDeleted()'>Delete</button>
+        </div>
     </div>
 </div>

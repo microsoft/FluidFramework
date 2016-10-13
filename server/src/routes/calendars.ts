@@ -26,11 +26,13 @@ export var crouter = <CalendarRouter> {
     init: init
 }
 
-function makeCalendarEvent(title: string, start: string, end: string, url?: string, location?: string, responseStatus?: string) {
+function makeCalendarEvent(id: string, title: string, start: string, end: string, self: string, location?: string, responseStatus?: string) {
     return <CalendarEvent>{
+        id: id,
         title: title,
         start: moment(start).toISOString(),
         end: moment(end).toISOString(),
+        self: self,
         responseStatus: responseStatus ? responseStatus : "unknown",
         location: location,
     }
@@ -69,10 +71,10 @@ router.get('/', (req: express.Request, response: express.Response) => {
                                 // MSFT strings are in UTC but don't place the UTC marker in the date string - convert to this format to standardize the input
                                 // to CalendarEvent
                                 var microsoftResults: CalendarEvent[] = body.value.map((item) => {
-                                    let loc = item.location? item.location.displayName : "";
-                                    return makeCalendarEvent(item.subject, moment.utc(item.start.dateTime).toISOString(), 
-                                                      moment.utc(item.end.dateTime).toISOString(),`/calendars/microsoft/${item.id}`,
-                                                      loc, item.responseStatus.response);
+                                    let loc = item.location ? item.location.displayName : "";
+                                    return makeCalendarEvent(item.id, item.subject, moment.utc(item.start.dateTime).toISOString(),
+                                        moment.utc(item.end.dateTime).toISOString(), `/calendars/microsoft/${item.id}`,
+                                        loc, item.responseStatus.response);
                                 });
 
                                 let calModel = makeCalendar("Microsoft", microsoftResults, '/calendars/microsoft');
@@ -111,7 +113,7 @@ router.get('/', (req: express.Request, response: express.Response) => {
                         }
                         else {                                                        
                             var googleResults = <CalendarEvent[]>response.items.map((item) => 
-                                    makeCalendarEvent(item.summary, item.start.dateTime, item.end.dateTime, 
+                                    makeCalendarEvent(item.id, item.summary, item.start.dateTime, item.end.dateTime, 
                                     `/calendars/google/${item.id}`,"", item.status));                                
                             let cal = makeCalendar("Google", googleResults, '/calendars/google');
 
@@ -130,6 +132,74 @@ router.get('/', (req: express.Request, response: express.Response) => {
     }, (error) => {
         response.status(400).json(error);
     });
+});
+
+router.delete('/:provider/:id', (req: express.Request, response: express.Response) => {
+    let provider = req.params['provider'];
+    let eventId = req.params['id'];
+
+    let user = <IUser>(<any>req).user;
+    let responseP;
+
+    if (provider === 'microsoft') {
+        responseP = accounts.getTokensForProvider(user, provider).then((tokens) => {
+            let url = `https://graph.microsoft.com/v1.0/me/events/${eventId}`;
+            var deleteP = new Promise((resolve, reject) => {
+                request.del(
+                    url,
+                    { auth: { 'bearer': tokens.access }, json: true },
+                    (error, response, body) => {
+                        if (error) {
+                            return reject(error);
+                        }
+                        else {
+                            return resolve();
+                        }
+                    });
+            });
+
+            return deleteP;
+        });
+    }
+    else if (provider === 'google') {
+        responseP = accounts.getTokensForProvider(user, provider).then((tokens) => {
+            var deleteP = new Promise((resolve, reject) => {
+                let calendar = google.calendar('v3');
+                var OAuth2 = google.auth.OAuth2;
+                var googleConfig = nconf.get("login:google");
+                var oauth2Client = new google.auth.OAuth2(googleConfig.clientId, googleConfig.secret, '/auth/google');;
+
+                // Retrieve tokens via token exchange explained above or set them:
+                oauth2Client.setCredentials({
+                    access_token: tokens.access,
+                    refresh_token: tokens.refresh
+                });
+
+                calendar.events.delete({
+                    auth: oauth2Client,
+                    calendarId: 'primary',
+                    eventId: eventId
+                },
+                    (err, response) => {
+                        if (err) {
+                            return reject(err);
+                        }
+                        else {
+                            return resolve();
+                        }
+                    });
+            });
+
+            return deleteP;
+        });
+    }
+    else {
+        responseP = Promise.reject({ message: 'Unknown provider' });
+    }
+
+    responseP.then(
+        () => response.status(204).end(),
+        (error) => response.status(400).json(error));
 });
 
 router.get('/views', (req: express.Request, response: express.Response) => {

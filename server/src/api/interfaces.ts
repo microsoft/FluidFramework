@@ -17,8 +17,19 @@ export interface ITableService {
 }
 
 /**
+ * Listener interface to receive table updates
+ */
+export interface ITableListener {
+    rowsChanged(rows: any[]): Promise<void>;
+
+    rowsSelected(rows: any[]): Promise<void>;
+}
+
+/**
  * Table access interface
  */
 export interface ITable {
     loadData(columns: string[], rows: any[]): Promise<void>;
+
+    addListener(listener: ITableListener): Promise<void>;
 }
