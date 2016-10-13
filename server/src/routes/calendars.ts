@@ -13,6 +13,19 @@ var googleAuth = require('google-auth-library');
 
 var router = express.Router();
 
+function init() {
+}
+
+export interface CalendarRouter {
+    router: express.Router;
+    init: () => void;
+}
+
+export var crouter = <CalendarRouter> {
+    router: router,
+    init: init
+}
+
 function makeCalendarEvent(title: string, start: string, end: string, url?: string, location?: string, responseStatus?: string) {
     return <CalendarEvent>{
         title: title,
@@ -128,5 +141,3 @@ router.get('/views', (req: express.Request, response: express.Response) => {
             partials: defaultPartials
         });
 });
-
-export = router;
