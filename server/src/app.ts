@@ -16,7 +16,7 @@ import * as authRoute from './routes/auth';
 import * as connectRoute from './routes/connect';
 import * as knowledgeRoute from './routes/knowledge';
 import * as documentsRoute from './routes/documents';
-import * as calendarsRoute from './routes/calendars';
+import * as calendarsRouter from './routes/calendars';
 import * as browserRoute from './routes/browser';
 import * as viewsRoute from './routes/views';
 
@@ -282,7 +282,8 @@ app.use('/connect', connectRoute);
 app.use('/users', usersRoute);
 app.use('/knowledge', knowledgeRoute);
 app.use('/documents', documentsRoute);
-app.use('/calendars', calendarsRoute);
+calendarsRouter.crouter.init();
+app.use('/calendars', calendarsRouter.crouter.router);
 app.use('/browser', browserRoute);
 app.use('/views', viewsRoute);
 
