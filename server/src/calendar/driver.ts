@@ -6,6 +6,7 @@ var qtip = require('qtip2');
 
 // TODO better wrap this into some kind of model structure
 var rowsModel: any[] = [];
+var pendingDeletes: any[] = [];
 
 class TableListener implements ITableListener {    
     rowsChanged(rows: any[]): Promise<void> {
@@ -13,13 +14,10 @@ class TableListener implements ITableListener {
         let deletedRows = _.filter(rowsModel, (rowModel) => _.find(rows, (row) => row.id === rowModel.id) === undefined);
         $('#calendar').fullCalendar('removeEvents', (event) => {
             return _.find(deletedRows, (deletedRow) => deletedRow.id === event.id);
-        });
+        });        
 
-        // iterate over the deletedRows URLs and delete them
-        for (let deletedRow of deletedRows) {
-            $.ajax(deletedRow.self, { method: "DELETE" });
-            console.log(`DELETE: ${deletedRow.self}`);
-        }
+        // Add the rows to delete to the pending list
+        pendingDeletes = pendingDeletes.concat(deletedRows);
 
         // Update the model with the changed rows
         rowsModel = rows;
@@ -49,6 +47,16 @@ $(document).ready(() => {
         success: (calData: Calendar[]) => {
             if (pnhost) {
                 $("#buttons").append($('<button id="load-table">Export to Table</button><button id="save">Save</button>'));
+                
+                // Save processes any pending calendar changes
+                $("#save").click(() => {
+                    // iterate over the deletedRows URLs and delete them
+                    for (let pendingDelete of pendingDeletes) {
+                        $.ajax(pendingDelete.self, { method: "DELETE" });
+                        console.log(`DELETE: ${pendingDelete.self}`);
+                    }
+                });
+
                 $("#load-table").click(() => {
                     tableServiceP.then((tableService) => {
                         if (!tableService) {
