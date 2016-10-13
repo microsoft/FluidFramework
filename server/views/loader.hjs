@@ -1,0 +1,46 @@
+{{<layout}}
+    {{$styles}}        
+        <link href="/stylesheets/embed.css" rel="stylesheet" />
+    {{/styles}}
+
+    {{$content}}        
+        <iframe src="/documents/calendar" frameborder="0" style="overflow:hidden;height:100%;width:100%" height="100%" width="100%"></iframe>                
+    {{/content}}
+
+    {{$scripts}}
+        <script src="/dist/api/api.js"></script>
+        <script>
+            var Table = (function () {
+                function Table() {                    
+                    this._listeners = [];
+                }
+                Table.prototype.loadData = function (columns, rows) {
+                    console.log('load data');                    
+                    return Promise.resolve();
+                };                
+                Table.prototype.addListener = function (listener) {
+                    this._listeners.push(listener);
+                    return Promise.resolve();
+                };
+                return Table;
+            }());
+            
+            var TableService = (function () {
+                function TableService() {
+                    this.tables = [];
+                }
+                TableService.prototype.createTable = function () {
+                    var table = new Table();
+                    this.tables.push(table);
+                    return Promise.resolve(table);
+                };
+                return TableService;
+            }());
+
+            var tableService = new TableService();
+            var server = new pronet.PostMessageHostServer(window);
+            server.addService(pronet.TableServiceName, tableService);
+            server.start();
+        </script>        
+    {{/scripts}}
+{{/layout}}
