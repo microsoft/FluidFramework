@@ -122,8 +122,71 @@ router.get('/', (req: express.Request, response: express.Response) => {
 });
 
 router.delete('/:provider/:id', (req: express.Request, response: express.Response) => {
-    console.log(`Deleteing ${req.params['provider']} ${req.params['id']}`);
-    response.status(204).end();
+    let provider = req.params['provider'];
+    let eventId = req.params['id'];
+
+    let user = <IUser>(<any>req).user;
+    let responseP;
+
+    if (provider === 'microsoft') {
+        responseP = accounts.getTokensForProvider(user, provider).then((tokens) => {
+            let url = `https://graph.microsoft.com/v1.0/me/events/${eventId}`;
+            var deleteP = new Promise((resolve, reject) => {
+                request.del(
+                    url,
+                    { auth: { 'bearer': tokens.access }, json: true },
+                    (error, response, body) => {
+                        if (error) {
+                            return reject(error);
+                        }
+                        else {
+                            return resolve();
+                        }
+                    });
+            });
+
+            return deleteP;
+        });
+    }
+    else if (provider === 'google') {
+        responseP = accounts.getTokensForProvider(user, provider).then((tokens) => {
+            var deleteP = new Promise((resolve, reject) => {
+                let calendar = google.calendar('v3');
+                var OAuth2 = google.auth.OAuth2;
+                var googleConfig = nconf.get("login:google");
+                var oauth2Client = new google.auth.OAuth2(googleConfig.clientId, googleConfig.secret, '/auth/google');;
+
+                // Retrieve tokens via token exchange explained above or set them:
+                oauth2Client.setCredentials({
+                    access_token: tokens.access,
+                    refresh_token: tokens.refresh
+                });
+
+                calendar.events.delete({
+                    auth: oauth2Client,
+                    calendarId: 'primary',
+                    eventId: eventId
+                },
+                    (err, response) => {
+                        if (err) {
+                            return reject(err);
+                        }
+                        else {
+                            return resolve();
+                        }
+                    });
+            });
+
+            return deleteP;
+        });
+    }
+    else {
+        responseP = Promise.reject({ message: 'Unknown provider' });
+    }
+
+    responseP.then(
+        () => response.status(204).end(),
+        (error) => response.status(400).json(error));
 });
 
 router.get('/views', (req: express.Request, response: express.Response) => {

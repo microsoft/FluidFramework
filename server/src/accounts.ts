@@ -176,6 +176,16 @@ function refreshTokens(account: accounts.IAccount): Promise<ITokens> {
     });
 }
 
+export function getTokensForProvider(user: IUser, provider: string): Promise<ITokens> {
+    for (let account of user.accounts) {
+        if (account.provider === provider) {
+            return getTokens(account);
+        }
+    }
+
+    return Promise.reject("Tokens don't exist for account");
+}
+
 /**
  * Retrieves the access tokens for the given account
  */
