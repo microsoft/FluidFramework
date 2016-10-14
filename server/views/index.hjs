@@ -10,6 +10,7 @@
             <h2>Data Sources</h2>
             <ul class="list-unstyled">                
                 <li><a href="/browser">Browser</a></li>
+                <li><a href="/loader">Loader</a></li>
             </ul>
         {{/user}}
         {{^user}}
