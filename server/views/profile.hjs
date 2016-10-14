@@ -14,7 +14,15 @@
                     {{/details.connected}}
                 </h3>
             </li>
-        {{/viewModel}}
-        </ul>                
+        {{/viewModel}}            
+        </ul>         
+        
+        <form action="/profile" method="post">
+            <div class="form-group">
+                <label for="code">Access Code</label>
+                <input type="password" class="form-control" id="code" name="code">
+            </div>
+            <button type="submit" class="btn btn-default">Submit</button>
+        </form>       
     {{/page_content}}            
 {{/page_layout}}  

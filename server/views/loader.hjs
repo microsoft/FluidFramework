@@ -3,19 +3,137 @@
         <link href="/stylesheets/embed.css" rel="stylesheet" />
     {{/styles}}
 
-    {{$content}}        
+    {{$content}}               
         <iframe src="/documents/calendar" frameborder="0" style="overflow:hidden;height:100%;width:100%" height="100%" width="100%"></iframe>                
     {{/content}}
 
     {{$scripts}}
+        <script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-2.1.4.min.js"></script>
+        <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js" type="text/javascript"></script>
         <script src="/dist/api/api.js"></script>
         <script>
+            var officeInitializedP = new Promise(function (resolve, reject) {
+                Office.initialize = function (reason) {
+                    $(document).ready(function () {
+                        resolve();                                    
+                    })
+                };
+            });
+            // officeInitializedP = Promise.resolve();
+
+            var binding;
+            
             var Table = (function () {
-                function Table() {                    
+                function Table() {                                        
                     this._listeners = [];
                 }
+
+                Table.prototype.notifyTableUpdate = function(newRowsRaw) {                                        
+                    // Run through the newRows and use that to filter the existing _rows
+                    var newRows = [];
+                    for (var i = 0; i < this._rows.length; i++) {                        
+                        // See if the row exists 
+                        for (var j = 1; j < newRowsRaw.value.length; j++) {                            
+                            var match = true;
+                            for (var k = 0; k < this._columns.length; k++) {                                                                
+                                if (this._rows[i][this._columns[k]] !== newRowsRaw.value[j][k]) {
+                                    match = false;
+                                } 
+                            }
+                            if (match) {
+                                newRows.push(this._rows[i]);
+                            }
+                        }
+                    }
+                    
+                    this._rows = newRows;                    
+                    for (var i = 0; i < this._listeners.length; i++) {
+                        this._listeners[i].rowsChanged(newRows);
+                    }
+                }
+
+                Table.prototype.displayDataForBinding = function(binding) {
+                    var that = this;
+                    Office.context.document.bindings.getByIdAsync(
+                        "myBinding",
+                        function (result) {
+                            if (result.status === Office.AsyncResultStatus.Succeeded) {
+                                binding = result.value;                                                                
+                                binding.getDataAsync(
+                                    {
+                                        coercionType: Office.CoercionType.Matrix, valueFormat: Office.ValueFormat.Unformatted, filterType: Office.FilterType.OnlyVisible
+                                    },
+                                    function (result) {
+                                        if (result.status === Office.AsyncResultStatus.Succeeded) {                                            
+                                            that.notifyTableUpdate(result);
+                                        }
+                                        else {                                            
+                                        }                         
+                                    });
+                            }
+                            else {
+                                fail(result);
+                            }
+                        });                    
+                }
+
                 Table.prototype.loadData = function (columns, rows) {
-                    console.log('load data');                    
+                    var that = this;
+                    this._columns = columns;
+                    this._rows = rows;                    
+
+                    // Run a batch operation against the Excel object model
+                    Excel.run(function (ctx) {
+                        // Create a proxy object for the active worksheet
+                        var sheet = ctx.workbook.worksheets.getActiveWorksheet();
+
+                        // I imagine I can do C style 'a' + number - but not sure how yet in JS
+                        var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                        var endPosition = possible.charAt(columns.length - 1) + 1; 
+                        var table = sheet.tables.add('A1:' + endPosition, true);
+                        table.name = "calendarTable";
+                        table.getHeaderRowRange().values = [columns];
+                        
+                        var rowsToLoad = [];
+                        for (var i = 0; i < rows.length; i++) {
+                            var newRow = [];                            
+                            for (var j = 0; j < columns.length; j++) {
+                                newRow.push(rows[i][columns[j]]);
+                            }                            
+                            table.rows.add(null, [newRow]);
+                        }                                                                        
+                                                                                                
+                        //Run the queued commands, and return a promise to indicate task completion
+                        return ctx.sync().then(function() {                            
+                            //Create a new table binding for myTable
+                            Office.context.document.bindings.addFromNamedItemAsync(
+                                "calendarTable", 
+                                Office.CoercionType.Table, 
+                                { id: "myBinding" }, 
+                                function (asyncResult) {                                    
+                                    if (asyncResult.status == "failed") {
+                                        console.log("Action failed with error: " + asyncResult.error.message);
+                                    }
+                                    else {
+                                        // If successful, add the event handler to the table binding.
+                                        Office.select("bindings#myBinding").addHandlerAsync(Office.EventType.BindingDataChanged, function() {                                            
+                                            that.displayDataForBinding();
+                                        });
+                                    }
+                                }); 
+                            });
+                    })
+                    .then(function () {                        
+                        console.log("Success!");
+                    })
+                    .catch(function (error) {
+                        // Always be sure to catch any accumulated errors that bubble up from the Excel.run execution                                                
+                        console.log("Error: " + error);
+                        if (error instanceof OfficeExtension.Error) {
+                            console.log("Debug info: " + JSON.stringify(error.debugInfo));
+                        }
+                    });     
+
                     return Promise.resolve();
                 };                
                 Table.prototype.addListener = function (listener) {
@@ -26,18 +144,22 @@
             }());
             
             var TableService = (function () {
-                function TableService() {
+                function TableService(officeReadyP) {
+                    this._officeReadyP = officeReadyP;
                     this.tables = [];
                 }
                 TableService.prototype.createTable = function () {
-                    var table = new Table();
-                    this.tables.push(table);
-                    return Promise.resolve(table);
+                    var _that = this;
+                    return this._officeReadyP.then(function() {
+                        var table = new Table();
+                        _that.tables.push(table);
+                        return table;
+                    });                    
                 };
                 return TableService;
             }());
 
-            var tableService = new TableService();
+            var tableService = new TableService(officeInitializedP);
             var server = new pronet.PostMessageHostServer(window);
             server.addService(pronet.TableServiceName, tableService);
             server.start();
