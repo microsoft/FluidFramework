@@ -51,6 +51,7 @@ class CalendarViewModel {
     private initView() {
         $("#buttons").append($('<div class="fc-right"><div class="fc-button-group"><button id="reload">Reload</button></div></div>'));
         $("#reload").click(() => {
+            this.loadAndCacheCalendars();
         });
 
         if (pnhost) {
@@ -102,11 +103,45 @@ class CalendarViewModel {
                 })
             });
         }
+
+        var fcOptions = <FullCalendar.Options>{
+            minTime: "07:00:00",
+            maxTime: "21:00:00",
+            weekends: false,
+            height: "auto",
+            eventRender: (event, element) => {
+                var content = event.title;
+                if (event.location && (event.location.length > 0)) {
+                    content += ("<br/>" + event.location);
+                }
+                if (event.responseStatus && (event.responseStatus.length > 0)) {
+                    content += ("<br/>" + event.responseStatus);
+                }
+                var qtipOptions: QTip2.QTipOptions = {
+                    content: content,
+                    position: {
+                        my: "left center",
+                        at: "center"
+                    }
+                };
+                element.qtip(qtipOptions);
+            }
+        };
+            
+        $('#calendar').fullCalendar(fcOptions);
+        $('#calendar').fullCalendar('changeView', 'agendaWeek');
     }
 
     private loadAndCacheCalendars(): Promise<Calendar[]> {
         return this._calendar.getCalendars().then((calendars) => {
+            // Initialize the custom UI once we load the first batch of data
+            if (this._cachedCalendars === undefined) {
+                this.initView();
+            }                
+
             this._cachedCalendars = calendars;
+            this.loadCalendarView(calendars);
+
             return calendars;
         })
     }
@@ -125,6 +160,34 @@ class CalendarViewModel {
         this._tableBoundRows = rows;
     }
 
+    private loadCalendarView(calendars: Calendar[]) {
+        var events: FullCalendar.EventObject[] = [];
+        for (var ncal = calendars.length, ical = 0; ical < ncal; ical++) {
+            var cal = calendars[ical];
+            var borderColor = (ical == 0) ? "black" : "darkblue";
+            var color = (ical == 0) ? "purple" : "green";
+
+            for (var nevent = cal.events.length, iev = 0; iev < nevent; iev++) {
+                let ev = cal.events[iev];
+                events.push({
+                    id: ev.id,
+                    title: ev.title,
+                    color: color,
+                    borderColor: borderColor,
+                    location: ev.location,
+                    responseStatus: ev.responseStatus,
+                    start: new Date(ev.start),
+                    end: new Date(ev.end),
+                });
+            }
+        }
+
+        $('#calendar').fullCalendar('removeEvents');
+        for (let event of events) {
+            $('#calendar').fullCalendar('renderEvent', event);
+        }
+    }
+
     init() {
         if (pnhost) {
             this._tableServiceP = pnhost.listServices().then((services) => {
@@ -136,61 +199,7 @@ class CalendarViewModel {
         }
 
         $(document).ready(() => {
-            let eventsP = this.loadAndCacheCalendars();
-            eventsP.then((cachedCalendars) => {
-                // Initialize the custom UI once we load the first batch of data
-                this.initView();
-
-                // page is now ready, initialize the calendar...
-                var fcOptions = <FullCalendar.Options>{
-                    minTime: "07:00:00",
-                    maxTime: "21:00:00",
-                    weekends: false,
-                    height: "auto",
-                    eventRender: (event, element) => {
-                        var content = event.title;
-                        if (event.location && (event.location.length > 0)) {
-                            content += ("<br/>" + event.location);
-                        }
-                        if (event.responseStatus && (event.responseStatus.length > 0)) {
-                            content += ("<br/>" + event.responseStatus);
-                        }
-                        var qtipOptions: QTip2.QTipOptions = {
-                            content: content,
-                            position: {
-                                my: "left center",
-                                at: "center"
-                            }
-                        };
-                        element.qtip(qtipOptions);
-                    }
-                };
-
-                var events: FullCalendar.EventObject[] = [];
-                for (var ncal = cachedCalendars.length, ical = 0; ical < ncal; ical++) {
-                    var cal = cachedCalendars[ical];
-                    var borderColor = (ical == 0) ? "black" : "darkblue";
-                    var color = (ical == 0) ? "purple" : "green";
-
-                    for (var nevent = cal.events.length, iev = 0; iev < nevent; iev++) {
-                        let ev = cal.events[iev];
-                        events.push({
-                            id: ev.id,
-                            title: ev.title,
-                            color: color,
-                            borderColor: borderColor,
-                            location: ev.location,
-                            responseStatus: ev.responseStatus,
-                            start: new Date(ev.start),
-                            end: new Date(ev.end),
-                        });
-                    }
-                }
-
-                fcOptions.events = events;
-                $('#calendar').fullCalendar(fcOptions);
-                $('#calendar').fullCalendar('changeView', 'agendaWeek');
-            });
+            this.loadAndCacheCalendars();            
         });
     }
 }
