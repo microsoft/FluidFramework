@@ -67,42 +67,13 @@ class CalendarViewModel {
                 }
             });
 
-            $("#load-table").click(() => {
-                if (!this._tableP) {
-                    this._tableP = this._tableServiceP.then((tableService) => tableService.createTable());
-                }
+            $("#load-table").click(() => {  
+                // Disable future loads since we're now bound to the host
+                $("#load-table").prop('disabled', true);
 
-                this._tableP.then((table) => {
-                    let columns = ['provider', 'title', 'location', 'start', 'end', 'responseStatus'];
-
-                    // Get and store the rows we will bind to the pnhost table
-                    this._tableBoundRows = [];
-                    for (let calendar of this._cachedCalendars) {
-                        for (let event of calendar.events) {
-                            this._tableBoundRows.push({
-                                id: event.id,
-                                provider: calendar.sourceName,
-                                title: event.title,
-                                location: event.location,
-                                start: event.start,
-                                end: event.end,
-                                responseStatus: event.responseStatus,
-                                self: event.self
-                            })
-                        }
-                    }
-
-                    // Load the rows into the hosted table
-                    table.loadData(columns, this._tableBoundRows);
-
-                    // Setup a table listener if it doesn't already exist 
-                    if (!this._tableListener) {
-                        this._tableListener = new TableListener(this);
-                        table.addListener(this._tableListener);
-                    }
-                })
+                this.loadPNHostTable();
             });
-        }
+        }        
 
         var fcOptions = <FullCalendar.Options>{
             minTime: "07:00:00",
@@ -132,15 +103,61 @@ class CalendarViewModel {
         $('#calendar').fullCalendar('changeView', 'agendaWeek');
     }
 
+    private loadPNHostTable() {
+        if (!this._tableP) {
+            this._tableP = this._tableServiceP.then((tableService) => tableService.createTable());
+        }
+
+        this._tableP.then((table) => {
+            let columns = ['provider', 'title', 'location', 'start', 'end', 'responseStatus'];
+
+            // Get and store the rows we will bind to the pnhost table
+            this._tableBoundRows = [];
+            for (let calendar of this._cachedCalendars) {
+                for (let event of calendar.events) {
+                    this._tableBoundRows.push({
+                        id: event.id,
+                        provider: calendar.sourceName,
+                        title: event.title,
+                        location: event.location,
+                        start: event.start,
+                        end: event.end,
+                        responseStatus: event.responseStatus,
+                        self: event.self
+                    })
+                }
+            }
+
+            // Load the rows into the hosted table
+            table.loadData(columns, this._tableBoundRows);
+
+            // Setup a table listener if it doesn't already exist 
+            if (!this._tableListener) {
+                this._tableListener = new TableListener(this);
+                table.addListener(this._tableListener);
+            }
+        })
+    }
+
     private loadAndCacheCalendars(): Promise<Calendar[]> {
         return this._calendar.getCalendars().then((calendars) => {
+            // Clear any pending deletes - a reload resets any interactions 
+            this._pendingDeletes = [];
+
             // Initialize the custom UI once we load the first batch of data
             if (this._cachedCalendars === undefined) {
                 this.initView();
             }                
 
             this._cachedCalendars = calendars;
+            
+            // Update the calendar UI
             this.loadCalendarView(calendars);
+
+            // Refresh the pnhost table with the new fields
+            if (this._tableP) {
+                this.loadPNHostTable();
+            }        
 
             return calendars;
         })
@@ -180,8 +197,9 @@ class CalendarViewModel {
                     end: new Date(ev.end),
                 });
             }
-        }
+        }        
 
+        // Update the calendar view
         $('#calendar').fullCalendar('removeEvents');
         for (let event of events) {
             $('#calendar').fullCalendar('renderEvent', event);
