@@ -3,7 +3,7 @@
         <link href="/stylesheets/embed.css" rel="stylesheet" />
     {{/styles}}
 
-    {{$content}}               
+    {{$content}}  
         <iframe src="/documents/calendar" frameborder="0" style="overflow:hidden;height:100%;width:100%" height="100%" width="100%"></iframe>                
     {{/content}}
 
@@ -84,44 +84,65 @@
 
                     // Run a batch operation against the Excel object model
                     Excel.run(function (ctx) {
-                        // Create a proxy object for the active worksheet
-                        var sheet = ctx.workbook.worksheets.getActiveWorksheet();
+                        if (that.table) {
+                            var tableRows = ctx.workbook.tables.getItem('calendarTable').rows;                                                         
+                            tableRows.load('items');
+                            return ctx.sync().then(function() {
+                                for (var i = tableRows.items.length - 1; i >= 0; i--) {
+                                    tableRows.items[i].delete();
+                                }
 
-                        // I imagine I can do C style 'a' + number - but not sure how yet in JS
-                        var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                        var endPosition = possible.charAt(columns.length - 1) + 1; 
-                        var table = sheet.tables.add('A1:' + endPosition, true);
-                        table.name = "calendarTable";
-                        table.getHeaderRowRange().values = [columns];
-                        
-                        var rowsToLoad = [];
-                        for (var i = 0; i < rows.length; i++) {
-                            var newRow = [];                            
-                            for (var j = 0; j < columns.length; j++) {
-                                newRow.push(rows[i][columns[j]]);
-                            }                            
-                            table.rows.add(null, [newRow]);
-                        }                                                                        
-                                                                                                
-                        //Run the queued commands, and return a promise to indicate task completion
-                        return ctx.sync().then(function() {                            
-                            //Create a new table binding for myTable
-                            Office.context.document.bindings.addFromNamedItemAsync(
-                                "calendarTable", 
-                                Office.CoercionType.Table, 
-                                { id: "myBinding" }, 
-                                function (asyncResult) {                                    
-                                    if (asyncResult.status == "failed") {
-                                        console.log("Action failed with error: " + asyncResult.error.message);
-                                    }
-                                    else {
-                                        // If successful, add the event handler to the table binding.
-                                        Office.select("bindings#myBinding").addHandlerAsync(Office.EventType.BindingDataChanged, function() {                                            
-                                            that.displayDataForBinding();
-                                        });
-                                    }
-                                }); 
-                            });
+                                var rowsToLoad = [];
+                                for (var i = 0; i < rows.length; i++) {
+                                    var newRow = [];                            
+                                    for (var j = 0; j < columns.length; j++) {
+                                        newRow.push(rows[i][columns[j]]);
+                                    }                            
+                                    tableRows.add(null, [newRow]);
+                                }
+                            });                            
+                        }
+                        else {
+                            // Create a proxy object for the active worksheet
+                            var sheet = ctx.workbook.worksheets.getActiveWorksheet();
+
+                            // I imagine I can do C style 'a' + number - but not sure how yet in JS
+                            var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                            var endPosition = possible.charAt(columns.length - 1) + 1; 
+                            var table = sheet.tables.add('A1:' + endPosition, true);
+                            that.table = table;
+                            table.name = "calendarTable";
+                            table.getHeaderRowRange().values = [columns];
+                            
+                            var rowsToLoad = [];
+                            for (var i = 0; i < rows.length; i++) {
+                                var newRow = [];                            
+                                for (var j = 0; j < columns.length; j++) {
+                                    newRow.push(rows[i][columns[j]]);
+                                }                            
+                                table.rows.add(null, [newRow]);
+                            }
+                                                                                                    
+                            //Run the queued commands, and return a promise to indicate task completion
+                            return ctx.sync().then(function() {                            
+                                //Create a new table binding for myTable
+                                Office.context.document.bindings.addFromNamedItemAsync(
+                                    "calendarTable", 
+                                    Office.CoercionType.Table, 
+                                    { id: "myBinding" }, 
+                                    function (asyncResult) {                                    
+                                        if (asyncResult.status == "failed") {
+                                            console.log("Action failed with error: " + asyncResult.error.message);
+                                        }
+                                        else {
+                                            // If successful, add the event handler to the table binding.
+                                            Office.select("bindings#myBinding").addHandlerAsync(Office.EventType.BindingDataChanged, function() {                                            
+                                                that.displayDataForBinding();
+                                            });
+                                        }
+                                    }); 
+                                });
+                        }
                     })
                     .then(function () {                        
                         console.log("Success!");
