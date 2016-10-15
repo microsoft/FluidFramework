@@ -1,9 +1,26 @@
 <head>
     <link rel='stylesheet' href='/node_modules/fullcalendar/dist/fullcalendar.css' />
     <link rel='stylesheet' href='/node_modules/qtip2/dist/jquery.qtip.css' />
-    <script src='/dist/views/calendar/driver.js'></script>                
+    <script src='/dist/views/calendar/driver.js'></script>
+    <style>
+        .clearfix:after {
+            visibility: hidden;
+            display: block;
+            font-size: 0;
+            content: " ";
+            clear: both;
+            height: 0;
+        }
+
+        .mui-controls {
+            margin-bottom: 15px;
+        }
+    </style>
 </head>
 <body>
-    <div id='buttons'></div>
+    <div class="fc clearfix mui-controls">
+        <div id='buttons' class="fc-toolbar">        
+        </div>
+    </div>
     <div id='calendar'></div>    
 </body>
