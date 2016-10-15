@@ -49,14 +49,14 @@ class CalendarViewModel {
     }
 
     private initView() {
-        $("#buttons").append($('<div class="fc-right"><div class="fc-button-group"><button id="reload">Reload</button></div></div>'));
+        $("#buttons").append($('<div class="fc-right"><div class="fc-button-group"><button id="reload" class="fc-button fc-state-default" type="button">Reload</button></div></div>'));
         $("#reload").click(() => {
             this.loadAndCacheCalendars();
         });
 
         if (pnhost) {
-            $("#buttons").append($('<div class="fc-left"><div class="fc-button-group"><button id="load-table">Export to Table</button></div></div>'));
-            $("#buttons .fc-right .fc-button-group").append('<button id="save">Save</button>');
+            $("#buttons").append($('<div class="fc-left"><div class="fc-button-group"><button id="load-table" class="fc-button fc-state-default" type="button">Export to Table</button></div></div>'));
+            $("#buttons .fc-right .fc-button-group").append('<button id="save" class="fc-button fc-state-default" type="button">Save</button>');
 
             // Save processes any pending calendar changes
             $("#save").click(() => {
