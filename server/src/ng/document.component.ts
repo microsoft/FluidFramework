@@ -27,16 +27,21 @@ class Table implements ITable {
     loadData(columns: string[], rows: any[]): Promise<void> {
         console.log('load data');
         let columnOptions = columns.map((column) => new TableColumn({prop: column}));
+                
+        // TODO There's a bug in the angular table where changing column options adds extra padding
+        // to the table. So assuming the columns don't change between loads for now.
+        if (!this.options) {            
+            this.options = new TableOptions({
+                columnMode: ColumnMode.force,
+                headerHeight: 50,
+                footerHeight: 50,
+                rowHeight: 'auto',
+                selectionType: SelectionType.multi,
+                columns: columnOptions
+            });
+        }
 
-        this.options = new TableOptions({
-            columnMode: ColumnMode.force,
-            headerHeight: 50,
-            footerHeight: 50,
-            rowHeight: 'auto',
-            selectionType: SelectionType.multi,
-            columns: columnOptions
-        });
-
+        this.selection = [];
         this.rows = rows;
 
         return Promise.resolve();
