@@ -3,7 +3,7 @@
         <link href="/stylesheets/embed.css" rel="stylesheet" />
     {{/styles}}
 
-    {{$content}}  
+    {{$content}}
         <iframe src="/documents/calendar" frameborder="0" style="overflow:hidden;height:100%;width:100%" height="100%" width="100%"></iframe>                
     {{/content}}
 
@@ -28,19 +28,26 @@
                     this._listeners = [];
                 }
 
-                Table.prototype.notifyTableUpdate = function(newRowsRaw) {                                        
+                Table.prototype.notifyTableUpdate = function(newRowsRaw) {
+                    // find which column has the id field
+                    var idColumn = -1;
+                    for (var i = 0; i < this._columns.length; i++) {
+                        if (this._columns[i].name === 'id') {
+                            idColumn = i;
+                            break;
+                        }
+                    }
+
+                    if (idColumn === -1) {
+                        throw "no id column defined";
+                    }
+
                     // Run through the newRows and use that to filter the existing _rows
                     var newRows = [];
                     for (var i = 0; i < this._rows.length; i++) {                        
                         // See if the row exists 
-                        for (var j = 1; j < newRowsRaw.value.length; j++) {                            
-                            var match = true;
-                            for (var k = 0; k < this._columns.length; k++) {                                                                
-                                if (this._rows[i][this._columns[k]] !== newRowsRaw.value[j][k]) {
-                                    match = false;
-                                } 
-                            }
-                            if (match) {
+                        for (var j = 1; j < newRowsRaw.value.length; j++) {
+                            if (this._rows[i]['id'] === newRowsRaw.value[j][idColumn]) {
                                 newRows.push(this._rows[i]);
                             }
                         }
@@ -80,7 +87,9 @@
                 Table.prototype.loadData = function (columns, rows) {
                     var that = this;
                     this._columns = columns;
-                    this._rows = rows;                    
+                    this._rows = rows;      
+                    var columnFormats = columns.map(function(column) { return column.format });
+                    var columnNames = columns.map(function(column) { return column.name });              
 
                     // Run a batch operation against the Excel object model
                     Excel.run(function (ctx) {
@@ -96,9 +105,13 @@
                                 for (var i = 0; i < rows.length; i++) {
                                     var newRow = [];                            
                                     for (var j = 0; j < columns.length; j++) {
-                                        newRow.push(rows[i][columns[j]]);
+                                        newRow.push(rows[i][columns[j].name]);
                                     }                            
-                                    tableRows.add(null, [newRow]);
+
+                                    var row = tableRows.add();
+                                    var range = row.getRange();
+                                    range.numberFormat = [columnFormats];
+                                    range.values = [newRow];
                                 }
                             });                            
                         }
@@ -112,19 +125,23 @@
                             var table = sheet.tables.add('A1:' + endPosition, true);
                             that.table = table;
                             table.name = "calendarTable";
-                            table.getHeaderRowRange().values = [columns];
+                            table.getHeaderRowRange().values = [columnNames];
                             
                             var rowsToLoad = [];
                             for (var i = 0; i < rows.length; i++) {
                                 var newRow = [];                            
                                 for (var j = 0; j < columns.length; j++) {
-                                    newRow.push(rows[i][columns[j]]);
+                                    newRow.push(rows[i][columns[j].name]);
                                 }                            
-                                table.rows.add(null, [newRow]);
+
+                                var row = table.rows.add();
+                                var range = row.getRange();
+                                range.numberFormat = [columnFormats];
+                                range.values = [newRow];                                                                
                             }
-                                                                                                    
+                                      
                             //Run the queued commands, and return a promise to indicate task completion
-                            return ctx.sync().then(function() {                            
+                            return ctx.sync().then(function() {
                                 //Create a new table binding for myTable
                                 Office.context.document.bindings.addFromNamedItemAsync(
                                     "calendarTable", 

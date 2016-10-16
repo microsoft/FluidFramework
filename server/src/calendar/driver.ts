@@ -4,6 +4,7 @@ import { Promise } from 'es6-promise';
 import { pnhost, IEchoService, EchoServiceName, ITable, ITableService, TableServiceName, ITableListener } from '../api/index';
 var fullcalendar = require('fullcalendar');
 var qtip = require('qtip2');
+import * as moment from 'moment';
 
 class TableListener implements ITableListener {
     constructor(private _viewModel: CalendarViewModel) {
@@ -109,9 +110,20 @@ class CalendarViewModel {
         }
 
         this._tableP.then((table) => {
-            let columns = ['provider', 'title', 'location', 'start', 'end', 'responseStatus'];
+            // Longer term we should standardize on some format here so there isn't a disconnect between Office and moment
+            const columnTimeFormatString = "m/d/yy h:mm AM/PM";
+            let columns = [
+                { name: 'id', format: null },
+                { name: 'provider', format: null }, 
+                { name: 'title', format: null }, 
+                { name: 'location', format: null }, 
+                { name: 'start', format: columnTimeFormatString }, 
+                { name: 'end', format: columnTimeFormatString }, 
+                { name: 'responseStatus', format: null }];
 
-            // Get and store the rows we will bind to the pnhost table
+
+            // Get and store the rows we will bind to the pnhost table - we convert times to a format easier to parse by hosts (i.e. Excel)
+            const formatString = "M/D/YY h:mm A";                                    
             this._tableBoundRows = [];
             for (let calendar of this._cachedCalendars) {
                 for (let event of calendar.events) {
@@ -120,8 +132,8 @@ class CalendarViewModel {
                         provider: calendar.sourceName,
                         title: event.title,
                         location: event.location,
-                        start: event.start,
-                        end: event.end,
+                        start: moment(event.start).format(formatString),
+                        end: moment(event.end).format(formatString),
                         responseStatus: event.responseStatus,
                         self: event.self
                     })
