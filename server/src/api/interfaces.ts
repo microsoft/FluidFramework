@@ -25,11 +25,17 @@ export interface ITableListener {
     rowsSelected(rows: any[]): Promise<void>;
 }
 
+export interface ITableColumn {
+    name: string;
+
+    format: string;
+}
+
 /**
  * Table access interface
  */
 export interface ITable {
-    loadData(columns: string[], rows: any[]): Promise<void>;
+    loadData(columns: ITableColumn[], rows: any[]): Promise<void>;
 
     addListener(listener: ITableListener): Promise<void>;
 }

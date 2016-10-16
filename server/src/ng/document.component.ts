@@ -2,7 +2,7 @@ import { Component, Input, OnChanges, SimpleChanges, OnInit } from '@angular/cor
 import { InteractiveDocumentViewService } from './interactive-document-view.service';
 import { InteractiveDocumentService } from './interactive-document.service';
 import { ViewModel, IViews, IView, Resource } from '../interfaces';
-import { PostMessageHostServer, EchoServiceName, TableServiceName, ITableService, ITable, ITableListener } from '../api/index';
+import { PostMessageHostServer, ITableColumn, EchoServiceName, TableServiceName, ITableService, ITable, ITableListener } from '../api/index';
 import * as services from '../services/index';
 import {
     Angular2DataTableModule,
@@ -24,9 +24,9 @@ class Table implements ITable {
     selection: any[] = [];
     private _listeners: ITableListener[] = [];
     
-    loadData(columns: string[], rows: any[]): Promise<void> {
+    loadData(columns: ITableColumn[], rows: any[]): Promise<void> {
         console.log('load data');
-        let columnOptions = columns.map((column) => new TableColumn({prop: column}));
+        let columnOptions = columns.map((column) => new TableColumn({prop: column.name}));
                 
         // TODO There's a bug in the angular table where changing column options adds extra padding
         // to the table. So assuming the columns don't change between loads for now.
