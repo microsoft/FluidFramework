@@ -19,6 +19,7 @@ import * as documentsRoute from './routes/documents';
 import * as calendarsRouter from './routes/calendars';
 import * as browserRoute from './routes/browser';
 import * as loaderRoute from './routes/loader';
+import * as excelRoute from './routes/excel';
 import * as viewsRoute from './routes/views';
 
 import * as passport from 'passport';
@@ -284,6 +285,8 @@ app.use('/users', usersRoute);
 app.use('/knowledge', knowledgeRoute);
 app.use('/documents', documentsRoute);
 app.use('/loader', loaderRoute);
+app.use('/excel', excelRoute);
+
 calendarsRouter.crouter.init();
 app.use('/calendars', calendarsRouter.crouter.router);
 app.use('/browser', browserRoute);
