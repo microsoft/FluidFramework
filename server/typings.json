@@ -9,6 +9,7 @@
     "node": "registry:env/node#4.0.0+20160918225031",
     "passport": "registry:dt/passport#0.2.0+20160720063208",
     "qtip2": "registry:dt/qtip2#2.2.1+20160317120654",
+    "quill": "registry:dt/quill#1.1.0+20161025144844",
     "socket.io": "registry:dt/socket.io#1.4.4+20160909205835",
     "socket.io-client": "registry:dt/socket.io-client#1.4.4+20160317120654"
   },

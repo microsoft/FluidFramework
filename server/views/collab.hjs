@@ -16,36 +16,12 @@
         <div id="editor">
           <p>Hello World!</p>
         </div>   
-        <div id="counter"></div>              
+        <div id="counter"></div>
+        <div id="console"></div>
     {{/content}}
     
     {{$scripts}}
-        <!-- Include the Quill library -->
-        <script src="https://cdn.quilljs.com/1.0.0/quill.js"></script>
-        <script src="/dist/collab/collab.js"></script>
-
-        <!-- Initialize Quill editor -->
-        <script>
-          // Implement and register module
-          Quill.register('modules/counter', function(quill, options) {
-            var container = document.querySelector(options.container);
-            quill.on('text-change', function() {
-              var text = quill.getText();
-              // There are a couple issues with counting words
-              // this way but we'll fix these later
-              container.innerHTML = text.split(/\s+/).length;
-            });
-          });
-
-          var editor = new Quill('#editor', {
-            modules: { 
-              toolbar: '#toolbar',
-              counter: {
-                container: '#counter'
-              } 
-            },
-            theme: 'snow'
-          });
-        </script>
+        <!-- Include the Quill library -->        
+        <script src="/dist/collab/collab.js"></script>        
     {{/scripts}}            
 {{/layout}}

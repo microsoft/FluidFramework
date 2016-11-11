@@ -57,6 +57,7 @@
     "passport-linkedin": "^1.0.0",
     "passport-openidconnect": "0.0.1",
     "qtip2": "^3.0.3",
+    "quill": "^1.1.5",
     "redis": "^2.6.2",
     "reflect-metadata": "^0.1.8",
     "request": "^2.75.0",
