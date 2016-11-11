@@ -82,4 +82,19 @@ gulp.task("calendar", function() {
         .pipe(gulp.dest("public/dist/views/calendar"))
 });
 
-gulp.task("default", ["build", "browserify", "api", "calendar"]);
+// Collab app
+gulp.task("collab", function() {
+    return browserify({
+            basedir: '.',
+            debug: true,
+            entries: ['src/collab/collab.ts'],
+            cache: {},
+            packageCache: {}
+        })        
+        .plugin(tsify)        
+        .bundle()        
+        .pipe(source('collab.js'))
+        .pipe(gulp.dest("public/dist/collab"))
+});
+
+gulp.task("default", ["build", "browserify", "api", "calendar", "collab"]);

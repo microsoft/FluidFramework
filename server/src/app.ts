@@ -21,6 +21,7 @@ import * as browserRoute from './routes/browser';
 import * as loaderRoute from './routes/loader';
 import * as excelRoute from './routes/excel';
 import * as viewsRoute from './routes/views';
+import * as collabRoute from './routes/collab';
 
 import * as passport from 'passport';
 import * as connectRedis from 'connect-redis';
@@ -286,6 +287,7 @@ app.use('/knowledge', knowledgeRoute);
 app.use('/documents', documentsRoute);
 app.use('/loader', loaderRoute);
 app.use('/excel', excelRoute);
+app.use('/collab', collabRoute);
 
 calendarsRouter.crouter.init();
 app.use('/calendars', calendarsRouter.crouter.router);
