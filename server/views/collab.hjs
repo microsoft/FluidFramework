@@ -14,7 +14,6 @@
 
         <!-- Create the editor container -->
         <div id="editor">
-          <p>Hello World!</p>
         </div>   
         <div id="counter"></div>
         <div id="console"></div>
@@ -22,6 +21,9 @@
     
     {{$scripts}}
         <!-- Include the Quill library -->        
-        <script src="/dist/collab/collab.js"></script>        
+        <script src="/dist/collab/collab.js"></script> 
+        <script>
+          collab.connect("{{id}}");          
+        </script>
     {{/scripts}}            
 {{/layout}}

@@ -89,7 +89,8 @@ gulp.task("collab", function() {
             debug: true,
             entries: ['src/collab/collab.ts'],
             cache: {},
-            packageCache: {}
+            packageCache: {},
+            standalone: 'collab'
         })        
         .plugin(tsify)        
         .bundle()        

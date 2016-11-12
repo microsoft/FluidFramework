@@ -82,11 +82,11 @@ class Collection<T> {
         });    
     }
     
-    create(document: T): Promise<T> {
+    create(document: T, disableAutomaticIdGeneration = true): Promise<T> {
         let collectionUrl = getCollectionUrl(this.name);
 
         return this._collectionP.then(() => {
-            return createDocument(collectionUrl, document, { disableAutomaticIdGeneration: true });
+            return createDocument(collectionUrl, document, { disableAutomaticIdGeneration: disableAutomaticIdGeneration });
         });
     }
 
