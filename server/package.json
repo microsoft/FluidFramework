@@ -91,6 +91,7 @@
   },
   "browserify-shim": {
     "jquery": "jQuery",
+    "quill": "global:Quill",
     "qtip2": {
       "depends": [
         "jquery:jQuery"

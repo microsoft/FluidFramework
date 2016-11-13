@@ -3,6 +3,7 @@
     {{$styles}}
         <!-- Include Quill stylesheet -->
         <link href="https://cdn.quilljs.com/1.0.0/quill.snow.css" rel="stylesheet">
+        <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
     {{/styles}}
 
     {{$content}}
@@ -10,6 +11,8 @@
         <div id="toolbar">
           <button class="ql-bold">Bold</button>
           <button class="ql-italic">Italic</button>
+          <button id="video-button" class="fa fa-play"></button>
+          <button id="chart-button" class="fa fa-area-chart"></button>
         </div>
 
         <!-- Create the editor container -->
@@ -20,10 +23,12 @@
     {{/content}}
     
     {{$scripts}}
-        <!-- Include the Quill library -->        
+        <!-- Include the Quill library -->   
+        <script src="https://cdn.quilljs.com/1.0.0/quill.js"></script>
+        <script src="https://edera.cloudapp.net/javascripts/api/ivy.js"></script>     
         <script src="/dist/collab/collab.js"></script> 
         <script>
-          collab.connect("{{id}}");          
+          collab.connect("{{id}}", {{sync}});          
         </script>
     {{/scripts}}            
 {{/layout}}
