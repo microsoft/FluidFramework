@@ -7,7 +7,8 @@ var richText = require('rich-text');
 sharedb.types.register(richText.type);
 
 // Open WebSocket connection to ShareDB server
-var socket = new WebSocket('ws://' + window.location.host);
+var protocol = window.location.protocol.indexOf('https') !== -1 ? 'wss' : 'ws';
+var socket = new WebSocket(`${protocol}://${window.location.host}`);
 var connection = new sharedb.Connection(socket);
 
 // For testing reconnection
