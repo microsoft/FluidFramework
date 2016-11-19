@@ -5,57 +5,36 @@ import { ViewModel, IViews, IView, Resource } from '../interfaces';
 import { PostMessageHostServer, ITableColumn, EchoServiceName, TableServiceName, ITableService, ITable, ITableListener } from '../api/index';
 import * as services from '../services/index';
 import {
-    Angular2DataTableModule,
-    TableOptions,
-    TableColumn,    
+    Angular2DataTableModule,                
     ColumnMode,
     SelectionType
 } from 'angular2-data-table';
 import * as _ from 'lodash';
 
-interface Table {
-    options: TableOptions;
+class Table implements ITable {    
     rows: any[];
-}
-
-class Table implements ITable {
-    options: TableOptions;
-    rows: any[];
-    selection: any[] = [];
+    columns: any[];    
+    selected: any[] = []
     private _listeners: ITableListener[] = [];
     
     loadData(columns: ITableColumn[], rows: any[]): Promise<void> {
         console.log('load data');
-        let columnOptions = columns.map((column) => new TableColumn({prop: column.name}));
-                
-        // TODO There's a bug in the angular table where changing column options adds extra padding
-        // to the table. So assuming the columns don't change between loads for now.
-        if (!this.options) {            
-            this.options = new TableOptions({
-                columnMode: ColumnMode.force,
-                headerHeight: 50,
-                footerHeight: 50,
-                rowHeight: 'auto',
-                selectionType: SelectionType.multi,
-                columns: columnOptions
-            });
-        }
-
-        this.selection = [];
+        this.columns = columns.map((column) => ({prop: column.name}));
+        this.selected = [];
         this.rows = rows;
 
         return Promise.resolve();
     }
 
     onSelectionChange(event: any) { 
-        this.selection = event;      
+        this.selected = event.selected;              
         for (let listener of this._listeners) {
-            listener.rowsSelected(event);
+            listener.rowsSelected(event.selected);
         }        
     }
 
     onSelectionDeleted() {
-        this.rows = _.filter(this.rows, (row) => !_.includes(this.selection, row));
+        this.rows = _.filter(this.rows, (row) => !_.includes(this.selected, row));
         for (let listener of this._listeners) {
             listener.rowsChanged(this.rows);
         }

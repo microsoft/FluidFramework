@@ -1,10 +1,29 @@
-import * as io from 'socket.io-client';
-var Quill = require('quill');
 import * as $ from 'jquery';
+var Quill = require('quill');
+var sharedb = require('sharedb/lib/client');
+var richText = require('rich-text');
 
+// Register the use of the rich text OT format
+sharedb.types.register(richText.type);
+
+// Open WebSocket connection to ShareDB server
+var socket = new WebSocket('ws://' + window.location.host);
+var connection = new sharedb.Connection(socket);
+
+// For testing reconnection
+(<any> window).disconnect = function () {
+    connection.close();
+};
+
+(<any> window).connect = function () {
+    var socket = new WebSocket('ws://' + window.location.host);
+    connection.bindToSocket(socket);
+};
+
+// One of the sample Quill modules as an example of a custom plugin
 Quill.register('modules/counter', (quill, options) => {
     var container = document.querySelector(options.container);
-    quill.on('text-change', (delta: Quill.DeltaStatic, oldContents: Quill.DeltaStatic, source: String) => {
+    quill.on('text-change', (delta, oldContents, source: String) => {
         var text = quill.getText();
         
         // There are a couple issues with counting words
@@ -97,9 +116,6 @@ var host = new window['ivy'].Host({
     secret: "IvyBearerToken"
 });
 
-// The below will fetch the data and then render it. If you want it to animate call setConfiguration again with new settings
-
-
 let ChartBlot: any = function (_BlockEmbed3) {        
     var ChartBlot: any =  function() {
         _classCallCheck(this, ChartBlot);
@@ -136,14 +152,20 @@ Quill.register(BlockEmbed);
 Quill.register(VideoBlot);
 Quill.register(ChartBlot);
 
-export function connect(id: string, sync: boolean) {    
-    let socket = io();
+export function connect(id: string, sync: boolean) {
+    let doc = connection.get('documents', id);    
+    doc.subscribe((err) => {        
+        if (err) {
+            throw err;
+        }
 
-    let editor = null;
-    let suppressChange = false;
+        // If there is no type we need to create the document
+        if (!doc.type) {
+            doc.create([], 'rich-text');
+        }
 
-    socket.emit('join', id, (opsDocument: any[]) => {            
-        editor = new Quill('#editor', {
+        // create the editor
+        let quill = new Quill('#editor', { 
             modules: {
                 toolbar: '#toolbar',
                 counter: {
@@ -152,20 +174,31 @@ export function connect(id: string, sync: boolean) {
             },
             theme: 'snow'
         });
-        (<any> window).myQuillEditor = editor;
 
+        // Set the contents and populate events
+        quill.setContents(doc.data);
+        quill.on('text-change', function (delta, oldDelta, source) {
+            if (source !== 'user') return;
+            doc.submitOp(delta, { source: quill });
+        });
+        doc.on('op', function (op, source) {
+            if (source === quill) return;
+            quill.updateContents(op);
+        });        
+
+        // Bind the custom buttons
         $('#video-button').click(() => {
-            let range = editor.getSelection(true);
-            editor.insertText(range.index, '\n', Quill.sources.USER);
+            let range = quill.getSelection(true);
+            quill.insertText(range.index, '\n', Quill.sources.USER);
             let url = 'https://www.youtube.com/embed/QHH3iSeDBLo?showinfo=0';
-            editor.insertEmbed(range.index + 1, 'video', url, Quill.sources.USER);
-            editor.formatText(range.index + 1, 1, { height: '170', width: '400' });
-            editor.setSelection(range.index + 2, Quill.sources.SILENT);
+            quill.insertEmbed(range.index + 1, 'video', url, Quill.sources.USER);
+            // quill.formatText(range.index + 1, 1, { height: '170', width: '400' });
+            quill.setSelection(range.index + 2, Quill.sources.SILENT);
         });
 
         $('#chart-button').click(() => {
-            let range = editor.getSelection(true);
-            editor.insertText(range.index, '\n', Quill.sources.USER);
+            let range = quill.getSelection(true);
+            quill.insertText(range.index, '\n', Quill.sources.USER);
             let chartDef = {
                 "hasChartTitle": true,
                 "chartTitleText": "Chart Title",
@@ -207,55 +240,9 @@ export function connect(id: string, sync: boolean) {
                 "hasDataLabels": false
                 };
 
-            editor.insertEmbed(range.index + 1, 'chart', JSON.stringify(chartDef), Quill.sources.USER);
-            editor.formatText(range.index + 1, 1, { height: '170', width: '400' });
-            editor.setSelection(range.index + 2, Quill.sources.SILENT);
-        });
-
-        // Seed the editor with the previous document
-        for (let ops of opsDocument) {
-            editor.updateContents(<Quill.DeltaStatic>(<any> { ops: ops.deltas }));
-        }        
-
-        // Listen for future updates
-        editor.on('text-change', (delta: Quill.DeltaStatic, oldContents: Quill.DeltaStatic, source: String) => {
-            // If we are processing an append don't handle the text change event
-            if (suppressChange) {
-                return;
-            }            
-
-            var contents = editor.getContents();            
-
-            // If syncing is not enabled don't broadcast updates
-            if (sync) {
-                socket.emit('append', {
-                    room: id,
-                    ops: delta.ops
-                });
-            }            
-        });                
-    });
-
-    socket.on('user connect', (msg) => {
-        // $("#console").append('<div>New user connected</div>');
-    });
-
-    socket.on('user disconnect', (msg) => {
-        // $("#console").append('<div>User disconnected</div>');
-    });
-
-    socket.on('append', (ops) => {
-        // If syncing is not enabled ignore updates     
-        if (!sync) {
-            return;
-        }   
-
-        let delta = {
-            ops: ops
-        };
-
-        suppressChange = true;
-        editor.updateContents(<Quill.DeltaStatic>(<any> delta));
-        suppressChange = false;
-    })
+            quill.insertEmbed(range.index + 1, 'chart', JSON.stringify(chartDef), Quill.sources.USER);
+            // quill.formatText(range.index + 1, 1, { height: '170', width: '400' });
+            quill.setSelection(range.index + 2, Quill.sources.SILENT);
+        });        
+    });                        
 }

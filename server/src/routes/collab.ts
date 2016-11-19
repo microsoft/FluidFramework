@@ -1,5 +1,8 @@
 import * as express from 'express';
 import { defaultPartials } from './partials';
+var ShareDB = require('sharedb');
+
+var share = new ShareDB()
 
 var router = express.Router();
 

@@ -5,11 +5,17 @@
     <div *ngIf="table.rows">
         <datatable 
             class='material striped' 
-            [rows]='table.rows' 
-            [options]='table.options'             
-            (onSelectionChange)='table.onSelectionChange($event)'>
+            [rows]='table.rows'
+            [columns]='table.columns'                
+            [columnMode]="'force'" 
+            [headerHeight]="50"
+            [footerHeight]="50"
+            [rowHeight]="'auto'"   
+            [selectionType]="'multi'"     
+            [selected]="table.selected"
+            (select)='table.onSelectionChange($event)'>
         </datatable>
-        <div *ngIf="table.selection.length > 0">
+        <div *ngIf="table.selected.length > 0">
             <button (click)='table.onSelectionDeleted()'>Delete</button>
         </div>
     </div>

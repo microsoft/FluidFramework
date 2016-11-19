@@ -29,8 +29,12 @@ var server = http.createServer(app);
 /**
  * Attach to socket.io connections
  */
-import { default as io } from './io';
-io.attach(server);
+// import { default as io } from './io';
+// io.attach(server);
+
+// Start the collaboration server
+import * as collabServer from './collab/server';
+collabServer.initialie(server);
 
 /**
  * Listen on provided port, on all network interfaces.

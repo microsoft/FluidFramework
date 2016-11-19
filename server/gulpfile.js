@@ -98,4 +98,20 @@ gulp.task("collab", function() {
         .pipe(gulp.dest("public/dist/collab"))
 });
 
-gulp.task("default", ["build", "browserify", "api", "calendar", "collab"]);
+// ShareDB app
+gulp.task("sharedb", function() {
+    return browserify({
+            basedir: '.',
+            debug: true,
+            entries: ['src/collab/sharedb.ts'],
+            cache: {},
+            packageCache: {},
+            standalone: 'collab'
+        })        
+        .plugin(tsify)        
+        .bundle()        
+        .pipe(source('sharedb.js'))
+        .pipe(gulp.dest("public/dist/collab"))
+});
+
+gulp.task("default", ["build", "browserify", "api", "calendar", "collab", "sharedb"]);
