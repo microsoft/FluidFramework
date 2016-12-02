@@ -12,6 +12,7 @@ that each team will have diverse skills, including JavaScript, native coding,
 and intelligent services.  Sprint 2 will likely have different feature teams.
 
 The five feature teams are:
+
 1. Data Services (David Conger, Yang Gao, KoshN, Dan Cheung/Ash Morgan)
 2. Excel (Mark Young, Shaofeng, Alex Croicu, Mark Schmidt)
 3. Data Model (Kurt, Alex, Ali, Igor, Ben, Gabe Hall)
@@ -37,6 +38,7 @@ The ink team will build a prototype of collaborative ink in the flex container, 
 screen and other view transformations. The ink team will investigate ink recognition and smoothing.
 
 The data services team will investigate the following questions:
+
 * Can we incorporate intelligent services such as spell check into our text block
 MUI?  How do we separate this service from its dependence on app-specific
 data structures?
@@ -46,6 +48,7 @@ data structures?
 * How can we visualize graphs such as LinkedIn, Office, Facebook?
 
 The Excel team will investigate the following questions: 
+
 * How do we back a set of Excel range MUIs with the Excel service? How do we make it easy to 
 create the OneDrive file required for the Excel service?  
 * Are there alternatives (could the Excel service run on some other backing store, for example a REST API for storage)?  How do we map 
@@ -58,6 +61,7 @@ a separate sheet, or are cross-sheet references too expensive?
 * How do we highlight Yellow?
 
 The data model team will investigate the following questions:
+
 * What is the container model for MUIs?  Does it vary between different container types? 
 * How do containers handle references and other cross-container information such as annotations?
 * How does the collaboration model and container representation relate to providing a timeline and
@@ -76,6 +80,7 @@ advantages on Windows?
 * Should we use the 1D stream control as our first native UX element?
 
 The canvas team will investigate the following questions:
+
 * How should the timeline UX provide checkpoints, undo, temporary undo (go back to point in time)
 and time-synchronized replay?
 * How can we use gestures and other UX to learn relationships among MUIs and between ink and MUIs so that 
@@ -89,7 +94,8 @@ make sure all MUIs can load incrementally with optional "splash screen"?
 * What is the UX for scaling, selection, and semantic lifting?
 * How do we think about UX for having flex and flow containers stacked or side by side?
 
-The ink team
+The ink team will investigate the following questions:
+
 * How do we smooth ink in Edge using low-latency client-side code?
 * How can we recognize basic shapes, numerals and other symbols using ink? Can we
 adapt code to use as client-side JavaScript? Can we build a service with 
