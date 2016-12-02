@@ -1,0 +1,87 @@
+# Welcome to Sprint 1 
+
+In Sprint 1 we will investigate key design questions and we will begin to prototype the Office framework,
+our set of MUI components.  This set of components includes domain-specifc MUIs such as calendars, 
+container MUIs such as the flex, flow, list, and grid containers, and MUIs that connect to services such as
+the Excel range MUI.
+
+Sprint 1 starts now and finishes January 20th, 2017.  
+
+Sprint 1 will have four feature teams.  We will balance the feature teams so 
+that each team will have diverse skills, including JavaScript, native coding,
+and intelligent services.  Sprint 2 will likely have different feature teams.
+
+The four feature teams are:
+1. Data sources and intelligent services
+2. MUI services and flow container
+3. Collaboration and data structures
+4. Flex container and ink UX
+
+The data sources and intelligent services team will build MUIs around key data sources, including
+document metadata, Satori, Office Graph, and CDM.  This team will also investigate how our MUIs can
+use intelligent services such as spell check and ink recognition.
+
+The MUI services and flow container team will have as its highest prioity the development of
+the Excel range MUI.  This team will also investigate and prototype UI design for the flow container, 
+using an "AI journaling" as a concrete example.  
+
+The collaboration and data structures team will service the other three teams by co-investigating and
+prototyping solutions to component model, collaboration infrastructure and representation of
+MUI container content.
+
+The Flex container and ink UX team will build a prototype of the Flex container.  The team will
+investigate UX for the flex container, especially how the Flex ink layer relates to the MUI content
+layer.   
+
+The data sources and intelligent services team will investigate the following
+questions:
+* How do we smooth ink in Edge using low-latency client-side code?
+* How can we recognize basic shapes, numerals and other symbols using ink? Can we
+adapt code to use as client-side JavaScript? Can we build a service with 
+reasonable latency?  Can we identify the key teams in Office and AI/MSR that
+could supply code or algorithms?
+* Can we recognize ink well enough to use it for UX commands?
+* How should we build a 1D stream control for listing MUIs?  How will we
+get sufficient performance in MUI preview to "flick scroll" the stream control? How can we
+make sure all MUIs can load incrementally with optional "splash screen"?
+* Can we incorporate intelligent services such as spell check into our text block
+MUI?  How do we separate this service from its dependence on app-specific
+data structures?
+* How should we show data for entities like People, Orgchart, and document metadata?
+
+The MUI services and flow container team will investigate the following 
+questions:
+* How do we back a set of Excel range MUIs with the Excel service?  How do we make it easy to 
+create the OneDrive file required for the Excel service?  Are there alternatives (could the 
+Excel service run on some other backing store, for example a REST API for storage)?  How do we map 
+multiple Excel ranges to a single Excel file?  How does the container MUI manage the set of ranges? 
+What is the component model for managing a set of MUIs at the container level?  Can we map each range to
+a separate sheet, or are cross-sheet references too expensive?
+* How do we use the OT model developed for desktop Excel to support collaboration on Excel range MUIs?
+* How do we think about re-layout from flow container to diverse devices?
+
+The collaboration and data structures will investigate the following questions:
+* What is the container model for MUIs?  Does it vary between different container types? 
+* How do containers handle references and other cross-container information such as annotations?
+* How does the collaboration model and container representation relate to providing a timeline and
+query over revision history?  What are the semantics of rolling back? Do we need branches?
+* How do we federate the operation log among MUIs in a container?
+* How do we design our component model so that compound MUIs have excellent interactive response?
+* How do UX events flow in a MUI hierarchy?
+* How do we use the DOM (or other scripted native scene graphs) as a viewport but keep a separate 
+representation to make memory use is minimized, incremental load is possible, and view transformations
+are speedy?
+* How do we ensure that timeline/replay operations can work over the data model of the MUI independent
+of the view model for that MUI (including multiple transformed views)?
+* How will we ensure that native UX can mix into our canvas, at least on Windows?  How do we ensure that
+non-Windows experiences are still excellent even if we have some touch, ink, or performance 
+advantages on Windows?
+* Should we use the 1D stream control as our first native UX element?
+
+The Flex container and ink UX team will investigate the following questions:
+* How should the timeline UX provide checkpoints, undo, temporary undo (go back to point in time)
+and time-synchronized replay?
+* How can we use gestures and other UX to learn relationships among MUIs and between ink and MUIs so that 
+we can sensibly lay out flex container MUI collections on diverse devices?  
+* What is the UX for sharing and privacy, including elimination of some timeline stretches?
+* How will we show MUIs built around IVisual data in the Flex container?
