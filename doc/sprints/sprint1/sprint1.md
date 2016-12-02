@@ -14,10 +14,10 @@ and intelligent services.  Sprint 2 will likely have different feature teams.
 The five feature teams are:
 
 1. Data Services (David Conger, Yang Gao, KoshN, Dan Cheung/Ash Morgan)
-2. Excel (Mark Young, Shaofeng, Alex Croicu, Mark Schmidt)
-3. Data Model (Kurt, Alex, Ali, Igor, Ben, Gabe Hall)
-4. Canvas (David Lee, Ilya tumonov, IgorZV, Rob Little, Brian Holly)
-5. Ink UX + Intelligence (Ian, Matt Ruhlen, Sam Broner, TBD Igor)
+2. Excel (Mark Young, Shaofeng Zhu, Alexandru Croicu, Mark Schmidt)
+3. Data Model (Kurt Berglund, Alex Grigorovitch, Ali Taleghani, Igor, Ben, Gabe Hall)
+4. Canvas (David Lee, Ilya Tumanov, Igor Zverev, Rob Little, Brian Holley)
+5. Ink UX + Intelligence (Ian Williams, Matt Ruhlen, Sam Broner, TBD Igor)
 
 The data services team will build MUIs around key data sources, including
 document metadata, Satori, Office Graph, and CDM.  This team will also investigate how our MUIs can
