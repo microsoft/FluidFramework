@@ -1,0 +1,77 @@
+body
+{
+    background-color: #2C2C2C;
+    font-family: Lato, Helvetica, Arial, sans-serif;
+    color: #fff;
+}
+
+table
+{
+    font-family: Lato, Helvetica, Arial, sans-serif;
+    font-size: 11px;
+
+    color: #878787;
+    border-width: 0 0 1px 1px;
+    border-style: solid;
+    border-color: #1a1a1a;
+    border-spacing: 0;
+    background-color: #262626;
+}
+
+td, th
+{
+    box-sizing: border-box;
+    position: relative;
+    display: inline-block;
+
+    height: 35px;
+    width: 75px;
+    margin: 0;
+    padding: 0;
+
+    text-align: center;
+
+    border-width: 1px 1px 0 0;
+    border-style: solid;
+    border-color: #1a1a1a;
+}
+
+td div, th div {
+    height: 100%;
+}
+
+td span
+{
+    display: inline-block;
+    width: calc(100% - 8px);
+    height: calc(100% - 8px);
+    padding: 4px;
+    line-height: 26px;
+}
+
+td input
+{
+    position: absolute;
+    z-index: 100;
+
+    font-family: Lato, Helvetica, Arial, sans-serif;
+    font-size: 11px;
+
+    display: inline-block;
+
+    width: calc(100% - 8px);
+    height: calc(100% - 8px);
+    margin: 0;
+    padding: 4px;
+
+    text-align: center;
+
+    color: #878787;
+    border: none;
+    background-color: #202020;
+}
+
+td.selected {
+    border: 2px solid #7F7F7F;
+    background-color: #2C2C2C;
+}
