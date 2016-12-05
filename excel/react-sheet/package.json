@@ -1,0 +1,72 @@
+{
+  "name": "react-spreadsheet-component",
+  "description": "A Spreadsheet Component for ReactJS",
+  "version": "0.5.1",
+  "license": "MIT",
+  "engines": {
+    "node": ">=6.5",
+    "npm": ">=3.10"
+  },
+  "dependencies": {
+    "jquery": "^2.1",
+    "mousetrap": "^1.5.3"
+  },
+  "peerDependencies": {
+    "react": "^0.14.3"
+  },
+  "devDependencies": {
+    "babel-eslint": "^7.1.1",
+    "body-parser": "^1.12.4",
+    "browserify": "^12.0.1",
+    "browserify-shim": "^3.8.11",
+    "del": "^2.0.2",
+    "eslint": "^3.11.1",
+    "eslint-plugin-import": "^2.2.0",
+    "eslint-plugin-react": "^6.8.0",
+    "express": "^4.12.3",
+    "gulp": "^3.8.11",
+    "gulp-connect": "^4.0.0",
+    "gulp-eslint": "^3.0.1",
+    "gulp-header": "^1.2.2",
+    "gulp-plumber": "^1.0.0",
+    "gulp-react": "^3.0.1",
+    "gulp-rename": "^1.2.0",
+    "gulp-streamify": "1.0.2",
+    "gulp-uglify": "^1.1.0",
+    "gulp-util": "^3.0.4",
+    "jest-cli": "^0.8.2",
+    "multer": "^1.1.0",
+    "react": "^0.14.0",
+    "react-addons-test-utils": "^0.14.3",
+    "react-dom": "^0.14.0",
+    "react-tools": "^0.13.3",
+    "reactify": "^1.1.1",
+    "tape": "^4.2.2",
+    "vinyl-source-stream": "^1.1.0"
+  },
+  "scripts": {
+    "debug": "gulp --debug",
+    "dist": "gulp bundle-js --production --release && gulp bundle-js --development --release",
+    "watch": "gulp",
+    "test": "jest",
+    "lint": "eslint src"
+  },
+  "jest": {
+    "scriptPreprocessor": "<rootDir>/preprocessor.js",
+    "unmockedModulePathPatterns": [
+      "<rootDir>/node_modules/*"
+    ]
+  },
+  "browserify-shim": {
+    "react": "global:React",
+    "react/addons": "global:React",
+    "react-dom": "global:ReactDOM"
+  },
+  "browserify": {
+    "transform": [
+      "browserify-shim"
+    ]
+  },
+  "main": "./lib/spreadsheet.js",
+  "standalone": "React-Spreadsheet"
+}
