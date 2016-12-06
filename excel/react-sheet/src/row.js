@@ -1,23 +1,26 @@
-"use strict";
 
-var React = require('react');
+import React, {PropTypes} from 'react';
 
-var CellComponent = require('./cell');
-var Helpers = require('./helpers');
+import CellComponent from './cell';
+import Helpers from './helpers';
 
-var RowComponent = React.createClass({    
+class RowComponent extends React.Component {
+  constructor(props, context) {
+    super(props, context);
+  }
     /**
      * React Render method
      * @return {[JSX]} [JSX to render]
      */
-    render: function() {
-        var config = this.props.config,
+    render() {
+        let config = this.props.config,
             cells = this.props.cells,
             columns = [],
             key, uid, selected, cellClasses, i;
 
         if (!config.columns || cells.length === 0) {
-            return console.error('Table can\'t be initialized without set number of columsn and no data!');
+
+            return console.error('Table can\'t be initialized without set number of columsn and no data!'); // eslint-disable-line no-console
         }
 
         for (i = 0; i < cells.length; i = i + 1) {
@@ -27,23 +30,37 @@ var RowComponent = React.createClass({
 
             key = 'row_' + this.props.uid + '_cell_' + i;
             uid = [this.props.uid, i];
-            columns.push(<CellComponent key={key} 
+            columns.push(<CellComponent key={key}
                                        uid={uid}
-                                       value={cells[i]}
+                                       value={cells[i].toString()}
                                        config={config}
                                        cellClasses={cellClasses}
-                                       onCellValueChange={this.props.onCellValueChange} 
+                                       onCellValueChange={this.props.onCellValueChange}
                                        handleSelectCell={this.props.handleSelectCell}
                                        handleDoubleClickOnCell={this.props.handleDoubleClickOnCell}
                                        handleCellBlur={this.props.handleCellBlur}
                                        spreadsheetId={this.props.spreadsheetId}
-                                       selected={selected} 
+                                       selected={selected}
                                        editing={this.props.editing} />
             );
         }
 
         return <tr>{columns}</tr>;
     }
-});
+}
 
-module.exports = RowComponent;
+RowComponent.propTypes = {
+  config: PropTypes.object,
+  editing: PropTypes.bool,
+  cells: PropTypes.array,
+  selected: PropTypes.array,
+  uid: PropTypes.number,
+  cellClasses: PropTypes.array,
+  spreadsheetId: PropTypes.string,
+  onCellValueChange: PropTypes.func,
+  handleSelectCell: PropTypes.func,
+  handleDoubleClickOnCell: PropTypes.func,
+  handleCellBlur: PropTypes.func
+};
+
+export default RowComponent;

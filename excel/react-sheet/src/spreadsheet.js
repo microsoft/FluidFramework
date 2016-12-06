@@ -1,12 +1,11 @@
-"use strict";
 
-var React = require('react');
-var ReactDOM = require('react-dom');
-var $ = require('jquery');
+import React, {PropTypes} from 'react';
+import ReactDOM from 'react-dom';
+import $ from 'jquery';
 
-var RowComponent = require('./row');
-var Dispatcher = require('./dispatcher');
-var Helpers = require('./helpers');
+import RowComponent from './row';
+import Dispatcher from './dispatcher';
+import Helpers from './helpers';
 
 var SpreadsheetComponent = React.createClass({
     spreadsheetId: null,

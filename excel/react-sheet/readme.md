@@ -112,7 +112,11 @@ Clone the repository from GitHub and open the created folder:
 Install npm packages and compile JSX
 ```bash
 npm install
-gulp
+npm start    //for development with hot reloading
+npm lint      //run Eslint
+npm test     //run jest tests
+npm build    //build for production
+npm open:dist //open against a local prod server
 ```
 
 Eslint is run automatically when you type 'gulp'. To check lint errors, do 'npm run lint'.
