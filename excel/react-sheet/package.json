@@ -10,23 +10,15 @@
   "dependencies": {
     "jquery": "^2.1",
     "mousetrap": "^1.5.3",
-    "object-assign": "4.1.0",
     "react": "^15.4.1",
-    "react-dom": "^15.4.1",
-    "react-redux": ">=4.4.5",
-    "react-router": ">=2.8.1",
-    "react-router-redux": ">=4.0.6",
-    "redux": ">=3.6.0",
-    "redux-thunk": ">=2.1.0"
-  },
-  "peerDependencies": {
-    "react": "^15.4.1"
+    "react-dom": "^15.4.1"
   },
   "devDependencies": {
     "autoprefixer": "6.5.1",
     "babel-cli": "6.16.0",
     "babel-core": "6.17.0",
     "babel-eslint": "^7.1.1",
+    "babel-jest": "^17.0.2",
     "babel-loader": "6.2.5",
     "babel-plugin-react-display-name": "2.0.0",
     "babel-plugin-transform-react-constant-elements": "6.9.1",
@@ -40,6 +32,7 @@
     "browser-sync": "2.17.5",
     "chai": "3.5.0",
     "chalk": "1.1.3",
+    "compression-webpack-plugin": "^0.3.2",
     "connect-history-api-fallback": "1.3.0",
     "coveralls": "2.11.14",
     "cross-env": "3.1.3",
@@ -56,8 +49,8 @@
     "html-webpack-plugin": "2.24.0",
     "isparta": "4.0.0",
     "istanbul": "0.4.4",
-    "jest-babel-preprocessor": "^0.3.0",
-    "jest-cli": "^0.8.2",
+    "jest-babel-preprocessor": "*",
+    "jest-cli": "^17.0.3",
     "json-loader": "0.5.4",
     "mocha": "3.1.2",
     "mockdate": "1.0.4",
@@ -98,11 +91,5 @@
     "analyze-bundle": "babel-node ./tools/analyzeBundle.js",
     "open:src": "babel-node tools/srcServer.js",
     "open:dist": "babel-node tools/distServer.js"
-  },
-  "jest": {
-    "scriptPreprocessor": "<rootDir>/node_modules/jest-babel-preprocessor/preprocessor.js",
-    "unmockedModulePathPatterns": [
-      "<rootDir>/node_modules/*"
-    ]
   }
 }

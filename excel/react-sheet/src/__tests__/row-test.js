@@ -1,22 +1,31 @@
-'use strict';
-//const jest = require('jest');
-//const expect = require('expect');
 
-jest.dontMock('../row');
+jest.unmock('../row');
 
-const React = require('react');
-const ReactDOM = require('react-dom');
-const TestUtils = require('react-addons-test-utils');
+import React from 'react';
+import ReactDOM from 'react-dom';
+import TestUtils from 'react-addons-test-utils';
 
-const RowComponent = require('../cell');
+import RowComponent from '../row';
 
 const testVars = {
-  cells: [],
   cellClasses: [],
   uid: 0,
   key: 'testkey',
   spreadsheetId: '0',
-  className: 'cellComponent'
+  className: 'rowComponent',
+  cells: ['', 1, 2, 3, 4, 5, 6, 7],
+  config: {
+    rows: 5,
+    columns: 8,
+    hasHeadColumn: true,
+    isHeadColumnString: true,
+    hasHeadRow: true,
+    isHeadRowString: true,
+    canAddRow: true,
+    canAddColumn: true,
+    emptyValueSymbol: '-',
+    hasLetterNumberHeads: true
+  }
 };
 
 describe('Row', () => {
@@ -25,6 +34,7 @@ describe('Row', () => {
       <table>
         <tbody>
             <RowComponent
+              config = {testVars.config}
               cells={testVars.cells}
               cellClasses={testVars.cellClasses}
               uid={testVars.uid}

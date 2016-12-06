@@ -13,7 +13,7 @@ class CellComponent extends React.Component {
        * React "getInitialState" method, setting whether or not
        * the cell is being edited and its changing value
        */
-      this.state = {
+    this.state = {
         editing: this.props.editing,
         changedValue: this.props.value
       };

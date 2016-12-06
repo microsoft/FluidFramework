@@ -1,6 +1,5 @@
-"use strict";
 
-var Helpers = {
+let Helpers = {
     /**
      * Find the first element in an array matching a boolean
      * @param  {[array]} arr     [Array to test]
@@ -9,7 +8,7 @@ var Helpers = {
      * @return {[object]}        [Found element]
      */
     firstInArray: function (arr, test, context) {
-        var result = null;
+        let result = null;
 
         arr.some(function(el, i) {
             return test.call(context, el, i, arr) ? ((result = el), true) : false;
@@ -24,7 +23,7 @@ var Helpers = {
      * @return {[object]}     [Found element]
      */
     firstTDinArray: function (arr) {
-        var cell = Helpers.firstInArray(arr, function (element) {
+        let cell = Helpers.firstInArray(arr, function (element) {
             if (element.nodeName && element.nodeName === 'TD') {
                 return true;
             } else {
@@ -58,7 +57,7 @@ var Helpers = {
      * @return {[string]} [Letter]
      */
     countWithLetters: function (num) {
-        var mod = num % 26,
+        let mod = num % 26,
             pow = num / 26 | 0,
             out = mod ? String.fromCharCode(64 + mod) : (--pow, 'Z');
         return pow ? this.countWithLetters(pow) + out : out;
@@ -70,15 +69,15 @@ var Helpers = {
      */
     makeSpreadsheetId: function()
     {
-        var text = '',
+        let text = '',
             possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 
-        for (var i = 0; i < 5; i = i + 1) {
+        for (let i = 0; i < 5; i = i + 1) {
             text += possible.charAt(Math.floor(Math.random() * possible.length));
         }
 
         return text;
     }
-}
+};
 
-module.exports = Helpers;
+export default Helpers;

@@ -26,7 +26,7 @@ webpack(config).run((error, stats) => {
     jsonStats.warnings.map(warning => console.log(chalkWarning(warning)));
   }
 
-  console.log(`Webpack stats: ${stats}`);
+  console.log(`Webpack stats: ${stats.toString({chunks:false})}`);
 
   // if we got this far, the build succeeded.
   console.log(chalkSuccess('Your app is compiled in production mode in /dist. It\'s ready to roll!'));
