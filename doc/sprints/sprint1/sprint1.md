@@ -7,17 +7,18 @@ the Excel range MUI.
 
 Sprint 1 starts now and finishes January 20th, 2017.  
 
+## Teams
+
 Sprint 1 will have five feature teams.  We will balance the feature teams so 
 that each team will have diverse skills, including JavaScript, native coding,
 and intelligent services.  Sprint 2 will likely have different feature teams.
 
 The five feature teams are:
 
-1. Data Services (David Conger, Yang Gao, KoshN, Dan Cheung/Ash Morgan)
+1. Data Services (Yang Gao, KoshN, Dan Cheung/Ash Morgan)
 2. Excel (Mark Young, Shaofeng Zhu, Alexandru Croicu, Mark Schmidt)
 3. Data Model (Kurt Berglund, Alex Grigorovitch, Ali Taleghani, Igor, Ben, Matt Ruhlen, Gabe Hall)
-4. Canvas (David Lee, Ilya Tumanov, Igor Zverev, Rob Little, Brian Holley)
-5. Ink UX + Intelligence (Ian Williams,  Sam Broner, TBD Igor)
+4. Canvas and Ink (David Lee, Ilya Tumanov, Igor Zverev, Rob Little, Brian Holley, Ian Williams, TBD Igor)
 
 The data services team will build MUIs around key data sources, including
 document metadata, Satori, Office Graph, and CDM.  This team will also investigate how our MUIs can
@@ -37,6 +38,9 @@ behavior of the timeline functionality.
 The ink team will build a prototype of collaborative ink in the flex container, including split
 screen and other view transformations. The ink team will investigate ink recognition and smoothing.
 
+## Investigation areas
+
+### Data Services
 The data services team will investigate the following questions:
 
 * Can we incorporate intelligent services such as spell check into our text block
@@ -47,6 +51,7 @@ data structures?
 * How should we show rich visualizations of enterprise data sources?
 * How can we visualize graphs such as LinkedIn, Office, Facebook?
 
+### Excel
 The Excel team will investigate the following questions: 
 
 * How do we back a set of Excel range MUIs with the Excel service? How do we make it easy to 
@@ -60,6 +65,7 @@ a separate sheet, or are cross-sheet references too expensive?
 * How do incorporate Lumen insights into the container UI?
 * How do we highlight Yellow?
 
+### Data Model
 The data model team will investigate the following questions:
 
 * What is the container model for MUIs?  Does it vary between different container types? 
@@ -68,10 +74,6 @@ The data model team will investigate the following questions:
 query over revision history?  What are the semantics of rolling back? Do we need branches?
 * How do we federate the operation log among MUIs in a container?
 * How do we design our component model so that compound MUIs have excellent interactive response?
-* How do UX events flow in a MUI hierarchy?
-* How do we use the DOM (or other scripted native scene graphs) as a viewport but keep a separate 
-representation to make memory use is minimized, incremental load is possible, and view transformations
-are speedy?
 * How do we ensure that timeline/replay operations can work over the data model of the MUI independent
 of the view model for that MUI (including multiple transformed views)?
 * How will we ensure that native UX can mix into our canvas, at least on Windows?  How do we ensure that
@@ -79,7 +81,8 @@ non-Windows experiences are still excellent even if we have some touch, ink, or 
 advantages on Windows?
 * Should we use the 1D stream control as our first native UX element?
 
-The canvas team will investigate the following questions:
+### Canvas and Ink
+The canvas and ink team will investigate the following questions:
 
 * How should the timeline UX provide checkpoints, undo, temporary undo (go back to point in time)
 and time-synchronized replay?
@@ -93,8 +96,12 @@ make sure all MUIs can load incrementally with optional "splash screen"?
 * How do we think about re-layout from flow container to diverse devices?
 * What is the UX for scaling, selection, and semantic lifting?
 * How do we think about UX for having flex and flow containers stacked or side by side?
+* How do UX events flow in a MUI hierarchy?
+* How do we use the DOM (or other scripted native scene graphs) as a viewport but keep a separate 
+representation to make memory use is minimized, incremental load is possible, and view transformations
+are speedy?
 
-The ink team will investigate the following questions:
+With ink questions:
 
 * How do we smooth ink in Edge using low-latency client-side code?
 * How can we recognize basic shapes, numerals and other symbols using ink? Can we
