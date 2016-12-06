@@ -74,10 +74,6 @@ The data model team will investigate the following questions:
 query over revision history?  What are the semantics of rolling back? Do we need branches?
 * How do we federate the operation log among MUIs in a container?
 * How do we design our component model so that compound MUIs have excellent interactive response?
-* How do UX events flow in a MUI hierarchy?
-* How do we use the DOM (or other scripted native scene graphs) as a viewport but keep a separate 
-representation to make memory use is minimized, incremental load is possible, and view transformations
-are speedy?
 * How do we ensure that timeline/replay operations can work over the data model of the MUI independent
 of the view model for that MUI (including multiple transformed views)?
 * How will we ensure that native UX can mix into our canvas, at least on Windows?  How do we ensure that
@@ -100,6 +96,10 @@ make sure all MUIs can load incrementally with optional "splash screen"?
 * How do we think about re-layout from flow container to diverse devices?
 * What is the UX for scaling, selection, and semantic lifting?
 * How do we think about UX for having flex and flow containers stacked or side by side?
+* How do UX events flow in a MUI hierarchy?
+* How do we use the DOM (or other scripted native scene graphs) as a viewport but keep a separate 
+representation to make memory use is minimized, incremental load is possible, and view transformations
+are speedy?
 
 With ink questions:
 
