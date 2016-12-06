@@ -1,11 +1,13 @@
-'use strict';
 
-var React = require('react');
-var ReactDOM = require('react-dom');
-var Spreadsheet = require('./lib/spreadsheet');
+import React from 'react';
+import ReactDOM from 'react-dom';
+import Spreadsheet from './spreadsheet';
+import './styles/excel.css';
+import './styles/example.css';
+
 
 // Example One
-var exampleOne = {};
+let exampleOne = {};
 
 exampleOne.initialData = {
     rows: [
@@ -31,7 +33,7 @@ exampleOne.config = {
 };
 
 // Example Two
-var exampleTwo = {};
+let exampleTwo = {};
 exampleTwo.initialData = {
     rows: [
         ['Customer', 'Job', 'Contact', 'City', 'Revenue'],
