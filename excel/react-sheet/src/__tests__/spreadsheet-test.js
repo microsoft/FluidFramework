@@ -1,13 +1,11 @@
-'use strict';
-//const jest = require('jest');
-//const expect = require('expect');
-jest.dontMock('../spreadsheet');
 
-const React = require('react');
-const ReactDOM = require('react-dom');
-const TestUtils = require('react-addons-test-utils');
+jest.unmock('../spreadsheet');
 
-const SpreadsheetComponent = require('../spreadsheet');
+import React from 'react';
+import ReactDOM from 'react-dom';
+import TestUtils from 'react-addons-test-utils';
+
+import SpreadsheetComponent from '../spreadsheet';
 
 const testVars = {
   initialData: {

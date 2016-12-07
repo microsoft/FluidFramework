@@ -1,10 +1,7 @@
-'use strict';
-//const jest = require('jest');
-//const expect = require('expect');
 
-jest.dontMock('../helpers');
+jest.unmock('../helpers');
 
-const Helpers = require('../helpers');
+import Helpers from '../helpers';
 
 describe('Helpers', () => {
   it('Correctly finds the first element in an array', () => {

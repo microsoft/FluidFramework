@@ -1,13 +1,11 @@
-'use strict';
-//const jest = require('jest');
 
-jest.dontMock('../cell');
+jest.unmock('../cell');
 
-const React = require('react');
-const ReactDOM = require('react-dom');
-const TestUtils = require('react-addons-test-utils');
+import React from 'react';
+import ReactDOM from 'react-dom';
+import TestUtils from 'react-addons-test-utils';
 
-const CellComponent = require('../cell');
+import CellComponent from '../cell';
 
 const testVars =  {
   key: 'row_0000_cell_1',

@@ -1,7 +1,7 @@
 
 import React from 'react';
 import ReactDOM from 'react-dom';
-const Spreadsheet = require('./spreadsheet');
+import Spreadsheet from './spreadsheet';
 import './styles/excel.css';
 import './styles/example.css';
 
