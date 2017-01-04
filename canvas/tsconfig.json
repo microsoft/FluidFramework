@@ -1,0 +1,15 @@
+// THIS IS CONFIGURATION FOR THE TYPESCRIPT TRANSPILER
+// IT TURNS TYPESCRIPT WITH EMBEDDED HTML INTO JAVASCRIPT
+{
+    "compilerOptions": {
+        "outDir": "./dist/",
+        "sourceMap": true,
+        "noImplicitAny": true,
+        "module": "commonjs",
+        "target": "es5",
+        "jsx": "react"
+    },
+    "include": [
+        "./**/*"
+    ]
+}

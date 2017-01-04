@@ -1,0 +1,24 @@
+{
+  "name": "canvas",
+  "version": "0.1.0",
+  "description": "entity canvas application skeleton",
+  "main": "index.js",
+  "dependencies": {
+    "@types/react": "^0.14.55",
+    "@types/react-dom": "^0.14.19",
+    "react": "^15.4.1",
+    "react-dom": "^15.4.1",
+    "source-map-loader": "^0.1.5",
+    "typescript": "2.0.10"
+  },
+  "devDependencies": {
+    "awesome-typescript-loader": "3.0.0-beta.12",
+    "source-map-loader": "^0.1.5",
+    "webpack": "^1.14.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}
