@@ -1,0 +1,53 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.25807.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UWPWebCanvas", "UWPWebCanvas\UWPWebCanvas.csproj", "{3C883E0D-4978-4C51-8811-DD8163EA235A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{0A157282-A47A-485F-B1D5-58AA41F05B82}"
+	ProjectSection(SolutionItems) = preProject
+		.gitignore = .gitignore
+		package.json = package.json
+		readme.md = readme.md
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|ARM = Debug|ARM
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|Any CPU = Release|Any CPU
+		Release|ARM = Release|ARM
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{3C883E0D-4978-4C51-8811-DD8163EA235A}.Debug|Any CPU.ActiveCfg = Debug|x86
+		{3C883E0D-4978-4C51-8811-DD8163EA235A}.Debug|Any CPU.Build.0 = Debug|x86
+		{3C883E0D-4978-4C51-8811-DD8163EA235A}.Debug|Any CPU.Deploy.0 = Debug|x86
+		{3C883E0D-4978-4C51-8811-DD8163EA235A}.Debug|ARM.ActiveCfg = Debug|ARM
+		{3C883E0D-4978-4C51-8811-DD8163EA235A}.Debug|ARM.Build.0 = Debug|ARM
+		{3C883E0D-4978-4C51-8811-DD8163EA235A}.Debug|ARM.Deploy.0 = Debug|ARM
+		{3C883E0D-4978-4C51-8811-DD8163EA235A}.Debug|x64.ActiveCfg = Debug|x64
+		{3C883E0D-4978-4C51-8811-DD8163EA235A}.Debug|x64.Build.0 = Debug|x64
+		{3C883E0D-4978-4C51-8811-DD8163EA235A}.Debug|x64.Deploy.0 = Debug|x64
+		{3C883E0D-4978-4C51-8811-DD8163EA235A}.Debug|x86.ActiveCfg = Debug|x86
+		{3C883E0D-4978-4C51-8811-DD8163EA235A}.Debug|x86.Build.0 = Debug|x86
+		{3C883E0D-4978-4C51-8811-DD8163EA235A}.Debug|x86.Deploy.0 = Debug|x86
+		{3C883E0D-4978-4C51-8811-DD8163EA235A}.Release|Any CPU.ActiveCfg = Release|x86
+		{3C883E0D-4978-4C51-8811-DD8163EA235A}.Release|ARM.ActiveCfg = Release|ARM
+		{3C883E0D-4978-4C51-8811-DD8163EA235A}.Release|ARM.Build.0 = Release|ARM
+		{3C883E0D-4978-4C51-8811-DD8163EA235A}.Release|ARM.Deploy.0 = Release|ARM
+		{3C883E0D-4978-4C51-8811-DD8163EA235A}.Release|x64.ActiveCfg = Release|x64
+		{3C883E0D-4978-4C51-8811-DD8163EA235A}.Release|x64.Build.0 = Release|x64
+		{3C883E0D-4978-4C51-8811-DD8163EA235A}.Release|x64.Deploy.0 = Release|x64
+		{3C883E0D-4978-4C51-8811-DD8163EA235A}.Release|x86.ActiveCfg = Release|x86
+		{3C883E0D-4978-4C51-8811-DD8163EA235A}.Release|x86.Build.0 = Release|x86
+		{3C883E0D-4978-4C51-8811-DD8163EA235A}.Release|x86.Deploy.0 = Release|x86
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,26 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<meta charset="utf-8" />
+	<title></title>
+	<link rel="stylesheet" href="index.css" />
+</head>
+<body>
+	<div id="geometry"></div>
+
+	<script src="app.bundle.js"></script>
+	<script type="text/javascript">
+		function qs(name) {
+			name = name.replace(/[\[\]]/g, "\\$&");
+			var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+				results = regex.exec(window.location.href);
+			if (!results) return null;
+			if (!results[2]) return '';
+			return decodeURIComponent(results[2].replace(/\+/g, " "));
+		}
+
+		createTriangle('geometry', [{x: qs('x1'), y: qs('y1')},{x: qs('x2'), y: qs('y2')},{x: qs('x3'), y: qs('y3')}], 400, 400)
+	</script>
+</body>
+</html>
