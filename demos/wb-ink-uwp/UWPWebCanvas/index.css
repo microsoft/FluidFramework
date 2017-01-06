@@ -1,0 +1,51 @@
+﻿body {
+	margin: 0px;
+	background-color: #fff;
+}
+
+#inkcanvas {
+    margin: 0px 0px 0px 0px;
+    background: white;
+    position: fixed;
+    z-index: -1;
+    top: 0;
+    left: 0;
+    width: 100%;
+}
+
+#toolpanel {
+    position: fixed;
+    bottom: 0;
+    height: 60;
+    background-color: #ddd;
+    text-align: center;
+    width: 100%;
+}
+
+.inkColorSelector {
+    margin: 10px;
+}
+
+#signInButton {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    margin: 10px;
+}
+
+#addContentButton {
+    display: none;
+}
+
+#addContentLabel {
+    border: 1px solid #ccc;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    margin: 10px;
+    cursor: pointer;
+}
+
+.outline {
+    position: fixed;
+}
