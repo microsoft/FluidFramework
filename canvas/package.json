@@ -14,9 +14,11 @@
   "devDependencies": {
     "awesome-typescript-loader": "3.0.0-beta.12",
     "source-map-loader": "^0.1.5",
-    "webpack": "^1.14.0"
+    "webpack": "^1.14.0",
+    "webpack-dev-server": "^1.16.2"
   },
   "scripts": {
+    "dev": "webpack-dev-server --content-base ./ --inline --hot --colors",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
