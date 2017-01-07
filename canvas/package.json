@@ -4,10 +4,16 @@
   "description": "entity canvas application skeleton",
   "main": "index.js",
   "dependencies": {
+    "@types/jquery": "^2.0.39",
     "@types/react": "^0.14.55",
     "@types/react-dom": "^0.14.19",
+    "jquery": "^3.1.1",
+    "pepjs": "^0.4.2",
+    "rc-table": "^5.0.3",
     "react": "^15.4.1",
     "react-dom": "^15.4.1",
+    "react-sparklines": "^1.6.0",
+    "request-promise-native": "^1.0.3",
     "source-map-loader": "^0.1.5",
     "typescript": "2.0.10"
   },
