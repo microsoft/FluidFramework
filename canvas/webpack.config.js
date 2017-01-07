@@ -1,9 +1,13 @@
 // WEBPACK'S CONFIG FILE IS ESSENTIALLY A MASTER BUILD CONFIG FILE
+var debug = process.env.NODE_ENV !== "production";
+var webpack = require('webpack');
+var path = require('path');
+
+
 module.exports = {
     entry: "./src/index.tsx",
     output: {
-        filename: "bundle.js",
-        path: __dirname + "/dist"
+        filename: "./dist/bundle.js"
     },
 
     // Enable sourcemaps for debugging webpack's output.
@@ -34,4 +38,11 @@ module.exports = {
         "react": "React",
         "react-dom": "ReactDOM"
     },
+
+    // Array of plugins for webpack. Note the two different arrays, one for debug, one for prod
+    plugins: debug ? [] : [
+        new webpack.optimize.DedupePlugin(),
+        new webpack.optimize.OccurenceOrderPlugin(),
+        new webpack.optimize.UglifyJsPlugin({ mangle: false, sourcemap: false }),
+    ],
 };
