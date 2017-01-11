@@ -29,7 +29,7 @@ var observer = redis.createClient(redisPort, redisHost, subOptions);
 // Register rich type as one of our OT formats
 ShareDB.types.register(richText.type);
 
-var db = new ShareDBMongo('mongodb://offnet-sharedb:Ow8XY0XOyNhdUcRAUkgXOyws0uVe4sfu00cvbDv5K5S0ny5dfD59jXhP95qUgmJiKkDd6LNAPwx54gfngpXxNA==@offnet-sharedb.documents.azure.com:10250/?ssl=true');
+var db = new ShareDBMongo('mongodb://mongodb:27017');
 var pubsub = new ShareDBRedisPub({ client: client, observer: observer });
 var shareDb = new ShareDB({
     db: db, 

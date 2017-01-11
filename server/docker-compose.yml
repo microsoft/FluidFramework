@@ -3,8 +3,13 @@ services:
     web:
         build: .
         ports:
-         - "3000:3000"
+            - "3000:3000"
         volumes:
-         - .:/usr/src/server
+            - .:/usr/src/server
+        depends_on:
+            - mongodb
+            - redis            
     redis:
         image: "redis:alpine"
+    mongodb:
+        image: "mongo:3.4.1"
