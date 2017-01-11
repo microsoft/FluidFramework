@@ -6,9 +6,9 @@ class Tools extends React.Component {
 	constructor(props) {
 		super(props);
 		this.state = {
-			inkcolors: ['#000', '#f00', '#00f', '#0f0', '#ff0', '#f0f'],
+			inkcolors: ['#000', '#f00', '#00f', '#0f0', '#ff0', '#f0f', 'rainbow'],
 		}
-	}
+    }
 	render() {
 		return (
 			<div id="toolpanel">
