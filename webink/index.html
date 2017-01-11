@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>InkingDemo</title>
+	<link rel="stylesheet" href="css/default.css">
+	<link rel="stylesheet" href="css/toolbar.css">
+	<link rel="stylesheet" href="css/stickyNote.css">
+	<script src="js/paper-core.js"></script>
+	<script src="js/utils.js"></script>
+	<script src="js/inkCanvas.js"></script>
+	<script src="js/stickyNote.js"></script>
+	<script src="js/toolbar.js"></script>
+	<script src="js/backBoard.js"></script>
+	<script src="js/main.js"></script>
+</head>
+
+<!-- Application Window -->
+
+<body>
+
+	<div id="content">
+		<div id="hitPlane" aria-label="Ink canvas" role="img">
+		</div>
+	</div>
+
+	<!-- Toolbar -->
+	<div id="ToolBar">
+		<!-- Color Menu -->
+		<div class="toolbarDiv">
+			<button class="menuButton" id="strokeButton" value="clear">Stroke</button>
+			<select class="menuItems" size="5" id="strokeColors" multiple>
+				<option style="background-color:black" value="Black">Black</option>
+				<option style="background-color:blue" value="Blue">Blue</option>
+				<option style="background-color:red" value="Red">Red</option>
+				<option style="background-color:green" value="Green">Green</option>
+				<option style="background-color:white; color:black" value="#00000000">Erase</option>
+      </select>
+		</div>
+		<!-- Buttons -->
+		<button id="undoButton" value="undo">Undo</button>
+		<button id="redoButton" value="redo">Redo</button>
+		<button id="clearButton" value="clear">Clear</button>
+		<button id="testButton">Reco</button>
+		<button id="turnOnInk">ink</button>
+	</div>
+</body>
+
+</html>
