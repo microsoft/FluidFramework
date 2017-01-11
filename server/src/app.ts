@@ -37,28 +37,36 @@ if (nconf.get('redis')) {
     console.log("Using redis for session storage");
     var RedisStore = connectRedis(expressSession);
 
-    var options: any = {
-        auth_pass: nconf.get("redis:pass")
-    };
+    if (nconf.get("redis:pass")) {
+        
+    }
+
+    // Apply custom options if specified
+    var options: any = null;
     if (nconf.get('redis:tls')) {
+        options = {
+            auth_pass: nconf.get("redis:pass")
+        };
+
         options.tls = {
             servername: nconf.get("redis:host")
         }
+
+        // Azure seems to lose our Redis client for SSL connections - we ping it to keep it alive.    
+        setInterval(() => {
+            redisClient.ping((error, result) => {
+                if (error) {
+                    console.log("Ping error: " + error);
+                }
+            });
+        }, 60 * 1000);
     }
 
+    // Create the client
     var redisClient = redis.createClient(
         nconf.get("redis:port"),
         nconf.get("redis:host"),
         options);
-
-    // Azure seems to lose our Redis client - we ping it to keep it alive.    
-    setInterval(() => {
-        redisClient.ping((error, result) => {
-            if (error) {
-                console.log("Ping error: " + error);
-            }
-        });
-    }, 60 * 1000);
 
     sessionStore = new RedisStore({ client: redisClient });
 }
