@@ -37,10 +37,11 @@ function simpleTest() {
 function fileTest1() {
     let content = fs.readFileSync("pizzaingredients.txt", "utf8");
     let a = content.split('\n');
-    let nRand = a.length>>2;
+    let iterCount = a.length >> 2;
+    const removeCount = 10;
     console.log("len: " + a.length);
 
-    for (let k = 0; k < nRand; k++) {
+    for (let k = 0; k < iterCount; k++) {
         let beast = Base.RedBlackTree<string, number>(compareStrings);
         let linearBeast = Base.LinearDictionary<string, number>(compareStrings);
         for (let i = 0, len = a.length; i < len; i++) {
@@ -53,12 +54,16 @@ function fileTest1() {
         if (k == 0) {
             beast.map(printStringNumProperty);
         }
-        let removeIndex = Math.floor(Math.random() * a.length);
-        console.log(`Removing: ${a[removeIndex]} at ${removeIndex}`);
-        beast.remove(a[removeIndex]);
-        linearBeast.remove(a[removeIndex]);
+        let removedAnimals: string[] = [];
+        for (let j = 0; j < removeCount; j++) {
+            let removeIndex = Math.floor(Math.random() * a.length);
+            console.log(`Removing: ${a[removeIndex]} at ${removeIndex}`);
+            beast.remove(a[removeIndex]);
+            linearBeast.remove(a[removeIndex]);
+            removedAnimals.push(a[removeIndex]);
+        }
         for (let animal of a) {
-            if ((animal.length > 0) && (animal != a[removeIndex])) {
+            if ((animal.length > 0) && (removedAnimals.indexOf(animal) < 0)) {
                 let prop = beast.get(animal);
                 let linProp = linearBeast.get(animal);
                 //console.log(`Trying key ${animal}`);
