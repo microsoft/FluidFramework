@@ -2,6 +2,9 @@
 dist
 public/dist
 
+# Compiled CSS from LESS
+public/stylesheets/*.css
+
 # Logs
 logs
 *.log
