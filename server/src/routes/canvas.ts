@@ -9,7 +9,7 @@ router.get('/:id', (req: express.Request, response: express.Response) => {
         'canvas',
         {
             partials: defaultPartials,
-            id: req.params['id']
+            id: `Canvas - ${req.params['id']}`,
         });
 });
 

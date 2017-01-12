@@ -114,4 +114,20 @@ gulp.task("sharedb", function() {
         .pipe(gulp.dest("public/dist/collab"))
 });
 
-gulp.task("default", ["build", "browserify", "api", "calendar", "collab", "sharedb"]);
+// Canvas controller
+gulp.task("canvas", function() {
+    return browserify({
+            basedir: '.',
+            debug: true,
+            entries: ['src/canvas/canvas.ts'],
+            cache: {},
+            packageCache: {},
+            standalone: 'canvas'
+        })        
+        .plugin(tsify)        
+        .bundle()        
+        .pipe(source('canvas.js'))
+        .pipe(gulp.dest("public/dist/canvas"))
+});
+
+gulp.task("default", ["build", "browserify", "api", "calendar", "collab", "sharedb", "canvas"]);

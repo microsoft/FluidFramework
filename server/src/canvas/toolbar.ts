@@ -1,10 +1,10 @@
-/// <reference path="utils.ts"/>
+import * as utils from './utils';
 
-class ToolBarButton {
+export class ToolBarButton {
     el : HTMLElement;
 
     constructor(icon : string) {
-        var urlParts = parseURL(icon); 
+        var urlParts = utils.parseURL(icon); 
         this.el = <HTMLElement>document.createElement('button');
         this.el.id = urlParts.file;
         this.el["ToolBarButton"] = this;

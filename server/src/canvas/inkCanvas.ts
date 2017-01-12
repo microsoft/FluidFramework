@@ -1,4 +1,4 @@
-/// <reference path="utils.ts"/>
+import * as utils from './utils';
 
 interface PtrEvtPoint {
   x: number;
@@ -19,7 +19,7 @@ class EventPoint {
   }
 }
 
-class InkCanvas {
+export default class InkCanvas {
   canvas: HTMLCanvasElement;
   context: CanvasRenderingContext2D;
   penID: number = -1;
@@ -186,7 +186,7 @@ class InkCanvas {
     this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
     this.renderAllStrokes();
-    displayStatus("");
-    displayError("");
+    utils.displayStatus("");
+    utils.displayError("");
   }
 }

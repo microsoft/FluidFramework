@@ -1,12 +1,42 @@
 
 {{<layout}}
     {{$styles}}
+        <link rel="stylesheet" href="/stylesheets/default.css">
+        <link rel="stylesheet" href="/stylesheets/toolbar.css">
+        <link rel="stylesheet" href="/stylesheets/stickyNote.css">
     {{/styles}}
 
     {{$content}}
-        <h1>Hi, I do collab</h1>
+        <!-- Application Window -->
+        <div id="content">
+                <div id="hitPlane" aria-label="Ink canvas" role="img">
+                </div>
+        </div>
+
+        <!-- Toolbar -->
+        <div id="ToolBar">
+            <!-- Color Menu -->
+            <div class="toolbarDiv">
+                <button class="menuButton" id="strokeButton" value="clear">Stroke</button>
+                <select class="menuItems" size="5" id="strokeColors" multiple>
+                        <option style="background-color:black" value="Black">Black</option>
+                        <option style="background-color:blue" value="Blue">Blue</option>
+                        <option style="background-color:red" value="Red">Red</option>
+                        <option style="background-color:green" value="Green">Green</option>
+                        <option style="background-color:white; color:black" value="#00000000">Erase</option>
+                </select>
+            </div>
+
+            <!-- Buttons -->
+            <button id="undoButton" value="undo">Undo</button>
+            <button id="redoButton" value="redo">Redo</button>
+            <button id="clearButton" value="clear">Clear</button>
+            <button id="testButton">Reco</button>
+            <button id="turnOnInk">ink</button>
+        </div>
     {{/content}}
     
     {{$scripts}}
+        <script src="/dist/canvas/canvas.js"></script> 
     {{/scripts}}            
 {{/layout}}

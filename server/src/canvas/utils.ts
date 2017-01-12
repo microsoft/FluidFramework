@@ -1,24 +1,24 @@
 // Various helpers functions
 
 // Utility to fetch elements by ID
-function id(elementId: string): HTMLElement {
+export function id(elementId: string): HTMLElement {
   return <HTMLElement>(document.getElementById(elementId));
 }
 
-function displayStatus(message: string) {
+export function displayStatus(message: string) {
   console.log("status:", message);
 }
 
-function displayError(message: string) {
+export function displayError(message: string) {
   console.log("error: ", message);
 }
 
-function makeElementVisible(elem, visible) {
+export function makeElementVisible(elem, visible) {
   elem.style.display = visible ? "block" : "none";
 }
 
 // Convenience function used by color converters.
-function byteHex(num: number) {
+export function byteHex(num: number) {
   var hex = num.toString(16);
   if (hex.length === 1) {
     hex = "0" + hex;
@@ -30,19 +30,19 @@ function byteHex(num: number) {
 // Color Wrangling
 // -----------------------------------------
 
-interface IColor {
+export interface IColor {
   r: number;
   g: number;
   b: number;
   a: number;
 }
 
-function toColorString(color: IColor) {
+export function toColorString(color: IColor) {
   return "#" + byteHex(color.r) + byteHex(color.g) + byteHex(color.b) + byteHex(color.a);
 }
 
 // Helper function to support HTML hexColor Strings
-function hexStrToRGBA(hexStr: string): IColor {
+export function hexStrToRGBA(hexStr: string): IColor {
   // RGBA color object
   var colorObject: IColor = { r: 255, g: 255, b: 255, a: 255 };
 
@@ -79,7 +79,7 @@ function hexStrToRGBA(hexStr: string): IColor {
 // Convert from the few color names used in this app to Windows.UI.Input.Inking's color code.
 // If it isn't one of those, then decode the hex string.  Otherwise return gray.
 // The alpha component is always set to full (255).
-function toColorStruct(color: string): IColor {
+export function toColorStruct(color: string): IColor {
   switch (color) {
     // Ink colors
     case "Black": return { r: 0x00, g: 0x00, b: 0x00, a: 0xff }
@@ -101,7 +101,7 @@ function toColorStruct(color: string): IColor {
 // ----------------------------------------------------------------------
 // URL/Path parsing stuff
 // ----------------------------------------------------------------------
-function breakFilePath(path) {
+export function breakFilePath(path) {
   var m = path.match(/(.*)[\/\\]([^\/\\]+)\.(\w+)/);
   if (m)
     return { source: m[0], path: m[1], filename: m[2], ext: m[3] };
@@ -109,7 +109,7 @@ function breakFilePath(path) {
     return { source: m[0], path: "", filename: "", ext: "" };
 }
 
-function parseURL(url) {
+export function parseURL(url) {
   var a = document.createElement('a');
   a.href = url;
   var parts = breakFilePath(a.pathname);
@@ -139,4 +139,3 @@ function parseURL(url) {
     hash: a.hash.replace('#', ''),
   };
 }
-

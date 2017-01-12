@@ -1,14 +1,15 @@
-/// <reference path="utils.ts"/>
+import App from './canvas';
+import * as utils from './utils';
 
-class BackBoard {
+export default class BackBoard {
   private div: HTMLElement;
   private gesture: MSGesture;
   myNameIs : string = "BackBoard Instance";
 
   pointerId: number = -1;
 
-  constructor(htmlId: string) {
-    this.div = id(htmlId);
+  constructor(private appObject: App, htmlId: string) {
+    this.div = utils.id(htmlId);
     this.div['sysObject'] = this;
 
     this.gesture = new MSGesture();
@@ -36,12 +37,12 @@ class BackBoard {
   gestureListener(evt) {
     if (evt.type === "MSGestureTap") {
       // Unselect everything that is selected
-      appObject.unselectAll();
+      this.appObject.unselectAll();
       var t = evt.gestureObject.target;
       if (t !== undefined && t !== null) {
         // hide the sheet of glass everything is under
         // it is a div that is the canvas
-        makeElementVisible(t, false);
+        utils.makeElementVisible(t, false);
         // try if to get an element from the point
         var elem = <HTMLElement>document.elementFromPoint(evt.clientX, evt.clientY);
         // should we check if this thing is selectable ???
@@ -51,8 +52,9 @@ class BackBoard {
           // put it above the glass
           elem.style.zIndex = "10";
         }
+
         // make the canvas visible again
-        makeElementVisible(t, true);
+        utils.makeElementVisible(t, true);
         evt.stopPropagation();
       }
     }
