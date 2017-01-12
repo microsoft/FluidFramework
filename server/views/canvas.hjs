@@ -1,0 +1,12 @@
+
+{{<layout}}
+    {{$styles}}
+    {{/styles}}
+
+    {{$content}}
+        <h1>Hi, I do collab</h1>
+    {{/content}}
+    
+    {{$scripts}}
+    {{/scripts}}            
+{{/layout}}
