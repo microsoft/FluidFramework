@@ -2,9 +2,15 @@ import * as $ from 'jquery';
 import * as _ from 'lodash';
 import { Promise } from 'es6-promise';
 import { pnhost, IEchoService, EchoServiceName, ITable, ITableService, TableServiceName, ITableListener } from '../api/index';
-var fullcalendar = require('fullcalendar');
-var qtip = require('qtip2');
 import * as moment from 'moment';
+import * as fullcalendar from 'fullcalendar';
+import * as qtip from 'qtip2';
+
+// The TypeScript compiler will elide these two libraries since they aren't directly accessed. They are jquery plugins
+// and so internally attach themselves to the $ object. We do the import below to force their inclusion while also keeping
+// the version above to get the typing information
+import "fullcalendar"
+import "qtip2"
 
 class TableListener implements ITableListener {
     constructor(private _viewModel: CalendarViewModel) {
@@ -76,7 +82,7 @@ class CalendarViewModel {
             });
         }        
 
-        var fcOptions = <FullCalendar.Options>{
+        var fcOptions: any = {
             minTime: "07:00:00",
             maxTime: "21:00:00",
             weekends: false,
@@ -89,7 +95,7 @@ class CalendarViewModel {
                 if (event.responseStatus && (event.responseStatus.length > 0)) {
                     content += ("<br/>" + event.responseStatus);
                 }
-                var qtipOptions: QTip2.QTipOptions = {
+                var qtipOptions = {
                     content: content,
                     position: {
                         my: "left center",
@@ -100,7 +106,7 @@ class CalendarViewModel {
             }
         };
             
-        $('#calendar').fullCalendar(fcOptions);
+        $('#calendar').fullCalendar(fcOptions as fullcalendar.Options);
         $('#calendar').fullCalendar('changeView', 'agendaWeek');
     }
 
@@ -190,7 +196,7 @@ class CalendarViewModel {
     }
 
     private loadCalendarView(calendars: Calendar[]) {
-        var events: FullCalendar.EventObject[] = [];
+        var events: fullcalendar.EventObject[] = [];
         for (var ncal = calendars.length, ical = 0; ical < ncal; ical++) {
             var cal = calendars[ical];
             var borderColor = (ical == 0) ? "black" : "darkblue";
@@ -198,7 +204,7 @@ class CalendarViewModel {
 
             for (var nevent = cal.events.length, iev = 0; iev < nevent; iev++) {
                 let ev = cal.events[iev];
-                events.push({
+                let event: any = {
                     id: ev.id,
                     title: ev.title,
                     color: color,
@@ -207,7 +213,9 @@ class CalendarViewModel {
                     responseStatus: ev.responseStatus,
                     start: new Date(ev.start),
                     end: new Date(ev.end),
-                });
+                };
+
+                events.push(event);
             }
         }        
 

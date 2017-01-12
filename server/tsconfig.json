@@ -1,16 +1,17 @@
 {    
     "exclude": [
-        "node_modules",
-        "dist"
+        "dist",
+        "node_modules"
     ],
     "compilerOptions": {
         "target": "es5",
         "module": "commonjs",        
         "moduleResolution": "node",
         "sourceMap": true,
+        "lib": [ "es2015", "dom", "scripthost" ],
         "emitDecoratorMetadata": true,
         "experimentalDecorators": true,
         "removeComments": false,
-        "noImplicitAny": false    
+        "noImplicitAny": false
     }
 }

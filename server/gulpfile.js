@@ -19,7 +19,7 @@ gulp.task("clean", function() {
 gulp.task("build", function () {
     var errors = false;
 
-    return gulp.src(['src/**/*.ts', 'typings/index.d.ts'])
+    return gulp.src(['src/**/*.ts'])
         .pipe(plumber(function() { errors = true; } ))      
         .pipe(sourcemaps.init())
         .pipe(ts(tsProject))

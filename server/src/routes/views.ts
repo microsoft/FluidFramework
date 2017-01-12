@@ -1,5 +1,6 @@
 import * as express from 'express';
 import * as views from '../db/views';
+import { Promise } from 'es6-promise';
 import { defaultPartials } from './partials';
 import { IView, IViews, Link } from '../interfaces';
 

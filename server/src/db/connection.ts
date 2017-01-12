@@ -12,14 +12,16 @@ let connectionString = nconf.get("documentDB");
 let client = new documentdb.DocumentClient(connectionString.endpoint, { masterKey: connectionString.key });
 
 // Convert from node style callbacks to es6 promises
-let readDatabase = promisify(client.readDatabase, client);
 let createDatabase = promisify(client.createDatabase, client);
-let readCollection = promisify(client.readCollection, client);
 let createCollection = promisify(client.createCollection, client);
-let readDocument = promisify(client.readDocument, client);
 let createDocument = promisify(client.createDocument, client);
 let replaceDocument = promisify(client.replaceDocument, client);
 let deleteDocument = promisify(client.deleteDocument, client);
+
+// The typings file needs an update to handle the below cases
+let readDatabase = promisify((<any> client).readDatabase, client);
+let readCollection = promisify((<any> client).readCollection, client);
+let readDocument = promisify((<any> client).readDocument, client);
 
 function getCollectionUrl(collection: string): string {
     return `${databaseUrl}/colls/${collection}`;
@@ -121,7 +123,7 @@ class Collection<T> {
         let collectionUrl = getCollectionUrl(this.name);
 
         return this._collectionP.then(() => {
-            let queryIterator = client.readDocuments(collectionUrl);
+            let queryIterator = (<any> client).readDocuments(collectionUrl);
             let readDocuments = promisify(queryIterator.toArray, queryIterator);
             return readDocuments();
         })

@@ -87,11 +87,11 @@ app.set('views', path.join(__dirname, '../views'));
 app.set('view engine', 'hjs');
 
 // Right now we simply pass through the entire stored user object to the session storage for that user
-passport.serializeUser((user, done) => {
+passport.serializeUser((user: accounts.IUser, done) => {
     done(null, user.user.id);
 });
 
-passport.deserializeUser((id, done) => {
+passport.deserializeUser((id: any, done) => {
     accounts.getUser(id).then((user) => done(null, user), (error) => done(error, null));
 });
 
