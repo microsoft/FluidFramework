@@ -6,6 +6,7 @@ var plumber = require('gulp-plumber');
 var ts = require("gulp-typescript");
 var tsProject = ts.createProject("tsconfig.json", { typescript: require('typescript') });
 var clean = require("gulp-clean");
+var tslint = require("gulp-tslint");
 var sourcemaps = require('gulp-sourcemaps');
 var path = require('path');
 
@@ -36,6 +37,15 @@ gulp.task("build", function () {
         })
 });
 
+// Linting to validate style guide
+gulp.task("tslint", () =>
+    gulp.src(['src/**/*.ts'])
+        .pipe(tslint({
+            formatter: "verbose"
+        }))
+        .pipe(tslint.report())
+);
+
 // Browserified client code definitions
 let controllers = [
     { name: "browserify", src: "src/ng/main.ts", outFile: "main.js", folder: "public/dist/ng", standalone: "controller" },
@@ -65,4 +75,4 @@ for (let controller of controllers) {
 
 let browserifyTasks = controllers.map(function(controller) { return controller.name });
 
-gulp.task("default", ["build"].concat(browserifyTasks));
+gulp.task("default", ["tslint", "build"].concat(browserifyTasks));
