@@ -1,55 +1,65 @@
-import { Component, Input, OnChanges, SimpleChanges, OnInit } from '@angular/core';
-import { InteractiveDocumentViewService } from './interactive-document-view.service';
-import { InteractiveDocumentService } from './interactive-document.service';
-import { ViewModel, IViews, IView, Resource } from '../interfaces';
-import { PostMessageHostServer, ITableColumn, EchoServiceName, TableServiceName, ITableService, ITable, ITableListener } from '../api/index';
-import * as services from '../services/index';
+import { Component, Input, OnChanges, OnInit, SimpleChanges } from "@angular/core";
 import {
-    Angular2DataTableModule,                
+    Angular2DataTableModule,
     ColumnMode,
-    SelectionType
-} from 'angular2-data-table';
-import * as _ from 'lodash';
+    SelectionType,
+} from "angular2-data-table";
+import * as _ from "lodash";
+import {
+    EchoServiceName,
+    ITable,
+    ITableColumn,
+    ITableListener,
+    ITableService,
+    PostMessageHostServer,
+    TableServiceName,
+} from "../api/index";
+import { IResource, IView, IViewModel, IViews } from "../interfaces";
+import * as services from "../services/index";
+import { InteractiveDocumentViewService } from "./interactive-document-view.service";
+import { InteractiveDocumentService } from "./interactive-document.service";
 
-class Table implements ITable {    
-    rows: any[];
-    columns: any[];    
-    selected: any[] = []
-    private _listeners: ITableListener[] = [];
-    
-    loadData(columns: ITableColumn[], rows: any[]): Promise<void> {
-        console.log('load data');
-        this.columns = columns.map((column) => ({prop: column.name}));
+// TODO split into multiple files
+// tslint:disable:max-classes-per-file
+
+class Table implements ITable {
+    public rows: any[];
+    public columns: any[];
+    public selected: any[] = [];
+    private listeners: ITableListener[] = [];
+
+    public loadData(columns: ITableColumn[], rows: any[]): Promise<void> {
+        this.columns = columns.map((column) => ({ prop: column.name }));
         this.selected = [];
         this.rows = rows;
 
         return Promise.resolve();
     }
 
-    onSelectionChange(event: any) { 
-        this.selected = event.selected;              
-        for (let listener of this._listeners) {
+    public onSelectionChange(event: any) {
+        this.selected = event.selected;
+        for (let listener of this.listeners) {
             listener.rowsSelected(event.selected);
-        }        
+        }
     }
 
-    onSelectionDeleted() {
+    public onSelectionDeleted() {
         this.rows = _.filter(this.rows, (row) => !_.includes(this.selected, row));
-        for (let listener of this._listeners) {
+        for (let listener of this.listeners) {
             listener.rowsChanged(this.rows);
         }
     }
 
-    addListener(listener: ITableListener): Promise<void> {   
-        this._listeners.push(listener);
-        return Promise.resolve();     
+    public addListener(listener: ITableListener): Promise<void> {
+        this.listeners.push(listener);
+        return Promise.resolve();
     }
 }
 
 class TableService implements ITableService {
-    tables: ITable[] = [];
+    public tables: ITable[] = [];
 
-    createTable(): Promise<ITable> {
+    public createTable(): Promise<ITable> {
         let table = new Table();
         this.tables.push(table);
         return Promise.resolve(table);
@@ -57,33 +67,33 @@ class TableService implements ITableService {
 }
 
 @Component({
-    selector: 'interactive-document',
-    templateUrl: 'templates/document.component.html',
-    providers: [InteractiveDocumentService, InteractiveDocumentViewService]
+    providers: [InteractiveDocumentService, InteractiveDocumentViewService],
+    selector: "interactive-document",
+    templateUrl: "templates/document.component.html",
 })
 export class DocumentComponent implements OnInit {
     // Loading flag for the document    
-    loaded: boolean = false;
+    public loaded: boolean = false;
 
-    url: string;
+    public url: string;
 
-    tableService = new TableService();
+    public tableService = new TableService();
 
     // The hosting server - this should probably be a shared angular service but keeping simple for now
-    private _server = new PostMessageHostServer(window);
+    private server = new PostMessageHostServer(window);
 
     constructor(
         private documentService: InteractiveDocumentService,
         private viewService: InteractiveDocumentViewService) {
     }
 
-    ngOnInit() {
-        this._server.addService(EchoServiceName, new services.BrowserEchoService());
-        this._server.addService(TableServiceName, this.tableService);
-        this._server.start();
+    public ngOnInit() {
+        this.server.addService(EchoServiceName, new services.BrowserEchoService());
+        this.server.addService(TableServiceName, this.tableService);
+        this.server.start();
     }
 
-    load(url: string): void {
+    public load(url: string): void {
         this.url = url;
         this.loaded = true;
     }

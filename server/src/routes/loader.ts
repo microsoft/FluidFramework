@@ -1,15 +1,17 @@
-import * as express from 'express';
-import { defaultPartials } from './partials';
-var ensureLoggedIn = require('connect-ensure-login').ensureLoggedIn;
+import * as express from "express";
+import { defaultPartials } from "./partials";
 
-var router = express.Router();
+// tslint:disable-next-line:no-var-requires:simpler code path and module not setup for import
+let ensureLoggedIn = require("connect-ensure-login").ensureLoggedIn;
 
-router.get('/', ensureLoggedIn(), (req: express.Request, response: express.Response) => {
+let router = express.Router();
+
+router.get("/", ensureLoggedIn(), (req: express.Request, response: express.Response) => {
     response.render(
-        'loader',
+        "loader",
         {
-            user: (<any>req).user,
-            partials: defaultPartials
+            partials: defaultPartials,
+            user: (<any> req).user,
         });
 });
 

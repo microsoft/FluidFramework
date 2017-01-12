@@ -3,7 +3,7 @@ export enum MessageType {
     Init,
 
     // Method invocation on the host
-    Method
+    Method,
 }
 
 export interface IWrappedService {
@@ -26,7 +26,7 @@ export enum MethodResultType {
 }
 
 export interface IHostMethodResult {
-    type: MethodResultType;    
+    type: MethodResultType;
 }
 
 export interface IHostMethodObjectResult extends IHostMethodResult {
@@ -34,7 +34,7 @@ export interface IHostMethodObjectResult extends IHostMethodResult {
 }
 
 export interface IHostMethodValueResult extends IHostMethodResult {
-    value: any;    
+    value: any;
 }
 
 export interface IHostMethodMessage extends IHostMessage {

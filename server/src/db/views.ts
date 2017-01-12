@@ -1,10 +1,10 @@
-import * as connection from './connection';
-import { Promise } from 'es6-promise';
-import { IView } from '../interfaces';
+import { Promise } from "es6-promise";
+import { IView } from "../interfaces";
+import * as connection from "./connection";
 
-const collectionName = 'views'
+const collectionName = "views";
 
-var collection = connection.getOrCreateCollection<IView>(collectionName);
+let collection = connection.getOrCreateCollection<IView>(collectionName);
 
 /**
  * Searches for the given string in the collection

@@ -1,14 +1,14 @@
-import * as express from 'express';
-import { defaultPartials } from './partials';
+import * as express from "express";
+import { defaultPartials } from "./partials";
 
-var router = express.Router();
+let router = express.Router();
 
-router.get('/', (req: express.Request, response: express.Response) => {
+router.get("/", (req: express.Request, response: express.Response) => {
     response.render(
-        'browser',
+        "browser",
         {
-            user: (<any>req).user,
-            partials: defaultPartials
+            partials: defaultPartials,
+            user: (<any> req).user,
         });
 });
 

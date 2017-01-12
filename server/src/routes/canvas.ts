@@ -1,15 +1,15 @@
-import * as express from 'express';
-import { defaultPartials } from './partials';
+import * as express from "express";
+import { defaultPartials } from "./partials";
 
-var router = express.Router();
+let router = express.Router();
 
-router.get('/:id', (req: express.Request, response: express.Response) => {
-    let sync = req.query['sync'] || true;    
+router.get("/:id", (req: express.Request, response: express.Response) => {
     response.render(
-        'canvas',
+        "canvas",
         {
+            // tslint:disable-next-line:no-string-literal
+            id: `Canvas - ${req.params["id"]}`,
             partials: defaultPartials,
-            id: `Canvas - ${req.params['id']}`,
         });
 });
 

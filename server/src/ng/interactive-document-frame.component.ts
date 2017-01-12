@@ -1,24 +1,24 @@
-import { Component, Input, OnChanges, SimpleChanges, ElementRef, AfterViewInit } from '@angular/core';
-import { InteractiveDocumentViewService } from './interactive-document-view.service';
-import { InteractiveDocumentService } from './interactive-document.service';
-import { ViewModel, IViews, IView, Resource } from '../interfaces';
-import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
+import { AfterViewInit, Component, ElementRef, Input, OnChanges, SimpleChanges } from "@angular/core";
+import { DomSanitizer, SafeUrl } from "@angular/platform-browser";
+import { IResource, IView, IViewModel, IViews } from "../interfaces";
+import { InteractiveDocumentViewService } from "./interactive-document-view.service";
+import { InteractiveDocumentService } from "./interactive-document.service";
 
 @Component({
-    selector: 'interactive-document-frame',
-    templateUrl: 'templates/interactive-document-frame.component.html',
-    providers: [InteractiveDocumentService, InteractiveDocumentViewService]
+    providers: [InteractiveDocumentService, InteractiveDocumentViewService],
+    selector: "interactive-document-frame",
+    templateUrl: "templates/interactive-document-frame.component.html",
 })
 export class InteractiveDocumentFrameComponent implements AfterViewInit {
     @Input()
-    url: string;
+    public url: string;
 
     constructor(private elementRef: ElementRef, private sanitizer: DomSanitizer) {
     }
 
-    ngAfterViewInit() {
+    public ngAfterViewInit() {
         // Load in the bound view                
-        let iframe = this.elementRef.nativeElement.querySelector('iframe');
-        iframe.setAttribute('src', this.url);
+        let iframe = this.elementRef.nativeElement.querySelector("iframe");
+        iframe.setAttribute("src", this.url);
     }
 }
