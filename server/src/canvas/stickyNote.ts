@@ -1,4 +1,4 @@
-import * as utils from './utils';
+import * as utils from "./utils";
 
 export default class StickyNote {
   private div: HTMLDivElement;
@@ -6,14 +6,15 @@ export default class StickyNote {
 
   constructor(parent: HTMLElement) {
 
-    this.div = <HTMLDivElement>document.createElement('div');     // id("sticky");
-    this.div['sticky'] = this;
+    this.div = <HTMLDivElement> document.createElement("div");     // id("sticky");
+    // tslint:disable-next-line:no-string-literal
+    this.div["sticky"] = this;
 
-    this.div.classList.add('stickyNote');
-    this.div.classList.add('selectable');
-    this.div.classList.add('stickySelected');
-    // this.div.classList.add('stickyInkable');
-   
+    this.div.classList.add("stickyNote");
+    this.div.classList.add("selectable");
+    this.div.classList.add("stickySelected");
+    // this.div.classList.add("stickyInkable");
+
     this.div.style.top = "100px";
     this.div.style.left = "100px";
 
@@ -28,13 +29,13 @@ export default class StickyNote {
     parent.appendChild(this.div);
   }
 
-  eventListener(evt) {
-    var sn = this['sticky'];
-    if (evt.type == "pointerdown") {
+  public eventListener(evt) {
+    // tslint:disable-next-line:no-string-literal
+    let sn = this["sticky"];
+    if (evt.type === "pointerdown") {
       sn.gesture.addPointer(evt.pointerId);
       return;
-    }
-    else if (evt.type == "MSGestureTap") {
+    } else if (evt.type === "MSGestureTap") {
       if (evt.target.classList.contains("stickySelected")) {
         evt.target.classList.remove("stickySelected");
         evt.target.style.zIndex = 1;
@@ -47,7 +48,7 @@ export default class StickyNote {
     sn.manipulateElement(evt);
   }
 
-  manipulateElement(e) {
+  public manipulateElement(e) {
     // Uncomment the following code if you want to disable the built-in inertia 
     // provided by dynamic gesture recognition
 
@@ -55,9 +56,9 @@ export default class StickyNote {
     //  return;
 
     // manipulate only with touch
-    if (1 || e.pointerType == "touch") {
+    if (1 || e.pointerType === "touch") {
       // Get the latest CSS transform on the element        
-      var m;
+      let m;
 
       // Get the latest CSS transform on the element in MS Edge 
       m = new WebKitCSSMatrix(window.getComputedStyle(this.gesture.target, null).transform);
@@ -71,14 +72,13 @@ export default class StickyNote {
           .translate(-e.offsetX, -e.offsetY); // Move the transform origin back
 
         /* to make it wider instead of bigger [un]comment the scaling above
-        var w : number = e.target.clientWidth;
-        var h : number = e.target.clientWidth;
-        var s : number = e.scale;
+        let w : number = e.target.clientWidth;
+        let h : number = e.target.clientWidth;
+        let s : number = e.scale;
         e.target.style.width = (w * s).toString() + "px";
         e.target.style.height = (h * s).toString() + "px";
         */
       }
     }
   }
-
 }

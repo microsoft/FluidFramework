@@ -1,31 +1,31 @@
 // The main app code
-import BackBoard from './backBoard';
-import InkCanvas from './inkCanvas';
-import StickyNote from './stickyNote';
-import * as utils from './utils';
+import BackBoard from "./backBoard";
+import InkCanvas from "./inkCanvas";
+import StickyNote from "./stickyNote";
+import * as utils from "./utils";
 
-var appObject;
-var sticky;
-var mainBoard;
+let appObject;
+let sticky;
+let mainBoard;
 
 // App Class 
 export default class App {
-  ink: InkCanvas;
+  public ink: InkCanvas;
 
-  handleKeys: boolean = true;
-  stickyCount: number = 0;
+  public handleKeys: boolean = true;
+  public stickyCount: number = 0;
 
   constructor() {
 
     // register all of the different handlers
-    var p: HTMLElement = utils.id("hitPlane");
+    let p: HTMLElement = utils.id("hitPlane");
     this.ink = new InkCanvas(p);
 
     window.addEventListener("keydown", this.keyPress, false);
     window.addEventListener("keyup", this.keyRelease, false);
 
     // toolbar buttons
-    document.querySelector("#strokeColors").addEventListener("click", (e) => { appObject.ink.inkColor() }, false);
+    document.querySelector("#strokeColors").addEventListener("click", (e) => { appObject.ink.inkColor(); }, false);
     document.querySelector("#clearButton").addEventListener("click", (e) => { appObject.clear(); }, false);
     document.querySelector("#undoButton").addEventListener("click", (e) => { appObject.ink.undo(); }, false);
     document.querySelector("#redoButton").addEventListener("click", (e) => { appObject.ink.redo(); }, false);
@@ -33,7 +33,6 @@ export default class App {
     document.querySelector("#turnOnInk").addEventListener("click", (e) => { appObject.test(e); }, false);
 
   }
-
 
   //  Key Handlers:
   //   Escape
@@ -44,14 +43,15 @@ export default class App {
   //   ^S  Save
   //   ^R  Recognize
   //   ^Q  Quit (shuts down the sample app)
-
-  keyRelease(evt) {
-
+  // tslint:disable-next-line:no-empty
+  public keyRelease(evt) {
   }
 
-  keyPress(evt) {
-    if (this.handleKeys === false)
+  public keyPress(evt) {
+    if (this.handleKeys === false) {
       return false;
+    }
+
     if (evt.keyCode === 27) { // Escape
       evt.preventDefault();
       utils.displayStatus("Escape");
@@ -85,23 +85,23 @@ export default class App {
     }
   }
 
-
   // this method will try up the entire board
-  clear() {
+  public clear() {
     appObject.ink.clear();
-    var board = utils.id("content");
-    var stickies = document.querySelectorAll(".stickyNote");
-    for (var i = 0; i < stickies.length; i++) {
+    let board = utils.id("content");
+    let stickies = document.querySelectorAll(".stickyNote");
+    // tslint:disable-next-line:prefer-for-of:stickies is NodeListOf not an array
+    for (let i = 0; i < stickies.length; i++) {
       board.removeChild(stickies[i]);
     }
   }
 
   // find all of the things that are selected and unselect them
-  unselectAll() {
-    var sel = document.querySelectorAll(".stickySelected");
-    var elem;
+  public unselectAll() {
+    let sel = document.querySelectorAll(".stickySelected");
+    let elem;
     if (sel.length > 0) {
-      for (var i = 0; i < sel.length; i++) {
+      for (let i = 0; i < sel.length; i++) {
         elem = sel.item(i);
         if (elem.classList.contains("stickySelected")) {
           elem.classList.remove("stickySelected");
@@ -111,25 +111,25 @@ export default class App {
     }
   }
 
-  makeInkable() {
-    var sel = document.querySelectorAll(".stickySelected");
-    var elem;
+  public makeInkable() {
+    let sel = document.querySelectorAll(".stickySelected");
+    let elem;
     if (sel.length > 0) {
-      for (var i = 0; i < sel.length; i++) {
+      for (let i = 0; i < sel.length; i++) {
         elem = sel.item(i);
         elem.classList.add("stickyInkable");
-        var ic = new InkCanvas(elem);
+        let ic = new InkCanvas(elem);
       }
     }
   }
 
   // this is the handler for the test tube
-  test(e) {
-    if (e.target.id === 'testButton') {
+  public test(e) {
+    if (e.target.id === "testButton") {
       this.unselectAll();
-      var x = new StickyNote(utils.id("content"));
+      let x = new StickyNote(utils.id("content"));
     }
-    if (e.target.id === 'turnOnInk') {
+    if (e.target.id === "turnOnInk") {
       this.makeInkable();
     }
   }
@@ -137,13 +137,9 @@ export default class App {
 }
 
 // create the new app
-
-(function () {
-  document.addEventListener("DOMContentLoaded", () => {
-    appObject = new App();
-    sticky = new StickyNote(utils.id("content"));
-    mainBoard = new BackBoard(appObject, "hitPlane");
-    // id("ToolBar").appendChild(new ToolBarButton("images/icons/pencil.svg").click(appObject.clear).elem());
-
-  });
-})();
+document.addEventListener("DOMContentLoaded", () => {
+  appObject = new App();
+  sticky = new StickyNote(utils.id("content"));
+  mainBoard = new BackBoard(appObject, "hitPlane");
+  // id("ToolBar").appendChild(new ToolBarButton("images/icons/pencil.svg").click(appObject.clear).elem());
+});

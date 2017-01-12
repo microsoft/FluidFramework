@@ -1,27 +1,28 @@
-import * as utils from './utils';
+import * as utils from "./utils";
 
 export class ToolBarButton {
-    el : HTMLElement;
+    public el: HTMLElement;
 
-    constructor(icon : string) {
-        var urlParts = utils.parseURL(icon); 
-        this.el = <HTMLElement>document.createElement('button');
+    constructor(icon: string) {
+        let urlParts = utils.parseURL(icon);
+        this.el = <HTMLElement> document.createElement("button");
         this.el.id = urlParts.file;
+        // tslint:disable-next-line:no-string-literal
         this.el["ToolBarButton"] = this;
         this.el.innerText = urlParts.file;
-        this.el.style.backgroundImage = "url('"+icon+"')";
+        this.el.style.backgroundImage = `url('${icon}')`;
         return this;
     }
 
-    icon(icon: string) {
-        this.el.style.backgroundImage = "url('"+icon+"')";
+    public icon(icon: string) {
+        this.el.style.backgroundImage = `url('${icon}')`;
         return this;
     }
 
-    click(handler: EventListenerOrEventListenerObject) {
-        this.el.addEventListener('click', handler);
+    public click(handler: EventListenerOrEventListenerObject) {
+        this.el.addEventListener("click", handler);
         return this;
     }
 
-    elem() { return this.el;}
+    public elem() { return this.el; }
 }
