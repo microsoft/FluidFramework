@@ -1,9 +1,13 @@
-import * as express from 'express';
-import * as views from '../db/views';
-import { defaultPartials } from './partials';
-import { IView, IViews, Link } from '../interfaces';
+import { Promise } from "es6-promise";
+import * as express from "express";
+import * as views from "../db/views";
+import { ILink, IView, IViews } from "../interfaces";
+import { defaultPartials } from "./partials";
 
-var router = express.Router();
+let router = express.Router();
+
+// TODO split into multiple files
+// tslint:disable:max-classes-per-file
 
 class View implements IView {
     constructor(public type: string, public url: string) {
@@ -11,20 +15,23 @@ class View implements IView {
 }
 
 class Views implements IViews {
-    _links: { [rel: string]: Link | Link[] };
-    _embedded: { [rel: string]: View[] };
+    // tslint:disable:variable-name:JSON format contains _
+    public _links: { [rel: string]: ILink | ILink[] };
+    public _embedded: { [rel: string]: View[] };
+    // tslint:enable:variable-name
 
     constructor(self: string, views: View[]) {
-        this._links = { "self": { href: self } };
-        this._embedded = { "item": views };
+        this._links = { self: { href: self } };
+        this._embedded = { item: views };
     }
 }
 
 /**
  * Retrieves a list of all supported views in the system
  */
-router.get('/', (req: express.Request, response: express.Response) => {
-    let type = req.query['type'];
+router.get("/", (req: express.Request, response: express.Response) => {
+    // tslint:disable-next-line:no-string-literal
+    let type = req.query["type"];
 
     let viewsP: Promise<View[]> = type ? views.search(type) : views.getAll();
 
@@ -35,7 +42,7 @@ router.get('/', (req: express.Request, response: express.Response) => {
         },
         (error) => {
             return response.status(400).json(error);
-        })
+        });
 });
 
 export = router;

@@ -1,11 +1,11 @@
-import socketIo = require('socket.io');
-import * as redis from 'redis';
-var socketIoRedis = require('socket.io-redis');
-import * as deltasDB from './db/deltas';
-import * as nconf from 'nconf';
-import * as _ from 'lodash';
+import * as _ from "lodash";
+import * as nconf from "nconf";
+import * as redis from "redis";
+import * as socketIo from "socket.io";
+import * as socketIoRedis from "socket.io-redis";
+import * as deltasDB from "./db/deltas";
 
-var io = socketIo();
+let io = socketIo();
 
 let host = nconf.get("redis:host");
 let port = nconf.get("redis:port");
@@ -13,18 +13,18 @@ let pass = nconf.get("redis:pass");
 
 // Setup redis options
 let options: any = { auth_pass: pass };
-if (nconf.get('redis:tls')) {
+if (nconf.get("redis:tls")) {
     options.tls = {
-        servername: host
-    }
+        servername: host,
+    };
 }
 
 let pubOptions = _.clone(options);
 let subOptions = _.clone(options);
 subOptions.return_buffers = true;
 
-var pub = redis.createClient(port, host, pubOptions);
-var sub = redis.createClient(port, host, subOptions);
+let pub = redis.createClient(port, host, pubOptions);
+let sub = redis.createClient(port, host, subOptions);
 io.adapter(socketIoRedis({ pubClient: pub, subClient: sub }));
 
 interface IAppendOperation {
@@ -32,31 +32,29 @@ interface IAppendOperation {
     ops: any[];
 }
 
-io.on('connection', (socket) => {
-    socket.on('join', (room, response) => {
-        console.log(`Join of room ${room} requested`);
+io.on("connection", (socket) => {
+    socket.on("join", (room, response) => {
         socket.join(room);
 
         deltasDB.get(room).then(
             (deltas) => {
-                console.log('Recieved deltas');
                 response(deltas);
             },
             (error) => {
-                console.log("error getting existing deltas");
-            });        
+                console.error("error getting existing deltas");
+            });
     });
 
-    socket.on('append', (append: IAppendOperation) => {        
+    socket.on("append", (append: IAppendOperation) => {
         deltasDB.append(append.room, append.ops);
-        socket.to(append.room).broadcast.emit('append', append.ops);        
+        socket.to(append.room).broadcast.emit("append", append.ops);
     });
 
-    socket.on('disconnect', () => {
-        socket.broadcast.emit('user disconnect');        
-    })
+    socket.on("disconnect", () => {
+        socket.broadcast.emit("user disconnect");
+    });
 
-    socket.broadcast.emit('user connect', 'hi');
+    socket.broadcast.emit("user connect", "hi");
 });
 
 export default io;

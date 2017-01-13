@@ -1,236 +1,256 @@
-import * as $ from 'jquery';
-import * as _ from 'lodash';
-import { Promise } from 'es6-promise';
-import { pnhost, IEchoService, EchoServiceName, ITable, ITableService, TableServiceName, ITableListener } from '../api/index';
-var fullcalendar = require('fullcalendar');
-var qtip = require('qtip2');
-import * as moment from 'moment';
+import { Promise } from "es6-promise";
+import * as fullcalendar from "fullcalendar";
+import * as $ from "jquery";
+import * as _ from "lodash";
+import * as moment from "moment";
+import * as qtip from "qtip2";
+import {
+    EchoServiceName,
+    IEchoService,
+    ITable,
+    ITableListener,
+    ITableService,
+    pnhost,
+    TableServiceName,
+} from "../api/index";
+import { ICalendar, ICalendarEvent } from "./interfaces";
+
+// The TypeScript compiler will elide these two libraries since they aren"t directly accessed. 
+// They are jquery plugins and so internally attach themselves to the $ object. We do the import 
+// below to force their inclusion while also keeping the version above to get the typing information
+import "fullcalendar";
+import "qtip2";
+
+// TODO split into multiple files
+// tslint:disable:max-classes-per-file
 
 class TableListener implements ITableListener {
-    constructor(private _viewModel: CalendarViewModel) {
+    constructor(private viewModel: CalendarViewModel) {
     }
 
-    rowsChanged(rows: any[]): Promise<void> {
-        this._viewModel.rowsChanged(rows);
+    public rowsChanged(rows: any[]): Promise<void> {
+        this.viewModel.rowsChanged(rows);
 
         return Promise.resolve();
     }
 
-    rowsSelected(rows: any[]): Promise<void> {
+    public rowsSelected(rows: any[]): Promise<void> {
         return Promise.resolve();
     }
 }
 
 class RemoteCalendar {
-    constructor() {
-    }
-
-    getCalendars(): Promise<Calendar[]> {
+    public getCalendars(): Promise<ICalendar[]> {
         return new Promise((resolve, reject) => {
             $.ajax("/calendars", {
                 cache: false,
                 dataType: "json",
-                success: (calData: Calendar[]) => resolve(calData),
-                error: (jqXHR: JQueryXHR, textStatus: string, errorThrown: string) => reject(jqXHR)
+                error: (jqXHR: JQueryXHR, textStatus: string, errorThrown: string) => reject(jqXHR),
+                success: (calData: ICalendar[]) => resolve(calData),
             });
         });
     }
 }
 
 class CalendarViewModel {
-    private _calendar = new RemoteCalendar();
-    private _tableServiceP: Promise<ITableService>;
-    private _cachedCalendars: Calendar[];
-    private _pendingDeletes: any[] = [];
-    private _tableP: Promise<ITable>;
-    private _tableListener: TableListener;
-    private _tableBoundRows: any[];
+    private calendar = new RemoteCalendar();
+    private tableServiceP: Promise<ITableService>;
+    private cachedCalendars: ICalendar[];
+    private pendingDeletes: any[] = [];
+    private tableP: Promise<ITable>;
+    private tableListener: TableListener;
+    private tableBoundRows: any[];
 
-    constructor() {
+    public init() {
+        if (pnhost) {
+            this.tableServiceP = pnhost.listServices().then((services) => {
+                return _.includes(services, TableServiceName)
+                    ? pnhost.getService(TableServiceName)
+                    : Promise.resolve(null);
+            });
+        } else {
+            this.tableServiceP = Promise.resolve(null);
+        }
+
+        $(document).ready(() => {
+            this.loadAndCacheCalendars();
+        });
+    }
+
+    public rowsChanged(rows: any[]) {
+        // compute the difference between the received rows and the bound data
+        let deletedRows = _.filter(
+            this.tableBoundRows,
+            (rowModel) => _.find(rows, (row) => row.id === rowModel.id) === undefined);
+        $("#calendar").fullCalendar("removeEvents", (event) => {
+            return _.find(deletedRows, (deletedRow) => deletedRow.id === event.id);
+        });
+
+        // Add the rows to delete to the pending list
+        this.pendingDeletes = this.pendingDeletes.concat(deletedRows);
+
+        // Update the bound data values
+        this.tableBoundRows = rows;
     }
 
     private initView() {
+        // tslint:disable-next-line:max-line-length
         $("#buttons").append($('<div class="fc-right"><div class="fc-button-group"><button id="reload" class="fc-button fc-state-default" type="button">Reload</button></div></div>'));
         $("#reload").click(() => {
             this.loadAndCacheCalendars();
         });
 
         if (pnhost) {
+            // tslint:disable-next-line:max-line-length
             $("#buttons").append($('<div class="fc-left"><div class="fc-button-group"><button id="load-table" class="fc-button fc-state-default" type="button">Export to Table</button></div></div>'));
             $("#buttons .fc-right .fc-button-group").append('<button id="save" class="fc-button fc-state-default" type="button">Save</button>');
 
             // Save processes any pending calendar changes
             $("#save").click(() => {
                 // iterate over the deletedRows URLs and delete them
-                for (let pendingDelete of this._pendingDeletes) {
+                for (let pendingDelete of this.pendingDeletes) {
                     $.ajax(pendingDelete.self, { method: "DELETE" });
-                    console.log(`DELETE: ${pendingDelete.self}`);
                 }
             });
 
-            $("#load-table").click(() => {  
-                // Disable future loads since we're now bound to the host
-                $("#load-table").prop('disabled', true);
+            $("#load-table").click(() => {
+                // Disable future loads since we"re now bound to the host
+                $("#load-table").prop("disabled", true);
 
                 this.loadPNHostTable();
             });
-        }        
+        }
 
-        var fcOptions = <FullCalendar.Options>{
-            minTime: "07:00:00",
-            maxTime: "21:00:00",
-            weekends: false,
-            height: "auto",
+        let fcOptions: any = {
             eventRender: (event, element) => {
-                var content = event.title;
+                let content = event.title;
                 if (event.location && (event.location.length > 0)) {
                     content += ("<br/>" + event.location);
                 }
                 if (event.responseStatus && (event.responseStatus.length > 0)) {
                     content += ("<br/>" + event.responseStatus);
                 }
-                var qtipOptions: QTip2.QTipOptions = {
-                    content: content,
+                let qtipOptions = {
+                    content,
                     position: {
+                        at: "center",
                         my: "left center",
-                        at: "center"
-                    }
+                    },
                 };
                 element.qtip(qtipOptions);
-            }
+            },
+            height: "auto",
+            maxTime: "21:00:00",
+            minTime: "07:00:00",
+            weekends: false,
         };
-            
-        $('#calendar').fullCalendar(fcOptions);
-        $('#calendar').fullCalendar('changeView', 'agendaWeek');
+
+        $("#calendar").fullCalendar(fcOptions as fullcalendar.Options);
+        $("#calendar").fullCalendar("changeView", "agendaWeek");
     }
 
     private loadPNHostTable() {
-        if (!this._tableP) {
-            this._tableP = this._tableServiceP.then((tableService) => tableService.createTable());
+        if (!this.tableP) {
+            this.tableP = this.tableServiceP.then((tableService) => tableService.createTable());
         }
 
-        this._tableP.then((table) => {
-            // Longer term we should standardize on some format here so there isn't a disconnect between Office and moment
+        this.tableP.then((table) => {
+            // Longer term we should standardize on some format here so there 
+            // isn't a disconnect between Office and moment
             const columnTimeFormatString = "m/d/yy h:mm AM/PM";
             let columns = [
-                { name: 'id', format: null },
-                { name: 'provider', format: null }, 
-                { name: 'title', format: null }, 
-                { name: 'location', format: null }, 
-                { name: 'start', format: columnTimeFormatString }, 
-                { name: 'end', format: columnTimeFormatString }, 
-                { name: 'responseStatus', format: null }];
+                { name: "id", format: null },
+                { name: "provider", format: null },
+                { name: "title", format: null },
+                { name: "location", format: null },
+                { name: "start", format: columnTimeFormatString },
+                { name: "end", format: columnTimeFormatString },
+                { name: "responseStatus", format: null },
+            ];
 
-
-            // Get and store the rows we will bind to the pnhost table - we convert times to a format easier to parse by hosts (i.e. Excel)
-            const formatString = "M/D/YY h:mm A";                                    
-            this._tableBoundRows = [];
-            for (let calendar of this._cachedCalendars) {
+            // Get and store the rows we will bind to the pnhost table - 
+            // we convert times to a format easier to parse by hosts (i.e. Excel)
+            const formatString = "M/D/YY h:mm A";
+            this.tableBoundRows = [];
+            for (let calendar of this.cachedCalendars) {
                 for (let event of calendar.events) {
-                    this._tableBoundRows.push({
-                        id: event.id,
-                        provider: calendar.sourceName,
-                        title: event.title,
-                        location: event.location,
-                        start: moment(event.start).format(formatString),
+                    this.tableBoundRows.push({
                         end: moment(event.end).format(formatString),
+                        id: event.id,
+                        location: event.location,
+                        provider: calendar.sourceName,
                         responseStatus: event.responseStatus,
-                        self: event.self
-                    })
+                        self: event.self,
+                        start: moment(event.start).format(formatString),
+                        title: event.title,
+                    });
                 }
             }
 
             // Load the rows into the hosted table
-            table.loadData(columns, this._tableBoundRows);
+            table.loadData(columns, this.tableBoundRows);
 
-            // Setup a table listener if it doesn't already exist 
-            if (!this._tableListener) {
-                this._tableListener = new TableListener(this);
-                table.addListener(this._tableListener);
+            // Setup a table listener if it doesn"t already exist 
+            if (!this.tableListener) {
+                this.tableListener = new TableListener(this);
+                table.addListener(this.tableListener);
             }
-        })
+        });
     }
 
-    private loadAndCacheCalendars(): Promise<Calendar[]> {
-        return this._calendar.getCalendars().then((calendars) => {
+    private loadAndCacheCalendars(): Promise<ICalendar[]> {
+        return this.calendar.getCalendars().then((calendars) => {
             // Clear any pending deletes - a reload resets any interactions 
-            this._pendingDeletes = [];
+            this.pendingDeletes = [];
 
             // Initialize the custom UI once we load the first batch of data
-            if (this._cachedCalendars === undefined) {
+            if (this.cachedCalendars === undefined) {
                 this.initView();
-            }                
+            }
 
-            this._cachedCalendars = calendars;
-            
+            this.cachedCalendars = calendars;
+
             // Update the calendar UI
             this.loadCalendarView(calendars);
 
             // Refresh the pnhost table with the new fields
-            if (this._tableP) {
+            if (this.tableP) {
                 this.loadPNHostTable();
-            }        
+            }
 
             return calendars;
-        })
-    }
-
-    rowsChanged(rows: any[]) {
-        // compute the difference between the received rows and the bound data
-        let deletedRows = _.filter(this._tableBoundRows, (rowModel) => _.find(rows, (row) => row.id === rowModel.id) === undefined);
-        $('#calendar').fullCalendar('removeEvents', (event) => {
-            return _.find(deletedRows, (deletedRow) => deletedRow.id === event.id);
         });
-
-        // Add the rows to delete to the pending list
-        this._pendingDeletes = this._pendingDeletes.concat(deletedRows);
-
-        // Update the bound data values
-        this._tableBoundRows = rows;
     }
 
-    private loadCalendarView(calendars: Calendar[]) {
-        var events: FullCalendar.EventObject[] = [];
-        for (var ncal = calendars.length, ical = 0; ical < ncal; ical++) {
-            var cal = calendars[ical];
-            var borderColor = (ical == 0) ? "black" : "darkblue";
-            var color = (ical == 0) ? "purple" : "green";
+    private loadCalendarView(calendars: ICalendar[]) {
+        let events: fullcalendar.EventObject[] = [];
+        for (let ncal = calendars.length, ical = 0; ical < ncal; ical++) {
+            let cal = calendars[ical];
+            let borderColor = (ical === 0) ? "black" : "darkblue";
+            let color = (ical === 0) ? "purple" : "green";
 
-            for (var nevent = cal.events.length, iev = 0; iev < nevent; iev++) {
+            for (let nevent = cal.events.length, iev = 0; iev < nevent; iev++) {
                 let ev = cal.events[iev];
-                events.push({
+                let event: any = {
+                    borderColor,
+                    color,
+                    end: new Date(ev.end),
                     id: ev.id,
-                    title: ev.title,
-                    color: color,
-                    borderColor: borderColor,
                     location: ev.location,
                     responseStatus: ev.responseStatus,
                     start: new Date(ev.start),
-                    end: new Date(ev.end),
-                });
+                    title: ev.title,
+                };
+
+                events.push(event);
             }
-        }        
+        }
 
         // Update the calendar view
-        $('#calendar').fullCalendar('removeEvents');
+        $("#calendar").fullCalendar("removeEvents");
         for (let event of events) {
-            $('#calendar').fullCalendar('renderEvent', event);
+            $("#calendar").fullCalendar("renderEvent", event);
         }
-    }
-
-    init() {
-        if (pnhost) {
-            this._tableServiceP = pnhost.listServices().then((services) => {
-                return _.includes(services, TableServiceName) ? pnhost.getService(TableServiceName) : Promise.resolve(null);
-            });
-        }
-        else {
-            this._tableServiceP = Promise.resolve(null);
-        }
-
-        $(document).ready(() => {
-            this.loadAndCacheCalendars();            
-        });
     }
 }
 

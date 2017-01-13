@@ -26,9 +26,7 @@
         }
     },
     "redis": {
-        "host": "officenet.redis.cache.windows.net",
-        "pass": "fq90fO6bAac7JBMwn3ymIqzHpqgFtTBUd2+E0Obm75M=",
-        "port": 6380,
-        "tls": true
+        "host": "redis",
+        "port": 6379
     }
 }

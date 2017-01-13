@@ -6,6 +6,7 @@ var plumber = require('gulp-plumber');
 var ts = require("gulp-typescript");
 var tsProject = ts.createProject("tsconfig.json", { typescript: require('typescript') });
 var clean = require("gulp-clean");
+var tslint = require("gulp-tslint");
 var sourcemaps = require('gulp-sourcemaps');
 var path = require('path');
 
@@ -19,7 +20,7 @@ gulp.task("clean", function() {
 gulp.task("build", function () {
     var errors = false;
 
-    return gulp.src(['src/**/*.ts', 'typings/index.d.ts'])
+    return gulp.src(['src/**/*.ts'])
         .pipe(plumber(function() { errors = true; } ))      
         .pipe(sourcemaps.init())
         .pipe(ts(tsProject))
@@ -36,82 +37,42 @@ gulp.task("build", function () {
         })
 });
 
-// Site app
-gulp.task("browserify", function() {
-    return browserify({
-            basedir: '.',
-            debug: true,
-            entries: ['src/ng/main.ts'],
-            cache: {},
-            packageCache: {}
-        })        
-        .plugin(tsify)        
-        .bundle()        
-        .pipe(source('main.js'))
-        .pipe(gulp.dest("public/dist/ng"))
-});
+// Linting to validate style guide
+gulp.task("tslint", () =>
+    gulp.src(['src/**/*.ts'])
+        .pipe(tslint({
+            formatter: "verbose"
+        }))
+        .pipe(tslint.report())
+);
 
-// Client side Interactive Document API
-gulp.task("api", function() {
-    return browserify({
-            basedir: '.',
-            debug: true,
-            entries: ['src/api/index.ts'],
-            cache: {},
-            packageCache: {},
-            standalone: 'pronet'
-        })        
-        .plugin(tsify)        
-        .bundle()        
-        .pipe(source('api.js'))
-        .pipe(gulp.dest("public/dist/api"))
-});
+// Browserified client code definitions
+let controllers = [
+    { name: "browserify", src: "src/ng/main.ts", outFile: "main.js", folder: "public/dist/ng", standalone: "controller" },
+    { name: "api", src: "src/api/index.ts", outFile: "api.js", folder: "public/dist/api", standalone: "pronet" },
+    { name: "calendar", src: "src/calendar/driver.ts", outFile: "driver.js", folder: "public/dist/views/calendar", standalone: "calendar" },
+    { name: "collab", src: "src/collab/collab.ts", outFile: "collab.js", folder: "public/dist/collab", standalone: "collab" },
+    { name: "canvas", src: "src/canvas/canvas.ts", outFile: "canvas.js", folder: "public/dist/canvas", standalone: "canvas" },
+];
 
-// Calendar app
-gulp.task("calendar", function() {
-    return browserify({
-            basedir: '.',
-            debug: true,
-            entries: ['src/calendar/driver.ts'],
-            cache: {},
-            packageCache: {}
-        })        
-        .plugin(tsify)        
-        .bundle()        
-        .pipe(source('driver.js'))
-        .pipe(gulp.dest("public/dist/views/calendar"))
-});
+// Generate tasks for the browserified code
+for (let controller of controllers) {
+    gulp.task(controller.name, function() {
+        return browserify({
+                basedir: '.',
+                debug: true,
+                entries: controller.src,
+                cache: {},
+                packageCache: {},
+                standalone: controller.standalone,
+            })        
+            .plugin(tsify)        
+            .bundle()        
+            .pipe(source(controller.outFile))
+            .pipe(gulp.dest(controller.folder))
+    });
+}
 
-// Collab app
-gulp.task("collab", function() {
-    return browserify({
-            basedir: '.',
-            debug: true,
-            entries: ['src/collab/collab.ts'],
-            cache: {},
-            packageCache: {},
-            standalone: 'collab'
-        })        
-        .plugin(tsify)        
-        .bundle()        
-        .pipe(source('collab.js'))
-        .pipe(gulp.dest("public/dist/collab"))
-});
+let browserifyTasks = controllers.map(function(controller) { return controller.name });
 
-// ShareDB app
-gulp.task("sharedb", function() {
-    return browserify({
-            basedir: '.',
-            debug: true,
-            entries: ['src/collab/sharedb.ts'],
-            cache: {},
-            packageCache: {},
-            standalone: 'collab'
-        })        
-        .plugin(tsify)        
-        .bundle()        
-        .pipe(source('sharedb.js'))
-        .pipe(gulp.dest("public/dist/collab"))
-});
-
-gulp.task("default", ["build", "browserify", "api", "calendar", "collab", "sharedb"]);
+gulp.task("default", ["tslint", "build"].concat(browserifyTasks));
