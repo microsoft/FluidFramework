@@ -1,103 +1,95 @@
-// TODO convert me
-// tslint:disable
+import { Promise } from "es6-promise";
+import * as express from "express";
+import * as googleAuth from "google-auth-library";
+import * as google from "googleapis";
+import * as moment from "moment";
+import * as nconf from "nconf";
+import * as request from "request";
+import * as accounts from "../accounts";
+import { defaultPartials } from "./partials";
 
-import * as express from 'express';
-import * as request from 'request';
-import * as moment from 'moment';
-import * as accounts from '../accounts';
-import { Promise } from 'es6-promise';
-import { IUser } from '../accounts';
-import * as nconf from 'nconf';
-import { defaultPartials } from './partials';
+// tslint:disable:no-console:Server side code
+// tslint:disable:max-line-length:TODO split get into helper functions
 
-var google = require('googleapis');
-var googleAuth = require('google-auth-library');
+let router = express.Router();
 
-var router = express.Router();
-
-interface ExcelTest {
+interface IExcelTest {
     success: boolean;
     error?: any;
 }
 
-router.get('/', (req: express.Request, response: express.Response) => {
-    let user = <IUser>(<any>req).user;
+router.get("/", (req: express.Request, response: express.Response) => {
+    let user = <accounts.IUser> (<any> req).user;
 
     if (!user) {
         return response.json([]);
     }
 
     for (let account of user.accounts) {
-        if (account.provider === 'microsoft') {
-            var excelTest = new Promise<ExcelTest>((resolve, reject) => {
+        if (account.provider === "microsoft") {
+            let excelTest = new Promise<IExcelTest>((resolve, reject) => {
                 return accounts.getTokens(account).then((tokens) => {
-                    let url = 'https://graph.microsoft.com/v1.0/me/drive/root:/BookService.xlsx:/workbook/createSession';
+                    let createSessionUrl = "https://graph.microsoft.com/v1.0/me/drive/root:/BookService.xlsx:/workbook/createSession";
                     request.post(
-                        url,
+                        createSessionUrl,
                         {
-                            auth: { 'bearer': tokens.access },
+                            auth: { bearer: tokens.access },
+                            body: { persistChanges: false },
                             json: true,
-                            body: { persistChanges: false }
-                        }, (error, response, body) => {
-                            if (error) {
-                                return reject({ success: false, error: error });
-                            }
-                            else {
-                                console.log(body);
-                                let sessionId = body.id;
-                                let sessionURL = 'https://graph.microsoft.com/v1.0/me/drive/root:/BookService.xlsx:/workbook/worksheets';
+                        }, (sessionError, sessionResponse, sessionBody) => {
+                            if (sessionError) {
+                                return reject({ success: false, error: sessionError });
+                            } else {
+                                console.log(sessionBody);
+                                let sessionId = sessionBody.id;
+                                let sessionURL = "https://graph.microsoft.com/v1.0/me/drive/root:/BookService.xlsx:/workbook/worksheets";
                                 request.get(
                                     sessionURL,
                                     {
-                                        auth: { 'bearer': tokens.access },
-                                        json: true,
+                                        auth: { bearer: tokens.access },
                                         headers: { "workbook-session-id": sessionId },
-                                    }, (error, response, body) => {
-                                        if (error) {
-                                            console.log(error);
-                                        }
-                                        else {
-                                            console.log(body);
-                                            let sheetURL = "https://graph.microsoft.com/v1.0/me/drive/root:/BookService.xlsx:/workbook/worksheets('Sheetaki')/cell(row=0, column=0)";
+                                        json: true,
+                                    }, (worksheetError, worksheetResponse, worksheetBody) => {
+                                        if (worksheetError) {
+                                            console.log(worksheetError);
+                                        } else {
+                                            console.log(worksheetBody);
                                             request.patch(
-                                                sheetURL,
+                                                "https://graph.microsoft.com/v1.0/me/drive/root:/BookService.xlsx:/workbook/worksheets('Sheetaki')/cell(row=0, column=0)",
                                                 {
-                                                    auth: { 'bearer': tokens.access },
-                                                    json: true,
-                                                    headers: { "workbook-session-id": sessionId },
+                                                    auth: { bearer: tokens.access },
                                                     body: { values: 10 },
-                                                }, (error, response, body) => {
-                                                    if (error) {
-                                                        console.log(error);
-                                                    }
-                                                    else {
-                                                        console.log(body);
-                                                        let sheetURL = "https://graph.microsoft.com/v1.0/me/drive/root:/BookService.xlsx:/workbook/worksheets('Sheetaki')/cell(row=1, column=1)";
+                                                    headers: { "workbook-session-id": sessionId },
+                                                    json: true,
+                                                }, (cellError, cellResponse, cellBody) => {
+                                                    if (cellError) {
+                                                        console.log(cellError);
+                                                    } else {
+                                                        console.log(cellBody);
                                                         request.get(
-                                                            sheetURL,
+                                                            "https://graph.microsoft.com/v1.0/me/drive/root:/BookService.xlsx:/workbook/worksheets('Sheetaki')/cell(row=1, column=1)",
                                                             {
-                                                                auth: { 'bearer': tokens.access },
-                                                                json: true,
+                                                                auth: { bearer: tokens.access },
                                                                 headers: { "workbook-session-id": sessionId },
-                                                            }, (error, response, body) => {
-                                                                if (error) {
-                                                                    console.log(error);
+                                                                json: true,
+                                                            }, (secondCellError, secondCellResponse, secondCellBody) => {
+                                                                if (secondCellError) {
+                                                                    console.log(secondCellError);
+                                                                } else {
+                                                                    console.log(secondCellBody);
                                                                 }
-                                                                else {
-                                                                    console.log(body);
-                                                                }
-                                                            }
+                                                            },
                                                         );
                                                     }
-                                                }
+                                                },
                                             );
                                         }
-                                    }
+                                    },
                                 );
                                 let et = { success: true };
                                 return resolve(et);
                             }
-                        }
+                        },
                     );
                 });
             });
@@ -106,6 +98,5 @@ router.get('/', (req: express.Request, response: express.Response) => {
 
     return response.json([]);
 });
-
 
 export = router;

@@ -323,9 +323,7 @@ app.use("/loader", loaderRoute);
 app.use("/excel", excelRoute);
 app.use("/collab", collabRoute);
 app.use("/canvas", canvasRoute);
-
-calendarsRouter.crouter.init();
-app.use("/calendars", calendarsRouter.crouter.router);
+app.use("/calendars", calendarsRouter);
 app.use("/browser", browserRoute);
 app.use("/views", viewsRoute);
 
