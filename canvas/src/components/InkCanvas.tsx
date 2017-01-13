@@ -1,7 +1,7 @@
 import * as React from 'react'
 import * as ReactDOM from 'react-dom'
 import * as $ from "jquery";
-import * as InkUtils from "../InkUtils"
+import * as InkUtils from "../inkutils"
 
 export interface InkCanvasProps { 
     width: number;

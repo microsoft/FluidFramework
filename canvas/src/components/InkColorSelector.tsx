@@ -1,6 +1,6 @@
 import * as React from 'react'
 import * as ReactDOM from 'react-dom'
-import * as InkUtils from "../InkUtils"
+import * as InkUtils from "../inkutils"
 
 class InkColorSelector extends React.Component<any, any> {
     componentDidMount() {
