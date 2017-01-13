@@ -1,21 +1,18 @@
-// TODO convert me
-// tslint:disable
-
-var nullDigit = -1;
+let nullDigit = -1;
 
 export interface Item {
     key: string;
 }
 
-interface Node {
+interface INode {
     item: Item;
     digit: number;
-    l?: Node;
-    m?: Node;
-    r?: Node;
+    l?: INode;
+    m?: INode;
+    r?: INode;
 }
 
-function checkAdd(tree: Node, item: Item) {
+function checkAdd(tree: INode, item: Item) {
     if (!search(tree, item.key, 0)) {
         return insert(tree, item, 0);
     }
@@ -25,112 +22,100 @@ function checkAdd(tree: Node, item: Item) {
 function digit(s: string, digitIndex: number) {
     if (digitIndex < s.length) {
         return s.charCodeAt(digitIndex);
-    }
-    else {
+    } else {
         return nullDigit;
     }
 }
 
-function internal(t: Node) {
-    return (t.digit != nullDigit);
+function internal(t: INode) {
+    return (t.digit !== nullDigit);
 }
 
-function split(p: Node, q: Node, digitIndex: number): Node {
+function split(p: INode, q: INode, digitIndex: number): INode {
     if (p.item.key.length > q.item.key.length) {
-        var temp = p;
+        let temp = p;
         p = q;
         q = temp;
     }
-    var pDigit = digit(p.item.key, digitIndex);
-    var qDigit = digit(q.item.key, digitIndex);
-    var t = build(qDigit);
+    let pDigit = digit(p.item.key, digitIndex);
+    let qDigit = digit(q.item.key, digitIndex);
+    let t = build(qDigit);
     if (pDigit < qDigit) {
         t.m = q;
-        if (pDigit != nullDigit) {
+        if (pDigit !== nullDigit) {
             t.l = build(pDigit, p);
-        }
-        else {
+        } else {
             t.l = p;
         }
-    }
-    else if (pDigit === qDigit) {
+    } else if (pDigit === qDigit) {
         t.m = split(p, q, digitIndex + 1);
-    }
-    else {
+    } else {
         t.m = q;
-        if (pDigit != nullDigit) {
+        if (pDigit !== nullDigit) {
             t.r = build(pDigit, p);
-        }
-        else {
         }
     }
     return t;
 }
 
-function search(h: Node, v: string, w: number): Item {
+function search(h: INode, v: string, w: number): Item {
     if (h) {
         if (internal(h)) {
-            var i = digit(v, w);
+            let i = digit(v, w);
             if (i < h.digit) {
                 return search(h.l, v, w);
-            }
-            else if (i === h.digit) {
+            } else if (i === h.digit) {
                 return search(h.m, v, w + 1);
-            }
-            else {
+            } else {
                 return search(h.r, v, w);
             }
-        }
-        else if (v == h.item.key) {
+        } else if (v === h.item.key) {
             return h.item;
         }
     }
 }
 
-function mapItems(h: Node, fn: (item: Item) => void) {
+function mapItems(h: INode, fn: (item: Item) => void) {
     if (h) {
         if (internal(h)) {
             mapItems(h.l, fn);
             mapItems(h.m, fn);
             mapItems(h.r, fn);
-        }
-        else {
+        } else {
             fn(h.item);
         }
     }
 }
 
-function findAllCompletions<T extends Item>(tree: Node, prefix: string): T[] {
-    var prefixTree = searchPrefix(tree, prefix, 0);
-    var accum: T[] = [];
-    mapItems(prefixTree, (item) => accum.push(<T>item));
+function findAllCompletions<T extends Item>(tree: INode, prefix: string): T[] {
+    let prefixTree = searchPrefix(tree, prefix, 0);
+    let accum: T[] = [];
+    mapItems(prefixTree, (item) => accum.push(<T> item));
     return accum;
 }
 
-function searchPrefix(tree: Node, val: string, w: number): Node {
-    if (w == val.length) {
+function searchPrefix(tree: INode, val: string, w: number): INode {
+    if (w === val.length) {
         return tree;
     }
     if (tree) {
-        if (tree.item && (tree.item.key.indexOf(val) == 0)) {
+        if (tree.item && (tree.item.key.indexOf(val) === 0)) {
             return tree;
         }
-        var i = digit(val, w);
+        let i = digit(val, w);
         if (i < tree.digit) {
             return searchPrefix(tree.l, val, w);
-        }
-        else if (i == tree.digit) {
+        } else if (i === tree.digit) {
             return searchPrefix(tree.m, val, w + 1);
-        }
-        else {
+        } else {
             return searchPrefix(tree.r, val, w);
         }
     }
 }
 
-function insert(h: Node, item: Item, w: number) {
-    var v = item.key;
-    var i = digit(v, w);
+function insert(h: INode, item: Item, w: number) {
+    let v = item.key;
+    let i = digit(v, w);
     if (!h) {
         return build(i, build(nullDigit, undefined, item));
     }
@@ -139,20 +124,18 @@ function insert(h: Node, item: Item, w: number) {
     }
     if (i < h.digit) {
         h.l = insert(h.l, item, w);
-    }
-    else if (i == h.digit) {
+    } else if (i === h.digit) {
         h.m = insert(h.m, item, w + 1);
-    }
-    else {
+    } else {
         h.r = insert(h.r, item, w);
     }
     return h;
 }
 
 class Indenter {
-    static indentStep: number = 4;
-    static indentStepString: string = "    ";
-    static indentStrings: string[] = [];
+    public static indentStep: number = 4;
+    public static indentStepString: string = "    ";
+    public static indentStrings: string[] = [];
     public indentAmt: number = 0;
 
     public increaseIndent() {
@@ -164,10 +147,10 @@ class Indenter {
     }
 
     public getIndent() {
-        var indentString = Indenter.indentStrings[this.indentAmt];
+        let indentString = Indenter.indentStrings[this.indentAmt];
         if (indentString === undefined) {
             indentString = "";
-            for (var i = 0; i < this.indentAmt; i = i + Indenter.indentStep) {
+            for (let i = 0; i < this.indentAmt; i = i + Indenter.indentStep) {
                 indentString += Indenter.indentStepString;
             }
             Indenter.indentStrings[this.indentAmt] = indentString;
@@ -176,16 +159,16 @@ class Indenter {
     }
 }
 
-function print(tree: Node) {
-    var indenter = new Indenter();
+function print(tree: INode) {
+    let indenter = new Indenter();
     pr1("root", tree);
-    function pr1(label: string, t: Node) {
+    function pr1(label: string, t: INode) {
         if (t) {
             WScript.StdOut.Write(indenter.getIndent());
             if (internal(t) || (!t.item)) {
-                WScript.StdOut.WriteLine(label + " node with digit: " + ((t.digit == nullDigit) ? "nullDigit" : String.fromCharCode(t.digit)));
-            }
-            else if (t.item) {
+                WScript.StdOut.WriteLine(label + " node with digit: " + (
+                    (t.digit === nullDigit) ? "nullDigit" : String.fromCharCode(t.digit)));
+            } else if (t.item) {
                 WScript.StdOut.WriteLine(label + " leaf with key: " + t.item.key);
             }
             indenter.increaseIndent();
@@ -197,47 +180,46 @@ function print(tree: Node) {
     }
 }
 
-function build(digit: number, m?: Node, item?: Item): Node {
+function build(digit: number, m?: INode, item?: Item): INode {
     return {
-        digit: digit,
-        m: m,
-        item: item,
+        digit,
+        item,
+        m,
     };
 }
 
-export interface Symtab<T extends Item> {
+export interface ISymtab<T extends Item> {
     add(item: T);
     complete(prefix: string): T[];
     find(key: string): T;
     print();
 }
 
-export function createSymtab<T extends Item>(): Symtab<T> {
-    var tree;
+export function createSymtab<T extends Item>(): ISymtab<T> {
+    let tree;
     return {
         add: (item: T) => {
             tree = checkAdd(tree, item);
         },
-        find: (key: string) => {
-            return <T>search(tree, key, 0);
-        },
         complete: (prefix: string) => {
             return findAllCompletions<T>(tree, prefix);
         },
+        find: (key: string) => {
+            return <T> search(tree, key, 0);
+        },
         print: () => {
             print(tree);
-        }
-    }
+        },
+    };
 }
 
-
-interface Symbol {
+interface ISymbol {
     key: string;
     flags?: number;
 }
 
-function printSymbols(syms: Symbol[]) {
-    for (var i = 0, len = syms.length; i < len; i++) {
+function printSymbols(syms: ISymbol[]) {
+    for (let i = 0, len = syms.length; i < len; i++) {
         if (i > 0) {
             WScript.StdOut.Write(", ");
         }
@@ -247,7 +229,7 @@ function printSymbols(syms: Symbol[]) {
 }
 
 function test1() {
-    var symtab = createSymtab<Symbol>();
+    let symtab = createSymtab<ISymbol>();
     symtab.add({ key: "buffalo" });
     symtab.add({ key: "beefalo" });
     symtab.add({ key: "fungus" });
@@ -262,7 +244,7 @@ function test1() {
 }
 
 function test2() {
-    var symtab = createSymtab<Symbol>();
+    let symtab = createSymtab<ISymbol>();
     symtab.add({ key: "as" });
     symtab.print();
     symtab.add({ key: "ast" });
@@ -272,7 +254,7 @@ function test2() {
 }
 
 function francestest() {
-    var symtab = createSymtab<Symbol>();
+    let symtab = createSymtab<ISymbol>();
     symtab.add({ key: "sparkles" });
     symtab.print();
     symtab.add({ key: "sparkler" });

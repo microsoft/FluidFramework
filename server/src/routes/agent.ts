@@ -1,4 +1,4 @@
-// TODO convert me
+// TODO enable linting for this file
 // tslint:disable
 
 import * as PrefixTree from './prefixTree';
