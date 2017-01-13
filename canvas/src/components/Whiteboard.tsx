@@ -1,11 +1,10 @@
 ﻿import * as React from 'react'
 import * as ReactDOM from 'react-dom'
-import * as $ from "jquery";
+import * as $ from "jquery"
 
-// import * as $ from 'jquery'
-import InkCanvas from './inkcanvas'
+import InkCanvas from './InkCanvas'
 // import InkGeometry from './inkgeometry'
-// import Tools from './tools'
+import Tools from './Tools'
 
 export interface WhiteboardProps { 
 
@@ -44,11 +43,8 @@ export class Whiteboard extends React.Component<WhiteboardProps, WhiteboardState
 		return (
             <div>
                 {/*onDragOver={this.dragOver} onDrop={this.dropFiles} */}
-                <InkCanvas width={this.state.width} height={this.state.height} inkColor={this.state.selectedPen} />
-
-            {/*
-                <Tools selectedPen={this.state.selectedPen} onPenSelected={this.selectPen} />
-            */}
+                <InkCanvas width={this.state.width} height={this.state.height} inkColor={this.state.selectedPen} /> 
+                <Tools selectedPen={this.state.selectedPen} onPenSelected={this.selectPen} />         
 			</div>
 		);
 	}

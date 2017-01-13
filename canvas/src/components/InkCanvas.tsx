@@ -1,6 +1,7 @@
 import * as React from 'react'
 import * as ReactDOM from 'react-dom'
 import * as $ from "jquery";
+import * as InkUtils from "../InkUtils"
 
 export interface InkCanvasProps { 
     width: number;
@@ -46,6 +47,7 @@ export class InkCanvas extends React.Component<InkCanvasProps, InkCanvasState> {
     componentDidUpdate(prevProps: InkCanvasProps, prevState: InkCanvasState) {
         this.postRender();
     }
+
     pointerDown(event: any) {
 
         // For now, we will let mouse and pen ink, but ignore touch.
@@ -59,18 +61,21 @@ export class InkCanvas extends React.Component<InkCanvasProps, InkCanvasState> {
         // TODO: using any here...
         // TODO: direct DOM access like findDOMNode is generally discouraged, though it may be
         // that this is a reasonable exception if canvas drawing isn't possible
-        let canvas : any = ReactDOM.findDOMNode(this.refs["inkcanvas"]);
-        var ctx = canvas.getContext("2d");
+        const canvas : any = ReactDOM.findDOMNode(this.refs["inkcanvas"]);
+        const ctx = canvas.getContext("2d");
 		ctx.beginPath();
-        ctx.strokeStyle = this.props.inkColor;
+
+        const color = (this.props.inkColor == 'rainbow' ? InkUtils.createRainbowInkGradient(ctx, canvas.width, canvas.height) : this.props.inkColor);
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 3;
 	}
 	pointerMove(event: any) {
 		if (this.inking) {
-			let lastPoint = this.wetInk.slice(-1)[0];
-			let point = { x: event.clientX, y: event.clientY };
+			const lastPoint = this.wetInk.slice(-1)[0];
+			const point = { x: event.clientX, y: event.clientY };
 
-			let canvas : any = ReactDOM.findDOMNode(this.refs["inkcanvas"]);
-            var ctx = canvas.getContext("2d");;
+			const canvas : any = ReactDOM.findDOMNode(this.refs["inkcanvas"]);
+            const ctx = canvas.getContext("2d");
             ctx.moveTo(lastPoint.x, lastPoint.y);
 			ctx.lineTo(point.x, point.y);
 			ctx.stroke();
@@ -98,17 +103,22 @@ export class InkCanvas extends React.Component<InkCanvasProps, InkCanvasState> {
 		);
 	}
 	postRender() {
-        let canvas : any = ReactDOM.findDOMNode(this.refs["inkcanvas"]);
+        const canvas : any = ReactDOM.findDOMNode(this.refs["inkcanvas"]);
 		canvas.addEventListener("pointerdown", this.pointerDown);
 		canvas.addEventListener("pointermove", this.pointerMove);
 		canvas.addEventListener("pointerup", this.pointerUp);
 
-		var ctx = canvas.getContext("2d");
-        for (let s of this.state.strokes) {
+		const ctx = canvas.getContext("2d");
+        const grd = InkUtils.createRainbowInkGradient(ctx, canvas.width, canvas.height);
+
+        // render all dried ink strokes we're tracking
+        for (const s of this.state.strokes) {
             ctx.beginPath();
-			ctx.strokeStyle = s.color;
+			ctx.strokeStyle = (s.color == 'rainbow' ? grd : s.color);
 			ctx.moveTo(s.points[0].x, s.points[0].y);
-			for (let pt of s.points.slice(1)) {
+
+            // connect all points in the stroke
+			for (const pt of s.points.slice(1)) {
 				ctx.lineTo(pt.x, pt.y);
 			}
             ctx.stroke();
