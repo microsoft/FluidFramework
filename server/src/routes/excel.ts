@@ -1,3 +1,6 @@
+// TODO convert me
+// tslint:disable
+
 import * as express from 'express';
 import * as request from 'request';
 import * as moment from 'moment';

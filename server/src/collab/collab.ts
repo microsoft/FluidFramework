@@ -11,6 +11,10 @@ let protocol = window.location.protocol.indexOf("https") !== -1 ? "wss" : "ws";
 let socket = new WebSocket(`${protocol}://${window.location.host}`);
 let connection = new sharedb.Connection(socket);
 
+// TODO swap with the Ivy npm package once available
+// tslint:disable-next-line:no-string-literal
+let ivy = window["ivy"];
+
 // For testing reconnection
 (<any> window).disconnect = () => {
     connection.close();
@@ -36,7 +40,7 @@ Quill.register("modules/counter", (quill, options) => {
 let BlockEmbed = Quill.import("blots/block/embed");
 
 // TODO - Quill assumes es6 and a webpack environment. I"m assuming TypeScript + Browserify. I"m not sure
-// yet how to extend an es6 class, defined as a letiable (the Quill.import above), inside of TypeScript. So
+// yet how to extend an es6 class, defined as a variable (the Quill.import above), inside of TypeScript. So
 // cheating a bit for now and just using the babel output.
 function _classCallCheck(instance, Constructor) {
     if (!(instance instanceof Constructor)) {
@@ -66,11 +70,14 @@ function _inherits(subClass, superClass) {
     }
 }
 
+// tslint:disable:only-arrow-functions:simplify to work around es6 classes to typescript difficulties
+// tslint:disable-next-line:variable-name
 let VideoBlot: any = function (_BlockEmbed3) {
-    let VideoBlot: any = function () {
+    // tslint:disable-next-line:no-var-keyword no-shadowed-variable
+    var VideoBlot: any =  function() {
         _classCallCheck(this, VideoBlot);
         return _possibleConstructorReturn(this, _BlockEmbed3.apply(this, arguments));
-    }
+    };
     _inherits(VideoBlot, _BlockEmbed3);
 
     VideoBlot.create = function create(url) {
@@ -92,11 +99,11 @@ let VideoBlot: any = function (_BlockEmbed3) {
         return format;
     };
 
-    VideoBlot.value = (node) => {
+    VideoBlot.value = function value(node) {
         return node.getAttribute("src");
     };
 
-    VideoBlot.prototype.format = (name, value) => {
+    VideoBlot.prototype.format = function format(name, value) {
         if (name === "height" || name === "width") {
             if (value) {
                 this.domNode.setAttribute(name, value);
@@ -108,30 +115,34 @@ let VideoBlot: any = function (_BlockEmbed3) {
         }
     };
     return VideoBlot;
-}(BlockEmbed);
+} (BlockEmbed);
 VideoBlot.blotName = "video";
 VideoBlot.tagName = "iframe";
+// tslint:enable:only-arrow-functions
 
 // Initialize the API
-let host = new window["ivy"].Host({
+let host = new ivy.Host({
     base: "https://edera.cloudapp.net",
     secret: "IvyBearerToken",
 });
 
+// tslint:disable:only-arrow-functions:simplify to work around es6 classes to typescript difficulties
+// tslint:disable-next-line:variable-name
 let ChartBlot: any = function (_BlockEmbed3) {
-    let ChartBlot: any = function () {
+    // tslint:disable-next-line:no-var-keyword no-shadowed-variable
+    var ChartBlot: any =  function() {
         _classCallCheck(this, ChartBlot);
         return _possibleConstructorReturn(this, _BlockEmbed3.apply(this, arguments));
-    }
+    };
     _inherits(ChartBlot, _BlockEmbed3);
 
-    ChartBlot.create = (settings) => {
+    ChartBlot.create = function create(settings) {
         let settingsAsJson = JSON.parse(settings);
 
         let node = _BlockEmbed3.create.call(this);
 
         // Create a chart
-        let chart = new window["ivy"].IvyChart(host, node);
+        let chart = new ivy.IvyChart(host, node);
         chart.setRenderer(1);
         chart.setConfiguration(settingsAsJson);
         node.dataset.chart = chart;
@@ -140,15 +151,16 @@ let ChartBlot: any = function (_BlockEmbed3) {
         return node;
     };
 
-    ChartBlot.value = (node) => {
+    ChartBlot.value = function value(node) {
         return node.dataset.settings;
     };
 
     return ChartBlot;
-}(BlockEmbed);
+} (BlockEmbed);
 ChartBlot.blotName = "chart";
 ChartBlot.tagName = "div";
 ChartBlot.className = "chart";
+// tslint:enable:only-arrow-functions
 
 Quill.register(BlockEmbed);
 Quill.register(VideoBlot);
@@ -208,49 +220,59 @@ export function connect(id: string, sync: boolean) {
             let range = quill.getSelection(true);
             quill.insertText(range.index, "\n", Quill.sources.USER);
 
-            // Disable for chart API input for simplicity
-            // tslint:disable
+            // Disable rules for simplicity with Ivy input format            
             let chartDef = {
-                "hasChartTitle": true,
-                "chartTitleText": "Chart Title",
-                "chartTitleEdge": 1,
-                "chartTitlePosition": 1,
-                "hasLegend": true,
-                "hasLegendTitle": true,
-                "legendTitleText": "Legend",
-                "legendTitleEdge": 1,
-                "legendTitleEdgePosition": 1,
-                "legendEdge": 1,
-                "legendPosition": 1,
-                "numDataPoints": 10,
-                "seriesLayout": 0,
-                "seriesData": [{
-                    "id": "i0",
-                    "title": "Series 1",
-                    "data": {
-                        "2": [28.90542477336814, 47.96023343271161, 66.20821209478959, 31.586201681367037, 42.353363654697574, 44.9377860637673, 37.0187548405804, 99.40313031303944, 46.128627123887746, 38.89247221424439]
+                chartTitleEdge: 1,
+                chartTitlePosition: 1,
+                chartTitleText: "Chart Title",
+                hasChartTitle: true,
+                hasDataLabels: false,
+                hasLegend: true,
+                hasLegendTitle: true,
+                height: 350,
+                legendEdge: 1,
+                legendPosition: 1,
+                legendTitleEdge: 1,
+                legendTitleEdgePosition: 1,
+                legendTitleText: "Legend",
+                numDataPoints: 10,
+                seriesData: [{
+                    data: {
+                        2: [
+                            28.90542477336814, 47.96023343271161, 66.20821209478959,
+                            31.586201681367037, 42.353363654697574, 44.9377860637673,
+                            37.0187548405804, 99.40313031303944, 46.128627123887746, 38.89247221424439,
+                        ],
                     },
-                    "layout": "Area Stacked (100%)|310E5127-9664-483E-B00D-43661237ED58"
+                    id: "i0",
+                    layout: "Area Stacked (100%)|310E5127-9664-483E-B00D-43661237ED58",
+                    title: "Series 1",
                 }, {
-                    "id": "i1",
-                    "title": "Series 2",
-                    "data": {
-                        "2": [94.72913125049618, 30.001128509353737, 36.7456928705214, 33.8969942653699, 59.17199006926743, 51.19145395109292, 34.95964640380736, 52.930325138593844, 52.02741092101171, 63.200190486346386]
+                    data: {
+                        2: [
+                            94.72913125049618, 30.001128509353737, 36.7456928705214,
+                            33.8969942653699, 59.17199006926743, 51.19145395109292,
+                            34.95964640380736, 52.930325138593844, 52.02741092101171, 63.200190486346386,
+                        ],
                     },
-                    "layout": "Area Stacked (100%)|310E5127-9664-483E-B00D-43661237ED58"
+                    id: "i1",
+                    layout: "Area Stacked (100%)|310E5127-9664-483E-B00D-43661237ED58",
+                    title: "Series 2",
                 }, {
-                    "id": "i2",
-                    "title": "Series 3",
-                    "data": {
-                        "2": [32.87199015776532, 29.503783579713023, 49.072543238145684, 77.7697683987071, 66.55250409944145, 43.255317066864755, 37.8755636471737, 3.38896612476708, 30.83535302110479, 10.03046388086483]
+                    data: {
+                        2: [
+                            32.87199015776532, 29.503783579713023, 49.072543238145684,
+                            77.7697683987071, 66.55250409944145, 43.255317066864755,
+                            37.8755636471737, 3.38896612476708, 30.83535302110479, 10.03046388086483,
+                        ],
                     },
-                    "layout": "Area Stacked (100%)|310E5127-9664-483E-B00D-43661237ED58"
+                    id: "i2",
+                    layout: "Area Stacked (100%)|310E5127-9664-483E-B00D-43661237ED58",
+                    title: "Series 3",
                 }],
-                "width": 400,
-                "height": 350,
-                "hasDataLabels": false
+                seriesLayout: 0,
+                width: 400,
             };
-            // tslint:enable
 
             quill.insertEmbed(range.index + 1, "chart", JSON.stringify(chartDef), Quill.sources.USER);
             // quill.formatText(range.index + 1, 1, { height: "170", width: "400" });

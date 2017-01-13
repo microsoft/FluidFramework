@@ -22,7 +22,7 @@ export interface IHostMessage {
 
 export enum MethodResultType {
     Value,
-    Object
+    Object,
 }
 
 export interface IHostMethodResult {

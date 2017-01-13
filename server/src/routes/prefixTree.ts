@@ -1,3 +1,5 @@
+// TODO convert me
+// tslint:disable
 
 var nullDigit = -1;
 

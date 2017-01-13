@@ -1,3 +1,6 @@
+// TODO convert me
+// tslint:disable
+
 import * as PrefixTree from './prefixTree';
 
 namespace Maths {

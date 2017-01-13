@@ -1,3 +1,6 @@
+// TODO convert me
+// tslint:disable
+
 import { MessageType, PostMessageSocketProtocol, IMessage } from './messages';
 import { Promise } from 'es6-promise';
 import { Deferred } from '../promise-utils/index';

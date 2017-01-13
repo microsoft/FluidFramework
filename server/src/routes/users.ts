@@ -18,7 +18,7 @@ router.get("/math", (req, res, next) => {
       answer = false;
     }
   }
-  let msg = answer ? ("on the right track: " + req.query.text + " leads to " + req.query.axiom) : "keep trying"
+  let msg = answer ? ("on the right track: " + req.query.text + " leads to " + req.query.axiom) : "keep trying";
   res.send("agent says: " + msg);
 });
 
