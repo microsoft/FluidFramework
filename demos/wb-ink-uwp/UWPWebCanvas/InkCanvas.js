@@ -20,14 +20,29 @@ class InkCanvas extends React.Component {
     componentDidUpdate(prevProps, prevState) {
         this.postRender()
     }
+    createRainbowInkGradient(ctx, w, h) {
+        var grd = ctx.createLinearGradient(0, 0, w, h)
+        grd.addColorStop(0, '#D9492D')
+        grd.addColorStop(0.15, '#E16D15')
+        grd.addColorStop(0.3, '#F1CF67')
+        grd.addColorStop(0.45, '#4AAE58')
+        grd.addColorStop(0.6, '#57B2BF')
+        grd.addColorStop(0.75, '#2A5091')
+        grd.addColorStop(0.9, '#35175B')
+        grd.addColorStop(0.9, '#35175B')
+        return grd
+    }
     pointerDown(event) {
 		this.inking = true
         this.wetInk = [{ x: event.clientX, y: event.clientY }]
 
         let canvas = ReactDOM.findDOMNode(this.refs.inkcanvas)
         var ctx = canvas.getContext("2d");
-		ctx.beginPath()
-        ctx.strokeStyle = this.props.inkColor
+        ctx.beginPath()
+
+        let color = (this.props.inkColor == 'rainbow' ? this.createRainbowInkGradient(ctx, canvas.width, canvas.height) : this.props.inkColor)
+        ctx.strokeStyle = color
+        ctx.lineWidth = 3
 	}
 	pointerMove(event) {
 		if (this.inking) {
@@ -65,10 +80,13 @@ class InkCanvas extends React.Component {
 		canvas.addEventListener("pointermove", this.pointerMove);
 		canvas.addEventListener("pointerup", this.pointerUp);
 
-		var ctx = canvas.getContext("2d");
+        var ctx = canvas.getContext("2d");
+        var grd = this.createRainbowInkGradient(ctx, canvas.width, canvas.height)
+        
         for (let s of this.state.strokes) {
             ctx.beginPath()
-			ctx.strokeStyle = s.color
+            ctx.strokeStyle = (s.color == 'rainbow' ? grd : s.color)
+            ctx.lineWidth = 3
 			ctx.moveTo(s.points[0].x, s.points[0].y)
 			for (let pt of s.points.slice(1)) {
 				ctx.lineTo(pt.x, pt.y)

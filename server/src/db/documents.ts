@@ -1,9 +1,9 @@
-import * as connection from './connection';
-import { Promise } from 'es6-promise';
+import { Promise } from "es6-promise";
+import * as connection from "./connection";
 
-const collectionName = 'documents'
+const collectionName = "documents";
 
-var collection = connection.getOrCreateCollection(collectionName);
+let collection = connection.getOrCreateCollection(collectionName);
 
 export function read(id: string): Promise<any> {
     return collection.read(id);

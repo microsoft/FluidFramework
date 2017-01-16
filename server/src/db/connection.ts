@@ -1,10 +1,10 @@
-import * as documentdb from 'documentdb';
-var nconf = require('nconf');
-import { Promise } from 'es6-promise';
-var promisify = require('es6-promisify');
+import * as documentdb from "documentdb";
+import { Promise } from "es6-promise";
+import * as promisify from "es6-promisify";
+import * as nconf from "nconf";
 
 // DB connection information
-const databaseName = 'pronet';
+const databaseName = "pronet";
 const databaseUrl = `dbs/${databaseName}`;
 
 // Connect to DocumentDB
@@ -12,14 +12,16 @@ let connectionString = nconf.get("documentDB");
 let client = new documentdb.DocumentClient(connectionString.endpoint, { masterKey: connectionString.key });
 
 // Convert from node style callbacks to es6 promises
-let readDatabase = promisify(client.readDatabase, client);
 let createDatabase = promisify(client.createDatabase, client);
-let readCollection = promisify(client.readCollection, client);
 let createCollection = promisify(client.createCollection, client);
-let readDocument = promisify(client.readDocument, client);
 let createDocument = promisify(client.createDocument, client);
 let replaceDocument = promisify(client.replaceDocument, client);
 let deleteDocument = promisify(client.deleteDocument, client);
+
+// The typings file needs an update to handle the below cases
+let readDatabase = promisify((<any> client).readDatabase, client);
+let readCollection = promisify((<any> client).readCollection, client);
+let readDocument = promisify((<any> client).readDocument, client);
 
 function getCollectionUrl(collection: string): string {
     return `${databaseUrl}/colls/${collection}`;
@@ -30,11 +32,10 @@ function getDocumentUrl(collection: string, documentId: string): string {
 }
 
 // Get or create the underlying database in DocumentDB
-let databaseP = (<Promise<documentdb.DatabaseMeta>>readDatabase(databaseUrl)).catch((error) => {
+let databaseP = (<Promise<documentdb.DatabaseMeta>> readDatabase(databaseUrl)).catch((error) => {
     if (error.code === 404) {
         return createDatabase({ id: databaseName });
-    }
-    else {
+    } else {
         throw error;
     }
 });
@@ -45,15 +46,14 @@ let databaseP = (<Promise<documentdb.DatabaseMeta>>readDatabase(databaseUrl)).ca
 export function getOrCreateCollection<T>(collection: string): Collection<T> {
     let collectionUrl = getCollectionUrl(collection);
 
-    var collectionP = databaseP.then(() => {
+    let collectionP = databaseP.then(() => {
         return readCollection(collectionUrl).catch((error) => {
             if (error.code === 404) {
                 return createCollection(databaseUrl, { id: collection }, { offerThroughput: 400 });
-            }
-            else {
+            } else {
                 throw error;
             }
-        })
+        });
     });
 
     return new Collection<T>(collection, collectionP);
@@ -62,68 +62,70 @@ export function getOrCreateCollection<T>(collection: string): Collection<T> {
 /**
  * Wrapper class to manage access to a DocumentDB collection
  */
-class Collection<T> {    
-    constructor(public name: string, private _collectionP: Promise<any>) {        
+class Collection<T> {
+    constructor(public name: string, private collectionP: Promise<any>) {
     }
 
-    read(documentId: string): Promise<T> {    
+    public read(documentId: string): Promise<T> {
         let documentUrl = getDocumentUrl(this.name, documentId);
-        return this._collectionP.then(() => {
+        return this.collectionP.then(() => {
             return readDocument(documentUrl).catch((error) => {
                 console.error(JSON.stringify(error, null, 2));
                 if (error.code === 404) {
-                    // We will just return null for documents that don't exist but will not treat this as an error
+                    // We will just return null for documents that don"t exist but will not treat this as an error
                     return null;
-                }
-                else {
+                } else {
                     throw error;
                 }
-            })            
-        });    
+            });
+        });
     }
-    
-    create(document: T, disableAutomaticIdGeneration = true): Promise<T> {
+
+    public create(document: T, disableAutomaticIdGeneration = true): Promise<T> {
         let collectionUrl = getCollectionUrl(this.name);
 
-        return this._collectionP.then(() => {
-            return createDocument(collectionUrl, document, { disableAutomaticIdGeneration: disableAutomaticIdGeneration });
+        return this.collectionP.then(() => {
+            return createDocument(
+                collectionUrl,
+                document,
+                { disableAutomaticIdGeneration });
         });
     }
 
     // TODO create some base IDocument so we know T has an id field
-    replace(document: any): Promise<T> {
+    public replace(document: any): Promise<T> {
         let documentUrl = getDocumentUrl(this.name, document.id);
 
-        return this._collectionP.then(() => {
+        return this.collectionP.then(() => {
             return replaceDocument(documentUrl, document);
         });
     }
 
-    delete(id: string): Promise<any> {
+    public delete(id: string): Promise<any> {
         let documentUrl = getDocumentUrl(this.name, id);
 
-        return this._collectionP.then(() => {
+        return this.collectionP.then(() => {
             return deleteDocument(documentUrl);
         });
     }
 
-    query(query: string, parameters: documentdb.SqlParameter[]): Promise<T[]> {
+    public query(query: string, parameters: documentdb.SqlParameter[]): Promise<T[]> {
         let collectionUrl = getCollectionUrl(this.name);
-                        
-        return this._collectionP.then(() => {
-            let queryIterator = client.queryDocuments(collectionUrl, { query: query, parameters: parameters })
-            var getResults = promisify(queryIterator.toArray, queryIterator);
+
+        return this.collectionP.then(() => {
+            let queryIterator = client.queryDocuments(collectionUrl, { query, parameters });
+            let getResults = promisify(queryIterator.toArray, queryIterator);
             return getResults();
-        })
+        });
     }
 
-    getAll(): Promise<T[]> {
+    public getAll(): Promise<T[]> {
         let collectionUrl = getCollectionUrl(this.name);
 
-        return this._collectionP.then(() => {
-            let queryIterator = client.readDocuments(collectionUrl);
+        return this.collectionP.then(() => {
+            let queryIterator = (<any> client).readDocuments(collectionUrl);
             let readDocuments = promisify(queryIterator.toArray, queryIterator);
             return readDocuments();
-        })
+        });
     }
 }

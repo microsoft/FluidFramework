@@ -8,7 +8,7 @@ export enum MessageType {
     ConnectAck,
     Message,
     Completion,
-    Failure
+    Failure,
 }
 
 export interface IPacket {

@@ -1,8 +1,8 @@
-import * as connection from './connection';
-import * as uuid from 'node-uuid';
-import { Promise } from 'es6-promise';
+import { Promise } from "es6-promise";
+import * as uuid from "node-uuid";
+import * as connection from "./connection";
 
-const collectionName = 'users'
+const collectionName = "users";
 
 let collection = connection.getOrCreateCollection(collectionName);
 
@@ -30,10 +30,10 @@ export function getUser(id: string): Promise<any> {
 }
 
 export function putUser(details: IUserDetails): Promise<any> {
-    var id = uuid.v4();
-    var userDocument: IUser = {
-        id: id,
-        details: details
+    let id = uuid.v4();
+    let userDocument: IUser = {
+        details,
+        id,
     };
 
     return collection.create(userDocument);

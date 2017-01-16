@@ -1,14 +1,14 @@
-import { Injectable } from '@angular/core';
-import { ViewModel } from '../interfaces';
-import { Http } from '@angular/http';
-import 'rxjs/add/operator/toPromise';
+import { Injectable } from "@angular/core";
+import { Http } from "@angular/http";
+import "rxjs/add/operator/toPromise";
+import { IViewModel } from "../interfaces";
 
 @Injectable()
 export class InteractiveDocumentService {
-    constructor(private http: Http) {        
+    constructor(private http: Http) {
     }
 
-    getDocument(url: string): Promise<ViewModel> {        
-        return this.http.get(url).toPromise().then((response) => response.json());        
+    public getDocument(url: string): Promise<IViewModel> {
+        return this.http.get(url).toPromise().then((response) => response.json());
     }
 }

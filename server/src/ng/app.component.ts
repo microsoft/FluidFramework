@@ -1,10 +1,10 @@
-import { Component } from '@angular/core';
+import { Component } from "@angular/core";
 
 @Component({
-    selector: 'my-app',
-    templateUrl: 'templates/app.component.html',
-    styleUrls: ['stylesheets/app.component.css']
+    selector: "my-app",
+    styleUrls: ["stylesheets/app.component.css"],
+    templateUrl: "templates/app.component.html",
 })
 export class AppComponent {
-    url = "/documents/calendar"
+    public url = "/documents/calendar";
 }
