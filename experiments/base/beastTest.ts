@@ -1,10 +1,17 @@
 /// <reference path="node.d.ts" />
-import * as fs from "fs";
-import * as Base from "./redBlack"
+/// <reference path="base.d.ts" />
+/// <reference path="typings/index.d.ts" />
 
+import * as fs from "fs";
+import * as RedBlack from "./redBlack";
+import * as random from "random-js";
 
 function compareStrings(a: string, b: string) {
     return a.localeCompare(b);
+}
+
+function compareNumbers(a: number, b: number) {
+    return a - b;
 }
 
 function printStringProperty(p: Base.Property<string, string>) {
@@ -25,7 +32,7 @@ function simpleTest() {
         "Dingo", "wild"
     ];
 
-    let beast = Base.RedBlackTree<string, string>(compareStrings);
+    let beast = RedBlack.RedBlackTree<string, string>(compareStrings);
     for (let i = 0; i < a.length; i += 2) {
         beast.put(a[i], a[i + 1]);
     }
@@ -33,6 +40,73 @@ function simpleTest() {
     printStringProperty(beast.get("Chameleon"));
 }
 
+function clock() {
+    return process.hrtime();
+}
+
+function took(desc: string, start: number[]) {
+    let end:number[] = process.hrtime(start);
+    let duration =  Math.round((end[0]*1000) + (end[1]/1000000));
+    console.log(`${desc} took ${duration} ms`);
+    return duration;
+}
+
+function integerTest1() {
+    let mt = random.engines.mt19937();
+    mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
+    const imin = 0;
+    const imax = 10000000;
+    const intCount = 1100000;
+    let distribution = random.integer(imin, imax);
+    let beast = RedBlack.RedBlackTree<number, number>(compareNumbers);
+    //let linearBeast = Base.LinearDictionary<number, number>(compareNumbers);
+    function randInt() {
+        return distribution(mt);
+    }
+    let pos = new Array<number>(intCount);
+    let i = 0;
+    let redo = false;
+    function onConflict(key: number, current: number, proposed:number) {
+        redo=true;
+        return current;
+    }
+    let conflictCount=0;
+    let start = clock();
+    while (i < intCount) {
+        pos[i] = randInt();
+        beast.put(pos[i], i, onConflict);
+        if (!redo) {
+            i++;
+        }
+        else {
+            conflictCount++;
+            redo = false;
+        }
+        //linearBeast.put(pos[i], i);
+    }
+    took("test gen", start);
+    let errorCount = 0;
+    start = clock();
+    for (let j = 0, len = pos.length; j < len; j++) {
+        let cp = pos[j];
+        let prop = beast.get(cp);
+        //let linProp = linearBeast.get(cp);
+        if (prop) {
+            if (prop.data != j) {
+                //console.log("data does not match index: " + j);
+                errorCount++;
+            }
+        }
+        else {
+            console.log("hmm...bad key: " + cp);
+            errorCount++;
+        }
+    }
+    let getdur=took("get all keys", start);
+    console.log(`cost per get is ${(1000.0*getdur/intCount).toFixed(3)} us`);
+    beast.diag();
+    console.log(`duplicates ${conflictCount}, errors ${errorCount}`);
+}
 
 function fileTest1() {
     let content = fs.readFileSync("pizzaingredients.txt", "utf8");
@@ -42,8 +116,8 @@ function fileTest1() {
     console.log("len: " + a.length);
 
     for (let k = 0; k < iterCount; k++) {
-        let beast = Base.RedBlackTree<string, number>(compareStrings);
-        let linearBeast = Base.LinearDictionary<string, number>(compareStrings);
+        let beast = RedBlack.RedBlackTree<string, number>(compareStrings);
+        let linearBeast = RedBlack.LinearDictionary<string, number>(compareStrings);
         for (let i = 0, len = a.length; i < len; i++) {
             a[i] = a[i].trim();
             if (a[i].length > 0) {
@@ -85,3 +159,4 @@ function fileTest1() {
 
 //simpleTest();
 fileTest1();
+integerTest1();

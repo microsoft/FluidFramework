@@ -1,39 +1,14 @@
-export interface Property<TKey, TData> {
-    key: TKey;
-    data: TData;
-}
+/// <reference path="base.d.ts" />
 
-export interface PropertyAction<TKey, TData> {
-    <TAccum>(p: Property<TKey, TData>, accum: TAccum): boolean;
-}
-
-export interface Dictionary<TKey, TData> {
-    get(key: TKey): Property<TKey, TData>;
-    put(key: TKey, data: TData);
-    remove(key: TKey);
-    map<TAccum>(action: PropertyAction<TKey, TData>, accum?: TAccum);
-    diag();
-}
-
-export interface SortedDictionary<TKey, TData> extends Dictionary<TKey, TData> {
-    max(): Property<TKey, TData>;
-    min(): Property<TKey, TData>;
-    mapRange<TAccum>(action: PropertyAction<TKey, TData>, accum?: TAccum, start?: TKey, end?: TKey);
-}
-
-export interface KeyComparer<TKey> {
-    (a: TKey, b: TKey): number;
-}
-
-export function LinearDictionary<TKey, TData>(compareKeys: KeyComparer<TKey>): SortedDictionary<TKey, TData> {
-    let a: Property<TKey, TData>[] = [];
-    function compareProps(a: Property<TKey, TData>, b: Property<TKey, TData>) {
+export function LinearDictionary<TKey, TData>(compareKeys: Base.KeyComparer<TKey>): Base.SortedDictionary<TKey, TData> {
+    let a: Base.Property<TKey, TData>[] = [];
+    function compareProps(a: Base.Property<TKey, TData>, b: Base.Property<TKey, TData>) {
         return compareKeys(a.key, b.key);
     }
     function diag() {
         console.log(`size is ${a.length}`);
     }
-    function mapRange<TAccum>(action: PropertyAction<TKey, TData>, accum?: TAccum, start?: TKey, end?: TKey) {
+    function mapRange<TAccum>(action: Base.PropertyAction<TKey, TData>, accum?: TAccum, start?: TKey, end?: TKey) {
         if (start === undefined) {
             start = min().key;
         }
@@ -41,20 +16,20 @@ export function LinearDictionary<TKey, TData>(compareKeys: KeyComparer<TKey>): S
             end = max().key;
         }
         for (let i = 0, len = a.length; i < len; i++) {
-            if (compareKeys(start,a[i].key) <= 0) {
+            if (compareKeys(start, a[i].key) <= 0) {
                 let ecmp = compareKeys(end, a[i].key);
                 if (ecmp < 0) {
                     break;
                 }
-                if (!action(a[i],accum)) {
+                if (!action(a[i], accum)) {
                     break;
                 }
             }
         }
     }
 
-    function map<TAccum>(action: PropertyAction<TKey, TData>, accum?: TAccum) {
-        mapRange(action,accum);
+    function map<TAccum>(action: Base.PropertyAction<TKey, TData>, accum?: TAccum) {
+        mapRange(action, accum);
     }
 
     function min() {
@@ -111,7 +86,7 @@ export function LinearDictionary<TKey, TData>(compareKeys: KeyComparer<TKey>): S
     }
 }
 
-export function RedBlackTree<TKey, TData>(compareKeys: KeyComparer<TKey>): SortedDictionary<TKey, TData> {
+export function RedBlackTree<TKey, TData>(compareKeys: Base.KeyComparer<TKey>): Base.SortedDictionary<TKey, TData> {
     const enum Color {
         RED,
         BLACK
@@ -162,31 +137,36 @@ export function RedBlackTree<TKey, TData>(compareKeys: KeyComparer<TKey>): Sorte
     function contains(key: TKey) {
         return get(key);
     }
-    function put(key: TKey, data: TData) {
+    function put(key: TKey, data: TData, conflict?: Base.ConflictAction<TKey, TData>) {
         if (key) {
             if (data === undefined) {
                 remove(key);
             }
             else {
-                root = nodePut(root, key, data);
+                root = nodePut(root, key, data, conflict);
                 root.color = Color.BLACK;
             }
         }
     }
-    function nodePut(node: Node, key: TKey, data: TData) {
+    function nodePut(node: Node, key: TKey, data: TData, conflict?: Base.ConflictAction<TKey, TData>) {
         if (!node) {
             return makeNode(key, data, Color.RED, 1);
         }
         else {
             let cmp = compareKeys(key, node.key);
             if (cmp < 0) {
-                node.left = nodePut(node.left, key, data);
+                node.left = nodePut(node.left, key, data, conflict);
             }
             else if (cmp > 0) {
-                node.right = nodePut(node.right, key, data);
+                node.right = nodePut(node.right, key, data, conflict);
             }
             else {
-                node.data = data;
+                if (conflict) {
+                    node.data=conflict(key, node.data, data);
+                }
+                else {
+                    node.data = data;
+                }
             }
             if (isRed(node.right) && (!isRed(node.left))) {
                 node = rotateLeft(node);
@@ -406,16 +386,16 @@ export function RedBlackTree<TKey, TData>(compareKeys: KeyComparer<TKey>): Sorte
         return node;
     }
 
-    function mapRange(action: PropertyAction<TKey, TData>, start?: TKey, end?: TKey) {
+    function mapRange(action: Base.PropertyAction<TKey, TData>, start?: TKey, end?: TKey) {
         nodeMap(root, action, start, end);
     }
 
-    function map<TAccum>(action: PropertyAction<TKey, TData>, accum?: TAccum) {
+    function map<TAccum>(action: Base.PropertyAction<TKey, TData>, accum?: TAccum) {
         // TODO: optimize to avoid comparisons
         nodeMap(root, action, accum);
     }
 
-    function nodeMap<TAccum>(node: Node, action: PropertyAction<TKey, TData>,
+    function nodeMap<TAccum>(node: Node, action: Base.PropertyAction<TKey, TData>,
         accum?: TAccum, start?: TKey, end?: TKey) {
         if (!node) {
             return true;
