@@ -1,8 +1,8 @@
-import { PostMessageHost } from './post-message-host';
-import { PostMessageHostServer } from './post-message-host-server';
-import { IHost } from './host';
- 
-export * from './interfaces';
+import { IHost } from "./host";
+import { PostMessageHost } from "./post-message-host";
+import { PostMessageHostServer } from "./post-message-host-server";
+
+export * from "./interfaces";
 export { PostMessageHostServer };
 
 function detectHost(): IHost {
@@ -17,4 +17,4 @@ function detectHost(): IHost {
     return null;
 }
 
-export var pnhost = detectHost();
+export let pnhost = detectHost();

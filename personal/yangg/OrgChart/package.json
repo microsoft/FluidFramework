@@ -1,0 +1,19 @@
+{
+  "name": "OrgChart",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.15.2",
+    "express": "^4.14.0",
+    "msnodesqlv8": "^0.2.11",
+    "mssql": "^3.3.0",
+    "seriate": "^0.8.1"
+  }
+}

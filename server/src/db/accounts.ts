@@ -1,13 +1,13 @@
-import * as connection from './connection';
-import { Promise } from 'es6-promise';
+import { Promise } from "es6-promise";
+import * as connection from "./connection";
 
-const collectionName = 'accounts'
+const collectionName = "accounts";
 
 let collection = connection.getOrCreateCollection(collectionName);
 
 export interface IAccount {
     // Id of the account
-    id: string,
+    id: string;
 
     // Name of the account provider
     provider: string;
@@ -16,13 +16,13 @@ export interface IAccount {
     providerId: string;
 
     // Access information for the account
-    accessToken: string,
+    accessToken: string;
 
     // Access token expiration time
-    expiration: string,
+    expiration: string;
 
     // Used to refresh access to the account
-    refreshToken: string,
+    refreshToken: string;
 
     // The id of the user the account is associated with
     userId: string;
@@ -49,14 +49,14 @@ export function linkAccount(
     refreshToken: string,
     userId: string) {
 
-    var account: IAccount = {
+    let account: IAccount = {
         id: getAccountId(provider, providerId),
-        provider: provider,
-        providerId: providerId,
-        accessToken: accessToken,
-        expiration: expiration,
-        refreshToken: refreshToken,
-        userId: userId
+        provider,
+        providerId,
+        accessToken,
+        expiration,
+        refreshToken,
+        userId,
     };
 
     return collection.create(account);
@@ -69,5 +69,5 @@ export function updateAccount(account: IAccount) {
 export function findAllForUser(userId: string): Promise<IAccount[]> {
     return collection.query(
         "SELECT * FROM users WHERE users.userId=@userId",
-        [{ name: "@userId", value: userId }]);    
+        [{ name: "@userId", value: userId }]);
 }

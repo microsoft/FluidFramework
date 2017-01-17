@@ -1,23 +1,23 @@
-import { Promise, Thenable } from 'es6-promise';
+import { Promise, Thenable } from "es6-promise";
 
 export class Deferred<T> {
     public promise: Promise<T>;
 
-    private _resolve: (value?: T | Thenable<T>) => void;
-    private _reject: (error?: any) => void;
+    private resolveFn: (value?: T | Thenable<T>) => void;
+    private rejectFn: (error?: any) => void;
 
     constructor() {
         this.promise = new Promise<T>((resolve, reject) => {
-            this._resolve = resolve;
-            this._reject = reject;
+            this.resolveFn = resolve;
+            this.rejectFn = reject;
         });
     }
 
-    resolve(value?: T | Thenable<T>) {
-        this._resolve(value);
+    public resolve(value?: T | Thenable<T>) {
+        this.resolveFn(value);
     }
 
-    reject(error?: any) {
-        this._reject(error);
+    public reject(error?: any) {
+        this.rejectFn(error);
     }
 }

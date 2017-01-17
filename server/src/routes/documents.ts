@@ -1,28 +1,29 @@
-import * as express from 'express';
-import * as documents from '../db/documents';
-import { defaultPartials } from './partials';
+import * as express from "express";
+import * as documents from "../db/documents";
+import { defaultPartials } from "./partials";
 
-var router = express.Router();
+let router = express.Router();
 
-router.get('/chart', (request: express.Request, response: express.Response) => {
+router.get("/chart", (request: express.Request, response: express.Response) => {
     response.render(
-        'documents/chart',
+        "documents/chart",
         {
-            partials: defaultPartials
+            partials: defaultPartials,
         });
 });
 
-router.get('/calendar', (request: express.Request, response: express.Response) => {
+router.get("/calendar", (request: express.Request, response: express.Response) => {
     response.render(
-        'documents/calendar',
+        "documents/calendar",
         {
-            partials: defaultPartials
+            partials: defaultPartials,
         });
 });
 
-router.get('/:id', (request: express.Request, response: express.Response) => {
-    var documentId = request.params['id'];
-    var documentP = documents.read(documentId);
+router.get("/:id", (request: express.Request, response: express.Response) => {
+    // tslint:disable-next-line:no-string-literal
+    let documentId = request.params["id"];
+    let documentP = documents.read(documentId);
 
     documentP.then(
         (document) => {
@@ -30,7 +31,7 @@ router.get('/:id', (request: express.Request, response: express.Response) => {
         },
         (error) => {
             response.status(400).json(error);
-        })
+        });
 });
 
 export = router;

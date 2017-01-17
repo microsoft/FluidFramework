@@ -1,21 +1,24 @@
+// This file is used to force the below imports
+// tslint:disable:no-var-requires
+
 /**
  * ES6 Polyfills
  */
-var es6Promise = require("es6-promise");
-var es6Collections = require("es6-collections");
+let es6Promise = require("es6-promise");
+let es6Collections = require("es6-collections");
 
 /**
  * Zone.js
  */
-var zone = require("zone.js/dist/zone");
-var traceZone = require("zone.js/dist/long-stack-trace-zone");
+let zone = require("zone.js/dist/zone");
+let traceZone = require("zone.js/dist/long-stack-trace-zone");
 
 /**
  * ReflectMetadata
  */
-var reflectMetadata = require("reflect-metadata");
+let reflectMetadata = require("reflect-metadata");
 
 /**
  * RxJS
  */
-var rxjs = require("rxjs/Rx");
+let rxjs = require("rxjs/Rx");
