@@ -1,0 +1,23 @@
+{
+  "name": "base",
+  "version": "1.0.0",
+  "description": "base data structures for ofx",
+  "main": "beastTest.js",
+  "dependencies": {
+    "random-js": "^1.0.8"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "node beastTest.js"
+  },
+  "author": "",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Microsoft/Prague.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Microsoft/Prague/issues"
+  },
+  "homepage": "https://github.com/Microsoft/Prague#readme"
+}
