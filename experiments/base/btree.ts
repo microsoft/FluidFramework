@@ -80,17 +80,17 @@ function BTree<TKey, TData>(compareKeys: Base.KeyComparer<TKey>): Base.SortedDic
         let entry = <Entry>{ key: key, val: data, next: undefined };
         // external node
         if (ht == 0) {
-            for (childIndex=0;childIndex<node.childCount;childIndex++) {
+            for (childIndex = 0; childIndex < node.childCount; childIndex++) {
                 if (compareKeys(key, node.children[childIndex].key) < 0) {
                     break;
                 }
             }
         }
         else {
-            for (childIndex=0;childIndex<node.childCount;childIndex++) {
-                if (((childIndex+1)==node.childCount)||(compareKeys(key, node.children[childIndex+1].key) < 0)) {
-                    let nextNode = insert(node.children[childIndex++].next, key, data, ht-1);
-                    if (nextNode === undefined) { 
+            for (childIndex = 0; childIndex < node.childCount; childIndex++) {
+                if (((childIndex + 1) == node.childCount) || (compareKeys(key, node.children[childIndex + 1].key) < 0)) {
+                    let nextNode = insert(node.children[childIndex++].next, key, data, ht - 1);
+                    if (nextNode === undefined) {
                         return undefined;
                     }
                     entry.key = nextNode.children[0].key;
@@ -99,10 +99,10 @@ function BTree<TKey, TData>(compareKeys: Base.KeyComparer<TKey>): Base.SortedDic
                 }
             }
         }
-        for (let i=node.childCount;i>childIndex;i--) {
-            node.children[i]=node.children[i-1];
+        for (let i = node.childCount; i > childIndex; i--) {
+            node.children[i] = node.children[i - 1];
         }
-        node.children[childIndex]= entry;
+        node.children[childIndex] = entry;
         node.childCount++;
         if (node.childCount < M) {
             return undefined;
@@ -112,9 +112,42 @@ function BTree<TKey, TData>(compareKeys: Base.KeyComparer<TKey>): Base.SortedDic
         }
     }
 
+    function split(node: Node) {
+        let halfCount = M / 2;
+        let newNode = makeNode(halfCount);
+        node.childCount = halfCount;
+        for (let i = 0; i < halfCount; i++) {
+            newNode.children[i] = node.children[(halfCount) + i];
+        }
+        return newNode;
+    }
+
+    function min() {
+        if (!isEmpty()) {
+            return nodeMin(root);
+        }
+    }
+
+    function nodeMin(node: Node) {
+        if (node.childCount > 0) {
+            return
+        }
+    }
+
+
+    return {
+        min: min,
+        max: max,
+        map: map,
+        mapRange: mapRange,
+        remove: remove,
+        get: get,
+        put: put,
+        diag: diag
+    }
+
 }
 
 
 
 
-}
