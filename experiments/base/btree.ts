@@ -75,7 +75,7 @@ function BTree<TKey, TData>(compareKeys: Base.KeyComparer<TKey>): Base.SortedDic
         // TODO: error on undefined
     }
 
-    function insert(node: Node, key: TKey, data: TData, ht: number) {
+    function insert(node: Node, key: TKey, data: TData, ht: number): Node {
         let childIndex: number;
         let entry = <Entry>{ key: key, val: data, next: undefined };
         // external node
@@ -88,8 +88,27 @@ function BTree<TKey, TData>(compareKeys: Base.KeyComparer<TKey>): Base.SortedDic
         }
         else {
             for (childIndex=0;childIndex<node.childCount;childIndex++) {
-                
+                if (((childIndex+1)==node.childCount)||(compareKeys(key, node.children[childIndex+1].key) < 0)) {
+                    let nextNode = insert(node.children[childIndex++].next, key, data, ht-1);
+                    if (nextNode === undefined) { 
+                        return undefined;
+                    }
+                    entry.key = nextNode.children[0].key;
+                    entry.next = nextNode;
+                    break;
+                }
             }
+        }
+        for (let i=node.childCount;i>childIndex;i--) {
+            node.children[i]=node.children[i-1];
+        }
+        node.children[childIndex]= entry;
+        node.childCount++;
+        if (node.childCount < M) {
+            return undefined;
+        }
+        else {
+            return split(node);
         }
     }
 
