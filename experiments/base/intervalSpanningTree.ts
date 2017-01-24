@@ -1,7 +1,12 @@
 /// <reference path="base.d.ts" />
 
+export interface TextSegmentAction {
+    <TAccum>(text: string, pos: number, accum?: TAccum): boolean;
+}
 // this is specialized to text; can generalize to Interval<TContent>
-export default function IntervalSpanningTree() {
+// represents a sequence of text segments; each text 
+// segment can have distinct attributes; 
+export function IntervalSpanningTree(initialText: string) {
     interface TextSegment {
         content: string;
         // attributes
@@ -14,7 +19,7 @@ export default function IntervalSpanningTree() {
 
     interface Node {
         liveEntryCount: number;
-        subTreeLength: number;
+        length: number;
         entries: Entry[];
     }
 
@@ -25,13 +30,15 @@ export default function IntervalSpanningTree() {
         return <Node>{ liveEntryCount: liveEntryCount, entries: <Entry[]>new Array(MaxEntries) };
     }
 
-    let root = makeNode(0);
-    function isEmpty() {
-        return size() == 0;
-    }
-    let n = 0;
-    function size() {
-        return n;
+    let root = initialNode(initialText);
+
+    // TODO: attributes
+    function initialNode(text: string) {
+        let seg = <TextSegment>{ content: text };
+        let node = makeNode(1);
+        node.entries[0] = <Entry>{ key: seg };
+        node.length = text.length;
+        return node;
     }
 
     function isLeafNode(node: Node): boolean {
@@ -47,7 +54,7 @@ export default function IntervalSpanningTree() {
 
     function entryLength(entry: Entry) {
         if (entry.ref) {
-            return entry.ref.subTreeLength;
+            return entry.ref.length;
         }
         else {
             return entry.key.content.length;
@@ -56,7 +63,7 @@ export default function IntervalSpanningTree() {
 
     function search(node: Node, pos: number): Entry {
         let entries = node.entries;
-        for (let entryIndex = 0;entryIndex<node.liveEntryCount;entryIndex++) {
+        for (let entryIndex = 0; entryIndex < node.liveEntryCount; entryIndex++) {
             let entry = entries[entryIndex];
             let len = entryLength(entry);
             if (pos < len) {
@@ -75,10 +82,11 @@ export default function IntervalSpanningTree() {
         }
     }
 
-    function put(ival: TextSegment, pos: number) {
-        if (ival !== undefined) {
-            let splitNode = insert(root, ival, pos);
-            n++;
+    // splice text segment into spanning intervals at position
+    // truncate containing interval
+    function spliceAt(textSegment: TextSegment, pos: number) {
+        if (textSegment !== undefined) {
+            let splitNode = spliceNodeAt(root, textSegment, pos);
             if (splitNode === undefined) {
                 return;
             }
@@ -88,38 +96,43 @@ export default function IntervalSpanningTree() {
             root = newRoot;
         }
         // TODO: error on undefined
+        // TODO: error on pos greater than root length
     }
 
-    function insert(node: Node, ival: TextSegment, pos: number): Node {
+    function spliceNodeAt(node: Node, textSegment: TextSegment, pos: number): Node {
         let entries = node.entries;
         let entryIndex: number;
-        let leafEntry = <Entry>{ key: ival };
+        let newEntry = <Entry>{ key: textSegment };
         let entry: Entry;
-        for (let entryIndex = 0;entryIndex<node.liveEntryCount;entryIndex++) {
+        for (let entryIndex = 0; entryIndex < node.liveEntryCount; entryIndex++) {
             entry = entries[entryIndex];
             let len = entryLength(entry);
             if (pos < len) {
                 // found entry containing pos
                 if (entry.ref) {
                     // internal node
-                    let splitNode = insert(node.entries[entryIndex++].ref, ival, pos);
+                    let splitNode = spliceNodeAt(node.entries[entryIndex].ref, textSegment, pos);
                     if (splitNode === undefined) {
                         return undefined;
                     }
-                    entry.key = splitNode.entries[0].key;
-                    entry.ref = splitNode;
+                    newEntry.key = splitNode.entries[0].key;
+                    newEntry.ref = splitNode;
                 }
+                else {
+                    // truncate containing Interval
+                    entry.key.content = entry.key.content.substring(0, pos);
+                }
+                entryIndex++; // insert after 
                 break;
             }
             else {
                 pos -= len;
             }
         }
-
         for (let i = node.liveEntryCount; i > entryIndex; i--) {
             node.entries[i] = node.entries[i - 1];
         }
-        node.entries[entryIndex] = entry;
+        node.entries[entryIndex] = newEntry;
         node.liveEntryCount++;
         if (node.liveEntryCount < MaxEntries) {
             return undefined;
@@ -139,88 +152,53 @@ export default function IntervalSpanningTree() {
         return newNode;
     }
 
-    function min() {
-        if (!isEmpty()) {
-            return nodeMin(root);
-        }
-    }
-
-    function nodeMin(node: Node) {
-        if (isLeafNode(node)) {
-            return node.entries[0];
-        }
-        else {
-            return nodeMin(node.entries[0].ref);
-        }
-    }
-
-    function max() {
-        if (!isEmpty()) {
-            return nodeMax(root);
-        }
-    }
-
-    function nodeMax(node: Node) {
-        if (isLeafNode(node)) {
-            return node.entries[node.liveEntryCount - 1];
-        }
-        else {
-            return nodeMax(node.entries[node.liveEntryCount - 1].ref);
-        }
-    }
-
-    function map<TAccum>(action: Base.PropertyAction<TKey, TData>, accum?: TAccum) {
+    function map<TAccum>(action: TextSegmentAction, accum?: TAccum) {
         // TODO: optimize to avoid comparisons
-        nodeMap(root, action, accum);
+        nodeMap(root, action, 0, accum);
     }
 
-    function mapRange<TAccum>(action: Base.PropertyAction<TKey, TData>, accum?: TAccum, start?: TKey, end?: TKey) {
-        nodeMap(root, action, accum, start, end);
+    function mapRange<TAccum>(action: TextSegmentAction, accum?: TAccum, start?: number, end?: number) {
+        nodeMap(root, action, 0, accum, start, end);
     }
 
-    function nodeMap<TAccum>(node: Node, action: Base.PropertyAction<TKey, TData>,
-        accum?: TAccum, start?: TKey, end?: TKey) {
+    function nodeMap<TAccum>(node: Node, action: TextSegmentAction, pos: number,
+        accum?: TAccum, start?: number, end?: number) {
         if (start === undefined) {
-            start = nodeMin(node).key;
+            start = 0;
         }
         if (end === undefined) {
-            end = nodeMax(node).key;
+            end = root.length - 1;
         }
         let go = true;
         let entries = node.entries;
-        if (isLeafNode(node)) {
-            for (let i = 0; i < node.liveEntryCount; i++) {
-                if (go && (compareKeys(start, entries[i].key) <= 0) && (compareKeys(end, entries[i].key) >= 0)) {
-                    go = action(entries[i], accum);
+        for (let entryIndex = 0; entryIndex < node.liveEntryCount; entryIndex++) {
+            let entry = entries[entryIndex];
+            let len = entryLength(entry);
+            if (go && ((start >= 0) && (start < len)) && (end >=0)) {
+                // found entry containing pos
+                if (entry.ref) {
+                    // internal node
+                    go = nodeMap(entry.ref, action, pos, accum, start, end);
+                }
+                else {
+                    go = action(entry.key.content, pos);
                 }
             }
-        }
-        else {
-            for (let i = 0; i < node.liveEntryCount; i++) {
-                if ((((i + 1) == node.liveEntryCount) || (compareKeys(start, entries[i + 1].key) <= 0)) &&
-                    ((i == 0) || (compareKeys(end, entries[i].key) >= 0))) {
-                    go = nodeMap(entries[i].ref, action, accum, start, end);
-                }
-            }
+            start -= len;
+            end -= len;
+            pos += len;
         }
         return go;
-    }
-
-    function remove(key: TKey) {
-        // TODO
     }
 
     function diag() {
         // TODO 
     }
     return {
-        min: min,
-        max: max,
         map: map,
         mapRange: mapRange,
-        remove: remove,
-        get: get,
-        put: put,
+        getContainingInterval: getContainingInterval,
+        spliceAt: spliceAt,
         diag: diag
     }
 
