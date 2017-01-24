@@ -74,7 +74,7 @@ export default function BTree<TKey, TData>(compareKeys: Base.KeyComparer<TKey>):
 
     function insert(node: Node, key: TKey, data: TData): Node {
         let childIndex: number;
-        let entry = <Entry>{ key: key, data: data, next: undefined };
+        let entry = <Entry>{ key: key, data: data };
         if (isLeafNode(node)) {
             for (childIndex = 0; childIndex < node.liveEntryCount; childIndex++) {
                 if (compareKeys(key, node.entries[childIndex].key) < 0) {
@@ -153,8 +153,8 @@ export default function BTree<TKey, TData>(compareKeys: Base.KeyComparer<TKey>):
         nodeMap(root, action, accum);
     }
 
-    function mapRange(action: Base.PropertyAction<TKey, TData>, start?: TKey, end?: TKey) {
-        nodeMap(root, action, start, end);
+    function mapRange<TAccum>(action: Base.PropertyAction<TKey, TData>, accum?: TAccum, start?: TKey, end?: TKey) {
+        nodeMap(root, action, accum, start, end);
     }
 
     function nodeMap<TAccum>(node: Node, action: Base.PropertyAction<TKey, TData>,
@@ -166,16 +166,19 @@ export default function BTree<TKey, TData>(compareKeys: Base.KeyComparer<TKey>):
             end = nodeMax(node).key;
         }
         let go = true;
-        for (let i = 0; i < node.liveEntryCount; i++) {
-            let entry = node.entries[i];
-            let cmpStart = compareKeys(start, entry.key);
-            let cmpEnd = compareKeys(end, entry.key);
-            if (go && (cmpStart <= 0) && (cmpEnd >= 0)) {
-                if (entry.ref !== undefined) {
-                    go = nodeMap(entry.ref, action, accum, start, end);
+        let entries = node.entries;
+        if (isLeafNode(node)) {
+            for (let i = 0; i < node.liveEntryCount; i++) {
+                if (go && (compareKeys(start, entries[i].key) <= 0) && (compareKeys(end, entries[i].key) >= 0)) {
+                    go = action(entries[i], accum);
                 }
-                else {
-                    go = action(entry, accum);
+            }
+        }
+        else {
+            for (let i = 0; i < node.liveEntryCount; i++) {
+                if ((((i + 1) == node.liveEntryCount) || (compareKeys(start, entries[i + 1].key) <= 0)) &&
+                    ((i == 0) || (compareKeys(end, entries[i].key) >= 0))) {
+                    go = nodeMap(entries[i].ref, action, accum, start, end);
                 }
             }
         }

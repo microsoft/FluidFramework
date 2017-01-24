@@ -41,6 +41,12 @@ function simpleTest() {
     }
     beast.map(printStringProperty);
     btree.map(printStringProperty);
+    console.log("Map B D");
+    btree.mapRange(printStringProperty,undefined,"B","D");
+    console.log("Map Aardvark Dingo");
+    btree.mapRange(printStringProperty,undefined,"Aardvark","Dingo");
+    console.log("Map Baboon Chameleon");
+    btree.mapRange(printStringProperty,undefined,"Baboon","Chameleon");
     printStringProperty(beast.get("Chameleon"));
     printStringProperty(btree.get("Chameleon"));
 }
@@ -177,6 +183,6 @@ function fileTest1() {
     }
 }
 
-//simpleTest();
+simpleTest();
 //fileTest1();
-integerTest1();
+//integerTest1();

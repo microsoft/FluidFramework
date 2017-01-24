@@ -1,5 +1,6 @@
 /// <reference path="base.d.ts" />
 
+// for testing
 export function LinearDictionary<TKey, TData>(compareKeys: Base.KeyComparer<TKey>): Base.SortedDictionary<TKey, TData> {
     let a: Base.Property<TKey, TData>[] = [];
     function compareProps(a: Base.Property<TKey, TData>, b: Base.Property<TKey, TData>) {
