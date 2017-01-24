@@ -18,12 +18,16 @@ export default class StickyNote {
     this.div.style.top = "100px";
     this.div.style.left = "100px";
 
-    this.gesture = new MSGesture();
-    this.gesture.target = this.div;
+    // tslint:disable-next-line:no-string-literal
+    if (window["MSGesture"]) {
+      this.gesture = new MSGesture();
+      this.gesture.target = this.div;
 
-    this.div.addEventListener("MSGestureChange", this.eventListener, false);
-    this.div.addEventListener("MSGestureTap", this.eventListener, false);
-    this.div.addEventListener("pointerdown", this.eventListener, false);
+      this.div.addEventListener("MSGestureChange", (evt) => this.eventListener(evt), false);
+      this.div.addEventListener("MSGestureTap", (evt) => this.eventListener(evt), false);
+    }
+
+    this.div.addEventListener("pointerdown", (evt) => this.eventListener(evt), false);
 
     // insert the child into the DOM
     parent.appendChild(this.div);

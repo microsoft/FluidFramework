@@ -1,5 +1,6 @@
 import * as _ from "lodash";
 import * as nconf from "nconf";
+import * as ink from "ot-ink";
 import * as redis from "redis";
 import * as richText from "rich-text";
 import * as ShareDB from "sharedb";
@@ -25,8 +26,9 @@ subOptions.return_buffers = true;
 let client = redis.createClient(redisPort, redisHost, pubOptions);
 let observer = redis.createClient(redisPort, redisHost, subOptions);
 
-// Register rich type as one of our OT formats
+// Register our OT formats
 ShareDB.types.register(richText.type);
+ShareDB.types.register(ink.type);
 
 let db = new ShareDBMongo("mongodb://mongodb:27017");
 let pubsub = new ShareDBRedisPub({ client, observer });
