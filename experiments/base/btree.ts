@@ -3,8 +3,8 @@
 function BTree<TKey, TData>(compareKeys: Base.KeyComparer<TKey>): Base.SortedDictionary<TKey, TData> {
     interface Entry {
         key: TKey;
-        val: TData | Node;
-        next: Node;
+        data: TData;
+        ref?: Node;
     }
 
     interface Node {
@@ -29,6 +29,10 @@ function BTree<TKey, TData>(compareKeys: Base.KeyComparer<TKey>): Base.SortedDic
         return n;
     }
 
+    function isLeafEntry(entry: Entry): boolean {
+        return !entry.ref;
+    }
+
     function getHeight() {
         return height;
     }
@@ -40,20 +44,20 @@ function BTree<TKey, TData>(compareKeys: Base.KeyComparer<TKey>): Base.SortedDic
         // TODO: error on undefined
     }
 
-    function search(node: Node, key: TKey, ht: number) {
+    function search(node: Node, key: TKey, ht: number): Entry {
         let children = node.children;
         // external node
         if (ht == 0) {
             for (let i = 0; i < node.childCount; i++) {
                 if (compareKeys(key, children[i].key) == 0) {
-                    return <TData>children[i].val;
+                    return children[i];
                 }
             }
         }
         else {
             for (let i = 0; i < node.childCount; i++) {
                 if (((i + 1) == node.childCount) || (compareKeys(key, children[i + 1].key))) {
-                    return search(children[i].next, key, ht - 1);
+                    return search(children[i].ref, key, ht - 1);
                 }
             }
         }
@@ -67,8 +71,8 @@ function BTree<TKey, TData>(compareKeys: Base.KeyComparer<TKey>): Base.SortedDic
                 return;
             }
             let newRoot = makeNode(2);
-            newRoot.children[0] = <Entry>{ key: root.children[0].key, val: undefined, next: root };
-            newRoot.children[1] = <Entry>{ key: splitNode.children[0].key, val: undefined, next: splitNode };
+            newRoot.children[0] = <Entry>{ key: root.children[0].key, data: undefined, ref: root };
+            newRoot.children[1] = <Entry>{ key: splitNode.children[0].key, data: undefined, ref: splitNode };
             root = newRoot;
             height++;
         }
@@ -77,7 +81,7 @@ function BTree<TKey, TData>(compareKeys: Base.KeyComparer<TKey>): Base.SortedDic
 
     function insert(node: Node, key: TKey, data: TData, ht: number): Node {
         let childIndex: number;
-        let entry = <Entry>{ key: key, val: data, next: undefined };
+        let entry = <Entry>{ key: key, data: data, next: undefined };
         // external node
         if (ht == 0) {
             for (childIndex = 0; childIndex < node.childCount; childIndex++) {
@@ -89,12 +93,12 @@ function BTree<TKey, TData>(compareKeys: Base.KeyComparer<TKey>): Base.SortedDic
         else {
             for (childIndex = 0; childIndex < node.childCount; childIndex++) {
                 if (((childIndex + 1) == node.childCount) || (compareKeys(key, node.children[childIndex + 1].key) < 0)) {
-                    let nextNode = insert(node.children[childIndex++].next, key, data, ht - 1);
-                    if (nextNode === undefined) {
+                    let splitNode = insert(node.children[childIndex++].ref, key, data, ht - 1);
+                    if (splitNode === undefined) {
                         return undefined;
                     }
-                    entry.key = nextNode.children[0].key;
-                    entry.next = nextNode;
+                    entry.key = splitNode.children[0].key;
+                    entry.ref = splitNode;
                     break;
                 }
             }
@@ -124,16 +128,33 @@ function BTree<TKey, TData>(compareKeys: Base.KeyComparer<TKey>): Base.SortedDic
 
     function min() {
         if (!isEmpty()) {
-            return nodeMin(root);
+            return nodeMin(root, height);
         }
     }
 
-    function nodeMin(node: Node) {
-        if (node.childCount > 0) {
-            return
+    function nodeMin(node: Node, ht: number) {
+        if (ht == 0) {
+            return node.children[0];
+        }
+        else {
+            return nodeMin(node.children[0].ref, ht - 1);
         }
     }
 
+    function max() {
+        if (!isEmpty()) {
+            return nodeMax(root, height);
+        }
+    }
+
+    function nodeMax(node: Node, ht: number) {
+        if (ht == 0) {
+            return node.children[node.childCount - 1];
+        }
+        else {
+            return nodeMax(node.children[node.childCount - 1].ref, ht - 1);
+        }
+    }
 
     return {
         min: min,
