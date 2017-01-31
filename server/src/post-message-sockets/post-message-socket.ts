@@ -55,7 +55,7 @@ export class PostMessageSocket implements IPostMessageSocket {
 
     public processMessageReceipt(message: IMessage) {
         // reject the message if no listener is defined.
-        // Alternatively if needed we could buffer messages until one is defined. But the former is simpler.  
+        // Alternatively if needed we could buffer messages until one is defined. But the former is simpler.
         if (!this.listener) {
             this.postMessage(MessageType.Failure, { message: "No handler defined" });
             return;

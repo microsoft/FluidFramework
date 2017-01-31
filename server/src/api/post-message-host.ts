@@ -30,7 +30,7 @@ export class PostMessageHost implements IHost {
 
     public start() {
         this.host = postMessageSockets.getOrCreateHost(this.window);
-        // TODO for security we may need to define a set of allowed hosts - 
+        // TODO for security we may need to define a set of allowed hosts -
         // especially if the iframe conveys secret information to the host
         this.socketP = this.host.connect(window.parent, "*");
 

@@ -5,7 +5,7 @@ services:
         ports:
             - "3000:3000"
         volumes:
-            - .:/usr/src/server
+            - .:/usr/src/
         depends_on:
             - mongodb
             - redis            

@@ -72,7 +72,7 @@ class TableService implements ITableService {
     templateUrl: "templates/document.component.html",
 })
 export class DocumentComponent implements OnInit {
-    // Loading flag for the document    
+    // Loading flag for the document
     public loaded: boolean = false;
 
     public url: string;

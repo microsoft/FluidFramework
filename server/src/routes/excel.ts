@@ -8,8 +8,8 @@ import * as request from "request";
 import * as accounts from "../accounts";
 import { defaultPartials } from "./partials";
 
-// tslint:disable:no-console:Server side code
-// tslint:disable:max-line-length:TODO split get into helper functions
+// tslint:disable:no-console
+// tslint:disable:max-line-length
 
 let router = express.Router();
 

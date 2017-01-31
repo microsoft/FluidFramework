@@ -12,17 +12,18 @@ sharedb.types.register(otInk.type);
 
 // tslint:disable:no-console
 
-// App Class 
-export class App {
+/**
+ * Canvas app
+ */
+export default class Canvas {
     public ink: InkCanvas;
 
     public handleKeys: boolean = true;
     public stickyCount: number = 0;
 
     constructor() {
-
         // register all of the different handlers
-        let p: HTMLElement = utils.id("hitPlane");
+        let p = document.getElementById("hitPlane");
         this.ink = new InkCanvas(p);
 
         window.addEventListener("keydown", (evt) => this.keyPress(evt), false);
@@ -93,7 +94,7 @@ export class App {
         this.ink.clear();
         let board = utils.id("content");
         let stickies = document.querySelectorAll(".stickyNote");
-        // tslint:disable-next-line:prefer-for-of:stickies is NodeListOf not an array
+        // tslint:disable-next-line:prefer-for-of
         for (let i = 0; i < stickies.length; i++) {
             board.removeChild(stickies[i]);
         }
@@ -136,47 +137,4 @@ export class App {
             this.makeInkable();
         }
     }
-}
-
-export function initialize(id: string) {
-    // Open WebSocket connection to ShareDB server
-    let protocol = window.location.protocol.indexOf("https") !== -1 ? "wss" : "ws";
-    let socket = new WebSocket(`${protocol}://${window.location.host}`);
-    let connection = new sharedb.Connection(socket);
-
-    // create the new app
-    $("document").ready(() => {
-        let appObject = new App();
-        let sticky = new StickyNote(utils.id("content"));
-        let mainBoard = new BackBoard(appObject, "hitPlane");
-        // id("ToolBar").appendChild(new ToolBarButton("images/icons/pencil.svg").click(appObject.clear).elem());
-
-        let doc = connection.get("canvas", id);
-        doc.subscribe((err) => {
-            if (err) {
-                throw err;
-            }
-
-            // If there is no type we need to create the document
-            if (!doc.type) {
-                console.log("Creating new document");
-                doc.create("Hello", otInk.type.name);
-            }
-
-            console.log(doc.data);
-
-            // To write more data
-            doc.submitOp(
-                { position: 3, text: "World, " },
-                { source: appObject });
-
-            doc.on("op", (op, source) => {
-                if (source === appObject) {
-                    return;
-                }
-
-                // Update the canvas
-            });
-        });
-    });
 }

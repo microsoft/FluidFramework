@@ -141,3 +141,23 @@ export function parseURL(url) {
     source: url,
   };
 }
+
+// Following recomendations of https://developer.mozilla.org/en-US/docs/Web/Events/resize to
+// throttle computationally expensive events
+export function throttle(type: string, name: string, obj?: any) {
+    obj = obj || window;
+    let running = false;
+    obj.addEventListener(
+      type,
+      () => {
+        if (running) {
+            return;
+        }
+
+        running = true;
+        requestAnimationFrame(() => {
+            obj.dispatchEvent(new CustomEvent(name));
+            running = false;
+        });
+      });
+};

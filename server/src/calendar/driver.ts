@@ -15,8 +15,8 @@ import {
 } from "../api/index";
 import { ICalendar, ICalendarEvent } from "./interfaces";
 
-// The TypeScript compiler will elide these two libraries since they aren"t directly accessed. 
-// They are jquery plugins and so internally attach themselves to the $ object. We do the import 
+// The TypeScript compiler will elide these two libraries since they aren"t directly accessed.
+// They are jquery plugins and so internally attach themselves to the $ object. We do the import
 // below to force their inclusion while also keeping the version above to get the typing information
 import "fullcalendar";
 import "qtip2";
@@ -155,7 +155,7 @@ class CalendarViewModel {
         }
 
         this.tableP.then((table) => {
-            // Longer term we should standardize on some format here so there 
+            // Longer term we should standardize on some format here so there
             // isn't a disconnect between Office and moment
             const columnTimeFormatString = "m/d/yy h:mm AM/PM";
             let columns = [
@@ -168,7 +168,7 @@ class CalendarViewModel {
                 { name: "responseStatus", format: null },
             ];
 
-            // Get and store the rows we will bind to the pnhost table - 
+            // Get and store the rows we will bind to the pnhost table -
             // we convert times to a format easier to parse by hosts (i.e. Excel)
             const formatString = "M/D/YY h:mm A";
             this.tableBoundRows = [];
@@ -190,7 +190,7 @@ class CalendarViewModel {
             // Load the rows into the hosted table
             table.loadData(columns, this.tableBoundRows);
 
-            // Setup a table listener if it doesn"t already exist 
+            // Setup a table listener if it doesn"t already exist
             if (!this.tableListener) {
                 this.tableListener = new TableListener(this);
                 table.addListener(this.tableListener);
@@ -200,7 +200,7 @@ class CalendarViewModel {
 
     private loadAndCacheCalendars(): Promise<ICalendar[]> {
         return this.calendar.getCalendars().then((calendars) => {
-            // Clear any pending deletes - a reload resets any interactions 
+            // Clear any pending deletes - a reload resets any interactions
             this.pendingDeletes = [];
 
             // Initialize the custom UI once we load the first batch of data

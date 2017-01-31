@@ -3,7 +3,8 @@ import * as _ from "lodash";
 import { IUser } from "../accounts";
 import { defaultPartials } from "./partials";
 
-// tslint:disable-next-line:no-var-requires:simpler code path and module not setup for import
+// simpler code path and module not setup for import
+// tslint:disable-next-line:no-var-requires
 let ensureLoggedIn = require("connect-ensure-login").ensureLoggedIn;
 let router = express.Router();
 

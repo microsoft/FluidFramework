@@ -1,4 +1,4 @@
-import { App } from "./canvas";
+import Canvas from "./canvas";
 import * as utils from "./utils";
 
 export default class BackBoard {
@@ -8,7 +8,7 @@ export default class BackBoard {
   private div: HTMLElement;
   private gesture: MSGesture;
 
-  constructor(private appObject: App, htmlId: string) {
+  constructor(private appObject: Canvas, htmlId: string) {
     this.div = utils.id(htmlId);
     // tslint:disable-next-line:no-string-literal
     this.div["sysObject"] = this;

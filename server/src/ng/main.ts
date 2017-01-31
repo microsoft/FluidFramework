@@ -1,4 +1,4 @@
-// The require here is deliberate. The TypeScript browserify will elide this line if 
+// The require here is deliberate. The TypeScript browserify will elide this line if
 // a standard import given no modules are used. We are including the polyfills so we pick
 // them up with our browserify package.
 
