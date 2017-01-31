@@ -34,7 +34,9 @@ export default class BackBoard {
     } else {
       // so.pointerId = evt.pointerId;
       if (evt.type === "pointerdown") {
-        so.gesture.addPointer(evt.pointerId);
+        if (so.gesture) {
+          so.gesture.addPointer(evt.pointerId);
+        }
       }
     }
   }

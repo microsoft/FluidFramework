@@ -36,6 +36,7 @@ export default class Canvas {
         document.querySelector("#redoButton").addEventListener("click", (e) => { this.ink.redo(); }, false);
         document.querySelector("#testButton").addEventListener("click", (e) => { this.test(e); }, false);
         document.querySelector("#turnOnInk").addEventListener("click", (e) => { this.test(e); }, false);
+        document.querySelector("#replay").addEventListener("click", (e) => { this.ink.replay(); }, false);
     }
 
     //  Key Handlers:

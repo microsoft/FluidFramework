@@ -23,6 +23,8 @@ export interface IMixInkAction {
     // y coordinate
     y: number;
 
+    // TODO - should the ink pressure exist here
+
     // Pen data if the pen has changed with this stroke
     pen?: IPen;
 };

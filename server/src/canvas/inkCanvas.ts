@@ -1,7 +1,11 @@
+import * as ink from "ot-ink";
 import * as utils from "./utils";
 
 // TODO split classes into separate files
 // tslint:disable:max-classes-per-file
+
+// TODO remove before commit
+// tslint:disable:no-console
 
 interface IPtrEvtPoint {
     x: number;
@@ -28,12 +32,17 @@ export default class InkCanvas {
     public penID: number = -1;
     public gesture: MSGesture;
 
+    private strokes: ink.IMixInkAction[] = [];
+
     // constructor
     constructor(parent: HTMLElement) {
         // setup canvas
         this.canvas = document.createElement("canvas");
         this.canvas.classList.add("drawSurface");
         parent.appendChild(this.canvas);
+
+        // tslint:disable-next-line:no-string-literal
+        window["strokes"] = this.strokes;
 
         // get context
         this.context = this.canvas.getContext("2d");
@@ -57,9 +66,6 @@ export default class InkCanvas {
     }
 
     public restoreMode() {
-    }
-
-    public renderAllStrokes() {
     }
 
     public anchorSelection() {
@@ -106,12 +112,10 @@ export default class InkCanvas {
                 this.restoreMode();
             }
 
-            this.context.beginPath();
-            this.context.moveTo(pt.rawPosition.x, pt.rawPosition.y);
-
             let pressureWidth = evt.pressure * 15;
-            this.context.lineWidth = pressureWidth;
             evt.returnValue = false;
+
+            this.addAndDrawStroke(pt.rawPosition, ink.MixInkActionKind.Move, pressureWidth);
         }
     }
 
@@ -122,32 +126,31 @@ export default class InkCanvas {
             let h = 8;
 
             if (evt.pointerType === "touch") {
-                this.context.strokeStyle = "gray";
+                // this.context.strokeStyle = "gray";
                 w = evt.width;
                 h = evt.height;
                 // context.strokeRect(evt.x - w/2 - 1, evt.y - h/2 -1 , w+1, h+1);
-                this.context.clearRect(evt.x - w / 4, evt.y - h / 4, w / 2, h / 2);
+                // this.context.clearRect(evt.x - w / 4, evt.y - h / 4, w / 2, h / 2);
                 evt.returnValue = false;
 
                 return false; // we"re going to clearRect instead
             }
 
             if (evt.pointerType === "pen") {
-                this.context.strokeStyle = "rgba(0, 50, 0,    1)";
+                // this.context.strokeStyle = "rgba(0, 50, 0,    1)";
                 w = w * (0.1 + evt.pressure);
                 h = h * (0.1 + evt.pressure);
             } else { // just mouse
-                this.context.strokeStyle = "rgba(250, 0, 0, 0.5)";
+                // this.context.strokeStyle = "rgba(250, 0, 0, 0.5)";
             }
 
-            this.context.lineWidth = w;
-            this.context.lineTo(evt.clientX, evt.clientY);
-            this.context.stroke();
             evt.returnValue = false;
 
             // let pts = evt.intermediatePoints;
             // for (let i = pts.length - 1; i >= 0 ; i--) {
             // }
+
+            this.addAndDrawStroke({ x: evt.clientX, y: evt.clientY }, ink.MixInkActionKind.Draw, evt.pressure);
         }
         return false;
     }
@@ -156,12 +159,11 @@ export default class InkCanvas {
         if (evt.pointerId === this.penID) {
             this.penID = -1;
             let pt = new EventPoint(evt);
-            // ic.context.lineTo(pt.rawPosition.x, pt.rawPosition.y);
-            // ic.context.stroke();
-            this.context.closePath();
-            this.renderAllStrokes();
             evt.returnValue = false;
+
+            this.addAndDrawStroke(pt.rawPosition, ink.MixInkActionKind.Draw, evt.pressure);
         }
+
         return false;
     }
 
@@ -170,11 +172,9 @@ export default class InkCanvas {
     public handlePointerOut(evt) {
         if (evt.pointerId === this.penID) {
             let pt = new EventPoint(evt);
-            this.context.lineTo(pt.rawPosition.x, pt.rawPosition.y);
-            this.context.stroke();
-            this.context.closePath();
             this.penID = -1;
-            this.renderAllStrokes();
+
+            this.addAndDrawStroke(pt.rawPosition, ink.MixInkActionKind.Draw, evt.pressure);
         }
 
         return false;
@@ -184,7 +184,6 @@ export default class InkCanvas {
         // Anchor and clear any current selection.
         if (this.anySelected()) {
             this.anchorSelection();
-            this.renderAllStrokes();
         }
         return false;
     }
@@ -197,9 +196,30 @@ export default class InkCanvas {
 
         this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-        this.renderAllStrokes();
         utils.displayStatus("");
         utils.displayError("");
+    }
+
+    public replay() {
+        this.clearCanvas();
+
+        if (this.strokes.length > 0) {
+            this.animateStroke(0);
+        }
+    }
+
+    private animateStroke(index: number) {
+        // Draw the requested stroke
+        let currentStroke = this.strokes[index];
+        let previousStroke = index - 1 >= 0 ? this.strokes[index - 1] : null;
+        this.drawStroke(currentStroke, previousStroke);
+
+        // And then ask for the next one
+        let nextStroke = index + 1 < this.strokes.length ? this.strokes[index + 1] : null;
+        if (nextStroke) {
+            let time = nextStroke.time - currentStroke.time;
+            setTimeout(() => this.animateStroke(index + 1), time);
+        }
     }
 
     /**
@@ -211,6 +231,30 @@ export default class InkCanvas {
 
     private redraw() {
         this.clearCanvas();
+
+        let previousStroke: ink.IMixInkAction = null;
+        for (let stroke of this.strokes) {
+            this.drawStroke(stroke, previousStroke);
+            previousStroke = stroke;
+        }
+    }
+
+    private drawStroke(stroke: ink.IMixInkAction, previous: ink.IMixInkAction) {
+        switch (stroke.kind) {
+            case ink.MixInkActionKind.Draw:
+                // Move?
+                this.context.beginPath();
+                this.context.moveTo(previous.x, previous.y);
+
+                // Draw
+                this.context.lineWidth = 10; // stroke.pen.thickness;
+                this.context.strokeStyle = stroke.pen.color;
+                this.context.lineTo(stroke.x, stroke.y);
+                this.context.stroke();
+                break;
+            default:
+                break;
+        }
     }
 
     /**
@@ -223,5 +267,27 @@ export default class InkCanvas {
 
         // And then redraw the canvas
         this.redraw();
+    }
+
+    private addAndDrawStroke(pt: IPtrEvtPoint, kind: ink.MixInkActionKind, pressure: number) {
+        // store the stroke command
+        let pen: ink.IPen = {
+            brush: ink.MixInkBlush.Pen,
+            color: "rgba(0, 50, 0,    1)",
+            thickness: pressure,
+        };
+
+        let stroke: ink.IMixInkAction = {
+            kind,
+            pen,
+            time: new Date().getTime(),
+            x: pt.x,
+            y: pt.y,
+        };
+
+        this.strokes.push(stroke);
+        let lastStroke = this.strokes.length > 1 ? this.strokes[this.strokes.length - 2] : null;
+
+        this.drawStroke(stroke, lastStroke);
     }
 }
