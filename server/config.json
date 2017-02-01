@@ -28,5 +28,8 @@
     "redis": {
         "host": "redis",
         "port": 6379
+    },
+    "mongo": {
+        "connectionString": "mongodb://mongodb:27017"
     }
 }

@@ -1,4 +1,4 @@
-import App from "./canvas";
+import Canvas from "./canvas";
 import * as utils from "./utils";
 
 export default class BackBoard {
@@ -8,16 +8,20 @@ export default class BackBoard {
   private div: HTMLElement;
   private gesture: MSGesture;
 
-  constructor(private appObject: App, htmlId: string) {
+  constructor(private appObject: Canvas, htmlId: string) {
     this.div = utils.id(htmlId);
     // tslint:disable-next-line:no-string-literal
     this.div["sysObject"] = this;
 
-    this.gesture = new MSGesture();
-    this.gesture.target = this.div;
+    // tslint:disable-next-line:no-string-literal
+    if (window["MSGesture"]) {
+      this.gesture = new MSGesture();
+      this.gesture.target = this.div;
 
-    this.div.addEventListener("MSGestureChange", this.gestureListener, false);
-    this.div.addEventListener("MSGestureTap", this.gestureListener, false);
+      this.div.addEventListener("MSGestureChange", this.gestureListener, false);
+      this.div.addEventListener("MSGestureTap", this.gestureListener, false);
+    }
+
     this.div.addEventListener("pointerdown", this.eventListener, false);
   }
 
@@ -30,7 +34,9 @@ export default class BackBoard {
     } else {
       // so.pointerId = evt.pointerId;
       if (evt.type === "pointerdown") {
-        so.gesture.addPointer(evt.pointerId);
+        if (so.gesture) {
+          so.gesture.addPointer(evt.pointerId);
+        }
       }
     }
   }

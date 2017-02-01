@@ -54,7 +54,7 @@ if (nconf.get("redis")) {
             servername: nconf.get("redis:host"),
         };
 
-        // Azure seems to lose our Redis client for SSL connections - we ping it to keep it alive.    
+        // Azure seems to lose our Redis client for SSL connections - we ping it to keep it alive.
         setInterval(() => {
             redisClient.ping((error, result) => {
                 if (error) {
@@ -301,7 +301,7 @@ app.use((request, response, next) => {
     if (!request.session) {
         return next(new Error("Session not available"));
     } else {
-        next();     // otherwise continue 
+        next();     // otherwise continue
     }
 });
 app.use(passport.initialize());

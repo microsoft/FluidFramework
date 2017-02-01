@@ -5,7 +5,7 @@ import * as nconf from "nconf";
 import * as path from "path";
 
 // Setup the configuration system - pull arguments, then environment letiables
-nconf.argv().env().file(path.join(__dirname, "../config.json")).use("memory");
+nconf.argv().env(<any> "__").file(path.join(__dirname, "../config.json")).use("memory");
 
 /**
  * Module dependencies.

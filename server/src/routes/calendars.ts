@@ -61,7 +61,7 @@ router.get("/", (req: express.Request, response: express.Response) => {
                             if (error) {
                                 return reject(error);
                             } else {
-                                // MSFT strings are in UTC but don"t place the UTC marker in the date string - 
+                                // MSFT strings are in UTC but don"t place the UTC marker in the date string -
                                 // convert to this format to standardize the input to CalendarEvent
                                 let microsoftResults: ICalendarEvent[] = body.value.map((item) => {
                                     let loc = item.location ? item.location.displayName : "";
@@ -136,7 +136,8 @@ router.get("/", (req: express.Request, response: express.Response) => {
 });
 
 router.delete("/:provider/:id", (req: express.Request, response: express.Response) => {
-    // tslint:disable:no-string-literal:easier access to param data
+    // easier access to param data
+    // tslint:disable:no-string-literal
     let provider = req.params["provider"];
     let eventId = req.params["id"];
     // tslint:enable:no-string-literal

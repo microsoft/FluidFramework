@@ -52,7 +52,7 @@ let controllers = [
     { name: "api", src: "src/api/index.ts", outFile: "api.js", folder: "public/dist/api", standalone: "pronet" },
     { name: "calendar", src: "src/calendar/driver.ts", outFile: "driver.js", folder: "public/dist/views/calendar", standalone: "calendar" },
     { name: "collab", src: "src/collab/collab.ts", outFile: "collab.js", folder: "public/dist/collab", standalone: "collab" },
-    { name: "canvas", src: "src/canvas/canvas.ts", outFile: "canvas.js", folder: "public/dist/canvas", standalone: "canvas" },
+    { name: "canvas", src: "src/canvas/index.ts", outFile: "canvas.js", folder: "public/dist/canvas", standalone: "canvas" },
 ];
 
 // Generate tasks for the browserified code
