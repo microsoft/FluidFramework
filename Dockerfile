@@ -1,5 +1,8 @@
 FROM node:6.9.4-alpine
 
+# Add git since we reference certain npm modules with git
+RUN apk update && apk upgrade && apk add --no-cache git
+
 # Install gulp for building services
 RUN npm install -g gulp
 
