@@ -6,6 +6,7 @@ import * as fs from "fs";
 import * as RedBlack from "./redBlack";
 import BTree from "./btree";
 import * as random from "random-js";
+import * as ITree from "./intervalSpanningTree";
 
 function compareStrings(a: string, b: string) {
     return a.localeCompare(b);
@@ -183,6 +184,32 @@ function fileTest1() {
     }
 }
 
-simpleTest();
+function printTextSegment(textSegment: ITree.TextSegment, pos: number) {
+    console.log(textSegment.content);
+    console.log(`at [${pos}, ${pos+textSegment.content.length}) with attributes: `);
+    for (let key in textSegment.attributes) {
+        if (textSegment.attributes.hasOwnProperty(key)) {
+            console.log(`    ${key}: ${textSegment.attributes[key]}`);
+        }
+    }
+    return true;
+}
+
+function makeTextSegment(text: string, attributes: any) : ITree.TextSegment {
+    return { content: text, attributes: attributes};
+}
+
+function itreeTest1() {
+    let attr = { font: "Helvetica" };
+    let itree = ITree.IntervalSpanningTree("the cat is on the mat", attr);
+    itree.setAttributes(4, 3, <ITree.Attributes>{ bold: true })
+    itree.map(printTextSegment);
+    let fuzzySeg = makeTextSegment("fuzzy, fuzzy", { italic: true});
+    itree.insertInterval(4, fuzzySeg);
+    itree.map(printTextSegment);
+}
+
+//simpleTest();
 //fileTest1();
 //integerTest1();
+itreeTest1();

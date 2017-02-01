@@ -1,19 +1,22 @@
 /// <reference path="base.d.ts" />
+// TODO: use es6 map
+export interface Attributes extends Object {
+}
+
+export interface TextSegment {
+    content: string;
+    attributes?: Attributes;
+}
 
 export interface TextSegmentAction {
-    <TAccum>(text: string, pos: number, accum?: TAccum): boolean;
+    <TAccum>(textSegment: TextSegment, pos: number, accum?: TAccum): boolean;
 }
 // this is specialized to text; can generalize to Interval<TContent>
 // represents a sequence of text segments; each text 
 // segment can have distinct attributes; 
-export function IntervalSpanningTree(initialText: string) {
-    interface TextSegment {
-        content: string;
-        // attributes
-    }
-
+export function IntervalSpanningTree(initialText: string, attr: Attributes) {
     interface Entry {
-        key: TextSegment;
+        text: TextSegment;
         ref?: Node;
     }
 
@@ -30,13 +33,13 @@ export function IntervalSpanningTree(initialText: string) {
         return <Node>{ liveEntryCount: liveEntryCount, entries: <Entry[]>new Array(MaxEntries) };
     }
 
-    let root = initialNode(initialText);
+    let root = initialNode(initialText, attr);
 
     // TODO: attributes
-    function initialNode(text: string) {
-        let seg = <TextSegment>{ content: text };
+    function initialNode(text: string, attr: Attributes) {
+        let seg = <TextSegment>{ content: text, attributes: attr };
         let node = makeNode(1);
-        node.entries[0] = <Entry>{ key: seg };
+        node.entries[0] = <Entry>{ text: seg };
         node.length = text.length;
         return node;
     }
@@ -57,7 +60,7 @@ export function IntervalSpanningTree(initialText: string) {
             return entry.ref.length;
         }
         else {
-            return entry.key.content.length;
+            return entry.text.content.length;
         }
     }
 
@@ -82,63 +85,123 @@ export function IntervalSpanningTree(initialText: string) {
         }
     }
 
-    // splice text segment into spanning intervals at position
-    // truncate containing interval
-    function spliceAt(textSegment: TextSegment, pos: number) {
-        if (textSegment !== undefined) {
-            let splitNode = spliceNodeAt(root, textSegment, pos);
-            if (splitNode === undefined) {
-                return;
+    function extend(obj: any, props: any) {
+        for (let key in props) {
+            if (props.hasOwnProperty(key)) {
+                obj[key] = props[key];
             }
-            let newRoot = makeNode(2);
-            newRoot.entries[0] = <Entry>{ key: root.entries[0].key, ref: root };
-            newRoot.entries[1] = <Entry>{ key: splitNode.entries[0].key, ref: splitNode };
-            root = newRoot;
         }
-        // TODO: error on undefined
-        // TODO: error on pos greater than root length
+        return obj;
     }
 
-    function spliceNodeAt(node: Node, textSegment: TextSegment, pos: number): Node {
+    function setAttributes(pos: number, len: number, attributes: Attributes) {
+        ensureIntervalBoundary(pos);
+        ensureIntervalBoundary(pos + len);
+        function intervalSetAttributes(textSegment: TextSegment) {
+            extend(textSegment.attributes, attributes);
+            return true;
+        }
+        mapRange(intervalSetAttributes, undefined, pos, pos + len);
+    }
+
+    function addSplitNodeToRoot(splitNode: Node) {
+        if (splitNode === undefined) {
+            return;
+        }
+        let newRoot = makeNode(2);
+        newRoot.entries[0] = <Entry>{ text: root.entries[0].text, ref: root };
+        newRoot.entries[1] = <Entry>{ text: splitNode.entries[0].text, ref: splitNode };
+        nodeUpdateLength(newRoot);
+        root = newRoot;
+    }
+
+    function insertInterval(pos: number, textSegment: TextSegment) {
+        ensureIntervalBoundary(pos);
+        let splitNode = nodeInsertBefore(root, pos, textSegment);
+        if (splitNode) {
+            addSplitNodeToRoot(splitNode);
+        }
+    }
+
+    function nodeInsertBefore(node: Node, pos: number, textSegment: TextSegment) {
+        return insertingWalk(node, pos, (entry: Entry, pos: number) => {
+            let newEntry = <Entry>{ text: entry.text };
+            entry.text = textSegment;
+            return newEntry;
+        });
+    }
+
+    function splitLeafEntry(entry: Entry, pos: number) {
+        if (pos > 0) {
+            let remainingText = entry.text.content.substring(pos);
+            entry.text.content = entry.text.content.substring(0, pos);
+            return <Entry>{
+                text: {
+                    content: remainingText,
+                    attributes: extend({}, entry.text.attributes)
+                }
+            };
+        }
+    }
+
+    function ensureIntervalBoundary(pos: number) {
+        let splitNode = insertingWalk(root, pos, splitLeafEntry);
+        if (splitNode) {
+            addSplitNodeToRoot(splitNode);
+        }
+    }
+
+    function insertingWalk(node: Node, pos: number, leafAction: (entry: Entry, pos: number) => Entry) {
         let entries = node.entries;
         let entryIndex: number;
-        let newEntry = <Entry>{ key: textSegment };
         let entry: Entry;
-        for (let entryIndex = 0; entryIndex < node.liveEntryCount; entryIndex++) {
+        let newEntry: Entry;
+        for (entryIndex = 0; entryIndex < node.liveEntryCount; entryIndex++) {
             entry = entries[entryIndex];
             let len = entryLength(entry);
             if (pos < len) {
                 // found entry containing pos
                 if (entry.ref) {
-                    // internal node
-                    let splitNode = spliceNodeAt(node.entries[entryIndex].ref, textSegment, pos);
+                    //internal node
+                    let splitNode = insertingWalk(entry.ref, pos, leafAction);
                     if (splitNode === undefined) {
                         return undefined;
                     }
-                    newEntry.key = splitNode.entries[0].key;
-                    newEntry.ref = splitNode;
+                    newEntry = <Entry>{ ref: splitNode };
+                    entryIndex++; // insert after
                 }
                 else {
-                    // truncate containing Interval
-                    entry.key.content = entry.key.content.substring(0, pos);
+                    newEntry = leafAction(entry, pos);
+                    if (newEntry) {
+                        entryIndex++; // insert after
+                    }
+                    else {
+                        // already an interval at this position
+                        return undefined;
+                    }
                 }
-                entryIndex++; // insert after 
                 break;
             }
             else {
                 pos -= len;
             }
         }
-        for (let i = node.liveEntryCount; i > entryIndex; i--) {
-            node.entries[i] = node.entries[i - 1];
-        }
-        node.entries[entryIndex] = newEntry;
-        node.liveEntryCount++;
-        if (node.liveEntryCount < MaxEntries) {
-            return undefined;
+        if (newEntry) {
+            for (let i = node.liveEntryCount; i > entryIndex; i--) {
+                node.entries[i] = node.entries[i - 1];
+            }
+            node.entries[entryIndex] = newEntry;
+            node.liveEntryCount++;
+            if (node.liveEntryCount < MaxEntries) {
+                nodeUpdateLength(node);
+                return undefined;
+            }
+            else {
+                return split(node);
+            }
         }
         else {
-            return split(node);
+            return undefined;
         }
     }
 
@@ -149,7 +212,17 @@ export function IntervalSpanningTree(initialText: string) {
         for (let i = 0; i < halfCount; i++) {
             newNode.entries[i] = node.entries[(halfCount) + i];
         }
+        nodeUpdateLength(node);
+        nodeUpdateLength(newNode);
         return newNode;
+    }
+
+    function nodeUpdateLength(node: Node) {
+        let len = 0;
+        for (let i = 0; i < node.liveEntryCount; i++) {
+            len += entryLength(node.entries[i]);
+        }
+        node.length = len;
     }
 
     function map<TAccum>(action: TextSegmentAction, accum?: TAccum) {
@@ -167,26 +240,26 @@ export function IntervalSpanningTree(initialText: string) {
             start = 0;
         }
         if (end === undefined) {
-            end = root.length - 1;
+            end = root.length;
         }
         let go = true;
         let entries = node.entries;
         for (let entryIndex = 0; entryIndex < node.liveEntryCount; entryIndex++) {
             let entry = entries[entryIndex];
             let len = entryLength(entry);
-            if (go && ((start >= 0) && (start < len)) && (end >=0)) {
+            if (go && ((start < len)) && (end >= len)) {
                 // found entry containing pos
                 if (entry.ref) {
                     // internal node
                     go = nodeMap(entry.ref, action, pos, accum, start, end);
                 }
                 else {
-                    go = action(entry.key.content, pos);
+                    go = action(entry.text, pos);
                 }
             }
+            pos += len;
             start -= len;
             end -= len;
-            pos += len;
         }
         return go;
     }
@@ -198,7 +271,9 @@ export function IntervalSpanningTree(initialText: string) {
         map: map,
         mapRange: mapRange,
         getContainingInterval: getContainingInterval,
-        spliceAt: spliceAt,
+        ensureIntervalBoundary: ensureIntervalBoundary,
+        setAttributes: setAttributes,
+        insertInterval: insertInterval,
         diag: diag
     }
 
