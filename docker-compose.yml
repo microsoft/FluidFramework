@@ -4,11 +4,13 @@ services:
         build: .
         ports:
             - "3000:3000"
+            - "5858:5858"
         volumes:
             - .:/usr/src/
         depends_on:
             - mongodb
             - redis            
+        command: node --debug /usr/src/server/dist/www.js
     redis:
         image: "redis:alpine"
     mongodb:

@@ -30,7 +30,8 @@ let observer = redis.createClient(redisPort, redisHost, subOptions);
 ShareDB.types.register(richText.type);
 ShareDB.types.register(ink.type);
 
-let db = new ShareDBMongo("mongodb://mongodb:27017");
+let mongoConnectionString = nconf.get("mongo:connectionString");
+let db = new ShareDBMongo(mongoConnectionString);
 let pubsub = new ShareDBRedisPub({ client, observer });
 let shareDb = new ShareDB({
     db,

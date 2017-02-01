@@ -17,6 +17,7 @@ RUN gulp
 
 # Expose the port the app runs under
 EXPOSE 3000
+EXPOSE 5858
 
 # And set the default command to start the server
 CMD ["npm", "start"]
