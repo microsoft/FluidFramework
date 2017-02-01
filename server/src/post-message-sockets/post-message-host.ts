@@ -80,7 +80,7 @@ export class PostMessageHost implements IPostMessageHost {
      * Client is requesting to connect to the server
      */
     private processConnect(event: MessageEvent, message: IPacket): void {
-        // Ignore connection events if we aren"t listening 
+        // Ignore connection events if we aren"t listening
         if (!this.connectionCallback) {
             // tslint:disable-next-line:no-console
             console.log("Client is attempting to connect but the server is not listening");
@@ -106,7 +106,7 @@ export class PostMessageHost implements IPostMessageHost {
     }
 
     /**
-     * Retrieves a new number to represent a connection 
+     * Retrieves a new number to represent a connection
      */
     private getConnectionId(): number {
         return this.nextConnectionId++;

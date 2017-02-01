@@ -33,10 +33,14 @@
             <button id="clearButton" value="clear">Clear</button>
             <button id="testButton">Reco</button>
             <button id="turnOnInk">ink</button>
+            <button id="replay">Replay</button>
         </div>
     {{/content}}
     
     {{$scripts}}
         <script src="/dist/canvas/canvas.js"></script> 
+        <script>
+            canvas.initialize("{{id}}");
+        </script>
     {{/scripts}}            
 {{/layout}}

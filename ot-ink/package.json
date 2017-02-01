@@ -1,0 +1,20 @@
+{
+  "name": "ot-ink",
+  "version": "0.1.0",
+  "description": "Ink OT type",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "author": "Microsoft",
+  "devDependencies": {
+    "gulp": "^3.9.1",
+    "gulp-clean": "^0.3.2",
+    "gulp-sourcemaps": "^1.9.1",
+    "gulp-tslint": "^7.0.1",
+    "gulp-typescript": "^3.1.3",
+    "tslint": "^4.0.2",
+    "typescript": "^2.1.4"
+  },
+  "dependencies": {
+    "@types/node": "^6.0.52"
+  }
+}

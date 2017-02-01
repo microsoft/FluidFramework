@@ -3,7 +3,8 @@ import * as passport from "passport";
 import * as accounts from "../accounts";
 import * as authOptions from "./authOptions";
 
-// tslint:disable-next-line:no-var-requires:simpler code path and module not setup for import
+// simpler code path and module not setup for import
+// tslint:disable-next-line:no-var-requires
 let ensureLoggedIn = require("connect-ensure-login").ensureLoggedIn;
 
 let router = express.Router();

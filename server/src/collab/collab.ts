@@ -70,7 +70,7 @@ function _inherits(subClass, superClass) {
     }
 }
 
-// tslint:disable:only-arrow-functions:simplify to work around es6 classes to typescript difficulties
+// tslint:disable:only-arrow-functions
 // tslint:disable-next-line:variable-name
 let VideoBlot: any = function (_BlockEmbed3) {
     // tslint:disable-next-line:no-var-keyword no-shadowed-variable
@@ -126,7 +126,7 @@ let host = new ivy.Host({
     secret: "IvyBearerToken",
 });
 
-// tslint:disable:only-arrow-functions:simplify to work around es6 classes to typescript difficulties
+// tslint:disable:only-arrow-functions
 // tslint:disable-next-line:variable-name
 let ChartBlot: any = function (_BlockEmbed3) {
     // tslint:disable-next-line:no-var-keyword no-shadowed-variable
@@ -220,7 +220,7 @@ export function connect(id: string, sync: boolean) {
             let range = quill.getSelection(true);
             quill.insertText(range.index, "\n", Quill.sources.USER);
 
-            // Disable rules for simplicity with Ivy input format            
+            // Disable rules for simplicity with Ivy input format
             let chartDef = {
                 chartTitleEdge: 1,
                 chartTitlePosition: 1,

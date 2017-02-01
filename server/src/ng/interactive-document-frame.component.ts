@@ -17,7 +17,7 @@ export class InteractiveDocumentFrameComponent implements AfterViewInit {
     }
 
     public ngAfterViewInit() {
-        // Load in the bound view                
+        // Load in the bound view
         let iframe = this.elementRef.nativeElement.querySelector("iframe");
         iframe.setAttribute("src", this.url);
     }

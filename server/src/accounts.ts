@@ -39,7 +39,7 @@ export function createOrGetUser(
     details: IUserDetails): Promise<any> {
 
     return accounts.getAccount(provider, providerId).then((account) => {
-        // Check to see if there is an account - if not we need to create a new user        
+        // Check to see if there is an account - if not we need to create a new user
         let userIdP;
         if (account === null) {
             // Create a user first and then link this account to it

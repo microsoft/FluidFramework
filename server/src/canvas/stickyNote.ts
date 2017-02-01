@@ -18,12 +18,16 @@ export default class StickyNote {
     this.div.style.top = "100px";
     this.div.style.left = "100px";
 
-    this.gesture = new MSGesture();
-    this.gesture.target = this.div;
+    // tslint:disable-next-line:no-string-literal
+    if (window["MSGesture"]) {
+      this.gesture = new MSGesture();
+      this.gesture.target = this.div;
 
-    this.div.addEventListener("MSGestureChange", this.eventListener, false);
-    this.div.addEventListener("MSGestureTap", this.eventListener, false);
-    this.div.addEventListener("pointerdown", this.eventListener, false);
+      this.div.addEventListener("MSGestureChange", (evt) => this.eventListener(evt), false);
+      this.div.addEventListener("MSGestureTap", (evt) => this.eventListener(evt), false);
+    }
+
+    this.div.addEventListener("pointerdown", (evt) => this.eventListener(evt), false);
 
     // insert the child into the DOM
     parent.appendChild(this.div);
@@ -49,7 +53,7 @@ export default class StickyNote {
   }
 
   public manipulateElement(e) {
-    // Uncomment the following code if you want to disable the built-in inertia 
+    // Uncomment the following code if you want to disable the built-in inertia
     // provided by dynamic gesture recognition
 
     // if (false && (e.detail == e.MSGESTURE_FLAG_INERTIA))
@@ -57,10 +61,10 @@ export default class StickyNote {
 
     // manipulate only with touch
     if (1 || e.pointerType === "touch") {
-      // Get the latest CSS transform on the element        
+      // Get the latest CSS transform on the element
       let m;
 
-      // Get the latest CSS transform on the element in MS Edge 
+      // Get the latest CSS transform on the element in MS Edge
       m = new WebKitCSSMatrix(window.getComputedStyle(this.gesture.target, null).transform);
 
       if (m) {

@@ -15,7 +15,7 @@ class View implements IView {
 }
 
 class Views implements IViews {
-    // tslint:disable:variable-name:JSON format contains _
+    // tslint:disable:variable-name
     public _links: { [rel: string]: ILink | ILink[] };
     public _embedded: { [rel: string]: View[] };
     // tslint:enable:variable-name
