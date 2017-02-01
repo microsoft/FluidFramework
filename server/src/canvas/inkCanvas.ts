@@ -290,4 +290,79 @@ export default class InkCanvas {
 
         this.drawStroke(stroke, lastStroke);
     }
+
+    /***
+     * given start point and end point, get MixInk shapes to render. The returned MixInk
+     * shapes may contain one or two circles whose center is either start point or end point.
+     * Enum SegmentCircleInclusive determins whether circle is in the return list.
+     * Besides circles, a trapezoid that serves as a bounding box of two stroke point is also returned.
+     */
+    private getShapes(startPoint: MixInk.IStylusPoint, endPoint: MixInk.IStylusPoint, circleInclusive: SegmentCircleInclusive): Array<MixInk.IShape> {
+        let dirVector = new MixInk.Vector2(endPoint.point.x - startPoint.point.x, endPoint.point.y - startPoint.point.y);
+        let len = dirVector.length;
+
+        let shapes = new Array<MixInk.IShape>();
+        let trapezoidP0: MixInk.IPoint;
+        let trapezoidP1: MixInk.IPoint;
+        let trapezoidP2: MixInk.IPoint;
+        let trapezoidP3: MixInk.IPoint;
+        let normalizedLateralVector: MixInk.IVector2;
+        let widthAtStart = startPoint.thickness / 2;
+        let widthAtEnd = endPoint.thickness / 2;
+
+        // Just draws a circle on small values??
+        if (len + Math.min(widthAtStart, widthAtEnd) <= Math.max(widthAtStart, widthAtEnd)) {
+            let center = widthAtStart >= widthAtEnd ? startPoint : endPoint;
+            shapes.push(new MixInk.Circle(center.point, center.thickness / 2));
+            return shapes;
+        }
+
+        if (len === 0) {
+            return null;
+        }
+
+        if (widthAtStart !== widthAtEnd) {
+            var angle = Math.acos(Math.abs(widthAtStart - widthAtEnd) / len);
+
+            if (widthAtStart < widthAtEnd) {
+                angle = Math.PI - angle;
+            }
+
+            normalizedLateralVector = dirVector.getRotatedVector(-angle).getNormalizedVector();
+            trapezoidP0 = new MixInk.Point(startPoint.point.x + widthAtStart * normalizedLateralVector.x, startPoint.point.y + widthAtStart * normalizedLateralVector.y);
+            trapezoidP3 = new MixInk.Point(endPoint.point.x + widthAtEnd * normalizedLateralVector.x, endPoint.point.y + widthAtEnd * normalizedLateralVector.y);
+
+            normalizedLateralVector = dirVector.getRotatedVector(angle).getNormalizedVector();
+            trapezoidP2 = new MixInk.Point(endPoint.point.x + widthAtEnd * normalizedLateralVector.x, endPoint.point.y + widthAtEnd * normalizedLateralVector.y);
+            trapezoidP1 = new MixInk.Point(startPoint.point.x + widthAtStart * normalizedLateralVector.x, startPoint.point.y + widthAtStart * normalizedLateralVector.y);
+        } else {
+            normalizedLateralVector = new MixInk.Vector2(-dirVector.y / len, dirVector.x / len);
+
+            trapezoidP0 = new MixInk.Point(startPoint.point.x + widthAtStart * normalizedLateralVector.x, startPoint.point.y + widthAtStart * normalizedLateralVector.y);
+            trapezoidP1 = new MixInk.Point(startPoint.point.x - widthAtStart * normalizedLateralVector.x, startPoint.point.y - widthAtStart * normalizedLateralVector.y);
+
+            trapezoidP2 = new MixInk.Point(endPoint.point.x - widthAtEnd * normalizedLateralVector.x, endPoint.point.y - widthAtEnd * normalizedLateralVector.y);
+            trapezoidP3 = new MixInk.Point(endPoint.point.x + widthAtEnd * normalizedLateralVector.x, endPoint.point.y + widthAtEnd * normalizedLateralVector.y);
+        }
+
+        var polygon = new MixInk.Polygon([trapezoidP0, trapezoidP3, trapezoidP2, trapezoidP1]);
+        shapes.push(polygon);
+
+        switch (circleInclusive) {
+            case SegmentCircleInclusive.None:
+                break;
+            case SegmentCircleInclusive.Both:
+                shapes.push(new MixInk.Circle(startPoint.point, startPoint.thickness / 2));
+                shapes.push(new MixInk.Circle(endPoint.point, endPoint.thickness / 2));
+                break;
+            case SegmentCircleInclusive.Start:
+                shapes.push(new MixInk.Circle(startPoint.point, startPoint.thickness / 2));
+                break;
+            case SegmentCircleInclusive.End:
+                shapes.push(new MixInk.Circle(endPoint.point, endPoint.thickness / 2));
+                break;
+        }
+
+        return shapes;
+    }
 }
