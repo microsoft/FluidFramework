@@ -1,8 +1,5 @@
 import * as geometry from "../geometry/index";
-
-export interface IShape {
-    render(context2D: CanvasRenderingContext2D);
-}
+import { IShape } from "./shape";
 
 export interface ICircle extends IShape {
     center: geometry.IPoint;
