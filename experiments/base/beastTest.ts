@@ -103,7 +103,8 @@ function integerTest1() {
     for (let j = 0, len = pos.length; j < len; j++) {
         let cp = pos[j];
         let prop = beast.get(cp);
-        let btprop = btree.get(cp);
+        //let btprop = btree.get(cp);
+        /*
         if (prop && btprop) {
             if (prop.data != j) {
                 //console.log("data does not match index: " + j);
@@ -117,7 +118,7 @@ function integerTest1() {
             console.log("hmm...bad key: " + cp);
             errorCount++;
         }
-        
+        */
     }
     let getdur=took("get all keys", start);
     console.log(`cost per get is ${(1000.0*getdur/intCount).toFixed(3)} us`);
@@ -211,5 +212,5 @@ function itreeTest1() {
 
 //simpleTest();
 //fileTest1();
-//integerTest1();
-itreeTest1();
+integerTest1();
+//itreeTest1();

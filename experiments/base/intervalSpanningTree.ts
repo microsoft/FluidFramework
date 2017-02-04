@@ -167,7 +167,7 @@ export function IntervalSpanningTree(initialText: string, attr: Attributes) {
                     if (splitNode === undefined) {
                         return undefined;
                     }
-                    newEntry = <Entry>{ ref: splitNode };
+                    newEntry = <Entry>{ ref: splitNode, text: undefined };
                     entryIndex++; // insert after
                 }
                 else {
@@ -215,6 +215,10 @@ export function IntervalSpanningTree(initialText: string, attr: Attributes) {
         nodeUpdateLength(node);
         nodeUpdateLength(newNode);
         return newNode;
+    }
+
+    function removeInterval(pos: number) {
+        
     }
 
     function nodeUpdateLength(node: Node) {
