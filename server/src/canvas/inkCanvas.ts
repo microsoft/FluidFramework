@@ -9,6 +9,13 @@ import * as utils from "./utils";
 // TODO remove before commit
 // tslint:disable:no-console
 
+export enum SegmentCircleInclusive {
+    None,
+    Both,
+    Start,
+    End,
+}
+
 interface IPtrEvtPoint {
     x: number;
     y: number;

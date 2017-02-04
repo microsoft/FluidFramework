@@ -1,5 +1,11 @@
 // Export the ink definition
-import * as ink from "./ink";
-export { ink as type };
+import * as type from "./type";
+export { type as type };
 
-export * from "./definitions";
+// And the other core types
+export * from "./actions";
+export * from "./core";
+export * from "./delta";
+export * from "./operations";
+export * from "./snapshot";
+export * from "./tools";
