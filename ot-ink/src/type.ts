@@ -1,48 +1,71 @@
-// This is a really simple OT type.
+// Ink OT type
 //
-// Its included for demonstration purposes and its used in the meta unit tests.
-//
-// This defines a really simple text OT type which only allows inserts. (No deletes).
-//
-// Ops look like:
-//   {position:#, text:"asdf"}
-//
-// Document snapshots look like:
-//   {str:string}
 
-export const name = "simple";
-export const uri = "http://sharejs.org/types/simple";
+import * as actions from "./actions";
+import { IDelta } from "./delta";
+import * as operations from "./operations";
+import { ISnapshot, Snapshot } from "./snapshot";
+
+export const name = "ink";
+export const uri = "http://microsoft.com/types/ink";
 
 // Create a new document snapshot. Initial data can be passed in.
-export function create(initial) {
-    if (initial === null) {
-        initial = "";
+export function create(initial: ISnapshot): Snapshot {
+    if (!initial || !initial.layers || !initial.layerIndex) {
+        throw "Invalid initial data";
     }
 
-    return {str: initial};
+    return new Snapshot(initial.layers, initial.layerIndex);
 }
 
-// Apply the given op to the document snapshot. Returns the new snapshot.
-export function apply(snapshot, op) {
-    if (op.position < 0 || op.position > snapshot.str.length) {
-        throw new Error("Invalid position");
-    }
-
-    let str = snapshot.str;
-    str = str.slice(0, op.position) + op.text + str.slice(op.position);
-    return { str };
+/**
+ * Applies the delta to the provided snapshot
+ */
+export function apply(snapshot: Snapshot, delta: IDelta) {
+    let newSnapshot = Snapshot.Clone(snapshot);
+    newSnapshot.apply(delta);
+    return newSnapshot;
 }
 
 // Transform op1 by op2. Returns transformed version of op1.
 // Sym describes the symmetry of the operation. Its either 'left' or 'right'
 // depending on whether the op being transformed comes from the client or the
 // server.
-export function transform(op1, op2, sym) {
-    let pos = op1.position;
+export function transform(delta: IDelta, applied: IDelta, sym: string): IDelta {
+    let appliedType = operations.getActionType(delta.operation);
+    let deltaType = operations.getActionType(delta.operation);
 
-    if (op2.position < pos || (op2.position === pos && sym === "left")) {
-        pos += op2.text.length;
+    if (appliedType === actions.ActionType.Clear || deltaType === actions.ActionType.Clear) {
+        return { operation: { time: delta.operation.time, clear: {}} };
     }
 
-    return {position: pos, text: op1.text};
+    switch (deltaType) {
+        // Move and up actions are local-only and so transfer as is
+        case actions.ActionType.StylusMove:
+        case actions.ActionType.StylusUp:
+            return delta;
+        case actions.ActionType.StylusDown:
+            // In the case of two moves we need to adjust the insertion order given both
+            // create a new layer. The tie breaking rule is that the server 'wins' and their
+            // ink appears in the higher z-order.
+            if ((appliedType === actions.ActionType.StylusDown) && (sym === "left")) {
+                // We are transforming the client on the serer- need to adjust the insertion position
+                return {
+                    operation: {
+                        stylusDown: {
+                            id: delta.operation.stylusDown.id,
+                            layer: delta.operation.stylusDown.layer + 1,
+                            pen: delta.operation.stylusDown.pen,
+                            point: delta.operation.stylusDown.point,
+                            pressure: delta.operation.stylusDown.pressure,
+                        },
+                        time: delta.operation.time,
+                    },
+                };
+            } else {
+                return delta;
+            }
+        default:
+            throw "Unknown action";
+    }
 }

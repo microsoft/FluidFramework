@@ -10,26 +10,35 @@ export interface IInkLayer {
     operations: operations.IOperation[];
 }
 
-export class Snapshot {
+export interface ISnapshot {
+    layers: IInkLayer[];
+    layerIndex: { [key: string]: IInkLayer };
+}
+
+export class Snapshot implements ISnapshot {
     public static Clone(snapshot: Snapshot) {
         return new Snapshot(snapshot.layers, snapshot.layerIndex);
     }
 
-    constructor(private layers: IInkLayer[] = [], private layerIndex: {[key: string]: IInkLayer } = {}) {
+    constructor(public layers: IInkLayer[] = [], public layerIndex: {[key: string]: IInkLayer } = {}) {
     }
 
     public apply(delta: IDelta) {
         let actionType = operations.getActionType(delta.operation);
 
         switch (actionType) {
-            case actions.Type.Clear:
+            case actions.ActionType.Clear:
                 this.processClearAction(delta.operation);
-            case actions.Type.StylusUp:
+                break;
+            case actions.ActionType.StylusUp:
                 this.processStylusUpAction(delta.operation);
-            case actions.Type.StylusDown:
+                break;
+            case actions.ActionType.StylusDown:
                 this.processStylusDownAction(delta.operation);
-            case actions.Type.StylusMove:
+                break;
+            case actions.ActionType.StylusMove:
                 this.processStylusMoveAction(delta.operation);
+                break;
             default:
                 throw "Unknown action type";
         }
@@ -42,13 +51,13 @@ export class Snapshot {
 
     private processStylusUpAction(operation: operations.IOperation) {
         // TODO - longer term on ink up - or possibly earlier - we can attempt to smooth the provided ink
-        this.addOperationToLayer(operation);
+        this.addOperationToLayer(operation.stylusUp.id, operation);
     }
 
     private processStylusDownAction(operation: operations.IOperation) {
-        let layer = { 
+        let layer = {
             id: operation.stylusDown.id,
-            operations: []
+            operations: [],
         };
 
         // Push if we are isnerting at the end - otherwise splice to insert at the specified location
@@ -62,15 +71,15 @@ export class Snapshot {
         this.layerIndex[layer.id] = layer;
 
         // And save the stylus down
-        this.addOperationToLayer(operation);
+        this.addOperationToLayer(operation.stylusDown.id, operation);
     }
 
     private processStylusMoveAction(operation: operations.IOperation) {
-        this.addOperationToLayer(operation);
+        this.addOperationToLayer(operation.stylusMove.id, operation);
     }
 
-    private addOperationToLayer(operation: operations.IOperation) {
-        let layer = this.layerIndex[operation.stylusMove.id];
+    private addOperationToLayer(id: string, operation: operations.IOperation) {
+        let layer = this.layerIndex[id];
         layer.operations.push(operation);
     }
 }

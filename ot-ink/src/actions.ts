@@ -4,7 +4,7 @@ import * as tools from "./tools";
 /**
  * Type of action
  */
-export enum Type {
+export enum ActionType {
     // Action of placing the stylus on the canvas
     StylusDown,
 

@@ -5,6 +5,9 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "author": "Microsoft",
+  "scripts": {
+    "test": "nyc mocha dist/test"
+  },
   "devDependencies": {
     "@types/mocha": "^2.2.38",
     "gulp": "^3.9.1",
