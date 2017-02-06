@@ -21,10 +21,10 @@ export default class Canvas {
     public handleKeys: boolean = true;
     public stickyCount: number = 0;
 
-    constructor() {
+    constructor(doc: any) {
         // register all of the different handlers
         let p = document.getElementById("hitPlane");
-        this.ink = new InkCanvas(p);
+        this.ink = new InkCanvas(p, doc);
 
         window.addEventListener("keydown", (evt) => this.keyPress(evt), false);
         window.addEventListener("keyup", (evt) => this.keyRelease(evt), false);
@@ -123,7 +123,9 @@ export default class Canvas {
             for (let i = 0; i < sel.length; i++) {
                 elem = sel.item(i);
                 elem.classList.add("stickyInkable");
-                let ic = new InkCanvas(elem);
+
+                // TODO enable inking for everything later
+                // let ic = new InkCanvas(elem);
             }
         }
     }
