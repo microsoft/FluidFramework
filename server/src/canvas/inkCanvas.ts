@@ -6,9 +6,6 @@ import * as utils from "./utils";
 // TODO split classes into separate files
 // tslint:disable:max-classes-per-file
 
-// TODO remove before commit
-// tslint:disable:no-console
-
 export enum SegmentCircleInclusive {
     None,
     Both,
@@ -52,6 +49,8 @@ export default class InkCanvas {
 
         // Listen for updates from the server
         this.model.on("op", (op, source) => {
+            // TODO possibly we can just have submitOp send it and use this queue
+            // for processing
             if (source === this) {
                 return;
             }
@@ -225,23 +224,31 @@ export default class InkCanvas {
     public replay() {
         this.clearCanvas();
 
-        // if (this.strokes.length > 0) {
-        //     this.animateStroke(0);
-        // }
+        if (this.snapshot.layers.length > 0) {
+            // Time of the first operation in layer 0 is our starting time
+            let startTime = this.snapshot.layers[0].operations[0].time;
+            for (let layer of this.snapshot.layers) {
+                this.animateLayer(layer, 0, startTime);
+            }
+        }
     }
 
-    private animateStroke(index: number) {
-        // Draw the requested stroke
-        // let currentStroke = this.strokes[index];
-        // let previousStroke = index - 1 >= 0 ? this.strokes[index - 1] : null;
-        // this.drawStroke(currentStroke, previousStroke);
+    private animateLayer(layer: ink.IInkLayer, operationIndex: number, startTime: number) {
+        if (operationIndex >= layer.operations.length) {
+            return;
+        }
 
-        // // And then ask for the next one
-        // let nextStroke = index + 1 < this.strokes.length ? this.strokes[index + 1] : null;
-        // if (nextStroke) {
-        //     let time = nextStroke.time - currentStroke.time;
-        //     setTimeout(() => this.animateStroke(index + 1), time);
-        // }
+        // Draw the requested stroke
+        let currentOperation = layer.operations[operationIndex];
+        let previousOperation = layer.operations[Math.max(0, operationIndex - 1)];
+        let time = operationIndex === 0
+            ? currentOperation.time - startTime
+            : currentOperation.time - previousOperation.time;
+
+        setTimeout(() => {
+            this.drawStroke(layer, currentOperation, previousOperation);
+            this.animateLayer(layer, operationIndex + 1, startTime);
+        }, time);
     }
 
     /**
@@ -320,7 +327,6 @@ export default class InkCanvas {
         }
 
         // Add the delta to our snapshot
-        console.log(`Applying ${JSON.stringify(delta)}`);
         // this.snapshot.apply(delta);
 
         // Get the layer the delta applies to
@@ -347,9 +353,6 @@ export default class InkCanvas {
         pen: ink.IPen,
         circleInclusive: SegmentCircleInclusive): IShape[] {
 
-        console.log(`Start: ${startPoint.point.x} ${startPoint.point.y}`);
-        console.log(`  End: ${startPoint.point.x} ${startPoint.point.y}`);
-
         let dirVector = new geometry.Vector(
             endPoint.point.x - startPoint.point.x,
             endPoint.point.y - startPoint.point.y);
@@ -366,13 +369,11 @@ export default class InkCanvas {
 
         // Just draws a circle on small values??
         if (len + Math.min(widthAtStart, widthAtEnd) <= Math.max(widthAtStart, widthAtEnd)) {
-            console.log("just a circle");
             let center = widthAtStart >= widthAtEnd ? startPoint : endPoint;
             shapes.push(new Circle({ x: center.point.x, y: center.point.y }, pen.thickness / 2));
             return shapes;
         }
 
-        console.log("Not a circle");
         if (len === 0) {
             return null;
         }

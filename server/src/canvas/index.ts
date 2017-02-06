@@ -29,7 +29,6 @@ export function initialize(id: string) {
     let doc = connection.get("canvas", id);
     let modelP = new Promise((resolve, reject) => {
         doc.subscribe((err) => {
-            console.error("Got the doc");
             if (err) {
                 return reject(err);
             }
@@ -52,13 +51,11 @@ export function initialize(id: string) {
     // Create a promise for when the document is ready
     let documentReadyP = new Promise((resolve, reject) => {
         $("document").ready(() => {
-            console.error("Document resolved");
             resolve();
         });
     });
 
     Promise.all([modelP, documentReadyP]).then((values) => {
-        console.error("Both promises resolved");
         let canvas = new Canvas(values[0]);
         let sticky = new StickyNote(utils.id("content"));
         let mainBoard = new BackBoard(canvas, "hitPlane");
