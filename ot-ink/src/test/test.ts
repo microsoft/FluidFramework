@@ -58,9 +58,11 @@ describe("Ink", () => {
             snapshot.apply(delta);
 
             assert.equal(snapshot.layers.length, 1);
-            assert.equal(snapshot.layerIndex[id].id, id);
-            assert.equal(snapshot.layerIndex[id].operations.length, 1);
-            assert.equal(snapshot.layerIndex[id].operations[0], delta.operation);
+            let layerIndex = snapshot.layerIndex[id];
+            assert.equal(layerIndex, 0);
+            assert.equal(snapshot.layers[layerIndex].id, id);
+            assert.equal(snapshot.layers[layerIndex].operations.length, 1);
+            assert.equal(snapshot.layers[layerIndex].operations[0], delta.operation);
         });
 
         it("can render multiple layers", () => {

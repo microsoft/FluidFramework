@@ -41,17 +41,29 @@ export default class InkCanvas {
     public penID: number = -1;
     public gesture: MSGesture;
 
-    private strokes: ink.IMixInkAction[] = [];
+    private snapshot: ink.Snapshot;
+    private currentStylusActionId: string;
+    private currentPen: ink.IPen;
 
     // constructor
-    constructor(parent: HTMLElement) {
+    constructor(parent: HTMLElement, private model: any) {
+        // Load the snapshot from the model
+        this.snapshot = ink.Snapshot.Clone(model.data);
+
+        // Listen for updates from the server
+        this.model.on("op", (op, source) => {
+            if (source === this) {
+                return;
+            }
+
+            // Update the canvas
+            this.addAndDrawStroke(op as ink.IDelta, false);
+        });
+
         // setup canvas
         this.canvas = document.createElement("canvas");
         this.canvas.classList.add("drawSurface");
         parent.appendChild(this.canvas);
-
-        // tslint:disable-next-line:no-string-literal
-        window["strokes"] = this.strokes;
 
         // get context
         this.context = this.canvas.getContext("2d");
@@ -60,6 +72,11 @@ export default class InkCanvas {
         this.canvas.addEventListener("pointerdown", (evt) => this.handlePointerDown(evt), bb);
         this.canvas.addEventListener("pointermove", (evt) => this.handlePointerMove(evt), bb);
         this.canvas.addEventListener("pointerup", (evt) => this.handlePointerUp(evt), bb);
+
+        this.currentPen = {
+            color: { r: 1, g: 0, b: 0, a: 1 },
+            thickness: 10,
+        };
 
         // Set the initial size of hte canvas and then register for resize events to be able to update it
         this.resize(this.canvas.offsetWidth, this.canvas.offsetHeight);
@@ -121,7 +138,9 @@ export default class InkCanvas {
                 this.restoreMode();
             }
 
-            this.addAndDrawStroke(pt.rawPosition, ink.MixInkActionKind.Move, evt.pressure);
+            let delta = new ink.Delta().stylusDown(pt.rawPosition, evt.pressure, this.currentPen);
+            this.currentStylusActionId = delta.operation.stylusDown.id;
+            this.addAndDrawStroke(delta, true);
 
             evt.returnValue = false;
         }
@@ -134,7 +153,11 @@ export default class InkCanvas {
             // } else {
             // }
 
-            this.addAndDrawStroke({ x: evt.clientX, y: evt.clientY }, ink.MixInkActionKind.Draw, evt.pressure);
+            let delta = new ink.Delta().stylusMove(
+                { x: evt.clientX, y: evt.clientY },
+                evt.pressure,
+                this.currentStylusActionId);
+            this.addAndDrawStroke(delta, true);
 
             evt.returnValue = false;
         }
@@ -148,7 +171,13 @@ export default class InkCanvas {
             let pt = new EventPoint(evt);
             evt.returnValue = false;
 
-            this.addAndDrawStroke(pt.rawPosition, ink.MixInkActionKind.Draw, evt.pressure);
+            let delta = new ink.Delta().stylusUp(
+                { x: evt.clientX, y: evt.clientY },
+                evt.pressure,
+                this.currentStylusActionId);
+            this.currentStylusActionId = undefined;
+
+            this.addAndDrawStroke(delta, true);
         }
 
         return false;
@@ -161,7 +190,13 @@ export default class InkCanvas {
             let pt = new EventPoint(evt);
             this.penID = -1;
 
-            this.addAndDrawStroke(pt.rawPosition, ink.MixInkActionKind.Draw, evt.pressure);
+            let delta = new ink.Delta().stylusUp(
+                { x: evt.clientX, y: evt.clientY },
+                evt.pressure,
+                this.currentStylusActionId);
+            this.currentStylusActionId = undefined;
+
+            this.addAndDrawStroke(delta, true);
         }
 
         return false;
@@ -190,23 +225,23 @@ export default class InkCanvas {
     public replay() {
         this.clearCanvas();
 
-        if (this.strokes.length > 0) {
-            this.animateStroke(0);
-        }
+        // if (this.strokes.length > 0) {
+        //     this.animateStroke(0);
+        // }
     }
 
     private animateStroke(index: number) {
         // Draw the requested stroke
-        let currentStroke = this.strokes[index];
-        let previousStroke = index - 1 >= 0 ? this.strokes[index - 1] : null;
-        this.drawStroke(currentStroke, previousStroke);
+        // let currentStroke = this.strokes[index];
+        // let previousStroke = index - 1 >= 0 ? this.strokes[index - 1] : null;
+        // this.drawStroke(currentStroke, previousStroke);
 
-        // And then ask for the next one
-        let nextStroke = index + 1 < this.strokes.length ? this.strokes[index + 1] : null;
-        if (nextStroke) {
-            let time = nextStroke.time - currentStroke.time;
-            setTimeout(() => this.animateStroke(index + 1), time);
-        }
+        // // And then ask for the next one
+        // let nextStroke = index + 1 < this.strokes.length ? this.strokes[index + 1] : null;
+        // if (nextStroke) {
+        //     let time = nextStroke.time - currentStroke.time;
+        //     setTimeout(() => this.animateStroke(index + 1), time);
+        // }
     }
 
     /**
@@ -219,27 +254,38 @@ export default class InkCanvas {
     private redraw() {
         this.clearCanvas();
 
-        let previousStroke: ink.IMixInkAction = null;
-        for (let stroke of this.strokes) {
-            this.drawStroke(stroke, previousStroke);
-            previousStroke = stroke;
+        for (let layer of this.snapshot.layers) {
+            let previous: ink.IOperation = layer.operations[0];
+            for (let operation of layer.operations) {
+                this.drawStroke(layer, operation, previous);
+                previous = operation;
+            }
         }
     }
 
-    private drawStroke(stroke: ink.IMixInkAction, previous: ink.IMixInkAction) {
+    private drawStroke(
+        layer: ink.IInkLayer,
+        current: ink.IOperation,
+        previous: ink.IOperation) {
+
+        let type = ink.getActionType(current);
         let shapes: IShape[];
 
-        switch (stroke.kind) {
-            case ink.MixInkActionKind.Move:
-                shapes = this.getShapes(stroke, stroke, ink.SegmentCircleInclusive.End);
+        let currentAction = ink.getStylusAction(current);
+        let previousAction = ink.getStylusAction(previous);
+        let pen = layer.operations[0].stylusDown.pen;
+
+        switch (type) {
+            case ink.ActionType.StylusDown:
+                shapes = this.getShapes(currentAction, currentAction, pen, SegmentCircleInclusive.End);
                 break;
 
-            case ink.MixInkActionKind.Draw:
-                shapes = this.getShapes(previous, stroke, ink.SegmentCircleInclusive.End);
+            case ink.ActionType.StylusMove:
+                shapes = this.getShapes(previousAction, currentAction, pen, SegmentCircleInclusive.End);
                 break;
 
-            case ink.MixInkActionKind.Clear:
-                this.clearCanvas();
+            case ink.ActionType.StylusUp:
+                shapes = this.getShapes(previousAction, currentAction, pen, SegmentCircleInclusive.End);
                 break;
 
             default:
@@ -268,33 +314,25 @@ export default class InkCanvas {
         this.redraw();
     }
 
-    private addAndDrawStroke(
-        pt: IPtrEvtPoint,
-        kind: ink.MixInkActionKind,
-        pressure: number,
-        color: string = "rgba(0, 50, 0, 1)") {
+    private addAndDrawStroke(delta: ink.IDelta, submit: boolean) {
+        if (submit) {
+            this.model.submitOp(delta, { source: this });
+        }
 
-        let thickness = pressure * 15;
+        // Add the delta to our snapshot
+        console.log(`Applying ${JSON.stringify(delta)}`);
+        // this.snapshot.apply(delta);
 
-        // store the stroke command
-        let pen: ink.IPen = {
-            brush: ink.MixInkBlush.Pen,
-            color,
-            thickness,
-        };
+        // Get the layer the delta applies to
+        let stylusId = ink.getStylusId(delta.operation);
+        let layer = this.snapshot.layers[this.snapshot.layerIndex[stylusId]];
 
-        let stroke: ink.IMixInkAction = {
-            kind,
-            pen,
-            time: new Date().getTime(),
-            x: pt.x,
-            y: pt.y,
-        };
+        // render the stroke
+        let lastOperation = layer.operations.length > 1
+            ? layer.operations[layer.operations.length - 2]
+            : layer.operations[0];
 
-        this.strokes.push(stroke);
-        let lastStroke = this.strokes.length > 1 ? this.strokes[this.strokes.length - 2] : null;
-
-        this.drawStroke(stroke, lastStroke);
+        this.drawStroke(layer, delta.operation, lastOperation);
     }
 
     /***
@@ -304,12 +342,17 @@ export default class InkCanvas {
      * Besides circles, a trapezoid that serves as a bounding box of two stroke point is also returned.
      */
     private getShapes(
-        startPoint: ink.IMixInkAction,
-        endPoint: ink.IMixInkAction,
-        circleInclusive: ink.SegmentCircleInclusive): IShape[] {
+        startPoint: ink.IStylusAction,
+        endPoint: ink.IStylusAction,
+        pen: ink.IPen,
+        circleInclusive: SegmentCircleInclusive): IShape[] {
 
-        let dirVector = new geometry.Vector(endPoint.x - startPoint.x,
-            endPoint.y - startPoint.y);
+        console.log(`Start: ${startPoint.point.x} ${startPoint.point.y}`);
+        console.log(`  End: ${startPoint.point.x} ${startPoint.point.y}`);
+
+        let dirVector = new geometry.Vector(
+            endPoint.point.x - startPoint.point.x,
+            endPoint.point.y - startPoint.point.y);
         let len = dirVector.length();
 
         let shapes = new Array<IShape>();
@@ -318,16 +361,18 @@ export default class InkCanvas {
         let trapezoidP2: geometry.IPoint;
         let trapezoidP3: geometry.IPoint;
         let normalizedLateralVector: geometry.IVector;
-        let widthAtStart = startPoint.pen.thickness / 2;
-        let widthAtEnd = endPoint.pen.thickness / 2;
+        let widthAtStart = pen.thickness / 2;
+        let widthAtEnd = pen.thickness / 2;
 
         // Just draws a circle on small values??
         if (len + Math.min(widthAtStart, widthAtEnd) <= Math.max(widthAtStart, widthAtEnd)) {
+            console.log("just a circle");
             let center = widthAtStart >= widthAtEnd ? startPoint : endPoint;
-            shapes.push(new Circle({ x: center.x, y: center.y }, center.pen.thickness / 2));
+            shapes.push(new Circle({ x: center.point.x, y: center.point.y }, pen.thickness / 2));
             return shapes;
         }
 
+        console.log("Not a circle");
         if (len === 0) {
             return null;
         }
@@ -341,52 +386,52 @@ export default class InkCanvas {
 
             normalizedLateralVector = geometry.Vector.normalize(geometry.Vector.rotate(dirVector, -angle));
             trapezoidP0 = new geometry.Point(
-                startPoint.x + widthAtStart * normalizedLateralVector.x,
-                startPoint.y + widthAtStart * normalizedLateralVector.y);
+                startPoint.point.x + widthAtStart * normalizedLateralVector.x,
+                startPoint.point.y + widthAtStart * normalizedLateralVector.y);
             trapezoidP3 = new geometry.Point(
-                endPoint.x + widthAtEnd * normalizedLateralVector.x,
-                endPoint.y + widthAtEnd * normalizedLateralVector.y);
+                endPoint.point.x + widthAtEnd * normalizedLateralVector.x,
+                endPoint.point.y + widthAtEnd * normalizedLateralVector.y);
 
             normalizedLateralVector = geometry.Vector.normalize(geometry.Vector.rotate(dirVector, angle));
             trapezoidP2 = new geometry.Point(
-                endPoint.x + widthAtEnd * normalizedLateralVector.x,
-                endPoint.y + widthAtEnd * normalizedLateralVector.y);
+                endPoint.point.x + widthAtEnd * normalizedLateralVector.x,
+                endPoint.point.y + widthAtEnd * normalizedLateralVector.y);
             trapezoidP1 = new geometry.Point(
-                startPoint.x + widthAtStart * normalizedLateralVector.x,
-                startPoint.y + widthAtStart * normalizedLateralVector.y);
+                startPoint.point.x + widthAtStart * normalizedLateralVector.x,
+                startPoint.point.y + widthAtStart * normalizedLateralVector.y);
         } else {
             normalizedLateralVector = new geometry.Vector(-dirVector.y / len, dirVector.x / len);
 
             trapezoidP0 = new geometry.Point(
-                startPoint.x + widthAtStart * normalizedLateralVector.x,
-                startPoint.y + widthAtStart * normalizedLateralVector.y);
+                startPoint.point.x + widthAtStart * normalizedLateralVector.x,
+                startPoint.point.y + widthAtStart * normalizedLateralVector.y);
             trapezoidP1 = new geometry.Point(
-                startPoint.x - widthAtStart * normalizedLateralVector.x,
-                startPoint.y - widthAtStart * normalizedLateralVector.y);
+                startPoint.point.x - widthAtStart * normalizedLateralVector.x,
+                startPoint.point.y - widthAtStart * normalizedLateralVector.y);
 
             trapezoidP2 = new geometry.Point(
-                endPoint.x - widthAtEnd * normalizedLateralVector.x,
-                endPoint.y - widthAtEnd * normalizedLateralVector.y);
+                endPoint.point.x - widthAtEnd * normalizedLateralVector.x,
+                endPoint.point.y - widthAtEnd * normalizedLateralVector.y);
             trapezoidP3 = new geometry.Point(
-                endPoint.x + widthAtEnd * normalizedLateralVector.x,
-                endPoint.y + widthAtEnd * normalizedLateralVector.y);
+                endPoint.point.x + widthAtEnd * normalizedLateralVector.x,
+                endPoint.point.y + widthAtEnd * normalizedLateralVector.y);
         }
 
         let polygon = new Polygon([trapezoidP0, trapezoidP3, trapezoidP2, trapezoidP1]);
         shapes.push(polygon);
 
         switch (circleInclusive) {
-            case ink.SegmentCircleInclusive.None:
+            case SegmentCircleInclusive.None:
                 break;
-            case ink.SegmentCircleInclusive.Both:
-                shapes.push(new Circle({ x: startPoint.x, y: startPoint.y }, startPoint.pen.thickness / 2));
-                shapes.push(new Circle({ x: endPoint.x, y: endPoint.y }, endPoint.pen.thickness / 2));
+            case SegmentCircleInclusive.Both:
+                shapes.push(new Circle({ x: startPoint.point.x, y: startPoint.point.y }, pen.thickness / 2));
+                shapes.push(new Circle({ x: endPoint.point.x, y: endPoint.point.y }, pen.thickness / 2));
                 break;
-            case ink.SegmentCircleInclusive.Start:
-                shapes.push(new Circle({ x: startPoint.x, y: startPoint.y }, startPoint.pen.thickness / 2));
+            case SegmentCircleInclusive.Start:
+                shapes.push(new Circle({ x: startPoint.point.x, y: startPoint.point.y }, pen.thickness / 2));
                 break;
-            case ink.SegmentCircleInclusive.End:
-                shapes.push(new Circle({ x: endPoint.x, y: endPoint.y }, endPoint.pen.thickness / 2));
+            case SegmentCircleInclusive.End:
+                shapes.push(new Circle({ x: endPoint.point.x, y: endPoint.point.y }, pen.thickness / 2));
                 break;
             default:
                 break;

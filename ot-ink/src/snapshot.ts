@@ -12,7 +12,10 @@ export interface IInkLayer {
 
 export interface ISnapshot {
     layers: IInkLayer[];
-    layerIndex: { [key: string]: IInkLayer };
+
+    // Stores a mapping from the provided key to its index in layers. Since
+    // ISnapshot is serialized we need to use an index.
+    layerIndex: { [key: string]: number };
 }
 
 export class Snapshot implements ISnapshot {
@@ -20,7 +23,7 @@ export class Snapshot implements ISnapshot {
         return new Snapshot(snapshot.layers, snapshot.layerIndex);
     }
 
-    constructor(public layers: IInkLayer[] = [], public layerIndex: {[key: string]: IInkLayer } = {}) {
+    constructor(public layers: IInkLayer[] = [], public layerIndex: {[key: string]: number } = {}) {
     }
 
     public apply(delta: IDelta) {
@@ -68,7 +71,7 @@ export class Snapshot implements ISnapshot {
         }
 
         // Create a reference to the specified layer
-        this.layerIndex[layer.id] = layer;
+        this.layerIndex[layer.id] = this.layers.length - 1 - operation.stylusDown.layer;
 
         // And save the stylus down
         this.addOperationToLayer(operation.stylusDown.id, operation);
@@ -79,7 +82,7 @@ export class Snapshot implements ISnapshot {
     }
 
     private addOperationToLayer(id: string, operation: operations.IOperation) {
-        let layer = this.layerIndex[id];
-        layer.operations.push(operation);
+        let layerIndex = this.layerIndex[id];
+        this.layers[layerIndex].operations.push(operation);
     }
 }

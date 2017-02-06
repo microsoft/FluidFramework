@@ -31,3 +31,35 @@ export function getActionType(operation: IOperation): actions.ActionType {
         throw "Unknown action";
     }
 }
+
+/**
+ * Extracts the IStylusAction contained in the operation
+ */
+export function getStylusAction(operation: IOperation): actions.IStylusAction {
+    if (operation.stylusDown) {
+        return operation.stylusDown;
+    } else if (operation.stylusUp) {
+        return operation.stylusUp;
+    } else if (operation.stylusMove) {
+        return operation.stylusMove;
+    } else {
+        throw "Unknown action";
+    }
+}
+
+/**
+ * Helper function to retrieve the ID of the stylus operation
+ */
+export function getStylusId(operation: IOperation): string {
+    let type = getActionType(operation);
+    switch (type) {
+        case actions.ActionType.StylusDown:
+            return operation.stylusDown.id;
+        case actions.ActionType.StylusUp:
+            return operation.stylusUp.id;
+        case actions.ActionType.StylusMove:
+            return operation.stylusMove.id;
+        default:
+            throw "Non-stylus event";
+    }
+}
