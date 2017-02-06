@@ -1,6 +1,11 @@
 import * as assert from "assert";
 import * as ink from "../";
 
+let testPen: ink.IPen = {
+    color: { r: 0.1, g: 0, b: 0, a: 1 },
+    thickness: 10,
+};
+
 function assertShouldThrow(operation: Function) {
     let threw = false;
 
@@ -11,6 +16,20 @@ function assertShouldThrow(operation: Function) {
     }
 
     assert(threw);
+}
+
+function renderLayer(snapshot: ink.Snapshot) {
+    let downDelta = new ink.Delta().stylusDown(
+        { x: 10, y: 20 },
+        100,
+        testPen);
+    let id = downDelta.operation.stylusDown.id;
+    let moveDelta = new ink.Delta().stylusMove({ x: 20, y: 25 }, 200, id);
+    let upDelta = new ink.Delta().stylusUp({ x: 20, y: 25 }, 200, id);
+
+    snapshot.apply(downDelta);
+    snapshot.apply(moveDelta);
+    snapshot.apply(upDelta);
 }
 
 describe("Ink", () => {
@@ -28,33 +47,117 @@ describe("Ink", () => {
     });
 
     describe("apply", () => {
-        it("Can apply a move", () => {
-            let id = "test";
-
+        it("can apply a stylus down", () => {
             let snapshot = new ink.Snapshot();
-            let operation: ink.IOperation = {
-                stylusDown: {
-                    id,
-                    layer: 0,
-                    pen: null,
-                    point: { x: 10, y: 20 },
-                    pressure: 100,
-                },
-                time: new Date().getTime(),
-            };
+            let delta = new ink.Delta().stylusDown(
+                { x: 10, y: 20 },
+                100,
+                testPen);
+            let id = delta.operation.stylusDown.id;
 
-            snapshot.apply({ operation });
+            snapshot.apply(delta);
 
             assert.equal(snapshot.layers.length, 1);
             assert.equal(snapshot.layerIndex[id].id, id);
             assert.equal(snapshot.layerIndex[id].operations.length, 1);
-            assert.equal(snapshot.layerIndex[id].operations[0], operation);
+            assert.equal(snapshot.layerIndex[id].operations[0], delta.operation);
+        });
+
+        it("can render multiple layers", () => {
+            let snapshot = new ink.Snapshot();
+            renderLayer(snapshot);
+            renderLayer(snapshot);
+            renderLayer(snapshot);
+
+            // should have three layers with three operations
+            assert.equal(snapshot.layers.length, 3);
+            assert.equal(snapshot.layers[0].operations.length, 3);
+        });
+
+        it("can clear the canvas", () => {
+            let snapshot = new ink.Snapshot();
+            renderLayer(snapshot);
+            assert.equal(snapshot.layers.length, 1);
+
+            let clear = new ink.Delta().clear();
+            snapshot.apply(clear);
+            assert.equal(snapshot.layers.length, 0);
+        });
+
+        it("can clear the canvas", () => {
+            let snapshot = new ink.Snapshot();
+            let clearSnapshot = ink.type.apply(snapshot, new ink.Delta().clear());
+            assert(clearSnapshot !== snapshot);
         });
     });
 
     describe("transform", () => {
-        it("should return -1 when the value is not present", () => {
-            assert.equal(-1, [1, 2, 3].indexOf(4));
+        it("can apply two mouse downs", () => {
+            let firstDown = new ink.Delta().stylusDown(
+                { x: 10, y: 20 },
+                100,
+                testPen);
+
+            let secondDown = new ink.Delta().stylusDown(
+                { x: 10, y: 20 },
+                100,
+                testPen);
+
+            let transformedLeft = ink.type.transform(firstDown, secondDown, "left");
+            let transformedRight = ink.type.transform(firstDown, secondDown, "right");
+
+            // Should still result in a stylus down
+            assert(transformedLeft.operation.stylusDown);
+            assert(transformedRight.operation.stylusDown);
+
+            // But the layer should now be oe up
+            assert.equal(transformedLeft.operation.stylusDown.layer, 1);
+            assert.equal(transformedRight.operation.stylusDown.layer, 0);
+
+            // Apply the operations and validate layer creation
+            let snapshotLeft = new ink.Snapshot();
+            snapshotLeft.apply(secondDown);
+            snapshotLeft.apply(transformedLeft);
+            assert.equal(snapshotLeft.layers.length, 2);
+            assert.equal(snapshotLeft.layers[0].operations[0], transformedLeft.operation);
+            assert.equal(snapshotLeft.layers[1].operations[0], secondDown.operation);
+
+            let snapshotRight = new ink.Snapshot();
+            snapshotRight.apply(secondDown);
+            snapshotRight.apply(transformedRight);
+            assert.equal(snapshotRight.layers.length, 2);
+            assert.equal(snapshotRight.layers[1].operations[0], transformedRight.operation);
+            assert.equal(snapshotRight.layers[0].operations[0], secondDown.operation);
+        });
+
+        it("can transform move/up", () => {
+            let first = new ink.Delta().stylusMove(
+                { x: 10, y: 20 },
+                100);
+            let second = new ink.Delta().stylusUp(
+                { x: 10, y: 20 },
+                100);
+
+            let transformedLeft = ink.type.transform(first, second, "left");
+            let transformedRight = ink.type.transform(first, second, "right");
+
+            // Should still result in a stylus down
+            assert(transformedLeft.operation.stylusMove);
+            assert(transformedRight.operation.stylusMove);
+        });
+
+        it("clears propagate", () => {
+            let clear = new ink.Delta().clear();
+            let action = new ink.Delta().stylusUp(
+                { x: 10, y: 20 },
+                100);
+
+            let transformedLeft = ink.type.transform(action, clear, "left");
+            let transformedRight = ink.type.transform(clear, action, "right");
+
+            // Should still result in a stylus down
+            assert(transformedLeft.operation.clear);
+            assert(transformedRight.operation.clear);
         });
     });
 });

@@ -2,7 +2,7 @@
 //
 
 import * as actions from "./actions";
-import { IDelta } from "./delta";
+import { Delta, IDelta } from "./delta";
 import * as operations from "./operations";
 import { ISnapshot, Snapshot } from "./snapshot";
 
@@ -32,11 +32,11 @@ export function apply(snapshot: Snapshot, delta: IDelta) {
 // depending on whether the op being transformed comes from the client or the
 // server.
 export function transform(delta: IDelta, applied: IDelta, sym: string): IDelta {
-    let appliedType = operations.getActionType(delta.operation);
+    let appliedType = operations.getActionType(applied.operation);
     let deltaType = operations.getActionType(delta.operation);
 
     if (appliedType === actions.ActionType.Clear || deltaType === actions.ActionType.Clear) {
-        return { operation: { time: delta.operation.time, clear: {}} };
+        return new Delta().clear(delta.operation.time);
     }
 
     switch (deltaType) {
@@ -50,18 +50,13 @@ export function transform(delta: IDelta, applied: IDelta, sym: string): IDelta {
             // ink appears in the higher z-order.
             if ((appliedType === actions.ActionType.StylusDown) && (sym === "left")) {
                 // We are transforming the client on the serer- need to adjust the insertion position
-                return {
-                    operation: {
-                        stylusDown: {
-                            id: delta.operation.stylusDown.id,
-                            layer: delta.operation.stylusDown.layer + 1,
-                            pen: delta.operation.stylusDown.pen,
-                            point: delta.operation.stylusDown.point,
-                            pressure: delta.operation.stylusDown.pressure,
-                        },
-                        time: delta.operation.time,
-                    },
-                };
+                return new Delta().stylusDown(
+                    delta.operation.stylusDown.point,
+                    delta.operation.stylusDown.pressure,
+                    delta.operation.stylusDown.pen,
+                    delta.operation.stylusDown.layer + 1,
+                    delta.operation.stylusDown.id,
+                    delta.operation.time);
             } else {
                 return delta;
             }

@@ -10,6 +10,7 @@
   },
   "devDependencies": {
     "@types/mocha": "^2.2.38",
+    "@types/node-uuid": "0.0.28",
     "gulp": "^3.9.1",
     "gulp-clean": "^0.3.2",
     "gulp-sourcemaps": "^1.9.1",
@@ -21,6 +22,7 @@
     "typescript": "^2.1.4"
   },
   "dependencies": {
-    "@types/node": "^6.0.52"
+    "@types/node": "^6.0.52",
+    "node-uuid": "^1.4.7"
   }
 }
