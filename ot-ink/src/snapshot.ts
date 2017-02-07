@@ -27,20 +27,26 @@ export class Snapshot implements ISnapshot {
     }
 
     public apply(delta: IDelta) {
-        let actionType = operations.getActionType(delta.operation);
+        for (let operation of delta.operations) {
+            this.applyOperation(operation);
+        }
+    }
+
+    public applyOperation(operation: operations.IOperation) {
+        let actionType = operations.getActionType(operation);
 
         switch (actionType) {
             case actions.ActionType.Clear:
-                this.processClearAction(delta.operation);
+                this.processClearAction(operation);
                 break;
             case actions.ActionType.StylusUp:
-                this.processStylusUpAction(delta.operation);
+                this.processStylusUpAction(operation);
                 break;
             case actions.ActionType.StylusDown:
-                this.processStylusDownAction(delta.operation);
+                this.processStylusDownAction(operation);
                 break;
             case actions.ActionType.StylusMove:
-                this.processStylusMoveAction(delta.operation);
+                this.processStylusMoveAction(operation);
                 break;
             default:
                 throw "Unknown action type";
