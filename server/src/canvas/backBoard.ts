@@ -18,11 +18,11 @@ export default class BackBoard {
       this.gesture = new MSGesture();
       this.gesture.target = this.div;
 
-      this.div.addEventListener("MSGestureChange", this.gestureListener, false);
-      this.div.addEventListener("MSGestureTap", this.gestureListener, false);
+      this.div.addEventListener("MSGestureChange", (evt) => this.gestureListener(evt), false);
+      this.div.addEventListener("MSGestureTap", (evt) => this.gestureListener(evt), false);
     }
 
-    this.div.addEventListener("pointerdown", this.eventListener, false);
+    this.div.addEventListener("pointerdown", (evt) => this.eventListener(evt), false);
   }
 
   public eventListener(evt) {
