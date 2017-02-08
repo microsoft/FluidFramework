@@ -65,6 +65,23 @@ describe("Ink", () => {
             assert.equal(snapshot.layers[layerIndex].operations[0], delta.operations[0]);
         });
 
+        it("layout index mapped correctly", () => {
+            let snapshot = new ink.Snapshot();
+            let base = new ink.Delta().stylusDown({ x: 10, y: 20 }, 100, testPen);
+            let normalLayer = new ink.Delta().stylusDown({ x: 10, y: 20 }, 100, testPen);
+            let offsetLayer = new ink.Delta().stylusDown({ x: 10, y: 20 }, 100, testPen, 1);
+
+            // Verify the easy case of appending two layers
+            snapshot = ink.type.apply(snapshot, base);
+            snapshot = ink.type.apply(snapshot, normalLayer);
+            assert.equal(snapshot.layerIndex[normalLayer.operations[0].stylusDown.id], 1);
+
+            // The offset layer should be inserted in between pushing the normal layer down one
+            snapshot = ink.type.apply(snapshot, offsetLayer);
+            assert.equal(snapshot.layerIndex[normalLayer.operations[0].stylusDown.id], 2);
+            assert.equal(snapshot.layerIndex[offsetLayer.operations[0].stylusDown.id], 1);
+        });
+
         it("can render multiple layers", () => {
             let snapshot = new ink.Snapshot();
             renderLayer(snapshot);
@@ -150,16 +167,29 @@ describe("Ink", () => {
 
         it("clears propagate", () => {
             let clear = new ink.Delta().clear();
-            let action = new ink.Delta().stylusUp(
-                { x: 10, y: 20 },
-                100);
+            let action = new ink.Delta()
+                .stylusDown({ x: 10, y: 20 }, 100, testPen)
+                .stylusUp({ x: 20, y: 20 }, 100);
 
             let transformedLeft = ink.type.transform(action, clear, "left");
             let transformedRight = ink.type.transform(clear, action, "right");
 
             // Should still result in a stylus down
-            assert(transformedLeft.operations[0].clear);
+            assert(transformedLeft.operations[0].stylusDown);
+            assert(transformedLeft.operations[1].stylusUp);
             assert(transformedRight.operations[0].clear);
+            assert(transformedRight.operations[1].stylusDown);
+            assert(transformedRight.operations[2].stylusUp);
+        });
+    });
+
+    describe("compose", () => {
+        it("can compose two deltas", () => {
+            let first = new ink.Delta().clear().stylusDown({ x: 10, y: 10 }, 10, testPen);
+            let second = new ink.Delta().stylusMove({ x: 10, y: 20 }, 100).stylusUp({ x: 10, y: 30 }, 100);
+
+            let composed = ink.type.compose(first, second);
+            assert.equal(composed.operations.length, first.operations.length + second.operations.length);
         });
     });
 });

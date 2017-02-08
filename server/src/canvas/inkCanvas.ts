@@ -38,15 +38,12 @@ export default class InkCanvas {
     public penID: number = -1;
     public gesture: MSGesture;
 
-    private snapshot: ink.Snapshot;
     private currentStylusActionId: string;
     private currentPen: ink.IPen;
+    private lastLayerRenderOp: { [key: string]: number } = {};
 
     // constructor
     constructor(parent: HTMLElement, private model: any) {
-        // Load the snapshot from the model
-        this.snapshot = ink.Snapshot.Clone(model.data);
-
         // Listen for updates from the server
         this.model.on("op", (op, source) => {
             // TODO possibly we can just have submitOp send it and use this queue
@@ -96,9 +93,6 @@ export default class InkCanvas {
     public anchorSelection() {
     }
 
-    public selectAll() {
-    }
-
     public inkMode() {
     }
 
@@ -138,7 +132,7 @@ export default class InkCanvas {
             }
 
             let delta = new ink.Delta().stylusDown(pt.rawPosition, evt.pressure, this.currentPen);
-            this.currentStylusActionId = delta.operation.stylusDown.id;
+            this.currentStylusActionId = delta.operations[0].stylusDown.id;
             this.addAndDrawStroke(delta, true);
 
             evt.returnValue = false;
@@ -211,23 +205,20 @@ export default class InkCanvas {
 
     public clear() {
         if (!this.anySelected()) {
-            this.selectAll();
             this.inkMode();
         }
 
-        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
-        utils.displayStatus("");
-        utils.displayError("");
+        let delta = new ink.Delta().clear();
+        this.addAndDrawStroke(delta, true);
     }
 
     public replay() {
         this.clearCanvas();
 
-        if (this.snapshot.layers.length > 0) {
+        if (this.model.data.layers.length > 0) {
             // Time of the first operation in layer 0 is our starting time
-            let startTime = this.snapshot.layers[0].operations[0].time;
-            for (let layer of this.snapshot.layers) {
+            let startTime = this.model.data.layers[0].operations[0].time;
+            for (let layer of this.model.data.layers) {
                 this.animateLayer(layer, 0, startTime);
             }
         }
@@ -261,7 +252,7 @@ export default class InkCanvas {
     private redraw() {
         this.clearCanvas();
 
-        for (let layer of this.snapshot.layers) {
+        for (let layer of this.model.data.layers) {
             let previous: ink.IOperation = layer.operations[0];
             for (let operation of layer.operations) {
                 this.drawStroke(layer, operation, previous);
@@ -326,19 +317,33 @@ export default class InkCanvas {
             this.model.submitOp(delta, { source: this });
         }
 
-        // Add the delta to our snapshot
-        // this.snapshot.apply(delta);
+        let dirtyLayers: {[key: string]: any} = {};
+        for (let operation of delta.operations) {
+            let type = ink.getActionType(operation);
+            if (type === ink.ActionType.Clear) {
+                this.clearCanvas();
+                this.lastLayerRenderOp = {};
+                dirtyLayers = {};
+            } else {
+                // Get the layer the delta applies to
+                let stylusId = ink.getStylusId(operation);
+                dirtyLayers[stylusId] = true;
+            }
+        }
 
-        // Get the layer the delta applies to
-        let stylusId = ink.getStylusId(delta.operation);
-        let layer = this.snapshot.layers[this.snapshot.layerIndex[stylusId]];
+        // Render all the dirty layers
+        // tslint:disable-next-line:forin
+        for (let id in dirtyLayers) {
+            let index = this.lastLayerRenderOp[id] || 0;
 
-        // render the stroke
-        let lastOperation = layer.operations.length > 1
-            ? layer.operations[layer.operations.length - 2]
-            : layer.operations[0];
+            let layer = this.model.data.layers[this.model.data.layerIndex[id]];
+            for (; index < layer.operations.length; index++) {
+                // render the stroke
+                this.drawStroke(layer, layer.operations[index], layer.operations[Math.max(0, index - 1)]);
+            }
 
-        this.drawStroke(layer, delta.operation, lastOperation);
+            this.lastLayerRenderOp[id] = index;
+        }
     }
 
     /***

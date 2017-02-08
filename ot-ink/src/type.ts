@@ -41,14 +41,6 @@ class OperationIterator {
     }
 
     /**
-     * Retrieves the type of the next action in the iterator
-     */
-    public peekType(): actions.ActionType {
-        let next = this.peek();
-        return operations.getActionType(next);
-    }
-
-    /**
      * Returns the index of the next element to be returned
      */
     public peekIndex(): number {
@@ -68,7 +60,7 @@ class OperationIterator {
      * Returns true if there is another element in the iterator
      */
     public hasNext(): boolean {
-        return this.index >= this.delta.operations.length;
+        return this.index < this.delta.operations.length;
     }
 
     /**
@@ -79,7 +71,7 @@ class OperationIterator {
     }
 }
 
-// Transform op1 by op2. Returns transformed version of op1.
+// Transform delta by aplied. Returns transformed version of delta.
 // Sym describes the symmetry of the operation. Its either 'left' or 'right'
 // depending on whether the op being transformed comes from the client or the
 // server.
@@ -94,7 +86,7 @@ export function transform(delta: IDelta, applied: IDelta, sym: string): IDelta {
     //      keep track of index of last clear found (to clone any operations we need to preserve if delta clears)
     //
     let appliedLayerOffset = 0;
-    let appliedLastClear = -1;
+    let appliedLastClear = 0;
     while (appliedIterator.hasNext()) {
         let next = appliedIterator.next();
         let type = operations.getActionType(next);
@@ -123,7 +115,8 @@ export function transform(delta: IDelta, applied: IDelta, sym: string): IDelta {
         // Track information needed in the case of a clear - should I just store this in the delta since
         // it's easy to compute when building the structure?
         if (type === actions.ActionType.StylusDown) {
-            if (sym === "left") {
+            // If the delta operation is the server then we want to offset client operations later
+            if (sym === "right") {
                 deltaLayerOffset++;
             }
 
@@ -154,7 +147,28 @@ export function transform(delta: IDelta, applied: IDelta, sym: string): IDelta {
     // On a clear in delta layer - copy over everything from last clear in applied layer - and set time to that of the
     // clear so that they 'pop' at the same time
     if (deltaLastClearTime !== -1) {
-        // TODO - implement clear logic
+        // reset applied back to before the clear
+        appliedIterator.reset(appliedLastClear);
+
+        while (appliedIterator.hasNext()) {
+            let next = appliedIterator.next();
+            let type = operations.getActionType(next);
+
+            if (type === actions.ActionType.StylusDown) {
+                result.stylusDown(
+                    next.stylusDown.point,
+                    next.stylusDown.pressure,
+                    next.stylusDown.pen,
+                    next.stylusDown.layer + deltaLayerOffset,
+                    next.stylusDown.id,
+                    next.time);
+            } else if (type === actions.ActionType.StylusMove || type === actions.ActionType.StylusUp) {
+                // We can append the operation as is
+                result.push(next);
+            } else {
+                throw "Unknown type encountered";
+            }
+        }
     }
 
     return result;

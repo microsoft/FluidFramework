@@ -22,7 +22,7 @@ export class Delta implements IDelta {
      * logs
      */
     public compose(delta: IDelta) {
-        this.operations.concat(delta.operations);
+        this.operations = this.operations.concat(delta.operations);
     }
 
     public push(operation: IOperation) {

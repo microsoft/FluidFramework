@@ -77,7 +77,14 @@ export class Snapshot implements ISnapshot {
         }
 
         // Create a reference to the specified layer
-        this.layerIndex[layer.id] = this.layers.length - 1 - operation.stylusDown.layer;
+        let layerIndex = this.layers.length - 1 - operation.stylusDown.layer;
+        this.layerIndex[layer.id] = layerIndex;
+
+        // And move any after it down by one
+        for (layerIndex = layerIndex + 1; layerIndex < this.layers.length; layerIndex++) {
+            let layerId = this.layers[layerIndex].id;
+            this.layerIndex[layerId] = this.layerIndex[layerId] + 1;
+        }
 
         // And save the stylus down
         this.addOperationToLayer(operation.stylusDown.id, operation);
