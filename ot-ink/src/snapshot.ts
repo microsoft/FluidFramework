@@ -27,20 +27,26 @@ export class Snapshot implements ISnapshot {
     }
 
     public apply(delta: IDelta) {
-        let actionType = operations.getActionType(delta.operation);
+        for (let operation of delta.operations) {
+            this.applyOperation(operation);
+        }
+    }
+
+    public applyOperation(operation: operations.IOperation) {
+        let actionType = operations.getActionType(operation);
 
         switch (actionType) {
             case actions.ActionType.Clear:
-                this.processClearAction(delta.operation);
+                this.processClearAction(operation);
                 break;
             case actions.ActionType.StylusUp:
-                this.processStylusUpAction(delta.operation);
+                this.processStylusUpAction(operation);
                 break;
             case actions.ActionType.StylusDown:
-                this.processStylusDownAction(delta.operation);
+                this.processStylusDownAction(operation);
                 break;
             case actions.ActionType.StylusMove:
-                this.processStylusMoveAction(delta.operation);
+                this.processStylusMoveAction(operation);
                 break;
             default:
                 throw "Unknown action type";
@@ -71,7 +77,14 @@ export class Snapshot implements ISnapshot {
         }
 
         // Create a reference to the specified layer
-        this.layerIndex[layer.id] = this.layers.length - 1 - operation.stylusDown.layer;
+        let layerIndex = this.layers.length - 1 - operation.stylusDown.layer;
+        this.layerIndex[layer.id] = layerIndex;
+
+        // And move any after it down by one
+        for (layerIndex = layerIndex + 1; layerIndex < this.layers.length; layerIndex++) {
+            let layerId = this.layers[layerIndex].id;
+            this.layerIndex[layerId] = this.layerIndex[layerId] + 1;
+        }
 
         // And save the stylus down
         this.addOperationToLayer(operation.stylusDown.id, operation);

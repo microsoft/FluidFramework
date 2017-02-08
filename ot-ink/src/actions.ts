@@ -38,6 +38,7 @@ export interface IStylusDownAction extends IStylusAction {
     pen: tools.IPen;
 
     // Where to insert the new ink layer. Where the highest z-ordered layer has index 0.
+    // This operation is reserved for merges.
     layer: number;
 }
 
