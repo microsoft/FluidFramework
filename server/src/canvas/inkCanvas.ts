@@ -369,13 +369,15 @@ export default class InkCanvas {
         let trapezoidP2: geometry.IPoint;
         let trapezoidP3: geometry.IPoint;
         let normalizedLateralVector: geometry.IVector;
-        let widthAtStart = pen.thickness / 2;
-        let widthAtEnd = pen.thickness / 2;
+
+        // Scale by a power curve to trend towards thicker values
+        let widthAtStart = pen.thickness * Math.pow(startPoint.pressure, 0.5) / 2;
+        let widthAtEnd = pen.thickness * Math.pow(endPoint.pressure, 0.5) / 2;
 
         // Just draws a circle on small values??
         if (len + Math.min(widthAtStart, widthAtEnd) <= Math.max(widthAtStart, widthAtEnd)) {
             let center = widthAtStart >= widthAtEnd ? startPoint : endPoint;
-            shapes.push(new Circle({ x: center.point.x, y: center.point.y }, pen.thickness / 2));
+            shapes.push(new Circle({ x: center.point.x, y: center.point.y }, widthAtEnd));
             return shapes;
         }
 
@@ -430,14 +432,14 @@ export default class InkCanvas {
             case SegmentCircleInclusive.None:
                 break;
             case SegmentCircleInclusive.Both:
-                shapes.push(new Circle({ x: startPoint.point.x, y: startPoint.point.y }, pen.thickness / 2));
-                shapes.push(new Circle({ x: endPoint.point.x, y: endPoint.point.y }, pen.thickness / 2));
+                shapes.push(new Circle({ x: startPoint.point.x, y: startPoint.point.y }, widthAtStart));
+                shapes.push(new Circle({ x: endPoint.point.x, y: endPoint.point.y }, widthAtEnd));
                 break;
             case SegmentCircleInclusive.Start:
-                shapes.push(new Circle({ x: startPoint.point.x, y: startPoint.point.y }, pen.thickness / 2));
+                shapes.push(new Circle({ x: startPoint.point.x, y: startPoint.point.y }, widthAtStart));
                 break;
             case SegmentCircleInclusive.End:
-                shapes.push(new Circle({ x: endPoint.point.x, y: endPoint.point.y }, pen.thickness / 2));
+                shapes.push(new Circle({ x: endPoint.point.x, y: endPoint.point.y }, widthAtEnd));
                 break;
             default:
                 break;
