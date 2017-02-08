@@ -8,13 +8,25 @@ export interface TextSegment {
     attributes?: Attributes;
 }
 
+export interface TextSegmentTree {
+    map<TAccum>(action: TextSegmentAction, accum?: TAccum);
+    mapRange<TAccum>(action: TextSegmentAction, accum?: TAccum, start?: number, end?: number);
+    ensureIntervalBoundary(pos:number);
+    setAttributes(start: number, end: number, attriburtes: Attributes);
+    insertInterval(pos: number, textSegment: TextSegment);
+    removeRange(start: number, end: number);
+    getContainingInterval(pos: number): TextSegment;
+    getText(start?: number, end?:  number): string;
+    diag();
+}
+
 export interface TextSegmentAction {
     <TAccum>(textSegment: TextSegment, pos: number, accum?: TAccum): boolean;
 }
 // this is specialized to text; can generalize to Interval<TContent>
 // represents a sequence of text segments; each text 
 // segment can have distinct attributes; 
-export function IntervalSpanningTree(initialText: string, attr: Attributes) {
+export function IntervalSpanningTree(seg: TextSegment): TextSegmentTree {
     interface Entry {
         text: TextSegment;
         ref?: Node;
@@ -33,14 +45,13 @@ export function IntervalSpanningTree(initialText: string, attr: Attributes) {
         return <Node>{ liveEntryCount: liveEntryCount, entries: <Entry[]>new Array(MaxEntries) };
     }
 
-    let root = initialNode(initialText, attr);
+    let root = initialNode(seg);
 
     // TODO: attributes
-    function initialNode(text: string, attr: Attributes) {
-        let seg = <TextSegment>{ content: text, attributes: attr };
+    function initialNode(seg: TextSegment) {
         let node = makeNode(1);
         node.entries[0] = <Entry>{ text: seg };
-        node.length = text.length;
+        node.length = seg.content.length;
         return node;
     }
 
@@ -48,9 +59,30 @@ export function IntervalSpanningTree(initialText: string, attr: Attributes) {
         return (node.liveEntryCount == 0) || (!node.entries[0].ref);
     }
 
+    // TODO: handle start and end positions
+    function gatherText(textSegment: TextSegment, pos: number, accumText: TextSegment) {
+        accumText.content += textSegment.content;
+        return true;
+    }
+
+    function getText(start?: number, end?: number) {
+        if (start === undefined) {
+            start = 0;
+        }
+        if (end === undefined) {
+            end = root.length;
+        }
+        let accum = { content: "" };
+        mapRange(gatherText,accum,start,end);
+        return accum.content;
+    }
+
     function getContainingInterval(pos: number) {
         if (pos !== undefined) {
-            return search(root, pos);
+            let entry = search(root, pos);
+            if (entry) {
+                return entry.text;
+            }
         }
         // TODO: error on undefined
     }
@@ -94,33 +126,30 @@ export function IntervalSpanningTree(initialText: string, attr: Attributes) {
         return obj;
     }
 
-    function setAttributes(pos: number, len: number, attributes: Attributes) {
-        ensureIntervalBoundary(pos);
-        ensureIntervalBoundary(pos + len);
+    function setAttributes(start: number, end: number, attributes: Attributes) {
+        ensureIntervalBoundary(start);
+        ensureIntervalBoundary(end);
         function intervalSetAttributes(textSegment: TextSegment) {
             extend(textSegment.attributes, attributes);
             return true;
         }
-        mapRange(intervalSetAttributes, undefined, pos, pos + len);
+        mapRange(intervalSetAttributes, undefined, start, end);
     }
 
-    function addSplitNodeToRoot(splitNode: Node) {
-        if (splitNode === undefined) {
-            return;
+    function updateRoot(splitNode: Node) {
+        if (splitNode !== undefined) {
+            let newRoot = makeNode(2);
+            newRoot.entries[0] = <Entry>{ text: root.entries[0].text, ref: root };
+            newRoot.entries[1] = <Entry>{ text: splitNode.entries[0].text, ref: splitNode };
+            root = newRoot;
         }
-        let newRoot = makeNode(2);
-        newRoot.entries[0] = <Entry>{ text: root.entries[0].text, ref: root };
-        newRoot.entries[1] = <Entry>{ text: splitNode.entries[0].text, ref: splitNode };
-        nodeUpdateLength(newRoot);
-        root = newRoot;
+        nodeUpdateLength(root);
     }
 
     function insertInterval(pos: number, textSegment: TextSegment) {
         ensureIntervalBoundary(pos);
         let splitNode = nodeInsertBefore(root, pos, textSegment);
-        if (splitNode) {
-            addSplitNodeToRoot(splitNode);
-        }
+        updateRoot(splitNode);
     }
 
     function nodeInsertBefore(node: Node, pos: number, textSegment: TextSegment) {
@@ -146,9 +175,7 @@ export function IntervalSpanningTree(initialText: string, attr: Attributes) {
 
     function ensureIntervalBoundary(pos: number) {
         let splitNode = insertingWalk(root, pos, splitLeafEntry);
-        if (splitNode) {
-            addSplitNodeToRoot(splitNode);
-        }
+        updateRoot(splitNode);
     }
 
     function insertingWalk(node: Node, pos: number, leafAction: (entry: Entry, pos: number) => Entry) {
@@ -217,8 +244,71 @@ export function IntervalSpanningTree(initialText: string, attr: Attributes) {
         return newNode;
     }
 
-    function removeInterval(pos: number) {
-        
+    function removeRange(start: number, end: number) {
+        nodeRemoveRange(root, start, end);
+    }
+
+    function nodeRemoveRange(node: Node, start: number, end: number) {
+        let entries = node.entries;
+        let startIndex: number;
+        if (start < 0) {
+            startIndex = -1;
+        }
+        let endIndex = node.liveEntryCount;
+        for (let entryIndex = 0; entryIndex < node.liveEntryCount; entryIndex++) {
+            let entry = entries[entryIndex];
+            let len = entryLength(entry);
+            if ((start >= 0) && (start < len)) {
+                startIndex = entryIndex;
+                if (entry.ref) {
+                    // internal node
+                    nodeRemoveRange(entry.ref, start, end);
+                }
+                else {
+                    let remnantString = "";
+                    if (start > 0) {
+                        remnantString += entry.text.content.substring(0, start);
+                    }
+                    if (end < len) {
+                        remnantString += entry.text.content.substring(end);
+                    }
+                    entry.text.content = remnantString;
+                    if (remnantString.length == 0) {
+                        startIndex--;
+                    }
+                }
+            }
+            if (end <= len) {
+                endIndex = entryIndex;
+                if (end > 0) {
+                    if (endIndex > startIndex) {
+                        if (entry.ref) {
+                            nodeRemoveRange(entry.ref, start, end);
+                        }
+                        else {
+                            entry.text.content = entry.text.content.substring(0, end);
+                            if (entry.text.content.length == 0) {
+                                endIndex++;
+                            }
+                        }
+                    }
+                }
+                break;
+            }
+            start -= len;
+            end -= len;
+        }
+        let deleteCount = (endIndex - startIndex) - 1;
+        if (deleteCount > 0) {
+            // delete nodes in middle of range
+            if (endIndex < node.liveEntryCount) {
+                for (let j = 1; j <= deleteCount; j++) {
+                    entries[startIndex + j] = entries[endIndex + j - 1];
+                }
+            }
+            node.liveEntryCount -= deleteCount;
+        }
+        nodeUpdateLength(node);
     }
 
     function nodeUpdateLength(node: Node) {
@@ -258,7 +348,7 @@ export function IntervalSpanningTree(initialText: string, attr: Attributes) {
                     go = nodeMap(entry.ref, action, pos, accum, start, end);
                 }
                 else {
-                    go = action(entry.text, pos);
+                    go = action(entry.text, pos, accum);
                 }
             }
             pos += len;
@@ -278,6 +368,8 @@ export function IntervalSpanningTree(initialText: string, attr: Attributes) {
         ensureIntervalBoundary: ensureIntervalBoundary,
         setAttributes: setAttributes,
         insertInterval: insertInterval,
+        removeRange: removeRange,
+        getText: getText,
         diag: diag
     }
 

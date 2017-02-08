@@ -35,19 +35,19 @@ function simpleTest() {
     ];
 
     let beast = RedBlack.RedBlackTree<string, string>(compareStrings);
-    let btree = BTree<string,string>(compareStrings);
+    let btree = BTree<string, string>(compareStrings);
     for (let i = 0; i < a.length; i += 2) {
         beast.put(a[i], a[i + 1]);
-        btree.put(a[i],a[i+1])
+        btree.put(a[i], a[i + 1])
     }
     beast.map(printStringProperty);
     btree.map(printStringProperty);
     console.log("Map B D");
-    btree.mapRange(printStringProperty,undefined,"B","D");
+    btree.mapRange(printStringProperty, undefined, "B", "D");
     console.log("Map Aardvark Dingo");
-    btree.mapRange(printStringProperty,undefined,"Aardvark","Dingo");
+    btree.mapRange(printStringProperty, undefined, "Aardvark", "Dingo");
     console.log("Map Baboon Chameleon");
-    btree.mapRange(printStringProperty,undefined,"Baboon","Chameleon");
+    btree.mapRange(printStringProperty, undefined, "Baboon", "Chameleon");
     printStringProperty(beast.get("Chameleon"));
     printStringProperty(btree.get("Chameleon"));
 }
@@ -57,8 +57,8 @@ function clock() {
 }
 
 function took(desc: string, start: number[]) {
-    let end:number[] = process.hrtime(start);
-    let duration =  Math.round((end[0]*1000) + (end[1]/1000000));
+    let end: number[] = process.hrtime(start);
+    let duration = Math.round((end[0] * 1000) + (end[1] / 1000000));
     console.log(`${desc} took ${duration} ms`);
     return duration;
 }
@@ -79,17 +79,17 @@ function integerTest1() {
     let pos = new Array<number>(intCount);
     let i = 0;
     let redo = false;
-    function onConflict(key: number, current: number, proposed:number) {
-        redo=true;
+    function onConflict(key: number, current: number, proposed: number) {
+        redo = true;
         return current;
     }
-    let conflictCount=0;
+    let conflictCount = 0;
     let start = clock();
     while (i < intCount) {
         pos[i] = randInt();
         beast.put(pos[i], i, onConflict);
         if (!redo) {
-            btree.put(pos[i],i);
+            btree.put(pos[i], i);
             i++;
         }
         else {
@@ -120,8 +120,8 @@ function integerTest1() {
         }
         */
     }
-    let getdur=took("get all keys", start);
-    console.log(`cost per get is ${(1000.0*getdur/intCount).toFixed(3)} us`);
+    let getdur = took("get all keys", start);
+    console.log(`cost per get is ${(1000.0 * getdur / intCount).toFixed(3)} us`);
     beast.diag();
     btree.diag();
     console.log(`duplicates ${conflictCount}, errors ${errorCount}`);
@@ -143,7 +143,7 @@ function fileTest1() {
             if (a[i].length > 0) {
                 beast.put(a[i], i);
                 linearBeast.put(a[i], i);
-                btree.put(a[i],i);
+                btree.put(a[i], i);
             }
         }
         if (k == 0) {
@@ -187,7 +187,7 @@ function fileTest1() {
 
 function printTextSegment(textSegment: ITree.TextSegment, pos: number) {
     console.log(textSegment.content);
-    console.log(`at [${pos}, ${pos+textSegment.content.length}) with attributes: `);
+    console.log(`at [${pos}, ${pos + textSegment.content.length}) with attributes: `);
     for (let key in textSegment.attributes) {
         if (textSegment.attributes.hasOwnProperty(key)) {
             console.log(`    ${key}: ${textSegment.attributes[key]}`);
@@ -196,21 +196,54 @@ function printTextSegment(textSegment: ITree.TextSegment, pos: number) {
     return true;
 }
 
-function makeTextSegment(text: string, attributes: any) : ITree.TextSegment {
-    return { content: text, attributes: attributes};
+function makeTextSegment(text: string, attributes: any): ITree.TextSegment {
+    return { content: text, attributes: attributes };
+}
+
+function editFlat(source: string, s: number, dl: number, nt = "") {
+    return source.substring(0, s) + nt + source.substring(s + dl, source.length);
+}
+
+function checkInsert(itree: ITree.TextSegmentTree, pos: number, textSegment: ITree.TextSegment) {
+    let checkText = itree.getText();
+    checkText = editFlat(checkText, pos, 0, textSegment.content);
+    itree.insertInterval(pos, textSegment);
+    let updatedText = itree.getText();
+    let result = ( checkText == updatedText);
+    if (!result) {
+        console.log(`mismatch: ${checkText} VS ${updatedText}`);
+    }
+    return result;
+}
+
+function checkRemove(itree: ITree.TextSegmentTree, start: number, end: number) {
+    let checkText = itree.getText();
+    checkText = editFlat(checkText, start, end - start);
+    itree.removeRange(start, end);
+    let updatedText = itree.getText();
+    let result = ( checkText == updatedText);
+    if (!result) {
+        console.log(`mismatch: ${checkText} VS ${updatedText}`);
+    }
+    return result;
 }
 
 function itreeTest1() {
     let attr = { font: "Helvetica" };
-    let itree = ITree.IntervalSpanningTree("the cat is on the mat", attr);
-    itree.setAttributes(4, 3, <ITree.Attributes>{ bold: true })
+    let itree = ITree.IntervalSpanningTree(makeTextSegment("the cat is on the mat", attr));
+    itree.setAttributes(4, 7, <ITree.Attributes>{ bold: true });
     itree.map(printTextSegment);
-    let fuzzySeg = makeTextSegment("fuzzy, fuzzy", { italic: true});
-    itree.insertInterval(4, fuzzySeg);
+
+    let fuzzySeg = makeTextSegment("fuzzy, fuzzy", { italic: true });
+    checkInsert(itree, 4, fuzzySeg);
+    fuzzySeg = makeTextSegment("fuzzy, fuzzy", { italic: true });
+    checkInsert(itree, 4, fuzzySeg);
+    checkRemove(itree, 4, 13);
+    checkInsert(itree, 4, makeTextSegment("fi", { font: "Roman" }));
     itree.map(printTextSegment);
 }
 
 //simpleTest();
 //fileTest1();
-integerTest1();
-//itreeTest1();
+//integerTest1();
+itreeTest1();
