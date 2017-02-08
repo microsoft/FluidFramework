@@ -5,7 +5,7 @@ import { IOperation } from "./operations";
 import * as tools from "./tools";
 
 export interface IDelta {
-    operation: IOperation;
+    operations: IOperation[];
 }
 
 /**
@@ -14,18 +14,25 @@ export interface IDelta {
  * the future
  */
 export class Delta implements IDelta {
-    constructor(public operation: IOperation = null) {
+    constructor(public operations: IOperation[] = []) {
+    }
+
+    /**
+     * Composes two ink delta streams together - which is as simple as appending their operation
+     * logs
+     */
+    public compose(delta: IDelta) {
+        this.operations = this.operations.concat(delta.operations);
+    }
+
+    public push(operation: IOperation) {
+        this.operations.push(operation);
     }
 
     public clear(time: number = new Date().getTime()): Delta {
-        this.throwIfExistingOperation();
-
         let clear: actions.IClearAction = { };
 
-        this.operation = {
-            clear,
-            time,
-        };
+        this.operations.push({ clear, time });
 
         return this;
     }
@@ -36,18 +43,13 @@ export class Delta implements IDelta {
         id: string = uuid.v4(),
         time: number = new Date().getTime()): Delta {
 
-        this.throwIfExistingOperation();
-
         let stylusUp: actions.IStylusUpAction = {
             id,
             point,
             pressure,
         };
 
-        this.operation = {
-            stylusUp,
-            time,
-        };
+        this.operations.push({ stylusUp, time });
 
         return this;
     }
@@ -60,8 +62,6 @@ export class Delta implements IDelta {
         id: string = uuid.v4(),
         time: number = new Date().getTime()): Delta {
 
-        this.throwIfExistingOperation();
-
         let stylusDown: actions.IStylusDownAction = {
             id,
             layer,
@@ -70,10 +70,7 @@ export class Delta implements IDelta {
             pressure,
         };
 
-        this.operation = {
-            stylusDown,
-            time,
-        };
+        this.operations.push({ stylusDown, time });
 
         return this;
     }
@@ -84,25 +81,13 @@ export class Delta implements IDelta {
         id: string = uuid.v4(),
         time: number = new Date().getTime()): Delta {
 
-        this.throwIfExistingOperation();
-
         let stylusMove: actions.IStylusMoveAction = {
             id,
             point,
             pressure,
         };
-
-        this.operation = {
-            stylusMove,
-            time,
-        };
+        this.operations.push({ stylusMove, time });
 
         return this;
-    }
-
-    private throwIfExistingOperation() {
-        if (this.operation) {
-            throw "Operation aleady set";
-        }
     }
 }

@@ -23,7 +23,7 @@ function renderLayer(snapshot: ink.Snapshot) {
         { x: 10, y: 20 },
         100,
         testPen);
-    let id = downDelta.operation.stylusDown.id;
+    let id = downDelta.operations[0].stylusDown.id;
     let moveDelta = new ink.Delta().stylusMove({ x: 20, y: 25 }, 200, id);
     let upDelta = new ink.Delta().stylusUp({ x: 20, y: 25 }, 200, id);
 
@@ -53,7 +53,7 @@ describe("Ink", () => {
                 { x: 10, y: 20 },
                 100,
                 testPen);
-            let id = delta.operation.stylusDown.id;
+            let id = delta.operations[0].stylusDown.id;
 
             snapshot.apply(delta);
 
@@ -62,7 +62,24 @@ describe("Ink", () => {
             assert.equal(layerIndex, 0);
             assert.equal(snapshot.layers[layerIndex].id, id);
             assert.equal(snapshot.layers[layerIndex].operations.length, 1);
-            assert.equal(snapshot.layers[layerIndex].operations[0], delta.operation);
+            assert.equal(snapshot.layers[layerIndex].operations[0], delta.operations[0]);
+        });
+
+        it("layout index mapped correctly", () => {
+            let snapshot = new ink.Snapshot();
+            let base = new ink.Delta().stylusDown({ x: 10, y: 20 }, 100, testPen);
+            let normalLayer = new ink.Delta().stylusDown({ x: 10, y: 20 }, 100, testPen);
+            let offsetLayer = new ink.Delta().stylusDown({ x: 10, y: 20 }, 100, testPen, 1);
+
+            // Verify the easy case of appending two layers
+            snapshot = ink.type.apply(snapshot, base);
+            snapshot = ink.type.apply(snapshot, normalLayer);
+            assert.equal(snapshot.layerIndex[normalLayer.operations[0].stylusDown.id], 1);
+
+            // The offset layer should be inserted in between pushing the normal layer down one
+            snapshot = ink.type.apply(snapshot, offsetLayer);
+            assert.equal(snapshot.layerIndex[normalLayer.operations[0].stylusDown.id], 2);
+            assert.equal(snapshot.layerIndex[offsetLayer.operations[0].stylusDown.id], 1);
         });
 
         it("can render multiple layers", () => {
@@ -109,27 +126,27 @@ describe("Ink", () => {
             let transformedRight = ink.type.transform(firstDown, secondDown, "right");
 
             // Should still result in a stylus down
-            assert(transformedLeft.operation.stylusDown);
-            assert(transformedRight.operation.stylusDown);
+            assert(transformedLeft.operations[0].stylusDown);
+            assert(transformedRight.operations[0].stylusDown);
 
             // But the layer should now be oe up
-            assert.equal(transformedLeft.operation.stylusDown.layer, 1);
-            assert.equal(transformedRight.operation.stylusDown.layer, 0);
+            assert.equal(transformedLeft.operations[0].stylusDown.layer, 1);
+            assert.equal(transformedRight.operations[0].stylusDown.layer, 0);
 
             // Apply the operations and validate layer creation
             let snapshotLeft = new ink.Snapshot();
             snapshotLeft.apply(secondDown);
             snapshotLeft.apply(transformedLeft);
             assert.equal(snapshotLeft.layers.length, 2);
-            assert.equal(snapshotLeft.layers[0].operations[0], transformedLeft.operation);
-            assert.equal(snapshotLeft.layers[1].operations[0], secondDown.operation);
+            assert.equal(snapshotLeft.layers[0].operations[0], transformedLeft.operations[0]);
+            assert.equal(snapshotLeft.layers[1].operations[0], secondDown.operations[0]);
 
             let snapshotRight = new ink.Snapshot();
             snapshotRight.apply(secondDown);
             snapshotRight.apply(transformedRight);
             assert.equal(snapshotRight.layers.length, 2);
-            assert.equal(snapshotRight.layers[1].operations[0], transformedRight.operation);
-            assert.equal(snapshotRight.layers[0].operations[0], secondDown.operation);
+            assert.equal(snapshotRight.layers[1].operations[0], transformedRight.operations[0]);
+            assert.equal(snapshotRight.layers[0].operations[0], secondDown.operations[0]);
         });
 
         it("can transform move/up", () => {
@@ -144,22 +161,35 @@ describe("Ink", () => {
             let transformedRight = ink.type.transform(first, second, "right");
 
             // Should still result in a stylus down
-            assert(transformedLeft.operation.stylusMove);
-            assert(transformedRight.operation.stylusMove);
+            assert(transformedLeft.operations[0].stylusMove);
+            assert(transformedRight.operations[0].stylusMove);
         });
 
         it("clears propagate", () => {
             let clear = new ink.Delta().clear();
-            let action = new ink.Delta().stylusUp(
-                { x: 10, y: 20 },
-                100);
+            let action = new ink.Delta()
+                .stylusDown({ x: 10, y: 20 }, 100, testPen)
+                .stylusUp({ x: 20, y: 20 }, 100);
 
             let transformedLeft = ink.type.transform(action, clear, "left");
             let transformedRight = ink.type.transform(clear, action, "right");
 
             // Should still result in a stylus down
-            assert(transformedLeft.operation.clear);
-            assert(transformedRight.operation.clear);
+            assert(transformedLeft.operations[0].stylusDown);
+            assert(transformedLeft.operations[1].stylusUp);
+            assert(transformedRight.operations[0].clear);
+            assert(transformedRight.operations[1].stylusDown);
+            assert(transformedRight.operations[2].stylusUp);
+        });
+    });
+
+    describe("compose", () => {
+        it("can compose two deltas", () => {
+            let first = new ink.Delta().clear().stylusDown({ x: 10, y: 10 }, 10, testPen);
+            let second = new ink.Delta().stylusMove({ x: 10, y: 20 }, 100).stylusUp({ x: 10, y: 30 }, 100);
+
+            let composed = ink.type.compose(first, second);
+            assert.equal(composed.operations.length, first.operations.length + second.operations.length);
         });
     });
 });
