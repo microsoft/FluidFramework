@@ -35,7 +35,7 @@ let server = http.createServer(app);
 
 // Start the collaboration server
 import * as collabServer from "./collab/server";
-collabServer.initialie(server);
+collabServer.initialize(server);
 
 /**
  * Listen on provided port, on all network interfaces.

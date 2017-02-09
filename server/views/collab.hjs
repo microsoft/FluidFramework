@@ -26,9 +26,9 @@
         <!-- Include the Quill library -->   
         <script src="https://cdn.quilljs.com/1.0.0/quill.js"></script>
         <script src="https://edera.cloudapp.net/javascripts/api/ivy.js"></script>     
-        <script src="/dist/collab/collab.js"></script> 
+        <script src="/dist/editor/editor.js"></script> 
         <script>
-          collab.connect("{{id}}", {{sync}});          
+          editor.connect("{{id}}", {{sync}});          
         </script>
     {{/scripts}}            
 {{/layout}}
