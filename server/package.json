@@ -51,6 +51,7 @@
     "nconf": "^0.8.4",
     "node-uuid": "^1.4.7",
     "ot-ink": "file:../ot-ink",
+    "ot-json0": "^1.0.1",
     "passport": "^0.3.2",
     "passport-facebook": "^2.1.1",
     "passport-google-oauth": "^1.0.0",
