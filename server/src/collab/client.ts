@@ -1,9 +1,11 @@
 import * as ink from "ot-ink";
+import * as json from "ot-json0";
 import * as richText from "rich-text";
 import * as sharedb from "sharedb/lib/client";
 
 // Register our OT types
 sharedb.types.register(ink.type);
+sharedb.types.register(json.type);
 sharedb.types.register(richText.type);
 
 let protocol = window.location.protocol.indexOf("https") !== -1 ? "wss" : "ws";
@@ -20,6 +22,7 @@ export function connect(): any {
 
 export let types = {
     ink,
+    json,
     richText,
 };
 

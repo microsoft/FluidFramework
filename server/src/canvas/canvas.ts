@@ -1,10 +1,13 @@
 // The main app code
+import { Promise } from "es6-promise";
 import * as $ from "jquery";
+import * as uuid from "node-uuid";
 import * as otInk from "ot-ink";
 import * as sharedb from "sharedb/lib/client";
 import * as collabDocument from "../editor/document";
 import BackBoard from "./backBoard";
 import InkCanvas from "./inkCanvas";
+import { Canvas as CanvasModel } from "./models/canvas";
 import StickyNote from "./stickyNote";
 import * as utils from "./utils";
 
@@ -17,28 +20,38 @@ sharedb.types.register(otInk.type);
  * Canvas app
  */
 export default class Canvas {
+    public static Create(modelP: Promise<CanvasModel>): Promise<Canvas> {
+        return modelP.then((model) => {
+            return new Canvas(model);
+        });
+    }
+
     public ink: InkCanvas;
 
     public handleKeys: boolean = true;
     public stickyCount: number = 0;
 
-    constructor(private connection: any, private id: any, doc: any) {
+    constructor(private model: CanvasModel) {
         // register all of the different handlers
         let p = document.getElementById("hitPlane");
-        this.ink = new InkCanvas(p, doc);
 
-        window.addEventListener("keydown", (evt) => this.keyPress(evt), false);
-        window.addEventListener("keyup", (evt) => this.keyRelease(evt), false);
+        let inkP = model.getInkLayer();
+        inkP.then((ink) => {
+            this.ink = new InkCanvas(p, ink);
 
-        // toolbar buttons
-        document.querySelector("#strokeColors").addEventListener("click", (e) => { this.ink.inkColor(); }, false);
-        document.querySelector("#clearButton").addEventListener("click", (e) => { this.clear(); }, false);
-        document.querySelector("#undoButton").addEventListener("click", (e) => { this.ink.undo(); }, false);
-        document.querySelector("#redoButton").addEventListener("click", (e) => { this.ink.redo(); }, false);
-        document.querySelector("#testButton").addEventListener("click", (e) => { this.test(e); }, false);
-        document.querySelector("#turnOnInk").addEventListener("click", (e) => { this.test(e); }, false);
-        document.querySelector("#replay").addEventListener("click", (e) => { this.ink.replay(); }, false);
-        document.querySelector("#editor").addEventListener("click", (e) => { this.addDocument(); }, false);
+            window.addEventListener("keydown", (evt) => this.keyPress(evt), false);
+            window.addEventListener("keyup", (evt) => this.keyRelease(evt), false);
+
+            // toolbar buttons
+            document.querySelector("#strokeColors").addEventListener("click", (e) => { this.ink.inkColor(); }, false);
+            document.querySelector("#clearButton").addEventListener("click", (e) => { this.clear(); }, false);
+            document.querySelector("#undoButton").addEventListener("click", (e) => { this.ink.undo(); }, false);
+            document.querySelector("#redoButton").addEventListener("click", (e) => { this.ink.redo(); }, false);
+            document.querySelector("#testButton").addEventListener("click", (e) => { this.test(e); }, false);
+            document.querySelector("#turnOnInk").addEventListener("click", (e) => { this.test(e); }, false);
+            document.querySelector("#replay").addEventListener("click", (e) => { this.ink.replay(); }, false);
+            document.querySelector("#editor").addEventListener("click", (e) => { this.addDocument(); }, false);
+        });
     }
 
     //  Key Handlers:
@@ -144,6 +157,7 @@ export default class Canvas {
     }
 
     public addDocument() {
+        // TODO add something to the canvas model to append a document
         let content = document.getElementById("content");
         let newDocument = document.createElement("div");
         newDocument.classList.add("collab-document");
@@ -152,6 +166,8 @@ export default class Canvas {
         newDocument.style.width = "400px";
         content.appendChild(newDocument);
 
-        collabDocument.create(newDocument, this.connection, `${this.id}-document`);
+        // TODO create the new remote object
+        // let newDocument = this.model.addObject();
+        // collabDocument.create(newDocument, this.connection, `${this.id}-document`);
     }
 }

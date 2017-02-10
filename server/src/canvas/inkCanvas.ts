@@ -1,5 +1,6 @@
 import * as ink from "ot-ink";
 import * as geometry from "./geometry/index";
+import { Ink } from "./models/ink";
 import { Circle, IShape, Polygon } from "./shapes/index";
 import * as utils from "./utils";
 
@@ -43,8 +44,9 @@ export default class InkCanvas {
     private lastLayerRenderOp: { [key: string]: number } = {};
 
     // constructor
-    constructor(parent: HTMLElement, private model: any) {
+    constructor(parent: HTMLElement, private model: Ink) {
         // Listen for updates from the server
+
         this.model.on("op", (op, source) => {
             // TODO possibly we can just have submitOp send it and use this queue
             // for processing
