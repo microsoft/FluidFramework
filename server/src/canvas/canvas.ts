@@ -2,6 +2,7 @@
 import * as $ from "jquery";
 import * as otInk from "ot-ink";
 import * as sharedb from "sharedb/lib/client";
+import * as collabDocument from "../editor/document";
 import BackBoard from "./backBoard";
 import InkCanvas from "./inkCanvas";
 import StickyNote from "./stickyNote";
@@ -21,7 +22,7 @@ export default class Canvas {
     public handleKeys: boolean = true;
     public stickyCount: number = 0;
 
-    constructor(doc: any) {
+    constructor(private connection: any, private id: any, doc: any) {
         // register all of the different handlers
         let p = document.getElementById("hitPlane");
         this.ink = new InkCanvas(p, doc);
@@ -37,6 +38,7 @@ export default class Canvas {
         document.querySelector("#testButton").addEventListener("click", (e) => { this.test(e); }, false);
         document.querySelector("#turnOnInk").addEventListener("click", (e) => { this.test(e); }, false);
         document.querySelector("#replay").addEventListener("click", (e) => { this.ink.replay(); }, false);
+        document.querySelector("#editor").addEventListener("click", (e) => { this.addDocument(); }, false);
     }
 
     //  Key Handlers:
@@ -139,5 +141,17 @@ export default class Canvas {
         if (e.target.id === "turnOnInk") {
             this.makeInkable();
         }
+    }
+
+    public addDocument() {
+        let content = document.getElementById("content");
+        let newDocument = document.createElement("div");
+        newDocument.classList.add("collab-document");
+        newDocument.style.top = "100px";
+        newDocument.style.left = "300px";
+        newDocument.style.width = "400px";
+        content.appendChild(newDocument);
+
+        collabDocument.create(newDocument, this.connection, `${this.id}-document`);
     }
 }

@@ -7,28 +7,18 @@
     {{/styles}}
 
     {{$content}}
-        <!-- Create the toolbar container -->
-        <div id="toolbar">
-          <button class="ql-bold">Bold</button>
-          <button class="ql-italic">Italic</button>
-          <button id="video-button" class="fa fa-play"></button>
-          <button id="chart-button" class="fa fa-area-chart"></button>
-        </div>
-
         <!-- Create the editor container -->
         <div id="editor">
-        </div>   
-        <div id="counter"></div>
-        <div id="console"></div>
+        </div>
     {{/content}}
     
     {{$scripts}}
         <!-- Include the Quill library -->   
         <script src="https://cdn.quilljs.com/1.0.0/quill.js"></script>
-        <script src="https://edera.cloudapp.net/javascripts/api/ivy.js"></script>     
+        <script src="https://charts.azureedge.net/release/0.1.163075.4/microsoft-charts.min.js"></script>     
         <script src="/dist/editor/editor.js"></script> 
         <script>
-          editor.connect("{{id}}", {{sync}});          
+          editor.connect("{{id}}");          
         </script>
     {{/scripts}}            
 {{/layout}}

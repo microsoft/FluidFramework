@@ -4,6 +4,10 @@
         <link rel="stylesheet" href="/stylesheets/default.css">
         <link rel="stylesheet" href="/stylesheets/toolbar.css">
         <link rel="stylesheet" href="/stylesheets/stickyNote.css">
+
+        <!-- Include Quill stylesheet -->
+        <link href="https://cdn.quilljs.com/1.0.0/quill.snow.css" rel="stylesheet">
+        <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
     {{/styles}}
 
     {{$content}}
@@ -34,10 +38,13 @@
             <button id="testButton">Reco</button>
             <button id="turnOnInk">ink</button>
             <button id="replay">Replay</button>
+            <button id="editor">Editor</button>
         </div>
     {{/content}}
     
     {{$scripts}}
+        <script src="https://cdn.quilljs.com/1.0.0/quill.js"></script>
+        <script src="https://charts.azureedge.net/release/0.1.163075.4/microsoft-charts.min.js"></script>     
         <script src="/dist/canvas/canvas.js"></script> 
         <script>
             canvas.initialize("{{id}}");
