@@ -1,6 +1,7 @@
 import * as $ from "jquery";
 import * as Quill from "quill";
 import * as sharedb from "sharedb/lib/client";
+import { RichText } from "../canvas/models/richText";
 import ChartBlot from "./blots/charts";
 import VideoBlot from "./blots/video";
 
@@ -10,22 +11,8 @@ Quill.register(BlockEmbed);
 Quill.register(VideoBlot);
 Quill.register(ChartBlot);
 
-export function create(
-    element: HTMLElement,
-    connection,
-    id: string) {
-
-    let doc = connection.get("documents", id);
-    doc.subscribe((err) => {
-        if (err) {
-            throw err;
-        }
-
-        // If there is no type we need to create the document
-        if (!doc.type) {
-            doc.create([], "rich-text");
-        }
-
+export class Document {
+    constructor(element: HTMLElement, model: RichText) {
         // Construct the UI for the element
         let toolbar = document.createElement("div");
         toolbar.innerHTML =
@@ -48,16 +35,16 @@ export function create(
         });
 
         // Set the contents and populate events
-        quill.setContents(doc.data);
+        quill.setContents(model.data);
         quill.on("text-change", (delta, oldDelta, source) => {
             if (source !== "user") {
                 return;
             }
 
-            doc.submitOp(delta, { source: quill });
+            model.submitOp(delta, { source: quill });
         });
 
-        doc.on("op", (op, source) => {
+        model.on("op", (op, source) => {
             if (source === quill) {
                 return;
             }
@@ -141,5 +128,5 @@ export function create(
             // quill.formatText(range.index + 1, 1, { height: "170", width: "400" });
             quill.setSelection(range.index + 2, Quill.sources.SILENT);
         });
-    });
+    }
 }

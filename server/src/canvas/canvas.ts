@@ -4,10 +4,11 @@ import * as $ from "jquery";
 import * as uuid from "node-uuid";
 import * as otInk from "ot-ink";
 import * as sharedb from "sharedb/lib/client";
-import * as collabDocument from "../editor/document";
+import { Document } from "../editor/document";
 import BackBoard from "./backBoard";
 import InkCanvas from "./inkCanvas";
-import { Canvas as CanvasModel } from "./models/canvas";
+import { Canvas as CanvasModel, IObject } from "./models/canvas";
+import { RichText } from "./models/richText";
 import StickyNote from "./stickyNote";
 import * as utils from "./utils";
 
@@ -20,9 +21,9 @@ sharedb.types.register(otInk.type);
  * Canvas app
  */
 export default class Canvas {
-    public static Create(modelP: Promise<CanvasModel>): Promise<Canvas> {
+    public static Create(connection: any, modelP: Promise<CanvasModel>): Promise<Canvas> {
         return modelP.then((model) => {
-            return new Canvas(model);
+            return new Canvas(connection, model);
         });
     }
 
@@ -31,9 +32,15 @@ export default class Canvas {
     public handleKeys: boolean = true;
     public stickyCount: number = 0;
 
-    constructor(private model: CanvasModel) {
+    constructor(private connection, private model: CanvasModel) {
         // register all of the different handlers
         let p = document.getElementById("hitPlane");
+
+        // Pull in all the objects on the canvas
+        for (let object of model.data.objects) {
+            // Load in the referenced document and render
+            this.addDocument(object);
+        }
 
         let inkP = model.getInkLayer();
         inkP.then((ink) => {
@@ -156,18 +163,47 @@ export default class Canvas {
         }
     }
 
-    public addDocument() {
-        // TODO add something to the canvas model to append a document
-        let content = document.getElementById("content");
-        let newDocument = document.createElement("div");
-        newDocument.classList.add("collab-document");
-        newDocument.style.top = "100px";
-        newDocument.style.left = "300px";
-        newDocument.style.width = "400px";
-        content.appendChild(newDocument);
+    public addDocument(object: IObject = null) {
+        let create = !object;
+        if (create) {
+            object = {
+                id: uuid.v4(),
+                location: {
+                    x: 300 + this.model.data.objects.length * 400,
+                    y: 100,
+                },
+                type: "document",
+                width: 400,
+            };
+        }
 
-        // TODO create the new remote object
-        // let newDocument = this.model.addObject();
-        // collabDocument.create(newDocument, this.connection, `${this.id}-document`);
+        let richTextP = RichText.GetOrCreate(this.connection, object.id);
+        richTextP.then((richText) => {
+            // TODO/NOTES - We want some kind of loading animation here. But trying to avoid
+            // a race condition with creating the new document and broadcasting it exists to others.
+            // There's a chance we could update the JSON OT type Canvas uses before we actually create
+            // the Rich Text OT type.
+            // Going conservative for now and waiting for it to be created before updating the canvas.
+            // Will want to understand what the UX should do as well.
+
+            // Generate the stub for where to place the document
+            let content = document.getElementById("content");
+            let newDocument = document.createElement("div");
+            newDocument.classList.add("collab-document");
+            newDocument.style.top = `${object.location.y}px`;
+            newDocument.style.left = `${object.location.x}px`;
+            newDocument.style.width = `${object.width}px`;
+            content.appendChild(newDocument);
+
+            // TODO create the new remote object
+            if (create) {
+                let newObject = object;
+                this.model.submitOp(
+                    {p: ["objects", this.model.data.objects.length + 1], li: newObject },
+                    { source: this });
+            }
+
+            let collabDocument = new Document(newDocument, richText);
+        });
     }
 }

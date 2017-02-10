@@ -18,7 +18,7 @@ export function initialize(id: string) {
     let canvasP = CanvasModel.LoadOrCreate(connection, id);
 
     $("document").ready(() => {
-        Canvas.Create(canvasP);
+        Canvas.Create(connection, canvasP);
         // let mainBoard = new BackBoard(canvas, "hitPlane");
     });
 }

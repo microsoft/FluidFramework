@@ -4,16 +4,33 @@ import * as uuid from "node-uuid";
 import * as collabClient from "../../collab/client";
 import { Ink } from "./ink";
 
+export interface IObject {
+    id: string;
+
+    type: string;
+
+    location: {
+        x: number;
+        y: number;
+    };
+
+    width: number;
+}
+
 export interface ICanvas {
     ink: {
         id: string;
     };
 
-    objects: any[];
+    objects: IObject[];
 }
 
 export interface IShareDBModel<T> {
     data: T;
+
+    on: Function;
+
+    submitOp: Function;
 }
 
 export class Canvas {
@@ -50,6 +67,10 @@ export class Canvas {
 
     private inkLayerP: Promise<Ink>;
 
+    public get data(): ICanvas {
+        return this.model.data;
+    }
+
     private constructor(private connection: any, private model: IShareDBModel<ICanvas>) {
         // Listen for updates and then fetch the promises for the given types
         this.inkLayerP = Ink.GetOrCreate(connection, model.data.ink.id);
@@ -59,9 +80,11 @@ export class Canvas {
         return this.inkLayerP;
     }
 
-    /**
-     * Adds a new object to the list of canvas objects
-     */
-    public addObject(): any {
+    public on(operation: string, callback: Function) {
+        this.model.on(operation, callback);
+    }
+
+    public submitOp(delta, params) {
+        this.model.submitOp(delta, params);
     }
 }
