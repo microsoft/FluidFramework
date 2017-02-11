@@ -1,6 +1,7 @@
 // The main app code
 import { Promise } from "es6-promise";
 import * as $ from "jquery";
+import * as _ from "lodash";
 import * as uuid from "node-uuid";
 import * as otInk from "ot-ink";
 import * as sharedb from "sharedb/lib/client";
@@ -170,6 +171,45 @@ export default class Canvas {
         }
     }
 
+    private handleChromeEvents(chrome: HTMLElement, object: IObject) {
+        let pointerDown = false;
+        let lastPoint: { x: number, y: number };
+
+        chrome.addEventListener("pointerdown", (evt) => {
+            pointerDown = true;
+            lastPoint = { x: evt.clientX, y: evt.clientY };
+            evt.returnValue = false;
+            chrome.setPointerCapture(evt.pointerId);
+        }, false);
+
+        chrome.addEventListener("pointermove", (evt) => {
+            if (pointerDown) {
+                let deltaX = evt.clientX - lastPoint.x;
+                let deltaY = evt.clientY - lastPoint.y;
+
+                object.location.x += deltaX;
+                object.location.y += deltaY;
+
+                chrome.style.top = `${object.location.y}px`;
+                chrome.style.left = `${object.location.x}px`;
+
+                lastPoint = { x: evt.clientX, y: evt.clientY };
+                evt.returnValue = false;
+
+                // Update the object properties
+                let location = _.indexOf(this.model.data.objects, object);
+                this.model.submitOp(
+                    {p: ["objects", location, "location"], oi: object.location },
+                    { source: this });
+            }
+        }, false);
+
+        chrome.addEventListener("pointerup", (evt) => {
+            pointerDown = false;
+            chrome.releasePointerCapture(evt.pointerId);
+        }, false);
+    }
+
     private addDocument(object: IObject = null) {
         let create = !object;
         if (create) {
@@ -198,12 +238,27 @@ export default class Canvas {
 
             // Generate the stub for where to place the document
             let content = document.getElementById("content");
+            let chrome = document.createElement("div");
+            chrome.classList.add("canvas-chrome");
+            chrome.style.top = `${object.location.y}px`;
+            chrome.style.left = `${object.location.x}px`;
+            chrome.style.width = `${object.width + 10}px`;
+            this.handleChromeEvents(chrome, object);
+
             let newDocument = document.createElement("div");
             newDocument.classList.add("collab-document");
-            newDocument.style.top = `${object.location.y}px`;
-            newDocument.style.left = `${object.location.x}px`;
-            newDocument.style.width = `${object.width}px`;
-            content.appendChild(newDocument);
+
+            chrome.appendChild(newDocument);
+            content.appendChild(chrome);
+
+            // TODO need a better way to reference these
+            this.canvasObjects[object.id] = chrome;
+
+            // Don't let events inside the content bubble up to the chrome
+            newDocument.addEventListener("pointerdown", (evt) => {
+                evt.stopPropagation();
+                return false;
+            }, false);
 
             // TODO create the new remote object
             if (create) {
@@ -220,9 +275,13 @@ export default class Canvas {
     private refreshCanvasObjects() {
         // Pull in all the objects on the canvas
         for (let object of this.model.data.objects) {
-            if (!this.canvasObjects[object.id]) {
+            let canvasObject = this.canvasObjects[object.id];
+            if (canvasObject === undefined) {
                 // Load in the referenced document and render
                 this.addDocument(object);
+            } else if (canvasObject !== true) {
+                canvasObject.style.top = `${object.location.y}px`;
+                canvasObject.style.left = `${object.location.x}px`;
             }
         }
     }
