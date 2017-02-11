@@ -28,19 +28,26 @@ export default class Canvas {
     }
 
     public ink: InkCanvas;
-
     public handleKeys: boolean = true;
     public stickyCount: number = 0;
+
+    // Map indicating whether or not we have processed a given object
+    private canvasObjects: {[key: string]: any } = {};
 
     constructor(private connection, private model: CanvasModel) {
         // register all of the different handlers
         let p = document.getElementById("hitPlane");
 
-        // Pull in all the objects on the canvas
-        for (let object of model.data.objects) {
-            // Load in the referenced document and render
-            this.addDocument(object);
-        }
+        this.refreshCanvasObjects();
+
+        model.on("op", (op, source) => {
+            if (source === this) {
+                return;
+            }
+
+            // Update the canvas
+            this.refreshCanvasObjects();
+        });
 
         let inkP = model.getInkLayer();
         inkP.then((ink) => {
@@ -163,7 +170,7 @@ export default class Canvas {
         }
     }
 
-    public addDocument(object: IObject = null) {
+    private addDocument(object: IObject = null) {
         let create = !object;
         if (create) {
             object = {
@@ -176,6 +183,9 @@ export default class Canvas {
                 width: 400,
             };
         }
+
+        // Mark that we've processed this object
+        this.canvasObjects[object.id] = true;
 
         let richTextP = RichText.GetOrCreate(this.connection, object.id);
         richTextP.then((richText) => {
@@ -205,5 +215,15 @@ export default class Canvas {
 
             let collabDocument = new Document(newDocument, richText);
         });
+    }
+
+    private refreshCanvasObjects() {
+        // Pull in all the objects on the canvas
+        for (let object of this.model.data.objects) {
+            if (!this.canvasObjects[object.id]) {
+                // Load in the referenced document and render
+                this.addDocument(object);
+            }
+        }
     }
 }
