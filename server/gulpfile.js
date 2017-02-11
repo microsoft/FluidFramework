@@ -2,6 +2,7 @@ var gulp = require("gulp");
 var browserify = require("browserify");
 var source = require("vinyl-source-stream");
 var tsify = require("tsify");
+var less = require("gulp-less");
 var plumber = require('gulp-plumber');
 var ts = require("gulp-typescript");
 var tsProject = ts.createProject("tsconfig.json", { typescript: require('typescript') });
@@ -15,6 +16,13 @@ gulp.task("clean", function() {
     return gulp.src(['dist', 'public/dist'], { read: false })        
         .pipe(clean());
 })
+
+// Compile from less to css files
+gulp.task("less", function () {
+  return gulp.src('public/stylesheets/**/*.less')
+    .pipe(less())
+    .pipe(gulp.dest('./public/stylesheets/'));
+});
 
 // Builds the server side JavaScript
 gulp.task("build", function () {
@@ -75,4 +83,4 @@ for (let controller of controllers) {
 
 let browserifyTasks = controllers.map(function(controller) { return controller.name });
 
-gulp.task("default", ["tslint", "build"].concat(browserifyTasks));
+gulp.task("default", ["less", "tslint", "build"].concat(browserifyTasks));

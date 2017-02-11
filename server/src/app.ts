@@ -3,7 +3,6 @@ import * as connectRedis from "connect-redis";
 import * as cookieParser from "cookie-parser";
 import * as express from "express";
 import * as expressSession from "express-session";
-import * as lessMiddleware from "less-middleware";
 import * as moment from "moment";
 import * as logger from "morgan";
 import * as nconf from "nconf";
@@ -292,7 +291,6 @@ app.use(expressSession({
     secret: "bAq0XuQWqoAZzaAkQT5EXPCHBkeIEZqi",
     store: sessionStore,
 }));
-app.use(lessMiddleware(path.join(__dirname, "../public")));
 app.use(express.static(path.join(__dirname, "../public")));
 app.use("/node_modules", express.static(path.join(__dirname, "../node_modules")));
 // The below is to check to make sure the session is available (redis could have gone down for instance) and if
