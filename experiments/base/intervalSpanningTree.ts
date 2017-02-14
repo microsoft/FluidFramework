@@ -3,65 +3,123 @@
 export interface Attributes extends Object {
 }
 
-export interface TextSegment {
-    content: string;
-    attributes?: Attributes;
-}
-
 export interface TextSegmentTree {
     map<TAccum>(action: TextSegmentAction, accum?: TAccum);
     mapRange<TAccum>(action: TextSegmentAction, accum?: TAccum, start?: number, end?: number);
-    ensureIntervalBoundary(pos:number);
+    ensureIntervalBoundary(pos: number);
     setAttributes(start: number, end: number, attriburtes: Attributes);
     insertInterval(pos: number, textSegment: TextSegment);
     removeRange(start: number, end: number);
-    getContainingInterval(pos: number): TextSegment;
-    getText(start?: number, end?:  number): string;
+    getContainingSegment(pos: number): TextSegment;
+    createMarker(pos: number): TextMarker;
+    getOffset(entry: TextSegment): number;
+    getText(start?: number, end?: number): string;
+    getLength(): number;
     diag();
 }
 
+// internal (represents multiple leaf segments) if child is defined
+export interface TextSegment {
+    parent?: TextSegmentBlock;
+    child?: TextSegmentBlock;
+    text?: string;
+    attributes?: Attributes;
+    markers?: TextMarker[];
+}
+// list of text segments
+export interface TextSegmentBlock {
+    liveSegmentCount: number;
+    length: number;
+    segments: TextSegment[];
+    parent?: TextSegmentBlock;
+}
+
+export interface TextMarker {
+    segment: TextSegment;
+    offset: number;
+}
+
+function makeInternalSegment(parent: TextSegmentBlock, child: TextSegmentBlock) {
+    child.parent = parent;
+    return <TextSegment>{ parent: parent, child: child };
+}
+
+function makeLeafSegment(parent: TextSegmentBlock, text: string, attributes?: Attributes) {
+    return <TextSegment>{ parent: parent, text: text, attributes: attributes };
+}
+
+function copyLeafSegment(textSegment: TextSegment) {
+    function migrateMarkers(segment: TextSegment, markers?: TextMarker[]) {
+        if (markers) {
+            return markers;
+        }
+    }
+    let newSegment = <TextSegment>{
+        parent: textSegment.parent,
+        text: textSegment.text,
+        attributes: textSegment.attributes,
+        markers: textSegment.markers
+    };
+    if (newSegment.markers) {
+        for (let i = 0, len = newSegment.markers.length; i < len; i++) {
+            newSegment.markers[i].segment = newSegment;
+        }
+    }
+    return newSegment;
+}
+
 export interface TextSegmentAction {
-    <TAccum>(textSegment: TextSegment, pos: number, accum?: TAccum): boolean;
+    <TAccum>(textSegment: TextSegment, pos: number, start: number, end: number, accum?: TAccum): boolean;
 }
 // this is specialized to text; can generalize to Interval<TContent>
 // represents a sequence of text segments; each text 
 // segment can have distinct attributes; 
-export function IntervalSpanningTree(seg: TextSegment): TextSegmentTree {
-    interface Entry {
-        text: TextSegment;
-        ref?: Node;
-    }
-
-    interface Node {
-        liveEntryCount: number;
-        length: number;
-        entries: Entry[];
-    }
-
+export function IntervalSpanningTree(text: string, attributes: Attributes): TextSegmentTree {
     // should be a power of 2
-    const MaxEntries = 4;
-    function makeNode(liveEntryCount: number) {
+    const MaxSegments = 4;
+    function makeNode(liveSegmentCount: number) {
         // assert childCount <= MaxEntries
-        return <Node>{ liveEntryCount: liveEntryCount, entries: <Entry[]>new Array(MaxEntries) };
+        return <TextSegmentBlock>{ liveSegmentCount: liveSegmentCount, segments: <TextSegment[]>new Array(MaxSegments) };
     }
 
-    let root = initialNode(seg);
+    let root = initialNode(text, attributes);
+
+    function getLength() {
+        return root.length;
+    }
+
+    function getOffset(leafSegment: TextSegment) {
+        if (leafSegment.text) {
+            let totalOffset = 0;
+            let parent = leafSegment.parent;
+            let prevParent: TextSegmentBlock;
+            while (parent) {
+                let segments = parent.segments;
+                for (let segmentIndex = 0; segmentIndex < parent.liveSegmentCount; segmentIndex++) {
+                    let segment = segments[segmentIndex];
+                    if ((prevParent && (segment.child == prevParent)) || (segment == leafSegment)) {
+                        break;
+                    }
+                    totalOffset += segmentLength(segment);
+                }
+                prevParent = parent;
+                parent = parent.parent;
+            }
+            return totalOffset;
+        }
+    }
 
     // TODO: attributes
-    function initialNode(seg: TextSegment) {
+    function initialNode(text: string, attributes: Attributes) {
         let node = makeNode(1);
-        node.entries[0] = <Entry>{ text: seg };
-        node.length = seg.content.length;
+        node.segments[0] = makeLeafSegment(node, text, attributes);
+        node.length = text.length;
         return node;
     }
 
-    function isLeafNode(node: Node): boolean {
-        return (node.liveEntryCount == 0) || (!node.entries[0].ref);
-    }
-
     // TODO: handle start and end positions
-    function gatherText(textSegment: TextSegment, pos: number, accumText: TextSegment) {
-        accumText.content += textSegment.content;
+    function gatherText(textSegment: TextSegment, pos: number, start: number, end: number, accumText: TextSegment) {
+        accumText.text += textSegment.text;
         return true;
     }
 
@@ -72,47 +130,60 @@ export function IntervalSpanningTree(seg: TextSegment): TextSegmentTree {
         if (end === undefined) {
             end = root.length;
         }
-        let accum = { content: "" };
-        mapRange(gatherText,accum,start,end);
-        return accum.content;
+        let accum = <TextSegment>{ text: "" };
+        mapRange(gatherText, accum, start, end);
+        return accum.text;
     }
 
-    function getContainingInterval(pos: number) {
+    function getContainingSegment(pos: number) {
         if (pos !== undefined) {
-            let entry = search(root, pos);
-            if (entry) {
-                return entry.text;
-            }
+            return search(root, pos);
         }
         // TODO: error on undefined
     }
 
-    function entryLength(entry: Entry) {
-        if (entry.ref) {
-            return entry.ref.length;
+    // TODO: change to assign to passed in marker
+    function createMarker(pos: number) {
+        let marker = <TextMarker>{ segment: undefined, offset: undefined };
+        function updateMarker(segment: TextSegment, pos: number, start: number) {
+            marker.offset = start;
+            marker.segment = segment;
+            return true;
+        }
+        search(root, pos, updateMarker, marker);
+        return marker;
+    }
+
+    function segmentLength(segment: TextSegment) {
+        if (segment.child) {
+            return segment.child.length;
         }
         else {
-            return entry.text.content.length;
+            return segment.text.length;
         }
     }
 
-    function search(node: Node, pos: number): Entry {
-        let entries = node.entries;
-        for (let entryIndex = 0; entryIndex < node.liveEntryCount; entryIndex++) {
-            let entry = entries[entryIndex];
-            let len = entryLength(entry);
-            if (pos < len) {
+    function search<TAccum>(node: TextSegmentBlock, pos: number, action?: TextSegmentAction, accum?: TAccum): TextSegment {
+        let segments = node.segments;
+        let start = pos;
+        for (let segmentIndex = 0; segmentIndex < node.liveSegmentCount; segmentIndex++) {
+            let segment = segments[segmentIndex];
+            let len = segmentLength(segment);
+            if (start < len) {
                 // found entry containing pos
-                if (entry.ref) {
+                if (segment.child) {
                     // internal node
-                    return search(entry.ref, pos);
+                    return search(segment.child, pos, action);
                 }
                 else {
-                    return entry;
+                    if (action) {
+                        action(segment, pos, start, -1, accum);
+                    }
+                    return segment;
                 }
             }
             else {
-                pos -= len;
+                start -= len;
             }
         }
     }
@@ -136,11 +207,11 @@ export function IntervalSpanningTree(seg: TextSegment): TextSegmentTree {
         mapRange(intervalSetAttributes, undefined, start, end);
     }
 
-    function updateRoot(splitNode: Node) {
+    function updateRoot(splitNode: TextSegmentBlock) {
         if (splitNode !== undefined) {
             let newRoot = makeNode(2);
-            newRoot.entries[0] = <Entry>{ text: root.entries[0].text, ref: root };
-            newRoot.entries[1] = <Entry>{ text: splitNode.entries[0].text, ref: splitNode };
+            newRoot.segments[0] = makeInternalSegment(newRoot, root);
+            newRoot.segments[1] = makeInternalSegment(newRoot, splitNode);
             root = newRoot;
         }
         nodeUpdateLength(root);
@@ -152,58 +223,64 @@ export function IntervalSpanningTree(seg: TextSegment): TextSegmentTree {
         updateRoot(splitNode);
     }
 
-    function nodeInsertBefore(node: Node, pos: number, textSegment: TextSegment) {
-        return insertingWalk(node, pos, (entry: Entry, pos: number) => {
-            let newEntry = <Entry>{ text: entry.text };
-            entry.text = textSegment;
-            return newEntry;
+    function nodeInsertBefore(node: TextSegmentBlock, pos: number, textSegment: TextSegment) {
+        return insertingWalk(node, pos, (segment: TextSegment, pos: number) => {
+            if (!segment) {
+                return <TextSegment>{
+                    parent: node,
+                    text: textSegment.text,
+                    attributes: textSegment.attributes
+                };
+            }
+            else {
+                let newSegment = copyLeafSegment(segment);
+                segment.text = textSegment.text;
+                segment.attributes = textSegment.attributes;
+                return newSegment;
+            }
         });
     }
 
-    function splitLeafEntry(entry: Entry, pos: number) {
+    function splitLeafSegment(segment: TextSegment, pos: number) {
         if (pos > 0) {
-            let remainingText = entry.text.content.substring(pos);
-            entry.text.content = entry.text.content.substring(0, pos);
-            return <Entry>{
-                text: {
-                    content: remainingText,
-                    attributes: extend({}, entry.text.attributes)
-                }
-            };
+            let remainingText = segment.text.substring(pos);
+            segment.text = segment.text.substring(0, pos);
+            return makeLeafSegment(segment.parent, remainingText, extend({}, segment.attributes));
         }
     }
 
     function ensureIntervalBoundary(pos: number) {
-        let splitNode = insertingWalk(root, pos, splitLeafEntry);
+        let splitNode = insertingWalk(root, pos, splitLeafSegment);
         updateRoot(splitNode);
     }
 
-    function insertingWalk(node: Node, pos: number, leafAction: (entry: Entry, pos: number) => Entry) {
-        let entries = node.entries;
-        let entryIndex: number;
-        let entry: Entry;
-        let newEntry: Entry;
-        for (entryIndex = 0; entryIndex < node.liveEntryCount; entryIndex++) {
-            entry = entries[entryIndex];
-            let len = entryLength(entry);
+    function insertingWalk(node: TextSegmentBlock, pos: number, leafAction: (segment: TextSegment, pos: number) => TextSegment) {
+        let segments = node.segments;
+        let segmentIndex: number;
+        let segment: TextSegment;
+        let newSegment: TextSegment;
+        for (segmentIndex = 0; segmentIndex < node.liveSegmentCount; segmentIndex++) {
+            segment = segments[segmentIndex];
+            let len = segmentLength(segment);
             if (pos < len) {
                 // found entry containing pos
-                if (entry.ref) {
+                if (segment.child) {
                     //internal node
-                    let splitNode = insertingWalk(entry.ref, pos, leafAction);
+                    let splitNode = insertingWalk(segment.child, pos, leafAction);
                     if (splitNode === undefined) {
+                        nodeUpdateLength(node);
                         return undefined;
                     }
-                    newEntry = <Entry>{ ref: splitNode, text: undefined };
-                    entryIndex++; // insert after
+                    newSegment = makeInternalSegment(node, splitNode);
+                    segmentIndex++; // insert after
                 }
                 else {
-                    newEntry = leafAction(entry, pos);
-                    if (newEntry) {
-                        entryIndex++; // insert after
+                    newSegment = leafAction(segment, pos);
+                    if (newSegment) {
+                        segmentIndex++; // insert after
                     }
                     else {
-                        // already an interval at this position
+                        // no change
                         return undefined;
                     }
                 }
@@ -213,13 +290,19 @@ export function IntervalSpanningTree(seg: TextSegment): TextSegmentTree {
                 pos -= len;
             }
         }
-        if (newEntry) {
-            for (let i = node.liveEntryCount; i > entryIndex; i--) {
-                node.entries[i] = node.entries[i - 1];
+        if (!newSegment) {
+            if (pos == 0) {
+                newSegment = leafAction(undefined, pos);
             }
-            node.entries[entryIndex] = newEntry;
-            node.liveEntryCount++;
-            if (node.liveEntryCount < MaxEntries) {
+        }
+        if (newSegment) {
+            for (let i = node.liveSegmentCount; i > segmentIndex; i--) {
+                node.segments[i] = node.segments[i - 1];
+            }
+            node.segments[segmentIndex] = newSegment;
+            newSegment.parent = node;
+            node.liveSegmentCount++;
+            if (node.liveSegmentCount < MaxSegments) {
                 nodeUpdateLength(node);
                 return undefined;
             }
@@ -232,12 +315,13 @@ export function IntervalSpanningTree(seg: TextSegment): TextSegmentTree {
         }
     }
 
-    function split(node: Node) {
-        let halfCount = MaxEntries / 2;
+    function split(node: TextSegmentBlock) {
+        let halfCount = MaxSegments / 2;
         let newNode = makeNode(halfCount);
-        node.liveEntryCount = halfCount;
+        node.liveSegmentCount = halfCount;
         for (let i = 0; i < halfCount; i++) {
-            newNode.entries[i] = node.entries[(halfCount) + i];
+            newNode.segments[i] = node.segments[(halfCount) + i];
+            newNode.segments[i].parent = newNode;
         }
         nodeUpdateLength(node);
         nodeUpdateLength(newNode);
@@ -248,46 +332,46 @@ export function IntervalSpanningTree(seg: TextSegment): TextSegmentTree {
         nodeRemoveRange(root, start, end);
     }
 
-    function nodeRemoveRange(node: Node, start: number, end: number) {
-        let entries = node.entries;
+    function nodeRemoveRange(node: TextSegmentBlock, start: number, end: number) {
+        let segments = node.segments;
         let startIndex: number;
         if (start < 0) {
             startIndex = -1;
         }
-        let endIndex = node.liveEntryCount;
-        for (let entryIndex = 0; entryIndex < node.liveEntryCount; entryIndex++) {
-            let entry = entries[entryIndex];
-            let len = entryLength(entry);
+        let endIndex = node.liveSegmentCount;
+        for (let segmentIndex = 0; segmentIndex < node.liveSegmentCount; segmentIndex++) {
+            let segment = segments[segmentIndex];
+            let len = segmentLength(segment);
             if ((start >= 0) && (start < len)) {
-                startIndex = entryIndex;
-                if (entry.ref) {
+                startIndex = segmentIndex;
+                if (segment.child) {
                     // internal node
-                    nodeRemoveRange(entry.ref, start, end);
+                    nodeRemoveRange(segment.child, start, end);
                 }
                 else {
                     let remnantString = "";
                     if (start > 0) {
-                        remnantString += entry.text.content.substring(0, start);
+                        remnantString += segment.text.substring(0, start);
                     }
                     if (end < len) {
-                        remnantString += entry.text.content.substring(end);
+                        remnantString += segment.text.substring(end);
                     }
-                    entry.text.content = remnantString;
+                    segment.text = remnantString;
                     if (remnantString.length == 0) {
                         startIndex--;
                     }
                 }
             }
-            if (end <= len) {
-                endIndex = entryIndex;
+            if (end < len) {
+                endIndex = segmentIndex;
                 if (end > 0) {
                     if (endIndex > startIndex) {
-                        if (entry.ref) {
-                            nodeRemoveRange(entry.ref, start, end);
+                        if (segment.child) {
+                            nodeRemoveRange(segment.child, start, end);
                         }
                         else {
-                            entry.text.content = entry.text.content.substring(0, end);
-                            if (entry.text.content.length == 0) {
+                            segment.text = segment.text.substring(end);
+                            if (segment.text.length == 0) {
                                 endIndex++;
                             }
                         }
@@ -299,22 +383,23 @@ export function IntervalSpanningTree(seg: TextSegment): TextSegmentTree {
             end -= len;
         }
         let deleteCount = (endIndex - startIndex) - 1;
+        let deleteStart = startIndex + 1;
         if (deleteCount > 0) {
             // delete nodes in middle of range
-            if (endIndex < node.liveEntryCount) {
-                for (let j = 1; j <= deleteCount; j++) {
-                    entries[startIndex + j] = entries[endIndex + j - 1];
-                }
+            let copyStart = deleteStart + deleteCount;
+            let copyCount = node.liveSegmentCount - copyStart;
+            for (let j = 0; j < copyCount; j++) {
+                segments[deleteStart + j] = segments[copyStart + j];
             }
-            node.liveEntryCount -= deleteCount;
+            node.liveSegmentCount -= deleteCount;
         }
         nodeUpdateLength(node);
     }
 
-    function nodeUpdateLength(node: Node) {
+    function nodeUpdateLength(node: TextSegmentBlock) {
         let len = 0;
-        for (let i = 0; i < node.liveEntryCount; i++) {
-            len += entryLength(node.entries[i]);
+        for (let i = 0; i < node.liveSegmentCount; i++) {
+            len += segmentLength(node.segments[i]);
         }
         node.length = len;
     }
@@ -328,7 +413,41 @@ export function IntervalSpanningTree(seg: TextSegment): TextSegmentTree {
         nodeMap(root, action, 0, accum, start, end);
     }
 
-    function nodeMap<TAccum>(node: Node, action: TextSegmentAction, pos: number,
+    let indentStrings = ["", " ", "  "];
+    function indent(n: number) {
+        if (indentStrings[n] === undefined) {
+            indentStrings[n] = "";
+            for (let i = 0; i < n; i++) {
+                indentStrings[n] += " ";
+            }
+        }
+        return indentStrings[n];
+    }
+
+
+    function toString() {
+        let strbuf = "";
+        function nodeToString(node: TextSegmentBlock, indentCount = 0) {
+            strbuf += indent(indentCount);
+            strbuf += `Node (len ${node.length}) with ${node.liveSegmentCount} live segments:\n`;
+            let segments = node.segments;
+            for (let segmentIndex = 0; segmentIndex < node.liveSegmentCount; segmentIndex++) {
+                let segment = segments[segmentIndex];
+                if (segment.child) {
+                    nodeToString(segment.child, indentCount + 4);
+                }
+                else {
+                    strbuf += indent(indentCount + 4);
+                    strbuf += segment.text;
+                    strbuf += "\n";
+                }
+            }
+        }
+        nodeToString(root);
+        return strbuf;
+    }
+
+    function nodeMap<TAccum>(node: TextSegmentBlock, action: TextSegmentAction, pos: number,
         accum?: TAccum, start?: number, end?: number) {
         if (start === undefined) {
             start = 0;
@@ -337,18 +456,18 @@ export function IntervalSpanningTree(seg: TextSegment): TextSegmentTree {
             end = root.length;
         }
         let go = true;
-        let entries = node.entries;
-        for (let entryIndex = 0; entryIndex < node.liveEntryCount; entryIndex++) {
-            let entry = entries[entryIndex];
-            let len = entryLength(entry);
+        let segments = node.segments;
+        for (let segmentIndex = 0; segmentIndex < node.liveSegmentCount; segmentIndex++) {
+            let segment = segments[segmentIndex];
+            let len = segmentLength(segment);
             if (go && ((start < len)) && (end >= len)) {
                 // found entry containing pos
-                if (entry.ref) {
+                if (segment.child) {
                     // internal node
-                    go = nodeMap(entry.ref, action, pos, accum, start, end);
+                    go = nodeMap(segment.child, action, pos, accum, start, end);
                 }
                 else {
-                    go = action(entry.text, pos, accum);
+                    go = action(segment, pos, start, end, accum);
                 }
             }
             pos += len;
@@ -364,12 +483,16 @@ export function IntervalSpanningTree(seg: TextSegment): TextSegmentTree {
     return {
         map: map,
         mapRange: mapRange,
-        getContainingInterval: getContainingInterval,
+        getOffset: getOffset,
+        getContainingSegment: getContainingSegment,
         ensureIntervalBoundary: ensureIntervalBoundary,
         setAttributes: setAttributes,
         insertInterval: insertInterval,
         removeRange: removeRange,
         getText: getText,
+        getLength: getLength,
+        createMarker: createMarker,
+        toString: toString,
         diag: diag
     }
 

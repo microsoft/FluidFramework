@@ -58,8 +58,20 @@ function clock() {
 
 function took(desc: string, start: number[]) {
     let end: number[] = process.hrtime(start);
-    let duration = Math.round((end[0] * 1000) + (end[1] / 1000000));
+    let duration = elapsedMilliseconds(start);
     console.log(`${desc} took ${duration} ms`);
+    return duration;
+}
+
+function elapsedMilliseconds(start: number[]) {
+    let end: number[] = process.hrtime(start);
+    let duration = Math.round((end[0] * 1000) + (end[1] / 1000000));
+    return duration;
+}
+
+function elapsedMicroseconds(start: number[]) {
+    let end: number[] = process.hrtime(start);
+    let duration = Math.round((end[0] * 1000000) + (end[1] / 1000));
     return duration;
 }
 
@@ -186,8 +198,8 @@ function fileTest1() {
 }
 
 function printTextSegment(textSegment: ITree.TextSegment, pos: number) {
-    console.log(textSegment.content);
-    console.log(`at [${pos}, ${pos + textSegment.content.length}) with attributes: `);
+    console.log(textSegment.text);
+    console.log(`at [${pos}, ${pos + textSegment.text.length}) with attributes: `);
     for (let key in textSegment.attributes) {
         if (textSegment.attributes.hasOwnProperty(key)) {
             console.log(`    ${key}: ${textSegment.attributes[key]}`);
@@ -197,40 +209,50 @@ function printTextSegment(textSegment: ITree.TextSegment, pos: number) {
 }
 
 function makeTextSegment(text: string, attributes: any): ITree.TextSegment {
-    return { content: text, attributes: attributes };
+    return { text: text, attributes: attributes };
 }
 
 function editFlat(source: string, s: number, dl: number, nt = "") {
     return source.substring(0, s) + nt + source.substring(s + dl, source.length);
 }
 
-function checkInsert(itree: ITree.TextSegmentTree, pos: number, textSegment: ITree.TextSegment) {
+let accumTime = 0;
+
+function checkInsert(itree: ITree.TextSegmentTree, pos: number, textSegment: ITree.TextSegment,
+    verbose = false) {
     let checkText = itree.getText();
-    checkText = editFlat(checkText, pos, 0, textSegment.content);
+    checkText = editFlat(checkText, pos, 0, textSegment.text);
+    let clockStart = clock();
     itree.insertInterval(pos, textSegment);
+    accumTime += elapsedMicroseconds(clockStart);
     let updatedText = itree.getText();
-    let result = ( checkText == updatedText);
-    if (!result) {
-        console.log(`mismatch: ${checkText} VS ${updatedText}`);
+    let result = (checkText == updatedText);
+    if ((!result) && verbose) {
+        console.log(`mismatch(o): ${checkText}`);
+        console.log(`mismatch(u): ${updatedText}`);
     }
     return result;
 }
 
-function checkRemove(itree: ITree.TextSegmentTree, start: number, end: number) {
-    let checkText = itree.getText();
-    checkText = editFlat(checkText, start, end - start);
+function checkRemove(itree: ITree.TextSegmentTree, start: number, end: number, verbose = false) {
+    let origText = itree.getText();
+    let checkText = editFlat(origText, start, end - start);
+    let clockStart = clock();
     itree.removeRange(start, end);
+    accumTime += elapsedMicroseconds(clockStart);
     let updatedText = itree.getText();
-    let result = ( checkText == updatedText);
-    if (!result) {
-        console.log(`mismatch: ${checkText} VS ${updatedText}`);
+    let result = (checkText == updatedText);
+    if ((!result) && verbose) {
+        console.log(`mismatch(o): ${origText}`);
+        console.log(`mismatch(c): ${checkText}`);
+        console.log(`mismatch(u): ${updatedText}`);
     }
     return result;
 }
 
 function itreeTest1() {
     let attr = { font: "Helvetica" };
-    let itree = ITree.IntervalSpanningTree(makeTextSegment("the cat is on the mat", attr));
+    let itree = ITree.IntervalSpanningTree("the cat is on the mat", attr);
     itree.setAttributes(4, 7, <ITree.Attributes>{ bold: true });
     itree.map(printTextSegment);
 
@@ -241,9 +263,167 @@ function itreeTest1() {
     checkRemove(itree, 4, 13);
     checkInsert(itree, 4, makeTextSegment("fi", { font: "Roman" }));
     itree.map(printTextSegment);
+    let segment = itree.getContainingSegment(4);
+    console.log(itree.getOffset(segment));
 }
+
+function itreeLargeTest() {
+    let attr = { font: "Helvetica" };
+    let itree = ITree.IntervalSpanningTree("the cat is on the mat", attr);
+    const insertCount = 1000000;
+    const removeCount = 980000;
+    let mt = random.engines.mt19937();
+    mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
+    const imin = 1;
+    const imax = 9;
+    let distribution = random.integer(imin, imax);
+    function randInt() {
+        return distribution(mt);
+    }
+    function randomString(len: number, c: string) {
+        let str = "";
+        for (let i = 0; i < len; i++) {
+            str += c;
+        }
+        return str;
+    }
+    accumTime = 0;
+    let accumTreeSize = 0;
+    let treeCount = 0;
+    for (let i = 0; i < insertCount; i++) {
+        let slen = randInt();
+        let s = randomString(slen, String.fromCharCode(48 + slen));
+        let preLen = itree.getLength();
+        let pos = random.integer(0, preLen)(mt);
+        let clockStart = clock();
+        itree.insertInterval(pos, makeTextSegment(s, attr));
+        accumTime += elapsedMicroseconds(clockStart);
+        if ((i > 0) && (0 == (i % 50000))) {
+            let perIter = (accumTime / (i + 1)).toFixed(3);
+            treeCount++;
+            accumTreeSize += itree.getLength();
+            let averageTreeSize = (accumTreeSize / treeCount).toFixed(3);
+            console.log(`i: ${i} time: ${accumTime}us which is average ${perIter} per insert with average tree size ${averageTreeSize}`);
+        }
+    }
+    console.log(process.memoryUsage().heapUsed);
+    accumTime = 0;
+    accumTreeSize = 0;
+    treeCount = 0;
+    for (let i = 0; i < removeCount; i++) {
+        let dlen = randInt();
+        let preLen = itree.getLength();
+        let pos = random.integer(0, preLen)(mt);
+        // console.log(itree.toString());
+        let clockStart = clock();
+        itree.removeRange(pos, pos + dlen);
+        accumTime += elapsedMicroseconds(clockStart);
+
+        if ((i > 0) && (0 == (i % 50000))) {
+            let perIter = (accumTime / (i + 1)).toFixed(3);
+            treeCount++;
+            accumTreeSize += itree.getLength();
+            let averageTreeSize = (accumTreeSize / treeCount).toFixed(3);
+            console.log(`i: ${i} time: ${accumTime}us which is average ${perIter} per del with average tree size ${averageTreeSize}`);
+        }
+    }
+}
+
+function itreeCheckedTest() {
+    let attr = { font: "Helvetica" };
+    let itree = ITree.IntervalSpanningTree("the cat is on the mat", attr);
+    const insertCount = 10000;
+    const removeCount = 7000;
+    const largeRemoveCount = 50;
+    let mt = random.engines.mt19937();
+    mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
+    const imin = 1;
+    const imax = 9;
+    let distribution = random.integer(imin, imax);
+    let largeDistribution = random.integer(10, 1000);
+    function randInt() {
+        return distribution(mt);
+    }
+    function randLargeInt() {
+        return largeDistribution(mt);
+    }
+    function randomString(len: number, c: string) {
+        let str = "";
+        for (let i = 0; i < len; i++) {
+            str += c;
+        }
+        return str;
+    }
+    accumTime = 0;
+    let accumTreeSize = 0;
+    let treeCount = 0;
+    for (let i = 0; i < insertCount; i++) {
+        let slen = randInt();
+        let s = randomString(slen, String.fromCharCode(48 + slen));
+        let preLen = itree.getLength();
+        let pos = random.integer(0, preLen)(mt);
+        if (!checkInsert(itree, pos, makeTextSegment(s, attr), true)) {
+            console.log(`i: ${i} preLen ${preLen} pos: ${pos} slen: ${slen} s: ${s} itree len: ${itree.getLength()}`);
+            console.log(itree.toString());
+            break;
+        }
+        if ((i > 0) && (0 == (i % 1000))) {
+            let perIter = (accumTime / (i + 1)).toFixed(3);
+            treeCount++;
+            accumTreeSize += itree.getLength();
+            let averageTreeSize = (accumTreeSize / treeCount).toFixed(3);
+            console.log(`i: ${i} time: ${accumTime}us which is average ${perIter} per insert with average tree size ${averageTreeSize}`);
+        }
+    }
+    accumTime = 0;
+    accumTreeSize = 0;
+    treeCount = 0;
+    for (let i = 0; i < largeRemoveCount; i++) {
+        let dlen = randLargeInt();
+        let preLen = itree.getLength();
+        let pos = random.integer(0, preLen)(mt);
+        // console.log(itree.toString());
+        if (!checkRemove(itree, pos, pos + dlen, true)) {
+            console.log(`i: ${i} preLen ${preLen} pos: ${pos} dlen: ${dlen} itree len: ${itree.getLength()}`);
+            console.log(itree.toString());
+            break;
+        }
+        if ((i > 0) && (0 == (i % 10))) {
+            let perIter = (accumTime / (i + 1)).toFixed(3);
+            treeCount++;
+            accumTreeSize += itree.getLength();
+            let averageTreeSize = (accumTreeSize / treeCount).toFixed(3);
+            console.log(`i: ${i} time: ${accumTime}us which is average ${perIter} per large del with average tree size ${averageTreeSize}`);
+        }
+    }
+    accumTime = 0;
+    accumTreeSize = 0;
+    treeCount = 0;
+    for (let i = 0; i < removeCount; i++) {
+        let dlen = randInt();
+        let preLen = itree.getLength();
+        let pos = random.integer(0, preLen)(mt);
+        // console.log(itree.toString());
+        if (!checkRemove(itree, pos, pos + dlen, true)) {
+            console.log(`i: ${i} preLen ${preLen} pos: ${pos} dlen: ${dlen} itree len: ${itree.getLength()}`);
+            console.log(itree.toString());
+            break;
+        }
+        if ((i > 0) && (0 == (i % 1000))) {
+            let perIter = (accumTime / (i + 1)).toFixed(3);
+            treeCount++;
+            accumTreeSize += itree.getLength();
+            let averageTreeSize = (accumTreeSize / treeCount).toFixed(3);
+            console.log(`i: ${i} time: ${accumTime}us which is average ${perIter} per del with average tree size ${averageTreeSize}`);
+        }
+    }
+
+}
+
 
 //simpleTest();
 //fileTest1();
 //integerTest1();
 itreeTest1();
+itreeLargeTest();
+itreeCheckedTest();
