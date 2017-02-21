@@ -42,17 +42,17 @@ class EventPoint {
 }
 
 export default class InkCanvas {
-    public canvas: HTMLCanvasElement;
-    public context: CanvasRenderingContext2D;
-    public penID: number = -1;
-    public gesture: MSGesture;
-
+    private canvas: HTMLCanvasElement;
+    private context: CanvasRenderingContext2D;
+    private penID: number = -1;
+    private gesture: MSGesture;
+    private canvasWrapper: HTMLElement;
     private currentStylusActionId: string;
     private currentPen: ink.IPen;
     private lastLayerRenderOp: { [key: string]: number } = {};
 
     // constructor
-    constructor(parent: HTMLElement, private model: Ink) {
+    constructor(parent: HTMLElement, private model: Ink, private alwaysOn: boolean) {
         this.model.on("op", (op, source) => {
             // TODO possibly we can just have submitOp send it and use this queue
             // for processing
@@ -65,11 +65,12 @@ export default class InkCanvas {
         });
 
         // setup canvas
-        let canvasWrapper = document.createElement("div");
-        canvasWrapper.classList.add("drawSurface");
+        this.canvasWrapper = document.createElement("div");
+        this.canvasWrapper.classList.add("drawSurface");
+        this.canvasWrapper.style.pointerEvents = alwaysOn ? "auto" : "none";
         this.canvas = document.createElement("canvas");
-        canvasWrapper.appendChild(this.canvas);
-        parent.appendChild(canvasWrapper);
+        this.canvasWrapper.appendChild(this.canvas);
+        parent.appendChild(this.canvasWrapper);
 
         // get context
         this.context = this.canvas.getContext("2d");
@@ -78,6 +79,8 @@ export default class InkCanvas {
         this.canvas.addEventListener("pointerdown", (evt) => this.handlePointerDown(evt), bb);
         this.canvas.addEventListener("pointermove", (evt) => this.handlePointerMove(evt), bb);
         this.canvas.addEventListener("pointerup", (evt) => this.handlePointerUp(evt), bb);
+        this.canvas.addEventListener("pointerenter", (evt) => this.handlePointerEnter(evt), bb);
+        this.canvas.addEventListener("pointerleave", (evt) => this.handlePointerLeave(evt), bb);
 
         this.currentPen = {
             color: { r: 1, g: 0, b: 0, a: 1 },
@@ -88,13 +91,13 @@ export default class InkCanvas {
         // TODO the resize event fires slightly after the resize happens causing possible
         // rendering tearing. We probably want to oversize the canvas and clip it.
         let throttler = new utils.AnimationFrameThrottler(() => {
-            this.resize(canvasWrapper.offsetWidth, canvasWrapper.offsetHeight);
+            this.resize(this.canvasWrapper.offsetWidth, this.canvasWrapper.offsetHeight);
         });
 
         // Listen for resize events and update the canvas dimensions accordingly
         new ResizeObserver((entries, obs) => {
             throttler.trigger();
-        }).observe(canvasWrapper);
+        }).observe(this.canvasWrapper);
     }
     // tslint:disable:no-empty
     // Stubs for bunch of functions that are being called in the code below
@@ -127,91 +130,6 @@ export default class InkCanvas {
         return false;
     }
 
-    // We will accept pen down or mouse left down as the start of a stroke.
-    // We will accept touch down or mouse right down as the start of a touch.
-    public handlePointerDown(evt) {
-        this.penID = evt.pointerId;
-
-        if (evt.pointerType === "touch") {
-            // ic.gesture.addPointer(evt.pointerId);
-        }
-
-        if ((evt.pointerType === "pen") || ((evt.pointerType === "mouse") && (evt.button === 0))) {
-            // Anchor and clear any current selection.
-            this.anchorSelection();
-            let pt = new EventPoint(this.canvas, evt);
-
-            if (pt.properties.isEraser) { // The back side of a pen, which we treat as an eraser
-                this.tempEraseMode();
-            } else {
-                this.restoreMode();
-            }
-
-            let delta = new ink.Delta().stylusDown(pt.rawPosition, evt.pressure, this.currentPen);
-            this.currentStylusActionId = delta.operations[0].stylusDown.id;
-            this.addAndDrawStroke(delta, true);
-
-            evt.returnValue = false;
-        }
-    }
-
-    public handlePointerMove(evt) {
-        if (evt.pointerId === this.penID) {
-            // if (evt.pointerType === "touch") {
-            // if (evt.pointerType === "pen") {
-            // } else {
-            // }
-
-            let pt = new EventPoint(this.canvas, evt);
-            let delta = new ink.Delta().stylusMove(
-                pt.rawPosition,
-                evt.pressure,
-                this.currentStylusActionId);
-            this.addAndDrawStroke(delta, true);
-
-            evt.returnValue = false;
-        }
-
-        return false;
-    }
-
-    public handlePointerUp(evt) {
-        if (evt.pointerId === this.penID) {
-            this.penID = -1;
-            let pt = new EventPoint(this.canvas, evt);
-            evt.returnValue = false;
-
-            let delta = new ink.Delta().stylusUp(
-                pt.rawPosition,
-                evt.pressure,
-                this.currentStylusActionId);
-            this.currentStylusActionId = undefined;
-
-            this.addAndDrawStroke(delta, true);
-        }
-
-        return false;
-    }
-
-    // We treat the event of the pen leaving the canvas as the same as the pen lifting;
-    // it completes the stroke.
-    public handlePointerOut(evt) {
-        if (evt.pointerId === this.penID) {
-            let pt = new EventPoint(this.canvas, evt);
-            this.penID = -1;
-
-            let delta = new ink.Delta().stylusUp(
-                pt.rawPosition,
-                evt.pressure,
-                this.currentStylusActionId);
-            this.currentStylusActionId = undefined;
-
-            this.addAndDrawStroke(delta, true);
-        }
-
-        return false;
-    }
-
     public handleTap(evt) {
         // Anchor and clear any current selection.
         if (this.anySelected()) {
@@ -239,6 +157,98 @@ export default class InkCanvas {
                 this.animateLayer(layer, 0, startTime);
             }
         }
+    }
+
+        // We will accept pen down or mouse left down as the start of a stroke.
+    // We will accept touch down or mouse right down as the start of a touch.
+    private handlePointerDown(evt: PointerEvent) {
+        this.penID = evt.pointerId;
+
+        if (evt.pointerType === "touch") {
+            // ic.gesture.addPointer(evt.pointerId);
+        }
+
+        if ((evt.pointerType === "pen") || ((evt.pointerType === "mouse") && (evt.button === 0))) {
+            // Anchor and clear any current selection.
+            this.anchorSelection();
+            let pt = new EventPoint(this.canvas, evt);
+
+            if (pt.properties.isEraser) { // The back side of a pen, which we treat as an eraser
+                this.tempEraseMode();
+            } else {
+                this.restoreMode();
+            }
+
+            let delta = new ink.Delta().stylusDown(pt.rawPosition, evt.pressure, this.currentPen);
+            this.currentStylusActionId = delta.operations[0].stylusDown.id;
+            this.addAndDrawStroke(delta, true);
+
+            evt.returnValue = false;
+        }
+    }
+
+    private handlePointerMove(evt: PointerEvent) {
+        if (evt.pointerId === this.penID) {
+            let pt = new EventPoint(this.canvas, evt);
+            let delta = new ink.Delta().stylusMove(
+                pt.rawPosition,
+                evt.pressure,
+                this.currentStylusActionId);
+            this.addAndDrawStroke(delta, true);
+
+            evt.returnValue = false;
+        }
+
+        return false;
+    }
+
+    private handlePointerUp(evt: PointerEvent) {
+        if (evt.pointerId === this.penID) {
+            this.penID = -1;
+            let pt = new EventPoint(this.canvas, evt);
+            evt.returnValue = false;
+
+            let delta = new ink.Delta().stylusUp(
+                pt.rawPosition,
+                evt.pressure,
+                this.currentStylusActionId);
+            this.currentStylusActionId = undefined;
+
+            this.addAndDrawStroke(delta, true);
+        }
+
+        return false;
+    }
+
+    private handlePointerEnter(evt: PointerEvent) {
+        if (evt.pointerType === "pen" && !this.alwaysOn) {
+            this.canvasWrapper.style.pointerEvents = "none";
+        }
+    }
+
+    private handlePointerLeave(evt: PointerEvent) {
+        if (evt.pointerType === "pen" && !this.alwaysOn) {
+            this.canvasWrapper.style.pointerEvents = "auto";
+        }
+    }
+
+    // We treat the event of the pen leaving the canvas as the same as the pen lifting;
+    // it completes the stroke.
+    private handlePointerOut(evt) {
+        if (evt.pointerId === this.penID) {
+            let pt = new EventPoint(this.canvas, evt);
+            this.penID = -1;
+
+            let delta = new ink.Delta().stylusUp(
+                pt.rawPosition,
+                evt.pressure,
+                this.currentStylusActionId);
+            this.currentStylusActionId = undefined;
+
+            this.addAndDrawStroke(delta, true);
+        }
+
+        return false;
     }
 
     private animateLayer(layer: ink.IInkLayer, operationIndex: number, startTime: number) {
@@ -321,7 +331,6 @@ export default class InkCanvas {
      * Resizes the canvas
      */
     private resize(width: number, height: number) {
-        console.error(`${width} ${height}`);
         // Updates the size of the canvas
         this.canvas.width = width;
         this.canvas.height = height;

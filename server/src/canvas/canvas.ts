@@ -54,7 +54,7 @@ export default class Canvas {
 
         let inkP = model.getInkLayer();
         inkP.then((ink) => {
-            this.ink = new InkCanvas(p, ink);
+            this.ink = new InkCanvas(p, ink, true);
 
             window.addEventListener("keydown", (evt) => this.keyPress(evt), false);
             window.addEventListener("keyup", (evt) => this.keyRelease(evt), false);

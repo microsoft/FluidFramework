@@ -44,7 +44,7 @@
     
     {{$scripts}}
         <script src="https://cdn.quilljs.com/1.0.0/quill.js"></script>
-        <script src="https://charts.azureedge.net/release/0.1.163075.4/microsoft-charts.min.js"></script>     
+        <script src="https://charts.azureedge.net/release/0.1.174206.1/microsoft-charts.min.js"></script>     
         <script src="/dist/canvas/canvas.js"></script> 
         <script>
             canvas.initialize("{{id}}");

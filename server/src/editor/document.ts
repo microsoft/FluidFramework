@@ -24,7 +24,7 @@ export class Document {
         element.appendChild(inkDiv);
 
         inkP.then((inkModel) => {
-            let inkCanvas = new InkCanvas(inkDiv, inkModel);
+            let inkCanvas = new InkCanvas(inkDiv, inkModel, false);
         });
 
         richTextP.then((richTextModel) => {
@@ -83,20 +83,23 @@ export class Document {
 
                 // Disable rules for simplicity with Ivy input format
                 let chartDef = {
-                    hasDataLabels: false,
                     legend: {
-                        edge: 1,
-                        edgePosition: 1,
+                        position: {
+                            edge: "Top",
+                            edgePosition: "Middle",
+                        },
                         title: {
-                            edge: 1,
-                            edgePosition: 1,
+                            position: {
+                                edge: "Top",
+                                edgePosition: "Middle",
+                            },
                             text: "Legend Title",
                         },
                     },
-                    seriesData: [
+                    series: [
                         {
                             data: {
-                                2: [
+                                values: [
                                     69.14964017037771, 82.55589380290198, 77.7992589146683,
                                     47.079431577865975, 61.0278147452978, 36.828990405761814,
                                     71.27523285013173, 18.651273016245575, 94.25718643974449, 50.32715058212624],
@@ -107,7 +110,7 @@ export class Document {
                         },
                         {
                             data: {
-                                2: [
+                                values: [
                                     52.2401034787816, 16.221559646645183, 44.47911083227592,
                                     49.707334744306294, 84.95812020684563, 49.01542136996819,
                                     18.300268885128506, 66.53927309022224, 45.52806497921968, 57.46258907835091],
@@ -118,7 +121,7 @@ export class Document {
                         },
                         {
                             data: {
-                                2: [
+                                values: [
                                     64.047312897452, 53.93685241137547, 78.53195036625438,
                                     63.12685058974058, 50.187516638835014, 43.90329745514665,
                                     94.0725396345816, 21.108326963613084, 32.72517345245099, 62.40440012954861],
@@ -133,8 +136,10 @@ export class Document {
                         width: 400,
                     },
                     title: {
-                        edge: 1,
-                        edgePosition: 1,
+                        position: {
+                            edge: "Top",
+                            edgePosition: "Middle",
+                        },
                         text: "Chart Title",
                     },
                 };
