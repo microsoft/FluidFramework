@@ -161,3 +161,26 @@ export function throttle(type: string, name: string, obj?: any) {
         });
       });
 };
+
+/**
+ * Helper class that throttles calling the provided callback based on
+ * an animation frame timer
+ */
+export class AnimationFrameThrottler {
+  private running = false;
+
+  constructor(private callback: Function) {
+  }
+
+  public trigger(): void {
+    if (this.running) {
+        return;
+    }
+
+    this.running = true;
+    requestAnimationFrame(() => {
+        this.callback();
+        this.running = false;
+    });
+  }
+}

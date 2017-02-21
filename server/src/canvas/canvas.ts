@@ -9,6 +9,8 @@ import { Document } from "../editor/document";
 import BackBoard from "./backBoard";
 import InkCanvas from "./inkCanvas";
 import { Canvas as CanvasModel, IObject } from "./models/canvas";
+import { Document as DocumentModel } from "./models/document";
+import { Ink } from "./models/ink";
 import { RichText } from "./models/richText";
 import StickyNote from "./stickyNote";
 import * as utils from "./utils";
@@ -58,12 +60,13 @@ export default class Canvas {
             window.addEventListener("keyup", (evt) => this.keyRelease(evt), false);
 
             // toolbar buttons
-            document.querySelector("#strokeColors").addEventListener("click", (e) => { this.ink.inkColor(); }, false);
+            // document.querySelector("#strokeColors")
+            // .addEventListener("click", (e) => { this.ink.inkColor(); }, false);
             document.querySelector("#clearButton").addEventListener("click", (e) => { this.clear(); }, false);
-            document.querySelector("#undoButton").addEventListener("click", (e) => { this.ink.undo(); }, false);
-            document.querySelector("#redoButton").addEventListener("click", (e) => { this.ink.redo(); }, false);
-            document.querySelector("#testButton").addEventListener("click", (e) => { this.test(e); }, false);
-            document.querySelector("#turnOnInk").addEventListener("click", (e) => { this.test(e); }, false);
+            // document.querySelector("#undoButton").addEventListener("click", (e) => { this.ink.undo(); }, false);
+            // document.querySelector("#redoButton").addEventListener("click", (e) => { this.ink.redo(); }, false);
+            // document.querySelector("#testButton").addEventListener("click", (e) => { this.test(e); }, false);
+            // document.querySelector("#turnOnInk").addEventListener("click", (e) => { this.test(e); }, false);
             document.querySelector("#replay").addEventListener("click", (e) => { this.ink.replay(); }, false);
             document.querySelector("#editor").addEventListener("click", (e) => { this.addDocument(); }, false);
         });
@@ -227,8 +230,9 @@ export default class Canvas {
         // Mark that we've processed this object
         this.canvasObjects[object.id] = true;
 
-        let richTextP = RichText.GetOrCreate(this.connection, object.id);
-        richTextP.then((richText) => {
+        // let inkP = Ink.GetOrCreate(this.connection, )
+        let documentP = DocumentModel.GetOrCreate(this.connection, object.id);
+        documentP.then((richText) => {
             // TODO/NOTES - We want some kind of loading animation here. But trying to avoid
             // a race condition with creating the new document and broadcasting it exists to others.
             // There's a chance we could update the JSON OT type Canvas uses before we actually create

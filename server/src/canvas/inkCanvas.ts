@@ -4,6 +4,10 @@ import { Ink } from "./models/ink";
 import { Circle, IShape, Polygon } from "./shapes/index";
 import * as utils from "./utils";
 
+// There's an issue with the d.ts files and the default export
+// tslint:disable-next-line:no-var-requires
+let ResizeObserver = require("resize-observer-polyfill");
+
 // TODO split classes into separate files
 // tslint:disable:max-classes-per-file
 
@@ -27,8 +31,12 @@ class EventPoint {
     public rawPosition: IPtrEvtPoint;
     public properties: IPointerPointProps;
 
-    constructor(evt: PointerEvent) {
-        this.rawPosition = { x: evt.x, y: evt.y };
+    constructor(relative: HTMLElement, evt: PointerEvent) {
+        let offset = $(relative).offset();
+        this.rawPosition = {
+            x: evt.pageX - offset.left,
+            y: evt.pageY - offset.top,
+        };
         this.properties = { isEraser: false };
     }
 }
@@ -45,8 +53,6 @@ export default class InkCanvas {
 
     // constructor
     constructor(parent: HTMLElement, private model: Ink) {
-        // Listen for updates from the server
-
         this.model.on("op", (op, source) => {
             // TODO possibly we can just have submitOp send it and use this queue
             // for processing
@@ -59,9 +65,11 @@ export default class InkCanvas {
         });
 
         // setup canvas
+        let canvasWrapper = document.createElement("div");
+        canvasWrapper.classList.add("drawSurface");
         this.canvas = document.createElement("canvas");
-        this.canvas.classList.add("drawSurface");
-        parent.appendChild(this.canvas);
+        canvasWrapper.appendChild(this.canvas);
+        parent.appendChild(canvasWrapper);
 
         // get context
         this.context = this.canvas.getContext("2d");
@@ -76,11 +84,17 @@ export default class InkCanvas {
             thickness: 10,
         };
 
-        // Set the initial size of hte canvas and then register for resize events to be able to update it
-        this.resize(this.canvas.offsetWidth, this.canvas.offsetHeight);
-        window.addEventListener("throttled-resize", (event) => {
-            this.resize(this.canvas.offsetWidth, this.canvas.offsetHeight);
+        // Throttle the canvas resizes at animation frame frequency
+        // TODO the resize event fires slightly after the resize happens causing possible
+        // rendering tearing. We probably want to oversize the canvas and clip it.
+        let throttler = new utils.AnimationFrameThrottler(() => {
+            this.resize(canvasWrapper.offsetWidth, canvasWrapper.offsetHeight);
         });
+
+        // Listen for resize events and update the canvas dimensions accordingly
+        new ResizeObserver((entries, obs) => {
+            throttler.trigger();
+        }).observe(canvasWrapper);
     }
     // tslint:disable:no-empty
     // Stubs for bunch of functions that are being called in the code below
@@ -125,7 +139,7 @@ export default class InkCanvas {
         if ((evt.pointerType === "pen") || ((evt.pointerType === "mouse") && (evt.button === 0))) {
             // Anchor and clear any current selection.
             this.anchorSelection();
-            let pt = new EventPoint(evt);
+            let pt = new EventPoint(this.canvas, evt);
 
             if (pt.properties.isEraser) { // The back side of a pen, which we treat as an eraser
                 this.tempEraseMode();
@@ -148,8 +162,9 @@ export default class InkCanvas {
             // } else {
             // }
 
+            let pt = new EventPoint(this.canvas, evt);
             let delta = new ink.Delta().stylusMove(
-                { x: evt.clientX, y: evt.clientY },
+                pt.rawPosition,
                 evt.pressure,
                 this.currentStylusActionId);
             this.addAndDrawStroke(delta, true);
@@ -163,11 +178,11 @@ export default class InkCanvas {
     public handlePointerUp(evt) {
         if (evt.pointerId === this.penID) {
             this.penID = -1;
-            let pt = new EventPoint(evt);
+            let pt = new EventPoint(this.canvas, evt);
             evt.returnValue = false;
 
             let delta = new ink.Delta().stylusUp(
-                { x: evt.clientX, y: evt.clientY },
+                pt.rawPosition,
                 evt.pressure,
                 this.currentStylusActionId);
             this.currentStylusActionId = undefined;
@@ -182,11 +197,11 @@ export default class InkCanvas {
     // it completes the stroke.
     public handlePointerOut(evt) {
         if (evt.pointerId === this.penID) {
-            let pt = new EventPoint(evt);
+            let pt = new EventPoint(this.canvas, evt);
             this.penID = -1;
 
             let delta = new ink.Delta().stylusUp(
-                { x: evt.clientX, y: evt.clientY },
+                pt.rawPosition,
                 evt.pressure,
                 this.currentStylusActionId);
             this.currentStylusActionId = undefined;
@@ -267,7 +282,6 @@ export default class InkCanvas {
         layer: ink.IInkLayer,
         current: ink.IOperation,
         previous: ink.IOperation) {
-
         let type = ink.getActionType(current);
         let shapes: IShape[];
 
@@ -293,6 +307,7 @@ export default class InkCanvas {
         }
 
         if (shapes) {
+            this.context.fillStyle = "blue";
             for (let shape of shapes) {
                 this.context.beginPath();
                 shape.render(this.context);
@@ -306,6 +321,7 @@ export default class InkCanvas {
      * Resizes the canvas
      */
     private resize(width: number, height: number) {
+        console.error(`${width} ${height}`);
         // Updates the size of the canvas
         this.canvas.width = width;
         this.canvas.height = height;
