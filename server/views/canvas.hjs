@@ -19,6 +19,12 @@
 
         <!-- Toolbar -->
         <div id="ToolBar">
+
+            <!-- Buttons -->
+            {{!--<button id="undoButton" value="undo">Undo</button>
+            <button id="redoButton" value="redo">Redo</button>
+            <button id="testButton">Reco</button>
+            <button id="turnOnInk">ink</button>--}}
             <!-- Color Menu -->
             <div class="toolbarDiv">
                 <button class="menuButton" id="strokeButton" value="clear">Stroke</button>
@@ -30,13 +36,7 @@
                         <option style="background-color:white; color:black" value="#00000000">Erase</option>
                 </select>
             </div>
-
-            <!-- Buttons -->
-            <button id="undoButton" value="undo">Undo</button>
-            <button id="redoButton" value="redo">Redo</button>
             <button id="clearButton" value="clear">Clear</button>
-            <button id="testButton">Reco</button>
-            <button id="turnOnInk">ink</button>
             <button id="replay">Replay</button>
             <button id="editor">Editor</button>
         </div>
@@ -44,7 +44,7 @@
     
     {{$scripts}}
         <script src="https://cdn.quilljs.com/1.0.0/quill.js"></script>
-        <script src="https://charts.azureedge.net/release/0.1.163075.4/microsoft-charts.min.js"></script>     
+        <script src="https://charts.azureedge.net/release/0.1.174206.1/microsoft-charts.min.js"></script>     
         <script src="/dist/canvas/canvas.js"></script> 
         <script>
             canvas.initialize("{{id}}");

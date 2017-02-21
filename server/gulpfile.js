@@ -59,7 +59,6 @@ let controllers = [
     { name: "browserify", src: "src/ng/main.ts", outFile: "main.js", folder: "public/dist/ng", standalone: "controller" },
     { name: "api", src: "src/api/index.ts", outFile: "api.js", folder: "public/dist/api", standalone: "pronet" },
     { name: "calendar", src: "src/calendar/driver.ts", outFile: "driver.js", folder: "public/dist/views/calendar", standalone: "calendar" },
-    { name: "collab", src: "src/editor/index.ts", outFile: "editor.js", folder: "public/dist/editor", standalone: "editor" },
     { name: "canvas", src: "src/canvas/index.ts", outFile: "canvas.js", folder: "public/dist/canvas", standalone: "canvas" },
 ];
 
