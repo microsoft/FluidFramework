@@ -24,7 +24,7 @@ export class Document {
         element.appendChild(inkDiv);
 
         inkP.then((inkModel) => {
-            let inkCanvas = new InkCanvas(inkDiv, inkModel, false);
+            let inkCanvas = new InkCanvas(inkDiv, inkModel, element);
         });
 
         richTextP.then((richTextModel) => {

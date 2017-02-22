@@ -39,38 +39,38 @@ export interface IColor {
   a: number;
 }
 
-export function toColorString(color: IColor) {
-  return "#" + byteHex(color.r) + byteHex(color.g) + byteHex(color.b) + byteHex(color.a);
+export function toColorStringNoAlpha(color: IColor) {
+  return "#" + byteHex(color.r * 255) + byteHex(color.g * 255) + byteHex(color.b * 255 );
 }
 
 // Helper function to support HTML hexColor Strings
 export function hexStrToRGBA(hexStr: string): IColor {
   // RGBA color object
-  let colorObject: IColor = { r: 255, g: 255, b: 255, a: 255 };
+  let colorObject: IColor = { r: 1, g: 1, b: 1, a: 1 };
 
   // remove hash if it exists
   hexStr = hexStr.replace("#", "");
 
   if (hexStr.length === 6) {
     // No Alpha
-    colorObject.r = parseInt(hexStr.slice(0, 2), 16);
-    colorObject.g = parseInt(hexStr.slice(2, 4), 16);
-    colorObject.b = parseInt(hexStr.slice(4, 6), 16);
-    colorObject.a = parseInt("0xFF", 16);
+    colorObject.r = parseInt(hexStr.slice(0, 2), 16) / 255;
+    colorObject.g = parseInt(hexStr.slice(2, 4), 16) / 255;
+    colorObject.b = parseInt(hexStr.slice(4, 6), 16) / 255;
+    colorObject.a = parseInt("0xFF", 16) / 255;
   } else if (hexStr.length === 8) {
     // Alpha
-    colorObject.r = parseInt(hexStr.slice(0, 2), 16);
-    colorObject.g = parseInt(hexStr.slice(2, 4), 16);
-    colorObject.b = parseInt(hexStr.slice(4, 6), 16);
-    colorObject.a = parseInt(hexStr.slice(6, 8), 16);
+    colorObject.r = parseInt(hexStr.slice(0, 2), 16) / 255;
+    colorObject.g = parseInt(hexStr.slice(2, 4), 16) / 255;
+    colorObject.b = parseInt(hexStr.slice(4, 6), 16) / 255;
+    colorObject.a = parseInt(hexStr.slice(6, 8), 16) / 255;
   } else if (hexStr.length === 3) {
     // Shorthand hex color
     let rVal = hexStr.slice(0, 1);
     let gVal = hexStr.slice(1, 2);
     let bVal = hexStr.slice(2, 3);
-    colorObject.r = parseInt(rVal + rVal, 16);
-    colorObject.g = parseInt(gVal + gVal, 16);
-    colorObject.b = parseInt(bVal + bVal, 16);
+    colorObject.r = parseInt(rVal + rVal, 16) / 255;
+    colorObject.g = parseInt(gVal + gVal, 16) / 255;
+    colorObject.b = parseInt(bVal + bVal, 16) / 255;
   } else {
     throw new Error("Invalid HexString length. Expected either 8, 6, or 3. The actual length was " + hexStr.length);
   }
