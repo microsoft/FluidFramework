@@ -82,7 +82,6 @@
     "@types/express-session": "0.0.32",
     "@types/fullcalendar": "^2.7.36",
     "@types/jquery": "^2.0.39",
-    "@types/lodash": "^4.14.48",
     "@types/moment": "^2.13.0",
     "@types/nconf": "0.0.33",
     "@types/node": "^7.0.0",
