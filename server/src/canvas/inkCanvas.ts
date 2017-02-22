@@ -52,7 +52,7 @@ export default class InkCanvas {
     private lastLayerRenderOp: { [key: string]: number } = {};
 
     // constructor
-    constructor(parent: HTMLElement, private model: Ink, private alwaysOn: boolean) {
+    constructor(parent: HTMLElement, private model: Ink, private entryTarget: HTMLElement = null) {
         this.model.on("op", (op, source) => {
             // TODO possibly we can just have submitOp send it and use this queue
             // for processing
@@ -67,7 +67,7 @@ export default class InkCanvas {
         // setup canvas
         this.canvasWrapper = document.createElement("div");
         this.canvasWrapper.classList.add("drawSurface");
-        this.canvasWrapper.style.pointerEvents = alwaysOn ? "auto" : "none";
+        this.canvasWrapper.style.pointerEvents = entryTarget ? "none" : "auto";
         this.canvas = document.createElement("canvas");
         this.canvasWrapper.appendChild(this.canvas);
         parent.appendChild(this.canvasWrapper);
@@ -79,12 +79,16 @@ export default class InkCanvas {
         this.canvas.addEventListener("pointerdown", (evt) => this.handlePointerDown(evt), bb);
         this.canvas.addEventListener("pointermove", (evt) => this.handlePointerMove(evt), bb);
         this.canvas.addEventListener("pointerup", (evt) => this.handlePointerUp(evt), bb);
-        this.canvas.addEventListener("pointerenter", (evt) => this.handlePointerEnter(evt), bb);
-        this.canvas.addEventListener("pointerleave", (evt) => this.handlePointerLeave(evt), bb);
+
+        // Listen for enter/leave on the entry target if available
+        if (this.entryTarget) {
+            this.entryTarget.addEventListener("pointerenter", (evt) => this.handlePointerEnter(evt), bb);
+            this.entryTarget.addEventListener("pointerleave", (evt) => this.handlePointerLeave(evt), bb);
+        }
 
         this.currentPen = {
-            color: { r: 1, g: 0, b: 0, a: 1 },
-            thickness: 10,
+            color: { r: 1, g: 0, b: 0, a: 0 },
+            thickness: 7,
         };
 
         // Throttle the canvas resizes at animation frame frequency
@@ -221,14 +225,14 @@ export default class InkCanvas {
     }
 
     private handlePointerEnter(evt: PointerEvent) {
-        if (evt.pointerType === "pen" && !this.alwaysOn) {
-            this.canvasWrapper.style.pointerEvents = "none";
+        if (evt.pointerType === "pen") {
+            this.canvasWrapper.style.pointerEvents = "auto";
         }
     }
 
     private handlePointerLeave(evt: PointerEvent) {
-        if (evt.pointerType === "pen" && !this.alwaysOn) {
-            this.canvasWrapper.style.pointerEvents = "auto";
+        if (evt.pointerType === "pen") {
+            this.canvasWrapper.style.pointerEvents = "none";
         }
     }
 
@@ -317,7 +321,7 @@ export default class InkCanvas {
         }
 
         if (shapes) {
-            this.context.fillStyle = "blue";
+            this.context.fillStyle = utils.toColorStringNoAlpha(pen.color);
             for (let shape of shapes) {
                 this.context.beginPath();
                 shape.render(this.context);
