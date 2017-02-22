@@ -10,7 +10,6 @@ export interface MapLike<T> {
 
 export class PropertySet {
     propertyMap:MapLike<Property> = createDictionaryObject<Property>();
-    setProperty(name: )
 }
 
 export interface PropertyDictionary {

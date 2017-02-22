@@ -421,40 +421,6 @@ function itreeCheckedTest() {
 
 }
 
-class TestClient {
-    constructor(public id: number, public text:string, public testService: TestService) {
-
-    }
-    testInsert(pos: number, s: string) {
-    
-    }    
-
-}
-
-class TestService {
-    todoIndex = 0;
-    ops: CollabString.Op[] = [];
-    clients: TestClient[] = [];
-
-    msg(op: CollabString.Op) {
-        this.ops.push(op);
-        this.process();
-    }
-
-    process() {
-        let outOps: CollabString.Op[]=[];
-        for (let i=this.todoIndex, len = this.ops.length;i<len;i++) {
-            let op = this.ops[i];
-            if (i>this.todoIndex) {
-                
-            }
-            else {
-                outOps.push(op);
-            }
-        }
-    }
-}
-
 //simpleTest();
 //fileTest1();
 //integerTest1();
