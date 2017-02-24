@@ -4,7 +4,7 @@ export enum OpType {
 }
 
 export interface Op {
-    transform(op: Op, opsOut: Op[]);
+    transform(op: Op, opsOut: Op[], prior: boolean);
     opType: OpType;
     clientId?: number;
     seq?: number;
@@ -16,13 +16,13 @@ export class InsertTextOp implements Op {
 
     }
 
-    transform(op: Op, opsOut: Op[]) {
+    transform(op: Op, opsOut: Op[], prior: boolean) {
         let len = this.text.length;
         switch (op.opType) {
             case OpType.Insert: {
                 let insertOp = <InsertTextOp>op;
                 let pos2 = insertOp.pos;
-                if (this.pos <= pos2) {
+                if ((this.pos < pos2) || (this.pos == pos2) && prior) {
                     pos2 += len;
                 }
                 opsOut.push(new InsertTextOp(pos2, insertOp.text));
@@ -60,7 +60,7 @@ export class RemoveRangeOp implements Op {
 
     }
 
-    transform(op: Op, opsOut: Op[], outIndex = 0) {
+    transform(op: Op, opsOut: Op[], prior = true) {
         let len = this.end - this.start;
         switch (op.opType) {
             case OpType.Insert: {
@@ -72,7 +72,7 @@ export class RemoveRangeOp implements Op {
                 else if (this.start < pos) {
                     pos = this.start;
                 }
-                opsOut[0] = new InsertTextOp(pos, insertOp.text);
+                opsOut.push(new InsertTextOp(pos, insertOp.text));
                 break;
             }
             case OpType.RemoveRange: {
@@ -94,7 +94,7 @@ export class RemoveRangeOp implements Op {
                         end2 = this.start;
                     }
                 }
-                opsOut[0] = new RemoveRangeOp(start2, end2);
+                opsOut.push(new RemoveRangeOp(start2, end2));
                 break;
             }
         }
@@ -103,7 +103,90 @@ export class RemoveRangeOp implements Op {
 
 const Nope = -1;
 function editFlat(source: string, s: number, dl: number, nt = "") {
-    return source.substring(0, s) + nt + source.substring(s + dl, source.length);
+    console.log(`EDIT pos: ${s} dlen ${dl} nt ${nt}`);
+    let post = source.substring(0, s) + nt + source.substring(s + dl, source.length);
+    return post;
+}
+
+function multiTransform(localOps: Op[], localOpsOut:Op[], serverOp: Op, opsOut: Op[],prior: boolean) {
+    let outputOps = [serverOp]
+    let inputOps = <Op[]>[];
+    for (let i = 0, len = localOps.length; i < len; i++) {
+        let temp = outputOps;
+        outputOps = inputOps;
+        outputOps.length = 0;
+        inputOps = temp;
+        for (let inputOp of inputOps) {
+            localOps[i].transform(inputOp, outputOps, prior);
+        }
+    }
+    for (let outputOp of outputOps) {
+        opsOut.push(outputOp);
+    }
+}
+
+export function diamondTest() {
+    // for now two clients
+    let reftexts = ["", ""];
+
+    function rand(imin: number, imax: number) {
+        return Math.floor(Math.random() * (imax - imin + 1)) + imin;
+    }
+
+    function randInsert(reftextIndex: number) {
+        let textLength = rand(1, 6);
+        let text = "abcdef".substring(0, textLength);
+        let textPos = rand(0, reftexts[reftextIndex].length - 1);
+        return new InsertTextOp(textPos, text);
+    }
+
+    const insertCount1 = 2;
+    for (let i = 0; i < insertCount1; i++) {
+        //let opCount = rand(1, 4);
+        let opCount = 2;
+        let ops0 = <InsertTextOp[]>[];
+        let ops1 = <InsertTextOp[]>[];
+        console.log("Before Edits");
+        console.log(reftexts[0]);
+        console.log(reftexts[1]);
+        for (let j = 0; j < opCount; j++) {
+            ops0[j] = randInsert(0);
+            ops1[j] = randInsert(1);
+            reftexts[0] = editFlat(reftexts[0], ops0[j].pos, 0, ops0[j].text);
+            reftexts[1] = editFlat(reftexts[1], ops1[j].pos, 0, ops1[j].text);
+        }
+        console.log("After Edits");
+        console.log(reftexts[0]);
+        console.log(reftexts[1]);
+
+        let xformOps0 = <InsertTextOp[]>[];
+        let xformOps1 = <InsertTextOp[]>[];
+
+        // assume client 0 first 
+        for (let k = 0; k < opCount; k++) {
+            multiTransform(ops0, ops1[k], xformOps0, true);
+            multiTransform(ops1, ops0[k], xformOps1, false);
+        }
+
+        console.log("Edits on client 0 from client 1")
+        for (let k = 0; k < xformOps0.length; k++) {
+            reftexts[0] = editFlat(reftexts[0], xformOps0[k].pos, 0, xformOps0[k].text);
+        }
+        console.log(reftexts[0]);
+
+        console.log("Edits on client 1 from client 0")
+        for (let k = 0; k < xformOps0.length; k++) {
+            reftexts[1] = editFlat(reftexts[1], xformOps1[k].pos, 0, xformOps1[k].text);
+        }
+        console.log(reftexts[1]);
+
+        if (reftexts[0] != reftexts[1]) {
+            console.log(
+                `mismatch at iteration ${i}`
+            );
+            break;
+        }
+    }
 }
 
 export class TestClient {
@@ -115,16 +198,25 @@ export class TestClient {
         testService.registerClient(this);
     }
 
+    buffer(op: Op) {
+        op.clientId = this.clientId;
+        op.seq = this.seq;
+        this.snackOps.push(op);
+    }
+
     insert(pos: number, s: string) {
-        this.snackOps.push(new InsertTextOp(pos, s));
+        this.buffer(new InsertTextOp(pos, s));
     }
 
     remove(start: number, end: number) {
-        this.snackOps.push(new RemoveRangeOp(start, end));
+        this.buffer(new RemoveRangeOp(start, end));
     }
 
     flush() {
-
+        if (this.snackOps.length > 0) {
+            let msg = JSON.stringify(this.snackOps);
+            this.testService.rawmsg(msg);
+        }
     }
 
     apply(op: Op) {
@@ -144,6 +236,7 @@ export class TestClient {
     setClientId(id: number) {
         this.clientId = id;
     }
+
     msg(serverOps: Op[]) {
         let xformServerOps = <Op[]>[];
         // transform each server op by any ops sent but not acknowledged
@@ -151,7 +244,7 @@ export class TestClient {
             if (serverOp.clientId != this.clientId) {
                 for (let snackIndex = this.snackStart, snackLen = this.snackOps.length; snackIndex < snackLen; snackIndex++) {
                     let snackOp = this.snackOps[snackIndex];
-                    snackOp.transform(serverOp, xformServerOps);
+                    snackOp.transform(serverOp, xformServerOps, false);
                 }
             }
             else {
@@ -206,6 +299,12 @@ export class TestService {
             }
         }
     }
+
+    rawmsg(msgText: string) {
+        let ops = <Op[]>JSON.parse(msgText);
+        this.msg(ops);
+    }
+
     msg(ops: Op[]) {
         for (let op of ops) {
             let clientSeq = op.seq;
@@ -218,7 +317,7 @@ export class TestService {
                 xformOps = temp;
                 let priorOp = this.revisionHistory[i];
                 for (let clientOp of clientOps) {
-                    priorOp.transform(clientOp, xformOps);
+                    priorOp.transform(clientOp, xformOps, true);
                 }
             }
             for (let xformOp of xformOps) {

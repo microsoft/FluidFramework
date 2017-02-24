@@ -424,6 +424,7 @@ function itreeCheckedTest() {
 //simpleTest();
 //fileTest1();
 //integerTest1();
-itreeTest1();
-itreeLargeTest();
-itreeCheckedTest();
+//itreeTest1();
+//itreeLargeTest();
+//itreeCheckedTest();
+CollabString.diamondTest();
