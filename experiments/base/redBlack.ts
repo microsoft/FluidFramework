@@ -87,43 +87,48 @@ export function LinearDictionary<TKey, TData>(compareKeys: Base.KeyComparer<TKey
     }
 }
 
-export function RedBlackTree<TKey, TData>(compareKeys: Base.KeyComparer<TKey>): Base.SortedDictionary<TKey, TData> {
-    const enum Color {
-        RED,
-        BLACK
+const enum Color {
+    RED,
+    BLACK
+}
+
+interface Node<TKey, TData> {
+    key: TKey;
+    data: TData;
+    left: Node<TKey, TData>;
+    right: Node<TKey, TData>;
+    color: Color;
+    size: number;
+}
+
+export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TData> {
+    root: Node<TKey, TData>;
+    constructor(public compareKeys: Base.KeyComparer<TKey>) {
+
     }
-    interface Node {
-        key: TKey;
-        data: TData;
-        left: Node;
-        right: Node;
-        color: Color;
-        size: number;
+    makeNode(key: TKey, data: TData, color: Color, size: number) {
+        return <Node<TKey, TData>>{ key: key, data: data, color: color, size: size };
     }
-    function makeNode(key: TKey, data: TData, color: Color, size: number) {
-        return <Node>{ key: key, data: data, color: color, size: size };
-    }
-    let root: Node;
-    function isRed(node: Node) {
+    isRed(node: Node<TKey, TData>) {
         return node && (node.color == Color.RED);
     }
-    function nodeSize(node: Node) {
+    nodeSize(node: Node<TKey, TData>) {
         return node ? node.size : 0;
     }
-    function size() {
-        return nodeSize(root);
+    size() {
+        return this.nodeSize(this.root);
     }
-    function isEmpty() {
-        return root;
+    isEmpty() {
+        return this.root;
     }
-    function get(key: TKey) {
+    get(key: TKey) {
         if (key) {
-            return nodeGet(root, key);
+            return this.nodeGet(this.root, key);
         }
     }
-    function nodeGet(node: Node, key: TKey) {
+    nodeGet(node: Node<TKey, TData>, key: TKey) {
         while (node) {
-            let cmp = compareKeys(key, node.key);
+            let cmp = this.compareKeys(key, node.key);
             if (cmp < 0) {
                 node = node.left;
             }
@@ -135,303 +140,293 @@ export function RedBlackTree<TKey, TData>(compareKeys: Base.KeyComparer<TKey>): 
             }
         }
     }
-    function contains(key: TKey) {
-        return get(key);
+    contains(key: TKey) {
+        return this.get(key);
     }
-    function put(key: TKey, data: TData, conflict?: Base.ConflictAction<TKey, TData>) {
+    put(key: TKey, data: TData, conflict?: Base.ConflictAction<TKey, TData>) {
         if (key) {
             if (data === undefined) {
-                remove(key);
+                this.remove(key);
             }
             else {
-                root = nodePut(root, key, data, conflict);
-                root.color = Color.BLACK;
+                this.root = this.nodePut(this.root, key, data, conflict);
+                this.root.color = Color.BLACK;
             }
         }
     }
-    function nodePut(node: Node, key: TKey, data: TData, conflict?: Base.ConflictAction<TKey, TData>) {
+    nodePut(node: Node<TKey, TData>, key: TKey, data: TData, conflict?: Base.ConflictAction<TKey, TData>) {
         if (!node) {
-            return makeNode(key, data, Color.RED, 1);
+            return this.makeNode(key, data, Color.RED, 1);
         }
         else {
-            let cmp = compareKeys(key, node.key);
+            let cmp = this.compareKeys(key, node.key);
             if (cmp < 0) {
-                node.left = nodePut(node.left, key, data, conflict);
+                node.left = this.nodePut(node.left, key, data, conflict);
             }
             else if (cmp > 0) {
-                node.right = nodePut(node.right, key, data, conflict);
+                node.right = this.nodePut(node.right, key, data, conflict);
             }
             else {
                 if (conflict) {
-                    node.data=conflict(key, node.data, data);
+                    node.data = conflict(key, node.data, data);
                 }
                 else {
                     node.data = data;
                 }
             }
-            if (isRed(node.right) && (!isRed(node.left))) {
-                node = rotateLeft(node);
+            if (this.isRed(node.right) && (!this.isRed(node.left))) {
+                node = this.rotateLeft(node);
             }
-            if (isRed(node.left) && isRed(node.left.left)) {
-                node = rotateRight(node);
+            if (this.isRed(node.left) && this.isRed(node.left.left)) {
+                node = this.rotateRight(node);
             }
-            if (isRed(node.left) && isRed(node.right)) {
-                flipColors(node);
+            if (this.isRed(node.left) && this.isRed(node.right)) {
+                this.flipColors(node);
             }
-            node.size = nodeSize(node.left) + nodeSize(node.right) + 1;
+            node.size = this.nodeSize(node.left) + this.nodeSize(node.right) + 1;
 
             return node;
         }
     }
-    function removeMin() {
-        if (!isEmpty()) {
-            if ((!isRed(root.left)) && (!isRed(root.right))) {
-                root.color = Color.RED;
+    removeMin() {
+        if (!this.isEmpty()) {
+            if ((!this.isRed(this.root.left)) && (!this.isRed(this.root.right))) {
+                this.root.color = Color.RED;
             }
 
-            root = nodeRemoveMin(root);
-            if (!isEmpty()) {
-                root.color = Color.BLACK;
+            this.root = this.nodeRemoveMin(this.root);
+            if (!this.isEmpty()) {
+                this.root.color = Color.BLACK;
             }
         }
         // TODO: error on empty
     }
-    function nodeRemoveMin(node: Node) {
+    nodeRemoveMin(node: Node<TKey, TData>) {
         if (node.left) {
-            if ((!isRed(node.left)) && (!isRed(node.left.left))) {
-                node = moveRedLeft(node);
+            if ((!this.isRed(node.left)) && (!this.isRed(node.left.left))) {
+                node = this.moveRedLeft(node);
             }
 
-            node.left = nodeRemoveMin(node.left);
-            return balance(node);
+            node.left = this.nodeRemoveMin(node.left);
+            return this.balance(node);
         }
     }
 
-    function removeMax() {
-        if (isEmpty()) {
-            if ((!isRed(root.left)) && (!isRed(root.right))) {
-                root.color = Color.RED;
+    removeMax() {
+        if (this.isEmpty()) {
+            if ((!this.isRed(this.root.left)) && (!this.isRed(this.root.right))) {
+                this.root.color = Color.RED;
             }
 
-            root = nodeRemoveMax(root);
-            if (!isEmpty()) {
-                root.color = Color.BLACK;
+            this.root = this.nodeRemoveMax(this.root);
+            if (!this.isEmpty()) {
+                this.root.color = Color.BLACK;
             }
         }
         // TODO: error on empty
     }
 
-    function nodeRemoveMax(node: Node) {
-        if (isRed(node.left)) {
-            node = rotateRight(node);
+    nodeRemoveMax(node: Node<TKey, TData>) {
+        if (this.isRed(node.left)) {
+            node = this.rotateRight(node);
         }
 
         if (!node.right) {
             return undefined;
         }
 
-        if ((!isRed(node.right)) && (!isRed(node.right.left))) {
-            node = moveRedRight(node);
+        if ((!this.isRed(node.right)) && (!this.isRed(node.right.left))) {
+            node = this.moveRedRight(node);
         }
 
-        node.right = nodeRemoveMax(node.right);
+        node.right = this.nodeRemoveMax(node.right);
 
-        return balance(node);
+        return this.balance(node);
     }
 
-    function remove(key: TKey) {
+    remove(key: TKey) {
         if (key) {
-            if (!contains(key)) {
+            if (!this.contains(key)) {
                 return;
             }
 
-            if ((!isRed(root.left)) && (!isRed(root.right))) {
-                root.color = Color.RED;
+            if ((!this.isRed(this.root.left)) && (!this.isRed(this.root.right))) {
+                this.root.color = Color.RED;
             }
 
-            root = nodeRemove(root, key);
+            this.root = this.nodeRemove(this.root, key);
         }
         // TODO: error on undefined key
     }
 
-    function nodeRemove(node: Node, key: TKey) {
-        if (compareKeys(key, node.key) < 0) {
-            if ((!isRed(node.left)) && (!isRed(node.left.left))) {
-                node = moveRedLeft(node);
+    nodeRemove(node: Node<TKey, TData>, key: TKey) {
+        if (this.compareKeys(key, node.key) < 0) {
+            if ((!this.isRed(node.left)) && (!this.isRed(node.left.left))) {
+                node = this.moveRedLeft(node);
             }
-            node.left = nodeRemove(node.left, key);
+            node.left = this.nodeRemove(node.left, key);
         }
         else {
-            if (isRed(node.left)) {
-                node = rotateRight(node);
+            if (this.isRed(node.left)) {
+                node = this.rotateRight(node);
             }
-            if ((compareKeys(key, node.key) == 0) && (!node.right)) {
+            if ((this.compareKeys(key, node.key) == 0) && (!node.right)) {
                 return undefined;
             }
-            if ((!isRed(node.right)) && (!isRed(node.right.left))) {
-                node = moveRedRight(node);
+            if ((!this.isRed(node.right)) && (!this.isRed(node.right.left))) {
+                node = this.moveRedRight(node);
             }
-            if (compareKeys(key, node.key) == 0) {
-                let subtreeMin = nodeMin(node.right);
+            if (this.compareKeys(key, node.key) == 0) {
+                let subtreeMin = this.nodeMin(node.right);
                 node.key = subtreeMin.key;
                 node.data = subtreeMin.data;
-                node.right = nodeRemoveMin(node.right);
+                node.right = this.nodeRemoveMin(node.right);
             }
             else {
-                node.right = nodeRemove(node.right, key);
+                node.right = this.nodeRemove(node.right, key);
             }
         }
-        return balance(node);
+        return this.balance(node);
     }
-    function height() {
-        return nodeHeight(root);
+    height() {
+        return this.nodeHeight(this.root);
     }
-    function nodeHeight(node: Node) {
+    nodeHeight(node: Node<TKey, TData>) {
         if (node === undefined) {
             return -1;
         }
         else {
-            return 1 + Math.max(nodeHeight(node.left), nodeHeight(node.right));
+            return 1 + Math.max(this.nodeHeight(node.left), this.nodeHeight(node.right));
         }
     }
-    function min() {
-        if (!isEmpty()) {
-            return nodeMin(root);
+    min() {
+        if (!this.isEmpty()) {
+            return this.nodeMin(this.root);
         }
         // TODO: error on empty
     }
-    function nodeMin(node: Node): Node {
+    nodeMin(node: Node<TKey, TData>): Node<TKey, TData> {
         if (!node.left) {
             return node;
         }
         else {
-            return nodeMin(node.left);
+            return this.nodeMin(node.left);
         }
     }
-    function max() {
-        if (!isEmpty()) {
-            return nodeMax(root);
+    max() {
+        if (!this.isEmpty()) {
+            return this.nodeMax(this.root);
         }
         // TODO: error on empty
     }
-    function nodeMax(node: Node): Node {
+    nodeMax(node: Node<TKey, TData>): Node<TKey, TData> {
         if (!node.right) {
             return node;
         }
         else {
-            return nodeMax(node.right);
+            return this.nodeMax(node.right);
         }
     }
-    function rotateRight(node: Node) {
+    rotateRight(node: Node<TKey, TData>) {
         let leftChild = node.left;
         node.left = leftChild.right;
         leftChild.right = node;
         leftChild.color = leftChild.right.color;
         leftChild.right.color = Color.RED;
         leftChild.size = node.size;
-        node.size = nodeSize(node.left) + nodeSize(node.right) + 1;
+        node.size = this.nodeSize(node.left) + this.nodeSize(node.right) + 1;
         return leftChild;
     }
 
-    function rotateLeft(node: Node) {
+    rotateLeft(node: Node<TKey, TData>) {
         let rightChild = node.right;
         node.right = rightChild.left;
         rightChild.left = node;
         rightChild.color = rightChild.left.color;
         rightChild.left.color = Color.RED;
         rightChild.size = node.size;
-        node.size = nodeSize(node.left) + nodeSize(node.right) + 1;
+        node.size = this.nodeSize(node.left) + this.nodeSize(node.right) + 1;
         return rightChild;
     }
 
-    function oppositeColor(c: Color) {
+    oppositeColor(c: Color) {
         return (c == Color.BLACK) ? Color.RED : Color.BLACK;
     }
 
-    function flipColors(node: Node) {
-        node.color = oppositeColor(node.color);
-        node.left.color = oppositeColor(node.left.color);
-        node.right.color = oppositeColor(node.right.color);
+    flipColors(node: Node<TKey, TData>) {
+        node.color = this.oppositeColor(node.color);
+        node.left.color = this.oppositeColor(node.left.color);
+        node.right.color = this.oppositeColor(node.right.color);
     }
 
-    function moveRedLeft(node: Node) {
-        flipColors(node);
-        if (isRed(node.right.left)) {
-            node.right = rotateRight(node.right);
-            node = rotateLeft(node);
-            flipColors(node);
+    moveRedLeft(node: Node<TKey, TData>) {
+        this.flipColors(node);
+        if (this.isRed(node.right.left)) {
+            node.right = this.rotateRight(node.right);
+            node = this.rotateLeft(node);
+            this.flipColors(node);
         }
         return node;
     }
 
-    function moveRedRight(node: Node) {
-        flipColors(node);
-        if (isRed(node.left.left)) {
-            node = rotateRight(node);
-            flipColors(node);
+    moveRedRight(node: Node<TKey, TData>) {
+        this.flipColors(node);
+        if (this.isRed(node.left.left)) {
+            node = this.rotateRight(node);
+            this.flipColors(node);
         }
         return node;
     }
 
-    function balance(node: Node) {
-        if (isRed(node.right)) {
-            node = rotateLeft(node);
+    balance(node: Node<TKey, TData>) {
+        if (this.isRed(node.right)) {
+            node = this.rotateLeft(node);
         }
-        if (isRed(node.left) && isRed(node.left.left)) {
-            node = rotateRight(node);
+        if (this.isRed(node.left) && this.isRed(node.left.left)) {
+            node = this.rotateRight(node);
         }
-        if (isRed(node.left) && (isRed(node.right))) {
-            flipColors(node);
+        if (this.isRed(node.left) && (this.isRed(node.right))) {
+            this.flipColors(node);
         }
-        node.size = nodeSize(node.left) + nodeSize(node.right) + 1;
+        node.size = this.nodeSize(node.left) + this.nodeSize(node.right) + 1;
         return node;
     }
 
-    function mapRange(action: Base.PropertyAction<TKey, TData>, start?: TKey, end?: TKey) {
-        nodeMap(root, action, start, end);
+    mapRange(action: Base.PropertyAction<TKey, TData>, start?: TKey, end?: TKey) {
+        this.nodeMap(this.root, action, start, end);
     }
 
-    function map<TAccum>(action: Base.PropertyAction<TKey, TData>, accum?: TAccum) {
+    map<TAccum>(action: Base.PropertyAction<TKey, TData>, accum?: TAccum) {
         // TODO: optimize to avoid comparisons
-        nodeMap(root, action, accum);
+        this.nodeMap(this.root, action, accum);
     }
 
-    function nodeMap<TAccum>(node: Node, action: Base.PropertyAction<TKey, TData>,
+    nodeMap<TAccum>(node: Node<TKey, TData>, action: Base.PropertyAction<TKey, TData>,
         accum?: TAccum, start?: TKey, end?: TKey) {
         if (!node) {
             return true;
         }
         if (start === undefined) {
-            start = nodeMin(node).key;
+            start = this.nodeMin(node).key;
         }
         if (end === undefined) {
-            end = nodeMax(node).key;
+            end = this.nodeMax(node).key;
         }
-        let cmpStart = compareKeys(start, node.key);
-        let cmpEnd = compareKeys(end, node.key);
+        let cmpStart = this.compareKeys(start, node.key);
+        let cmpEnd = this.compareKeys(end, node.key);
         let go = true;
         if (cmpStart < 0) {
-            go = nodeMap(node.left, action, accum, start, end);
+            go = this.nodeMap(node.left, action, accum, start, end);
         }
         if (go && (cmpStart <= 0) && (cmpEnd >= 0)) {
             go = action(node, accum);
         }
         if (go && (cmpEnd > 0)) {
-            go = nodeMap(node.right, action, accum, start, end);
+            go = this.nodeMap(node.right, action, accum, start, end);
         }
         return go;
     }
-    function diag() {
-        console.log(`Height is ${height()}`);
-    }
-    return {
-        min: min,
-        max: max,
-        map: map,
-        mapRange: mapRange,
-        remove: remove,
-        get: get,
-        put: put,
-        diag: diag
+    diag() {
+        console.log(`Height is ${this.height()}`);
     }
 }

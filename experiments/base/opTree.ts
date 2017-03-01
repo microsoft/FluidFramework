@@ -18,9 +18,14 @@ export interface TextSegmentTree {
 export interface TextSegment {
     parent?: TextSegmentBlock;
     child?: TextSegmentBlock;
+    // below only for leaves
     text?: string;
     markers?: TextMarker[];
+    seq?: number;  // if not present assumed to be previous to window min
+    clientId?: number;
+    removed?: boolean;
 }
+
 // list of text segments
 export interface TextSegmentBlock {
     liveSegmentCount: number;
@@ -68,7 +73,7 @@ export interface TextSegmentAction {
 // this is specialized to text; can generalize to Interval<TContent>
 // represents a sequence of text segments; each text 
 // segment can have distinct attributes; 
-export function IntervalSpanningTree(text: string): TextSegmentTree {
+export function OpTree(text: string): TextSegmentTree {
     // should be a power of 2
     const MaxSegments = 4;
     function makeNode(liveSegmentCount: number) {

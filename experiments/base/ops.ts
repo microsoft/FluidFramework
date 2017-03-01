@@ -108,7 +108,7 @@ function editFlat(source: string, s: number, dl: number, nt = "") {
     return post;
 }
 
-function multiTransform(localOps: Op[], localOpsOut:Op[], serverOp: Op, opsOut: Op[],prior: boolean) {
+function multiTransform(localOps: Op[], serverOp: Op, opsOut: Op[],prior: boolean) {
     let outputOps = [serverOp]
     let inputOps = <Op[]>[];
     for (let i = 0, len = localOps.length; i < len; i++) {
