@@ -226,7 +226,10 @@ export function IntervalSpanningTree(text: string): TextSegmentTree {
         if (pos > 0) {
             let remainingText = segment.text.substring(pos);
             segment.text = segment.text.substring(0, pos);
-            return makeLeafSegment(segment.parent, remainingText);
+            // TODO: split markers
+            let otherSegment = copyLeafSegment(segment);
+            otherSegment.text = remainingText;
+            return otherSegment;
         }
     }
 

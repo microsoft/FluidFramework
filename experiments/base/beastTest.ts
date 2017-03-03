@@ -247,19 +247,68 @@ function checkRemove(itree: ITree.TextSegmentTree, start: number, end: number, v
     return result;
 }
 
+function checkInsertOpTree(opTree: OpTree.TextSegmentTree, pos: number, textSegment: ITree.TextSegment,
+    verbose = false) {
+    let checkText = opTree.getText();
+    checkText = editFlat(checkText, pos, 0, textSegment.text);
+    let clockStart = clock();
+    opTree.insertInterval(pos, textSegment);
+    accumTime += elapsedMicroseconds(clockStart);
+    let updatedText = opTree.getText();
+    let result = (checkText == updatedText);
+    if ((!result) && verbose) {
+        console.log(`mismatch(o): ${checkText}`);
+        console.log(`mismatch(u): ${updatedText}`);
+    }
+    return result;
+}
+
+function checkRemoveOpTree(opTree: OpTree.TextSegmentTree, start: number, end: number, verbose = false) {
+    let origText = opTree.getText();
+    let checkText = editFlat(origText, start, end - start);
+    let clockStart = clock();
+    opTree.removeRange(start, end);
+    accumTime += elapsedMicroseconds(clockStart);
+    let updatedText = opTree.getText();
+    let result = (checkText == updatedText);
+    if ((!result) && verbose) {
+        console.log(`mismatch(o): ${origText}`);
+        console.log(`mismatch(c): ${checkText}`);
+        console.log(`mismatch(u): ${updatedText}`);
+    }
+    return result;
+}
+
+function checkMarkRemoveOpTree(opTree: OpTree.TextSegmentTree, start: number, end: number, verbose = false) {
+    let origText = opTree.getText();
+    let checkText = editFlat(origText, start, end - start);
+    let clockStart = clock();
+    opTree.markRangeRemoved(start, end, 1, 1);
+    accumTime += elapsedMicroseconds(clockStart);
+    let updatedText = opTree.getText();
+    let result = (checkText == updatedText);
+    if ((!result) && verbose) {
+        console.log(`mismatch(o): ${origText}`);
+        console.log(`mismatch(c): ${checkText}`);
+        console.log(`mismatch(u): ${updatedText}`);
+    }
+    return result;
+}
+
 function opTreeTest1() {
     let opTree = OpTree.OpTree("the cat is on the mat");
-    opTree.map(printTextSegment);
+    opTree.map({ leaf: printTextSegment });
 
-    let fuzzySeg = makeTextSegment("fuzzy, fuzzy");
-    checkInsert(opTree, 4, fuzzySeg);
-    fuzzySeg = makeTextSegment("fuzzy, fuzzy");
-    checkInsert(opTree, 4, fuzzySeg);
-    checkRemove(opTree, 4, 13);
-    checkInsert(opTree, 4, makeTextSegment("fi"));
-    opTree.map(printTextSegment);
+    let fuzzySeg = makeTextSegment("fuzzy, fuzzy ");
+    checkInsertOpTree(opTree, 4, fuzzySeg);
+    fuzzySeg = makeTextSegment("fuzzy, fuzzy ");
+    checkInsertOpTree(opTree, 4, fuzzySeg);
+    checkMarkRemoveOpTree(opTree, 4, 13);
+    checkInsertOpTree(opTree, 4, makeTextSegment("fi"));
+    opTree.map({ leaf: printTextSegment });
     let segment = opTree.getContainingSegment(4);
     console.log(opTree.getOffset(segment));
+    console.log(opTree.getText());
 }
 
 function opTreeLargeTest() {
@@ -355,7 +404,7 @@ function opTreeCheckedTest() {
         let s = randomString(slen, String.fromCharCode(48 + slen));
         let preLen = opTree.getLength();
         let pos = random.integer(0, preLen)(mt);
-        if (!checkInsert(opTree, pos, makeTextSegment(s), true)) {
+        if (!checkInsertOpTree(opTree, pos, makeTextSegment(s), true)) {
             console.log(`i: ${i} preLen ${preLen} pos: ${pos} slen: ${slen} s: ${s} itree len: ${opTree.getLength()}`);
             console.log(opTree.toString());
             break;
@@ -376,7 +425,7 @@ function opTreeCheckedTest() {
         let preLen = opTree.getLength();
         let pos = random.integer(0, preLen)(mt);
         // console.log(itree.toString());
-        if (!checkRemove(opTree, pos, pos + dlen, true)) {
+        if (!checkRemoveOpTree(opTree, pos, pos + dlen, true)) {
             console.log(`i: ${i} preLen ${preLen} pos: ${pos} dlen: ${dlen} itree len: ${opTree.getLength()}`);
             console.log(opTree.toString());
             break;
@@ -397,10 +446,20 @@ function opTreeCheckedTest() {
         let preLen = opTree.getLength();
         let pos = random.integer(0, preLen)(mt);
         // console.log(itree.toString());
-        if (!checkRemove(opTree, pos, pos + dlen, true)) {
-            console.log(`i: ${i} preLen ${preLen} pos: ${pos} dlen: ${dlen} itree len: ${opTree.getLength()}`);
-            console.log(opTree.toString());
-            break;
+        if (i & 1) {
+            if (!checkRemoveOpTree(opTree, pos, pos + dlen, true)) {
+                console.log(`i: ${i} preLen ${preLen} pos: ${pos} dlen: ${dlen} itree len: ${opTree.getLength()}`);
+                console.log(opTree.toString());
+                break;
+            }
+        }
+        else {
+            if (!checkMarkRemoveOpTree(opTree, pos, pos + dlen, true)) {
+                console.log(`i: ${i} preLen ${preLen} pos: ${pos} dlen: ${dlen} itree len: ${opTree.getLength()}`);
+                console.log(opTree.toString());
+                break;
+            }
+
         }
         if ((i > 0) && (0 == (i % 1000))) {
             let perIter = (accumTime / (i + 1)).toFixed(3);
@@ -580,12 +639,12 @@ function itreeCheckedTest() {
 
 }
 
-simpleTest();
-fileTest1();
-integerTest1();
+//simpleTest();
+//fileTest1();
+//integerTest1();
 //itreeTest1();
 //itreeLargeTest();
 //itreeCheckedTest();
-//opTreeTest1();
+opTreeTest1();
 //opTreeLargeTest();
 //opTreeCheckedTest();

@@ -1,11 +1,26 @@
 /// <reference path="base.d.ts" />
 
+export interface TextSegmentAction {
+    <TAccum>(textSegment: TextSegment, pos: number, start: number, end: number, accum?: TAccum): boolean;
+}
+
+export interface TextSegmentBlockAction {
+    <TAccum>(textSegmentBlock: TextSegmentBlock, pos: number, start: number, end: number, accum?: TAccum): boolean;
+}
+
+export interface TextSegmentActions {
+    leaf: TextSegmentAction;
+    pre?: TextSegmentBlockAction;
+    post?: TextSegmentBlockAction;
+}
+
 export interface TextSegmentTree {
-    map<TAccum>(action: TextSegmentAction, accum?: TAccum);
-    mapRange<TAccum>(action: TextSegmentAction, accum?: TAccum, start?: number, end?: number);
+    map<TAccum>(actions: TextSegmentActions, accum?: TAccum);
+    mapRange<TAccum>(actions: TextSegmentActions, accum?: TAccum, start?: number, end?: number);
     ensureIntervalBoundary(pos: number);
     insertInterval(pos: number, textSegment: TextSegment);
     removeRange(start: number, end: number);
+    markRangeRemoved(start: number, end: number, sequenceNumber: number, clientId: number);
     getContainingSegment(pos: number): TextSegment;
     createMarker(pos: number): TextMarker;
     getOffset(entry: TextSegment): number;
@@ -23,7 +38,8 @@ export interface TextSegment {
     markers?: TextMarker[];
     seq?: number;  // if not present assumed to be previous to window min
     clientId?: number;
-    removed?: boolean;
+    removedSeq?: number;
+    removedClientId?: number;
 }
 
 // list of text segments
@@ -44,10 +60,19 @@ function makeInternalSegment(parent: TextSegmentBlock, child: TextSegmentBlock) 
     return <TextSegment>{ parent: parent, child: child };
 }
 
-function makeLeafSegment(parent: TextSegmentBlock, text: string) {
-    return <TextSegment>{ parent: parent, text: text};
+function makeLeafSegment(parent: TextSegmentBlock, text: string, sequenceNumber?: number, clientId?: number,
+    removedSeq?: number, removedClientId?: number) {
+    return <TextSegment>{
+        parent: parent,
+        text: text,
+        seq: sequenceNumber,
+        clientId: clientId,
+        removedSeq: removedSeq,
+        removedClientId: removedClientId
+    };
 }
 
+// add pos so can split markers
 function copyLeafSegment(textSegment: TextSegment) {
     function migrateMarkers(segment: TextSegment, markers?: TextMarker[]) {
         if (markers) {
@@ -57,7 +82,11 @@ function copyLeafSegment(textSegment: TextSegment) {
     let newSegment = <TextSegment>{
         parent: textSegment.parent,
         text: textSegment.text,
-        markers: textSegment.markers
+        markers: textSegment.markers,
+        removedClientId: textSegment.removedClientId,
+        removedSeq: textSegment.removedSeq,
+        seq: textSegment.seq,
+        clientId: textSegment.clientId
     };
     if (newSegment.markers) {
         for (let i = 0, len = newSegment.markers.length; i < len; i++) {
@@ -67,9 +96,6 @@ function copyLeafSegment(textSegment: TextSegment) {
     return newSegment;
 }
 
-export interface TextSegmentAction {
-    <TAccum>(textSegment: TextSegment, pos: number, start: number, end: number, accum?: TAccum): boolean;
-}
 // this is specialized to text; can generalize to Interval<TContent>
 // represents a sequence of text segments; each text 
 // segment can have distinct attributes; 
@@ -116,8 +142,11 @@ export function OpTree(text: string): TextSegmentTree {
     }
 
     // TODO: handle start and end positions
+    // TODO: discriminate by sequence number
     function gatherText(textSegment: TextSegment, pos: number, start: number, end: number, accumText: TextSegment) {
-        accumText.text += textSegment.text;
+        if (textSegment.removedSeq === undefined) {
+            accumText.text += textSegment.text;
+        }
         return true;
     }
 
@@ -129,7 +158,7 @@ export function OpTree(text: string): TextSegmentTree {
             end = root.length;
         }
         let accum = <TextSegment>{ text: "" };
-        mapRange(gatherText, accum, start, end);
+        mapRange({ leaf: gatherText }, accum, start, end);
         return accum.text;
     }
 
@@ -157,7 +186,12 @@ export function OpTree(text: string): TextSegmentTree {
             return segment.child.length;
         }
         else {
-            return segment.text.length;
+            if (segment.removedSeq) {
+                return 0;
+            }
+            else {
+                return segment.text.length;
+            }
         }
     }
 
@@ -314,6 +348,22 @@ export function OpTree(text: string): TextSegmentTree {
         return newNode;
     }
 
+    function markRangeRemoved(start: number, end: number, sequenceNumber: number, clientId: number) {
+        ensureIntervalBoundary(start);
+        ensureIntervalBoundary(end);
+        console.log(toString());
+        function markRemoved(textSegment: TextSegment, pos: number, start: number, end: number) {
+            textSegment.removedClientId = clientId;
+            textSegment.removedSeq = sequenceNumber;
+            return true;
+        }
+        function afterMarkRemoved(node: TextSegmentBlock, pos: number, start: number, end: number) {
+            nodeUpdateLength(node);
+            return true;
+        }
+        mapRange({ leaf: markRemoved, post: afterMarkRemoved }, undefined, start, end);
+    }
+
     function removeRange(start: number, end: number) {
         nodeRemoveRange(root, start, end);
     }
@@ -390,13 +440,13 @@ export function OpTree(text: string): TextSegmentTree {
         node.length = len;
     }
 
-    function map<TAccum>(action: TextSegmentAction, accum?: TAccum) {
+    function map<TAccum>(actions: TextSegmentActions, accum?: TAccum) {
         // TODO: optimize to avoid comparisons
-        nodeMap(root, action, 0, accum);
+        nodeMap(root, actions, 0, accum);
     }
 
-    function mapRange<TAccum>(action: TextSegmentAction, accum?: TAccum, start?: number, end?: number) {
-        nodeMap(root, action, 0, accum, start, end);
+    function mapRange<TAccum>(actions: TextSegmentActions, accum?: TAccum, start?: number, end?: number) {
+        nodeMap(root, actions, 0, accum, start, end);
     }
 
     let indentStrings = ["", " ", "  "];
@@ -433,7 +483,7 @@ export function OpTree(text: string): TextSegmentTree {
         return strbuf;
     }
 
-    function nodeMap<TAccum>(node: TextSegmentBlock, action: TextSegmentAction, pos: number,
+    function nodeMap<TAccum>(node: TextSegmentBlock, actions: TextSegmentActions, pos: number,
         accum?: TAccum, start?: number, end?: number) {
         if (start === undefined) {
             start = 0;
@@ -450,10 +500,18 @@ export function OpTree(text: string): TextSegmentTree {
                 // found entry containing pos
                 if (segment.child) {
                     // internal node
-                    go = nodeMap(segment.child, action, pos, accum, start, end);
+                    if (actions.pre) {
+                        go = actions.pre(segment.child, pos, start, end, accum);
+                    }
+                    if (go) {
+                        go = nodeMap(segment.child, actions, pos, accum, start, end);
+                    }
+                    if (go && actions.post) {
+                        go = actions.post(segment.child, pos, start, end, accum);
+                    }
                 }
                 else {
-                    go = action(segment, pos, start, end, accum);
+                    go = actions.leaf(segment, pos, start, end, accum);
                 }
             }
             pos += len;
@@ -474,6 +532,7 @@ export function OpTree(text: string): TextSegmentTree {
         ensureIntervalBoundary: ensureIntervalBoundary,
         insertInterval: insertInterval,
         removeRange: removeRange,
+        markRangeRemoved: markRangeRemoved,
         getText: getText,
         getLength: getLength,
         createMarker: createMarker,
