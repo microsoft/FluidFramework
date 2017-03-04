@@ -299,6 +299,34 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
             return 1 + Math.max(this.nodeHeight(node.left), this.nodeHeight(node.right));
         }
     }
+
+    floor(key: TKey) {
+        if (!this.isEmpty()) {
+            return this.nodeFloor(this.root, key);
+        }
+    }
+
+    nodeFloor(node: Node<TKey, TData>, key: TKey) {
+        if (node) {
+            let cmp = this.compareKeys(key, node.key);
+            if (cmp == 0) {
+                return node;
+            }
+            else if (cmp < 0) {
+                return this.nodeFloor(node.left, key);
+            }
+            else {
+                let rightFloor = this.nodeFloor(node.right, key);
+                if (rightFloor) {
+                    return rightFloor;
+                }
+                else {
+                    return node;
+                }
+            }
+        }
+    }
+
     min() {
         if (!this.isEmpty()) {
             return this.nodeMin(this.root);
