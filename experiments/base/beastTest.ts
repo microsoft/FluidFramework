@@ -697,6 +697,6 @@ function itreeCheckedTest() {
 //itreeTest1();
 //itreeLargeTest();
 //itreeCheckedTest();
-opTreeTest1();
+//opTreeTest1();
 //opTreeLargeTest();
-opTreeCheckedTest();
+//opTreeCheckedTest();

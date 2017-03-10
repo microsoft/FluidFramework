@@ -59,23 +59,132 @@ export interface TextMarker {
 export const AnySequenceNumber = -1;
 export const AnyClientId = -1;
 
-interface PartialTextLength {
-    sequenceNumber: number;
-    clientId: number;
-    length: number;
+interface PartialLength {
+    seq: number;
+    partialLength: number;
+    clientId?: number;
 }
 
-function compareNumbers(a: number, b: number) {
-    return a - b;
+/**
+ * Returns the partial length whose sequence number is 
+ * the greatest sequence number within a that is
+ * less than or equal to key.
+ * @param a array of partial segment lenghts
+ * @param key sequence number
+ */
+function maxLEQ(a: PartialLength[], key: number) {
+    let best = -1;
+    let lo = 0;
+    let hi = a.length - 1;
+    while (lo <= hi) {
+        let mid = lo + Math.floor((hi - lo) / 2);
+        if (a[mid].seq <= key) {
+            if ((best < 0) || (a[best].seq < a[mid].seq)) {
+                best = mid;
+            }
+            lo = mid + 1;
+        }
+        else {
+            hi = mid - 1;
+        }
+    }
+    return best;
 }
 
 class PartialTextLengths {
-    lengths = new RedBlack.RedBlackTree<number, PartialTextLength>(compareNumbers);
-    addSegment(textSegment: TextSegment) {
-        let node = this.lengths.get(textSegment.seq);
-        if (node) {
-            let partial = node.data;
-            partial.length += textSegment.text.length;
+    minLength = 0;
+    partialLengths: PartialLength[] = [];
+    clientSeqNumbers: PartialLength[][] = [];
+
+    cliLatestLEQ(clientId: number, refSeq: number) {
+        let cliSeqs = this.clientSeqNumbers[clientId];
+        if (cliSeqs) {
+            return maxLEQ(cliSeqs, refSeq);
+        }
+        else {
+            return -1;
+        }
+    }
+
+    cliLatest(clientId: number) {
+        let cliSeqs = this.clientSeqNumbers[clientId];
+        if (cliSeqs && (cliSeqs.length > 0)) {
+            return cliSeqs.length - 1;
+        }
+        else {
+            return -1;
+        }
+    }
+
+    get(refSeq: number, clientId: number) {
+        let pLen = this.minLength;
+        let seqIndex = maxLEQ(this.partialLengths, refSeq);
+        let cliLatestindex = this.cliLatest(clientId);
+        let cliSeq = this.clientSeqNumbers[clientId];
+        let cliLatest = cliSeq[cliLatestindex];
+        if (seqIndex > 0) {
+            pLen += this.partialLengths[seqIndex].partialLength;
+            if (cliLatestindex >= 0) {
+                if (cliLatest.seq > refSeq) {
+                    pLen += cliLatest.partialLength;
+                    let precedingCliIndex = this.cliLatestLEQ(clientId, refSeq - 1);
+                    if (precedingCliIndex >= 0) {
+                        pLen -= cliSeq[precedingCliIndex].partialLength;
+                    }
+                }
+            }
+        }
+        else {
+            if (cliLatestindex >= 0) {
+                pLen += cliLatest.partialLength;
+            }
+        }
+        return pLen;
+    }
+
+    addClientSeqNumber(clientId: number, seq: number, segmentLengths: number[]) {
+        if (this.clientSeqNumbers[clientId] === undefined) {
+            this.clientSeqNumbers[clientId] = [];
+        }
+        let cli = this.clientSeqNumbers[clientId];
+        let pLen = segmentLengths[seq];
+        if (cli.length > 0) {
+            pLen += cli[cli.length - 1].partialLength;
+        }
+        cli.push({ seq: seq, partialLength: pLen });
+    }
+
+    combine(b: PartialTextLengths, segmentLengths: number[]) {
+        let c = new PartialTextLengths();
+        let i = 0, j = 0;
+        let aLen = this.partialLengths.length;
+        let bLen = b.partialLengths.length;
+        let prevLen = 0;
+        function addNext(partialLength: PartialLength) {
+            let seq = partialLength.seq;
+            let pLen = segmentLengths[seq] + prevLen;
+            prevLen = pLen;
+            c.partialLengths.push({
+                seq: seq,
+                clientId: partialLength.clientId,
+                partialLength: pLen
+            });
+            c.addClientSeqNumber(partialLength.clientId, seq, segmentLengths);
+        }
+        while ((i < aLen) && (j < bLen)) {
+            if (this.partialLengths[i].seq < b.partialLengths[j].seq) {
+                addNext(this.partialLengths[i++]);
+            }
+            else {
+                addNext(b.partialLengths[j++])
+            }
+        }
+
+        while (i < aLen) {
+            addNext(this.partialLengths[i++]);
+        }
+        while (j < bLen) {
+            addNext(b.partialLengths[j++]);
         }
     }
 }
@@ -297,7 +406,7 @@ export function OpTree(text: string): TextSegmentOpTree {
     }
 
     function insertingWalk(node: TextSegmentBlock, pos: number, refSeq: number, clientId: number,
-                          leafAction: (segment: TextSegment, pos: number) => TextSegment) {
+        leafAction: (segment: TextSegment, pos: number) => TextSegment) {
         let segments = node.segments;
         let segmentIndex: number;
         let segment: TextSegment;
@@ -506,7 +615,7 @@ export function OpTree(text: string): TextSegmentOpTree {
     }
 
     function nodeMap<TAccum>(node: TextSegmentBlock, actions: TextSegmentActions, pos: number, refSeq: number,
-                             clientId: number, accum?: TAccum, start?: number, end?: number) {
+        clientId: number, accum?: TAccum, start?: number, end?: number) {
         if (start === undefined) {
             start = 0;
         }
