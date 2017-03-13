@@ -1,5 +1,4 @@
 /// <reference path="base.d.ts" />
-import * as RedBlack from "./redBlack";
 
 export interface TextSegmentAction {
     <TAccum>(textSegment: TextSegment, pos: number, refSeq: number, clientId: number, start: number, end: number, accum?: TAccum): boolean;
@@ -15,15 +14,15 @@ export interface TextSegmentActions {
     post?: TextSegmentBlockAction;
 }
 
-export interface TextSegmentOpTree {
+export interface SegmentTree {
     map<TAccum>(actions: TextSegmentActions, refSeq: number, clientId: number, accum?: TAccum);
     mapRange<TAccum>(actions: TextSegmentActions, refSeq: number, clientId: number, accum?: TAccum, start?: number, end?: number);
     ensureIntervalBoundary(pos: number, refSeq: number, clientId: number);
-    insertInterval(pos: number, refSeq: number, clientId: number, textSegment: TextSegment);
-    removeRange(start: number, end: number, refSeq: number, clientId: number);
-    markRangeRemoved(start: number, end: number, refSeq: number, clientId: number);
+    insertInterval(pos: number, refSeq: number, clientId: number, seq: number, textSegment: TextSegment);
+    removeRange(start: number, end: number, refSeq: number, seq: number, clientId: number);
+    markRangeRemoved(start: number, end: number, refSeq: number, clientId: number, seq: number);
     getContainingSegment(pos: number, refSeq: number, clientId: number): TextSegment;
-    createMarker(pos: number, refSeq: number, clientId: number): TextMarker;
+    createMarker(pos: number, refSeq: number, clientId: number, seq: number): TextMarker;
     getOffset(entry: TextSegment, refSeq: number, clientId: number): number;
     getText(refSeq: number, clientId: number, start?: number, end?: number): string;
     getLength(refSeq: number, clientId: number): number;
@@ -46,8 +45,9 @@ export interface TextSegment {
 // list of text segments
 export interface TextSegmentBlock {
     liveSegmentCount: number;
-    length: number;
     segments: TextSegment[];
+    length: number;
+    partialLengths?: PartialSequenceLengths;
     parent?: TextSegmentBlock;
 }
 
@@ -56,23 +56,48 @@ export interface TextMarker {
     offset: number;
 }
 
-export const AnySequenceNumber = -1;
-export const AnyClientId = -1;
+/**
+ * Sequence numbers for collaborative segments start at 1 or greater.  Every segment marked
+ * with sequence number zero will be counted as part of the requested string.
+ */
+export const UniversalSequenceNumber = 0;
+export const UnassignedSequenceNumber = -1;
+export const UnassignedClientId = -1;
 
-interface PartialLength {
+interface PartialSequenceLength {
     seq: number;
     partialLength: number;
     clientId?: number;
+}
+
+class SegmentWindow {
+    clientId = UnassignedClientId;
+
+    collaborating = false;
+    // lowest-numbered segment in window; no client can reference a state before this one
+    minSeq = 0;
+    // highest-numbered segment in window and current 
+    // reference segment for this client
+    currentSeq = 0;
+}
+
+function leafSegmentTotalLength(textSegment: TextSegment) {
+    if (textSegment.removedSeq !== undefined) {
+        return 0;
+    }
+    else {
+        return textSegment.text.length;
+    }
 }
 
 /**
  * Returns the partial length whose sequence number is 
  * the greatest sequence number within a that is
  * less than or equal to key.
- * @param a array of partial segment lenghts
- * @param key sequence number
+ * @param {PartialLength[]} a array of partial segment lengths
+ * @param {number} key sequence number
  */
-function maxLEQ(a: PartialLength[], key: number) {
+function latestLEQ(a: PartialSequenceLength[], key: number) {
     let best = -1;
     let lo = 0;
     let hi = a.length - 1;
@@ -91,15 +116,20 @@ function maxLEQ(a: PartialLength[], key: number) {
     return best;
 }
 
-class PartialTextLengths {
+/**
+ * Keep track of partial sums of segment lengths for all sequence numbers
+ * in the current collaboration window (if any).  Only used during active
+ * collaboration.
+ */
+class PartialSequenceLengths {
     minLength = 0;
-    partialLengths: PartialLength[] = [];
-    clientSeqNumbers: PartialLength[][] = [];
+    partialLengths: PartialSequenceLength[] = [];
+    clientSeqNumbers: PartialSequenceLength[][] = [];
 
     cliLatestLEQ(clientId: number, refSeq: number) {
         let cliSeqs = this.clientSeqNumbers[clientId];
         if (cliSeqs) {
-            return maxLEQ(cliSeqs, refSeq);
+            return latestLEQ(cliSeqs, refSeq);
         }
         else {
             return -1;
@@ -116,15 +146,16 @@ class PartialTextLengths {
         }
     }
 
-    get(refSeq: number, clientId: number) {
+    getPartialLength(refSeq: number, clientId: number) {
         let pLen = this.minLength;
-        let seqIndex = maxLEQ(this.partialLengths, refSeq);
+        let seqIndex = latestLEQ(this.partialLengths, refSeq);
         let cliLatestindex = this.cliLatest(clientId);
         let cliSeq = this.clientSeqNumbers[clientId];
-        let cliLatest = cliSeq[cliLatestindex];
         if (seqIndex > 0) {
             pLen += this.partialLengths[seqIndex].partialLength;
             if (cliLatestindex >= 0) {
+                let cliLatest = cliSeq[cliLatestindex];
+
                 if (cliLatest.seq > refSeq) {
                     pLen += cliLatest.partialLength;
                     let precedingCliIndex = this.cliLatestLEQ(clientId, refSeq - 1);
@@ -136,56 +167,174 @@ class PartialTextLengths {
         }
         else {
             if (cliLatestindex >= 0) {
+                let cliLatest = cliSeq[cliLatestindex];
                 pLen += cliLatest.partialLength;
             }
         }
         return pLen;
     }
 
-    addClientSeqNumber(clientId: number, seq: number, segmentLengths: number[]) {
-        if (this.clientSeqNumbers[clientId] === undefined) {
-            this.clientSeqNumbers[clientId] = [];
+    addClientSeqNumber(partialLength: PartialSequenceLength) {
+        if (this.clientSeqNumbers[partialLength.clientId] === undefined) {
+            this.clientSeqNumbers[partialLength.clientId] = [];
         }
-        let cli = this.clientSeqNumbers[clientId];
-        let pLen = segmentLengths[seq];
+        let cli = this.clientSeqNumbers[partialLength.clientId];
+        let pLen = partialLength.partialLength;
         if (cli.length > 0) {
             pLen += cli[cli.length - 1].partialLength;
         }
-        cli.push({ seq: seq, partialLength: pLen });
+        cli.push({ seq: partialLength.seq, partialLength: pLen });
     }
 
-    combine(b: PartialTextLengths, segmentLengths: number[]) {
-        let c = new PartialTextLengths();
-        let i = 0, j = 0;
-        let aLen = this.partialLengths.length;
-        let bLen = b.partialLengths.length;
+    // TODO: do not allocate/fill partials unless collaboration active
+    static fromLeaves(combinedPartialLengths: PartialSequenceLengths, textSegmentBlock: TextSegmentBlock, segmentWindow: SegmentWindow) {
+        combinedPartialLengths.minLength = 0;
+
+        function insertSegment(segment: TextSegment, removedSeq = false) {
+            let seq = segment.seq;
+            let segmentLen = segment.text.length;
+            if (removedSeq) {
+                seq = segment.removedSeq;
+                segmentLen = -segmentLen;
+            }
+
+            let seqPartials = combinedPartialLengths.partialLengths;
+            let seqPartialsLen = seqPartials.length;
+            // find the first entry with sequence number greater or equal to seq
+            let indexFirstGTE = 0;
+            for (; indexFirstGTE < seqPartialsLen; indexFirstGTE++) {
+                if (seqPartials[indexFirstGTE].seq >= seq) {
+                    break;
+                }
+            }
+            if ((seqPartialsLen > 0) && (seqPartials[indexFirstGTE].seq == seq)) {
+                seqPartials[indexFirstGTE].partialLength += segmentLen;
+            }
+            else {
+                let pLen = <PartialSequenceLength>{ seq: seq, clientId: segment.clientId, partialLength: segmentLen };
+                if (indexFirstGTE < seqPartialsLen) {
+                    // shift entries with greater sequence numbers
+                    for (let k = seqPartialsLen; k > indexFirstGTE; k--) {
+                        seqPartials[k] = seqPartials[k - 1];
+                    }
+                    seqPartials[indexFirstGTE] = pLen;
+                }
+                else {
+                    seqPartials.push(pLen);
+                }
+            }
+        }
+
+        for (let i = 0; i < textSegmentBlock.liveSegmentCount; i++) {
+            let textSegment = textSegmentBlock.segments[i];
+            if (textSegment.child === undefined) {
+                // leaf segment
+                if ((textSegment.seq === undefined) || (textSegment.seq <= segmentWindow.minSeq)) {
+                    combinedPartialLengths.minLength += leafSegmentTotalLength(textSegment);
+                }
+                else {
+                    insertSegment(textSegment);
+                    if (textSegment.removedSeq) {
+                        insertSegment(textSegment, true);
+                    }
+                }
+            }
+        }
+        // post-process correctly-ordered partials computing sums and creating
+        // lists for each present client id
+        let seqPartials = combinedPartialLengths.partialLengths;
+        let seqPartialsLen = seqPartials.length;
+
         let prevLen = 0;
-        function addNext(partialLength: PartialLength) {
+        for (let i = 0; i < seqPartialsLen; i++) {
+            seqPartials[i].partialLength += prevLen;
+            prevLen = seqPartials[i].partialLength;
+            combinedPartialLengths.addClientSeqNumber(seqPartials[i]);
+        }
+    }
+
+    /**
+     * Combine the partial lengths of textSegmentBlock's children
+     * @param {TextSegmentBlock} textSegmentBlock an interior node; it is assumed that each interior node child of this block
+     * has its partials up to date 
+     * @param {SegmentWindow} segmentWindow segment window fo the segment tree containing textSegmentBlock
+     */
+    static combine(textSegmentBlock: TextSegmentBlock, segmentWindow: SegmentWindow) {
+        let combinedPartialLengths = new PartialSequenceLengths();
+        PartialSequenceLengths.fromLeaves(combinedPartialLengths, textSegmentBlock, segmentWindow);
+        let prevPartial: PartialSequenceLength;
+
+        function addNext(partialLength: PartialSequenceLength) {
             let seq = partialLength.seq;
-            let pLen = segmentLengths[seq] + prevLen;
-            prevLen = pLen;
-            c.partialLengths.push({
+            let pLen = partialLength.partialLength;
+
+            if (prevPartial) {
+                if (prevPartial.seq == partialLength.seq) {
+                    prevPartial.partialLength += partialLength.partialLength;
+                    return;
+                }
+                else {
+                    pLen += prevPartial.partialLength;
+                    // previous sequence number is finished
+                    combinedPartialLengths.addClientSeqNumber(prevPartial);
+                }
+            }
+            prevPartial = {
                 seq: seq,
                 clientId: partialLength.clientId,
                 partialLength: pLen
-            });
-            c.addClientSeqNumber(partialLength.clientId, seq, segmentLengths);
-        }
-        while ((i < aLen) && (j < bLen)) {
-            if (this.partialLengths[i].seq < b.partialLengths[j].seq) {
-                addNext(this.partialLengths[i++]);
-            }
-            else {
-                addNext(b.partialLengths[j++])
-            }
+            };
+            combinedPartialLengths.partialLengths.push(prevPartial);
         }
 
-        while (i < aLen) {
-            addNext(this.partialLengths[i++]);
+        let childPartials: PartialSequenceLengths[] = [];
+        for (let i = 0; i < textSegmentBlock.liveSegmentCount; i++) {
+            let textSegment = textSegmentBlock.segments[i];
+            if (textSegment.child !== undefined) {
+                childPartials.push(textSegment.child.partialLengths);
+            }
         }
-        while (j < bLen) {
-            addNext(b.partialLengths[j++]);
+        let childPartialsLen = childPartials.length
+        if (childPartialsLen != 0) {
+            // some children are interior nodes
+            if (combinedPartialLengths.partialLengths.length > 0) {
+                // some children were leaves; add combined partials from these segments 
+                childPartials.push(combinedPartialLengths);
+                childPartialsLen++;
+                combinedPartialLengths = new PartialSequenceLengths();
+            }
+            let indices = new Array(childPartialsLen);
+            let childPartialsCounts = new Array(childPartialsLen);
+            for (let i = 0; i < childPartialsLen; i++) {
+                indices[i] = 0;
+                childPartialsCounts[i] = childPartials[i].partialLengths.length;
+                combinedPartialLengths.minLength += childPartials[i].minLength;
+            }
+            let outerIndexOfEarliest = 0;
+            let earliestPartialLength: PartialSequenceLength;
+            while (outerIndexOfEarliest >= 0) {
+                outerIndexOfEarliest = -1;
+                for (let k = 0; k < childPartialsLen; k++) {
+                    // find next earliest sequence number 
+                    if (indices[k] < childPartialsCounts[k]) {
+                        let cpLen = childPartials[k].partialLengths[indices[k]];
+                        if ((outerIndexOfEarliest < 0) || (cpLen.seq < earliestPartialLength.seq)) {
+                            outerIndexOfEarliest = k;
+                            earliestPartialLength = cpLen;
+                        }
+                    }
+                }
+                if (outerIndexOfEarliest >= 0) {
+                    let addedPartial = addNext(earliestPartialLength);
+                    indices[outerIndexOfEarliest]++;
+                }
+            }
+            // add client entry for last partial, if any
+            if (prevPartial) {
+                combinedPartialLengths.addClientSeqNumber(prevPartial);
+            }
         }
+        return combinedPartialLengths;
     }
 }
 
@@ -203,6 +352,17 @@ function makeLeafSegment(parent: TextSegmentBlock, text: string, sequenceNumber?
         clientId: clientId,
         removedSeq: removedSeq,
         removedClientId: removedClientId
+    };
+}
+
+function makeLeafSegmentFromSplit(parent: TextSegmentBlock, text: string, origSegment: TextSegment) {
+    return <TextSegment>{
+        parent: parent,
+        text: text,
+        seq: origSegment.seq,
+        clientId: origSegment.clientId,
+        removedSeq: origSegment.removedSeq,
+        removedClientId: origSegment.removedClientId
     };
 }
 // add pos so can split markers
@@ -230,7 +390,7 @@ function copyLeafSegment(textSegment: TextSegment) {
 }
 
 // represents a sequence of text segments
-export function OpTree(text: string): TextSegmentOpTree {
+export function segmentTree(text: string): SegmentTree {
     // should be a power of 2
     const MaxSegments = 4;
     function makeNode(liveSegmentCount: number) {
@@ -239,6 +399,7 @@ export function OpTree(text: string): TextSegmentOpTree {
     }
 
     let root = initialNode(text);
+    let segmentWindow = new SegmentWindow();
 
     function getLength(refSeq: number, clientId: number) {
         return root.length;
@@ -267,7 +428,7 @@ export function OpTree(text: string): TextSegmentOpTree {
 
     function initialNode(text: string) {
         let node = makeNode(1);
-        node.segments[0] = makeLeafSegment(node, text);
+        node.segments[0] = makeLeafSegment(node, text, UniversalSequenceNumber, UnassignedClientId);
         node.length = text.length;
         return node;
     }
@@ -301,7 +462,7 @@ export function OpTree(text: string): TextSegmentOpTree {
     }
 
     // TODO: change to assign to passed in marker
-    function createMarker(pos: number, refSeq: number, clientId: number) {
+    function createMarker(pos: number, refSeq: number, clientId: number, seq: number) {
         let marker = <TextMarker>{ segment: undefined, offset: undefined };
         function updateMarker(segment: TextSegment, pos: number, start: number) {
             marker.offset = start;
@@ -313,15 +474,34 @@ export function OpTree(text: string): TextSegmentOpTree {
     }
 
     function segmentLength(segment: TextSegment, refSeq: number, clientId: number) {
-        if (segment.child) {
-            return segment.child.length;
-        }
-        else {
-            if (segment.removedSeq) {
-                return 0;
+        if ((!segmentWindow.collaborating) || (segmentWindow.clientId == clientId)) {
+            // local client sees all segments, even when collaborating
+            if (segment.child) {
+                return segment.child.length;
             }
             else {
-                return segment.text.length;
+                return leafSegmentTotalLength(segment);
+            }
+        }
+        else {
+            // sequence number within window 
+            if (segment.child) {
+                return segment.child.partialLengths.getPartialLength(refSeq, clientId);
+            }
+            else {
+                if ((segment.clientId == clientId) || ((segment.seq != UnassignedSequenceNumber) && (segment.seq <= refSeq))) {
+                    // segment happened by reference sequence number or segment from requesting client
+                    if ((segment.removedSeq !== undefined) && (segment.removedSeq <= refSeq)) {
+                        return 0;
+                    }
+                    else {
+                        return segment.text.length;
+                    }
+                }
+                else {
+                    // segment invisible to client at reference sequence number
+                    return 0;
+                }
             }
         }
     }
@@ -367,17 +547,19 @@ export function OpTree(text: string): TextSegmentOpTree {
             newRoot.segments[1] = makeInternalSegment(newRoot, splitNode);
             root = newRoot;
         }
-        nodeUpdateLength(root);
+        nodeUpdateLengthNewStructure(root);
     }
 
-    function insertInterval(pos: number, refSeq: number, clientId: number, textSegment: TextSegment) {
+    function insertInterval(pos: number, refSeq: number, clientId: number, seq: number, textSegment: TextSegment) {
+        textSegment.seq = seq;
+        textSegment.clientId = clientId;
         ensureIntervalBoundary(pos, refSeq, clientId);
         let splitNode = nodeInsertBefore(root, pos, refSeq, clientId, textSegment);
         updateRoot(splitNode, refSeq, clientId);
     }
 
     function nodeInsertBefore(node: TextSegmentBlock, pos: number, refSeq: number, clientId: number, textSegment: TextSegment) {
-        return insertingWalk(node, pos, refSeq, clientId, (segment: TextSegment, pos: number) => {
+        return insertingWalk(node, pos, refSeq, clientId, textSegment.seq, (segment: TextSegment, pos: number) => {
             if (!segment) {
                 return <TextSegment>{
                     parent: node,
@@ -396,16 +578,16 @@ export function OpTree(text: string): TextSegmentOpTree {
         if (pos > 0) {
             let remainingText = segment.text.substring(pos);
             segment.text = segment.text.substring(0, pos);
-            return makeLeafSegment(segment.parent, remainingText);
+            return makeLeafSegmentFromSplit(segment.parent, remainingText, segment);
         }
     }
 
     function ensureIntervalBoundary(pos: number, refSeq: number, clientId: number) {
-        let splitNode = insertingWalk(root, pos, refSeq, clientId, splitLeafSegment);
+        let splitNode = insertingWalk(root, pos, refSeq, clientId, UniversalSequenceNumber, splitLeafSegment);
         updateRoot(splitNode, refSeq, clientId);
     }
 
-    function insertingWalk(node: TextSegmentBlock, pos: number, refSeq: number, clientId: number,
+    function insertingWalk(node: TextSegmentBlock, pos: number, refSeq: number, clientId: number, seq: number,
         leafAction: (segment: TextSegment, pos: number) => TextSegment) {
         let segments = node.segments;
         let segmentIndex: number;
@@ -418,9 +600,9 @@ export function OpTree(text: string): TextSegmentOpTree {
                 // found entry containing pos
                 if (segment.child) {
                     //internal node
-                    let splitNode = insertingWalk(segment.child, pos, refSeq, clientId, leafAction);
+                    let splitNode = insertingWalk(segment.child, pos, refSeq, clientId, seq, leafAction);
                     if (splitNode === undefined) {
-                        nodeUpdateLength(node);
+                        nodeUpdateLength(node, seq);
                         return undefined;
                     }
                     newSegment = makeInternalSegment(node, splitNode);
@@ -455,7 +637,7 @@ export function OpTree(text: string): TextSegmentOpTree {
             newSegment.parent = node;
             node.liveSegmentCount++;
             if (node.liveSegmentCount < MaxSegments) {
-                nodeUpdateLength(node);
+                nodeUpdateLength(node, seq);
                 return undefined;
             }
             else {
@@ -475,21 +657,21 @@ export function OpTree(text: string): TextSegmentOpTree {
             newNode.segments[i] = node.segments[(halfCount) + i];
             newNode.segments[i].parent = newNode;
         }
-        nodeUpdateLength(node);
-        nodeUpdateLength(newNode);
+        nodeUpdateLengthNewStructure(node);
+        nodeUpdateLengthNewStructure(newNode);
         return newNode;
     }
 
-    function markRangeRemoved(start: number, end: number, refSeq: number, clientId: number) {
+    function markRangeRemoved(start: number, end: number, refSeq: number, clientId: number, seq: number) {
         ensureIntervalBoundary(start, refSeq, clientId);
         ensureIntervalBoundary(end, refSeq, clientId);
         function markRemoved(textSegment: TextSegment, pos: number, start: number, end: number) {
             textSegment.removedClientId = clientId;
-            textSegment.removedSeq = refSeq;
+            textSegment.removedSeq = seq;
             return true;
         }
         function afterMarkRemoved(node: TextSegmentBlock, pos: number, start: number, end: number) {
-            nodeUpdateLength(node);
+            nodeUpdateLength(node, seq);
             return true;
         }
         mapRange({ leaf: markRemoved, post: afterMarkRemoved }, refSeq, clientId, undefined, start, end);
@@ -560,15 +742,30 @@ export function OpTree(text: string): TextSegmentOpTree {
             }
             node.liveSegmentCount -= deleteCount;
         }
-        nodeUpdateLength(node);
+        nodeUpdateLengthNewStructure(node);
     }
 
-    function nodeUpdateLength(node: TextSegmentBlock) {
+    function nodeUpdateLengthNewStructure(node: TextSegmentBlock) {
+        nodeUpdateTotalLength(node);
+        if (segmentWindow.collaborating) {
+            node.partialLengths = PartialSequenceLengths.combine(node, segmentWindow);
+        }
+    }
+
+    function nodeUpdateTotalLength(node: TextSegmentBlock) {
         let len = 0;
         for (let i = 0; i < node.liveSegmentCount; i++) {
-            len += segmentLength(node.segments[i], AnySequenceNumber, AnyClientId);
+            len += segmentLength(node.segments[i], UniversalSequenceNumber, segmentWindow.clientId);
         }
         node.length = len;
+    }
+
+    function nodeUpdateLength(node: TextSegmentBlock, seq: number) {
+        nodeUpdateTotalLength(node);
+        // TODO: optimize merge by adding only single sequence number seq
+        if (segmentWindow.collaborating) {
+            node.partialLengths = PartialSequenceLengths.combine(node, segmentWindow);
+        }
     }
 
     function map<TAccum>(actions: TextSegmentActions, refSeq: number, clientId: number, accum?: TAccum) {
@@ -591,7 +788,6 @@ export function OpTree(text: string): TextSegmentOpTree {
         return indentStrings[n];
     }
 
-
     function toString() {
         let strbuf = "";
         function nodeToString(node: TextSegmentBlock, indentCount = 0) {
@@ -604,6 +800,12 @@ export function OpTree(text: string): TextSegmentOpTree {
                     nodeToString(segment.child, indentCount + 4);
                 }
                 else {
+                    strbuf += indent(indentCount + 4);
+                    strbuf += `cli: ${segment.clientId} seq: ${segment.seq}`;
+                    if (segment.removedSeq !== undefined) {
+                        strbuf += ` rcli: ${segment.removedClientId} rseq: ${segment.removedSeq}`;
+                    }
+                    strbuf += "\n";
                     strbuf += indent(indentCount + 4);
                     strbuf += segment.text;
                     strbuf += "\n";
