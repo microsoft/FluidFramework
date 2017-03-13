@@ -449,7 +449,13 @@ export class TestClient {
                 console.log(cli.relText(clientId, refSeq));
             }
         }
-
+        cli.insertSegmentRemote("very ", 5, 4, 2, 2);
+        console.log(cli.segTree.toString());
+        for (let clientId = 0; clientId < 4; clientId++) {
+            for (let refSeq = 0; refSeq < 5; refSeq++) {
+                console.log(cli.relText(clientId, refSeq));
+            }
+        }
     }
 
     startCollaboration(localClientId: number) {
