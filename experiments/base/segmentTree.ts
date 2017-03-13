@@ -324,7 +324,7 @@ class PartialSequenceLengths {
                     }
                 }
                 if (outerIndexOfEarliest >= 0) {
-                    let addedPartial = addNext(earliestPartialLength);
+                    addNext(earliestPartialLength);
                     indices[outerIndexOfEarliest]++;
                 }
             }
