@@ -66,7 +66,7 @@ export const UnassignedClientId = -1;
 
 interface PartialSequenceLength {
     seq: number;
-    length: number;
+    len: number;
     clientId?: number;
 }
 
@@ -152,15 +152,15 @@ class PartialSequenceLengths {
         let cliLatestindex = this.cliLatest(clientId);
         let cliSeq = this.clientSeqNumbers[clientId];
         if (seqIndex > 0) {
-            pLen += this.partialLengths[seqIndex].length;
+            pLen += this.partialLengths[seqIndex].len;
             if (cliLatestindex >= 0) {
                 let cliLatest = cliSeq[cliLatestindex];
 
                 if (cliLatest.seq > refSeq) {
-                    pLen += cliLatest.length;
+                    pLen += cliLatest.len;
                     let precedingCliIndex = this.cliLatestLEQ(clientId, refSeq - 1);
                     if (precedingCliIndex >= 0) {
-                        pLen -= cliSeq[precedingCliIndex].length;
+                        pLen -= cliSeq[precedingCliIndex].len;
                     }
                 }
             }
@@ -168,7 +168,7 @@ class PartialSequenceLengths {
         else {
             if (cliLatestindex >= 0) {
                 let cliLatest = cliSeq[cliLatestindex];
-                pLen += cliLatest.length;
+                pLen += cliLatest.len;
             }
         }
         return pLen;
@@ -179,11 +179,11 @@ class PartialSequenceLengths {
             this.clientSeqNumbers[partialLength.clientId] = [];
         }
         let cli = this.clientSeqNumbers[partialLength.clientId];
-        let pLen = partialLength.length;
+        let pLen = partialLength.len;
         if (cli.length > 0) {
-            pLen += cli[cli.length - 1].length;
+            pLen += cli[cli.length - 1].len;
         }
-        cli.push({ seq: partialLength.seq, length: pLen });
+        cli.push({ seq: partialLength.seq, len: pLen });
     }
 
     static fromLeaves(combinedPartialLengths: PartialSequenceLengths, textSegmentBlock: TextSegmentBlock, segmentWindow: SegmentWindow) {
@@ -207,10 +207,10 @@ class PartialSequenceLengths {
                 }
             }
             if ((seqPartialsLen > 0) && (seqPartials[indexFirstGTE].seq == seq)) {
-                seqPartials[indexFirstGTE].length += segmentLen;
+                seqPartials[indexFirstGTE].len += segmentLen;
             }
             else {
-                let pLen = <PartialSequenceLength>{ seq: seq, clientId: segment.clientId, length: segmentLen };
+                let pLen = <PartialSequenceLength>{ seq: seq, clientId: segment.clientId, len: segmentLen };
                 if (indexFirstGTE < seqPartialsLen) {
                     // shift entries with greater sequence numbers
                     for (let k = seqPartialsLen; k > indexFirstGTE; k--) {
@@ -246,8 +246,8 @@ class PartialSequenceLengths {
 
         let prevLen = 0;
         for (let i = 0; i < seqPartialsLen; i++) {
-            seqPartials[i].length += prevLen;
-            prevLen = seqPartials[i].length;
+            seqPartials[i].len += prevLen;
+            prevLen = seqPartials[i].len;
             combinedPartialLengths.addClientSeqNumber(seqPartials[i]);
         }
     }
@@ -265,15 +265,15 @@ class PartialSequenceLengths {
 
         function addNext(partialLength: PartialSequenceLength) {
             let seq = partialLength.seq;
-            let pLen = partialLength.length;
+            let pLen = partialLength.len;
 
             if (prevPartial) {
                 if (prevPartial.seq == partialLength.seq) {
-                    prevPartial.length += partialLength.length;
+                    prevPartial.len += partialLength.len;
                     return;
                 }
                 else {
-                    pLen += prevPartial.length;
+                    pLen += prevPartial.len;
                     // previous sequence number is finished
                     combinedPartialLengths.addClientSeqNumber(prevPartial);
                 }
@@ -281,7 +281,7 @@ class PartialSequenceLengths {
             prevPartial = {
                 seq: seq,
                 clientId: partialLength.clientId,
-                length: pLen
+                len: pLen
             };
             combinedPartialLengths.partialLengths.push(prevPartial);
         }
