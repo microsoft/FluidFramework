@@ -1,4 +1,5 @@
 /// <reference path="base.d.ts" />
+import * as ListUtil from "./list";
 
 export interface TextSegmentAction {
     <TAccum>(textSegment: TextSegment, pos: number, refSeq: number, clientId: number, start: number, end: number, accum?: TAccum): boolean;
@@ -28,6 +29,7 @@ export interface SegmentTree {
     getLength(refSeq: number, clientId: number): number;
     startCollaboration(localClientId);
     getSegmentWindow(): SegmentWindow;
+    ackPendingSegment(seq: number);
     diag();
 }
 
@@ -69,6 +71,7 @@ export const LocalClientId = -1;
 interface PartialSequenceLength {
     seq: number;
     len: number;
+    seglen: number;
     clientId?: number;
 }
 
@@ -153,7 +156,7 @@ class PartialSequenceLengths {
         let seqIndex = latestLEQ(this.partialLengths, refSeq);
         let cliLatestindex = this.cliLatest(clientId);
         let cliSeq = this.clientSeqNumbers[clientId];
-        if (seqIndex > 0) {
+        if (seqIndex >= 0) {
             pLen += this.partialLengths[seqIndex].len;
             if (cliLatestindex >= 0) {
                 let cliLatest = cliSeq[cliLatestindex];
@@ -176,16 +179,17 @@ class PartialSequenceLengths {
         return pLen;
     }
 
+    // assumes sequence number already coalesced
     addClientSeqNumber(partialLength: PartialSequenceLength) {
         if (this.clientSeqNumbers[partialLength.clientId] === undefined) {
             this.clientSeqNumbers[partialLength.clientId] = [];
         }
         let cli = this.clientSeqNumbers[partialLength.clientId];
-        let pLen = partialLength.len;
+        let pLen = partialLength.seglen;
         if (cli.length > 0) {
             pLen += cli[cli.length - 1].len;
         }
-        cli.push({ seq: partialLength.seq, len: pLen });
+        cli.push({ seq: partialLength.seq, len: pLen, seglen: partialLength.seglen });
     }
 
     static fromLeaves(combinedPartialLengths: PartialSequenceLengths, textSegmentBlock: TextSegmentBlock, segmentWindow: SegmentWindow) {
@@ -208,11 +212,11 @@ class PartialSequenceLengths {
                     break;
                 }
             }
-            if ((seqPartialsLen > 0) && (seqPartials[indexFirstGTE].seq == seq)) {
-                seqPartials[indexFirstGTE].len += segmentLen;
+            if ((indexFirstGTE < seqPartialsLen) && (seqPartials[indexFirstGTE].seq == seq)) {
+                seqPartials[indexFirstGTE].seglen += segmentLen;
             }
             else {
-                let pLen = <PartialSequenceLength>{ seq: seq, clientId: segment.clientId, len: segmentLen };
+                let pLen = <PartialSequenceLength>{ seq: seq, clientId: segment.clientId, len: 0, seglen: segmentLen };
                 if (indexFirstGTE < seqPartialsLen) {
                     // shift entries with greater sequence numbers
                     for (let k = seqPartialsLen; k > indexFirstGTE; k--) {
@@ -248,7 +252,7 @@ class PartialSequenceLengths {
 
         let prevLen = 0;
         for (let i = 0; i < seqPartialsLen; i++) {
-            seqPartials[i].len += prevLen;
+            seqPartials[i].len = prevLen + seqPartials[i].seglen;
             prevLen = seqPartials[i].len;
             combinedPartialLengths.addClientSeqNumber(seqPartials[i]);
         }
@@ -267,15 +271,16 @@ class PartialSequenceLengths {
 
         function addNext(partialLength: PartialSequenceLength) {
             let seq = partialLength.seq;
-            let pLen = partialLength.len;
+            let pLen = 0;
 
             if (prevPartial) {
                 if (prevPartial.seq == partialLength.seq) {
-                    prevPartial.len += partialLength.len;
+                    prevPartial.seglen += partialLength.seglen;
+                    prevPartial.len += partialLength.seglen;
                     return;
                 }
                 else {
-                    pLen += prevPartial.len;
+                    pLen = prevPartial.len;
                     // previous sequence number is finished
                     combinedPartialLengths.addClientSeqNumber(prevPartial);
                 }
@@ -283,7 +288,8 @@ class PartialSequenceLengths {
             prevPartial = {
                 seq: seq,
                 clientId: partialLength.clientId,
-                len: pLen
+                len: pLen + partialLength.seglen,
+                seglen: partialLength.seglen
             };
             combinedPartialLengths.partialLengths.push(prevPartial);
         }
@@ -408,7 +414,7 @@ export class TestClient {
             clientId: clientId
         };
         this.segTree.insertInterval(pos, refSeq, clientId, seq, textSegment);
-    } 
+    }
 
     insertSegmentRemote(text: string, pos: number, seq: number, refSeq: number, clientId: number) {
         let segWindow = this.segTree.getSegmentWindow();
@@ -418,24 +424,38 @@ export class TestClient {
             clientId: clientId
         };
         this.segTree.insertInterval(pos, refSeq, clientId, seq, textSegment);
-    } 
+    }
+
+    relText(clientId: number, refSeq: number) {
+        return `cli: ${clientId} refSeq: ${refSeq}: ` + this.segTree.getText(refSeq, clientId);
+    }
 
     static firstTest() {
         let cli = new TestClient("on the mat.");
         cli.startCollaboration(1);
-        cli.insertSegmentRemote("fat ", 0, 1, 0, 0);
-        cli.insertSegmentLocal("cat ", 4);
+        cli.insertSegmentRemote("that ", 0, 1, 0, 0);
+        cli.insertSegmentRemote("fat ", 0, 2, 0, 2);
+        cli.insertSegmentLocal("cat ", 5);
         console.log(cli.segTree.toString());
-        console.log(cli.segTree.getText(0,1));
-        console.log(cli.segTree.getText(0,0));
-        console.log(cli.segTree.getText(1,1));
-        console.log(cli.segTree.getText(1,0));
+        for (let i = 0; i < 3; i++) {
+            for (let j = 0; j < 3; j++) {
+                console.log(cli.relText(i, j));
+            }
+        }
+        cli.segTree.ackPendingSegment(3);
+        console.log(cli.segTree.toString());
+        for (let clientId = 0; clientId < 4; clientId++) {
+            for (let refSeq = 0; refSeq < 4; refSeq++) {
+                console.log(cli.relText(clientId, refSeq));
+            }
+        }
+
     }
 
     startCollaboration(localClientId: number) {
         this.segTree.startCollaboration(localClientId);
     }
-} 
+}
 
 // represents a sequence of text segments
 export function segmentTree(text: string): SegmentTree {
@@ -448,6 +468,7 @@ export function segmentTree(text: string): SegmentTree {
 
     let root = initialNode(text);
     let segmentWindow = new SegmentWindow();
+    let pendingSegments: ListUtil.List<TextSegment>;
 
     // for now assume min starts at zero
     function startCollaboration(localClientId: number) {
@@ -455,6 +476,7 @@ export function segmentTree(text: string): SegmentTree {
         segmentWindow.minSeq = 0;
         segmentWindow.collaborating = true;
         segmentWindow.currentSeq = 0;
+        pendingSegments = ListUtil.ListMakeHead();
     }
 
     function getSegmentWindow() {
@@ -601,6 +623,20 @@ export function segmentTree(text: string): SegmentTree {
         nodeUpdateLengthNewStructure(root);
     }
 
+    /**
+     * Assign sequence number to existing segment; update partial lengths to reflect the change
+     * @param seq sequence number given by server to pending segment
+     */
+    function ackPendingSegment(seq: number) {
+        let pendingSegment = pendingSegments.dequeue();
+        if (pendingSegment !== undefined) {
+            pendingSegment.seq = seq;
+            console.log(`set pending segment with text ${pendingSegment.text} to sequence number ${seq}`);
+            nodeUpdateLength(pendingSegment.parent, seq);
+        }
+    }
+
+    // TODO: just pass text in to this function; no need to make text segment because will not be placed
     function insertInterval(pos: number, refSeq: number, clientId: number, seq: number, textSegment: TextSegment) {
         textSegment.seq = seq;
         textSegment.clientId = clientId;
@@ -611,19 +647,30 @@ export function segmentTree(text: string): SegmentTree {
 
     function nodeInsertBefore(node: TextSegmentBlock, pos: number, refSeq: number, clientId: number, textSegment: TextSegment) {
         return insertingWalk(node, pos, refSeq, clientId, textSegment.seq, (segment: TextSegment, pos: number) => {
+            function saveIfLocal(locSegment: TextSegment) {
+                // save segment so can assign sequence number when acked by server
+                if (segmentWindow.collaborating && (locSegment.seq == UnassignedSequenceNumber) && (clientId == segmentWindow.clientId)) {
+                    pendingSegments.enqueue(locSegment);
+                    console.log(`saved local seg with text: ${locSegment.text}`);
+                }
+            }
+
             if (!segment) {
-                return <TextSegment>{
+                segment = <TextSegment>{
                     parent: node,
                     text: textSegment.text,
                     seq: textSegment.seq,
                     clientId: textSegment.clientId
                 };
+                saveIfLocal(segment);
+                return segment;
             }
             else {
                 let newSegment = copyLeafSegment(segment);
                 segment.text = textSegment.text;
                 segment.seq = textSegment.seq;
                 segment.clientId = textSegment.clientId;
+                saveIfLocal(segment);
                 return newSegment;
             }
         });
@@ -884,7 +931,7 @@ export function segmentTree(text: string): SegmentTree {
         for (let segmentIndex = 0; segmentIndex < node.liveSegmentCount; segmentIndex++) {
             let segment = segments[segmentIndex];
             let len = segmentLength(segment, refSeq, clientId);
-            if (go && ((start < len)) && (end > 0)) {
+            if (go && (len > 0) && (start < len) && (end > 0)) {
                 // found entry containing pos
                 if (segment.child) {
                     // internal node
@@ -926,6 +973,7 @@ export function segmentTree(text: string): SegmentTree {
         createMarker: createMarker,
         startCollaboration: startCollaboration,
         getSegmentWindow: getSegmentWindow,
+        ackPendingSegment: ackPendingSegment,
         toString: toString,
         diag: diag
     }
