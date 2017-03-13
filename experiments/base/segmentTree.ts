@@ -26,6 +26,8 @@ export interface SegmentTree {
     getOffset(entry: TextSegment, refSeq: number, clientId: number): number;
     getText(refSeq: number, clientId: number, start?: number, end?: number): string;
     getLength(refSeq: number, clientId: number): number;
+    startCollaboration(localClientId);
+    getSegmentWindow(): SegmentWindow;
     diag();
 }
 
@@ -62,7 +64,7 @@ export interface TextMarker {
  */
 export const UniversalSequenceNumber = 0;
 export const UnassignedSequenceNumber = -1;
-export const UnassignedClientId = -1;
+export const LocalClientId = -1;
 
 interface PartialSequenceLength {
     seq: number;
@@ -71,7 +73,7 @@ interface PartialSequenceLength {
 }
 
 class SegmentWindow {
-    clientId = UnassignedClientId;
+    clientId = LocalClientId;
 
     collaborating = false;
     // lowest-numbered segment in window; no client can reference a state before this one
@@ -388,6 +390,53 @@ function copyLeafSegment(textSegment: TextSegment) {
     return newSegment;
 }
 
+export class TestClient {
+    segTree: SegmentTree;
+
+    constructor(initText: string) {
+        this.segTree = segmentTree(initText);
+    }
+
+    insertSegmentLocal(text: string, pos: number) {
+        let segWindow = this.segTree.getSegmentWindow();
+        let clientId = segWindow.clientId;
+        let refSeq = segWindow.currentSeq;
+        let seq = UnassignedSequenceNumber;
+        let textSegment = <TextSegment>{
+            text: text,
+            seq: seq,
+            clientId: clientId
+        };
+        this.segTree.insertInterval(pos, refSeq, clientId, seq, textSegment);
+    } 
+
+    insertSegmentRemote(text: string, pos: number, seq: number, refSeq: number, clientId: number) {
+        let segWindow = this.segTree.getSegmentWindow();
+        let textSegment = <TextSegment>{
+            text: text,
+            seq: seq,
+            clientId: clientId
+        };
+        this.segTree.insertInterval(pos, refSeq, clientId, seq, textSegment);
+    } 
+
+    static firstTest() {
+        let cli = new TestClient("on the mat.");
+        cli.startCollaboration(1);
+        cli.insertSegmentRemote("fat ", 0, 1, 0, 0);
+        cli.insertSegmentLocal("cat ", 4);
+        console.log(cli.segTree.toString());
+        console.log(cli.segTree.getText(0,1));
+        console.log(cli.segTree.getText(0,0));
+        console.log(cli.segTree.getText(1,1));
+        console.log(cli.segTree.getText(1,0));
+    }
+
+    startCollaboration(localClientId: number) {
+        this.segTree.startCollaboration(localClientId);
+    }
+} 
+
 // represents a sequence of text segments
 export function segmentTree(text: string): SegmentTree {
     // should be a power of 2
@@ -399,6 +448,18 @@ export function segmentTree(text: string): SegmentTree {
 
     let root = initialNode(text);
     let segmentWindow = new SegmentWindow();
+
+    // for now assume min starts at zero
+    function startCollaboration(localClientId: number) {
+        segmentWindow.clientId = localClientId;
+        segmentWindow.minSeq = 0;
+        segmentWindow.collaborating = true;
+        segmentWindow.currentSeq = 0;
+    }
+
+    function getSegmentWindow() {
+        return segmentWindow;
+    }
 
     function getLength(refSeq: number, clientId: number) {
         return root.length;
@@ -427,7 +488,7 @@ export function segmentTree(text: string): SegmentTree {
 
     function initialNode(text: string) {
         let node = makeNode(1);
-        node.segments[0] = makeLeafSegment(node, text, UniversalSequenceNumber, UnassignedClientId);
+        node.segments[0] = makeLeafSegment(node, text, UniversalSequenceNumber, LocalClientId);
         node.length = text.length;
         return node;
     }
@@ -530,15 +591,6 @@ export function segmentTree(text: string): SegmentTree {
         }
     }
 
-    function extend(obj: any, props: any) {
-        for (let key in props) {
-            if (props.hasOwnProperty(key)) {
-                obj[key] = props[key];
-            }
-        }
-        return obj;
-    }
-
     function updateRoot(splitNode: TextSegmentBlock, refSeq: number, clientId: number) {
         if (splitNode !== undefined) {
             let newRoot = makeNode(2);
@@ -563,11 +615,15 @@ export function segmentTree(text: string): SegmentTree {
                 return <TextSegment>{
                     parent: node,
                     text: textSegment.text,
+                    seq: textSegment.seq,
+                    clientId: textSegment.clientId
                 };
             }
             else {
                 let newSegment = copyLeafSegment(segment);
                 segment.text = textSegment.text;
+                segment.seq = textSegment.seq;
+                segment.clientId = textSegment.clientId;
                 return newSegment;
             }
         });
@@ -868,6 +924,8 @@ export function segmentTree(text: string): SegmentTree {
         getText: getText,
         getLength: getLength,
         createMarker: createMarker,
+        startCollaboration: startCollaboration,
+        getSegmentWindow: getSegmentWindow,
         toString: toString,
         diag: diag
     }
