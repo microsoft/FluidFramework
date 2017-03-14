@@ -95,6 +95,13 @@ function leafSegmentTotalLength(textSegment: TextSegment) {
     }
 }
 
+function leafSegmentRelativeLength(textSegment: TextSegment, minSeq: number) {
+    if ((textSegment.removedSeq!==undefined)&&(textSegment.removedSeq<=minSeq)) {
+        return 0;
+    }
+    else return textSegment.text.length;
+}
+
 /**
  * Returns the partial length whose sequence number is 
  * the greatest sequence number within a that is
@@ -149,6 +156,21 @@ class PartialSequenceLengths {
         else {
             return -1;
         }
+    }
+
+    toString() {
+        let buf = "";
+        for (let partial of this.partialLengths) {
+            buf += `(${partial.seq},${partial.len}) `;
+        }
+        for (let clientId in this.clientSeqNumbers) {
+            buf += `C${clientId}[`
+            for (let partial of this.clientSeqNumbers[clientId]) {
+                buf += `(${partial.seq},${partial.len})`
+            }
+            buf += ']';
+        }
+        return `min: ${this.minLength};` + buf;
     }
 
     getPartialLength(refSeq: number, clientId: number) {
@@ -229,18 +251,23 @@ class PartialSequenceLengths {
                 }
             }
         }
+        function seqLTE(seq: number, minSeq: number) {
+            return (seq === undefined) || ((seq != UnassignedSequenceNumber) && (seq <= minSeq));
+        }
 
         for (let i = 0; i < textSegmentBlock.liveSegmentCount; i++) {
             let textSegment = textSegmentBlock.segments[i];
             if (textSegment.child === undefined) {
                 // leaf segment
-                if ((textSegment.seq === undefined) || (textSegment.seq <= segmentWindow.minSeq)) {
-                    combinedPartialLengths.minLength += leafSegmentTotalLength(textSegment);
+                if (seqLTE(textSegment.seq, segmentWindow.minSeq)) {
+                    combinedPartialLengths.minLength += leafSegmentRelativeLength(textSegment, segmentWindow.minSeq);
                 }
                 else {
-                    insertSegment(textSegment);
-                    if (textSegment.removedSeq) {
-                        insertSegment(textSegment, true);
+                    if (textSegment.seq != UnassignedSequenceNumber) {
+                        insertSegment(textSegment);
+                        if (textSegment.removedSeq) {
+                            insertSegment(textSegment, true);
+                        }
                     }
                 }
             }
@@ -403,6 +430,18 @@ export class TestClient {
         this.segTree = segmentTree(initText);
     }
 
+    removeSegmentLocal(start: number, end: number) {
+        let segWindow = this.segTree.getSegmentWindow();
+        let clientId = segWindow.clientId;
+        let refSeq = segWindow.currentSeq;
+        let seq = UnassignedSequenceNumber;
+        this.segTree.markRangeRemoved(start, end, refSeq, clientId, seq);
+    }
+
+    removeSegmentRemote(start: number, end: number, seq: number, refSeq: number, clientId: number) {
+        this.segTree.markRangeRemoved(start, end, refSeq, clientId, seq);
+    }
+
     insertSegmentLocal(text: string, pos: number) {
         let segWindow = this.segTree.getSegmentWindow();
         let clientId = segWindow.clientId;
@@ -459,12 +498,12 @@ export class TestClient {
         cli = new TestClient(" old sock!");
         cli.startCollaboration(1);
         cli.insertSegmentRemote("abcde", 0, 1, 0, 2);
-        cli.insertSegmentRemote("yyy",0,2,0,0);
-        cli.insertSegmentRemote("zzz",2,3,1,3);
-        cli.insertSegmentRemote("EAGLE",1,4,1,4);
-        cli.insertSegmentRemote("HAS",4,5,1,5);
-        cli.insertSegmentLocal(" LANDED",19);
-        cli.insertSegmentRemote("yowza: ",0,6,4,2);
+        cli.insertSegmentRemote("yyy", 0, 2, 0, 0);
+        cli.insertSegmentRemote("zzz", 2, 3, 1, 3);
+        cli.insertSegmentRemote("EAGLE", 1, 4, 1, 4);
+        cli.insertSegmentRemote("HAS", 4, 5, 1, 5);
+        cli.insertSegmentLocal(" LANDED", 19);
+        cli.insertSegmentRemote("yowza: ", 0, 6, 4, 2);
         cli.segTree.ackPendingSegment(7);
         console.log(cli.segTree.toString());
         for (let clientId = 0; clientId < 6; clientId++) {
@@ -472,7 +511,25 @@ export class TestClient {
                 console.log(cli.relText(clientId, refSeq));
             }
         }
-        
+        cli.removeSegmentRemote(3, 5, 8, 6, 0);
+        console.log(cli.segTree.toString());
+        for (let clientId = 0; clientId < 6; clientId++) {
+            for (let refSeq = 0; refSeq < 9; refSeq++) {
+                console.log(cli.relText(clientId, refSeq));
+            }
+        }
+        cli = new TestClient("abcdefgh");
+        cli.startCollaboration(1);
+        cli.removeSegmentRemote(1, 3, 1, 0, 3);
+        console.log(cli.segTree.toString());
+        cli.insertSegmentRemote("zzz", 2, 2, 0, 2);
+        console.log(cli.segTree.toString());
+        for (let clientId = 0; clientId < 4; clientId++) {
+            for (let refSeq = 0; refSeq < 3; refSeq++) {
+                console.log(cli.relText(clientId, refSeq));
+            }
+        }
+
     }
 
     startCollaboration(localClientId: number) {
@@ -539,9 +596,8 @@ export function segmentTree(text: string): SegmentTree {
     }
 
     // TODO: handle start and end positions
-    // TODO: discriminate by sequence number
     function gatherText(textSegment: TextSegment, pos: number, refSeq: number, clientId: number, start: number, end: number, accumText: TextSegment) {
-        if (textSegment.removedSeq === undefined) {
+        if ((textSegment.removedSeq === undefined) || (textSegment.removedSeq > refSeq)) {
             accumText.text += textSegment.text;
         }
         return true;
@@ -596,7 +652,7 @@ export function segmentTree(text: string): SegmentTree {
             else {
                 if ((segment.clientId == clientId) || ((segment.seq != UnassignedSequenceNumber) && (segment.seq <= refSeq))) {
                     // segment happened by reference sequence number or segment from requesting client
-                    if ((segment.removedSeq !== undefined) && (segment.removedSeq <= refSeq)) {
+                    if ((segment.removedSeq !== undefined) && (segment.removedSeq != UnassignedSequenceNumber) && (segment.removedSeq <= refSeq)) {
                         return 0;
                     }
                     else {
@@ -653,9 +709,14 @@ export function segmentTree(text: string): SegmentTree {
     function ackPendingSegment(seq: number) {
         let pendingSegment = pendingSegments.dequeue();
         if (pendingSegment !== undefined) {
-            pendingSegment.seq = seq;
+            if (pendingSegment.seq == UnassignedSequenceNumber) {
+                pendingSegment.seq = seq;
+            }
+            else {
+                pendingSegment.removedSeq = seq;
+            }
             console.log(`set pending segment with text ${pendingSegment.text} to sequence number ${seq}`);
-            nodeUpdateLength(pendingSegment.parent, seq);
+            nodeUpdatePathLengths(pendingSegment.parent, seq);
         }
     }
 
@@ -781,6 +842,9 @@ export function segmentTree(text: string): SegmentTree {
         for (let i = 0; i < halfCount; i++) {
             newNode.segments[i] = node.segments[(halfCount) + i];
             newNode.segments[i].parent = newNode;
+            if (newNode.segments[i].child) {
+                newNode.segments[i].child.parent = newNode;
+            }
         }
         nodeUpdateLengthNewStructure(node);
         nodeUpdateLengthNewStructure(newNode);
@@ -885,6 +949,13 @@ export function segmentTree(text: string): SegmentTree {
         node.length = len;
     }
 
+    function nodeUpdatePathLengths(node: TextSegmentBlock, seq: number) {
+        while (node !== undefined) {
+            nodeUpdateLength(node, seq);
+            node = node.parent;
+        }
+    }
+
     function nodeUpdateLength(node: TextSegmentBlock, seq: number) {
         nodeUpdateTotalLength(node);
         // TODO: optimize merge by adding only single sequence number seq
@@ -917,7 +988,11 @@ export function segmentTree(text: string): SegmentTree {
         let strbuf = "";
         function nodeToString(node: TextSegmentBlock, indentCount = 0) {
             strbuf += indent(indentCount);
-            strbuf += `Node (len ${node.length}) with ${node.liveSegmentCount} live segments:\n`;
+            strbuf += `Node (len ${node.length}) p len (${node.parent ? node.parent.length : 0}) with ${node.liveSegmentCount} live segments:\n`;
+            if (segmentWindow.collaborating) {
+                strbuf += indent(indentCount);
+                strbuf += node.partialLengths.toString() + '\n';
+            }
             let segments = node.segments;
             for (let segmentIndex = 0; segmentIndex < node.liveSegmentCount; segmentIndex++) {
                 let segment = segments[segmentIndex];
@@ -950,6 +1025,9 @@ export function segmentTree(text: string): SegmentTree {
             end = root.length;
         }
         let go = true;
+        if (actions.pre) {
+            go = actions.pre(node, pos, refSeq, clientId, start, end, accum);
+        }
         let segments = node.segments;
         for (let segmentIndex = 0; segmentIndex < node.liveSegmentCount; segmentIndex++) {
             let segment = segments[segmentIndex];
@@ -958,14 +1036,8 @@ export function segmentTree(text: string): SegmentTree {
                 // found entry containing pos
                 if (segment.child) {
                     // internal node
-                    if (actions.pre) {
-                        go = actions.pre(segment.child, pos, refSeq, clientId, start, end, accum);
-                    }
                     if (go) {
                         go = nodeMap(segment.child, actions, pos, refSeq, clientId, accum, start, end);
-                    }
-                    if (go && actions.post) {
-                        go = actions.post(segment.child, pos, refSeq, clientId, start, end, accum);
                     }
                 }
                 else {
@@ -976,6 +1048,10 @@ export function segmentTree(text: string): SegmentTree {
             start -= len;
             end -= len;
         }
+        if (go && actions.post) {
+            go = actions.post(node, pos, refSeq, clientId, start, end, accum);
+        }
+
         return go;
     }
 

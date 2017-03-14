@@ -283,13 +283,13 @@ function checkRemoveSegTree(segTree: SegTree.SegmentTree, start: number, end: nu
     return result;
 }
 
-function checkMarkRemoveSegTree(opTree: SegTree.SegmentTree, start: number, end: number, verbose = false) {
-    let origText = opTree.getText(SegTree.UniversalSequenceNumber, SegTree.LocalClientId);
+function checkMarkRemoveSegTree(segTree: SegTree.SegmentTree, start: number, end: number, verbose = false) {
+    let origText = segTree.getText(SegTree.UniversalSequenceNumber, SegTree.LocalClientId);
     let checkText = editFlat(origText, start, end - start);
     let clockStart = clock();
-    opTree.markRangeRemoved(start, end, SegTree.UniversalSequenceNumber, SegTree.LocalClientId, SegTree.UniversalSequenceNumber);
+    segTree.markRangeRemoved(start, end, SegTree.UniversalSequenceNumber, SegTree.LocalClientId, SegTree.UniversalSequenceNumber);
     accumTime += elapsedMicroseconds(clockStart);
-    let updatedText = opTree.getText(SegTree.UniversalSequenceNumber, SegTree.LocalClientId);
+    let updatedText = segTree.getText(SegTree.UniversalSequenceNumber, SegTree.LocalClientId);
     let result = (checkText == updatedText);
     if ((!result) && verbose) {
         console.log(`mismatch(o): ${origText}`);
