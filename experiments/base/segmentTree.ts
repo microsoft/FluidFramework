@@ -456,6 +456,23 @@ export class TestClient {
                 console.log(cli.relText(clientId, refSeq));
             }
         }
+        cli = new TestClient(" old sock!");
+        cli.startCollaboration(1);
+        cli.insertSegmentRemote("abcde", 0, 1, 0, 2);
+        cli.insertSegmentRemote("yyy",0,2,0,0);
+        cli.insertSegmentRemote("zzz",2,3,1,3);
+        cli.insertSegmentRemote("EAGLE",1,4,1,4);
+        cli.insertSegmentRemote("HAS",4,5,1,5);
+        cli.insertSegmentLocal(" LANDED",19);
+        cli.insertSegmentRemote("yowza: ",0,6,4,2);
+        cli.segTree.ackPendingSegment(7);
+        console.log(cli.segTree.toString());
+        for (let clientId = 0; clientId < 6; clientId++) {
+            for (let refSeq = 0; refSeq < 8; refSeq++) {
+                console.log(cli.relText(clientId, refSeq));
+            }
+        }
+        
     }
 
     startCollaboration(localClientId: number) {
