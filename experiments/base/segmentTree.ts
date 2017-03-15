@@ -95,13 +95,6 @@ function leafSegmentTotalLength(textSegment: TextSegment) {
     }
 }
 
-function leafSegmentRelativeLength(textSegment: TextSegment, minSeq: number) {
-    if ((textSegment.removedSeq!==undefined)&&(textSegment.removedSeq<=minSeq)) {
-        return 0;
-    }
-    else return textSegment.text.length;
-}
-
 /**
  * Returns the partial length whose sequence number is 
  * the greatest sequence number within a that is
@@ -220,9 +213,11 @@ class PartialSequenceLengths {
         function insertSegment(segment: TextSegment, removedSeq = false) {
             let seq = segment.seq;
             let segmentLen = segment.text.length;
+            let clientId = segment.clientId;
             if (removedSeq) {
                 seq = segment.removedSeq;
                 segmentLen = -segmentLen;
+                clientId = segment.removedClientId;
             }
 
             let seqPartials = combinedPartialLengths.partialLengths;
@@ -238,7 +233,7 @@ class PartialSequenceLengths {
                 seqPartials[indexFirstGTE].seglen += segmentLen;
             }
             else {
-                let pLen = <PartialSequenceLength>{ seq: seq, clientId: segment.clientId, len: 0, seglen: segmentLen };
+                let pLen = <PartialSequenceLength>{ seq: seq, clientId: clientId, len: 0, seglen: segmentLen };
                 if (indexFirstGTE < seqPartialsLen) {
                     // shift entries with greater sequence numbers
                     for (let k = seqPartialsLen; k > indexFirstGTE; k--) {
@@ -251,8 +246,9 @@ class PartialSequenceLengths {
                 }
             }
         }
+
         function seqLTE(seq: number, minSeq: number) {
-            return (seq === undefined) || ((seq != UnassignedSequenceNumber) && (seq <= minSeq));
+            return (seq != UnassignedSequenceNumber) && (seq <= minSeq);
         }
 
         for (let i = 0; i < textSegmentBlock.liveSegmentCount; i++) {
@@ -260,14 +256,19 @@ class PartialSequenceLengths {
             if (textSegment.child === undefined) {
                 // leaf segment
                 if (seqLTE(textSegment.seq, segmentWindow.minSeq)) {
-                    combinedPartialLengths.minLength += leafSegmentRelativeLength(textSegment, segmentWindow.minSeq);
+                    combinedPartialLengths.minLength += textSegment.text.length;
                 }
                 else {
                     if (textSegment.seq != UnassignedSequenceNumber) {
                         insertSegment(textSegment);
-                        if (textSegment.removedSeq) {
-                            insertSegment(textSegment, true);
-                        }
+                    }
+                }
+                if (seqLTE(textSegment.removedSeq, segmentWindow.minSeq)) {
+                    combinedPartialLengths.minLength -= textSegment.text.length;
+                }
+                else {
+                    if ((textSegment.removedSeq !== undefined) && (textSegment.removedSeq != UnassignedSequenceNumber)) {
+                        insertSegment(textSegment, true);
                     }
                 }
             }
@@ -754,6 +755,8 @@ export function segmentTree(text: string): SegmentTree {
                 segment.text = textSegment.text;
                 segment.seq = textSegment.seq;
                 segment.clientId = textSegment.clientId;
+                segment.removedClientId = undefined;
+                segment.removedSeq = undefined;
                 saveIfLocal(segment);
                 return newSegment;
             }
