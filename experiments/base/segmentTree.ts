@@ -34,6 +34,10 @@ export interface SegmentTree {
     diag();
 }
 
+export interface TextSegmentGroup {
+    segments: TextSegment[];
+}
+
 // internal (represents multiple leaf segments) if child is defined
 export interface TextSegment {
     parent?: TextSegmentBlock;
@@ -41,6 +45,7 @@ export interface TextSegment {
     // below only for leaves
     text?: string;
     markers?: TextMarker[];
+    segmentGroup?: TextSegmentGroup;
     seq?: number;  // if not present assumed to be previous to window min
     clientId?: number;
     removedSeq?: number;
@@ -391,15 +396,34 @@ function makeLeafSegment(parent: TextSegmentBlock, text: string, sequenceNumber?
     };
 }
 
+function addToSegmentGroup(segment: TextSegment) {
+    segment.segmentGroup.segments.push(segment);
+}
+
+function segmentGroupReplace(currentSeg: TextSegment, newSegment: TextSegment) {
+    let segmentGroup = currentSeg.segmentGroup;
+    for (let i=0,len=segmentGroup.segments.length;i<len;i++) {
+        if (segmentGroup.segments[i]==currentSeg) {
+            segmentGroup.segments[i] = newSegment;
+            break;
+        }
+    }    
+    currentSeg.segmentGroup = undefined;
+}
+
 function makeLeafSegmentFromSplit(parent: TextSegmentBlock, text: string, origSegment: TextSegment) {
     let leafSegment = <TextSegment>{
         parent: parent,
-        text: text,
+        text: text, 
         seq: origSegment.seq,
         clientId: origSegment.clientId,
         removedSeq: origSegment.removedSeq,
-        removedClientId: origSegment.removedClientId
+        removedClientId: origSegment.removedClientId,
+        segmentGroup: origSegment.segmentGroup,
     };
+    if (leafSegment.segmentGroup) {
+        addToSegmentGroup(leafSegment);
+    }
     return leafSegment;
 }
 // add pos so can split markers
@@ -416,8 +440,12 @@ function copyLeafSegment(textSegment: TextSegment) {
         removedClientId: textSegment.removedClientId,
         removedSeq: textSegment.removedSeq,
         seq: textSegment.seq,
-        clientId: textSegment.clientId
+        clientId: textSegment.clientId,
+        segmentGroup:textSegment.segmentGroup
     };
+    if (newSegment.segmentGroup) {
+        segmentGroupReplace(textSegment,newSegment);
+    }
     if (newSegment.markers) {
         for (let i = 0, len = newSegment.markers.length; i < len; i++) {
             newSegment.markers[i].segment = newSegment;
@@ -565,6 +593,17 @@ export class TestClient {
                 console.log(cli.relText(clientId, refSeq));
             }
         }
+        cli.insertSegmentLocal("*yolumba*", 14);
+        cli.insertSegmentLocal("-zanzibar-",17);
+        cli.segTree.ackPendingSegment(5);
+        cli.insertSegmentRemote("(aaa)",2,6,4,2);
+        cli.segTree.ackPendingSegment(7);
+        console.log(cli.segTree.toString());
+        for (let clientId = 0; clientId < 4; clientId++) {
+            for (let refSeq = 0; refSeq < 8; refSeq++) {
+                console.log(cli.relText(clientId, refSeq));
+            }
+        }
     }
 
     startCollaboration(localClientId: number) {
@@ -583,7 +622,7 @@ export function segmentTree(text: string): SegmentTree {
 
     let root = initialNode(text);
     let segmentWindow = new SegmentWindow();
-    let pendingSegments: ListUtil.List<TextSegment>;
+    let pendingSegments: ListUtil.List<TextSegmentGroup>;
 
     // for now assume min starts at zero
     function startCollaboration(localClientId: number) {
@@ -591,7 +630,7 @@ export function segmentTree(text: string): SegmentTree {
         segmentWindow.minSeq = 0;
         segmentWindow.collaborating = true;
         segmentWindow.currentSeq = 0;
-        pendingSegments = ListUtil.ListMakeHead<TextSegment>();
+        pendingSegments = ListUtil.ListMakeHead<TextSegmentGroup>();
     }
 
     function getSegmentWindow() {
@@ -753,17 +792,27 @@ export function segmentTree(text: string): SegmentTree {
      * @param seq sequence number given by server to pending segment
      */
     function ackPendingSegment(seq: number) {
-        let pendingSegment = pendingSegments.dequeue();
-        if (pendingSegment !== undefined) {
-            if (pendingSegment.seq == UnassignedSequenceNumber) {
-                pendingSegment.seq = seq;
-            }
-            else {
-                pendingSegment.removedSeq = seq;
-            }
-            console.log(`set pending segment with text ${pendingSegment.text} to sequence number ${seq}`);
-            nodeUpdatePathLengths(pendingSegment.parent, seq);
+        let pendingSegmentGroup = pendingSegments.dequeue();
+        if (pendingSegmentGroup !== undefined) {
+            pendingSegmentGroup.segments.map((pendingSegment) => {
+                if (pendingSegment.seq == UnassignedSequenceNumber) {
+                    pendingSegment.seq = seq;
+                }
+                else {
+                    pendingSegment.removedSeq = seq;
+                }
+                console.log(`set pending segment with text ${pendingSegment.text} to sequence number ${seq}`);
+                // TODO: keep track of nodes to update and remove duplicates
+                nodeUpdatePathLengths(pendingSegment.parent, seq);
+            });
         }
+    }
+
+    function addToPendingList(segment: TextSegment) {
+        let segmentGroup = <TextSegmentGroup>{ segments: [segment] };
+        pendingSegments.enqueue(segmentGroup);
+        // TODO: share this group with UNDO
+        segment.segmentGroup = segmentGroup;
     }
 
     // TODO: just pass text in to this function; no need to make text segment because will not be placed
@@ -780,7 +829,7 @@ export function segmentTree(text: string): SegmentTree {
             function saveIfLocal(locSegment: TextSegment) {
                 // save segment so can assign sequence number when acked by server
                 if (segmentWindow.collaborating && (locSegment.seq == UnassignedSequenceNumber) && (clientId == segmentWindow.clientId)) {
-                    pendingSegments.enqueue(locSegment);
+                    addToPendingList(locSegment)
                     console.log(`saved local seg with text: ${locSegment.text}`);
                 }
             }
@@ -802,6 +851,7 @@ export function segmentTree(text: string): SegmentTree {
                 segment.clientId = textSegment.clientId;
                 segment.removedClientId = undefined;
                 segment.removedSeq = undefined;
+                segment.segmentGroup = undefined;
                 saveIfLocal(segment);
                 return newSegment;
             }
@@ -813,10 +863,6 @@ export function segmentTree(text: string): SegmentTree {
             let remainingText = segment.text.substring(pos);
             segment.text = segment.text.substring(0, pos);
             let leafSegment = makeLeafSegmentFromSplit(segment.parent, remainingText, segment);
-            if (segmentWindow.collaborating &&
-                ((leafSegment.seq == UnassignedSequenceNumber) || (leafSegment.removedSeq == UnassignedSequenceNumber))) {
-                    // TODO: add the split segment into the pending ack list
-            }
             return leafSegment;
         }
     }
@@ -912,7 +958,7 @@ export function segmentTree(text: string): SegmentTree {
             textSegment.removedSeq = seq;
             // save segment so can assign removed sequence number when acked by server
             if (segmentWindow.collaborating && (textSegment.removedSeq == UnassignedSequenceNumber) && (clientId == segmentWindow.clientId)) {
-                pendingSegments.enqueue(textSegment);
+                addToPendingList(textSegment);
                 console.log(`saved local removed seg with text: ${textSegment.text}`);
             }
             return true;
