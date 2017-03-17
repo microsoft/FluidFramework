@@ -6,8 +6,11 @@
   "dependencies": {
     "random-js": "^1.0.8"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "typescript": "^2.2.1"
+  },
   "scripts": {
+    "tsc": "tsc",
     "test": "node beastTest.js"
   },
   "author": "",
