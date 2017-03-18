@@ -402,19 +402,19 @@ function addToSegmentGroup(segment: TextSegment) {
 
 function segmentGroupReplace(currentSeg: TextSegment, newSegment: TextSegment) {
     let segmentGroup = currentSeg.segmentGroup;
-    for (let i=0,len=segmentGroup.segments.length;i<len;i++) {
-        if (segmentGroup.segments[i]==currentSeg) {
+    for (let i = 0, len = segmentGroup.segments.length; i < len; i++) {
+        if (segmentGroup.segments[i] == currentSeg) {
             segmentGroup.segments[i] = newSegment;
             break;
         }
-    }    
+    }
     currentSeg.segmentGroup = undefined;
 }
 
 function makeLeafSegmentFromSplit(parent: TextSegmentBlock, text: string, origSegment: TextSegment) {
     let leafSegment = <TextSegment>{
         parent: parent,
-        text: text, 
+        text: text,
         seq: origSegment.seq,
         clientId: origSegment.clientId,
         removedSeq: origSegment.removedSeq,
@@ -441,10 +441,10 @@ function copyLeafSegment(textSegment: TextSegment) {
         removedSeq: textSegment.removedSeq,
         seq: textSegment.seq,
         clientId: textSegment.clientId,
-        segmentGroup:textSegment.segmentGroup
+        segmentGroup: textSegment.segmentGroup
     };
     if (newSegment.segmentGroup) {
-        segmentGroupReplace(textSegment,newSegment);
+        segmentGroupReplace(textSegment, newSegment);
     }
     if (newSegment.markers) {
         for (let i = 0, len = newSegment.markers.length; i < len; i++) {
@@ -494,6 +494,21 @@ export class TestClient {
             clientId: clientId
         };
         this.segTree.insertInterval(pos, refSeq, clientId, seq, textSegment);
+        this.segTree.getSegmentWindow().currentSeq = seq;
+    }
+
+    ackPendingSegment(seq: number) {
+        this.segTree.ackPendingSegment(seq);
+        this.segTree.getSegmentWindow().currentSeq = seq;
+    }
+    
+    getCurrentSeq() {
+        return this.segTree.getSegmentWindow().currentSeq;
+    }
+
+    getText() {
+        let segmentWindow = this.segTree.getSegmentWindow();
+        return this.segTree.getText(segmentWindow.currentSeq, segmentWindow.clientId);
     }
 
     relText(clientId: number, refSeq: number) {
@@ -503,12 +518,15 @@ export class TestClient {
     static randolicious() {
         let mt = random.engines.mt19937();
         mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
-        const imin = 1;
-        const imax = 9;
-        let distribution = random.integer(imin, imax);
-        function randInt() {
-            return distribution(mt);
+        let segmentCountDistribution = random.integer(1, 3);
+        function randSegmentCount() {
+            return segmentCountDistribution(mt);
         }
+        let textLengthDistribution = random.integer(1, 5);
+        function randTextLength() {
+            return textLengthDistribution(mt);
+        }
+        const zedCode = 48;
         function randomString(len: number, c: string) {
             let str = "";
             for (let i = 0; i < len; i++) {
@@ -516,12 +534,62 @@ export class TestClient {
             }
             return str;
         }
-        let insertCount = 10;
-        let cliA = new TestClient("a stich in time saves nine");
-        let cliB = new TestClient("a stich in time saves nine")
-        for (let i = 0; i < insertCount; i++) {
+        let insertRounds = 10;
 
+        let cliA = new TestClient("a stich in time saves nine");
+        cliA.startCollaboration(0);
+        let cliB = new TestClient("a stich in time saves nine");
+        cliB.startCollaboration(1);
+        function checkTextMatch(checkSeq: number) {
+            if (cliA.getCurrentSeq() != checkSeq) {
+                console.log(`client A has seq number ${cliA.getCurrentSeq()} mismatch with ${checkSeq}`);
+            }
+            if (cliB.getCurrentSeq() != checkSeq) {
+                console.log(`client B has seq number ${cliB.getCurrentSeq()} mismatch with ${checkSeq}`);
+            }
+            let aText = cliA.getText();
+            let bText = cliB.getText();
+            if (aText != bText) {
+                console.log(`mismatch @${checkSeq}:`)
+                console.log(aText);
+                console.log(bText);
+            }
         }
+        for (let i = 0; i < insertRounds; i++) {
+            let insertCount = randSegmentCount();
+            let sequenceNumber = cliA.getCurrentSeq() + 1;
+            let firstSeq = sequenceNumber;
+            for (let j = 0; j < insertCount; j++) {
+                let textLen = randTextLength();
+                let text = randomString(textLen, String.fromCharCode(zedCode));
+                let preLen = cliA.getText().length;
+                let pos = random.integer(0, preLen)(mt);
+                cliB.insertSegmentRemote(text, pos, sequenceNumber++, cliA.getCurrentSeq(), cliA.segTree.getSegmentWindow().clientId);
+                cliA.insertSegmentLocal(text, pos);
+            }
+            for (let k=firstSeq;k<sequenceNumber;k++) {
+                cliA.segTree.ackPendingSegment(k);
+            }
+            checkTextMatch(sequenceNumber - 1);
+            insertCount = randSegmentCount();
+            sequenceNumber = cliA.getCurrentSeq() + 1;
+            firstSeq = sequenceNumber;
+            for (let j = 0; j < insertCount; j++) {
+                let textLen = randTextLength();
+                let text = randomString(textLen, String.fromCharCode(zedCode+sequenceNumber));
+                let preLen = cliB.getText().length;
+                let pos = random.integer(0, preLen)(mt);
+                cliA.insertSegmentRemote(text, pos, sequenceNumber++, cliA.getCurrentSeq(), cliA.segTree.getSegmentWindow().clientId);
+                cliB.insertSegmentLocal(text, pos);
+            }
+            for (let k=firstSeq;k<sequenceNumber;k++) {
+                cliB.ackPendingSegment(k);
+            }
+            checkTextMatch(sequenceNumber - 1);
+        }
+        console.log(cliA.segTree.toString());
+        console.log(cliB.segTree.toString());
+        console.log(cliA.getText());
     }
 
     static firstTest() {
@@ -594,9 +662,9 @@ export class TestClient {
             }
         }
         cli.insertSegmentLocal("*yolumba*", 14);
-        cli.insertSegmentLocal("-zanzibar-",17);
+        cli.insertSegmentLocal("-zanzibar-", 17);
         cli.segTree.ackPendingSegment(5);
-        cli.insertSegmentRemote("(aaa)",2,6,4,2);
+        cli.insertSegmentRemote("(aaa)", 2, 6, 4, 2);
         cli.segTree.ackPendingSegment(7);
         console.log(cli.segTree.toString());
         for (let clientId = 0; clientId < 4; clientId++) {
@@ -604,6 +672,7 @@ export class TestClient {
                 console.log(cli.relText(clientId, refSeq));
             }
         }
+        TestClient.randolicious();
     }
 
     startCollaboration(localClientId: number) {
