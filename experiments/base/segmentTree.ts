@@ -31,6 +31,7 @@ export interface SegmentTree {
     startCollaboration(localClientId);
     getSegmentWindow(): SegmentWindow;
     ackPendingSegment(seq: number);
+    updateMinSeq(minSeq: number);
     diag();
 }
 
@@ -137,6 +138,9 @@ class PartialSequenceLengths {
     minLength = 0;
     partialLengths: PartialSequenceLength[] = [];
     clientSeqNumbers: PartialSequenceLength[][] = [];
+
+    constructor(public minSeq: number) {
+    }
 
     cliLatestLEQ(clientId: number, refSeq: number) {
         let cliSeqs = this.clientSeqNumbers[clientId];
@@ -376,8 +380,8 @@ class PartialSequenceLengths {
      * has its partials up to date 
      * @param {SegmentWindow} segmentWindow segment window fo the segment tree containing textSegmentBlock
      */
-    static combine(textSegmentBlock: TextSegmentBlock, segmentWindow: SegmentWindow) {
-        let combinedPartialLengths = new PartialSequenceLengths();
+    static combine(textSegmentBlock: TextSegmentBlock, segmentWindow: SegmentWindow, recur = false) {
+        let combinedPartialLengths = new PartialSequenceLengths(segmentWindow.minSeq);
         PartialSequenceLengths.fromLeaves(combinedPartialLengths, textSegmentBlock, segmentWindow);
         let prevPartial: PartialSequenceLength;
 
@@ -410,17 +414,20 @@ class PartialSequenceLengths {
         for (let i = 0; i < textSegmentBlock.liveSegmentCount; i++) {
             let textSegment = textSegmentBlock.segments[i];
             if (textSegment.child !== undefined) {
+                if (recur) {
+                    textSegment.child.partialLengths = PartialSequenceLengths.combine(textSegment.child, segmentWindow, true);
+                }
                 childPartials.push(textSegment.child.partialLengths);
             }
         }
-        let childPartialsLen = childPartials.length
+        let childPartialsLen = childPartials.length;
         if (childPartialsLen != 0) {
             // some children are interior nodes
             if (combinedPartialLengths.partialLengths.length > 0) {
                 // some children were leaves; add combined partials from these segments 
                 childPartials.push(combinedPartialLengths);
                 childPartialsLen++;
-                combinedPartialLengths = new PartialSequenceLengths();
+                combinedPartialLengths = new PartialSequenceLengths(segmentWindow.minSeq);
             }
             let indices = new Array(childPartialsLen);
             let childPartialsCounts = new Array(childPartialsLen);
@@ -545,6 +552,8 @@ function elapsedMicroseconds(start: number[]) {
 export class TestClient {
     segTree: SegmentTree;
     accumTime = 0;
+    accumWindowTime = 0;
+    maxWindowTime = 0;
     accumWindow = 0;
     accumOps = 0;
     verboseOps = false;
@@ -561,7 +570,6 @@ export class TestClient {
         let clockStart = clock();
         this.segTree.markRangeRemoved(start, end, refSeq, clientId, seq);
         this.accumTime += elapsedMicroseconds(clockStart);
-        this.accumWindow += seq;
         this.accumOps++;
         if (this.verboseOps) {
             console.log(`remove local cli ${clientId} ref seq ${refSeq}`);
@@ -573,7 +581,6 @@ export class TestClient {
         this.segTree.markRangeRemoved(start, end, refSeq, clientId, seq);
         this.segTree.getSegmentWindow().currentSeq = seq;
         this.accumTime += elapsedMicroseconds(clockStart);
-        this.accumWindow += seq;
         this.accumOps++;
         if (this.verboseOps) {
             console.log(`seq ${seq} remove remote start ${start} end ${end} refseq ${refSeq} cli ${clientId}`);
@@ -593,7 +600,6 @@ export class TestClient {
         let clockStart = clock();
         this.segTree.insertInterval(pos, refSeq, clientId, seq, textSegment);
         this.accumTime += elapsedMicroseconds(clockStart);
-        this.accumWindow += seq;
         this.accumOps++;
         if (this.verboseOps) {
             console.log(`insert local cli ${clientId} ref seq ${refSeq}`);
@@ -612,7 +618,6 @@ export class TestClient {
         this.segTree.getSegmentWindow().currentSeq = seq;
 
         this.accumTime += elapsedMicroseconds(clockStart);
-        this.accumWindow += seq;
         this.accumOps++;
         if (this.verboseOps) {
             console.log(`seq ${seq} insert remote pos ${pos} refseq ${refSeq} cli ${clientId}`);
@@ -628,7 +633,13 @@ export class TestClient {
     }
 
     updateMinSeq(minSeq: number) {
-        this.segTree.getSegmentWindow().minSeq = minSeq;
+        let clockStart = clock();
+        this.segTree.updateMinSeq(minSeq);
+        let elapsed = elapsedMicroseconds(clockStart);
+        if (elapsed > this.maxWindowTime) {
+            this.maxWindowTime = elapsed;
+        }
+        this.accumWindowTime += elapsed;
     }
 
     getCurrentSeq() {
@@ -652,7 +663,9 @@ export class TestClient {
     static randolicious() {
         let mt = random.engines.mt19937();
         mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
-        let segmentCountDistribution = random.integer(1, 3);
+        let minSegCount = 1;
+        let maxSegCount = 40;
+        let segmentCountDistribution = random.integer(minSegCount, maxSegCount);
         function randSegmentCount() {
             return segmentCountDistribution(mt);
         }
@@ -668,8 +681,8 @@ export class TestClient {
             }
             return str;
         }
-        let insertRounds = 1000;
-        let removeRounds = 800;
+        let insertRounds = 500;
+        let removeRounds = 400;
 
         let cliA = new TestClient("a stitch in time saves nine");
         cliA.startCollaboration(0);
@@ -787,18 +800,24 @@ export class TestClient {
             console.log(cliB.segTree.toString());
         }
         else {
+            console.log(`sequence number: ${cliA.getCurrentSeq()} min: ${cliA.segTree.getSegmentWindow().minSeq}`);
+//            console.log(cliA.segTree.toString());
+
             console.log(`testing remove at ${cliA.getCurrentSeq()} and ${cliB.getCurrentSeq()}`);
             if (removeTest()) {
                 console.log(cliA.segTree.toString());
                 console.log(cliB.segTree.toString());
             }
         }
-        //console.log(cliA.segTree.toString());
+        console.log(`sequence number: ${cliA.getCurrentSeq()} min: ${cliA.segTree.getSegmentWindow().minSeq}`);
+//        console.log(cliA.segTree.toString());
         //console.log(cliB.segTree.toString());
         console.log(cliA.getText());
-        let aveWindow = (cliA.accumWindow / cliA.accumOps).toFixed(0);
+        let aveWindow = ((minSegCount + maxSegCount)/2).toFixed(1);
         let aveTime = (cliA.accumTime / cliA.accumOps).toFixed(3);
+        let aveWindowTime = (cliA.accumWindowTime / cliA.accumOps).toFixed(3);
         console.log(`accum time ${cliA.accumTime} us ops: ${cliA.accumOps} ave window ${aveWindow} ave time ${aveTime}`)
+        console.log(`accum window time ${cliA.accumWindowTime} us ave window time ${aveWindowTime}; max ${cliA.maxWindowTime}`)
         //console.log(cliB.getText());
     }
 
@@ -1042,6 +1061,17 @@ export function segmentTree(text: string): SegmentTree {
                     return 0;
                 }
             }
+        }
+    }
+
+    let lastClear = 0;
+
+    function updateMinSeq(minSeq: number) {
+        segmentWindow.minSeq = minSeq;
+        // TODO: refine heuristic to control how often to do this
+        if ((minSeq - lastClear) > 500) {
+            root.partialLengths = PartialSequenceLengths.combine(root, segmentWindow, true);
+            lastClear = minSeq;
         }
     }
 
@@ -1346,7 +1376,11 @@ export function segmentTree(text: string): SegmentTree {
     function nodeUpdateLengthNewStructure(node: TextSegmentBlock) {
         nodeUpdateTotalLength(node);
         if (segmentWindow.collaborating) {
-            node.partialLengths = PartialSequenceLengths.combine(node, segmentWindow);
+            let recur = false;
+            if (node.partialLengths && ((segmentWindow.minSeq - node.partialLengths.minSeq) > 10)) {
+                recur = true;
+            }
+            node.partialLengths = PartialSequenceLengths.combine(node, segmentWindow, recur);
         }
     }
 
@@ -1486,6 +1520,7 @@ export function segmentTree(text: string): SegmentTree {
         startCollaboration: startCollaboration,
         getSegmentWindow: getSegmentWindow,
         ackPendingSegment: ackPendingSegment,
+        updateMinSeq: updateMinSeq,
         toString: toString,
         diag: diag
     }
