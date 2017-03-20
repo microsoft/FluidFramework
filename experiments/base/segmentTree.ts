@@ -173,6 +173,11 @@ class PartialSequenceLengths {
         return `min: ${this.minLength};` + buf;
     }
 
+    recentWindow(segmentWindow: SegmentWindow) {
+        let windowSize = segmentWindow.currentSeq - segmentWindow.minSeq;
+        return this.partialLengths.length < windowSize;
+    }
+
     getPartialLength(refSeq: number, clientId: number) {
         let pLen = this.minLength;
         let seqIndex = latestLEQ(this.partialLengths, refSeq);
@@ -622,6 +627,10 @@ export class TestClient {
         }
     }
 
+    updateMinSeq(minSeq: number) {
+        this.segTree.getSegmentWindow().minSeq = minSeq;
+    }
+
     getCurrentSeq() {
         return this.segTree.getSegmentWindow().currentSeq;
     }
@@ -707,6 +716,8 @@ export class TestClient {
                 if (checkTextMatch(sequenceNumber - 1)) {
                     return true;
                 }
+                cliA.updateMinSeq(sequenceNumber - 1);
+                cliB.updateMinSeq(sequenceNumber - 1);
                 insertCount = randSegmentCount();
                 sequenceNumber = cliA.getCurrentSeq() + 1;
                 firstSeq = sequenceNumber;
@@ -724,6 +735,8 @@ export class TestClient {
                 if (checkTextMatch(sequenceNumber - 1)) {
                     return true;
                 }
+                cliA.updateMinSeq(sequenceNumber - 1);
+                cliB.updateMinSeq(sequenceNumber - 1);
             }
             return false;
         }
@@ -746,6 +759,8 @@ export class TestClient {
                 if (checkTextMatch(sequenceNumber - 1)) {
                     return true;
                 }
+                cliA.updateMinSeq(sequenceNumber - 1);
+                cliB.updateMinSeq(sequenceNumber - 1);
                 removeCount = randSegmentCount();
                 sequenceNumber = cliA.getCurrentSeq() + 1;
                 firstSeq = sequenceNumber;
@@ -762,6 +777,8 @@ export class TestClient {
                 if (checkTextMatch(sequenceNumber - 1)) {
                     return true;
                 }
+                cliA.updateMinSeq(sequenceNumber - 1);
+                cliB.updateMinSeq(sequenceNumber - 1);
             }
             return false;
         }
@@ -1350,15 +1367,13 @@ export function segmentTree(text: string): SegmentTree {
 
     function nodeUpdateLength(node: TextSegmentBlock, seq: number, clientId: number) {
         nodeUpdateTotalLength(node);
-        // TODO: optimize merge by adding only single sequence number seq
         if (segmentWindow.collaborating && (seq != UnassignedSequenceNumber) && (seq != TreeMaintainanceSequenceNumber)) {
-            if (node.partialLengths !== undefined) {
+            if ((node.partialLengths !== undefined) && (node.partialLengths.recentWindow(segmentWindow))) {
                 node.partialLengths.update(node, seq, clientId, segmentWindow);
             }
             else {
                 node.partialLengths = PartialSequenceLengths.combine(node, segmentWindow);
             }
-            //                node.partialLengths = PartialSequenceLengths.combine(node, segmentWindow);
         }
     }
 
