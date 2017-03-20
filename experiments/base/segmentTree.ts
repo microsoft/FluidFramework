@@ -1034,7 +1034,6 @@ export function segmentTree(text: string): SegmentTree {
                     //console.log(`saved local seg with text: ${locSegment.text}`);
                 }
             }
-
             if (!segment) {
                 segment = <TextSegment>{
                     parent: node,
