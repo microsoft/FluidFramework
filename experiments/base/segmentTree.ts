@@ -250,8 +250,8 @@ class PartialSequenceLengths {
                 let pLen = partialLengths[leqIndex];
                 if (pLen.seq == seq) {
                     seqPartialLen = pLen;
-                    leqIndex = latestLEQ(partialLengths, seq -1);
-                    if (leqIndex>=0) {
+                    leqIndex = latestLEQ(partialLengths, seq - 1);
+                    if (leqIndex >= 0) {
                         penultPartialLen = partialLengths[leqIndex];
                     }
                 }
@@ -1069,6 +1069,8 @@ export function segmentTree(text: string): SegmentTree {
      */
     function ackPendingSegment(seq: number) {
         let pendingSegmentGroup = pendingSegments.dequeue();
+        let nodesToUpdate = <TextSegmentBlock[]>[];
+        let clientId: number;
         if (pendingSegmentGroup !== undefined) {
             pendingSegmentGroup.segments.map((pendingSegment) => {
                 if (pendingSegment.seq == UnassignedSequenceNumber) {
@@ -1078,9 +1080,15 @@ export function segmentTree(text: string): SegmentTree {
                     pendingSegment.removedSeq = seq;
                 }
                 //console.log(`set pending segment with text ${pendingSegment.text} to sequence number ${seq}`);
-                // TODO: keep track of nodes to update and remove duplicates
-                nodeUpdatePathLengths(pendingSegment.parent, seq, pendingSegment.clientId);
+                // TODO: assert client ids match
+                clientId = pendingSegment.clientId;
+                if (nodesToUpdate.indexOf(pendingSegment.parent) < 0) {
+                    nodesToUpdate.push(pendingSegment.parent);
+                }
             });
+            for (let node of nodesToUpdate) {
+                nodeUpdatePathLengths(node, seq, clientId);
+            }
         }
     }
 
@@ -1350,8 +1358,7 @@ export function segmentTree(text: string): SegmentTree {
             else {
                 node.partialLengths = PartialSequenceLengths.combine(node, segmentWindow);
             }
-//                node.partialLengths = PartialSequenceLengths.combine(node, segmentWindow);
-
+            //                node.partialLengths = PartialSequenceLengths.combine(node, segmentWindow);
         }
     }
 
