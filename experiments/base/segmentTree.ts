@@ -72,6 +72,7 @@ export interface TextMarker {
  */
 export const UniversalSequenceNumber = 0;
 export const UnassignedSequenceNumber = -1;
+export const TreeMaintainanceSequenceNumber = -2;
 export const LocalClientId = -1;
 
 interface PartialSequenceLength {
@@ -211,6 +212,78 @@ class PartialSequenceLengths {
             pLen += cli[cli.length - 1].len;
         }
         cli.push({ seq: partialLength.seq, len: pLen, seglen: partialLength.seglen });
+    }
+
+    // assume: seq is latest sequence number; no structural change to sub-tree, but a segment
+    // with sequence number seq has been added within the sub-tree
+    // TODO: assert client id matches
+    update(node: TextSegmentBlock, seq: number, clientId: number, segmentWindow: SegmentWindow) {
+        let seqSeglen = 0;
+        // compute length for seq across children
+        for (let i = 0; i < node.liveSegmentCount; i++) {
+            let segment = node.segments[i];
+            if (segment.child) {
+                let partialLengths = segment.child.partialLengths.partialLengths;
+                let seqIndex = latestLEQ(partialLengths, seq);
+                if (seqIndex >= 0) {
+                    let leqPartial = partialLengths[seqIndex];
+                    if (leqPartial.seq == seq) {
+                        seqSeglen += leqPartial.seglen;
+                    }
+                }
+            }
+            else {
+                if (segment.seq == seq) {
+                    seqSeglen += segment.text.length;
+                }
+                else if (segment.removedSeq == seq) {
+                    seqSeglen -= segment.text.length;
+                }
+            }
+        }
+
+        function addSeq(partialLengths: PartialSequenceLength[], seq: number, clientId?: number) {
+            let seqPartialLen: PartialSequenceLength;
+            let penultPartialLen: PartialSequenceLength;
+            let leqIndex = latestLEQ(partialLengths, seq);
+            if (leqIndex >= 0) {
+                let pLen = partialLengths[leqIndex];
+                if (pLen.seq == seq) {
+                    seqPartialLen = pLen;
+                    leqIndex = latestLEQ(partialLengths, seq -1);
+                    if (leqIndex>=0) {
+                        penultPartialLen = partialLengths[leqIndex];
+                    }
+                }
+                else {
+                    penultPartialLen = pLen;
+                }
+            }
+            if (seqPartialLen === undefined) {
+                seqPartialLen = <PartialSequenceLength>{
+                    seq: seq,
+                    seglen: seqSeglen,
+                    clientId: clientId
+                }
+                partialLengths.push(seqPartialLen);
+            }
+            else {
+                seqPartialLen.seglen = seqSeglen;
+                // assert client id matches
+            }
+            if (penultPartialLen !== undefined) {
+                seqPartialLen.len = seqPartialLen.seglen + penultPartialLen.len;
+            }
+            else {
+                seqPartialLen.len = seqPartialLen.seglen;
+            }
+
+        }
+        addSeq(this.partialLengths, seq, clientId);
+        if (this.clientSeqNumbers[clientId] === undefined) {
+            this.clientSeqNumbers[clientId] = [];
+        }
+        addSeq(this.clientSeqNumbers[clientId], seq);
     }
 
     static fromLeaves(combinedPartialLengths: PartialSequenceLengths, textSegmentBlock: TextSegmentBlock, segmentWindow: SegmentWindow) {
@@ -558,6 +631,11 @@ export class TestClient {
         return this.segTree.getText(segmentWindow.currentSeq, segmentWindow.clientId);
     }
 
+    getLength() {
+        let segmentWindow = this.segTree.getSegmentWindow();
+        return this.segTree.getLength(segmentWindow.currentSeq, segmentWindow.clientId);
+    }
+
     relText(clientId: number, refSeq: number) {
         return `cli: ${clientId} refSeq: ${refSeq}: ` + this.segTree.getText(refSeq, clientId);
     }
@@ -581,8 +659,8 @@ export class TestClient {
             }
             return str;
         }
-        let insertRounds = 500;
-        let removeRounds = 400;
+        let insertRounds = 1000;
+        let removeRounds = 800;
 
         let cliA = new TestClient("a stitch in time saves nine");
         cliA.startCollaboration(0);
@@ -618,7 +696,7 @@ export class TestClient {
                 for (let j = 0; j < insertCount; j++) {
                     let textLen = randTextLength();
                     let text = randomString(textLen, String.fromCharCode(zedCode + (sequenceNumber % 50)));
-                    let preLen = cliA.getText().length;
+                    let preLen = cliA.getLength();
                     let pos = random.integer(0, preLen)(mt);
                     cliB.insertSegmentRemote(text, pos, sequenceNumber++, cliA.getCurrentSeq(), cliA.segTree.getSegmentWindow().clientId);
                     cliA.insertSegmentLocal(text, pos);
@@ -635,7 +713,7 @@ export class TestClient {
                 for (let j = 0; j < insertCount; j++) {
                     let textLen = randTextLength();
                     let text = randomString(textLen, String.fromCharCode(zedCode + (sequenceNumber % 50)));
-                    let preLen = cliB.getText().length;
+                    let preLen = cliB.getLength();
                     let pos = random.integer(0, preLen)(mt);
                     cliA.insertSegmentRemote(text, pos, sequenceNumber++, cliB.getCurrentSeq(), cliB.segTree.getSegmentWindow().clientId);
                     cliB.insertSegmentLocal(text, pos);
@@ -657,7 +735,7 @@ export class TestClient {
                 let firstSeq = sequenceNumber;
                 for (let j = 0; j < removeCount; j++) {
                     let dlen = randTextLength();
-                    let preLen = cliA.getText().length;
+                    let preLen = cliA.getLength();
                     let pos = random.integer(0, preLen)(mt);
                     cliB.removeSegmentRemote(pos, pos + dlen, sequenceNumber++, cliA.getCurrentSeq(), cliA.segTree.getSegmentWindow().clientId);
                     cliA.removeSegmentLocal(pos, pos + dlen);
@@ -673,7 +751,7 @@ export class TestClient {
                 firstSeq = sequenceNumber;
                 for (let j = 0; j < removeCount; j++) {
                     let dlen = randTextLength();
-                    let preLen = cliB.getText().length;
+                    let preLen = cliB.getLength();
                     let pos = random.integer(0, preLen)(mt);
                     cliA.removeSegmentRemote(pos, pos + dlen, sequenceNumber++, cliB.getCurrentSeq(), cliB.segTree.getSegmentWindow().clientId);
                     cliB.removeSegmentLocal(pos, pos + dlen);
@@ -689,6 +767,7 @@ export class TestClient {
         }
         if (insertTest()) {
             console.log(cliA.segTree.toString());
+            console.log(cliB.segTree.toString());
         }
         else {
             console.log(`testing remove at ${cliA.getCurrentSeq()} and ${cliB.getCurrentSeq()}`);
@@ -835,7 +914,7 @@ export function segmentTree(text: string): SegmentTree {
     }
 
     function getLength(refSeq: number, clientId: number) {
-        return root.length;
+        return nodeLength(root, refSeq, clientId);
     }
 
     function getOffset(leafSegment: TextSegment, refSeq: number, clientId: number) {
@@ -1000,7 +1079,7 @@ export function segmentTree(text: string): SegmentTree {
                 }
                 //console.log(`set pending segment with text ${pendingSegment.text} to sequence number ${seq}`);
                 // TODO: keep track of nodes to update and remove duplicates
-                nodeUpdatePathLengths(pendingSegment.parent, seq);
+                nodeUpdatePathLengths(pendingSegment.parent, seq, pendingSegment.clientId);
             });
         }
     }
@@ -1068,7 +1147,7 @@ export function segmentTree(text: string): SegmentTree {
     }
 
     function ensureIntervalBoundary(pos: number, refSeq: number, clientId: number) {
-        let splitNode = insertingWalk(root, pos, refSeq, clientId, UniversalSequenceNumber, splitLeafSegment);
+        let splitNode = insertingWalk(root, pos, refSeq, clientId, TreeMaintainanceSequenceNumber, splitLeafSegment);
         updateRoot(splitNode, refSeq, clientId);
     }
 
@@ -1087,7 +1166,7 @@ export function segmentTree(text: string): SegmentTree {
                     //internal node
                     let splitNode = insertingWalk(segment.child, pos, refSeq, clientId, seq, leafAction);
                     if (splitNode === undefined) {
-                        nodeUpdateLength(node, seq);
+                        nodeUpdateLength(node, seq, clientId);
                         return undefined;
                     }
                     newSegment = makeInternalSegment(node, splitNode);
@@ -1122,7 +1201,7 @@ export function segmentTree(text: string): SegmentTree {
             newSegment.parent = node;
             node.liveSegmentCount++;
             if (node.liveSegmentCount < MaxSegments) {
-                nodeUpdateLength(node, seq);
+                nodeUpdateLength(node, seq, clientId);
                 return undefined;
             }
             else {
@@ -1165,7 +1244,7 @@ export function segmentTree(text: string): SegmentTree {
             return true;
         }
         function afterMarkRemoved(node: TextSegmentBlock, pos: number, start: number, end: number) {
-            nodeUpdateLength(node, seq);
+            nodeUpdateLength(node, seq, clientId);
             return true;
         }
         mapRange({ leaf: markRemoved, post: afterMarkRemoved }, refSeq, clientId, undefined, start, end);
@@ -1254,18 +1333,25 @@ export function segmentTree(text: string): SegmentTree {
         node.length = len;
     }
 
-    function nodeUpdatePathLengths(node: TextSegmentBlock, seq: number) {
+    function nodeUpdatePathLengths(node: TextSegmentBlock, seq: number, clientId: number) {
         while (node !== undefined) {
-            nodeUpdateLength(node, seq);
+            nodeUpdateLength(node, seq, clientId);
             node = node.parent;
         }
     }
 
-    function nodeUpdateLength(node: TextSegmentBlock, seq: number) {
+    function nodeUpdateLength(node: TextSegmentBlock, seq: number, clientId: number) {
         nodeUpdateTotalLength(node);
         // TODO: optimize merge by adding only single sequence number seq
-        if (segmentWindow.collaborating) {
-            node.partialLengths = PartialSequenceLengths.combine(node, segmentWindow);
+        if (segmentWindow.collaborating && (seq != UnassignedSequenceNumber) && (seq != TreeMaintainanceSequenceNumber)) {
+            if (node.partialLengths !== undefined) {
+                node.partialLengths.update(node, seq, clientId, segmentWindow);
+            }
+            else {
+                node.partialLengths = PartialSequenceLengths.combine(node, segmentWindow);
+            }
+//                node.partialLengths = PartialSequenceLengths.combine(node, segmentWindow);
+
         }
     }
 
