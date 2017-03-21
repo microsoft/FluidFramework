@@ -210,6 +210,37 @@ class PartialSequenceLengths {
         return pLen;
     }
 
+    // clear away partial sums for sequence numbers earlier than the current window
+    zamboni(segmentWindow: SegmentWindow) {
+        function copyDown(partialLengths: PartialSequenceLength[]) {
+            let mindex = latestLEQ(partialLengths, segmentWindow.minSeq);
+            let minLength = 0;
+            //console.log(`mindex ${mindex}`);
+            if (mindex >= 0) {
+                minLength = partialLengths[mindex].len;
+                let seqCount = partialLengths.length;
+                if (mindex <= (seqCount - 1)) {
+                    // still some entries remaining
+                    let remainingCount = (seqCount - mindex) - 1;
+                    //copy down
+                    for (let i = 0; i < remainingCount; i++) {
+                        partialLengths[i] = partialLengths[i + mindex + 1];
+                        partialLengths[i].len -= minLength;
+                    }
+                    partialLengths.length = remainingCount;
+                }
+            }
+            return minLength;
+        }
+        this.minLength += copyDown(this.partialLengths);
+        for (let clientId in this.clientSeqNumbers) {
+            let cliPartials = this.clientSeqNumbers[clientId];
+            if (cliPartials) {
+                copyDown(cliPartials);
+            }
+        }
+    }
+
     // assumes sequence number already coalesced
     addClientSeqNumber(partialLength: PartialSequenceLength) {
         if (this.clientSeqNumbers[partialLength.clientId] === undefined) {
@@ -293,6 +324,10 @@ class PartialSequenceLengths {
             this.clientSeqNumbers[clientId] = [];
         }
         addSeq(this.clientSeqNumbers[clientId], seq);
+    //    console.log(this.toString());
+        this.zamboni(segmentWindow);
+     //   console.log('ZZZ');
+     //   console.log(this.toString());
     }
 
     static fromLeaves(combinedPartialLengths: PartialSequenceLengths, textSegmentBlock: TextSegmentBlock, segmentWindow: SegmentWindow) {
@@ -324,6 +359,7 @@ class PartialSequenceLengths {
                 let pLen = <PartialSequenceLength>{ seq: seq, clientId: clientId, len: 0, seglen: segmentLen };
                 if (indexFirstGTE < seqPartialsLen) {
                     // shift entries with greater sequence numbers
+                    // TODO: investigate performance improvement using BST
                     for (let k = seqPartialsLen; k > indexFirstGTE; k--) {
                         seqPartials[k] = seqPartials[k - 1];
                     }
@@ -460,6 +496,11 @@ class PartialSequenceLengths {
                 combinedPartialLengths.addClientSeqNumber(prevPartial);
             }
         }
+        // TODO: incremental zamboni during build
+        //console.log(combinedPartialLengths.toString());
+        //console.log(`ZZZ...(min ${segmentWindow.minSeq})`);
+        combinedPartialLengths.zamboni(segmentWindow);
+        //console.log(combinedPartialLengths.toString());
         return combinedPartialLengths;
     }
 }
@@ -664,7 +705,7 @@ export class TestClient {
         let mt = random.engines.mt19937();
         mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
         let minSegCount = 1;
-        let maxSegCount = 40;
+        let maxSegCount = 1000;
         let segmentCountDistribution = random.integer(minSegCount, maxSegCount);
         function randSegmentCount() {
             return segmentCountDistribution(mt);
@@ -681,8 +722,8 @@ export class TestClient {
             }
             return str;
         }
-        let insertRounds = 500;
-        let removeRounds = 400;
+        let insertRounds = 40;
+        let removeRounds = 32;
 
         let cliA = new TestClient("a stitch in time saves nine");
         cliA.startCollaboration(0);
@@ -801,7 +842,7 @@ export class TestClient {
         }
         else {
             console.log(`sequence number: ${cliA.getCurrentSeq()} min: ${cliA.segTree.getSegmentWindow().minSeq}`);
-//            console.log(cliA.segTree.toString());
+            //            console.log(cliA.segTree.toString());
 
             console.log(`testing remove at ${cliA.getCurrentSeq()} and ${cliB.getCurrentSeq()}`);
             if (removeTest()) {
@@ -810,10 +851,10 @@ export class TestClient {
             }
         }
         console.log(`sequence number: ${cliA.getCurrentSeq()} min: ${cliA.segTree.getSegmentWindow().minSeq}`);
-//        console.log(cliA.segTree.toString());
+//                console.log(cliA.segTree.toString());
         //console.log(cliB.segTree.toString());
         console.log(cliA.getText());
-        let aveWindow = ((minSegCount + maxSegCount)/2).toFixed(1);
+        let aveWindow = ((minSegCount + maxSegCount) / 2).toFixed(1);
         let aveTime = (cliA.accumTime / cliA.accumOps).toFixed(3);
         let aveWindowTime = (cliA.accumWindowTime / cliA.accumOps).toFixed(3);
         console.log(`accum time ${cliA.accumTime} us ops: ${cliA.accumOps} ave window ${aveWindow} ave time ${aveTime}`)
@@ -1069,10 +1110,10 @@ export function segmentTree(text: string): SegmentTree {
     function updateMinSeq(minSeq: number) {
         segmentWindow.minSeq = minSeq;
         // TODO: refine heuristic to control how often to do this
-        if ((minSeq - lastClear) > 500) {
-            root.partialLengths = PartialSequenceLengths.combine(root, segmentWindow, true);
-            lastClear = minSeq;
-        }
+        // if ((minSeq - lastClear) > 500) {
+        //     root.partialLengths = PartialSequenceLengths.combine(root, segmentWindow, true);
+        //     lastClear = minSeq;
+        // }
     }
 
     function search<TAccum>(node: TextSegmentBlock, pos: number, refSeq: number, clientId: number, action?: TextSegmentAction, accum?: TAccum): TextSegment {
@@ -1377,10 +1418,10 @@ export function segmentTree(text: string): SegmentTree {
         nodeUpdateTotalLength(node);
         if (segmentWindow.collaborating) {
             let recur = false;
-            if (node.partialLengths && ((segmentWindow.minSeq - node.partialLengths.minSeq) > 10)) {
+    /*        if (node.partialLengths && ((segmentWindow.minSeq - node.partialLengths.minSeq) > 10)) {
                 recur = true;
             }
-            node.partialLengths = PartialSequenceLengths.combine(node, segmentWindow, recur);
+*/            node.partialLengths = PartialSequenceLengths.combine(node, segmentWindow, recur);
         }
     }
 
