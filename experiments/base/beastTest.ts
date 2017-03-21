@@ -1,6 +1,6 @@
 /// <reference path="node.d.ts" />
 /// <reference path="base.d.ts" />
-/// <reference path="typings/index.d.ts" />
+/// <reference path="random.d.ts" />
 
 import * as fs from "fs";
 import * as RedBlack from "./redBlack";
