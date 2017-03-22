@@ -5,19 +5,34 @@
   "main": "index.js",
   "scripts": {
     "build": "tsc",
+    "start": "node dist/server/www.js",
     "test": "nyc -x dist/test/**/* mocha dist/test"
   },
   "author": "",
   "license": "Apache-2.0",
   "repository": "microsoft/prague",
   "devDependencies": {
+    "@types/lodash": "^4.14.57",
     "@types/mocha": "^2.2.40",
+    "@types/morgan": "^1.7.32",
+    "@types/nconf": "0.0.34",
+    "@types/socket.io": "^1.4.28",
+    "@types/socket.io-redis": "^1.0.21",
     "mocha": "^3.2.0",
     "nyc": "^10.1.2",
     "tslint": "^4.5.1",
     "typescript": "^2.2.1"
   },
   "dependencies": {
-    "express": "^4.15.2"
+    "body-parser": "^1.17.1",
+    "express": "^4.15.2",
+    "hjs": "0.0.6",
+    "lodash": "^4.17.4",
+    "morgan": "^1.8.1",
+    "nconf": "^0.8.4",
+    "passport": "^0.3.2",
+    "redis": "^2.7.1",
+    "socket.io": "^1.7.3",
+    "socket.io-redis": "^4.0.0"
   }
 }

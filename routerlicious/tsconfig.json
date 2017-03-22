@@ -8,9 +8,9 @@
         "module": "commonjs",
         "moduleResolution": "node",
         "noImplicitAny": false,
-        "noUnusedParameters": true,
         "noUnusedLocals": true,
-        "outDir": "dist"
+        "outDir": "dist",
+        "rootDir": "./src"
     },
     "include": [
         "src/**/*"
