@@ -1,0 +1,23 @@
+{
+  "name": "routerlicious",
+  "version": "0.1.0",
+  "description": "Server to assign sequence numbers and route deltas between connected clients",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "nyc -x dist/test/**/* mocha dist/test"
+  },
+  "author": "",
+  "license": "Apache-2.0",
+  "repository": "microsoft/prague",
+  "devDependencies": {
+    "@types/mocha": "^2.2.40",
+    "mocha": "^3.2.0",
+    "nyc": "^10.1.2",
+    "tslint": "^4.5.1",
+    "typescript": "^2.2.1"
+  },
+  "dependencies": {
+    "express": "^4.15.2"
+  }
+}
