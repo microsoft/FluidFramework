@@ -603,6 +603,7 @@ interface DeltaMsg {
     pos1: number;
     pos2?: number;
     text?: string;
+    minseq?: number;  // sent by server; minumum ref seq across clients
 }
 
 function makeInsertMsg(text: string, pos: number, seq: number, refSeq: number, clientId: number) {
