@@ -649,15 +649,27 @@ export function TestPack() {
         }
 
         let rounds = 10;
-        function clientProcessSome(client: TestClient) {
+        function clientProcessSome(client: TestClient, all = false) {
             let cliMsgCount = client.q.count();
-            let countToApply = random.integer(Math.floor(2 * cliMsgCount / 3), cliMsgCount)(mt);
+            let countToApply: number;
+            if (all) {
+                countToApply = cliMsgCount;
+            }
+            else {
+                countToApply = random.integer(Math.floor(2 * cliMsgCount / 3), cliMsgCount)(mt);
+            }
             client.applyMessages(countToApply);
         }
 
-        function serverProcessSome(server: TestClient) {
+        function serverProcessSome(server: TestClient, all = false) {
             let svrMsgCount = server.q.count();
-            let countToApply = random.integer(Math.floor(2 * svrMsgCount / 3), svrMsgCount)(mt);
+            let countToApply: number;
+            if (all) {
+                countToApply = svrMsgCount;
+            }
+            else {
+                countToApply = random.integer(Math.floor(2 * svrMsgCount / 3), svrMsgCount)(mt);
+            }
             server.applyMessages(countToApply, clients);
         }
 
@@ -688,6 +700,11 @@ export function TestPack() {
                 clientProcessSome(client);
                 serverProcessSome(server);
             }
+            // process remaining messages
+            for (let client of clients) {
+                clientProcessSome(client, true);
+            }
+            serverProcessSome(server, true);
         }
     }
 
