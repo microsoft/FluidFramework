@@ -5,10 +5,12 @@
   "main": "index.js",
   "scripts": {
     "browserify": "browserify dist/server/controllers/home.js -o public/scripts/dist/home.js",
-    "build": "tsc && npm run browserify && npm run less",
+    "build": "npm run tsc && npm run tslint && npm run browserify && npm run less",
     "less": "lessc src/stylesheets/style.less public/stylesheets/dist/style.css",
     "start": "node dist/server/www.js",
-    "test": "nyc -x dist/test/**/* mocha dist/test"
+    "test": "nyc -x dist/test/**/* mocha dist/test",
+    "tsc": "tsc",
+    "tslint": "tslint 'src/**/*.ts'"
   },
   "author": "Microsoft",
   "license": "Apache-2.0",
