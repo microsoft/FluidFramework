@@ -314,7 +314,7 @@ function segTreeTest1() {
     console.log(segTree.getOffset(segment, SegTree.UniversalSequenceNumber, SegTree.LocalClientId));
     console.log(segTree.getText(SegTree.UniversalSequenceNumber, SegTree.LocalClientId));
     console.log(segTree.toString());
-    SegTree.TestClient.firstTest();
+    SegTree.TestPack().firstTest();
 }
 
 function segTreeLargeTest() {
@@ -706,4 +706,4 @@ function itreeCheckedTest() {
 //segTreeTest1();
 //segTreeLargeTest();
 //segTreeCheckedTest();
-SegTree.TestClient.randolicious();
+SegTree.TestPack().randolicious();

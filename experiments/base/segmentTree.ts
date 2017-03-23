@@ -324,10 +324,10 @@ class PartialSequenceLengths {
             this.clientSeqNumbers[clientId] = [];
         }
         addSeq(this.clientSeqNumbers[clientId], seq);
-    //    console.log(this.toString());
+        //    console.log(this.toString());
         this.zamboni(segmentWindow);
-     //   console.log('ZZZ');
-     //   console.log(this.toString());
+        //   console.log('ZZZ');
+        //   console.log(this.toString());
     }
 
     static fromLeaves(combinedPartialLengths: PartialSequenceLengths, textSegmentBlock: TextSegmentBlock, segmentWindow: SegmentWindow) {
@@ -590,138 +590,107 @@ function elapsedMicroseconds(start: number[]) {
     return duration;
 }
 
-export class TestClient {
-    segTree: SegmentTree;
-    accumTime = 0;
-    accumWindowTime = 0;
-    maxWindowTime = 0;
-    accumWindow = 0;
-    accumOps = 0;
-    verboseOps = false;
+const enum MsgType {
+    INSERT,
+    REMOVE
+}
 
-    constructor(initText: string) {
-        this.segTree = segmentTree(initText);
+interface DeltaMsg {
+    type: MsgType;
+    seq: number;
+    refSeq: number;
+    clientId: number;
+    pos1: number;
+    pos2?: number;
+    text?: string;
+}
+
+function makeInsertMsg(text: string, pos: number, seq: number, refSeq: number, clientId: number) {
+    return <DeltaMsg>{ text: text, pos1: pos, seq: seq, refSeq: refSeq, clientId: clientId };
+}
+
+function makeRemoveMsg(start: number, end: number, seq: number, refSeq: number, clientId: number) {
+    return <DeltaMsg>{ pos1: start, pos2: end, seq: seq, refSeq: refSeq, clientId: clientId };
+}
+
+export function TestPack() {
+    let mt = random.engines.mt19937();
+    mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
+    let minSegCount = 1;
+    let maxSegCount = 1000;
+    let segmentCountDistribution = random.integer(minSegCount, maxSegCount);
+    let smallSegmentCountDistribution = random.integer(1, 4);
+    function randSmallSegmentCount() {
+        return smallSegmentCountDistribution(mt);
     }
-
-    removeSegmentLocal(start: number, end: number) {
-        let segWindow = this.segTree.getSegmentWindow();
-        let clientId = segWindow.clientId;
-        let refSeq = segWindow.currentSeq;
-        let seq = UnassignedSequenceNumber;
-        let clockStart = clock();
-        this.segTree.markRangeRemoved(start, end, refSeq, clientId, seq);
-        this.accumTime += elapsedMicroseconds(clockStart);
-        this.accumOps++;
-        if (this.verboseOps) {
-            console.log(`remove local cli ${clientId} ref seq ${refSeq}`);
+    function randSegmentCount() {
+        return segmentCountDistribution(mt);
+    }
+    let textLengthDistribution = random.integer(1, 5);
+    function randTextLength() {
+        return textLengthDistribution(mt);
+    }
+    const zedCode = 48;
+    function randomString(len: number, c: string) {
+        let str = "";
+        for (let i = 0; i < len; i++) {
+            str += c;
         }
+        return str;
     }
 
-    removeSegmentRemote(start: number, end: number, seq: number, refSeq: number, clientId: number) {
-        let clockStart = clock();
-        this.segTree.markRangeRemoved(start, end, refSeq, clientId, seq);
-        this.segTree.getSegmentWindow().currentSeq = seq;
-        this.accumTime += elapsedMicroseconds(clockStart);
-        this.accumOps++;
-        if (this.verboseOps) {
-            console.log(`seq ${seq} remove remote start ${start} end ${end} refseq ${refSeq} cli ${clientId}`);
+    function clientServer() {
+        const clientCount = 4;
+        let server = new TestClient("don't ask for whom the bell tolls; it tolls for thee");
+        let clients = <TestClient[]>Array(clientCount);
+        for (let i = 0; i < clientCount; i++) {
+            clients[i] = new TestClient("don't ask for whom the bell tolls; it tolls for thee");
         }
-    }
 
-    insertSegmentLocal(text: string, pos: number) {
-        let segWindow = this.segTree.getSegmentWindow();
-        let clientId = segWindow.clientId;
-        let refSeq = segWindow.currentSeq;
-        let seq = UnassignedSequenceNumber;
-        let textSegment = <TextSegment>{
-            text: text,
-            seq: seq,
-            clientId: clientId
-        };
-        let clockStart = clock();
-        this.segTree.insertInterval(pos, refSeq, clientId, seq, textSegment);
-        this.accumTime += elapsedMicroseconds(clockStart);
-        this.accumOps++;
-        if (this.verboseOps) {
-            console.log(`insert local cli ${clientId} ref seq ${refSeq}`);
+        let rounds = 10;
+        function clientProcessSome(client: TestClient) {
+            let cliMsgCount = client.q.count();
+            let countToApply = random.integer(Math.floor(2 * cliMsgCount / 3), cliMsgCount)(mt);
+            client.applyMessages(countToApply);
         }
-    }
 
-    insertSegmentRemote(text: string, pos: number, seq: number, refSeq: number, clientId: number) {
-        let segWindow = this.segTree.getSegmentWindow();
-        let textSegment = <TextSegment>{
-            text: text,
-            seq: seq,
-            clientId: clientId
-        };
-        let clockStart = clock();
-        this.segTree.insertInterval(pos, refSeq, clientId, seq, textSegment);
-        this.segTree.getSegmentWindow().currentSeq = seq;
-
-        this.accumTime += elapsedMicroseconds(clockStart);
-        this.accumOps++;
-        if (this.verboseOps) {
-            console.log(`seq ${seq} insert remote pos ${pos} refseq ${refSeq} cli ${clientId}`);
+        function serverProcessSome(server: TestClient) {
+            let svrMsgCount = server.q.count();
+            let countToApply = random.integer(Math.floor(2 * svrMsgCount / 3), svrMsgCount)(mt);
+            server.applyMessages(countToApply, clients);
         }
-    }
 
-    ackPendingSegment(seq: number) {
-        this.segTree.ackPendingSegment(seq);
-        this.segTree.getSegmentWindow().currentSeq = seq;
-        if (this.verboseOps) {
-            console.log(`ack seq # ${seq}`);
-        }
-    }
-
-    updateMinSeq(minSeq: number) {
-        let clockStart = clock();
-        this.segTree.updateMinSeq(minSeq);
-        let elapsed = elapsedMicroseconds(clockStart);
-        if (elapsed > this.maxWindowTime) {
-            this.maxWindowTime = elapsed;
-        }
-        this.accumWindowTime += elapsed;
-    }
-
-    getCurrentSeq() {
-        return this.segTree.getSegmentWindow().currentSeq;
-    }
-
-    getText() {
-        let segmentWindow = this.segTree.getSegmentWindow();
-        return this.segTree.getText(segmentWindow.currentSeq, segmentWindow.clientId);
-    }
-
-    getLength() {
-        let segmentWindow = this.segTree.getSegmentWindow();
-        return this.segTree.getLength(segmentWindow.currentSeq, segmentWindow.clientId);
-    }
-
-    relText(clientId: number, refSeq: number) {
-        return `cli: ${clientId} refSeq: ${refSeq}: ` + this.segTree.getText(refSeq, clientId);
-    }
-
-    static randolicious() {
-        let mt = random.engines.mt19937();
-        mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
-        let minSegCount = 1;
-        let maxSegCount = 1000;
-        let segmentCountDistribution = random.integer(minSegCount, maxSegCount);
-        function randSegmentCount() {
-            return segmentCountDistribution(mt);
-        }
-        let textLengthDistribution = random.integer(1, 5);
-        function randTextLength() {
-            return textLengthDistribution(mt);
-        }
-        const zedCode = 48;
-        function randomString(len: number, c: string) {
-            let str = "";
-            for (let i = 0; i < len; i++) {
-                str += c;
+        for (let i = 0; i < rounds; i++) {
+            for (let client of clients) {
+                let insertSegmentCount = randSmallSegmentCount();
+                for (let j = 0; j < insertSegmentCount; j++) {
+                    let textLen = randTextLength();
+                    let text = randomString(textLen, String.fromCharCode(zedCode + ((client.getCurrentSeq() + j) % 50)));
+                    let preLen = client.getLength();
+                    let pos = random.integer(0, preLen)(mt);
+                    server.enqueueMsg(makeInsertMsg(text, pos, UnassignedSequenceNumber, client.getCurrentSeq(), client.getClientId()));
+                    client.insertSegmentLocal(text, pos);
+                }
+                clientProcessSome(client);
+                serverProcessSome(server);
+                let removeSegmentCount = Math.floor(3*insertSegmentCount/4);
+                if (removeSegmentCount<1) {
+                    removeSegmentCount = 1;
+                }
+                for (let j = 0; j < removeSegmentCount; j++) {
+                    let dlen = randTextLength();
+                    let preLen = client.getLength();
+                    let pos = random.integer(0, preLen)(mt);
+                    server.enqueueMsg(makeRemoveMsg(pos, pos + dlen, UnassignedSequenceNumber, client.getCurrentSeq(), client.getClientId()));
+                    client.removeSegmentLocal(pos, pos + dlen);
+                }
+                clientProcessSome(client);
+                serverProcessSome(server);
             }
-            return str;
         }
+    }
+
+    function randolicious() {
         let insertRounds = 40;
         let removeRounds = 32;
 
@@ -795,6 +764,7 @@ export class TestClient {
             return false;
         }
 
+
         function removeTest() {
             for (let i = 0; i < removeRounds; i++) {
                 let removeCount = randSegmentCount();
@@ -851,7 +821,7 @@ export class TestClient {
             }
         }
         console.log(`sequence number: ${cliA.getCurrentSeq()} min: ${cliA.segTree.getSegmentWindow().minSeq}`);
-//                console.log(cliA.segTree.toString());
+        //                console.log(cliA.segTree.toString());
         //console.log(cliB.segTree.toString());
         console.log(cliA.getText());
         let aveWindow = ((minSegCount + maxSegCount) / 2).toFixed(1);
@@ -862,7 +832,7 @@ export class TestClient {
         //console.log(cliB.getText());
     }
 
-    static firstTest() {
+    function firstTest() {
         let cli = new TestClient("on the mat.");
         cli.startCollaboration(1);
         cli.insertSegmentRemote("that ", 0, 1, 0, 0);
@@ -956,7 +926,167 @@ export class TestClient {
                 console.log(cli.relText(clientId, refSeq));
             }
         }
-        TestClient.randolicious();
+    }
+    return {
+        firstTest: firstTest,
+        randolicious: randolicious,
+        clientServer: clientServer
+    }
+}
+
+export class TestClient {
+    segTree: SegmentTree;
+    accumTime = 0;
+    accumWindowTime = 0;
+    maxWindowTime = 0;
+    accumWindow = 0;
+    accumOps = 0;
+    verboseOps = false;
+    seq = 1; // used only in servers
+    q: ListUtil.List<DeltaMsg>;
+
+    constructor(initText: string) {
+        this.segTree = segmentTree(initText);
+        this.q = ListUtil.ListMakeHead<DeltaMsg>();
+    }
+
+    enqueueMsg(msg: DeltaMsg) {
+        this.q.enqueue(msg);
+    }
+
+    applyMsg(msg: DeltaMsg) {
+        switch (msg.type) {
+            case MsgType.INSERT:
+                this.insertSegmentRemote(msg.text, msg.pos1, msg.seq, msg.refSeq, msg.clientId);
+                break;
+            case MsgType.REMOVE:
+                this.removeSegmentRemote(msg.pos1, msg.pos2, msg.seq, msg.refSeq, msg.clientId);
+                break;
+        }
+    }
+
+    applyMessages(msgCount: number, forwardTo?: TestClient[]) {
+        while (msgCount > 0) {
+            let msg = this.q.dequeue();
+            if (msg) {
+                if (forwardTo) {
+                    // server adds sequence number
+                    msg.seq = this.seq++;
+                }
+                this.applyMsg(msg);
+                if (forwardTo) {
+                    for (let client of forwardTo) {
+                        client.enqueueMsg(msg);
+                    }
+                }
+            }
+            else {
+                break;
+            }
+            msgCount--;
+        }
+    }
+
+    removeSegmentLocal(start: number, end: number) {
+        let segWindow = this.segTree.getSegmentWindow();
+        let clientId = segWindow.clientId;
+        let refSeq = segWindow.currentSeq;
+        let seq = UnassignedSequenceNumber;
+        let clockStart = clock();
+        this.segTree.markRangeRemoved(start, end, refSeq, clientId, seq);
+        this.accumTime += elapsedMicroseconds(clockStart);
+        this.accumOps++;
+        if (this.verboseOps) {
+            console.log(`remove local cli ${clientId} ref seq ${refSeq}`);
+        }
+    }
+
+    removeSegmentRemote(start: number, end: number, seq: number, refSeq: number, clientId: number) {
+        let clockStart = clock();
+        this.segTree.markRangeRemoved(start, end, refSeq, clientId, seq);
+        this.segTree.getSegmentWindow().currentSeq = seq;
+        this.accumTime += elapsedMicroseconds(clockStart);
+        this.accumOps++;
+        if (this.verboseOps) {
+            console.log(`seq ${seq} remove remote start ${start} end ${end} refseq ${refSeq} cli ${clientId}`);
+        }
+    }
+
+    insertSegmentLocal(text: string, pos: number) {
+        let segWindow = this.segTree.getSegmentWindow();
+        let clientId = segWindow.clientId;
+        let refSeq = segWindow.currentSeq;
+        let seq = UnassignedSequenceNumber;
+        let textSegment = <TextSegment>{
+            text: text,
+            seq: seq,
+            clientId: clientId
+        };
+        let clockStart = clock();
+        this.segTree.insertInterval(pos, refSeq, clientId, seq, textSegment);
+        this.accumTime += elapsedMicroseconds(clockStart);
+        this.accumOps++;
+        if (this.verboseOps) {
+            console.log(`insert local cli ${clientId} ref seq ${refSeq}`);
+        }
+    }
+
+    insertSegmentRemote(text: string, pos: number, seq: number, refSeq: number, clientId: number) {
+        let segWindow = this.segTree.getSegmentWindow();
+        let textSegment = <TextSegment>{
+            text: text,
+            seq: seq,
+            clientId: clientId
+        };
+        let clockStart = clock();
+        this.segTree.insertInterval(pos, refSeq, clientId, seq, textSegment);
+        this.segTree.getSegmentWindow().currentSeq = seq;
+
+        this.accumTime += elapsedMicroseconds(clockStart);
+        this.accumOps++;
+        if (this.verboseOps) {
+            console.log(`seq ${seq} insert remote pos ${pos} refseq ${refSeq} cli ${clientId}`);
+        }
+    }
+
+    ackPendingSegment(seq: number) {
+        this.segTree.ackPendingSegment(seq);
+        this.segTree.getSegmentWindow().currentSeq = seq;
+        if (this.verboseOps) {
+            console.log(`ack seq # ${seq}`);
+        }
+    }
+
+    updateMinSeq(minSeq: number) {
+        let clockStart = clock();
+        this.segTree.updateMinSeq(minSeq);
+        let elapsed = elapsedMicroseconds(clockStart);
+        if (elapsed > this.maxWindowTime) {
+            this.maxWindowTime = elapsed;
+        }
+        this.accumWindowTime += elapsed;
+    }
+
+    getCurrentSeq() {
+        return this.segTree.getSegmentWindow().currentSeq;
+    }
+
+    getClientId() {
+        return this.segTree.getSegmentWindow().clientId;
+    }
+
+    getText() {
+        let segmentWindow = this.segTree.getSegmentWindow();
+        return this.segTree.getText(segmentWindow.currentSeq, segmentWindow.clientId);
+    }
+
+    getLength() {
+        let segmentWindow = this.segTree.getSegmentWindow();
+        return this.segTree.getLength(segmentWindow.currentSeq, segmentWindow.clientId);
+    }
+
+    relText(clientId: number, refSeq: number) {
+        return `cli: ${clientId} refSeq: ${refSeq}: ` + this.segTree.getText(refSeq, clientId);
     }
 
     startCollaboration(localClientId: number) {
