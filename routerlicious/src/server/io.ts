@@ -27,8 +27,10 @@ let sub = redis.createClient(port, host, subOptions);
 io.adapter(socketIoRedis({ pubClient: pub, subClient: sub }));
 
 io.on("connection", (socket) => {
-    socket.on("join", (room) => {
+    socket.on("join", (room, response) => {
+        console.log(`User has joined the room ${room}`);
         socket.join(room);
+        response("thanks");
     });
 });
 

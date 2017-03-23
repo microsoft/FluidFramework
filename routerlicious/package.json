@@ -16,13 +16,16 @@
   "license": "Apache-2.0",
   "repository": "microsoft/prague",
   "devDependencies": {
+    "@types/jquery": "^2.0.41",
     "@types/lodash": "^4.14.57",
     "@types/mocha": "^2.2.40",
     "@types/morgan": "^1.7.32",
     "@types/nconf": "0.0.34",
     "@types/socket.io": "^1.4.28",
+    "@types/socket.io-client": "^1.4.29",
     "@types/socket.io-redis": "^1.0.21",
     "browserify": "^14.1.0",
+    "browserify-shim": "^3.8.13",
     "less": "^2.7.2",
     "mocha": "^3.2.0",
     "nyc": "^10.1.2",
@@ -33,6 +36,7 @@
     "body-parser": "^1.17.1",
     "express": "^4.15.2",
     "hjs": "0.0.6",
+    "jquery": "^3.2.1",
     "lodash": "^4.17.4",
     "morgan": "^1.8.1",
     "nconf": "^0.8.4",
@@ -40,5 +44,14 @@
     "redis": "^2.7.1",
     "socket.io": "^1.7.3",
     "socket.io-redis": "^4.0.0"
+  },
+  "browserify": {
+    "transform": [
+      "browserify-shim"
+    ]
+  },
+  "browserify-shim": {
+    "jquery": "global:$",
+    "socket.io-client": "global:io"
   }
 }
