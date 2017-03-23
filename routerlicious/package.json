@@ -4,9 +4,11 @@
   "description": "Server to assign sequence numbers and route deltas between connected clients",
   "main": "index.js",
   "scripts": {
-    "browserify": "browserify dist/server/controllers/home.js -o public/scripts/dist/home.js",
+    "browserify": "mkdirp public/scripts/dist && browserify dist/server/controllers/home.js -o public/scripts/dist/home.js",
     "build": "npm run tsc && npm run tslint && npm run browserify && npm run less",
+    "build:watch": "watch 'npm run tsc && npm run browserify' src",
     "less": "lessc src/stylesheets/style.less public/stylesheets/dist/style.css",
+    "nodemon": "nodemon dist/server/www.js -w dist",
     "start": "node dist/server/www.js",
     "test": "nyc -x dist/test/**/* mocha dist/test",
     "tsc": "tsc",
@@ -21,16 +23,21 @@
     "@types/mocha": "^2.2.40",
     "@types/morgan": "^1.7.32",
     "@types/nconf": "0.0.34",
+    "@types/passport": "^0.3.3",
+    "@types/serve-favicon": "^2.2.28",
     "@types/socket.io": "^1.4.28",
     "@types/socket.io-client": "^1.4.29",
     "@types/socket.io-redis": "^1.0.21",
     "browserify": "^14.1.0",
     "browserify-shim": "^3.8.13",
     "less": "^2.7.2",
+    "mkdirp": "^0.5.1",
     "mocha": "^3.2.0",
+    "nodemon": "^1.11.0",
     "nyc": "^10.1.2",
     "tslint": "^4.5.1",
-    "typescript": "^2.2.1"
+    "typescript": "^2.2.1",
+    "watch": "^1.0.2"
   },
   "dependencies": {
     "body-parser": "^1.17.1",
@@ -42,6 +49,7 @@
     "nconf": "^0.8.4",
     "passport": "^0.3.2",
     "redis": "^2.7.1",
+    "serve-favicon": "^2.4.1",
     "socket.io": "^1.7.3",
     "socket.io-redis": "^4.0.0"
   },
