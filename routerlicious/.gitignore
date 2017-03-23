@@ -1,9 +1,5 @@
-# Compiled TypeScript
+# Compiled TypeScript and CSS
 dist
-public/dist
-
-# Compiled CSS from LESS
-public/stylesheets/*.css
 
 # Logs
 logs

@@ -1,0 +1,7 @@
+{{<layout}}
+    {{$content}}
+        Hello
+
+        This is a cool page
+    {{/content}}
+{{/layout}}

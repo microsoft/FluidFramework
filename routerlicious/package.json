@@ -4,11 +4,13 @@
   "description": "Server to assign sequence numbers and route deltas between connected clients",
   "main": "index.js",
   "scripts": {
-    "build": "tsc",
+    "browserify": "browserify dist/server/controllers/home.js -o public/scripts/dist/home.js",
+    "build": "tsc && npm run browserify && npm run less",
+    "less": "lessc src/stylesheets/style.less public/stylesheets/dist/style.css",
     "start": "node dist/server/www.js",
     "test": "nyc -x dist/test/**/* mocha dist/test"
   },
-  "author": "",
+  "author": "Microsoft",
   "license": "Apache-2.0",
   "repository": "microsoft/prague",
   "devDependencies": {
@@ -18,6 +20,8 @@
     "@types/nconf": "0.0.34",
     "@types/socket.io": "^1.4.28",
     "@types/socket.io-redis": "^1.0.21",
+    "browserify": "^14.1.0",
+    "less": "^2.7.2",
     "mocha": "^3.2.0",
     "nyc": "^10.1.2",
     "tslint": "^4.5.1",
