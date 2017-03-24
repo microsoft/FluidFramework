@@ -13,3 +13,19 @@ the interfaces. For instance connections are handled with socket.io. And cross m
 via Redis.
 
 The server also hooks in the interval spanning tree type as the core plugin.
+
+## Building
+
+Building Routerlicious is done via npm scripts.
+
+* `npm install`
+* `npm run build`
+
+## Running
+
+Docker Compose is used to run the service locally
+
+* `docker-compose build`
+* `docker-compose up`
+
+Docker will mount your source directory into the container so you need to build prior to running it.

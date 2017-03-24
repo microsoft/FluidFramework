@@ -1,4 +1,7 @@
 {
+    "eventHub": {
+        "connectionString": "Endpoint=sb://delta-stream-dev.servicebus.windows.net/;SharedAccessKeyName=sender;SharedAccessKey=OseppLfZtnn2VRo+0XWFgxmurMybiWBxoCnSQdVqut0=;EntityPath=deltas"
+    },
     "redis": {
         "host": "redis",
         "port": 6379
