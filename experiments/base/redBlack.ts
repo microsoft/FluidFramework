@@ -1,5 +1,69 @@
 /// <reference path="base.d.ts" />
 
+export interface Comparer<T> {
+    compare(a: T, b: T): number;
+    min: T;
+}
+
+var numberComparer: Comparer<number> = {
+    min: Number.MIN_VALUE,
+    compare: (a, b) => a - b,
+}
+
+export class Heap<T> {
+    L: T[];
+    count() {
+        return this.L.length - 1;
+    }
+    constructor(a: T[], public comp: Comparer<T>) {
+        this.L = [comp.min];
+        for (var i = 0, len = a.length; i < len; i++) {
+            this.add(a[i]);
+        }
+    }
+    peek() {
+        return this.L[1];
+    }
+
+    get() {
+        var x = this.L[1];
+        this.L[1] = this.L[this.count()];
+        this.L.pop();
+        this.fixdown(1);
+        return x;
+    }
+
+    add(x: T) {
+        this.L.push(x);
+        this.fixup(this.count());
+    }
+
+    private fixup(k: number) {
+        while (k > 1 && (this.comp.compare(this.L[k >> 1], this.L[k]) > 0)) {
+            var tmp = this.L[k >> 1];
+            this.L[k >> 1] = this.L[k];
+            this.L[k] = tmp;
+            k = k >> 1;
+        }
+    }
+
+    private fixdown(k: number) {
+        while ((k << 1) <= (this.count())) {
+            var j = k << 1;
+            if ((j < this.count()) && (this.comp.compare(this.L[j], this.L[j + 1]) > 0)) {
+                j++;
+            }
+            if (this.comp.compare(this.L[k], this.L[j]) <= 0) {
+                break;
+            }
+            var tmp = this.L[k];
+            this.L[k] = this.L[j];
+            this.L[j] = tmp;
+            k = j;
+        }
+    }
+}
+
 // for testing
 export function LinearDictionary<TKey, TData>(compareKeys: Base.KeyComparer<TKey>): Base.SortedDictionary<TKey, TData> {
     let a: Base.Property<TKey, TData>[] = [];

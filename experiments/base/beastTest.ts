@@ -705,5 +705,7 @@ function itreeCheckedTest() {
 //itreeCheckedTest();
 //segTreeTest1();
 //segTreeLargeTest();
-//segTreeCheckedTest();
-SegTree.TestPack().randolicious();
+segTreeCheckedTest();
+let testPack = SegTree.TestPack();
+testPack.randolicious();
+//testPack.clientServer();

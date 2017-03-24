@@ -1,6 +1,7 @@
 /// <reference path="base.d.ts" />
 import * as ListUtil from "./list";
 import * as random from "random-js";
+import * as BST from "./redBlack";
 
 export interface TextSegmentAction {
     <TAccum>(textSegment: TextSegment, pos: number, refSeq: number, clientId: number, start: number, end: number, accum?: TAccum): boolean;
@@ -607,11 +608,11 @@ interface DeltaMsg {
 }
 
 function makeInsertMsg(text: string, pos: number, seq: number, refSeq: number, clientId: number) {
-    return <DeltaMsg>{ text: text, pos1: pos, seq: seq, refSeq: refSeq, clientId: clientId };
+    return <DeltaMsg>{ type: MsgType.INSERT, text: text, pos1: pos, seq: seq, refSeq: refSeq, clientId: clientId };
 }
 
 function makeRemoveMsg(start: number, end: number, seq: number, refSeq: number, clientId: number) {
-    return <DeltaMsg>{ pos1: start, pos2: end, seq: seq, refSeq: refSeq, clientId: clientId };
+    return <DeltaMsg>{ type: MsgType.REMOVE, pos1: start, pos2: end, seq: seq, refSeq: refSeq, clientId: clientId };
 }
 
 export function TestPack() {
@@ -620,7 +621,7 @@ export function TestPack() {
     let minSegCount = 1;
     let maxSegCount = 1000;
     let segmentCountDistribution = random.integer(minSegCount, maxSegCount);
-    let smallSegmentCountDistribution = random.integer(1, 4);
+    let smallSegmentCountDistribution = random.integer(1, 2);
     function randSmallSegmentCount() {
         return smallSegmentCountDistribution(mt);
     }
@@ -642,13 +643,32 @@ export function TestPack() {
 
     function clientServer() {
         const clientCount = 4;
-        let server = new TestClient("don't ask for whom the bell tolls; it tolls for thee");
+        let server = new TestServer("don't ask for whom the bell tolls; it tolls for thee");
         let clients = <TestClient[]>Array(clientCount);
         for (let i = 0; i < clientCount; i++) {
             clients[i] = new TestClient("don't ask for whom the bell tolls; it tolls for thee");
+            clients[i].startCollaboration(i);
+        }
+        server.startCollaboration(clientCount);
+        server.addClients(clients);
+
+        function checkTextMatch() {
+            let serverText = server.getText();
+            for (let client of clients) {
+                let cliText = client.getText();
+                if (cliText != serverText) {
+                    console.log(`mismatch @${server.getCurrentSeq()} client @${client.getCurrentSeq()} id: ${client.getClientId()}`);
+                    console.log(serverText);
+                    console.log(cliText);
+                    console.log(server.segTree.toString());
+                    console.log(client.segTree.toString());
+                    return true;
+                }
+            }
+            return false;
         }
 
-        let rounds = 10;
+        let rounds = 10000;
         function clientProcessSome(client: TestClient, all = false) {
             let cliMsgCount = client.q.count();
             let countToApply: number;
@@ -670,7 +690,7 @@ export function TestPack() {
             else {
                 countToApply = random.integer(Math.floor(2 * svrMsgCount / 3), svrMsgCount)(mt);
             }
-            server.applyMessages(countToApply, clients);
+            server.applyMessages(countToApply);
         }
 
         for (let i = 0; i < rounds; i++) {
@@ -684,10 +704,11 @@ export function TestPack() {
                     server.enqueueMsg(makeInsertMsg(text, pos, UnassignedSequenceNumber, client.getCurrentSeq(), client.getClientId()));
                     client.insertSegmentLocal(text, pos);
                 }
-                clientProcessSome(client);
                 serverProcessSome(server);
-                let removeSegmentCount = Math.floor(3*insertSegmentCount/4);
-                if (removeSegmentCount<1) {
+                clientProcessSome(client);
+
+                let removeSegmentCount = Math.floor(3 * insertSegmentCount / 4);
+                if (removeSegmentCount < 1) {
                     removeSegmentCount = 1;
                 }
                 for (let j = 0; j < removeSegmentCount; j++) {
@@ -697,14 +718,21 @@ export function TestPack() {
                     server.enqueueMsg(makeRemoveMsg(pos, pos + dlen, UnassignedSequenceNumber, client.getCurrentSeq(), client.getClientId()));
                     client.removeSegmentLocal(pos, pos + dlen);
                 }
-                clientProcessSome(client);
                 serverProcessSome(server);
+                clientProcessSome(client);
             }
             // process remaining messages
+            serverProcessSome(server, true);
             for (let client of clients) {
                 clientProcessSome(client, true);
             }
-            serverProcessSome(server, true);
+            if (checkTextMatch()) {
+                console.log(`round: ${i}`);
+                break;
+            }
+            if (0 == (i % 100)) {
+                console.log(`round: ${i}`);
+            }
         }
     }
 
@@ -960,7 +988,6 @@ export class TestClient {
     accumWindow = 0;
     accumOps = 0;
     verboseOps = false;
-    seq = 1; // used only in servers
     q: ListUtil.List<DeltaMsg>;
 
     constructor(initText: string) {
@@ -972,7 +999,7 @@ export class TestClient {
         this.q.enqueue(msg);
     }
 
-    applyMsg(msg: DeltaMsg) {
+    coreApplyMsg(msg: DeltaMsg) {
         switch (msg.type) {
             case MsgType.INSERT:
                 this.insertSegmentRemote(msg.text, msg.pos1, msg.seq, msg.refSeq, msg.clientId);
@@ -983,20 +1010,23 @@ export class TestClient {
         }
     }
 
-    applyMessages(msgCount: number, forwardTo?: TestClient[]) {
+    applyMsg(msg: DeltaMsg) {
+        if ((msg.minseq !== undefined) && (msg.minseq > this.segTree.getSegmentWindow().minSeq)) {
+            this.updateMinSeq(msg.minseq);
+        }
+        if (msg.clientId == this.getClientId()) {
+            this.ackPendingSegment(msg.seq);
+        }
+        else {
+            this.coreApplyMsg(msg);
+        }
+    }
+
+    applyMessages(msgCount: number) {
         while (msgCount > 0) {
             let msg = this.q.dequeue();
             if (msg) {
-                if (forwardTo) {
-                    // server adds sequence number
-                    msg.seq = this.seq++;
-                }
                 this.applyMsg(msg);
-                if (forwardTo) {
-                    for (let client of forwardTo) {
-                        client.enqueueMsg(msg);
-                    }
-                }
             }
             else {
                 break;
@@ -1026,7 +1056,7 @@ export class TestClient {
         this.accumTime += elapsedMicroseconds(clockStart);
         this.accumOps++;
         if (this.verboseOps) {
-            console.log(`seq ${seq} remove remote start ${start} end ${end} refseq ${refSeq} cli ${clientId}`);
+            console.log(`@cli ${this.segTree.getSegmentWindow().clientId} seq ${seq} remove remote start ${start} end ${end} refseq ${refSeq} cli ${clientId}`);
         }
     }
 
@@ -1045,7 +1075,7 @@ export class TestClient {
         this.accumTime += elapsedMicroseconds(clockStart);
         this.accumOps++;
         if (this.verboseOps) {
-            console.log(`insert local cli ${clientId} ref seq ${refSeq}`);
+            console.log(`insert local text ${text} pos ${pos} cli ${clientId} ref seq ${refSeq}`);
         }
     }
 
@@ -1063,7 +1093,7 @@ export class TestClient {
         this.accumTime += elapsedMicroseconds(clockStart);
         this.accumOps++;
         if (this.verboseOps) {
-            console.log(`seq ${seq} insert remote pos ${pos} refseq ${refSeq} cli ${clientId}`);
+            console.log(`@cli ${this.segTree.getSegmentWindow().clientId} text ${text} seq ${seq} insert remote pos ${pos} refseq ${refSeq} cli ${clientId}`);
         }
     }
 
@@ -1071,7 +1101,7 @@ export class TestClient {
         this.segTree.ackPendingSegment(seq);
         this.segTree.getSegmentWindow().currentSeq = seq;
         if (this.verboseOps) {
-            console.log(`ack seq # ${seq}`);
+            console.log(`@cli ${this.segTree.getSegmentWindow().clientId} ack seq # ${seq}`);
         }
     }
 
@@ -1109,6 +1139,69 @@ export class TestClient {
 
     startCollaboration(localClientId: number) {
         this.segTree.startCollaboration(localClientId);
+    }
+}
+
+interface ClientSeq {
+    refSeq: number;
+    clientId: number;
+}
+
+var clientSeqComparer: BST.Comparer<ClientSeq> = {
+    min: { refSeq: -1, clientId: -1 },
+    compare: (a, b) => a.refSeq - b.refSeq
+}
+
+export class TestServer extends TestClient {
+    seq = 1;
+    clients: TestClient[];
+    clientSeqNumbers: BST.Heap<ClientSeq>;
+
+    constructor(initText: string) {
+        super(initText);
+    }
+
+    addClients(clients: TestClient[]) {
+        this.clientSeqNumbers = new BST.Heap<ClientSeq>([], clientSeqComparer);
+        this.clients = clients;
+        for (let client of clients) {
+            this.clientSeqNumbers.add({ refSeq: client.getCurrentSeq(), clientId: client.getClientId() });
+        }
+    }
+
+    applyMsg(msg: DeltaMsg) {
+        this.coreApplyMsg(msg);
+    }
+
+    applyMessages(msgCount: number) {
+        while (msgCount > 0) {
+            let msg = this.q.dequeue();
+            if (msg) {
+                msg.seq = this.seq++;
+                this.applyMsg(msg);
+                if (this.clients) {
+                    let minCli = this.clientSeqNumbers.peek();
+                    if (minCli && (minCli.clientId == msg.clientId) && (minCli.refSeq < msg.refSeq)) {
+                        let cliSeq = this.clientSeqNumbers.get();
+                        let oldSeq = cliSeq.refSeq;
+                        cliSeq.refSeq = msg.refSeq;
+                        this.clientSeqNumbers.add(cliSeq);
+                        minCli = this.clientSeqNumbers.peek();
+                        if (minCli.refSeq > oldSeq) {
+                            msg.minseq = minCli.refSeq;
+                            this.updateMinSeq(minCli.refSeq);
+                        }
+                    }
+                    for (let client of this.clients) {
+                        client.enqueueMsg(msg);
+                    }
+                }
+            }
+            else {
+                break;
+            }
+            msgCount--;
+        }
     }
 }
 
@@ -1257,11 +1350,6 @@ export function segmentTree(text: string): SegmentTree {
 
     function updateMinSeq(minSeq: number) {
         segmentWindow.minSeq = minSeq;
-        // TODO: refine heuristic to control how often to do this
-        // if ((minSeq - lastClear) > 500) {
-        //     root.partialLengths = PartialSequenceLengths.combine(root, segmentWindow, true);
-        //     lastClear = minSeq;
-        // }
     }
 
     function search<TAccum>(node: TextSegmentBlock, pos: number, refSeq: number, clientId: number, action?: TextSegmentAction, accum?: TAccum): TextSegment {
@@ -1316,8 +1404,7 @@ export function segmentTree(text: string): SegmentTree {
                     pendingSegment.removedSeq = seq;
                 }
                 //console.log(`set pending segment with text ${pendingSegment.text} to sequence number ${seq}`);
-                // TODO: assert client ids match
-                clientId = pendingSegment.clientId;
+                clientId = segmentWindow.clientId;
                 if (nodesToUpdate.indexOf(pendingSegment.parent) < 0) {
                     nodesToUpdate.push(pendingSegment.parent);
                 }
@@ -1395,17 +1482,23 @@ export function segmentTree(text: string): SegmentTree {
         updateRoot(splitNode, refSeq, clientId);
     }
 
+    function tieAtLaterSegment(pos: number, len: number, segment: TextSegment) {
+        return (pos == 0) && (len == 0) && (!segment.child) && (segment.seq == UnassignedSequenceNumber) && (segment.clientId == segmentWindow.clientId);
+    }
+
     function insertingWalk(node: TextSegmentBlock, pos: number, refSeq: number, clientId: number, seq: number,
         leafAction: (segment: TextSegment, pos: number) => TextSegment) {
         let segments = node.segments;
         let segmentIndex: number;
         let segment: TextSegment;
         let newSegment: TextSegment;
+        let found = false;
         for (segmentIndex = 0; segmentIndex < node.liveSegmentCount; segmentIndex++) {
             segment = segments[segmentIndex];
             let len = segmentLength(segment, refSeq, clientId);
-            if (pos < len) {
+            if ((pos < len) || (segmentWindow.collaborating && tieAtLaterSegment(pos, len, segment))) {
                 // found entry containing pos
+                found = true;
                 if (segment.child) {
                     //internal node
                     let splitNode = insertingWalk(segment.child, pos, refSeq, clientId, seq, leafAction);
@@ -1430,6 +1523,11 @@ export function segmentTree(text: string): SegmentTree {
             }
             else {
                 pos -= len;
+            }
+        }
+        if (traceTraversal) {
+            if ((!found) && (pos > 0)) {
+                console.log(`inserting walk fell through pos ${pos} len: ${nodeLength(root, refSeq, clientId)}`);
             }
         }
         if (!newSegment) {
@@ -1478,6 +1576,9 @@ export function segmentTree(text: string): SegmentTree {
         ensureIntervalBoundary(end, refSeq, clientId);
         let segmentGroup: TextSegmentGroup;
         function markRemoved(textSegment: TextSegment, pos: number, start: number, end: number) {
+            if (textSegment.removedSeq >= 1) {
+                console.log(`yump: overrote deleted segment ${textSegment.removedSeq} with more deletion`);
+            }
             textSegment.removedClientId = clientId;
             textSegment.removedSeq = seq;
             // save segment so can assign removed sequence number when acked by server
@@ -1491,7 +1592,9 @@ export function segmentTree(text: string): SegmentTree {
             nodeUpdateLength(node, seq, clientId);
             return true;
         }
+        //    traceTraversal = true;
         mapRange({ leaf: markRemoved, post: afterMarkRemoved }, refSeq, clientId, undefined, start, end);
+        traceTraversal = false;
     }
 
     function removeRange(start: number, end: number, refSeq: number, clientId: number) {
@@ -1565,11 +1668,7 @@ export function segmentTree(text: string): SegmentTree {
     function nodeUpdateLengthNewStructure(node: TextSegmentBlock) {
         nodeUpdateTotalLength(node);
         if (segmentWindow.collaborating) {
-            let recur = false;
-    /*        if (node.partialLengths && ((segmentWindow.minSeq - node.partialLengths.minSeq) > 10)) {
-                recur = true;
-            }
-*/            node.partialLengths = PartialSequenceLengths.combine(node, segmentWindow, recur);
+            node.partialLengths = PartialSequenceLengths.combine(node, segmentWindow);
         }
     }
 
@@ -1652,6 +1751,8 @@ export function segmentTree(text: string): SegmentTree {
         return strbuf;
     }
 
+    let traceTraversal = false;
+
     function nodeMap<TAccum>(node: TextSegmentBlock, actions: TextSegmentActions, pos: number, refSeq: number,
         clientId: number, accum?: TAccum, start?: number, end?: number) {
         if (start === undefined) {
@@ -1668,6 +1769,19 @@ export function segmentTree(text: string): SegmentTree {
         for (let segmentIndex = 0; segmentIndex < node.liveSegmentCount; segmentIndex++) {
             let segment = segments[segmentIndex];
             let len = segmentLength(segment, refSeq, clientId);
+            if (traceTraversal) {
+                let segInfo: string;
+                if (segment.child && segmentWindow.collaborating) {
+                    segInfo = `minLength: ${segment.child.partialLengths.minLength}`;
+                }
+                else {
+                    segInfo = `cli: ${segment.clientId} seq: ${segment.seq} text: ${segment.text}`;
+                    if (segment.removedSeq !== undefined) {
+                        segInfo += ` rcli: ${segment.removedClientId} rseq: ${segment.removedSeq}`;
+                    }
+                }
+                console.log(`len: ${len} start: ${start} end: ${end} ` + segInfo);
+            }
             if (go && (len > 0) && (start < len) && (end > 0)) {
                 // found entry containing pos
                 if (segment.child) {
@@ -1677,6 +1791,9 @@ export function segmentTree(text: string): SegmentTree {
                     }
                 }
                 else {
+                    if (traceTraversal) {
+                        console.log("leaf action");
+                    }
                     go = actions.leaf(segment, pos, refSeq, clientId, start, end, accum);
                 }
             }
