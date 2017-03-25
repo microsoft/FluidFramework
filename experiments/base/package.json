@@ -4,6 +4,7 @@
   "description": "base data structures for ofx",
   "main": "beastTest.js",
   "dependencies": {
+    "diff": "^3.2.0",
     "random-js": "^1.0.8"
   },
   "devDependencies": {

@@ -1,6 +1,9 @@
 /// <reference path="base.d.ts" />
+/// <reference path="diff.d.ts" />
+
 import * as ListUtil from "./list";
 import * as random from "random-js";
+import * as JsDiff from "diff";
 import * as BST from "./redBlack";
 
 export interface TextSegmentAction {
@@ -621,7 +624,7 @@ export function TestPack() {
     let minSegCount = 1;
     let maxSegCount = 1000;
     let segmentCountDistribution = random.integer(minSegCount, maxSegCount);
-    let smallSegmentCountDistribution = random.integer(1, 2);
+    let smallSegmentCountDistribution = random.integer(1, 4);
     function randSmallSegmentCount() {
         return smallSegmentCountDistribution(mt);
     }
@@ -660,6 +663,20 @@ export function TestPack() {
                     console.log(`mismatch @${server.getCurrentSeq()} client @${client.getCurrentSeq()} id: ${client.getClientId()}`);
                     console.log(serverText);
                     console.log(cliText);
+                    let diffParts = JsDiff.diffChars(serverText, cliText);
+                    for (let diffPart of diffParts) {
+                        let annotes = "";
+                        if (diffPart.added) {
+                            annotes += "added ";
+                        }
+                        else if (diffPart.removed) {
+                            annotes += "removed ";
+                        }
+                        if (diffPart.count) {
+                            annotes += `count: ${diffPart.count}`;
+                        }
+                        console.log(`text: ${diffPart.value} ` + annotes);
+                    }
                     console.log(server.segTree.toString());
                     console.log(client.segTree.toString());
                     return true;
@@ -734,6 +751,8 @@ export function TestPack() {
                 console.log(`round: ${i}`);
             }
         }
+        console.log(server.getText());
+        console.log(server.segTree.toString());
     }
 
     function randolicious() {
@@ -1395,12 +1414,16 @@ export function segmentTree(text: string): SegmentTree {
         let pendingSegmentGroup = pendingSegments.dequeue();
         let nodesToUpdate = <TextSegmentBlock[]>[];
         let clientId: number;
+        let overwrite = false;
         if (pendingSegmentGroup !== undefined) {
             pendingSegmentGroup.segments.map((pendingSegment) => {
                 if (pendingSegment.seq == UnassignedSequenceNumber) {
                     pendingSegment.seq = seq;
                 }
                 else {
+                    if (pendingSegment.removedSeq !== undefined) {
+                        overwrite = true;
+                    }
                     pendingSegment.removedSeq = seq;
                 }
                 //console.log(`set pending segment with text ${pendingSegment.text} to sequence number ${seq}`);
@@ -1410,7 +1433,7 @@ export function segmentTree(text: string): SegmentTree {
                 }
             });
             for (let node of nodesToUpdate) {
-                nodeUpdatePathLengths(node, seq, clientId);
+                nodeUpdatePathLengths(node, seq, clientId, overwrite);
             }
         }
     }
@@ -1431,7 +1454,11 @@ export function segmentTree(text: string): SegmentTree {
         textSegment.seq = seq;
         textSegment.clientId = clientId;
         ensureIntervalBoundary(pos, refSeq, clientId);
+        // if (refSeq >= 1700) {
+        //     traceTraversal = true;
+        // }
         let splitNode = nodeInsertBefore(root, pos, refSeq, clientId, textSegment);
+        traceTraversal = false;
         updateRoot(splitNode, refSeq, clientId);
     }
 
@@ -1482,8 +1509,30 @@ export function segmentTree(text: string): SegmentTree {
         updateRoot(splitNode, refSeq, clientId);
     }
 
-    function tieAtLaterSegment(pos: number, len: number, segment: TextSegment) {
-        return (pos == 0) && (len == 0) && (!segment.child) && (segment.seq == UnassignedSequenceNumber) && (segment.clientId == segmentWindow.clientId);
+    function tieAtLaterSegment(pos: number, len: number, seq: number, segment: TextSegment, refSeq: number, clientId: number) {
+        if (segment.child) {
+            if (pos == len) {
+                let node = segment.child;
+                let segments = node.segments;
+                let segIndex = node.liveSegmentCount - 1;
+                while (segIndex >= 0) {
+                    let innerLen = segmentLength(segments[segIndex], refSeq, clientId);
+                    if ((innerLen > 0) || segments[segIndex].child) {
+                        return false;
+                    }
+                    else if (tieAtLaterSegment(0, 0, seq, segments[segIndex], refSeq, clientId)) {
+                        return true;
+                    }
+                    segIndex--;
+                }
+            }
+        }
+        else {
+            return (pos == 0) && (len == 0) &&
+                ((segment.seq == UnassignedSequenceNumber) && (segment.clientId == segmentWindow.clientId) ||
+                    ((segment.seq > seq) && (seq >= 0)));
+        }
+        return false;
     }
 
     function insertingWalk(node: TextSegmentBlock, pos: number, refSeq: number, clientId: number, seq: number,
@@ -1496,7 +1545,21 @@ export function segmentTree(text: string): SegmentTree {
         for (segmentIndex = 0; segmentIndex < node.liveSegmentCount; segmentIndex++) {
             segment = segments[segmentIndex];
             let len = segmentLength(segment, refSeq, clientId);
-            if ((pos < len) || (segmentWindow.collaborating && tieAtLaterSegment(pos, len, segment))) {
+            if (traceTraversal) {
+                let segInfo: string;
+                if (segment.child && segmentWindow.collaborating) {
+                    segInfo = `minLength: ${segment.child.partialLengths.minLength}`;
+                }
+                else {
+                    segInfo = `cli: ${segment.clientId} seq: ${segment.seq} text: ${segment.text}`;
+                    if (segment.removedSeq !== undefined) {
+                        segInfo += ` rcli: ${segment.removedClientId} rseq: ${segment.removedSeq}`;
+                    }
+                }
+                console.log(`@tcli: ${segmentWindow.clientId} len: ${len} pos: ${pos} ` + segInfo);
+            }
+
+            if ((pos < len) || (segmentWindow.collaborating && tieAtLaterSegment(pos, len, seq, segment, refSeq, clientId))) {
                 // found entry containing pos
                 found = true;
                 if (segment.child) {
@@ -1510,6 +1573,10 @@ export function segmentTree(text: string): SegmentTree {
                     segmentIndex++; // insert after
                 }
                 else {
+                    if (traceTraversal) {
+                        console.log(`@tcli: ${segmentWindow.clientId}: leaf action`);
+                    }
+
                     newSegment = leafAction(segment, pos);
                     if (newSegment) {
                         segmentIndex++; // insert after
@@ -1532,6 +1599,10 @@ export function segmentTree(text: string): SegmentTree {
         }
         if (!newSegment) {
             if (pos == 0) {
+                if (traceTraversal) {
+                    console.log(`@tcli: ${segmentWindow.clientId}: leaf action pos 0`);
+                }
+
                 newSegment = leafAction(undefined, pos);
             }
         }
@@ -1575,9 +1646,11 @@ export function segmentTree(text: string): SegmentTree {
         ensureIntervalBoundary(start, refSeq, clientId);
         ensureIntervalBoundary(end, refSeq, clientId);
         let segmentGroup: TextSegmentGroup;
+        let overwrite = false;
         function markRemoved(textSegment: TextSegment, pos: number, start: number, end: number) {
-            if (textSegment.removedSeq >= 1) {
-                console.log(`yump: overrote deleted segment ${textSegment.removedSeq} with more deletion`);
+            if (textSegment.removedSeq != undefined) {
+                overwrite = true;
+                console.log(`yump @seq ${seq} cli ${segmentWindow.clientId}: overwrote deleted segment ${textSegment.removedSeq} with more deletion`);
             }
             textSegment.removedClientId = clientId;
             textSegment.removedSeq = seq;
@@ -1589,10 +1662,17 @@ export function segmentTree(text: string): SegmentTree {
             return true;
         }
         function afterMarkRemoved(node: TextSegmentBlock, pos: number, start: number, end: number) {
-            nodeUpdateLength(node, seq, clientId);
+            if (overwrite) {
+                nodeUpdateLengthNewStructure(node);
+            }
+            else {
+                nodeUpdateLength(node, seq, clientId);
+            }
             return true;
         }
-        //    traceTraversal = true;
+
+        //traceTraversal = true;
+
         mapRange({ leaf: markRemoved, post: afterMarkRemoved }, refSeq, clientId, undefined, start, end);
         traceTraversal = false;
     }
@@ -1680,9 +1760,14 @@ export function segmentTree(text: string): SegmentTree {
         node.length = len;
     }
 
-    function nodeUpdatePathLengths(node: TextSegmentBlock, seq: number, clientId: number) {
+    function nodeUpdatePathLengths(node: TextSegmentBlock, seq: number, clientId: number, newStructure = false) {
         while (node !== undefined) {
-            nodeUpdateLength(node, seq, clientId);
+            if (newStructure) {
+                nodeUpdateLengthNewStructure(node);
+            }
+            else {
+                nodeUpdateLength(node, seq, clientId);
+            }
             node = node.parent;
         }
     }
@@ -1780,7 +1865,7 @@ export function segmentTree(text: string): SegmentTree {
                         segInfo += ` rcli: ${segment.removedClientId} rseq: ${segment.removedSeq}`;
                     }
                 }
-                console.log(`len: ${len} start: ${start} end: ${end} ` + segInfo);
+                console.log(`@tcli: ${segmentWindow.clientId} len: ${len} start: ${start} end: ${end} ` + segInfo);
             }
             if (go && (len > 0) && (start < len) && (end > 0)) {
                 // found entry containing pos
@@ -1792,7 +1877,7 @@ export function segmentTree(text: string): SegmentTree {
                 }
                 else {
                     if (traceTraversal) {
-                        console.log("leaf action");
+                        console.log(`@tcli: ${segmentWindow.clientId}: leaf action`);
                     }
                     go = actions.leaf(segment, pos, refSeq, clientId, start, end, accum);
                 }
