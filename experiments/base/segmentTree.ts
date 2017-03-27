@@ -251,17 +251,27 @@ class PartialSequenceLengths {
         }
     }
 
-    // assumes sequence number already coalesced
-    addClientSeqNumber(partialLength: PartialSequenceLength) {
-        if (this.clientSeqNumbers[partialLength.clientId] === undefined) {
-            this.clientSeqNumbers[partialLength.clientId] = [];
+    addClientSeqNumber(clientId: number, seq: number, seglen: number) {
+        if (this.clientSeqNumbers[clientId] === undefined) {
+            this.clientSeqNumbers[clientId] = [];
         }
-        let cli = this.clientSeqNumbers[partialLength.clientId];
-        let pLen = partialLength.seglen;
+        let cli = this.clientSeqNumbers[clientId];
+        let pLen = seglen;
         if (cli.length > 0) {
             pLen += cli[cli.length - 1].len;
         }
-        cli.push({ seq: partialLength.seq, len: pLen, seglen: partialLength.seglen });
+        cli.push({ seq: seq, len: pLen, seglen: seglen });
+
+    }
+    // assumes sequence number already coalesced
+    addClientSeqNumberFromPartial(partialLength: PartialSequenceLength) {
+        this.addClientSeqNumber(partialLength.clientId, partialLength.seq, partialLength.seglen);
+        if (partialLength.overlapClients) {
+            partialLength.overlapClients.map((oc: Base.Property<number, OverlapClient>) => {
+                this.addClientSeqNumber(oc.data.clientId, partialLength.seq, oc.data.seglen);
+                return true;
+            });
+        }
     }
 
     // assume: seq is latest sequence number; no structural change to sub-tree, but a segment
@@ -356,7 +366,7 @@ class PartialSequenceLengths {
                 for (let clientId of overlapClientIds) {
                     let ovlapClientNode = partialLength.overlapClients.get(clientId);
                     if (!ovlapClientNode) {
-                        partialLength.overlapClients.put(clientId,  <OverlapClient>{ clientId: clientId, seglen: seglen });
+                        partialLength.overlapClients.put(clientId, <OverlapClient>{ clientId: clientId, seglen: seglen });
                     }
                     else {
                         ovlapClientNode.data.seglen += seglen;
@@ -457,7 +467,7 @@ class PartialSequenceLengths {
         for (let i = 0; i < seqPartialsLen; i++) {
             seqPartials[i].len = prevLen + seqPartials[i].seglen;
             prevLen = seqPartials[i].len;
-            combinedPartialLengths.addClientSeqNumber(seqPartials[i]);
+            combinedPartialLengths.addClientSeqNumberFromPartial(seqPartials[i]);
         }
     }
 
@@ -472,6 +482,26 @@ class PartialSequenceLengths {
         PartialSequenceLengths.fromLeaves(combinedPartialLengths, textSegmentBlock, segmentWindow);
         let prevPartial: PartialSequenceLength;
 
+        function combineOverlapClients(a: PartialSequenceLength, b: PartialSequenceLength) {
+            if (a.overlapClients) {
+                if (b.overlapClients) {
+                    b.overlapClients.map((bProp: Base.Property<number, OverlapClient>) => {
+                        let aProp = a.overlapClients.get(bProp.key);
+                        if (aProp) {
+                            aProp.data.seglen += bProp.data.seglen;
+                        }
+                        else {
+                            a.overlapClients.put(bProp.data.clientId, bProp.data);
+                        }
+                        return true;
+                    });
+                }
+            }
+            else {
+                a.overlapClients = b.overlapClients;
+            }
+        }
+
         function addNext(partialLength: PartialSequenceLength) {
             let seq = partialLength.seq;
             let pLen = 0;
@@ -480,19 +510,21 @@ class PartialSequenceLengths {
                 if (prevPartial.seq == partialLength.seq) {
                     prevPartial.seglen += partialLength.seglen;
                     prevPartial.len += partialLength.seglen;
+                    combineOverlapClients(prevPartial, partialLength);
                     return;
                 }
                 else {
                     pLen = prevPartial.len;
                     // previous sequence number is finished
-                    combinedPartialLengths.addClientSeqNumber(prevPartial);
+                    combinedPartialLengths.addClientSeqNumberFromPartial(prevPartial);
                 }
             }
             prevPartial = {
                 seq: seq,
                 clientId: partialLength.clientId,
                 len: pLen + partialLength.seglen,
-                seglen: partialLength.seglen
+                seglen: partialLength.seglen,
+                overlapClients: partialLength.overlapClients
             };
             combinedPartialLengths.partialLengths.push(prevPartial);
         }
@@ -544,7 +576,7 @@ class PartialSequenceLengths {
             }
             // add client entry for last partial, if any
             if (prevPartial) {
-                combinedPartialLengths.addClientSeqNumber(prevPartial);
+                combinedPartialLengths.addClientSeqNumberFromPartial(prevPartial);
             }
         }
         // TODO: incremental zamboni during build
@@ -794,7 +826,7 @@ export function TestPack() {
             else {
                 countToApply = random.integer(Math.floor(2 * svrMsgCount / 3), svrMsgCount)(mt);
             }
-            server.applyMessages(countToApply);
+            return server.applyMessages(countToApply);
         }
 
         for (let i = 0; i < rounds; i++) {
@@ -809,7 +841,9 @@ export function TestPack() {
                     client.insertSegmentLocal(text, pos);
                     client.enqueueTestString();
                 }
-                serverProcessSome(server);
+                if (serverProcessSome(server)) {
+                    return;
+                }
                 clientProcessSome(client);
 
                 let removeSegmentCount = Math.floor(3 * insertSegmentCount / 4);
@@ -824,11 +858,15 @@ export function TestPack() {
                     client.removeSegmentLocal(pos, pos + dlen);
                     client.enqueueTestString();
                 }
-                serverProcessSome(server);
+                if (serverProcessSome(server)) {
+                    return;
+                }
                 clientProcessSome(client);
             }
             // process remaining messages
-            serverProcessSome(server, true);
+            if (serverProcessSome(server, true)) {
+                return;
+            }
             for (let client of clients) {
                 clientProcessSome(client, true);
             }
@@ -1285,7 +1323,7 @@ export class TestServer extends TestClient {
 
     applyMsg(msg: DeltaMsg) {
         this.coreApplyMsg(msg);
-        checkTextMatchRelative(msg.refSeq, msg.clientId, this, msg);
+        return checkTextMatchRelative(msg.refSeq, msg.clientId, this, msg);
     }
 
     applyMessages(msgCount: number) {
@@ -1293,7 +1331,9 @@ export class TestServer extends TestClient {
             let msg = this.q.dequeue();
             if (msg) {
                 msg.seq = this.seq++;
-                this.applyMsg(msg);
+                if (this.applyMsg(msg)) {
+                    return true;
+                }
                 if (this.clients) {
                     let minCli = this.clientSeqNumbers.peek();
                     if (minCli && (minCli.clientId == msg.clientId) && (minCli.refSeq < msg.refSeq)) {
@@ -1317,6 +1357,7 @@ export class TestServer extends TestClient {
             }
             msgCount--;
         }
+        return false;
     }
 }
 
@@ -1379,9 +1420,18 @@ export function segmentTree(text: string): SegmentTree {
     }
 
     // TODO: handle start and end positions
+    let traceGatherText = true;
     function gatherText(textSegment: TextSegment, pos: number, refSeq: number, clientId: number, start: number, end: number, accumText: TextSegment) {
         if ((textSegment.removedSeq === undefined) || (textSegment.removedSeq == UnassignedSequenceNumber) || (textSegment.removedSeq > refSeq)) {
+            if (traceGatherText) {
+                console.log(`gather seg seq ${textSegment.seq} rseq ${textSegment.removedSeq} text ${textSegment.text}`);
+            }
             accumText.text += textSegment.text;
+        }
+        else {
+            if (traceGatherText) {
+                console.log(`ignore seg seq ${textSegment.seq} rseq ${textSegment.removedSeq} text ${textSegment.text}`);
+            }
         }
         return true;
     }
@@ -1394,6 +1444,9 @@ export function segmentTree(text: string): SegmentTree {
             end = nodeLength(root, refSeq, clientId);
         }
         let accum = <TextSegment>{ text: "" };
+        if (traceGatherText) {
+            console.log(`get text on cli ${segmentWindow.clientId} ref cli ${clientId} refSeq ${refSeq}`);
+        }
         mapRange({ leaf: gatherText }, refSeq, clientId, accum, start, end);
         return accum.text;
     }
@@ -1446,6 +1499,7 @@ export function segmentTree(text: string): SegmentTree {
                     // segment happened by reference sequence number or segment from requesting client
                     if ((segment.removedSeq !== undefined) &&
                         ((segment.removedClientId == clientId) ||
+                            (segment.removedClientOverlap && (segment.removedClientOverlap.indexOf(clientId) >= 0)) ||
                             ((segment.removedSeq != UnassignedSequenceNumber) && (segment.removedSeq <= refSeq)))) {
                         return 0;
                     }
@@ -1749,6 +1803,9 @@ export function segmentTree(text: string): SegmentTree {
         if (!textSegment.removedClientOverlap) {
             textSegment.removedClientOverlap = <number[]>[];
         }
+        if (diagOverlappingRemove) {
+            console.log(`added cli ${clientId} to rseq: ${textSegment.removedSeq} text ${textSegment.text}`);
+        }
         textSegment.removedClientOverlap.push(clientId);
     }
 
@@ -1763,9 +1820,9 @@ export function segmentTree(text: string): SegmentTree {
                 if (diagOverlappingRemove) {
                     console.log(`yump @seq ${seq} cli ${segmentWindow.clientId}: overlaps deleted segment ${textSegment.removedSeq} text ${textSegment.text}`);
                 }
+                overwrite = true;
                 if (textSegment.removedSeq == UnassignedSequenceNumber) {
                     // replace because comes later
-                    overwrite = true;
                     textSegment.removedClientId = clientId;
                     textSegment.removedSeq = seq;
                     removeFromSegmentGroup(textSegment.segmentGroup, textSegment);
@@ -1794,7 +1851,7 @@ export function segmentTree(text: string): SegmentTree {
             return true;
         }
 
-        if (refSeq >= 1150) {
+        if (refSeq >= 100) {
             traceTraversal = true;
         }
         mapRange({ leaf: markRemoved, post: afterMarkRemoved }, refSeq, clientId, undefined, start, end);
