@@ -43,6 +43,11 @@ export interface TextSegmentGroup {
     segments: TextSegment[];
 }
 
+export interface OverlapClient {
+    clientId: number;
+    seglen: number;
+}
+
 // internal (represents multiple leaf segments) if child is defined
 export interface TextSegment {
     parent?: TextSegmentBlock;
@@ -55,6 +60,7 @@ export interface TextSegment {
     clientId?: number;
     removedSeq?: number;
     removedClientId?: number;
+    removedClientOverlap?: number[];
 }
 
 // list of text segments
@@ -85,6 +91,7 @@ interface PartialSequenceLength {
     len: number;
     seglen: number;
     clientId?: number;
+    overlapClients?: BST.RedBlackTree<number, OverlapClient>;
 }
 
 class SegmentWindow {
@@ -133,6 +140,10 @@ function latestLEQ(a: PartialSequenceLength[], key: number) {
     return best;
 }
 
+function compareNumbers(a: number, b: number) {
+    return a - b;
+}
+
 /**
  * Keep track of partial sums of segment lengths for all sequence numbers
  * in the current collaboration window (if any).  Only used during active
@@ -179,11 +190,6 @@ class PartialSequenceLengths {
             buf += ']';
         }
         return `min: ${this.minLength};` + buf;
-    }
-
-    recentWindow(segmentWindow: SegmentWindow) {
-        let windowSize = segmentWindow.currentSeq - segmentWindow.minSeq;
-        return this.partialLengths.length < windowSize;
     }
 
     getPartialLength(refSeq: number, clientId: number) {
@@ -337,14 +343,44 @@ class PartialSequenceLengths {
     static fromLeaves(combinedPartialLengths: PartialSequenceLengths, textSegmentBlock: TextSegmentBlock, segmentWindow: SegmentWindow) {
         combinedPartialLengths.minLength = 0;
 
+        function getOverlapClients(overlapClientids: number[], seglen: number) {
+            let bst = new BST.RedBlackTree<number, OverlapClient>(compareNumbers);
+            for (let clientId of overlapClientids) {
+                bst.put(clientId, <OverlapClient>{ clientId: clientId, seglen: seglen });
+            }
+            return bst;
+        }
+
+        function accumulateClientOverlap(partialLength: PartialSequenceLength, overlapClientIds: number[], seglen: number) {
+            if (partialLength.overlapClients) {
+                for (let clientId of overlapClientIds) {
+                    let ovlapClientNode = partialLength.overlapClients.get(clientId);
+                    if (!ovlapClientNode) {
+                        partialLength.overlapClients.put(clientId,  <OverlapClient>{ clientId: clientId, seglen: seglen });
+                    }
+                    else {
+                        ovlapClientNode.data.seglen += seglen;
+                    }
+                }
+            }
+            else {
+                partialLength.overlapClients = getOverlapClients(overlapClientIds, seglen);
+            }
+        }
+
         function insertSegment(segment: TextSegment, removedSeq = false) {
             let seq = segment.seq;
             let segmentLen = segment.text.length;
             let clientId = segment.clientId;
+            let removedClientOverlap: number[];
+
             if (removedSeq) {
                 seq = segment.removedSeq;
                 segmentLen = -segmentLen;
                 clientId = segment.removedClientId;
+                if (segment.removedClientOverlap) {
+                    removedClientOverlap = segment.removedClientOverlap;
+                }
             }
 
             let seqPartials = combinedPartialLengths.partialLengths;
@@ -358,9 +394,20 @@ class PartialSequenceLengths {
             }
             if ((indexFirstGTE < seqPartialsLen) && (seqPartials[indexFirstGTE].seq == seq)) {
                 seqPartials[indexFirstGTE].seglen += segmentLen;
+                if (removedClientOverlap) {
+                    accumulateClientOverlap(seqPartials[indexFirstGTE], removedClientOverlap, segmentLen);
+                }
             }
             else {
-                let pLen = <PartialSequenceLength>{ seq: seq, clientId: clientId, len: 0, seglen: segmentLen };
+                let pLen: PartialSequenceLength;
+                if (removedClientOverlap) {
+                    let overlapClients = getOverlapClients(removedClientOverlap, segmentLen);
+                    pLen = { seq: seq, clientId: clientId, len: 0, seglen: segmentLen, overlapClients: overlapClients };
+                }
+                else {
+                    pLen = { seq: seq, clientId: clientId, len: 0, seglen: segmentLen };
+                }
+
                 if (indexFirstGTE < seqPartialsLen) {
                     // shift entries with greater sequence numbers
                     // TODO: investigate performance improvement using BST
@@ -530,6 +577,13 @@ function addToSegmentGroup(segment: TextSegment) {
     segment.segmentGroup.segments.push(segment);
 }
 
+function removeFromSegmentGroup(segmentGroup: TextSegmentGroup, toRemove: TextSegment) {
+    let index = segmentGroup.segments.indexOf(toRemove);
+    if (index >= 0) {
+        segmentGroup.segments.splice(index, 1);
+    }
+}
+
 function segmentGroupReplace(currentSeg: TextSegment, newSegment: TextSegment) {
     let segmentGroup = currentSeg.segmentGroup;
     for (let i = 0, len = segmentGroup.segments.length; i < len; i++) {
@@ -618,13 +672,45 @@ function makeRemoveMsg(start: number, end: number, seq: number, refSeq: number, 
     return <DeltaMsg>{ type: MsgType.REMOVE, pos1: start, pos2: end, seq: seq, refSeq: refSeq, clientId: clientId };
 }
 
+function checkTextMatchRelative(refSeq: number, clientId: number, server: TestServer, msg: DeltaMsg) {
+    let client = server.clients[clientId];
+    let serverText = server.segTree.getText(refSeq, clientId);
+    let cliText = client.checkQ.dequeue();
+    if ((cliText === undefined) || (cliText != serverText)) {
+        console.log(`mismatch `);
+        console.log(msg);
+        //        console.log(serverText);
+        //        console.log(cliText);
+        if (cliText !== undefined) {
+            let diffParts = JsDiff.diffChars(serverText, cliText);
+            for (let diffPart of diffParts) {
+                let annotes = "";
+                if (diffPart.added) {
+                    annotes += "added ";
+                }
+                else if (diffPart.removed) {
+                    annotes += "removed ";
+                }
+                if (diffPart.count) {
+                    annotes += `count: ${diffPart.count}`;
+                }
+                console.log(`text: ${diffPart.value} ` + annotes);
+            }
+            console.log(server.segTree.toString());
+            console.log(client.segTree.toString());
+        }
+        return true;
+    }
+    return false;
+}
+
 export function TestPack() {
     let mt = random.engines.mt19937();
     mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
     let minSegCount = 1;
     let maxSegCount = 1000;
     let segmentCountDistribution = random.integer(minSegCount, maxSegCount);
-    let smallSegmentCountDistribution = random.integer(1, 4);
+    let smallSegmentCountDistribution = random.integer(1, 8);
     function randSmallSegmentCount() {
         return smallSegmentCountDistribution(mt);
     }
@@ -656,6 +742,7 @@ export function TestPack() {
         server.addClients(clients);
 
         function checkTextMatch() {
+            console.log(`checking text match @${server.getCurrentSeq()}`);
             let serverText = server.getText();
             for (let client of clients) {
                 let cliText = client.getText();
@@ -720,6 +807,7 @@ export function TestPack() {
                     let pos = random.integer(0, preLen)(mt);
                     server.enqueueMsg(makeInsertMsg(text, pos, UnassignedSequenceNumber, client.getCurrentSeq(), client.getClientId()));
                     client.insertSegmentLocal(text, pos);
+                    client.enqueueTestString();
                 }
                 serverProcessSome(server);
                 clientProcessSome(client);
@@ -734,6 +822,7 @@ export function TestPack() {
                     let pos = random.integer(0, preLen)(mt);
                     server.enqueueMsg(makeRemoveMsg(pos, pos + dlen, UnassignedSequenceNumber, client.getCurrentSeq(), client.getClientId()));
                     client.removeSegmentLocal(pos, pos + dlen);
+                    client.enqueueTestString();
                 }
                 serverProcessSome(server);
                 clientProcessSome(client);
@@ -751,8 +840,8 @@ export function TestPack() {
                 console.log(`round: ${i}`);
             }
         }
-        console.log(server.getText());
-        console.log(server.segTree.toString());
+        //console.log(server.getText());
+        //console.log(server.segTree.toString());
     }
 
     function randolicious() {
@@ -1006,16 +1095,22 @@ export class TestClient {
     maxWindowTime = 0;
     accumWindow = 0;
     accumOps = 0;
-    verboseOps = false;
+    verboseOps = true;
     q: ListUtil.List<DeltaMsg>;
+    checkQ: ListUtil.List<string>;
 
     constructor(initText: string) {
         this.segTree = segmentTree(initText);
         this.q = ListUtil.ListMakeHead<DeltaMsg>();
+        this.checkQ = ListUtil.ListMakeHead<string>();
     }
 
     enqueueMsg(msg: DeltaMsg) {
         this.q.enqueue(msg);
+    }
+
+    enqueueTestString() {
+        this.checkQ.enqueue(this.getText());
     }
 
     coreApplyMsg(msg: DeltaMsg) {
@@ -1190,6 +1285,7 @@ export class TestServer extends TestClient {
 
     applyMsg(msg: DeltaMsg) {
         this.coreApplyMsg(msg);
+        checkTextMatchRelative(msg.refSeq, msg.clientId, this, msg);
     }
 
     applyMessages(msgCount: number) {
@@ -1422,11 +1518,18 @@ export function segmentTree(text: string): SegmentTree {
                 }
                 else {
                     if (pendingSegment.removedSeq !== undefined) {
+                        let aug = "";
+                        // TODO: test leaving this false when removedSeq == UnassignedSequenceNumber
                         overwrite = true;
+                        if (pendingSegment.removedSeq != UnassignedSequenceNumber) {
+                            aug = "r";
+                        }
+                        if (diagOverlappingRemove) {
+                            console.log(`g${aug}ump @seq ${seq} cli ${segmentWindow.clientId} from ${pendingSegment.removedSeq} text ${pendingSegment.text}`);
+                        }
                     }
                     pendingSegment.removedSeq = seq;
                 }
-                //console.log(`set pending segment with text ${pendingSegment.text} to sequence number ${seq}`);
                 clientId = segmentWindow.clientId;
                 if (nodesToUpdate.indexOf(pendingSegment.parent) < 0) {
                     nodesToUpdate.push(pendingSegment.parent);
@@ -1642,6 +1745,14 @@ export function segmentTree(text: string): SegmentTree {
         return newNode;
     }
 
+    function addOverlappingClient(textSegment: TextSegment, clientId: number) {
+        if (!textSegment.removedClientOverlap) {
+            textSegment.removedClientOverlap = <number[]>[];
+        }
+        textSegment.removedClientOverlap.push(clientId);
+    }
+
+    let diagOverlappingRemove = true;
     function markRangeRemoved(start: number, end: number, refSeq: number, clientId: number, seq: number) {
         ensureIntervalBoundary(start, refSeq, clientId);
         ensureIntervalBoundary(end, refSeq, clientId);
@@ -1649,11 +1760,23 @@ export function segmentTree(text: string): SegmentTree {
         let overwrite = false;
         function markRemoved(textSegment: TextSegment, pos: number, start: number, end: number) {
             if (textSegment.removedSeq != undefined) {
-                overwrite = true;
-                console.log(`yump @seq ${seq} cli ${segmentWindow.clientId}: overwrote deleted segment ${textSegment.removedSeq} with more deletion`);
+                if (diagOverlappingRemove) {
+                    console.log(`yump @seq ${seq} cli ${segmentWindow.clientId}: overlaps deleted segment ${textSegment.removedSeq} text ${textSegment.text}`);
+                }
+                if (textSegment.removedSeq == UnassignedSequenceNumber) {
+                    // replace because comes later
+                    overwrite = true;
+                    textSegment.removedClientId = clientId;
+                    textSegment.removedSeq = seq;
+                    removeFromSegmentGroup(textSegment.segmentGroup, textSegment);
+                }
+                // do not replace earlier sequence number for remove
+                addOverlappingClient(textSegment, clientId);
             }
-            textSegment.removedClientId = clientId;
-            textSegment.removedSeq = seq;
+            else {
+                textSegment.removedClientId = clientId;
+                textSegment.removedSeq = seq;
+            }
             // save segment so can assign removed sequence number when acked by server
             if (segmentWindow.collaborating && (textSegment.removedSeq == UnassignedSequenceNumber) && (clientId == segmentWindow.clientId)) {
                 segmentGroup = addToPendingList(textSegment, segmentGroup);
@@ -1671,8 +1794,9 @@ export function segmentTree(text: string): SegmentTree {
             return true;
         }
 
-        //traceTraversal = true;
-
+        if (refSeq >= 1150) {
+            traceTraversal = true;
+        }
         mapRange({ leaf: markRemoved, post: afterMarkRemoved }, refSeq, clientId, undefined, start, end);
         traceTraversal = false;
     }
@@ -1775,7 +1899,7 @@ export function segmentTree(text: string): SegmentTree {
     function nodeUpdateLength(node: TextSegmentBlock, seq: number, clientId: number) {
         nodeUpdateTotalLength(node);
         if (segmentWindow.collaborating && (seq != UnassignedSequenceNumber) && (seq != TreeMaintainanceSequenceNumber)) {
-            if ((node.partialLengths !== undefined) && (node.partialLengths.recentWindow(segmentWindow))) {
+            if (node.partialLengths !== undefined) {
                 node.partialLengths.update(node, seq, clientId, segmentWindow);
             }
             else {
