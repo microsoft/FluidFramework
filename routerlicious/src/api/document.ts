@@ -1,4 +1,5 @@
 import * as extensions from "./extension";
+import * as map from "./map";
 import * as storage from "./storage";
 import * as types from "./types";
 
@@ -49,4 +50,6 @@ export async function load(source: storage.IStorage, name: string): Promise<Docu
     return new Document(map);
 }
 
+// Create a registry and seed with default types
 export const registry = new extensions.Registry();
+registry.register(new map.MapExtension());

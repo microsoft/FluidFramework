@@ -34,3 +34,6 @@ typings
 
 # Debug log from npm
 npm-debug.log
+
+# Code coverage
+.nyc_output/

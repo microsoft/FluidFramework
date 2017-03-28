@@ -64,7 +64,9 @@ class Map implements api.IMap {
  * The extension that defines the map
  */
 export class MapExtension implements api.IExtension {
-    public type: string = "https://graph.microsoft.com/types/map";
+    public static Type = "https://graph.microsoft.com/types/map";
+
+    public type: string = MapExtension.Type;
 
     public create(snapshot: any): api.ICollaborativeObject {
         return new Map(snapshot);
