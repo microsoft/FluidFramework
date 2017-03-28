@@ -1,5 +1,5 @@
 import * as extensions from "./extension";
-import * as map from "./map";
+import * as mapExtension from "./map";
 import * as storage from "./storage";
 import * as types from "./types";
 
@@ -37,12 +37,8 @@ export class Document {
 }
 
 export async function load(source: storage.IStorage, name: string): Promise<Document> {
-    const details = await source.loadObject(name);
-
     // The root document type should be a collaborative map
-    if (details.object.type !== types.CoreTypes.Map) {
-        throw new Error("Unexpected document type");
-    }
+    const details = await source.loadObject(name, mapExtension.MapExtension.Type);
 
     const extension = registry.getExtension(details.object.type);
     const map = extension.load(details) as types.IMap;
@@ -52,4 +48,4 @@ export async function load(source: storage.IStorage, name: string): Promise<Docu
 
 // Create a registry and seed with default types
 export const registry = new extensions.Registry();
-registry.register(new map.MapExtension());
+registry.register(new mapExtension.MapExtension());

@@ -66,9 +66,9 @@ export interface ICollaborativeObjectDetails {
  */
 export interface IStorage {
     /**
-     * Creates or loads a new collaborative object with the given name
+     * Creates or loads a new collaborative object with the given id and type
      */
-    loadObject(id: string): Promise<ICollaborativeObjectDetails>;
+    loadObject(id: string, type: string): Promise<ICollaborativeObjectDetails>;
 }
 
 export interface IOptions {

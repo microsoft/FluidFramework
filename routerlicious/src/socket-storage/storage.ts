@@ -9,14 +9,14 @@ export class Storage implements api.IStorage {
      * Loads the object with the given ID from the server
      * @param id Id of the object to load
      */
-    public loadObject(id: string): Promise<api.ICollaborativeObjectDetails> {
+    public loadObject(id: string, type: string): Promise<api.ICollaborativeObjectDetails> {
         return new Promise<api.ICollaborativeObjectDetails>((resolve, reject) => {
-            this.socket.emit("loadObject", name, (response) => {
+            this.socket.emit("loadObject", id, type, (response) => {
                 let details: api.ICollaborativeObjectDetails = {
                     object: new StorageObject(
                         response.id,
                         response.type,
-                        response.storage,
+                        this,
                         this.socket),
                     snapshot: response.snapshot,
                 };

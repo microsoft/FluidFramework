@@ -1,9 +1,5 @@
 import * as storage from "./storage";
 
-export const CoreTypes = {
-    Map: "https://collab.microsoft.com/types/map",
-};
-
 export interface ICollaborativeObject {
     /**
      * A readonly identifier for th e collaborative object

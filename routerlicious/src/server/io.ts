@@ -27,10 +27,15 @@ let sub = redis.createClient(port, host, subOptions);
 io.adapter(socketIoRedis({ pubClient: pub, subClient: sub }));
 
 io.on("connection", (socket) => {
-    socket.on("join", (room, response) => {
-        console.log(`User has joined the room ${room}`);
-        socket.join(room);
-        response("thanks");
+    socket.on("loadObject", (id: string, type: string, response) => {
+        console.log(`Client has requested to load ${id}`);
+        socket.join(id);
+        const document = {
+            id,
+            snapshot: {},
+            type,
+        };
+        response(document);
     });
 });
 
