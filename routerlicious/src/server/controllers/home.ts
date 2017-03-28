@@ -1,9 +1,12 @@
 import * as $ from "jquery";
-import * as io from "socket.io-client";
+import * as api from "../../api";
+import * as socketStorage from "../../socket-storage";
 
 $(document).ready(() => {
-    const socket = io();
-    socket.emit("join", "room", (response) => {
-        console.log(`Connected to ${response}`);
+    let provider = new socketStorage.StorageProvider();
+    provider.connect({ token: "none" }).then((storage) => {
+        api.load(storage, "test").then((document) => {
+            console.log("loaded document test");
+        });
     });
 });

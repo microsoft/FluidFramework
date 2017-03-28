@@ -1,18 +1,24 @@
 import * as api from "../api";
-import { Document } from "./document";
+import { StorageObject } from "./storageObject";
 
 export class Storage implements api.IStorage {
     constructor(private socket: SocketIOClient.Socket) {
     }
 
-    public load(name: string): Promise<api.IDocumentDetails> {
-        return new Promise<api.IDocumentDetails>((resolve, reject) => {
-            this.socket.emit("join", name, (response) => {
-                let details: api.IDocumentDetails = {
-                    data: null,
-                    document: new Document(this.socket),
-                    existing: false,
-                    type: null,
+    /**
+     * Loads the object with the given ID from the server
+     * @param id Id of the object to load
+     */
+    public loadObject(id: string): Promise<api.ICollaborativeObjectDetails> {
+        return new Promise<api.ICollaborativeObjectDetails>((resolve, reject) => {
+            this.socket.emit("loadObject", name, (response) => {
+                let details: api.ICollaborativeObjectDetails = {
+                    object: new StorageObject(
+                        response.id,
+                        response.type,
+                        response.storage,
+                        this.socket),
+                    snapshot: response.snapshot,
                 };
                 resolve(details);
             });

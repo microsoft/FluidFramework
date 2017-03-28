@@ -16,13 +16,28 @@ export enum DocumentEvents {
 }
 
 /**
- * API access to the underlying document stored on the server
+ * Interface which provides access to the underlying object on the server
  */
-export interface IDocument {
+export interface IStorageObject {
+    /**
+     * ID for the collaborative object
+     */
+    id: string;
+
+    /**
+     * The type of the underlying object
+     */
+    type: string;
+
+    /**
+     * The storage this object is associated with
+     */
+    storage: IStorage;
+
     /**
      * Subscribe to events emitted by the document
      */
-    on(event: DocumentEvents, listener: Function): this;
+    on(event: string, listener: Function): this;
 
     /**
      * Detaches the document from the server and unsubscribes from all events.
@@ -31,28 +46,18 @@ export interface IDocument {
 }
 
 /**
- * Server details of the document
+ * Values returned from a call to create a new collaborative object
  */
-export interface IDocumentDetails {
+export interface ICollaborativeObjectDetails {
     /**
-     * Snapshot of the data returned during the initial load of the document
+     * The current snapshot for the document
      */
-    data: any;
+    snapshot: any;
 
     /**
-     * The interface to the server document
+     * The server resource fro the given collaborative object
      */
-    document: IDocument;
-
-    /**
-     * Boolean indicating whether or not the loaded document already existed on the server
-     */
-    existing: boolean;
-
-    /**
-     * The type of the underlying document
-     */
-    type: string;
+    object: IStorageObject;
 }
 
 /**
@@ -61,9 +66,9 @@ export interface IDocumentDetails {
  */
 export interface IStorage {
     /**
-     * Creates or loads a new document with the given name
+     * Creates or loads a new collaborative object with the given name
      */
-    load(name: string): Promise<IDocumentDetails>;
+    loadObject(id: string): Promise<ICollaborativeObjectDetails>;
 }
 
 export interface IOptions {
