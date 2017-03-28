@@ -70,6 +70,7 @@ export interface TextSegmentBlock {
     length: number;
     partialLengths?: PartialSequenceLengths;
     parent?: TextSegmentBlock;
+    detached?: boolean;
 }
 
 export interface TextMarker {
@@ -1374,6 +1375,16 @@ export class TestServer extends TestClient {
     }
 }
 
+interface RemovableNode {
+    node?: TextSegmentBlock;
+    maxSeq: number;
+}
+
+var removableNodeComparer: BST.Comparer<RemovableNode> = {
+    min: { maxSeq: -2 },
+    compare: (a,b) => a.maxSeq - b.maxSeq
+}
+
 // represents a sequence of text segments
 export function segmentTree(text: string): SegmentTree {
     // should be a power of 2
@@ -1386,6 +1397,7 @@ export function segmentTree(text: string): SegmentTree {
     let root = initialNode(text);
     let segmentWindow = new SegmentWindow();
     let pendingSegments: ListUtil.List<TextSegmentGroup>;
+    let nodesToRemove: BST.Heap<RemovableNode>;
 
     // for now assume min starts at zero
     function startCollaboration(localClientId: number) {
@@ -1393,6 +1405,7 @@ export function segmentTree(text: string): SegmentTree {
         segmentWindow.minSeq = 0;
         segmentWindow.collaborating = true;
         segmentWindow.currentSeq = 0;
+        nodesToRemove = new BST.Heap<RemovableNode>([], removableNodeComparer);
         pendingSegments = ListUtil.ListMakeHead<TextSegmentGroup>();
     }
 
