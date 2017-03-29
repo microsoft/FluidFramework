@@ -765,6 +765,13 @@ export function TestPack() {
         return str;
     }
 
+    function reportTiming(client: TestClient) {
+        let aveTime = (client.accumTime / client.accumOps).toFixed(3);
+        let aveWindowTime = (client.accumWindowTime / client.accumOps).toFixed(3);
+        console.log(`accum time ${client.accumTime} us ops: ${client.accumOps} ave time ${aveTime}`)
+        console.log(`accum window time ${client.accumWindowTime} us ave window time ${aveWindowTime}; max ${client.maxWindowTime}`)
+    }
+
     function clientServer() {
         const clientCount = 4;
         let server = new TestServer("don't ask for whom the bell tolls; it tolls for thee");
@@ -807,7 +814,7 @@ export function TestPack() {
             return false;
         }
 
-        let rounds = 10000;
+        let rounds = 20000;
         function clientProcessSome(client: TestClient, all = false) {
             let cliMsgCount = client.q.count();
             let countToApply: number;
@@ -882,9 +889,12 @@ export function TestPack() {
                 break;
             }
             if (0 == (i % 100)) {
-                console.log(`round: ${i} seq ${server.seq}`);
+                console.log(`round: ${i} seq ${server.seq} char count ${server.getLength()}`);
+                reportTiming(server);
             }
         }
+        reportTiming(server);
+        reportTiming(clients[2]);
         //console.log(server.getText());
         //console.log(server.segTree.toString());
     }
@@ -1259,8 +1269,11 @@ export class TestClient {
     }
 
     ackPendingSegment(seq: number) {
+        let clockStart = clock();
         this.segTree.ackPendingSegment(seq);
         this.segTree.getSegmentWindow().currentSeq = seq;
+        this.accumTime += elapsedMicroseconds(clockStart);
+        this.accumOps++;
         if (this.verboseOps) {
             console.log(`@cli ${this.segTree.getSegmentWindow().clientId} ack seq # ${seq}`);
         }
@@ -1382,7 +1395,7 @@ interface RemovableNode {
 
 var removableNodeComparer: BST.Comparer<RemovableNode> = {
     min: { maxSeq: -2 },
-    compare: (a,b) => a.maxSeq - b.maxSeq
+    compare: (a, b) => a.maxSeq - b.maxSeq
 }
 
 // represents a sequence of text segments
@@ -1397,7 +1410,7 @@ export function segmentTree(text: string): SegmentTree {
     let root = initialNode(text);
     let segmentWindow = new SegmentWindow();
     let pendingSegments: ListUtil.List<TextSegmentGroup>;
-    let nodesToRemove: BST.Heap<RemovableNode>;
+    let nodesToScour: BST.Heap<RemovableNode>;
 
     // for now assume min starts at zero
     function startCollaboration(localClientId: number) {
@@ -1405,8 +1418,49 @@ export function segmentTree(text: string): SegmentTree {
         segmentWindow.minSeq = 0;
         segmentWindow.collaborating = true;
         segmentWindow.currentSeq = 0;
-        nodesToRemove = new BST.Heap<RemovableNode>([], removableNodeComparer);
+        nodesToScour = new BST.Heap<RemovableNode>([], removableNodeComparer);
         pendingSegments = ListUtil.ListMakeHead<TextSegmentGroup>();
+    }
+
+    function addToPotentialRemovables(node: TextSegmentBlock, seq: number) {
+        nodesToScour.add({ node: node, maxSeq: seq });
+    }
+
+    const zamboniRemovedMaxCount = 3;
+
+    // TODO: re-structure tree when node live segment count is less than maxSegCount/2
+    function zamboniRemovedSegments() {
+        let nodeToScour = nodesToScour.peek();
+        if (nodeToScour && (nodeToScour.maxSeq <= segmentWindow.minSeq)) {
+            for (let i = 0; i < zamboniRemovedMaxCount; i++) {
+                nodeToScour = nodesToScour.get();
+                if (nodeToScour && (nodeToScour.maxSeq <= segmentWindow.minSeq)) {
+                    let node = nodeToScour.node;
+                    let segmentsCopy = <TextSegment[]>[];
+                    let someRemoved = false;
+                    let newLiveSegmentCount = 0;
+                    for (let k = 0; k < node.liveSegmentCount; k++) {
+                        let segment = node.segments[k];
+                        if ((segment.removedSeq != undefined) && (segment.removedSeq != UnassignedSequenceNumber)) {
+                            if (segment.removedSeq > segmentWindow.minSeq) {
+                                segmentsCopy[newLiveSegmentCount++] = segment;
+                            }
+                        }
+                        else {
+                            segmentsCopy[newLiveSegmentCount++] = segment;
+                        }
+                    }
+                    if (newLiveSegmentCount < node.liveSegmentCount) {
+                        node.liveSegmentCount = newLiveSegmentCount;
+                        node.segments = segmentsCopy;
+                        nodeUpdatePathLengths(node, UnassignedSequenceNumber, -1, true);
+                    }
+                }
+                else {
+                    break;
+                }
+            }
+        }
     }
 
     function getSegmentWindow() {
@@ -1545,6 +1599,7 @@ export function segmentTree(text: string): SegmentTree {
 
     function updateMinSeq(minSeq: number) {
         segmentWindow.minSeq = minSeq;
+        zamboniRemovedSegments();
     }
 
     function search<TAccum>(node: TextSegmentBlock, pos: number, refSeq: number, clientId: number, action?: TextSegmentAction, accum?: TAccum): TextSegment {
@@ -1863,8 +1918,13 @@ export function segmentTree(text: string): SegmentTree {
                 textSegment.removedSeq = seq;
             }
             // save segment so can assign removed sequence number when acked by server
-            if (segmentWindow.collaborating && (textSegment.removedSeq == UnassignedSequenceNumber) && (clientId == segmentWindow.clientId)) {
-                segmentGroup = addToPendingList(textSegment, segmentGroup);
+            if (segmentWindow.collaborating) {
+                if ((textSegment.removedSeq == UnassignedSequenceNumber) && (clientId == segmentWindow.clientId)) {
+                    segmentGroup = addToPendingList(textSegment, segmentGroup);
+                }
+                else {
+                    addToPotentialRemovables(textSegment.parent, seq);
+                }
                 //console.log(`saved local removed seg with text: ${textSegment.text}`);
             }
             return true;
@@ -1880,6 +1940,9 @@ export function segmentTree(text: string): SegmentTree {
         }
         // traceTraversal = true;
         mapRange({ leaf: markRemoved, post: afterMarkRemoved }, refSeq, clientId, undefined, start, end);
+        if (segmentWindow.collaborating) {
+            zamboniRemovedSegments();
+        }
         traceTraversal = false;
     }
 
