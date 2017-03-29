@@ -9,6 +9,7 @@ import * as random from "random-js";
 import * as ITree from "./intervalSpanningTree";
 import * as SegTree from "./segmentTree";
 import * as CollabString from "./ops";
+import * as Text from "./text";
 
 function compareStrings(a: string, b: string) {
     return a.localeCompare(b);
@@ -697,6 +698,8 @@ function itreeCheckedTest() {
 
 }
 
+
+
 //simpleTest();
 //fileTest1();
 //integerTest1();
@@ -706,6 +709,7 @@ function itreeCheckedTest() {
 //segTreeTest1();
 //segTreeLargeTest();
 //segTreeCheckedTest();
-let testPack = SegTree.TestPack();
+//let testPack = SegTree.TestPack();
 //testPack.randolicious();
-testPack.clientServer();
+//testPack.clientServer();
+Text.loadText('pp.txt');

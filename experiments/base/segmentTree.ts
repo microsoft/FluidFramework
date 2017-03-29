@@ -32,6 +32,7 @@ export interface SegmentTree {
     getOffset(entry: TextSegment, refSeq: number, clientId: number): number;
     getText(refSeq: number, clientId: number, start?: number, end?: number): string;
     getLength(refSeq: number, clientId: number): number;
+    getHeight(): number;
     startCollaboration(localClientId);
     getSegmentWindow(): SegmentWindow;
     ackPendingSegment(seq: number);
@@ -1467,6 +1468,24 @@ export function segmentTree(text: string): SegmentTree {
         return segmentWindow;
     }
 
+    function getHeight() {
+        function nodeGetHeight(node: TextSegmentBlock) {
+            let maxHeight = 0;
+            for (let i=0;i<node.liveSegmentCount;i++) {
+                let segment = node.segments[i];
+                let height = 1;
+                if (segment.child) {
+                    height = 1 + nodeGetHeight(segment.child);
+                }
+                if (height > maxHeight) {
+                    maxHeight = height;
+                }
+            }
+            return maxHeight;
+        }
+        return nodeGetHeight(root);
+    }
+
     function getLength(refSeq: number, clientId: number) {
         return nodeLength(root, refSeq, clientId);
     }
@@ -2176,6 +2195,7 @@ export function segmentTree(text: string): SegmentTree {
         markRangeRemoved: markRangeRemoved,
         getText: getText,
         getLength: getLength,
+        getHeight: getHeight,
         createMarker: createMarker,
         startCollaboration: startCollaboration,
         getSegmentWindow: getSegmentWindow,
