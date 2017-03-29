@@ -27,6 +27,12 @@ let sub = redis.createClient(port, host, subOptions);
 io.adapter(socketIoRedis({ pubClient: pub, subClient: sub }));
 
 io.on("connection", (socket) => {
+    // The loadObject call needs to see if the object already exists. If not it should offload to
+    // the storage service to go and create it.
+    //
+    // If it does exist it should query that same service to pull in the current snapshot.
+    //
+    // Given a client is then going to send us deltas on that service we need routerlicious to kick in as well.
     socket.on("loadObject", (id: string, type: string, response) => {
         console.log(`Client has requested to load ${id}`);
         socket.join(id);

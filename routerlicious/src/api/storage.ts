@@ -40,6 +40,11 @@ export interface IStorageObject {
     on(event: string, listener: Function): this;
 
     /**
+     * Send new messages to the server
+     */
+    emit(event: string, ...args: any[]): boolean;
+
+    /**
      * Detaches the document from the server and unsubscribes from all events.
      */
     detach();

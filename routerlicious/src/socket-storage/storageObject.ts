@@ -9,14 +9,20 @@ export class StorageObject implements api.IStorageObject {
         public type: string,
         public storage: api.IStorage,
         private socket: SocketIOClient.Socket) {
-        this.socket.emit("hello");
 
-        // TODO I want to listen for socket.io messages and then forward them to the server
+        // Listen for messages from the server
+        this.socket.on("message", () => {
+            console.log("Server said hello");
+        });
     }
 
     public on(event: string, listener: Function): this {
         this.emitter.on(event, listener);
         return this;
+    }
+
+    public emit(event: string, ...args: any[]): boolean {
+        return true;
     }
 
     public detach() {
