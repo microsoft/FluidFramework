@@ -1,5 +1,6 @@
 /// <reference path="base.d.ts" />
 /// <reference path="diff.d.ts" />
+/// <reference path="random.d.ts" />
 
 import * as ListUtil from "./list";
 import * as random from "random-js";
@@ -20,6 +21,11 @@ export interface TextSegmentActions {
     post?: TextSegmentBlockAction;
 }
 
+export interface SearchResult {
+    text: string;
+    pos: number;
+}
+
 export interface SegmentTree {
     map<TAccum>(actions: TextSegmentActions, refSeq: number, clientId: number, accum?: TAccum);
     mapRange<TAccum>(actions: TextSegmentActions, refSeq: number, clientId: number, accum?: TAccum, start?: number, end?: number);
@@ -33,10 +39,12 @@ export interface SegmentTree {
     getText(refSeq: number, clientId: number, start?: number, end?: number): string;
     getLength(refSeq: number, clientId: number): number;
     getHeight(): number;
+    searchFromPos(pos: number, regexp: RegExp): SearchResult;
     startCollaboration(localClientId);
     getSegmentWindow(): SegmentWindow;
     ackPendingSegment(seq: number);
     updateMinSeq(minSeq: number);
+    reloadFromSegments(segments: TextSegment[]);
     diag();
 }
 
@@ -890,8 +898,9 @@ export function TestPack() {
                 break;
             }
             if (0 == (i % 100)) {
-                console.log(`round: ${i} seq ${server.seq} char count ${server.getLength()}`);
+                console.log(`round: ${i} seq ${server.seq} char count ${server.getLength()} height ${server.segTree.getHeight()}`);
                 reportTiming(server);
+                reportTiming(clients[2]);
             }
         }
         reportTiming(server);
@@ -1403,9 +1412,59 @@ var removableNodeComparer: BST.Comparer<RemovableNode> = {
 export function segmentTree(text: string): SegmentTree {
     // should be a power of 2
     const MaxSegments = 8;
+
     function makeNode(liveSegmentCount: number) {
-        // assert childCount <= MaxEntries
-        return <TextSegmentBlock>{ liveSegmentCount: liveSegmentCount, segments: <TextSegment[]>new Array(MaxSegments) };
+        return <TextSegmentBlock>{
+            liveSegmentCount: liveSegmentCount,
+            segments: <TextSegment[]>new Array(MaxSegments)
+        };
+    }
+
+    function initialNode(text: string) {
+        let node = makeNode(1);
+        node.segments[0] = makeLeafSegment(node, text, UniversalSequenceNumber, LocalClientId);
+        node.length = text.length;
+        return node;
+    }
+
+    function addSegment(node: TextSegmentBlock, segment: TextSegment) {
+        node.segments[node.liveSegmentCount++] = segment;
+        segment.parent = node;
+        if (segment.child) {
+            segment.child.parent = node;
+        }
+    }
+
+    function reloadFromSegments(segments: TextSegment[]) {
+        let segCap = MaxSegments - 1;
+        function buildSegmentTree(segments: TextSegment[]) {
+            const segmentCount = Math.ceil(segments.length / segCap);
+            const internalSegments: TextSegment[] = [];
+            let segmentIndex = 0;
+            for (let i = 0; i < segmentCount; i++) {
+                let len = 0;
+                internalSegments[i] = makeInternalSegment(undefined, makeNode(0));
+                for (let j = 0; j < segCap; j++) {
+                    if (segmentIndex < segments.length) {
+                        addSegment(internalSegments[i].child, segments[segmentIndex]);
+                        len += segmentLength(segments[segmentIndex], UniversalSequenceNumber, LocalClientId);
+                    } else {
+                        break;
+                    }
+                    segmentIndex++;
+                }
+                internalSegments[i].child.length = len;
+            }
+            if (internalSegments.length == 1) {
+                return internalSegments[0];
+            }
+            else {
+                return buildSegmentTree(internalSegments);
+            }
+        }
+        root = makeNode(1);
+        root.segments[0] = buildSegmentTree(segments);
+        root.length = segmentLength(root.segments[0], UniversalSequenceNumber, LocalClientId);
     }
 
     let root = initialNode(text);
@@ -1471,7 +1530,7 @@ export function segmentTree(text: string): SegmentTree {
     function getHeight() {
         function nodeGetHeight(node: TextSegmentBlock) {
             let maxHeight = 0;
-            for (let i=0;i<node.liveSegmentCount;i++) {
+            for (let i = 0; i < node.liveSegmentCount; i++) {
                 let segment = node.segments[i];
                 let height = 1;
                 if (segment.child) {
@@ -1511,21 +1570,46 @@ export function segmentTree(text: string): SegmentTree {
         }
     }
 
-    function initialNode(text: string) {
-        let node = makeNode(1);
-        node.segments[0] = makeLeafSegment(node, text, UniversalSequenceNumber, LocalClientId);
-        node.length = text.length;
-        return node;
+    const chunkSize = 256;
+    function searchFromPos(pos: number, target: RegExp) {
+        let start = pos;
+        let end = pos + chunkSize;
+        let chunk = "";
+        let found = false;
+        while (!found) {
+            if (end > root.length) {
+                end = root.length;
+            }
+            chunk += getText(UniversalSequenceNumber, segmentWindow.clientId, start, end);
+            let result  = chunk.match(target);
+            if (result!==null) {
+                return { text: result[0], pos: result.index};
+            }         
+            start += chunkSize;
+            if (start >= root.length) {
+                break;
+            }
+            end += chunkSize;
+        }
     }
 
-    // TODO: handle start and end positions
     let traceGatherText = false;
     function gatherText(textSegment: TextSegment, pos: number, refSeq: number, clientId: number, start: number, end: number, accumText: TextSegment) {
         if ((textSegment.removedSeq === undefined) || (textSegment.removedSeq == UnassignedSequenceNumber) || (textSegment.removedSeq > refSeq)) {
             if (traceGatherText) {
                 console.log(`gather seg seq ${textSegment.seq} rseq ${textSegment.removedSeq} text ${textSegment.text}`);
             }
-            accumText.text += textSegment.text;
+            if ((start <= 0) && (end >= textSegment.text.length)) {
+                accumText.text += textSegment.text;
+            }
+            else {
+                if (end >= textSegment.text.length) {
+                    accumText.text += textSegment.text.substring(start);
+                }
+                else {
+                    accumText.text += textSegment.text.substring(start, end);
+                }
+            }
         }
         else {
             if (traceGatherText) {
@@ -2194,6 +2278,7 @@ export function segmentTree(text: string): SegmentTree {
         removeRange: removeRange,
         markRangeRemoved: markRangeRemoved,
         getText: getText,
+        searchFromPos: searchFromPos,
         getLength: getLength,
         getHeight: getHeight,
         createMarker: createMarker,
@@ -2201,6 +2286,7 @@ export function segmentTree(text: string): SegmentTree {
         getSegmentWindow: getSegmentWindow,
         ackPendingSegment: ackPendingSegment,
         updateMinSeq: updateMinSeq,
+        reloadFromSegments: reloadFromSegments,
         toString: toString,
         diag: diag
     }

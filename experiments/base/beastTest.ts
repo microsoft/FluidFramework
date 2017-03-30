@@ -712,4 +712,5 @@ function itreeCheckedTest() {
 //let testPack = SegTree.TestPack();
 //testPack.randolicious();
 //testPack.clientServer();
-Text.loadText('pp.txt');
+//Text.loadText('pp.txt');
+Text.testFindWord();

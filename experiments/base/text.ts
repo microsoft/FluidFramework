@@ -1,24 +1,51 @@
 /// <reference path="node.d.ts" />
 /// <reference path="base.d.ts" />
+/// <reference path="random.d.ts" />
 
+import * as random from "random-js";
 import * as SegTree from "./segmentTree";
 import * as fs from "fs";
 
 export function loadText(filename: string) {
     let content = fs.readFileSync(filename, "utf8");
-    content = content.replace(/^\uFEFF/,"");
+    content = content.replace(/^\uFEFF/, "");
 
     let paragraphs = content.split('\r\n\r\n');
     for (let i = 0, len = paragraphs.length; i < len; i++) {
-        paragraphs[i] = paragraphs[i].replace(/\r\n/g, ' ').replace(/\u201c|\u201d/g,'"') + '\n';
+        paragraphs[i] = paragraphs[i].replace(/\r\n/g, ' ').replace(/\u201c|\u201d/g, '"').replace(/\u2019/g, "'") + '\n';
     }
     let segTree = SegTree.segmentTree("");
+    let segments = <SegTree.TextSegment[]>[];
     for (let paragraph of paragraphs) {
         let segment = <SegTree.TextSegment>{
-            text: paragraph
+            text: paragraph,
+            seq: SegTree.UniversalSequenceNumber,
+            clientId: SegTree.LocalClientId
         }
-        segTree.insertInterval(segTree.getLength(0, -1), 0, -1, 0, segment);
+        segments.push(segment);
     }
+    segTree.reloadFromSegments(segments);
+    console.log(`Number of Segments: ${segments.length}`);
     console.log(`Height: ${segTree.getHeight()}`);
-    console.log(segTree.toString());
+    //console.log(segTree.toString());
+    return segTree;
+}
+
+let mt = random.engines.mt19937();
+mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
+
+function findRandomWord(segTree: SegTree.SegmentTree, clientId: number) {
+    let len = segTree.getLength(SegTree.UniversalSequenceNumber, clientId);
+    let pos = random.integer(0, len)(mt);
+    let textAtPos = segTree.getText(SegTree.UniversalSequenceNumber, clientId, pos, pos + 10);
+    console.log(textAtPos);
+    let nextWord = segTree.searchFromPos(pos, /\s\w+\b/);
+    if (nextWord) {
+        console.log(`next word is ${nextWord.text} at pos ${nextWord.pos}`);
+    }
+}
+
+export function testFindWord() {
+    let segTree=loadText("pp.txt");
+    findRandomWord(segTree, SegTree.LocalClientId);
 }
