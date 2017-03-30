@@ -25,7 +25,7 @@ export interface ICollaborativeObject {
      * Attaches the given collaborative object to an upstream storage location.
      * This marks it as a collaborative object.
      */
-    attach(source: storage.IStorage);
+    attach(source: storage.IStorageObject);
 }
 
 /**
