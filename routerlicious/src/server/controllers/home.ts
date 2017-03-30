@@ -15,5 +15,8 @@ async function loadDocument(id: string): Promise<api.Document> {
 }
 
 $(document).ready(() => {
-    loadDocument("test");
+    loadDocument("test").then((doc) => {
+        // tslint:disable-next-line
+        window["doc"] = doc;
+    });
 });
