@@ -1,6 +1,8 @@
+import * as assert from "assert";
 import { EventEmitter } from "events";
 import * as uuid from "node-uuid";
 import * as api from ".";
+import * as socketStorage from "../socket-storage";
 
 /**
  * Implementation of a map collaborative object
@@ -10,8 +12,9 @@ class Map implements api.IMap {
 
     private events = new EventEmitter();
 
-    constructor(private snapshot: any, source?: api.IStorageObject) {
+    constructor(private snapshot: any, private source?: api.IStorageObject) {
         this.id = source ? source.id : uuid.v4();
+        this.attach(source);
     }
 
     public get(key: string) {
@@ -23,18 +26,48 @@ class Map implements api.IMap {
     }
 
     public set(key: string, value: any): void {
-        // TODO send updates to the server
-        this.snapshot[key] = value;
+        if (this.source) {
+            this.source.emit("submitOp", {
+                clientId: this.source.storage.clientId,
+                objectId: this.id,
+                op: {
+                    key,
+                    type: "set",
+                    value,
+                },
+            });
+        }
+
+        this.setCore(key, value);
     }
 
     public delete(key: string) {
-        // TODO send updates to the server
-        delete this.snapshot[key];
+        if (this.source) {
+            this.source.emit("submitOp", {
+                clientId: this.source.storage.clientId,
+                objectId: this.id,
+                op: {
+                    key,
+                    type: "delete",
+                },
+            });
+        }
+
+        this.deleteCore(key);
     }
 
     public clear() {
-        // TODO send updates to the server
-        this.snapshot = {};
+        if (this.source) {
+            this.source.emit("submitOp", {
+                clientId: this.source.storage.clientId,
+                objectId: this.id,
+                op: {
+                    type: "clear",
+                },
+            });
+        }
+
+        this.clearCore();
     }
 
     public on(event: string, listener: Function): this {
@@ -52,11 +85,60 @@ class Map implements api.IMap {
         return this;
     }
 
-    public attach(source: api.IStorage) {
+    public attach(source: api.IStorageObject) {
         // TODO we need to go and create the object on the server and upload
         // the initial snapshot.
         // TODO should this be async or should we indirectly pull in this information or
         // just expose it via an error callback?
+        this.source = source;
+
+        // listen for specific events
+        this.source.on("op", (message: socketStorage.IRoutedOpMessage) => {
+            // The op message should be restricted to an individual room
+            assert.equal(this.id, message.objectId);
+
+            this.processOperation(message);
+
+            // Let others know it happened
+            this.events.emit("op", message);
+        });
+    }
+
+    private processOperation(message: socketStorage.IRoutedOpMessage) {
+        // Process the message
+        console.log(`Received a message from the server ${JSON.stringify(message)}`);
+
+        // TODO We can use this message in the future to update our own sequence numbers
+        if (message.clientId === this.source.storage.clientId) {
+            return;
+        }
+
+        // Message has come from someone else - let's go and update now
+        switch (message.op.type) {
+            case "clear":
+                this.clearCore();
+                break;
+            case "delete":
+                this.deleteCore(message.op.key);
+                break;
+            case "set":
+                this.setCore(message.op.key, message.op.value);
+                break;
+            default:
+                throw new Error("Unknown operation");
+        }
+    }
+
+    private setCore(key: string, value: any) {
+        this.snapshot[key] = value;
+    }
+
+    private clearCore() {
+        this.snapshot = {};
+    }
+
+    private deleteCore(key: string) {
+        delete this.snapshot[key];
     }
 }
 

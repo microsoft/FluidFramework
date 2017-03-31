@@ -71,9 +71,14 @@ export interface ICollaborativeObjectDetails {
  */
 export interface IStorage {
     /**
+     * An identifier to represent the client to the storage service
+     */
+    clientId: string;
+
+    /**
      * Creates or loads a new collaborative object with the given id and type
      */
-    loadObject(id: string, type: string): Promise<ICollaborativeObjectDetails>;
+    loadObject(id: string, type: string, initial?: any): Promise<ICollaborativeObjectDetails>;
 }
 
 export interface IOptions {
