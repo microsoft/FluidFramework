@@ -19,7 +19,7 @@
   "repository": "microsoft/prague",
   "devDependencies": {
     "@types/jquery": "^2.0.41",
-    "@types/lodash": "^4.14.57",
+    "@types/lodash": "^4.14.61",
     "@types/mocha": "^2.2.40",
     "@types/morgan": "^1.7.32",
     "@types/nconf": "0.0.34",
