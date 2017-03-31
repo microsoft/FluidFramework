@@ -3,11 +3,12 @@ import { Client } from "azure-event-hubs";
 
 // const connectionString = nconf.get("eventHub:connectionString");
 // tslint:disable-next-line
-const connectionString = "Endpoint=sb://delta-stream-dev.servicebus.windows.net/;SharedAccessKeyName=listen;SharedAccessKey=/yMm6/DduZy/yOqHxj7bdD4JrFnAPZP63FvX/kVYWK8=";
+const connectionString = 
+    "Endpoint=sb://delta-stream-dev.servicebus.windows.net/;SharedAccessKeyName=reader;SharedAccessKey=spdhQ3pQEPEd+J24xcVwS2huukQ07v/4LFKu+MP2WG0=";
 
 function listenForMessages(client, id) {
     let messageCount = 0;
-    client.createReceiver("snapshot", id).then((receiver) => {
+    client.createReceiver("$Default", id).then((receiver) => {
             console.log(`Receiver created for partition ${id}`);
             receiver.on("errorReceived", (error) => {
                 console.log(error);
@@ -22,7 +23,7 @@ function listenForMessages(client, id) {
         });
 }
 
-let client = Client.fromConnectionString(connectionString, "deltas");
+let client = Client.fromConnectionString(connectionString, "raw-deltas");
 client.open().then(() => {
     client.getPartitionIds().then((ids) => {
         for (const id of ids) {

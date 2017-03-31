@@ -1,6 +1,11 @@
 {
     "eventHub": {
-        "connectionString": "Endpoint=sb://delta-stream-dev.servicebus.windows.net/;SharedAccessKeyName=sender;SharedAccessKey=OseppLfZtnn2VRo+0XWFgxmurMybiWBxoCnSQdVqut0=;EntityPath=deltas"
+        "routerlicious": {
+            "endpoint": "delta-stream-dev.servicebus.windows.net",
+            "sharedAccessKeyName": "sender",
+            "sharedAccessKey": "p/dClJHt/VhUjlGJcGCG5gPuUu2vAYpViXaLI124USU=",
+            "entityPath": "raw-deltas"
+        }
     },
     "redis": {
         "host": "redis",
