@@ -24,7 +24,7 @@ export class Document {
     /**
      * Retrieves the root collaborative object that the document is based on
      */
-    public getRoot(): types.ICollaborativeObject {
+    public getRoot(): types.IMap {
         return this.map;
     }
 

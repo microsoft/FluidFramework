@@ -53,6 +53,11 @@ export interface IMap extends ICollaborativeObject {
     delete(key: string): any;
 
     /**
+     * Retreives all the keys contained within the map
+     */
+    keys(): string[];
+
+    /**
      * Removes all entries from the map
      */
     clear();

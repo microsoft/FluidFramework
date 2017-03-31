@@ -1,5 +1,6 @@
 import * as assert from "assert";
 import { EventEmitter } from "events";
+import * as _ from "lodash";
 import * as uuid from "node-uuid";
 import * as api from ".";
 import * as socketStorage from "../socket-storage";
@@ -15,6 +16,10 @@ class Map implements api.IMap {
     constructor(private snapshot: any, private source?: api.IStorageObject) {
         this.id = source ? source.id : uuid.v4();
         this.attach(source);
+    }
+
+    public keys(): string[] {
+        return _.keys(this.snapshot);
     }
 
     public get(key: string) {
@@ -98,9 +103,6 @@ class Map implements api.IMap {
             assert.equal(this.id, message.objectId);
 
             this.processOperation(message);
-
-            // Let others know it happened
-            this.events.emit("op", message);
         });
     }
 
@@ -131,14 +133,17 @@ class Map implements api.IMap {
 
     private setCore(key: string, value: any) {
         this.snapshot[key] = value;
+        this.events.emit("valueChanged", { key });
     }
 
     private clearCore() {
         this.snapshot = {};
+        this.events.emit("clear");
     }
 
     private deleteCore(key: string) {
         delete this.snapshot[key];
+        this.events.emit("valueChanged", { key });
     }
 }
 
