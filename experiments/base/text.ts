@@ -6,7 +6,7 @@ import * as random from "random-js";
 import * as SegTree from "./segmentTree";
 import * as fs from "fs";
 
-export function loadText(filename: string) {
+export function loadText(filename: string, segTree: SegTree.SegmentTree) {
     let content = fs.readFileSync(filename, "utf8");
     content = content.replace(/^\uFEFF/, "");
 
@@ -14,7 +14,6 @@ export function loadText(filename: string) {
     for (let i = 0, len = paragraphs.length; i < len; i++) {
         paragraphs[i] = paragraphs[i].replace(/\r\n/g, ' ').replace(/\u201c|\u201d/g, '"').replace(/\u2019/g, "'") + '\n';
     }
-    let segTree = SegTree.segmentTree("");
     let segments = <SegTree.TextSegment[]>[];
     for (let paragraph of paragraphs) {
         let segment = <SegTree.TextSegment>{
@@ -41,11 +40,17 @@ function findRandomWord(segTree: SegTree.SegmentTree, clientId: number) {
     console.log(textAtPos);
     let nextWord = segTree.searchFromPos(pos, /\s\w+\b/);
     if (nextWord) {
+        nextWord.pos += pos;
         console.log(`next word is ${nextWord.text} at pos ${nextWord.pos}`);
     }
+    return nextWord;
 }
 
-export function testFindWord() {
-    let segTree=loadText("pp.txt");
-    findRandomWord(segTree, SegTree.LocalClientId);
+export function createWordMove(segTree: SegTree.SegmentTree, clientId: number) {
+    let word1 = findRandomWord(segTree, clientId);
+    let word2 = findRandomWord(segTree, clientId);
+    return {
+        word1: word1,
+        word2: word2
+    }
 }

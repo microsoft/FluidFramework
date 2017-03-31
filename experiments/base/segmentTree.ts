@@ -6,6 +6,7 @@ import * as ListUtil from "./list";
 import * as random from "random-js";
 import * as JsDiff from "diff";
 import * as BST from "./redBlack";
+import * as Text from "./text";
 
 export interface TextSegmentAction {
     <TAccum>(textSegment: TextSegment, pos: number, refSeq: number, clientId: number, start: number, end: number, accum?: TAccum): boolean;
@@ -781,12 +782,22 @@ export function TestPack() {
         console.log(`accum window time ${client.accumWindowTime} us ave window time ${aveWindowTime}; max ${client.maxWindowTime}`)
     }
 
-    function clientServer() {
+    function clientServer(startFile?: string) {
         const clientCount = 4;
-        let server = new TestServer("don't ask for whom the bell tolls; it tolls for thee");
+        let initString = "";
+        if (!startFile) {
+            initString = "don't ask for whom the bell tolls; it tolls for thee";
+        }
+        let server = new TestServer(initString);
+        if (startFile) {
+            Text.loadText(startFile, server.segTree);
+        }
         let clients = <TestClient[]>Array(clientCount);
         for (let i = 0; i < clientCount; i++) {
-            clients[i] = new TestClient("don't ask for whom the bell tolls; it tolls for thee");
+            clients[i] = new TestClient(initString);
+            if (startFile) {
+                Text.loadText(startFile, clients[i].segTree);
+            }
             clients[i].startCollaboration(i);
         }
         server.startCollaboration(clientCount);
@@ -848,18 +859,57 @@ export function TestPack() {
             return server.applyMessages(countToApply);
         }
 
+        function randomSpateOfInserts(client: TestClient, charIndex: number) {
+            let textLen = randTextLength();
+            let text = randomString(textLen, String.fromCharCode(zedCode + ((client.getCurrentSeq() + charIndex) % 50)));
+            let preLen = client.getLength();
+            let pos = random.integer(0, preLen)(mt);
+            server.enqueueMsg(makeInsertMsg(text, pos, UnassignedSequenceNumber, client.getCurrentSeq(), client.getClientId()));
+            client.insertSegmentLocal(text, pos);
+            if (useCheckQ) {
+                client.enqueueTestString();
+            }
+        }
+
+        function randomSpateOfRemoves(client: TestClient) {
+            let dlen = randTextLength();
+            let preLen = client.getLength();
+            let pos = random.integer(0, preLen)(mt);
+            server.enqueueMsg(makeRemoveMsg(pos, pos + dlen, UnassignedSequenceNumber, client.getCurrentSeq(), client.getClientId()));
+            client.removeSegmentLocal(pos, pos + dlen);
+            if (useCheckQ) {
+                client.enqueueTestString();
+            }
+        }
+
+        function randomWordMove(client: TestClient) {
+            let wordMove = Text.createWordMove(client.segTree, client.getClientId());
+            if (wordMove && wordMove.word1 && wordMove.word2) {
+                let removeStart = wordMove.word1.pos;
+                let removeEnd = removeStart + wordMove.word1.text.length;
+                server.enqueueMsg(makeRemoveMsg(removeStart, removeEnd, UnassignedSequenceNumber, client.getCurrentSeq(), client.getClientId()));
+                client.removeSegmentLocal(removeStart, removeEnd);
+                if (useCheckQ) {
+                    client.enqueueTestString();
+                }
+                let pos = wordMove.word2.pos + wordMove.word2.text.length;
+                server.enqueueMsg(makeInsertMsg(wordMove.word1.text, pos, UnassignedSequenceNumber, client.getCurrentSeq(), client.getClientId()));
+                client.insertSegmentLocal(wordMove.word1.text, pos);
+                if (useCheckQ) {
+                    client.enqueueTestString();
+                }
+            }
+        }
+
         for (let i = 0; i < rounds; i++) {
             for (let client of clients) {
                 let insertSegmentCount = randSmallSegmentCount();
                 for (let j = 0; j < insertSegmentCount; j++) {
-                    let textLen = randTextLength();
-                    let text = randomString(textLen, String.fromCharCode(zedCode + ((client.getCurrentSeq() + j) % 50)));
-                    let preLen = client.getLength();
-                    let pos = random.integer(0, preLen)(mt);
-                    server.enqueueMsg(makeInsertMsg(text, pos, UnassignedSequenceNumber, client.getCurrentSeq(), client.getClientId()));
-                    client.insertSegmentLocal(text, pos);
-                    if (useCheckQ) {
-                        client.enqueueTestString();
+                    if (startFile) {
+                        randomWordMove(client);
+                    }
+                    else {
+                        randomSpateOfInserts(client, j);
                     }
                 }
                 if (serverProcessSome(server)) {
@@ -872,13 +922,11 @@ export function TestPack() {
                     removeSegmentCount = 1;
                 }
                 for (let j = 0; j < removeSegmentCount; j++) {
-                    let dlen = randTextLength();
-                    let preLen = client.getLength();
-                    let pos = random.integer(0, preLen)(mt);
-                    server.enqueueMsg(makeRemoveMsg(pos, pos + dlen, UnassignedSequenceNumber, client.getCurrentSeq(), client.getClientId()));
-                    client.removeSegmentLocal(pos, pos + dlen);
-                    if (useCheckQ) {
-                        client.enqueueTestString();
+                    if (startFile) {
+                        randomWordMove(client);
+                    }
+                    else {
+                        randomSpateOfRemoves(client);
                     }
                 }
                 if (serverProcessSome(server)) {
@@ -1581,10 +1629,10 @@ export function segmentTree(text: string): SegmentTree {
                 end = root.length;
             }
             chunk += getText(UniversalSequenceNumber, segmentWindow.clientId, start, end);
-            let result  = chunk.match(target);
-            if (result!==null) {
-                return { text: result[0], pos: result.index};
-            }         
+            let result = chunk.match(target);
+            if (result !== null) {
+                return { text: result[0], pos: result.index };
+            }
             start += chunkSize;
             if (start >= root.length) {
                 break;

@@ -709,8 +709,6 @@ function itreeCheckedTest() {
 //segTreeTest1();
 //segTreeLargeTest();
 //segTreeCheckedTest();
-//let testPack = SegTree.TestPack();
+let testPack = SegTree.TestPack();
 //testPack.randolicious();
-//testPack.clientServer();
-//Text.loadText('pp.txt');
-Text.testFindWord();
+testPack.clientServer("pp.txt");
