@@ -1446,12 +1446,12 @@ export class TestServer extends TestClient {
     }
 }
 
-interface RemovableNode {
+interface LRUNode {
     node?: TextSegmentBlock;
     maxSeq: number;
 }
 
-var removableNodeComparer: BST.Comparer<RemovableNode> = {
+var removableNodeComparer: BST.Comparer<LRUNode> = {
     min: { maxSeq: -2 },
     compare: (a, b) => a.maxSeq - b.maxSeq
 }
@@ -1518,7 +1518,7 @@ export function segmentTree(text: string): SegmentTree {
     let root = initialNode(text);
     let segmentWindow = new SegmentWindow();
     let pendingSegments: ListUtil.List<TextSegmentGroup>;
-    let nodesToScour: BST.Heap<RemovableNode>;
+    let nodesToScour: BST.Heap<LRUNode>;
 
     // for now assume min starts at zero
     function startCollaboration(localClientId: number) {
@@ -1526,8 +1526,9 @@ export function segmentTree(text: string): SegmentTree {
         segmentWindow.minSeq = 0;
         segmentWindow.collaborating = true;
         segmentWindow.currentSeq = 0;
-        nodesToScour = new BST.Heap<RemovableNode>([], removableNodeComparer);
+        nodesToScour = new BST.Heap<LRUNode>([], removableNodeComparer);
         pendingSegments = ListUtil.ListMakeHead<TextSegmentGroup>();
+        nodeUpdateLengthNewStructure(root, true);
     }
 
     function addToPotentialRemovables(node: TextSegmentBlock, seq: number) {
@@ -1822,6 +1823,7 @@ export function segmentTree(text: string): SegmentTree {
             });
             for (let node of nodesToUpdate) {
                 nodeUpdatePathLengths(node, seq, clientId, overwrite);
+                //nodeUpdatePathLengths(node, seq, clientId, true);
             }
         }
     }
@@ -1842,9 +1844,7 @@ export function segmentTree(text: string): SegmentTree {
         textSegment.seq = seq;
         textSegment.clientId = clientId;
         ensureIntervalBoundary(pos, refSeq, clientId);
-        // if (refSeq >= 1700) {
-        //     traceTraversal = true;
-        // }
+        // traceTraversal = true;
         let splitNode = nodeInsertBefore(root, pos, refSeq, clientId, textSegment);
         traceTraversal = false;
         updateRoot(splitNode, refSeq, clientId);
@@ -2089,7 +2089,7 @@ export function segmentTree(text: string): SegmentTree {
             }
             return true;
         }
-        // traceTraversal = true;
+        //traceTraversal = true;
         mapRange({ leaf: markRemoved, post: afterMarkRemoved }, refSeq, clientId, undefined, start, end);
         if (segmentWindow.collaborating) {
             zamboniRemovedSegments();
@@ -2165,10 +2165,10 @@ export function segmentTree(text: string): SegmentTree {
         nodeUpdateLengthNewStructure(node);
     }
 
-    function nodeUpdateLengthNewStructure(node: TextSegmentBlock) {
+    function nodeUpdateLengthNewStructure(node: TextSegmentBlock, recur = false) {
         nodeUpdateTotalLength(node);
         if (segmentWindow.collaborating) {
-            node.partialLengths = PartialSequenceLengths.combine(node, segmentWindow);
+            node.partialLengths = PartialSequenceLengths.combine(node, segmentWindow, recur);
         }
     }
 
@@ -2197,6 +2197,7 @@ export function segmentTree(text: string): SegmentTree {
         if (segmentWindow.collaborating && (seq != UnassignedSequenceNumber) && (seq != TreeMaintainanceSequenceNumber)) {
             if (node.partialLengths !== undefined) {
                 node.partialLengths.update(node, seq, clientId, segmentWindow);
+                // node.partialLengths = PartialSequenceLengths.combine(node, segmentWindow);
             }
             else {
                 node.partialLengths = PartialSequenceLengths.combine(node, segmentWindow);

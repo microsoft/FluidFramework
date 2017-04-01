@@ -41,7 +41,7 @@ function findRandomWord(segTree: SegTree.SegmentTree, clientId: number) {
     let nextWord = segTree.searchFromPos(pos, /\s\w+\b/);
     if (nextWord) {
         nextWord.pos += pos;
-        console.log(`next word is ${nextWord.text} at pos ${nextWord.pos}`);
+        console.log(`next word is ${nextWord.text} len ${nextWord.text.length} at pos ${nextWord.pos}`);
     }
     return nextWord;
 }
