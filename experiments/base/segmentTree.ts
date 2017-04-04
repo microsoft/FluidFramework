@@ -188,6 +188,37 @@ class PartialSequenceLengths {
         }
     }
 
+    compare(b: PartialSequenceLengths) {
+        function comparePartialLengths(aList: PartialSequenceLength[], bList: PartialSequenceLength[]) {
+            let aLen = aList.length;
+            let bLen = bList.length;
+            if (aLen != bLen) {
+                return false;
+            }
+            for (let i = 0; i < aLen; i++) {
+                let aPartial = aList[i];
+                let bPartial = bList[i];
+                if ((aPartial.seq != bPartial.seq) || (aPartial.clientId != bPartial.clientId) ||
+                    (aPartial.seglen != bPartial.seglen) || (aPartial.len != bPartial.len) || (aPartial.overlapClients && (!bPartial.overlapClients))) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        if (!comparePartialLengths(this.partialLengths, b.partialLengths)) {
+            return false;
+        }
+        for (let clientId in this.clientSeqNumbers) {
+            if (!b.clientSeqNumbers[clientId]) {
+                return false;
+            }
+            else if (!comparePartialLengths(this.clientSeqNumbers[clientId], b.clientSeqNumbers[clientId])) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     toString() {
         let buf = "";
         for (let partial of this.partialLengths) {
@@ -1485,7 +1516,7 @@ export function segmentTree(text: string): SegmentTree {
 
     function reloadFromSegments(segments: TextSegment[]) {
         let segCap = MaxSegments - 1;
-        function buildSegmentTree(segments: TextSegment[]) {
+        function buildSegmentTree(segments: TextSegment[]): TextSegment {
             const segmentCount = Math.ceil(segments.length / segCap);
             const internalSegments: TextSegment[] = [];
             let segmentIndex = 0;
@@ -1511,7 +1542,12 @@ export function segmentTree(text: string): SegmentTree {
             }
         }
         root = makeNode(1);
-        root.segments[0] = buildSegmentTree(segments);
+        let segTree = buildSegmentTree(segments);
+        segTree.parent = root;
+        if (segTree.child) {
+            segTree.child.parent = root;
+        }
+        root.segments[0] = segTree;
         root.length = segmentLength(root.segments[0], UniversalSequenceNumber, LocalClientId);
     }
 
@@ -1531,7 +1567,7 @@ export function segmentTree(text: string): SegmentTree {
         nodeUpdateLengthNewStructure(root, true);
     }
 
-    function addToPotentialRemovables(node: TextSegmentBlock, seq: number) {
+    function addToLRUSet(node: TextSegmentBlock, seq: number) {
         nodesToScour.add({ node: node, maxSeq: seq });
     }
 
@@ -1779,14 +1815,17 @@ export function segmentTree(text: string): SegmentTree {
         }
     }
 
-    function updateRoot(splitNode: TextSegmentBlock, refSeq: number, clientId: number) {
+    function updateRoot(splitNode: TextSegmentBlock, refSeq: number, clientId: number, seq: number) {
         if (splitNode !== undefined) {
             let newRoot = makeNode(2);
             newRoot.segments[0] = makeInternalSegment(newRoot, root);
             newRoot.segments[1] = makeInternalSegment(newRoot, splitNode);
             root = newRoot;
+            nodeUpdateLengthNewStructure(root);
         }
-        nodeUpdateLengthNewStructure(root);
+        else {
+            nodeUpdateLength(root, seq, clientId);
+        }
     }
 
     /**
@@ -1847,7 +1886,7 @@ export function segmentTree(text: string): SegmentTree {
         // traceTraversal = true;
         let splitNode = nodeInsertBefore(root, pos, refSeq, clientId, textSegment);
         traceTraversal = false;
-        updateRoot(splitNode, refSeq, clientId);
+        updateRoot(splitNode, refSeq, clientId, seq);
     }
 
     function nodeInsertBefore(node: TextSegmentBlock, pos: number, refSeq: number, clientId: number, textSegment: TextSegment) {
@@ -1895,7 +1934,7 @@ export function segmentTree(text: string): SegmentTree {
 
     function ensureIntervalBoundary(pos: number, refSeq: number, clientId: number) {
         let splitNode = insertingWalk(root, pos, refSeq, clientId, TreeMaintainanceSequenceNumber, splitLeafSegment);
-        updateRoot(splitNode, refSeq, clientId);
+        updateRoot(splitNode, refSeq, clientId, TreeMaintainanceSequenceNumber);
     }
 
     function tieAtLaterSegment(pos: number, len: number, seq: number, segment: TextSegment, refSeq: number, clientId: number) {
@@ -2074,7 +2113,7 @@ export function segmentTree(text: string): SegmentTree {
                     segmentGroup = addToPendingList(textSegment, segmentGroup);
                 }
                 else {
-                    addToPotentialRemovables(textSegment.parent, seq);
+                    addToLRUSet(textSegment.parent, seq);
                 }
                 //console.log(`saved local removed seg with text: ${textSegment.text}`);
             }
@@ -2192,10 +2231,36 @@ export function segmentTree(text: string): SegmentTree {
         }
     }
 
+    let once = true;
+    function nodeCompareUpdateLength(node: TextSegmentBlock, seq: number, clientId: number) {
+        nodeUpdateTotalLength(node);
+        if (segmentWindow.collaborating && (seq != UnassignedSequenceNumber) && (seq != TreeMaintainanceSequenceNumber)) {
+            if (node.partialLengths !== undefined) {
+                let bplStr = node.partialLengths.toString();
+                node.partialLengths.update(node, seq, clientId, segmentWindow);
+                let tempPartialLengths = PartialSequenceLengths.combine(node, segmentWindow);
+                if (!tempPartialLengths.compare(node.partialLengths)) {
+                    console.log(`partial sum update mismatch @cli ${segmentWindow.clientId} seq ${seq} clientId ${clientId}`);
+                    console.log(tempPartialLengths.toString());
+                    console.log("b4 " + bplStr);
+                    console.log(node.partialLengths.toString());
+                    if (once) {
+                        console.log(nodeToString(node, "", 2));
+                        once = false;
+                    }
+                }
+            }
+            else {
+                node.partialLengths = PartialSequenceLengths.combine(node, segmentWindow);
+            }
+        }
+    }
+
     function nodeUpdateLength(node: TextSegmentBlock, seq: number, clientId: number) {
         nodeUpdateTotalLength(node);
         if (segmentWindow.collaborating && (seq != UnassignedSequenceNumber) && (seq != TreeMaintainanceSequenceNumber)) {
             if (node.partialLengths !== undefined) {
+                //nodeCompareUpdateLength(node, seq, clientId);
                 node.partialLengths.update(node, seq, clientId, segmentWindow);
                 // node.partialLengths = PartialSequenceLengths.combine(node, segmentWindow);
             }
@@ -2225,36 +2290,36 @@ export function segmentTree(text: string): SegmentTree {
         return indentStrings[n];
     }
 
-    function toString() {
-        let strbuf = "";
-        function nodeToString(node: TextSegmentBlock, indentCount = 0) {
+    function nodeToString(node: TextSegmentBlock, strbuf: string, indentCount = 0) {
+        strbuf += indent(indentCount);
+        strbuf += `Node (len ${node.length}) p len (${node.parent ? node.parent.length : 0}) with ${node.liveSegmentCount} live segments:\n`;
+        if (segmentWindow.collaborating) {
             strbuf += indent(indentCount);
-            strbuf += `Node (len ${node.length}) p len (${node.parent ? node.parent.length : 0}) with ${node.liveSegmentCount} live segments:\n`;
-            if (segmentWindow.collaborating) {
-                strbuf += indent(indentCount);
-                strbuf += node.partialLengths.toString() + '\n';
+            strbuf += node.partialLengths.toString() + '\n';
+        }
+        let segments = node.segments;
+        for (let segmentIndex = 0; segmentIndex < node.liveSegmentCount; segmentIndex++) {
+            let segment = segments[segmentIndex];
+            if (segment.child) {
+                strbuf = nodeToString(segment.child, strbuf, indentCount + 4);
             }
-            let segments = node.segments;
-            for (let segmentIndex = 0; segmentIndex < node.liveSegmentCount; segmentIndex++) {
-                let segment = segments[segmentIndex];
-                if (segment.child) {
-                    nodeToString(segment.child, indentCount + 4);
+            else {
+                strbuf += indent(indentCount + 4);
+                strbuf += `cli: ${segment.clientId} seq: ${segment.seq}`;
+                if (segment.removedSeq !== undefined) {
+                    strbuf += ` rcli: ${segment.removedClientId} rseq: ${segment.removedSeq}`;
                 }
-                else {
-                    strbuf += indent(indentCount + 4);
-                    strbuf += `cli: ${segment.clientId} seq: ${segment.seq}`;
-                    if (segment.removedSeq !== undefined) {
-                        strbuf += ` rcli: ${segment.removedClientId} rseq: ${segment.removedSeq}`;
-                    }
-                    strbuf += "\n";
-                    strbuf += indent(indentCount + 4);
-                    strbuf += segment.text;
-                    strbuf += "\n";
-                }
+                strbuf += "\n";
+                strbuf += indent(indentCount + 4);
+                strbuf += segment.text;
+                strbuf += "\n";
             }
         }
-        nodeToString(root);
         return strbuf;
+    }
+
+    function toString() {
+        return nodeToString(root, "", 0);
     }
 
     let traceTraversal = false;

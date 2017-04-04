@@ -37,11 +37,11 @@ function findRandomWord(segTree: SegTree.SegmentTree, clientId: number) {
     let len = segTree.getLength(SegTree.UniversalSequenceNumber, clientId);
     let pos = random.integer(0, len)(mt);
     let textAtPos = segTree.getText(SegTree.UniversalSequenceNumber, clientId, pos, pos + 10);
-    console.log(textAtPos);
+    //console.log(textAtPos);
     let nextWord = segTree.searchFromPos(pos, /\s\w+\b/);
     if (nextWord) {
         nextWord.pos += pos;
-        console.log(`next word is ${nextWord.text} len ${nextWord.text.length} at pos ${nextWord.pos}`);
+        //console.log(`next word is ${nextWord.text} len ${nextWord.text.length} at pos ${nextWord.pos}`);
     }
     return nextWord;
 }
