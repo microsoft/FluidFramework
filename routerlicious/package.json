@@ -9,6 +9,7 @@
     "build:watch": "watch 'npm run tsc && npm run browserify' src",
     "less": "lessc src/stylesheets/style.less public/stylesheets/dist/style.css",
     "nodemon": "nodemon dist/server/www.js -w dist",
+    "deli": "nodemon dist/deli/index.js -w dist",
     "start": "node dist/server/www.js",
     "test": "nyc -x dist/test/**/* mocha dist/test",
     "tsc": "tsc",
@@ -55,6 +56,7 @@
     "redis": "^2.7.1",
     "serve-favicon": "^2.4.1",
     "socket.io": "^1.7.3",
+    "socket.io-emitter": "^2.0.0",
     "socket.io-redis": "^4.0.0"
   },
   "browserify": {
