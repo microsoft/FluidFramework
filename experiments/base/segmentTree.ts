@@ -164,6 +164,9 @@ class PartialSequenceLengths {
     minLength = 0;
     partialLengths: PartialSequenceLength[] = [];
     clientSeqNumbers: PartialSequenceLength[][] = [];
+    static options = {
+        zamboni: true
+    };
 
     constructor(public minSeq: number) {
     }
@@ -387,7 +390,9 @@ class PartialSequenceLengths {
         }
         addSeq(this.clientSeqNumbers[clientId], seq);
         //    console.log(this.toString());
-        this.zamboni(segmentWindow);
+        if (PartialSequenceLengths.options.zamboni) {
+            this.zamboni(segmentWindow);
+        }
         //   console.log('ZZZ');
         //   console.log(this.toString());
     }
@@ -624,7 +629,9 @@ class PartialSequenceLengths {
         // TODO: incremental zamboni during build
         //console.log(combinedPartialLengths.toString());
         //console.log(`ZZZ...(min ${segmentWindow.minSeq})`);
-        combinedPartialLengths.zamboni(segmentWindow);
+        if (PartialSequenceLengths.options.zamboni) {
+            combinedPartialLengths.zamboni(segmentWindow);
+        }
         //console.log(combinedPartialLengths.toString());
         return combinedPartialLengths;
     }
@@ -772,8 +779,8 @@ function checkTextMatchRelative(refSeq: number, clientId: number, server: TestSe
                 }
                 console.log(`text: ${diffPart.value} ` + annotes);
             }
-            console.log(server.segTree.toString());
-            console.log(client.segTree.toString());
+//            console.log(server.segTree.toString());
+//            console.log(client.segTree.toString());
         }
         return true;
     }
@@ -808,8 +815,12 @@ export function TestPack() {
 
     function reportTiming(client: TestClient) {
         let aveTime = (client.accumTime / client.accumOps).toFixed(3);
+        let aveLocalTime = (client.localTime / client.localOps).toFixed(3);
         let aveWindowTime = (client.accumWindowTime / client.accumOps).toFixed(3);
-        console.log(`accum time ${client.accumTime} us ops: ${client.accumOps} ave time ${aveTime}`)
+        if (client.localOps > 0) {
+            console.log(`local time ${client.localTime} us ops: ${client.localOps} ave time ${aveLocalTime}`);
+        }
+        console.log(`accum time ${client.accumTime} us ops: ${client.accumOps} ave time ${aveTime}`);
         console.log(`accum window time ${client.accumWindowTime} us ave window time ${aveWindowTime}; max ${client.maxWindowTime}`)
     }
 
@@ -857,8 +868,8 @@ export function TestPack() {
                         }
                         console.log(`text: ${diffPart.value} ` + annotes);
                     }
-                    console.log(server.segTree.toString());
-                    console.log(client.segTree.toString());
+                    //console.log(server.segTree.toString());
+                    //console.log(client.segTree.toString());
                     return true;
                 }
             }
@@ -1237,6 +1248,8 @@ let useCheckQ = false;
 export class TestClient {
     segTree: SegmentTree;
     accumTime = 0;
+    localTime = 0;
+    localOps = 0;
     accumWindowTime = 0;
     maxWindowTime = 0;
     accumWindow = 0;
@@ -1302,8 +1315,8 @@ export class TestClient {
         let seq = UnassignedSequenceNumber;
         let clockStart = clock();
         this.segTree.markRangeRemoved(start, end, refSeq, clientId, seq);
-        this.accumTime += elapsedMicroseconds(clockStart);
-        this.accumOps++;
+        this.localTime += elapsedMicroseconds(clockStart);
+        this.localOps++;
         if (this.verboseOps) {
             console.log(`remove local cli ${clientId} ref seq ${refSeq}`);
         }
@@ -1332,8 +1345,8 @@ export class TestClient {
         };
         let clockStart = clock();
         this.segTree.insertInterval(pos, refSeq, clientId, seq, textSegment);
-        this.accumTime += elapsedMicroseconds(clockStart);
-        this.accumOps++;
+        this.localTime += elapsedMicroseconds(clockStart);
+        this.localOps++;
         if (this.verboseOps) {
             console.log(`insert local text ${text} pos ${pos} cli ${clientId} ref seq ${refSeq}`);
         }
@@ -1482,7 +1495,7 @@ interface LRUNode {
     maxSeq: number;
 }
 
-var removableNodeComparer: BST.Comparer<LRUNode> = {
+var LRUNodeComparer: BST.Comparer<LRUNode> = {
     min: { maxSeq: -2 },
     compare: (a, b) => a.maxSeq - b.maxSeq
 }
@@ -1491,6 +1504,10 @@ var removableNodeComparer: BST.Comparer<LRUNode> = {
 export function segmentTree(text: string): SegmentTree {
     // should be a power of 2
     const MaxSegments = 8;
+    let options = {
+        incrementalUpdate: true,
+        zamboniSegments: true
+    };
 
     function makeNode(liveSegmentCount: number) {
         return <TextSegmentBlock>{
@@ -1562,7 +1579,7 @@ export function segmentTree(text: string): SegmentTree {
         segmentWindow.minSeq = 0;
         segmentWindow.collaborating = true;
         segmentWindow.currentSeq = 0;
-        nodesToScour = new BST.Heap<LRUNode>([], removableNodeComparer);
+        nodesToScour = new BST.Heap<LRUNode>([], LRUNodeComparer);
         pendingSegments = ListUtil.ListMakeHead<TextSegmentGroup>();
         nodeUpdateLengthNewStructure(root, true);
     }
@@ -1787,7 +1804,9 @@ export function segmentTree(text: string): SegmentTree {
 
     function updateMinSeq(minSeq: number) {
         segmentWindow.minSeq = minSeq;
-        zamboniRemovedSegments();
+        if (options.zamboniSegments) {
+            zamboniRemovedSegments();
+        }
     }
 
     function search<TAccum>(node: TextSegmentBlock, pos: number, refSeq: number, clientId: number, action?: TextSegmentAction, accum?: TAccum): TextSegment {
@@ -2130,8 +2149,10 @@ export function segmentTree(text: string): SegmentTree {
         }
         //traceTraversal = true;
         mapRange({ leaf: markRemoved, post: afterMarkRemoved }, refSeq, clientId, undefined, start, end);
-        if (segmentWindow.collaborating) {
-            zamboniRemovedSegments();
+        if (segmentWindow.collaborating && (seq!=UnassignedSequenceNumber)) {
+            if (options.zamboniSegments) {
+                zamboniRemovedSegments();
+            }
         }
         traceTraversal = false;
     }
@@ -2261,8 +2282,12 @@ export function segmentTree(text: string): SegmentTree {
         if (segmentWindow.collaborating && (seq != UnassignedSequenceNumber) && (seq != TreeMaintainanceSequenceNumber)) {
             if (node.partialLengths !== undefined) {
                 //nodeCompareUpdateLength(node, seq, clientId);
-                node.partialLengths.update(node, seq, clientId, segmentWindow);
-                // node.partialLengths = PartialSequenceLengths.combine(node, segmentWindow);
+                if (options.incrementalUpdate) {
+                    node.partialLengths.update(node, seq, clientId, segmentWindow);
+                }
+                else {
+                    node.partialLengths = PartialSequenceLengths.combine(node, segmentWindow);
+                }
             }
             else {
                 node.partialLengths = PartialSequenceLengths.combine(node, segmentWindow);
