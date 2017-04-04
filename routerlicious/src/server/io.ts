@@ -39,7 +39,6 @@ if (nconf.get("redis:tls")) {
 
 let pubOptions = _.clone(options);
 let subOptions = _.clone(options);
-subOptions.return_buffers = true;
 
 let pub = redis.createClient(port, host, pubOptions);
 let sub = redis.createClient(port, host, subOptions);
@@ -82,15 +81,6 @@ io.on("connection", (socket) => {
 
             // Notify the client of receipt
             response(responseMessage);
-
-            // TODO routerlicious now needs to get this message to the appropriate worker who will assign a sequence
-            // number and then send the update to clients
-            const routedMessage: socketStorage.IRoutedOpMessage = {
-                clientId: message.clientId,
-                objectId: message.objectId,
-                op: message.op,
-            };
-            io.to(message.objectId).emit("op", routedMessage);
         });
     });
 });

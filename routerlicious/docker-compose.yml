@@ -8,5 +8,12 @@ services:
             - .:/usr/src/server
         depends_on:
             - redis
+    deli:
+        build: .
+        volumes:
+            - .:/usr/src/server
+        depends_on:
+            - redis
+        command: npm run deli
     redis:
         image: "redis:alpine"

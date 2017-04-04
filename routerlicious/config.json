@@ -5,6 +5,13 @@
             "sharedAccessKeyName": "sender",
             "sharedAccessKey": "p/dClJHt/VhUjlGJcGCG5gPuUu2vAYpViXaLI124USU=",
             "entityPath": "raw-deltas"
+        },
+        "deli": {
+            "endpoint": "delta-stream-dev.servicebus.windows.net",
+            "sharedAccessKeyName": "reader",
+            "sharedAccessKey": "spdhQ3pQEPEd+J24xcVwS2huukQ07v/4LFKu+MP2WG0=",
+            "entityPath": "raw-deltas",
+            "consumerGroup": "deli"
         }
     },
     "redis": {
