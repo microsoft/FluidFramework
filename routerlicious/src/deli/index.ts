@@ -1,8 +1,9 @@
-import { Client } from "azure-event-hubs";
+import { Client, Sender } from "azure-event-hubs";
 import * as nconf from "nconf";
 import * as path from "path";
 import * as socketIoEmitter from "socket.io-emitter";
 import * as socketStorage from "../socket-storage";
+import * as utils from "../utils";
 
 // Setup the configuration system - pull arguments, then environment variables
 nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
@@ -18,15 +19,20 @@ io.redis.on("error", (error) => {
 });
 
 // Configure access to the event hub
-const endpoint = nconf.get("eventHub:deli:endpoint");
-const sharedAccessKeyName = nconf.get("eventHub:deli:sharedAccessKeyName");
-const sharedAccessKey = nconf.get("eventHub:deli:sharedAccessKey");
-const entityPath = nconf.get("eventHub:deli:entityPath");
-const consumerGroup = nconf.get("eventHub:deli:consumerGroup");
-const connectionString =
-    `Endpoint=sb://${endpoint}/;SharedAccessKeyName=${sharedAccessKeyName};SharedAccessKey=${sharedAccessKey}`;
+const rawDeltasConfig = nconf.get("eventHub:raw-deltas");
+const rawDeltasConnectionString = utils.getEventHubConnectionString(rawDeltasConfig.endpoint, rawDeltasConfig.listen);
+const receiveClient = Client.fromConnectionString(rawDeltasConnectionString, rawDeltasConfig.entityPath);
+const consumerGroup = nconf.get("deli:consumerGroup");
 
-function listenForMessages(client: Client, id: string) {
+// Configure access to the event hub where we'll send sequenced packets
+const deltasConfig = nconf.get("eventHub:deltas");
+const deltasConnectionString = utils.getEventHubConnectionString(deltasConfig.endpoint, deltasConfig.send);
+const sendClient = Client.fromConnectionString(deltasConnectionString, deltasConfig.entityPath);
+const senderP = sendClient.open().then(() => sendClient.createSender());
+
+let sequenceNumber = 0;
+
+function listenForMessages(client: Client, sender: Sender, id: string) {
     // TODO I'm limiting to messages after now - which we'll want to remove once we have proper checkpointing
     client.createReceiver(consumerGroup, id, { startAfterTime: Date.now() }).then((receiver) => {
             console.log(`Receiver created for partition ${id}`);
@@ -36,30 +42,33 @@ function listenForMessages(client: Client, id: string) {
 
             receiver.on("message", (message) => {
                 console.log(`Received message on partition ${id} with key ${message.partitionKey}`);
-                console.log(JSON.stringify(message.body, null, 2));
 
                 // TODO assign the sequence number here
 
                 // Route the updated message to connected clients
+                console.log(`Routing message to clients`);
                 const submitOpMessage = message.body as socketStorage.ISubmitOpMessage;
                 const routedMessage: socketStorage.IRoutedOpMessage = {
                     clientId: submitOpMessage.clientId,
                     objectId: submitOpMessage.objectId,
                     op: submitOpMessage.op,
+                    sequenceNumber: sequenceNumber++,
                 };
-                // tslint:disable-next-line
-                console.log(`Sending message to channel ${submitOpMessage.objectId} with data ${JSON.stringify(routedMessage, null, 2)}`);
                 io.to(submitOpMessage.objectId).emit("op", routedMessage);
+
+                console.log(`Serializing sequenced message to event hub`);
+                sender.send(routedMessage, routedMessage.objectId);
             });
             console.log("Listening");
         });
 }
 
-let client = Client.fromConnectionString(connectionString, entityPath);
-client.open().then(() => {
-    client.getPartitionIds().then((ids) => {
-        for (const id of ids) {
-            listenForMessages(client, id);
-        }
+receiveClient.open().then(() => {
+    senderP.then((sender) => {
+        receiveClient.getPartitionIds().then((ids) => {
+            for (const id of ids) {
+                listenForMessages(receiveClient, sender, id);
+            }
+        });
     });
 });

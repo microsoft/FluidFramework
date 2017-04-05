@@ -1,29 +1,20 @@
-import * as amqp from "amqp10";
+import { Client } from "azure-event-hubs";
 import * as _ from "lodash";
 import * as nconf from "nconf";
 import * as redis from "redis";
 import * as socketIo from "socket.io";
 import * as socketIoRedis from "socket.io-redis";
 import * as socketStorage from "../socket-storage";
+import * as utils from "../utils";
 
 let io = socketIo();
 
 // Configure access to the event hub
-let amqpClient = new amqp.Client(amqp.Policy.EventHub);
-const endpoint = nconf.get("eventHub:routerlicious:endpoint");
-const sharedAccessKeyName = encodeURIComponent(nconf.get("eventHub:routerlicious:sharedAccessKeyName"));
-const sharedAccessKey = encodeURIComponent(nconf.get("eventHub:routerlicious:sharedAccessKey"));
-const entityPath = encodeURIComponent(nconf.get("eventHub:routerlicious:entityPath"));
-const connectionString = `amqps://${sharedAccessKeyName}:${sharedAccessKey}@${endpoint}`;
+const rawDeltasConfig = nconf.get("eventHub:raw-deltas");
+const connectionString = utils.getEventHubConnectionString(rawDeltasConfig.endpoint, rawDeltasConfig.send);
 
-console.log(connectionString);
-let connectP = amqpClient.connect(connectionString);
-let amqpSenderP = connectP.then(() => {
-    console.log("Connected to the event hub");
-    return amqpClient.createSender(entityPath);
-}, (err) => {
-    console.error(err);
-});
+let client = Client.fromConnectionString(connectionString, rawDeltasConfig.entityPath);
+let senderP = client.open().then(() => client.createSender());
 
 // Setup redis
 let host = nconf.get("redis:host");
@@ -69,15 +60,16 @@ io.on("connection", (socket) => {
 
     // Message sent when a new operation is submitted to the router
     socket.on("submitOp", (message: socketStorage.ISubmitOpMessage, response) => {
-        amqpSenderP.then((amqpSender) => {
-            console.log(`Client has sent the message: ${JSON.stringify(message)}`);
+        senderP.then((sender) => {
+            console.log(`Operation received for object ${message.objectId}`);
             const responseMessage: socketStorage.IResponse<boolean> = {
                 data: true,
                 error: null,
             };
 
+            // TODO we either want to ack each send or ack a group of them later on
             // Place the message in the routerlicious queue for sequence number generation
-            amqpSender.send(message, { messageAnnotations: { "x-opt-partition-key": message.objectId} });
+            sender.send(message, message.objectId);
 
             // Notify the client of receipt
             response(responseMessage);

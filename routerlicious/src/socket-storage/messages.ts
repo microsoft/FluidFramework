@@ -26,6 +26,9 @@ export interface IRoutedOpMessage extends IObjectMessage {
 
     // The operation being applied
     op: any;
+
+    // The assigned sequence number
+    sequenceNumber: number;
 }
 
 /**

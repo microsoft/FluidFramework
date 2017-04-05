@@ -1,18 +1,35 @@
 {
     "eventHub": {
-        "routerlicious": {
+        "raw-deltas": {
             "endpoint": "delta-stream-dev.servicebus.windows.net",
-            "sharedAccessKeyName": "sender",
-            "sharedAccessKey": "p/dClJHt/VhUjlGJcGCG5gPuUu2vAYpViXaLI124USU=",
-            "entityPath": "raw-deltas"
-        },
-        "deli": {
-            "endpoint": "delta-stream-dev.servicebus.windows.net",
-            "sharedAccessKeyName": "reader",
-            "sharedAccessKey": "spdhQ3pQEPEd+J24xcVwS2huukQ07v/4LFKu+MP2WG0=",
             "entityPath": "raw-deltas",
-            "consumerGroup": "deli"
+            "listen": {
+                "sharedAccessKeyName": "reader",
+                "sharedAccessKey": "spdhQ3pQEPEd+J24xcVwS2huukQ07v/4LFKu+MP2WG0="
+            },
+            "send": {
+                "sharedAccessKeyName": "sender",
+                "sharedAccessKey": "p/dClJHt/VhUjlGJcGCG5gPuUu2vAYpViXaLI124USU="
+            }
+        },
+        "deltas": {
+            "endpoint": "delta-stream-dev.servicebus.windows.net",
+            "entityPath": "deltas",
+            "listen": {
+                "sharedAccessKeyName": "listen",
+                "sharedAccessKey": "/yMm6/DduZy/yOqHxj7bdD4JrFnAPZP63FvX/kVYWK8="
+            },
+            "send": {
+                "sharedAccessKeyName": "sender",
+                "sharedAccessKey": "OseppLfZtnn2VRo+0XWFgxmurMybiWBxoCnSQdVqut0="
+            }
         }
+    },
+    "deli": {
+        "consumerGroup": "deli"
+    },
+    "scriptorium": {
+        "consumerGroup": "scriptorium"
     },
     "redis": {
         "host": "redis",
