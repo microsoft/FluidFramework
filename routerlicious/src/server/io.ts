@@ -67,6 +67,7 @@ io.on("connection", (socket) => {
                 error: null,
             };
 
+            // TODO we either want to ack each send or ack a group of them later on
             // Place the message in the routerlicious queue for sequence number generation
             sender.send(message, message.objectId);
 
