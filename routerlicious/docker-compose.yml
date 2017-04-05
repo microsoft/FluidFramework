@@ -15,5 +15,19 @@ services:
         depends_on:
             - redis
         command: npm run deli
+    paparazzi:
+        build: .
+        volumes:
+            - .:/usr/src/server
+        depends_on:
+            - redis
+        command: npm run paparazzi
+    scriptorium:
+        build: .
+        volumes:
+            - .:/usr/src/server
+        depends_on:
+            - redis
+        command: npm run scriptorium
     redis:
         image: "redis:alpine"

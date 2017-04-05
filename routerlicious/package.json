@@ -10,6 +10,8 @@
     "less": "lessc src/stylesheets/style.less public/stylesheets/dist/style.css",
     "nodemon": "nodemon dist/server/www.js -w dist",
     "deli": "nodemon dist/deli/index.js -w dist",
+    "paparazzi": "nodemon dist/paparazzi/index.js -w dist",
+    "scriptorium": "nodemon dist/scriptorium/index.js -w dist",
     "start": "node dist/server/www.js",
     "test": "nyc -x dist/test/**/* mocha dist/test",
     "tsc": "tsc",
@@ -43,7 +45,7 @@
   },
   "dependencies": {
     "amqp10": "^3.0.0",
-    "azure-event-hubs": "0.0.6",
+    "azure-event-hubs": "0.0.7",
     "body-parser": "^1.17.1",
     "express": "^4.15.2",
     "hjs": "0.0.6",
