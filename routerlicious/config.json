@@ -28,6 +28,9 @@
     "deli": {
         "consumerGroup": "deli"
     },
+    "scriptorium": {
+        "consumerGroup": "scriptorium"
+    },
     "redis": {
         "host": "redis",
         "port": 6379

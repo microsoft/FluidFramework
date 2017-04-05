@@ -30,6 +30,8 @@ const deltasConnectionString = utils.getEventHubConnectionString(deltasConfig.en
 const sendClient = Client.fromConnectionString(deltasConnectionString, deltasConfig.entityPath);
 const senderP = sendClient.open().then(() => sendClient.createSender());
 
+let sequenceNumber = 0;
+
 function listenForMessages(client: Client, sender: Sender, id: string) {
     // TODO I'm limiting to messages after now - which we'll want to remove once we have proper checkpointing
     client.createReceiver(consumerGroup, id, { startAfterTime: Date.now() }).then((receiver) => {
@@ -40,20 +42,22 @@ function listenForMessages(client: Client, sender: Sender, id: string) {
 
             receiver.on("message", (message) => {
                 console.log(`Received message on partition ${id} with key ${message.partitionKey}`);
-                console.log(JSON.stringify(message.body, null, 2));
 
                 // TODO assign the sequence number here
 
                 // Route the updated message to connected clients
+                console.log(`Routing message to clients`);
                 const submitOpMessage = message.body as socketStorage.ISubmitOpMessage;
                 const routedMessage: socketStorage.IRoutedOpMessage = {
                     clientId: submitOpMessage.clientId,
                     objectId: submitOpMessage.objectId,
                     op: submitOpMessage.op,
+                    sequenceNumber: sequenceNumber++,
                 };
-                // tslint:disable-next-line
-                console.log(`Sending message to channel ${submitOpMessage.objectId} with data ${JSON.stringify(routedMessage, null, 2)}`);
                 io.to(submitOpMessage.objectId).emit("op", routedMessage);
+
+                console.log(`Serializing sequenced message to event hub`);
+                sender.send(routedMessage, routedMessage.objectId);
             });
             console.log("Listening");
         });

@@ -61,7 +61,7 @@ io.on("connection", (socket) => {
     // Message sent when a new operation is submitted to the router
     socket.on("submitOp", (message: socketStorage.ISubmitOpMessage, response) => {
         senderP.then((sender) => {
-            console.log(`Client has sent the message: ${JSON.stringify(message)}`);
+            console.log(`Operation received for object ${message.objectId}`);
             const responseMessage: socketStorage.IResponse<boolean> = {
                 data: true,
                 error: null,
