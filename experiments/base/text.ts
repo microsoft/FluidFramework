@@ -6,7 +6,7 @@ import * as random from "random-js";
 import * as SegTree from "./segmentTree";
 import * as fs from "fs";
 
-export function loadText(filename: string, segTree: SegTree.SegmentTree) {
+export function loadText(filename: string, segTree: SegTree.SegmentTree, segLimit = 0) {
     let content = fs.readFileSync(filename, "utf8");
     content = content.replace(/^\uFEFF/, "");
 
@@ -23,6 +23,9 @@ export function loadText(filename: string, segTree: SegTree.SegmentTree) {
         }
         segments.push(segment);
     }
+    if (segLimit>0) {
+        segments.length = segLimit;
+    }
     segTree.reloadFromSegments(segments);
     console.log(`Number of Segments: ${segments.length}`);
     console.log(`Height: ${segTree.getHeight()}`);
@@ -33,7 +36,7 @@ export function loadText(filename: string, segTree: SegTree.SegmentTree) {
 let mt = random.engines.mt19937();
 mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
 
-function findRandomWord(segTree: SegTree.SegmentTree, clientId: number) {
+export function findRandomWord(segTree: SegTree.SegmentTree, clientId: number) {
     let len = segTree.getLength(SegTree.UniversalSequenceNumber, clientId);
     let pos = random.integer(0, len)(mt);
     let textAtPos = segTree.getText(SegTree.UniversalSequenceNumber, clientId, pos, pos + 10);
@@ -41,16 +44,8 @@ function findRandomWord(segTree: SegTree.SegmentTree, clientId: number) {
     let nextWord = segTree.searchFromPos(pos, /\s\w+\b/);
     if (nextWord) {
         nextWord.pos += pos;
-        //console.log(`next word is ${nextWord.text} len ${nextWord.text.length} at pos ${nextWord.pos}`);
+        console.log(`next word is '${nextWord.text}' len ${nextWord.text.length} at pos ${nextWord.pos}`);
     }
     return nextWord;
 }
 
-export function createWordMove(segTree: SegTree.SegmentTree, clientId: number) {
-    let word1 = findRandomWord(segTree, clientId);
-    let word2 = findRandomWord(segTree, clientId);
-    return {
-        word1: word1,
-        word2: word2
-    }
-}

@@ -22,6 +22,10 @@ export interface TextSegmentActions {
     post?: TextSegmentBlockAction;
 }
 
+export interface TieBreaker {
+    (pos: number, len: number, seq: number, segment: TextSegment, refSeq: number, clientId: number): boolean;
+}
+
 export interface SearchResult {
     text: string;
     pos: number;
@@ -779,8 +783,8 @@ function checkTextMatchRelative(refSeq: number, clientId: number, server: TestSe
                 }
                 console.log(`text: ${diffPart.value} ` + annotes);
             }
-//            console.log(server.segTree.toString());
-//            console.log(client.segTree.toString());
+            console.log(server.segTree.toString());
+            console.log(client.segTree.toString());
         }
         return true;
     }
@@ -826,19 +830,21 @@ export function TestPack() {
 
     function clientServer(startFile?: string) {
         const clientCount = 4;
+        const fileSegCount = 20;
         let initString = "";
         if (!startFile) {
             initString = "don't ask for whom the bell tolls; it tolls for thee";
         }
         let server = new TestServer(initString);
         if (startFile) {
-            Text.loadText(startFile, server.segTree);
+            Text.loadText(startFile, server.segTree, fileSegCount);
         }
+
         let clients = <TestClient[]>Array(clientCount);
         for (let i = 0; i < clientCount; i++) {
             clients[i] = new TestClient(initString);
             if (startFile) {
-                Text.loadText(startFile, clients[i].segTree);
+                Text.loadText(startFile, clients[i].segTree, fileSegCount);
             }
             clients[i].startCollaboration(i);
         }
@@ -852,8 +858,8 @@ export function TestPack() {
                 let cliText = client.getText();
                 if (cliText != serverText) {
                     console.log(`mismatch @${server.getCurrentSeq()} client @${client.getCurrentSeq()} id: ${client.getClientId()}`);
-                    console.log(serverText);
-                    console.log(cliText);
+                    //console.log(serverText);
+                    //console.log(cliText);
                     let diffParts = JsDiff.diffChars(serverText, cliText);
                     for (let diffPart of diffParts) {
                         let annotes = "";
@@ -925,18 +931,19 @@ export function TestPack() {
         }
 
         function randomWordMove(client: TestClient) {
-            let wordMove = Text.createWordMove(client.segTree, client.getClientId());
-            if (wordMove && wordMove.word1 && wordMove.word2) {
-                let removeStart = wordMove.word1.pos;
-                let removeEnd = removeStart + wordMove.word1.text.length;
+            let word1 = Text.findRandomWord(client.segTree, client.getClientId());
+            if (word1) {
+                let removeStart = word1.pos;
+                let removeEnd = removeStart + word1.text.length;
                 server.enqueueMsg(makeRemoveMsg(removeStart, removeEnd, UnassignedSequenceNumber, client.getCurrentSeq(), client.getClientId()));
                 client.removeSegmentLocal(removeStart, removeEnd);
                 if (useCheckQ) {
                     client.enqueueTestString();
                 }
-                let pos = wordMove.word2.pos + wordMove.word2.text.length;
-                server.enqueueMsg(makeInsertMsg(wordMove.word1.text, pos, UnassignedSequenceNumber, client.getCurrentSeq(), client.getClientId()));
-                client.insertSegmentLocal(wordMove.word1.text, pos);
+                let word2 = Text.findRandomWord(client.segTree, client.getClientId());
+                let pos = word2.pos + word2.text.length;
+                server.enqueueMsg(makeInsertMsg(word1.text, pos, UnassignedSequenceNumber, client.getCurrentSeq(), client.getClientId()));
+                client.insertSegmentLocal(word1.text, pos);
                 if (useCheckQ) {
                     client.enqueueTestString();
                 }
@@ -1243,7 +1250,7 @@ export function TestPack() {
     }
 }
 
-let useCheckQ = false;
+let useCheckQ = true;
 
 export class TestClient {
     segTree: SegmentTree;
@@ -1254,7 +1261,7 @@ export class TestClient {
     maxWindowTime = 0;
     accumWindow = 0;
     accumOps = 0;
-    verboseOps = false;
+    verboseOps = true;
     q: ListUtil.List<DeltaMsg>;
     checkQ: ListUtil.List<string>;
 
@@ -1506,7 +1513,7 @@ export function segmentTree(text: string): SegmentTree {
     const MaxSegments = 8;
     let options = {
         incrementalUpdate: true,
-        zamboniSegments: true
+        zamboniSegments: false
     };
 
     function makeNode(liveSegmentCount: number) {
@@ -1695,11 +1702,11 @@ export function segmentTree(text: string): SegmentTree {
         }
     }
 
-    let traceGatherText = false;
+    let traceGatherText = true;
     function gatherText(textSegment: TextSegment, pos: number, refSeq: number, clientId: number, start: number, end: number, accumText: TextSegment) {
         if ((textSegment.removedSeq === undefined) || (textSegment.removedSeq == UnassignedSequenceNumber) || (textSegment.removedSeq > refSeq)) {
             if (traceGatherText) {
-                console.log(`gather seg seq ${textSegment.seq} rseq ${textSegment.removedSeq} text ${textSegment.text}`);
+                console.log(`@cli ${segmentWindow.clientId} gather seg seq ${textSegment.seq} rseq ${textSegment.removedSeq} text ${textSegment.text}`);
             }
             if ((start <= 0) && (end >= textSegment.text.length)) {
                 accumText.text += textSegment.text;
@@ -1902,7 +1909,7 @@ export function segmentTree(text: string): SegmentTree {
         textSegment.seq = seq;
         textSegment.clientId = clientId;
         ensureIntervalBoundary(pos, refSeq, clientId);
-        // traceTraversal = true;
+        traceTraversal = true;
         let splitNode = nodeInsertBefore(root, pos, refSeq, clientId, textSegment);
         traceTraversal = false;
         updateRoot(splitNode, refSeq, clientId, seq);
@@ -1956,28 +1963,14 @@ export function segmentTree(text: string): SegmentTree {
         updateRoot(splitNode, refSeq, clientId, TreeMaintainanceSequenceNumber);
     }
 
-    function tieAtLaterSegment(pos: number, len: number, seq: number, segment: TextSegment, refSeq: number, clientId: number) {
-        if (segment.child) {
-            if (pos == len) {
-                let node = segment.child;
-                let segments = node.segments;
-                let segIndex = node.liveSegmentCount - 1;
-                while (segIndex >= 0) {
-                    let innerLen = segmentLength(segments[segIndex], refSeq, clientId);
-                    if ((innerLen > 0) || segments[segIndex].child) {
-                        return false;
-                    }
-                    else if (tieAtLaterSegment(0, 0, seq, segments[segIndex], refSeq, clientId)) {
-                        return true;
-                    }
-                    segIndex--;
-                }
-            }
+    // assume caled only when pos == len
+    function isZed(pos: number, len: number, seq: number, segment: TextSegment, refSeq: number, clientId: number) {
+        if (pos==0) {
+            return true;
         }
-        else {
-            return (pos == 0) && (len == 0) &&
-                ((segment.seq == UnassignedSequenceNumber) && (segment.clientId == segmentWindow.clientId) ||
-                    ((segment.seq > seq) && (seq >= 0)));
+        else if (segment.child) {
+            // dive into segment because pos will be zero by end of segment
+            return true;
         }
         return false;
     }
@@ -2006,7 +1999,7 @@ export function segmentTree(text: string): SegmentTree {
                 console.log(`@tcli: ${segmentWindow.clientId} len: ${len} pos: ${pos} ` + segInfo);
             }
 
-            if ((pos < len) || (segmentWindow.collaborating && tieAtLaterSegment(pos, len, seq, segment, refSeq, clientId))) {
+            if ((pos < len) || ((pos==len)&&isZed(pos, len, seq, segment, refSeq, clientId))) {
                 // found entry containing pos
                 found = true;
                 if (segment.child) {
@@ -2099,7 +2092,7 @@ export function segmentTree(text: string): SegmentTree {
         textSegment.removedClientOverlap.push(clientId);
     }
 
-    let diagOverlappingRemove = false;
+    let diagOverlappingRemove = true;
     function markRangeRemoved(start: number, end: number, refSeq: number, clientId: number, seq: number) {
         ensureIntervalBoundary(start, refSeq, clientId);
         ensureIntervalBoundary(end, refSeq, clientId);
@@ -2147,9 +2140,9 @@ export function segmentTree(text: string): SegmentTree {
             }
             return true;
         }
-        //traceTraversal = true;
+        traceTraversal = true;
         mapRange({ leaf: markRemoved, post: afterMarkRemoved }, refSeq, clientId, undefined, start, end);
-        if (segmentWindow.collaborating && (seq!=UnassignedSequenceNumber)) {
+        if (segmentWindow.collaborating && (seq != UnassignedSequenceNumber)) {
             if (options.zamboniSegments) {
                 zamboniRemovedSegments();
             }
@@ -2371,7 +2364,7 @@ export function segmentTree(text: string): SegmentTree {
                     segInfo = `minLength: ${segment.child.partialLengths.minLength}`;
                 }
                 else {
-                    segInfo = `cli: ${segment.clientId} seq: ${segment.seq} text: ${segment.text}`;
+                    segInfo = `cli: ${segment.clientId} seq: ${segment.seq} text: '${segment.text}'`;
                     if (segment.removedSeq !== undefined) {
                         segInfo += ` rcli: ${segment.removedClientId} rseq: ${segment.removedSeq}`;
                     }
