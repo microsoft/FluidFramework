@@ -941,6 +941,9 @@ export function TestPack() {
                     client.enqueueTestString();
                 }
                 let word2 = Text.findRandomWord(client.segTree, client.getClientId());
+                while (!word2) {
+                    word2 = Text.findRandomWord(client.segTree, client.getClientId());
+                }
                 let pos = word2.pos + word2.text.length;
                 server.enqueueMsg(makeInsertMsg(word1.text, pos, UnassignedSequenceNumber, client.getCurrentSeq(), client.getClientId()));
                 client.insertSegmentLocal(word1.text, pos);
@@ -1261,7 +1264,7 @@ export class TestClient {
     maxWindowTime = 0;
     accumWindow = 0;
     accumOps = 0;
-    verboseOps = true;
+    verboseOps = false;
     q: ListUtil.List<DeltaMsg>;
     checkQ: ListUtil.List<string>;
 
@@ -1702,7 +1705,7 @@ export function segmentTree(text: string): SegmentTree {
         }
     }
 
-    let traceGatherText = true;
+    let traceGatherText = false;
     function gatherText(textSegment: TextSegment, pos: number, refSeq: number, clientId: number, start: number, end: number, accumText: TextSegment) {
         if ((textSegment.removedSeq === undefined) || (textSegment.removedSeq == UnassignedSequenceNumber) || (textSegment.removedSeq > refSeq)) {
             if (traceGatherText) {
@@ -1909,14 +1912,34 @@ export function segmentTree(text: string): SegmentTree {
         textSegment.seq = seq;
         textSegment.clientId = clientId;
         ensureIntervalBoundary(pos, refSeq, clientId);
-        traceTraversal = true;
+        //traceTraversal = true;
         let splitNode = nodeInsertBefore(root, pos, refSeq, clientId, textSegment);
         traceTraversal = false;
         updateRoot(splitNode, refSeq, clientId, seq);
     }
 
     function nodeInsertBefore(node: TextSegmentBlock, pos: number, refSeq: number, clientId: number, textSegment: TextSegment) {
-        return insertingWalk(node, pos, refSeq, clientId, textSegment.seq, (segment: TextSegment, pos: number) => {
+        let segIsLocal = false;
+        function checkSegmentIsLocal(textSegment: TextSegment, pos: number, refSeq: number, clientId: number) {
+            if (textSegment.seq == UnassignedSequenceNumber) {
+                console.log(`@cli ${segmentWindow.clientId}: promoting continue due to seq ${textSegment.seq} text ${textSegment.text} ref ${refSeq}`);
+
+                segIsLocal = true;
+            }
+            // only need to look at first segment that follows finished node
+            return false;
+        }
+
+        function continueFrom(node: TextSegmentBlock) {
+            segIsLocal = false;
+            excursion(node, checkSegmentIsLocal);
+            if (segIsLocal) {
+                console.log(`@cli ${segmentWindow.clientId}: attempting continue with seq ${textSegment.seq} text ${textSegment.text} ref ${refSeq}`);
+            }
+            return segIsLocal;
+        }
+
+        function onLeaf(segment: TextSegment, pos: number) {
             function saveIfLocal(locSegment: TextSegment) {
                 // save segment so can assign sequence number when acked by server
                 if (segmentWindow.collaborating && (locSegment.seq == UnassignedSequenceNumber) && (clientId == segmentWindow.clientId)) {
@@ -1946,7 +1969,8 @@ export function segmentTree(text: string): SegmentTree {
                 saveIfLocal(segment);
                 return newSegment;
             }
-        });
+        }
+        return insertingWalk(node, pos, refSeq, clientId, textSegment.seq, onLeaf, continueFrom);
     }
 
     function splitLeafSegment(segment: TextSegment, pos: number) {
@@ -1964,19 +1988,57 @@ export function segmentTree(text: string): SegmentTree {
     }
 
     // assume caled only when pos == len
-    function isZed(pos: number, len: number, seq: number, segment: TextSegment, refSeq: number, clientId: number) {
-        if (pos==0) {
+    function breakTie(pos: number, len: number, seq: number, segment: TextSegment, refSeq: number, clientId: number) {
+        if (segment.child) {
             return true;
         }
-        else if (segment.child) {
-            // dive into segment because pos will be zero by end of segment
-            return true;
+        else {
+            if (pos == 0) {
+                return segment.seq != UnassignedSequenceNumber;
+            }
+            return false;
         }
-        return false;
     }
 
+    // visit segments starting from node's right siblings, then up to node's parent
+    function excursion(node: TextSegmentBlock, leafAction: TextSegmentAction) {
+        let actions = { leaf: leafAction };
+        let go = true;
+        let startNode = node;
+        let parent = startNode.parent;
+        while (parent) {
+            let segments = parent.segments;
+            let segmentIndex: number;
+            let segment: TextSegment;
+            let matchedStart = false;
+            for (segmentIndex = 0; segmentIndex < parent.liveSegmentCount; segmentIndex++) {
+                segment = segments[segmentIndex];
+                if (matchedStart) {
+                    if (segment.child) {
+                        go = nodeMap(segment.child, actions, 0, UniversalSequenceNumber, segmentWindow.clientId,
+                            undefined);
+                    }
+                    else {
+                        go = leafAction(segment, 0, UniversalSequenceNumber, segmentWindow.clientId, 0, 0);
+                    }
+                    if (!go) {
+                        return;
+                    }
+                }
+                else {
+                    matchedStart = (startNode === segment.child);
+                }
+            }
+            startNode = parent;
+            parent = parent.parent;
+        }
+    }
+
+    let theUnfinishedNode = <TextSegmentBlock>{ liveSegmentCount: -1 };
+
     function insertingWalk(node: TextSegmentBlock, pos: number, refSeq: number, clientId: number, seq: number,
-        leafAction: (segment: TextSegment, pos: number) => TextSegment) {
+        leafAction: (segment: TextSegment, pos: number) => TextSegment,
+        continuePredicate?: (continueFromNode: TextSegmentBlock) => boolean) {
         let segments = node.segments;
         let segmentIndex: number;
         let segment: TextSegment;
@@ -1999,18 +2061,27 @@ export function segmentTree(text: string): SegmentTree {
                 console.log(`@tcli: ${segmentWindow.clientId} len: ${len} pos: ${pos} ` + segInfo);
             }
 
-            if ((pos < len) || ((pos==len)&&isZed(pos, len, seq, segment, refSeq, clientId))) {
+            if ((pos < len) || ((pos == len) && breakTie(pos, len, seq, segment, refSeq, clientId))) {
                 // found entry containing pos
                 found = true;
                 if (segment.child) {
                     //internal node
-                    let splitNode = insertingWalk(segment.child, pos, refSeq, clientId, seq, leafAction);
+                    let splitNode = insertingWalk(segment.child, pos, refSeq, clientId, seq, leafAction, continuePredicate);
                     if (splitNode === undefined) {
                         nodeUpdateLength(node, seq, clientId);
                         return undefined;
                     }
-                    newSegment = makeInternalSegment(node, splitNode);
-                    segmentIndex++; // insert after
+                    else if (splitNode == theUnfinishedNode) {
+                        if (traceTraversal) {
+                            console.log(`@cli ${segmentWindow.clientId} unfinished bus pos ${pos} len ${len}`);
+                        }
+                        pos -= len; // act as if shifted segment
+                        continue;
+                    }
+                    else {
+                        newSegment = makeInternalSegment(node, splitNode);
+                        segmentIndex++; // insert after
+                    }
                 }
                 else {
                     if (traceTraversal) {
@@ -2039,11 +2110,16 @@ export function segmentTree(text: string): SegmentTree {
         }
         if (!newSegment) {
             if (pos == 0) {
-                if (traceTraversal) {
-                    console.log(`@tcli: ${segmentWindow.clientId}: leaf action pos 0`);
+                // TODO: look ahead to see if we should shift next segment
+                if ((seq != UnassignedSequenceNumber) && continuePredicate && continuePredicate(node)) {
+                    return theUnfinishedNode;
                 }
-
-                newSegment = leafAction(undefined, pos);
+                else {
+                    if (traceTraversal) {
+                        console.log(`@tcli: ${segmentWindow.clientId}: leaf action pos 0`);
+                    }
+                    newSegment = leafAction(undefined, pos);
+                }
             }
         }
         if (newSegment) {
@@ -2092,7 +2168,7 @@ export function segmentTree(text: string): SegmentTree {
         textSegment.removedClientOverlap.push(clientId);
     }
 
-    let diagOverlappingRemove = true;
+    let diagOverlappingRemove = false;
     function markRangeRemoved(start: number, end: number, refSeq: number, clientId: number, seq: number) {
         ensureIntervalBoundary(start, refSeq, clientId);
         ensureIntervalBoundary(end, refSeq, clientId);
@@ -2140,7 +2216,7 @@ export function segmentTree(text: string): SegmentTree {
             }
             return true;
         }
-        traceTraversal = true;
+        //traceTraversal = true;
         mapRange({ leaf: markRemoved, post: afterMarkRemoved }, refSeq, clientId, undefined, start, end);
         if (segmentWindow.collaborating && (seq != UnassignedSequenceNumber)) {
             if (options.zamboniSegments) {
@@ -2348,7 +2424,7 @@ export function segmentTree(text: string): SegmentTree {
             start = 0;
         }
         if (end === undefined) {
-            end = root.length;
+            end = nodeLength(node, refSeq, clientId);
         }
         let go = true;
         if (actions.pre) {
@@ -2369,7 +2445,7 @@ export function segmentTree(text: string): SegmentTree {
                         segInfo += ` rcli: ${segment.removedClientId} rseq: ${segment.removedSeq}`;
                     }
                 }
-                console.log(`@tcli: ${segmentWindow.clientId} len: ${len} start: ${start} end: ${end} ` + segInfo);
+                console.log(`@tcli ${segmentWindow.clientId}: map len: ${len} start: ${start} end: ${end} ` + segInfo);
             }
             if (go && (len > 0) && (start < len) && (end > 0)) {
                 // found entry containing pos
@@ -2381,10 +2457,13 @@ export function segmentTree(text: string): SegmentTree {
                 }
                 else {
                     if (traceTraversal) {
-                        console.log(`@tcli: ${segmentWindow.clientId}: leaf action`);
+                        console.log(`@tcli ${segmentWindow.clientId}: map leaf action`);
                     }
                     go = actions.leaf(segment, pos, refSeq, clientId, start, end, accum);
                 }
+            }
+            if (!go) {
+                break;
             }
             pos += len;
             start -= len;
