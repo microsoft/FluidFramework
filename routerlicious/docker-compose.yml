@@ -29,6 +29,7 @@ services:
             - .:/usr/src/server
         depends_on:
             - redis
+            - mongodb
         command: npm run scriptorium
     tmz:
         build: .
@@ -39,3 +40,5 @@ services:
         command: npm run tmz
     redis:
         image: "redis:alpine"
+    mongodb:
+        image: "mongo:3.4.3"
