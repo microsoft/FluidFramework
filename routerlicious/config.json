@@ -25,11 +25,24 @@
             }
         }
     },
+    "serviceBus": {
+        "snapshot": {
+            "send": "Endpoint=sb://prague-dev.servicebus.windows.net/;SharedAccessKeyName=send;SharedAccessKey=wujZ6eW+OAjAYp9VTbV/Qp6GNhWiVGYJyzzXC7R5Gy4=",
+            "listen": "Endpoint=sb://prague-dev.servicebus.windows.net/;SharedAccessKeyName=listen;SharedAccessKey=8wV5L6Hvl0nBSR43rP674bTp2UYBUk/wu/F2M7dCxhA="
+        }
+    },
     "deli": {
         "consumerGroup": "deli"
     },
+    "paparazzi": {
+        "queue": "snapshot"
+    },
     "scriptorium": {
         "consumerGroup": "scriptorium"
+    },
+    "tmz": {
+        "consumerGroup": "tmz",
+        "queue": "snapshot"
     },
     "redis": {
         "host": "redis",
