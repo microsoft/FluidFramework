@@ -21,6 +21,7 @@ services:
             - .:/usr/src/server
         depends_on:
             - redis
+            - web
         command: npm run paparazzi
     scriptorium:
         build: .
@@ -29,5 +30,12 @@ services:
         depends_on:
             - redis
         command: npm run scriptorium
+    tmz:
+        build: .
+        volumes:
+            - .:/usr/src/server
+        depends_on:
+            - redis
+        command: npm run tmz
     redis:
         image: "redis:alpine"

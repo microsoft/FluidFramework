@@ -12,6 +12,7 @@
     "deli": "nodemon dist/deli/index.js -w dist",
     "paparazzi": "nodemon dist/paparazzi/index.js -w dist",
     "scriptorium": "nodemon dist/scriptorium/index.js -w dist",
+    "tmz": "nodemon dist/tmz/index.js -w dist",
     "start": "node dist/server/www.js",
     "test": "nyc -x dist/test/**/* mocha dist/test",
     "tsc": "tsc",
@@ -46,6 +47,7 @@
   "dependencies": {
     "amqp10": "^3.0.0",
     "azure-event-hubs": "0.0.7",
+    "azure-sb": "^0.10.4",
     "body-parser": "^1.17.1",
     "express": "^4.15.2",
     "hjs": "0.0.6",
