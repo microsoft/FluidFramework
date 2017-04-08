@@ -34,7 +34,9 @@
     "mongo": {
         "endpoint": "mongodb://mongodb:27017",
         "collectionNames": {
-            "deltas": "deltas"
+            "deltas": "deltas",
+            "objects": "objects",
+            "partitions": "partitions"
         }
     },
     "deli": {

@@ -49,6 +49,7 @@ async function processMessage(message: socketStorage.IRoutedOpMessage, db: Colle
     // Serialize the message to backing store
     console.log(`Inserting to mongodb`);
     db.insert(message).catch((error) => {
+        // This could happen in cases of device replays
         console.error(error);
     });
 

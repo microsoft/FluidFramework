@@ -46,6 +46,11 @@ io.on("connection", (socket) => {
         console.log(`Client has requested to load ${message.objectId}`);
         socket.join(message.objectId);
 
+        // TODO
+        // 1. Fetch the latest snapshot
+        // 2. Grab all deltas that have occurred since that snapshot
+        // 3. Return these to the client
+
         const responseMessage: socketStorage.IResponse<socketStorage.IObjectDetails> = {
             data: {
                 id: message.objectId,

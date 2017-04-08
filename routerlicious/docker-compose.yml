@@ -14,6 +14,7 @@ services:
             - .:/usr/src/server
         depends_on:
             - redis
+            - mongodb
         command: npm run deli
     paparazzi:
         build: .
