@@ -31,6 +31,15 @@ export interface SearchResult {
     pos: number;
 }
 
+export interface SegmentTreeStats {
+    maxHeight: number;
+    nodeCount: number;
+    leafCount: number;
+    removedLeafCount: number;
+    liveCount: number;
+    histo: number[];
+}
+
 export interface SegmentTree {
     map<TAccum>(actions: TextSegmentActions, refSeq: number, clientId: number, accum?: TAccum);
     mapRange<TAccum>(actions: TextSegmentActions, refSeq: number, clientId: number, accum?: TAccum, start?: number, end?: number);
@@ -43,7 +52,7 @@ export interface SegmentTree {
     getOffset(entry: TextSegment, refSeq: number, clientId: number): number;
     getText(refSeq: number, clientId: number, start?: number, end?: number): string;
     getLength(refSeq: number, clientId: number): number;
-    getHeight(): number;
+    getStats(): SegmentTreeStats;
     searchFromPos(pos: number, regexp: RegExp): SearchResult;
     startCollaboration(localClientId);
     getSegmentWindow(): SegmentWindow;
@@ -808,7 +817,7 @@ export function TestPack() {
     function randTextLength() {
         return textLengthDistribution(mt);
     }
-    const zedCode = 48;
+    const zedCode = 48
     function randomString(len: number, c: string) {
         let str = "";
         for (let i = 0; i < len; i++) {
@@ -818,19 +827,20 @@ export function TestPack() {
     }
 
     function reportTiming(client: TestClient) {
-        let aveTime = (client.accumTime / client.accumOps).toFixed(3);
-        let aveLocalTime = (client.localTime / client.localOps).toFixed(3);
-        let aveWindowTime = (client.accumWindowTime / client.accumOps).toFixed(3);
+        let aveTime = (client.accumTime / client.accumOps).toFixed(1);
+        let aveLocalTime = (client.localTime / client.localOps).toFixed(1);
+        let aveWindowTime = (client.accumWindowTime / client.accumOps).toFixed(1);
+        let aveWindow = (client.accumWindow / client.accumOps).toFixed(1);
         if (client.localOps > 0) {
             console.log(`local time ${client.localTime} us ops: ${client.localOps} ave time ${aveLocalTime}`);
         }
-        console.log(`accum time ${client.accumTime} us ops: ${client.accumOps} ave time ${aveTime}`);
-        console.log(`accum window time ${client.accumWindowTime} us ave window time ${aveWindowTime}; max ${client.maxWindowTime}`)
+        console.log(`accum time ${client.accumTime} us ops: ${client.accumOps} ave time ${aveTime} ave window ${aveWindow}`);
+        console.log(`accum window time ${client.accumWindowTime} us ave window time ${aveWindowTime}; max ${client.maxWindowTime}`);
     }
 
     function clientServer(startFile?: string) {
-        const clientCount = 4;
-        const fileSegCount = 20;
+        const clientCount = 5;
+        const fileSegCount = 0;
         let initString = "";
         if (!startFile) {
             initString = "don't ask for whom the bell tolls; it tolls for thee";
@@ -882,7 +892,7 @@ export function TestPack() {
             return false;
         }
 
-        let rounds = 20000;
+        let rounds = 100000;
         function clientProcessSome(client: TestClient, all = false) {
             let cliMsgCount = client.q.count();
             let countToApply: number;
@@ -952,7 +962,8 @@ export function TestPack() {
                 }
             }
         }
-
+        let startTime = Date.now();
+        let checkTime = 0;
         for (let i = 0; i < rounds; i++) {
             for (let client of clients) {
                 let insertSegmentCount = randSmallSegmentCount();
@@ -993,14 +1004,32 @@ export function TestPack() {
             for (let client of clients) {
                 clientProcessSome(client, true);
             }
+            /*
             if (checkTextMatch()) {
                 console.log(`round: ${i}`);
                 break;
-            }
+            }*/
             if (0 == (i % 100)) {
-                console.log(`round: ${i} seq ${server.seq} char count ${server.getLength()} height ${server.segTree.getHeight()}`);
+                let clockStart = clock();
+                if (checkTextMatch()) {
+                    console.log(`round: ${i}`);
+                    break;
+                }
+                checkTime += elapsedMicroseconds(clockStart);
+                console.log(`wall clock is ${((Date.now() - startTime) / 1000.0).toFixed(1)}`);
+                let stats = server.segTree.getStats();
+                let liveAve = (stats.liveCount / stats.nodeCount).toFixed(1);
+                let posLeaves = stats.leafCount - stats.removedLeafCount;
+                console.log(`round: ${i} seq ${server.seq} char count ${server.getLength()} height ${stats.maxHeight} lv ${stats.leafCount} rml ${stats.removedLeafCount} p ${posLeaves} nodes ${stats.nodeCount} pop ${liveAve} histo ${stats.histo}`);
                 reportTiming(server);
                 reportTiming(clients[2]);
+                let totalTime = server.accumTime + server.accumWindowTime;
+                for (let client of clients) {
+                    totalTime += (client.accumTime + client.localTime + client.accumWindowTime);
+                }
+                console.log(`total time ${(totalTime / 1000000.0).toFixed(1)} check time ${(checkTime / 1000000.0).toFixed(1)}`);
+                //console.log(server.getText());
+                //console.log(server.segTree.toString());
             }
         }
         reportTiming(server);
@@ -1253,7 +1282,7 @@ export function TestPack() {
     }
 }
 
-let useCheckQ = true;
+let useCheckQ = false;
 
 export class TestClient {
     segTree: SegmentTree;
@@ -1338,6 +1367,7 @@ export class TestClient {
         this.segTree.getSegmentWindow().currentSeq = seq;
         this.accumTime += elapsedMicroseconds(clockStart);
         this.accumOps++;
+        this.accumWindow += (this.getCurrentSeq() - this.segTree.getSegmentWindow().minSeq);
         if (this.verboseOps) {
             console.log(`@cli ${this.segTree.getSegmentWindow().clientId} seq ${seq} remove remote start ${start} end ${end} refseq ${refSeq} cli ${clientId}`);
         }
@@ -1375,6 +1405,8 @@ export class TestClient {
 
         this.accumTime += elapsedMicroseconds(clockStart);
         this.accumOps++;
+        this.accumWindow += (this.getCurrentSeq() - this.segTree.getSegmentWindow().minSeq);
+
         if (this.verboseOps) {
             console.log(`@cli ${this.segTree.getSegmentWindow().clientId} text ${text} seq ${seq} insert remote pos ${pos} refseq ${refSeq} cli ${clientId}`);
         }
@@ -1386,6 +1418,8 @@ export class TestClient {
         this.segTree.getSegmentWindow().currentSeq = seq;
         this.accumTime += elapsedMicroseconds(clockStart);
         this.accumOps++;
+        this.accumWindow += (this.getCurrentSeq() - this.segTree.getSegmentWindow().minSeq);
+
         if (this.verboseOps) {
             console.log(`@cli ${this.segTree.getSegmentWindow().clientId} ack seq # ${seq}`);
         }
@@ -1512,11 +1546,11 @@ var LRUNodeComparer: BST.Comparer<LRUNode> = {
 
 // represents a sequence of text segments
 export function segmentTree(text: string): SegmentTree {
-    // should be a power of 2
+    // should be a power of 2   
     const MaxSegments = 8;
     let options = {
         incrementalUpdate: true,
-        zamboniSegments: false
+        zamboniSegments: true
     };
 
     function makeNode(liveSegmentCount: number) {
@@ -1543,6 +1577,7 @@ export function segmentTree(text: string): SegmentTree {
 
     function reloadFromSegments(segments: TextSegment[]) {
         let segCap = MaxSegments - 1;
+        let measureReloadTime = true;
         function buildSegmentTree(segments: TextSegment[]): TextSegment {
             const segmentCount = Math.ceil(segments.length / segCap);
             const internalSegments: TextSegment[] = [];
@@ -1568,6 +1603,10 @@ export function segmentTree(text: string): SegmentTree {
                 return buildSegmentTree(internalSegments);
             }
         }
+        let clockStart;
+        if (measureReloadTime) {
+            clockStart = clock();
+        }
         root = makeNode(1);
         let segTree = buildSegmentTree(segments);
         segTree.parent = root;
@@ -1576,6 +1615,9 @@ export function segmentTree(text: string): SegmentTree {
         }
         root.segments[0] = segTree;
         root.length = segmentLength(root.segments[0], UniversalSequenceNumber, LocalClientId);
+        if (measureReloadTime) {
+            console.log(`reload time ${elapsedMicroseconds(clockStart)}`);
+        }
     }
 
     let root = initialNode(text);
@@ -1591,11 +1633,43 @@ export function segmentTree(text: string): SegmentTree {
         segmentWindow.currentSeq = 0;
         nodesToScour = new BST.Heap<LRUNode>([], LRUNodeComparer);
         pendingSegments = ListUtil.ListMakeHead<TextSegmentGroup>();
+        let measureFullCollab = true;
+        let clockStart;
+        if (measureFullCollab) {
+            clockStart = clock();
+        }
         nodeUpdateLengthNewStructure(root, true);
+        if (measureFullCollab) {
+            console.log(`update partial lengths at start ${elapsedMicroseconds(clockStart)}`);
+        }
     }
 
     function addToLRUSet(node: TextSegmentBlock, seq: number) {
         nodesToScour.add({ node: node, maxSeq: seq });
+    }
+
+    // assume node.parent and node.liveSegmentCount in [0,1]
+    function removeNodeFromParent(node: TextSegmentBlock) {
+        let parent = node.parent;
+        let segments = parent.segments;
+        let segmentIndex: number;
+        let segment: TextSegment;
+        for (segmentIndex = 0; segmentIndex < parent.liveSegmentCount; segmentIndex++) {
+            segment = segments[segmentIndex];
+            if (segment.child == node) {
+                if (node.liveSegmentCount == 1) {
+                    segments[segmentIndex] = node.segments[0];
+                }
+                else {
+                    // assume node.liveSegmentCount == 0
+                    for (let k = segmentIndex; k < (parent.liveSegmentCount - 1); k++) {
+                        segments[k] = segments[k + 1];
+                    }
+                    parent.liveSegmentCount--;
+                }
+                break;
+            }
+        }
     }
 
     const zamboniRemovedMaxCount = 3;
@@ -1609,7 +1683,6 @@ export function segmentTree(text: string): SegmentTree {
                 if (nodeToScour && (nodeToScour.maxSeq <= segmentWindow.minSeq)) {
                     let node = nodeToScour.node;
                     let segmentsCopy = <TextSegment[]>[];
-                    let someRemoved = false;
                     let newLiveSegmentCount = 0;
                     for (let k = 0; k < node.liveSegmentCount; k++) {
                         let segment = node.segments[k];
@@ -1625,6 +1698,10 @@ export function segmentTree(text: string): SegmentTree {
                     if (newLiveSegmentCount < node.liveSegmentCount) {
                         node.liveSegmentCount = newLiveSegmentCount;
                         node.segments = segmentsCopy;
+                        while ((node.liveSegmentCount <= 1) && node.parent) {
+                            removeNodeFromParent(node);
+                            node = node.parent;
+                        }
                         nodeUpdatePathLengths(node, UnassignedSequenceNumber, -1, true);
                     }
                 }
@@ -1639,22 +1716,42 @@ export function segmentTree(text: string): SegmentTree {
         return segmentWindow;
     }
 
-    function getHeight() {
-        function nodeGetHeight(node: TextSegmentBlock) {
-            let maxHeight = 0;
+    function getStats() {
+        function nodeGetStats(node: TextSegmentBlock) {
+            let stats = { maxHeight: 0, nodeCount: 0, leafCount: 0, removedLeafCount: 0, liveCount: 0, histo: [] };
+            for (let k = 0; k < MaxSegments; k++) {
+                stats.histo[k] = 0;
+            }
             for (let i = 0; i < node.liveSegmentCount; i++) {
                 let segment = node.segments[i];
                 let height = 1;
                 if (segment.child) {
-                    height = 1 + nodeGetHeight(segment.child);
+                    let childStats = nodeGetStats(segment.child);
+                    height = 1 + childStats.maxHeight;
+                    stats.nodeCount += childStats.nodeCount;
+                    stats.leafCount += childStats.leafCount;
+                    stats.removedLeafCount += childStats.removedLeafCount;
+                    stats.liveCount += childStats.liveCount;
+                    for (let i = 0; i < MaxSegments; i++) {
+                        stats.histo[i] += childStats.histo[i];
+                    }
                 }
-                if (height > maxHeight) {
-                    maxHeight = height;
+                else {
+                    stats.leafCount++;
+                    if (segment.removedSeq!==undefined) {
+                        stats.removedLeafCount++;
+                    }
+                }
+                if (height > stats.maxHeight) {
+                    stats.maxHeight = height;
                 }
             }
-            return maxHeight;
+            stats.histo[node.liveSegmentCount]++;
+            stats.nodeCount++;
+            stats.liveCount += node.liveSegmentCount;
+            return stats;
         }
-        return nodeGetHeight(root);
+        return nodeGetStats(root);
     }
 
     function getLength(refSeq: number, clientId: number) {
@@ -1918,12 +2015,14 @@ export function segmentTree(text: string): SegmentTree {
         updateRoot(splitNode, refSeq, clientId, seq);
     }
 
+    let diagInsertTie = false;
     function nodeInsertBefore(node: TextSegmentBlock, pos: number, refSeq: number, clientId: number, textSegment: TextSegment) {
         let segIsLocal = false;
         function checkSegmentIsLocal(textSegment: TextSegment, pos: number, refSeq: number, clientId: number) {
             if (textSegment.seq == UnassignedSequenceNumber) {
-                console.log(`@cli ${segmentWindow.clientId}: promoting continue due to seq ${textSegment.seq} text ${textSegment.text} ref ${refSeq}`);
-
+                if (diagInsertTie) {
+                    console.log(`@cli ${segmentWindow.clientId}: promoting continue due to seq ${textSegment.seq} text ${textSegment.text} ref ${refSeq}`);
+                }
                 segIsLocal = true;
             }
             // only need to look at first segment that follows finished node
@@ -1933,7 +2032,7 @@ export function segmentTree(text: string): SegmentTree {
         function continueFrom(node: TextSegmentBlock) {
             segIsLocal = false;
             excursion(node, checkSegmentIsLocal);
-            if (segIsLocal) {
+            if (diagInsertTie && segIsLocal) {
                 console.log(`@cli ${segmentWindow.clientId}: attempting continue with seq ${textSegment.seq} text ${textSegment.text} ref ${refSeq}`);
             }
             return segIsLocal;
@@ -2491,7 +2590,7 @@ export function segmentTree(text: string): SegmentTree {
         getText: getText,
         searchFromPos: searchFromPos,
         getLength: getLength,
-        getHeight: getHeight,
+        getStats: getStats,
         createMarker: createMarker,
         startCollaboration: startCollaboration,
         getSegmentWindow: getSegmentWindow,

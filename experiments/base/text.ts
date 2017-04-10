@@ -28,7 +28,7 @@ export function loadText(filename: string, segTree: SegTree.SegmentTree, segLimi
     }
     segTree.reloadFromSegments(segments);
     console.log(`Number of Segments: ${segments.length}`);
-    console.log(`Height: ${segTree.getHeight()}`);
+    console.log(`Height: ${segTree.getStats().maxHeight}`);
     //console.log(segTree.toString());
     return segTree;
 }
