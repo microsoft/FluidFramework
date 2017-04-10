@@ -840,7 +840,7 @@ export function TestPack() {
 
     function clientServer(startFile?: string) {
         const clientCount = 5;
-        const fileSegCount = 0;
+        const fileSegCount = 1;
         let initString = "";
         if (!startFile) {
             initString = "don't ask for whom the bell tolls; it tolls for thee";
@@ -892,7 +892,7 @@ export function TestPack() {
             return false;
         }
 
-        let rounds = 100000;
+        let rounds = 1000;
         function clientProcessSome(client: TestClient, all = false) {
             let cliMsgCount = client.q.count();
             let countToApply: number;
@@ -1004,15 +1004,20 @@ export function TestPack() {
             for (let client of clients) {
                 clientProcessSome(client, true);
             }
-            /*
-            if (checkTextMatch()) {
-                console.log(`round: ${i}`);
-                break;
-            }*/
+
+            /*          
+                        if (checkTextMatch()) {
+                            console.log(`round: ${i}`);
+                            break;
+                        }
+            */
+                console.log(server.getText());
+                console.log(server.segTree.toString());
+                console.log(server.segTree.getStats());
             if (0 == (i % 100)) {
                 let clockStart = clock();
                 if (checkTextMatch()) {
-                    console.log(`round: ${i}`);
+                    console.log(`round: ${i} BREAK`);
                     break;
                 }
                 checkTime += elapsedMicroseconds(clockStart);
@@ -1672,27 +1677,45 @@ export function segmentTree(text: string): SegmentTree {
         }
     }
 
-    const zamboniRemovedMaxCount = 3;
+    // assume: both segments are leaves and have seq <= minSeq; segments not part of segment group
+    function extendSegment(prevSegment: TextSegment, segment: TextSegment) {
+        //console.log(`extending seq ${prevSegment.seq} text ${prevSegment.text} with seq ${segment.seq} text ${segment.text}`);
+        prevSegment.text += segment.text;
+    }
 
-    // TODO: re-structure tree when node live segment count is less than maxSegCount/2
-    function zamboniRemovedSegments() {
+    const zamboniSegmentsMaxCount = 3;
+    function zamboniSegments() {
         let nodeToScour = nodesToScour.peek();
         if (nodeToScour && (nodeToScour.maxSeq <= segmentWindow.minSeq)) {
-            for (let i = 0; i < zamboniRemovedMaxCount; i++) {
+            for (let i = 0; i < zamboniSegmentsMaxCount; i++) {
                 nodeToScour = nodesToScour.get();
                 if (nodeToScour && (nodeToScour.maxSeq <= segmentWindow.minSeq)) {
                     let node = nodeToScour.node;
                     let segmentsCopy = <TextSegment[]>[];
                     let newLiveSegmentCount = 0;
+                    let prevSegment: TextSegment;
                     for (let k = 0; k < node.liveSegmentCount; k++) {
                         let segment = node.segments[k];
                         if ((segment.removedSeq != undefined) && (segment.removedSeq != UnassignedSequenceNumber)) {
                             if (segment.removedSeq > segmentWindow.minSeq) {
                                 segmentsCopy[newLiveSegmentCount++] = segment;
                             }
+                            prevSegment = undefined;
                         }
                         else {
-                            segmentsCopy[newLiveSegmentCount++] = segment;
+                            if ((!segment.child) && (segment.seq <= segmentWindow.minSeq) && (!segment.segmentGroup)) {
+                                if (prevSegment) {
+                                    extendSegment(prevSegment, segment);
+                                }
+                                else {
+                                    segmentsCopy[newLiveSegmentCount++] = segment;
+                                    prevSegment = segment;
+                                }
+                            }
+                            else {
+                                segmentsCopy[newLiveSegmentCount++] = segment;
+                                prevSegment = undefined;
+                            }
                         }
                     }
                     if (newLiveSegmentCount < node.liveSegmentCount) {
@@ -1738,7 +1761,7 @@ export function segmentTree(text: string): SegmentTree {
                 }
                 else {
                     stats.leafCount++;
-                    if (segment.removedSeq!==undefined) {
+                    if (segment.removedSeq !== undefined) {
                         stats.removedLeafCount++;
                     }
                 }
@@ -1912,7 +1935,7 @@ export function segmentTree(text: string): SegmentTree {
     function updateMinSeq(minSeq: number) {
         segmentWindow.minSeq = minSeq;
         if (options.zamboniSegments) {
-            zamboniRemovedSegments();
+            zamboniSegments();
         }
     }
 
@@ -1949,9 +1972,6 @@ export function segmentTree(text: string): SegmentTree {
             root = newRoot;
             nodeUpdateLengthNewStructure(root);
         }
-        else {
-            nodeUpdateLength(root, seq, clientId);
-        }
     }
 
     /**
@@ -1981,6 +2001,7 @@ export function segmentTree(text: string): SegmentTree {
                         }
                     }
                 }
+                pendingSegment.segmentGroup = undefined;
                 clientId = segmentWindow.clientId;
                 if (nodesToUpdate.indexOf(pendingSegment.parent) < 0) {
                     nodesToUpdate.push(pendingSegment.parent);
@@ -2011,7 +2032,7 @@ export function segmentTree(text: string): SegmentTree {
         ensureIntervalBoundary(pos, refSeq, clientId);
         //traceTraversal = true;
         let splitNode = nodeInsertBefore(root, pos, refSeq, clientId, textSegment);
-        traceTraversal = false;
+        //traceTraversal = false;
         updateRoot(splitNode, refSeq, clientId, seq);
     }
 
@@ -2041,9 +2062,13 @@ export function segmentTree(text: string): SegmentTree {
         function onLeaf(segment: TextSegment, pos: number) {
             function saveIfLocal(locSegment: TextSegment) {
                 // save segment so can assign sequence number when acked by server
-                if (segmentWindow.collaborating && (locSegment.seq == UnassignedSequenceNumber) && (clientId == segmentWindow.clientId)) {
-                    addToPendingList(locSegment)
-                    //console.log(`saved local seg with text: ${locSegment.text}`);
+                if (segmentWindow.collaborating) {
+                    if ((locSegment.seq == UnassignedSequenceNumber) && (clientId == segmentWindow.clientId)) {
+                        addToPendingList(locSegment);
+                    }
+                    else if (locSegment.seq >= segmentWindow.minSeq) {
+                        addToLRUSet(locSegment.parent, locSegment.seq);
+                    }
                 }
             }
             if (!segment) {
@@ -2134,7 +2159,7 @@ export function segmentTree(text: string): SegmentTree {
     }
 
     let theUnfinishedNode = <TextSegmentBlock>{ liveSegmentCount: -1 };
-
+    let theSuccessfulShiftNode = <TextSegmentBlock>{ liveSegmentCount: -2 };
     function insertingWalk(node: TextSegmentBlock, pos: number, refSeq: number, clientId: number, seq: number,
         leafAction: (segment: TextSegment, pos: number) => TextSegment,
         continuePredicate?: (continueFromNode: TextSegmentBlock) => boolean) {
@@ -2176,6 +2201,10 @@ export function segmentTree(text: string): SegmentTree {
                         }
                         pos -= len; // act as if shifted segment
                         continue;
+                    }
+                    else if (splitNode == theSuccessfulShiftNode) {
+                        nodeUpdateLengthNewStructure(node);
+                        return undefined;
                     }
                     else {
                         newSegment = makeInternalSegment(node, splitNode);
@@ -2241,20 +2270,73 @@ export function segmentTree(text: string): SegmentTree {
         }
     }
 
-    function split(node: TextSegmentBlock) {
-        let halfCount = MaxSegments / 2;
-        let newNode = makeNode(halfCount);
-        node.liveSegmentCount = halfCount;
-        for (let i = 0; i < halfCount; i++) {
-            newNode.segments[i] = node.segments[(halfCount) + i];
-            newNode.segments[i].parent = newNode;
-            if (newNode.segments[i].child) {
-                newNode.segments[i].child.parent = newNode;
+    function getLeftSibling(node: TextSegmentBlock) {
+        let parent = node.parent;
+        if (parent) {
+            let segments = parent.segments;
+            let segmentIndex: number;
+            let segment: TextSegment;
+            let prevSegment: TextSegment;
+            for (segmentIndex = 0; segmentIndex < parent.liveSegmentCount; segmentIndex++) {
+                segment = segments[segmentIndex];
+                if (segment.child && (segment.child == node)) {
+                    return prevSegment;
+                }
+                prevSegment = segment;
             }
         }
-        nodeUpdateLengthNewStructure(node);
-        nodeUpdateLengthNewStructure(newNode);
-        return newNode;
+    }
+
+    function tryShiftLeft(node: TextSegmentBlock) {
+        let leftSib = getLeftSibling(node);
+        if (leftSib && leftSib.child) {
+            let leftNode = leftSib.child;
+            if (leftNode.liveSegmentCount <= (MaxSegments / 2)) {
+                let leftSegments = leftNode.segments;
+                let segments = node.segments;
+                let leftCapacity = (MaxSegments - 1) - leftNode.liveSegmentCount;
+                for (let k = 0; k < leftCapacity; k++) {
+                    let shiftSegment = segments[k];
+                    leftSegments[k + leftNode.liveSegmentCount] = shiftSegment;
+                    shiftSegment.parent = leftNode;
+                    if (shiftSegment.child) {
+                        shiftSegment.child.parent = leftNode;
+                    }
+                    segments[k] = segments[k + leftCapacity];
+                }
+                leftNode.liveSegmentCount += leftCapacity;
+                node.liveSegmentCount = node.liveSegmentCount - leftCapacity;
+                for (let k = leftCapacity; k    < node.liveSegmentCount; k++) {
+                    segments[k] = segments[k + leftCapacity];
+                }
+                nodeUpdateLengthNewStructure(node);
+                nodeUpdatePathLengths(leftNode, UniversalSequenceNumber, -1, true);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    let skipLeftShift = true;
+    function split(node: TextSegmentBlock) {
+        if (skipLeftShift || (!tryShiftLeft(node))) {
+            let halfCount = MaxSegments / 2;
+            let newNode = makeNode(halfCount);
+            node.liveSegmentCount = halfCount;
+            for (let i = 0; i < halfCount; i++) {
+                newNode.segments[i] = node.segments[halfCount + i];
+                newNode.segments[i].parent = newNode;
+                if (newNode.segments[i].child) {
+                    newNode.segments[i].child.parent = newNode;
+                }
+            }
+            nodeUpdateLengthNewStructure(node);
+            nodeUpdateLengthNewStructure(newNode);
+            return newNode;
+        }
+        else {
+            return theSuccessfulShiftNode;
+        }
     }
 
     function addOverlappingClient(textSegment: TextSegment, clientId: number) {
@@ -2319,7 +2401,7 @@ export function segmentTree(text: string): SegmentTree {
         mapRange({ leaf: markRemoved, post: afterMarkRemoved }, refSeq, clientId, undefined, start, end);
         if (segmentWindow.collaborating && (seq != UnassignedSequenceNumber)) {
             if (options.zamboniSegments) {
-                zamboniRemovedSegments();
+                zamboniSegments();
             }
         }
         traceTraversal = false;
