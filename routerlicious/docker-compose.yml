@@ -21,7 +21,6 @@ services:
         volumes:
             - .:/usr/src/server
         depends_on:
-            - redis
             - web
         command: npm run paparazzi
     scriptorium:
@@ -38,6 +37,7 @@ services:
             - .:/usr/src/server
         depends_on:
             - redis
+            - mongodb
         command: npm run tmz
     redis:
         image: "redis:alpine"

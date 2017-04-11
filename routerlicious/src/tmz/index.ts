@@ -1,63 +1,96 @@
-import { Client } from "azure-event-hubs";
+
 import * as sb from "azure-sb";
 import * as nconf from "nconf";
 import * as path from "path";
+import * as eventProcessor from "../event-processor";
 import * as socketStorage from "../socket-storage";
 import * as utils from "../utils";
 
 // Setup the configuration system - pull arguments, then environment variables
 nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
 
-// Configure access to the event hub where we'll send sequenced packets
-const deltasConfig = nconf.get("eventHub:deltas");
-const deltasConnectionString = utils.getEventHubConnectionString(deltasConfig.endpoint, deltasConfig.listen);
-const client = Client.fromConnectionString(deltasConnectionString, deltasConfig.entityPath);
-const consumerGroup = nconf.get("tmz:consumerGroup");
-
 // Service bus configuration
 const serviceBusConnectionString = nconf.get("serviceBus:snapshot:send");
-const snapshotBus = sb.createServiceBusService(serviceBusConnectionString);
 const snapshotQueue = nconf.get("tmz:queue");
 
-let createdRequests: any = {};
+// Get the event hub connection string information
+const deltasConfig = nconf.get("eventHub:deltas");
+const deltasConnectionString = utils.getEventHubConnectionString(deltasConfig.endpoint, deltasConfig.listen);
+const consumerGroup = nconf.get("tmz:consumerGroup");
 
-/**
- * Handles incoming sequenced deltas. Responsible for distributing the work of snapshotting the given object.
- */
-function processMessage(message: socketStorage.IRoutedOpMessage) {
-    if (createdRequests[message.objectId]) {
-        console.log(`Already requested snapshots for ${message.objectId}`);
-        return;
+// The checkpoint manager stores the current location inside of the event hub
+const mongoUrl = nconf.get("mongo:endpoint");
+const partitionsCollectionName = nconf.get("mongo:collectionNames:partitions");
+const mongoCheckpointManager = new eventProcessor.MongoCheckpointManager(
+    mongoUrl,
+    partitionsCollectionName,
+    deltasConfig.entityPath,
+    consumerGroup);
+
+class EventProcessor implements eventProcessor.IEventProcessor {
+    private createdRequests: any = {};
+
+    constructor(private serviceBus: any, private queue: string) {
     }
 
-    createdRequests[message.objectId] = true;
-    console.log(`Requesting snapshots for ${message.objectId}`);
-    snapshotBus.sendQueueMessage(snapshotQueue, message.objectId, (error) => {
-        if (!error) {
-            console.log("Message sent successfully");
+    public async openAsync(context: eventProcessor.PartitionContext): Promise<void> {
+        console.log("opening event processor");
+    }
+
+    public async closeAsync(
+        context: eventProcessor.PartitionContext,
+        reason: eventProcessor.CloseReason): Promise<void> {
+        console.log("closing event processor");
+    }
+
+    public async processEvents(context: eventProcessor.PartitionContext, messages: any[]): Promise<void> {
+        console.log(`Processing ${messages.length} events`);
+        const messageProcessed: Array<Promise<any>> = [];
+        for (const message of messages) {
+            let processedP = this.processEvent(message.body as socketStorage.IRoutedOpMessage);
+            messageProcessed.push(processedP);
         }
-    });
+
+        console.log(`Checkpointing ${messages.length} messages`);
+        await Promise.all(messageProcessed);
+        await context.checkpoint();
+    }
+
+    public async error(context: eventProcessor.PartitionContext, error: any): Promise<void> {
+        console.error(`EventProcessor error: ${JSON.stringify(error)}`);
+    }
+
+    private async processEvent(message: socketStorage.IRoutedOpMessage): Promise<void> {
+        if (this.createdRequests[message.objectId]) {
+            console.log(`Already requested snapshots for ${message.objectId}`);
+            return;
+        }
+
+        this.createdRequests[message.objectId] = true;
+        console.log(`Requesting snapshots for ${message.objectId}`);
+        this.serviceBus.sendQueueMessage(this.queue, message.objectId, (error) => {
+            if (!error) {
+                console.log("Message sent successfully");
+            }
+        });
+    }
 }
 
-function listenForMessages(receiveClient: Client, id: string) {
-    // TODO I'm limiting to messages after now - which we'll want to remove once we have proper checkpointing
-    receiveClient.createReceiver(consumerGroup, id, { startAfterTime: Date.now() }).then((receiver) => {
-        console.log(`Receiver created for partition ${id}`);
-        receiver.on("errorReceived", (error) => {
-            console.log(error);
-        });
+class EventProcessorFactory implements eventProcessor.IEventProcessorFactory {
+    private serviceBus: any;
 
-        receiver.on("message", (message) => {
-            processMessage(message.body);
-        });
-    });
-}
+    constructor(connectionString: any, private queue: string) {
+        this.serviceBus = sb.createServiceBusService(connectionString);
+    }
 
-// Open a connection to the client and begin listening for messages
-client.open().then(() => {
-    client.getPartitionIds().then((ids) => {
-        for (const id of ids) {
-            listenForMessages(client, id);
-        }
-    });
-});
+    public createEventProcessor(context: any): eventProcessor.IEventProcessor {
+        return new EventProcessor(this.serviceBus, this.queue);
+    }
+};
+
+const host = new eventProcessor.EventProcessorHost(
+    deltasConfig.entityPath,
+    consumerGroup,
+    deltasConnectionString,
+    mongoCheckpointManager);
+host.registerEventProcessorFactory(new EventProcessorFactory(serviceBusConnectionString, snapshotQueue));
