@@ -23,6 +23,8 @@ const mongoCheckpointManager = new eventProcessor.MongoCheckpointManager(
     consumerGroup);
 
 class EventProcessor implements eventProcessor.IEventProcessor {
+    private sequenceNumber = 0;
+
     constructor(private senderP: Promise<Sender>) {
     }
 
@@ -63,7 +65,7 @@ class EventProcessor implements eventProcessor.IEventProcessor {
             clientId: submitOpMessage.clientId,
             objectId: submitOpMessage.objectId,
             op: submitOpMessage.op,
-            sequenceNumber: 0, // FILL ME IN!
+            sequenceNumber: this.sequenceNumber++,
         };
 
         // Serialize the sequenced message to the event hub
