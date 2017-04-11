@@ -1,74 +1,101 @@
 import { Client, Sender } from "azure-event-hubs";
 import * as nconf from "nconf";
 import * as path from "path";
-import * as socketIoEmitter from "socket.io-emitter";
+import * as eventProcessor from "../event-processor";
 import * as socketStorage from "../socket-storage";
 import * as utils from "../utils";
 
 // Setup the configuration system - pull arguments, then environment variables
 nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
 
-// Initialize Socket.io and connect to the Redis adapter
-// TODO put in the extra stuff here
-let host = nconf.get("redis:host");
-let port = nconf.get("redis:port");
-
-let io = socketIoEmitter(({ host, port }));
-io.redis.on("error", (error) => {
-    console.error(error);
-});
-
-// Configure access to the event hub
+// Get connection information to the event hub
 const rawDeltasConfig = nconf.get("eventHub:raw-deltas");
 const rawDeltasConnectionString = utils.getEventHubConnectionString(rawDeltasConfig.endpoint, rawDeltasConfig.listen);
-const receiveClient = Client.fromConnectionString(rawDeltasConnectionString, rawDeltasConfig.entityPath);
 const consumerGroup = nconf.get("deli:consumerGroup");
 
-// Configure access to the event hub where we'll send sequenced packets
-const deltasConfig = nconf.get("eventHub:deltas");
-const deltasConnectionString = utils.getEventHubConnectionString(deltasConfig.endpoint, deltasConfig.send);
-const sendClient = Client.fromConnectionString(deltasConnectionString, deltasConfig.entityPath);
-const senderP = sendClient.open().then(() => sendClient.createSender());
+// The checkpoint manager stores the current location inside of the event hub
+const mongoUrl = nconf.get("mongo:endpoint");
+const partitionsCollectionName = nconf.get("mongo:collectionNames:partitions");
+const mongoCheckpointManager = new eventProcessor.MongoCheckpointManager(
+    mongoUrl,
+    partitionsCollectionName,
+    rawDeltasConfig.entityPath,
+    consumerGroup);
 
-let sequenceNumber = 0;
+class EventProcessor implements eventProcessor.IEventProcessor {
+    private sequenceNumber = 0;
 
-function listenForMessages(client: Client, sender: Sender, id: string) {
-    // TODO I'm limiting to messages after now - which we'll want to remove once we have proper checkpointing
-    client.createReceiver(consumerGroup, id, { startAfterTime: Date.now() }).then((receiver) => {
-            console.log(`Receiver created for partition ${id}`);
-            receiver.on("errorReceived", (error) => {
-                console.log(error);
-            });
+    constructor(private senderP: Promise<Sender>) {
+    }
 
-            receiver.on("message", (message) => {
-                console.log(`Received message on partition ${id} with key ${message.partitionKey}`);
+    public async openAsync(context: eventProcessor.PartitionContext): Promise<void> {
+        console.log("opening event processor");
+    }
 
-                // TODO assign the sequence number here
+    public async closeAsync(
+        context: eventProcessor.PartitionContext,
+        reason: eventProcessor.CloseReason): Promise<void> {
+        console.log("closing event processor");
+    }
 
-                // Route the updated message to connected clients
-                console.log(`Routing message to clients`);
-                const submitOpMessage = message.body as socketStorage.ISubmitOpMessage;
-                const routedMessage: socketStorage.IRoutedOpMessage = {
-                    clientId: submitOpMessage.clientId,
-                    objectId: submitOpMessage.objectId,
-                    op: submitOpMessage.op,
-                    sequenceNumber: sequenceNumber++,
-                };
-                io.to(submitOpMessage.objectId).emit("op", routedMessage);
+    public async processEvents(context: eventProcessor.PartitionContext, messages: any[]): Promise<void> {
+        const sender = await this.senderP;
 
-                console.log(`Serializing sequenced message to event hub`);
-                sender.send(routedMessage, routedMessage.objectId);
-            });
-            console.log("Listening");
+        console.log(`Processing ${messages.length} events`);
+        const messageProcessed: Array<Promise<any>> = [];
+        for (const message of messages) {
+            let processedP = this.processEvent(sender, context, message);
+            messageProcessed.push(processedP);
+        }
+
+        console.log(`Checkpointing ${messages.length} messages`);
+        await Promise.all(messageProcessed);
+        await context.checkpoint();
+    }
+
+    public async error(context: eventProcessor.PartitionContext, error: any): Promise<void> {
+        console.error(`EventProcessor error: ${JSON.stringify(error)}`);
+    }
+
+    private async processEvent(sender: Sender, context: eventProcessor.PartitionContext, message: any): Promise<void> {
+        // tslint:disable-next-line
+        console.log(`Received message on partition ${context.partitionId} with key ${message.partitionKey} at offset ${message.offset}`);
+        const submitOpMessage = message.body as socketStorage.ISubmitOpMessage;
+        const routedMessage: socketStorage.IRoutedOpMessage = {
+            clientId: submitOpMessage.clientId,
+            objectId: submitOpMessage.objectId,
+            op: submitOpMessage.op,
+            sequenceNumber: this.sequenceNumber++,
+        };
+
+        // Serialize the sequenced message to the event hub
+        let promise = new Promise<any>((resolve, reject) => {
+            sender.send(routedMessage, routedMessage.objectId).then(() => resolve(), (error) => reject(error));
         });
+
+        return promise;
+    }
 }
 
-receiveClient.open().then(() => {
-    senderP.then((sender) => {
-        receiveClient.getPartitionIds().then((ids) => {
-            for (const id of ids) {
-                listenForMessages(receiveClient, sender, id);
-            }
-        });
-    });
-});
+class EventProcessorFactory implements eventProcessor.IEventProcessorFactory {
+    private senderP: Promise<Sender>;
+
+    constructor() {
+        // Configure access to the event hub where we'll send sequenced packets
+        const deltasConfig = nconf.get("eventHub:deltas");
+        const deltasConnectionString = utils.getEventHubConnectionString(deltasConfig.endpoint, deltasConfig.send);
+        const sendClient = Client.fromConnectionString(deltasConnectionString, deltasConfig.entityPath);
+        this.senderP = sendClient.open().then(() => sendClient.createSender());
+    }
+
+    public createEventProcessor(context: any): eventProcessor.IEventProcessor {
+        return new EventProcessor(this.senderP);
+    }
+};
+
+const host = new eventProcessor.EventProcessorHost(
+    rawDeltasConfig.entityPath,
+    consumerGroup,
+    rawDeltasConnectionString,
+    mongoCheckpointManager);
+host.registerEventProcessorFactory(new EventProcessorFactory());

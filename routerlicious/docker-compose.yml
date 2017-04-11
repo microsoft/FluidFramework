@@ -14,13 +14,13 @@ services:
             - .:/usr/src/server
         depends_on:
             - redis
+            - mongodb
         command: npm run deli
     paparazzi:
         build: .
         volumes:
             - .:/usr/src/server
         depends_on:
-            - redis
             - web
         command: npm run paparazzi
     scriptorium:
@@ -29,6 +29,7 @@ services:
             - .:/usr/src/server
         depends_on:
             - redis
+            - mongodb
         command: npm run scriptorium
     tmz:
         build: .
@@ -36,6 +37,9 @@ services:
             - .:/usr/src/server
         depends_on:
             - redis
+            - mongodb
         command: npm run tmz
     redis:
         image: "redis:alpine"
+    mongodb:
+        image: "mongo:3.4.3"

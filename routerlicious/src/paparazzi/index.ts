@@ -56,7 +56,8 @@ function processMessage(message: string): Promise<void> {
     });
 }
 
-function retrieveAndProcessMessage(): Promise<void> {
+async function retrieveAndProcessMessage(): Promise<void> {
+    // Retrieve a message from the queue. Service Bus doesn't give us es6 promises so we need to convert
     const messageP = new Promise<any>((resolve, reject) => {
         service.receiveQueueMessage(queueName, { isPeekLock: true, timeoutIntervalInS: 60 }, (error, message) => {
             if (error) {
@@ -67,17 +68,17 @@ function retrieveAndProcessMessage(): Promise<void> {
         });
     });
 
-    const processedP = messageP.then((message) => processMessage(message.body));
-    return Promise.all([messageP, processedP]).then((results) => {
-        return new Promise<void>((resolve, reject) => {
-            // Message received and locked
-            service.deleteMessage(results[0], (deleteError) => {
-                if (deleteError) {
-                    return reject(deleteError);
-                }
+    const message = await messageP;
+    await processMessage(message.body);
 
-                return resolve();
-            });
+    // We can delete the message now that we have successfully processed it
+    return new Promise<void>((resolve, reject) => {
+        service.deleteMessage(message, (deleteError) => {
+            if (deleteError) {
+                return reject(deleteError);
+            }
+
+            return resolve();
         });
     });
 }

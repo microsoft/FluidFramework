@@ -31,6 +31,14 @@
             "listen": "Endpoint=sb://prague-dev.servicebus.windows.net/;SharedAccessKeyName=listen;SharedAccessKey=8wV5L6Hvl0nBSR43rP674bTp2UYBUk/wu/F2M7dCxhA="
         }
     },
+    "mongo": {
+        "endpoint": "mongodb://mongodb:27017",
+        "collectionNames": {
+            "deltas": "deltas",
+            "objects": "objects",
+            "partitions": "partitions"
+        }
+    },
     "deli": {
         "consumerGroup": "deli"
     },
