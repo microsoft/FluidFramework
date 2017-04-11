@@ -1,150 +1,99 @@
 import { Client, Sender } from "azure-event-hubs";
-import { Collection, MongoClient } from "mongodb";
 import * as nconf from "nconf";
 import * as path from "path";
+import * as eventProcessor from "../event-processor";
 import * as socketStorage from "../socket-storage";
 import * as utils from "../utils";
 
 // Setup the configuration system - pull arguments, then environment variables
 nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
 
-// Configure access to the event hub
+// Get connection information to the event hub
 const rawDeltasConfig = nconf.get("eventHub:raw-deltas");
 const rawDeltasConnectionString = utils.getEventHubConnectionString(rawDeltasConfig.endpoint, rawDeltasConfig.listen);
-const receiveClient = Client.fromConnectionString(rawDeltasConnectionString, rawDeltasConfig.entityPath);
 const consumerGroup = nconf.get("deli:consumerGroup");
 
-// Configure access to the event hub where we'll send sequenced packets
-const deltasConfig = nconf.get("eventHub:deltas");
-const deltasConnectionString = utils.getEventHubConnectionString(deltasConfig.endpoint, deltasConfig.send);
-const sendClient = Client.fromConnectionString(deltasConnectionString, deltasConfig.entityPath);
-const senderP = sendClient.open().then(() => sendClient.createSender());
-
-// Connect to the database and index on the objectId
+// The checkpoint manager stores the current location inside of the event hub
 const mongoUrl = nconf.get("mongo:endpoint");
-const mongoClientP = MongoClient.connect(mongoUrl);
+const partitionsCollectionName = nconf.get("mongo:collectionNames:partitions");
+const mongoCheckpointManager = new eventProcessor.MongoCheckpointManager(
+    mongoUrl,
+    partitionsCollectionName,
+    rawDeltasConfig.entityPath,
+    consumerGroup);
 
-// const objectsCollectionP = mongoClientP.then(async (db) => {
-//     const objectsCollectionName = nconf.get("mongo:collectionNames:objects");
-//     const collection = db.collection(objectsCollectionName);
+class EventProcessor implements eventProcessor.IEventProcessor {
+    constructor(private senderP: Promise<Sender>) {
+    }
 
-//     return collection;
-// });
+    public async openAsync(context: eventProcessor.PartitionContext): Promise<void> {
+        console.log("opening event processor");
+    }
 
-const partitionCollectionP = mongoClientP.then(async (db) => {
-    const partitionsCollectionName = nconf.get("mongo:collectionNames:objects");
-    const collection = db.collection(partitionsCollectionName);
+    public async closeAsync(
+        context: eventProcessor.PartitionContext,
+        reason: eventProcessor.CloseReason): Promise<void> {
+        console.log("closing event processor");
+    }
 
-    return collection;
-});
+    public async processEvents(context: eventProcessor.PartitionContext, messages: any[]): Promise<void> {
+        const sender = await this.senderP;
 
-/**
- * Details of a pending checkpoint operation
- */
-interface IPendingCheckpoint {
-    // The next offset to checkpoint or null if none
-    offset: string;
-}
+        console.log(`Processing ${messages.length} events`);
+        const messageProcessed: Array<Promise<any>> = [];
+        for (const message of messages) {
+            let processedP = this.processEvent(sender, context, message);
+            messageProcessed.push(processedP);
+        }
 
-const partitionCheckpoints: { [key: string]: IPendingCheckpoint } = {};
+        console.log(`Checkpointing ${messages.length} messages`);
+        await Promise.all(messageProcessed);
+        await context.checkpoint();
+    }
 
-function checkpoint(partition: Collection, id: string, offset: string) {
-    // Mark the current checkpoint
-    partitionCheckpoints[id] = { offset };
+    public async error(context: eventProcessor.PartitionContext, error: any): Promise<void> {
+        console.error(`EventProcessor error: ${JSON.stringify(error)}`);
+    }
 
-    console.log(`Checkpointing partition ${id} at offset ${offset}`);
-    const replaceP = partition.replaceOne({ _id: id }, { _id: id, startAfterOffset: offset }, { upsert: true });
-    return replaceP.then(
-        () => {
-            // Enqueue another checkpoint if pending. Otherwise mark none are left
-            if (partitionCheckpoints[id].offset !== offset) {
-                checkpoint(partition, id, offset);
-            } else {
-                console.log("No messages to checkpoint");
-                delete partitionCheckpoints[id];
-            }
-        },
-        (error) => {
-            console.error(`Error checkpointing ${error}. Delaying then trying again`);
-            setTimeout(() => checkpoint(partition, id, partitionCheckpoints[id].offset), 10000);
+    private async processEvent(sender: Sender, context: eventProcessor.PartitionContext, message: any): Promise<void> {
+        // tslint:disable-next-line
+        console.log(`Received message on partition ${context.partitionId} with key ${message.partitionKey} at offset ${message.offset}`);
+        const submitOpMessage = message.body as socketStorage.ISubmitOpMessage;
+        const routedMessage: socketStorage.IRoutedOpMessage = {
+            clientId: submitOpMessage.clientId,
+            objectId: submitOpMessage.objectId,
+            op: submitOpMessage.op,
+            sequenceNumber: 0, // FILL ME IN!
+        };
+
+        // Serialize the sequenced message to the event hub
+        let promise = new Promise<any>((resolve, reject) => {
+            sender.send(routedMessage, routedMessage.objectId).then(() => resolve(), (error) => reject(error));
         });
-}
 
-function enqueueCheckpoint(partition: Collection, id: string, offset: string) {
-    // See if we have a pending checkpoint in the queue. If so update the offset. Otherwise kick off
-    // the checkpoint operation
-    const pendingCheckpoint = partitionCheckpoints[id];
-    if (pendingCheckpoint) {
-        pendingCheckpoint.offset = offset;
-    } else {
-        checkpoint(partition, id, offset);
+        return promise;
     }
 }
 
-async function listenForMessages(client: Client, sender: Sender, id: string) {
-    // Need to go and grab the sequence number where we last checkpointed
-    let partitions = await partitionCollectionP;
-    let partition = await partitions.findOne({ _id: id });
+class EventProcessorFactory implements eventProcessor.IEventProcessorFactory {
+    private senderP: Promise<Sender>;
 
-    let options = null;
-    if (!partition) {
-        console.log("New partition - creating root document");
-        partition = {
-            _id: id,
-        };
-
-        // TODO remove this later once things have stabalized. This just avoids reading earlier data until we're
-        // ready for it.
-        options = {
-            startAfterTime: Date.now(),
-        };
-    } else {
-        console.log(`Existing partition at offset ${partition.startAfterOffset}`);
-
-        options = {
-            startAfterOffset: partition.startAfterOffset,
-        };
+    constructor() {
+        // Configure access to the event hub where we'll send sequenced packets
+        const deltasConfig = nconf.get("eventHub:deltas");
+        const deltasConnectionString = utils.getEventHubConnectionString(deltasConfig.endpoint, deltasConfig.send);
+        const sendClient = Client.fromConnectionString(deltasConnectionString, deltasConfig.entityPath);
+        this.senderP = sendClient.open().then(() => sendClient.createSender());
     }
 
-    client.createReceiver(consumerGroup, id, options).then((receiver) => {
-        console.log(`Receiver created for partition ${id}`);
-        receiver.on("errorReceived", (error) => {
-            console.log(error);
-        });
+    public createEventProcessor(context: any): eventProcessor.IEventProcessor {
+        return new EventProcessor(this.senderP);
+    }
+};
 
-        receiver.on("message", (message) => {
-            // tslint:disable-next-line
-            console.log(`Received message on partition ${id} with key ${message.partitionKey} at offset ${message.offset}`);
-            console.log(JSON.stringify(message, null, 2));
-
-            // TODO assign the sequence number here
-            console.log(`Assigning sequence number`);
-            const submitOpMessage = message.body as socketStorage.ISubmitOpMessage;
-            const routedMessage: socketStorage.IRoutedOpMessage = {
-                clientId: submitOpMessage.clientId,
-                objectId: submitOpMessage.objectId,
-                op: submitOpMessage.op,
-                sequenceNumber: 0, // FILL ME IN!
-            };
-
-            // Serialize the sequenced message to the event hub
-            console.log(`Serializing sequenced message to event hub`);
-            sender.send(routedMessage, routedMessage.objectId);
-
-            // Indicate that we can checkpoint
-            enqueueCheckpoint(partitions, id, message.offset);
-        });
-
-        console.log("Listening");
-    });
-}
-
-receiveClient.open().then(() => {
-    senderP.then((sender) => {
-        receiveClient.getPartitionIds().then((ids) => {
-            for (const id of ids) {
-                listenForMessages(receiveClient, sender, id);
-            }
-        });
-    });
-});
+const host = new eventProcessor.EventProcessorHost(
+    rawDeltasConfig.entityPath,
+    consumerGroup,
+    rawDeltasConnectionString,
+    mongoCheckpointManager);
+host.registerEventProcessorFactory(new EventProcessorFactory());
