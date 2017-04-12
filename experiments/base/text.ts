@@ -27,6 +27,9 @@ export function loadText(filename: string, segTree: SegTree.SegmentTree, segLimi
         segments.length = segLimit;
     }
     segTree.reloadFromSegments(segments);
+    // for (let segment of segments) {
+    //     segTree.insertInterval(segTree.getLength(0,SegTree.LocalClientId),0,SegTree.LocalClientId,0,segment);
+    // }
     console.log(`Number of Segments: ${segments.length}`);
     console.log(`Height: ${segTree.getStats().maxHeight}`);
     //console.log(segTree.toString());

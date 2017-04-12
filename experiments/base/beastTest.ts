@@ -711,4 +711,5 @@ function itreeCheckedTest() {
 //segTreeCheckedTest();
 let testPack = SegTree.TestPack();
 //testPack.randolicious();
-testPack.clientServer();
+testPack.clientServer("pp.txt");
+//testPack.firstTest();

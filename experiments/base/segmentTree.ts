@@ -93,7 +93,7 @@ export interface TextSegmentBlock {
     length: number;
     partialLengths?: PartialSequenceLengths;
     parent?: TextSegmentBlock;
-    detached?: boolean;
+    //    detached?: boolean;
 }
 
 export interface TextMarker {
@@ -840,7 +840,7 @@ export function TestPack() {
 
     function clientServer(startFile?: string) {
         const clientCount = 5;
-        const fileSegCount = 1;
+        const fileSegCount = 0;
         let initString = "";
         if (!startFile) {
             initString = "don't ask for whom the bell tolls; it tolls for thee";
@@ -892,7 +892,7 @@ export function TestPack() {
             return false;
         }
 
-        let rounds = 1000;
+        let rounds = 100000;
         function clientProcessSome(client: TestClient, all = false) {
             let cliMsgCount = client.q.count();
             let countToApply: number;
@@ -1011,9 +1011,9 @@ export function TestPack() {
                             break;
                         }
             */
-                console.log(server.getText());
-                console.log(server.segTree.toString());
-                console.log(server.segTree.getStats());
+            // console.log(server.getText());
+            // console.log(server.segTree.toString());
+            // console.log(server.segTree.getStats());
             if (0 == (i % 100)) {
                 let clockStart = clock();
                 if (checkTextMatch()) {
@@ -1539,12 +1539,12 @@ export class TestServer extends TestClient {
     }
 }
 
-interface LRUNode {
-    node?: TextSegmentBlock;
+interface LRUSegment {
+    segment?: TextSegment;
     maxSeq: number;
 }
 
-var LRUNodeComparer: BST.Comparer<LRUNode> = {
+var LRUSegmentComparer: BST.Comparer<LRUSegment> = {
     min: { maxSeq: -2 },
     compare: (a, b) => a.maxSeq - b.maxSeq
 }
@@ -1553,6 +1553,8 @@ var LRUNodeComparer: BST.Comparer<LRUNode> = {
 export function segmentTree(text: string): SegmentTree {
     // should be a power of 2   
     const MaxSegments = 8;
+    const TextSegmentGranularity = 128;
+
     let options = {
         incrementalUpdate: true,
         zamboniSegments: true
@@ -1628,7 +1630,7 @@ export function segmentTree(text: string): SegmentTree {
     let root = initialNode(text);
     let segmentWindow = new SegmentWindow();
     let pendingSegments: ListUtil.List<TextSegmentGroup>;
-    let nodesToScour: BST.Heap<LRUNode>;
+    let segmentsToScour: BST.Heap<LRUSegment>;
 
     // for now assume min starts at zero
     function startCollaboration(localClientId: number) {
@@ -1636,7 +1638,7 @@ export function segmentTree(text: string): SegmentTree {
         segmentWindow.minSeq = 0;
         segmentWindow.collaborating = true;
         segmentWindow.currentSeq = 0;
-        nodesToScour = new BST.Heap<LRUNode>([], LRUNodeComparer);
+        segmentsToScour = new BST.Heap<LRUSegment>([], LRUSegmentComparer);
         pendingSegments = ListUtil.ListMakeHead<TextSegmentGroup>();
         let measureFullCollab = true;
         let clockStart;
@@ -1649,31 +1651,91 @@ export function segmentTree(text: string): SegmentTree {
         }
     }
 
-    function addToLRUSet(node: TextSegmentBlock, seq: number) {
-        nodesToScour.add({ node: node, maxSeq: seq });
+    function addToLRUSet(segment: TextSegment, seq: number) {
+        segmentsToScour.add({ segment: segment, maxSeq: seq });
     }
 
-    // assume node.parent and node.liveSegmentCount in [0,1]
-    function removeNodeFromParent(node: TextSegmentBlock) {
+    function underflow(node: TextSegmentBlock) {
+        return node.liveSegmentCount < (MaxSegments / 2);
+    }
+
+    function scourNode(node: TextSegmentBlock, holdSegments: TextSegment[]) {
+        let prevSegment: TextSegment;
+        for (let k = 0; k < node.liveSegmentCount; k++) {
+            let segment = node.segments[k];
+            if ((segment.removedSeq != undefined) && (segment.removedSeq != UnassignedSequenceNumber)) {
+                if (segment.removedSeq > segmentWindow.minSeq) {
+                    holdSegments.push(segment);
+                }
+                else {
+                    //                          console.log(`removed rseq ${segment.removedSeq}`);
+                    segment.parent = undefined;
+                }
+                prevSegment = undefined;
+            }
+            else {
+                if ((!segment.child) && (segment.seq <= segmentWindow.minSeq) && (!segment.segmentGroup)) {
+                    if (prevSegment && ((prevSegment.text.length <= TextSegmentGranularity) || (segment.text.length <= TextSegmentGranularity))) {
+                        extendSegment(prevSegment, segment);
+                        segment.parent = undefined;
+                    }
+                    else {
+                        holdSegments.push(segment);
+                        prevSegment = segment;
+                    }
+                }
+                else {
+                    holdSegments.push(segment);
+                    prevSegment = undefined;
+                }
+            }
+        }
+    }
+
+    // interior node with all node children
+    function pack(node: TextSegmentBlock) {
         let parent = node.parent;
         let segments = parent.segments;
         let segmentIndex: number;
         let segment: TextSegment;
+        let holdSegments = <TextSegment[]>[];
         for (segmentIndex = 0; segmentIndex < parent.liveSegmentCount; segmentIndex++) {
             segment = segments[segmentIndex];
-            if (segment.child == node) {
-                if (node.liveSegmentCount == 1) {
-                    segments[segmentIndex] = node.segments[0];
-                }
-                else {
-                    // assume node.liveSegmentCount == 0
-                    for (let k = segmentIndex; k < (parent.liveSegmentCount - 1); k++) {
-                        segments[k] = segments[k + 1];
-                    }
-                    parent.liveSegmentCount--;
-                }
-                break;
+            scourNode(segment.child,holdSegments);
+        }
+        let totalSegmentCount = holdSegments.length;
+        let halfCount = MaxSegments / 2;
+        let childCount = Math.min(MaxSegments - 1, Math.floor(totalSegmentCount / halfCount));
+        let baseCount = Math.floor(totalSegmentCount / childCount);
+        let extraCount = totalSegmentCount % childCount;
+        let parentSegments = <TextSegment[]>new Array(MaxSegments);
+        let readCount = 0;
+        for (let nodeIndex = 0; nodeIndex < childCount; nodeIndex++) {
+            let segmentCount = baseCount;
+            if (extraCount > 0) {
+                segmentCount++;
+                extraCount--;
             }
+            let packedNode = makeNode(segmentCount);
+            for (let packedSegmentIndex = 0; packedSegmentIndex < segmentCount; packedSegmentIndex++) {
+                let segToPack = holdSegments[readCount++];
+                packedNode.segments[packedSegmentIndex] = segToPack;
+                segToPack.parent = packedNode;
+                if (segToPack.child) {
+                    segToPack.child.parent = packedNode;
+                }
+            }
+            let packedNodeSegment = makeInternalSegment(parent, packedNode);
+            parentSegments[nodeIndex] = packedNodeSegment;
+            nodeUpdateLengthNewStructure(packedNode);
+        }
+        parent.segments = parentSegments;
+        parent.liveSegmentCount = childCount;
+        if (underflow(parent) && (parent.parent)) {
+            pack(parent);
+        }
+        else {
+            nodeUpdatePathLengths(parent, UnassignedSequenceNumber, -1, true);
         }
     }
 
@@ -1685,47 +1747,30 @@ export function segmentTree(text: string): SegmentTree {
 
     const zamboniSegmentsMaxCount = 3;
     function zamboniSegments() {
-        let nodeToScour = nodesToScour.peek();
-        if (nodeToScour && (nodeToScour.maxSeq <= segmentWindow.minSeq)) {
+        //console.log(`scour line ${segmentsToScour.count()}`);
+        let segmentToScour = segmentsToScour.peek();
+        if (segmentToScour && (segmentToScour.maxSeq <= segmentWindow.minSeq)) {
             for (let i = 0; i < zamboniSegmentsMaxCount; i++) {
-                nodeToScour = nodesToScour.get();
-                if (nodeToScour && (nodeToScour.maxSeq <= segmentWindow.minSeq)) {
-                    let node = nodeToScour.node;
+                segmentToScour = segmentsToScour.get();
+                if (segmentToScour && segmentToScour.segment.parent && (segmentToScour.maxSeq <= segmentWindow.minSeq)) {
+                    let node = segmentToScour.segment.parent;
                     let segmentsCopy = <TextSegment[]>[];
-                    let newLiveSegmentCount = 0;
-                    let prevSegment: TextSegment;
-                    for (let k = 0; k < node.liveSegmentCount; k++) {
-                        let segment = node.segments[k];
-                        if ((segment.removedSeq != undefined) && (segment.removedSeq != UnassignedSequenceNumber)) {
-                            if (segment.removedSeq > segmentWindow.minSeq) {
-                                segmentsCopy[newLiveSegmentCount++] = segment;
-                            }
-                            prevSegment = undefined;
-                        }
-                        else {
-                            if ((!segment.child) && (segment.seq <= segmentWindow.minSeq) && (!segment.segmentGroup)) {
-                                if (prevSegment) {
-                                    extendSegment(prevSegment, segment);
-                                }
-                                else {
-                                    segmentsCopy[newLiveSegmentCount++] = segment;
-                                    prevSegment = segment;
-                                }
-                            }
-                            else {
-                                segmentsCopy[newLiveSegmentCount++] = segment;
-                                prevSegment = undefined;
-                            }
-                        }
-                    }
+                    //                console.log(`scouring from ${segmentToScour.segment.seq}`);
+                    scourNode(node, segmentsCopy);
+                    let newLiveSegmentCount = segmentsCopy.length;
+
                     if (newLiveSegmentCount < node.liveSegmentCount) {
                         node.liveSegmentCount = newLiveSegmentCount;
                         node.segments = segmentsCopy;
-                        while ((node.liveSegmentCount <= 1) && node.parent) {
-                            removeNodeFromParent(node);
-                            node = node.parent;
+
+                        if (underflow(node) && node.parent) {
+                            //nodeUpdatePathLengths(node, UnassignedSequenceNumber, -1, true);
+                            pack(node);
                         }
-                        nodeUpdatePathLengths(node, UnassignedSequenceNumber, -1, true);
+                        else {
+                            nodeUpdatePathLengths(node, UnassignedSequenceNumber, -1, true);
+                        }
+
                     }
                 }
                 else {
@@ -2034,6 +2079,9 @@ export function segmentTree(text: string): SegmentTree {
         let splitNode = nodeInsertBefore(root, pos, refSeq, clientId, textSegment);
         //traceTraversal = false;
         updateRoot(splitNode, refSeq, clientId, seq);
+        if (segmentWindow.collaborating && options.zamboniSegments && seq != UnassignedSequenceNumber) {
+            zamboniSegments();
+        }
     }
 
     let diagInsertTie = false;
@@ -2066,8 +2114,8 @@ export function segmentTree(text: string): SegmentTree {
                     if ((locSegment.seq == UnassignedSequenceNumber) && (clientId == segmentWindow.clientId)) {
                         addToPendingList(locSegment);
                     }
-                    else if (locSegment.seq >= segmentWindow.minSeq) {
-                        addToLRUSet(locSegment.parent, locSegment.seq);
+                    else if ((locSegment.seq >= segmentWindow.minSeq) && options.zamboniSegments) {
+                        addToLRUSet(locSegment, locSegment.seq);
                     }
                 }
             }
@@ -2306,7 +2354,7 @@ export function segmentTree(text: string): SegmentTree {
                 }
                 leftNode.liveSegmentCount += leftCapacity;
                 node.liveSegmentCount = node.liveSegmentCount - leftCapacity;
-                for (let k = leftCapacity; k    < node.liveSegmentCount; k++) {
+                for (let k = leftCapacity; k < node.liveSegmentCount; k++) {
                     segments[k] = segments[k + leftCapacity];
                 }
                 nodeUpdateLengthNewStructure(node);
@@ -2377,12 +2425,12 @@ export function segmentTree(text: string): SegmentTree {
                 textSegment.removedSeq = seq;
             }
             // save segment so can assign removed sequence number when acked by server
-            if (segmentWindow.collaborating) {
+            if (segmentWindow.collaborating && options.zamboniSegments) {
                 if ((textSegment.removedSeq == UnassignedSequenceNumber) && (clientId == segmentWindow.clientId)) {
                     segmentGroup = addToPendingList(textSegment, segmentGroup);
                 }
                 else {
-                    addToLRUSet(textSegment.parent, seq);
+                    addToLRUSet(textSegment, seq);
                 }
                 //console.log(`saved local removed seg with text: ${textSegment.text}`);
             }
