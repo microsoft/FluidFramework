@@ -95,7 +95,7 @@ class EventProcessor implements eventProcessor.IEventProcessor {
         context: eventProcessor.PartitionContext,
         message: any): Promise<void> {
 
-        const objectId = message.body.objectid;
+        const objectId = message.body.objectId;
 
         // Go grab the takeANumber machine for the objectId and mark it as dirty
         if (!(objectId in this.dispensers)) {

@@ -26,7 +26,7 @@ export class TakeANumber {
         dbObjectP.then(
             (dbObject) => {
                 if (dbObject) {
-                    console.log(`Existing object ${dbObject.sequenceNumber}`);
+                    console.log(`Existing object ${this.objectId}@${dbObject.sequenceNumber}`);
                 } else {
                     console.log(`New object`);
                 }
@@ -95,7 +95,7 @@ export class TakeANumber {
 
     private ticketCore(rawMessage: any): Promise<void> {
         // In cases where we are reprocessing messages we have already checkpointed exit early
-        if (rawMessage.sequenceNumber < this.sequenceNumber) {
+        if (rawMessage.sequenceNumber < this.eventHubSequenceNumber) {
             return Promise.resolve();
         }
 

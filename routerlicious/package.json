@@ -4,7 +4,7 @@
   "description": "Server to assign sequence numbers and route deltas between connected clients",
   "main": "index.js",
   "scripts": {
-    "browserify": "mkdirp public/scripts/dist && browserify dist/server/controllers/home.js -o public/scripts/dist/home.js",
+    "browserify": "mkdirp public/scripts/dist && browserify dist/server/controllers/home.js -o public/scripts/dist/home.js -s controller",
     "build": "npm run tsc && npm run tslint && npm run browserify && npm run less",
     "build:watch": "watch 'npm run tsc && npm run browserify' src",
     "less": "lessc src/stylesheets/style.less public/stylesheets/dist/style.css",
