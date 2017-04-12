@@ -4,6 +4,9 @@ import * as path from "path";
 import * as api from "../api";
 import * as socketStorage from "../socket-storage";
 
+// TODO when we have embedded documents either we will run the whole update algorithm here
+//      or will allow someone to configure the API to ignore dependent objects
+
 // Setup the configuration system - pull arguments, then environment variables
 nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
 
@@ -17,7 +20,7 @@ async function loadDocument(id: string): Promise<api.Document> {
     const provider = new socketStorage.StorageProvider("http://web:3000");
     const storage = await provider.connect({ token: "none" });
 
-    console.log("Loading in root document...");
+    console.log(`Loading in root document for ${id}...`);
     const document = await api.load(storage, id);
 
     console.log("Document loaded");
@@ -31,14 +34,22 @@ function displayMap(map: api.IMap) {
     }
 }
 
+/**
+ * Serializes the document to blob storage and then marks the latest version in mongodb
+ */
+function serialize(root: api.IMap) {
+    console.log("Serializing");
+}
+
 function handleDocument(id: string) {
-    loadDocument("test").then((doc) => {
+    loadDocument(id).then((doc) => {
         const root = doc.getRoot();
 
         // Display the initial values and then listen for updates
         displayMap(root);
         root.on("valueChanged", () => {
             displayMap(root);
+            serialize(root);
         });
     },
     (error) => {

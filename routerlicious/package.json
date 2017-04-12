@@ -49,6 +49,7 @@
     "amqp10": "^3.0.0",
     "azure-event-hubs": "0.0.7",
     "azure-sb": "^0.10.4",
+    "azure-storage": "^2.1.0",
     "body-parser": "^1.17.1",
     "express": "^4.15.2",
     "hjs": "0.0.6",

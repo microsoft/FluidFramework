@@ -83,10 +83,12 @@ class EventProcessorFactory implements eventProcessor.IEventProcessorFactory {
         const mongoClientP = MongoClient.connect(mongoUrl);
         this.collectionP = mongoClientP.then(async (db) => {
             const deltasCollectionName = nconf.get("mongo:collectionNames:deltas");
-            const collection = db.collection(deltasCollectionName);
 
             // TODO remove once we've stabalized
+            let collection = await db.createCollection(deltasCollectionName);
             await collection.drop();
+
+            collection = db.collection(deltasCollectionName);
 
             const indexP = collection.createIndex({
                     objectId: 1,

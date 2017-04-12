@@ -60,6 +60,11 @@ export interface ICollaborativeObjectDetails {
     snapshot: any;
 
     /**
+     * The sequence number the snapshot is relative to
+     */
+    sequenceNumber: number;
+
+    /**
      * The server resource fro the given collaborative object
      */
     object: IStorageObject;

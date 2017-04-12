@@ -40,6 +40,7 @@ export class Storage implements api.IStorage {
                         response.data.type,
                         this,
                         this.socket),
+                    sequenceNumber: response.data.sequenceNumber,
                     snapshot: response.data.snapshot,
                 };
                 resolve(details);

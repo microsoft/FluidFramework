@@ -54,6 +54,7 @@ io.on("connection", (socket) => {
         const responseMessage: socketStorage.IResponse<socketStorage.IObjectDetails> = {
             data: {
                 id: message.objectId,
+                sequenceNumber: 0,
                 snapshot: {},
                 type: message.type,
             },
