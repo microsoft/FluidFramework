@@ -11,7 +11,7 @@ export interface IExtension {
     /**
      * Creates a new collaborative object with the initial snapshot state.
      */
-    create(snapshot: any): types.ICollaborativeObject;
+    create(snapshot: any, sequenceNumber: number): types.ICollaborativeObject;
 
     /**
      * Loads the given service backed collaborative object.

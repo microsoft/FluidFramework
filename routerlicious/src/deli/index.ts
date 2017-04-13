@@ -1,9 +1,10 @@
 import { Client, Sender } from "azure-event-hubs";
+import { Collection, MongoClient } from "mongodb";
 import * as nconf from "nconf";
 import * as path from "path";
 import * as eventProcessor from "../event-processor";
-import * as socketStorage from "../socket-storage";
 import * as utils from "../utils";
+import { TakeANumber } from "./takeANumber";
 
 // Setup the configuration system - pull arguments, then environment variables
 nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
@@ -23,9 +24,12 @@ const mongoCheckpointManager = new eventProcessor.MongoCheckpointManager(
     consumerGroup);
 
 class EventProcessor implements eventProcessor.IEventProcessor {
-    private sequenceNumber = 0;
+    private dispensers: { [key: string]: TakeANumber } = {};
 
-    constructor(private senderP: Promise<Sender>) {
+    // A map of dispensers that have recently ticketed a message and require serializing the generated sequence number
+    private dirtyDispensers: { [key: string]: TakeANumber } = {};
+
+    constructor(private senderP: Promise<Sender>, private objectsCollectionP: Promise<Collection>) {
     }
 
     public async openAsync(context: eventProcessor.PartitionContext): Promise<void> {
@@ -39,17 +43,28 @@ class EventProcessor implements eventProcessor.IEventProcessor {
     }
 
     public async processEvents(context: eventProcessor.PartitionContext, messages: any[]): Promise<void> {
-        const sender = await this.senderP;
+        const dependencies = await Promise.all([this.senderP, this.objectsCollectionP]);
+        const sender = dependencies[0];
+        const collection = dependencies[1];
 
         console.log(`Processing ${messages.length} events`);
         const messageProcessed: Array<Promise<any>> = [];
         for (const message of messages) {
-            let processedP = this.processEvent(sender, context, message);
+            // tslint:disable-next-line
+            console.log(`Received message on partition ${context.partitionId} with key ${message.partitionKey} at offset ${message.offset}`);
+            let processedP = this.processEvent(
+                sender,
+                collection,
+                context,
+                message);
             messageProcessed.push(processedP);
         }
 
-        console.log(`Checkpointing ${messages.length} messages`);
+        // Wait for all the messages to finish processing. Then have the ticketing machines checkpoint. And finally
+        // checkpoint the event hub. The ordering here matters since once we checkpoint the event hub we won't
+        // return to process the messages
         await Promise.all(messageProcessed);
+        await this.checkpointDispensers();
         await context.checkpoint();
     }
 
@@ -57,28 +72,45 @@ class EventProcessor implements eventProcessor.IEventProcessor {
         console.error(`EventProcessor error: ${JSON.stringify(error)}`);
     }
 
-    private async processEvent(sender: Sender, context: eventProcessor.PartitionContext, message: any): Promise<void> {
-        // tslint:disable-next-line
-        console.log(`Received message on partition ${context.partitionId} with key ${message.partitionKey} at offset ${message.offset}`);
-        const submitOpMessage = message.body as socketStorage.ISubmitOpMessage;
-        const routedMessage: socketStorage.IRoutedOpMessage = {
-            clientId: submitOpMessage.clientId,
-            objectId: submitOpMessage.objectId,
-            op: submitOpMessage.op,
-            sequenceNumber: this.sequenceNumber++,
-        };
+    /**
+     * Checkpoints all the pending dispensers
+     */
+    private async checkpointDispensers(): Promise<any> {
+        console.log("Checkpointing dispensers...");
+        const checkpointsP: Array<Promise<void>> = [];
 
-        // Serialize the sequenced message to the event hub
-        let promise = new Promise<any>((resolve, reject) => {
-            sender.send(routedMessage, routedMessage.objectId).then(() => resolve(), (error) => reject(error));
-        });
+        // tslint:disable-next-line:forin
+        for (const key in this.dirtyDispensers) {
+            const dispenser = this.dispensers[key];
+            const checkpointP = dispenser.checkpoint();
+            checkpointsP.push(checkpointP);
+        }
 
-        return promise;
+        return Promise.all(checkpointsP);
+    }
+
+    private async processEvent(
+        sender: Sender,
+        collection: Collection,
+        context: eventProcessor.PartitionContext,
+        message: any): Promise<void> {
+
+        const objectId = message.body.objectId;
+
+        // Go grab the takeANumber machine for the objectId and mark it as dirty
+        if (!(objectId in this.dispensers)) {
+            this.dispensers[objectId] = new TakeANumber(objectId, collection, sender);
+        }
+        const dispenser = this.dispensers[objectId];
+        this.dirtyDispensers[objectId] = dispenser;
+
+        return dispenser.ticket(message);
     }
 }
 
 class EventProcessorFactory implements eventProcessor.IEventProcessorFactory {
     private senderP: Promise<Sender>;
+    private objectsCollectionP: Promise<Collection>;
 
     constructor() {
         // Configure access to the event hub where we'll send sequenced packets
@@ -86,10 +118,15 @@ class EventProcessorFactory implements eventProcessor.IEventProcessorFactory {
         const deltasConnectionString = utils.getEventHubConnectionString(deltasConfig.endpoint, deltasConfig.send);
         const sendClient = Client.fromConnectionString(deltasConnectionString, deltasConfig.entityPath);
         this.senderP = sendClient.open().then(() => sendClient.createSender());
+
+        // Connection to stored document details
+        const client = MongoClient.connect(mongoUrl);
+        const objectsCollectionName = nconf.get("mongo:collectionNames:objects");
+        this.objectsCollectionP = client.then((db) => db.collection(objectsCollectionName));
     }
 
     public createEventProcessor(context: any): eventProcessor.IEventProcessor {
-        return new EventProcessor(this.senderP);
+        return new EventProcessor(this.senderP, this.objectsCollectionP);
     }
 };
 

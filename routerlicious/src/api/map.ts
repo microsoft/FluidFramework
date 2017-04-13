@@ -13,21 +13,21 @@ class Map implements api.IMap {
 
     private events = new EventEmitter();
 
-    constructor(private snapshot: any, private source?: api.IStorageObject) {
+    constructor(private data: any, private sequenceNumber: number,  private source?: api.IStorageObject) {
         this.id = source ? source.id : uuid.v4();
         this.attach(source);
     }
 
     public keys(): string[] {
-        return _.keys(this.snapshot);
+        return _.keys(this.data);
     }
 
     public get(key: string) {
-        return this.snapshot[key];
+        return this.data[key];
     }
 
     public has(key: string): boolean {
-        return key in this.snapshot;
+        return key in this.data;
     }
 
     public set(key: string, value: any): void {
@@ -106,9 +106,20 @@ class Map implements api.IMap {
         });
     }
 
+    public snapshot(): api.ICollaborativeObjectSnapshot {
+        return {
+            sequenceNumber: this.sequenceNumber,
+            snapshot: _.clone(this.data),
+        };
+    }
+
     private processOperation(message: socketStorage.IRoutedOpMessage) {
         // Process the message
         console.log(`Received a message from the server ${JSON.stringify(message)}`);
+
+        // TODO making the below simplifying assumption for now that these arrive in order. Need to double check
+        // that assumption and/or cause clients to handle out of order
+        this.sequenceNumber = Math.max(this.sequenceNumber, message.sequenceNumber);
 
         // TODO We can use this message in the future to update our own sequence numbers
         if (message.clientId === this.source.storage.clientId) {
@@ -132,17 +143,17 @@ class Map implements api.IMap {
     }
 
     private setCore(key: string, value: any) {
-        this.snapshot[key] = value;
+        this.data[key] = value;
         this.events.emit("valueChanged", { key });
     }
 
     private clearCore() {
-        this.snapshot = {};
+        this.data = {};
         this.events.emit("clear");
     }
 
     private deleteCore(key: string) {
-        delete this.snapshot[key];
+        delete this.data[key];
         this.events.emit("valueChanged", { key });
     }
 }
@@ -155,11 +166,12 @@ export class MapExtension implements api.IExtension {
 
     public type: string = MapExtension.Type;
 
-    public create(snapshot: any): api.ICollaborativeObject {
-        return new Map(snapshot);
+    public create(snapshot: any, sequenceNumber: number): api.ICollaborativeObject {
+        return new Map(snapshot, sequenceNumber);
     }
 
     public load(details: api.ICollaborativeObjectDetails): api.ICollaborativeObject {
-        return new Map(details.snapshot, details.object);
+        // TODO this should be some interface to the object itself
+        return new Map(details.snapshot, details.sequenceNumber, details.object);
     }
 }

@@ -4,7 +4,7 @@
   "description": "Server to assign sequence numbers and route deltas between connected clients",
   "main": "index.js",
   "scripts": {
-    "browserify": "mkdirp public/scripts/dist && browserify dist/server/controllers/home.js -o public/scripts/dist/home.js",
+    "browserify": "mkdirp public/scripts/dist && browserify dist/server/controllers/home.js -o public/scripts/dist/home.js -s controller",
     "build": "npm run tsc && npm run tslint && npm run browserify && npm run less",
     "build:watch": "watch 'npm run tsc && npm run browserify' src",
     "less": "lessc src/stylesheets/style.less public/stylesheets/dist/style.css",
@@ -49,6 +49,7 @@
     "amqp10": "^3.0.0",
     "azure-event-hubs": "0.0.7",
     "azure-sb": "^0.10.4",
+    "azure-storage": "^2.1.0",
     "body-parser": "^1.17.1",
     "express": "^4.15.2",
     "hjs": "0.0.6",
