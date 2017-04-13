@@ -1,6 +1,7 @@
 import { Client } from "azure-event-hubs";
 import * as azureStorage from "azure-storage";
 import * as _ from "lodash";
+import { MongoClient } from "mongodb";
 import * as nconf from "nconf";
 import * as redis from "redis";
 import * as socketIo from "socket.io";
@@ -37,9 +38,21 @@ let pub = redis.createClient(port, host, pubOptions);
 let sub = redis.createClient(port, host, subOptions);
 io.adapter(socketIoRedis({ pubClient: pub, subClient: sub }));
 
+// Connect to the database
+const mongoUrl = nconf.get("mongo:endpoint");
+const mongoClientP = MongoClient.connect(mongoUrl);
+const collectionP = mongoClientP.then(async (db) => {
+    const deltasCollectionName = nconf.get("mongo:collectionNames:deltas");
+    const collection = db.collection(deltasCollectionName);
+    return collection;
+});
+
+// Gain access to the document storage
 const blobStorageConnectionString = nconf.get("blobStorage:connectionString");
 const snapshotContainer = nconf.get("blobStorage:containers:snapshots");
 const blobStorage = azureStorage.createBlobService(blobStorageConnectionString);
+
+// Get Mongo access to grab pending snapshots
 
 io.on("connection", (socket) => {
     // The loadObject call needs to see if the object already exists. If not it should offload to
@@ -49,44 +62,53 @@ io.on("connection", (socket) => {
     //
     // Given a client is then going to send us deltas on that service we need routerlicious to kick in as well.
     socket.on("loadObject", (message: socketStorage.ILoadObjectMessage, response) => {
-        // 1. TODO join the room first so we sign up for the latest updates
-        // 2. Load the snapshot
-        // 3. Grab every delta after the snapshot
-        // 4. Return these to the client
-        // ---- Be aware there are probably potential ordering conflicts with an update happening prior to 2-4
-
+        // Join the room first to ensure the client will start receiving delta updates
         console.log(`Client has requested to load ${message.objectId}`);
-        socket.join(message.objectId);
-
-        blobStorage.getBlobToText(snapshotContainer, message.objectId, (error, text) => {
-            let snapshot: api.ICollaborativeObjectSnapshot;
-
-            // TODO need to distinguish no blob vs. error
-            if (error && (<any> error).code !== "BlobNotFound") {
-                response({ error });
-                return;
+        socket.join(message.objectId, (joinError) => {
+            if (joinError) {
+                return response({ error: joinError });
             }
 
-            if (error) {
-                snapshot = {
-                    sequenceNumber: 0,
-                    snapshot: {},
+            // Now grab the snapshot, any deltas post snapshot, and send to the client
+            blobStorage.getBlobToText(snapshotContainer, message.objectId, async (error, text) => {
+                let snapshot: api.ICollaborativeObjectSnapshot;
+
+                // TODO need to distinguish no blob vs. error
+                if (error && (<any> error).code !== "BlobNotFound") {
+                    response({ error });
+                    return;
+                }
+
+                if (error) {
+                    snapshot = {
+                        sequenceNumber: 0,
+                        snapshot: {},
+                    };
+                } else {
+                    snapshot = JSON.parse(text);
+                }
+
+                const collection = await collectionP;
+                const deltas = await collection
+                    .find({ objectId: message.objectId, sequenceNumber: { $gt: snapshot.sequenceNumber } })
+                    .sort({ sequenceNumber: 1 })
+                    .toArray();
+                console.log("Found outstanding deltas");
+                console.log(JSON.stringify(deltas, null, 2));
+
+                const responseMessage: socketStorage.IResponse<socketStorage.IObjectDetails> = {
+                    data: {
+                        deltas,
+                        id: message.objectId,
+                        sequenceNumber: snapshot.sequenceNumber,
+                        snapshot: snapshot.snapshot,
+                        type: message.type,
+                    },
+                    error: null,
                 };
-            } else {
-                snapshot = JSON.parse(text);
-            }
 
-            const responseMessage: socketStorage.IResponse<socketStorage.IObjectDetails> = {
-                data: {
-                    id: message.objectId,
-                    sequenceNumber: snapshot.sequenceNumber,
-                    snapshot: snapshot.snapshot,
-                    type: message.type,
-                },
-                error: null,
-            };
-
-            response(responseMessage);
+                response(responseMessage);
+            });
         });
     });
 
