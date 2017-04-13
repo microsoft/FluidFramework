@@ -29,12 +29,17 @@ export class Storage implements api.IStorage {
                 type,
             };
 
+            // TODO the "loadObject" below will also sign us up for notifications. It's possible we will receive
+            // these messages prior to the object being created and will want to queue these messages to provide
+            // tot he object once it has been loaded
+
             this.socket.emit(
                 "loadObject",
                 loadObjectMessage,
                 (response: messages.IResponse<messages.IObjectDetails>) => {
 
                 let details: api.ICollaborativeObjectDetails = {
+                    deltas: response.data.deltas,
                     object: new StorageObject(
                         response.data.id,
                         response.data.type,

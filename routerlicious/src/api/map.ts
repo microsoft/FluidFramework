@@ -13,9 +13,18 @@ class Map implements api.IMap {
 
     private events = new EventEmitter();
 
-    constructor(private data: any, private sequenceNumber: number,  private source?: api.IStorageObject) {
+    constructor(
+        private data: any,
+        deltas: socketStorage.IRoutedOpMessage[],
+        private sequenceNumber: number,
+        private source?: api.IStorageObject) {
         this.id = source ? source.id : uuid.v4();
         this.attach(source);
+
+        // load pending deltas
+        for (const delta of deltas) {
+            this.processOperation(delta);
+        }
     }
 
     public keys(): string[] {
@@ -167,11 +176,11 @@ export class MapExtension implements api.IExtension {
     public type: string = MapExtension.Type;
 
     public create(snapshot: any, sequenceNumber: number): api.ICollaborativeObject {
-        return new Map(snapshot, sequenceNumber);
+        return new Map(snapshot, [], sequenceNumber);
     }
 
     public load(details: api.ICollaborativeObjectDetails): api.ICollaborativeObject {
         // TODO this should be some interface to the object itself
-        return new Map(details.snapshot, details.sequenceNumber, details.object);
+        return new Map(details.snapshot, details.deltas, details.sequenceNumber, details.object);
     }
 }

@@ -17,7 +17,7 @@ async function loadDocument(id: string): Promise<api.Document> {
 function displayMap(map: api.IMap) {
     const container = $("<div></div>");
 
-    const keys = map.keys();
+    const keys = map.keys().sort();
     for (const key of keys) {
         container.append($(`<div>${key}: ${map.get(key)}</div>`));
     }
