@@ -1,4 +1,4 @@
-import * as sb from "azure-sb";
+import * as amqp from "amqplib";
 import * as azureStorage from "azure-storage";
 import * as nconf from "nconf";
 import * as path from "path";
@@ -11,10 +11,12 @@ import * as socketStorage from "../socket-storage";
 // Setup the configuration system - pull arguments, then environment variables
 nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
 
-// Service bus configuration
-const serviceBusConnectionString = nconf.get("serviceBus:snapshot:listen");
-const service = sb.createServiceBusService(serviceBusConnectionString);
+// Queue configuration
 const queueName = nconf.get("tmz:queue");
+const connectionString = nconf.get("rabbitmq:connectionString");
+
+const connectionP = amqp.connect(connectionString);
+const channelP = connectionP.then((connection) => connection.createChannel());
 
 // Setup blob storage to store the snapshots
 const blobStorageConnectionString = nconf.get("blobStorage:connectionString");
@@ -98,44 +100,20 @@ function processMessage(message: string): Promise<void> {
     });
 }
 
-async function retrieveAndProcessMessage(): Promise<void> {
-    // Retrieve a message from the queue. Service Bus doesn't give us es6 promises so we need to convert
-    const messageP = new Promise<any>((resolve, reject) => {
-        service.receiveQueueMessage(queueName, { isPeekLock: true, timeoutIntervalInS: 60 }, (error, message) => {
-            if (error) {
-                return reject(error);
-            }
+async function run() {
+    const channel = await channelP;
 
-            resolve(message);
-        });
-    });
+    channel.assertQueue(queueName, { durable: true });
+    channel.prefetch(1);
 
-    const message = await messageP;
-    await processMessage(message.body);
-
-    // We can delete the message now that we have successfully processed it
-    return new Promise<void>((resolve, reject) => {
-        service.deleteMessage(message, (deleteError) => {
-            if (deleteError) {
-                return reject(deleteError);
-            }
-
-            return resolve();
-        });
-    });
-}
-
-function run() {
-    // Determine whether we have capacity to support another document and if so pull from the queue. For now
-    // we always pull from the queue
-    const processP = retrieveAndProcessMessage();
-    processP.then(() => {
-            run();
+    channel.consume(
+        queueName,
+        (message) => {
+            processMessage(message.content.toString()).then(() => {
+                channel.ack(message);
+            });
         },
-        (error) => {
-            console.error(error);
-            run();
-        });
+        { noAck: false });
 }
 
 run();

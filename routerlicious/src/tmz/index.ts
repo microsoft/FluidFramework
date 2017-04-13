@@ -1,5 +1,5 @@
-
-import * as sb from "azure-sb";
+import * as amqp from "amqplib";
+import * as Bluebird from "bluebird";
 import * as nconf from "nconf";
 import * as path from "path";
 import * as eventProcessor from "../event-processor";
@@ -9,9 +9,9 @@ import * as utils from "../utils";
 // Setup the configuration system - pull arguments, then environment variables
 nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
 
-// Service bus configuration
-const serviceBusConnectionString = nconf.get("serviceBus:snapshot:send");
+// Go grab the connection string to the queue system
 const snapshotQueue = nconf.get("tmz:queue");
+const rabbitmqConnectionString = nconf.get("rabbitmq:connectionString");
 
 // Get the event hub connection string information
 const deltasConfig = nconf.get("eventHub:deltas");
@@ -30,11 +30,13 @@ const mongoCheckpointManager = new eventProcessor.MongoCheckpointManager(
 class EventProcessor implements eventProcessor.IEventProcessor {
     private createdRequests: any = {};
 
-    constructor(private serviceBus: any, private queue: string) {
+    constructor(private channelP: Bluebird<amqp.Channel>, private queue: string) {
     }
 
     public async openAsync(context: eventProcessor.PartitionContext): Promise<void> {
         console.log("opening event processor");
+        const channel = await this.channelP;
+        await channel.assertQueue(this.queue, { durable: true });
     }
 
     public async closeAsync(
@@ -68,23 +70,22 @@ class EventProcessor implements eventProcessor.IEventProcessor {
 
         this.createdRequests[message.objectId] = true;
         console.log(`Requesting snapshots for ${message.objectId}`);
-        this.serviceBus.sendQueueMessage(this.queue, message.objectId, (error) => {
-            if (!error) {
-                console.log("Message sent successfully");
-            }
-        });
+
+        const channel = await this.channelP;
+        channel.sendToQueue(this.queue, new Buffer(message.objectId), { persistent: true });
     }
 }
 
 class EventProcessorFactory implements eventProcessor.IEventProcessorFactory {
-    private serviceBus: any;
+    private channelP: Bluebird<amqp.Channel>;
 
-    constructor(connectionString: any, private queue: string) {
-        this.serviceBus = sb.createServiceBusService(connectionString);
+    constructor(connectionString: string, private queue: string) {
+        const connectionP = amqp.connect(connectionString);
+        this.channelP = connectionP.then((connection) => connection.createChannel());
     }
 
     public createEventProcessor(context: any): eventProcessor.IEventProcessor {
-        return new EventProcessor(this.serviceBus, this.queue);
+        return new EventProcessor(this.channelP, this.queue);
     }
 };
 
@@ -93,4 +94,4 @@ const host = new eventProcessor.EventProcessorHost(
     consumerGroup,
     deltasConnectionString,
     mongoCheckpointManager);
-host.registerEventProcessorFactory(new EventProcessorFactory(serviceBusConnectionString, snapshotQueue));
+host.registerEventProcessorFactory(new EventProcessorFactory(rabbitmqConnectionString, snapshotQueue));

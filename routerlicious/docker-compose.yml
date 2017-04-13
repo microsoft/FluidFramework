@@ -22,6 +22,7 @@ services:
             - .:/usr/src/server
         depends_on:
             - web
+            - rabbitmq
         command: npm run paparazzi
     scriptorium:
         build: .
@@ -38,8 +39,11 @@ services:
         depends_on:
             - redis
             - mongodb
+            - rabbitmq
         command: npm run tmz
     redis:
         image: "redis:alpine"
     mongodb:
         image: "mongo:3.4.3"
+    rabbitmq:
+        image: "rabbitmq:alpine"
