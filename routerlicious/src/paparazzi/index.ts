@@ -104,12 +104,16 @@ async function run() {
     const channel = await channelP;
 
     channel.assertQueue(queueName, { durable: true });
+    channel.prefetch(1);
+
     channel.consume(
         queueName,
         (message) => {
-            processMessage(message.content.toString());
+            processMessage(message.content.toString()).then(() => {
+                channel.ack(message);
+            });
         },
-        { noAck: true });
+        { noAck: false });
 }
 
 run();

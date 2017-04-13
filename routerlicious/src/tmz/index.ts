@@ -72,20 +72,20 @@ class EventProcessor implements eventProcessor.IEventProcessor {
         console.log(`Requesting snapshots for ${message.objectId}`);
 
         const channel = await this.channelP;
-        channel.sendToQueue(this.queue, new Buffer(message.objectId))
+        channel.sendToQueue(this.queue, new Buffer(message.objectId), { persistent: true });
     }
 }
 
 class EventProcessorFactory implements eventProcessor.IEventProcessorFactory {
     private channelP: Bluebird<amqp.Channel>;
 
-    constructor(connectionString: string, private snapshotQueue: string) {
+    constructor(connectionString: string, private queue: string) {
         const connectionP = amqp.connect(connectionString);
         this.channelP = connectionP.then((connection) => connection.createChannel());
     }
 
     public createEventProcessor(context: any): eventProcessor.IEventProcessor {
-        return new EventProcessor(this.channelP, this.snapshotQueue);
+        return new EventProcessor(this.channelP, this.queue);
     }
 };
 
