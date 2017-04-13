@@ -24,5 +24,8 @@
     {{$scripts}}
         <script src="/socket.io/socket.io.js"></script>
         <script src="/public/scripts/dist/home.js"></script>
+        <script>
+            controller.load("{{ id }}");
+        </script>
     {{/scripts}}
 {{/layout}}

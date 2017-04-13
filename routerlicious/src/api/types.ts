@@ -1,5 +1,14 @@
 import * as storage from "./storage";
 
+/**
+ * Helper interface to wrap a snapshot with the sequence number it was taken at
+ */
+export interface ICollaborativeObjectSnapshot {
+    sequenceNumber: number;
+
+    snapshot: any;
+}
+
 export interface ICollaborativeObject {
     /**
      * A readonly identifier for th e collaborative object
@@ -26,6 +35,13 @@ export interface ICollaborativeObject {
      * This marks it as a collaborative object.
      */
     attach(source: storage.IStorageObject);
+
+    /**
+     * Gets a form of the object that can be serialized.
+     * TODO this is temporary to bootstrap the process. For performance/dynamic load/etc... we'll likely expose
+     * access to the snapshot behind the storage objects.
+     */
+    snapshot(): ICollaborativeObjectSnapshot;
 }
 
 /**

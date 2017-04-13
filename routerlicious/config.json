@@ -31,6 +31,12 @@
             "listen": "Endpoint=sb://prague-dev.servicebus.windows.net/;SharedAccessKeyName=listen;SharedAccessKey=8wV5L6Hvl0nBSR43rP674bTp2UYBUk/wu/F2M7dCxhA="
         }
     },
+    "blobStorage": {
+        "connectionString": "DefaultEndpointsProtocol=https;AccountName=praguedev;AccountKey=Si7wdPPwjedgYTUSyKBU4aYoz3U3HcHEfZWziXshCf8w3kxRP6H4g7QThWHGB8kFX0Wrm/mHe8+1b596yA4mlg==;EndpointSuffix=core.windows.net",
+        "containers": {
+            "snapshots": "snapshots"
+        }
+    },
     "mongo": {
         "endpoint": "mongodb://mongodb:27017",
         "collectionNames": {
