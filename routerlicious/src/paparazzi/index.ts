@@ -1,4 +1,5 @@
 import * as sb from "azure-sb";
+import * as azureStorage from "azure-storage";
 import * as nconf from "nconf";
 import * as path from "path";
 import * as api from "../api";
@@ -15,6 +16,11 @@ const serviceBusConnectionString = nconf.get("serviceBus:snapshot:listen");
 const service = sb.createServiceBusService(serviceBusConnectionString);
 const queueName = nconf.get("tmz:queue");
 
+// Setup blob storage to store the snapshots
+const blobStorageConnectionString = nconf.get("blobStorage:connectionString");
+const snapshotContainer = nconf.get("blobStorage:containers:snapshots");
+const blobStorage = azureStorage.createBlobService(blobStorageConnectionString);
+
 async function loadDocument(id: string): Promise<api.Document> {
     console.log("Connecting to storage provider...");
     const provider = new socketStorage.StorageProvider("http://web:3000");
@@ -27,18 +33,45 @@ async function loadDocument(id: string): Promise<api.Document> {
     return document;
 }
 
-function displayMap(map: api.IMap) {
-    const keys = map.keys();
-    for (const key of keys) {
-        console.log(`Value changed: ${key}: ${map.get(key)}`);
-    }
-}
+const pendingSerializeMap: { [key: string]: boolean } = {};
+const dirtyMap: { [key: string]: boolean } = {};
 
 /**
  * Serializes the document to blob storage and then marks the latest version in mongodb
  */
 function serialize(root: api.IMap) {
-    console.log("Serializing");
+    if (pendingSerializeMap[root.id]) {
+        dirtyMap[root.id] = true;
+        return;
+    }
+
+    // Set a pending operation and clear any dirty flags
+    pendingSerializeMap[root.id] = true;
+    dirtyMap[root.id] = false;
+
+    const snapshot = root.snapshot();
+    const options: azureStorage.BlobService.CreateBlobRequestOptions = {
+        contentSettings: {
+            contentType: "application/json",
+        },
+    };
+
+    blobStorage.createBlockBlobFromText(
+        snapshotContainer,
+        root.id,
+        JSON.stringify(snapshot),
+        options,
+        (error, result) => {
+            // TODO we will just log errors for now. Will want a better strategy later on (replay, wait)
+            if (error) {
+                console.error(error);
+            }
+
+            pendingSerializeMap[root.id] = false;
+            if (dirtyMap[root.id]) {
+                serialize(root);
+            }
+        });
 }
 
 function handleDocument(id: string) {
@@ -46,9 +79,7 @@ function handleDocument(id: string) {
         const root = doc.getRoot();
 
         // Display the initial values and then listen for updates
-        displayMap(root);
         root.on("valueChanged", () => {
-            displayMap(root);
             serialize(root);
         });
     },

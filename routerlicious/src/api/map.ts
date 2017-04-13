@@ -117,6 +117,10 @@ class Map implements api.IMap {
         // Process the message
         console.log(`Received a message from the server ${JSON.stringify(message)}`);
 
+        // TODO making the below simplifying assumption for now that these arrive in order. Need to double check
+        // that assumption and/or cause clients to handle out of order
+        this.sequenceNumber = Math.max(this.sequenceNumber, message.sequenceNumber);
+
         // TODO We can use this message in the future to update our own sequence numbers
         if (message.clientId === this.source.storage.clientId) {
             return;

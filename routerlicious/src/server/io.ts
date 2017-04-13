@@ -1,9 +1,11 @@
 import { Client } from "azure-event-hubs";
+import * as azureStorage from "azure-storage";
 import * as _ from "lodash";
 import * as nconf from "nconf";
 import * as redis from "redis";
 import * as socketIo from "socket.io";
 import * as socketIoRedis from "socket.io-redis";
+import * as api from "../api";
 import * as socketStorage from "../socket-storage";
 import * as utils from "../utils";
 
@@ -35,6 +37,10 @@ let pub = redis.createClient(port, host, pubOptions);
 let sub = redis.createClient(port, host, subOptions);
 io.adapter(socketIoRedis({ pubClient: pub, subClient: sub }));
 
+const blobStorageConnectionString = nconf.get("blobStorage:connectionString");
+const snapshotContainer = nconf.get("blobStorage:containers:snapshots");
+const blobStorage = azureStorage.createBlobService(blobStorageConnectionString);
+
 io.on("connection", (socket) => {
     // The loadObject call needs to see if the object already exists. If not it should offload to
     // the storage service to go and create it.
@@ -46,22 +52,36 @@ io.on("connection", (socket) => {
         console.log(`Client has requested to load ${message.objectId}`);
         socket.join(message.objectId);
 
-        // TODO
-        // 1. Fetch the latest snapshot
-        // 2. Grab all deltas that have occurred since that snapshot
-        // 3. Return these to the client
+        blobStorage.getBlobToText(snapshotContainer, message.objectId, (error, text) => {
+            let snapshot: api.ICollaborativeObjectSnapshot;
 
-        const responseMessage: socketStorage.IResponse<socketStorage.IObjectDetails> = {
-            data: {
-                id: message.objectId,
-                sequenceNumber: 0,
-                snapshot: {},
-                type: message.type,
-            },
-            error: null,
-        };
+            // TODO need to distinguish no blob vs. error
+            if (error && (<any> error).code !== "BlobNotFound") {
+                response({ error });
+                return;
+            }
 
-        response(responseMessage);
+            if (error) {
+                snapshot = {
+                    sequenceNumber: 0,
+                    snapshot: {},
+                };
+            } else {
+                snapshot = JSON.parse(text);
+            }
+
+            const responseMessage: socketStorage.IResponse<socketStorage.IObjectDetails> = {
+                data: {
+                    id: message.objectId,
+                    sequenceNumber: snapshot.sequenceNumber,
+                    snapshot: snapshot.snapshot,
+                    type: message.type,
+                },
+                error: null,
+            };
+
+            response(responseMessage);
+        });
     });
 
     // Message sent when a new operation is submitted to the router
