@@ -750,14 +750,33 @@ const enum MsgType {
 }
 
 interface DeltaMsg {
+    /**
+     * Type of this change.
+     */
     type: MsgType;
+    /**
+     * Sequence number of this change.  Added by the server.
+     */
     seq: number;
+    /**
+     * Last sequence number processed by client before sending this message.
+     */
     refSeq: number;
+    /**
+     * Unique identifier for client initiating this change.
+     */
     clientId: number;
+    /**
+     * Client's sequence number.  
+     */
+    clientSeq: number;
     pos1: number;
     pos2?: number;
     text?: string;
-    minseq?: number;  // sent by server; minumum ref seq across clients
+    /**
+     * Sent by server; minumum ref seq across clients.
+     */
+    minseq?: number; 
 }
 
 function makeInsertMsg(text: string, pos: number, seq: number, refSeq: number, clientId: number) {
@@ -826,7 +845,7 @@ export function TestPack() {
         return str;
     }
 
-    function reportTiming(client: TestClient) {
+    function reportTiming(client: Client) {
         let aveTime = (client.accumTime / client.accumOps).toFixed(1);
         let aveLocalTime = (client.localTime / client.localOps).toFixed(1);
         let aveWindowTime = (client.accumWindowTime / client.accumOps).toFixed(1);
@@ -850,9 +869,9 @@ export function TestPack() {
             Text.loadText(startFile, server.segTree, fileSegCount);
         }
 
-        let clients = <TestClient[]>Array(clientCount);
+        let clients = <Client[]>Array(clientCount);
         for (let i = 0; i < clientCount; i++) {
-            clients[i] = new TestClient(initString);
+            clients[i] = new Client(initString);
             if (startFile) {
                 Text.loadText(startFile, clients[i].segTree, fileSegCount);
             }
@@ -893,7 +912,7 @@ export function TestPack() {
         }
 
         let rounds = 100000;
-        function clientProcessSome(client: TestClient, all = false) {
+        function clientProcessSome(client: Client, all = false) {
             let cliMsgCount = client.q.count();
             let countToApply: number;
             if (all) {
@@ -905,7 +924,7 @@ export function TestPack() {
             client.applyMessages(countToApply);
         }
 
-        function serverProcessSome(server: TestClient, all = false) {
+        function serverProcessSome(server: Client, all = false) {
             let svrMsgCount = server.q.count();
             let countToApply: number;
             if (all) {
@@ -917,7 +936,7 @@ export function TestPack() {
             return server.applyMessages(countToApply);
         }
 
-        function randomSpateOfInserts(client: TestClient, charIndex: number) {
+        function randomSpateOfInserts(client: Client, charIndex: number) {
             let textLen = randTextLength();
             let text = randomString(textLen, String.fromCharCode(zedCode + ((client.getCurrentSeq() + charIndex) % 50)));
             let preLen = client.getLength();
@@ -929,7 +948,7 @@ export function TestPack() {
             }
         }
 
-        function randomSpateOfRemoves(client: TestClient) {
+        function randomSpateOfRemoves(client: Client) {
             let dlen = randTextLength();
             let preLen = client.getLength();
             let pos = random.integer(0, preLen)(mt);
@@ -940,7 +959,7 @@ export function TestPack() {
             }
         }
 
-        function randomWordMove(client: TestClient) {
+        function randomWordMove(client: Client) {
             let word1 = Text.findRandomWord(client.segTree, client.getClientId());
             if (word1) {
                 let removeStart = word1.pos;
@@ -1047,9 +1066,9 @@ export function TestPack() {
         let insertRounds = 40;
         let removeRounds = 32;
 
-        let cliA = new TestClient("a stitch in time saves nine");
+        let cliA = new Client("a stitch in time saves nine");
         cliA.startCollaboration(0);
-        let cliB = new TestClient("a stitch in time saves nine");
+        let cliB = new Client("a stitch in time saves nine");
         cliB.startCollaboration(1);
         function checkTextMatch(checkSeq: number) {
             let error = false;
@@ -1186,7 +1205,7 @@ export function TestPack() {
     }
 
     function firstTest() {
-        let cli = new TestClient("on the mat.");
+        let cli = new Client("on the mat.");
         cli.startCollaboration(1);
         cli.insertSegmentRemote("that ", 0, 1, 0, 0);
         cli.insertSegmentRemote("fat ", 0, 2, 0, 2);
@@ -1211,7 +1230,7 @@ export function TestPack() {
                 console.log(cli.relText(clientId, refSeq));
             }
         }
-        cli = new TestClient(" old sock!");
+        cli = new Client(" old sock!");
         cli.startCollaboration(1);
         cli.insertSegmentRemote("abcde", 0, 1, 0, 2);
         cli.insertSegmentRemote("yyy", 0, 2, 0, 0);
@@ -1234,7 +1253,7 @@ export function TestPack() {
                 console.log(cli.relText(clientId, refSeq));
             }
         }
-        cli = new TestClient("abcdefgh");
+        cli = new Client("abcdefgh");
         cli.startCollaboration(1);
         cli.removeSegmentRemote(1, 3, 1, 0, 3);
         console.log(cli.segTree.toString());
@@ -1287,9 +1306,12 @@ export function TestPack() {
     }
 }
 
+/**
+ * Used for in-memory testing.  This will queue a reference string for each client message.
+ */
 let useCheckQ = false;
 
-export class TestClient {
+export class Client {
     segTree: SegmentTree;
     accumTime = 0;
     localTime = 0;
@@ -1467,26 +1489,30 @@ export class TestClient {
     }
 }
 
-interface ClientSeq {
+export interface ClientSeq {
     refSeq: number;
     clientId: number;
 }
 
-var clientSeqComparer: BST.Comparer<ClientSeq> = {
+export var clientSeqComparer: BST.Comparer<ClientSeq> = {
     min: { refSeq: -1, clientId: -1 },
     compare: (a, b) => a.refSeq - b.refSeq
 }
 
-export class TestServer extends TestClient {
+/**
+ * Server for tests.  Simulates client communication by directing placing
+ * messages in client queues.  
+ */
+export class TestServer extends Client {
     seq = 1;
-    clients: TestClient[];
+    clients: Client[];
     clientSeqNumbers: BST.Heap<ClientSeq>;
 
     constructor(initText: string) {
         super(initText);
     }
 
-    addClients(clients: TestClient[]) {
+    addClients(clients: Client[]) {
         this.clientSeqNumbers = new BST.Heap<ClientSeq>([], clientSeqComparer);
         this.clients = clients;
         for (let client of clients) {
