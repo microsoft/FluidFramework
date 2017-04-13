@@ -1,8 +1,8 @@
-import { Client, Receiver } from "azure-event-hubs";
+import { Client } from "azure-event-hubs";
 import { ICheckpointManager, IEventProcessor, PartitionContext } from ".";
 
 export class PartitionPump {
-    private reciever: Receiver = null;
+    private recieverP: any = null;
     private messageQueue: any[] = [];
     private processing = false;
     private context: PartitionContext;
@@ -20,7 +20,7 @@ export class PartitionPump {
      * Starts the PartitionPump
      */
     public async start() {
-        if (this.reciever) {
+        if (this.recieverP) {
             throw new Error("Pump has already been started");
         }
 
@@ -32,7 +32,7 @@ export class PartitionPump {
 
         await this.eventProcessor.openAsync(this.context);
 
-        this.reciever = this.client.createReceiver(this.consumerGroup, this.partitionId, options)
+        this.recieverP = this.client.createReceiver(this.consumerGroup, this.partitionId, options)
             .then((receiver) => {
                 receiver.on("errorReceived", (error) => {
                     console.log(error);

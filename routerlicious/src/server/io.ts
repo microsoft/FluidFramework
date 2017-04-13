@@ -49,6 +49,12 @@ io.on("connection", (socket) => {
     //
     // Given a client is then going to send us deltas on that service we need routerlicious to kick in as well.
     socket.on("loadObject", (message: socketStorage.ILoadObjectMessage, response) => {
+        // 1. TODO join the room first so we sign up for the latest updates
+        // 2. Load the snapshot
+        // 3. Grab every delta after the snapshot
+        // 4. Return these to the client
+        // ---- Be aware there are probably potential ordering conflicts with an update happening prior to 2-4
+
         console.log(`Client has requested to load ${message.objectId}`);
         socket.join(message.objectId);
 

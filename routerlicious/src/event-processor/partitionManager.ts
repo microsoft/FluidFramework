@@ -34,7 +34,7 @@ export class PartitionManager {
                         eventProcessor,
                         client,
                         this.consumerGroup,
-                        id,
+                        id.toString(),
                         this.checkpointManager);
 
                     console.log(`Starting pump on partitino ${id}`);

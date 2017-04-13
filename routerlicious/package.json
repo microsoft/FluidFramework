@@ -22,6 +22,7 @@
   "license": "Apache-2.0",
   "repository": "microsoft/prague",
   "devDependencies": {
+    "@types/amqplib": "^0.5.1",
     "@types/jquery": "^2.0.41",
     "@types/lodash": "^4.14.61",
     "@types/mocha": "^2.2.40",
@@ -47,6 +48,7 @@
   },
   "dependencies": {
     "amqp10": "^3.0.0",
+    "amqplib": "^0.5.1",
     "azure-event-hubs": "0.0.7",
     "azure-sb": "^0.10.4",
     "azure-storage": "^2.1.0",

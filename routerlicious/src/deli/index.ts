@@ -117,7 +117,11 @@ class EventProcessorFactory implements eventProcessor.IEventProcessorFactory {
         const deltasConfig = nconf.get("eventHub:deltas");
         const deltasConnectionString = utils.getEventHubConnectionString(deltasConfig.endpoint, deltasConfig.send);
         const sendClient = Client.fromConnectionString(deltasConnectionString, deltasConfig.entityPath);
-        this.senderP = sendClient.open().then(() => sendClient.createSender());
+        this.senderP = new Promise<Sender>((resolve, reject) => {
+            sendClient.open().then(() => sendClient.createSender()).then(
+                (sender) => resolve(sender),
+                (error) => reject(error));
+        });
 
         // Connection to stored document details
         const client = MongoClient.connect(mongoUrl);
