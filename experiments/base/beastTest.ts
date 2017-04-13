@@ -6,9 +6,7 @@ import * as fs from "fs";
 import * as RedBlack from "./redBlack";
 import BTree from "./btree";
 import * as random from "random-js";
-import * as ITree from "./intervalSpanningTree";
 import * as SegTree from "./segmentTree";
-import * as CollabString from "./ops";
 import * as Text from "./text";
 
 function compareStrings(a: string, b: string) {
