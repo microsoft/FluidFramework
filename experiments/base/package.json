@@ -5,6 +5,7 @@
   "main": "beastTest.js",
   "dependencies": {
     "diff": "^3.2.0",
+    "json-websocket": "^0.1.5",
     "random-js": "^1.0.8"
   },
   "devDependencies": {

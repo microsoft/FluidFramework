@@ -1,10 +1,6 @@
 /// <reference path="base.d.ts" />
-/// <reference path="diff.d.ts" />
-/// <reference path="random.d.ts" />
 
 import * as ListUtil from "./list";
-import * as random from "random-js";
-import * as JsDiff from "diff";
 import * as BST from "./redBlack";
 import * as Text from "./text";
 
@@ -22,10 +18,6 @@ export interface TextSegmentActions {
     post?: TextSegmentBlockAction;
 }
 
-export interface TieBreaker {
-    (pos: number, len: number, seq: number, segment: TextSegment, refSeq: number, clientId: number): boolean;
-}
-
 export interface SearchResult {
     text: string;
     pos: number;
@@ -38,6 +30,8 @@ export interface SegmentTreeStats {
     removedLeafCount: number;
     liveCount: number;
     histo: number[];
+    windowTime?: number;
+    packTime?: number;
 }
 
 export interface SegmentTree {
@@ -175,6 +169,7 @@ function compareNumbers(a: number, b: number) {
  */
 class PartialSequenceLengths {
     minLength = 0;
+    segmentCount = 0;
     partialLengths: PartialSequenceLength[] = [];
     clientSeqNumbers: PartialSequenceLength[][] = [];
     static options = {
@@ -247,7 +242,7 @@ class PartialSequenceLengths {
             }
             buf += ']';
         }
-        return `min: ${this.minLength};` + buf;
+        return `min: ${this.minLength}; sc: ${this.segmentCount};` + buf;
     }
 
     getPartialLength(refSeq: number, clientId: number) {
@@ -337,6 +332,7 @@ class PartialSequenceLengths {
     // TODO: assert client id matches
     update(node: TextSegmentBlock, seq: number, clientId: number, segmentWindow: SegmentWindow) {
         let seqSeglen = 0;
+        let segCount = 0;
         // compute length for seq across children
         for (let i = 0; i < node.liveSegmentCount; i++) {
             let segment = node.segments[i];
@@ -349,6 +345,7 @@ class PartialSequenceLengths {
                         seqSeglen += leqPartial.seglen;
                     }
                 }
+                segCount += segment.child.partialLengths.segmentCount;
             }
             else {
                 if (segment.seq == seq) {
@@ -357,8 +354,10 @@ class PartialSequenceLengths {
                 else if (segment.removedSeq == seq) {
                     seqSeglen -= segment.text.length;
                 }
+                segCount++;
             }
         }
+        this.segmentCount = segCount;
 
         function addSeq(partialLengths: PartialSequenceLength[], seq: number, clientId?: number) {
             let seqPartialLen: PartialSequenceLength;
@@ -412,6 +411,7 @@ class PartialSequenceLengths {
 
     static fromLeaves(combinedPartialLengths: PartialSequenceLengths, textSegmentBlock: TextSegmentBlock, segmentWindow: SegmentWindow) {
         combinedPartialLengths.minLength = 0;
+        combinedPartialLengths.segmentCount = textSegmentBlock.liveSegmentCount;
 
         function getOverlapClients(overlapClientids: number[], seglen: number) {
             let bst = new BST.RedBlackTree<number, OverlapClient>(compareNumbers);
@@ -614,6 +614,7 @@ class PartialSequenceLengths {
                 indices[i] = 0;
                 childPartialsCounts[i] = childPartials[i].partialLengths.length;
                 combinedPartialLengths.minLength += childPartials[i].minLength;
+                combinedPartialLengths.segmentCount += childPartials[i].segmentCount;
             }
             let outerIndexOfEarliest = 0;
             let earliestPartialLength: PartialSequenceLength;
@@ -744,12 +745,12 @@ function elapsedMicroseconds(start: number[]) {
     return duration;
 }
 
-const enum MsgType {
+export const enum MsgType {
     INSERT,
     REMOVE
 }
 
-interface DeltaMsg {
+export interface DeltaMsg {
     /**
      * Type of this change.
      */
@@ -776,16 +777,22 @@ interface DeltaMsg {
     /**
      * Sent by server; minumum ref seq across clients.
      */
-    minseq?: number; 
+    minseq?: number;
 }
 
-function makeInsertMsg(text: string, pos: number, seq: number, refSeq: number, clientId: number) {
+export function makeInsertMsg(text: string, pos: number, seq: number, refSeq: number, clientId: number) {
     return <DeltaMsg>{ type: MsgType.INSERT, text: text, pos1: pos, seq: seq, refSeq: refSeq, clientId: clientId };
 }
 
-function makeRemoveMsg(start: number, end: number, seq: number, refSeq: number, clientId: number) {
+export function makeRemoveMsg(start: number, end: number, seq: number, refSeq: number, clientId: number) {
     return <DeltaMsg>{ type: MsgType.REMOVE, pos1: start, pos2: end, seq: seq, refSeq: refSeq, clientId: clientId };
 }
+
+
+/**
+ * Used for in-memory testing.  This will queue a reference string for each client message.
+ */
+export const useCheckQ = false;
 
 function checkTextMatchRelative(refSeq: number, clientId: number, server: TestServer, msg: DeltaMsg) {
     let client = server.clients[clientId];
@@ -796,520 +803,13 @@ function checkTextMatchRelative(refSeq: number, clientId: number, server: TestSe
         console.log(msg);
         //        console.log(serverText);
         //        console.log(cliText);
-        if (cliText !== undefined) {
-            let diffParts = JsDiff.diffChars(serverText, cliText);
-            for (let diffPart of diffParts) {
-                let annotes = "";
-                if (diffPart.added) {
-                    annotes += "added ";
-                }
-                else if (diffPart.removed) {
-                    annotes += "removed ";
-                }
-                if (diffPart.count) {
-                    annotes += `count: ${diffPart.count}`;
-                }
-                console.log(`text: ${diffPart.value} ` + annotes);
-            }
-            console.log(server.segTree.toString());
-            console.log(client.segTree.toString());
-        }
+        console.log(server.segTree.toString());
+        console.log(client.segTree.toString());
         return true;
     }
     return false;
 }
 
-export function TestPack() {
-    let mt = random.engines.mt19937();
-    mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
-    let minSegCount = 1;
-    let maxSegCount = 1000;
-    let segmentCountDistribution = random.integer(minSegCount, maxSegCount);
-    let smallSegmentCountDistribution = random.integer(1, 4);
-    function randSmallSegmentCount() {
-        return smallSegmentCountDistribution(mt);
-    }
-    function randSegmentCount() {
-        return segmentCountDistribution(mt);
-    }
-    let textLengthDistribution = random.integer(1, 5);
-    function randTextLength() {
-        return textLengthDistribution(mt);
-    }
-    const zedCode = 48
-    function randomString(len: number, c: string) {
-        let str = "";
-        for (let i = 0; i < len; i++) {
-            str += c;
-        }
-        return str;
-    }
-
-    function reportTiming(client: Client) {
-        let aveTime = (client.accumTime / client.accumOps).toFixed(1);
-        let aveLocalTime = (client.localTime / client.localOps).toFixed(1);
-        let aveWindowTime = (client.accumWindowTime / client.accumOps).toFixed(1);
-        let aveWindow = (client.accumWindow / client.accumOps).toFixed(1);
-        if (client.localOps > 0) {
-            console.log(`local time ${client.localTime} us ops: ${client.localOps} ave time ${aveLocalTime}`);
-        }
-        console.log(`accum time ${client.accumTime} us ops: ${client.accumOps} ave time ${aveTime} ave window ${aveWindow}`);
-        console.log(`accum window time ${client.accumWindowTime} us ave window time ${aveWindowTime}; max ${client.maxWindowTime}`);
-    }
-
-    function clientServer(startFile?: string) {
-        const clientCount = 5;
-        const fileSegCount = 0;
-        let initString = "";
-        if (!startFile) {
-            initString = "don't ask for whom the bell tolls; it tolls for thee";
-        }
-        let server = new TestServer(initString);
-        if (startFile) {
-            Text.loadText(startFile, server.segTree, fileSegCount);
-        }
-
-        let clients = <Client[]>Array(clientCount);
-        for (let i = 0; i < clientCount; i++) {
-            clients[i] = new Client(initString);
-            if (startFile) {
-                Text.loadText(startFile, clients[i].segTree, fileSegCount);
-            }
-            clients[i].startCollaboration(i);
-        }
-        server.startCollaboration(clientCount);
-        server.addClients(clients);
-
-        function checkTextMatch() {
-            //console.log(`checking text match @${server.getCurrentSeq()}`);
-            let serverText = server.getText();
-            for (let client of clients) {
-                let cliText = client.getText();
-                if (cliText != serverText) {
-                    console.log(`mismatch @${server.getCurrentSeq()} client @${client.getCurrentSeq()} id: ${client.getClientId()}`);
-                    //console.log(serverText);
-                    //console.log(cliText);
-                    let diffParts = JsDiff.diffChars(serverText, cliText);
-                    for (let diffPart of diffParts) {
-                        let annotes = "";
-                        if (diffPart.added) {
-                            annotes += "added ";
-                        }
-                        else if (diffPart.removed) {
-                            annotes += "removed ";
-                        }
-                        if (diffPart.count) {
-                            annotes += `count: ${diffPart.count}`;
-                        }
-                        console.log(`text: ${diffPart.value} ` + annotes);
-                    }
-                    //console.log(server.segTree.toString());
-                    //console.log(client.segTree.toString());
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        let rounds = 100000;
-        function clientProcessSome(client: Client, all = false) {
-            let cliMsgCount = client.q.count();
-            let countToApply: number;
-            if (all) {
-                countToApply = cliMsgCount;
-            }
-            else {
-                countToApply = random.integer(Math.floor(2 * cliMsgCount / 3), cliMsgCount)(mt);
-            }
-            client.applyMessages(countToApply);
-        }
-
-        function serverProcessSome(server: Client, all = false) {
-            let svrMsgCount = server.q.count();
-            let countToApply: number;
-            if (all) {
-                countToApply = svrMsgCount;
-            }
-            else {
-                countToApply = random.integer(Math.floor(2 * svrMsgCount / 3), svrMsgCount)(mt);
-            }
-            return server.applyMessages(countToApply);
-        }
-
-        function randomSpateOfInserts(client: Client, charIndex: number) {
-            let textLen = randTextLength();
-            let text = randomString(textLen, String.fromCharCode(zedCode + ((client.getCurrentSeq() + charIndex) % 50)));
-            let preLen = client.getLength();
-            let pos = random.integer(0, preLen)(mt);
-            server.enqueueMsg(makeInsertMsg(text, pos, UnassignedSequenceNumber, client.getCurrentSeq(), client.getClientId()));
-            client.insertSegmentLocal(text, pos);
-            if (useCheckQ) {
-                client.enqueueTestString();
-            }
-        }
-
-        function randomSpateOfRemoves(client: Client) {
-            let dlen = randTextLength();
-            let preLen = client.getLength();
-            let pos = random.integer(0, preLen)(mt);
-            server.enqueueMsg(makeRemoveMsg(pos, pos + dlen, UnassignedSequenceNumber, client.getCurrentSeq(), client.getClientId()));
-            client.removeSegmentLocal(pos, pos + dlen);
-            if (useCheckQ) {
-                client.enqueueTestString();
-            }
-        }
-
-        function randomWordMove(client: Client) {
-            let word1 = Text.findRandomWord(client.segTree, client.getClientId());
-            if (word1) {
-                let removeStart = word1.pos;
-                let removeEnd = removeStart + word1.text.length;
-                server.enqueueMsg(makeRemoveMsg(removeStart, removeEnd, UnassignedSequenceNumber, client.getCurrentSeq(), client.getClientId()));
-                client.removeSegmentLocal(removeStart, removeEnd);
-                if (useCheckQ) {
-                    client.enqueueTestString();
-                }
-                let word2 = Text.findRandomWord(client.segTree, client.getClientId());
-                while (!word2) {
-                    word2 = Text.findRandomWord(client.segTree, client.getClientId());
-                }
-                let pos = word2.pos + word2.text.length;
-                server.enqueueMsg(makeInsertMsg(word1.text, pos, UnassignedSequenceNumber, client.getCurrentSeq(), client.getClientId()));
-                client.insertSegmentLocal(word1.text, pos);
-                if (useCheckQ) {
-                    client.enqueueTestString();
-                }
-            }
-        }
-        let startTime = Date.now();
-        let checkTime = 0;
-        for (let i = 0; i < rounds; i++) {
-            for (let client of clients) {
-                let insertSegmentCount = randSmallSegmentCount();
-                for (let j = 0; j < insertSegmentCount; j++) {
-                    if (startFile) {
-                        randomWordMove(client);
-                    }
-                    else {
-                        randomSpateOfInserts(client, j);
-                    }
-                }
-                if (serverProcessSome(server)) {
-                    return;
-                }
-                clientProcessSome(client);
-
-                let removeSegmentCount = Math.floor(3 * insertSegmentCount / 4);
-                if (removeSegmentCount < 1) {
-                    removeSegmentCount = 1;
-                }
-                for (let j = 0; j < removeSegmentCount; j++) {
-                    if (startFile) {
-                        randomWordMove(client);
-                    }
-                    else {
-                        randomSpateOfRemoves(client);
-                    }
-                }
-                if (serverProcessSome(server)) {
-                    return;
-                }
-                clientProcessSome(client);
-            }
-            // process remaining messages
-            if (serverProcessSome(server, true)) {
-                return;
-            }
-            for (let client of clients) {
-                clientProcessSome(client, true);
-            }
-
-            /*          
-                        if (checkTextMatch()) {
-                            console.log(`round: ${i}`);
-                            break;
-                        }
-            */
-            // console.log(server.getText());
-            // console.log(server.segTree.toString());
-            // console.log(server.segTree.getStats());
-            if (0 == (i % 100)) {
-                let clockStart = clock();
-                if (checkTextMatch()) {
-                    console.log(`round: ${i} BREAK`);
-                    break;
-                }
-                checkTime += elapsedMicroseconds(clockStart);
-                console.log(`wall clock is ${((Date.now() - startTime) / 1000.0).toFixed(1)}`);
-                let stats = server.segTree.getStats();
-                let liveAve = (stats.liveCount / stats.nodeCount).toFixed(1);
-                let posLeaves = stats.leafCount - stats.removedLeafCount;
-                console.log(`round: ${i} seq ${server.seq} char count ${server.getLength()} height ${stats.maxHeight} lv ${stats.leafCount} rml ${stats.removedLeafCount} p ${posLeaves} nodes ${stats.nodeCount} pop ${liveAve} histo ${stats.histo}`);
-                reportTiming(server);
-                reportTiming(clients[2]);
-                let totalTime = server.accumTime + server.accumWindowTime;
-                for (let client of clients) {
-                    totalTime += (client.accumTime + client.localTime + client.accumWindowTime);
-                }
-                console.log(`total time ${(totalTime / 1000000.0).toFixed(1)} check time ${(checkTime / 1000000.0).toFixed(1)}`);
-                //console.log(server.getText());
-                //console.log(server.segTree.toString());
-            }
-        }
-        reportTiming(server);
-        reportTiming(clients[2]);
-        //console.log(server.getText());
-        //console.log(server.segTree.toString());
-    }
-
-    function randolicious() {
-        let insertRounds = 40;
-        let removeRounds = 32;
-
-        let cliA = new Client("a stitch in time saves nine");
-        cliA.startCollaboration(0);
-        let cliB = new Client("a stitch in time saves nine");
-        cliB.startCollaboration(1);
-        function checkTextMatch(checkSeq: number) {
-            let error = false;
-            if (cliA.getCurrentSeq() != checkSeq) {
-                console.log(`client A has seq number ${cliA.getCurrentSeq()} mismatch with ${checkSeq}`);
-                error = true;
-            }
-            if (cliB.getCurrentSeq() != checkSeq) {
-                console.log(`client B has seq number ${cliB.getCurrentSeq()} mismatch with ${checkSeq}`);
-                error = true;
-            }
-            let aText = cliA.getText();
-            let bText = cliB.getText();
-            if (aText != bText) {
-                console.log(`mismatch @${checkSeq}:`)
-                console.log(aText);
-                console.log(bText);
-                error = true;
-            }
-            return error;
-        }
-        cliA.accumTime = 0;
-        cliB.accumTime = 0;
-        function insertTest() {
-            for (let i = 0; i < insertRounds; i++) {
-                let insertCount = randSegmentCount();
-                let sequenceNumber = cliA.getCurrentSeq() + 1;
-                let firstSeq = sequenceNumber;
-                for (let j = 0; j < insertCount; j++) {
-                    let textLen = randTextLength();
-                    let text = randomString(textLen, String.fromCharCode(zedCode + (sequenceNumber % 50)));
-                    let preLen = cliA.getLength();
-                    let pos = random.integer(0, preLen)(mt);
-                    cliB.insertSegmentRemote(text, pos, sequenceNumber++, cliA.getCurrentSeq(), cliA.segTree.getSegmentWindow().clientId);
-                    cliA.insertSegmentLocal(text, pos);
-                }
-                for (let k = firstSeq; k < sequenceNumber; k++) {
-                    cliA.ackPendingSegment(k);
-                }
-                if (checkTextMatch(sequenceNumber - 1)) {
-                    return true;
-                }
-                cliA.updateMinSeq(sequenceNumber - 1);
-                cliB.updateMinSeq(sequenceNumber - 1);
-                insertCount = randSegmentCount();
-                sequenceNumber = cliA.getCurrentSeq() + 1;
-                firstSeq = sequenceNumber;
-                for (let j = 0; j < insertCount; j++) {
-                    let textLen = randTextLength();
-                    let text = randomString(textLen, String.fromCharCode(zedCode + (sequenceNumber % 50)));
-                    let preLen = cliB.getLength();
-                    let pos = random.integer(0, preLen)(mt);
-                    cliA.insertSegmentRemote(text, pos, sequenceNumber++, cliB.getCurrentSeq(), cliB.segTree.getSegmentWindow().clientId);
-                    cliB.insertSegmentLocal(text, pos);
-                }
-                for (let k = firstSeq; k < sequenceNumber; k++) {
-                    cliB.ackPendingSegment(k);
-                }
-                if (checkTextMatch(sequenceNumber - 1)) {
-                    return true;
-                }
-                cliA.updateMinSeq(sequenceNumber - 1);
-                cliB.updateMinSeq(sequenceNumber - 1);
-            }
-            return false;
-        }
-
-
-        function removeTest() {
-            for (let i = 0; i < removeRounds; i++) {
-                let removeCount = randSegmentCount();
-                let sequenceNumber = cliA.getCurrentSeq() + 1;
-                let firstSeq = sequenceNumber;
-                for (let j = 0; j < removeCount; j++) {
-                    let dlen = randTextLength();
-                    let preLen = cliA.getLength();
-                    let pos = random.integer(0, preLen)(mt);
-                    cliB.removeSegmentRemote(pos, pos + dlen, sequenceNumber++, cliA.getCurrentSeq(), cliA.segTree.getSegmentWindow().clientId);
-                    cliA.removeSegmentLocal(pos, pos + dlen);
-                }
-                for (let k = firstSeq; k < sequenceNumber; k++) {
-                    cliA.ackPendingSegment(k);
-                }
-                if (checkTextMatch(sequenceNumber - 1)) {
-                    return true;
-                }
-                cliA.updateMinSeq(sequenceNumber - 1);
-                cliB.updateMinSeq(sequenceNumber - 1);
-                removeCount = randSegmentCount();
-                sequenceNumber = cliA.getCurrentSeq() + 1;
-                firstSeq = sequenceNumber;
-                for (let j = 0; j < removeCount; j++) {
-                    let dlen = randTextLength();
-                    let preLen = cliB.getLength();
-                    let pos = random.integer(0, preLen)(mt);
-                    cliA.removeSegmentRemote(pos, pos + dlen, sequenceNumber++, cliB.getCurrentSeq(), cliB.segTree.getSegmentWindow().clientId);
-                    cliB.removeSegmentLocal(pos, pos + dlen);
-                }
-                for (let k = firstSeq; k < sequenceNumber; k++) {
-                    cliB.ackPendingSegment(k);
-                }
-                if (checkTextMatch(sequenceNumber - 1)) {
-                    return true;
-                }
-                cliA.updateMinSeq(sequenceNumber - 1);
-                cliB.updateMinSeq(sequenceNumber - 1);
-            }
-            return false;
-        }
-        if (insertTest()) {
-            console.log(cliA.segTree.toString());
-            console.log(cliB.segTree.toString());
-        }
-        else {
-            console.log(`sequence number: ${cliA.getCurrentSeq()} min: ${cliA.segTree.getSegmentWindow().minSeq}`);
-            //            console.log(cliA.segTree.toString());
-
-            console.log(`testing remove at ${cliA.getCurrentSeq()} and ${cliB.getCurrentSeq()}`);
-            if (removeTest()) {
-                console.log(cliA.segTree.toString());
-                console.log(cliB.segTree.toString());
-            }
-        }
-        console.log(`sequence number: ${cliA.getCurrentSeq()} min: ${cliA.segTree.getSegmentWindow().minSeq}`);
-        //                console.log(cliA.segTree.toString());
-        //console.log(cliB.segTree.toString());
-        console.log(cliA.getText());
-        let aveWindow = ((minSegCount + maxSegCount) / 2).toFixed(1);
-        let aveTime = (cliA.accumTime / cliA.accumOps).toFixed(3);
-        let aveWindowTime = (cliA.accumWindowTime / cliA.accumOps).toFixed(3);
-        console.log(`accum time ${cliA.accumTime} us ops: ${cliA.accumOps} ave window ${aveWindow} ave time ${aveTime}`)
-        console.log(`accum window time ${cliA.accumWindowTime} us ave window time ${aveWindowTime}; max ${cliA.maxWindowTime}`)
-        //console.log(cliB.getText());
-    }
-
-    function firstTest() {
-        let cli = new Client("on the mat.");
-        cli.startCollaboration(1);
-        cli.insertSegmentRemote("that ", 0, 1, 0, 0);
-        cli.insertSegmentRemote("fat ", 0, 2, 0, 2);
-        cli.insertSegmentLocal("cat ", 5);
-        console.log(cli.segTree.toString());
-        for (let i = 0; i < 3; i++) {
-            for (let j = 0; j < 3; j++) {
-                console.log(cli.relText(i, j));
-            }
-        }
-        cli.segTree.ackPendingSegment(3);
-        console.log(cli.segTree.toString());
-        for (let clientId = 0; clientId < 4; clientId++) {
-            for (let refSeq = 0; refSeq < 4; refSeq++) {
-                console.log(cli.relText(clientId, refSeq));
-            }
-        }
-        cli.insertSegmentRemote("very ", 5, 4, 2, 2);
-        console.log(cli.segTree.toString());
-        for (let clientId = 0; clientId < 4; clientId++) {
-            for (let refSeq = 0; refSeq < 5; refSeq++) {
-                console.log(cli.relText(clientId, refSeq));
-            }
-        }
-        cli = new Client(" old sock!");
-        cli.startCollaboration(1);
-        cli.insertSegmentRemote("abcde", 0, 1, 0, 2);
-        cli.insertSegmentRemote("yyy", 0, 2, 0, 0);
-        cli.insertSegmentRemote("zzz", 2, 3, 1, 3);
-        cli.insertSegmentRemote("EAGLE", 1, 4, 1, 4);
-        cli.insertSegmentRemote("HAS", 4, 5, 1, 5);
-        cli.insertSegmentLocal(" LANDED", 19);
-        cli.insertSegmentRemote("yowza: ", 0, 6, 4, 2);
-        cli.segTree.ackPendingSegment(7);
-        console.log(cli.segTree.toString());
-        for (let clientId = 0; clientId < 6; clientId++) {
-            for (let refSeq = 0; refSeq < 8; refSeq++) {
-                console.log(cli.relText(clientId, refSeq));
-            }
-        }
-        cli.removeSegmentRemote(3, 5, 8, 6, 0);
-        console.log(cli.segTree.toString());
-        for (let clientId = 0; clientId < 6; clientId++) {
-            for (let refSeq = 0; refSeq < 9; refSeq++) {
-                console.log(cli.relText(clientId, refSeq));
-            }
-        }
-        cli = new Client("abcdefgh");
-        cli.startCollaboration(1);
-        cli.removeSegmentRemote(1, 3, 1, 0, 3);
-        console.log(cli.segTree.toString());
-        cli.insertSegmentRemote("zzz", 2, 2, 0, 2);
-        console.log(cli.segTree.toString());
-        for (let clientId = 0; clientId < 4; clientId++) {
-            for (let refSeq = 0; refSeq < 3; refSeq++) {
-                console.log(cli.relText(clientId, refSeq));
-            }
-        }
-        cli.insertSegmentRemote(" chaser", 9, 3, 2, 3);
-        cli.removeSegmentLocal(12, 14);
-        cli.segTree.ackPendingSegment(4);
-        console.log(cli.segTree.toString());
-        for (let clientId = 0; clientId < 4; clientId++) {
-            for (let refSeq = 0; refSeq < 5; refSeq++) {
-                console.log(cli.relText(clientId, refSeq));
-            }
-        }
-        cli.insertSegmentLocal("*yolumba*", 14);
-        cli.insertSegmentLocal("-zanzibar-", 17);
-        cli.segTree.ackPendingSegment(5);
-        cli.insertSegmentRemote("(aaa)", 2, 6, 4, 2);
-        cli.segTree.ackPendingSegment(7);
-        console.log(cli.segTree.toString());
-        for (let clientId = 0; clientId < 4; clientId++) {
-            for (let refSeq = 0; refSeq < 8; refSeq++) {
-                console.log(cli.relText(clientId, refSeq));
-            }
-        }
-        /*
-        cli.removeSegmentLocal(3,8);
-        cli.removeSegmentLocal(5,7);
-        cli.ackPendingSegment(8);
-        cli.ackPendingSegment(9);
-        */
-        cli.removeSegmentRemote(3, 8, 8, 7, 2);
-        cli.removeSegmentRemote(5, 7, 9, 7, 2);
-        console.log(cli.segTree.toString());
-        for (let clientId = 0; clientId < 4; clientId++) {
-            for (let refSeq = 0; refSeq < 10; refSeq++) {
-                console.log(cli.relText(clientId, refSeq));
-            }
-        }
-    }
-    return {
-        firstTest: firstTest,
-        randolicious: randolicious,
-        clientServer: clientServer
-    }
-}
-
-/**
- * Used for in-memory testing.  This will queue a reference string for each client message.
- */
-let useCheckQ = false;
 
 export class Client {
     segTree: SegmentTree;
@@ -1321,6 +821,7 @@ export class Client {
     accumWindow = 0;
     accumOps = 0;
     verboseOps = false;
+    measureOps = true;
     q: ListUtil.List<DeltaMsg>;
     checkQ: ListUtil.List<string>;
 
@@ -1379,22 +880,37 @@ export class Client {
         let clientId = segWindow.clientId;
         let refSeq = segWindow.currentSeq;
         let seq = UnassignedSequenceNumber;
-        let clockStart = clock();
+
+        let clockStart;
+        if (this.measureOps) {
+            clockStart = clock();
+        }
+
         this.segTree.markRangeRemoved(start, end, refSeq, clientId, seq);
-        this.localTime += elapsedMicroseconds(clockStart);
-        this.localOps++;
+
+        if (this.measureOps) {
+            this.localTime += elapsedMicroseconds(clockStart);
+            this.localOps++;
+        }
         if (this.verboseOps) {
             console.log(`remove local cli ${clientId} ref seq ${refSeq}`);
         }
     }
 
     removeSegmentRemote(start: number, end: number, seq: number, refSeq: number, clientId: number) {
-        let clockStart = clock();
+        let clockStart;
+        if (this.measureOps) {
+            clockStart = clock();
+        }
+
         this.segTree.markRangeRemoved(start, end, refSeq, clientId, seq);
         this.segTree.getSegmentWindow().currentSeq = seq;
-        this.accumTime += elapsedMicroseconds(clockStart);
-        this.accumOps++;
-        this.accumWindow += (this.getCurrentSeq() - this.segTree.getSegmentWindow().minSeq);
+
+        if (this.measureOps) {
+            this.accumTime += elapsedMicroseconds(clockStart);
+            this.accumOps++;
+            this.accumWindow += (this.getCurrentSeq() - this.segTree.getSegmentWindow().minSeq);
+        }
         if (this.verboseOps) {
             console.log(`@cli ${this.segTree.getSegmentWindow().clientId} seq ${seq} remove remote start ${start} end ${end} refseq ${refSeq} cli ${clientId}`);
         }
@@ -1410,10 +926,17 @@ export class Client {
             seq: seq,
             clientId: clientId
         };
-        let clockStart = clock();
+        let clockStart;
+        if (this.measureOps) {
+            clockStart = clock();
+        }
+
         this.segTree.insertInterval(pos, refSeq, clientId, seq, textSegment);
-        this.localTime += elapsedMicroseconds(clockStart);
-        this.localOps++;
+
+        if (this.measureOps) {
+            this.localTime += elapsedMicroseconds(clockStart);
+            this.localOps++;
+        }
         if (this.verboseOps) {
             console.log(`insert local text ${text} pos ${pos} cli ${clientId} ref seq ${refSeq}`);
         }
@@ -1426,40 +949,58 @@ export class Client {
             seq: seq,
             clientId: clientId
         };
-        let clockStart = clock();
+        let clockStart;
+        if (this.measureOps) {
+            clockStart = clock();
+        }
+
         this.segTree.insertInterval(pos, refSeq, clientId, seq, textSegment);
         this.segTree.getSegmentWindow().currentSeq = seq;
 
-        this.accumTime += elapsedMicroseconds(clockStart);
-        this.accumOps++;
-        this.accumWindow += (this.getCurrentSeq() - this.segTree.getSegmentWindow().minSeq);
-
+        if (this.measureOps) {
+            this.accumTime += elapsedMicroseconds(clockStart);
+            this.accumOps++;
+            this.accumWindow += (this.getCurrentSeq() - this.segTree.getSegmentWindow().minSeq);
+        }
         if (this.verboseOps) {
             console.log(`@cli ${this.segTree.getSegmentWindow().clientId} text ${text} seq ${seq} insert remote pos ${pos} refseq ${refSeq} cli ${clientId}`);
         }
     }
 
     ackPendingSegment(seq: number) {
-        let clockStart = clock();
+        let clockStart;
+        if (this.measureOps) {
+            clockStart = clock();
+        }
+
         this.segTree.ackPendingSegment(seq);
         this.segTree.getSegmentWindow().currentSeq = seq;
-        this.accumTime += elapsedMicroseconds(clockStart);
-        this.accumOps++;
-        this.accumWindow += (this.getCurrentSeq() - this.segTree.getSegmentWindow().minSeq);
 
+        if (this.measureOps) {
+            this.accumTime += elapsedMicroseconds(clockStart);
+            this.accumOps++;
+            this.accumWindow += (this.getCurrentSeq() - this.segTree.getSegmentWindow().minSeq);
+        }
         if (this.verboseOps) {
             console.log(`@cli ${this.segTree.getSegmentWindow().clientId} ack seq # ${seq}`);
         }
     }
 
     updateMinSeq(minSeq: number) {
-        let clockStart = clock();
-        this.segTree.updateMinSeq(minSeq);
-        let elapsed = elapsedMicroseconds(clockStart);
-        if (elapsed > this.maxWindowTime) {
-            this.maxWindowTime = elapsed;
+        let clockStart;
+        if (this.measureOps) {
+            clockStart = clock();
         }
-        this.accumWindowTime += elapsed;
+
+        this.segTree.updateMinSeq(minSeq);
+
+        if (this.measureOps) {
+            let elapsed = elapsedMicroseconds(clockStart);
+            this.accumWindowTime += elapsed;
+            if (elapsed > this.maxWindowTime) {
+                this.maxWindowTime = elapsed;
+            }
+        }
     }
 
     getCurrentSeq() {
@@ -1577,13 +1118,16 @@ var LRUSegmentComparer: BST.Comparer<LRUSegment> = {
 
 // represents a sequence of text segments
 export function segmentTree(text: string): SegmentTree {
-    // should be a power of 2   
+    // must be an even number   
     const MaxSegments = 8;
     const TextSegmentGranularity = 128;
+    let windowTime = 0;
+    let packTime = 0;
 
-    let options = {
+    const options = {
         incrementalUpdate: true,
-        zamboniSegments: true
+        zamboniSegments: true,
+        measureWindowTime: true,
     };
 
     function makeNode(liveSegmentCount: number) {
@@ -1610,7 +1154,7 @@ export function segmentTree(text: string): SegmentTree {
 
     function reloadFromSegments(segments: TextSegment[]) {
         let segCap = MaxSegments - 1;
-        let measureReloadTime = true;
+        const measureReloadTime = true;
         function buildSegmentTree(segments: TextSegment[]): TextSegment {
             const segmentCount = Math.ceil(segments.length / segCap);
             const internalSegments: TextSegment[] = [];
@@ -1700,7 +1244,8 @@ export function segmentTree(text: string): SegmentTree {
                 prevSegment = undefined;
             }
             else {
-                if ((!segment.child) && (segment.seq <= segmentWindow.minSeq) && (!segment.segmentGroup)) {
+                if ((!segment.child) && (segment.seq <= segmentWindow.minSeq) &&
+                    (!segment.segmentGroup) && (segment.seq != UnassignedSequenceNumber)) {
                     if (prevSegment && canExtendRight(prevSegment) && ((prevSegment.text.length <= TextSegmentGranularity) || (segment.text.length <= TextSegmentGranularity))) {
                         extendSegment(prevSegment, segment);
                         segment.parent = undefined;
@@ -1727,11 +1272,14 @@ export function segmentTree(text: string): SegmentTree {
         let holdSegments = <TextSegment[]>[];
         for (segmentIndex = 0; segmentIndex < parent.liveSegmentCount; segmentIndex++) {
             segment = segments[segmentIndex];
-            scourNode(segment.child,holdSegments);
+            scourNode(segment.child, holdSegments);
         }
         let totalSegmentCount = holdSegments.length;
         let halfCount = MaxSegments / 2;
         let childCount = Math.min(MaxSegments - 1, Math.floor(totalSegmentCount / halfCount));
+        if (childCount < 1) {
+            childCount = 1;
+        }
         let baseCount = Math.floor(totalSegmentCount / childCount);
         let extraCount = totalSegmentCount % childCount;
         let parentSegments = <TextSegment[]>new Array(MaxSegments);
@@ -1755,6 +1303,9 @@ export function segmentTree(text: string): SegmentTree {
             parentSegments[nodeIndex] = packedNodeSegment;
             nodeUpdateLengthNewStructure(packedNode);
         }
+        if (readCount != totalSegmentCount) {
+            console.log(`total count ${totalSegmentCount} readCount ${readCount}`);
+        }
         parent.segments = parentSegments;
         parent.liveSegmentCount = childCount;
         if (underflow(parent) && (parent.parent)) {
@@ -1766,7 +1317,7 @@ export function segmentTree(text: string): SegmentTree {
     }
 
     function canExtendRight(segment: TextSegment) {
-        return (!segment.removedSeq)&&(segment.text.charAt(segment.text.length-1)!='\n');
+        return (!segment.removedSeq) && (segment.text.charAt(segment.text.length - 1) != '\n');
     }
 
     // assume: both segments are leaves and have seq <= minSeq; segments not part of segment group
@@ -1775,9 +1326,14 @@ export function segmentTree(text: string): SegmentTree {
         prevSegment.text += segment.text;
     }
 
-    const zamboniSegmentsMaxCount = 3;
+    const zamboniSegmentsMaxCount = 2;
     function zamboniSegments() {
         //console.log(`scour line ${segmentsToScour.count()}`);
+        let clockStart;
+        if (options.measureWindowTime) {
+            clockStart = clock();
+        }
+
         let segmentToScour = segmentsToScour.peek();
         if (segmentToScour && (segmentToScour.maxSeq <= segmentWindow.minSeq)) {
             for (let i = 0; i < zamboniSegmentsMaxCount; i++) {
@@ -1795,7 +1351,14 @@ export function segmentTree(text: string): SegmentTree {
 
                         if (underflow(node) && node.parent) {
                             //nodeUpdatePathLengths(node, UnassignedSequenceNumber, -1, true);
+                            let packClockStart;
+                            if (options.measureWindowTime) {
+                                packClockStart = clock();
+                            }
                             pack(node);
+                            if (options.measureWindowTime) {
+                                packTime += elapsedMicroseconds(packClockStart);
+                            }
                         }
                         else {
                             nodeUpdatePathLengths(node, UnassignedSequenceNumber, -1, true);
@@ -1807,6 +1370,10 @@ export function segmentTree(text: string): SegmentTree {
                     break;
                 }
             }
+        }
+
+        if (options.measureWindowTime) {
+            windowTime += elapsedMicroseconds(clockStart);
         }
     }
 
@@ -1849,7 +1416,12 @@ export function segmentTree(text: string): SegmentTree {
             stats.liveCount += node.liveSegmentCount;
             return stats;
         }
-        return nodeGetStats(root);
+        let rootStats = <SegmentTreeStats>nodeGetStats(root);
+        if (options.measureWindowTime) {
+            rootStats.windowTime = windowTime;
+            rootStats.packTime = packTime;
+        }
+        return rootStats;
     }
 
     function getLength(refSeq: number, clientId: number) {
@@ -1877,10 +1449,10 @@ export function segmentTree(text: string): SegmentTree {
         }
     }
 
-    const chunkSize = 256;
+    const searchChunkSize = 256;
     function searchFromPos(pos: number, target: RegExp) {
         let start = pos;
-        let end = pos + chunkSize;
+        let end = pos + searchChunkSize;
         let chunk = "";
         let found = false;
         while (!found) {
@@ -1892,11 +1464,11 @@ export function segmentTree(text: string): SegmentTree {
             if (result !== null) {
                 return { text: result[0], pos: result.index };
             }
-            start += chunkSize;
+            start += searchChunkSize;
             if (start >= root.length) {
                 break;
             }
-            end += chunkSize;
+            end += searchChunkSize;
         }
     }
 
