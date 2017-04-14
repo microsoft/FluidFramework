@@ -1701,7 +1701,7 @@ export function segmentTree(text: string): SegmentTree {
             }
             else {
                 if ((!segment.child) && (segment.seq <= segmentWindow.minSeq) && (!segment.segmentGroup)) {
-                    if (prevSegment && ((prevSegment.text.length <= TextSegmentGranularity) || (segment.text.length <= TextSegmentGranularity))) {
+                    if (prevSegment && canExtendRight(prevSegment) && ((prevSegment.text.length <= TextSegmentGranularity) || (segment.text.length <= TextSegmentGranularity))) {
                         extendSegment(prevSegment, segment);
                         segment.parent = undefined;
                     }
@@ -1763,6 +1763,10 @@ export function segmentTree(text: string): SegmentTree {
         else {
             nodeUpdatePathLengths(parent, UnassignedSequenceNumber, -1, true);
         }
+    }
+
+    function canExtendRight(segment: TextSegment) {
+        return (!segment.removedSeq)&&(segment.text.charAt(segment.text.length-1)!='\n');
     }
 
     // assume: both segments are leaves and have seq <= minSeq; segments not part of segment group
