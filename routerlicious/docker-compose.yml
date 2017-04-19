@@ -9,6 +9,7 @@ services:
         depends_on:
             - redis
             - mongodb
+            - kafka
     deli:
         build: .
         volumes:
@@ -16,6 +17,7 @@ services:
         depends_on:
             - redis
             - mongodb
+            - kafka
         command: npm run deli
     paparazzi:
         build: .
@@ -32,6 +34,7 @@ services:
         depends_on:
             - redis
             - mongodb
+            - kafka
         command: npm run scriptorium
     tmz:
         build: .
@@ -41,7 +44,23 @@ services:
             - redis
             - mongodb
             - rabbitmq
+            - kafka
         command: npm run tmz
+    zookeeper:
+        image: wurstmeister/zookeeper
+        ports:
+            - "2181:2181"
+    kafka:
+        image: wurstmeister/kafka
+        depends_on:
+            - zookeeper
+        ports:
+            - "9092:9092"
+        environment:
+            KAFKA_ADVERTISED_HOST_NAME: "kafka"
+            KAFKA_ADVERTISED_PORT: "9092"
+            KAFKA_CREATE_TOPICS: "test:1:1,deltas:8:1,rawdeltas:8:1"
+            KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
     redis:
         image: "redis:alpine"
     mongodb:

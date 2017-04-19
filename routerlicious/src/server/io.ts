@@ -1,5 +1,5 @@
-import { Client } from "azure-event-hubs";
 import * as azureStorage from "azure-storage";
+import * as kafka from "kafka-node";
 import * as _ from "lodash";
 import { MongoClient } from "mongodb";
 import * as nconf from "nconf";
@@ -8,16 +8,33 @@ import * as socketIo from "socket.io";
 import * as socketIoRedis from "socket.io-redis";
 import * as api from "../api";
 import * as socketStorage from "../socket-storage";
-import * as utils from "../utils";
 
 let io = socketIo();
 
-// Configure access to the event hub
-const rawDeltasConfig = nconf.get("eventHub:raw-deltas");
-const connectionString = utils.getEventHubConnectionString(rawDeltasConfig.endpoint, rawDeltasConfig.send);
+// Group this into some kind of an interface
+const zookeeperEndpoint = nconf.get("zookeeper:endpoint");
+const kafkaClientId = nconf.get("alfred:kafkaClientId");
+const topic = nconf.get("alfred:topic");
 
-let client = Client.fromConnectionString(connectionString, rawDeltasConfig.entityPath);
-let senderP = client.open().then(() => client.createSender());
+let kafkaClient = new kafka.Client(zookeeperEndpoint, kafkaClientId);
+let producer = new kafka.Producer(kafkaClient, { partitionerType: 3 });
+let producerReady = new Promise<void>((resolve, reject) => {
+    producer.on("ready", () => {
+        kafkaClient.refreshMetadata(["rawdeltas"], (error, data) => {
+            if (error) {
+                console.error(error);
+                return reject();
+            }
+
+            return resolve();
+        });
+    });
+});
+
+producer.on("error", (error) => {
+    console.error("ERROR CONNECTEING TO KAFKA");
+    console.error(error);
+});
 
 // Setup redis
 let host = nconf.get("redis:host");
@@ -114,20 +131,25 @@ io.on("connection", (socket) => {
 
     // Message sent when a new operation is submitted to the router
     socket.on("submitOp", (message: socketStorage.ISubmitOpMessage, response) => {
-        senderP.then((sender) => {
-            console.log(`Operation received for object ${message.objectId}`);
-            const responseMessage: socketStorage.IResponse<boolean> = {
-                data: true,
-                error: null,
-            };
+        console.log(`Operation received for object ${message.objectId}`);
 
-            // TODO we either want to ack each send or ack a group of them later on
-            // Place the message in the routerlicious queue for sequence number generation
-            sender.send(message, message.objectId);
+        let submittedP = producerReady.then(() => {
+            const payloads = [{ topic, messages: [JSON.stringify(message)], key: message.objectId }];
+            return new Promise<any>((resolve, reject) => {
+                producer.send(payloads, (error, data) => {
+                    if (error) {
+                        return reject(error);
+                    }
 
-            // Notify the client of receipt
-            response(responseMessage);
+                    console.log(data);
+                    resolve({ data: true });
+                });
+            });
         });
+
+        submittedP.then(
+            (responseMessage) => response(responseMessage),
+            (error) => ({ error }));
     });
 });
 
