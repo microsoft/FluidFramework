@@ -29,3 +29,9 @@ Docker Compose is used to run the service locally
 * `docker-compose up`
 
 Docker will mount your source directory into the container so you need to build prior to running it.
+
+
+## Design principals
+
+* Screw the Client
+* Perf === Magic
