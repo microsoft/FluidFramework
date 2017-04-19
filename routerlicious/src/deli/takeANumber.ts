@@ -1,4 +1,5 @@
-import { Sender } from "azure-event-hubs";
+// import { Sender } from "azure-event-hubs";
+import * as kafka from "kafka-node";
 import { Collection } from "mongodb";
 import * as socketStorage from "../socket-storage";
 
@@ -18,9 +19,12 @@ export class TakeANumber {
     private error: any;
     private sequenceNumber: number = undefined;
     private offset: string;
-    private eventHubSequenceNumber: number;
 
-    constructor(private objectId: string, private collection: Collection, private sender: Sender) {
+    constructor(
+        private objectId: string,
+        private collection: Collection,
+        private producer: kafka.Producer,
+        private topic: string) {
         // Lookup the last sequence number stored
         const dbObjectP = this.collection.findOne({ _id: this.objectId });
         dbObjectP.then(
@@ -32,7 +36,6 @@ export class TakeANumber {
                 }
 
                 this.sequenceNumber = dbObject ? dbObject.sequenceNumber : StartingSequenceNumber;
-                this.eventHubSequenceNumber = dbObject ? dbObject.eventHubSequenceNumber : undefined;
                 this.offset = dbObject ? dbObject.offset : undefined;
                 this.resolvePending();
             },
@@ -83,7 +86,6 @@ export class TakeANumber {
             {
                 $set: {
                     _id : this.objectId,
-                    eventHubSequenceNumber: this.eventHubSequenceNumber,
                     offset: this.offset,
                     sequenceNumber : this.sequenceNumber,
                 },
@@ -95,19 +97,18 @@ export class TakeANumber {
 
     private ticketCore(rawMessage: any): Promise<void> {
         // In cases where we are reprocessing messages we have already checkpointed exit early
-        if (rawMessage.sequenceNumber < this.eventHubSequenceNumber) {
+        if (rawMessage.offset < this.offset) {
             return Promise.resolve();
         }
 
-        const message = rawMessage.body as socketStorage.ISubmitOpMessage;
+        const message = JSON.parse(rawMessage.value) as socketStorage.ISubmitOpMessage;
 
         // Increment and grab the next sequence number as well as store the event hub offset mapping to it
         const sequenceNumber = ++this.sequenceNumber;
         this.offset = rawMessage.offset;
-        this.eventHubSequenceNumber = rawMessage.sequenceNumber;
 
         // tslint:disable-next-line
-        console.log(`Assigning ticket ${message.objectId}@${sequenceNumber} at event hub@${this.eventHubSequenceNumber}`);
+        console.log(`Assigning ticket ${message.objectId}@${sequenceNumber} at topic@${this.offset}`);
 
         const routedMessage: socketStorage.IRoutedOpMessage = {
             clientId: message.clientId,
@@ -117,11 +118,21 @@ export class TakeANumber {
         };
 
         // Serialize the sequenced message to the event hub
-        const promise = new Promise<any>((resolve, reject) => {
-            this.sender.send(routedMessage, routedMessage.objectId).then(() => resolve(), (error) => reject(error));
-        });
+        const payloads = [{
+            key: routedMessage.objectId,
+            messages: [JSON.stringify(routedMessage)],
+            topic: this.topic,
+        }];
+        return new Promise<any>((resolve, reject) => {
+            this.producer.send(payloads, (error, data) => {
+                if (error) {
+                    return reject(error);
+                }
 
-        return promise;
+                console.log(data);
+                resolve({ data: true });
+            });
+        });
     }
 
     /**

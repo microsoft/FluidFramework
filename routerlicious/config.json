@@ -48,18 +48,34 @@
             "partitions": "partitions"
         }
     },
+    "zookeeper": {
+        "endpoint": "zookeeper:2181"
+    },
+    "alfred": {
+        "kafkaClientId": "alfred",
+        "topic": "rawdeltas"
+    },
     "deli": {
-        "consumerGroup": "deli"
+        "topics": {
+            "receive": "rawdeltas",
+            "send": "deltas"
+        },
+        "kafkaClientId": "deli",
+        "groupId": "deli"
     },
     "paparazzi": {
         "queue": "snapshot"
     },
     "scriptorium": {
-        "consumerGroup": "scriptorium"
+        "topic": "deltas",
+        "kafkaClientId": "scriptorium",
+        "groupId": "scriptorium"
     },
     "tmz": {
-        "consumerGroup": "tmz",
-        "queue": "snapshot"
+        "queue": "snapshot",
+        "topic": "deltas",
+        "kafkaClientId": "tmz",
+        "groupId": "tmz"
     },
     "redis": {
         "host": "redis",
