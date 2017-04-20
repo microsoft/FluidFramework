@@ -53,7 +53,8 @@
     },
     "alfred": {
         "kafkaClientId": "alfred",
-        "topic": "rawdeltas"
+        "topic": "rawdeltas",
+        "bucket": "snapshots"
     },
     "deli": {
         "topics": {
@@ -64,7 +65,8 @@
         "groupId": "deli"
     },
     "paparazzi": {
-        "queue": "snapshot"
+        "queue": "snapshot",
+        "bucket": "snapshots"
     },
     "scriptorium": {
         "topic": "deltas",
@@ -80,5 +82,11 @@
     "redis": {
         "host": "redis",
         "port": 6379
+    },
+    "minio": {
+        "endpoint": "minio",
+        "port": 9000,
+        "accessKey": "prague",
+        "secretKey": "mhioAkNXTwdX4dXWgKgXVtHo"
     }
 }

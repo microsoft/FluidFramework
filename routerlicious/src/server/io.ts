@@ -1,11 +1,12 @@
-import * as azureStorage from "azure-storage";
 import * as kafka from "kafka-node";
 import * as _ from "lodash";
+import * as minio from "minio";
 import { MongoClient } from "mongodb";
 import * as nconf from "nconf";
 import * as redis from "redis";
 import * as socketIo from "socket.io";
 import * as socketIoRedis from "socket.io-redis";
+import { Readable } from "stream";
 import * as api from "../api";
 import * as socketStorage from "../socket-storage";
 
@@ -15,6 +16,7 @@ let io = socketIo();
 const zookeeperEndpoint = nconf.get("zookeeper:endpoint");
 const kafkaClientId = nconf.get("alfred:kafkaClientId");
 const topic = nconf.get("alfred:topic");
+const bucket = nconf.get("alfred:bucket");
 
 let kafkaClient = new kafka.Client(zookeeperEndpoint, kafkaClientId);
 let producer = new kafka.Producer(kafkaClient, { partitionerType: 3 });
@@ -65,11 +67,44 @@ const collectionP = mongoClientP.then(async (db) => {
 });
 
 // Gain access to the document storage
-const blobStorageConnectionString = nconf.get("blobStorage:connectionString");
-const snapshotContainer = nconf.get("blobStorage:containers:snapshots");
-const blobStorage = azureStorage.createBlobService(blobStorageConnectionString);
+const minioConfig = nconf.get("minio");
+const minioClient = new minio.Client({
+    accessKey: minioConfig.accessKey,
+    endPoint: minioConfig.endpoint,
+    port: minioConfig.port,
+    secretKey: minioConfig.secretKey,
+    secure: false,
+});
 
-// Get Mongo access to grab pending snapshots
+/**
+ * Retrieves the stored object
+ */
+async function getObject(objectId: string, bucket: string): Promise<string> {
+    return new Promise<string>((resolve, reject) => {
+        minioClient.getObject(bucket, objectId, (error, stream: Readable) => {
+            if (error) {
+                return error.code === "NoSuchKey" ? resolve(null) : reject(error);
+            }
+
+            let object = "";
+
+            // Set the encoding so that node does the conversion to a string
+            stream.setEncoding("utf-8");
+            stream.on("data", (chunk: string) => {
+                object += chunk;
+            });
+
+            stream.on("end", () => {
+                console.log(object);
+                resolve(object);
+            });
+
+            stream.on("error", (streamError) => {
+                reject(streamError);
+            });
+        });
+    });
+}
 
 io.on("connection", (socket) => {
     // The loadObject call needs to see if the object already exists. If not it should offload to
@@ -87,16 +122,9 @@ io.on("connection", (socket) => {
             }
 
             // Now grab the snapshot, any deltas post snapshot, and send to the client
-            blobStorage.getBlobToText(snapshotContainer, message.objectId, async (error, text) => {
+            const resultP = getObject(message.objectId, bucket).then(async (text) => {
                 let snapshot: api.ICollaborativeObjectSnapshot;
-
-                // TODO need to distinguish no blob vs. error
-                if (error && (<any> error).code !== "BlobNotFound") {
-                    response({ error });
-                    return;
-                }
-
-                if (error) {
+                if (text === null) {
                     snapshot = {
                         sequenceNumber: 0,
                         snapshot: {},
@@ -124,8 +152,12 @@ io.on("connection", (socket) => {
                     error: null,
                 };
 
-                response(responseMessage);
+                return responseMessage;
             });
+
+            resultP.then(
+                (responseMessage) => response(responseMessage),
+                (error) => response({ error }));
         });
     });
 
