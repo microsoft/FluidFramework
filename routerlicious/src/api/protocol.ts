@@ -27,10 +27,10 @@ export interface IDelta {
 
 export const enum SegTreeMsgType {
     INSERT,
-    REMOVE
+    REMOVE,
 }
 
-export interface SegTreeDeltaMsg extends IDelta {
+export interface ISegTreeDeltaMsg extends IDelta {
     /**
      * Type of this change.
      */
