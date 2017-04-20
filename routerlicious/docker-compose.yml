@@ -67,3 +67,11 @@ services:
         image: "mongo:3.4.3"
     rabbitmq:
         image: "rabbitmq:alpine"
+    minio:
+        image: minio/minio
+        ports:
+            - "9000:9000"
+        environment:
+            MINIO_ACCESS_KEY: prague
+            MINIO_SECRET_KEY: mhioAkNXTwdX4dXWgKgXVtHo
+        command: server /export
