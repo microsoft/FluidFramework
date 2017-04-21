@@ -13,4 +13,4 @@ RUN npm run build
 EXPOSE 3000
 
 # And set the default command to start the server
-CMD ["npm", "run", "nodemon"]
+CMD ["npm", "start"]

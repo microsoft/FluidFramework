@@ -1,45 +1,40 @@
-version: '2'
+version: '3'
 services:
     web:
+        image: 127.0.0.1:5000/routerlicious
         build: .
         ports:
             - "3000:3000"
-        volumes:
-            - .:/usr/src/server
         depends_on:
             - redis
             - mongodb
             - kafka
     deli:
+        image: 127.0.0.1:5000/routerlicious
         build: .
-        volumes:
-            - .:/usr/src/server
         depends_on:
             - redis
             - mongodb
             - kafka
         command: npm run deli
     paparazzi:
+        image: 127.0.0.1:5000/routerlicious
         build: .
-        volumes:
-            - .:/usr/src/server
         depends_on:
             - web
             - rabbitmq
         command: npm run paparazzi
     scriptorium:
+        image: 127.0.0.1:5000/routerlicious
         build: .
-        volumes:
-            - .:/usr/src/server
         depends_on:
             - redis
             - mongodb
             - kafka
         command: npm run scriptorium
     tmz:
+        image: 127.0.0.1:5000/routerlicious
         build: .
-        volumes:
-            - .:/usr/src/server
         depends_on:
             - redis
             - mongodb

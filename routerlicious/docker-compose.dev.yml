@@ -1,0 +1,22 @@
+version: '3'
+services:
+    web:
+        volumes:
+            - .:/usr/src/server
+        command: npm run start:watch
+    deli:
+        volumes:
+            - .:/usr/src/server
+        command: npm run deli:watch
+    paparazzi:
+        volumes:
+            - .:/usr/src/server
+        command: npm run paparazzi:watch
+    scriptorium:
+        volumes:
+            - .:/usr/src/server
+        command: npm run scriptorium:watch
+    tmz:
+        volumes:
+            - .:/usr/src/server
+        command: npm run tmz:watch
