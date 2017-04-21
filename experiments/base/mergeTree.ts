@@ -34,28 +34,6 @@ export interface MergeTreeStats {
     packTime?: number;
 }
 
-export interface IMergeTree {
-    map<TAccum>(actions: TextSegmentActions, refSeq: number, clientId: number, accum?: TAccum);
-    mapRange<TAccum>(actions: TextSegmentActions, refSeq: number, clientId: number, accum?: TAccum, start?: number, end?: number);
-    ensureIntervalBoundary(pos: number, refSeq: number, clientId: number);
-    insertInterval(pos: number, refSeq: number, clientId: number, seq: number, textSegment: TextSegment);
-    removeRange(start: number, end: number, refSeq: number, seq: number, clientId: number);
-    markRangeRemoved(start: number, end: number, refSeq: number, clientId: number, seq: number);
-    getContainingSegment(pos: number, refSeq: number, clientId: number): TextSegment;
-    createMarker(pos: number, refSeq: number, clientId: number, seq: number): TextMarker;
-    getOffset(entry: TextSegment, refSeq: number, clientId: number): number;
-    getText(refSeq: number, clientId: number, start?: number, end?: number): string;
-    getLength(refSeq: number, clientId: number): number;
-    getStats(): MergeTreeStats;
-    searchFromPos(pos: number, regexp: RegExp): SearchResult;
-    startCollaboration(localClientId);
-    getSegmentWindow(): SegmentWindow;
-    ackPendingSegment(seq: number);
-    updateMinSeq(minSeq: number);
-    reloadFromSegments(segments: TextSegment[]);
-    diag();
-}
-
 export interface TextSegmentGroup {
     segments: TextSegment[];
 }
@@ -1128,7 +1106,7 @@ var LRUSegmentComparer: BST.Comparer<LRUSegment> = {
 }
 
 // represents a sequence of text segments
-export class MergeTree implements IMergeTree {
+export class MergeTree  {
     // must be an even number   
     static MaxSegments = 8;
     static TextSegmentGranularity = 128;
@@ -1150,7 +1128,7 @@ export class MergeTree implements IMergeTree {
 
     windowTime = 0;
     packTime = 0;
-    
+
     root: TextSegmentBlock;
     segmentWindow = new SegmentWindow();
     pendingSegments: ListUtil.List<TextSegmentGroup>;
@@ -2306,9 +2284,6 @@ export class MergeTree implements IMergeTree {
         return go;
     }
 
-    diag() {
-        // TODO 
-    }
 }
 
 
