@@ -16,7 +16,7 @@ let io = socketIo();
 const zookeeperEndpoint = nconf.get("zookeeper:endpoint");
 const kafkaClientId = nconf.get("alfred:kafkaClientId");
 const topic = nconf.get("alfred:topic");
-const bucket = nconf.get("alfred:bucket");
+const storageBucket = nconf.get("alfred:bucket");
 
 let kafkaClient = new kafka.Client(zookeeperEndpoint, kafkaClientId);
 let producer = new kafka.Producer(kafkaClient, { partitionerType: 3 });
@@ -122,7 +122,7 @@ io.on("connection", (socket) => {
             }
 
             // Now grab the snapshot, any deltas post snapshot, and send to the client
-            const resultP = getObject(message.objectId, bucket).then(async (text) => {
+            const resultP = getObject(message.objectId, storageBucket).then(async (text) => {
                 let snapshot: api.ICollaborativeObjectSnapshot;
                 if (text === null) {
                     snapshot = {

@@ -6,7 +6,7 @@
 import * as fs from "fs";
 import * as RedBlack from "./redBlack";
 import * as random from "random-js";
-import * as SegTree from "./segmentTree";
+import * as MergeTree from "./mergeTree";
 import * as Text from "./text";
 import * as JsDiff from "diff";
 
@@ -165,17 +165,17 @@ function fileTest1() {
     }
 }
 
-function printTextSegment(textSegment: SegTree.TextSegment, pos: number) {
+function printTextSegment(textSegment: MergeTree.TextSegment, pos: number) {
     console.log(textSegment.text);
     console.log(`at [${pos}, ${pos + textSegment.text.length})`);
     return true;
 }
 
-function makeTextSegment(text: string): SegTree.TextSegment {
+function makeTextSegment(text: string): MergeTree.TextSegment {
     return { text: text };
 }
 
-function makeCollabTextSegment(text: string, seq = SegTree.UniversalSequenceNumber, clientId = SegTree.LocalClientId): SegTree.TextSegment {
+function makeCollabTextSegment(text: string, seq = MergeTree.UniversalSequenceNumber, clientId = MergeTree.LocalClientId): MergeTree.TextSegment {
     return { text: text, seq: seq, clientId: clientId };
 }
 
@@ -185,14 +185,14 @@ function editFlat(source: string, s: number, dl: number, nt = "") {
 
 let accumTime = 0;
 
-function checkInsertSegTree(segTree: SegTree.SegmentTree, pos: number, textSegment: SegTree.TextSegment,
+function checkInsertSegTree(segTree: MergeTree.MergeTree, pos: number, textSegment: MergeTree.TextSegment,
     verbose = false) {
-    let checkText = segTree.getText(SegTree.UniversalSequenceNumber, SegTree.LocalClientId);
+    let checkText = segTree.getText(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
     checkText = editFlat(checkText, pos, 0, textSegment.text);
     let clockStart = clock();
-    segTree.insertInterval(pos, SegTree.UniversalSequenceNumber, SegTree.LocalClientId, SegTree.UniversalSequenceNumber, textSegment);
+    segTree.insertInterval(pos, MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId, MergeTree.UniversalSequenceNumber, textSegment);
     accumTime += elapsedMicroseconds(clockStart);
-    let updatedText = segTree.getText(SegTree.UniversalSequenceNumber, SegTree.LocalClientId);
+    let updatedText = segTree.getText(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
     let result = (checkText == updatedText);
     if ((!result) && verbose) {
         console.log(`mismatch(o): ${checkText}`);
@@ -201,13 +201,13 @@ function checkInsertSegTree(segTree: SegTree.SegmentTree, pos: number, textSegme
     return result;
 }
 
-function checkRemoveSegTree(segTree: SegTree.SegmentTree, start: number, end: number, verbose = false) {
-    let origText = segTree.getText(SegTree.UniversalSequenceNumber, SegTree.LocalClientId);
+function checkRemoveSegTree(mergeTree: MergeTree.MergeTree, start: number, end: number, verbose = false) {
+    let origText = mergeTree.getText(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
     let checkText = editFlat(origText, start, end - start);
     let clockStart = clock();
-    segTree.removeRange(start, end, SegTree.UniversalSequenceNumber, SegTree.LocalClientId, SegTree.UniversalSequenceNumber);
+    mergeTree.removeRange(start, end, MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
     accumTime += elapsedMicroseconds(clockStart);
-    let updatedText = segTree.getText(SegTree.UniversalSequenceNumber, SegTree.LocalClientId);
+    let updatedText = mergeTree.getText(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
     let result = (checkText == updatedText);
     if ((!result) && verbose) {
         console.log(`mismatch(o): ${origText}`);
@@ -217,13 +217,13 @@ function checkRemoveSegTree(segTree: SegTree.SegmentTree, start: number, end: nu
     return result;
 }
 
-function checkMarkRemoveSegTree(segTree: SegTree.SegmentTree, start: number, end: number, verbose = false) {
-    let origText = segTree.getText(SegTree.UniversalSequenceNumber, SegTree.LocalClientId);
+function checkMarkRemoveSegTree(segTree: MergeTree.MergeTree, start: number, end: number, verbose = false) {
+    let origText = segTree.getText(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
     let checkText = editFlat(origText, start, end - start);
     let clockStart = clock();
-    segTree.markRangeRemoved(start, end, SegTree.UniversalSequenceNumber, SegTree.LocalClientId, SegTree.UniversalSequenceNumber);
+    segTree.markRangeRemoved(start, end, MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId, MergeTree.UniversalSequenceNumber);
     accumTime += elapsedMicroseconds(clockStart);
-    let updatedText = segTree.getText(SegTree.UniversalSequenceNumber, SegTree.LocalClientId);
+    let updatedText = segTree.getText(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
     let result = (checkText == updatedText);
     if ((!result) && verbose) {
         console.log(`mismatch(o): ${origText}`);
@@ -234,25 +234,25 @@ function checkMarkRemoveSegTree(segTree: SegTree.SegmentTree, start: number, end
 }
 
 function segTreeTest1() {
-    let segTree = SegTree.segmentTree("the cat is on the mat");
-    segTree.map({ leaf: printTextSegment }, SegTree.UniversalSequenceNumber, SegTree.LocalClientId);
+    let mergeTree = new MergeTree.MergeTree("the cat is on the mat");
+    mergeTree.map({ leaf: printTextSegment }, MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
     let fuzzySeg = makeCollabTextSegment("fuzzy, fuzzy ");
-    checkInsertSegTree(segTree, 4, fuzzySeg);
+    checkInsertSegTree(mergeTree, 4, fuzzySeg);
     fuzzySeg = makeCollabTextSegment("fuzzy, fuzzy ");
-    checkInsertSegTree(segTree, 4, fuzzySeg);
-    checkMarkRemoveSegTree(segTree, 4, 13);
+    checkInsertSegTree(mergeTree, 4, fuzzySeg);
+    checkMarkRemoveSegTree(mergeTree, 4, 13);
     //checkRemoveSegTree(segTree, 4, 13);
-    checkInsertSegTree(segTree, 4, makeCollabTextSegment("fi"));
-    segTree.map({ leaf: printTextSegment }, SegTree.UniversalSequenceNumber, SegTree.LocalClientId);
-    let segment = segTree.getContainingSegment(4, SegTree.UniversalSequenceNumber, SegTree.LocalClientId);
-    console.log(segTree.getOffset(segment, SegTree.UniversalSequenceNumber, SegTree.LocalClientId));
-    console.log(segTree.getText(SegTree.UniversalSequenceNumber, SegTree.LocalClientId));
-    console.log(segTree.toString());
+    checkInsertSegTree(mergeTree, 4, makeCollabTextSegment("fi"));
+    mergeTree.map({ leaf: printTextSegment }, MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
+    let segment = mergeTree.getContainingSegment(4, MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
+    console.log(mergeTree.getOffset(segment, MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId));
+    console.log(mergeTree.getText(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId));
+    console.log(mergeTree.toString());
     TestPack().firstTest();
 }
 
 function segTreeLargeTest() {
-    let segTree = SegTree.segmentTree("the cat is on the mat");
+    let mergeTree = new MergeTree.MergeTree("the cat is on the mat");
     const insertCount = 1000000;
     const removeCount = 980000;
     let mt = random.engines.mt19937();
@@ -276,15 +276,15 @@ function segTreeLargeTest() {
     for (let i = 0; i < insertCount; i++) {
         let slen = randInt();
         let s = randomString(slen, String.fromCharCode(48 + slen));
-        let preLen = segTree.getLength(SegTree.UniversalSequenceNumber, SegTree.LocalClientId);
+        let preLen = mergeTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
         let pos = random.integer(0, preLen)(mt);
         let clockStart = clock();
-        segTree.insertInterval(pos, SegTree.UniversalSequenceNumber, SegTree.LocalClientId, SegTree.UniversalSequenceNumber, makeCollabTextSegment(s));
+        mergeTree.insertInterval(pos, MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId, MergeTree.UniversalSequenceNumber, makeCollabTextSegment(s));
         accumTime += elapsedMicroseconds(clockStart);
         if ((i > 0) && (0 == (i % 50000))) {
             let perIter = (accumTime / (i + 1)).toFixed(3);
             treeCount++;
-            accumTreeSize += segTree.getLength(SegTree.UniversalSequenceNumber, SegTree.LocalClientId);
+            accumTreeSize += mergeTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
             let averageTreeSize = (accumTreeSize / treeCount).toFixed(3);
             console.log(`i: ${i} time: ${accumTime}us which is average ${perIter} per insert with average tree size ${averageTreeSize}`);
         }
@@ -295,17 +295,17 @@ function segTreeLargeTest() {
     treeCount = 0;
     for (let i = 0; i < removeCount; i++) {
         let dlen = randInt();
-        let preLen = segTree.getLength(SegTree.UniversalSequenceNumber, SegTree.LocalClientId);
+        let preLen = mergeTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
         let pos = random.integer(0, preLen)(mt);
         // console.log(itree.toString());
         let clockStart = clock();
-        segTree.removeRange(pos, pos + dlen, SegTree.UniversalSequenceNumber, SegTree.LocalClientId, SegTree.UniversalSequenceNumber);
+        mergeTree.removeRange(pos, pos + dlen, MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
         accumTime += elapsedMicroseconds(clockStart);
 
         if ((i > 0) && (0 == (i % 50000))) {
             let perIter = (accumTime / (i + 1)).toFixed(3);
             treeCount++;
-            accumTreeSize += segTree.getLength(SegTree.UniversalSequenceNumber, SegTree.LocalClientId);
+            accumTreeSize += mergeTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
             let averageTreeSize = (accumTreeSize / treeCount).toFixed(3);
             console.log(`i: ${i} time: ${accumTime}us which is average ${perIter} per del with average tree size ${averageTreeSize}`);
         }
@@ -313,7 +313,7 @@ function segTreeLargeTest() {
 }
 
 function segTreeCheckedTest() {
-    let segTree = SegTree.segmentTree("the cat is on the mat");
+    let segTree = new MergeTree.MergeTree("the cat is on the mat");
     const insertCount = 10000;
     const removeCount = 7000;
     const largeRemoveCount = 50;
@@ -342,17 +342,17 @@ function segTreeCheckedTest() {
     for (let i = 0; i < insertCount; i++) {
         let slen = randInt();
         let s = randomString(slen, String.fromCharCode(48 + slen));
-        let preLen = segTree.getLength(SegTree.UniversalSequenceNumber, SegTree.LocalClientId);
+        let preLen = segTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
         let pos = random.integer(0, preLen)(mt);
         if (!checkInsertSegTree(segTree, pos, makeCollabTextSegment(s), true)) {
-            console.log(`i: ${i} preLen ${preLen} pos: ${pos} slen: ${slen} s: ${s} itree len: ${segTree.getLength(SegTree.UniversalSequenceNumber, SegTree.LocalClientId)}`);
+            console.log(`i: ${i} preLen ${preLen} pos: ${pos} slen: ${slen} s: ${s} itree len: ${segTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId)}`);
             console.log(segTree.toString());
             break;
         }
         if ((i > 0) && (0 == (i % 1000))) {
             let perIter = (accumTime / (i + 1)).toFixed(3);
             treeCount++;
-            accumTreeSize += segTree.getLength(SegTree.UniversalSequenceNumber, SegTree.LocalClientId);
+            accumTreeSize += segTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
             let averageTreeSize = (accumTreeSize / treeCount).toFixed(3);
             console.log(`i: ${i} time: ${accumTime}us which is average ${perIter} per insert with average tree size ${averageTreeSize}`);
         }
@@ -362,18 +362,18 @@ function segTreeCheckedTest() {
     treeCount = 0;
     for (let i = 0; i < largeRemoveCount; i++) {
         let dlen = randLargeInt();
-        let preLen = segTree.getLength(SegTree.UniversalSequenceNumber, SegTree.LocalClientId);
+        let preLen = segTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
         let pos = random.integer(0, preLen)(mt);
         // console.log(itree.toString());
         if (!checkRemoveSegTree(segTree, pos, pos + dlen, true)) {
-            console.log(`i: ${i} preLen ${preLen} pos: ${pos} dlen: ${dlen} itree len: ${segTree.getLength(SegTree.UniversalSequenceNumber, SegTree.LocalClientId)}`);
+            console.log(`i: ${i} preLen ${preLen} pos: ${pos} dlen: ${dlen} itree len: ${segTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId)}`);
             console.log(segTree.toString());
             break;
         }
         if ((i > 0) && (0 == (i % 10))) {
             let perIter = (accumTime / (i + 1)).toFixed(3);
             treeCount++;
-            accumTreeSize += segTree.getLength(SegTree.UniversalSequenceNumber, SegTree.LocalClientId);
+            accumTreeSize += segTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
             let averageTreeSize = (accumTreeSize / treeCount).toFixed(3);
             console.log(`i: ${i} time: ${accumTime}us which is average ${perIter} per large del with average tree size ${averageTreeSize}`);
         }
@@ -383,19 +383,19 @@ function segTreeCheckedTest() {
     treeCount = 0;
     for (let i = 0; i < removeCount; i++) {
         let dlen = randInt();
-        let preLen = segTree.getLength(SegTree.UniversalSequenceNumber, SegTree.LocalClientId);
+        let preLen = segTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
         let pos = random.integer(0, preLen)(mt);
         // console.log(itree.toString());
         if (i & 1) {
             if (!checkMarkRemoveSegTree(segTree, pos, pos + dlen, true)) {
-                console.log(`i: ${i} preLen ${preLen} pos: ${pos} dlen: ${dlen} itree len: ${segTree.getLength(SegTree.UniversalSequenceNumber, SegTree.LocalClientId)}`);
+                console.log(`i: ${i} preLen ${preLen} pos: ${pos} dlen: ${dlen} itree len: ${segTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId)}`);
                 console.log(segTree.toString());
                 break;
             }
         }
         else {
             if (!checkRemoveSegTree(segTree, pos, pos + dlen, true)) {
-                console.log(`i: ${i} preLen ${preLen} pos: ${pos} dlen: ${dlen} itree len: ${segTree.getLength(SegTree.UniversalSequenceNumber, SegTree.LocalClientId)}`);
+                console.log(`i: ${i} preLen ${preLen} pos: ${pos} dlen: ${dlen} itree len: ${segTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId)}`);
                 console.log(segTree.toString());
                 break;
             }
@@ -404,7 +404,7 @@ function segTreeCheckedTest() {
         if ((i > 0) && (0 == (i % 1000))) {
             let perIter = (accumTime / (i + 1)).toFixed(3);
             treeCount++;
-            accumTreeSize += segTree.getLength(SegTree.UniversalSequenceNumber, SegTree.LocalClientId);
+            accumTreeSize += segTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
             let averageTreeSize = (accumTreeSize / treeCount).toFixed(3);
             console.log(`i: ${i} time: ${accumTime}us which is average ${perIter} per del with average tree size ${averageTreeSize}`);
         }
@@ -415,17 +415,17 @@ function segTreeCheckedTest() {
     for (let i = 0; i < insertCount; i++) {
         let slen = randInt();
         let s = randomString(slen, String.fromCharCode(48 + slen));
-        let preLen = segTree.getLength(SegTree.UniversalSequenceNumber, SegTree.LocalClientId);
+        let preLen = segTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
         let pos = random.integer(0, preLen)(mt);
         if (!checkInsertSegTree(segTree, pos, makeCollabTextSegment(s), true)) {
-            console.log(`i: ${i} preLen ${preLen} pos: ${pos} slen: ${slen} s: ${s} itree len: ${segTree.getLength(SegTree.UniversalSequenceNumber, SegTree.LocalClientId)}`);
+            console.log(`i: ${i} preLen ${preLen} pos: ${pos} slen: ${slen} s: ${s} itree len: ${segTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId)}`);
             console.log(segTree.toString());
             break;
         }
         if ((i > 0) && (0 == (i % 1000))) {
             let perIter = (accumTime / (i + 1)).toFixed(3);
             treeCount++;
-            accumTreeSize += segTree.getLength(SegTree.UniversalSequenceNumber, SegTree.LocalClientId);
+            accumTreeSize += segTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
             let averageTreeSize = (accumTreeSize / treeCount).toFixed(3);
             console.log(`i: ${i} time: ${accumTime}us which is average ${perIter} per insert with average tree size ${averageTreeSize}`);
         }
@@ -435,19 +435,19 @@ function segTreeCheckedTest() {
     treeCount = 0;
     for (let i = 0; i < removeCount; i++) {
         let dlen = randInt();
-        let preLen = segTree.getLength(SegTree.UniversalSequenceNumber, SegTree.LocalClientId);
+        let preLen = segTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
         let pos = random.integer(0, preLen)(mt);
         // console.log(itree.toString());
         if (i & 1) {
             if (!checkMarkRemoveSegTree(segTree, pos, pos + dlen, true)) {
-                console.log(`i: ${i} preLen ${preLen} pos: ${pos} dlen: ${dlen} itree len: ${segTree.getLength(SegTree.UniversalSequenceNumber, SegTree.LocalClientId)}`);
+                console.log(`i: ${i} preLen ${preLen} pos: ${pos} dlen: ${dlen} itree len: ${segTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId)}`);
                 console.log(segTree.toString());
                 break;
             }
         }
         else {
             if (!checkRemoveSegTree(segTree, pos, pos + dlen, true)) {
-                console.log(`i: ${i} preLen ${preLen} pos: ${pos} dlen: ${dlen} itree len: ${segTree.getLength(SegTree.UniversalSequenceNumber, SegTree.LocalClientId)}`);
+                console.log(`i: ${i} preLen ${preLen} pos: ${pos} dlen: ${dlen} itree len: ${segTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId)}`);
                 console.log(segTree.toString());
                 break;
             }
@@ -456,7 +456,7 @@ function segTreeCheckedTest() {
         if ((i > 0) && (0 == (i % 1000))) {
             let perIter = (accumTime / (i + 1)).toFixed(3);
             treeCount++;
-            accumTreeSize += segTree.getLength(SegTree.UniversalSequenceNumber, SegTree.LocalClientId);
+            accumTreeSize += segTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
             let averageTreeSize = (accumTreeSize / treeCount).toFixed(3);
             console.log(`i: ${i} time: ${accumTime}us which is average ${perIter} per del with average tree size ${averageTreeSize}`);
         }
@@ -490,10 +490,10 @@ export function TestPack() {
         return str;
     }
 
-    function reportTiming(client: SegTree.Client) {
+    function reportTiming(client: MergeTree.Client) {
         let aveTime = (client.accumTime / client.accumOps).toFixed(1);
         let aveLocalTime = (client.localTime / client.localOps).toFixed(1);
-        let stats = client.segTree.getStats();
+        let stats = client.mergeTree.getStats();
         let windowTime = stats.windowTime;
         let packTime = stats.packTime;
         let aveWindowTime = ((windowTime || 0) / (client.accumOps)).toFixed(1);
@@ -508,6 +508,15 @@ export function TestPack() {
         console.log(`accum window time ${client.accumWindowTime} us ave window time total ${aveWindowTime} not in ops ${aveExtraWindowTime}; max ${client.maxWindowTime}`);
     }
 
+    function manyMergeTrees() {
+        const mergeTreeCount = 2000000;
+        let a = <MergeTree.MergeTree[]>Array(mergeTreeCount);
+        for (let i=0;i<mergeTreeCount;i++) {
+            a[i]=new MergeTree.MergeTree("");
+        }
+        for (;;);
+    }
+
     function clientServer(startFile?: string) {
         const clientCount = 5;
         const fileSegCount = 0;
@@ -515,16 +524,16 @@ export function TestPack() {
         if (!startFile) {
             initString = "don't ask for whom the bell tolls; it tolls for thee";
         }
-        let server = new SegTree.TestServer(initString);
+        let server = new MergeTree.TestServer(initString);
         if (startFile) {
-            Text.loadText(startFile, server.segTree, fileSegCount);
+            Text.loadText(startFile, server.mergeTree, fileSegCount);
         }
 
-        let clients = <SegTree.Client[]>Array(clientCount);
+        let clients = <MergeTree.Client[]>Array(clientCount);
         for (let i = 0; i < clientCount; i++) {
-            clients[i] = new SegTree.Client(initString);
+            clients[i] = new MergeTree.Client(initString);
             if (startFile) {
-                Text.loadText(startFile, clients[i].segTree, fileSegCount);
+                Text.loadText(startFile, clients[i].mergeTree, fileSegCount);
             }
             clients[i].startCollaboration(i);
         }
@@ -554,8 +563,8 @@ export function TestPack() {
                         }
                         console.log(`text: ${diffPart.value} ` + annotes);
                     }
-                    //console.log(server.segTree.toString());
-                    //console.log(client.segTree.toString());
+                    //console.log(server.mergeTree.toString());
+                    //console.log(client.mergeTree.toString());
                     return true;
                 }
             }
@@ -563,7 +572,7 @@ export function TestPack() {
         }
 
         let rounds = 1000000;
-        function clientProcessSome(client: SegTree.Client, all = false) {
+        function clientProcessSome(client: MergeTree.Client, all = false) {
             let cliMsgCount = client.q.count();
             let countToApply: number;
             if (all) {
@@ -575,7 +584,7 @@ export function TestPack() {
             client.applyMessages(countToApply);
         }
 
-        function serverProcessSome(server: SegTree.Client, all = false) {
+        function serverProcessSome(server: MergeTree.Client, all = false) {
             let svrMsgCount = server.q.count();
             let countToApply: number;
             if (all) {
@@ -587,47 +596,47 @@ export function TestPack() {
             return server.applyMessages(countToApply);
         }
 
-        function randomSpateOfInserts(client: SegTree.Client, charIndex: number) {
+        function randomSpateOfInserts(client: MergeTree.Client, charIndex: number) {
             let textLen = randTextLength();
             let text = randomString(textLen, String.fromCharCode(zedCode + ((client.getCurrentSeq() + charIndex) % 50)));
             let preLen = client.getLength();
             let pos = random.integer(0, preLen)(mt);
-            server.enqueueMsg(SegTree.makeInsertMsg(text, pos, SegTree.UnassignedSequenceNumber, client.getCurrentSeq(), client.getClientId()));
+            server.enqueueMsg(MergeTree.makeInsertMsg(text, pos, MergeTree.UnassignedSequenceNumber, client.getCurrentSeq(), client.getClientId()));
             client.insertSegmentLocal(text, pos);
-            if (SegTree.useCheckQ) {
+            if (MergeTree.useCheckQ) {
                 client.enqueueTestString();
             }
         }
 
-        function randomSpateOfRemoves(client: SegTree.Client) {
+        function randomSpateOfRemoves(client: MergeTree.Client) {
             let dlen = randTextLength();
             let preLen = client.getLength();
             let pos = random.integer(0, preLen)(mt);
-            server.enqueueMsg(SegTree.makeRemoveMsg(pos, pos + dlen, SegTree.UnassignedSequenceNumber, client.getCurrentSeq(), client.getClientId()));
+            server.enqueueMsg(MergeTree.makeRemoveMsg(pos, pos + dlen, MergeTree.UnassignedSequenceNumber, client.getCurrentSeq(), client.getClientId()));
             client.removeSegmentLocal(pos, pos + dlen);
-            if (SegTree.useCheckQ) {
+            if (MergeTree.useCheckQ) {
                 client.enqueueTestString();
             }
         }
 
-        function randomWordMove(client: SegTree.Client) {
-            let word1 = Text.findRandomWord(client.segTree, client.getClientId());
+        function randomWordMove(client: MergeTree.Client) {
+            let word1 = Text.findRandomWord(client.mergeTree, client.getClientId());
             if (word1) {
                 let removeStart = word1.pos;
                 let removeEnd = removeStart + word1.text.length;
-                server.enqueueMsg(SegTree.makeRemoveMsg(removeStart, removeEnd, SegTree.UnassignedSequenceNumber, client.getCurrentSeq(), client.getClientId()));
+                server.enqueueMsg(MergeTree.makeRemoveMsg(removeStart, removeEnd, MergeTree.UnassignedSequenceNumber, client.getCurrentSeq(), client.getClientId()));
                 client.removeSegmentLocal(removeStart, removeEnd);
-                if (SegTree.useCheckQ) {
+                if (MergeTree.useCheckQ) {
                     client.enqueueTestString();
                 }
-                let word2 = Text.findRandomWord(client.segTree, client.getClientId());
+                let word2 = Text.findRandomWord(client.mergeTree, client.getClientId());
                 while (!word2) {
-                    word2 = Text.findRandomWord(client.segTree, client.getClientId());
+                    word2 = Text.findRandomWord(client.mergeTree, client.getClientId());
                 }
                 let pos = word2.pos + word2.text.length;
-                server.enqueueMsg(SegTree.makeInsertMsg(word1.text, pos, SegTree.UnassignedSequenceNumber, client.getCurrentSeq(), client.getClientId()));
+                server.enqueueMsg(MergeTree.makeInsertMsg(word1.text, pos, MergeTree.UnassignedSequenceNumber, client.getCurrentSeq(), client.getClientId()));
                 client.insertSegmentLocal(word1.text, pos);
-                if (SegTree.useCheckQ) {
+                if (MergeTree.useCheckQ) {
                     client.enqueueTestString();
                 }
             }
@@ -682,8 +691,8 @@ export function TestPack() {
                         }
             */
             // console.log(server.getText());
-            // console.log(server.segTree.toString());
-            // console.log(server.segTree.getStats());
+            // console.log(server.mergeTree.toString());
+            // console.log(server.mergeTree.getStats());
             if (0 == (i % 100)) {
                 let clockStart = clock();
                 if (checkTextMatch()) {
@@ -692,7 +701,7 @@ export function TestPack() {
                 }
                 checkTime += elapsedMicroseconds(clockStart);
                 console.log(`wall clock is ${((Date.now() - startTime) / 1000.0).toFixed(1)}`);
-                let stats = server.segTree.getStats();
+                let stats = server.mergeTree.getStats();
                 let liveAve = (stats.liveCount / stats.nodeCount).toFixed(1);
                 let posLeaves = stats.leafCount - stats.removedLeafCount;
                 console.log(`round: ${i} seq ${server.seq} char count ${server.getLength()} height ${stats.maxHeight} lv ${stats.leafCount} rml ${stats.removedLeafCount} p ${posLeaves} nodes ${stats.nodeCount} pop ${liveAve} histo ${stats.histo}`);
@@ -704,22 +713,22 @@ export function TestPack() {
                 }
                 console.log(`total time ${(totalTime / 1000000.0).toFixed(1)} check time ${(checkTime / 1000000.0).toFixed(1)}`);
                 //console.log(server.getText());
-                //console.log(server.segTree.toString());
+                //console.log(server.mergeTree.toString());
             }
         }
         reportTiming(server);
         reportTiming(clients[2]);
         //console.log(server.getText());
-        //console.log(server.segTree.toString());
+        //console.log(server.mergeTree.toString());
     }
 
     function randolicious() {
         let insertRounds = 40;
         let removeRounds = 32;
 
-        let cliA = new SegTree.Client("a stitch in time saves nine");
+        let cliA = new MergeTree.Client("a stitch in time saves nine");
         cliA.startCollaboration(0);
-        let cliB = new SegTree.Client("a stitch in time saves nine");
+        let cliB = new MergeTree.Client("a stitch in time saves nine");
         cliB.startCollaboration(1);
         function checkTextMatch(checkSeq: number) {
             let error = false;
@@ -753,7 +762,7 @@ export function TestPack() {
                     let text = randomString(textLen, String.fromCharCode(zedCode + (sequenceNumber % 50)));
                     let preLen = cliA.getLength();
                     let pos = random.integer(0, preLen)(mt);
-                    cliB.insertSegmentRemote(text, pos, sequenceNumber++, cliA.getCurrentSeq(), cliA.segTree.getSegmentWindow().clientId);
+                    cliB.insertSegmentRemote(text, pos, sequenceNumber++, cliA.getCurrentSeq(), cliA.mergeTree.getSegmentWindow().clientId);
                     cliA.insertSegmentLocal(text, pos);
                 }
                 for (let k = firstSeq; k < sequenceNumber; k++) {
@@ -772,7 +781,7 @@ export function TestPack() {
                     let text = randomString(textLen, String.fromCharCode(zedCode + (sequenceNumber % 50)));
                     let preLen = cliB.getLength();
                     let pos = random.integer(0, preLen)(mt);
-                    cliA.insertSegmentRemote(text, pos, sequenceNumber++, cliB.getCurrentSeq(), cliB.segTree.getSegmentWindow().clientId);
+                    cliA.insertSegmentRemote(text, pos, sequenceNumber++, cliB.getCurrentSeq(), cliB.mergeTree.getSegmentWindow().clientId);
                     cliB.insertSegmentLocal(text, pos);
                 }
                 for (let k = firstSeq; k < sequenceNumber; k++) {
@@ -797,7 +806,7 @@ export function TestPack() {
                     let dlen = randTextLength();
                     let preLen = cliA.getLength();
                     let pos = random.integer(0, preLen)(mt);
-                    cliB.removeSegmentRemote(pos, pos + dlen, sequenceNumber++, cliA.getCurrentSeq(), cliA.segTree.getSegmentWindow().clientId);
+                    cliB.removeSegmentRemote(pos, pos + dlen, sequenceNumber++, cliA.getCurrentSeq(), cliA.mergeTree.getSegmentWindow().clientId);
                     cliA.removeSegmentLocal(pos, pos + dlen);
                 }
                 for (let k = firstSeq; k < sequenceNumber; k++) {
@@ -815,7 +824,7 @@ export function TestPack() {
                     let dlen = randTextLength();
                     let preLen = cliB.getLength();
                     let pos = random.integer(0, preLen)(mt);
-                    cliA.removeSegmentRemote(pos, pos + dlen, sequenceNumber++, cliB.getCurrentSeq(), cliB.segTree.getSegmentWindow().clientId);
+                    cliA.removeSegmentRemote(pos, pos + dlen, sequenceNumber++, cliB.getCurrentSeq(), cliB.mergeTree.getSegmentWindow().clientId);
                     cliB.removeSegmentLocal(pos, pos + dlen);
                 }
                 for (let k = firstSeq; k < sequenceNumber; k++) {
@@ -830,22 +839,22 @@ export function TestPack() {
             return false;
         }
         if (insertTest()) {
-            console.log(cliA.segTree.toString());
-            console.log(cliB.segTree.toString());
+            console.log(cliA.mergeTree.toString());
+            console.log(cliB.mergeTree.toString());
         }
         else {
-            console.log(`sequence number: ${cliA.getCurrentSeq()} min: ${cliA.segTree.getSegmentWindow().minSeq}`);
-            //            console.log(cliA.segTree.toString());
+            console.log(`sequence number: ${cliA.getCurrentSeq()} min: ${cliA.mergeTree.getSegmentWindow().minSeq}`);
+            //            console.log(cliA.mergeTree.toString());
 
             console.log(`testing remove at ${cliA.getCurrentSeq()} and ${cliB.getCurrentSeq()}`);
             if (removeTest()) {
-                console.log(cliA.segTree.toString());
-                console.log(cliB.segTree.toString());
+                console.log(cliA.mergeTree.toString());
+                console.log(cliB.mergeTree.toString());
             }
         }
-        console.log(`sequence number: ${cliA.getCurrentSeq()} min: ${cliA.segTree.getSegmentWindow().minSeq}`);
-        //                console.log(cliA.segTree.toString());
-        //console.log(cliB.segTree.toString());
+        console.log(`sequence number: ${cliA.getCurrentSeq()} min: ${cliA.mergeTree.getSegmentWindow().minSeq}`);
+        //                console.log(cliA.mergeTree.toString());
+        //console.log(cliB.mergeTree.toString());
         console.log(cliA.getText());
         let aveWindow = ((minSegCount + maxSegCount) / 2).toFixed(1);
         let aveTime = (cliA.accumTime / cliA.accumOps).toFixed(3);
@@ -856,32 +865,32 @@ export function TestPack() {
     }
 
     function firstTest() {
-        let cli = new SegTree.Client("on the mat.");
+        let cli = new MergeTree.Client("on the mat.");
         cli.startCollaboration(1);
         cli.insertSegmentRemote("that ", 0, 1, 0, 0);
         cli.insertSegmentRemote("fat ", 0, 2, 0, 2);
         cli.insertSegmentLocal("cat ", 5);
-        console.log(cli.segTree.toString());
+        console.log(cli.mergeTree.toString());
         for (let i = 0; i < 3; i++) {
             for (let j = 0; j < 3; j++) {
                 console.log(cli.relText(i, j));
             }
         }
-        cli.segTree.ackPendingSegment(3);
-        console.log(cli.segTree.toString());
+        cli.mergeTree.ackPendingSegment(3);
+        console.log(cli.mergeTree.toString());
         for (let clientId = 0; clientId < 4; clientId++) {
             for (let refSeq = 0; refSeq < 4; refSeq++) {
                 console.log(cli.relText(clientId, refSeq));
             }
         }
         cli.insertSegmentRemote("very ", 5, 4, 2, 2);
-        console.log(cli.segTree.toString());
+        console.log(cli.mergeTree.toString());
         for (let clientId = 0; clientId < 4; clientId++) {
             for (let refSeq = 0; refSeq < 5; refSeq++) {
                 console.log(cli.relText(clientId, refSeq));
             }
         }
-        cli = new SegTree.Client(" old sock!");
+        cli = new MergeTree.Client(" old sock!");
         cli.startCollaboration(1);
         cli.insertSegmentRemote("abcde", 0, 1, 0, 2);
         cli.insertSegmentRemote("yyy", 0, 2, 0, 0);
@@ -890,26 +899,26 @@ export function TestPack() {
         cli.insertSegmentRemote("HAS", 4, 5, 1, 5);
         cli.insertSegmentLocal(" LANDED", 19);
         cli.insertSegmentRemote("yowza: ", 0, 6, 4, 2);
-        cli.segTree.ackPendingSegment(7);
-        console.log(cli.segTree.toString());
+        cli.mergeTree.ackPendingSegment(7);
+        console.log(cli.mergeTree.toString());
         for (let clientId = 0; clientId < 6; clientId++) {
             for (let refSeq = 0; refSeq < 8; refSeq++) {
                 console.log(cli.relText(clientId, refSeq));
             }
         }
         cli.removeSegmentRemote(3, 5, 8, 6, 0);
-        console.log(cli.segTree.toString());
+        console.log(cli.mergeTree.toString());
         for (let clientId = 0; clientId < 6; clientId++) {
             for (let refSeq = 0; refSeq < 9; refSeq++) {
                 console.log(cli.relText(clientId, refSeq));
             }
         }
-        cli = new SegTree.Client("abcdefgh");
+        cli = new MergeTree.Client("abcdefgh");
         cli.startCollaboration(1);
         cli.removeSegmentRemote(1, 3, 1, 0, 3);
-        console.log(cli.segTree.toString());
+        console.log(cli.mergeTree.toString());
         cli.insertSegmentRemote("zzz", 2, 2, 0, 2);
-        console.log(cli.segTree.toString());
+        console.log(cli.mergeTree.toString());
         for (let clientId = 0; clientId < 4; clientId++) {
             for (let refSeq = 0; refSeq < 3; refSeq++) {
                 console.log(cli.relText(clientId, refSeq));
@@ -917,8 +926,8 @@ export function TestPack() {
         }
         cli.insertSegmentRemote(" chaser", 9, 3, 2, 3);
         cli.removeSegmentLocal(12, 14);
-        cli.segTree.ackPendingSegment(4);
-        console.log(cli.segTree.toString());
+        cli.mergeTree.ackPendingSegment(4);
+        console.log(cli.mergeTree.toString());
         for (let clientId = 0; clientId < 4; clientId++) {
             for (let refSeq = 0; refSeq < 5; refSeq++) {
                 console.log(cli.relText(clientId, refSeq));
@@ -926,10 +935,10 @@ export function TestPack() {
         }
         cli.insertSegmentLocal("*yolumba*", 14);
         cli.insertSegmentLocal("-zanzibar-", 17);
-        cli.segTree.ackPendingSegment(5);
+        cli.mergeTree.ackPendingSegment(5);
         cli.insertSegmentRemote("(aaa)", 2, 6, 4, 2);
-        cli.segTree.ackPendingSegment(7);
-        console.log(cli.segTree.toString());
+        cli.mergeTree.ackPendingSegment(7);
+        console.log(cli.mergeTree.toString());
         for (let clientId = 0; clientId < 4; clientId++) {
             for (let refSeq = 0; refSeq < 8; refSeq++) {
                 console.log(cli.relText(clientId, refSeq));
@@ -943,7 +952,7 @@ export function TestPack() {
         */
         cli.removeSegmentRemote(3, 8, 8, 7, 2);
         cli.removeSegmentRemote(5, 7, 9, 7, 2);
-        console.log(cli.segTree.toString());
+        console.log(cli.mergeTree.toString());
         for (let clientId = 0; clientId < 4; clientId++) {
             for (let refSeq = 0; refSeq < 10; refSeq++) {
                 console.log(cli.relText(clientId, refSeq));
@@ -953,7 +962,8 @@ export function TestPack() {
     return {
         firstTest: firstTest,
         randolicious: randolicious,
-        clientServer: clientServer
+        clientServer: clientServer,
+        manyMergeTrees: manyMergeTrees
     }
 }
 
@@ -967,3 +977,4 @@ let testPack = TestPack();
 //testPack.randolicious();
 testPack.clientServer("pp.txt");
 //testPack.firstTest();
+//testPack.manyMergeTrees();

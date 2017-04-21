@@ -3,10 +3,10 @@
 /// <reference path="random.d.ts" />
 
 import * as random from "random-js";
-import * as SegTree from "./segmentTree";
+import * as MergeTree from "./mergeTree";
 import * as fs from "fs";
 
-export function loadText(filename: string, segTree: SegTree.SegmentTree, segLimit = 0) {
+export function loadText(filename: string, segTree: MergeTree.MergeTree, segLimit = 0) {
     let content = fs.readFileSync(filename, "utf8");
     content = content.replace(/^\uFEFF/, "");
 
@@ -14,12 +14,12 @@ export function loadText(filename: string, segTree: SegTree.SegmentTree, segLimi
     for (let i = 0, len = paragraphs.length; i < len; i++) {
         paragraphs[i] = paragraphs[i].replace(/\r\n/g, ' ').replace(/\u201c|\u201d/g, '"').replace(/\u2019/g, "'") + '\n';
     }
-    let segments = <SegTree.TextSegment[]>[];
+    let segments = <MergeTree.TextSegment[]>[];
     for (let paragraph of paragraphs) {
-        let segment = <SegTree.TextSegment>{
+        let segment = <MergeTree.TextSegment>{
             text: paragraph,
-            seq: SegTree.UniversalSequenceNumber,
-            clientId: SegTree.LocalClientId
+            seq: MergeTree.UniversalSequenceNumber,
+            clientId: MergeTree.LocalClientId
         }
         segments.push(segment);
     }
@@ -39,10 +39,10 @@ export function loadText(filename: string, segTree: SegTree.SegmentTree, segLimi
 let mt = random.engines.mt19937();
 mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
 
-export function findRandomWord(segTree: SegTree.SegmentTree, clientId: number) {
-    let len = segTree.getLength(SegTree.UniversalSequenceNumber, clientId);
+export function findRandomWord(segTree: MergeTree.MergeTree, clientId: number) {
+    let len = segTree.getLength(MergeTree.UniversalSequenceNumber, clientId);
     let pos = random.integer(0, len)(mt);
-    let textAtPos = segTree.getText(SegTree.UniversalSequenceNumber, clientId, pos, pos + 10);
+    let textAtPos = segTree.getText(MergeTree.UniversalSequenceNumber, clientId, pos, pos + 10);
     //console.log(textAtPos);
     let nextWord = segTree.searchFromPos(pos, /\s\w+\b/);
     if (nextWord) {
