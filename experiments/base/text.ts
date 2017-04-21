@@ -14,9 +14,9 @@ export function loadText(filename: string, segTree: MergeTree.MergeTree, segLimi
     for (let i = 0, len = paragraphs.length; i < len; i++) {
         paragraphs[i] = paragraphs[i].replace(/\r\n/g, ' ').replace(/\u201c|\u201d/g, '"').replace(/\u2019/g, "'") + '\n';
     }
-    let segments = <MergeTree.TextSegment[]>[];
+    let segments = <MergeTree.Segment[]>[];
     for (let paragraph of paragraphs) {
-        let segment = <MergeTree.TextSegment>{
+        let segment = <MergeTree.Segment>{
             text: paragraph,
             seq: MergeTree.UniversalSequenceNumber,
             clientId: MergeTree.LocalClientId

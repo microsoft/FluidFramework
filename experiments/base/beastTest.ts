@@ -165,17 +165,17 @@ function fileTest1() {
     }
 }
 
-function printTextSegment(textSegment: MergeTree.TextSegment, pos: number) {
+function printTextSegment(textSegment: MergeTree.Segment, pos: number) {
     console.log(textSegment.text);
     console.log(`at [${pos}, ${pos + textSegment.text.length})`);
     return true;
 }
 
-function makeTextSegment(text: string): MergeTree.TextSegment {
+function makeTextSegment(text: string): MergeTree.Segment {
     return { text: text };
 }
 
-function makeCollabTextSegment(text: string, seq = MergeTree.UniversalSequenceNumber, clientId = MergeTree.LocalClientId): MergeTree.TextSegment {
+function makeCollabTextSegment(text: string, seq = MergeTree.UniversalSequenceNumber, clientId = MergeTree.LocalClientId): MergeTree.Segment {
     return { text: text, seq: seq, clientId: clientId };
 }
 
@@ -185,7 +185,7 @@ function editFlat(source: string, s: number, dl: number, nt = "") {
 
 let accumTime = 0;
 
-function checkInsertSegTree(segTree: MergeTree.MergeTree, pos: number, textSegment: MergeTree.TextSegment,
+function checkInsertSegTree(segTree: MergeTree.MergeTree, pos: number, textSegment: MergeTree.Segment,
     verbose = false) {
     let checkText = segTree.getText(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
     checkText = editFlat(checkText, pos, 0, textSegment.text);
@@ -490,6 +490,9 @@ export function TestPack() {
         return str;
     }
 
+    let getTextTime = 0;
+    let getTextCalls = 0;
+
     function reportTiming(client: MergeTree.Client) {
         let aveTime = (client.accumTime / client.accumOps).toFixed(1);
         let aveLocalTime = (client.localTime / client.localOps).toFixed(1);
@@ -501,9 +504,11 @@ export function TestPack() {
         let aveExtraWindowTime = (client.accumWindowTime / client.accumOps).toFixed(1);
         let aveWindow = (client.accumWindow / client.accumOps).toFixed(1);
         let adjTime = ((client.accumTime - (windowTime - client.accumWindowTime)) / client.accumOps).toFixed(1);
+        let aveGetTextTime = (getTextTime/getTextCalls).toFixed(1);
         if (client.localOps > 0) {
             console.log(`local time ${client.localTime} us ops: ${client.localOps} ave time ${aveLocalTime}`);
         }
+        console.log(`get text time: ${aveGetTextTime}`);
         console.log(`accum time ${client.accumTime} us ops: ${client.accumOps} ave time ${aveTime} - wtime ${adjTime} pack ${avePackTime} ave window ${aveWindow}`);
         console.log(`accum window time ${client.accumWindowTime} us ave window time total ${aveWindowTime} not in ops ${aveExtraWindowTime}; max ${client.maxWindowTime}`);
     }
@@ -511,10 +516,10 @@ export function TestPack() {
     function manyMergeTrees() {
         const mergeTreeCount = 2000000;
         let a = <MergeTree.MergeTree[]>Array(mergeTreeCount);
-        for (let i=0;i<mergeTreeCount;i++) {
-            a[i]=new MergeTree.MergeTree("");
+        for (let i = 0; i < mergeTreeCount; i++) {
+            a[i] = new MergeTree.MergeTree("");
         }
-        for (;;);
+        for (; ;);
     }
 
     function clientServer(startFile?: string) {
@@ -542,7 +547,10 @@ export function TestPack() {
 
         function checkTextMatch() {
             //console.log(`checking text match @${server.getCurrentSeq()}`);
+            let clockStart = clock();
             let serverText = server.getText();
+            getTextTime += elapsedMicroseconds(clockStart);
+            getTextCalls++;
             for (let client of clients) {
                 let cliText = client.getText();
                 if (cliText != serverText) {
@@ -975,6 +983,6 @@ export function TestPack() {
 //segTreeCheckedTest();
 let testPack = TestPack();
 //testPack.randolicious();
-testPack.clientServer("pp.txt");
+testPack.clientServer();
 //testPack.firstTest();
 //testPack.manyMergeTrees();
