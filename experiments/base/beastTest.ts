@@ -509,7 +509,7 @@ export function TestPack() {
     }
 
     function manyMergeTrees() {
-        const mergeTreeCount = 100000;
+        const mergeTreeCount = 2000000;
         let a = <MergeTree.MergeTree[]>Array(mergeTreeCount);
         for (let i=0;i<mergeTreeCount;i++) {
             a[i]=new MergeTree.MergeTree("");

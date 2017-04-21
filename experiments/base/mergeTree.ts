@@ -1132,16 +1132,30 @@ export class MergeTree implements IMergeTree {
     // must be an even number   
     static MaxSegments = 8;
     static TextSegmentGranularity = 128;
-    windowTime = 0;
-    packTime = 0;
-
+    static zamboniSegmentsMaxCount = 2;
     static options = {
         incrementalUpdate: true,
         zamboniSegments: true,
         measureWindowTime: true,
     };
+    static searchChunkSize = 256;
+    static traceGatherText = false;
+    static diagInsertTie = false;
+    static skipLeftShift = true;
+    static diagOverlappingRemove = false;
+    static traceTraversal = false;
 
+    static theUnfinishedNode = <TextSegmentBlock>{ liveSegmentCount: -1 };
+    static theSuccessfulShiftNode = <TextSegmentBlock>{ liveSegmentCount: -2 };
+
+    windowTime = 0;
+    packTime = 0;
+    
     root: TextSegmentBlock;
+    segmentWindow = new SegmentWindow();
+    pendingSegments: ListUtil.List<TextSegmentGroup>;
+    segmentsToScour: BST.Heap<LRUSegment>;
+
     constructor(public text: string) {
         this.root = this.initialNode(this.text);
     }
@@ -1212,10 +1226,6 @@ export class MergeTree implements IMergeTree {
             console.log(`reload time ${elapsedMicroseconds(clockStart)}`);
         }
     }
-
-    segmentWindow = new SegmentWindow();
-    pendingSegments: ListUtil.List<TextSegmentGroup>;
-    segmentsToScour: BST.Heap<LRUSegment>;
 
     // for now assume min starts at zero
     startCollaboration(localClientId: number) {
@@ -1342,7 +1352,6 @@ export class MergeTree implements IMergeTree {
         prevSegment.text += segment.text;
     }
 
-    static zamboniSegmentsMaxCount = 2;
     zamboniSegments() {
         //console.log(`scour line ${segmentsToScour.count()}`);
         let clockStart;
@@ -1465,7 +1474,6 @@ export class MergeTree implements IMergeTree {
         }
     }
 
-    static searchChunkSize = 256;
     searchFromPos(pos: number, target: RegExp) {
         let start = pos;
         let end = pos + MergeTree.searchChunkSize;
@@ -1488,7 +1496,6 @@ export class MergeTree implements IMergeTree {
         }
     }
 
-    static traceGatherText = false;
     gatherText = (textSegment: TextSegment, pos: number, refSeq: number, clientId: number, start: number, end: number, accumText: TextSegment) => {
         if ((textSegment.removedSeq === undefined) || (textSegment.removedSeq == UnassignedSequenceNumber) || (textSegment.removedSeq > refSeq)) {
             if (MergeTree.traceGatherText) {
@@ -1592,8 +1599,6 @@ export class MergeTree implements IMergeTree {
             }
         }
     }
-
-    lastClear = 0;
 
     updateMinSeq(minSeq: number) {
         this.segmentWindow.minSeq = minSeq;
@@ -1702,7 +1707,6 @@ export class MergeTree implements IMergeTree {
         }
     }
 
-    static diagInsertTie = false;
     nodeInsertBefore(node: TextSegmentBlock, pos: number, refSeq: number, clientId: number, textSegment: TextSegment) {
         let segIsLocal = false;
         let checkSegmentIsLocal = (textSegment: TextSegment, pos: number, refSeq: number, clientId: number) => {
@@ -1824,8 +1828,6 @@ export class MergeTree implements IMergeTree {
         }
     }
 
-    theUnfinishedNode = <TextSegmentBlock>{ liveSegmentCount: -1 };
-    theSuccessfulShiftNode = <TextSegmentBlock>{ liveSegmentCount: -2 };
     insertingWalk(node: TextSegmentBlock, pos: number, refSeq: number, clientId: number, seq: number,
         leafAction: (segment: TextSegment, pos: number) => TextSegment,
         continuePredicate?: (continueFromNode: TextSegmentBlock) => boolean) {
@@ -1861,14 +1863,14 @@ export class MergeTree implements IMergeTree {
                         this.nodeUpdateLength(node, seq, clientId);
                         return undefined;
                     }
-                    else if (splitNode == this.theUnfinishedNode) {
+                    else if (splitNode == MergeTree.theUnfinishedNode) {
                         if (MergeTree.traceTraversal) {
                             console.log(`@cli ${this.segmentWindow.clientId} unfinished bus pos ${pos} len ${len}`);
                         }
                         pos -= len; // act as if shifted segment
                         continue;
                     }
-                    else if (splitNode == this.theSuccessfulShiftNode) {
+                    else if (splitNode == MergeTree.theSuccessfulShiftNode) {
                         this.nodeUpdateLengthNewStructure(node);
                         return undefined;
                     }
@@ -1906,7 +1908,7 @@ export class MergeTree implements IMergeTree {
             if (pos == 0) {
                 // TODO: look ahead to see if we should shift next segment
                 if ((seq != UnassignedSequenceNumber) && continuePredicate && continuePredicate(node)) {
-                    return this.theUnfinishedNode;
+                    return MergeTree.theUnfinishedNode;
                 }
                 else {
                     if (MergeTree.traceTraversal) {
@@ -1983,7 +1985,6 @@ export class MergeTree implements IMergeTree {
         return false;
     }
 
-    static skipLeftShift = true;
     split(node: TextSegmentBlock) {
         if (MergeTree.skipLeftShift || (!this.tryShiftLeft(node))) {
             let halfCount = MergeTree.MaxSegments / 2;
@@ -2001,7 +2002,7 @@ export class MergeTree implements IMergeTree {
             return newNode;
         }
         else {
-            return this.theSuccessfulShiftNode;
+            return MergeTree.theSuccessfulShiftNode;
         }
     }
 
@@ -2015,7 +2016,6 @@ export class MergeTree implements IMergeTree {
         textSegment.removedClientOverlap.push(clientId);
     }
 
-    static diagOverlappingRemove = false;
     markRangeRemoved(start: number, end: number, refSeq: number, clientId: number, seq: number) {
         this.ensureIntervalBoundary(start, refSeq, clientId);
         this.ensureIntervalBoundary(end, refSeq, clientId);
@@ -2168,7 +2168,6 @@ export class MergeTree implements IMergeTree {
         }
     }
 
-    once = true;
     nodeCompareUpdateLength(node: TextSegmentBlock, seq: number, clientId: number) {
         this.nodeUpdateTotalLength(node);
         if (this.segmentWindow.collaborating && (seq != UnassignedSequenceNumber) && (seq != TreeMaintainanceSequenceNumber)) {
@@ -2181,10 +2180,6 @@ export class MergeTree implements IMergeTree {
                     console.log(tempPartialLengths.toString());
                     console.log("b4 " + bplStr);
                     console.log(node.partialLengths.toString());
-                    if (this.once) {
-                        console.log(this.nodeToString(node, "", 2));
-                        this.once = false;
-                    }
                 }
             }
             else {
@@ -2252,8 +2247,6 @@ export class MergeTree implements IMergeTree {
     toString() {
         return this.nodeToString(this.root, "", 0);
     }
-
-    static traceTraversal = false;
 
     nodeMap<TAccum>(node: TextSegmentBlock, actions: TextSegmentActions, pos: number, refSeq: number,
         clientId: number, accum?: TAccum, start?: number, end?: number) {
