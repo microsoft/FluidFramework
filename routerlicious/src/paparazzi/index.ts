@@ -61,7 +61,6 @@ async function getOrCreateBucket(bucket: string) {
 const bucket = nconf.get("paparazzi:bucket");
 const bucketReadyP = getOrCreateBucket(bucket);
 
-
 async function loadDocument(id: string): Promise<api.Document> {
     console.log("Connecting to storage provider...");
     const provider = new socketStorage.StorageProvider("http://web:3000");
