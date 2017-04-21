@@ -6,7 +6,7 @@
 import * as fs from "fs";
 import * as RedBlack from "./redBlack";
 import * as random from "random-js";
-import * as MergeTree from "./cmergeTree";
+import * as MergeTree from "./mergeTree";
 import * as Text from "./text";
 import * as JsDiff from "diff";
 
