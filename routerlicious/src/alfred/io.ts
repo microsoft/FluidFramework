@@ -56,24 +56,6 @@ let pub = redis.createClient(port, host, pubOptions);
 let sub = redis.createClient(port, host, subOptions);
 io.adapter(socketIoRedis({ pubClient: pub, subClient: sub }));
 
-// Connect to the database
-// import { MongoClient } from "mongodb";
-// const mongoUrl = nconf.get("mongo:endpoint");
-// const mongoClientP = MongoClient.connect(mongoUrl);
-// const collectionP = mongoClientP.then(async (db) => {
-//     const deltasCollectionName = nconf.get("mongo:collectionNames:deltas");
-//     const collection = db.collection(deltasCollectionName);
-//     return collection;
-// });
-
-// const collection = await collectionP;
-// const deltas = await collection
-//     .find({ objectId: message.objectId, sequenceNumber: { $gt: snapshot.sequenceNumber } })
-//     .sort({ sequenceNumber: 1 })
-//     .toArray();
-// console.log("Found outstanding deltas");
-// console.log(JSON.stringify(deltas, null, 2));
-
 // Gain access to the document storage
 const minioConfig = nconf.get("minio");
 const minioClient = new minio.Client({
