@@ -16,11 +16,10 @@ export function loadText(filename: string, segTree: MergeTree.MergeTree, segLimi
     }
     let segments = <MergeTree.Segment[]>[];
     for (let paragraph of paragraphs) {
-        let segment = <MergeTree.Segment>{
-            text: paragraph,
-            seq: MergeTree.UniversalSequenceNumber,
-            clientId: MergeTree.LocalClientId
-        }
+        let segment = new MergeTree.TextSegment(paragraph,
+            MergeTree.UniversalSequenceNumber,
+            MergeTree.LocalClientId);
+        
         segments.push(segment);
     }
     if (segLimit>0) {
