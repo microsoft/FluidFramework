@@ -1,9 +1,9 @@
 version: '3'
 services:
-    web:
+    alfred:
         volumes:
             - .:/usr/src/server
-        command: npm run start:watch
+        command: npm run alfred:watch
     deli:
         volumes:
             - .:/usr/src/server

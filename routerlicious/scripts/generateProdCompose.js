@@ -6,7 +6,7 @@ const composeFile = process.argv[2];
 const compose =
 `version: '3'
 services:
-    web:
+    alfred:
         image: ${composeFile}
         ports:
             - "80:3000"

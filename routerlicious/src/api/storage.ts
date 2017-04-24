@@ -55,11 +55,6 @@ export interface IStorageObject {
  */
 export interface ICollaborativeObjectDetails {
     /**
-     * Pending delta operations not yet applied to the snapshot
-     */
-    deltas: any[];
-
-    /**
      * The current snapshot for the document
      */
     snapshot: any;

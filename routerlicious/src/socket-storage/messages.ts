@@ -67,8 +67,6 @@ export interface IResponse<T> {
 export interface IObjectDetails {
     id: string;
 
-    deltas: any[];
-
     sequenceNumber: number;
 
     snapshot: any;

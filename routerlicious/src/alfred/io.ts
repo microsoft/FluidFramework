@@ -1,7 +1,6 @@
 import * as kafka from "kafka-node";
 import * as _ from "lodash";
 import * as minio from "minio";
-import { MongoClient } from "mongodb";
 import * as nconf from "nconf";
 import * as redis from "redis";
 import * as socketIo from "socket.io";
@@ -58,13 +57,22 @@ let sub = redis.createClient(port, host, subOptions);
 io.adapter(socketIoRedis({ pubClient: pub, subClient: sub }));
 
 // Connect to the database
-const mongoUrl = nconf.get("mongo:endpoint");
-const mongoClientP = MongoClient.connect(mongoUrl);
-const collectionP = mongoClientP.then(async (db) => {
-    const deltasCollectionName = nconf.get("mongo:collectionNames:deltas");
-    const collection = db.collection(deltasCollectionName);
-    return collection;
-});
+// import { MongoClient } from "mongodb";
+// const mongoUrl = nconf.get("mongo:endpoint");
+// const mongoClientP = MongoClient.connect(mongoUrl);
+// const collectionP = mongoClientP.then(async (db) => {
+//     const deltasCollectionName = nconf.get("mongo:collectionNames:deltas");
+//     const collection = db.collection(deltasCollectionName);
+//     return collection;
+// });
+
+// const collection = await collectionP;
+// const deltas = await collection
+//     .find({ objectId: message.objectId, sequenceNumber: { $gt: snapshot.sequenceNumber } })
+//     .sort({ sequenceNumber: 1 })
+//     .toArray();
+// console.log("Found outstanding deltas");
+// console.log(JSON.stringify(deltas, null, 2));
 
 // Gain access to the document storage
 const minioConfig = nconf.get("minio");
@@ -133,17 +141,8 @@ io.on("connection", (socket) => {
                     snapshot = JSON.parse(text);
                 }
 
-                const collection = await collectionP;
-                const deltas = await collection
-                    .find({ objectId: message.objectId, sequenceNumber: { $gt: snapshot.sequenceNumber } })
-                    .sort({ sequenceNumber: 1 })
-                    .toArray();
-                console.log("Found outstanding deltas");
-                console.log(JSON.stringify(deltas, null, 2));
-
                 const responseMessage: socketStorage.IResponse<socketStorage.IObjectDetails> = {
                     data: {
-                        deltas,
                         id: message.objectId,
                         sequenceNumber: snapshot.sequenceNumber,
                         snapshot: snapshot.snapshot,

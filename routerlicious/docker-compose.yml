@@ -1,7 +1,6 @@
 version: '3'
 services:
-    web:
-        image: 127.0.0.1:5000/routerlicious
+    alfred:
         build: .
         ports:
             - "3000:3000"
@@ -10,7 +9,6 @@ services:
             - mongodb
             - kafka
     deli:
-        image: 127.0.0.1:5000/routerlicious
         build: .
         depends_on:
             - redis
@@ -18,14 +16,12 @@ services:
             - kafka
         command: npm run deli
     paparazzi:
-        image: 127.0.0.1:5000/routerlicious
         build: .
         depends_on:
-            - web
+            - alfred
             - rabbitmq
         command: npm run paparazzi
     scriptorium:
-        image: 127.0.0.1:5000/routerlicious
         build: .
         depends_on:
             - redis
@@ -33,7 +29,6 @@ services:
             - kafka
         command: npm run scriptorium
     tmz:
-        image: 127.0.0.1:5000/routerlicious
         build: .
         depends_on:
             - redis

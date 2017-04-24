@@ -39,7 +39,6 @@ export class Storage implements api.IStorage {
                 (response: messages.IResponse<messages.IObjectDetails>) => {
 
                 let details: api.ICollaborativeObjectDetails = {
-                    deltas: response.data.deltas,
                     object: new StorageObject(
                         response.data.id,
                         response.data.type,

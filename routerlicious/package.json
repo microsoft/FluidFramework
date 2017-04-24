@@ -8,6 +8,8 @@
     "build": "npm run tsc && npm run tslint && npm run browserify && npm run less",
     "build:watch": "watch 'npm run tsc && npm run browserify' src",
     "less": "lessc src/stylesheets/style.less public/stylesheets/dist/style.css",
+    "alfred": "node dist/alfred/www.js",
+    "alfred:watch": "nodemon dist/alfred/www.js -w dist",
     "deli": "node dist/deli/index.js",
     "deli:watch": "nodemon dist/deli/index.js -w dist",
     "paparazzi": "node dist/paparazzi/index.js",
@@ -16,8 +18,7 @@
     "scriptorium:watch": "nodemon dist/scriptorium/index.js -w dist",
     "tmz": "node dist/tmz/index.js",
     "tmz:watch": "nodemon dist/tmz/index.js -w dist",
-    "start": "node dist/server/www.js",
-    "start:watch": "nodemon dist/server/www.js -w dist",
+    "start": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml up",
     "test": "nyc -x dist/test/**/* mocha dist/test",
     "tsc": "tsc",
     "tslint": "tslint 'src/**/*.ts'"

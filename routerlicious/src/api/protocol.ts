@@ -1,6 +1,8 @@
 // Is there a doc comment genrator for TS?
 
 export interface IMessageBase {
+    userId: string;
+
     clientId: string;
 
     clientSequenceNumber: number;
