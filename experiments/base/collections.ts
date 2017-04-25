@@ -20,6 +20,7 @@ export class Stack<T> {
   }
   
 }
+
 export function ListRemoveEntry<U>(entry: List<U>): List<U> {
     if (entry === undefined) {
         return undefined;

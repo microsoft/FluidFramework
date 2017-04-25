@@ -1,6 +1,8 @@
 /// <reference path="base.d.ts" />
+/// <reference path ="node.d.ts"/>
 
 import * as Collections from "./collections";
+import * as fs from "fs";
 
 export interface Node {
     parent: Block;
@@ -124,7 +126,7 @@ export class BaseSegment extends MergeNode implements Segment {
     }
     removedSeq: number;
     removedClientId: number;
-   removedClientOverlap: number[];
+    removedClientOverlap: number[];
     segmentGroup: SegmentGroup;
     splitAt(pos: number): Segment {
         return undefined;
@@ -280,7 +282,6 @@ enum IncrementalExecOp {
 
 class IncrementalMapState<TContext> {
     op = IncrementalExecOp.Go;
-
     constructor(
         public block: Block,
         public actions: IncrementalSegmentActions,
@@ -290,9 +291,175 @@ class IncrementalMapState<TContext> {
         public context: TContext,
         public start: number,
         public end: number,
-        public childIndex: number
+        public childIndex = 0
     ) {
+    }
+}
 
+interface SnapshotHeader {
+    chunkCount: number;
+    indexOffset: number;
+    segmentsOffset: number;
+    seq: number;
+}
+
+interface SnapChunk {
+    /**
+     * Offset from beginning of segments.
+     */
+    position: number;
+    segmentCount: number;
+    lengthBytes: number;
+    buffer?: Buffer;
+}
+
+class Snapshot {
+    static SnapChunkSize = 0x10000;
+    static SegmentLengthSize = 0x4;
+    static SnapshotHeaderSize = 0x10;
+    static IndexEntrySize = 0xC;
+    header: SnapshotHeader;
+    index: SnapChunk[];
+    fileDesriptor: number;
+    stateStack: Collections.Stack<IncrementalMapState<Snapshot>>;
+    seq: number;
+    buffer: Buffer;
+    pendingChunk: SnapChunk;
+
+    emitSegment(segment: Segment, state: IncrementalMapState<Snapshot>) {
+        if ((segment.seq != UnassignedSequenceNumber) && (segment.seq <= this.seq) &&
+            (segment.getType() == SegmentType.Text)) {
+            if ((segment.removedSeq === undefined) ||
+                (segment.removedSeq == UnassignedSequenceNumber) ||
+                (segment.removedSeq > this.seq)) {
+                let textSegment = <TextSegment>segment;
+                let chunk = this.index[this.index.length - 1];
+                let savedSegmentLength = Snapshot.SegmentLengthSize + textSegment.text.length;
+                if ((chunk.lengthBytes + savedSegmentLength) > Snapshot.SnapChunkSize) {
+                    let newChunk = <SnapChunk>{
+                        position: chunk.position + Snapshot.SegmentLengthSize,
+                        segmentCount: 0,
+                        lengthBytes: 0
+                    };
+                    this.index.push(newChunk);
+                    chunk.buffer = this.buffer;
+                    this.pendingChunk = chunk;
+                    chunk = newChunk;
+                    this.buffer = undefined;
+                }
+                chunk.segmentCount++;
+                if (this.buffer === undefined) {
+                    this.buffer = new Buffer(Snapshot.SnapChunkSize);
+                }
+                chunk.lengthBytes = this.buffer.writeUInt32BE(textSegment.text.length, chunk.lengthBytes);
+                chunk.lengthBytes = this.buffer.write(textSegment.text, chunk.lengthBytes);
+                if (this.pendingChunk) {
+                    state.op = IncrementalExecOp.Yield;
+                }
+            }
+        }
+    }
+
+    close() {
+        // TODO: call back to original snapshot creator
+        fs.close(this.fileDesriptor,(err)=> {});
+    }
+
+    writeIndexAndClose(indexOffset: number) {
+        let indexSize = Snapshot.IndexEntrySize*this.index.length;
+        let indexBuf = new Buffer(indexSize);
+        let offset = 0;
+        for (let i=0;i<this.index.length;i++) {
+            let chunk = this.index[i];
+            offset = indexBuf.writeUInt32BE(chunk.position,offset);
+            offset = indexBuf.writeUInt32BE(chunk.segmentCount,offset);
+            offset = indexBuf.writeUInt32BE(chunk.lengthBytes,offset);
+        }
+        fs.write(this.fileDesriptor,indexBuf,0,indexSize,indexOffset,
+            (err, written, buf) => {
+                // TODO: process err and check written == buffer size
+                this.close();
+            });
+    }
+
+    writeHeader() {
+        // header information
+        let chunkCount = this.index.length;
+        let segmentsSize = chunkCount * Snapshot.SnapChunkSize;
+        let segmentsOffset = Snapshot.SnapshotHeaderSize;
+        let indexOffset = segmentsOffset + segmentsSize;
+        // write header
+        let headerBuf = new Buffer(Snapshot.SnapshotHeaderSize);
+        let offset = 0;
+        offset = headerBuf.writeUInt32BE(chunkCount, offset);
+        offset = headerBuf.writeUInt32BE(indexOffset, offset);
+        offset = headerBuf.writeUInt32BE(segmentsOffset, offset);
+        offset = headerBuf.writeUInt32BE(this.seq, offset);
+        // assert offset == segmentsOffset
+        fs.write(this.fileDesriptor, headerBuf, 0,Snapshot.SnapshotHeaderSize,0,
+            (err, written, buf) => {
+                // TODO: process err and check written == buffer size
+                this.writeIndexAndClose(indexOffset);
+            });
+
+    }
+
+    writeLastChunk() {
+        let chunk = this.index[this.index.length - 1];
+        if (chunk.lengthBytes > 0) {
+            fs.write(this.fileDesriptor, this.buffer, chunk.position,
+                (err, written, buf) => {
+                    // TODO: process err and check written == buffer size
+                    this.writeHeader();
+                });
+        }
+    }
+
+    step() {
+        this.mergeTree.incrementalBlockMap(this.stateStack);
+        if (this.stateStack.empty()) {
+            this.writeLastChunk();
+        }
+        else {
+            let state = this.stateStack.top();
+            if (state.op == IncrementalExecOp.Yield) {
+                state.op = IncrementalExecOp.Go;
+                if (this.pendingChunk) {
+                    let chunk = this.pendingChunk;
+                    this.pendingChunk = undefined;
+                    fs.write(this.fileDesriptor, this.pendingChunk.buffer, this.pendingChunk.position,
+                        (err, written, buf) => {
+                            // TODO: process err and check written == buffer size
+                            this.step();
+                        });
+                }
+            }
+        }
+    }
+
+    onOpen(fd: number) {
+        let collabWindow = this.mergeTree.getSegmentWindow();
+        this.fileDesriptor = fd;
+        this.seq = collabWindow.minSeq;
+        this.index = [{
+            position: Snapshot.SnapshotHeaderSize,
+            segmentCount: 0,
+            lengthBytes: 0
+        }];
+        this.stateStack = new Collections.Stack<IncrementalMapState<Snapshot>>();
+        let initialState = new IncrementalMapState<Snapshot>(this.mergeTree.root,
+            { leaf: (segment, state) => { this.emitSegment(segment, state) } },
+            0, UniversalSequenceNumber, collabWindow.clientId, this, 0,
+            this.mergeTree.getLength(UniversalSequenceNumber, collabWindow.clientId), 0);
+        this.stateStack.push(initialState);
+        this.step();
+    }
+
+    constructor(public mergeTree: MergeTree, public filename: string) {
+        fs.open(filename, 'w', (err, fd) => {
+            // TODO: process err
+            this.onOpen(fd);
+        });
     }
 }
 
