@@ -20,7 +20,8 @@ export enum SegmentType {
     Base,
     Text,
     Marker,
-    Component
+    Component,
+    ExternalBlock
 }
 
 // internal (represents multiple leaf segments) if child is defined
@@ -55,10 +56,24 @@ export interface BlockAction {
         accum?: TAccum): boolean;
 }
 
+export interface IncrementalSegmentAction {
+    <TContext>(segment: Segment, state: IncrementalMapState<TContext>);
+}
+
+export interface IncrementalBlockAction {
+    <TContext>(state: IncrementalMapState<TContext>);
+}
+
 export interface SegmentActions {
     leaf: SegmentAction;
     pre?: BlockAction;
     post?: BlockAction;
+}
+
+export interface IncrementalSegmentActions {
+    leaf: IncrementalSegmentAction;
+    pre?: IncrementalBlockAction;
+    post?: IncrementalBlockAction;
 }
 
 export interface SearchResult {
@@ -109,7 +124,7 @@ export class BaseSegment extends MergeNode implements Segment {
     }
     removedSeq: number;
     removedClientId: number;
-    removedClientOverlap: number[];
+   removedClientOverlap: number[];
     segmentGroup: SegmentGroup;
     splitAt(pos: number): Segment {
         return undefined;
@@ -226,6 +241,58 @@ function segmentCopy(from: Segment, to: Segment, propSegGroup = false) {
         else {
             segmentGroupReplace(from, to);
         }
+    }
+}
+
+function incrementalGatherText(segment: Segment, state: IncrementalMapState<TextSegment>) {
+    if (segment.getType() == SegmentType.Text) {
+        let textSegment = <TextSegment>segment;
+        if ((textSegment.removedSeq === undefined) || (textSegment.removedSeq == UnassignedSequenceNumber) || (textSegment.removedSeq > state.refSeq)) {
+            if (MergeTree.traceGatherText) {
+                console.log(`@cli ${this.collabWindow.clientId} gather seg seq ${textSegment.seq} rseq ${textSegment.removedSeq} text ${textSegment.text}`);
+            }
+            if ((state.start <= 0) && (state.end >= textSegment.text.length)) {
+                state.context.text += textSegment.text;
+            }
+            else {
+                if (state.end >= textSegment.text.length) {
+                    state.context.text += textSegment.text.substring(state.start);
+                }
+                else {
+                    state.context.text += textSegment.text.substring(state.start, state.end);
+                }
+            }
+        }
+        else {
+            if (MergeTree.traceGatherText) {
+                console.log(`ignore seg seq ${textSegment.seq} rseq ${textSegment.removedSeq} text ${textSegment.text}`);
+            }
+        }
+    }
+    state.op = IncrementalExecOp.Go;
+}
+
+enum IncrementalExecOp {
+    Go,
+    Stop,
+    Yield
+}
+
+class IncrementalMapState<TContext> {
+    op = IncrementalExecOp.Go;
+
+    constructor(
+        public block: Block,
+        public actions: IncrementalSegmentActions,
+        public pos: number,
+        public refSeq: number,
+        public clientId: number,
+        public context: TContext,
+        public start: number,
+        public end: number,
+        public childIndex: number
+    ) {
+
     }
 }
 
@@ -1569,6 +1636,25 @@ export class MergeTree {
         return true;
     }
 
+    incrementalGetText(refSeq: number, clientId: number, start?: number, end?: number) {
+        if (start === undefined) {
+            start = 0;
+        }
+        if (end === undefined) {
+            end = this.blockLength(this.root, refSeq, clientId);
+        }
+        let context = new TextSegment("");
+        let stack = new Collections.Stack<IncrementalMapState<TextSegment>>();
+        let initialState = new IncrementalMapState(this.root, { leaf: incrementalGatherText },
+            0, refSeq, clientId, context, start, end, 0);
+        stack.push(initialState);
+
+        while (!stack.empty()) {
+            this.incrementalBlockMap(stack);
+        }
+        return context.text;
+    }
+
     getText(refSeq: number, clientId: number, start?: number, end?: number) {
         if (start === undefined) {
             start = 0;
@@ -2224,6 +2310,54 @@ export class MergeTree {
     toString() {
         return this.nodeToString(this.root, "", 0);
     }
+
+    incrementalBlockMap<TContext>(stateStack: Collections.Stack<IncrementalMapState<TContext>>) {
+        while (!stateStack.empty()) {
+            let state = stateStack.top();
+            if (state.op != IncrementalExecOp.Go) {
+                return;
+            }
+            if (state.childIndex == 0) {
+                if (state.start === undefined) {
+                    state.start = 0;
+                }
+                if (state.end === undefined) {
+                    state.end = this.blockLength(state.block, state.refSeq, state.clientId);
+                }
+
+                if (state.actions.pre) {
+                    state.actions.pre(state);
+                }
+            }
+            if ((state.op == IncrementalExecOp.Go) && (state.childIndex < state.block.childCount)) {
+                let child = state.block.children[state.childIndex];
+                let len = this.nodeLength(child, state.refSeq, state.clientId);
+                if ((len > 0) && (state.start < len) && (state.end > 0)) {
+                    if (!child.isLeaf()) {
+                        let childState = new IncrementalMapState(<Block>child, state.actions, state.pos,
+                            state.refSeq, state.clientId, state.context, state.start, state.end, 0);
+                        stateStack.push(childState);
+                    }
+                    else {
+                        state.actions.leaf(<Segment>child, state);
+                    }
+                }
+                state.pos += len;
+                state.start -= len;
+                state.end -= len;
+                state.childIndex++;
+            }
+            else {
+                if (state.childIndex == state.block.childCount) {
+                    if ((state.op == IncrementalExecOp.Go) && state.actions.post) {
+                        state.actions.post(state);
+                    }
+                    stateStack.pop();
+                }
+            }
+        }
+    }
+
 
     nodeMap<TAccum>(node: Block, actions: SegmentActions, pos: number, refSeq: number,
         clientId: number, accum?: TAccum, start?: number, end?: number) {

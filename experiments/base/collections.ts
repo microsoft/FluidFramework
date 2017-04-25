@@ -1,5 +1,25 @@
 /// <reference path="base.d.ts" />
 
+
+export class Stack<T> {
+  items: T[] = [];
+  push(val: T) {
+    this.items.push(val);
+  }
+
+  empty() {
+      return this.items.length == 0;
+  }
+
+  top(): T | undefined {
+    return this.items[this.items.length-1];   
+  }
+
+  pop(): T | undefined {
+    return this.items.pop();
+  }
+  
+}
 export function ListRemoveEntry<U>(entry: List<U>): List<U> {
     if (entry === undefined) {
         return undefined;
