@@ -9,6 +9,7 @@ import * as random from "random-js";
 import * as MergeTree from "./mergeTree";
 import * as Text from "./text";
 import * as JsDiff from "diff";
+import * as Paparazzo from "./snapshot";
 
 function compareStrings(a: string, b: string) {
     return a.localeCompare(b);
@@ -556,7 +557,7 @@ export function TestPack() {
         server.addClients(clients);
 
         function incrGetText(client: MergeTree.Client) {
-            let collabWindow = client.mergeTree.getSegmentWindow();
+            let collabWindow = client.mergeTree.getCollabWindow();
             return client.mergeTree.incrementalGetText(collabWindow.currentSeq, collabWindow.clientId);
         }
 
@@ -673,9 +674,10 @@ export function TestPack() {
                 }
             }
         }
-        let startTime = Date.now();
-        let checkTime = 0;
-        for (let i = 0; i < rounds; i++) {
+
+        let errorCount = 0;
+
+        function round(roundCount: number) {
             for (let client of clients) {
                 let insertSegmentCount = randSmallSegmentCount();
                 for (let j = 0; j < insertSegmentCount; j++) {
@@ -725,18 +727,19 @@ export function TestPack() {
             // console.log(server.getText());
             // console.log(server.mergeTree.toString());
             // console.log(server.mergeTree.getStats());
-            if (0 == (i % 100)) {
+            if (0 == (roundCount % 100)) {
                 let clockStart = clock();
                 if (checkTextMatch()) {
-                    console.log(`round: ${i} BREAK`);
-                    break;
+                    console.log(`round: ${roundCount} BREAK`);
+                    errorCount++;
+                    return;
                 }
                 checkTime += elapsedMicroseconds(clockStart);
                 console.log(`wall clock is ${((Date.now() - startTime) / 1000.0).toFixed(1)}`);
                 let stats = server.mergeTree.getStats();
                 let liveAve = (stats.liveCount / stats.nodeCount).toFixed(1);
                 let posLeaves = stats.leafCount - stats.removedLeafCount;
-                console.log(`round: ${i} seq ${server.seq} char count ${server.getLength()} height ${stats.maxHeight} lv ${stats.leafCount} rml ${stats.removedLeafCount} p ${posLeaves} nodes ${stats.nodeCount} pop ${liveAve} histo ${stats.histo}`);
+                console.log(`round: ${roundCount} seq ${server.seq} char count ${server.getLength()} height ${stats.maxHeight} lv ${stats.leafCount} rml ${stats.removedLeafCount} p ${posLeaves} nodes ${stats.nodeCount} pop ${liveAve} histo ${stats.histo}`);
                 reportTiming(server);
                 reportTiming(clients[2]);
                 let totalTime = server.accumTime + server.accumWindowTime;
@@ -748,10 +751,57 @@ export function TestPack() {
                 //console.log(server.mergeTree.toString());
             }
         }
-        reportTiming(server);
-        reportTiming(clients[2]);
-        //console.log(server.getText());
-        //console.log(server.mergeTree.toString());
+
+        let startTime = Date.now();
+        let checkTime = 0;
+        let asyncExec = false;
+        let asyncRoundCount = 0;
+        let snapInProgress = false;
+
+        function snapFinished() {
+            snapInProgress = false;
+            let curmin = server.mergeTree.getCollabWindow().minSeq;
+            console.log(`snap finished round ${asyncRoundCount} seq ${server.getCurrentSeq()} minseq ${curmin}`);
+        }
+
+        function ohSnap(filename: string) {
+            snapInProgress = true;
+            let curmin = server.mergeTree.getCollabWindow().minSeq;
+            console.log(`snap started seq ${server.getCurrentSeq()} minseq ${curmin}`);
+            let snapshot = new Paparazzo.Snapshot(server.mergeTree, filename, snapFinished);
+            snapshot.start();
+        }
+
+        function asyncStep() {
+            round(asyncRoundCount);
+            if (!snapInProgress) {
+                ohSnap("snapit");
+            }
+            asyncRoundCount++;
+            if (asyncRoundCount < rounds) {
+                setImmediate(asyncStep);
+            }
+        }
+
+        if (asyncExec) {
+            ohSnap("snap-initial");
+            setImmediate(asyncStep);
+        }
+        else {
+            for (let i = 0; i < rounds; i++) {
+                round(i);
+                if (errorCount > 0) {
+                    break;
+                }
+            }
+            tail();
+        }
+        function tail() {
+            reportTiming(server);
+            reportTiming(clients[2]);
+            //console.log(server.getText());
+            //console.log(server.mergeTree.toString());
+        }
     }
 
     function randolicious() {
@@ -794,7 +844,7 @@ export function TestPack() {
                     let text = randomString(textLen, String.fromCharCode(zedCode + (sequenceNumber % 50)));
                     let preLen = cliA.getLength();
                     let pos = random.integer(0, preLen)(mt);
-                    cliB.insertSegmentRemote(text, pos, sequenceNumber++, cliA.getCurrentSeq(), cliA.mergeTree.getSegmentWindow().clientId);
+                    cliB.insertSegmentRemote(text, pos, sequenceNumber++, cliA.getCurrentSeq(), cliA.mergeTree.getCollabWindow().clientId);
                     cliA.insertSegmentLocal(text, pos);
                 }
                 for (let k = firstSeq; k < sequenceNumber; k++) {
@@ -813,7 +863,7 @@ export function TestPack() {
                     let text = randomString(textLen, String.fromCharCode(zedCode + (sequenceNumber % 50)));
                     let preLen = cliB.getLength();
                     let pos = random.integer(0, preLen)(mt);
-                    cliA.insertSegmentRemote(text, pos, sequenceNumber++, cliB.getCurrentSeq(), cliB.mergeTree.getSegmentWindow().clientId);
+                    cliA.insertSegmentRemote(text, pos, sequenceNumber++, cliB.getCurrentSeq(), cliB.mergeTree.getCollabWindow().clientId);
                     cliB.insertSegmentLocal(text, pos);
                 }
                 for (let k = firstSeq; k < sequenceNumber; k++) {
@@ -838,7 +888,7 @@ export function TestPack() {
                     let dlen = randTextLength();
                     let preLen = cliA.getLength();
                     let pos = random.integer(0, preLen)(mt);
-                    cliB.removeSegmentRemote(pos, pos + dlen, sequenceNumber++, cliA.getCurrentSeq(), cliA.mergeTree.getSegmentWindow().clientId);
+                    cliB.removeSegmentRemote(pos, pos + dlen, sequenceNumber++, cliA.getCurrentSeq(), cliA.mergeTree.getCollabWindow().clientId);
                     cliA.removeSegmentLocal(pos, pos + dlen);
                 }
                 for (let k = firstSeq; k < sequenceNumber; k++) {
@@ -856,7 +906,7 @@ export function TestPack() {
                     let dlen = randTextLength();
                     let preLen = cliB.getLength();
                     let pos = random.integer(0, preLen)(mt);
-                    cliA.removeSegmentRemote(pos, pos + dlen, sequenceNumber++, cliB.getCurrentSeq(), cliB.mergeTree.getSegmentWindow().clientId);
+                    cliA.removeSegmentRemote(pos, pos + dlen, sequenceNumber++, cliB.getCurrentSeq(), cliB.mergeTree.getCollabWindow().clientId);
                     cliB.removeSegmentLocal(pos, pos + dlen);
                 }
                 for (let k = firstSeq; k < sequenceNumber; k++) {
@@ -875,7 +925,7 @@ export function TestPack() {
             console.log(cliB.mergeTree.toString());
         }
         else {
-            console.log(`sequence number: ${cliA.getCurrentSeq()} min: ${cliA.mergeTree.getSegmentWindow().minSeq}`);
+            console.log(`sequence number: ${cliA.getCurrentSeq()} min: ${cliA.mergeTree.getCollabWindow().minSeq}`);
             //            console.log(cliA.mergeTree.toString());
 
             console.log(`testing remove at ${cliA.getCurrentSeq()} and ${cliB.getCurrentSeq()}`);
@@ -884,7 +934,7 @@ export function TestPack() {
                 console.log(cliB.mergeTree.toString());
             }
         }
-        console.log(`sequence number: ${cliA.getCurrentSeq()} min: ${cliA.mergeTree.getSegmentWindow().minSeq}`);
+        console.log(`sequence number: ${cliA.getCurrentSeq()} min: ${cliA.mergeTree.getCollabWindow().minSeq}`);
         //                console.log(cliA.mergeTree.toString());
         //console.log(cliB.mergeTree.toString());
         //console.log(cliA.getText());
