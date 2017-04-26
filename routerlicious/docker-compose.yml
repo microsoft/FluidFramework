@@ -72,13 +72,12 @@ services:
         command: server /export
     elasticsearch:
         image: elasticsearch:latest
-        command: elasticsearch -Des.network.host=0.0.0.0
         ports:
             - "9200:9200"
             - "9300:9300"
         #volume-driver: flocker
         volumes:
-            - elasticsearch1:/usr/share/elasticsearch/data
+            - ./elasticsearch/data:/usr/share/elasticsearch/data
     logstash:
         image: logstash:latest
         command: logstash -f /etc/logstash/conf.d/logstash.conf
@@ -94,8 +93,6 @@ services:
             - "5601:5601"
         links:
             - elasticsearch
-        environment:
-            - ELASTICSEARCH_URL=http://elasticsearch:9200
 
-volumes:
-  elasticsearch1:
+#volumes:
+#  elasticsearch1:
