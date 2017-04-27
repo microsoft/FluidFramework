@@ -1183,6 +1183,7 @@ export var clientSeqComparer: Collections.Comparer<ClientSeq> = {
 export class TestServer extends Client {
     seq = 1;
     clients: Client[];
+    listeners: Client[]; // listeners do not generate edits
     clientSeqNumbers: Collections.Heap<ClientSeq>;
 
     constructor(initText: string) {
@@ -1195,6 +1196,10 @@ export class TestServer extends Client {
         for (let client of clients) {
             this.clientSeqNumbers.add({ refSeq: client.getCurrentSeq(), clientId: client.getClientId() });
         }
+    }
+
+    addListeners(listeners: Client[]) {
+        this.listeners = listeners;
     }
 
     applyMsg(msg: DeltaMsg) {
@@ -1230,6 +1235,11 @@ export class TestServer extends Client {
                     }
                     for (let client of this.clients) {
                         client.enqueueMsg(msg);
+                    }
+                    if (this.listeners) {
+                        for (let listener of this.listeners) {
+                            listener.enqueueMsg(msg);
+                        }
                     }
                 }
             }

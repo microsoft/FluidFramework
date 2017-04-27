@@ -467,6 +467,20 @@ function mergeTreeCheckedTest() {
 
 }
 
+enum AsyncRoundState {
+    Insert,
+    Remove,
+    Tail
+}
+
+interface AsyncRoundInfo {
+    clientIndex: number;
+    state: AsyncRoundState;
+    insertSegmentCount?: number;
+    removeSegmentCount?: number;
+    iterIndex: number;
+}
+
 export function TestPack() {
     let mt = random.engines.mt19937();
     mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
@@ -499,6 +513,8 @@ export function TestPack() {
     let getTextCalls = 0;
     let incrGetTextTime = 0;
     let incrGetTextCalls = 0;
+    let catchUpTime = 0;
+    let catchUps = 0;
 
     function reportTiming(client: MergeTree.Client) {
         let aveTime = (client.accumTime / client.accumOps).toFixed(1);
@@ -513,13 +529,17 @@ export function TestPack() {
         let adjTime = ((client.accumTime - (windowTime - client.accumWindowTime)) / client.accumOps).toFixed(1);
         let aveGetTextTime = (getTextTime / getTextCalls).toFixed(1);
         let aveIncrGetTextTime = "off";
+        let aveCatchUpTime = "off";
+        if (catchUps > 0) {
+            aveCatchUpTime = (catchUpTime / catchUps).toFixed(1);
+        }
         if (checkIncr) {
             aveIncrGetTextTime = (incrGetTextTime / incrGetTextCalls).toFixed(1);
         }
         if (client.localOps > 0) {
             console.log(`local time ${client.localTime} us ops: ${client.localOps} ave time ${aveLocalTime}`);
         }
-        console.log(`get text time: ${aveGetTextTime} incr: ${aveIncrGetTextTime}`);
+        console.log(`get text time: ${aveGetTextTime} incr: ${aveIncrGetTextTime} catch up ${aveCatchUpTime}`);
         console.log(`accum time ${client.accumTime} us ops: ${client.accumOps} ave time ${aveTime} - wtime ${adjTime} pack ${avePackTime} ave window ${aveWindow}`);
         console.log(`accum window time ${client.accumWindowTime} us ave window time total ${aveWindowTime} not in ops ${aveExtraWindowTime}; max ${client.maxWindowTime}`);
     }
@@ -535,8 +555,12 @@ export function TestPack() {
 
     function clientServer(startFile?: string) {
         const clientCount = 5;
-        const fileSegCount = 0;
+        const fileSegCount = 20;
         let initString = "";
+        let snapInProgress = false;
+        let asyncExec = false;
+        let snapClient: MergeTree.Client;
+
         if (!startFile) {
             initString = "don't ask for whom the bell tolls; it tolls for thee";
         }
@@ -555,7 +579,14 @@ export function TestPack() {
         }
         server.startCollaboration(clientCount);
         server.addClients(clients);
-
+        if (asyncExec) {
+            snapClient = new MergeTree.Client(initString);
+            if (startFile) {
+                Text.loadText(startFile, snapClient.mergeTree, fileSegCount);
+            }
+            snapClient.startCollaboration(clientCount + 1);
+            server.addListeners([snapClient]);
+        }
         function incrGetText(client: MergeTree.Client) {
             let collabWindow = client.mergeTree.getCollabWindow();
             return client.mergeTree.incrementalGetText(collabWindow.currentSeq, collabWindow.clientId);
@@ -657,7 +688,8 @@ export function TestPack() {
             if (word1) {
                 let removeStart = word1.pos;
                 let removeEnd = removeStart + word1.text.length;
-                server.enqueueMsg(MergeTree.makeRemoveMsg(removeStart, removeEnd, MergeTree.UnassignedSequenceNumber, client.getCurrentSeq(), client.getClientId()));
+                server.enqueueMsg(MergeTree.makeRemoveMsg(removeStart, removeEnd, MergeTree.UnassignedSequenceNumber,
+                    client.getCurrentSeq(), client.getClientId()));
                 client.removeSegmentLocal(removeStart, removeEnd);
                 if (MergeTree.useCheckQ) {
                     client.enqueueTestString();
@@ -677,39 +709,75 @@ export function TestPack() {
 
         let errorCount = 0;
 
-        function round(roundCount: number) {
-            for (let client of clients) {
-                let insertSegmentCount = randSmallSegmentCount();
-                for (let j = 0; j < insertSegmentCount; j++) {
+        function asyncRoundStep(asyncInfo: AsyncRoundInfo, roundCount: number) {
+            if (asyncInfo.state == AsyncRoundState.Insert) {
+                if (!asyncInfo.insertSegmentCount) {
+                    asyncInfo.insertSegmentCount = randSmallSegmentCount();
+                }
+                if (asyncInfo.clientIndex == clients.length) {
+                    asyncInfo.state = AsyncRoundState.Remove;
+                    asyncInfo.iterIndex = 0;
+                }
+                else {
+                    let client = clients[asyncInfo.clientIndex];
                     if (startFile) {
                         randomWordMove(client);
                     }
                     else {
-                        randomSpateOfInserts(client, j);
+                        randomSpateOfInserts(client, asyncInfo.iterIndex);
+                    }
+                    asyncInfo.iterIndex++;
+                    if (asyncInfo.iterIndex == asyncInfo.insertSegmentCount) {
+                        asyncInfo.clientIndex++;
+                        asyncInfo.insertSegmentCount = undefined;
+                        asyncInfo.iterIndex = 0;
                     }
                 }
-                if (serverProcessSome(server)) {
-                    return;
-                }
-                clientProcessSome(client);
-
-                let removeSegmentCount = Math.floor(3 * insertSegmentCount / 4);
-                if (removeSegmentCount < 1) {
-                    removeSegmentCount = 1;
-                }
-                for (let j = 0; j < removeSegmentCount; j++) {
-                    if (startFile) {
-                        randomWordMove(client);
-                    }
-                    else {
-                        randomSpateOfRemoves(client);
-                    }
-                }
-                if (serverProcessSome(server)) {
-                    return;
-                }
-                clientProcessSome(client);
             }
+            if (asyncInfo.state == AsyncRoundState.Remove) {
+                if (!asyncInfo.removeSegmentCount) {
+                    asyncInfo.removeSegmentCount = Math.floor(3 * asyncInfo.insertSegmentCount / 4);
+                    if (asyncInfo.removeSegmentCount < 1) {
+                        asyncInfo.removeSegmentCount = 1;
+                    }
+                }
+                if (asyncInfo.clientIndex == clients.length) {
+                    asyncInfo.state = AsyncRoundState.Tail;
+                }
+                else {
+                    let client = clients[asyncInfo.clientIndex];
+                    if (startFile) {
+                        randomWordMove(client);
+                    }
+                    else {
+                        randomSpateOfInserts(client, asyncInfo.iterIndex);
+                    }
+                    asyncInfo.iterIndex++;
+                    if (asyncInfo.iterIndex == asyncInfo.removeSegmentCount) {
+                        asyncInfo.clientIndex++;
+                        asyncInfo.removeSegmentCount = undefined;
+                        asyncInfo.iterIndex = 0;
+                    }
+                }
+            }
+            if (asyncInfo.state == AsyncRoundState.Tail) {
+                finishRound(roundCount);
+            }
+            else {
+                setImmediate(asyncRoundStep, asyncInfo, roundCount);
+            }
+        }
+
+        function asyncRound(roundCount: number) {
+            let asyncInfo = <AsyncRoundInfo>{
+                clientIndex: 0,
+                iterIndex: 0,
+                state: AsyncRoundState.Insert
+            }
+            setImmediate(asyncRoundStep, asyncInfo, roundCount);
+        }
+
+        function finishRound(roundCount: number) {
             // process remaining messages
             if (serverProcessSome(server, true)) {
                 return;
@@ -752,29 +820,79 @@ export function TestPack() {
             }
         }
 
+        function round(roundCount: number) {
+            for (let client of clients) {
+                let insertSegmentCount = randSmallSegmentCount();
+                for (let j = 0; j < insertSegmentCount; j++) {
+                    if (startFile) {
+                        randomWordMove(client);
+                    }
+                    else {
+                        randomSpateOfInserts(client, j);
+                    }
+                }
+                if (serverProcessSome(server)) {
+                    return;
+                }
+                clientProcessSome(client);
+
+                let removeSegmentCount = Math.floor(3 * insertSegmentCount / 4);
+                if (removeSegmentCount < 1) {
+                    removeSegmentCount = 1;
+                }
+                for (let j = 0; j < removeSegmentCount; j++) {
+                    if (startFile) {
+                        randomWordMove(client);
+                    }
+                    else {
+                        randomSpateOfRemoves(client);
+                    }
+                }
+                if (serverProcessSome(server)) {
+                    return;
+                }
+                clientProcessSome(client);
+            }
+            finishRound(roundCount);
+        }
+
         let startTime = Date.now();
         let checkTime = 0;
-        let asyncExec = false;
         let asyncRoundCount = 0;
-        let snapInProgress = false;
+        let lastSnap = 0;
+        let checkSnapText = true;
 
         function snapFinished() {
             snapInProgress = false;
-            let curmin = server.mergeTree.getCollabWindow().minSeq;
-            console.log(`snap finished round ${asyncRoundCount} seq ${server.getCurrentSeq()} minseq ${curmin}`);
+            let curmin = snapClient.mergeTree.getCollabWindow().minSeq;
+            console.log(`snap finished round ${asyncRoundCount} server seq ${server.getCurrentSeq()} seq ${snapClient.getCurrentSeq()} minseq ${curmin}`);
+            let clockStart = clock();
+            //snapClient.verboseOps = true;
+            clientProcessSome(snapClient, true);
+            catchUpTime += elapsedMicroseconds(clockStart);
+            catchUps++;
+            if (checkSnapText) {
+                let serverText = server.getText();
+                let snapText = snapClient.getText();
+                if (serverText != snapText) {
+                    console.log(`mismatch @${server.getCurrentSeq()} client @${snapClient.getCurrentSeq()} id: ${snapClient.getClientId()}`);
+                }
+            }
         }
 
         function ohSnap(filename: string) {
             snapInProgress = true;
-            let curmin = server.mergeTree.getCollabWindow().minSeq;
-            console.log(`snap started seq ${server.getCurrentSeq()} minseq ${curmin}`);
-            let snapshot = new Paparazzo.Snapshot(server.mergeTree, filename, snapFinished);
+            let curmin = snapClient.mergeTree.getCollabWindow().minSeq;
+            lastSnap = curmin;
+            console.log(`snap started seq ${snapClient.getCurrentSeq()} minseq ${curmin}`);
+            let snapshot = new Paparazzo.Snapshot(snapClient.mergeTree, filename, snapFinished);
             snapshot.start();
         }
 
         function asyncStep() {
-            round(asyncRoundCount);
-            if (!snapInProgress) {
+            asyncRound(asyncRoundCount);
+            let curmin = server.mergeTree.getCollabWindow().minSeq;
+            if ((!snapInProgress) && (lastSnap < curmin)) {
                 ohSnap("snapit");
             }
             asyncRoundCount++;
@@ -1059,6 +1177,6 @@ export function TestPack() {
 //mergeTreeCheckedTest();
 let testPack = TestPack();
 //testPack.randolicious();
-testPack.clientServer("pp.txt");
+testPack.clientServer();
 //testPack.firstTest();
 //testPack.manyMergeTrees();
