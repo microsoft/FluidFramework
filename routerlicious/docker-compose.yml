@@ -9,6 +9,11 @@ services:
             - redis
             - mongodb
             - kafka
+        logging:
+            driver: gelf
+            options:
+                gelf-address: "udp://127.0.0.1:12201"
+                tag: "log-web"
     deli:
         image: 127.0.0.1:5000/routerlicious
         build: .
@@ -17,6 +22,11 @@ services:
             - mongodb
             - kafka
         command: npm run deli
+        logging:
+            driver: gelf
+            options:
+                gelf-address: "udp://127.0.0.1:12201"
+                tag: "log-deli"
     paparazzi:
         image: 127.0.0.1:5000/routerlicious
         build: .
@@ -24,6 +34,11 @@ services:
             - web
             - rabbitmq
         command: npm run paparazzi
+        logging:
+            driver: gelf
+            options:
+                gelf-address: "udp://127.0.0.1:12201"
+                tag: "log-paparazzi"
     scriptorium:
         image: 127.0.0.1:5000/routerlicious
         build: .
@@ -32,6 +47,11 @@ services:
             - mongodb
             - kafka
         command: npm run scriptorium
+        logging:
+            driver: gelf
+            options:
+                gelf-address: "udp://127.0.0.1:12201"
+                tag: "log-scriptorium"
     tmz:
         image: 127.0.0.1:5000/routerlicious
         build: .
@@ -41,10 +61,20 @@ services:
             - rabbitmq
             - kafka
         command: npm run tmz
+        logging:
+            driver: gelf
+            options:
+                gelf-address: "udp://127.0.0.1:12201"
+                tag: "log-tmz"
     zookeeper:
         image: wurstmeister/zookeeper
         ports:
             - "2181:2181"
+        logging:
+            driver: gelf
+            options:
+                gelf-address: "udp://127.0.0.1:12201"
+                tag: "log-zookeeper"
     kafka:
         image: wurstmeister/kafka
         depends_on:
@@ -56,12 +86,32 @@ services:
             KAFKA_ADVERTISED_PORT: "9092"
             KAFKA_CREATE_TOPICS: "test:1:1,deltas:8:1,rawdeltas:8:1"
             KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+        logging:
+            driver: gelf
+            options:
+                gelf-address: "udp://127.0.0.1:12201"
+                tag: "log-kafka"
     redis:
         image: "redis:alpine"
+        logging:
+            driver: gelf
+            options:
+                gelf-address: "udp://127.0.0.1:12201"
+                tag: "log-redis"    
     mongodb:
         image: "mongo:3.4.3"
+        logging:
+            driver: gelf
+            options:
+                gelf-address: "udp://127.0.0.1:12201"
+                tag: "log-mongo"
     rabbitmq:
         image: "rabbitmq:alpine"
+        logging:
+            driver: gelf
+            options:
+                gelf-address: "udp://127.0.0.1:12201"
+                tag: "log-rabbitmq"
     minio:
         image: minio/minio
         ports:
@@ -70,21 +120,28 @@ services:
             MINIO_ACCESS_KEY: prague
             MINIO_SECRET_KEY: mhioAkNXTwdX4dXWgKgXVtHo
         command: server /export
+        logging:
+            driver: gelf
+            options:
+                gelf-address: "udp://127.0.0.1:12201"
+                tag: "log-minio"
     elasticsearch:
         image: elasticsearch:latest
         ports:
             - "9200:9200"
             - "9300:9300"
-        #volume-driver: flocker
         volumes:
-            - ./elasticsearch/data:/usr/share/elasticsearch/data
+            - esdata:/usr/share/elasticsearch/data
     logstash:
         image: logstash:latest
         command: logstash -f /etc/logstash/conf.d/logstash.conf
         volumes:
             - ./logstash.conf:/etc/logstash/conf.d/logstash.conf
+        expose:
+            - "12201"
         ports:
-            - "5000:5000"
+            - "12201:12201"
+            - "12201:12201/udp"
         links:
             - elasticsearch
     kibana:
@@ -94,5 +151,6 @@ services:
         links:
             - elasticsearch
 
-#volumes:
-#  elasticsearch1:
+volumes:
+  esdata:
+    driver: local
