@@ -2,7 +2,6 @@
 /// <reference path ="node.d.ts"/>
 
 import * as Collections from "./collections";
-import * as fs from "fs";
 
 export interface Node {
     parent: Block;
@@ -1281,7 +1280,7 @@ export class MergeTree {
     static diagOverlappingRemove = false;
     static traceTraversal = false;
     static traceIncrTraversal = false;
-    
+
     static theUnfinishedNode = <Block>{ childCount: -1 };
 
     windowTime = 0;
