@@ -507,7 +507,7 @@ export function TestPack() {
         return str;
     }
 
-    let checkIncr = true;
+    let checkIncr = false;
 
     let getTextTime = 0;
     let getTextCalls = 0;
@@ -555,10 +555,10 @@ export function TestPack() {
 
     function clientServer(startFile?: string) {
         const clientCount = 5;
-        const fileSegCount = 20;
+        const fileSegCount = 0;
         let initString = "";
         let snapInProgress = false;
-        let asyncExec = false;
+        let asyncExec = true;
         let snapClient: MergeTree.Client;
 
         if (!startFile) {
@@ -635,7 +635,7 @@ export function TestPack() {
             return false;
         }
 
-        let rounds = 1000000;
+        let rounds = 200000;
         function clientProcessSome(client: MergeTree.Client, all = false) {
             let cliMsgCount = client.q.count();
             let countToApply: number;
@@ -890,7 +890,7 @@ export function TestPack() {
         }
 
         function asyncStep() {
-            asyncRound(asyncRoundCount);
+            round(asyncRoundCount);
             let curmin = server.mergeTree.getCollabWindow().minSeq;
             if ((!snapInProgress) && (lastSnap < curmin)) {
                 ohSnap("snapit");
@@ -1177,6 +1177,6 @@ export function TestPack() {
 //mergeTreeCheckedTest();
 let testPack = TestPack();
 //testPack.randolicious();
-testPack.clientServer();
+testPack.clientServer("pp.txt");
 //testPack.firstTest();
 //testPack.manyMergeTrees();

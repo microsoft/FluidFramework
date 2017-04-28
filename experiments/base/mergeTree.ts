@@ -251,7 +251,7 @@ function incrementalGatherText(segment: Segment, state: IncrementalMapState<Text
         let textSegment = <TextSegment>segment;
         if ((textSegment.removedSeq === undefined) || (textSegment.removedSeq == UnassignedSequenceNumber) || (textSegment.removedSeq > state.refSeq)) {
             if (MergeTree.traceGatherText) {
-                console.log(`@cli ${this.collabWindow.clientId} gather seg seq ${textSegment.seq} rseq ${textSegment.removedSeq} text ${textSegment.text}`);
+                console.log(`@cli ${this.collabWindow ? this.collabwindow.clientId : -1} gather seg seq ${textSegment.seq} rseq ${textSegment.removedSeq} text ${textSegment.text}`);
             }
             if ((state.start <= 0) && (state.end >= textSegment.text.length)) {
                 state.context.text += textSegment.text;
@@ -304,6 +304,7 @@ export const UniversalSequenceNumber = 0;
 export const UnassignedSequenceNumber = -1;
 export const TreeMaintainanceSequenceNumber = -2;
 export const LocalClientId = -1;
+export const NonCollabClient = -2;
 
 interface PartialSequenceLength {
     seq: number;
@@ -1279,7 +1280,8 @@ export class MergeTree {
     static skipLeftShift = true;
     static diagOverlappingRemove = false;
     static traceTraversal = false;
-
+    static traceIncrTraversal = false;
+    
     static theUnfinishedNode = <Block>{ childCount: -1 };
 
     windowTime = 0;
@@ -1827,6 +1829,12 @@ export class MergeTree {
         return segmentGroup;
     }
 
+    // assumes not collaborating for now
+    appendTextSegment(text: string) {
+        let pos = this.root.cachedLength;
+        this.insertInterval(pos, UniversalSequenceNumber, LocalClientId, UniversalSequenceNumber, text);
+    }
+
     insertInterval(pos: number, refSeq: number, clientId: number, seq: number, text: string) {
         this.ensureIntervalBoundary(pos, refSeq, clientId);
         //traceTraversal = true;
@@ -2342,6 +2350,11 @@ export class MergeTree {
             if ((state.op == IncrementalExecOp.Go) && (state.childIndex < state.block.childCount)) {
                 let child = state.block.children[state.childIndex];
                 let len = this.nodeLength(child, state.refSeq, state.clientId);
+                if (MergeTree.traceIncrTraversal) {
+                    if (child.isLeaf()) {
+                        console.log(`considering (r ${state.refSeq} c ${state.clientId}) seg with text ${(<TextSegment>child).text} len ${len} seq ${(<Segment>child).seq} rseq ${(<Segment>child).removedSeq} cli ${(<Segment>child).clientId}`);
+                    }
+                }
                 if ((len > 0) && (state.start < len) && (state.end > 0)) {
                     if (!child.isLeaf()) {
                         let childState = new IncrementalMapState(<Block>child, state.actions, state.pos,
@@ -2349,6 +2362,9 @@ export class MergeTree {
                         stateStack.push(childState);
                     }
                     else {
+                        if (MergeTree.traceIncrTraversal) {
+                            console.log(`action on seg with text ${(<TextSegment>child).text}`);
+                        }
                         state.actions.leaf(<Segment>child, state);
                     }
                 }
