@@ -1,7 +1,6 @@
 version: '3'
 services:
     web:
-        image: 127.0.0.1:5000/routerlicious
         build: .
         ports:
             - "3000:3000"
@@ -9,18 +8,19 @@ services:
             - redis
             - mongodb
             - kafka
+            - logstash
         logging:
             driver: gelf
             options:
                 gelf-address: "udp://127.0.0.1:12201"
                 tag: "log-web"
     deli:
-        image: 127.0.0.1:5000/routerlicious
         build: .
         depends_on:
             - redis
             - mongodb
             - kafka
+            - logstash
         command: npm run deli
         logging:
             driver: gelf
@@ -28,11 +28,11 @@ services:
                 gelf-address: "udp://127.0.0.1:12201"
                 tag: "log-deli"
     paparazzi:
-        image: 127.0.0.1:5000/routerlicious
         build: .
         depends_on:
             - web
             - rabbitmq
+            - logstash
         command: npm run paparazzi
         logging:
             driver: gelf
@@ -40,12 +40,12 @@ services:
                 gelf-address: "udp://127.0.0.1:12201"
                 tag: "log-paparazzi"
     scriptorium:
-        image: 127.0.0.1:5000/routerlicious
         build: .
         depends_on:
             - redis
             - mongodb
             - kafka
+            - logstash
         command: npm run scriptorium
         logging:
             driver: gelf
@@ -53,13 +53,13 @@ services:
                 gelf-address: "udp://127.0.0.1:12201"
                 tag: "log-scriptorium"
     tmz:
-        image: 127.0.0.1:5000/routerlicious
         build: .
         depends_on:
             - redis
             - mongodb
             - rabbitmq
             - kafka
+            - logstash
         command: npm run tmz
         logging:
             driver: gelf
@@ -70,11 +70,6 @@ services:
         image: wurstmeister/zookeeper
         ports:
             - "2181:2181"
-        logging:
-            driver: gelf
-            options:
-                gelf-address: "udp://127.0.0.1:12201"
-                tag: "log-zookeeper"
     kafka:
         image: wurstmeister/kafka
         depends_on:
@@ -86,32 +81,12 @@ services:
             KAFKA_ADVERTISED_PORT: "9092"
             KAFKA_CREATE_TOPICS: "test:1:1,deltas:8:1,rawdeltas:8:1"
             KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-        logging:
-            driver: gelf
-            options:
-                gelf-address: "udp://127.0.0.1:12201"
-                tag: "log-kafka"
     redis:
         image: "redis:alpine"
-        logging:
-            driver: gelf
-            options:
-                gelf-address: "udp://127.0.0.1:12201"
-                tag: "log-redis"    
     mongodb:
         image: "mongo:3.4.3"
-        logging:
-            driver: gelf
-            options:
-                gelf-address: "udp://127.0.0.1:12201"
-                tag: "log-mongo"
     rabbitmq:
         image: "rabbitmq:alpine"
-        logging:
-            driver: gelf
-            options:
-                gelf-address: "udp://127.0.0.1:12201"
-                tag: "log-rabbitmq"
     minio:
         image: minio/minio
         ports:
@@ -120,11 +95,6 @@ services:
             MINIO_ACCESS_KEY: prague
             MINIO_SECRET_KEY: mhioAkNXTwdX4dXWgKgXVtHo
         command: server /export
-        logging:
-            driver: gelf
-            options:
-                gelf-address: "udp://127.0.0.1:12201"
-                tag: "log-minio"
     elasticsearch:
         image: elasticsearch:latest
         ports:
@@ -134,9 +104,7 @@ services:
             - esdata:/usr/share/elasticsearch/data
     logstash:
         image: logstash:latest
-        command: logstash -f /etc/logstash/conf.d/logstash.conf
-        volumes:
-            - ./logstash.conf:/etc/logstash/conf.d/logstash.conf
+        command: logstash -e 'input { gelf { type => docker port => 12201 } } output { elasticsearch { hosts => "elasticsearch:9200" } stdout {  codec => rubydebug } }'
         expose:
             - "12201"
         ports:
