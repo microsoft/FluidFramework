@@ -564,27 +564,27 @@ export function TestPack() {
         if (!startFile) {
             initString = "don't ask for whom the bell tolls; it tolls for thee";
         }
-        let server = new MergeTree.TestServer(initString);
+        let server = new MergeTree.TestServer(initString, "theServer");
         if (startFile) {
             Text.loadText(startFile, server.mergeTree, fileSegCount);
         }
 
         let clients = <MergeTree.Client[]>Array(clientCount);
         for (let i = 0; i < clientCount; i++) {
-            clients[i] = new MergeTree.Client(initString);
+            clients[i] = new MergeTree.Client(initString, `Fred${i}`);
             if (startFile) {
                 Text.loadText(startFile, clients[i].mergeTree, fileSegCount);
             }
-            clients[i].startCollaboration(i);
+            clients[i].startCollaboration();
         }
-        server.startCollaboration(clientCount);
+        server.startCollaboration();
         server.addClients(clients);
         if (asyncExec) {
-            snapClient = new MergeTree.Client(initString);
+            snapClient = new MergeTree.Client(initString, "snapshot");
             if (startFile) {
                 Text.loadText(startFile, snapClient.mergeTree, fileSegCount);
             }
-            snapClient.startCollaboration(clientCount + 1);
+            snapClient.startCollaboration();
             server.addListeners([snapClient]);
         }
         function incrGetText(client: MergeTree.Client) {
@@ -665,7 +665,8 @@ export function TestPack() {
             let text = randomString(textLen, String.fromCharCode(zedCode + ((client.getCurrentSeq() + charIndex) % 50)));
             let preLen = client.getLength();
             let pos = random.integer(0, preLen)(mt);
-            server.enqueueMsg(MergeTree.makeInsertMsg(text, pos, MergeTree.UnassignedSequenceNumber, client.getCurrentSeq(), client.getClientId()));
+            server.enqueueMsg(client.makeInsertMsg(text, pos, MergeTree.UnassignedSequenceNumber,
+                client.getCurrentSeq(), ""));
             client.insertSegmentLocal(text, pos);
             if (MergeTree.useCheckQ) {
                 client.enqueueTestString();
@@ -676,7 +677,8 @@ export function TestPack() {
             let dlen = randTextLength();
             let preLen = client.getLength();
             let pos = random.integer(0, preLen)(mt);
-            server.enqueueMsg(MergeTree.makeRemoveMsg(pos, pos + dlen, MergeTree.UnassignedSequenceNumber, client.getCurrentSeq(), client.getClientId()));
+            server.enqueueMsg(client.makeRemoveMsg(pos, pos + dlen, MergeTree.UnassignedSequenceNumber,
+                client.getCurrentSeq(), ""));
             client.removeSegmentLocal(pos, pos + dlen);
             if (MergeTree.useCheckQ) {
                 client.enqueueTestString();
@@ -688,8 +690,8 @@ export function TestPack() {
             if (word1) {
                 let removeStart = word1.pos;
                 let removeEnd = removeStart + word1.text.length;
-                server.enqueueMsg(MergeTree.makeRemoveMsg(removeStart, removeEnd, MergeTree.UnassignedSequenceNumber,
-                    client.getCurrentSeq(), client.getClientId()));
+                server.enqueueMsg(client.makeRemoveMsg(removeStart, removeEnd, MergeTree.UnassignedSequenceNumber,
+                    client.getCurrentSeq(), ""));
                 client.removeSegmentLocal(removeStart, removeEnd);
                 if (MergeTree.useCheckQ) {
                     client.enqueueTestString();
@@ -699,7 +701,8 @@ export function TestPack() {
                     word2 = Text.findRandomWord(client.mergeTree, client.getClientId());
                 }
                 let pos = word2.pos + word2.text.length;
-                server.enqueueMsg(MergeTree.makeInsertMsg(word1.text, pos, MergeTree.UnassignedSequenceNumber, client.getCurrentSeq(), client.getClientId()));
+                server.enqueueMsg(client.makeInsertMsg(word1.text, pos, MergeTree.UnassignedSequenceNumber,
+                    client.getCurrentSeq(), ""));
                 client.insertSegmentLocal(word1.text, pos);
                 if (MergeTree.useCheckQ) {
                     client.enqueueTestString();
@@ -926,10 +929,10 @@ export function TestPack() {
         let insertRounds = 800;
         let removeRounds = 700;
 
-        let cliA = new MergeTree.Client("a stitch in time saves nine");
-        cliA.startCollaboration(0);
-        let cliB = new MergeTree.Client("a stitch in time saves nine");
-        cliB.startCollaboration(1);
+        let cliA = new MergeTree.Client("a stitch in time saves nine", "FredA");
+        cliA.startCollaboration();
+        let cliB = new MergeTree.Client("a stitch in time saves nine", "FredB");
+        cliB.startCollaboration();
         function checkTextMatch(checkSeq: number) {
             let error = false;
             if (cliA.getCurrentSeq() != checkSeq) {
@@ -1065,8 +1068,8 @@ export function TestPack() {
     }
 
     function firstTest() {
-        let cli = new MergeTree.Client("on the mat.");
-        cli.startCollaboration(1);
+        let cli = new MergeTree.Client("on the mat.", "Fred1");
+        cli.startCollaboration();
         cli.insertSegmentRemote("that ", 0, 1, 0, 0);
         console.log(cli.mergeTree.toString());
         cli.insertSegmentRemote("fat ", 0, 2, 0, 2);
@@ -1092,8 +1095,8 @@ export function TestPack() {
                 console.log(cli.relText(clientId, refSeq));
             }
         }
-        cli = new MergeTree.Client(" old sock!");
-        cli.startCollaboration(1);
+        cli = new MergeTree.Client(" old sock!", "Fred2");
+        cli.startCollaboration();
         cli.insertSegmentRemote("abcde", 0, 1, 0, 2);
         cli.insertSegmentRemote("yyy", 0, 2, 0, 0);
         cli.insertSegmentRemote("zzz", 2, 3, 1, 3);
@@ -1115,8 +1118,8 @@ export function TestPack() {
                 console.log(cli.relText(clientId, refSeq));
             }
         }
-        cli = new MergeTree.Client("abcdefgh");
-        cli.startCollaboration(1);
+        cli = new MergeTree.Client("abcdefgh","Fred3");
+        cli.startCollaboration();
         cli.removeSegmentRemote(1, 3, 1, 0, 3);
         console.log(cli.mergeTree.toString());
         cli.insertSegmentRemote("zzz", 2, 2, 0, 2);

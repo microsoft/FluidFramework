@@ -2,6 +2,7 @@
 /// <reference path ="node.d.ts"/>
 
 import * as Collections from "./collections";
+import * as Protocol from "../../routerlicious/src/api/protocol";
 
 export interface Node {
     parent: Block;
@@ -351,6 +352,10 @@ function latestLEQ(a: PartialSequenceLength[], key: number) {
 
 function compareNumbers(a: number, b: number) {
     return a - b;
+}
+
+function compareStrings(a: string, b: string) {
+    return a.localeCompare(b);
 }
 
 /**
@@ -880,56 +885,13 @@ function elapsedMicroseconds(start: number[]) {
     return duration;
 }
 
-export const enum MsgType {
-    INSERT,
-    REMOVE
-}
-
-export interface DeltaMsg {
-    /**
-     * Type of this change.
-     */
-    type: MsgType;
-    /**
-     * Sequence number of this change.  Added by the server.
-     */
-    seq: number;
-    /**
-     * Last sequence number processed by client before sending this message.
-     */
-    refSeq: number;
-    /**
-     * Unique identifier for client initiating this change.
-     */
-    clientId: number;
-    /**
-     * Client's sequence number.  
-     */
-    clientSeq: number;
-    pos1: number;
-    pos2?: number;
-    text?: string;
-    /**
-     * Sent by server; minumum ref seq across clients.
-     */
-    minseq?: number;
-}
-
-export function makeInsertMsg(text: string, pos: number, seq: number, refSeq: number, clientId: number) {
-    return <DeltaMsg>{ type: MsgType.INSERT, text: text, pos1: pos, seq: seq, refSeq: refSeq, clientId: clientId };
-}
-
-export function makeRemoveMsg(start: number, end: number, seq: number, refSeq: number, clientId: number) {
-    return <DeltaMsg>{ type: MsgType.REMOVE, pos1: start, pos2: end, seq: seq, refSeq: refSeq, clientId: clientId };
-}
-
-
 /**
  * Used for in-memory testing.  This will queue a reference string for each client message.
  */
 export const useCheckQ = false;
 
-function checkTextMatchRelative(refSeq: number, clientId: number, server: TestServer, msg: DeltaMsg) {
+function checkTextMatchRelative(refSeq: number, clientId: number, server: TestServer,
+    msg: Protocol.IDeltaMessage) {
     let client = server.clients[clientId];
     let serverText = server.mergeTree.getText(refSeq, clientId);
     let cliText = client.checkQ.dequeue();
@@ -956,7 +918,6 @@ function indent(n: number) {
     return indentStrings[n];
 }
 
-
 export class Client {
     mergeTree: MergeTree;
     accumTime = 0;
@@ -968,16 +929,67 @@ export class Client {
     accumOps = 0;
     verboseOps = false;
     measureOps = true;
-    q: Collections.List<DeltaMsg>;
+    q: Collections.List<Protocol.IDeltaMessage>;
     checkQ: Collections.List<string>;
+    clientSequenceNumber = 1;
+    clientNameToId = new Collections.RedBlackTree<string, number>(compareStrings);
+    shortClientIdMap = <string[]>[];
 
-    constructor(initText: string) {
+    constructor(initText: string, public longClientId: string) {
         this.mergeTree = new MergeTree(initText);
-        this.q = Collections.ListMakeHead<DeltaMsg>();
+        this.mergeTree.getLongClientId = id => this.getLongClientId(id);
+        this.q = Collections.ListMakeHead<Protocol.IDeltaMessage>();
         this.checkQ = Collections.ListMakeHead<string>();
+        this.addLongClientId(longClientId);
     }
 
-    enqueueMsg(msg: DeltaMsg) {
+    getOrAddShortClientId(longClientId: string) {
+        if (!this.clientNameToId.get(longClientId)) {
+            this.addLongClientId(longClientId);
+        }
+        return this.getShortClientId(longClientId);
+    }
+
+    getShortClientId(longClientId: string) {
+        return this.clientNameToId.get(longClientId).data;
+    }
+
+    getLongClientId(clientId: number) {
+        return this.shortClientIdMap[clientId];
+    }
+
+    addLongClientId(longClientId: string) {
+        this.clientNameToId.put(longClientId, this.shortClientIdMap.length);
+        this.shortClientIdMap.push(longClientId);
+    }
+
+    makeInsertMsg(text: string, pos: number, seq: number, refSeq: number, objectId: string) {
+        return <Protocol.IDeltaMessage>{
+            clientId: this.longClientId,
+            sequenceNumber: seq,
+            referenceSequenceNumber: refSeq,
+            objectId: objectId,
+            clientSequenceNumber: this.clientSequenceNumber,
+            op: {
+                type: Protocol.MergeTreeMsgType.INSERT, text: text, pos1: pos
+            }
+        };
+    }
+
+    makeRemoveMsg(start: number, end: number, seq: number, refSeq: number, objectId: string) {
+        return <Protocol.IDeltaMessage>{
+            clientId: this.longClientId,
+            sequenceNumber: seq,
+            referenceSequenceNumber: refSeq,
+            objectId: objectId,
+            clientSequenceNumber: this.clientSequenceNumber,
+            op: {
+                type: Protocol.MergeTreeMsgType.REMOVE, pos1: start, pos2: end
+            }
+        };
+    }
+
+    enqueueMsg(msg: Protocol.IDeltaMessage) {
         this.q.enqueue(msg);
     }
 
@@ -985,23 +997,27 @@ export class Client {
         this.checkQ.enqueue(this.getText());
     }
 
-    coreApplyMsg(msg: DeltaMsg) {
-        switch (msg.type) {
-            case MsgType.INSERT:
-                this.insertSegmentRemote(msg.text, msg.pos1, msg.seq, msg.refSeq, msg.clientId);
+    coreApplyMsg(msg: Protocol.IDeltaMessage) {
+        let op = <Protocol.IMergeTreeDeltaMsg>msg.op;
+        let clid = this.getOrAddShortClientId(msg.clientId);
+        switch (op.type) {
+            case Protocol.MergeTreeMsgType.INSERT:
+                this.insertSegmentRemote(op.text, op.pos1, msg.sequenceNumber, msg.referenceSequenceNumber,
+                    clid);
                 break;
-            case MsgType.REMOVE:
-                this.removeSegmentRemote(msg.pos1, msg.pos2, msg.seq, msg.refSeq, msg.clientId);
+            case Protocol.MergeTreeMsgType.REMOVE:
+                this.removeSegmentRemote(op.pos1, op.pos2, msg.sequenceNumber, msg.referenceSequenceNumber,
+                    clid);
                 break;
         }
     }
 
-    applyMsg(msg: DeltaMsg) {
-        if ((msg.minseq !== undefined) && (msg.minseq > this.mergeTree.getCollabWindow().minSeq)) {
-            this.updateMinSeq(msg.minseq);
+    applyMsg(msg: Protocol.IDeltaMessage) {
+        if ((msg !== undefined) && (msg.minimumSequenceNumber > this.mergeTree.getCollabWindow().minSeq)) {
+            this.updateMinSeq(msg.minimumSequenceNumber);
         }
-        if (msg.clientId == this.getClientId()) {
-            this.ackPendingSegment(msg.seq);
+        if (msg.clientId == this.longClientId) {
+            this.ackPendingSegment(msg.sequenceNumber);
         }
         else {
             this.coreApplyMsg(msg);
@@ -1039,7 +1055,7 @@ export class Client {
             this.localOps++;
         }
         if (this.verboseOps) {
-            console.log(`remove local cli ${clientId} ref seq ${refSeq}`);
+            console.log(`remove local cli ${this.getLongClientId(clientId)} ref seq ${refSeq}`);
         }
     }
 
@@ -1058,7 +1074,7 @@ export class Client {
             this.accumWindow += (this.getCurrentSeq() - this.mergeTree.getCollabWindow().minSeq);
         }
         if (this.verboseOps) {
-            console.log(`@cli ${this.mergeTree.getCollabWindow().clientId} seq ${seq} remove remote start ${start} end ${end} refseq ${refSeq} cli ${clientId}`);
+            console.log(`@cli ${this.getLongClientId(this.mergeTree.getCollabWindow().clientId)} seq ${seq} remove remote start ${start} end ${end} refseq ${refSeq} cli ${clientId}`);
         }
     }
 
@@ -1079,7 +1095,7 @@ export class Client {
             this.localOps++;
         }
         if (this.verboseOps) {
-            console.log(`insert local text ${text} pos ${pos} cli ${clientId} ref seq ${refSeq}`);
+            console.log(`insert local text ${text} pos ${pos} cli ${this.getLongClientId(clientId)} ref seq ${refSeq}`);
         }
     }
 
@@ -1099,7 +1115,7 @@ export class Client {
             this.accumWindow += (this.getCurrentSeq() - this.mergeTree.getCollabWindow().minSeq);
         }
         if (this.verboseOps) {
-            console.log(`@cli ${this.mergeTree.getCollabWindow().clientId} text ${text} seq ${seq} insert remote pos ${pos} refseq ${refSeq} cli ${clientId}`);
+            console.log(`@cli ${this.getLongClientId(this.mergeTree.getCollabWindow().clientId)} text ${text} seq ${seq} insert remote pos ${pos} refseq ${refSeq} cli ${clientId}`);
         }
     }
 
@@ -1118,7 +1134,7 @@ export class Client {
             this.accumWindow += (this.getCurrentSeq() - this.mergeTree.getCollabWindow().minSeq);
         }
         if (this.verboseOps) {
-            console.log(`@cli ${this.mergeTree.getCollabWindow().clientId} ack seq # ${seq}`);
+            console.log(`@cli ${this.getLongClientId(this.mergeTree.getCollabWindow().clientId)} ack seq # ${seq}`);
         }
     }
 
@@ -1158,21 +1174,21 @@ export class Client {
     }
 
     relText(clientId: number, refSeq: number) {
-        return `cli: ${clientId} refSeq: ${refSeq}: ` + this.mergeTree.getText(refSeq, clientId);
+        return `cli: ${this.getLongClientId(clientId)} refSeq: ${refSeq}: ` + this.mergeTree.getText(refSeq, clientId);
     }
 
-    startCollaboration(localClientId: number) {
-        this.mergeTree.startCollaboration(localClientId);
+    startCollaboration() {
+        this.mergeTree.startCollaboration(this.getShortClientId(this.longClientId));
     }
 }
 
 export interface ClientSeq {
     refSeq: number;
-    clientId: number;
+    clientId: string;
 }
 
 export var clientSeqComparer: Collections.Comparer<ClientSeq> = {
-    min: { refSeq: -1, clientId: -1 },
+    min: { refSeq: -1, clientId: "" },
     compare: (a, b) => a.refSeq - b.refSeq
 }
 
@@ -1186,15 +1202,15 @@ export class TestServer extends Client {
     listeners: Client[]; // listeners do not generate edits
     clientSeqNumbers: Collections.Heap<ClientSeq>;
 
-    constructor(initText: string) {
-        super(initText);
+    constructor(initText: string, clientId: string) {
+        super(initText, clientId);
     }
 
     addClients(clients: Client[]) {
         this.clientSeqNumbers = new Collections.Heap<ClientSeq>([], clientSeqComparer);
         this.clients = clients;
         for (let client of clients) {
-            this.clientSeqNumbers.add({ refSeq: client.getCurrentSeq(), clientId: client.getClientId() });
+            this.clientSeqNumbers.add({ refSeq: client.getCurrentSeq(), clientId: client.longClientId });
         }
     }
 
@@ -1202,10 +1218,11 @@ export class TestServer extends Client {
         this.listeners = listeners;
     }
 
-    applyMsg(msg: DeltaMsg) {
+    applyMsg(msg: Protocol.IDeltaMessage) {
         this.coreApplyMsg(msg);
         if (useCheckQ) {
-            return checkTextMatchRelative(msg.refSeq, msg.clientId, this, msg);
+            let clid = this.getShortClientId(msg.clientId);
+            return checkTextMatchRelative(msg.referenceSequenceNumber, clid, this, msg);
         }
         else {
             return false;
@@ -1216,20 +1233,21 @@ export class TestServer extends Client {
         while (msgCount > 0) {
             let msg = this.q.dequeue();
             if (msg) {
-                msg.seq = this.seq++;
+                msg.sequenceNumber = this.seq++;
                 if (this.applyMsg(msg)) {
                     return true;
                 }
                 if (this.clients) {
                     let minCli = this.clientSeqNumbers.peek();
-                    if (minCli && (minCli.clientId == msg.clientId) && (minCli.refSeq < msg.refSeq)) {
+                    if (minCli && (minCli.clientId == msg.clientId) &&
+                        (minCli.refSeq < msg.referenceSequenceNumber)) {
                         let cliSeq = this.clientSeqNumbers.get();
                         let oldSeq = cliSeq.refSeq;
-                        cliSeq.refSeq = msg.refSeq;
+                        cliSeq.refSeq = msg.referenceSequenceNumber;
                         this.clientSeqNumbers.add(cliSeq);
                         minCli = this.clientSeqNumbers.peek();
                         if (minCli.refSeq > oldSeq) {
-                            msg.minseq = minCli.refSeq;
+                            msg.minimumSequenceNumber = minCli.refSeq;
                             this.updateMinSeq(minCli.refSeq);
                         }
                     }
@@ -1262,6 +1280,15 @@ var LRUSegmentComparer: Collections.Comparer<LRUSegment> = {
     compare: (a, b) => a.maxSeq - b.maxSeq
 }
 
+function glc(mergeTree: MergeTree, id: number) {
+    if (mergeTree.getLongClientId) {
+        return mergeTree.getLongClientId(id);
+    }
+    else {
+        return id.toString();
+    }
+}
+
 // represents a sequence of text segments
 export class MergeTree {
     // must be an even number   
@@ -1290,6 +1317,8 @@ export class MergeTree {
     collabWindow = new CollaborationWindow();
     pendingSegments: Collections.List<SegmentGroup>;
     segmentsToScour: Collections.Heap<LRUSegment>;
+    // for diagnostics
+    getLongClientId: (id: number) => string;
 
     constructor(public text: string) {
         this.root = this.initialTextNode(this.text);
@@ -1624,7 +1653,7 @@ export class MergeTree {
             let textSegment = <TextSegment>segment;
             if ((textSegment.removedSeq === undefined) || (textSegment.removedSeq == UnassignedSequenceNumber) || (textSegment.removedSeq > refSeq)) {
                 if (MergeTree.traceGatherText) {
-                    console.log(`@cli ${this.collabWindow.clientId} gather seg seq ${textSegment.seq} rseq ${textSegment.removedSeq} text ${textSegment.text}`);
+                    console.log(`@cli ${this.getLongClientId(this.collabWindow.clientId)} gather seg seq ${textSegment.seq} rseq ${textSegment.removedSeq} text ${textSegment.text}`);
                 }
                 if ((start <= 0) && (end >= textSegment.text.length)) {
                     accumText.text += textSegment.text;
@@ -1675,7 +1704,7 @@ export class MergeTree {
         }
         let accum = new TextSegment("");
         if (MergeTree.traceGatherText) {
-            console.log(`get text on cli ${this.collabWindow.clientId} ref cli ${clientId} refSeq ${refSeq}`);
+            console.log(`get text on cli ${glc(this, this.collabWindow.clientId)} ref cli ${glc(this, clientId)} refSeq ${refSeq}`);
         }
         this.mapRange({ leaf: this.gatherText }, refSeq, clientId, accum, start, end);
         return accum.text;
@@ -1796,7 +1825,7 @@ export class MergeTree {
                         if (pendingSegment.removedSeq != UnassignedSequenceNumber) {
                             overwrite = true;
                             if (MergeTree.diagOverlappingRemove) {
-                                console.log(`grump @seq ${seq} cli ${this.collabWindow.clientId} from ${pendingSegment.removedSeq} text ${pendingSegment.toString()}`);
+                                console.log(`grump @seq ${seq} cli ${glc(this, this.collabWindow.clientId)} from ${pendingSegment.removedSeq} text ${pendingSegment.toString()}`);
                             }
                         }
                         else {
@@ -1851,7 +1880,7 @@ export class MergeTree {
         let checkSegmentIsLocal = (segment: Segment, pos: number, refSeq: number, clientId: number) => {
             if (segment.seq == UnassignedSequenceNumber) {
                 if (MergeTree.diagInsertTie) {
-                    console.log(`@cli ${this.collabWindow.clientId}: promoting continue due to seq ${segment.seq} text ${segment.toString()} ref ${refSeq}`);
+                    console.log(`@cli ${glc(this, this.collabWindow.clientId)}: promoting continue due to seq ${segment.seq} text ${segment.toString()} ref ${refSeq}`);
                 }
                 segIsLocal = true;
             }
@@ -1863,7 +1892,7 @@ export class MergeTree {
             segIsLocal = false;
             this.excursion(node, checkSegmentIsLocal);
             if (MergeTree.diagInsertTie && segIsLocal) {
-                console.log(`@cli ${this.collabWindow.clientId}: attempting continue with seq ${seq} text ${text} ref ${refSeq}`);
+                console.log(`@cli ${glc(this, this.collabWindow.clientId)}: attempting continue with seq ${seq} text ${text} ref ${refSeq}`);
             }
             return segIsLocal;
         }
@@ -1980,12 +2009,12 @@ export class MergeTree {
                 }
                 else {
                     let segment = <Segment>child;
-                    segInfo = `cli: ${segment.clientId} seq: ${segment.seq} text: ${segment.toString()}`;
+                    segInfo = `cli: ${glc(this, segment.clientId)} seq: ${segment.seq} text: ${segment.toString()}`;
                     if (segment.removedSeq !== undefined) {
-                        segInfo += ` rcli: ${segment.removedClientId} rseq: ${segment.removedSeq}`;
+                        segInfo += ` rcli: ${glc(this, segment.removedClientId)} rseq: ${segment.removedSeq}`;
                     }
                 }
-                console.log(`@tcli: ${this.collabWindow.clientId} len: ${len} pos: ${pos} ` + segInfo);
+                console.log(`@tcli: ${glc(this, this.collabWindow.clientId)} len: ${len} pos: ${pos} ` + segInfo);
             }
 
             if ((pos < len) || ((pos == len) && this.breakTie(pos, len, seq, child, refSeq, clientId))) {
@@ -2002,7 +2031,7 @@ export class MergeTree {
                     }
                     else if (splitNode == MergeTree.theUnfinishedNode) {
                         if (MergeTree.traceTraversal) {
-                            console.log(`@cli ${this.collabWindow.clientId} unfinished bus pos ${pos} len ${len}`);
+                            console.log(`@cli ${glc(this, this.collabWindow.clientId)} unfinished bus pos ${pos} len ${len}`);
                         }
                         pos -= len; // act as if shifted segment
                         continue;
@@ -2014,7 +2043,7 @@ export class MergeTree {
                 }
                 else {
                     if (MergeTree.traceTraversal) {
-                        console.log(`@tcli: ${this.collabWindow.clientId}: leaf action`);
+                        console.log(`@tcli: ${glc(this, this.collabWindow.clientId)}: leaf action`);
                     }
 
                     let segmentChanges = leafAction(<Segment>child, pos);
@@ -2050,7 +2079,7 @@ export class MergeTree {
                 }
                 else {
                     if (MergeTree.traceTraversal) {
-                        console.log(`@tcli: ${this.collabWindow.clientId}: leaf action pos 0`);
+                        console.log(`@tcli: ${glc(this, this.collabWindow.clientId)}: leaf action pos 0`);
                     }
                     let segmentChanges = leafAction(undefined, pos);
                     newNode = segmentChanges.next;
@@ -2096,7 +2125,7 @@ export class MergeTree {
             textSegment.removedClientOverlap = <number[]>[];
         }
         if (MergeTree.diagOverlappingRemove) {
-            console.log(`added cli ${clientId} to rseq: ${textSegment.removedSeq} text ${textSegment.toString()}`);
+            console.log(`added cli ${glc(this, clientId)} to rseq: ${textSegment.removedSeq} text ${textSegment.toString()}`);
         }
         textSegment.removedClientOverlap.push(clientId);
     }
@@ -2109,7 +2138,7 @@ export class MergeTree {
         let markRemoved = (segment: Segment, pos: number, start: number, end: number) => {
             if (segment.removedSeq != undefined) {
                 if (MergeTree.diagOverlappingRemove) {
-                    console.log(`yump @seq ${seq} cli ${this.collabWindow.clientId}: overlaps deleted segment ${segment.removedSeq} text ${segment.toString()}`);
+                    console.log(`yump @seq ${seq} cli ${glc(this, this.collabWindow.clientId)}: overlaps deleted segment ${segment.removedSeq} text ${segment.toString()}`);
                 }
                 overwrite = true;
                 if (segment.removedSeq == UnassignedSequenceNumber) {
@@ -2256,7 +2285,7 @@ export class MergeTree {
                 node.partialLengths.update(node, seq, clientId, this.collabWindow);
                 let tempPartialLengths = PartialSequenceLengths.combine(node, this.collabWindow);
                 if (!tempPartialLengths.compare(node.partialLengths)) {
-                    console.log(`partial sum update mismatch @cli ${this.collabWindow.clientId} seq ${seq} clientId ${clientId}`);
+                    console.log(`partial sum update mismatch @cli ${glc(this, this.collabWindow.clientId)} seq ${seq} clientId ${glc(this, clientId)}`);
                     console.log(tempPartialLengths.toString());
                     console.log("b4 " + bplStr);
                     console.log(node.partialLengths.toString());
@@ -2311,9 +2340,9 @@ export class MergeTree {
             else {
                 let segment = <Segment>child;
                 strbuf += indent(indentCount + 4);
-                strbuf += `cli: ${segment.clientId} seq: ${segment.seq}`;
+                strbuf += `cli: ${glc(this, segment.clientId)} seq: ${segment.seq}`;
                 if (segment.removedSeq !== undefined) {
-                    strbuf += ` rcli: ${segment.removedClientId} rseq: ${segment.removedSeq}`;
+                    strbuf += ` rcli: ${glc(this, segment.removedClientId)} rseq: ${segment.removedSeq}`;
                 }
                 strbuf += "\n";
                 strbuf += indent(indentCount + 4);
@@ -2351,7 +2380,7 @@ export class MergeTree {
                 let len = this.nodeLength(child, state.refSeq, state.clientId);
                 if (MergeTree.traceIncrTraversal) {
                     if (child.isLeaf()) {
-                        console.log(`considering (r ${state.refSeq} c ${state.clientId}) seg with text ${(<TextSegment>child).text} len ${len} seq ${(<Segment>child).seq} rseq ${(<Segment>child).removedSeq} cli ${(<Segment>child).clientId}`);
+                        console.log(`considering (r ${state.refSeq} c ${glc(this, state.clientId)}) seg with text ${(<TextSegment>child).text} len ${len} seq ${(<Segment>child).seq} rseq ${(<Segment>child).removedSeq} cli ${glc(this, (<Segment>child).clientId)}`);
                     }
                 }
                 if ((len > 0) && (state.start < len) && (state.end > 0)) {
@@ -2407,12 +2436,12 @@ export class MergeTree {
                 }
                 else {
                     let segment = <Segment>child;
-                    segInfo = `cli: ${segment.clientId} seq: ${segment.seq} text: '${segment.toString()}'`;
+                    segInfo = `cli: ${glc(this, segment.clientId)} seq: ${segment.seq} text: '${segment.toString()}'`;
                     if (segment.removedSeq !== undefined) {
-                        segInfo += ` rcli: ${segment.removedClientId} rseq: ${segment.removedSeq}`;
+                        segInfo += ` rcli: ${glc(this, segment.removedClientId)} rseq: ${segment.removedSeq}`;
                     }
                 }
-                console.log(`@tcli ${this.collabWindow.clientId}: map len: ${len} start: ${start} end: ${end} ` + segInfo);
+                console.log(`@tcli ${glc(this, this.collabWindow.clientId)}: map len: ${len} start: ${start} end: ${end} ` + segInfo);
             }
             if (go && (len > 0) && (start < len) && (end > 0)) {
                 // found entry containing pos
@@ -2423,7 +2452,7 @@ export class MergeTree {
                 }
                 else {
                     if (MergeTree.traceTraversal) {
-                        console.log(`@tcli ${this.collabWindow.clientId}: map leaf action`);
+                        console.log(`@tcli ${glc(this, this.collabWindow.clientId)}: map leaf action`);
                     }
                     go = actions.leaf(<Segment>child, pos, refSeq, clientId, start, end, accum);
                 }

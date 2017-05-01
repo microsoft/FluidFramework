@@ -1,13 +1,15 @@
 // Is there a doc comment genrator for TS?
 
-export interface IMessageBase {
+export interface IDeltaMessage {
     clientId: string;
+
+    sequenceNumber: number;
 
     clientSequenceNumber: number;
 
     referenceSequenceNumber: number;
 
-    minimumSequenceNumber: number;
+    minimumSequenceNumber?: number;
 
     // The collaborative object the operation is intended for
     objectId: string;
@@ -15,26 +17,19 @@ export interface IMessageBase {
     op: IDelta;
 }
 
-export interface IMessage extends IMessageBase {
-}
-
-export interface ISequencedMessage extends IMessageBase {
-    sequenceNumber: number;
-}
-
 export interface IDelta {
 }
 
-export const enum SegTreeMsgType {
+export const enum MergeTreeMsgType {
     INSERT,
     REMOVE,
 }
 
-export interface ISegTreeDeltaMsg extends IDelta {
+export interface IMergeTreeDeltaMsg extends IDelta {
     /**
      * Type of this change.
      */
-    type: SegTreeMsgType;
+    type: MergeTreeMsgType;
     pos1: number;
     pos2?: number;
     text?: string;
