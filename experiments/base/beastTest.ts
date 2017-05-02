@@ -558,7 +558,10 @@ export function TestPack() {
         const fileSegCount = 0;
         let initString = "";
         let snapInProgress = false;
-        let asyncExec = true;
+        let asyncExec = false;
+        let addSnapClient = true;
+        let extractSnap = true;
+        let testSyncload = true;
         let snapClient: MergeTree.Client;
 
         if (!startFile) {
@@ -579,7 +582,19 @@ export function TestPack() {
         }
         server.startCollaboration();
         server.addClients(clients);
-        if (asyncExec) {
+        if (testSyncload) {
+            let clockStart = clock();
+            let segs = Paparazzo.Snapshot.loadSync("snap-initial");
+            console.log(`sync load time ${elapsedMicroseconds(clockStart)}`);
+            let fromLoad = new MergeTree.MergeTree("");
+            fromLoad.reloadFromSegments(segs);
+            let fromLoadText = fromLoad.getText(MergeTree.UniversalSequenceNumber, MergeTree.NonCollabClient);
+            let serverText = server.getText();
+            if (fromLoadText != serverText) {
+                console.log('snap file vs. text file mismatch');
+            }
+        }
+        if (addSnapClient) {
             snapClient = new MergeTree.Client(initString, "snapshot");
             if (startFile) {
                 Text.loadText(startFile, snapClient.mergeTree, fileSegCount);
@@ -780,6 +795,8 @@ export function TestPack() {
             setImmediate(asyncRoundStep, asyncInfo, roundCount);
         }
 
+        let extractSnapTime = 0;
+        let extractSnapOps = 0;
         function finishRound(roundCount: number) {
             // process remaining messages
             if (serverProcessSome(server, true)) {
@@ -789,6 +806,12 @@ export function TestPack() {
                 clientProcessSome(client, true);
             }
 
+            if (extractSnap) {
+                let clockStart = clock();
+                let texts = new Paparazzo.Snapshot(snapClient.mergeTree).extractSync();
+                extractSnapTime += elapsedMicroseconds(clockStart);
+                extractSnapOps++;
+            }
             /*          
                         if (checkTextMatch()) {
                             console.log(`round: ${i}`);
@@ -810,7 +833,15 @@ export function TestPack() {
                 let stats = server.mergeTree.getStats();
                 let liveAve = (stats.liveCount / stats.nodeCount).toFixed(1);
                 let posLeaves = stats.leafCount - stats.removedLeafCount;
+                let aveExtractSnapTime = "off";
+                if (extractSnapOps > 0) {
+                    aveExtractSnapTime = (extractSnapTime / extractSnapOps).toFixed(1);
+                }
                 console.log(`round: ${roundCount} seq ${server.seq} char count ${server.getLength()} height ${stats.maxHeight} lv ${stats.leafCount} rml ${stats.removedLeafCount} p ${posLeaves} nodes ${stats.nodeCount} pop ${liveAve} histo ${stats.histo}`);
+                if (extractSnapOps > 0) {
+                    aveExtractSnapTime = (extractSnapTime / extractSnapOps).toFixed(1);
+                    console.log(`ave extract snap time ${aveExtractSnapTime}`);
+                }
                 reportTiming(server);
                 reportTiming(clients[2]);
                 let totalTime = server.accumTime + server.accumWindowTime;
@@ -1118,7 +1149,7 @@ export function TestPack() {
                 console.log(cli.relText(clientId, refSeq));
             }
         }
-        cli = new MergeTree.Client("abcdefgh","Fred3");
+        cli = new MergeTree.Client("abcdefgh", "Fred3");
         cli.startCollaboration();
         cli.removeSegmentRemote(1, 3, 1, 0, 3);
         console.log(cli.mergeTree.toString());

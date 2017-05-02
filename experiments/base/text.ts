@@ -6,7 +6,7 @@ import * as random from "random-js";
 import * as MergeTree from "./mergeTree";
 import * as fs from "fs";
 
-export function loadText(filename: string, segTree: MergeTree.MergeTree, segLimit = 0) {
+export function loadText(filename: string, mergeTree: MergeTree.MergeTree, segLimit = 0) {
     let content = fs.readFileSync(filename, "utf8");
     content = content.replace(/^\uFEFF/, "");
 
@@ -25,25 +25,25 @@ export function loadText(filename: string, segTree: MergeTree.MergeTree, segLimi
     if (segLimit>0) {
         segments.length = segLimit;
     }
-    segTree.reloadFromSegments(segments);
+    mergeTree.reloadFromSegments(segments);
     // for (let segment of segments) {
     //     segTree.insertInterval(segTree.getLength(0,SegTree.LocalClientId),0,SegTree.LocalClientId,0,segment);
     // }
     console.log(`Number of Segments: ${segments.length}`);
-    console.log(`Height: ${segTree.getStats().maxHeight}`);
+    console.log(`Height: ${mergeTree.getStats().maxHeight}`);
     //console.log(segTree.toString());
-    return segTree;
+    return mergeTree;
 }
 
 let mt = random.engines.mt19937();
 mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
 
-export function findRandomWord(segTree: MergeTree.MergeTree, clientId: number) {
-    let len = segTree.getLength(MergeTree.UniversalSequenceNumber, clientId);
+export function findRandomWord(mergeTree: MergeTree.MergeTree, clientId: number) {
+    let len = mergeTree.getLength(MergeTree.UniversalSequenceNumber, clientId);
     let pos = random.integer(0, len)(mt);
-    let textAtPos = segTree.getText(MergeTree.UniversalSequenceNumber, clientId, pos, pos + 10);
+    let textAtPos = mergeTree.getText(MergeTree.UniversalSequenceNumber, clientId, pos, pos + 10);
     //console.log(textAtPos);
-    let nextWord = segTree.searchFromPos(pos, /\s\w+\b/);
+    let nextWord = mergeTree.searchFromPos(pos, /\s\w+\b/);
     if (nextWord) {
         nextWord.pos += pos;
 //        console.log(`next word is '${nextWord.text}' len ${nextWord.text.length} at pos ${nextWord.pos}`);

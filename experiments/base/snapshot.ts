@@ -46,8 +46,8 @@ export class Snapshot {
     buffer: Buffer;
     pendingChunk: SnapChunk;
 
-    constructor(public mergeTree: MergeTree.MergeTree, public filename: string,
-        public onCompletion: () => void) {
+    constructor(public mergeTree: MergeTree.MergeTree, public filename?: string,
+        public onCompletion?: () => void) {
     }
 
     start() {
@@ -55,6 +55,84 @@ export class Snapshot {
             // TODO: process err
             this.onOpen(fd);
         });
+    }
+
+    extractSync() {
+        let collabWindow = this.mergeTree.getCollabWindow();
+        this.seq = collabWindow.minSeq;
+        //let charLen = this.mergeTree.getLength(this.mergeTree.collabWindow.minSeq,
+        //    MergeTree.NonCollabClient);
+        //let buffer = new Buffer(Math.ceil(charLen * 1.10));
+        //let offset = 0;
+        let texts =<string[]>[];
+        let extractSegment = (segment: MergeTree.Segment, pos: number, refSeq: number, clientId: number,
+            start: number, end: number) => {
+            if ((segment.seq != MergeTree.UnassignedSequenceNumber) && (segment.seq <= this.seq) &&
+                (segment.getType() == MergeTree.SegmentType.Text)) {
+                if ((segment.removedSeq === undefined) ||
+                    (segment.removedSeq == MergeTree.UnassignedSequenceNumber) ||
+                    (segment.removedSeq > this.seq)) {
+                    let textSegment = <MergeTree.TextSegment>segment;
+/*                    let ulen = Buffer.byteLength(textSegment.text, 'utf8');
+                    buffer.writeUInt32BE(ulen, offset);
+                    offset += 4;
+                    buffer.write(textSegment.text, offset);
+                    offset += ulen;*/
+                    texts.push(textSegment.text);
+                }
+            }
+            return true;
+        }
+        this.mergeTree.map({ leaf: extractSegment }, this.seq, MergeTree.NonCollabClient);
+        return texts;
+        //return { buffer: buffer, offset: offset };
+    }
+
+    static loadSync(filename: string) {
+        let segs = <MergeTree.TextSegment[]>[];
+        let buf = new Buffer(Snapshot.SnapshotHeaderSize);
+        let fd = fs.openSync(filename, 'r');
+        let expectedBytes = Snapshot.SnapshotHeaderSize;
+        let actualBytes = fs.readSync(fd, buf, 0, expectedBytes, 0);
+        if (actualBytes != expectedBytes) {
+            console.log(`actual bytes read ${actualBytes} expected ${expectedBytes}`);
+        }
+        let offset = 0;
+
+        let chunkCount = buf.readUInt32BE(offset);
+        let segmentsTotalLength = buf.readUInt32BE(offset + 4);
+        let indexOffset = buf.readUInt32BE(offset + 8);
+        let segmentsOffset = buf.readUInt32BE(offset + 12);
+        let seq = buf.readUInt32BE(offset + 16);
+        let position = actualBytes;
+
+        buf = new Buffer(Snapshot.SnapChunkMaxSize);
+
+        let readChunk = () => {
+            actualBytes = fs.readSync(fd, buf, 0, 4, position);
+            let lengthBytes = buf.readUInt32BE(0);
+            actualBytes = fs.readSync(fd, buf, 4, lengthBytes - 4, position + 4)
+            let remainingBytes = actualBytes;
+            let offset = 4;
+            while (remainingBytes > 0) {
+                let prevOffset = offset;
+                let segmentLengthBytes = buf.readUInt32BE(offset);
+                offset += 4;
+                let text = buf.toString('utf8', offset, offset + segmentLengthBytes);
+                offset += segmentLengthBytes;
+                segs.push(new MergeTree.TextSegment(text, MergeTree.UniversalSequenceNumber,
+                    MergeTree.LocalClientId));
+                remainingBytes -= (offset - prevOffset);
+            }
+            position += (actualBytes + 4);
+        }
+
+        for (let i = 0; i < chunkCount; i++) {
+            readChunk();
+        }
+
+        fs.closeSync(fd);
+        return segs;
     }
 
     writtenText: string;
