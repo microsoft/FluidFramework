@@ -1,12 +1,12 @@
 import * as kafka from "kafka-node";
 import * as _ from "lodash";
-import * as minio from "minio";
+import * as moniker from "moniker";
 import * as nconf from "nconf";
 import * as redis from "redis";
 import * as socketIo from "socket.io";
 import * as socketIoRedis from "socket.io-redis";
-import { Readable } from "stream";
 import * as api from "../api";
+import * as core from "../core";
 import * as socketStorage from "../socket-storage";
 
 let io = socketIo();
@@ -15,13 +15,12 @@ let io = socketIo();
 const zookeeperEndpoint = nconf.get("zookeeper:endpoint");
 const kafkaClientId = nconf.get("alfred:kafkaClientId");
 const topic = nconf.get("alfred:topic");
-const storageBucket = nconf.get("alfred:bucket");
 
 let kafkaClient = new kafka.Client(zookeeperEndpoint, kafkaClientId);
 let producer = new kafka.Producer(kafkaClient, { partitionerType: 3 });
 let producerReady = new Promise<void>((resolve, reject) => {
     producer.on("ready", () => {
-        kafkaClient.refreshMetadata(["rawdeltas"], (error, data) => {
+        kafkaClient.refreshMetadata([topic], (error, data) => {
             if (error) {
                 console.error(error);
                 return reject();
@@ -56,98 +55,53 @@ let pub = redis.createClient(port, host, pubOptions);
 let sub = redis.createClient(port, host, subOptions);
 io.adapter(socketIoRedis({ pubClient: pub, subClient: sub }));
 
-// Gain access to the document storage
-const minioConfig = nconf.get("minio");
-const minioClient = new minio.Client({
-    accessKey: minioConfig.accessKey,
-    endPoint: minioConfig.endpoint,
-    port: minioConfig.port,
-    secretKey: minioConfig.secretKey,
-    secure: false,
-});
-
-/**
- * Retrieves the stored object
- */
-async function getObject(objectId: string, bucket: string): Promise<string> {
-    return new Promise<string>((resolve, reject) => {
-        minioClient.getObject(bucket, objectId, (error, stream: Readable) => {
-            if (error) {
-                return error.code === "NoSuchKey" ? resolve(null) : reject(error);
-            }
-
-            let object = "";
-
-            // Set the encoding so that node does the conversion to a string
-            stream.setEncoding("utf-8");
-            stream.on("data", (chunk: string) => {
-                object += chunk;
-            });
-
-            stream.on("end", () => {
-                console.log(object);
-                resolve(object);
-            });
-
-            stream.on("error", (streamError) => {
-                reject(streamError);
-            });
-        });
-    });
-}
-
 io.on("connection", (socket) => {
+    const clientId = moniker.choose();
+    const connectionsMap: { [id: string]: boolean } = {};
+
     // The loadObject call needs to see if the object already exists. If not it should offload to
     // the storage service to go and create it.
     //
     // If it does exist it should query that same service to pull in the current snapshot.
     //
     // Given a client is then going to send us deltas on that service we need routerlicious to kick in as well.
-    socket.on("loadObject", (message: socketStorage.ILoadObjectMessage, response) => {
+    // Note connect is a reserved socket.io word so we use connectObject to represent the connect request
+    socket.on("connectObject", (message: socketStorage.IConnect, response) => {
         // Join the room first to ensure the client will start receiving delta updates
         console.log(`Client has requested to load ${message.objectId}`);
         socket.join(message.objectId, (joinError) => {
             if (joinError) {
-                return response({ error: joinError });
+                return response(joinError, null);
             }
 
-            // Now grab the snapshot, any deltas post snapshot, and send to the client
-            const resultP = getObject(message.objectId, storageBucket).then(async (text) => {
-                let snapshot: api.ICollaborativeObjectSnapshot;
-                if (text === null) {
-                    snapshot = {
-                        sequenceNumber: 0,
-                        snapshot: {},
-                    };
-                } else {
-                    snapshot = JSON.parse(text);
-                }
-
-                const responseMessage: socketStorage.IResponse<socketStorage.IObjectDetails> = {
-                    data: {
-                        id: message.objectId,
-                        sequenceNumber: snapshot.sequenceNumber,
-                        snapshot: snapshot.snapshot,
-                        type: message.type,
-                    },
-                    error: null,
-                };
-
-                return responseMessage;
-            });
-
-            resultP.then(
-                (responseMessage) => response(responseMessage),
-                (error) => response({ error }));
+            connectionsMap[message.objectId] = true;
+            const connectedMessage: socketStorage.IConnected = {
+                clientId,
+                // TODO distinguish new vs existing objects
+                existing: true,
+            };
+            response(null, connectedMessage);
         });
     });
 
     // Message sent when a new operation is submitted to the router
-    socket.on("submitOp", (message: socketStorage.ISubmitOpMessage, response) => {
-        console.log(`Operation received for object ${message.objectId}`);
+    socket.on("submitOp", (objectId: string, message: api.IMessage, response) => {
+        console.log(`Operation received for object ${objectId}`);
+
+        // Verify the user has connected on this object id
+        if (!connectionsMap[objectId]) {
+            return response("Invalid object", null);
+        }
+
+        const rawMessage: core.IRawOperationMessage = {
+            clientId,
+            operation: message,
+            objectId,
+            userId: null,
+        };
 
         let submittedP = producerReady.then(() => {
-            const payloads = [{ topic, messages: [JSON.stringify(message)], key: message.objectId }];
+            const payloads = [{ topic, messages: [JSON.stringify(rawMessage)], key: objectId }];
             return new Promise<any>((resolve, reject) => {
                 producer.send(payloads, (error, data) => {
                     if (error) {
@@ -161,8 +115,8 @@ io.on("connection", (socket) => {
         });
 
         submittedP.then(
-            (responseMessage) => response(responseMessage),
-            (error) => ({ error }));
+            (responseMessage) => response(null, responseMessage),
+            (error) => response(error, null));
     });
 });
 

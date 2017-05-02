@@ -17,27 +17,28 @@ const collectionP = mongoClientP.then(async (db) => {
 /**
  * Retrieves deltas for the given document. With an optional from and to range (both exclusive) specified
  */
-router.get("/deltas/:id", async (request, response, next) => {
+router.get("/:id", async (request, response, next) => {
     // Create an optional filter to restrict the delta range
     const query: any = { objectId: request.params.id };
     if (request.query.from || request.query.to) {
-        query.sequenceNumber = {};
+        query["operation.sequenceNumber"] = {};
 
         if (request.query.from) {
-            query.sequenceNumber.$gt = parseInt(request.query.from, 10);
+            query["operation.sequenceNumber"].$gt = parseInt(request.query.from, 10);
         }
 
         if (request.query.to) {
-            query.sequenceNumber.$lt = parseInt(request.query.to, 10);
+            query["operation.sequenceNumber"].$lt = parseInt(request.query.to, 10);
         }
     }
 
-    // Query for the deltas and return them
+    // Query for the deltas and return a filtered version of just the operations field
     const collection = await collectionP;
-    const deltas = await collection
+    const dbDeltas = await collection
         .find(query)
-        .sort({ sequenceNumber: 1 })
+        .sort({ "operation.sequenceNumber": 1 })
         .toArray();
+    const deltas = dbDeltas.map((delta) => delta.operation);
 
     response.status(200).json(deltas);
 });

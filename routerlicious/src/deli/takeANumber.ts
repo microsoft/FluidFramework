@@ -1,7 +1,8 @@
 // import { Sender } from "azure-event-hubs";
 import * as kafka from "kafka-node";
 import { Collection } from "mongodb";
-import * as socketStorage from "../socket-storage";
+import * as api from "../api";
+import * as core from "../core";
 
 interface IPendingTicket<T> {
     message: any;
@@ -101,7 +102,8 @@ export class TakeANumber {
             return Promise.resolve();
         }
 
-        const message = JSON.parse(rawMessage.value) as socketStorage.ISubmitOpMessage;
+        const message = JSON.parse(rawMessage.value) as core.IRawOperationMessage;
+        const operation = message.operation;
 
         // Increment and grab the next sequence number as well as store the event hub offset mapping to it
         const sequenceNumber = ++this.sequenceNumber;
@@ -109,18 +111,24 @@ export class TakeANumber {
 
         // tslint:disable-next-line
         console.log(`Assigning ticket ${message.objectId}@${sequenceNumber} at topic@${this.offset}`);
-
-        const routedMessage: socketStorage.IRoutedOpMessage = {
+        const sequencedOperation: api.ISequencedMessage = {
             clientId: message.clientId,
-            objectId: message.objectId,
-            op: message.op,
+            clientSequenceNumber: operation.clientSequenceNumber,
+            minimumSequenceNumber: operation.minimumSequenceNumber,
+            op: operation.op,
+            referenceSequenceNumber: operation.referenceSequenceNumber,
             sequenceNumber,
+            userId: message.userId,
+        };
+        const sequencedMessage: core.ISequencedOperationMessage = {
+            objectId: message.objectId,
+            operation: sequencedOperation,
         };
 
         // Serialize the sequenced message to the event hub
         const payloads = [{
-            key: routedMessage.objectId,
-            messages: [JSON.stringify(routedMessage)],
+            key: sequencedMessage.objectId,
+            messages: [JSON.stringify(sequencedMessage)],
             topic: this.topic,
         }];
         return new Promise<any>((resolve, reject) => {

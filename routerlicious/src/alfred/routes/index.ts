@@ -1,5 +1,8 @@
 import home from "./home";
 export { home };
 
-import api from "./api";
-export { api };
+import deltas from "./deltas";
+export { deltas };
+
+import storage from "./storage";
+export { storage };

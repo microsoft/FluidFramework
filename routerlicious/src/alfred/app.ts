@@ -26,8 +26,9 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 // bind routes
+app.use("/deltas", routes.deltas);
+app.use("/storage", routes.storage);
 app.use(routes.home);
-app.use("/api", routes.api);
 
 // catch 404 and forward to error handler
 app.use((req, res, next) => {

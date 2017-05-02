@@ -3,6 +3,7 @@ import { MongoClient } from "mongodb";
 import * as nconf from "nconf";
 import * as path from "path";
 import * as socketIoEmitter from "socket.io-emitter";
+import * as core from "../core";
 
 // Setup the configuration system - pull arguments, then environment variables
 nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
@@ -35,8 +36,8 @@ const collectionP = mongoClientP.then(async (db) => {
     const collection = db.collection(deltasCollectionName);
 
     const indexP = collection.createIndex({
-            objectId: 1,
-            sequenceNumber: 1,
+            "objectId": 1,
+            "operation.sequenceNumber": 1,
         },
         { unique: true });
 
@@ -45,14 +46,20 @@ const collectionP = mongoClientP.then(async (db) => {
 });
 
 consumerGroup.on("message", async (message: any) => {
-    const value = JSON.parse(message.value);
+    // NOTE the processing of the below messages must make sure to notify clients of the messages in increasing
+    // order. Be aware of promise handling ordering possibly causing out of order messages to be delivered.
+
+    const value = JSON.parse(message.value) as core.ISequencedOperationMessage;
 
     // Serialize the message to backing store
-    console.log(`Inserting to mongodb`);
+    console.log(`Inserting to mongodb ${value.objectId}@${value.operation.sequenceNumber}`);
     const collection = await collectionP;
-    await collection.insert(value);
+    collection.insert(value).catch((error) => {
+        console.error("Error serializing to MongoDB");
+        console.error(error);
+    });
 
     // Route the message to clients
-    console.log(`Routing message to clients`);
-    io.to(value.objectId).emit("op", value);
+    console.log(`Routing message to clients ${value.objectId}@${value.operation.sequenceNumber}`);
+    io.to(value.objectId).emit("op", value.objectId, value.operation);
 });
