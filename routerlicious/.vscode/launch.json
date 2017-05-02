@@ -6,16 +6,75 @@
     "configurations": [
         {
             "type": "node",
-            "request": "launch",
-            "name": "Launch Program",
-            "program": "${workspaceRoot}/dist/api/services/sender.js"
+            "request": "attach",
+            "name": "Attach to server",
+            "address": "localhost",
+            "port": 5858,
+            "restart": true,
+            "sourceMaps": true,
+            "localRoot": "${workspaceRoot}",
+            "remoteRoot": "/usr/src/server",
+            "outFiles": [ "${workspaceRoot}/dist/**/*.js" ],
+            "protocol":"legacy",
+            "trace": "sm"
         },
         {
             "type": "node",
             "request": "attach",
-            "name": "Attach to Process",
+            "name": "Attach to deli",
             "address": "localhost",
-            "port": 5858
-        }
+            "port": 5859,
+            "restart": true,
+            "sourceMaps": true,
+            "localRoot": "${workspaceRoot}",
+            "remoteRoot": "/usr/src/server",
+            "outFiles": [ "${workspaceRoot}/dist/**/*.js" ],
+            "protocol":"legacy",
+            "trace": "sm"
+        },    
+        {
+            "type": "node",
+            "request": "attach",
+            "name": "Attach to paparazzi",
+            "address": "localhost",
+            "port": 5860,
+            "restart": true,
+            "sourceMaps": true,
+            "localRoot": "${workspaceRoot}",
+            "remoteRoot": "/usr/src/server",
+            "outFiles": [ "${workspaceRoot}/dist/**/*.js" ],
+            "protocol":"legacy",
+            "trace": "sm"
+        },
+        {
+            "type": "node",
+            "request": "attach",
+            "name": "Attach to scriptorium",
+            "address": "localhost",
+            "port": 5861,
+            "restart": true,
+            "sourceMaps": true,
+            "localRoot": "${workspaceRoot}",
+            "remoteRoot": "/usr/src/server",
+            "outFiles": [ "${workspaceRoot}/dist/**/*.js" ],
+            "protocol":"legacy",
+            "trace": "sm"
+        },
+        {
+            "type": "node",
+            "request": "attach",
+            "name": "Attach to tmz",
+            "address": "localhost",
+            "port": 5862,
+            "restart": true,
+            "sourceMaps": true,
+            "localRoot": "${workspaceRoot}",
+            "remoteRoot": "/usr/src/server",
+            "outFiles": [ "${workspaceRoot}/dist/**/*.js" ],
+            "protocol":"legacy",
+            "trace": "sm"
+        }        
+        
+        
     ]
 }
