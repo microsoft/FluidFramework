@@ -1,6 +1,3 @@
-/// <reference path="base.d.ts" />
-/// <reference path ="node.d.ts"/>
-
 import * as Collections from "./collections";
 import * as fs from "fs";
 import * as MergeTree from "./mergeTree";
@@ -45,6 +42,7 @@ export class Snapshot {
     seq: number;
     buffer: Buffer;
     pendingChunk: SnapChunk;
+    texts: string[];
 
     constructor(public mergeTree: MergeTree.MergeTree, public filename?: string,
         public onCompletion?: () => void) {
@@ -84,6 +82,7 @@ export class Snapshot {
             return true;
         }
         this.mergeTree.map({ leaf: extractSegment }, this.seq, MergeTree.NonCollabClient);
+        this.texts = texts;
         return texts;
         //return { buffer: buffer, offset: offset };
     }

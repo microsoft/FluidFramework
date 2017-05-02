@@ -1,8 +1,3 @@
-/// <reference path="node.d.ts" />
-/// <reference path="base.d.ts" />
-/// <reference path="random.d.ts" />
-/// <reference path="diff.d.ts" />
-
 import * as fs from "fs";
 import * as Collections from "./collections";
 import * as random from "random-js";
@@ -10,6 +5,7 @@ import * as MergeTree from "./mergeTree";
 import * as Text from "./text";
 import * as JsDiff from "diff";
 import * as Paparazzo from "./snapshot";
+import * as express from "express";
 
 function compareStrings(a: string, b: string) {
     return a.localeCompare(b);
@@ -52,23 +48,44 @@ function clock() {
     return process.hrtime();
 }
 
-function took(desc: string, start: number[]) {
+function took(desc: string, start: [number, number]) {
     let end: number[] = process.hrtime(start);
     let duration = elapsedMilliseconds(start);
     console.log(`${desc} took ${duration} ms`);
     return duration;
 }
 
-function elapsedMilliseconds(start: number[]) {
+function elapsedMilliseconds(start: [number, number]) {
     let end: number[] = process.hrtime(start);
     let duration = Math.round((end[0] * 1000) + (end[1] / 1000000));
     return duration;
 }
 
-function elapsedMicroseconds(start: number[]) {
+function elapsedMicroseconds(start: [number, number]) {
     let end: number[] = process.hrtime(start);
     let duration = Math.round((end[0] * 1000000) + (end[1] / 1000));
     return duration;
+}
+
+class Server {
+    server: MergeTree.TestServer;
+    proxyClient: MergeTree.Client;
+    snapshot: Paparazzo.Snapshot;
+
+    constructor(filename: string) {
+        this.server = new MergeTree.TestServer("", "theServer");
+        Text.loadText(filename, this.server.mergeTree);
+        this.proxyClient = new MergeTree.Client("", "proxyClient");
+        this.server.addListeners([this.proxyClient]);
+        this.snapshot = new Paparazzo.Snapshot(this.server.mergeTree);
+        this.snapshot.extractSync();
+    }
+
+    startListening() {
+        let app = express();
+
+    }
+
 }
 
 function integerTest1() {

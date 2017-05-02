@@ -1,6 +1,3 @@
-/// <reference path="base.d.ts" />
-
-
 export class Stack<T> {
   items: T[] = [];
   push(val: T) {

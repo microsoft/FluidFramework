@@ -1,6 +1,3 @@
-/// <reference path="base.d.ts" />
-/// <reference path ="node.d.ts"/>
-
 import * as Collections from "./collections";
 import * as Protocol from "../../routerlicious/src/api/protocol";
 
@@ -879,7 +876,7 @@ function clock() {
     return process.hrtime();
 }
 
-function elapsedMicroseconds(start: number[]) {
+function elapsedMicroseconds(start: [number,number]) {
     let end: number[] = process.hrtime(start);
     let duration = Math.round((end[0] * 1000000) + (end[1] / 1000));
     return duration;

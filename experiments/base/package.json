@@ -5,10 +5,14 @@
   "main": "beastTest.js",
   "dependencies": {
     "diff": "^3.2.0",
+    "express": "^4.15.2",
     "json-websocket": "^0.1.5",
     "random-js": "^1.0.8"
   },
   "devDependencies": {
+    "@types/diff": "0.0.31",
+    "@types/express": "^4.0.35",
+    "@types/random-js": "^1.0.28",
     "typescript": "^2.2.1"
   },
   "scripts": {
