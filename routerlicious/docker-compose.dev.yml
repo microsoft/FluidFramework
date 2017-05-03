@@ -1,11 +1,11 @@
 version: '3'
 services:
-    web:
+    alfred:
         volumes:
             - .:/usr/src/server
         ports:
             - "5858:5858"
-        command: npm run start:watch
+        command: npm run alfred:watch
     deli:
         volumes:
             - .:/usr/src/server

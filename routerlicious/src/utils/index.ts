@@ -1,3 +1,5 @@
+export * from "./heap";
+
 export interface ISharedAccessPolicy {
     sharedAccessKeyName: string;
     sharedAccessKey: string;

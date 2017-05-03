@@ -4,6 +4,7 @@ import * as nconf from "nconf";
 import * as path from "path";
 import * as api from "../api";
 import * as socketStorage from "../socket-storage";
+import { ObjectStorageService } from "./objectStorageService";
 
 // TODO when we have embedded documents either we will run the whole update algorithm here
 //      or will allow someone to configure the API to ignore dependent objects
@@ -26,6 +27,16 @@ const minioClient = new minio.Client({
     secretKey: minioConfig.secretKey,
     secure: false,
 });
+
+const storageBucket = nconf.get("paparazzi:bucket");
+
+// Connect to Alfred for default storage options
+const alfredUrl = nconf.get("paparazzi:alfred");
+const services: api.ICollaborationServices = {
+    deltaNotificationService: new socketStorage.DeltaNotificationService(alfredUrl),
+    deltaStorageService: new socketStorage.DeltaStorageService(alfredUrl),
+    objectStorageService: new ObjectStorageService(alfredUrl, minioClient, storageBucket),
+};
 
 async function bucketExists(bucket: string) {
     return new Promise<boolean>((resolve, reject) => {
@@ -58,16 +69,12 @@ async function getOrCreateBucket(bucket: string) {
     }
 }
 
-const bucket = nconf.get("paparazzi:bucket");
-const bucketReadyP = getOrCreateBucket(bucket);
-
 async function loadDocument(id: string): Promise<api.Document> {
-    console.log("Connecting to storage provider...");
-    const provider = new socketStorage.StorageProvider("http://web:3000");
-    const storage = await provider.connect({ token: "none" });
-
     console.log(`Loading in root document for ${id}...`);
-    const document = await api.load(storage, id);
+    const document = await api.load(
+        id,
+        api.defaultRegistry,
+        services);
 
     console.log("Document loaded");
     return document;
@@ -89,13 +96,18 @@ function serialize(root: api.IMap) {
     pendingSerializeMap[root.id] = true;
     dirtyMap[root.id] = false;
 
-    const snapshot = root.snapshot();
-    minioClient.putObject(bucket, root.id, JSON.stringify(snapshot), "application/json", (error) => {
+    console.log("Snapshotting");
+    const snapshotP = root.snapshot().catch((error) => {
         // TODO we will just log errors for now. Will want a better strategy later on (replay, wait)
         if (error) {
             console.error(error);
         }
 
+        return Promise.resolve();
+    });
+
+    // Finally clause to start snapshotting again once we finish
+    snapshotP.then(() => {
         pendingSerializeMap[root.id] = false;
         if (dirtyMap[root.id]) {
             serialize(root);
@@ -128,7 +140,7 @@ function processMessage(message: string): Promise<void> {
 }
 
 async function run() {
-    await bucketReadyP;
+    await getOrCreateBucket(storageBucket);
     const channel = await channelP;
 
     channel.assertQueue(queueName, { durable: true });

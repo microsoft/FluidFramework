@@ -2,24 +2,24 @@ import * as $ from "jquery";
 import * as api from "../../api";
 import * as socketStorage from "../../socket-storage";
 
-async function loadDocument(id: string): Promise<api.Document> {
-    console.log("Connecting to storage provider...");
-    const provider = new socketStorage.StorageProvider();
-    const storage = await provider.connect({ token: "none" });
+socketStorage.registerAsDefault(document.location.origin);
 
+async function loadDocument(id: string): Promise<api.Document> {
     console.log("Loading in root document...");
-    const document = await api.load(storage, id);
+    const document = await api.load(id);
 
     console.log("Document loaded");
     return document;
 }
 
-function displayMap(map: api.IMap) {
+async function displayMap(map: api.IMap) {
     const container = $("<div></div>");
 
-    const keys = map.keys().sort();
+    const keys = await map.keys();
+    keys.sort();
+
     for (const key of keys) {
-        container.append($(`<div>${key}: ${map.get(key)}</div>`));
+        container.append($(`<div>${key}: ${await map.get(key)}</div>`));
     }
 
     $("#values").children().remove();

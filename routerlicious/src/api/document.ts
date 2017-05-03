@@ -1,6 +1,6 @@
 import * as extensions from "./extension";
 import * as mapExtension from "./map";
-import * as storage from "./storage";
+import { ICollaborationServices } from "./storage";
 import * as types from "./types";
 
 /**
@@ -32,20 +32,50 @@ export class Document {
      * Closes the document and detaches all listeners
      */
     public close() {
-        throw new Error("Yuck");
+        throw new Error("Not yet implemented");
     }
 }
 
-export async function load(source: storage.IStorage, name: string): Promise<Document> {
-    // The root document type should be a collaborative map
-    const details = await source.loadObject(name, mapExtension.MapExtension.Type);
+// Registered services to use when loading a document
+let defaultServices: ICollaborationServices;
 
-    const extension = registry.getExtension(details.object.type);
-    const map = extension.load(details) as types.IMap;
+// The default registry for extensions
+export const defaultRegistry = new extensions.Registry();
+defaultRegistry.register(new mapExtension.MapExtension());
+
+export function registerExtension(extension: extensions.IExtension) {
+    defaultRegistry.register(extension);
+}
+
+/**
+ * Registers the default services to use for interacting with collaborative documents. To simplify the API it is
+ * expected that the implementation provider of these will register themselves during startup prior to the user
+ * requesting to load a collaborative object.
+ */
+export function registerDefaultServices(services: ICollaborationServices) {
+    defaultServices = services;
+}
+
+/**
+ * Loads a collaborative object from the server
+ */
+export async function load(
+    id: string,
+    registry: extensions.Registry = defaultRegistry,
+    services: ICollaborationServices = defaultServices): Promise<Document> {
+
+    // Verify an extensions registry was provided
+    if (!registry) {
+        throw new Error("No extension registry provided");
+    }
+
+    // Verify we have services to load the document with
+    if (!services) {
+        throw new Error("Services not provided to load call");
+    }
+
+    const extension = registry.getExtension(mapExtension.MapExtension.Type);
+    const map = extension.load(id, services) as types.IMap;
 
     return new Document(map);
 }
-
-// Create a registry and seed with default types
-export const registry = new extensions.Registry();
-registry.register(new mapExtension.MapExtension());

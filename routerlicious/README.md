@@ -31,10 +31,9 @@ Docker Compose is used to run the service locally
 For development you likely want to map your source tree into the container. There's an override compose file that does
 this for you. You can run it with
 
-* `docker-compose -f docker-compose.yml -f docker-compose.dev.yml up`
+* `npm start` - which internally is doing a `docker-compose -f docker-compose.yml -f docker-compose.dev.yml up`
 
 Docker will mount your source directory into the container so you need to build prior to running it.
-
 
 ## Design principals
 
