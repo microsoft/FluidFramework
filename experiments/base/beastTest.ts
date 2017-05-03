@@ -6,6 +6,7 @@ import * as Text from "./text";
 import * as JsDiff from "diff";
 import * as Paparazzo from "./snapshot";
 import * as express from "express";
+import * as path from "path";
 
 function compareStrings(a: string, b: string) {
     return a.localeCompare(b);
@@ -71,6 +72,7 @@ class Server {
     server: MergeTree.TestServer;
     proxyClient: MergeTree.Client;
     snapshot: Paparazzo.Snapshot;
+    html: string;
 
     constructor(filename: string) {
         this.server = new MergeTree.TestServer("", "theServer");
@@ -79,13 +81,88 @@ class Server {
         this.server.addListeners([this.proxyClient]);
         this.snapshot = new Paparazzo.Snapshot(this.server.mergeTree);
         this.snapshot.extractSync();
+        let clockStart = clock();
+        this.html = this.snapToHTML(8000);
+        console.log(`snap to html took ${elapsedMicroseconds(clockStart)}`);
+    }
+
+    segsToHTML(segTexts: string[], lengthLimit?: number) {
+        let buf = "<div style='line-height:120%;font-size:18px;font-famliy:Helvetica'><div>";
+        let segCount = segTexts.length;
+        let charLength = 0;
+        for (let i = 0; i < segCount; i++) {
+            let segText = segTexts[i];
+            let styleAttr = "";
+            if (segText.indexOf("Chapter") >= 0) {
+                styleAttr = " style='font-size:140%;line-height:150%'";
+            }
+            else {
+                segText = segText.replace(/_([a-zA-Z]+)_/g, "<span style='font-style:italic'>$1</span>");
+            }
+            buf += `<span${styleAttr}>${segText}</span>`
+            if (segText.charAt(segText.length - 1) == '\n') {
+                buf += "</div><div>";
+            }
+            charLength += segText.length;
+            if (lengthLimit && (charLength >= lengthLimit)) {
+                break;
+            }
+        }
+        buf += "</div></div>";
+        return buf;
+    }
+
+    snapToHTML(lengthLimit?: number) {
+        let segTexts = this.snapshot.texts;
+        let buf = "<!DOCTYPE html><html><head>";
+        buf += "<script src='static/bro.js'></script><script src='static/driver.js'></script>";
+        buf += "</head><body onload='eff()' style='overflow:hidden'>";
+        buf += this.segsToHTML(segTexts, lengthLimit);
+        buf += "</body></html>";
+        return buf;
+    }
+
+    getCharLengthSegs(alltexts: string[], approxCharLength: number, startIndex= 0) {
+        //console.log(`start index ${startIndex}`);
+        let texts = <string[]>[];
+        let lengthChars = 0;
+        let segCount = 0;
+        while ((lengthChars < approxCharLength) && ((startIndex+segCount)<alltexts.length)) {
+            let text = alltexts[startIndex+segCount];
+            segCount++;
+            texts.push(text);
+            lengthChars += text.length;
+        }
+        return {
+            startIndex: startIndex,
+            segCount: segCount,
+            lengthChars: lengthChars,
+            totalLengthChars: this.snapshot.header.segmentsTotalLength,
+            seq: this.snapshot.header.seq,
+            texts: texts
+        }
     }
 
     startListening() {
         let app = express();
+        app.use("/static", express.static(path.join(__dirname, "/public")));
 
+        app.get("/obj", (req, res) => {
+             if (req.query.init) {
+                 res.json(this.getCharLengthSegs(this.snapshot.texts, 10000, 0));
+             }
+             else {
+                 res.json(this.getCharLengthSegs(this.snapshot.texts, 10000, +req.query.startSegment)); 
+             }
+        });
+
+        app.get("/", (req, res) => {
+            res.send(this.html);
+        });
+        app.listen(3002, () => {
+            console.log("listening on port 3002");
+        });
     }
-
 }
 
 function integerTest1() {
@@ -1239,5 +1316,6 @@ export function TestPack() {
 let testPack = TestPack();
 //testPack.randolicious();
 //testPack.clientServer("pp.txt");
-testPack.firstTest();
+//testPack.firstTest();
 //testPack.manyMergeTrees();
+new Server("pp.txt").startListening();
