@@ -1,6 +1,6 @@
 version: '3'
 services:
-    web:
+    alfred:
         build: .
         ports:
             - "3000:3000"
@@ -13,7 +13,7 @@ services:
             driver: gelf
             options:
                 gelf-address: "udp://127.0.0.1:12201"
-                tag: "log-web"
+                tag: "log-alfred"
     deli:
         build: .
         depends_on:
@@ -30,7 +30,7 @@ services:
     paparazzi:
         build: .
         depends_on:
-            - web
+            - alfred
             - rabbitmq
             - logstash
         command: npm run paparazzi
