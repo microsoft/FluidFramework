@@ -59,18 +59,23 @@ export class TakeANumber {
                     console.log(`New object`);
                 }
 
-                if (dbObject.clients) {
-                    for (const client of dbObject.clients) {
-                        this.upsertClient(
-                            client.clientId,
-                            client.clientSequenceNumber,
-                            client.referenceSequenceNumber,
-                            client.lastUpdate);
+                if (dbObject) {
+                    if (dbObject.clients) {
+                        for (const client of dbObject.clients) {
+                            this.upsertClient(
+                                client.clientId,
+                                client.clientSequenceNumber,
+                                client.referenceSequenceNumber,
+                                client.lastUpdate);
+                        }
                     }
+                    this.sequenceNumber = dbObject.sequenceNumber;
+                    this.offset = dbObject.offset;
+                } else {
+                    this.sequenceNumber = StartingSequenceNumber;
+                    this.offset = undefined;
                 }
 
-                this.sequenceNumber = dbObject ? dbObject.sequenceNumber : StartingSequenceNumber;
-                this.offset = dbObject ? dbObject.offset : undefined;
                 this.resolvePending();
             },
             (error) => {
