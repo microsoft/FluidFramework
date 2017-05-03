@@ -423,13 +423,17 @@ class PartialSequenceLengths {
         return true;
     }
 
-    toString() {
+    toString(glc?: (id:number)=> string) {
         let buf = "";
         for (let partial of this.partialLengths) {
             buf += `(${partial.seq},${partial.len}) `;
         }
         for (let clientId in this.clientSeqNumbers) {
-            buf += `C${clientId}[`
+            buf += `C${clientId}`;
+            if (glc) {
+                buf += `(${glc(+clientId)})`;
+            }
+            buf += ']';
             for (let partial of this.clientSeqNumbers[clientId]) {
                 buf += `(${partial.seq},${partial.len})`
             }
@@ -876,7 +880,7 @@ function clock() {
     return process.hrtime();
 }
 
-function elapsedMicroseconds(start: [number,number]) {
+function elapsedMicroseconds(start: [number, number]) {
     let end: number[] = process.hrtime(start);
     let duration = Math.round((end[0] * 1000000) + (end[1] / 1000));
     return duration;
@@ -952,7 +956,12 @@ export class Client {
     }
 
     getLongClientId(clientId: number) {
-        return this.shortClientIdMap[clientId];
+        if (clientId >= 0) {
+            return this.shortClientIdMap[clientId];
+        }
+        else {
+            return "original";
+        }
     }
 
     addLongClientId(longClientId: string) {
@@ -2326,7 +2335,7 @@ export class MergeTree {
         strbuf += `Node (len ${node.cachedLength}) p len (${node.parent ? node.parent.cachedLength : 0}) with ${node.childCount} live segments:\n`;
         if (this.collabWindow.collaborating) {
             strbuf += indent(indentCount);
-            strbuf += node.partialLengths.toString() + '\n';
+            strbuf += node.partialLengths.toString((id)=>glc(this,id)) + '\n';
         }
         let children = node.children;
         for (let childIndex = 0; childIndex < node.childCount; childIndex++) {

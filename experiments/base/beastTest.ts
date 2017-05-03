@@ -1115,10 +1115,14 @@ export function TestPack() {
         //console.log(cliB.getText());
     }
 
+    let clientNames = ["Ed", "Ted", "Ned", "Harv", "Marv", "Glenda", "Susan"];
     function firstTest() {
         let cli = new MergeTree.Client("on the mat.", "Fred1");
+        for (let cname of clientNames) {
+            cli.addLongClientId(cname);
+        }
         cli.startCollaboration();
-        cli.insertSegmentRemote("that ", 0, 1, 0, 0);
+        cli.insertSegmentRemote("that ", 0, 1, 0, 1);
         console.log(cli.mergeTree.toString());
         cli.insertSegmentRemote("fat ", 0, 2, 0, 2);
         console.log(cli.mergeTree.toString());
@@ -1144,9 +1148,12 @@ export function TestPack() {
             }
         }
         cli = new MergeTree.Client(" old sock!", "Fred2");
+        for (let cname of clientNames) {
+            cli.addLongClientId(cname);
+        }
         cli.startCollaboration();
         cli.insertSegmentRemote("abcde", 0, 1, 0, 2);
-        cli.insertSegmentRemote("yyy", 0, 2, 0, 0);
+        cli.insertSegmentRemote("yyy", 0, 2, 0, 1);
         cli.insertSegmentRemote("zzz", 2, 3, 1, 3);
         cli.insertSegmentRemote("EAGLE", 1, 4, 1, 4);
         cli.insertSegmentRemote("HAS", 4, 5, 1, 5);
@@ -1159,7 +1166,7 @@ export function TestPack() {
                 console.log(cli.relText(clientId, refSeq));
             }
         }
-        cli.removeSegmentRemote(3, 5, 8, 6, 0);
+        cli.removeSegmentRemote(3, 5, 8, 6, 1);
         console.log(cli.mergeTree.toString());
         for (let clientId = 0; clientId < 6; clientId++) {
             for (let refSeq = 0; refSeq < 9; refSeq++) {
@@ -1167,6 +1174,9 @@ export function TestPack() {
             }
         }
         cli = new MergeTree.Client("abcdefgh", "Fred3");
+        for (let cname of clientNames) {
+            cli.addLongClientId(cname);
+        }
         cli.startCollaboration();
         cli.removeSegmentRemote(1, 3, 1, 0, 3);
         console.log(cli.mergeTree.toString());
@@ -1228,6 +1238,6 @@ export function TestPack() {
 //mergeTreeCheckedTest();
 let testPack = TestPack();
 //testPack.randolicious();
-testPack.clientServer("pp.txt");
-//testPack.firstTest();
+//testPack.clientServer("pp.txt");
+testPack.firstTest();
 //testPack.manyMergeTrees();
