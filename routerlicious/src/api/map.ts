@@ -178,8 +178,6 @@ class Map implements api.IMap {
         // Prep the message
         const message: api.IMessage = {
             clientSequenceNumber: this.clientSequenceNumber++,
-            // Should this move somewhere else?
-            minimumSequenceNumber: 0,
             op,
             referenceSequenceNumber: this.sequenceNumber,
         };

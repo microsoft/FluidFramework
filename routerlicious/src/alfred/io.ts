@@ -97,6 +97,7 @@ io.on("connection", (socket) => {
             clientId,
             operation: message,
             objectId,
+            timestamp: Date.now(),
             userId: null,
         };
 

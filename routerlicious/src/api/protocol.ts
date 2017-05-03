@@ -6,8 +6,6 @@ export interface IMessageBase {
 
     referenceSequenceNumber: number;
 
-    minimumSequenceNumber: number;
-
     op: any;
 }
 
@@ -29,6 +27,9 @@ export interface ISequencedMessage extends IMessageBase {
 
     // The assigned sequence number
     sequenceNumber: number;
+
+    // Minimum sequence number of connected clients
+    minimumSequenceNumber: number;
 }
 
 export interface IDelta {
