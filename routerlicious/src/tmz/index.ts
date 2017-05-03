@@ -39,7 +39,6 @@ consumerGroup.on("message", async (message: any) => {
     const value = JSON.parse(message.value) as core.IRawOperationMessage;
 
     if (createdRequests[value.objectId]) {
-        console.log(`Already requested snapshots for ${value.objectId}`);
         return;
     }
 
