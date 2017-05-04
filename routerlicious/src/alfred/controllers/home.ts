@@ -28,17 +28,24 @@ async function displayValues(map: api.IMap, container: JQuery) {
 /**
  * Displays the keys in the map
  */
-async function displayMap(map: api.IMap) {
+async function displayMap(map: api.IMap, root?: api.IMap) {
     const header = $(`<h2>${map.id}</h2>`);
     const container = $(`<div></div>`);
 
     displayValues(map, container);
-
     map.on("valueChanged", async (changed) => {
         displayValues(map, container);
     });
 
     $("#mapViews").append(header, container);
+
+    if (root) {
+        const attach = $("<button>Attach</button>");
+        attach.click(() => {
+            root.set(map.id, map);
+        });
+        $("#mapViews").append(attach);
+    }
 }
 
 /**
@@ -71,7 +78,7 @@ export function load(id: string) {
 
             $("#addMap").click(() => {
                 const map = doc.createMap();
-                displayMap(map);
+                displayMap(map, root);
                 randomizeMap(map);
             });
         });

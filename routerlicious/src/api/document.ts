@@ -88,7 +88,7 @@ export async function load(
     }
 
     const extension = registry.getExtension(mapExtension.MapExtension.Type);
-    const map = extension.load(id, services) as types.IMap;
+    const map = extension.load(id, services, registry) as types.IMap;
 
     return new Document(map, registry);
 }
