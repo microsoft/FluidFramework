@@ -16,8 +16,6 @@
                 to simulate map operations
             </p>
 
-            <button id="randomize">Change key/value pairs</button>
-            <button id="addMap">Insert Map</button>
             <div id="mapViews"></div>
         </div>
     {{/content}}

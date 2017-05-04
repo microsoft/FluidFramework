@@ -12,40 +12,78 @@ async function loadDocument(id: string): Promise<api.Document> {
     return document;
 }
 
-async function displayValues(map: api.IMap, container: JQuery) {
+async function updateOrCreateKey(key: string, map: api.IMap, container: JQuery, doc: api.Document) {
+    const value = await map.get(key);
+
+    let keyElement = container.find(`>.${key}`);
+    const newElement = keyElement.length === 0;
+    const isString = typeof value === "string";
+
+    if (newElement) {
+        keyElement = $(`<div class="${key} ${isString ? "" : "collab-object"}"></div>`);
+        container.append(keyElement);
+    }
+
+    if (isString) {
+        keyElement.text(`${key}: ${value}`);
+    } else {
+        if (newElement) {
+            displayMap(keyElement, value, map, doc);
+        }
+    }
+}
+
+async function displayValues(map: api.IMap, container: JQuery, doc: api.Document) {
     const keys = await map.keys();
     keys.sort();
 
     const values = $("<div></div>");
     for (const key of keys) {
-        values.append($(`<div class="${key}">${key}: ${await map.get(key)}</div>`));
+        updateOrCreateKey(key, map, values, doc);
     }
 
-    container.children().remove();
+    // Listen and process updates
+    map.on("valueChanged", async (changed) => {
+        updateOrCreateKey(changed.key, map, values, doc);
+    });
+
     container.append(values);
 }
 
 /**
  * Displays the keys in the map
  */
-async function displayMap(map: api.IMap, root?: api.IMap) {
+async function displayMap(parentElement: JQuery, map: api.IMap, parent: api.IMap, doc: api.Document) {
     const header = $(`<h2>${map.id}</h2>`);
+    parentElement.append(header);
+
     const container = $(`<div></div>`);
+    const childMaps = $(`<div></div>`);
 
-    displayValues(map, container);
-    map.on("valueChanged", async (changed) => {
-        displayValues(map, container);
+    displayValues(map, container, doc);
+
+    const randomize = $("<button>Randomize</button>");
+    randomize.click((event) => {
+        randomizeMap(map);
     });
+    parentElement.append(randomize);
 
-    $("#mapViews").append(header, container);
+    const addMap = $("<button>Add</button>");
+    addMap.click(() => {
+        const newMap = doc.createMap();
+        displayMap(childMaps, newMap, map, doc);
+    });
+    parentElement.append(addMap);
 
-    if (root) {
+    if (parent && map.isLocal()) {
         const attach = $("<button>Attach</button>");
         attach.click(() => {
-            root.set(map.id, map);
+            parent.set(map.id, map);
         });
-        $("#mapViews").append(attach);
+        parentElement.append(attach);
     }
+
+    parentElement.append(container, childMaps);
 }
 
 /**
@@ -69,18 +107,7 @@ export function load(id: string) {
             const root = doc.getRoot();
 
             // Display the initial values and then listen for updates
-            displayMap(root);
-
-            // link up the randomize button
-            $("#randomize").click(() => {
-                randomizeMap(root);
-            });
-
-            $("#addMap").click(() => {
-                const map = doc.createMap();
-                displayMap(map, root);
-                randomizeMap(map);
-            });
+            displayMap($("#mapViews"), root, null, doc);
         });
     });
 }
