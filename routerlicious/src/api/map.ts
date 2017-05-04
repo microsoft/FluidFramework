@@ -25,9 +25,6 @@ export enum ValueType {
     // The value is a collaborative object
     Collaborative,
 
-    // The value is a locally stored collaborative object
-    CollaborativeLocal,
-
     // The value is a plain JavaScript object
     Plain,
 }
@@ -61,7 +58,7 @@ class Map implements api.IMap {
     private loadingP: Promise<void>;
 
     // Map data
-    private data: any = {};
+    private data: {[key: string]: IMapValue } = {};
 
     // The last sequence number processed
     private connection: api.IDeltaConnection;
@@ -76,6 +73,9 @@ class Map implements api.IMap {
     // Sequence number for operations local to this client
     private clientSequenceNumber = 0;
 
+    // Map of collaborative objects stored inside of the map
+    private collaborativeObjects: {[id: string]: api.ICollaborativeObject} = {};
+
     /**
      * Constructs a new collaborative map. If the object is non-local an id and service interfaces will
      * be provided
@@ -89,9 +89,25 @@ class Map implements api.IMap {
         return _.keys(this.data);
     }
 
+    /**
+     * Retrieves the value with the given key from the map.
+     */
     public async get(key: string) {
         await this.loadingP;
-        return this.data[key];
+
+        const value = this.data[key];
+        if (value.type === ValueType[ValueType.Collaborative]) {
+            const collabMapValue = value.value as ICollaborativeMapValue;
+            if (!(collabMapValue.id in this.collaborativeObjects)) {
+                const extension = this.registry.getExtension(collabMapValue.type);
+                this.collaborativeObjects[collabMapValue.id] =
+                    extension.load(collabMapValue.id, this.services, this.registry);
+            }
+
+            return this.collaborativeObjects[collabMapValue.id];
+        } else {
+            return this.data[key].value;
+        }
     }
 
     public async has(key: string): Promise<boolean> {
@@ -102,11 +118,27 @@ class Map implements api.IMap {
     public async set(key: string, value: any): Promise<void> {
         await this.loadingP;
 
-        // If a local collaborative object is being set we need to attach it to the document
-        let operationValue: IMapValue = {
-            type: ValueType[value.__collaborativeObject__ ? ValueType.CollaborativeLocal : ValueType.Plain],
-            value,
-        };
+        let operationValue: IMapValue;
+        if (value.__collaborativeObject__) {
+            // Convert any local collaborative objects to our internal storage format
+            const collaborativeObject = value as api.ICollaborativeObject;
+            this.collaborativeObjects[collaborativeObject.id] = collaborativeObject;
+
+            const collabMapValue: ICollaborativeMapValue = {
+                id: collaborativeObject.id,
+                type: collaborativeObject.type,
+            };
+
+            operationValue = {
+                type: ValueType[ValueType.Collaborative],
+                value: collabMapValue,
+            };
+        } else {
+            operationValue = {
+                type: ValueType[ValueType.Plain],
+                value,
+            };
+        }
 
         const op: IMapOperation = {
             key,
@@ -220,33 +252,14 @@ class Map implements api.IMap {
         const op = message.op as IMapOperation;
 
         // We need to translate any local collaborative object sets to the serialized form
-        if (op.type === "set" && op.value.type === ValueType[ValueType.CollaborativeLocal]) {
-            const localObject = op.value.value as api.ICollaborativeObject;
-            if (localObject.isLocal()) {
-                await localObject.attach(this.services, this.registry);
+        if (op.type === "set" && op.value.type === ValueType[ValueType.Collaborative]) {
+            // We need to attach the object prior to submitting the message
+            const collabMapValue = op.value.value as ICollaborativeMapValue;
+            const collabObject = this.collaborativeObjects[collabMapValue.id];
+
+            if (collabObject.isLocal()) {
+                await collabObject.attach(this.services, this.registry);
             }
-
-            const transformedValue: ICollaborativeMapValue = {
-                id: localObject.id,
-                type: localObject.type,
-            };
-
-            const transformedMapValue: IMapValue = {
-                type: ValueType[ValueType.Collaborative],
-                value: transformedValue,
-            };
-
-            const transformedOp: IMapOperation = {
-                key: op.key,
-                type: op.type,
-                value: transformedMapValue,
-            };
-
-            message = {
-                clientSequenceNumber: message.clientSequenceNumber,
-                op: transformedOp,
-                referenceSequenceNumber: message.referenceSequenceNumber,
-            };
         }
 
         this.connection.submitOp(message);
@@ -312,20 +325,7 @@ class Map implements api.IMap {
     }
 
     private setCore(key: string, value: IMapValue) {
-        const valueType = ValueType[value.type];
-
-        if (valueType === ValueType.Collaborative) {
-            const collaborativeMapValue = value.value as ICollaborativeMapValue;
-
-            // Use the local value if available - otherwise we need to load the object from the server
-            const extension = this.registry.getExtension(collaborativeMapValue.type);
-            const collaborativeObject = extension.load(collaborativeMapValue.id, this.services, this.registry);
-
-            this.data[key] = collaborativeObject;
-        } else {
-            this.data[key] = value.value;
-        }
-
+        this.data[key] = value;
         this.events.emit("valueChanged", { key });
     }
 
