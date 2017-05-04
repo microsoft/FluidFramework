@@ -12,18 +12,45 @@ async function loadDocument(id: string): Promise<api.Document> {
     return document;
 }
 
-async function displayMap(map: api.IMap) {
-    const container = $("<div></div>");
-
+async function displayValues(map: api.IMap, container: JQuery) {
     const keys = await map.keys();
     keys.sort();
 
+    const values = $("<div></div>");
     for (const key of keys) {
-        container.append($(`<div>${key}: ${await map.get(key)}</div>`));
+        values.append($(`<div class="${key}">${key}: ${await map.get(key)}</div>`));
     }
 
-    $("#values").children().remove();
-    $("#values").append(container);
+    container.children().remove();
+    container.append(values);
+}
+
+/**
+ * Displays the keys in the map
+ */
+async function displayMap(map: api.IMap) {
+    const header = $(`<h2>${map.id}</h2>`);
+    const container = $(`<div></div>`);
+
+    displayValues(map, container);
+
+    map.on("valueChanged", async (changed) => {
+        displayValues(map, container);
+    });
+
+    $("#mapViews").append(header, container);
+}
+
+/**
+ * Randomly changes the values in the map
+ */
+function randomizeMap(map: api.IMap) {
+    // link up the randomize button
+    const keys = ["foo", "bar", "baz", "binky", "winky", "twinkie"];
+    setInterval(() => {
+        const key = keys[Math.floor(Math.random() * keys.length)];
+        map.set(key, Math.floor(Math.random() * 100000).toString());
+    }, 1000);
 }
 
 export function load(id: string) {
@@ -36,17 +63,16 @@ export function load(id: string) {
 
             // Display the initial values and then listen for updates
             displayMap(root);
-            root.on("valueChanged", () => {
-                displayMap(root);
-            });
 
             // link up the randomize button
             $("#randomize").click(() => {
-                const keys = ["foo", "bar", "baz", "binky", "winky", "twinkie"];
-                setInterval(() => {
-                    const key = keys[Math.floor(Math.random() * keys.length)];
-                    root.set(key, Math.floor(Math.random() * 100000).toString());
-                }, 1000);
+                randomizeMap(root);
+            });
+
+            $("#addMap").click(() => {
+                const map = doc.createMap();
+                displayMap(map);
+                randomizeMap(map);
             });
         });
     });

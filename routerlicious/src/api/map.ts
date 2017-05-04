@@ -257,4 +257,8 @@ export class MapExtension implements api.IExtension {
     public load(id: string, services: api.ICollaborationServices): api.IMap {
         return new Map(id, services);
     }
+
+    public create(id: string): api.IMap {
+        return new Map(id);
+    }
 }

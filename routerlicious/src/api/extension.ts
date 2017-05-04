@@ -12,6 +12,11 @@ export interface IExtension {
      * Loads the given service backed collaborative object.
      */
     load(id: string, services: storage.ICollaborationServices): types.ICollaborativeObject;
+
+    /**
+     * Creates a local version of the collaborative object.
+     */
+    create(id: string): types.ICollaborativeObject;
 }
 
 /**
