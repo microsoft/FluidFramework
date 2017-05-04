@@ -17,7 +17,8 @@
             </p>
 
             <button id="randomize">Change key/value pairs</button>
-            <div id="values"></div>
+            <button id="addMap">Insert Map</button>
+            <div id="mapViews"></div>
         </div>
     {{/content}}
 
