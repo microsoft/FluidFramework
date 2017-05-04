@@ -63,9 +63,6 @@ class Map implements api.IMap {
     // Map data
     private data: any = {};
 
-    // The client identifier for the connection with the server
-    private clientId: string;
-
     // The last sequence number processed
     private connection: api.IDeltaConnection;
     private deltaManager: DeltaManager = null;
@@ -173,7 +170,7 @@ class Map implements api.IMap {
         // Attaching makes a local document available for collaboration. The connect call should create the object.
         // We assert the return type to validate this is the case.
         this.connection = await services.deltaNotificationService.connect(this.id);
-        assert.ok(!this.connection.existing);
+        // TODO bring back assert.ok(!this.connection.existing);
 
         for (const localOp of this.localOps) {
             this.submit(localOp);
@@ -234,9 +231,15 @@ class Map implements api.IMap {
                 type: localObject.type,
             };
 
-            const transformedOp: IMapValue = {
+            const transformedMapValue: IMapValue = {
                 type: ValueType[ValueType.Collaborative],
                 value: transformedValue,
+            };
+
+            const transformedOp: IMapOperation = {
+                key: op.key,
+                type: op.type,
+                value: transformedMapValue,
             };
 
             message = {
@@ -277,7 +280,7 @@ class Map implements api.IMap {
         assert.equal(this.sequenceNumber + 1, message.sequenceNumber);
         this.sequenceNumber = message.sequenceNumber;
 
-        if (message.clientId === this.clientId) {
+        if (message.clientId === this.connection.clientId) {
             // One of our messages was sequenced. We can remove it from the local message list. Given these arrive
             // in order we only need to check the beginning of the local list.
             if (this.localOps.length > 0 &&
