@@ -1,3 +1,4 @@
+import { Registry } from "./extension";
 import * as storage from "./storage";
 
 /**
@@ -11,9 +12,19 @@ export interface ICollaborativeObjectSnapshot {
 
 export interface ICollaborativeObject {
     /**
-     * A readonly identifier for th e collaborative object
+     * A readonly identifier for the collaborative object
      */
-    id?: string;
+    id: string;
+
+    /**
+     * The type of the collaborative object
+     */
+    type: string;
+
+    /**
+     * Marker to clearly identify the object as a collaborative object
+     */
+    __collaborativeObject__: boolean;
 
     /**
      * Attaches an event listener for the given event
@@ -34,7 +45,12 @@ export interface ICollaborativeObject {
      * Attaches the given collaborative object to an upstream storage location.
      * This marks it as a collaborative object.
      */
-    attach(source: storage.ICollaborationServices);
+    attach(source: storage.ICollaborationServices, registry: Registry): Promise<void>;
+
+    /**
+     * Returns whether the given collaborative object is local
+     */
+    isLocal(): boolean;
 
     /**
      * Gets a form of the object that can be serialized.

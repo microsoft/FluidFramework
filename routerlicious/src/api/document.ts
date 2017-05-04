@@ -1,3 +1,4 @@
+import * as uuid from "node-uuid";
 import * as extensions from "./extension";
 import * as mapExtension from "./map";
 import { ICollaborationServices } from "./storage";
@@ -10,15 +11,27 @@ export class Document {
     /**
      * Constructs a new document from the provided details
      */
-    constructor(private map: types.IMap) {
+    constructor(
+        private map: types.IMap,
+        private registry: extensions.Registry) {
     }
 
     /**
      * Constructs a new collaborative object that can be attached to the document
-     * @param extension
+     * @param type the identifier for the collaborative object type
      */
-    public create(extension: extensions.IExtension): any {
-        return null;
+    public create(type: string): types.ICollaborativeObject {
+        const extension = this.registry.getExtension(type);
+        const object = extension.create(uuid.v4());
+
+        return object;
+    }
+
+    /**
+     * Creates a new collaborative map
+     */
+    public createMap(): types.IMap {
+        return this.create(mapExtension.MapExtension.Type) as types.IMap;
     }
 
     /**
@@ -75,7 +88,7 @@ export async function load(
     }
 
     const extension = registry.getExtension(mapExtension.MapExtension.Type);
-    const map = extension.load(id, services) as types.IMap;
+    const map = extension.load(id, services, registry) as types.IMap;
 
-    return new Document(map);
+    return new Document(map, registry);
 }

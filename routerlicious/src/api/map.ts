@@ -10,7 +10,7 @@ import { DeltaManager } from "./deltaManager";
 interface IMapOperation {
     type: string;
     key?: string;
-    value?: string;
+    value?: IMapValue;
 }
 
 /**
@@ -21,18 +21,44 @@ export interface ISnapshot {
     snapshot: any;
 };
 
+export enum ValueType {
+    // The value is a collaborative object
+    Collaborative,
+
+    // The value is a plain JavaScript object
+    Plain,
+}
+
+export interface ICollaborativeMapValue {
+    // The type of collaborative object
+    type: string;
+
+    // The id for the collaborative object
+    id: string;
+}
+
+export interface IMapValue {
+    // The type of the value
+    type: string;
+
+    // The actual value
+    value: any;
+}
+
 /**
  * Implementation of a map collaborative object
  */
 class Map implements api.IMap {
+    public type = MapExtension.Type;
+
+    // tslint:disable-next-line:variable-name
+    public __collaborativeObject__ = true;
+
     private events = new EventEmitter();
     private loadingP: Promise<void>;
 
     // Map data
-    private data: any = {};
-
-    // The client identifier for the connection with the server
-    private clientId: string;
+    private data: {[key: string]: IMapValue } = {};
 
     // The last sequence number processed
     private connection: api.IDeltaConnection;
@@ -47,11 +73,14 @@ class Map implements api.IMap {
     // Sequence number for operations local to this client
     private clientSequenceNumber = 0;
 
+    // Map of collaborative objects stored inside of the map
+    private collaborativeObjects: {[id: string]: api.ICollaborativeObject} = {};
+
     /**
      * Constructs a new collaborative map. If the object is non-local an id and service interfaces will
      * be provided
      */
-    constructor(public id: string, private services?: api.ICollaborationServices) {
+    constructor(public id: string, private services?: api.ICollaborationServices, private registry?: api.Registry) {
         this.loadingP = services ? this.load(id, services) : Promise.resolve();
     }
 
@@ -60,9 +89,25 @@ class Map implements api.IMap {
         return _.keys(this.data);
     }
 
+    /**
+     * Retrieves the value with the given key from the map.
+     */
     public async get(key: string) {
         await this.loadingP;
-        return this.data[key];
+
+        const value = this.data[key];
+        if (value.type === ValueType[ValueType.Collaborative]) {
+            const collabMapValue = value.value as ICollaborativeMapValue;
+            if (!(collabMapValue.id in this.collaborativeObjects)) {
+                const extension = this.registry.getExtension(collabMapValue.type);
+                this.collaborativeObjects[collabMapValue.id] =
+                    extension.load(collabMapValue.id, this.services, this.registry);
+            }
+
+            return this.collaborativeObjects[collabMapValue.id];
+        } else {
+            return this.data[key].value;
+        }
     }
 
     public async has(key: string): Promise<boolean> {
@@ -72,13 +117,36 @@ class Map implements api.IMap {
 
     public async set(key: string, value: any): Promise<void> {
         await this.loadingP;
+
+        let operationValue: IMapValue;
+        if (value.__collaborativeObject__) {
+            // Convert any local collaborative objects to our internal storage format
+            const collaborativeObject = value as api.ICollaborativeObject;
+            this.collaborativeObjects[collaborativeObject.id] = collaborativeObject;
+
+            const collabMapValue: ICollaborativeMapValue = {
+                id: collaborativeObject.id,
+                type: collaborativeObject.type,
+            };
+
+            operationValue = {
+                type: ValueType[ValueType.Collaborative],
+                value: collabMapValue,
+            };
+        } else {
+            operationValue = {
+                type: ValueType[ValueType.Plain],
+                value,
+            };
+        }
+
         const op: IMapOperation = {
             key,
             type: "set",
-            value,
+            value: operationValue,
         };
 
-        this.processLocalOperation(op);
+        return this.processLocalOperation(op);
     }
 
     public async delete(key: string): Promise<void> {
@@ -88,7 +156,7 @@ class Map implements api.IMap {
             type: "delete",
         };
 
-        this.processLocalOperation(op);
+        return this.processLocalOperation(op);
     }
 
     public async clear(): Promise<void> {
@@ -97,7 +165,7 @@ class Map implements api.IMap {
             type: "clear",
         };
 
-        this.processLocalOperation(op);
+        return this.processLocalOperation(op);
     }
 
     public on(event: string, listener: Function): this {
@@ -127,19 +195,27 @@ class Map implements api.IMap {
     /**
      * Attaches the document to the given backend service.
      */
-    public async attach(services: api.ICollaborationServices) {
+    public async attach(services: api.ICollaborationServices, registry: api.Registry): Promise<void> {
         this.services = services;
+        this.registry = registry;
 
         // Attaching makes a local document available for collaboration. The connect call should create the object.
         // We assert the return type to validate this is the case.
         this.connection = await services.deltaNotificationService.connect(this.id);
-        assert.ok(!this.connection.existing);
+        // TODO bring back assert.ok(!this.connection.existing);
 
         for (const localOp of this.localOps) {
-            this.connection.submitOp(localOp);
+            this.submit(localOp);
         }
 
         this.listenForUpdates();
+    }
+
+    /**
+     * Returns true if the object is local only
+     */
+    public isLocal(): boolean {
+        return !this.connection;
     }
 
     /**
@@ -171,10 +247,28 @@ class Map implements api.IMap {
             });
     }
 
+    private async submit(message: api.IMessage): Promise<void> {
+        // TODO chain these requests given the attach is async
+        const op = message.op as IMapOperation;
+
+        // We need to translate any local collaborative object sets to the serialized form
+        if (op.type === "set" && op.value.type === ValueType[ValueType.Collaborative]) {
+            // We need to attach the object prior to submitting the message
+            const collabMapValue = op.value.value as ICollaborativeMapValue;
+            const collabObject = this.collaborativeObjects[collabMapValue.id];
+
+            if (collabObject.isLocal()) {
+                await collabObject.attach(this.services, this.registry);
+            }
+        }
+
+        this.connection.submitOp(message);
+    }
+
     /**
      * Processes a message by the local client
      */
-    private processLocalOperation(op: IMapOperation) {
+    private async processLocalOperation(op: IMapOperation): Promise<void> {
         // Prep the message
         const message: api.IMessage = {
             clientSequenceNumber: this.clientSequenceNumber++,
@@ -185,7 +279,7 @@ class Map implements api.IMap {
         // Store the message for when it is ACKed and then submit to the server if connected
         this.localOps.push(message);
         if (this.connection) {
-            this.connection.submitOp(message);
+            this.submit(message);
         }
 
         this.processOperation(op);
@@ -199,7 +293,7 @@ class Map implements api.IMap {
         assert.equal(this.sequenceNumber + 1, message.sequenceNumber);
         this.sequenceNumber = message.sequenceNumber;
 
-        if (message.clientId === this.clientId) {
+        if (message.clientId === this.connection.clientId) {
             // One of our messages was sequenced. We can remove it from the local message list. Given these arrive
             // in order we only need to check the beginning of the local list.
             if (this.localOps.length > 0 &&
@@ -230,7 +324,7 @@ class Map implements api.IMap {
         }
     }
 
-    private setCore(key: string, value: any) {
+    private setCore(key: string, value: IMapValue) {
         this.data[key] = value;
         this.events.emit("valueChanged", { key });
     }
@@ -254,7 +348,11 @@ export class MapExtension implements api.IExtension {
 
     public type: string = MapExtension.Type;
 
-    public load(id: string, services: api.ICollaborationServices): api.IMap {
-        return new Map(id, services);
+    public load(id: string, services: api.ICollaborationServices, registry: api.Registry): api.IMap {
+        return new Map(id, services, registry);
+    }
+
+    public create(id: string): api.IMap {
+        return new Map(id);
     }
 }
