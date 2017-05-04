@@ -62,7 +62,8 @@
             "send": "deltas"
         },
         "kafkaClientId": "deli",
-        "groupId": "deli"
+        "groupId": "deli",
+        "checkpointBatchSize": 10
     },
     "paparazzi": {
         "queue": "snapshot",
