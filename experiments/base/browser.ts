@@ -53,7 +53,7 @@ function ajax_get(url, callback) {
 
 
 export function onLoad() {
-    ajax_get("/obj?init=true", (data, txt) => {
+    ajax_get("/obj?init=true", (data, text) => {
         data.texts[0]+=` RULES in ${Date.now()-clockStart}ms\n`;
         let html = segsToHTML(data.texts);
         document.body.removeChild(document.body.children[0]);
