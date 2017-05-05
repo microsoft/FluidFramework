@@ -1,6 +1,7 @@
-import * as ink from "ot-ink";
+// This one is where a lot is going to happen
+
+import * as ink from "../../ink";
 import * as geometry from "./geometry/index";
-import { Ink } from "./models/ink";
 import { Circle, IShape, Polygon } from "./shapes/index";
 import * as utils from "./utils";
 
@@ -45,7 +46,6 @@ export default class InkCanvas {
     private canvas: HTMLCanvasElement;
     private context: CanvasRenderingContext2D;
     private penID: number = -1;
-    private gesture: MSGesture;
     private canvasWrapper: HTMLElement;
     private currentStylusActionId: string;
     private currentPen: ink.IPen;
@@ -234,25 +234,6 @@ export default class InkCanvas {
         if (evt.pointerType === "pen") {
             this.canvasWrapper.style.pointerEvents = "none";
         }
-    }
-
-    // We treat the event of the pen leaving the canvas as the same as the pen lifting;
-    // it completes the stroke.
-    private handlePointerOut(evt) {
-        if (evt.pointerId === this.penID) {
-            let pt = new EventPoint(this.canvas, evt);
-            this.penID = -1;
-
-            let delta = new ink.Delta().stylusUp(
-                pt.rawPosition,
-                evt.pressure,
-                this.currentStylusActionId);
-            this.currentStylusActionId = undefined;
-
-            this.addAndDrawStroke(delta, true);
-        }
-
-        return false;
     }
 
     private animateLayer(layer: ink.IInkLayer, operationIndex: number, startTime: number) {

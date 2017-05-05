@@ -1,5 +1,3 @@
-// letious helpers functions
-
 // Utility to fetch elements by ID
 export function id(elementId: string): HTMLElement {
   return <HTMLElement> (document.getElementById(elementId));

@@ -1,24 +1,9 @@
 // The main app code
-import { Promise } from "es6-promise";
-import * as $ from "jquery";
 import * as _ from "lodash";
 import * as uuid from "node-uuid";
-import * as otInk from "ot-ink";
-import * as sharedb from "sharedb/lib/client";
-import { Document } from "../editor/document";
-import BackBoard from "./backBoard";
 import InkCanvas from "./inkCanvas";
-import { Canvas as CanvasModel, IObject } from "./models/canvas";
-import { Document as DocumentModel } from "./models/document";
-import { Ink } from "./models/ink";
-import { RichText } from "./models/richText";
 import StickyNote from "./stickyNote";
 import * as utils from "./utils";
-
-// Register the use of the rich text OT format
-sharedb.types.register(otInk.type);
-
-// tslint:disable:no-console
 
 /**
  * Canvas app
@@ -167,7 +152,8 @@ export default class Canvas {
     public test(e) {
         if (e.target.id === "testButton") {
             this.unselectAll();
-            let x = new StickyNote(utils.id("content"));
+            // tslint:disable-next-line:no-unused-new
+            new StickyNote(utils.id("content"));
         }
         if (e.target.id === "turnOnInk") {
             this.makeInkable();
@@ -272,7 +258,8 @@ export default class Canvas {
                     { source: this });
             }
 
-            let collabDocument = new Document(newDocument, richText);
+            // tslint:disable-next-line:no-unused-new
+            new Document(newDocument, richText);
         });
     }
 

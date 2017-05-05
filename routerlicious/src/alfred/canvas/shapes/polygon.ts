@@ -6,8 +6,6 @@ export interface IPolygon extends IShape {
 }
 
 export class Polygon implements IPolygon {
-    private isDirty: boolean = true;
-
     /**
      * Constructs a new polygon composed of the given points. The polygon
      * takes ownership of the passed in array of points.

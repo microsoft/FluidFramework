@@ -1,5 +1,3 @@
-import * as utils from "./utils";
-
 export default class StickyNote {
   private div: HTMLDivElement;
   private gesture: MSGesture;
