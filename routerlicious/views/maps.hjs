@@ -11,7 +11,7 @@
 
     {{$scripts}}
         <script src="/socket.io/socket.io.js"></script>
-        <script src="/public/scripts/dist/home.js"></script>
+        <script src="/public/scripts/dist/maps.js"></script>
         <script>
             controller.load("{{ id }}");
         </script>

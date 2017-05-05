@@ -1,4 +1,4 @@
-import Canvas from "./canvas";
+import { Canvas } from "./canvas";
 import * as utils from "./utils";
 
 export default class BackBoard {

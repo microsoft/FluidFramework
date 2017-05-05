@@ -6,9 +6,10 @@
     {{$content}}
         <div class="container">
             <h1>Demos</h1>
-            <p>
-                <a href="/maps">Collaborative Map</a>
-            </p>
+            <ul class="list-unstyled">
+                <li><a href="/maps">Collaborative Map</a></li>
+                <li><a href="/canvas">Ink Canvas</a></li>
+            </ul>
         </div>
     {{/content}}
 {{/layout}}

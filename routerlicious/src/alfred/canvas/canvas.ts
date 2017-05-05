@@ -6,7 +6,7 @@ import * as utils from "./utils";
 /**
  * Canvas app
  */
-export default class Canvas {
+export class Canvas {
     public ink: InkCanvas;
     public handleKeys: boolean = true;
     public stickyCount: number = 0;
