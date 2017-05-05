@@ -68,3 +68,15 @@ export interface IMergeTreeDeltaMsg extends IDelta {
     pos2?: number;
     text?: string;
 }
+
+export interface MergeTreeChunk {
+    clientId: string;
+    chunkStartSegmentIndex: number;
+    chunkSegmentCount: number;
+    chunkLengthChars: number;
+    totalLengthChars: number;
+    totalSegmentCount: number;
+    chunkSequenceNumber: number;
+    segmentTexts: string[];
+    // TODO: segment properties key
+}

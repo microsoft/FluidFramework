@@ -43,7 +43,7 @@ export class Snapshot {
     buffer: Buffer;
     pendingChunk: SnapChunk;
     texts: string[];
-
+    
     constructor(public mergeTree: MergeTree.MergeTree, public filename?: string,
         public onCompletion?: () => void) {
     }
