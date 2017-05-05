@@ -1,3 +1,4 @@
+import { Registry } from "./extension";
 import * as storage from "./storage";
 
 /**
@@ -11,9 +12,19 @@ export interface ICollaborativeObjectSnapshot {
 
 export interface ICollaborativeObject {
     /**
-     * A readonly identifier for th e collaborative object
+     * A readonly identifier for the collaborative object
      */
     id: string;
+
+    /**
+     * The type of the collaborative object
+     */
+    type: string;
+
+    /**
+     * Marker to clearly identify the object as a collaborative object
+     */
+    __collaborativeObject__: boolean;
 
     /**
      * Attaches an event listener for the given event
@@ -34,14 +45,19 @@ export interface ICollaborativeObject {
      * Attaches the given collaborative object to an upstream storage location.
      * This marks it as a collaborative object.
      */
-    attach(source: storage.IStorageObject);
+    attach(source: storage.ICollaborationServices, registry: Registry): Promise<void>;
+
+    /**
+     * Returns whether the given collaborative object is local
+     */
+    isLocal(): boolean;
 
     /**
      * Gets a form of the object that can be serialized.
      * TODO this is temporary to bootstrap the process. For performance/dynamic load/etc... we'll likely expose
      * access to the snapshot behind the storage objects.
      */
-    snapshot(): ICollaborativeObjectSnapshot;
+    snapshot(): Promise<void>;
 }
 
 /**
@@ -51,30 +67,30 @@ export interface IMap extends ICollaborativeObject {
     /**
      * Retrieves the given key from the map
      */
-    get(key: string): any;
+    get(key: string): Promise<any>;
 
     /**
      * Returns a boolean indicating whether or not the key exists in the map
      */
-    has(key: string): boolean;
+    has(key: string): Promise<boolean>;
 
     /**
      * Sets the key to the provided value
      */
-    set(key: string, value: any): void;
+    set(key: string, value: any): Promise<void>;
 
     /**
      * Deletes the specified key from the map and returns the value of the key at the time of deletion.
      */
-    delete(key: string): any;
+    delete(key: string): Promise<void>;
 
     /**
      * Retreives all the keys contained within the map
      */
-    keys(): string[];
+    keys(): Promise<string[]>;
 
     /**
      * Removes all entries from the map
      */
-    clear();
+    clear(): Promise<void>;
 }

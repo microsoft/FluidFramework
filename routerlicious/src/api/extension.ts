@@ -9,14 +9,14 @@ export interface IExtension {
     type: string;
 
     /**
-     * Creates a new collaborative object with the initial snapshot state.
-     */
-    create(snapshot: any, sequenceNumber: number): types.ICollaborativeObject;
-
-    /**
      * Loads the given service backed collaborative object.
      */
-    load(details: storage.ICollaborativeObjectDetails): types.ICollaborativeObject;
+    load(id: string, services: storage.ICollaborationServices, registry: Registry): types.ICollaborativeObject;
+
+    /**
+     * Creates a local version of the collaborative object.
+     */
+    create(id: string): types.ICollaborativeObject;
 }
 
 /**

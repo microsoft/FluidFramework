@@ -1,38 +1,49 @@
-export enum DocumentEvents {
+import { IMessage, ISequencedMessage } from "./protocol";
+
+/**
+ * Interface to provide access to snapshots saved for a collaborative object
+ */
+export interface IObjectStorageService {
     /**
-     * new updates have been pushed to the document
+     * Reads the object with the given ID
      */
-    Update,
+    // TODO should we just provide file system like semantics here or expose block level access
+    read(id: string): Promise<any>;
 
     /**
-     * A new user has joined the document
+     * Writes to the object with the given ID
      */
-    UserJoined,
-
-    /**
-     * A user has left the document
-     */
-    UserLeft,
+    write(id: string, data: any): Promise<void>;
 }
 
 /**
- * Interface which provides access to the underlying object on the server
+ * Interface to provide access to stored deltas for a collaborative object
  */
-export interface IStorageObject {
+export interface IDeltaStorageService {
     /**
-     * ID for the collaborative object
+     * Retrieves all the delta operations within the inclusive sequence number range
      */
-    id: string;
+    get(id: string, from?: number, to?: number): Promise<ISequencedMessage[]>;
+}
+
+/**
+ * Interface to represent a connection to a delta notification stream
+ */
+export interface IDeltaConnection {
+    /**
+     * The object the connection is for
+     */
+    objectId: string;
 
     /**
-     * The type of the underlying object
+     * Client identifier for this session
      */
-    type: string;
+    clientId: string;
 
     /**
-     * The storage this object is associated with
+     * Whether or not the document existed prior to connection
      */
-    storage: IStorage;
+    existing: boolean;
 
     /**
      * Subscribe to events emitted by the document
@@ -42,53 +53,25 @@ export interface IStorageObject {
     /**
      * Send new messages to the server
      */
-    emit(event: string, ...args: any[]): boolean;
-
-    /**
-     * Detaches the document from the server and unsubscribes from all events.
-     */
-    detach();
+    submitOp(message: IMessage);
 }
 
 /**
- * Values returned from a call to create a new collaborative object
+ * The delta notification service provides the ability to connect to a collaborative object's delta stream
+ * to send and receive notifications
  */
-export interface ICollaborativeObjectDetails {
+export interface IDeltaNotificationService {
     /**
-     * Pending delta operations not yet applied to the snapshot
+     * Connects to the given object ID to send and receive Delta updates. If the object doesn't exist this call
+     * will also create it.
      */
-    deltas: any[];
-
-    /**
-     * The current snapshot for the document
-     */
-    snapshot: any;
-
-    /**
-     * The sequence number the snapshot is relative to
-     */
-    sequenceNumber: number;
-
-    /**
-     * The server resource fro the given collaborative object
-     */
-    object: IStorageObject;
+    connect(id: string): Promise<IDeltaConnection>;
 }
 
-/**
- * The storage interface provides access to the backend system that is storing the underlying interactive
- * document. It can be used to create, load, and query interactive documents.
- */
-export interface IStorage {
-    /**
-     * An identifier to represent the client to the storage service
-     */
-    clientId: string;
-
-    /**
-     * Creates or loads a new collaborative object with the given id and type
-     */
-    loadObject(id: string, type: string, initial?: any): Promise<ICollaborativeObjectDetails>;
+export interface ICollaborationServices {
+    objectStorageService: IObjectStorageService;
+    deltaStorageService: IDeltaStorageService;
+    deltaNotificationService: IDeltaNotificationService;
 }
 
 export interface IOptions {
@@ -96,14 +79,4 @@ export interface IOptions {
      * Access token to the storage system
      */
     token: string;
-}
-
-/**
- * Factory interface which provides access to connecting to a storage system
- */
-export interface IStorageProvider {
-    /**
-     * Creates a connection to the given storage provider
-     */
-    connect(options: IOptions): Promise<IStorage>;
 }

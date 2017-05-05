@@ -2,6 +2,7 @@ import * as kafka from "kafka-node";
 import { MongoClient } from "mongodb";
 import * as nconf from "nconf";
 import * as path from "path";
+import * as core from "../core";
 import { TakeANumber } from "./takeANumber";
 
 // Setup the configuration system - pull arguments, then environment variables
@@ -55,7 +56,7 @@ producerReady.then(
             [receiveTopic]);
         const consumerOffset = new kafka.Offset(kafkaClient);
         consumerGroup.on("message", async (message: any) => {
-            const value = JSON.parse(message.value);
+            const value = JSON.parse(message.value) as core.IRawOperationMessage;
             const objectId = value.objectId;
 
             // Go grab the takeANumber machine for the objectId and mark it as dirty

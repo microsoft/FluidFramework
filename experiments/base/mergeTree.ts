@@ -20,7 +20,7 @@ export enum SegmentType {
     Text,
     Marker,
     Component,
-    ExternalBlock
+    External
 }
 
 // internal (represents multiple leaf segments) if child is defined
@@ -117,7 +117,7 @@ class MergeBlock extends MergeNode implements Block {
     cachedLength: number;
 }
 
-export class BaseSegment extends MergeNode implements Segment {
+export abstract class BaseSegment extends MergeNode implements Segment {
     constructor(public seq?: number, public clientId?: number) {
         super();
     }
@@ -125,9 +125,6 @@ export class BaseSegment extends MergeNode implements Segment {
     removedClientId: number;
     removedClientOverlap: number[];
     segmentGroup: SegmentGroup;
-    splitAt(pos: number): Segment {
-        return undefined;
-    }
     isLeaf() {
         return true;
     }
@@ -142,27 +139,47 @@ export class BaseSegment extends MergeNode implements Segment {
     canAppend(segment: Segment) {
         return false;
     }
-    append(segment: Segment) {
-        // TODO: throw exception
-    }
-    getType() {
-        // TODO: throw exception
-        return SegmentType.Base;
-    }
-    removeRange(start: number, end: number) {
-        // TODO: throw exception
-        return false;
-    }
+    abstract append(segment: Segment): Segment;
+    abstract getType(): SegmentType;
+    abstract removeRange(start: number, end: number): boolean;
+    abstract splitAt(pos: number): Segment;
 }
 
 // TODO: shift semantics; getPosition()
 export class Marker extends BaseSegment {
+
     constructor(pos: number, seq: number, clientId: number) {
         super(seq, clientId);
         this.cachedLength = 0;
     }
+    
+    append(segment: Segment): Segment {
+        throw new Error('Can not append to external segment');
+    }
+
     getType() {
         return SegmentType.Marker;
+    }
+    removeRange(): boolean {
+        throw new Error('Method not implemented.');
+    }
+    splitAt(pos: number): Segment {
+        throw new Error('Method not implemented.');
+    }
+}
+
+export class ExternalSegment extends BaseSegment {
+    append(segment: Segment): Segment {
+        throw new Error('Can not append to external segment');
+    }
+    getType(): SegmentType {
+        return SegmentType.External;
+    }
+    removeRange(start: number, end: number): boolean {
+        throw new Error('Method not implemented.');
+    }
+    splitAt(pos: number): Segment {
+        throw new Error('Method not implemented.');
     }
 }
 
@@ -203,8 +220,11 @@ export class TextSegment extends BaseSegment {
         if (segment.getType() === SegmentType.Text) {
             this.text += (<TextSegment>segment).text;
             this.cachedLength = this.text.length;
+            return this;
         }
-        // else raise exception
+        else {
+            throw new Error("can only append text segment");
+        }
     }
 
     // TODO: retain removed text for undo
@@ -423,7 +443,7 @@ class PartialSequenceLengths {
         return true;
     }
 
-    toString(glc?: (id:number)=> string) {
+    toString(glc?: (id: number) => string) {
         let buf = "";
         for (let partial of this.partialLengths) {
             buf += `(${partial.seq},${partial.len}) `;
@@ -2335,7 +2355,7 @@ export class MergeTree {
         strbuf += `Node (len ${node.cachedLength}) p len (${node.parent ? node.parent.cachedLength : 0}) with ${node.childCount} live segments:\n`;
         if (this.collabWindow.collaborating) {
             strbuf += indent(indentCount);
-            strbuf += node.partialLengths.toString((id)=>glc(this,id)) + '\n';
+            strbuf += node.partialLengths.toString((id) => glc(this, id)) + '\n';
         }
         let children = node.children;
         for (let childIndex = 0; childIndex < node.childCount; childIndex++) {

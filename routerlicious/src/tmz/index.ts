@@ -2,6 +2,7 @@ import * as amqp from "amqplib";
 import * as kafka from "kafka-node";
 import * as nconf from "nconf";
 import * as path from "path";
+import * as core from "../core";
 
 // Setup the configuration system - pull arguments, then environment variables
 nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
@@ -35,10 +36,9 @@ const consumerGroup = new kafka.ConsumerGroup({
 const createdRequests: any = {};
 
 consumerGroup.on("message", async (message: any) => {
-    const value = JSON.parse(message.value);
+    const value = JSON.parse(message.value) as core.IRawOperationMessage;
 
     if (createdRequests[value.objectId]) {
-        console.log(`Already requested snapshots for ${value.objectId}`);
         return;
     }
 

@@ -1,6 +1,7 @@
+import * as uuid from "node-uuid";
 import * as extensions from "./extension";
 import * as mapExtension from "./map";
-import * as storage from "./storage";
+import { ICollaborationServices } from "./storage";
 import * as types from "./types";
 
 /**
@@ -10,15 +11,27 @@ export class Document {
     /**
      * Constructs a new document from the provided details
      */
-    constructor(private map: types.IMap) {
+    constructor(
+        private map: types.IMap,
+        private registry: extensions.Registry) {
     }
 
     /**
      * Constructs a new collaborative object that can be attached to the document
-     * @param extension
+     * @param type the identifier for the collaborative object type
      */
-    public create(extension: extensions.IExtension): any {
-        return null;
+    public create(type: string): types.ICollaborativeObject {
+        const extension = this.registry.getExtension(type);
+        const object = extension.create(uuid.v4());
+
+        return object;
+    }
+
+    /**
+     * Creates a new collaborative map
+     */
+    public createMap(): types.IMap {
+        return this.create(mapExtension.MapExtension.Type) as types.IMap;
     }
 
     /**
@@ -32,20 +45,50 @@ export class Document {
      * Closes the document and detaches all listeners
      */
     public close() {
-        throw new Error("Yuck");
+        throw new Error("Not yet implemented");
     }
 }
 
-export async function load(source: storage.IStorage, name: string): Promise<Document> {
-    // The root document type should be a collaborative map
-    const details = await source.loadObject(name, mapExtension.MapExtension.Type);
+// Registered services to use when loading a document
+let defaultServices: ICollaborationServices;
 
-    const extension = registry.getExtension(details.object.type);
-    const map = extension.load(details) as types.IMap;
+// The default registry for extensions
+export const defaultRegistry = new extensions.Registry();
+defaultRegistry.register(new mapExtension.MapExtension());
 
-    return new Document(map);
+export function registerExtension(extension: extensions.IExtension) {
+    defaultRegistry.register(extension);
 }
 
-// Create a registry and seed with default types
-export const registry = new extensions.Registry();
-registry.register(new mapExtension.MapExtension());
+/**
+ * Registers the default services to use for interacting with collaborative documents. To simplify the API it is
+ * expected that the implementation provider of these will register themselves during startup prior to the user
+ * requesting to load a collaborative object.
+ */
+export function registerDefaultServices(services: ICollaborationServices) {
+    defaultServices = services;
+}
+
+/**
+ * Loads a collaborative object from the server
+ */
+export async function load(
+    id: string,
+    registry: extensions.Registry = defaultRegistry,
+    services: ICollaborationServices = defaultServices): Promise<Document> {
+
+    // Verify an extensions registry was provided
+    if (!registry) {
+        throw new Error("No extension registry provided");
+    }
+
+    // Verify we have services to load the document with
+    if (!services) {
+        throw new Error("Services not provided to load call");
+    }
+
+    const extension = registry.getExtension(mapExtension.MapExtension.Type);
+    const map = extension.load(id, services, registry) as types.IMap;
+
+    return new Document(map, registry);
+}

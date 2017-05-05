@@ -67,7 +67,8 @@
     },
     "paparazzi": {
         "queue": "snapshot",
-        "bucket": "snapshots"
+        "bucket": "snapshots",
+        "alfred": "http://alfred:3000"
     },
     "scriptorium": {
         "topic": "deltas",

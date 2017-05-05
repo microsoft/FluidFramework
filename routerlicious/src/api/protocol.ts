@@ -1,4 +1,38 @@
-// Is there a doc comment genrator for TS?
+/**
+ * Base collaborative object message
+ */
+export interface IMessageBase {
+    clientSequenceNumber: number;
+
+    referenceSequenceNumber: number;
+
+    op: any;
+}
+
+/**
+ * Message sent when a new operation is submitted to the server
+ */
+export interface IMessage extends IMessageBase {
+}
+
+/**
+ * Message sent to clients when an operation has been assigned a sequence number and is being routed to clients
+ */
+export interface ISequencedMessage extends IMessageBase {
+    // The user that submitted the delta
+    userId: string;
+
+    // The client ID that submitted the delta
+    clientId: string;
+
+    // The assigned sequence number
+    sequenceNumber: number;
+
+    // Minimum sequence number of connected clients
+    minimumSequenceNumber: number;
+}
+
+// TODO need to consolidate the above with the IDeltaMessage below
 
 export interface IDeltaMessage {
     clientId: string;
