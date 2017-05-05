@@ -1,0 +1,14 @@
+{{<layout}}
+    {{$styles}}
+        <link href="/public/stylesheets/dist/style.css" rel="stylesheet" />
+    {{/styles}}
+
+    {{$content}}
+        <div class="container">
+            <h1>Demos</h1>
+            <p>
+                <a href="/maps">Collaborative Map</a>
+            </p>
+        </div>
+    {{/content}}
+{{/layout}}

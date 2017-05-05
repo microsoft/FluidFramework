@@ -5,17 +5,6 @@
 
     {{$content}}
         <div class="container-fluid">
-            <p>
-                Hello,
-            </p>
-            <p>
-                This is a cool test page showing off an interactive document
-            </p>
-            <p>
-                But... there isn't one yet. So instead you can click the button below
-                to simulate map operations
-            </p>
-
             <div id="mapViews"></div>
         </div>
     {{/content}}
