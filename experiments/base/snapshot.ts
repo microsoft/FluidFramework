@@ -3,10 +3,10 @@ import * as fs from "fs";
 import * as MergeTree from "./mergeTree";
 
 interface SnapshotHeader {
-    chunkCount: number;
+    chunkCount?: number;
     segmentsTotalLength: number;
-    indexOffset: number;
-    segmentsOffset: number;
+    indexOffset?: number;
+    segmentsOffset?: number;
     seq: number;
 }
 
@@ -58,11 +58,12 @@ export class Snapshot {
     extractSync() {
         let collabWindow = this.mergeTree.getCollabWindow();
         this.seq = collabWindow.minSeq;
-        //let charLen = this.mergeTree.getLength(this.mergeTree.collabWindow.minSeq,
-        //    MergeTree.NonCollabClient);
-        //let buffer = new Buffer(Math.ceil(charLen * 1.10));
-        //let offset = 0;
-        let texts =<string[]>[];
+        this.header = { 
+            segmentsTotalLength: this.mergeTree.getLength(this.mergeTree.collabWindow.minSeq,
+            MergeTree.NonCollabClient),
+            seq: this.mergeTree.collabWindow.minSeq
+        };
+        let texts = <string[]>[];
         let extractSegment = (segment: MergeTree.Segment, pos: number, refSeq: number, clientId: number,
             start: number, end: number) => {
             if ((segment.seq != MergeTree.UnassignedSequenceNumber) && (segment.seq <= this.seq) &&
@@ -71,11 +72,6 @@ export class Snapshot {
                     (segment.removedSeq == MergeTree.UnassignedSequenceNumber) ||
                     (segment.removedSeq > this.seq)) {
                     let textSegment = <MergeTree.TextSegment>segment;
-/*                    let ulen = Buffer.byteLength(textSegment.text, 'utf8');
-                    buffer.writeUInt32BE(ulen, offset);
-                    offset += 4;
-                    buffer.write(textSegment.text, offset);
-                    offset += ulen;*/
                     texts.push(textSegment.text);
                 }
             }
@@ -84,7 +80,6 @@ export class Snapshot {
         this.mergeTree.map({ leaf: extractSegment }, this.seq, MergeTree.NonCollabClient);
         this.texts = texts;
         return texts;
-        //return { buffer: buffer, offset: offset };
     }
 
     static loadSync(filename: string) {

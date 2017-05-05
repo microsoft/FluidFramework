@@ -1,3 +1,4 @@
 *.js
+!public/driver.js
 *.map
 ff

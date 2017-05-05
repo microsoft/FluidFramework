@@ -39,3 +39,7 @@ Docker will mount your source directory into the container so you need to build 
 
 * Screw the Client
 * Perf === Magic
+
+## Architecture
+
+![Routerlicious architecture diagram](../doc/img/routerlicious-architecture.jpg)
