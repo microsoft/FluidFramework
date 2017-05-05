@@ -6,9 +6,11 @@ import * as utils from "./utils";
 // throttle resize events and replace with an optimized version
 utils.throttle("resize", "throttled-resize");
 
+let canvas: Canvas;
+
 export function initialize(id: string) {
     $("document").ready(() => {
-        Canvas.Create(connection, canvasP);
+        canvas = new Canvas();
         // let mainBoard = new BackBoard(canvas, "hitPlane");
     });
 }
