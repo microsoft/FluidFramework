@@ -41,6 +41,7 @@ producer.on("error", (error) => {
 });
 
 const dispensers: { [key: string]: TakeANumber } = {};
+const partitionMap: { [key: string]: string[] } = {};
 
 producerReady.then(
     () => {
@@ -59,26 +60,41 @@ producerReady.then(
             const value = JSON.parse(message.value) as core.IRawOperationMessage;
             const objectId = value.objectId;
 
-            // Go grab the takeANumber machine for the objectId and mark it as dirty
+            // Go grab the takeANumber machine for the objectId and mark it as dirty.
+            // Store it in the partition map. We need to add an eviction strategy here.
             if (!(objectId in dispensers)) {
                 const collection = await objectsCollectionP;
                 dispensers[objectId] = new TakeANumber(objectId, collection, producer, sendTopic);
+                if (!(message.partition in partitionMap)) {
+                    partitionMap[message.partition] = [objectId];
+                } else if (partitionMap[message.partition].indexOf(objectId) === -1) {
+                    partitionMap[message.partition].push(objectId);
+                }
+                console.log(`Brand New object Found: ${objectId}`);
             }
             const dispenser = dispensers[objectId];
-
             await dispenser.ticket(message);
+
             // Periodically checkpoints to mongo and checkpoints offset back to kafka.
+            // Ideally there should be a better strategy to figure out when to checkpoint.
             if (message.offset % CheckpointBatchSize === 0) {
-                await dispenser.checkpoint();
-                consumerOffset.commit(groupId,
-                    [{ topic: message.topic, partition: message.partition, offset: message.offset }],
-                    (error, data) => {
-                            if (error) {
-                                console.error(`Error checkpointing kafka offset: ${error}`);
-                            } else {
-                                console.log(`Success checkpointing kafka offset: ${message.offset}`);
-                            }
-                    });
+                for (let partition of Object.keys(partitionMap)) {
+                    // Find out most lagged offset across all document assigned to this partition.
+                    let mostLaggedOffset = Number.MAX_VALUE;
+                    for (let doc of partitionMap[partition]) {
+                        await dispensers[doc].checkpoint(); // Checkpoint to mongo first.
+                        mostLaggedOffset = Math.min(mostLaggedOffset, Number(dispensers[doc].getOffset()));
+                    }
+                    consumerOffset.commit(groupId,
+                        [{ topic: message.topic, partition: Number(partition), offset: mostLaggedOffset }],
+                        (error, data) => {
+                                if (error) {
+                                    console.error(`Error checkpointing kafka offset: ${error}`);
+                                } else {
+                                    console.log(`Checkpointed partition ${partition} with offset ${mostLaggedOffset}`);
+                                }
+                        });
+                }
             }
         });
     },
