@@ -4,38 +4,83 @@ import * as Protocol from "../../routerlicious/src/api/protocol";
 // first script loaded
 let clockStart = Date.now();
 
-// TODO: eliminate duplicate code
-function segsToHTML(segs: MergeTree.TextSegment[], lengthLimit?: number) {
-    let buf = "<div style='line-height:120%;font-size:18px;font-famliy:Helvetica'><div>";
+interface SegSpan extends HTMLSpanElement {
+    seg: MergeTree.TextSegment;
+}
+
+let cachedCanvas: HTMLCanvasElement;
+/**
+ * Uses canvas.measureText to compute and return the width of the given text of given font in pixels.
+ * 
+ * @param {String} text The text to be rendered.
+ * @param {String} font The css font descriptor that text is to be rendered with (e.g. "bold 14px verdana").
+ * 
+ * @see http://stackoverflow.com/questions/118241/calculate-text-width-with-javascript/21015393#21015393
+ */
+function getTextWidth(text, font) {
+    // re-use canvas object for better performance
+    var canvas = cachedCanvas || (cachedCanvas = document.createElement("canvas"));
+    var context = canvas.getContext("2d");
+    context.font = font;
+    var metrics = context.measureText(text);
+    return metrics.width;
+}
+
+function insertSegs(div: HTMLDivElement, segs: MergeTree.TextSegment[], lengthLimit?: number) {
+    function makeInnerDiv() {
+        let innerDiv = document.createElement("div");
+        innerDiv.style.font = "18px Futura";
+        innerDiv.style.lineHeight = "120%";
+        return innerDiv;
+    }
+    let innerDiv = makeInnerDiv();
+    let w_est = getTextWidth("abcdefghi jklmnopqrstuvwxyz", innerDiv.style.font)/27
+    let tryTextWidth = (w_est).toFixed(1);
+    let w = Math.floor(w_est);
+    let h = 22;
+    let charsPerLine = window.innerWidth/w;
+    let charsPerViewport = Math.floor((window.innerHeight/h)*charsPerLine);
+    console.log(`alph space width ${tryTextWidth}`);
+    div.appendChild(innerDiv);
     let segCount = segs.length;
     let charLength = 0;
+    let halfSegCount = segCount>>1;
+    console.log(` window h,w ${window.innerHeight}, ${window.innerWidth}`);
     for (let i = 0; i < segCount; i++) {
         let segText = segs[i].text;
         let styleAttr = "";
+        let span = <SegSpan>document.createElement("span");
         if (segText.indexOf("Chapter") >= 0) {
-            styleAttr = " style='font-size:140%;line-height:150%'";
+            span.style.fontSize = "140%";
+            span.style.lineHeight = "150%";
         }
         else {
             segText = segText.replace(/_([a-zA-Z]+)_/g, "<span style='font-style:italic'>$1</span>");
         }
-        buf += `<span${styleAttr}>${segText}</span>`
-        if (segText.charAt(segText.length - 1) == '\n') {
-            buf += "</div><div>";
-        }
+        span.innerHTML = segText;
+        span.seg = segs[i];
+        innerDiv.appendChild(span);
+        innerDiv = makeInnerDiv();
+        div.appendChild(innerDiv);
         charLength += segText.length;
+        
         if (lengthLimit && (charLength >= lengthLimit)) {
-            break;
+            return i;
+        }
+        if (charLength>charsPerViewport) {
+            console.log(`client h, w ${div.clientHeight},${div.clientWidth}`);
+            if (div.clientHeight>window.innerHeight) {
+                return i;
+            }
         }
     }
-    buf += "</div></div>";
-    return buf;
 }
 
 function ajax_get(url, callback) {
     let xmlhttp = new XMLHttpRequest();
     xmlhttp.onreadystatechange = function () {
         if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-            console.log('responseText:' + xmlhttp.responseText);
+            //console.log('responseText:' + xmlhttp.responseText);
             try {
                 var data = JSON.parse(xmlhttp.responseText);
             } catch (err) {
@@ -64,7 +109,23 @@ function textsToSegments(texts: string[]) {
 let theString: ClientString;
 
 class ClientString {
+    timeToImpression: number;
+    timeToLoad: number;
+    timeToEdit: number;
+    timeToCollab: number;
+
     constructor(public client: MergeTree.Client, public totalSegmentCount, public currentSegmentIndex, public totalLengthChars) {
+    }
+
+    setEdit() {
+        document.body.onclick = (e) => {
+            let span = <SegSpan>e.target;
+            if (span.seg) {
+                let offset = this.client.mergeTree.getOffset(span.seg, this.client.getCurrentSeq(),
+                    this.client.getClientId());
+                console.log(`segment at char offset ${offset}`);
+            }
+        }
     }
 
     continueLoading() {
@@ -77,7 +138,7 @@ class ClientString {
                 this.continueLoading();
             }
             else {
-                alert(`time to load: ${Date.now()-clockStart}ms len: ${this.client.getLength()}`);
+                console.log(`time to edit/impression: ${this.timeToEdit} time to load: ${Date.now() - clockStart}ms len: ${this.client.getLength()}`);
             }
         });
     }
@@ -88,14 +149,15 @@ export function onLoad() {
         let client = new MergeTree.Client("", data.clientId);
         let segs = textsToSegments(data.segmentTexts);
         let div = document.createElement("div");
-        let html = segsToHTML(segs);
-        div.innerHTML = html;
-        document.body.removeChild(document.body.children[0]);
         document.body.appendChild(div);
+        insertSegs(div, segs);
+        document.body.removeChild(document.body.children[0]);
         client.mergeTree.reloadFromSegments(segs);
         theString = new ClientString(client, data.totalSegmentCount, data.chunkSegmentCount,
             data.totalLengthChars);
+        theString.timeToEdit = theString.timeToImpression = Date.now() - clockStart;
         if (data.chunkSegmentCount < data.totalSegmentCount) {
+            theString.setEdit();
             theString.continueLoading();
         }
     });
