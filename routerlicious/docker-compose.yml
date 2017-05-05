@@ -79,6 +79,7 @@ services:
         environment:
             KAFKA_ADVERTISED_HOST_NAME: "kafka"
             KAFKA_ADVERTISED_PORT: "9092"
+            KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'false'
             KAFKA_CREATE_TOPICS: "test:1:1,deltas:8:1,rawdeltas:8:1"
             KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
     redis:
