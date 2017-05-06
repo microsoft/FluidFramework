@@ -31,7 +31,6 @@
             </div>
             <button id="clearButton" value="clear">Clear</button>
             <button id="replay">Replay</button>
-            <button id="editor">Editor</button>
         </div>
     {{/content}}
 

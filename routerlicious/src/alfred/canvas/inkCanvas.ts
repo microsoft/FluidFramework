@@ -165,7 +165,7 @@ export default class InkCanvas {
         }
     }
 
-        // We will accept pen down or mouse left down as the start of a stroke.
+    // We will accept pen down or mouse left down as the start of a stroke.
     // We will accept touch down or mouse right down as the start of a touch.
     private handlePointerDown(evt: PointerEvent) {
         this.penID = evt.pointerId;
