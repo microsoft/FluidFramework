@@ -70,7 +70,7 @@ export interface IMergeTreeDeltaMsg extends IDelta {
 }
 
 export interface MergeTreeChunk {
-    clientId: string;
+    clientId?: string;
     chunkStartSegmentIndex: number;
     chunkSegmentCount: number;
     chunkLengthChars: number;
