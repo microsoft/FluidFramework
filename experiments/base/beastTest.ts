@@ -117,8 +117,8 @@ class Server {
         let segTexts = this.snapshot.texts;
         let buf = "<!DOCTYPE html><html><head>";
         buf += "<script src='static/bro.js'></script><script src='static/driver.js'></script>";
-        buf += "</head><body onload='eff()' style='overflow:hidden'>";
-        buf += this.segsToHTML(segTexts, lengthLimit);
+        buf += "</head><body onload='eff()'>";
+        //buf += this.segsToHTML(segTexts, lengthLimit);
         buf += "</body></html>";
         return buf;
     }
