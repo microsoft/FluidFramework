@@ -69,6 +69,7 @@ export interface IMergeTreeDeltaMsg extends IDelta {
     text?: string;
 }
 
+// tslint:disable-next-line:interface-name
 export interface MergeTreeChunk {
     clientId?: string;
     chunkStartSegmentIndex: number;
