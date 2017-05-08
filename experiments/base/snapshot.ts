@@ -1,6 +1,9 @@
 import * as Collections from "./collections";
 import * as fs from "fs";
 import * as MergeTree from "./mergeTree";
+import * as API from "../../routerlicious/src/api";
+import * as Paparazzo from "./snapshot";
+import * as Protocol from "../../routerlicious/src/api/protocol";
 
 interface SnapshotHeader {
     chunkCount?: number;
@@ -55,12 +58,43 @@ export class Snapshot {
         });
     }
 
+    getCharLengthSegs(alltexts: string[], approxCharLength: number, startIndex = 0): Protocol.MergeTreeChunk {
+        //console.log(`start index ${startIndex}`);
+        let texts = <string[]>[];
+        let lengthChars = 0;
+        let segCount = 0;
+        while ((lengthChars < approxCharLength) && ((startIndex + segCount) < alltexts.length)) {
+            let text = alltexts[startIndex + segCount];
+            segCount++;
+            texts.push(text);
+            lengthChars += text.length;
+        }
+        return {
+            chunkStartSegmentIndex: startIndex,
+            chunkSegmentCount: segCount,
+            chunkLengthChars: lengthChars,
+            totalLengthChars: this.header.segmentsTotalLength,
+            totalSegmentCount: alltexts.length,
+            chunkSequenceNumber: this.header.seq,
+            segmentTexts: texts
+        }
+    }
+
+    async emit(services: API.ICollaborationServices, id: string) {
+        let storage = services.objectStorageService;
+        let chunk1 = this.getCharLengthSegs(this.texts, 10000);
+        let chunk2 = this.getCharLengthSegs(this.texts, chunk1.totalLengthChars, chunk1.chunkSegmentCount);
+        let p1 = storage.write(id+"header", chunk1);
+        let p2 = storage.write(id, chunk2);
+        return Promise.all([p1,p2]);
+    }
+
     extractSync() {
         let collabWindow = this.mergeTree.getCollabWindow();
         this.seq = collabWindow.minSeq;
-        this.header = { 
+        this.header = {
             segmentsTotalLength: this.mergeTree.getLength(this.mergeTree.collabWindow.minSeq,
-            MergeTree.NonCollabClient),
+                MergeTree.NonCollabClient),
             seq: this.mergeTree.collabWindow.minSeq
         };
         let texts = <string[]>[];
@@ -80,6 +114,13 @@ export class Snapshot {
         this.mergeTree.map({ leaf: extractSegment }, this.seq, MergeTree.NonCollabClient);
         this.texts = texts;
         return texts;
+    }
+
+    static async loadChunk(services: API.ICollaborationServices, id: string) {
+        let segs = <MergeTree.TextSegment[]>[];
+        let expectedBytes = Snapshot.SnapshotHeaderSize;
+        let chunk:Protocol.MergeTreeChunk = await services.objectStorageService.read(id+"header");
+        return chunk;
     }
 
     static loadSync(filename: string) {
