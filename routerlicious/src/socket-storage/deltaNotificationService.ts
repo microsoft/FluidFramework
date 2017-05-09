@@ -21,9 +21,10 @@ export class DeltaNotificationService implements api.IDeltaNotificationService {
         this.socket = io(url);
     }
 
-    public connect(id: string): Promise<api.IDeltaConnection> {
+    public connect(id: string, type: string): Promise<api.IDeltaConnection> {
         const connectMessage: messages.IConnect = {
             objectId: id,
+            type,
         };
 
         return new Promise((resolve, reject) => {

@@ -1,0 +1,15 @@
+{{<layout}}
+    {{$styles}}
+        <link href="/public/stylesheets/dist/style.css" rel="stylesheet" />
+    {{/styles}}
+
+    {{$content}}
+        <div class="container">
+            <h1>Demos</h1>
+            <ul class="list-unstyled">
+                <li><a href="/maps">Collaborative Map</a></li>
+                <li><a href="/canvas">Ink Canvas</a></li>
+            </ul>
+        </div>
+    {{/content}}
+{{/layout}}

@@ -1,3 +1,5 @@
+export * from "./collaborativeObject";
+export * from "./deltaManager";
 export * from "./document";
 export * from "./extension";
 export * from "./map";

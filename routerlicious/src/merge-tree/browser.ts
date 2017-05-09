@@ -1,5 +1,6 @@
 // tslint:disable
 
+import * as Geometry from "./geometry";
 import * as MergeTree from "./mergeTree";
 import { MergeTreeChunk } from "../api";
 
@@ -30,12 +31,12 @@ function getTextWidth(text, font) {
 
 // for now global; later map from font info to width/height estimates
 let w_est = 0;
-let h_est = 22;
+let h_est = 23;
 
 function makeInnerDiv() {
     let innerDiv = document.createElement("div");
     innerDiv.style.font = "18px Times";
-    innerDiv.style.lineHeight = "120%";
+    innerDiv.style.lineHeight = "125%";
     return innerDiv;
 }
 
@@ -50,58 +51,60 @@ function widthEst(fontInfo: string) {
     w_est = getTextWidth("abcdefghi jklmnopqrstuvwxyz", innerDiv.style.font) / 27;
 }
 
-function render(div: HTMLDivElement, segs: MergeTree.TextSegment[], cp: number,
-    totalLengthChars: number) {
+function heightFromCharCount(sizeChars: number) {
+    let charsPerLine = window.innerWidth / Math.floor(w_est);
+    let charsPerViewport = Math.floor((window.innerHeight / h_est) * charsPerLine);
+    return Math.floor((sizeChars / charsPerViewport) * window.innerHeight);
+}
+
+function renderTree(div: HTMLDivElement, pos: number, client: MergeTree.Client) {
+    div.id = "renderedTree";
+    div.style.marginRight = "8%";
+    div.style.marginLeft = "5%";
     let tryTextWidth = (w_est).toFixed(1);
     let w = Math.floor(w_est);
     let h = h_est;
+    let totalLengthChars = client.getLength();
     let charsPerLine = window.innerWidth / w;
     let charsPerViewport = Math.floor((window.innerHeight / h) * charsPerLine);
-    if (cp > 0) {
-        let placeholderDiv = makePlaceholder(cp, charsPerViewport);
-        div.appendChild(placeholderDiv);
-    }
-    function afterDiv() {
-        if ((cp + charsPerViewport) < totalLengthChars) {
-            let afterSize = totalLengthChars - (cp + charsPerViewport);
-            let placeholderDiv = makePlaceholder(afterSize, charsPerViewport);
-            div.appendChild(placeholderDiv);
-        }
-    }
     let innerDiv = makeInnerDiv();
-    console.log(`alph space width ${tryTextWidth}`);
     div.appendChild(innerDiv);
-    let segCount = segs.length;
     let charLength = 0;
-    // let halfSegCount = segCount >> 1;
-    console.log(` window h,w ${window.innerHeight}, ${window.innerWidth}`);
-    for (let i = 0; i < segCount; i++) {
-        let segText = segs[i].text;
-        // let styleAttr = "";
-        let span = <SegSpan>document.createElement("span");
-        if (segText.indexOf("Chapter") >= 0) {
-            span.style.fontSize = "140%";
-            span.style.lineHeight = "150%";
-        }
-        else {
-            segText = segText.replace(/_([a-zA-Z]+)_/g, "<span style='font-style:italic'>$1</span>");
-        }
-        span.innerHTML = segText;
-        span.seg = segs[i];
-        innerDiv.appendChild(span);
-        innerDiv = makeInnerDiv();
-        div.appendChild(innerDiv);
-        charLength += segText.length;
 
-        if (charLength > charsPerViewport) {
-            console.log(`client h, w ${div.clientHeight},${div.clientWidth}`);
-            if (div.clientHeight > window.innerHeight) {
-                afterDiv();
-                return i;
+    function renderSegment(segment: MergeTree.Segment, pos: number, refSeq: number,
+        clientId: number, start: number, end: number) {
+        if (segment.getType() == MergeTree.SegmentType.Text) {
+            let textSegment = <MergeTree.TextSegment>segment;
+            let segText = textSegment.text;
+            let styleAttr = "";
+            let span = <SegSpan>document.createElement("span");
+            if (segText.indexOf("Chapter") >= 0) {
+                span.style.fontSize = "140%";
+                span.style.lineHeight = "150%";
+            }
+            else {
+                segText = segText.replace(/_([a-zA-Z]+)_/g, "<span style='font-style:italic'>$1</span>");
+            }
+            span.innerHTML = segText;
+            span.seg = textSegment;
+            innerDiv.appendChild(span);
+            if (segText.charAt(segText.length - 1) == '\n') {
+                innerDiv = makeInnerDiv();
+                div.appendChild(innerDiv);
+            }
+            charLength += segText.length;
+
+            if (charLength > charsPerViewport) {
+                console.log(`client h, w ${div.clientHeight},${div.clientWidth}`);
+                if (div.clientHeight > window.innerHeight) {
+                    return false;
+                }
             }
         }
+        return true;
     }
-    afterDiv();
+    client.mergeTree.mapRange({ leaf: renderSegment }, MergeTree.UniversalSequenceNumber,
+        client.getClientId(), undefined, pos);
 }
 
 function ajax_get(url, callback) {
@@ -141,9 +144,15 @@ class ClientString {
     timeToLoad: number;
     timeToEdit: number;
     timeToCollab: number;
-
+    viewportCharCount: number;
     constructor(public client: MergeTree.Client, public totalSegmentCount, public currentSegmentIndex, public totalLengthChars) {
+        let charsPerLine = window.innerWidth / Math.floor(w_est); // overestimate
+        let charsPerViewport = Math.floor((window.innerHeight / h_est) * charsPerLine);
+        this.viewportCharCount = charsPerViewport;
     }
+
+
+    ticking = false;
 
     setEdit() {
         document.body.onclick = (e) => {
@@ -154,6 +163,64 @@ class ClientString {
                 console.log(`segment at char offset ${offset}`);
             }
         }
+        let handler = (e: KeyboardEvent) => {
+            console.log(`key ${e.keyCode}`);
+            if (((e.keyCode == 33) || (e.keyCode == 34)) && (!this.ticking)) {
+                setTimeout(() => {
+                    console.log(`animation frame ${Date.now() - clockStart}`);
+                    theString.scroll(e.keyCode == 33);
+                    this.ticking = false;
+                }, 40);
+                this.ticking = true;
+            }
+            else if (e.keyCode == 36) {
+                theString.render(0);
+                e.preventDefault();
+                e.returnValue = false;
+            }
+        }
+        document.body.onkeydown = handler;
+
+    }
+
+    topChar = 0
+    scroll(up: boolean) {
+        let len = this.client.getLength();
+        let halfport = Math.floor(this.viewportCharCount / 2);
+        if ((up && (this.topChar == 0)) || ((!up) && (this.topChar > (len - halfport)))) {
+            return;
+        }
+        if (up) {
+            this.topChar -= halfport;
+            if (this.topChar < 0) {
+                this.topChar = 0;
+            }
+        }
+        else {
+            this.topChar += halfport;
+            if (this.topChar >= len) {
+                this.topChar -= (halfport / 2);
+            }
+        }
+        this.render();
+    }
+
+    render(topChar?: number) {
+        if (topChar !== undefined) {
+            this.topChar = topChar;
+        }
+        let len = this.client.getLength();
+        let frac = this.topChar / len;
+        let pos = Math.floor(frac * len);
+        let oldDiv = document.getElementById("renderedTree");
+        if (oldDiv) {
+            document.body.removeChild(oldDiv);
+        }
+        let viewportDiv = document.createElement("div");
+        document.body.appendChild(viewportDiv);
+        //let flowDiv = document.createElement("div");
+        //let scrollDiv = document.createElement("div");
+        renderTree(viewportDiv, pos, this.client);
     }
 
     continueLoading() {
@@ -172,35 +239,18 @@ class ClientString {
     }
 }
 
-// let globScrollY = 0;
-// let ticking = false;
-
 export function onLoad() {
     widthEst("18px Times");
     ajax_get("/obj?init=true", (data: MergeTreeChunk, text) => {
-        /* document.body.onscroll = () => {
-        
-            globScrollY = window.scrollY;
-            if (!ticking) {
-                window.requestAnimationFrame(()=> {
-                    render()
-                    ticking = false;
-                });
-            }
-            //console.log(`scroll top: ${document.body.scrollTop}`);
-            ticking = true;
-        }*/
         let client = new MergeTree.Client("", data.clientId);
         let segs = textsToSegments(data.segmentTexts);
-        let div = document.createElement("div");
-        document.body.appendChild(div);
-        render(div, segs, 0, data.totalLengthChars);
         client.mergeTree.reloadFromSegments(segs);
         theString = new ClientString(client, data.totalSegmentCount, data.chunkSegmentCount,
             data.totalLengthChars);
+        theString.render(0);
         theString.timeToEdit = theString.timeToImpression = Date.now() - clockStart;
+        theString.setEdit();
         if (data.chunkSegmentCount < data.totalSegmentCount) {
-            theString.setEdit();
             theString.continueLoading();
         }
     });

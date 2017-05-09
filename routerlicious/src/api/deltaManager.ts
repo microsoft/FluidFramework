@@ -18,10 +18,14 @@ export class DeltaManager {
         private deltaStorage: api.IDeltaStorageService,
         private deltaConnection: api.IDeltaConnection,
         private listener: IDeltaListener) {
+
         // listen for specific events
         this.deltaConnection.on("op", (message: api.ISequencedMessage) => {
             this.handleOp(message);
         });
+
+        // Directly fetch all sequence numbers after base
+        this.fetchMissingDeltas(this.baseSequenceNumber);
     }
 
     private handleOp(message: api.ISequencedMessage) {
@@ -51,7 +55,7 @@ export class DeltaManager {
     /**
      * Retrieves the missing deltas between the given sequence numbers
      */
-    private fetchMissingDeltas(from: number, to: number) {
+    private fetchMissingDeltas(from: number, to?: number) {
         // Exit out early if we're already fetching deltas
         if (this.fetching) {
             return;
@@ -72,11 +76,14 @@ export class DeltaManager {
     }
 
     private catchUp(messages: api.ISequencedMessage[]) {
-        assert.equal(messages[0].sequenceNumber, this.baseSequenceNumber + 1);
-
         // Apply current operations
         for (const message of messages) {
-            this.emit(message);
+            // Ignore sequence numbers prior to the base. This can happen at startup when we fetch all missing
+            // deltas while also listening for updates
+            if (message.sequenceNumber > this.baseSequenceNumber) {
+                assert.equal(message.sequenceNumber, this.baseSequenceNumber + 1);
+                this.emit(message);
+            }
         }
 
         // Then sort pending operations and attempt to apply them again.

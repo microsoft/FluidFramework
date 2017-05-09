@@ -1,4 +1,5 @@
 import * as uuid from "node-uuid";
+import * as ink from "../ink";
 import * as mergeTree from "../merge-tree";
 import * as extensions from "./extension";
 import * as mapExtension from "./map";
@@ -43,6 +44,13 @@ export class Document {
     }
 
     /**
+     * Creates a new ink collaborative object
+     */
+    public createInk(): ink.IInk {
+        return this.create(ink.InkExtension.Type) as ink.IInk;
+    }
+
+    /**
      * Retrieves the root collaborative object that the document is based on
      */
     public getRoot(): types.IMap {
@@ -64,6 +72,7 @@ let defaultServices: ICollaborationServices;
 export const defaultRegistry = new extensions.Registry();
 defaultRegistry.register(new mapExtension.MapExtension());
 defaultRegistry.register(new mergeTree.CollaboritiveStringExtension());
+defaultRegistry.register(new ink.InkExtension());
 
 export function registerExtension(extension: extensions.IExtension) {
     defaultRegistry.register(extension);

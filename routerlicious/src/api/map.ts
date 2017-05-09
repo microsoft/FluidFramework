@@ -1,5 +1,4 @@
 import * as assert from "assert";
-import { EventEmitter } from "events";
 import * as _ from "lodash";
 import * as api from ".";
 import { DeltaManager } from "./deltaManager";
@@ -48,13 +47,9 @@ export interface IMapValue {
 /**
  * Implementation of a map collaborative object
  */
-class Map implements api.IMap {
+class Map extends api.CollaborativeObject implements api.IMap {
     public type = MapExtension.Type;
 
-    // tslint:disable-next-line:variable-name
-    public __collaborativeObject__ = true;
-
-    private events = new EventEmitter();
     private loadingP: Promise<void>;
 
     // Map data
@@ -81,6 +76,7 @@ class Map implements api.IMap {
      * be provided
      */
     constructor(public id: string, private services?: api.ICollaborationServices, private registry?: api.Registry) {
+        super();
         this.loadingP = services ? this.load(id, services) : Promise.resolve();
     }
 
@@ -119,7 +115,7 @@ class Map implements api.IMap {
         await this.loadingP;
 
         let operationValue: IMapValue;
-        if (value.__collaborativeObject__) {
+        if (_.hasIn(value, "__collaborativeObject__")) {
             // Convert any local collaborative objects to our internal storage format
             const collaborativeObject = value as api.ICollaborativeObject;
             this.collaborativeObjects[collaborativeObject.id] = collaborativeObject;
@@ -168,21 +164,6 @@ class Map implements api.IMap {
         return this.processLocalOperation(op);
     }
 
-    public on(event: string, listener: Function): this {
-        this.events.on(event, listener);
-        return this;
-    }
-
-    public removeListener(event: string, listener: Function): this {
-        this.events.removeListener(event, listener);
-        return this;
-    }
-
-    public removeAllListeners(event?: string): this {
-        this.events.removeAllListeners(event);
-        return this;
-    }
-
     public snapshot(): Promise<void> {
         const snapshot = {
             sequenceNumber: this.sequenceNumber,
@@ -201,8 +182,8 @@ class Map implements api.IMap {
 
         // Attaching makes a local document available for collaboration. The connect call should create the object.
         // We assert the return type to validate this is the case.
-        this.connection = await services.deltaNotificationService.connect(this.id);
-        // TODO bring back assert.ok(!this.connection.existing);
+        this.connection = await services.deltaNotificationService.connect(this.id, this.type);
+        assert.ok(!this.connection.existing);
 
         for (const localOp of this.localOps) {
             this.submit(localOp);
@@ -223,7 +204,7 @@ class Map implements api.IMap {
      */
     private async load(id: string, services: api.ICollaborationServices): Promise<void> {
         // Load the snapshot and begin listening for messages
-        this.connection = await services.deltaNotificationService.connect(id);
+        this.connection = await services.deltaNotificationService.connect(id, this.type);
 
         // Load from the snapshot if it exists
         const rawSnapshot = this.connection.existing ? await services.objectStorageService.read(id) : null;
