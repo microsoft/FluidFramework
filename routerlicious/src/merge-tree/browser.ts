@@ -1,6 +1,6 @@
 // tslint:disable
 
-import * as Geometry from "./geometry";
+// import * as Geometry from "./geometry";
 import * as MergeTree from "./mergeTree";
 import { MergeTreeChunk } from "../api";
 
@@ -40,7 +40,7 @@ function makeInnerDiv() {
     return innerDiv;
 }
 
-function makePlaceholder(sizeChars: number, charsPerViewport: number) {
+export function makePlaceholder(sizeChars: number, charsPerViewport: number) {
     let div = document.createElement("div");
     div.style.height = `${Math.floor(sizeChars / charsPerViewport) * window.innerHeight}px`;
     return div;
@@ -51,7 +51,7 @@ function widthEst(fontInfo: string) {
     w_est = getTextWidth("abcdefghi jklmnopqrstuvwxyz", innerDiv.style.font) / 27;
 }
 
-function heightFromCharCount(sizeChars: number) {
+export function heightFromCharCount(sizeChars: number) {
     let charsPerLine = window.innerWidth / Math.floor(w_est);
     let charsPerViewport = Math.floor((window.innerHeight / h_est) * charsPerLine);
     return Math.floor((sizeChars / charsPerViewport) * window.innerHeight);
@@ -61,10 +61,8 @@ function renderTree(div: HTMLDivElement, pos: number, client: MergeTree.Client) 
     div.id = "renderedTree";
     div.style.marginRight = "8%";
     div.style.marginLeft = "5%";
-    let tryTextWidth = (w_est).toFixed(1);
     let w = Math.floor(w_est);
     let h = h_est;
-    let totalLengthChars = client.getLength();
     let charsPerLine = window.innerWidth / w;
     let charsPerViewport = Math.floor((window.innerHeight / h) * charsPerLine);
     let innerDiv = makeInnerDiv();
@@ -76,7 +74,6 @@ function renderTree(div: HTMLDivElement, pos: number, client: MergeTree.Client) 
         if (segment.getType() == MergeTree.SegmentType.Text) {
             let textSegment = <MergeTree.TextSegment>segment;
             let segText = textSegment.text;
-            let styleAttr = "";
             let span = <SegSpan>document.createElement("span");
             if (segText.indexOf("Chapter") >= 0) {
                 span.style.fontSize = "140%";
