@@ -81,7 +81,7 @@ export class DeltaManager {
             // Ignore sequence numbers prior to the base. This can happen at startup when we fetch all missing
             // deltas while also listening for updates
             if (message.sequenceNumber > this.baseSequenceNumber) {
-                assert.equal(messages[0].sequenceNumber, this.baseSequenceNumber + 1);
+                assert.equal(message.sequenceNumber, this.baseSequenceNumber + 1);
                 this.emit(message);
             }
         }
