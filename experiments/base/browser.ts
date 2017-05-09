@@ -34,6 +34,8 @@ function makeInnerDiv() {
     let innerDiv = document.createElement("div");
     innerDiv.style.font = "18px Times";
     innerDiv.style.lineHeight = "120%";
+    innerDiv.style.marginLeft = "5%";
+    innerDiv.style.marginRight = "5%";
     return innerDiv;
 }
 
@@ -46,6 +48,7 @@ function makePlaceholder(sizeChars: number, charsPerViewport: number) {
 function widthEst(fontInfo: string) {
     let innerDiv = makeInnerDiv();
     w_est = getTextWidth("abcdefghi jklmnopqrstuvwxyz", innerDiv.style.font) / 27;
+    w_est *= 0.9;
 }
 
 function heightFromCharCount(sizeChars: number) {
@@ -116,22 +119,9 @@ function renderTree(div: HTMLDivElement, pos: number, client: MergeTree.Client) 
     let totalLengthChars = client.getLength();
     let charsPerLine = window.innerWidth / w;
     let charsPerViewport = Math.floor((window.innerHeight / h) * charsPerLine);
-    if (pos > 0) {
-        let placeholderDiv = makePlaceholder(pos, charsPerViewport);
-        div.appendChild(placeholderDiv);
-    }
-    let middleDiv = document.createElement("div");
-    div.appendChild(middleDiv);
     let innerDiv = makeInnerDiv();
-    middleDiv.appendChild(innerDiv);
+    div.appendChild(innerDiv);
     let charLength = 0;
-    function afterDiv() {
-        if ((pos + charsPerViewport) < totalLengthChars) {
-            let afterSize = totalLengthChars - (pos + charsPerViewport);
-            let placeholderDiv = makePlaceholder(afterSize, charsPerViewport);
-            div.appendChild(placeholderDiv);
-        }
-    }
     function renderSegment(segment: MergeTree.Segment, pos: number, refSeq: number,
         clientId: number, start: number, end: number) {
         if (segment.getType() == MergeTree.SegmentType.Text) {
@@ -151,13 +141,13 @@ function renderTree(div: HTMLDivElement, pos: number, client: MergeTree.Client) 
             innerDiv.appendChild(span);
             if (segText.charAt(segText.length - 1) == '\n') {
                 innerDiv = makeInnerDiv();
-                middleDiv.appendChild(innerDiv);
+                div.appendChild(innerDiv);
             }
             charLength += segText.length;
 
             if (charLength > charsPerViewport) {
-                console.log(`client h, w ${middleDiv.clientHeight},${middleDiv.clientWidth}`);
-                if (middleDiv.clientHeight > window.innerHeight) {
+                console.log(`client h, w ${div.clientHeight},${div.clientWidth}`);
+                if (div.clientHeight > window.innerHeight) {
                     return false;
                 }
             }
@@ -166,7 +156,6 @@ function renderTree(div: HTMLDivElement, pos: number, client: MergeTree.Client) 
     }
     client.mergeTree.mapRange({ leaf: renderSegment }, MergeTree.UniversalSequenceNumber,
         client.getClientId(), undefined, pos);
-    afterDiv();
 }
 
 function ajax_get(url, callback) {
@@ -206,11 +195,11 @@ class ClientString {
     timeToLoad: number;
     timeToEdit: number;
     timeToCollab: number;
-    totalHeight: number;
-
+    viewportCharCount: number;
     constructor(public client: MergeTree.Client, public totalSegmentCount, public currentSegmentIndex, public totalLengthChars) {
-        this.totalHeight = heightFromCharCount(totalLengthChars);
-        console.log(`total height: ${this.totalHeight}`);
+        let charsPerLine = window.innerWidth / Math.floor(w_est);
+        let charsPerViewport = Math.floor((window.innerHeight / h_est) * charsPerLine);
+        this.viewportCharCount = charsPerViewport;
     }
 
     setEdit() {
@@ -224,15 +213,35 @@ class ClientString {
         }
     }
 
-    prevTopPx = -1;
-    render(topPx: number) {
-        if (topPx==this.prevTopPx) {
+    topChar = 0
+    scroll(up: boolean) {
+        let len = this.client.getLength();
+        let halfport = Math.floor(this.viewportCharCount / 2);
+        if ((up && (this.topChar == 0)) || ((!up) && (this.topChar > (len - halfport)))) {
             return;
         }
-        this.prevTopPx = topPx;
-        console.log(`top pix ${topPx}`);
-        let frac = topPx / this.totalHeight;
-        let pos = Math.floor(frac * this.client.getLength());
+        if (up) {
+            this.topChar -= halfport;
+            if (this.topChar < 0) {
+                this.topChar = 0;
+            }
+        }
+        else {
+            this.topChar += halfport;
+            if (this.topChar >= len) {
+                this.topChar -= (halfport / 2);
+            }
+        }
+        this.render();
+    }
+
+    render(topChar?: number) {
+        if (topChar !== undefined) {
+            this.topChar = topChar;
+        }
+        let len = this.client.getLength();
+        let frac = this.topChar / len;
+        let pos = Math.floor(frac * len);
         let oldDiv = document.getElementById("renderedTree");
         if (oldDiv) {
             document.body.removeChild(oldDiv);
@@ -271,18 +280,24 @@ export function onLoad() {
             data.totalLengthChars);
         theString.render(0);
         theString.timeToEdit = theString.timeToImpression = Date.now() - clockStart;
-        document.body.onscroll = () => {
-            scrollPos = document.body.scrollTop;
-            console.log(`scroll Y: ${window.scrollY} tick ${Date.now() - clockStart}`);
-            if (!ticking) {
+        let handler = (e: KeyboardEvent) => {
+            console.log(`key ${e.keyCode}`);
+            if (((e.keyCode == 33) || (e.keyCode == 34)) && (!ticking)) {
                 setTimeout(() => {
-                    console.log(`animation frame ${Date.now()-clockStart}`);
-                    theString.render(document.body.scrollTop);
+                    console.log(`animation frame ${Date.now() - clockStart}`);
+                    theString.scroll(e.keyCode == 33);
                     ticking = false;
                 }, 40);
+                ticking = true;
             }
-            ticking = true;
+            else if (e.keyCode == 36) {
+                theString.render(0);
+                e.preventDefault();
+                e.returnValue = false;
+            }
         }
+        document.body.onkeydown = handler;
+        //document.body.onkeypress = handler;
         if (data.chunkSegmentCount < data.totalSegmentCount) {
             theString.setEdit();
             theString.continueLoading();
