@@ -93,7 +93,7 @@ class CollaborativeString implements API.ICollaborativeObject {
     async attach(services: API.ICollaborationServices, registry: API.Registry): Promise<void> {
         this.services = services;
         this.initialSeq = 0;
-        this.connection = await this.services.deltaNotificationService.connect(this.id);
+        this.connection = await this.services.deltaNotificationService.connect(this.id, "string");
         this.listenForUpdates();
     }
 

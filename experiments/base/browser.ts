@@ -1,3 +1,4 @@
+import * as Geometry from "./geometry";
 import * as MergeTree from "./mergeTree";
 import * as Protocol from "../../routerlicious/src/api/protocol";
 
@@ -28,14 +29,12 @@ function getTextWidth(text, font) {
 
 // for now global; later map from font info to width/height estimates
 let w_est = 0;
-let h_est = 22;
+let h_est = 23;
 
 function makeInnerDiv() {
     let innerDiv = document.createElement("div");
     innerDiv.style.font = "18px Times";
-    innerDiv.style.lineHeight = "120%";
-    innerDiv.style.marginLeft = "5%";
-    innerDiv.style.marginRight = "5%";
+    innerDiv.style.lineHeight = "125%";
     return innerDiv;
 }
 
@@ -48,7 +47,6 @@ function makePlaceholder(sizeChars: number, charsPerViewport: number) {
 function widthEst(fontInfo: string) {
     let innerDiv = makeInnerDiv();
     w_est = getTextWidth("abcdefghi jklmnopqrstuvwxyz", innerDiv.style.font) / 27;
-    w_est *= 0.9;
 }
 
 function heightFromCharCount(sizeChars: number) {
@@ -57,62 +55,10 @@ function heightFromCharCount(sizeChars: number) {
     return Math.floor((sizeChars / charsPerViewport) * window.innerHeight);
 }
 
-function render(div: HTMLDivElement, segs: MergeTree.TextSegment[], cp: number,
-    totalLengthChars: number) {
-    let tryTextWidth = (w_est).toFixed(1);
-    let w = Math.floor(w_est);
-    let h = h_est;
-    let charsPerLine = window.innerWidth / w;
-    let charsPerViewport = Math.floor((window.innerHeight / h) * charsPerLine);
-    if (cp > 0) {
-        let placeholderDiv = makePlaceholder(cp, charsPerViewport);
-        div.appendChild(placeholderDiv);
-    }
-    function afterDiv() {
-        if ((cp + charsPerViewport) < totalLengthChars) {
-            let afterSize = totalLengthChars - (cp + charsPerViewport);
-            let placeholderDiv = makePlaceholder(afterSize, charsPerViewport);
-            div.appendChild(placeholderDiv);
-        }
-    }
-    let innerDiv = makeInnerDiv();
-    console.log(`alph space width ${tryTextWidth}`);
-    div.appendChild(innerDiv);
-    let segCount = segs.length;
-    let charLength = 0;
-    let halfSegCount = segCount >> 1;
-    console.log(` window h,w ${window.innerHeight}, ${window.innerWidth}`);
-    for (let i = 0; i < segCount; i++) {
-        let segText = segs[i].text;
-        let styleAttr = "";
-        let span = <SegSpan>document.createElement("span");
-        if (segText.indexOf("Chapter") >= 0) {
-            span.style.fontSize = "140%";
-            span.style.lineHeight = "150%";
-        }
-        else {
-            segText = segText.replace(/_([a-zA-Z]+)_/g, "<span style='font-style:italic'>$1</span>");
-        }
-        span.innerHTML = segText;
-        span.seg = segs[i];
-        innerDiv.appendChild(span);
-        innerDiv = makeInnerDiv();
-        div.appendChild(innerDiv);
-        charLength += segText.length;
-
-        if (charLength > charsPerViewport) {
-            console.log(`client h, w ${div.clientHeight},${div.clientWidth}`);
-            if (div.clientHeight > window.innerHeight) {
-                afterDiv();
-                return i;
-            }
-        }
-    }
-    afterDiv();
-}
-
 function renderTree(div: HTMLDivElement, pos: number, client: MergeTree.Client) {
     div.id = "renderedTree";
+    div.style.marginRight = "8%";
+    div.style.marginLeft = "5%";
     let tryTextWidth = (w_est).toFixed(1);
     let w = Math.floor(w_est);
     let h = h_est;
@@ -197,10 +143,13 @@ class ClientString {
     timeToCollab: number;
     viewportCharCount: number;
     constructor(public client: MergeTree.Client, public totalSegmentCount, public currentSegmentIndex, public totalLengthChars) {
-        let charsPerLine = window.innerWidth / Math.floor(w_est);
+        let charsPerLine = window.innerWidth / Math.floor(w_est); // overestimate
         let charsPerViewport = Math.floor((window.innerHeight / h_est) * charsPerLine);
         this.viewportCharCount = charsPerViewport;
     }
+
+
+    ticking = false;
 
     setEdit() {
         document.body.onclick = (e) => {
@@ -211,6 +160,24 @@ class ClientString {
                 console.log(`segment at char offset ${offset}`);
             }
         }
+        let handler = (e: KeyboardEvent) => {
+            console.log(`key ${e.keyCode}`);
+            if (((e.keyCode == 33) || (e.keyCode == 34)) && (!this.ticking)) {
+                setTimeout(() => {
+                    console.log(`animation frame ${Date.now() - clockStart}`);
+                    theString.scroll(e.keyCode == 33);
+                    this.ticking = false;
+                }, 40);
+                this.ticking = true;
+            }
+            else if (e.keyCode == 36) {
+                theString.render(0);
+                e.preventDefault();
+                e.returnValue = false;
+            }
+        }
+        document.body.onkeydown = handler;
+
     }
 
     topChar = 0
@@ -246,9 +213,11 @@ class ClientString {
         if (oldDiv) {
             document.body.removeChild(oldDiv);
         }
-        let div = document.createElement("div");
-        document.body.appendChild(div);
-        renderTree(div, pos, this.client);
+        let viewportDiv = document.createElement("div");
+        document.body.appendChild(viewportDiv);
+        //let flowDiv = document.createElement("div");
+        //let scrollDiv = document.createElement("div");
+        renderTree(viewportDiv, pos, this.client);
     }
 
     continueLoading() {
@@ -267,9 +236,6 @@ class ClientString {
     }
 }
 
-let ticking = false;
-let scrollPos = 0;
-
 export function onLoad() {
     widthEst("18px Times");
     ajax_get("/obj?init=true", (data: Protocol.MergeTreeChunk, text) => {
@@ -280,26 +246,8 @@ export function onLoad() {
             data.totalLengthChars);
         theString.render(0);
         theString.timeToEdit = theString.timeToImpression = Date.now() - clockStart;
-        let handler = (e: KeyboardEvent) => {
-            console.log(`key ${e.keyCode}`);
-            if (((e.keyCode == 33) || (e.keyCode == 34)) && (!ticking)) {
-                setTimeout(() => {
-                    console.log(`animation frame ${Date.now() - clockStart}`);
-                    theString.scroll(e.keyCode == 33);
-                    ticking = false;
-                }, 40);
-                ticking = true;
-            }
-            else if (e.keyCode == 36) {
-                theString.render(0);
-                e.preventDefault();
-                e.returnValue = false;
-            }
-        }
-        document.body.onkeydown = handler;
-        //document.body.onkeypress = handler;
+        theString.setEdit();
         if (data.chunkSegmentCount < data.totalSegmentCount) {
-            theString.setEdit();
             theString.continueLoading();
         }
     });
