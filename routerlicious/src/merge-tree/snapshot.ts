@@ -113,8 +113,20 @@ export class Snapshot {
     }
 
     static async loadChunk(services: API.ICollaborationServices, id: string) {
-        let chunk:API.MergeTreeChunk = await services.objectStorageService.read(id+"header");
-        return chunk;
+        let chunkAsString: string = await services.objectStorageService.read(id+"header");
+        if (chunkAsString.length !== 0) {
+            return JSON.parse(chunkAsString) as API.MergeTreeChunk;
+        } else {
+            return {
+                chunkStartSegmentIndex: -1,
+                chunkSegmentCount: -1,
+                chunkLengthChars: -1,
+                totalLengthChars: -1,
+                totalSegmentCount: -1,
+                chunkSequenceNumber: -1,
+                segmentTexts: [],
+            }
+        }
     }
 
     static loadSync(filename: string) {

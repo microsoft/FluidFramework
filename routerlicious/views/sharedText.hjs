@@ -1,0 +1,16 @@
+{{<layout}}
+    {{$styles}}
+        <link href="/public/stylesheets/dist/style.css" rel="stylesheet" />
+    {{/styles}}
+
+    {{$content}}
+    {{/content}}
+
+    {{$scripts}}
+        <script src="/socket.io/socket.io.js"></script>
+        <script src="/public/scripts/dist/sharedText.js"></script>
+        <script>
+            controller.onLoad("{{ id }}");
+        </script>
+    {{/scripts}}
+{{/layout}}

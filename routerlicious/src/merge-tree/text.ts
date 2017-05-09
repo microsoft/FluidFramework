@@ -4,8 +4,12 @@ import * as random from "random-js";
 import * as MergeTree from "./mergeTree";
 import * as fs from "fs";
 
-export function loadText(filename: string, mergeTree: MergeTree.MergeTree, segLimit = 0) {
+export function loadTextFromFile(filename: string, mergeTree: MergeTree.MergeTree, segLimit = 0) {
     let content = fs.readFileSync(filename, "utf8");
+    return loadText(content, mergeTree, segLimit);
+}
+
+export function loadText(content: string, mergeTree: MergeTree.MergeTree, segLimit: number) {
     content = content.replace(/^\uFEFF/, "");
 
     let paragraphs = content.split('\r\n\r\n');

@@ -87,6 +87,10 @@ export function registerDefaultServices(services: ICollaborationServices) {
     defaultServices = services;
 }
 
+export function getDefaultServices(): ICollaborationServices {
+    return defaultServices;
+}
+
 /**
  * Loads a collaborative object from the server
  */

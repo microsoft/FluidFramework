@@ -80,7 +80,7 @@ class Server {
 
     constructor(filename: string) {
         this.server = new MergeTree.TestServer("", "theServer");
-        Text.loadText(filename, this.server.mergeTree);
+        Text.loadTextFromFile(filename, this.server.mergeTree);
         this.proxyClient = new MergeTree.Client("", "proxyClient");
         this.server.addListeners([this.proxyClient]);
         this.snapshot = new Paparazzo.Snapshot(this.server.mergeTree);
@@ -139,7 +139,6 @@ class Server {
             lengthChars += text.length;
         }
         return {
-            clientId: clientId,
             chunkStartSegmentIndex: startIndex,
             chunkSegmentCount: segCount,
             chunkLengthChars: lengthChars,
