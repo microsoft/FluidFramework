@@ -48,6 +48,12 @@ function widthEst(fontInfo: string) {
     w_est = getTextWidth("abcdefghi jklmnopqrstuvwxyz", innerDiv.style.font) / 27;
 }
 
+function heightFromCharCount(sizeChars: number) {
+    let charsPerLine = window.innerWidth / Math.floor(w_est);
+    let charsPerViewport = Math.floor((window.innerHeight / h_est) * charsPerLine);
+    return Math.floor((sizeChars / charsPerViewport) * window.innerHeight);
+}
+
 function render(div: HTMLDivElement, segs: MergeTree.TextSegment[], cp: number,
     totalLengthChars: number) {
     let tryTextWidth = (w_est).toFixed(1);
@@ -102,6 +108,67 @@ function render(div: HTMLDivElement, segs: MergeTree.TextSegment[], cp: number,
     afterDiv();
 }
 
+function renderTree(div: HTMLDivElement, pos: number, client: MergeTree.Client) {
+    div.id = "renderedTree";
+    let tryTextWidth = (w_est).toFixed(1);
+    let w = Math.floor(w_est);
+    let h = h_est;
+    let totalLengthChars = client.getLength();
+    let charsPerLine = window.innerWidth / w;
+    let charsPerViewport = Math.floor((window.innerHeight / h) * charsPerLine);
+    if (pos > 0) {
+        let placeholderDiv = makePlaceholder(pos, charsPerViewport);
+        div.appendChild(placeholderDiv);
+    }
+    let middleDiv = document.createElement("div");
+    div.appendChild(middleDiv);
+    let innerDiv = makeInnerDiv();
+    middleDiv.appendChild(innerDiv);
+    let charLength = 0;
+    function afterDiv() {
+        if ((pos + charsPerViewport) < totalLengthChars) {
+            let afterSize = totalLengthChars - (pos + charsPerViewport);
+            let placeholderDiv = makePlaceholder(afterSize, charsPerViewport);
+            div.appendChild(placeholderDiv);
+        }
+    }
+    function renderSegment(segment: MergeTree.Segment, pos: number, refSeq: number,
+        clientId: number, start: number, end: number) {
+        if (segment.getType() == MergeTree.SegmentType.Text) {
+            let textSegment = <MergeTree.TextSegment>segment;
+            let segText = textSegment.text;
+            let styleAttr = "";
+            let span = <SegSpan>document.createElement("span");
+            if (segText.indexOf("Chapter") >= 0) {
+                span.style.fontSize = "140%";
+                span.style.lineHeight = "150%";
+            }
+            else {
+                segText = segText.replace(/_([a-zA-Z]+)_/g, "<span style='font-style:italic'>$1</span>");
+            }
+            span.innerHTML = segText;
+            span.seg = textSegment;
+            innerDiv.appendChild(span);
+            if (segText.charAt(segText.length - 1) == '\n') {
+                innerDiv = makeInnerDiv();
+                middleDiv.appendChild(innerDiv);
+            }
+            charLength += segText.length;
+
+            if (charLength > charsPerViewport) {
+                console.log(`client h, w ${middleDiv.clientHeight},${middleDiv.clientWidth}`);
+                if (middleDiv.clientHeight > window.innerHeight) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+    client.mergeTree.mapRange({ leaf: renderSegment }, MergeTree.UniversalSequenceNumber,
+        client.getClientId(), undefined, pos);
+    afterDiv();
+}
+
 function ajax_get(url, callback) {
     let xmlhttp = new XMLHttpRequest();
     xmlhttp.onreadystatechange = function () {
@@ -139,8 +206,11 @@ class ClientString {
     timeToLoad: number;
     timeToEdit: number;
     timeToCollab: number;
+    totalHeight: number;
 
     constructor(public client: MergeTree.Client, public totalSegmentCount, public currentSegmentIndex, public totalLengthChars) {
+        this.totalHeight = heightFromCharCount(totalLengthChars);
+        console.log(`total height: ${this.totalHeight}`);
     }
 
     setEdit() {
@@ -152,6 +222,24 @@ class ClientString {
                 console.log(`segment at char offset ${offset}`);
             }
         }
+    }
+
+    prevTopPx = -1;
+    render(topPx: number) {
+        if (topPx==this.prevTopPx) {
+            return;
+        }
+        this.prevTopPx = topPx;
+        console.log(`top pix ${topPx}`);
+        let frac = topPx / this.totalHeight;
+        let pos = Math.floor(frac * this.client.getLength());
+        let oldDiv = document.getElementById("renderedTree");
+        if (oldDiv) {
+            document.body.removeChild(oldDiv);
+        }
+        let div = document.createElement("div");
+        document.body.appendChild(div);
+        renderTree(div, pos, this.client);
     }
 
     continueLoading() {
@@ -170,33 +258,31 @@ class ClientString {
     }
 }
 
-let globScrollY = 0;
 let ticking = false;
+let scrollPos = 0;
 
 export function onLoad() {
     widthEst("18px Times");
     ajax_get("/obj?init=true", (data: Protocol.MergeTreeChunk, text) => {
-        /* document.body.onscroll = () => {
-        
-            globScrollY = window.scrollY;
-            if (!ticking) {
-                window.requestAnimationFrame(()=> {
-                    render()
-                    ticking = false;
-                });
-            }
-            //console.log(`scroll top: ${document.body.scrollTop}`);
-            ticking = true;
-        }*/
         let client = new MergeTree.Client("", data.clientId);
         let segs = textsToSegments(data.segmentTexts);
-        let div = document.createElement("div");
-        document.body.appendChild(div);
-        render(div, segs, 0, data.totalLengthChars);
         client.mergeTree.reloadFromSegments(segs);
         theString = new ClientString(client, data.totalSegmentCount, data.chunkSegmentCount,
             data.totalLengthChars);
+        theString.render(0);
         theString.timeToEdit = theString.timeToImpression = Date.now() - clockStart;
+        document.body.onscroll = () => {
+            scrollPos = document.body.scrollTop;
+            console.log(`scroll Y: ${window.scrollY} tick ${Date.now() - clockStart}`);
+            if (!ticking) {
+                setTimeout(() => {
+                    console.log(`animation frame ${Date.now()-clockStart}`);
+                    theString.render(document.body.scrollTop);
+                    ticking = false;
+                }, 40);
+            }
+            ticking = true;
+        }
         if (data.chunkSegmentCount < data.totalSegmentCount) {
             theString.setEdit();
             theString.continueLoading();
