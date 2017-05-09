@@ -53,16 +53,17 @@ export default class InkCanvas {
 
     // constructor
     constructor(private model: ink.IInk, parent: HTMLElement, private entryTarget: HTMLElement = null) {
-        // TODO this needs to be updated
         this.model.on("op", (op, isLocal) => {
-            // TODO possibly we can just have submitOp send it and use this queue
-            // for processing
             if (isLocal) {
                 return;
             }
 
             // Update the canvas
             this.addAndDrawStroke(op as ink.IDelta, false);
+        });
+
+        this.model.on("load", () => {
+            this.redraw();
         });
 
         // setup canvas

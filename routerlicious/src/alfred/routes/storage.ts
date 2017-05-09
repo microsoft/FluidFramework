@@ -34,7 +34,6 @@ async function getObject(objectId: string, bucket: string): Promise<string> {
             });
 
             stream.on("end", () => {
-                console.log(object);
                 resolve(object);
             });
 

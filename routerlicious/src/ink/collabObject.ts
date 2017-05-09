@@ -97,6 +97,9 @@ export class InkCollaborativeObject extends api.CollaborativeObject implements I
         this.inkSnapshot = Snapshot.Clone(snapshot.snapshot);
         this.sequenceNumber = snapshot.sequenceNumber;
 
+        // Emit the load event so listeners can redraw the new information
+        this.events.emit("load");
+
         this.listenForUpdates();
     }
 
