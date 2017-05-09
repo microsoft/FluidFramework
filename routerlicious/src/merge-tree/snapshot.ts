@@ -1,9 +1,9 @@
+// tslint:disable
+
 import * as Collections from "./collections";
 import * as fs from "fs";
 import * as MergeTree from "./mergeTree";
-import * as API from "../../routerlicious/src/api";
-import * as Paparazzo from "./snapshot";
-import * as Protocol from "../../routerlicious/src/api/protocol";
+import * as API from "../api";
 
 interface SnapshotHeader {
     chunkCount?: number;
@@ -11,10 +11,6 @@ interface SnapshotHeader {
     indexOffset?: number;
     segmentsOffset?: number;
     seq: number;
-}
-
-interface SnapChunkHeader {
-    chunkLengthBytes: number;
 }
 
 // first three are index entry
@@ -58,7 +54,7 @@ export class Snapshot {
         });
     }
 
-    getCharLengthSegs(alltexts: string[], approxCharLength: number, startIndex = 0): Protocol.MergeTreeChunk {
+    getCharLengthSegs(alltexts: string[], approxCharLength: number, startIndex = 0): API.MergeTreeChunk {
         //console.log(`start index ${startIndex}`);
         let texts = <string[]>[];
         let lengthChars = 0;
@@ -117,9 +113,7 @@ export class Snapshot {
     }
 
     static async loadChunk(services: API.ICollaborationServices, id: string) {
-        let segs = <MergeTree.TextSegment[]>[];
-        let expectedBytes = Snapshot.SnapshotHeaderSize;
-        let chunk:Protocol.MergeTreeChunk = await services.objectStorageService.read(id+"header");
+        let chunk:API.MergeTreeChunk = await services.objectStorageService.read(id+"header");
         return chunk;
     }
 
@@ -135,10 +129,10 @@ export class Snapshot {
         let offset = 0;
 
         let chunkCount = buf.readUInt32BE(offset);
-        let segmentsTotalLength = buf.readUInt32BE(offset + 4);
-        let indexOffset = buf.readUInt32BE(offset + 8);
-        let segmentsOffset = buf.readUInt32BE(offset + 12);
-        let seq = buf.readUInt32BE(offset + 16);
+        // let segmentsTotalLength = buf.readUInt32BE(offset + 4);
+        // let indexOffset = buf.readUInt32BE(offset + 8);
+        // let segmentsOffset = buf.readUInt32BE(offset + 12);
+        // let seq = buf.readUInt32BE(offset + 16);
         let position = actualBytes;
 
         buf = new Buffer(Snapshot.SnapChunkMaxSize);

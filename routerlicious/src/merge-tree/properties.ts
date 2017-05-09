@@ -1,3 +1,5 @@
+// tslint:disable
+
 export class Property {
     name: string;
     value: string;
@@ -29,7 +31,7 @@ function createDictionaryObject<T>(): MapLike<T> {
     return map;
 }
 
-function makePropertyDictionary(): PropertyDictionary {
+export function makePropertyDictionary(): PropertyDictionary {
     let properties: Property[] = [];
     let propertyMap:MapLike<Property> = createDictionaryObject<Property>(); 
     function internProperty(name: string, value: string) {

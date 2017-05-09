@@ -1,11 +1,14 @@
+// tslint:disable
+
 import * as MergeTree from "./mergeTree";
 import { EventEmitter } from "events";
 import * as Paparazzo from "./snapshot";
-import * as API from "../../routerlicious/src/api";
-import * as Protocol from "../../routerlicious/src/api/protocol";
+import * as API from "../api";
 
-class CollaboritiveStringExtension implements API.IExtension {
-    type: string;
+export class CollaboritiveStringExtension implements API.IExtension {
+    public static Type = "https://graph.microsoft.com/types/mergeTree";
+
+    public type: string = CollaboritiveStringExtension.Type;
 
     load(id: string, services: API.ICollaborationServices, registry: API.Registry): API.ICollaborativeObject {
         let coString = new CollaborativeString(id);
@@ -32,11 +35,11 @@ function textsToSegments(texts: string[]) {
 
 class CollaborativeString implements API.ICollaborativeObject {
     client: MergeTree.Client;
-    type: string;
+    type: string = CollaboritiveStringExtension.Type;
     services: API.ICollaborationServices;
     connection: API.IDeltaConnection;
     deltaManager: API.DeltaManager;
-    __collaborativeObject__: boolean;
+    __collaborativeObject__: boolean = true;
     initialSeq: number;
     private events = new EventEmitter();
 
@@ -74,7 +77,7 @@ class CollaborativeString implements API.ICollaborativeObject {
         return this;
     }
 
-    private processRemoteOperation(message: Protocol.ISequencedMessage) {
+    private processRemoteOperation(message: API.ISequencedMessage) {
         this.client.applyMsg(message.op); // TODO: change to ISeqMSG
     }
 

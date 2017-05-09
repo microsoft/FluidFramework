@@ -1,5 +1,7 @@
+// tslint:disable
+
 import * as MergeTree from "./mergeTree";
-import * as Protocol from "../../routerlicious/src/api/protocol";
+import { MergeTreeChunk } from "../api";
 
 // first script loaded
 let clockStart = Date.now();
@@ -71,11 +73,11 @@ function render(div: HTMLDivElement, segs: MergeTree.TextSegment[], cp: number,
     div.appendChild(innerDiv);
     let segCount = segs.length;
     let charLength = 0;
-    let halfSegCount = segCount >> 1;
+    // let halfSegCount = segCount >> 1;
     console.log(` window h,w ${window.innerHeight}, ${window.innerWidth}`);
     for (let i = 0; i < segCount; i++) {
         let segText = segs[i].text;
-        let styleAttr = "";
+        // let styleAttr = "";
         let span = <SegSpan>document.createElement("span");
         if (segText.indexOf("Chapter") >= 0) {
             span.style.fontSize = "140%";
@@ -155,7 +157,7 @@ class ClientString {
     }
 
     continueLoading() {
-        ajax_get(`/obj?startSegment=${this.currentSegmentIndex}`, (data: Protocol.MergeTreeChunk, text) => {
+        ajax_get(`/obj?startSegment=${this.currentSegmentIndex}`, (data: MergeTreeChunk, text) => {
             for (let text of data.segmentTexts) {
                 this.client.mergeTree.appendTextSegment(text);
             }
@@ -170,12 +172,12 @@ class ClientString {
     }
 }
 
-let globScrollY = 0;
-let ticking = false;
+// let globScrollY = 0;
+// let ticking = false;
 
 export function onLoad() {
     widthEst("18px Times");
-    ajax_get("/obj?init=true", (data: Protocol.MergeTreeChunk, text) => {
+    ajax_get("/obj?init=true", (data: MergeTreeChunk, text) => {
         /* document.body.onscroll = () => {
         
             globScrollY = window.scrollY;

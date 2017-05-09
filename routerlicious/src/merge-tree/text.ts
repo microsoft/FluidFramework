@@ -1,3 +1,5 @@
+// tslint:disable
+
 import * as random from "random-js";
 import * as MergeTree from "./mergeTree";
 import * as fs from "fs";
@@ -37,12 +39,12 @@ mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
 export function findRandomWord(mergeTree: MergeTree.MergeTree, clientId: number) {
     let len = mergeTree.getLength(MergeTree.UniversalSequenceNumber, clientId);
     let pos = random.integer(0, len)(mt); 
-    let textAtPos = mergeTree.getText(MergeTree.UniversalSequenceNumber, clientId, pos, pos + 10);
-    //console.log(textAtPos);
+    // let textAtPos = mergeTree.getText(MergeTree.UniversalSequenceNumber, clientId, pos, pos + 10);
+    // console.log(textAtPos);
     let nextWord = mergeTree.searchFromPos(pos, /\s\w+\b/);
     if (nextWord) {
         nextWord.pos += pos;
-//        console.log(`next word is '${nextWord.text}' len ${nextWord.text.length} at pos ${nextWord.pos}`);
+        // console.log(`next word is '${nextWord.text}' len ${nextWord.text.length} at pos ${nextWord.pos}`);
     }
     return nextWord;
 }

@@ -1,3 +1,7 @@
+// tslint:disable
+
+import * as Base from "./base";
+
 export class Stack<T> {
   items: T[] = [];
   push(val: T) {
@@ -177,7 +181,7 @@ export interface Comparer<T> {
     min: T;
 }
 
-var numberComparer: Comparer<number> = {
+export var numberComparer: Comparer<number> = {
     min: Number.MIN_VALUE,
     compare: (a, b) => a - b,
 }

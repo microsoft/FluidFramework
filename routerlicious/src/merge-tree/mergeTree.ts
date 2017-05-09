@@ -1,5 +1,8 @@
+// tslint:disable
+
+import * as Base from "./base";
 import * as Collections from "./collections";
-import * as Protocol from "../../routerlicious/src/api/protocol";
+import * as api from "../api";
 
 export interface Node {
     parent: Block;
@@ -964,7 +967,7 @@ function elapsedMicroseconds(start: [number, number]) {
 export const useCheckQ = false;
 
 function checkTextMatchRelative(refSeq: number, clientId: number, server: TestServer,
-    msg: Protocol.IDeltaMessage) {
+    msg: api.IDeltaMessage) {
     let client = server.clients[clientId];
     let serverText = server.mergeTree.getText(refSeq, clientId);
     let cliText = client.checkQ.dequeue();
@@ -1002,7 +1005,7 @@ export class Client {
     accumOps = 0;
     verboseOps = false;
     measureOps = true;
-    q: Collections.List<Protocol.IDeltaMessage>;
+    q: Collections.List<api.IDeltaMessage>;
     checkQ: Collections.List<string>;
     clientSequenceNumber = 1;
     clientNameToId = new Collections.RedBlackTree<string, number>(compareStrings);
@@ -1011,7 +1014,7 @@ export class Client {
     constructor(initText: string, public longClientId: string) {
         this.mergeTree = new MergeTree(initText);
         this.mergeTree.getLongClientId = id => this.getLongClientId(id);
-        this.q = Collections.ListMakeHead<Protocol.IDeltaMessage>();
+        this.q = Collections.ListMakeHead<api.IDeltaMessage>();
         this.checkQ = Collections.ListMakeHead<string>();
         this.addLongClientId(longClientId);
     }
@@ -1042,32 +1045,32 @@ export class Client {
     }
 
     makeInsertMsg(text: string, pos: number, seq: number, refSeq: number, objectId: string) {
-        return <Protocol.IDeltaMessage>{
+        return <api.IDeltaMessage>{
             clientId: this.longClientId,
             sequenceNumber: seq,
             referenceSequenceNumber: refSeq,
             objectId: objectId,
             clientSequenceNumber: this.clientSequenceNumber,
             op: {
-                type: Protocol.MergeTreeMsgType.INSERT, text: text, pos1: pos
+                type: api.MergeTreeMsgType.INSERT, text: text, pos1: pos
             }
         };
     }
 
     makeRemoveMsg(start: number, end: number, seq: number, refSeq: number, objectId: string) {
-        return <Protocol.IDeltaMessage>{
+        return <api.IDeltaMessage>{
             clientId: this.longClientId,
             sequenceNumber: seq,
             referenceSequenceNumber: refSeq,
             objectId: objectId,
             clientSequenceNumber: this.clientSequenceNumber,
             op: {
-                type: Protocol.MergeTreeMsgType.REMOVE, pos1: start, pos2: end
+                type: api.MergeTreeMsgType.REMOVE, pos1: start, pos2: end
             }
         };
     }
 
-    enqueueMsg(msg: Protocol.IDeltaMessage) {
+    enqueueMsg(msg: api.IDeltaMessage) {
         this.q.enqueue(msg);
     }
 
@@ -1075,22 +1078,22 @@ export class Client {
         this.checkQ.enqueue(this.getText());
     }
 
-    coreApplyMsg(msg: Protocol.IDeltaMessage) {
-        let op = <Protocol.IMergeTreeDeltaMsg>msg.op;
+    coreApplyMsg(msg: api.IDeltaMessage) {
+        let op = <api.IMergeTreeDeltaMsg>msg.op;
         let clid = this.getOrAddShortClientId(msg.clientId);
         switch (op.type) {
-            case Protocol.MergeTreeMsgType.INSERT:
+            case api.MergeTreeMsgType.INSERT:
                 this.insertSegmentRemote(op.text, op.pos1, msg.sequenceNumber, msg.referenceSequenceNumber,
                     clid);
                 break;
-            case Protocol.MergeTreeMsgType.REMOVE:
+            case api.MergeTreeMsgType.REMOVE:
                 this.removeSegmentRemote(op.pos1, op.pos2, msg.sequenceNumber, msg.referenceSequenceNumber,
                     clid);
                 break;
         }
     }
 
-    applyMsg(msg: Protocol.IDeltaMessage) {
+    applyMsg(msg: api.IDeltaMessage) {
         if ((msg !== undefined) && (msg.minimumSequenceNumber > this.mergeTree.getCollabWindow().minSeq)) {
             this.updateMinSeq(msg.minimumSequenceNumber);
         }
@@ -1178,7 +1181,6 @@ export class Client {
     }
 
     insertSegmentRemote(text: string, pos: number, seq: number, refSeq: number, clientId: number) {
-        let segWindow = this.mergeTree.getCollabWindow();
         let clockStart;
         if (this.measureOps) {
             clockStart = clock();
@@ -1296,7 +1298,7 @@ export class TestServer extends Client {
         this.listeners = listeners;
     }
 
-    applyMsg(msg: Protocol.IDeltaMessage) {
+    applyMsg(msg: api.IDeltaMessage) {
         this.coreApplyMsg(msg);
         if (useCheckQ) {
             let clid = this.getShortClientId(msg.clientId);

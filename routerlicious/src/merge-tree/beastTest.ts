@@ -1,13 +1,16 @@
+// tslint:disable
+
 import * as fs from "fs";
 import * as Collections from "./collections";
 import * as random from "random-js";
 import * as MergeTree from "./mergeTree";
+import * as Base from "./base";
 import * as Text from "./text";
 import * as JsDiff from "diff";
 import * as Paparazzo from "./snapshot";
 import * as express from "express";
 import * as path from "path";
-import * as Protocol from "../../routerlicious/src/api/protocol";
+import { MergeTreeChunk } from "../api";
 
 function compareStrings(a: string, b: string) {
     return a.localeCompare(b);
@@ -27,7 +30,7 @@ function printStringNumProperty(p: Base.Property<string, number>) {
     return true;
 }
 
-function simpleTest() {
+export function simpleTest() {
     let a = [
         "Aardvark", "cute",
         "Baboon", "big",
@@ -51,7 +54,7 @@ function clock() {
 }
 
 function took(desc: string, start: [number, number]) {
-    let end: number[] = process.hrtime(start);
+    // let end: number[] = process.hrtime(start);
     let duration = elapsedMilliseconds(start);
     console.log(`${desc} took ${duration} ms`);
     return duration;
@@ -114,7 +117,7 @@ class Server {
     }
 
     snapToHTML(lengthLimit?: number) {
-        let segTexts = this.snapshot.texts;
+        // let segTexts = this.snapshot.texts;
         let buf = "<!DOCTYPE html><html><head>";
         buf += "<script src='static/bro.js'></script><script src='static/driver.js'></script>";
         buf += "</head><body onload='eff()'>";
@@ -124,7 +127,7 @@ class Server {
     }
 
     getCharLengthSegs(alltexts: string[], approxCharLength: number, clientId: string,
-        startIndex = 0): Protocol.MergeTreeChunk {
+        startIndex = 0): MergeTreeChunk {
         //console.log(`start index ${startIndex}`);
         let texts = <string[]>[];
         let lengthChars = 0;
@@ -169,7 +172,7 @@ class Server {
     }
 }
 
-function integerTest1() {
+export function integerTest1() {
     let mt = random.engines.mt19937();
     mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
     const imin = 0;
@@ -206,7 +209,7 @@ function integerTest1() {
     start = clock();
     for (let j = 0, len = pos.length; j < len; j++) {
         let cp = pos[j];
-        let prop = beast.get(cp);
+        /* let prop = */ beast.get(cp);
     }
     let getdur = took("get all keys", start);
     console.log(`cost per get is ${(1000.0 * getdur / intCount).toFixed(3)} us`);
@@ -214,7 +217,7 @@ function integerTest1() {
     console.log(`duplicates ${conflictCount}, errors ${errorCount}`);
 }
 
-function fileTest1() {
+export function fileTest1() {
     let content = fs.readFileSync("pizzaingredients.txt", "utf8");
     let a = content.split('\n');
     let iterCount = a.length >> 2;
@@ -270,7 +273,7 @@ function printTextSegment(textSegment: MergeTree.TextSegment, pos: number) {
     return true;
 }
 
-function makeTextSegment(text: string): MergeTree.Node {
+export function makeTextSegment(text: string): MergeTree.Node {
     return new MergeTree.TextSegment(text);
 }
 
@@ -333,7 +336,7 @@ function checkMarkRemoveMergeTree(mergeTree: MergeTree.MergeTree, start: number,
     return result;
 }
 
-function mergeTreeTest1() {
+export function mergeTreeTest1() {
     let mergeTree = new MergeTree.MergeTree("the cat is on the mat");
     mergeTree.map({ leaf: printTextSegment }, MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
     let fuzzySeg = makeCollabTextSegment("fuzzy, fuzzy ");
@@ -351,7 +354,7 @@ function mergeTreeTest1() {
     TestPack().firstTest();
 }
 
-function mergeTreeLargeTest() {
+export function mergeTreeLargeTest() {
     let mergeTree = new MergeTree.MergeTree("the cat is on the mat");
     const insertCount = 1000000;
     const removeCount = 980000;
@@ -413,7 +416,7 @@ function mergeTreeLargeTest() {
     }
 }
 
-function mergeTreeCheckedTest() {
+export function mergeTreeCheckedTest() {
     let segTree = new MergeTree.MergeTree("the cat is on the mat");
     const insertCount = 10000;
     const removeCount = 7000;
@@ -884,14 +887,14 @@ export function TestPack() {
             }
         }
 
-        function asyncRound(roundCount: number) {
-            let asyncInfo = <AsyncRoundInfo>{
-                clientIndex: 0,
-                iterIndex: 0,
-                state: AsyncRoundState.Insert
-            }
-            setImmediate(asyncRoundStep, asyncInfo, roundCount);
-        }
+        // function asyncRound(roundCount: number) {
+        //     let asyncInfo = <AsyncRoundInfo>{
+        //         clientIndex: 0,
+        //         iterIndex: 0,
+        //         state: AsyncRoundState.Insert
+        //     }
+        //     setImmediate(asyncRoundStep, asyncInfo, roundCount);
+        // }
 
         let extractSnapTime = 0;
         let extractSnapOps = 0;
@@ -906,7 +909,7 @@ export function TestPack() {
 
             if (extractSnap) {
                 let clockStart = clock();
-                let texts = new Paparazzo.Snapshot(snapClient.mergeTree).extractSync();
+                /* let texts = */ new Paparazzo.Snapshot(snapClient.mergeTree).extractSync();
                 extractSnapTime += elapsedMicroseconds(clockStart);
                 extractSnapOps++;
             }
