@@ -65,7 +65,7 @@ export interface IDeltaNotificationService {
      * Connects to the given object ID to send and receive Delta updates. If the object doesn't exist this call
      * will also create it.
      */
-    connect(id: string): Promise<IDeltaConnection>;
+    connect(id: string, type: string): Promise<IDeltaConnection>;
 }
 
 export interface ICollaborationServices {

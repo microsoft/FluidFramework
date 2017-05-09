@@ -1,5 +1,6 @@
 import * as kafka from "kafka-node";
 import * as _ from "lodash";
+import { MongoClient } from "mongodb";
 import * as moniker from "moniker";
 import * as nconf from "nconf";
 import * as redis from "redis";
@@ -55,6 +56,29 @@ let pub = redis.createClient(port, host, pubOptions);
 let sub = redis.createClient(port, host, subOptions);
 io.adapter(socketIoRedis({ pubClient: pub, subClient: sub }));
 
+// Connection to stored document details
+const mongoUrl = nconf.get("mongo:endpoint");
+const client = MongoClient.connect(mongoUrl);
+const objectsCollectionName = nconf.get("mongo:collectionNames:objects");
+const objectsCollectionP = client.then((db) => db.collection(objectsCollectionName));
+
+async function getOrCreateObject(id: string, type: string): Promise<boolean> {
+    const collection = await objectsCollectionP;
+    const dbObjectP = collection.findOne({ _id: id });
+    return dbObjectP.then(
+        (dbObject) => {
+            if (dbObject) {
+                if (dbObject.type !== type) {
+                    throw new Error("Mismatched shared types");
+                }
+
+                return true;
+            } else {
+                return collection.insertOne({ _id: id, type }).then(() => false);
+            }
+        });
+}
+
 io.on("connection", (socket) => {
     const clientId = moniker.choose();
     const connectionsMap: { [id: string]: boolean } = {};
@@ -69,19 +93,29 @@ io.on("connection", (socket) => {
     socket.on("connectObject", (message: socketStorage.IConnect, response) => {
         // Join the room first to ensure the client will start receiving delta updates
         console.log(`Client has requested to load ${message.objectId}`);
-        socket.join(message.objectId, (joinError) => {
-            if (joinError) {
-                return response(joinError, null);
-            }
 
-            connectionsMap[message.objectId] = true;
-            const connectedMessage: socketStorage.IConnected = {
-                clientId,
-                // TODO distinguish new vs existing objects
-                existing: true,
-            };
-            response(null, connectedMessage);
-        });
+        const existingP = getOrCreateObject(message.objectId, message.type);
+        existingP.then(
+            (existing) => {
+                socket.join(message.objectId, (joinError) => {
+                    if (joinError) {
+                        return response(joinError, null);
+                    }
+
+                    console.log(`Existing object ${existing}`);
+                    connectionsMap[message.objectId] = true;
+                    const connectedMessage: socketStorage.IConnected = {
+                        clientId,
+                        existing,
+                    };
+                    response(null, connectedMessage);
+                });
+            },
+            (error) => {
+                console.error("Error fetching");
+                console.error(error);
+                response(error, null);
+            });
     });
 
     // Message sent when a new operation is submitted to the router

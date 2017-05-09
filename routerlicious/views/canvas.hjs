@@ -1,0 +1,44 @@
+{{<layout}}
+    {{$styles}}
+        <link href="/public/stylesheets/dist/style.css" rel="stylesheet" />
+    {{/styles}}
+
+    {{$content}}
+        <!-- Application Window -->
+        <div id="content">
+                <div id="hitPlane" aria-label="Ink canvas" role="img">
+                </div>
+        </div>
+
+        <!-- Toolbar -->
+        <div id="ToolBar">
+
+            <!-- Buttons -->
+            {{!--<button id="undoButton" value="undo">Undo</button>
+            <button id="redoButton" value="redo">Redo</button>
+            <button id="testButton">Reco</button>
+            <button id="turnOnInk">ink</button>--}}
+            <!-- Color Menu -->
+            <div class="toolbarDiv">
+                <button class="menuButton" id="strokeButton" value="clear">Stroke</button>
+                <select class="menuItems" size="5" id="strokeColors" multiple>
+                        <option style="background-color:black" value="Black">Black</option>
+                        <option style="background-color:blue" value="Blue">Blue</option>
+                        <option style="background-color:red" value="Red">Red</option>
+                        <option style="background-color:green" value="Green">Green</option>
+                        <option style="background-color:white; color:black" value="#00000000">Erase</option>
+                </select>
+            </div>
+            <button id="clearButton" value="clear">Clear</button>
+            <button id="replay">Replay</button>
+        </div>
+    {{/content}}
+
+    {{$scripts}}
+        <script src="/socket.io/socket.io.js"></script>
+        <script src="/public/scripts/dist/canvas.js"></script>
+        <script>
+            controller.initialize("{{id}}");
+        </script>
+    {{/scripts}}
+{{/layout}}

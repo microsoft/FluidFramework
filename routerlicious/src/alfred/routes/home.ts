@@ -10,14 +10,15 @@ const defaultPartials = {
  * Route to retrieve the home page for the app
  */
 router.get("/", (request, response, next) => {
-    renderDocument("test", response);
+    response.render("home", { partials: defaultPartials, title: "Routerlicious" });
 });
 
 /**
  * Allow loading of a specific document
  */
-router.get("/:id", (request, response, next) => {
-    renderDocument(request.params.id, response);
+router.get("/maps/:id?", (request, response, next) => {
+    const id = request.params.id ? request.params.id : "test";
+    renderDocument(id, response);
 });
 
 function renderDocument(id: string, response: express.Response) {
