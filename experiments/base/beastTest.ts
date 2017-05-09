@@ -7,6 +7,7 @@ import * as JsDiff from "diff";
 import * as Paparazzo from "./snapshot";
 import * as express from "express";
 import * as path from "path";
+import * as Protocol from "../../routerlicious/src/api/protocol";
 
 function compareStrings(a: string, b: string) {
     return a.localeCompare(b);
@@ -117,29 +118,32 @@ class Server {
         let buf = "<!DOCTYPE html><html><head>";
         buf += "<script src='static/bro.js'></script><script src='static/driver.js'></script>";
         buf += "</head><body onload='eff()' style='overflow:hidden'>";
-        buf += this.segsToHTML(segTexts, lengthLimit);
+        //buf += this.segsToHTML(segTexts, lengthLimit);
         buf += "</body></html>";
         return buf;
     }
 
-    getCharLengthSegs(alltexts: string[], approxCharLength: number, startIndex= 0) {
+    getCharLengthSegs(alltexts: string[], approxCharLength: number, clientId: string,
+        startIndex = 0): Protocol.MergeTreeChunk {
         //console.log(`start index ${startIndex}`);
         let texts = <string[]>[];
         let lengthChars = 0;
         let segCount = 0;
-        while ((lengthChars < approxCharLength) && ((startIndex+segCount)<alltexts.length)) {
-            let text = alltexts[startIndex+segCount];
+        while ((lengthChars < approxCharLength) && ((startIndex + segCount) < alltexts.length)) {
+            let text = alltexts[startIndex + segCount];
             segCount++;
             texts.push(text);
             lengthChars += text.length;
         }
         return {
-            startIndex: startIndex,
-            segCount: segCount,
-            lengthChars: lengthChars,
+            clientId: clientId,
+            chunkStartSegmentIndex: startIndex,
+            chunkSegmentCount: segCount,
+            chunkLengthChars: lengthChars,
             totalLengthChars: this.snapshot.header.segmentsTotalLength,
-            seq: this.snapshot.header.seq,
-            texts: texts
+            totalSegmentCount: alltexts.length,
+            chunkSequenceNumber: this.snapshot.header.seq,
+            segmentTexts: texts
         }
     }
 
@@ -148,12 +152,12 @@ class Server {
         app.use("/static", express.static(path.join(__dirname, "/public")));
 
         app.get("/obj", (req, res) => {
-             if (req.query.init) {
-                 res.json(this.getCharLengthSegs(this.snapshot.texts, 10000, 0));
-             }
-             else {
-                 res.json(this.getCharLengthSegs(this.snapshot.texts, 10000, +req.query.startSegment)); 
-             }
+            if (req.query.init) {
+                res.json(this.getCharLengthSegs(this.snapshot.texts, 10000, "FurryFox", 0));
+            }
+            else {
+                res.json(this.getCharLengthSegs(this.snapshot.texts, 10000, "FurryFox", +req.query.startSegment));
+            }
         });
 
         app.get("/", (req, res) => {
@@ -285,7 +289,7 @@ function checkInsertMergeTree(mergeTree: MergeTree.MergeTree, pos: number, textS
     let checkText = mergeTree.getText(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
     checkText = editFlat(checkText, pos, 0, textSegment.text);
     let clockStart = clock();
-    mergeTree.insertInterval(pos, MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId, MergeTree.UniversalSequenceNumber,
+    mergeTree.insertText(pos, MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId, MergeTree.UniversalSequenceNumber,
         textSegment.text);
     accumTime += elapsedMicroseconds(clockStart);
     let updatedText = mergeTree.getText(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
@@ -375,7 +379,7 @@ function mergeTreeLargeTest() {
         let preLen = mergeTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
         let pos = random.integer(0, preLen)(mt);
         let clockStart = clock();
-        mergeTree.insertInterval(pos, MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId, MergeTree.UniversalSequenceNumber,
+        mergeTree.insertText(pos, MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId, MergeTree.UniversalSequenceNumber,
             s);
         accumTime += elapsedMicroseconds(clockStart);
         if ((i > 0) && (0 == (i % 50000))) {
@@ -1313,7 +1317,7 @@ export function TestPack() {
 //mergeTreeTest1();
 //mergeTreeLargeTest();
 //mergeTreeCheckedTest();
-let testPack = TestPack();
+//let testPack = TestPack();
 //testPack.randolicious();
 //testPack.clientServer("pp.txt");
 //testPack.firstTest();

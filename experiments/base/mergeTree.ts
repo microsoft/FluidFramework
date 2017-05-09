@@ -152,7 +152,7 @@ export class Marker extends BaseSegment {
         super(seq, clientId);
         this.cachedLength = 0;
     }
-    
+
     append(segment: Segment): Segment {
         throw new Error('Can not append to external segment');
     }
@@ -168,16 +168,68 @@ export class Marker extends BaseSegment {
     }
 }
 
+/**
+ * A non-collaborative placeholder for external content.
+ */
 export class ExternalSegment extends BaseSegment {
+    constructor(public placeholderSeq, public charLength: number, public lengthBytes: number,
+        public binPosition: number) {
+        super();
+    }
+
+    mergeTreeInsert(mergeTree: MergeTree, pos: number, refSeq: number, clientId: number, seq: number) {
+        let segIsLocal = false;
+        let checkSegmentIsLocal = (segment: Segment, pos: number, refSeq: number, clientId: number) => {
+            if (segment.seq == UnassignedSequenceNumber) {
+                if (MergeTree.diagInsertTie) {
+                    console.log(`@cli ${glc(mergeTree, mergeTree.collabWindow.clientId)}: promoting continue due to seq ${segment.seq} text ${segment.toString()} ref ${refSeq}`);
+                }
+                segIsLocal = true;
+            }
+            // only need to look at first segment that follows finished node
+            return false;
+        }
+
+        let continueFrom = (block: Block) => {
+            segIsLocal = false;
+            mergeTree.excursion(block, checkSegmentIsLocal);
+            if (MergeTree.diagInsertTie && segIsLocal) {
+                console.log(`@cli ${glc(mergeTree, mergeTree.collabWindow.clientId)}: attempting continue with ext seq ${seq} ref ${refSeq}`);
+            }
+            return segIsLocal;
+        }
+
+        let onLeaf = (segment: Segment, pos: number) => {
+            let segmentChanges = <SegmentChanges>{};
+            if (segment) {
+                segmentChanges.replaceCurrent = this;
+                segmentChanges.next = segment;
+            }
+            else {
+                segmentChanges.next = this;
+            }
+            return segmentChanges;
+        }
+
+        mergeTree.insert(pos, refSeq, clientId, seq, this,
+            (block, pos, refSeq, clientId, seq, eseg: ExternalSegment) => {
+                return mergeTree.insertingWalk(block, pos, refSeq, clientId, seq, onLeaf, continueFrom);
+            }
+        );
+    }
+
     append(segment: Segment): Segment {
         throw new Error('Can not append to external segment');
     }
+
     getType(): SegmentType {
         return SegmentType.External;
     }
+
     removeRange(start: number, end: number): boolean {
         throw new Error('Method not implemented.');
     }
+
     splitAt(pos: number): Segment {
         throw new Error('Method not implemented.');
     }
@@ -1114,7 +1166,7 @@ export class Client {
             clockStart = clock();
         }
 
-        this.mergeTree.insertInterval(pos, refSeq, clientId, seq, text);
+        this.mergeTree.insertText(pos, refSeq, clientId, seq, text);
 
         if (this.measureOps) {
             this.localTime += elapsedMicroseconds(clockStart);
@@ -1132,7 +1184,7 @@ export class Client {
             clockStart = clock();
         }
 
-        this.mergeTree.insertInterval(pos, refSeq, clientId, seq, text);
+        this.mergeTree.insertText(pos, refSeq, clientId, seq, text);
         this.mergeTree.getCollabWindow().currentSeq = seq;
 
         if (this.measureOps) {
@@ -1369,7 +1421,7 @@ export class MergeTree {
 
     reloadFromSegments(segments: Segment[]) {
         let segCap = MergeTree.MaxNodesInBlock - 1;
-        const measureReloadTime = true;
+        const measureReloadTime = false;
         let buildMergeTree: (nodes: Node[]) => Block = (nodes: Segment[]) => {
             const nodeCount = Math.ceil(nodes.length / segCap);
             const blocks: Block[] = [];
@@ -1886,22 +1938,28 @@ export class MergeTree {
     // assumes not collaborating for now
     appendTextSegment(text: string) {
         let pos = this.root.cachedLength;
-        this.insertInterval(pos, UniversalSequenceNumber, LocalClientId, UniversalSequenceNumber, text);
+        this.insertText(pos, UniversalSequenceNumber, LocalClientId, UniversalSequenceNumber, text);
     }
 
-    insertInterval(pos: number, refSeq: number, clientId: number, seq: number, text: string) {
+    insert<T>(pos: number, refSeq: number, clientId: number, seq: number, segData: T,
+        traverse: (block: Block, pos: number, refSeq: number, clientId: number, seq: number, segData: T) => Block) {
         this.ensureIntervalBoundary(pos, refSeq, clientId);
         //traceTraversal = true;
-        let splitNode = this.nodeInsertText(this.root, pos, refSeq, seq, clientId, text);
+        let splitNode = traverse(this.root, pos, refSeq, clientId, seq, segData);
         //traceTraversal = false;
         this.updateRoot(splitNode, refSeq, clientId, seq);
+    }
+
+    insertText(pos: number, refSeq: number, clientId: number, seq: number, text: string) {
+        this.insert(pos, refSeq, clientId, seq, text, (block, pos, refSeq, clientId, seq, text) =>
+            this.nodeInsertText(this.root, pos, refSeq, clientId, seq, text));
         if (this.collabWindow.collaborating && MergeTree.options.zamboniSegments &&
             (seq != UnassignedSequenceNumber)) {
             this.zamboniSegments();
         }
     }
 
-    nodeInsertText(node: Block, pos: number, refSeq: number, seq: number, clientId: number, text: string) {
+    nodeInsertText(node: Block, pos: number, refSeq: number, clientId: number, seq: number, text: string) {
         let segIsLocal = false;
         let checkSegmentIsLocal = (segment: Segment, pos: number, refSeq: number, clientId: number) => {
             if (segment.seq == UnassignedSequenceNumber) {
@@ -2099,7 +2157,6 @@ export class MergeTree {
         }
         if (!newNode) {
             if (pos == 0) {
-                // TODO: look ahead to see if we should shift next segment
                 if ((seq != UnassignedSequenceNumber) && continuePredicate && continuePredicate(block)) {
                     return MergeTree.theUnfinishedNode;
                 }
