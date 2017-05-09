@@ -4,6 +4,9 @@
 export interface IConnect {
     // The collaborative object the operation is intended for
     objectId: string;
+
+    // The type of the collaborative object
+    type: string;
 }
 
 /**

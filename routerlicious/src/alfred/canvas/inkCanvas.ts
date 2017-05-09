@@ -51,20 +51,19 @@ export default class InkCanvas {
     private currentPen: ink.IPen;
     private lastLayerRenderOp: { [key: string]: number } = {};
 
-    private model = new ink.Snapshot();
-
     // constructor
-    constructor(parent: HTMLElement, private entryTarget: HTMLElement = null) {
-        // this.model.on("op", (op, source) => {
-        //     // TODO possibly we can just have submitOp send it and use this queue
-        //     // for processing
-        //     if (source === this) {
-        //         return;
-        //     }
+    constructor(private model: ink.IInk, parent: HTMLElement, private entryTarget: HTMLElement = null) {
+        // TODO this needs to be updated
+        this.model.on("op", (op, isLocal) => {
+            // TODO possibly we can just have submitOp send it and use this queue
+            // for processing
+            if (isLocal) {
+                return;
+            }
 
-        //     // Update the canvas
-        //     this.addAndDrawStroke(op as ink.IDelta, false);
-        // });
+            // Update the canvas
+            this.addAndDrawStroke(op as ink.IDelta, false);
+        });
 
         // setup canvas
         this.canvasWrapper = document.createElement("div");
@@ -156,12 +155,12 @@ export default class InkCanvas {
     public replay() {
         this.clearCanvas();
 
-        if (this.model.layers.length > 0) {
-            // Time of the first operation in layer 0 is our starting time
-            let startTime = this.model.layers[0].operations[0].time;
-            for (let layer of this.model.layers) {
-                this.animateLayer(layer, 0, startTime);
-            }
+        const layers = this.model.getLayers();
+
+        // Time of the first operation in layer 0 is our starting time
+        let startTime = layers[0].operations[0].time;
+        for (let layer of layers) {
+            this.animateLayer(layer, 0, startTime);
         }
     }
 
@@ -266,7 +265,8 @@ export default class InkCanvas {
     private redraw() {
         this.clearCanvas();
 
-        for (let layer of this.model.layers) {
+        const layers = this.model.getLayers();
+        for (let layer of layers) {
             let previous: ink.IOperation = layer.operations[0];
             for (let operation of layer.operations) {
                 this.drawStroke(layer, operation, previous);
@@ -327,10 +327,9 @@ export default class InkCanvas {
     }
 
     private addAndDrawStroke(delta: ink.IDelta, submit: boolean) {
-        // if (submit) {
-        //     this.model.submitOp(delta, { source: this });
-        // }
-        this.model.apply(delta);
+        if (submit) {
+            this.model.submitOp(delta);
+        }
 
         let dirtyLayers: { [key: string]: any } = {};
         for (let operation of delta.operations) {
@@ -351,7 +350,7 @@ export default class InkCanvas {
         for (let id in dirtyLayers) {
             let index = this.lastLayerRenderOp[id] || 0;
 
-            let layer = this.model.layers[this.model.layerIndex[id]];
+            const layer = this.model.getLayer(id);
             for (; index < layer.operations.length; index++) {
                 // render the stroke
                 this.drawStroke(layer, layer.operations[index], layer.operations[Math.max(0, index - 1)]);

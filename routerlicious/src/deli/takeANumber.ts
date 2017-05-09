@@ -53,28 +53,24 @@ export class TakeANumber {
         const dbObjectP = this.collection.findOne({ _id: this.objectId });
         dbObjectP.then(
             (dbObject) => {
-                if (dbObject) {
-                    console.log(`Existing object ${this.objectId}@${dbObject.sequenceNumber}`);
-                } else {
-                    console.log(`New object`);
+                if (!dbObject) {
+                    throw new Error("Object does not exist");
                 }
 
-                if (dbObject) {
-                    if (dbObject.clients) {
-                        for (const client of dbObject.clients) {
-                            this.upsertClient(
-                                client.clientId,
-                                client.clientSequenceNumber,
-                                client.referenceSequenceNumber,
-                                client.lastUpdate);
-                        }
+                // The object exists but we may have yet to update the deli related fields
+
+                if (dbObject.clients) {
+                    for (const client of dbObject.clients) {
+                        this.upsertClient(
+                            client.clientId,
+                            client.clientSequenceNumber,
+                            client.referenceSequenceNumber,
+                            client.lastUpdate);
                     }
-                    this.sequenceNumber = dbObject.sequenceNumber;
-                    this.offset = dbObject.offset;
-                } else {
-                    this.sequenceNumber = StartingSequenceNumber;
-                    this.offset = undefined;
                 }
+
+                this.sequenceNumber = dbObject.sequenceNumber ? dbObject.sequenceNumber : StartingSequenceNumber;
+                this.offset = dbObject.offset ? dbObject.offset : undefined;
 
                 this.resolvePending();
             },

@@ -19,7 +19,7 @@ export interface ISnapshot {
 }
 
 export class Snapshot implements ISnapshot {
-    public static Clone(snapshot: Snapshot) {
+    public static Clone(snapshot: ISnapshot) {
         return new Snapshot(snapshot.layers, snapshot.layerIndex);
     }
 

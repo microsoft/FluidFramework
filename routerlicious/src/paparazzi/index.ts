@@ -1,16 +1,20 @@
 import * as amqp from "amqplib";
 import * as minio from "minio";
+import { MongoClient } from "mongodb";
 import * as nconf from "nconf";
 import * as path from "path";
 import * as api from "../api";
 import * as socketStorage from "../socket-storage";
 import { ObjectStorageService } from "./objectStorageService";
 
-// TODO when we have embedded documents either we will run the whole update algorithm here
-//      or will allow someone to configure the API to ignore dependent objects
-
 // Setup the configuration system - pull arguments, then environment variables
 nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
+
+// Connection to stored document details
+const mongoUrl = nconf.get("mongo:endpoint");
+const client = MongoClient.connect(mongoUrl);
+const objectsCollectionName = nconf.get("mongo:collectionNames:objects");
+const objectsCollectionP = client.then((db) => db.collection(objectsCollectionName));
 
 // Queue configuration
 const queueName = nconf.get("tmz:queue");
@@ -69,15 +73,16 @@ async function getOrCreateBucket(bucket: string) {
     }
 }
 
-async function loadDocument(id: string): Promise<api.Document> {
+async function loadDocument(id: string): Promise<api.ICollaborativeObject> {
     console.log(`Loading in root document for ${id}...`);
-    const document = await api.load(
-        id,
-        api.defaultRegistry,
-        services);
+    const collection = await objectsCollectionP;
+    const dbObject = await collection.findOne({ _id: id });
 
-    console.log("Document loaded");
-    return document;
+    const extension = api.defaultRegistry.getExtension(dbObject.type);
+    const sharedObject = extension.load(id, services, api.defaultRegistry);
+
+    console.log("Shared object loaded");
+    return sharedObject;
 }
 
 const pendingSerializeMap: { [key: string]: boolean } = {};
@@ -86,7 +91,7 @@ const dirtyMap: { [key: string]: boolean } = {};
 /**
  * Serializes the document to blob storage and then marks the latest version in mongodb
  */
-function serialize(root: api.IMap) {
+function serialize(root: api.ICollaborativeObject) {
     if (pendingSerializeMap[root.id]) {
         dirtyMap[root.id] = true;
         return;
@@ -116,12 +121,18 @@ function serialize(root: api.IMap) {
 }
 
 function handleDocument(id: string) {
+    // don't use the document here - just load directly
+
     loadDocument(id).then((doc) => {
-        const root = doc.getRoot();
+        // TODO need a generic way to know that the object has 'changed'
 
         // Display the initial values and then listen for updates
-        root.on("valueChanged", () => {
-            serialize(root);
+        doc.on("valueChanged", () => {
+            serialize(doc);
+        });
+
+        doc.on("op", () => {
+            serialize(doc);
         });
     },
     (error) => {

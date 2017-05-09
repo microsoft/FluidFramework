@@ -1,4 +1,5 @@
 // The main app code
+import * as ink from "../../ink";
 import InkCanvas from "./inkCanvas";
 import StickyNote from "./stickyNote";
 import * as utils from "./utils";
@@ -14,7 +15,7 @@ export class Canvas {
     // Map indicating whether or not we have processed a given object
     // private canvasObjects: {[key: string]: any } = {};
 
-    constructor() {
+    constructor(model: ink.IInk) {
         // register all of the different handlers
         let p = document.getElementById("hitPlane");
 
@@ -28,7 +29,7 @@ export class Canvas {
         //     this.refreshCanvasObjects();
         // });
 
-        this.ink = new InkCanvas(p);
+        this.ink = new InkCanvas(model, p);
 
         window.addEventListener("keydown", (evt) => this.keyPress(evt), false);
         window.addEventListener("keyup", (evt) => this.keyRelease(evt), false);

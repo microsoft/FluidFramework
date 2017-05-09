@@ -9,3 +9,7 @@ export * from "./delta";
 export * from "./operations";
 export * from "./snapshot";
 export * from "./tools";
+
+export * from "./extension";
+import { IInk } from "./collabObject";
+export { IInk };
