@@ -120,6 +120,10 @@ class ClientString {
         let charsPerLine = window.innerWidth / Math.floor(w_est); // overestimate
         let charsPerViewport = Math.floor((window.innerHeight / h_est) * charsPerLine);
         this.viewportCharCount = charsPerViewport;
+
+        sharedString.on("op", () => {
+            this.render();
+        });
     }
 
     ticking = false;
@@ -207,21 +211,6 @@ export async function onLoad(id: string) {
     sharedString.on("partialLoad", async (data: MergeTreeChunk) => {
         console.log("Partial load fired");
 
-        if (data.totalSegmentCount < 0) {
-            let literatureP = new Promise<void>((resolve, reject) => {
-                request.get("http://localhost:3000/public/literature/pp.txt", (error, response, body: string) => {
-                    if (error) {
-                        console.error(error);
-                        return reject(error);
-                    }
-
-                    SharedString.loadText(body, sharedString.client.mergeTree, 0);
-                    resolve();
-                });
-            });
-            await literatureP;
-        }
-
         widthEst("18px Times");
         theString = new ClientString(sharedString);
         theString.render(0);
@@ -230,8 +219,19 @@ export async function onLoad(id: string) {
     });
 
     sharedString.on("loadFinshed", (data: MergeTreeChunk) => {
-        if (theString) {
-            theString.loadFinished();
+        theString.loadFinished();
+
+        if (sharedString.client.getLength() === 0) {
+            request.get("http://localhost:3000/public/literature/pp.txt", (error, response, body: string) => {
+                if (error) {
+                    return console.error(error);
+                }
+
+                const segments = SharedString.loadSegments(body, 0);
+                for (const segment of segments) {
+                    sharedString.insertText((<SharedString.TextSegment> segment).text, sharedString.client.getLength());
+                }
+            });
         }
     });
 }

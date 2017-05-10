@@ -9,7 +9,7 @@ export function loadTextFromFile(filename: string, mergeTree: MergeTree.MergeTre
     return loadText(content, mergeTree, segLimit);
 }
 
-export function loadText(content: string, mergeTree: MergeTree.MergeTree, segLimit: number) {
+export function loadSegments(content: string, segLimit: number) {
     content = content.replace(/^\uFEFF/, "");
 
     let paragraphs = content.split('\r\n\r\n');
@@ -27,6 +27,12 @@ export function loadText(content: string, mergeTree: MergeTree.MergeTree, segLim
     if (segLimit>0) {
         segments.length = segLimit;
     }
+
+    return segments;
+}
+
+export function loadText(content: string, mergeTree: MergeTree.MergeTree, segLimit: number) {
+    const segments = loadSegments(content, segLimit);
     mergeTree.reloadFromSegments(segments);
     // for (let segment of segments) {
     //     segTree.insertInterval(segTree.getLength(0,SegTree.LocalClientId),0,SegTree.LocalClientId,0,segment);

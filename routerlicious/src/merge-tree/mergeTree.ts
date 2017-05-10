@@ -952,13 +952,21 @@ function segmentGroupReplace(currentSeg: Segment, newSegment: Segment) {
 }
 
 function clock() {
-    return process.hrtime();
+    if (process.hrtime) {
+        return process.hrtime();
+    } else {
+        return Date.now();
+    }
 }
 
-function elapsedMicroseconds(start: [number, number]) {
-    let end: number[] = process.hrtime(start);
-    let duration = Math.round((end[0] * 1000000) + (end[1] / 1000));
-    return duration;
+function elapsedMicroseconds(start: [number, number] | number) {
+    if (process.hrtime) {
+        let end: number[] = process.hrtime(start as [number, number]);
+        let duration = Math.round((end[0] * 1000000) + (end[1] / 1000));
+        return duration;
+    } else {
+        return 1000 * (Date.now() - (start as number));
+    }
 }
 
 /**
@@ -967,7 +975,7 @@ function elapsedMicroseconds(start: [number, number]) {
 export const useCheckQ = false;
 
 function checkTextMatchRelative(refSeq: number, clientId: number, server: TestServer,
-    msg: api.IDeltaMessage) {
+    msg: api.ISequencedMessage) {
     let client = server.clients[clientId];
     let serverText = server.mergeTree.getText(refSeq, clientId);
     let cliText = client.checkQ.dequeue();
@@ -1004,19 +1012,19 @@ export class Client {
     accumWindow = 0;
     accumOps = 0;
     verboseOps = false;
-    measureOps = true;
-    q: Collections.List<api.IDeltaMessage>;
+    measureOps = false;
+    q: Collections.List<api.ISequencedMessage>;
     checkQ: Collections.List<string>;
     clientSequenceNumber = 1;
     clientNameToId = new Collections.RedBlackTree<string, number>(compareStrings);
     shortClientIdMap = <string[]>[];
+    public longClientId: string;
 
-    constructor(initText: string, public longClientId: string) {
+    constructor(initText: string) {
         this.mergeTree = new MergeTree(initText);
         this.mergeTree.getLongClientId = id => this.getLongClientId(id);
-        this.q = Collections.ListMakeHead<api.IDeltaMessage>();
+        this.q = Collections.ListMakeHead<api.ISequencedMessage>();
         this.checkQ = Collections.ListMakeHead<string>();
-        this.addLongClientId(longClientId);
     }
 
     getOrAddShortClientId(longClientId: string) {
@@ -1045,12 +1053,14 @@ export class Client {
     }
 
     makeInsertMsg(text: string, pos: number, seq: number, refSeq: number, objectId: string) {
-        return <api.IDeltaMessage>{
+        return <api.ISequencedMessage>{
             clientId: this.longClientId,
             sequenceNumber: seq,
             referenceSequenceNumber: refSeq,
             objectId: objectId,
             clientSequenceNumber: this.clientSequenceNumber,
+            userId: undefined,
+            minimumSequenceNumber: undefined,
             op: {
                 type: api.MergeTreeMsgType.INSERT, text: text, pos1: pos
             }
@@ -1058,19 +1068,21 @@ export class Client {
     }
 
     makeRemoveMsg(start: number, end: number, seq: number, refSeq: number, objectId: string) {
-        return <api.IDeltaMessage>{
+        return <api.ISequencedMessage>{
             clientId: this.longClientId,
             sequenceNumber: seq,
             referenceSequenceNumber: refSeq,
             objectId: objectId,
             clientSequenceNumber: this.clientSequenceNumber,
+            userId: undefined,
+            minimumSequenceNumber: undefined,
             op: {
                 type: api.MergeTreeMsgType.REMOVE, pos1: start, pos2: end
             }
         };
     }
 
-    enqueueMsg(msg: api.IDeltaMessage) {
+    enqueueMsg(msg: api.ISequencedMessage) {
         this.q.enqueue(msg);
     }
 
@@ -1078,7 +1090,7 @@ export class Client {
         this.checkQ.enqueue(this.getText());
     }
 
-    coreApplyMsg(msg: api.IDeltaMessage) {
+    coreApplyMsg(msg: api.ISequencedMessage) {
         let op = <api.IMergeTreeDeltaMsg>msg.op;
         let clid = this.getOrAddShortClientId(msg.clientId);
         switch (op.type) {
@@ -1093,7 +1105,7 @@ export class Client {
         }
     }
 
-    applyMsg(msg: api.IDeltaMessage) {
+    applyMsg(msg: api.ISequencedMessage) {
         if ((msg !== undefined) && (msg.minimumSequenceNumber > this.mergeTree.getCollabWindow().minSeq)) {
             this.updateMinSeq(msg.minimumSequenceNumber);
         }
@@ -1115,6 +1127,12 @@ export class Client {
                 break;
             }
             msgCount--;
+        }
+    }
+
+    applyAll() {
+        while (!this.q.empty()) {
+            this.applyMsg(this.q.dequeue());
         }
     }
 
@@ -1257,8 +1275,10 @@ export class Client {
         return `cli: ${this.getLongClientId(clientId)} refSeq: ${refSeq}: ` + this.mergeTree.getText(refSeq, clientId);
     }
 
-    startCollaboration() {
-        this.mergeTree.startCollaboration(this.getShortClientId(this.longClientId));
+    startCollaboration(longClientId: string, minSeq = 0) {
+        this.longClientId = longClientId;
+        this.addLongClientId(longClientId);
+        this.mergeTree.startCollaboration(this.getShortClientId(this.longClientId), minSeq);
     }
 }
 
@@ -1282,8 +1302,8 @@ export class TestServer extends Client {
     listeners: Client[]; // listeners do not generate edits
     clientSeqNumbers: Collections.Heap<ClientSeq>;
 
-    constructor(initText: string, clientId: string) {
-        super(initText, clientId);
+    constructor(initText: string) {
+        super(initText);
     }
 
     addClients(clients: Client[]) {
@@ -1298,7 +1318,7 @@ export class TestServer extends Client {
         this.listeners = listeners;
     }
 
-    applyMsg(msg: api.IDeltaMessage) {
+    applyMsg(msg: api.ISequencedMessage) {
         this.coreApplyMsg(msg);
         if (useCheckQ) {
             let clid = this.getShortClientId(msg.clientId);
@@ -1464,11 +1484,11 @@ export class MergeTree {
     }
 
     // for now assume min starts at zero
-    startCollaboration(localClientId: number) {
+    startCollaboration(localClientId: number, minSeq: number) {
         this.collabWindow.clientId = localClientId;
-        this.collabWindow.minSeq = 0;
+        this.collabWindow.minSeq = minSeq;
         this.collabWindow.collaborating = true;
-        this.collabWindow.currentSeq = 0;
+        this.collabWindow.currentSeq = minSeq;
         this.segmentsToScour = new Collections.Heap<LRUSegment>([], LRUSegmentComparer);
         this.pendingSegments = Collections.ListMakeHead<SegmentGroup>();
         let measureFullCollab = true;

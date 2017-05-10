@@ -79,9 +79,9 @@ class Server {
     html: string;
 
     constructor(filename: string) {
-        this.server = new MergeTree.TestServer("", "theServer");
+        this.server = new MergeTree.TestServer("");
         Text.loadTextFromFile(filename, this.server.mergeTree);
-        this.proxyClient = new MergeTree.Client("", "proxyClient");
+        this.proxyClient = new MergeTree.Client("");
         this.server.addListeners([this.proxyClient]);
         this.snapshot = new Paparazzo.Snapshot(this.server.mergeTree);
         this.snapshot.extractSync();
@@ -667,20 +667,20 @@ export function TestPack() {
         if (!startFile) {
             initString = "don't ask for whom the bell tolls; it tolls for thee";
         }
-        let server = new MergeTree.TestServer(initString, "theServer");
+        let server = new MergeTree.TestServer(initString);
         if (startFile) {
             Text.loadText(startFile, server.mergeTree, fileSegCount);
         }
 
         let clients = <MergeTree.Client[]>Array(clientCount);
         for (let i = 0; i < clientCount; i++) {
-            clients[i] = new MergeTree.Client(initString, `Fred${i}`);
+            clients[i] = new MergeTree.Client(initString);
             if (startFile) {
                 Text.loadText(startFile, clients[i].mergeTree, fileSegCount);
             }
-            clients[i].startCollaboration();
+            clients[i].startCollaboration(`Fred${i}`);
         }
-        server.startCollaboration();
+        server.startCollaboration("theServer");
         server.addClients(clients);
         if (testSyncload) {
             let clockStart = clock();
@@ -695,11 +695,11 @@ export function TestPack() {
             }
         }
         if (addSnapClient) {
-            snapClient = new MergeTree.Client(initString, "snapshot");
+            snapClient = new MergeTree.Client(initString);
             if (startFile) {
                 Text.loadText(startFile, snapClient.mergeTree, fileSegCount);
             }
-            snapClient.startCollaboration();
+            snapClient.startCollaboration("snapshot");
             server.addListeners([snapClient]);
         }
         function incrGetText(client: MergeTree.Client) {
@@ -1060,10 +1060,10 @@ export function TestPack() {
         let insertRounds = 800;
         let removeRounds = 700;
 
-        let cliA = new MergeTree.Client("a stitch in time saves nine", "FredA");
-        cliA.startCollaboration();
-        let cliB = new MergeTree.Client("a stitch in time saves nine", "FredB");
-        cliB.startCollaboration();
+        let cliA = new MergeTree.Client("a stitch in time saves nine");
+        cliA.startCollaboration("FredA");
+        let cliB = new MergeTree.Client("a stitch in time saves nine");
+        cliB.startCollaboration("FredB");
         function checkTextMatch(checkSeq: number) {
             let error = false;
             if (cliA.getCurrentSeq() != checkSeq) {
@@ -1200,11 +1200,11 @@ export function TestPack() {
 
     let clientNames = ["Ed", "Ted", "Ned", "Harv", "Marv", "Glenda", "Susan"];
     function firstTest() {
-        let cli = new MergeTree.Client("on the mat.", "Fred1");
+        let cli = new MergeTree.Client("on the mat.");
+        cli.startCollaboration("Fred1");
         for (let cname of clientNames) {
             cli.addLongClientId(cname);
         }
-        cli.startCollaboration();
         cli.insertSegmentRemote("that ", 0, 1, 0, 1);
         console.log(cli.mergeTree.toString());
         cli.insertSegmentRemote("fat ", 0, 2, 0, 2);
@@ -1230,11 +1230,11 @@ export function TestPack() {
                 console.log(cli.relText(clientId, refSeq));
             }
         }
-        cli = new MergeTree.Client(" old sock!", "Fred2");
+        cli = new MergeTree.Client(" old sock!");
+        cli.startCollaboration("Fred2");
         for (let cname of clientNames) {
             cli.addLongClientId(cname);
         }
-        cli.startCollaboration();
         cli.insertSegmentRemote("abcde", 0, 1, 0, 2);
         cli.insertSegmentRemote("yyy", 0, 2, 0, 1);
         cli.insertSegmentRemote("zzz", 2, 3, 1, 3);
@@ -1256,11 +1256,11 @@ export function TestPack() {
                 console.log(cli.relText(clientId, refSeq));
             }
         }
-        cli = new MergeTree.Client("abcdefgh", "Fred3");
+        cli = new MergeTree.Client("abcdefgh");
+        cli.startCollaboration("Fred3");
         for (let cname of clientNames) {
             cli.addLongClientId(cname);
         }
-        cli.startCollaboration();
         cli.removeSegmentRemote(1, 3, 1, 0, 3);
         console.log(cli.mergeTree.toString());
         cli.insertSegmentRemote("zzz", 2, 2, 0, 2);

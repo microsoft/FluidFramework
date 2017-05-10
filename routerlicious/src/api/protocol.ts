@@ -32,25 +32,6 @@ export interface ISequencedMessage extends IMessageBase {
     minimumSequenceNumber: number;
 }
 
-// TODO need to consolidate the above with the IDeltaMessage below
-
-export interface IDeltaMessage {
-    clientId: string;
-
-    sequenceNumber: number;
-
-    clientSequenceNumber: number;
-
-    referenceSequenceNumber: number;
-
-    minimumSequenceNumber?: number;
-
-    // The collaborative object the operation is intended for
-    objectId: string;
-
-    op: IDelta;
-}
-
 export interface IDelta {
 }
 
