@@ -54,10 +54,9 @@ producerReady.then(
                 protocol: ["roundrobin"],
             },
             [receiveTopic]);
-        
+
         const consumerOffset = new kafka.Offset(kafkaClient);
         const partitionManager = new core.PartitionManager(groupId, receiveTopic, consumerOffset, CheckpointBatchSize);
-        
         consumerGroup.on("message", async (message: any) => {
             const value = JSON.parse(message.value) as core.IRawOperationMessage;
             const objectId = value.objectId;
@@ -67,27 +66,24 @@ producerReady.then(
             if (!(objectId in dispensers)) {
                 const collection = await objectsCollectionP;
                 dispensers[objectId] = new TakeANumber(objectId, collection, producer, sendTopic);
-                partitionManager.enqueueDoc(objectId, message.partition);
                 console.log(`Brand New object Found: ${objectId}`);
             }
             const dispenser = dispensers[objectId];
             await dispenser.ticket(message);
-            partitionManager.updateOffset(objectId, message.partition, message.offset);
+            // Update partition manager entry.
+            partitionManager.update(objectId, message.partition, message.offset);
 
             // Periodically checkpoints to mongo and checkpoints offset back to kafka.
             // Ideally there should be a better strategy to figure out when to checkpoint.
-            if (message.offset % CheckpointBatchSize === 0) {
+            if (message.offset > 0 && message.offset % CheckpointBatchSize === 0) {
                 // Checkpointing to mongo first.
-                const partitionMap = partitionManager.getPartitionMap();
                 let checkpointQueue = [];
-                for (let partition of Object.keys(partitionMap)) {
-                    for (let doc of Object.keys(partitionMap[partition])) {
-                        checkpointQueue.push(dispensers[doc].checkpoint());
-                    }
+                for (let doc of Object.keys(dispensers)) {
+                    checkpointQueue.push(dispensers[doc].checkpoint());
                 }
                 await Promise.all(checkpointQueue);
                 // Finally call kafka checkpointing.
-                partitionManager.checkPoint(message);
+                partitionManager.checkPoint();
             }
         });
     },

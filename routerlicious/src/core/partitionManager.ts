@@ -1,13 +1,12 @@
 import * as kafka from "kafka-node";
 
 /**
- * Class to manage checkpointing of Kafka offsets at different partitions. 
+ * Class to manage checkpointing of Kafka offsets at different partitions.
  */
 export class PartitionManager {
     private checkpointing = false;
-    // Map: PartitionNo : {ObjectId, ProcessedOffset}
-    private partitionMap: { [key: string]: { [key: string]: string } } = {};
-    private lastCheckpointSnapshot = Number.MAX_VALUE;
+    // Map of {PartitionNo : [{docId, ProcessedOffset}, [maxOffset, LastProcessedOffset]}
+    private partitionMap: { [key: string]: [{ [key: string]: string }, [number, number]] } = {};
 
     constructor(
         private groupId: string,
@@ -19,86 +18,104 @@ export class PartitionManager {
     /**
      * Controls when to checkpoint.
      */
-    public checkPoint(rawMessage: any) {
+    public checkPoint() {
         // If already checkpointing allow the operation to complete to trigger another round.
         if (this.checkpointing) {
             return;
         }
 
         // Base case for when there are not enough messages to trigger checkpointing.
-        if (this.lastCheckpointSnapshot != Number.MAX_VALUE &&
-            Number(rawMessage.offset) - this.lastCheckpointSnapshot < this.batchSize) {
+        if (!this.startCheckpointing()) {
             this.checkpointing = false;
             return;
         }
 
         // Finally begin checkpointing the offsets.
         this.checkpointing = true;
-        this.checkPointCore(rawMessage)
+        this.checkPointCore()
             .then(() => {
                 this.checkpointing = false;
                 // Recursive call to trigger another round.
-                this.checkPoint(rawMessage);
+                this.checkPoint();
             },
             (error) => {
-                console.log(`Error checkpointing kafka offset: ${JSON.stringify(error)}`);
+                console.log(`${this.groupId}: Error checkpointing kafka offset: ${JSON.stringify(error)}`);
+                this.checkpointing = false;
             });
+    }
+
+    /**
+     * Enqueues or updates a document's position in the map.
+     */
+    public update(objectId: string, partition: string, offset: string) {
+        if (!(partition in this.partitionMap)) {
+            let newPartition: { [key: string]: string } = {};
+            newPartition[objectId] = offset;
+            this.partitionMap[partition] = [newPartition, [Number(offset), -1]];
+        } else {
+            this.partitionMap[partition][0][objectId] = offset;
+            this.partitionMap[partition][1][0] = Number(offset);
+        }
     }
 
     /**
      * Implements checkpointing kafka offsets.
      */
-    private checkPointCore(rawMessage: any): Promise<void> {
+    private checkPointCore(): Promise<void> {
         return new Promise<any>((resolve, reject) => {
+            let commitDetails = [];
             for (let partition of Object.keys(this.partitionMap)) {
+                // Empty partition. Evict the partition.
+                if (this.partitionMap[partition][1][0] === this.partitionMap[partition][1][1]) {
+                    console.log(`${this.groupId}: Removing partition ${partition}`);
+                    delete this.partitionMap[partition];
+                    continue;
+                }
                 // Find out most lagged offset across all document assigned to this partition.
                 let mostLaggedOffset = Number.MAX_VALUE;
-                for (let doc of Object.keys(this.partitionMap[partition])) {
-                    mostLaggedOffset = Math.min(mostLaggedOffset, Number(this.partitionMap[partition][doc]));
+                let lastCheckpointOffset = this.partitionMap[partition][1][1];
+                for (let doc of Object.keys(this.partitionMap[partition][0])) {
+                    let docOffset = this.partitionMap[partition][0][doc];
+                    // Inactive since last checkpoint. Evict the document from map and continue.
+                    if (Number(docOffset) <= lastCheckpointOffset) {
+                        console.log(`${this.groupId}: Removing ${doc} from partition ${partition}`);
+                        delete this.partitionMap[partition][0][doc];
+                        continue;
+                    }
+                    mostLaggedOffset = Math.min(mostLaggedOffset, Number(docOffset));
                 }
-                // Commit the checkpoint ossfet.
-                this.consumerOffset.commit(this.groupId,
-                    [{ topic: this.topic, partition: Number(partition), offset: mostLaggedOffset }],
-                    (error, data) => {
-                        if (error) {
-                            console.error(`Error checkpointing kafka offset: ${error}`);
-                            reject(error);
-                        } else {
-                            console.log(`Checkpointed partition ${partition} with offset ${mostLaggedOffset}`);
-                        }
-                });
-                // Keep track of the last offset when you performed a snapshot.
-                this.lastCheckpointSnapshot = rawMessage.offset;
+                // No document for this partition. Delete the partition.
+                if (mostLaggedOffset === Number.MAX_VALUE) {
+                    delete this.partitionMap[partition];
+                    continue;
+                }
+                this.partitionMap[partition][1][1] = mostLaggedOffset;
+                commitDetails.push({ topic: this.topic, partition: Number(partition), offset: mostLaggedOffset });
             }
-            resolve({ data: true });
+            // Commit all checkpoint offsets as a batch.
+            this.consumerOffset.commit(this.groupId, commitDetails,
+                (error, data) => {
+                    if (error) {
+                        console.error(`${this.groupId}: Error checkpointing kafka offsets: ${error}`);
+                        reject(error);
+                    } else {
+                        console.log(`${this.groupId}: Checkpointed kafka. ${JSON.stringify(commitDetails)}`);
+                        resolve({ data: true });
+                    }
+            });
         });
     }
 
     /**
-     * Enqueues a new document to partition map.
-     */    
-    public enqueueDoc(objectId: string, partition: string) {
-        if (!(partition in this.partitionMap)) {
-            let newPartition: { [key: string]: string } = {};
-            newPartition[objectId] = "";
-            this.partitionMap[partition] = newPartition;
-        } else if (!(objectId in this.partitionMap[partition])) {
-            this.partitionMap[partition][objectId] = "";
+     * Decides whether to kick of checkpointing or not.
+     */
+    private startCheckpointing(): boolean {
+        // Checks if any of the partitions has more than batchsize messages unprocessed.
+        for (let partition of Object.keys(this.partitionMap)) {
+            if (this.partitionMap[partition][1][0] - this.partitionMap[partition][1][1] >= this.batchSize) {
+                return true;
+            }
         }
+        return false;
     }
-
-    /**
-     * Updates offset of a document in the partition map.
-     */    
-    public updateOffset(objectId: string, partition: string, offset: string) {
-        this.partitionMap[partition][objectId] = offset;
-    }
-
-    /**
-     * Returns the partition map.
-     */    
-    public getPartitionMap() {
-        return this.partitionMap;
-    }
-
 }

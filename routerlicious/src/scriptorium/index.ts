@@ -19,6 +19,7 @@ const zookeeperEndpoint = nconf.get("zookeeper:endpoint");
 const kafkaClientId = nconf.get("scriptorium:kafkaClientId");
 const topic = nconf.get("scriptorium:topic");
 const groupId = nconf.get("scriptorium:groupId");
+const CheckpointBatchSize = nconf.get("scriptorium:checkpointBatchSize");
 
 const consumerGroup = new kafka.ConsumerGroup({
         fromOffset: "earliest",
@@ -28,6 +29,9 @@ const consumerGroup = new kafka.ConsumerGroup({
         protocol: ["roundrobin"],
     },
     [topic]);
+ let kafkaClient = new kafka.Client(zookeeperEndpoint, kafkaClientId);
+ const consumerOffset = new kafka.Offset(kafkaClient);
+ const partitionManager = new core.PartitionManager(groupId, topic, consumerOffset, CheckpointBatchSize);
 
 const mongoUrl = nconf.get("mongo:endpoint");
 const mongoClientP = MongoClient.connect(mongoUrl);
@@ -50,16 +54,25 @@ consumerGroup.on("message", async (message: any) => {
     // order. Be aware of promise handling ordering possibly causing out of order messages to be delivered.
 
     const value = JSON.parse(message.value) as core.ISequencedOperationMessage;
+    const objectId = value.objectId;
 
-    // Serialize the message to backing store
-    console.log(`Inserting to mongodb ${value.objectId}@${value.operation.sequenceNumber}`);
-    const collection = await collectionP;
-    collection.insert(value).catch((error) => {
-        console.error("Error serializing to MongoDB");
-        console.error(error);
-    });
+    partitionManager.update(objectId, message.partition, message.offset);
 
-    // Route the message to clients
-    console.log(`Routing message to clients ${value.objectId}@${value.operation.sequenceNumber}`);
-    io.to(value.objectId).emit("op", value.objectId, value.operation);
+    // Checkpoint to kafka after completing all operations.
+    // We should experiment with 'CheckpointBatchSize' here.
+    if (message.offset % CheckpointBatchSize === 0) {
+        // Serialize the message to backing store
+        console.log(`Inserting to mongodb ${objectId}@${value.operation.sequenceNumber}`);
+        const collection = await collectionP;
+        collection.insert(value).catch((error) => {
+            console.error("Error serializing to MongoDB");
+            console.error(error);
+        });
+
+        // Route the message to clients
+        console.log(`Routing message to clients ${value.objectId}@${value.operation.sequenceNumber}`);
+        io.to(value.objectId).emit("op", value.objectId, value.operation);
+        // Finally call kafka checkpointing.
+        partitionManager.checkPoint();
+    }
 });

@@ -73,7 +73,8 @@
     "scriptorium": {
         "topic": "deltas",
         "kafkaClientId": "scriptorium",
-        "groupId": "scriptorium"
+        "groupId": "scriptorium",
+        "checkpointBatchSize": 1
     },
     "tmz": {
         "queue": "snapshot",
