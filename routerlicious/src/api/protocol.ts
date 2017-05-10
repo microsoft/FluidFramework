@@ -32,25 +32,6 @@ export interface ISequencedMessage extends IMessageBase {
     minimumSequenceNumber: number;
 }
 
-// TODO need to consolidate the above with the IDeltaMessage below
-
-export interface IDeltaMessage {
-    clientId: string;
-
-    sequenceNumber: number;
-
-    clientSequenceNumber: number;
-
-    referenceSequenceNumber: number;
-
-    minimumSequenceNumber?: number;
-
-    // The collaborative object the operation is intended for
-    objectId: string;
-
-    op: IDelta;
-}
-
 export interface IDelta {
 }
 
@@ -71,7 +52,6 @@ export interface IMergeTreeDeltaMsg extends IDelta {
 
 // tslint:disable-next-line:interface-name
 export interface MergeTreeChunk {
-    clientId?: string;
     chunkStartSegmentIndex: number;
     chunkSegmentCount: number;
     chunkLengthChars: number;

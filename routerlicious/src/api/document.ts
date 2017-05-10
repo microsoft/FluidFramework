@@ -1,5 +1,6 @@
 import * as uuid from "node-uuid";
 import * as ink from "../ink";
+import * as mergeTree from "../merge-tree";
 import * as extensions from "./extension";
 import * as mapExtension from "./map";
 import { ICollaborationServices } from "./storage";
@@ -36,6 +37,13 @@ export class Document {
     }
 
     /**
+     * Creates a new collaborative string
+     */
+    public createString(): types.ICollaborativeObject {
+        return this.create(mergeTree.CollaboritiveStringExtension.Type) as types.ICollaborativeObject;
+    }
+
+    /**
      * Creates a new ink collaborative object
      */
     public createInk(): ink.IInk {
@@ -63,6 +71,7 @@ let defaultServices: ICollaborationServices;
 // The default registry for extensions
 export const defaultRegistry = new extensions.Registry();
 defaultRegistry.register(new mapExtension.MapExtension());
+defaultRegistry.register(new mergeTree.CollaboritiveStringExtension());
 defaultRegistry.register(new ink.InkExtension());
 
 export function registerExtension(extension: extensions.IExtension) {
@@ -76,6 +85,10 @@ export function registerExtension(extension: extensions.IExtension) {
  */
 export function registerDefaultServices(services: ICollaborationServices) {
     defaultServices = services;
+}
+
+export function getDefaultServices(): ICollaborationServices {
+    return defaultServices;
 }
 
 /**

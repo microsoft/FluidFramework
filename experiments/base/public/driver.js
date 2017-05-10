@@ -1,3 +1,0 @@
-function eff() {
-    controller.onLoad();
-}

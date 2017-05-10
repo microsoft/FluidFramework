@@ -1,12 +1,19 @@
-import * as Geometry from "./geometry";
-import * as MergeTree from "./mergeTree";
-import * as Protocol from "../../routerlicious/src/api/protocol";
+// tslint:disable
+
+import * as request from "request";
+// import * as Geometry from "./geometry";
+import * as api from "../../api";
+import * as SharedString from "../../merge-tree";
+import { MergeTreeChunk } from "../../api";
+import * as socketStorage from "../../socket-storage";
+
+socketStorage.registerAsDefault(document.location.origin);
 
 // first script loaded
 let clockStart = Date.now();
 
 interface SegSpan extends HTMLSpanElement {
-    seg: MergeTree.TextSegment;
+    seg: SharedString.TextSegment;
 }
 
 let cachedCanvas: HTMLCanvasElement;
@@ -38,7 +45,7 @@ function makeInnerDiv() {
     return innerDiv;
 }
 
-function makePlaceholder(sizeChars: number, charsPerViewport: number) {
+export function makePlaceholder(sizeChars: number, charsPerViewport: number) {
     let div = document.createElement("div");
     div.style.height = `${Math.floor(sizeChars / charsPerViewport) * window.innerHeight}px`;
     return div;
@@ -49,31 +56,29 @@ function widthEst(fontInfo: string) {
     w_est = getTextWidth("abcdefghi jklmnopqrstuvwxyz", innerDiv.style.font) / 27;
 }
 
-function heightFromCharCount(sizeChars: number) {
+export function heightFromCharCount(sizeChars: number) {
     let charsPerLine = window.innerWidth / Math.floor(w_est);
     let charsPerViewport = Math.floor((window.innerHeight / h_est) * charsPerLine);
     return Math.floor((sizeChars / charsPerViewport) * window.innerHeight);
 }
 
-function renderTree(div: HTMLDivElement, pos: number, client: MergeTree.Client) {
+function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Client) {
     div.id = "renderedTree";
     div.style.marginRight = "8%";
     div.style.marginLeft = "5%";
-    let tryTextWidth = (w_est).toFixed(1);
     let w = Math.floor(w_est);
     let h = h_est;
-    let totalLengthChars = client.getLength();
     let charsPerLine = window.innerWidth / w;
     let charsPerViewport = Math.floor((window.innerHeight / h) * charsPerLine);
     let innerDiv = makeInnerDiv();
     div.appendChild(innerDiv);
     let charLength = 0;
-    function renderSegment(segment: MergeTree.Segment, pos: number, refSeq: number,
+
+    function renderSegment(segment: SharedString.Segment, pos: number, refSeq: number,
         clientId: number, start: number, end: number) {
-        if (segment.getType() == MergeTree.SegmentType.Text) {
-            let textSegment = <MergeTree.TextSegment>segment;
+        if (segment.getType() == SharedString.SegmentType.Text) {
+            let textSegment = <SharedString.TextSegment>segment;
             let segText = textSegment.text;
-            let styleAttr = "";
             let span = <SegSpan>document.createElement("span");
             if (segText.indexOf("Chapter") >= 0) {
                 span.style.fontSize = "140%";
@@ -100,41 +105,9 @@ function renderTree(div: HTMLDivElement, pos: number, client: MergeTree.Client) 
         }
         return true;
     }
-    client.mergeTree.mapRange({ leaf: renderSegment }, MergeTree.UniversalSequenceNumber,
+    client.mergeTree.mapRange({ leaf: renderSegment }, SharedString.UniversalSequenceNumber,
         client.getClientId(), undefined, pos);
 }
-
-function ajax_get(url, callback) {
-    let xmlhttp = new XMLHttpRequest();
-    xmlhttp.onreadystatechange = function () {
-        if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-            //console.log('responseText:' + xmlhttp.responseText);
-            try {
-                var data = JSON.parse(xmlhttp.responseText);
-            } catch (err) {
-                console.log(err.message + " in " + xmlhttp.responseText);
-                return;
-            }
-            callback(data, xmlhttp.responseText);
-        }
-    };
-
-    xmlhttp.open("GET", url, true);
-    xmlhttp.send();
-}
-
-function textsToSegments(texts: string[]) {
-    let segments = <MergeTree.TextSegment[]>[];
-    for (let text of texts) {
-        let segment = new MergeTree.TextSegment(text,
-            MergeTree.UniversalSequenceNumber,
-            MergeTree.LocalClientId);
-        segments.push(segment);
-    }
-    return segments;
-}
-
-let theString: ClientString;
 
 class ClientString {
     timeToImpression: number;
@@ -142,12 +115,16 @@ class ClientString {
     timeToEdit: number;
     timeToCollab: number;
     viewportCharCount: number;
-    constructor(public client: MergeTree.Client, public totalSegmentCount, public currentSegmentIndex, public totalLengthChars) {
+
+    constructor(public sharedString: SharedString.SharedString) {
         let charsPerLine = window.innerWidth / Math.floor(w_est); // overestimate
         let charsPerViewport = Math.floor((window.innerHeight / h_est) * charsPerLine);
         this.viewportCharCount = charsPerViewport;
-    }
 
+        sharedString.on("op", () => {
+            this.render();
+        });
+    }
 
     ticking = false;
 
@@ -155,8 +132,8 @@ class ClientString {
         document.body.onclick = (e) => {
             let span = <SegSpan>e.target;
             if (span.seg) {
-                let offset = this.client.mergeTree.getOffset(span.seg, this.client.getCurrentSeq(),
-                    this.client.getClientId());
+                let offset = this.sharedString.client.mergeTree.getOffset(span.seg, this.sharedString.client.getCurrentSeq(),
+                    this.sharedString.client.getClientId());
                 console.log(`segment at char offset ${offset}`);
             }
         }
@@ -165,13 +142,13 @@ class ClientString {
             if (((e.keyCode == 33) || (e.keyCode == 34)) && (!this.ticking)) {
                 setTimeout(() => {
                     console.log(`animation frame ${Date.now() - clockStart}`);
-                    theString.scroll(e.keyCode == 33);
+                    this.scroll(e.keyCode == 33);
                     this.ticking = false;
                 }, 40);
                 this.ticking = true;
             }
             else if (e.keyCode == 36) {
-                theString.render(0);
+                this.render(0);
                 e.preventDefault();
                 e.returnValue = false;
             }
@@ -182,7 +159,7 @@ class ClientString {
 
     topChar = 0
     scroll(up: boolean) {
-        let len = this.client.getLength();
+        let len = this.sharedString.client.getLength();
         let halfport = Math.floor(this.viewportCharCount / 2);
         if ((up && (this.topChar == 0)) || ((!up) && (this.topChar > (len - halfport)))) {
             return;
@@ -206,7 +183,7 @@ class ClientString {
         if (topChar !== undefined) {
             this.topChar = topChar;
         }
-        let len = this.client.getLength();
+        let len = this.sharedString.client.getLength();
         let frac = this.topChar / len;
         let pos = Math.floor(frac * len);
         let oldDiv = document.getElementById("renderedTree");
@@ -217,38 +194,44 @@ class ClientString {
         document.body.appendChild(viewportDiv);
         //let flowDiv = document.createElement("div");
         //let scrollDiv = document.createElement("div");
-        renderTree(viewportDiv, pos, this.client);
+        renderTree(viewportDiv, pos, this.sharedString.client);
     }
 
-    continueLoading() {
-        ajax_get(`/obj?startSegment=${this.currentSegmentIndex}`, (data: Protocol.MergeTreeChunk, text) => {
-            for (let text of data.segmentTexts) {
-                this.client.mergeTree.appendTextSegment(text);
-            }
-            this.currentSegmentIndex += data.chunkSegmentCount;
-            if (this.currentSegmentIndex < this.totalSegmentCount) {
-                this.continueLoading();
-            }
-            else {
-                console.log(`time to edit/impression: ${this.timeToEdit} time to load: ${Date.now() - clockStart}ms len: ${this.client.getLength()}`);
-            }
-        });
+    loadFinished() {
+        console.log(`time to edit/impression: ${this.timeToEdit} time to load: ${Date.now() - clockStart}ms len: ${this.sharedString.client.getLength()}`);
     }
 }
 
-export function onLoad() {
-    widthEst("18px Times");
-    ajax_get("/obj?init=true", (data: Protocol.MergeTreeChunk, text) => {
-        let client = new MergeTree.Client("", data.clientId);
-        let segs = textsToSegments(data.segmentTexts);
-        client.mergeTree.reloadFromSegments(segs);
-        theString = new ClientString(client, data.totalSegmentCount, data.chunkSegmentCount,
-            data.totalLengthChars);
+export let theString: ClientString;
+
+export async function onLoad(id: string) {
+    const extension = api.defaultRegistry.getExtension(SharedString.CollaboritiveStringExtension.Type);
+    const sharedString = extension.load(id, api.getDefaultServices(), api.defaultRegistry) as SharedString.SharedString;
+
+    sharedString.on("partialLoad", async (data: MergeTreeChunk) => {
+        console.log("Partial load fired");
+
+        widthEst("18px Times");
+        theString = new ClientString(sharedString);
         theString.render(0);
         theString.timeToEdit = theString.timeToImpression = Date.now() - clockStart;
         theString.setEdit();
-        if (data.chunkSegmentCount < data.totalSegmentCount) {
-            theString.continueLoading();
+    });
+
+    sharedString.on("loadFinshed", (data: MergeTreeChunk) => {
+        theString.loadFinished();
+
+        if (sharedString.client.getLength() === 0) {
+            request.get("http://localhost:3000/public/literature/pp.txt", (error, response, body: string) => {
+                if (error) {
+                    return console.error(error);
+                }
+
+                const segments = SharedString.loadSegments(body, 0);
+                for (const segment of segments) {
+                    sharedString.insertText((<SharedString.TextSegment> segment).text, sharedString.client.getLength());
+                }
+            });
         }
     });
 }

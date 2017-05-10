@@ -100,11 +100,14 @@ function randomizeMap(map: api.IMap) {
 
 export function load(id: string) {
     $(document).ready(() => {
-        loadDocument(id).then((doc) => {
+        loadDocument(id).then(async (doc) => {
             // tslint:disable-next-line
             window["doc"] = doc;
 
             const root = doc.getRoot();
+
+            const collabString = doc.createString();
+            console.log(collabString.isLocal());
 
             // Display the initial values and then listen for updates
             displayMap($("#mapViews"), root, null, doc);

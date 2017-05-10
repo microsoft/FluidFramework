@@ -1,3 +1,5 @@
+// tslint:disable
+
 export interface Point {
     x: number;
     y: number;
@@ -88,7 +90,7 @@ export class Rectangle {
         return rects;
     }
 
-    private proportionalSplitVert(...proportionalHeights: number[]): Rectangle[] {
+    public proportionalSplitVert(...proportionalHeights: number[]): Rectangle[] {
         var totalPropHeight = 0;
         var i: number;
 

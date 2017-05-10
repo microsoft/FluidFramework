@@ -1,9 +1,15 @@
+// tslint:disable
+
 import * as random from "random-js";
 import * as MergeTree from "./mergeTree";
 import * as fs from "fs";
 
-export function loadText(filename: string, mergeTree: MergeTree.MergeTree, segLimit = 0) {
+export function loadTextFromFile(filename: string, mergeTree: MergeTree.MergeTree, segLimit = 0) {
     let content = fs.readFileSync(filename, "utf8");
+    return loadText(content, mergeTree, segLimit);
+}
+
+export function loadSegments(content: string, segLimit: number) {
     content = content.replace(/^\uFEFF/, "");
 
     let paragraphs = content.split('\r\n\r\n');
@@ -21,6 +27,12 @@ export function loadText(filename: string, mergeTree: MergeTree.MergeTree, segLi
     if (segLimit>0) {
         segments.length = segLimit;
     }
+
+    return segments;
+}
+
+export function loadText(content: string, mergeTree: MergeTree.MergeTree, segLimit: number) {
+    const segments = loadSegments(content, segLimit);
     mergeTree.reloadFromSegments(segments);
     // for (let segment of segments) {
     //     segTree.insertInterval(segTree.getLength(0,SegTree.LocalClientId),0,SegTree.LocalClientId,0,segment);
@@ -37,12 +49,12 @@ mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
 export function findRandomWord(mergeTree: MergeTree.MergeTree, clientId: number) {
     let len = mergeTree.getLength(MergeTree.UniversalSequenceNumber, clientId);
     let pos = random.integer(0, len)(mt); 
-    let textAtPos = mergeTree.getText(MergeTree.UniversalSequenceNumber, clientId, pos, pos + 10);
-    //console.log(textAtPos);
+    // let textAtPos = mergeTree.getText(MergeTree.UniversalSequenceNumber, clientId, pos, pos + 10);
+    // console.log(textAtPos);
     let nextWord = mergeTree.searchFromPos(pos, /\s\w+\b/);
     if (nextWord) {
         nextWord.pos += pos;
-//        console.log(`next word is '${nextWord.text}' len ${nextWord.text.length} at pos ${nextWord.pos}`);
+        // console.log(`next word is '${nextWord.text}' len ${nextWord.text.length} at pos ${nextWord.pos}`);
     }
     return nextWord;
 }
