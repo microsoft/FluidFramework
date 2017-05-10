@@ -8,50 +8,26 @@ services:
             - redis
             - mongodb
             - kafka
-            - logstash
-        logging:
-            driver: gelf
-            options:
-                gelf-address: "udp://127.0.0.1:12201"
-                tag: "log-alfred"
     deli:
         build: .
         depends_on:
             - redis
             - mongodb
             - kafka
-            - logstash
         command: npm run deli
-        logging:
-            driver: gelf
-            options:
-                gelf-address: "udp://127.0.0.1:12201"
-                tag: "log-deli"
     paparazzi:
         build: .
         depends_on:
             - alfred
             - rabbitmq
-            - logstash
         command: npm run paparazzi
-        logging:
-            driver: gelf
-            options:
-                gelf-address: "udp://127.0.0.1:12201"
-                tag: "log-paparazzi"
     scriptorium:
         build: .
         depends_on:
             - redis
             - mongodb
             - kafka
-            - logstash
         command: npm run scriptorium
-        logging:
-            driver: gelf
-            options:
-                gelf-address: "udp://127.0.0.1:12201"
-                tag: "log-scriptorium"
     tmz:
         build: .
         depends_on:
@@ -59,13 +35,7 @@ services:
             - mongodb
             - rabbitmq
             - kafka
-            - logstash
         command: npm run tmz
-        logging:
-            driver: gelf
-            options:
-                gelf-address: "udp://127.0.0.1:12201"
-                tag: "log-tmz"
     zookeeper:
         image: wurstmeister/zookeeper
         ports:
@@ -96,30 +66,3 @@ services:
             MINIO_ACCESS_KEY: prague
             MINIO_SECRET_KEY: mhioAkNXTwdX4dXWgKgXVtHo
         command: server /export
-    elasticsearch:
-        image: elasticsearch:latest
-        ports:
-            - "9200:9200"
-            - "9300:9300"
-        volumes:
-            - esdata:/usr/share/elasticsearch/data
-    logstash:
-        image: logstash:latest
-        command: logstash -e 'input { gelf { type => docker port => 12201 } } output { elasticsearch { hosts => "elasticsearch:9200" } stdout {  codec => rubydebug } }'
-        expose:
-            - "12201"
-        ports:
-            - "12201:12201"
-            - "12201:12201/udp"
-        links:
-            - elasticsearch
-    kibana:
-        image: kibana
-        ports:
-            - "5601:5601"
-        links:
-            - elasticsearch
-
-volumes:
-  esdata:
-    driver: local

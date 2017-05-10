@@ -3,30 +3,20 @@ services:
     alfred:
         volumes:
             - .:/usr/src/server
-        ports:
-            - "5858:5858"
         command: npm run alfred:watch
     deli:
         volumes:
             - .:/usr/src/server
-        ports:
-            - "5859:5858"
         command: npm run deli:watch
     paparazzi:
         volumes:
             - .:/usr/src/server
-        ports:
-            - "5860:5858"
         command: npm run paparazzi:watch
     scriptorium:
         volumes:
             - .:/usr/src/server
-        ports:
-            - "5861:5858"
         command: npm run scriptorium:watch
     tmz:
         volumes:
             - .:/usr/src/server
-        ports:
-            - "5862:5858"
         command: npm run tmz:watch

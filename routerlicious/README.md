@@ -33,6 +33,10 @@ this for you. You can run it with
 
 * `npm start` - which internally is doing a `docker-compose -f docker-compose.yml -f docker-compose.dev.yml up`
 
+If you also need debugging you can do a
+
+* `npm run start:debug` - which will allow you to attach a debugger
+
 Docker will mount your source directory into the container so you need to build prior to running it.
 
 ## Design principals
