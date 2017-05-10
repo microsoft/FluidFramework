@@ -22,6 +22,7 @@ const groupId = nconf.get("scriptorium:groupId");
 const CheckpointBatchSize = nconf.get("scriptorium:checkpointBatchSize");
 
 const consumerGroup = new kafka.ConsumerGroup({
+        autoCommit: false,
         fromOffset: "earliest",
         groupId,
         host: zookeeperEndpoint,
