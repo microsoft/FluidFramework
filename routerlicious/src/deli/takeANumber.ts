@@ -162,7 +162,8 @@ export class TakeANumber {
         // The min value in the heap represents the minimum sequence number
         const minimumSequenceNumber = this.getMinimumSequenceNumber(message.timestamp);
 
-        console.log(`Assigning ticket ${message.objectId}@${sequenceNumber} at topic@${this.offset}`);
+        // tslint:disable-next-line:max-line-length
+        console.log(`Assigning ticket ${message.objectId}@${sequenceNumber}:${minimumSequenceNumber} at topic@${this.offset}`);
         const sequencedOperation: api.ISequencedMessage = {
             clientId: message.clientId,
             clientSequenceNumber: operation.clientSequenceNumber,

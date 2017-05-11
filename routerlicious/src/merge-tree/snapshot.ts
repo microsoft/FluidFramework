@@ -113,7 +113,7 @@ export class Snapshot {
     }
 
     static async loadChunk(services: API.ICollaborationServices, id: string) {
-        let chunkAsString: string = await services.objectStorageService.read(id+"header");
+        let chunkAsString: string = await services.objectStorageService.read(id);
         if (chunkAsString.length !== 0) {
             return JSON.parse(chunkAsString) as API.MergeTreeChunk;
         } else {

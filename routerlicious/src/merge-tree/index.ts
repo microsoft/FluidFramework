@@ -133,13 +133,13 @@ export class SharedString implements API.ICollaborativeObject {
     }
 
     private processRemoteOperation(message: API.ISequencedMessage) {
-        this.events.emit("op", message);
-
         if (this.isLoaded) {
             this.client.applyMsg(message);
         } else {
             this.client.enqueueMsg(message);
         }
+
+        this.events.emit("op", message);
     }
 
     private listenForUpdates() {
