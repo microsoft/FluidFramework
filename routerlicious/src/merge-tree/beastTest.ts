@@ -78,9 +78,11 @@ class Server {
     snapshot: Paparazzo.Snapshot;
     html: string;
 
-    constructor(filename: string) {
+    constructor(filename?: string) {
         this.server = new MergeTree.TestServer("");
-        Text.loadTextFromFile(filename, this.server.mergeTree);
+        if (filename) {
+            Text.loadTextFromFile(filename, this.server.mergeTree);
+        }
         this.proxyClient = new MergeTree.Client("");
         this.server.addListeners([this.proxyClient]);
         this.snapshot = new Paparazzo.Snapshot(this.server.mergeTree);
@@ -170,6 +172,7 @@ class Server {
         });
     }
 }
+
 
 export function integerTest1() {
     let mt = random.engines.mt19937();
@@ -659,9 +662,9 @@ export function TestPack() {
         let initString = "";
         let snapInProgress = false;
         let asyncExec = false;
-        let addSnapClient = true;
-        let extractSnap = true;
-        let testSyncload = true;
+        let addSnapClient = false;
+        let extractSnap = false;
+        let testSyncload = false;
         let snapClient: MergeTree.Client;
 
         if (!startFile) {
@@ -1312,16 +1315,13 @@ export function TestPack() {
         manyMergeTrees: manyMergeTrees
     }
 }
-
 //simpleTest();
 //fileTest1();
 //integerTest1();
 //mergeTreeTest1();
 //mergeTreeLargeTest();
 //mergeTreeCheckedTest();
-//let testPack = TestPack();
+let testPack = TestPack();
 //testPack.randolicious();
-//testPack.clientServer("pp.txt");
-//testPack.firstTest();
-//testPack.manyMergeTrees();
-new Server("pp.txt").startListening();
+testPack.clientServer();
+new Server();

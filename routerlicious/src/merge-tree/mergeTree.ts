@@ -19,7 +19,7 @@ export interface Block extends Node {
 
 // TODO: make this extensible 
 export enum SegmentType {
-    Base,
+    Base, 
     Text,
     Marker,
     Component,
