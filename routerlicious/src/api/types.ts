@@ -45,7 +45,7 @@ export interface ICollaborativeObject {
      * Attaches the given collaborative object to an upstream storage location.
      * This marks it as a collaborative object.
      */
-    attach(source: storage.ICollaborationServices, registry: Registry): Promise<void>;
+    attach(services: storage.ICollaborationServices, registry: Registry): Promise<void>;
 
     /**
      * Returns whether the given collaborative object is local

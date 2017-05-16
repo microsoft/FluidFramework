@@ -53,28 +53,24 @@ export class TakeANumber {
         const dbObjectP = this.collection.findOne({ _id: this.objectId });
         dbObjectP.then(
             (dbObject) => {
-                if (dbObject) {
-                    console.log(`Existing object ${this.objectId}@${dbObject.sequenceNumber}`);
-                } else {
-                    console.log(`New object`);
+                if (!dbObject) {
+                    throw new Error("Object does not exist");
                 }
 
-                if (dbObject) {
-                    if (dbObject.clients) {
-                        for (const client of dbObject.clients) {
-                            this.upsertClient(
-                                client.clientId,
-                                client.clientSequenceNumber,
-                                client.referenceSequenceNumber,
-                                client.lastUpdate);
-                        }
+                // The object exists but we may have yet to update the deli related fields
+
+                if (dbObject.clients) {
+                    for (const client of dbObject.clients) {
+                        this.upsertClient(
+                            client.clientId,
+                            client.clientSequenceNumber,
+                            client.referenceSequenceNumber,
+                            client.lastUpdate);
                     }
-                    this.sequenceNumber = dbObject.sequenceNumber;
-                    this.offset = dbObject.offset;
-                } else {
-                    this.sequenceNumber = StartingSequenceNumber;
-                    this.offset = undefined;
                 }
+
+                this.sequenceNumber = dbObject.sequenceNumber ? dbObject.sequenceNumber : StartingSequenceNumber;
+                this.offset = dbObject.offset ? dbObject.offset : undefined;
 
                 this.resolvePending();
             },
@@ -173,7 +169,8 @@ export class TakeANumber {
         // The min value in the heap represents the minimum sequence number
         const minimumSequenceNumber = this.getMinimumSequenceNumber(message.timestamp);
 
-        console.log(`Assigning ticket ${message.objectId}@${sequenceNumber} at topic@${this.offset}`);
+        // tslint:disable-next-line:max-line-length
+        console.log(`Assigning ticket ${message.objectId}@${sequenceNumber}:${minimumSequenceNumber} at topic@${this.offset}`);
         const sequencedOperation: api.ISequencedMessage = {
             clientId: message.clientId,
             clientSequenceNumber: operation.clientSequenceNumber,
