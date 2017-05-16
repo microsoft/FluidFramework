@@ -109,6 +109,9 @@ export class InkCollaborativeObject extends api.CollaborativeObject implements I
             this.services.deltaStorageService,
             this.connection,
             {
+                getReferenceSequenceNumber: () => {
+                    return this.sequenceNumber;
+                },
                 op: (message) => {
                     this.processRemoteOperation(message);
                 },
@@ -159,7 +162,7 @@ export class InkCollaborativeObject extends api.CollaborativeObject implements I
     }
 
     private async submit(message: api.IMessage): Promise<void> {
-        this.connection.submitOp(message);
+        this.deltaManager.submitOp(message);
     }
 
     private processOperation(op: IDelta, isLocal: boolean) {

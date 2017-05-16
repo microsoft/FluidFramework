@@ -123,13 +123,13 @@ export class SharedString implements API.ICollaborativeObject {
     public insertText(text: string, pos: number) {
         const insertMessage = this.makeInsertMsg(text, pos);
         this.client.insertSegmentLocal(text, pos);
-        this.connection.submitOp(insertMessage);
+        this.deltaManager.submitOp(insertMessage);
     }
 
     public removeText(start: number, end: number) {
         const removeMessage = this.makeRemoveMsg(start, end);
         this.client.removeSegmentLocal(start, end);
-        this.connection.submitOp(removeMessage);
+        this.deltaManager.submitOp(removeMessage);
     }
 
     private processRemoteOperation(message: API.ISequencedMessage) {
@@ -148,6 +148,9 @@ export class SharedString implements API.ICollaborativeObject {
             this.services.deltaStorageService,
             this.connection,
             {
+                getReferenceSequenceNumber: () => {
+                    return this.client.getCurrentSeq();
+                },
                 op: (message) => {
                     this.processRemoteOperation(message);
                 },

@@ -2,7 +2,15 @@ import * as assert from "assert";
 import * as api from ".";
 
 export interface IDeltaListener {
+    /**
+     * Fired when a new delta operation is recieved
+     */
     op(message: api.ISequencedMessage);
+
+    /**
+     * Returns the current reference sequence number for the client.
+     */
+    getReferenceSequenceNumber(): number;
 }
 
 /**
@@ -12,6 +20,17 @@ export interface IDeltaListener {
 export class DeltaManager {
     private pending: api.ISequencedMessage[] = [];
     private fetching = false;
+
+    // The referenceSequenceNumber identifies the last sent sequence number by the client
+    private referenceSequenceNumber = 0;
+
+    // The minimum sequence number and last sequence number received from the server
+    private sequenceNumber = 0;
+    private minimumSequenceNumber = 0;
+
+    // Flag indicating whether or not we need to udpate the reference sequence number
+    private updateHasBeenRequested = false;
+    private immediate: any;
 
     constructor(
         private baseSequenceNumber: number,
@@ -26,6 +45,16 @@ export class DeltaManager {
 
         // Directly fetch all sequence numbers after base
         this.fetchMissingDeltas(this.baseSequenceNumber);
+    }
+
+    /**
+     * Submits a new delta operation
+     */
+    public submitOp(message: api.IMessage) {
+        // Track the last reference sequence number we saw
+        this.stopSequenceNumberUpdate();
+        this.referenceSequenceNumber = message.referenceSequenceNumber;
+        this.deltaConnection.submitOp(message);
     }
 
     private handleOp(message: api.ISequencedMessage) {
@@ -97,10 +126,55 @@ export class DeltaManager {
     }
 
     /**
+     * Acks the server to update the reference sequence number
+     */
+    private updateSequenceNumber() {
+        // If an update has already been requeested then mark this fact. We will wait until no updates have
+        // been requested before sending the updated sequence number.
+        if (this.immediate) {
+            this.updateHasBeenRequested = true;
+            return;
+        }
+
+        // Clear an update in 100 ms
+        this.immediate = setTimeout(() => {
+            this.immediate = undefined;
+
+            // If a second update wasn't requested then send an update message. Otherwise defer this until we
+            // stop processing new messages.
+            if (!this.updateHasBeenRequested) {
+                let sequenceNumber = this.listener.getReferenceSequenceNumber();
+                this.deltaConnection.updateReferenceSequenceNumber(sequenceNumber);
+            } else {
+                this.updateHasBeenRequested = false;
+                this.updateSequenceNumber();
+            }
+        }, 100);
+    }
+
+    private stopSequenceNumberUpdate() {
+        if (this.immediate) {
+            clearImmediate(this.immediate);
+        }
+
+        this.updateHasBeenRequested = false;
+        this.immediate = undefined;
+    }
+
+    /**
      * Revs the base sequence number based on the message and notifices the listener of the new message
      */
     private emit(message: api.ISequencedMessage) {
+        // Watch the minimum sequence number and be ready to update as needed
+        console.log(`Ref: ${this.referenceSequenceNumber} - MSN: ${this.minimumSequenceNumber}`);
+        this.minimumSequenceNumber = message.minimumSequenceNumber;
+        this.sequenceNumber = message.sequenceNumber;
         this.baseSequenceNumber = message.sequenceNumber;
+
+        // Fire all listeners
         this.listener.op(message);
+
+        // Queue a request to update the sequence number
+        this.updateSequenceNumber();
     }
 }

@@ -222,6 +222,9 @@ class Map extends api.CollaborativeObject implements api.IMap {
             this.services.deltaStorageService,
             this.connection,
             {
+                getReferenceSequenceNumber: () => {
+                    return this.sequenceNumber;
+                },
                 op: (message) => {
                     this.processRemoteOperation(message);
                 },
@@ -243,7 +246,7 @@ class Map extends api.CollaborativeObject implements api.IMap {
             }
         }
 
-        this.connection.submitOp(message);
+        this.deltaManager.submitOp(message);
     }
 
     /**
