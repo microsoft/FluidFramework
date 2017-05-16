@@ -139,6 +139,13 @@ export class TakeANumber {
             });
     }
 
+    /**
+     * Returns the offset of the last sequenced message.
+     */
+    public getOffset(): string {
+        return this.offset;
+    }
+
     private ticketCore(rawMessage: any): Promise<void> {
         // In cases where we are reprocessing messages we have already checkpointed exit early
         if (rawMessage.offset < this.offset) {
