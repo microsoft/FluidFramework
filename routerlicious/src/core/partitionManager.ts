@@ -5,8 +5,8 @@ import * as kafka from "kafka-node";
  */
 export class PartitionManager {
     private checkpointing = false;
-    // Map of {PartitionNo : [{docId, ProcessedOffset}, [maxOffset, LastProcessedOffset]}
-    private partitionMap: { [key: string]: [{ [key: string]: string }, [number, number]] } = {};
+    // Map of {PartitionNo : [LatestOffset, LastCheckpointedOffset]}
+    private partitionMap: { [key: string]: [number , number]} = {};
 
     constructor(
         private groupId: string,
@@ -25,8 +25,7 @@ export class PartitionManager {
         }
 
         // Base case for when there are not enough messages to trigger checkpointing.
-        if (!this.startCheckpointing()) {
-            this.checkpointing = false;
+        if (!this.shouldCheckpoint()) {
             return;
         }
 
@@ -41,23 +40,21 @@ export class PartitionManager {
             (error) => {
                 console.log(`${this.groupId}: Error checkpointing kafka offset: ${JSON.stringify(error)}`);
                 this.checkpointing = false;
+                // Triggering another round.
+                this.checkPoint();
             });
     }
 
     /**
-     * Enqueues or updates a document's position in the map.
+     * Enqueues or updates a partition's offset in the map.
      */
-    public update(objectId: string, partition: string, offset: string) {
+    public update(partition: string, offset: string) {
         if (!(partition in this.partitionMap)) {
-            let newPartition: { [key: string]: string } = {};
-            newPartition[objectId] = offset;
-            this.partitionMap[partition] = [newPartition, [Number(offset), -1]];
+            this.partitionMap[partition] = [Number(offset), -1];
         } else {
-            this.partitionMap[partition][0][objectId] = offset;
-            this.partitionMap[partition][1][0] = Number(offset);
+            this.partitionMap[partition][0] = Number(offset);
         }
     }
-
     /**
      * Implements checkpointing kafka offsets.
      */
@@ -65,33 +62,19 @@ export class PartitionManager {
         return new Promise<any>((resolve, reject) => {
             let commitDetails = [];
             for (let partition of Object.keys(this.partitionMap)) {
-                // Empty partition. Evict the partition.
-                if (this.partitionMap[partition][1][0] === this.partitionMap[partition][1][1]) {
+                let currentPartition = this.partitionMap[partition];
+                // No update since last checkpoint. Delete the partition.
+                if (currentPartition[0] === currentPartition[1]) {
                     console.log(`${this.groupId}: Removing partition ${partition}`);
                     delete this.partitionMap[partition];
                     continue;
                 }
-                // Find out most lagged offset across all document assigned to this partition.
-                let mostLaggedOffset = Number.MAX_VALUE;
-                let lastCheckpointOffset = this.partitionMap[partition][1][1];
-                for (let doc of Object.keys(this.partitionMap[partition][0])) {
-                    let docOffset = this.partitionMap[partition][0][doc];
-                    // Inactive since last checkpoint. Evict the document from map and continue.
-                    if (Number(docOffset) <= lastCheckpointOffset) {
-                        console.log(`${this.groupId}: Removing ${doc} from partition ${partition}`);
-                        delete this.partitionMap[partition][0][doc];
-                        continue;
-                    }
-                    mostLaggedOffset = Math.min(mostLaggedOffset, Number(docOffset));
-                }
-                // No document for this partition. Delete the partition.
-                if (mostLaggedOffset === Number.MAX_VALUE) {
-                    delete this.partitionMap[partition];
-                    continue;
-                }
-                this.partitionMap[partition][1][1] = mostLaggedOffset;
-                commitDetails.push({ topic: this.topic, partition: Number(partition), offset: mostLaggedOffset });
+
+                // Push to checkpoint queue and update the offset.
+                commitDetails.push({ topic: this.topic, partition: Number(partition), offset: currentPartition[0] });
+                currentPartition[1] = currentPartition[0];
             }
+
             // Commit all checkpoint offsets as a batch.
             this.consumerOffset.commit(this.groupId, commitDetails,
                 (error, data) => {
@@ -109,10 +92,10 @@ export class PartitionManager {
     /**
      * Decides whether to kick of checkpointing or not.
      */
-    private startCheckpointing(): boolean {
+    private shouldCheckpoint(): boolean {
         // Checks if any of the partitions has more than batchsize messages unprocessed.
         for (let partition of Object.keys(this.partitionMap)) {
-            if (this.partitionMap[partition][1][0] - this.partitionMap[partition][1][1] >= this.batchSize) {
+            if (this.partitionMap[partition][0] - this.partitionMap[partition][1] >= this.batchSize) {
                 return true;
             }
         }

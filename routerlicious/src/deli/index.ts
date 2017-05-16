@@ -13,7 +13,7 @@ const zookeeperEndpoint = nconf.get("zookeeper:endpoint");
 const kafkaClientId = nconf.get("deli:kafkaClientId");
 const receiveTopic = nconf.get("deli:topics:receive");
 const sendTopic = nconf.get("deli:topics:send");
-const CheckpointBatchSize = nconf.get("deli:checkpointBatchSize");
+const checkpointBatchSize = nconf.get("deli:checkpointBatchSize");
 
 // Connection to stored document details
 const client = MongoClient.connect(mongoUrl);
@@ -56,7 +56,8 @@ producerReady.then(
             [receiveTopic]);
 
         const consumerOffset = new kafka.Offset(kafkaClient);
-        const partitionManager = new core.PartitionManager(groupId, receiveTopic, consumerOffset, CheckpointBatchSize);
+        const partitionManager = new core.PartitionManager(groupId, receiveTopic, consumerOffset, checkpointBatchSize);
+        let ticketQueue = [];
         consumerGroup.on("message", async (message: any) => {
             const value = JSON.parse(message.value) as core.IRawOperationMessage;
             const objectId = value.objectId;
@@ -69,19 +70,26 @@ producerReady.then(
                 console.log(`Brand New object Found: ${objectId}`);
             }
             const dispenser = dispensers[objectId];
-            await dispenser.ticket(message);
+            // Push promise to ticketQueue.
+            ticketQueue.push(dispenser.ticket(message));
+
             // Update partition manager entry.
-            partitionManager.update(objectId, message.partition, message.offset);
+            partitionManager.update(message.partition, message.offset);
 
             // Periodically checkpoints to mongo and checkpoints offset back to kafka.
             // Ideally there should be a better strategy to figure out when to checkpoint.
-            if (message.offset > 0 && message.offset % CheckpointBatchSize === 0) {
-                // Checkpointing to mongo first.
+            if (message.offset % checkpointBatchSize === 0) {
+                // Ticket all messages and empty the queue.
+                await Promise.all(ticketQueue);
+                ticketQueue = [];
+
+                // Checkpoint to mongo now.
                 let checkpointQueue = [];
                 for (let doc of Object.keys(dispensers)) {
                     checkpointQueue.push(dispensers[doc].checkpoint());
                 }
                 await Promise.all(checkpointQueue);
+
                 // Finally call kafka checkpointing.
                 partitionManager.checkPoint();
             }

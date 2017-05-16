@@ -19,7 +19,7 @@ const zookeeperEndpoint = nconf.get("zookeeper:endpoint");
 const kafkaClientId = nconf.get("scriptorium:kafkaClientId");
 const topic = nconf.get("scriptorium:topic");
 const groupId = nconf.get("scriptorium:groupId");
-const CheckpointBatchSize = nconf.get("scriptorium:checkpointBatchSize");
+const checkpointBatchSize = nconf.get("scriptorium:checkpointBatchSize");
 
 const consumerGroup = new kafka.ConsumerGroup({
         autoCommit: false,
@@ -32,7 +32,7 @@ const consumerGroup = new kafka.ConsumerGroup({
     [topic]);
  let kafkaClient = new kafka.Client(zookeeperEndpoint, kafkaClientId);
  const consumerOffset = new kafka.Offset(kafkaClient);
- const partitionManager = new core.PartitionManager(groupId, topic, consumerOffset, CheckpointBatchSize);
+ const partitionManager = new core.PartitionManager(groupId, topic, consumerOffset, checkpointBatchSize);
 
 const mongoUrl = nconf.get("mongo:endpoint");
 const mongoClientP = MongoClient.connect(mongoUrl);
@@ -57,22 +57,24 @@ consumerGroup.on("message", async (message: any) => {
     const value = JSON.parse(message.value) as core.ISequencedOperationMessage;
     const objectId = value.objectId;
 
-    partitionManager.update(objectId, message.partition, message.offset);
+    // Serialize the message to backing store
+    console.log(`Inserting to mongodb ${objectId}@${value.operation.sequenceNumber}`);
+    const collection = await collectionP;
+    collection.insert(value).catch((error) => {
+        console.error("Error serializing to MongoDB");
+        console.error(error);
+    });
+
+    // Route the message to clients
+    console.log(`Routing message to clients ${value.objectId}@${value.operation.sequenceNumber}`);
+    io.to(value.objectId).emit("op", value.objectId, value.operation);
+
+    // Update partition manager.
+    partitionManager.update(message.partition, message.offset);
 
     // Checkpoint to kafka after completing all operations.
     // We should experiment with 'CheckpointBatchSize' here.
-    if (message.offset % CheckpointBatchSize === 0) {
-        // Serialize the message to backing store
-        console.log(`Inserting to mongodb ${objectId}@${value.operation.sequenceNumber}`);
-        const collection = await collectionP;
-        collection.insert(value).catch((error) => {
-            console.error("Error serializing to MongoDB");
-            console.error(error);
-        });
-
-        // Route the message to clients
-        console.log(`Routing message to clients ${value.objectId}@${value.operation.sequenceNumber}`);
-        io.to(value.objectId).emit("op", value.objectId, value.operation);
+    if (message.offset % checkpointBatchSize === 0) {
         // Finally call kafka checkpointing.
         partitionManager.checkPoint();
     }
