@@ -44,7 +44,6 @@ export class DeltaConnection implements api.IDeltaConnection {
      */
     public updateReferenceSequenceNumber(sequenceNumber: number): Promise<void> {
         return new Promise<void>((resolve, reject) => {
-            console.log(`Would update ref to ${sequenceNumber}`);
             this.service.emit("updateReferenceSequenceNumber", this.objectId, sequenceNumber, (error) => {
                 if (error) {
                     reject(error);

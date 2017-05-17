@@ -174,7 +174,6 @@ export class DeltaManager {
      */
     private emit(message: api.ISequencedMessage) {
         // Watch the minimum sequence number and be ready to update as needed
-        console.log(`Ref: ${this.referenceSequenceNumber} - MSN: ${this.minimumSequenceNumber}`);
         this.minimumSequenceNumber = message.minimumSequenceNumber;
         const needsSequenceUpdate = this.sequenceNumber !== message.sequenceNumber;
         this.sequenceNumber = message.sequenceNumber;
