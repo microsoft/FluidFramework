@@ -8,11 +8,11 @@ This repository splits the code into two separate sections. The core API is cont
 contains the core routerlicious code. But stubs out connections to external services behind provided interfaces.
 This code is shared between clients and services.
 
-A server implementation is contained within src/server. This makes use of the API but provides implementations of
+A server implementation is contained within various other folders. These are named based on the image provided below. This makes use of the API but provides implementations of
 the interfaces. For instance connections are handled with socket.io. And cross machine communication is handled
 via Redis.
 
-The server also hooks in the interval spanning tree type as the core plugin.
+The server also hooks in the merge tree type as the core plugin.
 
 ## Building
 
