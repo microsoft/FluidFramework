@@ -132,6 +132,7 @@ io.on("connection", (socket) => {
             operation: message,
             objectId,
             timestamp: Date.now(),
+            type: core.RawOperationType,
             userId: null,
         };
 
@@ -145,6 +146,41 @@ io.on("connection", (socket) => {
 
                     console.log(data);
                     resolve({ data: true });
+                });
+            });
+        });
+
+        submittedP.then(
+            (responseMessage) => response(null, responseMessage),
+            (error) => response(error, null));
+    });
+
+    socket.on("updateReferenceSequenceNumber", (objectId: string, sequenceNumber: number, response) => {
+        console.log(`${clientId} Updating ${objectId} to ${sequenceNumber}`);
+
+        // Verify the user has connected on this object id
+        if (!connectionsMap[objectId]) {
+            return response("Invalid object", null);
+        }
+
+        const message: core.IUpdateReferenceSequenceNumberMessage = {
+            clientId,
+            objectId,
+            sequenceNumber,
+            timestamp: Date.now(),
+            type: core.UpdateReferenceSequenceNumberType,
+            userId: null,
+        };
+
+        let submittedP = producerReady.then(() => {
+            const payloads = [{ topic, messages: [JSON.stringify(message)], key: objectId }];
+            return new Promise<any>((resolve, reject) => {
+                producer.send(payloads, (error, data) => {
+                    if (error) {
+                        return reject(error);
+                    }
+
+                    resolve();
                 });
             });
         });

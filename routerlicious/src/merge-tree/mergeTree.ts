@@ -394,6 +394,8 @@ class CollaborationWindow {
     // highest-numbered segment in window and current 
     // reference segment for this client
     currentSeq = 0;
+    // highest-numbered message processed
+    offset = 0;
 }
 
 /**
@@ -1013,7 +1015,7 @@ export class Client {
     accumOps = 0;
     verboseOps = false;
     measureOps = false;
-    q: Collections.List<api.ISequencedMessage>;
+    q: Collections.List<api.IBase>;
     checkQ: Collections.List<string>;
     clientSequenceNumber = 1;
     clientNameToId = new Collections.RedBlackTree<string, number>(compareStrings);
@@ -1061,9 +1063,11 @@ export class Client {
             clientSequenceNumber: this.clientSequenceNumber,
             userId: undefined,
             minimumSequenceNumber: undefined,
+            offset: seq,
             op: {
                 type: api.MergeTreeMsgType.INSERT, text: text, pos1: pos
-            }
+            },
+            type: api.OperationType,
         };
     }
 
@@ -1076,13 +1080,15 @@ export class Client {
             clientSequenceNumber: this.clientSequenceNumber,
             userId: undefined,
             minimumSequenceNumber: undefined,
+            offset: seq,
             op: {
                 type: api.MergeTreeMsgType.REMOVE, pos1: start, pos2: end
-            }
+            },
+            type: api.OperationType,
         };
     }
 
-    enqueueMsg(msg: api.ISequencedMessage) {
+    enqueueMsg(msg: api.IBase) {
         this.q.enqueue(msg);
     }
 
@@ -1105,15 +1111,23 @@ export class Client {
         }
     }
 
-    applyMsg(msg: api.ISequencedMessage) {
+    applyMsg(msg: api.IBase) {
         if ((msg !== undefined) && (msg.minimumSequenceNumber > this.mergeTree.getCollabWindow().minSeq)) {
             this.updateMinSeq(msg.minimumSequenceNumber);
         }
-        if (msg.clientId == this.longClientId) {
-            this.ackPendingSegment(msg.sequenceNumber);
-        }
-        else {
-            this.coreApplyMsg(msg);
+
+        // Update the offset on the message
+        this.mergeTree.getCollabWindow().offset = msg.offset;
+
+        // Apply if an operation message
+        if (msg.type === api.OperationType) {
+            const operationMessage = msg as api.ISequencedMessage;
+            if (operationMessage.clientId == this.longClientId) {
+                this.ackPendingSegment(operationMessage.sequenceNumber);
+            }
+            else {
+                this.coreApplyMsg(operationMessage);
+            }
         }
     }
 
@@ -1275,10 +1289,10 @@ export class Client {
         return `cli: ${this.getLongClientId(clientId)} refSeq: ${refSeq}: ` + this.mergeTree.getText(refSeq, clientId);
     }
 
-    startCollaboration(longClientId: string, minSeq = 0) {
+    startCollaboration(longClientId: string, minSeq = 0, offset = 0) {
         this.longClientId = longClientId;
         this.addLongClientId(longClientId);
-        this.mergeTree.startCollaboration(this.getShortClientId(this.longClientId), minSeq);
+        this.mergeTree.startCollaboration(this.getShortClientId(this.longClientId), minSeq, offset);
     }
 }
 
@@ -1327,46 +1341,6 @@ export class TestServer extends Client {
         else {
             return false;
         }
-    }
-
-    applyMessages(msgCount: number) {
-        while (msgCount > 0) {
-            let msg = this.q.dequeue();
-            if (msg) {
-                msg.sequenceNumber = this.seq++;
-                if (this.applyMsg(msg)) {
-                    return true;
-                }
-                if (this.clients) {
-                    let minCli = this.clientSeqNumbers.peek();
-                    if (minCli && (minCli.clientId == msg.clientId) &&
-                        (minCli.refSeq < msg.referenceSequenceNumber)) {
-                        let cliSeq = this.clientSeqNumbers.get();
-                        let oldSeq = cliSeq.refSeq;
-                        cliSeq.refSeq = msg.referenceSequenceNumber;
-                        this.clientSeqNumbers.add(cliSeq);
-                        minCli = this.clientSeqNumbers.peek();
-                        if (minCli.refSeq > oldSeq) {
-                            msg.minimumSequenceNumber = minCli.refSeq;
-                            this.updateMinSeq(minCli.refSeq);
-                        }
-                    }
-                    for (let client of this.clients) {
-                        client.enqueueMsg(msg);
-                    }
-                    if (this.listeners) {
-                        for (let listener of this.listeners) {
-                            listener.enqueueMsg(msg);
-                        }
-                    }
-                }
-            }
-            else {
-                break;
-            }
-            msgCount--;
-        }
-        return false;
     }
 }
 
@@ -1484,11 +1458,12 @@ export class MergeTree {
     }
 
     // for now assume min starts at zero
-    startCollaboration(localClientId: number, minSeq: number) {
+    startCollaboration(localClientId: number, minSeq: number, offset: number) {
         this.collabWindow.clientId = localClientId;
         this.collabWindow.minSeq = minSeq;
         this.collabWindow.collaborating = true;
         this.collabWindow.currentSeq = minSeq;
+        this.collabWindow.offset = offset;
         this.segmentsToScour = new Collections.Heap<LRUSegment>([], LRUSegmentComparer);
         this.pendingSegments = Collections.ListMakeHead<SegmentGroup>();
         let measureFullCollab = true;

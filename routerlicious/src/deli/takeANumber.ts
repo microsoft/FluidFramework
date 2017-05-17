@@ -40,9 +40,11 @@ export class TakeANumber {
     private queue: Array<IPendingTicket<void>> = [];
     private error: any;
     private sequenceNumber: number = undefined;
-    private offset: string;
+    private logOffset: number;
+    private offset: number;
     private clientNodeMap: { [key: string]: utils.IHeapNode<IClientSequenceNumber> } = {};
     private clientSeqNumbers = new utils.Heap<IClientSequenceNumber>(SequenceNumberComparer);
+    private minimumSequenceNumber;
 
     constructor(
         private objectId: string,
@@ -70,7 +72,8 @@ export class TakeANumber {
                 }
 
                 this.sequenceNumber = dbObject.sequenceNumber ? dbObject.sequenceNumber : StartingSequenceNumber;
-                this.offset = dbObject.offset ? dbObject.offset : undefined;
+                this.offset = dbObject.offset ? dbObject.offset : StartingSequenceNumber;
+                this.logOffset = dbObject.logOffset ? dbObject.logOffset : undefined;
 
                 this.resolvePending();
             },
@@ -130,6 +133,7 @@ export class TakeANumber {
                 $set: {
                     _id : this.objectId,
                     clients,
+                    logOffset: this.logOffset,
                     offset: this.offset,
                     sequenceNumber : this.sequenceNumber,
                 },
@@ -142,50 +146,88 @@ export class TakeANumber {
     /**
      * Returns the offset of the last sequenced message.
      */
-    public getOffset(): string {
-        return this.offset;
+    public getOffset(): number {
+        return this.logOffset;
     }
 
     private ticketCore(rawMessage: any): Promise<void> {
         // In cases where we are reprocessing messages we have already checkpointed exit early
-        if (rawMessage.offset < this.offset) {
+        if (rawMessage.offset < this.logOffset) {
             return Promise.resolve();
         }
 
-        const message = JSON.parse(rawMessage.value) as core.IRawOperationMessage;
-        const operation = message.operation;
+        this.logOffset = rawMessage.offset;
 
-        // Increment and grab the next sequence number as well as store the event hub offset mapping to it
-        const sequenceNumber = ++this.sequenceNumber;
-        this.offset = rawMessage.offset;
+        // Update the client's reference sequence number based on the message type
+        const objectMessage = JSON.parse(rawMessage.value) as core.IObjectMessage;
+        if (objectMessage.type === core.UpdateReferenceSequenceNumberType) {
+            const message = objectMessage as core.IUpdateReferenceSequenceNumberMessage;
+            this.updateClient(message.clientId, message.timestamp, message.sequenceNumber);
 
-        // Update and retrieve the minimum sequence number
-        this.upsertClient(
-            message.clientId,
-            message.operation.clientSequenceNumber,
-            message.operation.referenceSequenceNumber,
-            message.timestamp);
+        } else {
+            const message = objectMessage as core.IRawOperationMessage;
 
-        // The min value in the heap represents the minimum sequence number
-        const minimumSequenceNumber = this.getMinimumSequenceNumber(message.timestamp);
+            // Update and retrieve the minimum sequence number
+            this.upsertClient(
+                message.clientId,
+                message.operation.clientSequenceNumber,
+                message.operation.referenceSequenceNumber,
+                message.timestamp);
+        }
 
-        // tslint:disable-next-line:max-line-length
-        console.log(`Assigning ticket ${message.objectId}@${sequenceNumber}:${minimumSequenceNumber} at topic@${this.offset}`);
-        const sequencedOperation: api.ISequencedMessage = {
-            clientId: message.clientId,
-            clientSequenceNumber: operation.clientSequenceNumber,
-            minimumSequenceNumber,
-            op: operation.op,
-            referenceSequenceNumber: operation.referenceSequenceNumber,
-            sequenceNumber,
-            userId: message.userId,
-        };
+        // Store the previous minimum sequene number we returned and then update it
+        const lastMinimumSequenceNumber = this.minimumSequenceNumber;
+        this.minimumSequenceNumber = this.getMinimumSequenceNumber(objectMessage.timestamp);
+
+        // And now craft the output message
+        let outputMessage: api.IBase;
+        if (objectMessage.type === core.UpdateReferenceSequenceNumberType) {
+            // Only create a new message if the minimum sequence number actually has changed
+            if (lastMinimumSequenceNumber !== this.minimumSequenceNumber) {
+                const minimumSequenceNumberMessage: api.IBase = {
+                    minimumSequenceNumber: this.minimumSequenceNumber,
+                    offset: this.revOffset(),
+                    sequenceNumber: this.sequenceNumber,
+                    type: api.MinimumSequenceNumberUpdateType,
+                };
+
+                outputMessage = minimumSequenceNumberMessage;
+            }
+        } else {
+            const message = objectMessage as core.IRawOperationMessage;
+            const operation = message.operation;
+
+            // Increment and grab the next sequence number as well as store the event hub offset mapping to it
+            const sequenceNumber = this.revSequenceNumber();
+
+            // tslint:disable-next-line:max-line-length
+            console.log(`Assigning ticket ${message.objectId}@${sequenceNumber}:${this.minimumSequenceNumber} at topic@${this.logOffset}`);
+            const sequencedOperation: api.ISequencedMessage = {
+                clientId: message.clientId,
+                clientSequenceNumber: operation.clientSequenceNumber,
+                minimumSequenceNumber: this.minimumSequenceNumber,
+                offset: this.revOffset(),
+                op: operation.op,
+                referenceSequenceNumber: operation.referenceSequenceNumber,
+                sequenceNumber,
+                type: api.OperationType,
+                userId: message.userId,
+            };
+            outputMessage = sequencedOperation;
+        }
+
+        // If no message then we can return early
+        if (!outputMessage) {
+            return Promise.resolve();
+        }
+
         const sequencedMessage: core.ISequencedOperationMessage = {
-            objectId: message.objectId,
-            operation: sequencedOperation,
+            objectId: objectMessage.objectId,
+            operation: outputMessage,
+            type: core.SequencedOperationType,
         };
 
-        // Serialize the sequenced message to the event hub
+        // Otherwise send the message to the event hub
         const payloads = [{
             key: sequencedMessage.objectId,
             messages: [JSON.stringify(sequencedMessage)],
@@ -201,6 +243,20 @@ export class TakeANumber {
                 resolve({ data: true });
             });
         });
+    }
+
+    /**
+     * Returns a new offset value
+     */
+    private revOffset(): number {
+        return ++this.offset;
+    }
+
+    /**
+     * Returns a new sequence number
+     */
+    private revSequenceNumber(): number {
+        return ++this.sequenceNumber;
     }
 
     /**
@@ -256,12 +312,29 @@ export class TakeANumber {
             this.clientNodeMap[clientId] = newNode;
         }
 
+        // And then update its values
+        this.updateClient(clientId, timestamp, referenceSequenceNumber, clientSequenceNumber);
+    }
+
+    /**
+     * Updates the sequence number of the specified client
+     */
+    private updateClient(
+        clientId: string,
+        timestamp: number,
+        referenceSequenceNumber: number,
+        clientSequenceNumber?: number) {
+
         // Lookup the node and then update its value based on the message
         const heapNode = this.clientNodeMap[clientId];
-        heapNode.value.referenceSequenceNumber = referenceSequenceNumber;
-        heapNode.value.clientSequenceNumber = clientSequenceNumber;
-        heapNode.value.lastUpdate = timestamp;
-        this.clientSeqNumbers.update(heapNode);
+        if (heapNode) {
+            heapNode.value.referenceSequenceNumber = referenceSequenceNumber;
+            heapNode.value.lastUpdate = timestamp;
+            if (clientSequenceNumber !== undefined) {
+                heapNode.value.clientSequenceNumber = clientSequenceNumber;
+            }
+            this.clientSeqNumbers.update(heapNode);
+        }
     }
 
     /**

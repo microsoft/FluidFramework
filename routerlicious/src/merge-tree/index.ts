@@ -46,6 +46,7 @@ export class SharedString implements API.ICollaborativeObject {
     deltaManager: API.DeltaManager;
     __collaborativeObject__: boolean = true;
     initialSeq: number;
+    initialOffset: number;
     private events = new EventEmitter();
     private clientSequenceNumber = 1;
     private isLoaded = false;
@@ -71,14 +72,16 @@ export class SharedString implements API.ICollaborativeObject {
                 this.client.mergeTree.appendTextSegment(text);
             }
             this.initialSeq = chunk.chunkSequenceNumber;
+            this.initialOffset = chunk.chunkOffset;
         } else {
             this.initialSeq = 0;
+            this.initialOffset = 0;
         }
 
         this.events.emit('loadFinshed', chunk);
         this.isLoaded = true;
         this.client.applyAll();
-        this.client.startCollaboration(this.connection.clientId, this.initialSeq);
+        this.client.startCollaboration(this.connection.clientId, this.initialSeq, this.initialOffset);
 
         this.listenForUpdates();
     }
@@ -132,7 +135,7 @@ export class SharedString implements API.ICollaborativeObject {
         this.deltaManager.submitOp(removeMessage);
     }
 
-    private processRemoteOperation(message: API.ISequencedMessage) {
+    private processRemoteOperation(message: API.IBase) {
         if (this.isLoaded) {
             this.client.applyMsg(message);
         } else {
@@ -144,7 +147,7 @@ export class SharedString implements API.ICollaborativeObject {
 
     private listenForUpdates() {
         this.deltaManager = new API.DeltaManager(
-            this.initialSeq,
+            this.initialOffset,
             this.services.deltaStorageService,
             this.connection,
             {
@@ -160,10 +163,11 @@ export class SharedString implements API.ICollaborativeObject {
     async attach(services: API.ICollaborationServices, registry: API.Registry): Promise<void> {
         this.services = services;
         this.initialSeq = 0;
+        this.initialOffset = 0;
         this.connection = await this.services.deltaNotificationService.connect(this.id, "string");
+        this.listenForUpdates();
         this.isLoaded = true;
         this.client.startCollaboration(this.connection.clientId, this.initialSeq);
-        this.listenForUpdates();
     }
 
     isLocal(): boolean {

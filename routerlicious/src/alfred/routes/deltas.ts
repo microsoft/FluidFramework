@@ -21,14 +21,14 @@ router.get("/:id", async (request, response, next) => {
     // Create an optional filter to restrict the delta range
     const query: any = { objectId: request.params.id };
     if (request.query.from || request.query.to) {
-        query["operation.sequenceNumber"] = {};
+        query["operation.offset"] = {};
 
         if (request.query.from) {
-            query["operation.sequenceNumber"].$gt = parseInt(request.query.from, 10);
+            query["operation.offset"].$gt = parseInt(request.query.from, 10);
         }
 
         if (request.query.to) {
-            query["operation.sequenceNumber"].$lt = parseInt(request.query.to, 10);
+            query["operation.offset"].$lt = parseInt(request.query.to, 10);
         }
     }
 
@@ -36,7 +36,7 @@ router.get("/:id", async (request, response, next) => {
     const collection = await collectionP;
     const dbDeltas = await collection
         .find(query)
-        .sort({ "operation.sequenceNumber": 1 })
+        .sort({ "operation.offset": 1 })
         .toArray();
     const deltas = dbDeltas.map((delta) => delta.operation);
 

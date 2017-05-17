@@ -5,7 +5,7 @@ export interface IDeltaListener {
     /**
      * Fired when a new delta operation is recieved
      */
-    op(message: api.ISequencedMessage);
+    op(message: api.IBase);
 
     /**
      * Returns the current reference sequence number for the client.
@@ -36,7 +36,7 @@ export class DeltaManager {
     private readonly = true;
 
     constructor(
-        private baseSequenceNumber: number,
+        private baseOffset: number,
         private deltaStorage: api.IDeltaStorageService,
         private deltaConnection: api.IDeltaConnection,
         private listener: IDeltaListener) {
@@ -47,7 +47,7 @@ export class DeltaManager {
         });
 
         // Directly fetch all sequence numbers after base
-        this.fetchMissingDeltas(this.baseSequenceNumber);
+        this.fetchMissingDeltas(this.baseOffset);
     }
 
     /**
@@ -63,7 +63,7 @@ export class DeltaManager {
     private handleOp(message: api.ISequencedMessage) {
         // Incoming sequence numbers should be one higher than the previous ones seen. If not we have missed the
         // stream and need to query the server for the missing deltas.
-        if (message.sequenceNumber !== this.baseSequenceNumber + 1) {
+        if (message.offset !== this.baseOffset + 1) {
             this.handleOutOfOrderMessage(message);
         } else {
             this.emit(message);
@@ -74,14 +74,14 @@ export class DeltaManager {
      * Handles an out of order message retrieved from the server
      */
     private handleOutOfOrderMessage(message: api.ISequencedMessage) {
-        if (message.sequenceNumber <= this.baseSequenceNumber) {
+        if (message.offset <= this.baseOffset) {
             console.log(`Received duplicate message ${this.deltaConnection.objectId}@${message.sequenceNumber}`);
             return;
         }
 
-        console.log(`Received out of order sequence number ${message.sequenceNumber}:${this.baseSequenceNumber}`);
+        console.log(`Received out of order message ${message.offset}:${this.baseOffset}`);
         this.pending.push(message);
-        this.fetchMissingDeltas(this.baseSequenceNumber, message.sequenceNumber);
+        this.fetchMissingDeltas(this.baseOffset, message.offset);
     }
 
     /**
@@ -112,8 +112,8 @@ export class DeltaManager {
         for (const message of messages) {
             // Ignore sequence numbers prior to the base. This can happen at startup when we fetch all missing
             // deltas while also listening for updates
-            if (message.sequenceNumber > this.baseSequenceNumber) {
-                assert.equal(message.sequenceNumber, this.baseSequenceNumber + 1);
+            if (message.offset > this.baseOffset) {
+                assert.equal(message.offset, this.baseOffset + 1);
                 this.emit(message);
             }
         }
@@ -121,7 +121,7 @@ export class DeltaManager {
         // Then sort pending operations and attempt to apply them again.
         // This could be optimized to stop handling messages once we realize we need to fetch mising values.
         // But for simplicity, and because catching up should be rare, we just process all of them.
-        const pendingSorted = this.pending.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
+        const pendingSorted = this.pending.sort((a, b) => a.offset - b.offset);
         this.pending = [];
         for (const pendingMessage of pendingSorted) {
             this.handleOp(pendingMessage);
@@ -162,7 +162,7 @@ export class DeltaManager {
 
     private stopSequenceNumberUpdate() {
         if (this.immediate) {
-            clearImmediate(this.immediate);
+            clearTimeout(this.immediate);
         }
 
         this.updateHasBeenRequested = false;
@@ -176,13 +176,16 @@ export class DeltaManager {
         // Watch the minimum sequence number and be ready to update as needed
         console.log(`Ref: ${this.referenceSequenceNumber} - MSN: ${this.minimumSequenceNumber}`);
         this.minimumSequenceNumber = message.minimumSequenceNumber;
+        const needsSequenceUpdate = this.sequenceNumber !== message.sequenceNumber;
         this.sequenceNumber = message.sequenceNumber;
-        this.baseSequenceNumber = message.sequenceNumber;
+        this.baseOffset = message.offset;
 
         // Fire all listeners
         this.listener.op(message);
 
         // Queue a request to update the sequence number
-        this.updateSequenceNumber();
+        if (needsSequenceUpdate) {
+            this.updateSequenceNumber();
+        }
     }
 }
