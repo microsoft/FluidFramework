@@ -32,6 +32,9 @@ export class DeltaManager {
     private updateHasBeenRequested = false;
     private immediate: any;
 
+    // Flag indicating whether the client has only received messages
+    private readonly = true;
+
     constructor(
         private baseSequenceNumber: number,
         private deltaStorage: api.IDeltaStorageService,
@@ -51,7 +54,7 @@ export class DeltaManager {
      * Submits a new delta operation
      */
     public submitOp(message: api.IMessage) {
-        // Track the last reference sequence number we saw
+        this.readonly = false;
         this.stopSequenceNumberUpdate();
         this.referenceSequenceNumber = message.referenceSequenceNumber;
         this.deltaConnection.submitOp(message);
@@ -129,6 +132,11 @@ export class DeltaManager {
      * Acks the server to update the reference sequence number
      */
     private updateSequenceNumber() {
+        // Exit early for readonly clients. They don't take part in the minimum sequence number calculation.
+        if (this.readonly) {
+            return;
+        }
+
         // If an update has already been requeested then mark this fact. We will wait until no updates have
         // been requested before sending the updated sequence number.
         if (this.immediate) {
