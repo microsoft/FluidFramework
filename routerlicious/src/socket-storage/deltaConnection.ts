@@ -40,6 +40,21 @@ export class DeltaConnection implements api.IDeltaConnection {
     }
 
     /**
+     * Updates the reference sequence number on the given connection to the provided value
+     */
+    public updateReferenceSequenceNumber(sequenceNumber: number): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
+            this.service.emit("updateReferenceSequenceNumber", this.objectId, sequenceNumber, (error) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    resolve();
+                }
+            });
+        });
+    }
+
+    /**
      * Dispatches the given event to any registered listeners.
      * This is an internal method.
      */

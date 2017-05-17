@@ -46,6 +46,7 @@ export class SharedString implements API.ICollaborativeObject {
     deltaManager: API.DeltaManager;
     __collaborativeObject__: boolean = true;
     initialSeq: number;
+    initialOffset: number;
     private events = new EventEmitter();
     private clientSequenceNumber = 1;
     private isLoaded = false;
@@ -71,14 +72,16 @@ export class SharedString implements API.ICollaborativeObject {
                 this.client.mergeTree.appendTextSegment(text);
             }
             this.initialSeq = chunk.chunkSequenceNumber;
+            this.initialOffset = chunk.chunkOffset;
         } else {
             this.initialSeq = 0;
+            this.initialOffset = 0;
         }
 
         this.events.emit('loadFinshed', chunk);
         this.isLoaded = true;
         this.client.applyAll();
-        this.client.startCollaboration(this.connection.clientId, this.initialSeq);
+        this.client.startCollaboration(this.connection.clientId, this.initialSeq, this.initialOffset);
 
         this.listenForUpdates();
     }
@@ -123,16 +126,16 @@ export class SharedString implements API.ICollaborativeObject {
     public insertText(text: string, pos: number) {
         const insertMessage = this.makeInsertMsg(text, pos);
         this.client.insertSegmentLocal(text, pos);
-        this.connection.submitOp(insertMessage);
+        this.deltaManager.submitOp(insertMessage);
     }
 
     public removeText(start: number, end: number) {
         const removeMessage = this.makeRemoveMsg(start, end);
         this.client.removeSegmentLocal(start, end);
-        this.connection.submitOp(removeMessage);
+        this.deltaManager.submitOp(removeMessage);
     }
 
-    private processRemoteOperation(message: API.ISequencedMessage) {
+    private processRemoteOperation(message: API.IBase) {
         if (this.isLoaded) {
             this.client.applyMsg(message);
         } else {
@@ -144,10 +147,13 @@ export class SharedString implements API.ICollaborativeObject {
 
     private listenForUpdates() {
         this.deltaManager = new API.DeltaManager(
-            this.initialSeq,
+            this.initialOffset,
             this.services.deltaStorageService,
             this.connection,
             {
+                getReferenceSequenceNumber: () => {
+                    return this.client.getCurrentSeq();
+                },
                 op: (message) => {
                     this.processRemoteOperation(message);
                 },
@@ -157,10 +163,11 @@ export class SharedString implements API.ICollaborativeObject {
     async attach(services: API.ICollaborationServices, registry: API.Registry): Promise<void> {
         this.services = services;
         this.initialSeq = 0;
+        this.initialOffset = 0;
         this.connection = await this.services.deltaNotificationService.connect(this.id, "string");
+        this.listenForUpdates();
         this.isLoaded = true;
         this.client.startCollaboration(this.connection.clientId, this.initialSeq);
-        this.listenForUpdates();
     }
 
     isLocal(): boolean {

@@ -1,4 +1,5 @@
 import * as kafka from "kafka-node";
+import * as _ from "lodash";
 import { MongoClient } from "mongodb";
 import * as nconf from "nconf";
 import * as path from "path";
@@ -57,41 +58,51 @@ producerReady.then(
 
         const consumerOffset = new kafka.Offset(kafkaClient);
         const partitionManager = new core.PartitionManager(groupId, receiveTopic, consumerOffset, checkpointBatchSize);
-        let ticketQueue = [];
+        let ticketQueue: {[id: string]: Promise<void> } = {};
+
         consumerGroup.on("message", async (message: any) => {
-            const value = JSON.parse(message.value) as core.IRawOperationMessage;
-            const objectId = value.objectId;
+            const baseMessage = JSON.parse(message.value) as core.IMessage;
 
-            // Go grab the takeANumber machine for the objectId and mark it as dirty.
-            // Store it in the partition map. We need to add an eviction strategy here.
-            if (!(objectId in dispensers)) {
-                const collection = await objectsCollectionP;
-                dispensers[objectId] = new TakeANumber(objectId, collection, producer, sendTopic);
-                console.log(`Brand New object Found: ${objectId}`);
-            }
-            const dispenser = dispensers[objectId];
-            // Push promise to ticketQueue.
-            ticketQueue.push(dispenser.ticket(message));
+            if (baseMessage.type === core.UpdateReferenceSequenceNumberType ||
+                baseMessage.type === core.RawOperationType) {
 
-            // Update partition manager entry.
-            partitionManager.update(message.partition, message.offset);
+                const objectMessage = JSON.parse(message.value) as core.IObjectMessage;
+                const objectId = objectMessage.objectId;
 
-            // Periodically checkpoints to mongo and checkpoints offset back to kafka.
-            // Ideally there should be a better strategy to figure out when to checkpoint.
-            if (message.offset % checkpointBatchSize === 0) {
-                // Ticket all messages and empty the queue.
-                await Promise.all(ticketQueue);
-                ticketQueue = [];
-
-                // Checkpoint to mongo now.
-                let checkpointQueue = [];
-                for (let doc of Object.keys(dispensers)) {
-                    checkpointQueue.push(dispensers[doc].checkpoint());
+                // Go grab the takeANumber machine for the objectId and mark it as dirty.
+                // Store it in the partition map. We need to add an eviction strategy here.
+                if (!(objectId in dispensers)) {
+                    const collection = await objectsCollectionP;
+                    dispensers[objectId] = new TakeANumber(objectId, collection, producer, sendTopic);
+                    console.log(`Brand New object Found: ${objectId}`);
                 }
-                await Promise.all(checkpointQueue);
+                const dispenser = dispensers[objectId];
 
-                // Finally call kafka checkpointing.
-                partitionManager.checkPoint();
+                // Either ticket the message or update the sequence number depending on the message type
+                const ticketP = dispenser.ticket(message);
+                ticketQueue[objectId] = ticketP;
+
+                // Update partition manager entry.
+                partitionManager.update(message.partition, message.offset);
+
+                // Periodically checkpoints to mongo and checkpoints offset back to kafka.
+                // Ideally there should be a better strategy to figure out when to checkpoint.
+                if (message.offset % checkpointBatchSize === 0) {
+                    // Ticket all messages and empty the queue.
+                    let pendingTickets = _.values(ticketQueue);
+                    ticketQueue = {};
+                    await Promise.all(pendingTickets);
+
+                    // Checkpoint to mongo now.
+                    let checkpointQueue = [];
+                    for (let doc of Object.keys(dispensers)) {
+                        checkpointQueue.push(dispensers[doc].checkpoint());
+                    }
+                    await Promise.all(checkpointQueue);
+
+                    // Finally call kafka checkpointing.
+                    partitionManager.checkPoint();
+                }
             }
         });
     },

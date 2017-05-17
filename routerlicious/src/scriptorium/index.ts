@@ -42,7 +42,7 @@ const collectionP = mongoClientP.then(async (db) => {
 
     const indexP = collection.createIndex({
             "objectId": 1,
-            "operation.sequenceNumber": 1,
+            "operation.offset": 1,
         },
         { unique: true });
 
@@ -54,20 +54,23 @@ consumerGroup.on("message", async (message: any) => {
     // NOTE the processing of the below messages must make sure to notify clients of the messages in increasing
     // order. Be aware of promise handling ordering possibly causing out of order messages to be delivered.
 
-    const value = JSON.parse(message.value) as core.ISequencedOperationMessage;
-    const objectId = value.objectId;
+    const baseMessage = JSON.parse(message.value) as core.IMessage;
+    if (baseMessage.type === core.SequencedOperationType) {
+        const value = baseMessage as core.ISequencedOperationMessage;
+        const objectId = value.objectId;
 
-    // Serialize the message to backing store
-    console.log(`Inserting to mongodb ${objectId}@${value.operation.sequenceNumber}`);
-    const collection = await collectionP;
-    collection.insert(value).catch((error) => {
-        console.error("Error serializing to MongoDB");
-        console.error(error);
-    });
+        // Serialize the message to backing store
+        console.log(`Inserting to mongodb ${objectId}@${value.operation.offset}:${value.operation.sequenceNumber}`);
+        const collection = await collectionP;
+        collection.insert(value).catch((error) => {
+            console.error("Error serializing to MongoDB");
+            console.error(error);
+        });
 
-    // Route the message to clients
-    console.log(`Routing message to clients ${value.objectId}@${value.operation.sequenceNumber}`);
-    io.to(value.objectId).emit("op", value.objectId, value.operation);
+        // Route the message to clients
+        console.log(`Routing message to clients ${value.objectId}@${value.operation.sequenceNumber}`);
+        io.to(value.objectId).emit("op", value.objectId, value.operation);
+    }
 
     // Update partition manager.
     partitionManager.update(message.partition, message.offset);

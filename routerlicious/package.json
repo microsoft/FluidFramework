@@ -16,7 +16,7 @@
     "alfred:watch": "nodemon dist/alfred/www.js -w dist",
     "deli": "node dist/deli/index.js",
     "deli:debug": "nodemon -L --debug=0.0.0.0:5858 dist/deli/index.js -w dist",
-    "deli:watch": "nodemon dist/deli/index.js -w dist",    
+    "deli:watch": "nodemon dist/deli/index.js -w dist",
     "paparazzi": "node dist/paparazzi/index.js",
     "paparazzi:debug": "nodemon -L --debug=0.0.0.0:5858 dist/paparazzi/index.js -w dist",
     "paparazzi:watch": "nodemon dist/paparazzi/index.js -w dist",

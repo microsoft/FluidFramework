@@ -17,6 +17,7 @@ export interface IInk extends api.ICollaborativeObject {
  * Map snapshot definition
  */
 export interface IInkSnapshot {
+    offset: number;
     sequenceNumber: number;
     snapshot: ISnapshot;
 };
@@ -34,8 +35,9 @@ export class InkCollaborativeObject extends api.CollaborativeObject implements I
     // Locally applied operations not yet sent to the server
     private localOps: api.IMessage[] = [];
 
-    // The last sequence number retrieved from the server
+    // The last sequence number and offset retrieved from the server
     private sequenceNumber = 0;
+    private offset = 0;
 
     // Sequence number for operations local to this client
     private clientSequenceNumber = 0;
@@ -54,11 +56,11 @@ export class InkCollaborativeObject extends api.CollaborativeObject implements I
         // Attaching makes a local document available for collaboration. The connect call should create the object.
         // We assert the return type to validate this is the case.
         this.connection = await services.deltaNotificationService.connect(this.id, this.type);
+        this.listenForUpdates();
+
         for (const localOp of this.localOps) {
             this.submit(localOp);
         }
-
-        this.listenForUpdates();
     }
 
     public isLocal(): boolean {
@@ -66,7 +68,8 @@ export class InkCollaborativeObject extends api.CollaborativeObject implements I
     }
 
     public snapshot(): Promise<void> {
-        const snapshot = {
+        const snapshot: IInkSnapshot = {
+            offset: this.offset,
             sequenceNumber: this.sequenceNumber,
             snapshot: _.clone(this.inkSnapshot),
         };
@@ -92,10 +95,13 @@ export class InkCollaborativeObject extends api.CollaborativeObject implements I
 
         // Load from the snapshot if it exists
         const rawSnapshot = this.connection.existing ? await services.objectStorageService.read(id) : null;
-        const snapshot: IInkSnapshot = rawSnapshot ? JSON.parse(rawSnapshot) : { sequenceNumber: 0, snapshot: {} };
+        const snapshot: IInkSnapshot = rawSnapshot
+            ? JSON.parse(rawSnapshot)
+            : { offset: 0, sequenceNumber: 0, snapshot: {} };
 
         this.inkSnapshot = Snapshot.Clone(snapshot.snapshot);
         this.sequenceNumber = snapshot.sequenceNumber;
+        this.offset = snapshot.offset;
 
         // Emit the load event so listeners can redraw the new information
         this.events.emit("load");
@@ -105,12 +111,15 @@ export class InkCollaborativeObject extends api.CollaborativeObject implements I
 
     private listenForUpdates() {
         this.deltaManager = new api.DeltaManager(
-            this.sequenceNumber,
+            this.offset,
             this.services.deltaStorageService,
             this.connection,
             {
+                getReferenceSequenceNumber: () => {
+                    return this.sequenceNumber;
+                },
                 op: (message) => {
-                    this.processRemoteOperation(message);
+                    this.processRemoteMessage(message);
                 },
             });
     }
@@ -138,11 +147,21 @@ export class InkCollaborativeObject extends api.CollaborativeObject implements I
     /**
      * Handles a message coming from the remote service
      */
-    private processRemoteOperation(message: api.ISequencedMessage) {
-        // server messages should only be delivered to this method in sequence number order
-        assert.equal(this.sequenceNumber + 1, message.sequenceNumber);
+    private processRemoteMessage(message: api.IBase) {
+        // server messages should only be delivered to this method in offset order
+        assert.equal(this.offset + 1, message.offset);
         this.sequenceNumber = message.sequenceNumber;
+        this.offset = message.offset;
 
+        if (message.type === api.OperationType) {
+            this.processRemoteOperation(message as api.ISequencedMessage);
+        }
+    }
+
+    /**
+     * Processed a remote operation
+     */
+    private processRemoteOperation(message: api.ISequencedMessage) {
         if (message.clientId === this.connection.clientId) {
             // One of our messages was sequenced. We can remove it from the local message list. Given these arrive
             // in order we only need to check the beginning of the local list.
@@ -159,7 +178,7 @@ export class InkCollaborativeObject extends api.CollaborativeObject implements I
     }
 
     private async submit(message: api.IMessage): Promise<void> {
-        this.connection.submitOp(message);
+        this.deltaManager.submitOp(message);
     }
 
     private processOperation(op: IDelta, isLocal: boolean) {
