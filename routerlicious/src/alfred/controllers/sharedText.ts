@@ -12,9 +12,81 @@ socketStorage.registerAsDefault(document.location.origin);
 // first script loaded
 let clockStart = Date.now();
 
+enum CharacterCodes {
+    _ = 95,
+    $ = 36,
+
+    ampersand = 38,             // &
+    asterisk = 42,              // *
+    at = 64,                    // @
+    backslash = 92,             // \
+    bar = 124,                  // |
+    caret = 94,                 // ^
+    closeBrace = 125,           // }
+    closeBracket = 93,          // ]
+    closeParen = 41,            // )
+    colon = 58,                 // : 
+    comma = 44,                 // ,
+    dot = 46,                   // .
+    doubleQuote = 34,           // "
+    equals = 61,                // =
+    exclamation = 33,           // !
+    hash = 35,                  // #
+    greaterThan = 62,           // >
+    lessThan = 60,              // <
+    minus = 45,                 // -
+    openBrace = 123,            // {
+    openBracket = 91,           // [
+    openParen = 40,             // (
+    percent = 37,               // %
+    plus = 43,                  // +
+    question = 63,              // ?
+    semicolon = 59,             // ;
+    singleQuote = 39,           // '
+    slash = 47,                 // /
+    tilde = 126,                // ~
+    _0 = 48,
+    _9 = 57,
+    a = 97,
+    z = 122,
+
+    A = 65,
+    Z = 90,
+    space = 0x0020,   // " "
+}
+
 interface ISegSpan extends HTMLSpanElement {
     seg: SharedString.TextSegment;
     pos?: number;
+}
+
+interface IRangeInfo {
+    elm: HTMLElement;
+    node: Node;
+    offset: number;
+}
+
+function elmOffToSegOff(elmOff: IRangeInfo, span: HTMLSpanElement) {
+    let offset = elmOff.offset;
+    let prevSib = elmOff.node.previousSibling;
+    if ((!prevSib) && (elmOff.elm !== span)) {
+        prevSib = elmOff.elm.previousSibling;
+    }
+    while (prevSib) {
+        switch (prevSib.nodeType) {
+            case Node.ELEMENT_NODE:
+                let innerSpan = <HTMLSpanElement>prevSib;
+                offset += innerSpan.innerText.length;
+                break;
+            case Node.TEXT_NODE:
+                offset += prevSib.nodeValue.length;
+                break;
+            default:
+                break;
+        }
+        prevSib = prevSib.previousSibling;
+    }
+    return offset;
 }
 
 let cachedCanvas: HTMLCanvasElement;
@@ -100,6 +172,25 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
         clientId: number, start: number, end: number) {
         let segOffset = 0;
         let prevWord: string;
+
+        function segmentToSpan(segText: string, textSegment: SharedString.TextSegment) {
+            let span = <ISegSpan>document.createElement("span");
+            if (segText.indexOf("Chapter") >= 0) {
+                span.style.fontSize = "140%";
+                span.style.lineHeight = "150%";
+            } else {
+                segText = segText.replace(/_([a-zA-Z]+)_/g, "<span style='font-style:italic'>$1</span>");
+            }
+            span.innerHTML = segText;
+            span.seg = textSegment;
+            if (segOffset > 0) {
+                span.pos = segOffset;
+                segOffset = 0;
+            }
+            innerDiv.appendChild(span);
+            return segText;
+        }
+
         function renderFirstSegment(text: string) {
             let segLength = 0;
             let words = text.split(" ");
@@ -157,20 +248,7 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
                     context.adjustedTopChar = context.topChar + (actualStart - start);
                 }
             }
-            let span = <ISegSpan>document.createElement("span");
-            if (segText.indexOf("Chapter") >= 0) {
-                span.style.fontSize = "140%";
-                span.style.lineHeight = "150%";
-            } else {
-                segText = segText.replace(/_([a-zA-Z]+)_/g, "<span style='font-style:italic'>$1</span>");
-            }
-            span.innerHTML = segText;
-            span.seg = textSegment;
-            if (segOffset > 0) {
-                span.pos = segOffset;
-                segOffset = 0;
-            }
-            innerDiv.appendChild(span);
+            segText = segmentToSpan(segText, textSegment);
             if (segText.charAt(segText.length - 1) === "\n") {
                 innerDiv = makeInnerDiv();
                 div.appendChild(innerDiv);
@@ -179,12 +257,14 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
 
             if ((charLength > charsPerViewport) || last) {
                 console.log(`client h, w ${div.clientHeight},${div.clientWidth}`);
-                if (div.clientHeight > Math.floor(window.innerHeight * 0.95)) {
+                let constraint = Math.floor(window.innerHeight * 0.95);
+
+                if (div.clientHeight > constraint) {
                     if (innerDiv.previousElementSibling) {
                         let pruneDiv = <HTMLDivElement>innerDiv.previousElementSibling;
                         let lastPruned: HTMLDivElement;
                         while (pruneDiv) {
-                            if (pruneDiv.getBoundingClientRect().bottom > Math.floor(window.innerHeight * 0.95)) {
+                            if (pruneDiv.getBoundingClientRect().bottom > constraint) {
                                 let temp = <HTMLDivElement>pruneDiv.previousElementSibling;
                                 div.removeChild(pruneDiv);
                                 lastPruned = pruneDiv;
@@ -198,10 +278,23 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
                             for (let i = 0; i < lastPruned.childElementCount; i++) {
                                 let prunedSpan = <ISegSpan>lastPruned.children[i];
                                 let bounds = prunedSpan.getBoundingClientRect();
-                                let constraint = window.innerHeight * 0.9;
-                                if (bounds.bottom <= (Math.floor(constraint))) {
+                                if (bounds.bottom <= constraint) {
                                     innerDiv.appendChild(prunedSpan);
                                 } else {
+                                    if ((constraint - bounds.top) > hEst) {
+                                        let x = bounds.right;
+                                        let y = constraint - Math.floor(hEst / 2);
+                                        let elmOff = pointerToElementOffsetWebkit(x, y);
+                                        let segOff = elmOffToSegOff(elmOff, prunedSpan) + 1;
+                                        let textSeg = <SharedString.TextSegment>prunedSpan.seg;
+                                        while ((segOff > 0) &&
+                                            (textSeg.text.charCodeAt(segOff) !== CharacterCodes.space)) {
+                                            segOff--;
+                                        }
+                                        if (segOff > 0) {
+                                            segmentToSpan(textSeg.text.substring(0, segOff), textSeg);
+                                        }
+                                    }
                                     break;
                                 }
                             }
@@ -220,9 +313,13 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
 
 export let theString: StringView;
 
-function pointerToElementOffsetWebkit(x: number, y: number) {
-    let range = (<any>document).caretRangeFromPoint(x, y);
-    let result = { elm: <HTMLElement>range.startContainer.parentElement, offset: range.startOffset };
+function pointerToElementOffsetWebkit(x: number, y: number): IRangeInfo {
+    let range = document.caretRangeFromPoint(x, y);
+    let result = {
+        elm: <HTMLElement>range.startContainer.parentElement,
+        node: range.startContainer,
+        offset: range.startOffset,
+    };
     range.detach();
 
     return result;
@@ -277,7 +374,7 @@ class StringView {
                     this.client.getClientId());
                 let elmOff = pointerToElementOffsetWebkit(e.clientX, e.clientY);
                 // tslint:disable:max-line-length
-                console.log(`segment ${segspan.childNodes.length} children; at char offset ${segOffset} within: ${elmOff.offset}`);
+                console.log(`segment ${segspan.childNodes.length} children; at char offset ${segOffset} within: ${elmOff.offset} computed: ${elmOffToSegOff(elmOff, segspan)}`);
             }
         };
 
@@ -291,7 +388,7 @@ class StringView {
             }
             // console.log(`delta: ${delta} wheel: ${e.wheelDeltaY} ${e.wheelDelta} ${e.detail}`);
             setTimeout(() => {
-                this.render(this.topChar + delta);
+                this.render(this.topChar - delta);
                 this.ticking = false;
             }, 20);
             this.ticking = true;
