@@ -1,4 +1,5 @@
 export * from "./heap";
+export * from "./promises";
 
 export interface ISharedAccessPolicy {
     sharedAccessKeyName: string;
