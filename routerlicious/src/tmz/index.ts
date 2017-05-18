@@ -11,40 +11,56 @@ nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use
 const snapshotQueue = nconf.get("tmz:queue");
 const rabbitmqConnectionString = nconf.get("rabbitmq:connectionString");
 
-const connectionP = amqp.connect(rabbitmqConnectionString);
-const channelP = connectionP.then(async (connection) => {
-    const channel = await connection.createChannel();
-    await channel.assertQueue(snapshotQueue, { durable: true });
-    return channel;
-});
-
 // Setup Kafka connection
 const zookeeperEndpoint = nconf.get("zookeeper:endpoint");
 const kafkaClientId = nconf.get("tmz:kafkaClientId");
 const topic = nconf.get("tmz:topic");
 const groupId = nconf.get("tmz:groupId");
 
-const consumerGroup = new kafka.ConsumerGroup({
-        fromOffset: "earliest",
-        groupId,
-        host: zookeeperEndpoint,
-        id: kafkaClientId,
-        protocol: ["roundrobin"],
-    },
-    [topic]);
+async function run() {
+    const connection = await amqp.connect(rabbitmqConnectionString);
+    const channel = await connection.createChannel();
+    await channel.assertQueue(snapshotQueue, { durable: true });
 
-const createdRequests: any = {};
+    // The rabbitmq library does not support re-connect. We will simply exit and rely on being restarted once
+    // we lose our connection to RabbitMQ.
+    connection.on("error", (error) => {
+        console.error("Lost connection to RabbitMQ - exiting");
+        console.error(error);
+        process.exit(1);
+    });
 
-consumerGroup.on("message", async (message: any) => {
-    const value = JSON.parse(message.value) as core.IRawOperationMessage;
+    const consumerGroup = new kafka.ConsumerGroup({
+            fromOffset: "earliest",
+            groupId,
+            host: zookeeperEndpoint,
+            id: kafkaClientId,
+            protocol: ["roundrobin"],
+        },
+        [topic]);
 
-    if (createdRequests[value.objectId]) {
-        return;
-    }
+    const createdRequests: any = {};
+    consumerGroup.on("message", async (message: any) => {
+        const value = JSON.parse(message.value) as core.IRawOperationMessage;
 
-    createdRequests[value.objectId] = true;
-    console.log(`Requesting snapshots for ${value.objectId}`);
+        if (createdRequests[value.objectId]) {
+            return;
+        }
 
-    const channel = await channelP;
-    channel.sendToQueue(snapshotQueue, new Buffer(value.objectId), { persistent: true });
+        createdRequests[value.objectId] = true;
+        console.log(`Requesting snapshots for ${value.objectId}`);
+
+        channel.sendToQueue(snapshotQueue, new Buffer(value.objectId), { persistent: true });
+    });
+
+    consumerGroup.on("error", (error) => {
+        console.error(error);
+    });
+}
+
+// Start up the TMZ service
+const runP = run();
+runP.catch((error) => {
+    console.error(error);
+    process.exit(1);
 });
