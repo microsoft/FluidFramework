@@ -20,8 +20,10 @@ const groupId = nconf.get("tmz:groupId");
 
 async function run() {
     const connection = await amqp.connect(rabbitmqConnectionString);
+    console.log("Connected to RabbitMQ");
     const channel = await connection.createChannel();
     await channel.assertQueue(snapshotQueue, { durable: true });
+    console.log("Channel ready");
 
     // The rabbitmq library does not support re-connect. We will simply exit and rely on being restarted once
     // we lose our connection to RabbitMQ.
@@ -30,6 +32,10 @@ async function run() {
         console.error(error);
         process.exit(1);
     });
+
+    // Ensure topics exist
+    const kafkaClient = new kafka.Client(zookeeperEndpoint, kafkaClientId);
+    await utils.kafka.ensureTopics(kafkaClient, [topic]);
 
     // Create the consumer group and wire up messages
     const consumerGroup = new kafka.ConsumerGroup({
@@ -58,13 +64,10 @@ async function run() {
 
         channel.sendToQueue(snapshotQueue, new Buffer(value.objectId), { persistent: true });
     });
-
-    // We await ensure topics at the end to make sure we've registered all message handlers on the consumer group
-    // during the current turn
-    await utils.kafka.ensureTopics((<any> consumerGroup).client, [topic]);
 }
 
 // Start up the TMZ service
+console.log("Starting");
 const runP = run();
 runP.catch((error) => {
     console.error(error);
