@@ -4,6 +4,7 @@ import { Collection, MongoClient } from "mongodb";
 import * as nconf from "nconf";
 import * as path from "path";
 import * as core from "../core";
+import * as utils from "../utils";
 import { TakeANumber } from "./takeANumber";
 
 // Setup the configuration system - pull arguments, then environment variables
@@ -17,21 +18,6 @@ const sendTopic = nconf.get("deli:topics:send");
 const checkpointBatchSize = nconf.get("deli:checkpointBatchSize");
 const objectsCollectionName = nconf.get("mongo:collectionNames:objects");
 const groupId = nconf.get("deli:groupId");
-
-function refreshMetadata(client: kafka.Client, topics: string[]): Promise<void> {
-    return new Promise<void>((resolve, reject) => {
-        client.refreshMetadata(
-            topics,
-            (error, data) => {
-                if (error) {
-                    console.error(error);
-                    return reject();
-                }
-
-                return resolve();
-            });
-    });
-}
 
 async function processMessages(kafkaClient: kafka.Client, producer: kafka.Producer, objectsCollection: Collection) {
     const dispensers: { [key: string]: TakeANumber } = {};
@@ -126,7 +112,7 @@ async function run() {
         });
 
         producer.on("ready", () => {
-            refreshMetadata(kafkaClient, [sendTopic, receiveTopic])
+            utils.kafka.ensureTopics(kafkaClient, [sendTopic, receiveTopic])
                     .then(() => processMessages(kafkaClient, producer, objectsCollection))
                     .catch((error) => reject(error));
         });

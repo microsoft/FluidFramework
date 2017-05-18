@@ -3,6 +3,7 @@ import * as kafka from "kafka-node";
 import * as nconf from "nconf";
 import * as path from "path";
 import * as core from "../core";
+import * as utils from "../utils";
 
 // Setup the configuration system - pull arguments, then environment variables
 nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
@@ -38,6 +39,8 @@ async function run() {
             protocol: ["roundrobin"],
         },
         [topic]);
+
+    await utils.kafka.ensureTopics((<any> consumerGroup).client, [topic]);
 
     const createdRequests: any = {};
     consumerGroup.on("message", async (message: any) => {
