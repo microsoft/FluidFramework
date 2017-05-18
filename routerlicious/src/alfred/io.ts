@@ -9,6 +9,7 @@ import * as socketIoRedis from "socket.io-redis";
 import * as api from "../api";
 import * as core from "../core";
 import * as socketStorage from "../socket-storage";
+import * as utils from "../utils";
 
 let io = socketIo();
 
@@ -19,21 +20,13 @@ const topic = nconf.get("alfred:topic");
 
 let kafkaClient = new kafka.Client(zookeeperEndpoint, kafkaClientId);
 let producer = new kafka.Producer(kafkaClient, { partitionerType: 3 });
-let producerReady = new Promise<void>((resolve, reject) => {
-    producer.on("ready", () => {
-        kafkaClient.refreshMetadata([topic], (error, data) => {
-            if (error) {
-                console.error(error);
-                return reject();
-            }
-
-            return resolve();
-        });
-    });
-});
+let producerReady = new Promise<void>(
+    (resolve, reject) => {
+        producer.on("ready", () => resolve());
+    })
+    .then(() => utils.kafka.ensureTopics(kafkaClient, [topic]));
 
 producer.on("error", (error) => {
-    console.error("ERROR CONNECTEING TO KAFKA");
     console.error(error);
 });
 

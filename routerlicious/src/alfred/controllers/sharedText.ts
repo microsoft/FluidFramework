@@ -245,11 +245,16 @@ class StringView {
     private off = true;
     private cursorBlinkCount = 0;
     private blinkTimer: any;
+    private pendingRender = false;
 
     constructor(public sharedString: SharedString.SharedString, public totalSegmentCount,
         public totalLengthChars) {
         this.client = sharedString.client;
         this.updateGeometry();
+
+        sharedString.on("op", () => {
+            this.queueRender();
+        });
     }
 
     public updateGeometry() {
@@ -392,6 +397,16 @@ class StringView {
         this.render(0, true);
         // tslint:disable-next-line:max-line-length
         console.log(`time to edit/impression: ${this.timeToEdit} time to load: ${Date.now() - clockStart}ms len: ${this.sharedString.client.getLength()}`);
+    }
+
+    private queueRender() {
+        if (!this.pendingRender) {
+            this.pendingRender = true;
+            window.requestAnimationFrame(() => {
+                this.pendingRender = false;
+                this.render();
+            });
+        }
     }
 
     private blinker = () => {

@@ -14,3 +14,6 @@ export function getEventHubConnectionString(
     // tslint:disable-next-line:max-line-length
     return `Endpoint=sb://${endpoint}/;SharedAccessKeyName=${policy.sharedAccessKeyName};SharedAccessKey=${policy.sharedAccessKey}`;
 }
+
+import * as kafka from "./kafka";
+export { kafka };
