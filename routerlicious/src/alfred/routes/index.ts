@@ -15,3 +15,6 @@ export { canvas };
 
 import sharedText from "./sharedText";
 export { sharedText };
+
+import cell from "./cell";
+export { cell };

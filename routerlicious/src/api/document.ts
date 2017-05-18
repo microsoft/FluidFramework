@@ -1,6 +1,7 @@
 import * as uuid from "node-uuid";
 import * as ink from "../ink";
 import * as mergeTree from "../merge-tree";
+import * as cell from "./cell";
 import * as extensions from "./extension";
 import * as mapExtension from "./map";
 import { ICollaborationServices } from "./storage";
@@ -34,6 +35,14 @@ export class Document {
      */
     public createMap(): types.IMap {
         return this.create(mapExtension.MapExtension.Type) as types.IMap;
+    }
+
+    /**
+     * Creates a new collaborative cell.
+     * TODO (tanvir): replace this with type class.
+     */
+    public createCell(): types.ICell {
+        return this.create(cell.CellExtension.Type) as types.ICell;
     }
 
     /**
@@ -73,6 +82,7 @@ export const defaultRegistry = new extensions.Registry();
 defaultRegistry.register(new mapExtension.MapExtension());
 defaultRegistry.register(new mergeTree.CollaboritiveStringExtension());
 defaultRegistry.register(new ink.InkExtension());
+defaultRegistry.register(new cell.CellExtension());
 
 export function registerExtension(extension: extensions.IExtension) {
     defaultRegistry.register(extension);
