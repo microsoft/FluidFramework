@@ -31,6 +31,7 @@ async function run() {
         process.exit(1);
     });
 
+    // Create the consumer group and wire up messages
     const consumerGroup = new kafka.ConsumerGroup({
             fromOffset: "earliest",
             groupId,
@@ -40,7 +41,9 @@ async function run() {
         },
         [topic]);
 
-    await utils.kafka.ensureTopics((<any> consumerGroup).client, [topic]);
+    consumerGroup.on("error", (error) => {
+        console.error(error);
+    });
 
     const createdRequests: any = {};
     consumerGroup.on("message", async (message: any) => {
@@ -56,9 +59,9 @@ async function run() {
         channel.sendToQueue(snapshotQueue, new Buffer(value.objectId), { persistent: true });
     });
 
-    consumerGroup.on("error", (error) => {
-        console.error(error);
-    });
+    // We await ensure topics at the end to make sure we've registered all message handlers on the consumer group
+    // during the current turn
+    await utils.kafka.ensureTopics((<any> consumerGroup).client, [topic]);
 }
 
 // Start up the TMZ service

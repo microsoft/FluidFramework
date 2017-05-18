@@ -22,6 +22,13 @@ const groupId = nconf.get("deli:groupId");
 async function processMessages(kafkaClient: kafka.Client, producer: kafka.Producer, objectsCollection: Collection) {
     const dispensers: { [key: string]: TakeANumber } = {};
 
+    const consumerOffset = new kafka.Offset(kafkaClient);
+    const partitionManager = new core.PartitionManager(
+        groupId,
+        receiveTopic,
+        consumerOffset,
+        checkpointBatchSize);
+
     const consumerGroup = new kafka.ConsumerGroup({
             autoCommit: false,
             fromOffset: "earliest",
@@ -31,19 +38,11 @@ async function processMessages(kafkaClient: kafka.Client, producer: kafka.Produc
             protocol: ["roundrobin"],
         },
         [receiveTopic]);
+
     consumerGroup.on("error", (error) => {
         console.error(error);
     });
-    consumerGroup.on("offsetOutOfRange", (error) => {
-        console.error(error);
-    });
 
-    const consumerOffset = new kafka.Offset(kafkaClient);
-    const partitionManager = new core.PartitionManager(
-        groupId,
-        receiveTopic,
-        consumerOffset,
-        checkpointBatchSize);
     let ticketQueue: {[id: string]: Promise<void> } = {};
 
     console.log("Waiting for messages");
