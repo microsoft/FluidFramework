@@ -12,6 +12,21 @@ async function loadDocument(id: string): Promise<api.Document> {
     return document;
 }
 
+async function updateOrCreateValue(cell: api.ICell, container: JQuery, doc: api.Document) {
+    const value = await cell.get();
+
+    let element = container.find(".cell");
+    const newElement = element.length === 0;
+
+    if (newElement) {
+        console.log("New element");
+        element = $(`<div class="cell"></div>`);
+        container.append(element);
+    }
+    element.text(value);
+
+}
+
 /**
  * Displays the actual value and listen for updates.
  */
@@ -20,10 +35,8 @@ async function displayCellValue(cell: api.ICell, container: JQuery, doc: api.Doc
     const value = $("<div></div>");
 
     // Listen and process updates
-    cell.on("valueChanged", async (changed) => {
-        console.log("Received change: ");
-        console.log(changed);
-        // updateOrCreateValue(changed.key, map, values, doc);
+    cell.on("valueChanged", async (changedValue) => {
+        updateOrCreateValue(cell, value, doc);
     });
     container.append(value);
 }
@@ -55,9 +68,8 @@ function randomizeCell(cell: api.ICell) {
     const keys = ["foo", "bar", "baz", "binky", "winky", "twinkie"];
     setInterval(() => {
         const key = keys[Math.floor(Math.random() * keys.length)];
-        console.log("Randomizing to: ", key);
         cell.set(key);
-    }, 1000);
+    }, 3000);
 }
 
 export async function load(id: string) {
