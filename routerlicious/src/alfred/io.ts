@@ -1,4 +1,3 @@
-import * as kafka from "kafka-node";
 import * as _ from "lodash";
 import { MongoClient } from "mongodb";
 import * as moniker from "moniker";
@@ -17,18 +16,6 @@ let io = socketIo();
 const zookeeperEndpoint = nconf.get("zookeeper:endpoint");
 const kafkaClientId = nconf.get("alfred:kafkaClientId");
 const topic = nconf.get("alfred:topic");
-
-let kafkaClient = new kafka.Client(zookeeperEndpoint, kafkaClientId);
-let producer = new kafka.Producer(kafkaClient, { partitionerType: 3 });
-let producerReady = new Promise<void>(
-    (resolve, reject) => {
-        producer.on("ready", () => resolve());
-    })
-    .then(() => utils.kafka.ensureTopics(kafkaClient, [topic]));
-
-producer.on("error", (error) => {
-    console.error(error);
-});
 
 // Setup redis
 let host = nconf.get("redis:host");
@@ -71,6 +58,9 @@ async function getOrCreateObject(id: string, type: string): Promise<boolean> {
             }
         });
 }
+
+// Producer used to publish messages
+const producer = new utils.kafka.Producer(zookeeperEndpoint, kafkaClientId, [topic]);
 
 io.on("connection", (socket) => {
     const clientId = moniker.choose();
@@ -129,25 +119,16 @@ io.on("connection", (socket) => {
             userId: null,
         };
 
-        let submittedP = producerReady.then(() => {
-            const payloads = [{ topic, messages: [JSON.stringify(rawMessage)], key: objectId }];
-            return new Promise<any>((resolve, reject) => {
-                producer.send(payloads, (error, data) => {
-                    if (error) {
-                        return reject(error);
-                    }
-
-                    console.log(data);
-                    resolve({ data: true });
-                });
-            });
-        });
-
-        submittedP.then(
+        const payload = [{ topic, messages: [JSON.stringify(rawMessage)], key: objectId }];
+        producer.send(payload).then(
             (responseMessage) => response(null, responseMessage),
-            (error) => response(error, null));
+            (error) => {
+                console.error(error);
+                response(error, null);
+            });
     });
 
+    // Message sent to allow clients to update their sequence number
     socket.on("updateReferenceSequenceNumber", (objectId: string, sequenceNumber: number, response) => {
         console.log(`${clientId} Updating ${objectId} to ${sequenceNumber}`);
 
@@ -165,22 +146,13 @@ io.on("connection", (socket) => {
             userId: null,
         };
 
-        let submittedP = producerReady.then(() => {
-            const payloads = [{ topic, messages: [JSON.stringify(message)], key: objectId }];
-            return new Promise<any>((resolve, reject) => {
-                producer.send(payloads, (error, data) => {
-                    if (error) {
-                        return reject(error);
-                    }
-
-                    resolve();
-                });
-            });
-        });
-
-        submittedP.then(
+        const payload = [{ topic, messages: [JSON.stringify(message)], key: objectId }];
+        producer.send(payload).then(
             (responseMessage) => response(null, responseMessage),
-            (error) => response(error, null));
+            (error) => {
+                console.error(error);
+                response(error, null);
+            });
     });
 });
 
