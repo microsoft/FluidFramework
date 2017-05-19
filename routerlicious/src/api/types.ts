@@ -108,4 +108,9 @@ export interface ICell extends ICollaborativeObject {
      * Sets the cell value.
      */
     set(value: any): Promise<void>;
+
+    /**
+     * Checks whether cell is empty or not.
+     */
+    empty() : Promise<boolean>;
 }

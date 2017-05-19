@@ -13,17 +13,36 @@ async function loadDocument(id: string): Promise<api.Document> {
 }
 
 async function updateOrCreateValue(cell: api.ICell, container: JQuery, doc: api.Document) {
+
+    // Initially cell is empty.
+    const emptyCell = await cell.empty();
+    if (emptyCell) {
+        console.log("Cell is empty: ", cell.id);
+        return;
+    }
+
+    console.log("Getting value for: ", cell.id);
     const value = await cell.get();
+    console.log(value);
 
     let element = container.find(".cell");
     const newElement = element.length === 0;
+    const isString = typeof value === "string";
 
     if (newElement) {
         console.log("New element");
         element = $(`<div class="cell"></div>`);
         container.append(element);
     }
-    element.text(value);
+
+    if (isString) {
+        element.text(value);
+    } else {
+        if (newElement) {
+            displayCell(element, value, doc);
+        }
+    }
+    
 
 }
 
@@ -34,8 +53,12 @@ async function displayCellValue(cell: api.ICell, container: JQuery, doc: api.Doc
 
     const value = $("<div></div>");
 
+    // Load initially
+    updateOrCreateValue(cell, value, doc);
+
     // Listen and process updates
     cell.on("valueChanged", async (changedValue) => {
+        console.log("Value Changed for cell: ", cell.id);
         updateOrCreateValue(cell, value, doc);
     });
     container.append(value);
@@ -45,16 +68,22 @@ async function displayCellValue(cell: api.ICell, container: JQuery, doc: api.Doc
  * Displays the cell
  */
 async function displayCell(parentElement: JQuery, cell: api.ICell, doc: api.Document) {
-    console.log(cell.id);
-    console.log(cell.type);
     const header = $(`<h2>${cell.id}</h2>`);
     parentElement.append(header);
 
-    const randomize = $("<button>Randomize</button>");
-    randomize.click((event) => {
-        randomizeCell(cell);
+    const setString = $(`<button class="setString">Set String</button>`);
+    const addCell = $(`<button class="addCell">Add Cell</button>`);
+    parentElement.append(setString, addCell);
+
+    setString.click((event) => {
+        randomizeCell(cell, setString, addCell);
     });
-    parentElement.append(randomize);
+    
+    addCell.click((event) => {
+        addAnotherCell(parentElement, cell, setString, addCell, doc);
+    });
+
+
     const container = $(`<div></div>`);
     displayCellValue(cell, container, doc);
     parentElement.append(container);
@@ -63,8 +92,27 @@ async function displayCell(parentElement: JQuery, cell: api.ICell, doc: api.Docu
 /**
  * Randomly changes the values in the map
  */
-function randomizeCell(cell: api.ICell) {
+function addAnotherCell(parent: JQuery, cell: api.ICell, element1: JQuery, element2: JQuery, doc: api.Document) {
     // link up the randomize button
+    element1.remove();
+    element2.remove();
+
+    const childCell = $(`<div></div>`);
+    const newCell = doc.createCell() as api.ICell;
+    
+    parent.append(childCell);
+    cell.set(newCell);
+
+    displayCell(childCell, newCell, doc);
+}
+
+/**
+ * Randomly changes the values in the map
+ */
+function randomizeCell(cell: api.ICell, element1: JQuery, element2: JQuery) {
+    // link up the randomize button
+    element1.remove();
+    element2.remove();
     const keys = ["foo", "bar", "baz", "binky", "winky", "twinkie"];
     setInterval(() => {
         const key = keys[Math.floor(Math.random() * keys.length)];
@@ -79,9 +127,11 @@ export async function load(id: string) {
     let cell: api.ICell;
     if (await root.has("cell")) {
         cell = await root.get("cell") as api.ICell;
+        console.log("Existnig document");
     } else {
         cell = doc.createCell() as api.ICell;
         root.set("cell", cell);
+        console.log("Brand new document");
     }
 
     $("document").ready(() => {

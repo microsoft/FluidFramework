@@ -136,6 +136,14 @@ class Cell extends api.CollaborativeObject implements api.ICell {
         return this.processLocalOperation(op);
     }
 
+    /**
+     * Returns whether cell is empty or not.
+     */
+     public async empty() {
+         await this.loadingP;
+         return this.data === undefined? true : false;
+     }
+
     public snapshot(): Promise<void> {
         const snapshot = {
             sequenceNumber: this.sequenceNumber,
