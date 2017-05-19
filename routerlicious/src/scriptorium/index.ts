@@ -16,6 +16,7 @@ const kafkaClientId = nconf.get("scriptorium:kafkaClientId");
 const topic = nconf.get("scriptorium:topic");
 const groupId = nconf.get("scriptorium:groupId");
 const checkpointBatchSize = nconf.get("scriptorium:checkpointBatchSize");
+const checkpointTimeIntervalMsec = nconf.get("deli:checkpointTimeIntervalMsec");
 const mongoUrl = nconf.get("mongo:endpoint");
 const deltasCollectionName = nconf.get("mongo:collectionNames:deltas");
 
@@ -39,7 +40,8 @@ async function run() {
     await utils.kafka.ensureTopics(kafkaClient, [topic]);
 
     const consumerOffset = new kafka.Offset(kafkaClient);
-    const partitionManager = new core.PartitionManager(groupId, topic, consumerOffset, checkpointBatchSize);
+    const partitionManager = new core.PartitionManager(groupId, topic, consumerOffset,
+                                                       checkpointBatchSize, checkpointTimeIntervalMsec);
 
     const consumerGroup = new kafka.ConsumerGroup({
             autoCommit: false,

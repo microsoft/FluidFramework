@@ -16,6 +16,7 @@ const kafkaClientId = nconf.get("deli:kafkaClientId");
 const receiveTopic = nconf.get("deli:topics:receive");
 const sendTopic = nconf.get("deli:topics:send");
 const checkpointBatchSize = nconf.get("deli:checkpointBatchSize");
+const checkpointTimeIntervalMsec = nconf.get("deli:checkpointTimeIntervalMsec");
 const objectsCollectionName = nconf.get("mongo:collectionNames:objects");
 const groupId = nconf.get("deli:groupId");
 
@@ -27,7 +28,8 @@ async function processMessages(kafkaClient: kafka.Client, producer: kafka.Produc
         groupId,
         receiveTopic,
         consumerOffset,
-        checkpointBatchSize);
+        checkpointBatchSize,
+        checkpointTimeIntervalMsec);
 
     const consumerGroup = new kafka.ConsumerGroup({
             autoCommit: false,
@@ -44,6 +46,7 @@ async function processMessages(kafkaClient: kafka.Client, producer: kafka.Produc
     });
 
     let ticketQueue: {[id: string]: Promise<void> } = {};
+    let checkpointTimer: any;
 
     console.log("Waiting for messages");
     consumerGroup.on("message", async (message: any) => {
@@ -71,25 +74,33 @@ async function processMessages(kafkaClient: kafka.Client, producer: kafka.Produc
             partitionManager.update(message.partition, message.offset);
 
             // Periodically checkpoints to mongo and checkpoints offset back to kafka.
-            // Ideally there should be a better strategy to figure out when to checkpoint.
             if (message.offset % checkpointBatchSize === 0) {
-                // Ticket all messages and empty the queue.
-                let pendingTickets = _.values(ticketQueue);
-                ticketQueue = {};
-                await Promise.all(pendingTickets);
-
-                // Checkpoint to mongo now.
-                let checkpointQueue = [];
-                for (let doc of Object.keys(dispensers)) {
-                    checkpointQueue.push(dispensers[doc].checkpoint());
-                }
-                await Promise.all(checkpointQueue);
-
-                // Finally call kafka checkpointing.
-                partitionManager.checkPoint();
+                await checkpoint(ticketQueue, dispensers, partitionManager);
+                clearTimeout(checkpointTimer);
+                checkpointTimer = setTimeout(() => {
+                    checkpoint(ticketQueue, dispensers, partitionManager);
+                }, checkpointTimeIntervalMsec);
             }
         }
     });
+}
+
+async function checkpoint(ticketQueue: {[id: string]: Promise<void> }, dispensers: { [key: string]: TakeANumber},
+                          partitionManager: core.PartitionManager) {
+        // Ticket all messages and empty the queue.
+        let pendingTickets = _.values(ticketQueue);
+        ticketQueue = {};
+        await Promise.all(pendingTickets);
+
+        // Checkpoint to mongo now.
+        let checkpointQueue = [];
+        for (let doc of Object.keys(dispensers)) {
+            checkpointQueue.push(dispensers[doc].checkpoint());
+        }
+        await Promise.all(checkpointQueue);
+
+        // Finally call kafka checkpointing.
+        partitionManager.checkPoint();
 }
 
 async function run() {

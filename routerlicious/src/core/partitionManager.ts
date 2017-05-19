@@ -1,18 +1,28 @@
 import * as kafka from "kafka-node";
 
+interface IPartitionRange {
+    // Latest offset seen for the partition.
+    latestOffset: number;
+
+    // Last checkpointed offset seen for the partition.
+    checkpointedOffset: number;
+}
+
 /**
  * Class to manage checkpointing of Kafka offsets at different partitions.
  */
 export class PartitionManager {
     private checkpointing = false;
-    // Map of {PartitionNo : [LatestOffset, LastCheckpointedOffset]}
-    private partitionMap: { [key: string]: [number , number]} = {};
+    // Stores the processed offset for each partition.
+    private partitionMap: { [key: string]: IPartitionRange} = {};
+    private lastCheckpointTimestamp: number;
 
     constructor(
         private groupId: string,
         private topic: string,
         private consumerOffset: kafka.Offset,
-        private batchSize: number) {
+        private batchSize: number,
+        private checkPointInterval: number) {
     }
 
     /**
@@ -34,6 +44,7 @@ export class PartitionManager {
         this.checkPointCore()
             .then(() => {
                 this.checkpointing = false;
+                this.lastCheckpointTimestamp = Date.now();
                 // Recursive call to trigger another round.
                 this.checkPoint();
             },
@@ -50,9 +61,9 @@ export class PartitionManager {
      */
     public update(partition: string, offset: string) {
         if (!(partition in this.partitionMap)) {
-            this.partitionMap[partition] = [Number(offset), -1];
+            this.partitionMap[partition] = {latestOffset: Number(offset), checkpointedOffset: -1};
         } else {
-            this.partitionMap[partition][0] = Number(offset);
+            this.partitionMap[partition].latestOffset = Number(offset);
         }
     }
     /**
@@ -64,15 +75,16 @@ export class PartitionManager {
             for (let partition of Object.keys(this.partitionMap)) {
                 let currentPartition = this.partitionMap[partition];
                 // No update since last checkpoint. Delete the partition.
-                if (currentPartition[0] === currentPartition[1]) {
+                if (currentPartition.checkpointedOffset === currentPartition.latestOffset) {
                     console.log(`${this.groupId}: Removing partition ${partition}`);
                     delete this.partitionMap[partition];
                     continue;
                 }
 
                 // Push to checkpoint queue and update the offset.
-                commitDetails.push({ topic: this.topic, partition: Number(partition), offset: currentPartition[0] });
-                currentPartition[1] = currentPartition[0];
+                commitDetails.push({ offset: currentPartition.latestOffset, partition: Number(partition),
+                                     topic: this.topic});
+                currentPartition.checkpointedOffset = currentPartition.latestOffset;
             }
 
             // Commit all checkpoint offsets as a batch.
@@ -90,12 +102,17 @@ export class PartitionManager {
     }
 
     /**
-     * Decides whether to kick of checkpointing or not.
+     * Decides whether to kick off checkpointing or not.
      */
     private shouldCheckpoint(): boolean {
+        // Checks if threshold time has passed after the last chckpoint.
+        if (Date.now() - this.lastCheckpointTimestamp >= this.checkPointInterval) {
+            return true;
+        }
         // Checks if any of the partitions has more than batchsize messages unprocessed.
         for (let partition of Object.keys(this.partitionMap)) {
-            if (this.partitionMap[partition][0] - this.partitionMap[partition][1] >= this.batchSize) {
+            if (this.partitionMap[partition].latestOffset - this.partitionMap[partition].checkpointedOffset >=
+                this.batchSize) {
                 return true;
             }
         }
