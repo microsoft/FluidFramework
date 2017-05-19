@@ -63,7 +63,7 @@
         },
         "kafkaClientId": "deli",
         "groupId": "deli",
-        "checkpointBatchSize": 10,
+        "checkpointBatchSize": 100,
         "checkpointTimeIntervalMsec": 20000
 
     },

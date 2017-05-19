@@ -76,7 +76,10 @@ async function processMessages(kafkaClient: kafka.Client, producer: kafka.Produc
             // Periodically checkpoints to mongo and checkpoints offset back to kafka.
             if (message.offset % checkpointBatchSize === 0) {
                 await checkpoint(ticketQueue, dispensers, partitionManager);
-                clearTimeout(checkpointTimer);
+                if (checkpointTimer) {
+                    console.log("Clearing checkpoint timer");
+                    clearTimeout(checkpointTimer);
+                }
                 checkpointTimer = setTimeout(() => {
                     checkpoint(ticketQueue, dispensers, partitionManager);
                 }, checkpointTimeIntervalMsec);
