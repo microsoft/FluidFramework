@@ -5,9 +5,9 @@
   "main": "index.js",
   "scripts": {
     "browserify": "mkdirp public/scripts/dist && npm run browserify-canvas && npm run browserify-maps && npm run browserify-sharedText",
-    "browserify-canvas": "browserify src/alfred/controllers/canvas.ts -o public/scripts/dist/canvas.js -s controller -p [ tsify ]",
-    "browserify-maps": "browserify src/alfred/controllers/maps.ts -o public/scripts/dist/maps.js -s controller -p [ tsify ]",
-    "browserify-sharedText": "browserify src/alfred/controllers/sharedText.ts -o public/scripts/dist/sharedText.js -s controller -p [ tsify ]",
+    "browserify-canvas": "browserify src/alfred/controllers/canvas.ts -o public/scripts/dist/canvas.js -s controller -p [ tsify -t es5 ]",
+    "browserify-maps": "browserify src/alfred/controllers/maps.ts -o public/scripts/dist/maps.js -s controller -p [ tsify -t es5 ]",
+    "browserify-sharedText": "browserify src/alfred/controllers/sharedText.ts -o public/scripts/dist/sharedText.js -s controller -p [ tsify -t es5 ]",
     "build": "npm run tsc && npm run tslint && npm run browserify && npm run less",
     "build:watch": "watch 'npm run tsc && npm run browserify' src",
     "less": "lessc src/stylesheets/style.less public/stylesheets/dist/style.css",
