@@ -421,6 +421,8 @@ class StringView {
                 let inputDelta = e.wheelDelta;
                 if (Math.abs(e.wheelDelta) === 120) {
                     inputDelta = e.wheelDelta/6;
+                } else {
+                    inputDelta = e.wheelDelta/2;
                 }
                 let delta = factor * inputDelta;
                 console.log(`top char: ${this.topChar - delta} factor ${factor}; delta: ${delta} wheel: ${e.wheelDeltaY} ${e.wheelDelta} ${e.detail}`);
