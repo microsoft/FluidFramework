@@ -195,13 +195,13 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
         function renderFirstSegment(text: string, textSegment: SharedString.TextSegment) {
             segmentToSpan(text, textSegment);
             let bounds = innerDiv.getBoundingClientRect();
-            let x = bounds.left + Math.floor(wEst/2);
+            let x = bounds.left + Math.floor(wEst / 2);
             let y = bounds.top + Math.floor(hEst / 2);
             let offset = 0;
             let prevOffset = 0;
             let segspan = <ISegSpan>innerDiv.children[0];
             do {
-                if (y>bounds.bottom) {
+                if (y > bounds.bottom) {
                     prevOffset = offset;
                     break;
                 }
@@ -218,7 +218,7 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
             } while (offset < start);
             innerDiv.removeChild(segspan);
             offset = prevOffset;
-            while ((offset>=1)&&(text.charCodeAt(offset-1)!==CharacterCodes.space)) {
+            while ((offset >= 1) && (text.charCodeAt(offset - 1) !== CharacterCodes.space)) {
                 offset--;
             }
             return text.substring(offset);
@@ -417,13 +417,12 @@ class StringView {
 
         document.body.onmousewheel = (e) => {
             if (!this.wheelTicking) {
-                let factor = this.viewportCharCount / 10;
-                let delta = Math.max(-factor, Math.min(factor, (e.wheelDelta || -e.detail)));
-                if (delta < 0) {
-                    delta = Math.min(-factor, delta);
-                } else {
-                    delta = Math.max(factor, delta);
+                let factor = Math.round(this.viewportCharCount / this.charsPerLine);
+                let inputDelta = e.wheelDelta;
+                if (Math.abs(e.wheelDelta) === 120) {
+                    inputDelta = e.wheelDelta/6;
                 }
+                let delta = factor * inputDelta;
                 console.log(`top char: ${this.topChar - delta} factor ${factor}; delta: ${delta} wheel: ${e.wheelDeltaY} ${e.wheelDelta} ${e.detail}`);
                 setTimeout(() => {
                     this.render(Math.floor(this.topChar - delta));
@@ -496,8 +495,8 @@ class StringView {
         let len = this.client.getLength();
         let halfport = Math.floor(this.viewportCharCount / 2);
         if (topChar !== undefined) {
-            if (((this.topChar === topChar) ||((this.topChar === 0) && (topChar <= 0)))
-                 && (!changed)) {
+            if (((this.topChar === topChar) || ((this.topChar === 0) && (topChar <= 0)))
+                && (!changed)) {
                 // console.log("no change in top char");
                 return;
             }
