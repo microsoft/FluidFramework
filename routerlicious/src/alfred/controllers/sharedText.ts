@@ -168,10 +168,11 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
     let innerDiv = makeInnerDiv();
     div.appendChild(innerDiv);
     let charLength = 0;
+    let firstSeg = true;
     function renderSegment(segment: SharedString.Segment, segPos: number, refSeq: number,
         clientId: number, start: number, end: number) {
         let segOffset = 0;
-        let prevWord: string;
+        // let prevWord: string;
 
         function segmentToSpan(segText: string, textSegment: SharedString.TextSegment) {
             let span = <ISegSpan>document.createElement("span");
@@ -191,58 +192,92 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
             return segText;
         }
 
-        function renderFirstSegment(text: string) {
-            let segLength = 0;
-            let words = text.split(" ");
-            segOffset = 0;
-            for (let word of words) {
-                if (segLength >= start) {
-                    let rightSpan = <ISegSpan>innerDiv.lastElementChild;
-                    let onRightLeftBound = window.innerWidth * 2;
-                    let onRightCharOffset = 0;
-                    while (rightSpan) {
-                        let bounds = rightSpan.getBoundingClientRect();
-                        // console.log(`left: ${bounds.left}`);
-                        if (onRightLeftBound < bounds.left) {
-                            segOffset = onRightCharOffset;
-                            break;
-                        }
-                        onRightCharOffset = rightSpan.pos;
-                        let prev = <ISegSpan>rightSpan.previousElementSibling;
-                        innerDiv.removeChild(rightSpan);
-                        rightSpan = prev;
-                    }
-                    div.removeChild(innerDiv);
-                    div.appendChild(makeInnerDiv());
+        function renderFirstSegment(text: string, textSegment: SharedString.TextSegment) {
+            segmentToSpan(text, textSegment);
+            let bounds = innerDiv.getBoundingClientRect();
+            let x = bounds.left + Math.floor(wEst/2);
+            let y = bounds.top + Math.floor(hEst / 2);
+            let offset = 0;
+            let prevOffset = 0;
+            let segspan = <ISegSpan>innerDiv.children[0];
+            do {
+                if (y>bounds.bottom) {
+                    prevOffset = offset;
                     break;
-                } else {
-                    let span = <ISegSpan>document.createElement("span");
-                    word = word.replace(/_([a-zA-Z]+)_/g, "<span style='font-style:italic'>$1</span>");
-                    if (prevWord) {
-                        // TODO: handle multi-space separators; incorporate separator as preceding word
-                        // as in view as sequence of /\s*\w+/ with a trailing \s*
-                        word = " " + word;
-                    }
-                    prevWord = word;
-                    span.innerHTML = word;
-                    innerDiv.appendChild(span);
-                    span.pos = segLength;
-                    segLength += word.length;
                 }
+                let elmOff = pointerToElementOffsetWebkit(x, y);
+                if (elmOff) {
+                    prevOffset = offset;
+                    offset = elmOffToSegOff(elmOff, segspan);
+                    y += hEst;
+                } else {
+                    console.log(`no hit for ${x} ${y} start ${start}`);
+                    prevOffset = offset;
+                    break;
+                }
+            } while (offset < start);
+            innerDiv.removeChild(segspan);
+            offset = prevOffset;
+            while ((offset>=1)&&(text.charCodeAt(offset-1)!==CharacterCodes.space)) {
+                offset--;
             }
-            return text.substring(segOffset);
+            return text.substring(offset);
         }
+
+        // function renderFirstSegment(text: string) {
+        //     let segLength = 0;
+        //     let words = text.split(" ");
+        //     segOffset = 0;
+        //     console.log("render first");
+        //     for (let word of words) {
+        //         if (segLength >= start) {
+        //             let rightSpan = <ISegSpan>innerDiv.lastElementChild;
+        //             let onRightLeftBound = window.innerWidth * 2;
+        //             let onRightCharOffset = 0;
+        //             while (rightSpan) {
+        //                 let bounds = rightSpan.getBoundingClientRect();
+        //                 // console.log(`left: ${bounds.left}`);
+        //                 if (onRightLeftBound < bounds.left) {
+        //                     segOffset = onRightCharOffset;
+        //                     break;
+        //                 }
+        //                 onRightCharOffset = rightSpan.pos;
+        //                 let prev = <ISegSpan>rightSpan.previousElementSibling;
+        //                 innerDiv.removeChild(rightSpan);
+        //                 rightSpan = prev;
+        //             }
+        //             div.removeChild(innerDiv);
+        //             div.appendChild(makeInnerDiv());
+        //             break;
+        //         } else {
+        //             let span = <ISegSpan>document.createElement("span");
+        //             word = word.replace(/_([a-zA-Z]+)_/g, "<span style='font-style:italic'>$1</span>");
+        //             if (prevWord) {
+        //                 // TODO: handle multi-space separators; incorporate separator as preceding word
+        //                 // as in view as sequence of /\s*\w+/ with a trailing \s*
+        //                 word = " " + word;
+        //             }
+        //             prevWord = word;
+        //             span.innerHTML = word;
+        //             innerDiv.appendChild(span);
+        //             span.pos = segLength;
+        //             segLength += word.length;
+        //         }
+        //     }
+        //     return text.substring(segOffset);
+        // }
         if (segment.getType() === SharedString.SegmentType.Text) {
             let textSegment = <SharedString.TextSegment>segment;
             let last = (textSegment.text.length === end);
-            if (textSegment !== context.prevTopSegment) {
+            if (firstSeg && (textSegment !== context.prevTopSegment)) {
                 splitTopSeg = false;
                 context.prevTopSegment = textSegment;
             }
+            firstSeg = false;
             let segText = textSegment.text;
             context.adjustedTopChar = context.topChar;
             if ((start > 0) && splitTopSeg) {
-                segText = renderFirstSegment(segText);
+                segText = renderFirstSegment(segText, textSegment);
                 let actualStart = textSegment.text.length - segText.length;
                 if (start !== actualStart) {
                     context.adjustedTopChar = context.topChar + (actualStart - start);
@@ -315,14 +350,15 @@ export let theString: StringView;
 
 function pointerToElementOffsetWebkit(x: number, y: number): IRangeInfo {
     let range = document.caretRangeFromPoint(x, y);
-    let result = {
-        elm: <HTMLElement>range.startContainer.parentElement,
-        node: range.startContainer,
-        offset: range.startOffset,
-    };
-    range.detach();
-
-    return result;
+    if (range) {
+        let result = {
+            elm: <HTMLElement>range.startContainer.parentElement,
+            node: range.startContainer,
+            offset: range.startOffset,
+        };
+        range.detach();
+        return result;
+    }
 }
 
 class StringView {
@@ -338,6 +374,7 @@ class StringView {
     public viewportDiv: HTMLDivElement;
     public client: SharedString.Client;
     public ticking = false;
+    public wheelTicking = false;
     public topChar = 0;
     private off = true;
     private cursorBlinkCount = 0;
@@ -379,20 +416,21 @@ class StringView {
         };
 
         document.body.onmousewheel = (e) => {
-            let factor = this.viewportCharCount / 10;
-            let delta = Math.max(-factor, Math.min(factor, (e.wheelDelta || -e.detail)));
-            if (delta < 0) {
-                delta = Math.min(-factor, delta);
-            } else {
-                delta = Math.max(factor, delta);
+            if (!this.wheelTicking) {
+                let factor = this.viewportCharCount / 10;
+                let delta = Math.max(-factor, Math.min(factor, (e.wheelDelta || -e.detail)));
+                if (delta < 0) {
+                    delta = Math.min(-factor, delta);
+                } else {
+                    delta = Math.max(factor, delta);
+                }
+                console.log(`top char: ${this.topChar - delta} factor ${factor}; delta: ${delta} wheel: ${e.wheelDeltaY} ${e.wheelDelta} ${e.detail}`);
+                setTimeout(() => {
+                    this.render(Math.floor(this.topChar - delta));
+                    this.wheelTicking = false;
+                }, 20);
+                this.wheelTicking = true;
             }
-            // console.log(`delta: ${delta} wheel: ${e.wheelDeltaY} ${e.wheelDelta} ${e.detail}`);
-            setTimeout(() => {
-                this.render(this.topChar - delta);
-                this.ticking = false;
-            }, 20);
-            this.ticking = true;
-
             e.preventDefault();
             e.returnValue = false;
         };
@@ -458,7 +496,8 @@ class StringView {
         let len = this.client.getLength();
         let halfport = Math.floor(this.viewportCharCount / 2);
         if (topChar !== undefined) {
-            if ((this.topChar === topChar) && (!changed)) {
+            if (((this.topChar === topChar) ||((this.topChar === 0) && (topChar <= 0)))
+                 && (!changed)) {
                 // console.log("no change in top char");
                 return;
             }
@@ -539,7 +578,7 @@ export async function onLoad(id: string) {
         widthEst("18px Times");
         theString = new StringView(sharedString, data.totalSegmentCount, data.totalLengthChars);
         if (data.totalLengthChars > 0) {
-            theString.render(0);
+            theString.render(0, true);
         }
         theString.timeToEdit = theString.timeToImpression = Date.now() - clockStart;
         theString.setEdit();
