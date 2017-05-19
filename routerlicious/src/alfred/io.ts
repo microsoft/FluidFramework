@@ -1,4 +1,3 @@
-import * as kafka from "kafka-node";
 import * as _ from "lodash";
 import { MongoClient } from "mongodb";
 import * as moniker from "moniker";
@@ -9,6 +8,7 @@ import * as socketIoRedis from "socket.io-redis";
 import * as api from "../api";
 import * as core from "../core";
 import * as socketStorage from "../socket-storage";
+import * as utils from "../utils";
 
 let io = socketIo();
 
@@ -16,26 +16,6 @@ let io = socketIo();
 const zookeeperEndpoint = nconf.get("zookeeper:endpoint");
 const kafkaClientId = nconf.get("alfred:kafkaClientId");
 const topic = nconf.get("alfred:topic");
-
-let kafkaClient = new kafka.Client(zookeeperEndpoint, kafkaClientId);
-let producer = new kafka.Producer(kafkaClient, { partitionerType: 3 });
-let producerReady = new Promise<void>((resolve, reject) => {
-    producer.on("ready", () => {
-        kafkaClient.refreshMetadata([topic], (error, data) => {
-            if (error) {
-                console.error(error);
-                return reject();
-            }
-
-            return resolve();
-        });
-    });
-});
-
-producer.on("error", (error) => {
-    console.error("ERROR CONNECTEING TO KAFKA");
-    console.error(error);
-});
 
 // Setup redis
 let host = nconf.get("redis:host");
@@ -78,6 +58,9 @@ async function getOrCreateObject(id: string, type: string): Promise<boolean> {
             }
         });
 }
+
+// Producer used to publish messages
+const producer = new utils.kafka.Producer(zookeeperEndpoint, kafkaClientId, [topic]);
 
 io.on("connection", (socket) => {
     const clientId = moniker.choose();
@@ -132,26 +115,44 @@ io.on("connection", (socket) => {
             operation: message,
             objectId,
             timestamp: Date.now(),
+            type: core.RawOperationType,
             userId: null,
         };
 
-        let submittedP = producerReady.then(() => {
-            const payloads = [{ topic, messages: [JSON.stringify(rawMessage)], key: objectId }];
-            return new Promise<any>((resolve, reject) => {
-                producer.send(payloads, (error, data) => {
-                    if (error) {
-                        return reject(error);
-                    }
-
-                    console.log(data);
-                    resolve({ data: true });
-                });
-            });
-        });
-
-        submittedP.then(
+        const payload = [{ topic, messages: [JSON.stringify(rawMessage)], key: objectId }];
+        producer.send(payload).then(
             (responseMessage) => response(null, responseMessage),
-            (error) => response(error, null));
+            (error) => {
+                console.error(error);
+                response(error, null);
+            });
+    });
+
+    // Message sent to allow clients to update their sequence number
+    socket.on("updateReferenceSequenceNumber", (objectId: string, sequenceNumber: number, response) => {
+        console.log(`${clientId} Updating ${objectId} to ${sequenceNumber}`);
+
+        // Verify the user has connected on this object id
+        if (!connectionsMap[objectId]) {
+            return response("Invalid object", null);
+        }
+
+        const message: core.IUpdateReferenceSequenceNumberMessage = {
+            clientId,
+            objectId,
+            sequenceNumber,
+            timestamp: Date.now(),
+            type: core.UpdateReferenceSequenceNumberType,
+            userId: null,
+        };
+
+        const payload = [{ topic, messages: [JSON.stringify(message)], key: objectId }];
+        producer.send(payload).then(
+            (responseMessage) => response(null, responseMessage),
+            (error) => {
+                console.error(error);
+                response(error, null);
+            });
     });
 });
 

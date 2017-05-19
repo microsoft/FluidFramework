@@ -16,6 +16,7 @@ interface IMapOperation {
  * Map snapshot definition
  */
 export interface ISnapshot {
+    offset: number;
     sequenceNumber: number;
     snapshot: any;
 };
@@ -62,8 +63,10 @@ class Map extends api.CollaborativeObject implements api.IMap {
     // Locally applied operations not yet sent to the server
     private localOps: api.IMessage[] = [];
 
-    // The last sequence number retrieved from the server
+    // The last sequence number and offset retrieved from the server
     private sequenceNumber = 0;
+    private offset = 0;
+    private minimumSequenceNumber = 0;
 
     // Sequence number for operations local to this client
     private clientSequenceNumber = 0;
@@ -166,6 +169,7 @@ class Map extends api.CollaborativeObject implements api.IMap {
 
     public snapshot(): Promise<void> {
         const snapshot = {
+            offset: this.offset,
             sequenceNumber: this.sequenceNumber,
             snapshot: _.clone(this.data),
         };
@@ -185,11 +189,13 @@ class Map extends api.CollaborativeObject implements api.IMap {
         this.connection = await services.deltaNotificationService.connect(this.id, this.type);
         assert.ok(!this.connection.existing);
 
+        // Listen for updates to create the delta manager
+        this.listenForUpdates();
+
+        // And then submit all pending operations
         for (const localOp of this.localOps) {
             this.submit(localOp);
         }
-
-        this.listenForUpdates();
     }
 
     /**
@@ -208,22 +214,28 @@ class Map extends api.CollaborativeObject implements api.IMap {
 
         // Load from the snapshot if it exists
         const rawSnapshot = this.connection.existing ? await services.objectStorageService.read(id) : null;
-        const snapshot: ISnapshot = rawSnapshot ? JSON.parse(rawSnapshot) : { sequenceNumber: 0, snapshot: {} };
+        const snapshot: ISnapshot = rawSnapshot
+            ? JSON.parse(rawSnapshot)
+            : { offset: 0, sequenceNumber: 0, snapshot: {} };
 
         this.data = snapshot.snapshot;
         this.sequenceNumber = snapshot.sequenceNumber;
+        this.offset = snapshot.offset;
 
         this.listenForUpdates();
     }
 
     private listenForUpdates() {
         this.deltaManager = new DeltaManager(
-            this.sequenceNumber,
+            this.offset,
             this.services.deltaStorageService,
             this.connection,
             {
+                getReferenceSequenceNumber: () => {
+                    return this.sequenceNumber;
+                },
                 op: (message) => {
-                    this.processRemoteOperation(message);
+                    this.processRemoteMessage(message);
                 },
             });
     }
@@ -243,7 +255,7 @@ class Map extends api.CollaborativeObject implements api.IMap {
             }
         }
 
-        this.connection.submitOp(message);
+        this.deltaManager.submitOp(message);
     }
 
     /**
@@ -269,11 +281,19 @@ class Map extends api.CollaborativeObject implements api.IMap {
     /**
      * Handles a message coming from the remote service
      */
-    private processRemoteOperation(message: api.ISequencedMessage) {
+    private processRemoteMessage(message: api.IBase) {
         // server messages should only be delivered to this method in sequence number order
-        assert.equal(this.sequenceNumber + 1, message.sequenceNumber);
+        assert.equal(this.offset + 1, message.offset);
+        this.offset = message.offset;
         this.sequenceNumber = message.sequenceNumber;
+        this.minimumSequenceNumber = message.minimumSequenceNumber;
 
+        if (message.type === api.OperationType) {
+            this.processRemoteOperation(message as api.ISequencedMessage);
+        }
+    }
+
+    private processRemoteOperation(message: api.ISequencedMessage) {
         if (message.clientId === this.connection.clientId) {
             // One of our messages was sequenced. We can remove it from the local message list. Given these arrive
             // in order we only need to check the beginning of the local list.

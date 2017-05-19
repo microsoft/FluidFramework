@@ -53,7 +53,12 @@ export interface IDeltaConnection {
     /**
      * Send new messages to the server
      */
-    submitOp(message: IMessage);
+    submitOp(message: IMessage): Promise<void>;
+
+    /**
+     * Updates the reference sequence number on the given connection
+     */
+    updateReferenceSequenceNumber(sequenceNumber: number): Promise<void>;
 }
 
 /**

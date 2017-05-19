@@ -15,10 +15,30 @@ export interface IMessageBase {
 export interface IMessage extends IMessageBase {
 }
 
+export interface IBase {
+    // Message offset number
+    offset: number;
+
+    // The sequence number for the message
+    sequenceNumber: number;
+
+    // The minimum sequence number for the message
+    minimumSequenceNumber: number;
+
+    // The type of operation
+    type: string;
+}
+
+// Delta operation application type
+export const OperationType = "op";
+
+// Type representing a minimum sequence number update
+export const MinimumSequenceNumberUpdateType = "msn";
+
 /**
  * Message sent to clients when an operation has been assigned a sequence number and is being routed to clients
  */
-export interface ISequencedMessage extends IMessageBase {
+export interface ISequencedMessage extends IMessageBase, IBase {
     // The user that submitted the delta
     userId: string;
 
@@ -59,5 +79,6 @@ export interface MergeTreeChunk {
     totalSegmentCount: number;
     chunkSequenceNumber: number;
     segmentTexts: string[];
+    chunkOffset: number;
     // TODO: segment properties key
 }

@@ -1,0 +1,22 @@
+version: '3'
+services:
+    alfred:
+        ports:
+            - "5858:5858"
+        command: npm run alfred:debug:windows
+    deli:
+        ports:
+            - "5859:5858"
+        command: npm run deli:debug:windows
+    paparazzi:
+        ports:
+            - "5860:5858"
+        command: npm run paparazzi:debug:windows
+    scriptorium:
+        ports:
+            - "5861:5858"
+        command: npm run scriptorium:debug:windows
+    tmz:
+        ports:
+            - "5862:5858"
+        command: npm run tmz:debug:windows

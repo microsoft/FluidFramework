@@ -1,6 +1,6 @@
 import * as amqp from "amqplib";
 import * as minio from "minio";
-import { MongoClient } from "mongodb";
+import { Collection, MongoClient } from "mongodb";
 import * as nconf from "nconf";
 import * as path from "path";
 import * as api from "../api";
@@ -19,30 +19,13 @@ const objectsCollectionP = client.then((db) => db.collection(objectsCollectionNa
 // Queue configuration
 const queueName = nconf.get("tmz:queue");
 const connectionString = nconf.get("rabbitmq:connectionString");
-
-const connectionP = amqp.connect(connectionString);
-const channelP = connectionP.then((connection) => connection.createChannel());
-
 const minioConfig = nconf.get("minio");
-const minioClient = new minio.Client({
-    accessKey: minioConfig.accessKey,
-    endPoint: minioConfig.endpoint,
-    port: minioConfig.port,
-    secretKey: minioConfig.secretKey,
-    secure: false,
-});
-
 const storageBucket = nconf.get("paparazzi:bucket");
 
 // Connect to Alfred for default storage options
 const alfredUrl = nconf.get("paparazzi:alfred");
-const services: api.ICollaborationServices = {
-    deltaNotificationService: new socketStorage.DeltaNotificationService(alfredUrl),
-    deltaStorageService: new socketStorage.DeltaStorageService(alfredUrl),
-    objectStorageService: new ObjectStorageService(alfredUrl, minioClient, storageBucket),
-};
 
-async function bucketExists(bucket: string) {
+async function bucketExists(minioClient, bucket: string) {
     return new Promise<boolean>((resolve, reject) => {
         minioClient.bucketExists(bucket, (error) => {
             if (error && error.code !== "NoSuchBucket") {
@@ -54,7 +37,7 @@ async function bucketExists(bucket: string) {
     });
 }
 
-async function makeBucket(bucket: string) {
+async function makeBucket(minioClient, bucket: string) {
     return new Promise<void>((resolve, reject) => {
         minioClient.makeBucket(bucket, "us-east-1", (error) => {
             if (error) {
@@ -66,22 +49,26 @@ async function makeBucket(bucket: string) {
     });
 }
 
-async function getOrCreateBucket(bucket: string) {
-    const exists = await bucketExists(bucket);
+async function getOrCreateBucket(minioClient, bucket: string) {
+    const exists = await bucketExists(minioClient, bucket);
     if (!exists) {
-        return await makeBucket(bucket);
+        return await makeBucket(minioClient, bucket);
     }
 }
 
-async function loadDocument(id: string): Promise<api.ICollaborativeObject> {
-    console.log(`Loading in root document for ${id}...`);
-    const collection = await objectsCollectionP;
+async function loadObject(
+    services: api.ICollaborationServices,
+    collection: Collection,
+    id: string): Promise<api.ICollaborativeObject> {
+
+    console.log(`${id}: Loading`);
     const dbObject = await collection.findOne({ _id: id });
+    console.log(`${id}: Found`);
 
     const extension = api.defaultRegistry.getExtension(dbObject.type);
     const sharedObject = extension.load(id, services, api.defaultRegistry);
 
-    console.log("Shared object loaded");
+    console.log(`${id}: Loaded`);
     return sharedObject;
 }
 
@@ -120,10 +107,8 @@ function serialize(root: api.ICollaborativeObject) {
     });
 }
 
-function handleDocument(id: string) {
-    // don't use the document here - just load directly
-
-    loadDocument(id).then((doc) => {
+function handleDocument(services: api.ICollaborationServices, collection: Collection, id: string) {
+    loadObject(services, collection, id).then((doc) => {
         // TODO need a generic way to know that the object has 'changed'
 
         // Display the initial values and then listen for updates
@@ -143,16 +128,45 @@ function handleDocument(id: string) {
 /**
  * Processes a message received from a service bus queue
  */
-function processMessage(message: string): Promise<void> {
+function processMessage(message: string, collection: Collection, services: api.ICollaborationServices): Promise<void> {
     return new Promise<void>((resolve, reject) => {
-        handleDocument(message);
+        handleDocument(services, collection, message);
         resolve();
     });
 }
 
 async function run() {
-    await getOrCreateBucket(storageBucket);
-    const channel = await channelP;
+    const minioClient = new minio.Client({
+        accessKey: minioConfig.accessKey,
+        endPoint: minioConfig.endpoint,
+        port: minioConfig.port,
+        secretKey: minioConfig.secretKey,
+        secure: false,
+    });
+
+    const services: api.ICollaborationServices = {
+        deltaNotificationService: new socketStorage.DeltaNotificationService(alfredUrl),
+        deltaStorageService: new socketStorage.DeltaStorageService(alfredUrl),
+        objectStorageService: new ObjectStorageService(alfredUrl, minioClient, storageBucket),
+    };
+
+    // Prep minio
+    await getOrCreateBucket(minioClient, storageBucket);
+
+    // Load the mongodb collection
+    const collection = await objectsCollectionP;
+
+    // Connect to the queue
+    const connection = await amqp.connect(connectionString);
+    const channel = await connection.createChannel();
+
+    // The rabbitmq library does not support re-connect. We will simply exit and rely on being restarted once
+    // we lose our connection to RabbitMQ.
+    connection.on("error", (error) => {
+        console.error("Lost connection to RabbitMQ - exiting");
+        console.error(error);
+        process.exit(1);
+    });
 
     channel.assertQueue(queueName, { durable: true });
     channel.prefetch(1);
@@ -160,11 +174,21 @@ async function run() {
     channel.consume(
         queueName,
         (message) => {
-            processMessage(message.content.toString()).then(() => {
-                channel.ack(message);
-            });
+            processMessage(message.content.toString(), collection, services)
+                .then(() => {
+                    channel.ack(message);
+                })
+                .catch((error) => {
+                    console.error(error);
+                    channel.nack(message);
+                });
         },
         { noAck: false });
 }
 
-run();
+// Start up the paparazzi service
+const runP = run();
+runP.catch((error) => {
+    console.error(error);
+    process.exit(1);
+});

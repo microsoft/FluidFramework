@@ -89,7 +89,7 @@ export default class InkCanvas {
         }
 
         this.currentPen = {
-            color: { r: 1, g: 0, b: 0, a: 0 },
+            color: { r: 0, g: 161 / 255, b: 241 / 255, a: 0 },
             thickness: 7,
         };
 
