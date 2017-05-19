@@ -116,6 +116,16 @@ export class Producer {
      * Handles an error that requires a reconnect to Kafka
      */
     private handleError(error: any) {
+        // Close the client if it exists
+        if (this.client) {
+            this.client.close((closeError) => {
+                if (closeError) {
+                    console.error(closeError);
+                }
+            });
+            this.client = undefined;
+        }
+
         this.connecting = this.connected = false;
         console.error("Kafka error - attempting reconnect");
         console.error(error);
