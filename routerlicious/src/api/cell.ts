@@ -136,12 +136,21 @@ class Cell extends api.CollaborativeObject implements api.ICell {
         return this.processLocalOperation(op);
     }
 
+    // Deletes the value from the cell.
+    public async delete(): Promise<void> {
+        await this.loadingP;
+        const op: ICellOperation = {
+            type: "delete",
+        };
+        return this.processLocalOperation(op);
+    }
+
     /**
      * Returns whether cell is empty or not.
      */
      public async empty() {
          await this.loadingP;
-         return this.data === undefined? true : false;
+         return this.data === undefined ? true : false;
      }
 
     public snapshot(): Promise<void> {
@@ -274,6 +283,9 @@ class Cell extends api.CollaborativeObject implements api.ICell {
             case "set":
                 this.setCore(op.value);
                 break;
+            case "delete":
+                this.deleteCore();
+                break;
             default:
                 throw new Error("Unknown operation");
         }
@@ -282,6 +294,11 @@ class Cell extends api.CollaborativeObject implements api.ICell {
     private setCore(value: ICellValue) {
         this.data = value;
         this.events.emit("valueChanged", { value });
+    }
+
+    private deleteCore() {
+        delete this.data;
+        this.events.emit("delete");
     }
 }
 

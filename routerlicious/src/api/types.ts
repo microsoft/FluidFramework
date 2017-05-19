@@ -112,5 +112,10 @@ export interface ICell extends ICollaborativeObject {
     /**
      * Checks whether cell is empty or not.
      */
-    empty() : Promise<boolean>;
+    empty(): Promise<boolean>;
+
+    /**
+     * Delete the value from the cell.
+     */
+    delete(): Promise<void>;
 }
