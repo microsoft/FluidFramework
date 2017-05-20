@@ -188,6 +188,12 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
                 span.pos = segOffset;
                 segOffset = 0;
             }
+            if ((textSegment.clientId == 0)&&(textSegment.seq>0)) {
+                span.style.backgroundColor = "lightskyblue";
+            }
+            else if ((textSegment.clientId == 1)&&(textSegment.seq>0)) {
+                span.style.backgroundColor = "pink";                
+            }
             innerDiv.appendChild(span);
             return segText;
         }
@@ -544,7 +550,6 @@ class StringView {
             let removeStart = word1.pos;
             let removeEnd = removeStart + word1.text.length;
             this.sharedString.removeText(removeStart,removeEnd);
-            client.removeSegmentLocal(removeStart, removeEnd);
             let word2 = SharedString.findRandomWord(client.mergeTree, client.getClientId());
             while (!word2) {
                 word2 = SharedString.findRandomWord(client.mergeTree, client.getClientId());
