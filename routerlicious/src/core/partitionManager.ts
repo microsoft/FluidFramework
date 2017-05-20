@@ -15,7 +15,7 @@ export class PartitionManager {
     private checkpointing = false;
     // Stores the processed offset for each partition.
     private partitionMap: { [key: string]: IPartitionRange} = {};
-    private lastCheckpointTimestamp: number;
+    private lastCheckpointTimestamp: number = 0;
 
     constructor(
         private groupId: string,

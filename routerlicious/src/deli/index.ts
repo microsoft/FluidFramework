@@ -81,6 +81,7 @@ async function processMessages(kafkaClient: kafka.Client, producer: kafka.Produc
                     clearTimeout(checkpointTimer);
                 }
                 checkpointTimer = setTimeout(() => {
+                    console.log("Kicking off checkpoint from settimeout function");
                     checkpoint(ticketQueue, dispensers, partitionManager);
                 }, checkpointTimeIntervalMsec);
             }
