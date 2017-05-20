@@ -105,6 +105,11 @@ export default class InkCanvas {
             throttler.trigger();
         }).observe(this.canvasWrapper);
     }
+
+    public setPenColor(color: ink.IColor) {
+        this.currentPen.color = color;
+    }
+
     // tslint:disable:no-empty
     // Stubs for bunch of functions that are being called in the code below
     // this will make it easier to fill some code in later or just delete them

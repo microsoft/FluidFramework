@@ -41,6 +41,23 @@ export function toColorStringNoAlpha(color: IColor) {
   return "#" + byteHex(color.r * 255) + byteHex(color.g * 255) + byteHex(color.b * 255 );
 }
 
+/**
+ * Converts an RGB component in the range [0,1] to [0,255]
+ */
+function toRGBInteger(value: number) {
+  return Math.round(value * 255);
+}
+
+/**
+ * Converts the provided color to a rgba CSS color string
+ */
+export function toColorString(color: IColor) {
+  const r = toRGBInteger(color.r);
+  const g = toRGBInteger(color.g);
+  const b = toRGBInteger(color.b);
+  return `rgba(${r}, ${g}, ${b}, ${color.a})`;
+}
+
 // Helper function to support HTML hexColor Strings
 export function hexStrToRGBA(hexStr: string): IColor {
   // RGBA color object

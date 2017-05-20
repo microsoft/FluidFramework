@@ -10,8 +10,27 @@
                 </div>
         </div>
 
+        {{!--id="strokeButton" --}}
+
+        <nav class="navbar navbar-prague navbar-fixed-bottom">
+            <div class="container-fluid">
+                <div class="row">
+                    <ul class="nav navbar-nav navbar-palette">
+                        <li class="dropup">
+                            <button class="dropdown-toggle btn btn-palette prague-icon-pencil" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
+                            <ul id="color-picker" class="dropdown-menu dropdown-menu-prague" aria-labelledby="dropdownMenu2">
+                            </ul>
+                        </li>
+                        <li>
+                            <button class="btn btn-palette prague-icon-replay" id="replay"></button>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
         <!-- Toolbar -->
-        <div id="ToolBar">
+        {{!--<div id="ToolBar">--}}
 
             <!-- Buttons -->
             {{!--<button id="undoButton" value="undo">Undo</button>
@@ -19,19 +38,10 @@
             <button id="testButton">Reco</button>
             <button id="turnOnInk">ink</button>--}}
             <!-- Color Menu -->
-            <div class="toolbarDiv">
-                <button class="menuButton" id="strokeButton" value="clear">Stroke</button>
-                <select class="menuItems" size="5" id="strokeColors" multiple>
-                        <option style="background-color:black" value="Black">Black</option>
-                        <option style="background-color:blue" value="Blue">Blue</option>
-                        <option style="background-color:red" value="Red">Red</option>
-                        <option style="background-color:green" value="Green">Green</option>
-                        <option style="background-color:white; color:black" value="#00000000">Erase</option>
-                </select>
-            </div>
-            <button id="clearButton" value="clear">Clear</button>
-            <button id="replay">Replay</button>
-        </div>
+
+            {{!--<button id="clearButton" value="clear">Clear</button>--}}
+            {{!--
+        </div>--}}
     {{/content}}
 
     {{$scripts}}
