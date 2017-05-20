@@ -7,8 +7,8 @@ import * as API from "../api";
 
 export * from "./mergeTree";
 
-import { loadSegments } from "./text";
-export { loadSegments };
+import { loadSegments, findRandomWord } from "./text";
+export { loadSegments, findRandomWord };
 
 export class CollaboritiveStringExtension implements API.IExtension {
     public static Type = "https://graph.microsoft.com/types/mergeTree";
