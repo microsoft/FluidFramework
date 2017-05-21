@@ -18,3 +18,6 @@ export { sharedText };
 
 import cell from "./cell";
 export { cell };
+
+import scribe from "./scribe";
+export { scribe };

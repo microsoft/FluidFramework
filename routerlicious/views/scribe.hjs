@@ -1,0 +1,42 @@
+{{<layout}}
+    {{$styles}}
+        <link href="/public/stylesheets/dist/style.css" rel="stylesheet" />
+    {{/styles}}
+
+    {{$content}}
+        <div class="container">
+            <h1>Scribe</h1>
+
+            <form id="text-form">
+                <div class="form-group">
+                    <label for="shared-text-id">Shared Text ID</label>
+                    <input type="text" class="form-control" id="shared-text-id">
+                </div>
+                <div class="form-group">
+                    <label for="interval">Typing Interval (ms)</label>
+                    <input type="text" class="form-control" id="interval" value="1000">
+                </div>
+                <div class="form-group">
+                    <label for="file">Text</label>
+                    <input type="file" id="file">
+                </div>
+                <button type="submit" class="btn btn-default hidden" id="create">Create</button>
+            </form>
+
+            <div class="typing-details">
+                <a href="" target="_blank" id="document-link"></a>
+                <div class="progress hidden" id="progress">
+                    <div class="progress-bar progress-bar-striped active" role="progressbar" style="width: 0%">
+                    </div>
+                </div>
+                <div id="total-time">
+                </div>
+            </div>
+        </div>
+    {{/content}}
+
+    {{$scripts}}
+        <script src="/socket.io/socket.io.js"></script>
+        <script src="/public/scripts/dist/scribe.js"></script>
+    {{/scripts}}
+{{/layout}}

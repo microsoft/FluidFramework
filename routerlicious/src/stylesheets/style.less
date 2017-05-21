@@ -73,4 +73,62 @@ body
 }
 
 @import "./stickyNote.less";
-@import "./toolbar.less";
+
+.navbar-prague {
+    background-color: #222;
+}
+
+.btn-palette {
+    border-radius: 0;
+    background-color: #333;
+    width: 50px;
+    height: 50px;
+    padding: 5px;
+    border: none;
+}
+
+.btn-palette:hover {
+   background-color: orangered;
+}
+
+.prague-icon {
+    background-size: 50%;
+    background-repeat: no-repeat;
+    background-position: center center;
+}
+
+.prague-icon-pencil {
+    .prague-icon;
+    background-image: url("../../images/icons/pencil.svg");
+}
+
+.prague-icon-replay {
+    .prague-icon;
+    background-image: url("../../images/icons/backward.svg");
+}
+
+.dropdown-menu > li > a.color-choice {
+    width: 100%;
+    height: 50px;
+    
+    &:hover, &:focus {
+        background-color: inherit;
+        background-image: inherit;
+    }
+}
+
+.dropdown-menu-prague {
+    padding: 0 0;
+}
+
+.navbar-nav.navbar-palette {
+    margin: 0;
+
+    > li {
+        float: left;
+    }
+}
+
+.typing-details {
+    margin-top: 25px;
+}
