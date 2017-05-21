@@ -60,15 +60,17 @@ function typeFile(sharedString: SharedString.SharedString, fileText: string, int
         fileText = normalizeText(fileText);
 
         sharedString.on("op", (message) => {
-            progressBar.style.width = `${Math.round(100 * message.clientSequenceNumber / fileText.length)}%`;
+            if (message.clientSequenceNumber) {
+                progressBar.style.width = `${Math.round(100 * message.clientSequenceNumber / fileText.length)}%`;
 
-            // We need a better way of hearing when our messages have been received and processed.
-            // For now I just assume we are the only writer and wait to receive a message with a client
-            // sequence number greater than the number of submitted operations.
-            if (message.clientSequenceNumber >= fileText.length) {
-                progressBar.classList.remove("active");
-                const endTime = Date.now();
-                resolve(endTime - startTime);
+                // We need a better way of hearing when our messages have been received and processed.
+                // For now I just assume we are the only writer and wait to receive a message with a client
+                // sequence number greater than the number of submitted operations.
+                if (message.clientSequenceNumber >= fileText.length) {
+                    progressBar.classList.remove("active");
+                    const endTime = Date.now();
+                    resolve(endTime - startTime);
+                }
             }
         });
 
