@@ -9,7 +9,7 @@
             <ul class="list-unstyled">
                 <li><a href="/maps/maps">Collaborative Map</a></li>
                 <li><a href="/canvas/canvas">Ink Canvas</a></li>
-                <li><a href="/sharedString/string">Shared String</a></li>
+                <li><a href="/sharedText/string">Shared String</a></li>
                 <li><a href="/scribe">Scribe</a></li>
             </ul>
         </div>
