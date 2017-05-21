@@ -18,7 +18,7 @@ export class DeltaNotificationService implements api.IDeltaNotificationService {
     private socket;
 
     constructor(url: string) {
-        this.socket = io(url);
+        this.socket = io(url, { transports: ["websocket"] });
     }
 
     public connect(id: string, type: string): Promise<api.IDeltaConnection> {
