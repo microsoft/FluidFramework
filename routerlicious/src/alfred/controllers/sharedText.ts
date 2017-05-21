@@ -188,11 +188,10 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
                 span.pos = segOffset;
                 segOffset = 0;
             }
-            if ((textSegment.clientId == 0)&&(textSegment.seq>0)) {
+            if ((textSegment.clientId === 0)&&(textSegment.seq>0)) {
                 span.style.backgroundColor = "lightskyblue";
-            }
-            else if ((textSegment.clientId == 1)&&(textSegment.seq>0)) {
-                span.style.backgroundColor = "pink";                
+            } else if ((textSegment.clientId === 1)&&(textSegment.seq>0)) {
+                span.style.backgroundColor = "pink";
             }
             innerDiv.appendChild(span);
             return segText;
