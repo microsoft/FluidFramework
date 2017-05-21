@@ -16,9 +16,6 @@ export interface IMessage extends IMessageBase {
 }
 
 export interface IBase {
-    // Message offset number
-    offset: number;
-
     // The sequence number for the message
     sequenceNumber: number;
 
@@ -79,6 +76,5 @@ export interface MergeTreeChunk {
     totalSegmentCount: number;
     chunkSequenceNumber: number;
     segmentTexts: string[];
-    chunkOffset: number;
     // TODO: segment properties key
 }

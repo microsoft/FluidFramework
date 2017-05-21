@@ -17,7 +17,6 @@ export interface IInk extends api.ICollaborativeObject {
  * Map snapshot definition
  */
 export interface IInkSnapshot {
-    offset: number;
     sequenceNumber: number;
     snapshot: ISnapshot;
 };
@@ -35,9 +34,8 @@ export class InkCollaborativeObject extends api.CollaborativeObject implements I
     // Locally applied operations not yet sent to the server
     private localOps: api.IMessage[] = [];
 
-    // The last sequence number and offset retrieved from the server
+    // The last sequence number retrieved from the server
     private sequenceNumber = 0;
-    private offset = 0;
 
     // Sequence number for operations local to this client
     private clientSequenceNumber = 0;
@@ -69,7 +67,6 @@ export class InkCollaborativeObject extends api.CollaborativeObject implements I
 
     public snapshot(): Promise<void> {
         const snapshot: IInkSnapshot = {
-            offset: this.offset,
             sequenceNumber: this.sequenceNumber,
             snapshot: _.clone(this.inkSnapshot),
         };
@@ -97,11 +94,10 @@ export class InkCollaborativeObject extends api.CollaborativeObject implements I
         const rawSnapshot = this.connection.existing ? await services.objectStorageService.read(id) : null;
         const snapshot: IInkSnapshot = rawSnapshot
             ? JSON.parse(rawSnapshot)
-            : { offset: 0, sequenceNumber: 0, snapshot: {} };
+            : { sequenceNumber: 0, snapshot: {} };
 
         this.inkSnapshot = Snapshot.Clone(snapshot.snapshot);
         this.sequenceNumber = snapshot.sequenceNumber;
-        this.offset = snapshot.offset;
 
         // Emit the load event so listeners can redraw the new information
         this.events.emit("load");
@@ -111,7 +107,7 @@ export class InkCollaborativeObject extends api.CollaborativeObject implements I
 
     private listenForUpdates() {
         this.deltaManager = new api.DeltaManager(
-            this.offset,
+            this.sequenceNumber,
             this.services.deltaStorageService,
             this.connection,
             {
@@ -148,10 +144,9 @@ export class InkCollaborativeObject extends api.CollaborativeObject implements I
      * Handles a message coming from the remote service
      */
     private processRemoteMessage(message: api.IBase) {
-        // server messages should only be delivered to this method in offset order
-        assert.equal(this.offset + 1, message.offset);
+        // server messages should only be delivered to this method in sequence number order
+        assert.equal(this.sequenceNumber + 1, message.sequenceNumber);
         this.sequenceNumber = message.sequenceNumber;
-        this.offset = message.offset;
 
         if (message.type === api.OperationType) {
             this.processRemoteOperation(message as api.ISequencedMessage);

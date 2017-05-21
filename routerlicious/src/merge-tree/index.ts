@@ -46,7 +46,6 @@ export class SharedString implements API.ICollaborativeObject {
     deltaManager: API.DeltaManager;
     __collaborativeObject__: boolean = true;
     initialSeq: number;
-    initialOffset: number;
     private events = new EventEmitter();
     private clientSequenceNumber = 1;
     private isLoaded = false;
@@ -63,25 +62,26 @@ export class SharedString implements API.ICollaborativeObject {
 
         this.connection = await this.services.deltaNotificationService.connect(this.id, this.type);
 
-        let chunk = await Paparazzo.Snapshot.loadChunk(services, this.id + "header");
+        let headerChunkP = Paparazzo.Snapshot.loadChunk(services, this.id + "header");
+        let bodyChunkP = Paparazzo.Snapshot.loadChunk(services, this.id);
+        let chunk = await headerChunkP;
+
         this.events.emit('partialLoad', chunk);
         if (chunk.totalSegmentCount >= 0) {
             this.client.mergeTree.reloadFromSegments(textsToSegments(chunk.segmentTexts));
-            chunk = await Paparazzo.Snapshot.loadChunk(services, this.id);
+            chunk = await bodyChunkP;
             for (let text of chunk.segmentTexts) {
                 this.client.mergeTree.appendTextSegment(text);
             }
             this.initialSeq = chunk.chunkSequenceNumber;
-            this.initialOffset = chunk.chunkOffset;
         } else {
             this.initialSeq = 0;
-            this.initialOffset = 0;
         }
 
         this.events.emit('loadFinshed', chunk);
         this.isLoaded = true;
         this.client.applyAll();
-        this.client.startCollaboration(this.connection.clientId, this.initialSeq, this.initialOffset);
+        this.client.startCollaboration(this.connection.clientId, this.initialSeq);
 
         this.listenForUpdates();
     }
@@ -147,7 +147,7 @@ export class SharedString implements API.ICollaborativeObject {
 
     private listenForUpdates() {
         this.deltaManager = new API.DeltaManager(
-            this.initialOffset,
+            this.initialSeq,
             this.services.deltaStorageService,
             this.connection,
             {
@@ -163,7 +163,6 @@ export class SharedString implements API.ICollaborativeObject {
     async attach(services: API.ICollaborationServices, registry: API.Registry): Promise<void> {
         this.services = services;
         this.initialSeq = 0;
-        this.initialOffset = 0;
         this.connection = await this.services.deltaNotificationService.connect(this.id, "string");
         this.listenForUpdates();
         this.isLoaded = true;

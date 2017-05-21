@@ -147,7 +147,6 @@ class Server {
             totalLengthChars: this.snapshot.header.segmentsTotalLength,
             totalSegmentCount: alltexts.length,
             chunkSequenceNumber: this.snapshot.header.seq,
-            chunkOffset: this.snapshot.header.offset,
             segmentTexts: texts
         }
     }

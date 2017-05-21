@@ -29,7 +29,7 @@ async function run() {
     const collection = db.collection(deltasCollectionName);
     await collection.createIndex({
             "objectId": 1,
-            "operation.offset": 1,
+            "operation.sequenceNumber": 1,
         },
         { unique: true });
 
@@ -65,7 +65,7 @@ async function run() {
             const objectId = value.objectId;
 
             // Serialize the message to backing store
-            console.log(`Inserting to mongodb ${objectId}@${value.operation.offset}:${value.operation.sequenceNumber}`);
+            console.log(`Inserting to mongodb ${objectId}@${value.operation.sequenceNumber}`);
             collection.insert(value).catch((error) => {
                 console.error("Error serializing to MongoDB");
                 console.error(error);

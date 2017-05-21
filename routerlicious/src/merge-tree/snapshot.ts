@@ -11,7 +11,6 @@ interface SnapshotHeader {
     indexOffset?: number;
     segmentsOffset?: number;
     seq: number;
-    offset: number;
 }
 
 // first three are index entry
@@ -73,7 +72,6 @@ export class Snapshot {
             totalLengthChars: this.header.segmentsTotalLength,
             totalSegmentCount: alltexts.length,
             chunkSequenceNumber: this.header.seq,
-            chunkOffset: this.header.offset,
             segmentTexts: texts
         }
     }
@@ -94,7 +92,6 @@ export class Snapshot {
             segmentsTotalLength: this.mergeTree.getLength(this.mergeTree.collabWindow.minSeq,
                 MergeTree.NonCollabClient),
             seq: this.mergeTree.collabWindow.minSeq,
-            offset: this.mergeTree.collabWindow.offset,
         };
         let texts = <string[]>[];
         let extractSegment = (segment: MergeTree.Segment, pos: number, refSeq: number, clientId: number,
@@ -127,7 +124,6 @@ export class Snapshot {
                 totalLengthChars: -1,
                 totalSegmentCount: -1,
                 chunkSequenceNumber: -1,
-                chunkOffset: -1,
                 segmentTexts: [],
             }
         }

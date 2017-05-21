@@ -25,18 +25,17 @@ export class DeltaManager {
     private referenceSequenceNumber = 0;
 
     // The minimum sequence number and last sequence number received from the server
-    private sequenceNumber = 0;
     private minimumSequenceNumber = 0;
 
     // Flag indicating whether or not we need to udpate the reference sequence number
     private updateHasBeenRequested = false;
-    private immediate: any;
+    private updateSequenceNumberTimer: any;
 
     // Flag indicating whether the client has only received messages
     private readonly = true;
 
     constructor(
-        private baseOffset: number,
+        private baseSequenceNumber: number,
         private deltaStorage: api.IDeltaStorageService,
         private deltaConnection: api.IDeltaConnection,
         private listener: IDeltaListener) {
@@ -47,7 +46,7 @@ export class DeltaManager {
         });
 
         // Directly fetch all sequence numbers after base
-        this.fetchMissingDeltas(this.baseOffset);
+        this.fetchMissingDeltas(this.baseSequenceNumber);
     }
 
     /**
@@ -63,7 +62,7 @@ export class DeltaManager {
     private handleOp(message: api.ISequencedMessage) {
         // Incoming sequence numbers should be one higher than the previous ones seen. If not we have missed the
         // stream and need to query the server for the missing deltas.
-        if (message.offset !== this.baseOffset + 1) {
+        if (message.sequenceNumber !== this.baseSequenceNumber + 1) {
             this.handleOutOfOrderMessage(message);
         } else {
             this.emit(message);
@@ -74,14 +73,14 @@ export class DeltaManager {
      * Handles an out of order message retrieved from the server
      */
     private handleOutOfOrderMessage(message: api.ISequencedMessage) {
-        if (message.offset <= this.baseOffset) {
+        if (message.sequenceNumber <= this.baseSequenceNumber) {
             console.log(`Received duplicate message ${this.deltaConnection.objectId}@${message.sequenceNumber}`);
             return;
         }
 
-        console.log(`Received out of order message ${message.offset}:${this.baseOffset}`);
+        console.log(`Received out of order message ${this.baseSequenceNumber}`);
         this.pending.push(message);
-        this.fetchMissingDeltas(this.baseOffset, message.offset);
+        this.fetchMissingDeltas(this.baseSequenceNumber, message.sequenceNumber);
     }
 
     /**
@@ -112,8 +111,8 @@ export class DeltaManager {
         for (const message of messages) {
             // Ignore sequence numbers prior to the base. This can happen at startup when we fetch all missing
             // deltas while also listening for updates
-            if (message.offset > this.baseOffset) {
-                assert.equal(message.offset, this.baseOffset + 1);
+            if (message.sequenceNumber > this.baseSequenceNumber) {
+                assert.equal(message.sequenceNumber, this.baseSequenceNumber + 1);
                 this.emit(message);
             }
         }
@@ -121,7 +120,7 @@ export class DeltaManager {
         // Then sort pending operations and attempt to apply them again.
         // This could be optimized to stop handling messages once we realize we need to fetch mising values.
         // But for simplicity, and because catching up should be rare, we just process all of them.
-        const pendingSorted = this.pending.sort((a, b) => a.offset - b.offset);
+        const pendingSorted = this.pending.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
         this.pending = [];
         for (const pendingMessage of pendingSorted) {
             this.handleOp(pendingMessage);
@@ -139,14 +138,14 @@ export class DeltaManager {
 
         // If an update has already been requeested then mark this fact. We will wait until no updates have
         // been requested before sending the updated sequence number.
-        if (this.immediate) {
+        if (this.updateSequenceNumberTimer) {
             this.updateHasBeenRequested = true;
             return;
         }
 
         // Clear an update in 100 ms
-        this.immediate = setTimeout(() => {
-            this.immediate = undefined;
+        this.updateSequenceNumberTimer = setTimeout(() => {
+            this.updateSequenceNumberTimer = undefined;
 
             // If a second update wasn't requested then send an update message. Otherwise defer this until we
             // stop processing new messages.
@@ -161,12 +160,12 @@ export class DeltaManager {
     }
 
     private stopSequenceNumberUpdate() {
-        if (this.immediate) {
-            clearTimeout(this.immediate);
+        if (this.updateSequenceNumberTimer) {
+            clearTimeout(this.updateSequenceNumberTimer);
         }
 
         this.updateHasBeenRequested = false;
-        this.immediate = undefined;
+        this.updateSequenceNumberTimer = undefined;
     }
 
     /**
@@ -175,15 +174,16 @@ export class DeltaManager {
     private emit(message: api.ISequencedMessage) {
         // Watch the minimum sequence number and be ready to update as needed
         this.minimumSequenceNumber = message.minimumSequenceNumber;
-        const needsSequenceUpdate = this.sequenceNumber !== message.sequenceNumber;
-        this.sequenceNumber = message.sequenceNumber;
-        this.baseOffset = message.offset;
+        this.baseSequenceNumber = message.sequenceNumber;
 
         // Fire all listeners
         this.listener.op(message);
 
-        // Queue a request to update the sequence number
-        if (needsSequenceUpdate) {
+        // We will queue a message to update our reference sequence number upon receiving a server operation. This
+        // allows the server to know our true reference sequence number and be able to correctly update the minimum
+        // sequence number (MSN). We don't ackowledge other message types similarly (like a min sequence number update)
+        // to avoid ackowledgement cycles (i.e. ack the MSN update, which updates the MSN, then ack the update, etc...).
+        if (message.type === api.OperationType) {
             this.updateSequenceNumber();
         }
     }

@@ -394,8 +394,6 @@ class CollaborationWindow {
     // highest-numbered segment in window and current 
     // reference segment for this client
     currentSeq = 0;
-    // highest-numbered message processed
-    offset = 0;
 }
 
 /**
@@ -1116,9 +1114,6 @@ export class Client {
             this.updateMinSeq(msg.minimumSequenceNumber);
         }
 
-        // Update the offset on the message
-        this.mergeTree.getCollabWindow().offset = msg.offset;
-
         // Apply if an operation message
         if (msg.type === api.OperationType) {
             const operationMessage = msg as api.ISequencedMessage;
@@ -1289,10 +1284,10 @@ export class Client {
         return `cli: ${this.getLongClientId(clientId)} refSeq: ${refSeq}: ` + this.mergeTree.getText(refSeq, clientId);
     }
 
-    startCollaboration(longClientId: string, minSeq = 0, offset = 0) {
+    startCollaboration(longClientId: string, minSeq = 0) {
         this.longClientId = longClientId;
         this.addLongClientId(longClientId);
-        this.mergeTree.startCollaboration(this.getShortClientId(this.longClientId), minSeq, offset);
+        this.mergeTree.startCollaboration(this.getShortClientId(this.longClientId), minSeq);
     }
 }
 
@@ -1458,12 +1453,11 @@ export class MergeTree {
     }
 
     // for now assume min starts at zero
-    startCollaboration(localClientId: number, minSeq: number, offset: number) {
+    startCollaboration(localClientId: number, minSeq: number) {
         this.collabWindow.clientId = localClientId;
         this.collabWindow.minSeq = minSeq;
         this.collabWindow.collaborating = true;
         this.collabWindow.currentSeq = minSeq;
-        this.collabWindow.offset = offset;
         this.segmentsToScour = new Collections.Heap<LRUSegment>([], LRUSegmentComparer);
         this.pendingSegments = Collections.ListMakeHead<SegmentGroup>();
         let measureFullCollab = true;
