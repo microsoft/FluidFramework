@@ -31,6 +31,19 @@ form.addEventListener("submit", (event) => {
 });
 
 /**
+ * Processes the input text into a normalized form for the shared string
+ */
+function normalizeText(input: string): string {
+    let result = "";
+    const segments = SharedString.loadSegments(input, 0);
+    for (const segment of segments) {
+        result += (<SharedString.TextSegment> segment).text;
+    }
+
+    return result;
+}
+
+/**
  * Types the given file into the shared string - starting at the end of the string
  */
 function typeFile(sharedString: SharedString.SharedString, fileText: string, intervalTime: number): Promise<number> {
@@ -43,6 +56,8 @@ function typeFile(sharedString: SharedString.SharedString, fileText: string, int
     return new Promise<number>((resolve, reject) => {
         let insertPosition = sharedString.client.getLength();
         let readPosition = 0;
+
+        fileText = normalizeText(fileText);
 
         sharedString.on("op", (message) => {
             progressBar.style.width = `${Math.round(100 * message.clientSequenceNumber / fileText.length)}%`;
