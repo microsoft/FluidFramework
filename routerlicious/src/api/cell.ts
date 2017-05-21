@@ -271,8 +271,8 @@ class Cell extends api.CollaborativeObject implements api.ICell {
      * Handles a message coming from the remote service
      */
     private processRemoteMessage(message: api.IBase) {
-        assert.equal(this.offset + 1, message.offset);
-        this.offset = message.offset;
+        // server messages should only be delivered to this method in sequence number order
+        assert.equal(this.sequenceNumber + 1, message.sequenceNumber);
         this.sequenceNumber = message.sequenceNumber;
         this.minimumSequenceNumber = message.minimumSequenceNumber;
 
