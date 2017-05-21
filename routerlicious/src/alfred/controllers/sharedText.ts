@@ -188,6 +188,12 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
                 span.pos = segOffset;
                 segOffset = 0;
             }
+            if ((textSegment.clientId == 0)&&(textSegment.seq>0)) {
+                span.style.backgroundColor = "lightskyblue";
+            }
+            else if ((textSegment.clientId == 1)&&(textSegment.seq>0)) {
+                span.style.backgroundColor = "pink";                
+            }
             innerDiv.appendChild(span);
             return segText;
         }
@@ -379,6 +385,7 @@ class StringView {
     private off = true;
     private cursorBlinkCount = 0;
     private blinkTimer: any;
+    private randWordTimer: any;
     private pendingRender = false;
 
     constructor(public sharedString: SharedString.SharedString, public totalSegmentCount,
@@ -420,9 +427,9 @@ class StringView {
                 let factor = Math.round(this.viewportCharCount / this.charsPerLine);
                 let inputDelta = e.wheelDelta;
                 if (Math.abs(e.wheelDelta) === 120) {
-                    inputDelta = e.wheelDelta/6;
+                    inputDelta = e.wheelDelta / 6;
                 } else {
-                    inputDelta = e.wheelDelta/2;
+                    inputDelta = e.wheelDelta / 2;
                 }
                 let delta = factor * inputDelta;
                 console.log(`top char: ${this.topChar - delta} factor ${factor}; delta: ${delta} wheel: ${e.wheelDeltaY} ${e.wheelDelta} ${e.detail}`);
@@ -534,6 +541,32 @@ class StringView {
         this.render(0, true);
         // tslint:disable-next-line:max-line-length
         console.log(`time to edit/impression: ${this.timeToEdit} time to load: ${Date.now() - clockStart}ms len: ${this.sharedString.client.getLength()}`);
+    }
+
+    public randomWordMove() {
+        let client = this.sharedString.client;
+        let word1 = SharedString.findRandomWord(client.mergeTree, client.getClientId());
+        if (word1) {
+            let removeStart = word1.pos;
+            let removeEnd = removeStart + word1.text.length;
+            this.sharedString.removeText(removeStart,removeEnd);
+            let word2 = SharedString.findRandomWord(client.mergeTree, client.getClientId());
+            while (!word2) {
+                word2 = SharedString.findRandomWord(client.mergeTree, client.getClientId());
+            }
+            let pos = word2.pos + word2.text.length;
+            this.sharedString.insertText(word1.text, pos);
+        }
+    }
+
+    public randomWordMoveStart() {
+        this.randWordTimer = setInterval(()=> {
+            this.randomWordMove();
+        }, 10);
+    }
+
+    public randomWordMoveEnd() {
+        clearInterval(this.randWordTimer);    
     }
 
     private queueRender() {
