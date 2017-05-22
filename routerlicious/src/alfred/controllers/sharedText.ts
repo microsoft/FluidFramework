@@ -2,7 +2,7 @@
 import * as request from "request";
 import * as url from "url";
 // import * as Geometry from "./geometry";
-import * as api from "../../api";
+import * as API from "../../api";
 import { MergeTreeChunk } from "../../api";
 import * as SharedString from "../../merge-tree";
 import * as socketStorage from "../../socket-storage";
@@ -188,9 +188,9 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
                 span.pos = segOffset;
                 segOffset = 0;
             }
-            if ((textSegment.clientId === 0)&&(textSegment.seq>0)) {
+            if ((textSegment.clientId === 0) && (textSegment.seq > 0)) {
                 span.style.backgroundColor = "lightskyblue";
-            } else if ((textSegment.clientId === 1)&&(textSegment.seq>0)) {
+            } else if ((textSegment.clientId === 1) && (textSegment.seq > 0)) {
                 span.style.backgroundColor = "pink";
             }
             innerDiv.appendChild(span);
@@ -281,11 +281,16 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
             firstSeg = false;
             let segText = textSegment.text;
             context.adjustedTopChar = context.topChar;
-            if ((start > 0) && splitTopSeg) {
-                segText = renderFirstSegment(segText, textSegment);
-                let actualStart = textSegment.text.length - segText.length;
-                if (start !== actualStart) {
-                    context.adjustedTopChar = context.topChar + (actualStart - start);
+            if (start > 0) {
+                if (splitTopSeg) {
+                    segText = renderFirstSegment(segText, textSegment);
+                    let actualStart = textSegment.text.length - segText.length;
+                    if (start !== actualStart) {
+                        context.adjustedTopChar = context.topChar + (actualStart - start);
+                    }
+                }
+                else {
+                    context.adjustedTopChar = context.topChar - start;
                 }
             }
             segText = segmentToSpan(segText, textSegment);
@@ -315,11 +320,15 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
                         }
                         if (lastPruned) {
                             div.appendChild(lastPruned);
+                            let lastSeg: SharedString.TextSegment;
+                            let lastSegOff = 0;
                             for (let i = 0; i < lastPruned.childElementCount; i++) {
                                 let prunedSpan = <ISegSpan>lastPruned.children[i];
                                 let bounds = prunedSpan.getBoundingClientRect();
                                 if (bounds.bottom <= constraint) {
                                     innerDiv.appendChild(prunedSpan);
+                                    lastSeg = prunedSpan.seg;
+                                    lastSegOff = lastSeg.text.length;
                                 } else {
                                     if ((constraint - bounds.top) > hEst) {
                                         let x = bounds.right;
@@ -334,11 +343,23 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
                                         if (segOff > 0) {
                                             segmentToSpan(textSeg.text.substring(0, segOff), textSeg);
                                         }
+                                        lastSegOff = segOff;
+                                        lastSeg = textSeg;
                                     }
                                     break;
                                 }
                             }
                             div.removeChild(lastPruned);
+                            if (lastSeg) {
+                                let segStart = context.client.mergeTree.getOffset(lastSeg, context.client.getCurrentSeq(), context.client.getClientId());
+                                context.viewportEndChar = segStart + lastSegOff;
+                            }
+                            else {
+                                context.viewportEndChar = charLength + context.adjustedTopChar;
+                            }
+                        }
+                        else {
+                            context.viewportEndChar = charLength + context.adjustedTopChar;
                         }
                     }
                     return false;
@@ -375,6 +396,7 @@ class StringView {
     public charsPerLine: number;
     public prevTopSegment: SharedString.TextSegment;
     public adjustedTopChar: number;
+    public viewportEndChar: number;
     public cursorSpan: HTMLSpanElement;
     public viewportDiv: HTMLDivElement;
     public client: SharedString.Client;
@@ -392,8 +414,9 @@ class StringView {
         this.client = sharedString.client;
         this.updateGeometry();
 
-        sharedString.on("op", () => {
-            this.queueRender();
+        sharedString.on("op", (msg: API.IMessageBase) => {
+            let delta = <API.IMergeTreeDeltaMsg>msg.op;
+            this.queueRender(delta);
         });
     }
 
@@ -499,6 +522,20 @@ class StringView {
         }
     }
 
+    public makeVisibleAndRender(viewChar: number) {
+        let halfport = Math.floor(this.viewportCharCount / 2);
+        if ((this.adjustedTopChar > viewChar) || (this.viewportEndChar < viewChar)) {
+            let topChar = viewChar - halfport;
+            if (topChar < 0) {
+                topChar = 0;
+            }
+            this.render(topChar);
+        }
+        else {
+            this.render();
+        }
+    }
+
     public render(topChar?: number, changed = false) {
         let len = this.client.getLength();
         let halfport = Math.floor(this.viewportCharCount / 2);
@@ -548,7 +585,7 @@ class StringView {
         if (word1) {
             let removeStart = word1.pos;
             let removeEnd = removeStart + word1.text.length;
-            this.sharedString.removeText(removeStart,removeEnd);
+            this.sharedString.removeText(removeStart, removeEnd);
             let word2 = SharedString.findRandomWord(client.mergeTree, client.getClientId());
             while (!word2) {
                 word2 = SharedString.findRandomWord(client.mergeTree, client.getClientId());
@@ -559,21 +596,30 @@ class StringView {
     }
 
     public randomWordMoveStart() {
-        this.randWordTimer = setInterval(()=> {
-            this.randomWordMove();
+        this.randWordTimer = setInterval(() => {
+            for (let i = 0; i < 3; i++) {
+                this.randomWordMove();
+            }
         }, 10);
     }
 
     public randomWordMoveEnd() {
-        clearInterval(this.randWordTimer);    
+        clearInterval(this.randWordTimer);
     }
 
-    private queueRender() {
-        if (!this.pendingRender) {
+    private queueRender(delta: API.IMergeTreeDeltaMsg) {
+        if ((!this.pendingRender) && delta) {
             this.pendingRender = true;
             window.requestAnimationFrame(() => {
                 this.pendingRender = false;
-                this.render();
+                let viewChar = 0;
+                if (delta.type == API.MergeTreeMsgType.INSERT) {
+                    viewChar = delta.pos1 + delta.text.length;
+                }
+                else {
+                    viewChar = delta.pos2;
+                }
+                this.makeVisibleAndRender(viewChar);
             });
         }
     }
@@ -602,8 +648,8 @@ class StringView {
 }
 
 export async function onLoad(id: string) {
-    const extension = api.defaultRegistry.getExtension(SharedString.CollaboritiveStringExtension.Type);
-    const sharedString = extension.load(id, api.getDefaultServices(), api.defaultRegistry) as SharedString.SharedString;
+    const extension = API.defaultRegistry.getExtension(SharedString.CollaboritiveStringExtension.Type);
+    const sharedString = extension.load(id, API.getDefaultServices(), API.defaultRegistry) as SharedString.SharedString;
 
     sharedString.on("partialLoad", async (data: MergeTreeChunk) => {
         console.log("Partial load fired");
