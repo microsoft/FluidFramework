@@ -48,6 +48,8 @@ async function processMessages(kafkaClient: kafka.Client, producer: kafka.Produc
     console.log("Waiting for messages");
     consumerGroup.on("message", async (message: any) => {
         const baseMessage = JSON.parse(message.value) as core.IMessage;
+        console.log("Got message from kafka");
+        console.log("Deli-Message:", message);
 
         if (baseMessage.type === core.UpdateReferenceSequenceNumberType ||
             baseMessage.type === core.RawOperationType) {

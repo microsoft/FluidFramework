@@ -50,9 +50,12 @@ export class Producer {
      */
     public send(message: any): Promise<any> {
         const deferred = new Deferred<any>();
+        console.log("Loging inside wrapper");
         if (!this.connected) {
+            console.log("Not connected! Pushing to local");
             this.messages.push({ deferred, message });
         } else {
+            console.log("Connected! Pushing to kafka");
             this.sendMessage(message, deferred);
         }
 

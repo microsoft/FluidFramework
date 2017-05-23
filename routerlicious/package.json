@@ -39,7 +39,9 @@
     "test": "nyc -x dist/test/**/* mocha dist/test",
     "tsc": "tsc",
     "tslint": "tslint 'src/**/*.ts'",
-    "beast": "node dist/merge-tree/beastTest.js"
+    "beast": "node dist/merge-tree/beastTest.js",
+    "perf": "node dist/perf/www.js",
+    "perf:debug": "nodemon --exitcrash --debug=0.0.0.0:5858 dist/perf/www.js -w dist"
   },
   "author": "Microsoft",
   "license": "Apache-2.0",

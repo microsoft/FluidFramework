@@ -91,5 +91,10 @@
         "port": 9000,
         "accessKey": "prague",
         "secretKey": "mhioAkNXTwdX4dXWgKgXVtHo"
+    },
+    "perf": {
+        "kafkaClientId": "alfred",
+        "topic": "rawdeltas",
+        "bucket": "snapshots"
     }
 }
