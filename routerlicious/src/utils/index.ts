@@ -1,3 +1,4 @@
+export * from "./counters";
 export * from "./heap";
 export * from "./promises";
 
@@ -18,3 +19,6 @@ export function getEventHubConnectionString(
 
 import * as kafka from "./kafka";
 export { kafka };
+
+import * as scribe from "./scribe";
+export { scribe };

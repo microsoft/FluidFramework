@@ -14,7 +14,7 @@
                 </div>
                 <div class="form-group">
                     <label for="interval">Typing Interval (ms)</label>
-                    <input type="text" class="form-control" id="interval" value="1000">
+                    <input type="text" class="form-control" id="interval" value="100">
                 </div>
                 <div class="form-group">
                     <label for="file">Text</label>
