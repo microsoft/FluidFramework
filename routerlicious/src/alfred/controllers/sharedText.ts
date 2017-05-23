@@ -163,8 +163,8 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
     let splitTopSeg = true;
     let w = Math.floor(wEst);
     let h = hEst;
-    let charsPerLine = window.innerWidth / w;
-    let charsPerViewport = Math.floor((window.innerHeight / h) * charsPerLine);
+    let charsPerLine = (window.innerWidth*0.9) / w;
+    let charsPerViewport = Math.floor(((window.innerHeight*0.9) / h) * charsPerLine);
     let innerDiv = makeInnerDiv();
     div.appendChild(innerDiv);
     let charLength = 0;
@@ -229,48 +229,6 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
             return text.substring(offset);
         }
 
-        // function renderFirstSegment(text: string) {
-        //     let segLength = 0;
-        //     let words = text.split(" ");
-        //     segOffset = 0;
-        //     console.log("render first");
-        //     for (let word of words) {
-        //         if (segLength >= start) {
-        //             let rightSpan = <ISegSpan>innerDiv.lastElementChild;
-        //             let onRightLeftBound = window.innerWidth * 2;
-        //             let onRightCharOffset = 0;
-        //             while (rightSpan) {
-        //                 let bounds = rightSpan.getBoundingClientRect();
-        //                 // console.log(`left: ${bounds.left}`);
-        //                 if (onRightLeftBound < bounds.left) {
-        //                     segOffset = onRightCharOffset;
-        //                     break;
-        //                 }
-        //                 onRightCharOffset = rightSpan.pos;
-        //                 let prev = <ISegSpan>rightSpan.previousElementSibling;
-        //                 innerDiv.removeChild(rightSpan);
-        //                 rightSpan = prev;
-        //             }
-        //             div.removeChild(innerDiv);
-        //             div.appendChild(makeInnerDiv());
-        //             break;
-        //         } else {
-        //             let span = <ISegSpan>document.createElement("span");
-        //             word = word.replace(/_([a-zA-Z]+)_/g, "<span style='font-style:italic'>$1</span>");
-        //             if (prevWord) {
-        //                 // TODO: handle multi-space separators; incorporate separator as preceding word
-        //                 // as in view as sequence of /\s*\w+/ with a trailing \s*
-        //                 word = " " + word;
-        //             }
-        //             prevWord = word;
-        //             span.innerHTML = word;
-        //             innerDiv.appendChild(span);
-        //             span.pos = segLength;
-        //             segLength += word.length;
-        //         }
-        //     }
-        //     return text.substring(segOffset);
-        // }
         if (segment.getType() === SharedString.SegmentType.Text) {
             let textSegment = <SharedString.TextSegment>segment;
             let last = (textSegment.text.length === end);

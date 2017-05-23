@@ -58,8 +58,6 @@ export class SharedString implements API.ICollaborativeObject {
     async load(services: API.ICollaborationServices, registry: API.Registry) {
         this.services = services;
 
-        // TODO set clientId in load
-
         this.connection = await this.services.deltaNotificationService.connect(this.id, this.type);
 
         let headerChunkP = Paparazzo.Snapshot.loadChunk(services, this.id + "header");
@@ -80,7 +78,6 @@ export class SharedString implements API.ICollaborativeObject {
 
         this.events.emit('loadFinshed', chunk);
         this.isLoaded = true;
-        this.client.applyAll();
         this.client.startCollaboration(this.connection.clientId, this.initialSeq);
 
         this.listenForUpdates();
