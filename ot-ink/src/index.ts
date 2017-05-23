@@ -2,6 +2,9 @@
 import * as type from "./type";
 export { type as type };
 
+import * as nocompose from "./nocompose";
+export { nocompose as nocompose };
+
 // And the other core types
 export * from "./actions";
 export * from "./core";

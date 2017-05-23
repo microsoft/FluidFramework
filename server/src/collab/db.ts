@@ -29,6 +29,7 @@ let observer = redis.createClient(redisPort, redisHost, subOptions);
 // Register our OT formats
 ShareDB.types.register(richText.type);
 ShareDB.types.register(ink.type);
+ShareDB.types.register(ink.nocompose);
 
 let mongoConnectionString = nconf.get("mongo:connectionString");
 let db = new ShareDBMongo(mongoConnectionString);
