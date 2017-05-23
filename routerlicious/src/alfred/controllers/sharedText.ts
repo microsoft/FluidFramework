@@ -288,8 +288,7 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
                     if (start !== actualStart) {
                         context.adjustedTopChar = context.topChar + (actualStart - start);
                     }
-                }
-                else {
+                } else {
                     context.adjustedTopChar = context.topChar - start;
                 }
             }
@@ -351,14 +350,13 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
                             }
                             div.removeChild(lastPruned);
                             if (lastSeg) {
-                                let segStart = context.client.mergeTree.getOffset(lastSeg, context.client.getCurrentSeq(), context.client.getClientId());
+                                let segStart = context.client.mergeTree.getOffset(
+                                    lastSeg, context.client.getCurrentSeq(), context.client.getClientId());
                                 context.viewportEndChar = segStart + lastSegOff;
-                            }
-                            else {
+                            } else {
                                 context.viewportEndChar = charLength + context.adjustedTopChar;
                             }
-                        }
-                        else {
+                        } else {
                             context.viewportEndChar = charLength + context.adjustedTopChar;
                         }
                     }
@@ -530,8 +528,7 @@ class StringView {
                 topChar = 0;
             }
             this.render(topChar);
-        }
-        else {
+        } else {
             this.render();
         }
     }
@@ -613,10 +610,9 @@ class StringView {
             window.requestAnimationFrame(() => {
                 this.pendingRender = false;
                 let viewChar = 0;
-                if (delta.type == API.MergeTreeMsgType.INSERT) {
+                if (delta.type === API.MergeTreeMsgType.INSERT) {
                     viewChar = delta.pos1 + delta.text.length;
-                }
-                else {
+                } else {
                     viewChar = delta.pos2;
                 }
                 this.makeVisibleAndRender(viewChar);
