@@ -93,7 +93,7 @@
         "secretKey": "mhioAkNXTwdX4dXWgKgXVtHo"
     },
     "perf": {
-        "kafkaClientId": "alfred",
+        "kafkaClientId": "perf",
         "topic": "rawdeltas",
         "bucket": "snapshots"
     }

@@ -29,27 +29,26 @@ async function processMessages(kafkaClient: kafka.Client, producer: kafka.Produc
         consumerOffset,
         checkpointBatchSize);
 
-    const consumerGroup = new kafka.ConsumerGroup({
-            autoCommit: false,
-            fromOffset: "earliest",
-            groupId,
-            host: zookeeperEndpoint,
-            id: kafkaClientId,
-            protocol: ["roundrobin"],
-        },
-        [receiveTopic]);
+    const highLevelConsumer = new kafka.HighLevelConsumer(kafkaClient, [{topic: receiveTopic}], {
+        autoCommit: false,
+        fromOffset: true,
+        groupId,
+        id: kafkaClientId
+    });
 
-    consumerGroup.on("error", (error) => {
-        console.error(error);
+    highLevelConsumer.on("error", (error) => {
+        console.error(`Error in kafka consumer: ${error}. Closing consumer and Restarting....`);
+        highLevelConsumer.close(true, () => {
+            process.exit(1); 
+        });
     });
 
     let ticketQueue: {[id: string]: Promise<void> } = {};
 
     console.log("Waiting for messages");
-    consumerGroup.on("message", async (message: any) => {
+    highLevelConsumer.on("message", async (message: any) => {
         const baseMessage = JSON.parse(message.value) as core.IMessage;
-        console.log("Got message from kafka");
-        console.log("Deli-Message:", message);
+        console.log(`Deli-Message partition: ${message.partition}, Offset: ${message.offset}`);
 
         if (baseMessage.type === core.UpdateReferenceSequenceNumberType ||
             baseMessage.type === core.RawOperationType) {
@@ -88,7 +87,7 @@ async function processMessages(kafkaClient: kafka.Client, producer: kafka.Produc
                 await Promise.all(checkpointQueue);
 
                 // Finally call kafka checkpointing.
-                partitionManager.checkPoint();
+                partitionManager.checkPoint();               
             }
         }
     });
