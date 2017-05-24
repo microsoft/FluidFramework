@@ -4,6 +4,8 @@ import { Collection, MongoClient } from "mongodb";
 import * as nconf from "nconf";
 import * as path from "path";
 import * as api from "../api";
+import * as resume from "../intelligence/resume";
+import * as mergeTree from "../merge-tree";
 import * as socketStorage from "../socket-storage";
 import { ObjectStorageService } from "./objectStorageService";
 
@@ -24,6 +26,9 @@ const storageBucket = nconf.get("paparazzi:bucket");
 
 // Connect to Alfred for default storage options
 const alfredUrl = nconf.get("paparazzi:alfred");
+
+// Create the resume intelligent service
+const intelligent = resume.factory.create();
 
 async function bucketExists(minioClient, bucket: string) {
     return new Promise<boolean>((resolve, reject) => {
@@ -89,14 +94,23 @@ function serialize(root: api.ICollaborativeObject) {
     dirtyMap[root.id] = false;
 
     console.log("Snapshotting");
-    const snapshotP = root.snapshot().catch((error) => {
-        // TODO we will just log errors for now. Will want a better strategy later on (replay, wait)
-        if (error) {
-            console.error(error);
-        }
+    const snapshotP = root.snapshot().then(
+        () => {
+            if (root.type === mergeTree.CollaboritiveStringExtension.Type) {
+                const sharedString = root as mergeTree.SharedString;
+                const text = sharedString.client.getText();
+                return intelligent.run(text)
+                    .then((probability) => console.log(`PROBABILITY IS: ${probability}`));
+            }
+        },
+        (error) => {
+            // TODO we will just log errors for now. Will want a better strategy later on (replay, wait)
+            if (error) {
+                console.error(error);
+            }
 
-        return Promise.resolve();
-    });
+            return Promise.resolve();
+        });
 
     // Finally clause to start snapshotting again once we finish
     snapshotP.then(() => {
