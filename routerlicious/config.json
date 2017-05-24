@@ -95,6 +95,7 @@
     "perf": {
         "kafkaClientId": "perf",
         "topic": "rawdeltas",
-        "bucket": "snapshots"
+        "bucket": "snapshots",
+        "chunkSize": 10000
     }
 }

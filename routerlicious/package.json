@@ -41,7 +41,9 @@
     "tslint": "tslint 'src/**/*.ts'",
     "beast": "node dist/merge-tree/beastTest.js",
     "perf": "node dist/perf/www.js",
-    "perf:debug": "nodemon --exitcrash --debug=0.0.0.0:5858 dist/perf/www.js -w dist"
+    "perf:debug": "nodemon --exitcrash --debug=0.0.0.0:5858 dist/perf/www.js -w dist",
+    "pretestperf": "docker-compose -f docker-compose.test.yml down --remove-orphans",
+    "testperf": "npm run pretestperf; docker-compose -f docker-compose.test.yml up"
   },
   "author": "Microsoft",
   "license": "Apache-2.0",

@@ -5,7 +5,6 @@ services:
         context: .
         dockerfile: Dockerfile-test
       ports:
-            - "3000:3000"
             - "5858:5858"
       depends_on:
             - redis
@@ -16,7 +15,9 @@ services:
             - .:/usr/src/server
       restart: always
     deli:
-      build: .
+      build:
+        context: .
+        dockerfile: Dockerfile-test
       ports:
             - "5859:5858"
       depends_on:

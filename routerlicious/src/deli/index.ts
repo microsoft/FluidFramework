@@ -37,10 +37,10 @@ async function processMessages(kafkaClient: kafka.Client, producer: kafka.Produc
     });
 
     highLevelConsumer.on("error", (error) => {
-        console.error(`Error in kafka consumer: ${error}. Closing consumer and Restarting....`);
-        highLevelConsumer.close(true, () => {
-            process.exit(1); 
-        });
+        console.error(`Error in kafka consumer: ${error}. Wait for 30 seconds and restart...`);
+        setTimeout(function() {
+            process.exit(1);
+        }, 30000);
     });
 
     let ticketQueue: {[id: string]: Promise<void> } = {};
@@ -123,6 +123,6 @@ async function run() {
 console.log("Starting");
 const runP = run();
 runP.catch((error) => {
-    console.error(error);
+    console.error(`Error executing run...`);
     process.exit(1);
 });
