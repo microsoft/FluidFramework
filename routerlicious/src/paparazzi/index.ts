@@ -5,8 +5,8 @@ import * as nconf from "nconf";
 import * as path from "path";
 import * as api from "../api";
 import { resume, textAnalytics } from "../intelligence";
-import * as mergeTree from "../merge-tree";
 import * as socketStorage from "../socket-storage";
+import { IntelligentServicesManager } from "./intelligence";
 import { ObjectStorageService } from "./objectStorageService";
 
 // Setup the configuration system - pull arguments, then environment variables
@@ -26,10 +26,6 @@ const storageBucket = nconf.get("paparazzi:bucket");
 
 // Connect to Alfred for default storage options
 const alfredUrl = nconf.get("paparazzi:alfred");
-
-// Create the resume intelligent service
-const resumeService = resume.factory.create(nconf.get("intelligence:resume"));
-const textAnalyticsService = textAnalytics.factory.create(nconf.get("intelligence:textAnalytics"));
 
 async function bucketExists(minioClient, bucket: string) {
     return new Promise<boolean>((resolve, reject) => {
@@ -95,30 +91,7 @@ function serialize(root: api.ICollaborativeObject) {
     dirtyMap[root.id] = false;
 
     console.log("Snapshotting");
-    const snapshotP = root.snapshot().then(
-        () => {
-            // TODO wrap the below into an intelligence updating service
-            if (root.type === mergeTree.CollaboritiveStringExtension.Type) {
-                const sharedString = root as mergeTree.SharedString;
-                const text = sharedString.client.getText();
-
-                const resumeP = resumeService.run(text);
-                const textAnalyticsP = textAnalyticsService.run(text);
-
-                return Promise.all([resumeP, textAnalyticsP]).then((results) => {
-                    console.log("INTELLIGENCE RESULTS");
-                    console.log(JSON.stringify(results, null, 2));
-
-                    // For now we'll delay intelligence to happen every 30 seconds
-                    return new Promise((resolve, reject) => {
-                        setTimeout(() => {
-                            resolve();
-                        }, 30000);
-                    });
-                });
-            }
-        },
-        (error) => {
+    const snapshotP = root.snapshot().catch((error) => {
             // TODO we will just log errors for now. Will want a better strategy later on (replay, wait)
             if (error) {
                 console.error(error);
@@ -136,17 +109,25 @@ function serialize(root: api.ICollaborativeObject) {
     });
 }
 
-function handleDocument(services: api.ICollaborationServices, collection: Collection, id: string) {
+function handleDocument(
+    services: api.ICollaborationServices,
+    collection: Collection,
+    id: string,
+    intelligenceManager: IntelligentServicesManager) {
+
     loadObject(services, collection, id).then((doc) => {
-        // TODO need a generic way to know that the object has 'changed'
+        // TODO need a generic way to know that the object has 'changed'. Best thing here is to probably trigger
+        // a message whenever the MSN changes since this is what will cause a snapshot
 
         // Display the initial values and then listen for updates
         doc.on("valueChanged", () => {
             serialize(doc);
+            intelligenceManager.process(doc);
         });
 
         doc.on("op", () => {
             serialize(doc);
+            intelligenceManager.process(doc);
         });
     },
     (error) => {
@@ -157,9 +138,13 @@ function handleDocument(services: api.ICollaborationServices, collection: Collec
 /**
  * Processes a message received from a service bus queue
  */
-function processMessage(message: string, collection: Collection, services: api.ICollaborationServices): Promise<void> {
+function processMessage(
+    message: string,
+    collection: Collection,
+    services: api.ICollaborationServices,
+    intelligenceManager: IntelligentServicesManager): Promise<void> {
     return new Promise<void>((resolve, reject) => {
-        handleDocument(services, collection, message);
+        handleDocument(services, collection, message, intelligenceManager);
         resolve();
     });
 }
@@ -178,6 +163,11 @@ async function run() {
         deltaStorageService: new socketStorage.DeltaStorageService(alfredUrl),
         objectStorageService: new ObjectStorageService(alfredUrl, minioClient, storageBucket),
     };
+
+    // Create the resume intelligent service and manager
+    const intelligenceManager = new IntelligentServicesManager(services);
+    intelligenceManager.registerService(resume.factory.create(nconf.get("intelligence:resume")));
+    intelligenceManager.registerService(textAnalytics.factory.create(nconf.get("intelligence:textAnalytics")));
 
     // Prep minio
     await getOrCreateBucket(minioClient, storageBucket);
@@ -203,7 +193,7 @@ async function run() {
     channel.consume(
         queueName,
         (message) => {
-            processMessage(message.content.toString(), collection, services)
+            processMessage(message.content.toString(), collection, services, intelligenceManager)
                 .then(() => {
                     channel.ack(message);
                 })
