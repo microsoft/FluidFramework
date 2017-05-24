@@ -91,5 +91,16 @@
         "port": 9000,
         "accessKey": "prague",
         "secretKey": "mhioAkNXTwdX4dXWgKgXVtHo"
+    },
+    "intelligence": {
+        "resume": {
+            "deviceId": "routerlicious",
+            "host": "pkarimov-paidIOT.azure-devices.net",
+            "sharedAccessKeyName": "iothubowner",
+            "sharedAccessKey": "8mvOmNnUklwnuzY+U96V51w+qCq262ZUpSkdw8nTZ18="
+        },
+        "textAnalytics": {
+            "key": "c8b60dc5e49849ce903d7d29a2dce550"
+        }
     }
 }

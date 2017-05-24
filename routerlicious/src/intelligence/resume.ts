@@ -2,57 +2,24 @@ import { Client, Message } from "azure-iot-device";
 import { Mqtt } from "azure-iot-device-mqtt";
 import * as iothub from "azure-iothub";
 import * as utils from "../utils";
+import { IIntelligentService, IIntelligentServiceFactory } from "./api";
 
 interface IResumeResponse {
     MessageId: string;
     Payload: number;
 }
 
-// tslint:disable-next-line
-const connectionString = "HostName=pkarimov-paidIOT.azure-devices.net;SharedAccessKeyName=iothubowner;SharedAccessKey=8mvOmNnUklwnuzY+U96V51w+qCq262ZUpSkdw8nTZ18=";
-const registry = iothub.Registry.fromConnectionString(connectionString);
+export interface IConfig {
+    deviceId: string;
+    host: string;
+    sharedAccessKey: string;
+    sharedAccessKeyName: string;
+}
 
-function createClientString(deviceInfo: iothub.Device): string {
+function createClientString(host: string, deviceInfo: iothub.Device): string {
     const deviceId = `DeviceId=${deviceInfo.deviceId}`;
     const sharedAccessKey = `SharedAccessKey=${deviceInfo.authentication.symmetricKey.primaryKey}`;
-    return `HostName=pkarimov-paidIOT.azure-devices.net;${deviceId};${sharedAccessKey}`;
-}
-
-function createOrGetDeviceIdentity(deviceId: string): Promise<iothub.Device> {
-    const device = new iothub.Device(null);
-    device.deviceId = deviceId;
-
-    return new Promise<iothub.Device>((resolve, reject) => {
-        registry.create(device, (err, deviceInfo, res) => {
-            if (err) {
-                registry.get(device.deviceId, (registryGetErr, getDeviceInfo) => {
-                    if (registryGetErr) {
-                        return reject(registryGetErr);
-                    }
-
-                    resolve(getDeviceInfo);
-                });
-            } else {
-                resolve(deviceInfo);
-            }
-        });
-    });
-}
-
-export interface IIntelligentService {
-    name: string;
-
-    /**
-     * Runs the intelligent service on the provided input
-     */
-    run(value: any): Promise<any>;
-}
-
-export interface IIntelligentServiceFactory {
-    /**
-     * Constructs a new intelligent service
-     */
-    create(): IIntelligentService;
+    return `HostName=${host};${deviceId};${sharedAccessKey}`;
 }
 
 /**
@@ -60,13 +27,21 @@ export interface IIntelligentServiceFactory {
  * a document as a resume or not
  */
 export class ResumeIntelligentSerivce implements IIntelligentService {
-    public name = "resume";
+    public name = "Resume";
 
     private clientP: Promise<Client>;
+    private registry: iothub.Registry;
+    private deviceId: string;
     private messagePromises: {[key: string]: utils.Deferred<any> } = {};
 
-    constructor(private deviceId: string) {
-        this.clientP = this.createClient(deviceId);
+    constructor(config: IConfig) {
+        this.deviceId = config.deviceId;
+
+        // tslint:disable-next-line:max-line-length
+        const connectionString = `HostName=${config.host};SharedAccessKeyName=${config.sharedAccessKeyName};SharedAccessKey=${config.sharedAccessKey}`;
+        this.registry = iothub.Registry.fromConnectionString(connectionString);
+
+        this.clientP = this.createClient(config.host, config.deviceId);
     }
 
     public async run(value: any): Promise<any> {
@@ -100,9 +75,9 @@ export class ResumeIntelligentSerivce implements IIntelligentService {
         return deferred.promise;
     }
 
-    private async createClient(deviceId: string): Promise<Client> {
-        const device = await createOrGetDeviceIdentity(deviceId);
-        const cs = createClientString(device);
+    private async createClient(host: string, deviceId: string): Promise<Client> {
+        const device = await this.createOrGetDeviceIdentity();
+        const cs = createClientString(host, device);
 
         const client = Client.fromConnectionString(cs, Mqtt);
         await new Promise<Client>((resolve, reject) => {
@@ -132,18 +107,36 @@ export class ResumeIntelligentSerivce implements IIntelligentService {
 
         return client;
     }
+
+    private createOrGetDeviceIdentity(): Promise<iothub.Device> {
+        const device = new iothub.Device(null);
+        device.deviceId = this.deviceId;
+
+        return new Promise<iothub.Device>((resolve, reject) => {
+            this.registry.create(device, (err, deviceInfo, res) => {
+                if (err) {
+                    this.registry.get(device.deviceId, (registryGetErr, getDeviceInfo) => {
+                        if (registryGetErr) {
+                            return reject(registryGetErr);
+                        }
+
+                        resolve(getDeviceInfo);
+                    });
+                } else {
+                    resolve(deviceInfo);
+                }
+            });
+        });
+    }
 }
 
 /**
  * Factory to create new resume classifier intelligent services
  */
 class ResumeFactory implements IIntelligentServiceFactory {
-    constructor(private deviceId: string) {
-    }
-
-    public create(): IIntelligentService {
-        return new ResumeIntelligentSerivce(this.deviceId);
+    public create(config: IConfig): IIntelligentService {
+        return new ResumeIntelligentSerivce(config);
     }
 }
 
-export const factory: IIntelligentServiceFactory = new ResumeFactory("myFirstNodeDevice");
+export const factory: IIntelligentServiceFactory = new ResumeFactory();

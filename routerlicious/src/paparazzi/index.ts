@@ -4,7 +4,7 @@ import { Collection, MongoClient } from "mongodb";
 import * as nconf from "nconf";
 import * as path from "path";
 import * as api from "../api";
-import * as resume from "../intelligence/resume";
+import { resume, textAnalytics } from "../intelligence";
 import * as mergeTree from "../merge-tree";
 import * as socketStorage from "../socket-storage";
 import { ObjectStorageService } from "./objectStorageService";
@@ -28,7 +28,8 @@ const storageBucket = nconf.get("paparazzi:bucket");
 const alfredUrl = nconf.get("paparazzi:alfred");
 
 // Create the resume intelligent service
-const intelligent = resume.factory.create();
+const resumeService = resume.factory.create(nconf.get("intelligence:resume"));
+const textAnalyticsService = textAnalytics.factory.create(nconf.get("intelligence:textAnalytics"));
 
 async function bucketExists(minioClient, bucket: string) {
     return new Promise<boolean>((resolve, reject) => {
@@ -96,11 +97,25 @@ function serialize(root: api.ICollaborativeObject) {
     console.log("Snapshotting");
     const snapshotP = root.snapshot().then(
         () => {
+            // TODO wrap the below into an intelligence updating service
             if (root.type === mergeTree.CollaboritiveStringExtension.Type) {
                 const sharedString = root as mergeTree.SharedString;
                 const text = sharedString.client.getText();
-                return intelligent.run(text)
-                    .then((probability) => console.log(`PROBABILITY IS: ${probability}`));
+
+                const resumeP = resumeService.run(text);
+                const textAnalyticsP = textAnalyticsService.run(text);
+
+                return Promise.all([resumeP, textAnalyticsP]).then((results) => {
+                    console.log("INTELLIGENCE RESULTS");
+                    console.log(JSON.stringify(results, null, 2));
+
+                    // For now we'll delay intelligence to happen every 30 seconds
+                    return new Promise((resolve, reject) => {
+                        setTimeout(() => {
+                            resolve();
+                        }, 30000);
+                    });
+                });
             }
         },
         (error) => {
