@@ -4,7 +4,9 @@ import { Collection, MongoClient } from "mongodb";
 import * as nconf from "nconf";
 import * as path from "path";
 import * as api from "../api";
+import { resume, textAnalytics } from "../intelligence";
 import * as socketStorage from "../socket-storage";
+import { IntelligentServicesManager } from "./intelligence";
 import { ObjectStorageService } from "./objectStorageService";
 
 // Setup the configuration system - pull arguments, then environment variables
@@ -90,13 +92,13 @@ function serialize(root: api.ICollaborativeObject) {
 
     console.log("Snapshotting");
     const snapshotP = root.snapshot().catch((error) => {
-        // TODO we will just log errors for now. Will want a better strategy later on (replay, wait)
-        if (error) {
-            console.error(error);
-        }
+            // TODO we will just log errors for now. Will want a better strategy later on (replay, wait)
+            if (error) {
+                console.error(error);
+            }
 
-        return Promise.resolve();
-    });
+            return Promise.resolve();
+        });
 
     // Finally clause to start snapshotting again once we finish
     snapshotP.then(() => {
@@ -107,17 +109,25 @@ function serialize(root: api.ICollaborativeObject) {
     });
 }
 
-function handleDocument(services: api.ICollaborationServices, collection: Collection, id: string) {
+function handleDocument(
+    services: api.ICollaborationServices,
+    collection: Collection,
+    id: string,
+    intelligenceManager: IntelligentServicesManager) {
+
     loadObject(services, collection, id).then((doc) => {
-        // TODO need a generic way to know that the object has 'changed'
+        // TODO need a generic way to know that the object has 'changed'. Best thing here is to probably trigger
+        // a message whenever the MSN changes since this is what will cause a snapshot
 
         // Display the initial values and then listen for updates
         doc.on("valueChanged", () => {
             serialize(doc);
+            intelligenceManager.process(doc);
         });
 
         doc.on("op", () => {
             serialize(doc);
+            intelligenceManager.process(doc);
         });
     },
     (error) => {
@@ -128,9 +138,13 @@ function handleDocument(services: api.ICollaborationServices, collection: Collec
 /**
  * Processes a message received from a service bus queue
  */
-function processMessage(message: string, collection: Collection, services: api.ICollaborationServices): Promise<void> {
+function processMessage(
+    message: string,
+    collection: Collection,
+    services: api.ICollaborationServices,
+    intelligenceManager: IntelligentServicesManager): Promise<void> {
     return new Promise<void>((resolve, reject) => {
-        handleDocument(services, collection, message);
+        handleDocument(services, collection, message, intelligenceManager);
         resolve();
     });
 }
@@ -149,6 +163,11 @@ async function run() {
         deltaStorageService: new socketStorage.DeltaStorageService(alfredUrl),
         objectStorageService: new ObjectStorageService(alfredUrl, minioClient, storageBucket),
     };
+
+    // Create the resume intelligent service and manager
+    const intelligenceManager = new IntelligentServicesManager(services);
+    intelligenceManager.registerService(resume.factory.create(nconf.get("intelligence:resume")));
+    intelligenceManager.registerService(textAnalytics.factory.create(nconf.get("intelligence:textAnalytics")));
 
     // Prep minio
     await getOrCreateBucket(minioClient, storageBucket);
@@ -174,7 +193,7 @@ async function run() {
     channel.consume(
         queueName,
         (message) => {
-            processMessage(message.content.toString(), collection, services)
+            processMessage(message.content.toString(), collection, services, intelligenceManager)
                 .then(() => {
                     channel.ack(message);
                 })
