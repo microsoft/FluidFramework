@@ -152,7 +152,6 @@ function makeScrollLosenge(height: number, left: number, top: number) {
     return div;
 }
 
-// TODO: ensure some text shows up in very small viewports
 function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Client, context: StringView) {
     div.id = "renderedTree";
     div.style.marginRight = "8%";
@@ -163,16 +162,16 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
     let splitTopSeg = true;
     let w = Math.floor(wEst);
     let h = hEst;
-    let charsPerLine = (window.innerWidth*0.9) / w;
-    let charsPerViewport = Math.floor(((window.innerHeight*0.9) / h) * charsPerLine);
+    let charsPerLine = (window.innerWidth * 0.9) / w;
+    let charsPerViewport = Math.floor(((window.innerHeight * 0.9) / h) * charsPerLine);
     let innerDiv = makeInnerDiv();
     div.appendChild(innerDiv);
     let charLength = 0;
     let firstSeg = true;
+    context.viewportEndChar = -1;
     function renderSegment(segment: SharedString.Segment, segPos: number, refSeq: number,
         clientId: number, start: number, end: number) {
         let segOffset = 0;
-        // let prevWord: string;
 
         function segmentToSpan(segText: string, textSegment: SharedString.TextSegment) {
             let span = <ISegSpan>document.createElement("span");
@@ -229,6 +228,11 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
             return text.substring(offset);
         }
 
+        function freshDiv() {
+            innerDiv = makeInnerDiv();
+            div.appendChild(innerDiv);
+        }
+
         if (segment.getType() === SharedString.SegmentType.Text) {
             let textSegment = <SharedString.TextSegment>segment;
             let last = (textSegment.text.length === end);
@@ -250,18 +254,20 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
                     context.adjustedTopChar = context.topChar - start;
                 }
             }
+            charLength += segText.length;
             segText = segmentToSpan(segText, textSegment);
             if (segText.charAt(segText.length - 1) === "\n") {
-                innerDiv = makeInnerDiv();
-                div.appendChild(innerDiv);
+                freshDiv();
             }
-            charLength += segText.length;
 
             if ((charLength > charsPerViewport) || last) {
                 console.log(`client h, w ${div.clientHeight},${div.clientWidth}`);
                 let constraint = Math.floor(window.innerHeight * 0.95);
 
-                if (div.clientHeight > constraint) {
+                if ((div.clientHeight > constraint) || last) {
+                    if (innerDiv.childNodes.length > 0) {
+                        freshDiv();
+                    }
                     if (innerDiv.previousElementSibling) {
                         let pruneDiv = <HTMLDivElement>innerDiv.previousElementSibling;
                         let lastPruned: HTMLDivElement;
@@ -309,17 +315,13 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
                             div.removeChild(lastPruned);
                             if (lastSeg) {
                                 // tslint:disable:max-line-length
-                                let segStart = context.client.mergeTree.getOffset(lastSeg, context.client.getCurrentSeq(), 
-                                context.client.getClientId());
+                                let segStart = context.client.mergeTree.getOffset(lastSeg, context.client.getCurrentSeq(),
+                                    context.client.getClientId());
                                 context.viewportEndChar = segStart + lastSegOff;
-                            } else {
-                                context.viewportEndChar = charLength + context.adjustedTopChar;
                             }
-                        } else {
-                            context.viewportEndChar = charLength + context.adjustedTopChar;
                         }
+                        return false;
                     }
-                    return false;
                 }
             }
         }
@@ -327,6 +329,9 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
     }
     client.mergeTree.mapRange({ leaf: renderSegment }, SharedString.UniversalSequenceNumber,
         client.getClientId(), undefined, pos);
+    if (context.viewportEndChar < 0) {
+        context.viewportEndChar = charLength + context.adjustedTopChar;
+    }
 }
 
 export let theString: StringView;
@@ -480,15 +485,15 @@ class StringView {
     }
 
     public makeVisibleAndRender(viewChar: number) {
-        let halfport = Math.floor(this.viewportCharCount / 2);
+        console.log(`view char: ${viewChar} top: ${this.topChar} adj: ${this.adjustedTopChar} bot: ${this.viewportEndChar}`);
         if ((this.adjustedTopChar > viewChar) || (this.viewportEndChar < viewChar)) {
-            let topChar = viewChar - halfport;
+            let topChar = viewChar-Math.floor((this.viewportEndChar-this.adjustedTopChar)/2);
             if (topChar < 0) {
                 topChar = 0;
             }
-            this.render(topChar);
+            this.render(topChar, true);
         } else {
-            this.render();
+            this.render(this.topChar, true);
         }
     }
 
@@ -502,11 +507,11 @@ class StringView {
                 return;
             }
             this.topChar = topChar;
-            if (this.topChar < 0) {
-                this.topChar = 0;
-            }
             if (this.topChar >= (len - halfport)) {
                 this.topChar -= (halfport / 2);
+            }
+            if (this.topChar < 0) {
+                this.topChar = 0;
             }
         }
         let clk = Date.now();
