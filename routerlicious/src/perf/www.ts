@@ -40,28 +40,36 @@ async function getOrCreateObject(id: string, type: string): Promise<boolean> {
 }
 
 
-console.log("This is pure perf test. We will hammer deli with messages.");
+console.log("Perf testing deli.");
 // const objectId = uuid.v4();
 const objectId = "test-document";
-produce();
-consume();
+runTest();
 
 
-let startTime: number;
-let sendStopTime: number;
-let receiveStartTime: number;
-let endTime: number;
-async function produce() {
+async function runTest() {
+    let startTime: number;
+    let sendStopTime: number;
+    let receiveStartTime: number;
+    let endTime: number;
+    console.log("Wait for 10 seconds to warm up everything....");
+    await sleep(10000);
+    console.log("Start producing messages to kafka...");
+    produce(startTime, sendStopTime);
+    console.log("Start receiving from kafka...");
+    consume(receiveStartTime, endTime);
+}
+
+
+async function produce(startTime: number, sendStopTime: number) {
     await getOrCreateObject(objectId, "https://graph.microsoft.com/types/map");
 
     // Producer used to publish messages
-    await sleep(10000);
+    
     const producer = new utils.kafka.Producer(zookeeperEndpoint, kafkaClientId, [topic]);
 
-    console.log("Start hammering");
+    console.log("Sending messages...");
     startTime = Date.now();
     for (var i = 0; i < chunkSize; ++i) {
-        // console.log("Sending message: ", i);
         const message: api.IMessage = {
             clientSequenceNumber: 100,
             referenceSequenceNumber: 200,
@@ -78,17 +86,19 @@ async function produce() {
         const payload = [{ topic, messages: [JSON.stringify(rawMessage)], key: "test-object" }];
         producer.send(payload).then(
             (responseMessage) => {
-                // console.log("Message successfully sent to kafka: ", responseMessage);
+                let response = JSON.stringify(responseMessage);
+                if (response.includes(String(chunkSize-1))) {
+                    sendStopTime = Date.now();
+                    console.log(`Done sending ${chunkSize} messages to kafka: ${response}`);
+                }
             },
             (error) => {
-                // console.error("Error reading from kafka: ", error);
+                console.error(`Error writing to kafka: ${error}`);
         });
     }
-    sendStopTime = Date.now();
-    console.log(`Done sending ${chunkSize} messages: ${sendStopTime}`);
 }
 
-async function consume() {
+async function consume(receiveStartTime: number, endTime: number) {
     let kafkaClientId2 = "scriptorium";
     let topic2 = "deltas";
     let kafkaClient = new kafka.Client(zookeeperEndpoint, kafkaClientId2);
@@ -112,6 +122,7 @@ async function consume() {
     console.log("Perf: Waiting for messages...");
 
     consumerGroup.on("message", async (message: any) => {
+        console.log(JSON.stringify(message));
         if (message.offset === 1) {
             receiveStartTime = Date.now();
             console.log(`Start receiving messages: ${receiveStartTime}`);
@@ -119,15 +130,23 @@ async function consume() {
         if (message.offset === chunkSize -1) {
             endTime = Date.now();
             console.log(`Done receiving messages: ${endTime}`);
-            calculateTiming();
+            console.log(`Time to receive all messages: ${endTime - receiveStartTime}`);
+            consumerGroup.commit((err, data) => {
+                if (err) {
+                    console.log(`Error checkpointing: ${err}`);
+                } else {
+                    console.log(`Success checkpointing: ${JSON.stringify(data)}`);
+                }
+            });
         }
     });
 
-    function calculateTiming() {
+    /*
+    function calculateTiming(startTime: number, sendStopTime: number, receiveStartTime: number, endTime: number) {
         console.log(`Time to send all messages: ${sendStopTime - startTime}`);
         console.log(`Time to receive all messages: ${endTime - receiveStartTime}`);
         console.log(`Total processing time: ${endTime - startTime}`);
-    }
+    }*/
 
 }
 

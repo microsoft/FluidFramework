@@ -96,6 +96,6 @@
         "kafkaClientId": "perf",
         "topic": "rawdeltas",
         "bucket": "snapshots",
-        "chunkSize": 10000
+        "chunkSize": 100
     }
 }

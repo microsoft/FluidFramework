@@ -86,6 +86,7 @@ async function processMessages(kafkaClient: kafka.Client, producer: kafka.Produc
                 }
                 await Promise.all(checkpointQueue);
 
+                console.log(`Calling checkpointing for: ${message.offset}`);
                 // Finally call kafka checkpointing.
                 partitionManager.checkPoint();               
             }
