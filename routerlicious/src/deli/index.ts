@@ -124,6 +124,6 @@ async function run() {
 console.log("Starting");
 const runP = run();
 runP.catch((error) => {
-    console.error(`Error executing run...`);
+    console.error(error);
     process.exit(1);
 });
