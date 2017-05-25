@@ -12,8 +12,10 @@ nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use
 
 // Group this into some kind of an interface
 const zookeeperEndpoint = nconf.get("zookeeper:endpoint");
-const kafkaClientId = nconf.get("perf:kafkaClientId");
+const kafkaSendClientId = nconf.get("perf:kafkaSendClientId");
+const kafkaReceiveClientId = nconf.get("perf:kafkaReceiveClientId");
 const topic = nconf.get("perf:sendTopic");
+const receiveTopic = nconf.get("perf:receiveTopic");
 const chunkSize = nconf.get("perf:chunkSize");
 
 // Connection to stored document details
@@ -73,37 +75,40 @@ async function produce(pass: number) {
 
     // Producer used to publish messages
     
-    const producer = new utils.kafka.Producer(zookeeperEndpoint, kafkaClientId, [topic]);
+    const producer = new utils.kafka.Producer(zookeeperEndpoint, kafkaSendClientId, [topic]);
 
     console.log(`SENDING MESSAGES FOR PASS ${pass}...`);
+
+    let messagesLeft = chunkSize;
+    const message: api.IMessage = {
+        clientSequenceNumber: 100,
+        referenceSequenceNumber: 200,
+        op: "test"
+    };
+    const rawMessage: core.IRawOperationMessage = {
+        clientId: "test-client",
+        operation: message,
+        objectId: objectId,
+        timestamp: Date.now(),
+        type: core.RawOperationType,
+        userId: null,
+    };
+    const payload = [{ topic, messages: [JSON.stringify(rawMessage)], key: objectId }];
+
     for (var i = 0; i < chunkSize; ++i) {
-        const message: api.IMessage = {
-            clientSequenceNumber: 100,
-            referenceSequenceNumber: 200,
-            op: "test"
-        };
-        const rawMessage: core.IRawOperationMessage = {
-            clientId: "test-client",
-            operation: message,
-            objectId: objectId,
-            timestamp: Date.now(),
-            type: core.RawOperationType,
-            userId: null,
-        };
-        const payload = [{ topic, messages: [JSON.stringify(rawMessage)], key: objectId }];
         producer.send(payload).then(
             (responseMessage) => {
-                let responseOffset = Number(JSON.stringify(responseMessage.rawdeltas).split(":")[1].replace("}", ""));
-                if (responseOffset === (pass-1)*chunkSize) {
+                if (messagesLeft === chunkSize) {
                     startTime = Date.now();
-                    console.log(`First message received: ${responseOffset}`);
+                    console.log(`First message received: ${JSON.stringify(responseMessage)}`);
                 }
-                if (responseOffset === pass*chunkSize-1) {
+                if (messagesLeft === 1) {
                     sendStopTime = Date.now();
                     updateMap("PushToKafkaTime", sendStopTime - startTime);
                     console.log(`Pass ${pass}: Time to send all messages: ${sendStopTime - startTime}`);
-                    console.log(`Pass ${pass}: Done sending ${chunkSize} messages to kafka: ${responseOffset}`);
+                    console.log(`Pass ${pass}: Done sending ${chunkSize} messages to kafka: ${JSON.stringify(responseMessage)}`);
                 }
+                --messagesLeft;
             },
             (error) => {
                 console.error(`Error writing to kafka: ${error}`);
@@ -112,21 +117,19 @@ async function produce(pass: number) {
 }
 
 async function consume(pass: number): Promise<void> {
-    let kafkaClientId2 = "scriptorium";
-    let topic2 = "deltas";
-    //let kafkaClient = new kafka.Client(zookeeperEndpoint, kafkaClientId2);
+    let kafkaClient = new kafka.Client(zookeeperEndpoint, kafkaReceiveClientId);
 
-    // await utils.kafka.ensureTopics(kafkaClient, [topic2]);
+    await utils.kafka.ensureTopics(kafkaClient, [receiveTopic]);
 
     const consumerGroup = new kafka.ConsumerGroup({
             autoCommit: false,
             fromOffset: "earliest",
             groupId: "scriptorium",
             host: zookeeperEndpoint,
-            id: kafkaClientId2,
+            id: "scriptorium",
             protocol: ["roundrobin"],
         },
-        [topic2]);
+        [receiveTopic]);
 
     console.log("Perf: Waiting for messages...");
 

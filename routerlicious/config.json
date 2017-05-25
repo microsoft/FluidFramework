@@ -93,10 +93,11 @@
         "secretKey": "mhioAkNXTwdX4dXWgKgXVtHo"
     },
     "perf": {
-        "kafkaClientId": "perf",
+        "kafkaSendClientId": "perfsend",
+        "kafkaReceiveClientId": "perfreceive",
         "sendTopic": "rawdeltas",
         "receiveTopic": "deltas",
         "bucket": "snapshots",
-        "chunkSize": 10000
+        "chunkSize": 1000
     }
 }
