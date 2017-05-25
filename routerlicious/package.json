@@ -39,7 +39,11 @@
     "test": "nyc -x dist/test/**/* mocha dist/test",
     "tsc": "tsc",
     "tslint": "tslint 'src/**/*.ts'",
-    "beast": "node dist/merge-tree/beastTest.js"
+    "beast": "node dist/merge-tree/beastTest.js",
+    "perf:deli": "node dist/perf/deli.js",
+    "perf:deli:debug": "nodemon --exitcrash --debug=0.0.0.0:5858 dist/perf/deli.js -w dist",
+    "pretest:perf:deli": "docker-compose -f docker-compose.test.deli.yml down --remove-orphans",
+    "test:perf:deli": "npm run pretest:perf:deli; docker-compose -f docker-compose.test.deli.yml up"
   },
   "author": "Microsoft",
   "license": "Apache-2.0",

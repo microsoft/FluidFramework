@@ -55,7 +55,6 @@ export class Producer {
         } else {
             this.sendMessage(message, deferred);
         }
-
         return deferred.promise;
     }
 

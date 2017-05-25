@@ -92,6 +92,14 @@
         "accessKey": "prague",
         "secretKey": "mhioAkNXTwdX4dXWgKgXVtHo"
     },
+    "perf": {
+        "kafkaSendClientId": "perfsend",
+        "kafkaReceiveClientId": "perfreceive",
+        "sendTopic": "rawdeltas",
+        "receiveTopic": "deltas",
+        "bucket": "snapshots",
+        "chunkSize": 1000
+    },
     "intelligence": {
         "resume": {
             "deviceId": "routerlicious",
