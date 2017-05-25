@@ -372,7 +372,8 @@ class StringView {
     private pendingRender = false;
 
     constructor(public sharedString: SharedString.SharedString, public totalSegmentCount,
-        public totalLengthChars) {
+        public totalLengthChars,
+        insights: API.IMap) {
         this.client = sharedString.client;
         this.updateGeometry();
 
@@ -380,6 +381,8 @@ class StringView {
             let delta = <API.IMergeTreeDeltaMsg>msg.op;
             this.queueRender(delta);
         });
+
+        this.trackInsights(insights);
     }
 
     public updateGeometry() {
@@ -605,17 +608,44 @@ class StringView {
         this.blinkTimer = setTimeout(this.blinker, 500);
     }
 
+    private async updateInsights(insights: API.IMap) {
+        const insightsElem = document.getElementById("insights");
+        const insightsText = insightsElem.querySelector(".insight-text");
+
+        const resumeP = insights.get("Resume");
+        const analyticsP = insights.get("TextAnalytics");
+        const results = await Promise.all([resumeP, analyticsP]);
+
+        if (results[0]) {
+            const probability = parseFloat(results[0]);
+            if (probability !== 1 && probability > 0.7) {
+                insightsElem.classList.remove("hidden");
+                insightsText.textContent = `${Math.round(probability * 100)}% sure I found a resume!`;
+            }
+        }
+    }
+
+    private trackInsights(insights: API.IMap) {
+        this.updateInsights(insights);
+        insights.on("valueChanged", () => {
+            this.updateInsights(insights);
+        });
+    }
 }
 
 export async function onLoad(id: string) {
     const extension = API.defaultRegistry.getExtension(SharedString.CollaboritiveStringExtension.Type);
     const sharedString = extension.load(id, API.getDefaultServices(), API.defaultRegistry) as SharedString.SharedString;
 
+    // Retrive any stored insights
+    const mapExtension = API.defaultRegistry.getExtension(API.MapExtension.Type);
+    const insights = mapExtension.load(`${id}-insights`, API.getDefaultServices(), API.defaultRegistry) as API.IMap;
+
     sharedString.on("partialLoad", async (data: MergeTreeChunk) => {
         console.log("Partial load fired");
 
         widthEst("18px Times");
-        theString = new StringView(sharedString, data.totalSegmentCount, data.totalLengthChars);
+        theString = new StringView(sharedString, data.totalSegmentCount, data.totalLengthChars, insights);
         if (data.totalLengthChars > 0) {
             theString.render(0, true);
         }

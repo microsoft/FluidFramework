@@ -4,6 +4,10 @@
     {{/styles}}
 
     {{$content}}
+        <div id="insights" class="insights hidden">
+            <span class="insight-text"></span>
+            <img class="clippy" src="/public/images/clippy.gif"></img>
+        </div>
     {{/content}}
 
     {{$scripts}}
