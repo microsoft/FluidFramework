@@ -5,7 +5,6 @@ import * as path from "path";
 import * as api from "../api";
 import * as core from "../core";
 import * as utils from "../utils";
-// import * as uuid from "node-uuid";
 
 // Setup the configuration system - pull arguments, then environment variables
 nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
@@ -33,7 +32,6 @@ async function getOrCreateObject(id: string, type: string): Promise<boolean> {
                 if (dbObject.type !== type) {
                     throw new Error("Mismatched shared types");
                 }
-
                 return true;
             } else {
                 return collection.insertOne({ _id: id, type }).then(() => false);
@@ -41,72 +39,62 @@ async function getOrCreateObject(id: string, type: string): Promise<boolean> {
         });
 }
 
-
-console.log("Perf testing deli.");
-// const objectId = uuid.v4();
-const objectId = "test-document";
+console.log("Perf testing deli...");
 runTest();
 
-
+const objectId = "test-document";
 let startTime: number;
 let sendStopTime: number;
 let receiveStartTime: number;
 let endTime: number;
-let perfMap: { [key: string]: Array<number>} = {};
 
 async function runTest() {
-    console.log("Wait for 10 seconds to warm up everything....");
+    console.log("Wait for 10 seconds to warm up kafka and zookeeper....");
     await sleep(10000);
-    for (let i = 1; i <= 1; ++i) {
-        console.log(`PASS ${i}...........................`);
-        console.log("Start producing messages to kafka...");
-        produce(i);
-        console.log("Start receiving from kafka...");
-        await consume(i);
-        console.log("Done receiving from kafka.")
-    }
-    console.log("PRINTING FINAL METRICS.......................");
-    printMap();
+    produce();
+    await consume();
+    console.log("Done receiving from kafka. Printing Final Metrics....");
+    console.log(`Send to Kafka Ack time: ${sendStopTime - startTime}`);
+    console.log(`Kafka receiving time: ${endTime - receiveStartTime}`);
+    console.log(`Total time: ${endTime - startTime}`);
 }
 
-
-async function produce(pass: number) {
+async function produce() {
+    // Create the object first in the DB.
     await getOrCreateObject(objectId, "https://graph.microsoft.com/types/map");
-
-    // Producer used to publish messages
-    
+    // Producer to push to kafka.
     const producer = new utils.kafka.Producer(zookeeperEndpoint, kafkaSendClientId, [topic]);
 
-    console.log(`SENDING MESSAGES FOR PASS ${pass}...`);
-
-    let messagesLeft = chunkSize;
+    // Prepare the message that deli understands.
     const message: api.IMessage = {
         clientSequenceNumber: 100,
+        op: "test",
         referenceSequenceNumber: 200,
-        op: "test"
     };
     const rawMessage: core.IRawOperationMessage = {
         clientId: "test-client",
+        objectId,
         operation: message,
-        objectId: objectId,
         timestamp: Date.now(),
         type: core.RawOperationType,
         userId: null,
     };
     const payload = [{ topic, messages: [JSON.stringify(rawMessage)], key: objectId }];
 
-    for (var i = 0; i < chunkSize; ++i) {
+    let messagesLeft = chunkSize;
+
+    // Start sending
+    for (let i = 0; i < chunkSize; ++i) {
         producer.send(payload).then(
             (responseMessage) => {
                 if (messagesLeft === chunkSize) {
                     startTime = Date.now();
-                    console.log(`First message received: ${JSON.stringify(responseMessage)}`);
+                    console.log(`Ack for first message received: ${JSON.stringify(responseMessage)}`);
                 }
                 if (messagesLeft === 1) {
                     sendStopTime = Date.now();
-                    updateMap("PushToKafkaTime", sendStopTime - startTime);
-                    console.log(`Pass ${pass}: Time to send all messages: ${sendStopTime - startTime}`);
-                    console.log(`Pass ${pass}: Done sending ${chunkSize} messages to kafka: ${JSON.stringify(responseMessage)}`);
+                    console.log(`Time to get ack for all messages: ${sendStopTime - startTime}`);
+                    console.log(`Ack for ${chunkSize}th message received: ${JSON.stringify(responseMessage)}`);
                 }
                 --messagesLeft;
             },
@@ -116,9 +104,9 @@ async function produce(pass: number) {
     }
 }
 
-async function consume(pass: number): Promise<void> {
+async function consume(): Promise<void> {
+    // Bootstrap kafka client to consume.
     let kafkaClient = new kafka.Client(zookeeperEndpoint, kafkaReceiveClientId);
-
     await utils.kafka.ensureTopics(kafkaClient, [receiveTopic]);
 
     const consumerGroup = new kafka.ConsumerGroup({
@@ -131,32 +119,26 @@ async function consume(pass: number): Promise<void> {
         },
         [receiveTopic]);
 
-    console.log("Perf: Waiting for messages...");
+    console.log("Waiting for messages...");
 
     return new Promise<any>((resolve, reject) => {
-        
         consumerGroup.on("error", (error) => {
             console.error(error);
             reject(error);
         });
 
         consumerGroup.on("message", async (message: any) => {
-            if (message.offset === (pass-1)*chunkSize) {
+            if (message.offset === 0) {
                 receiveStartTime = Date.now();
-                console.log(`Pass ${pass}: Start receiving messages: ${receiveStartTime}`);
             }
-            if (message.offset === (pass*chunkSize) -1) {
+            if (message.offset === (chunkSize - 1)) {
                 endTime = Date.now();
-                console.log(`Pass ${pass}: message ${message.offset} received from kafka partition ${message.partition}: ${endTime}`);
-                console.log(`Pass ${pass}: Time to receive all messages: ${endTime - receiveStartTime}`);
-                console.log(`Pass ${pass}: Total processing time: ${endTime - startTime}`);
-                updateMap("ReceiveFromKafkaTime", endTime - receiveStartTime);
-                updateMap("ProcessingTime", endTime - startTime);
+
+                // Checkpoint to kafka before leaving.
                 consumerGroup.commit((err, data) => {
                     if (err) {
                         console.log(`Error checkpointing: ${err}`);
                         reject(err);
-
                     } else {
                         console.log(`Success checkpointing: ${JSON.stringify(data)}`);
                         resolve({data: true});
@@ -167,39 +149,6 @@ async function consume(pass: number): Promise<void> {
     });
 }
 
-/*
-function calculateTiming(startTime: number, sendStopTime: number, receiveStartTime: number, endTime: number) {
-    console.log(`Time to send all messages: ${sendStopTime - startTime}`);
-    console.log(`Time to receive all messages: ${endTime - receiveStartTime}`);
-    console.log(`Total processing time: ${endTime - startTime}`);
-}*/
-
-
-function updateMap(metric: string, value: number) {
-    if (!(metric in perfMap)) {
-        let newMetric: Array<number> = [value];
-        perfMap[metric] = newMetric;
-    } else {
-        perfMap[metric].push(value);
-    }
-}
-
-function printMap() {
-    for (let metric of Object.keys(perfMap)) {
-        let values = perfMap[metric];
-        console.log(`${metric}: `);
-        for (let value of values) {
-            console.log(value);
-        }
-
-    }
-}
-
 function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
-
-
-
-
-

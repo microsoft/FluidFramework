@@ -82,7 +82,8 @@ export class PartitionManager {
                         console.error(`${this.groupId}: Error checkpointing kafka offsets: ${error}`);
                         reject(error);
                     } else {
-                        console.log(`${this.groupId}: Checkpointed kafka with: ${JSON.stringify(commitDetails)}. Result: ${JSON.stringify(data)}`);
+                        console.log(`${this.groupId}: Checkpointed kafka with: ${JSON.stringify(commitDetails)}.
+                                     Result: ${JSON.stringify(data)}`);
                         resolve({ data: true });
                     }
             });

@@ -33,12 +33,14 @@ async function processMessages(kafkaClient: kafka.Client, producer: kafka.Produc
         autoCommit: false,
         fromOffset: true,
         groupId,
-        id: kafkaClientId
+        id: kafkaClientId,
     });
 
     highLevelConsumer.on("error", (error) => {
+        // Workaround to resolve rebalance partition error.
+        // https://github.com/SOHU-Co/kafka-node/issues/90
         console.error(`Error in kafka consumer: ${error}. Wait for 30 seconds and restart...`);
-        setTimeout(function() {
+        setTimeout(() => {
             process.exit(1);
         }, 30000);
     });
@@ -88,7 +90,7 @@ async function processMessages(kafkaClient: kafka.Client, producer: kafka.Produc
 
                 console.log(`Calling checkpointing for: ${message.offset}`);
                 // Finally call kafka checkpointing.
-                partitionManager.checkPoint();               
+                partitionManager.checkPoint();
             }
         }
     });
