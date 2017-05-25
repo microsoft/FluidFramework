@@ -1,23 +1,19 @@
 version: '3'
 services:
     perf:
-      build:
-        context: .
-        dockerfile: Dockerfile-test
+      build: . 
       ports:
             - "5858:5858"
       depends_on:
             - redis
             - mongodb
             - kafka
-      command: npm run perf:debug
+      command: npm run perf:deli:debug
       volumes:
             - .:/usr/src/server
       restart: always
     deli:
-      build:
-        context: .
-        dockerfile: Dockerfile-test
+      build: .
       ports:
             - "5859:5858"
       depends_on:
