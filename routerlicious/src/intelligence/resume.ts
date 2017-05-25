@@ -52,7 +52,7 @@ export class ResumeIntelligentSerivce implements IIntelligentService {
     private async sendMessage(client: Client, method: string, body: string) {
         const messageId = Math.floor((Math.random() * 10000) + 1);
         const data = JSON.stringify({
-            body,
+            body: body.substring(0, Math.min(body.length, 200000)),
             deviceId: this.deviceId,
             messageid: messageId,
             method,

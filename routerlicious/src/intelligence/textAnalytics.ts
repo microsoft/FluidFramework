@@ -16,8 +16,7 @@ class TextAnalyticsIntelligentService implements IIntelligentService {
     }
 
     public async run(value: string): Promise<any> {
-        const condensed = value.substring(0, Math.min(value.length, 5120));
-
+        const condensed = value.substring(0, Math.min(value.length, 5012));
         const data: any = {
             documents: [{
                 id: "1",
@@ -27,7 +26,6 @@ class TextAnalyticsIntelligentService implements IIntelligentService {
 
         // Start by detecting the language
         const languageResult = await this.invokeRequest(languageUrl, data);
-        console.log(languageResult);
         const detectedLanguages = languageResult.documents[0].detectedLanguages as any[];
         detectedLanguages.sort((a, b) => a.score - b.score);
 

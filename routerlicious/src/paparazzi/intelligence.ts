@@ -77,7 +77,6 @@ export class IntelligentServicesManager {
                     `${object.id}-insights`,
                     this.collaborationServices,
                     api.defaultRegistry) as api.IMap;
-                console.log(insights.id);
 
                 this.trackedDocuments[object.id] = new RateLimiter(
                     async () => {
