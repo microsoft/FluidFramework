@@ -487,31 +487,24 @@ class StringView {
         }
     }
 
-    public makeVisibleAndRender(viewChar: number) {
-        console.log(`view char: ${viewChar} top: ${this.topChar} adj: ${this.adjustedTopChar} bot: ${this.viewportEndChar}`);
-        if ((this.adjustedTopChar > viewChar) || (this.viewportEndChar < viewChar)) {
-            let topChar = viewChar-Math.floor((this.viewportEndChar-this.adjustedTopChar)/2);
-            if (topChar < 0) {
-                topChar = 0;
-            }
-            this.render(topChar, true);
-        } else {
-            this.render(this.topChar, true);
+    public renderIfVisible(viewChar: number) {
+        // console.log(`view char: ${viewChar} top: ${this.topChar} adj: ${this.adjustedTopChar} bot: ${this.viewportEndChar}`);
+        let len = this.client.getLength();
+        if ((viewChar <= this.viewportEndChar)||(len<this.viewportCharCount)) {
+            this.render(this.topChar,true);
         }
     }
 
     public render(topChar?: number, changed = false) {
         let len = this.client.getLength();
-        let halfport = Math.floor(this.viewportCharCount / 2);
         if (topChar !== undefined) {
             if (((this.topChar === topChar) || ((this.topChar === 0) && (topChar <= 0)))
                 && (!changed)) {
-                // console.log("no change in top char");
                 return;
             }
             this.topChar = topChar;
-            if (this.topChar >= (len - halfport)) {
-                this.topChar -= (halfport / 2);
+            if (this.topChar >= len) {
+                this.topChar = len-this.charsPerLine;
             }
             if (this.topChar < 0) {
                 this.topChar = 0;
@@ -582,7 +575,7 @@ class StringView {
                 } else {
                     viewChar = delta.pos2;
                 }
-                this.makeVisibleAndRender(viewChar);
+                this.renderIfVisible(viewChar);
             });
         }
     }
