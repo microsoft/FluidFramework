@@ -1,4 +1,5 @@
 import * as $ from "jquery";
+import * as _ from "lodash";
 import * as api from "../../api";
 import * as socketStorage from "../../socket-storage";
 
@@ -17,19 +18,19 @@ async function updateOrCreateKey(key: string, map: api.IMap, container: JQuery, 
 
     let keyElement = container.find(`>.${key}`);
     const newElement = keyElement.length === 0;
-    const isString = typeof value === "string";
+    const isCollab = _.hasIn(value, "__collaborativeObject__");
 
     if (newElement) {
-        keyElement = $(`<div class="${key} ${isString ? "" : "collab-object"}"></div>`);
+        keyElement = $(`<div class="${key} ${isCollab ? "collab-object" : ""}"></div>`);
         container.append(keyElement);
     }
 
-    if (isString) {
-        keyElement.text(`${key}: ${value}`);
-    } else {
+    if (isCollab) {
         if (newElement) {
             displayMap(keyElement, value, map, doc);
         }
+    } else {
+        keyElement.text(`${key}: ${JSON.stringify(value)}`);
     }
 }
 
@@ -105,9 +106,6 @@ export function load(id: string) {
             window["doc"] = doc;
 
             const root = doc.getRoot();
-
-            const collabString = doc.createString();
-            console.log(collabString.isLocal());
 
             // Display the initial values and then listen for updates
             displayMap($("#mapViews"), root, null, doc);

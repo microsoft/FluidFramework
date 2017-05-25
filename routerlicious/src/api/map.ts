@@ -92,6 +92,10 @@ class Map extends api.CollaborativeObject implements api.IMap {
     public async get(key: string) {
         await this.loadingP;
 
+        if (!(key in this.data)) {
+            return undefined;
+        }
+
         const value = this.data[key];
         if (value.type === ValueType[ValueType.Collaborative]) {
             const collabMapValue = value.value as ICollaborativeMapValue;

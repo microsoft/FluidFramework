@@ -24,9 +24,9 @@ sharedb.types.register(otInk.type);
  * Canvas app
  */
 export default class Canvas {
-    public static Create(connection: any, modelP: Promise<CanvasModel>): Promise<Canvas> {
+    public static Create(connection: any, modelP: Promise<CanvasModel>, compose: boolean): Promise<Canvas> {
         return modelP.then((model) => {
-            return new Canvas(connection, model);
+            return new Canvas(connection, model, compose);
         });
     }
 
@@ -37,7 +37,7 @@ export default class Canvas {
     // Map indicating whether or not we have processed a given object
     private canvasObjects: {[key: string]: any } = {};
 
-    constructor(private connection, private model: CanvasModel) {
+    constructor(private connection, private model: CanvasModel, private compose: boolean) {
         // register all of the different handlers
         let p = document.getElementById("hitPlane");
 
@@ -231,7 +231,7 @@ export default class Canvas {
         this.canvasObjects[object.id] = true;
 
         // let inkP = Ink.GetOrCreate(this.connection, )
-        let documentP = DocumentModel.GetOrCreate(this.connection, object.id);
+        let documentP = DocumentModel.GetOrCreate(this.connection, object.id, this.compose);
         documentP.then((richText) => {
             // TODO/NOTES - We want some kind of loading animation here. But trying to avoid
             // a race condition with creating the new document and broadcasting it exists to others.

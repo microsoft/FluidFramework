@@ -2,7 +2,7 @@
 import * as request from "request";
 import * as url from "url";
 // import * as Geometry from "./geometry";
-import * as api from "../../api";
+import * as API from "../../api";
 import { MergeTreeChunk } from "../../api";
 import * as SharedString from "../../merge-tree";
 import * as socketStorage from "../../socket-storage";
@@ -152,7 +152,6 @@ function makeScrollLosenge(height: number, left: number, top: number) {
     return div;
 }
 
-// TODO: ensure some text shows up in very small viewports
 function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Client, context: StringView) {
     div.id = "renderedTree";
     div.style.marginRight = "8%";
@@ -163,16 +162,16 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
     let splitTopSeg = true;
     let w = Math.floor(wEst);
     let h = hEst;
-    let charsPerLine = window.innerWidth / w;
-    let charsPerViewport = Math.floor((window.innerHeight / h) * charsPerLine);
+    let charsPerLine = (window.innerWidth * 0.9) / w;
+    let charsPerViewport = Math.floor(((window.innerHeight * 0.9) / h) * charsPerLine);
     let innerDiv = makeInnerDiv();
     div.appendChild(innerDiv);
     let charLength = 0;
     let firstSeg = true;
+    context.viewportEndChar = -1;
     function renderSegment(segment: SharedString.Segment, segPos: number, refSeq: number,
         clientId: number, start: number, end: number) {
         let segOffset = 0;
-        // let prevWord: string;
 
         function segmentToSpan(segText: string, textSegment: SharedString.TextSegment) {
             let span = <ISegSpan>document.createElement("span");
@@ -188,9 +187,9 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
                 span.pos = segOffset;
                 segOffset = 0;
             }
-            if ((textSegment.clientId === 0)&&(textSegment.seq>0)) {
+            if ((textSegment.clientId === 0) && (textSegment.seq > 0)) {
                 span.style.backgroundColor = "lightskyblue";
-            } else if ((textSegment.clientId === 1)&&(textSegment.seq>0)) {
+            } else if ((textSegment.clientId === 1) && (textSegment.seq > 0)) {
                 span.style.backgroundColor = "pink";
             }
             innerDiv.appendChild(span);
@@ -229,48 +228,11 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
             return text.substring(offset);
         }
 
-        // function renderFirstSegment(text: string) {
-        //     let segLength = 0;
-        //     let words = text.split(" ");
-        //     segOffset = 0;
-        //     console.log("render first");
-        //     for (let word of words) {
-        //         if (segLength >= start) {
-        //             let rightSpan = <ISegSpan>innerDiv.lastElementChild;
-        //             let onRightLeftBound = window.innerWidth * 2;
-        //             let onRightCharOffset = 0;
-        //             while (rightSpan) {
-        //                 let bounds = rightSpan.getBoundingClientRect();
-        //                 // console.log(`left: ${bounds.left}`);
-        //                 if (onRightLeftBound < bounds.left) {
-        //                     segOffset = onRightCharOffset;
-        //                     break;
-        //                 }
-        //                 onRightCharOffset = rightSpan.pos;
-        //                 let prev = <ISegSpan>rightSpan.previousElementSibling;
-        //                 innerDiv.removeChild(rightSpan);
-        //                 rightSpan = prev;
-        //             }
-        //             div.removeChild(innerDiv);
-        //             div.appendChild(makeInnerDiv());
-        //             break;
-        //         } else {
-        //             let span = <ISegSpan>document.createElement("span");
-        //             word = word.replace(/_([a-zA-Z]+)_/g, "<span style='font-style:italic'>$1</span>");
-        //             if (prevWord) {
-        //                 // TODO: handle multi-space separators; incorporate separator as preceding word
-        //                 // as in view as sequence of /\s*\w+/ with a trailing \s*
-        //                 word = " " + word;
-        //             }
-        //             prevWord = word;
-        //             span.innerHTML = word;
-        //             innerDiv.appendChild(span);
-        //             span.pos = segLength;
-        //             segLength += word.length;
-        //         }
-        //     }
-        //     return text.substring(segOffset);
-        // }
+        function freshDiv() {
+            innerDiv = makeInnerDiv();
+            div.appendChild(innerDiv);
+        }
+
         if (segment.getType() === SharedString.SegmentType.Text) {
             let textSegment = <SharedString.TextSegment>segment;
             let last = (textSegment.text.length === end);
@@ -281,25 +243,31 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
             firstSeg = false;
             let segText = textSegment.text;
             context.adjustedTopChar = context.topChar;
-            if ((start > 0) && splitTopSeg) {
-                segText = renderFirstSegment(segText, textSegment);
-                let actualStart = textSegment.text.length - segText.length;
-                if (start !== actualStart) {
-                    context.adjustedTopChar = context.topChar + (actualStart - start);
+            if (start > 0) {
+                if (splitTopSeg) {
+                    segText = renderFirstSegment(segText, textSegment);
+                    let actualStart = textSegment.text.length - segText.length;
+                    if (start !== actualStart) {
+                        context.adjustedTopChar = context.topChar + (actualStart - start);
+                    }
+                } else {
+                    context.adjustedTopChar = context.topChar - start;
                 }
             }
+            charLength += segText.length;
             segText = segmentToSpan(segText, textSegment);
             if (segText.charAt(segText.length - 1) === "\n") {
-                innerDiv = makeInnerDiv();
-                div.appendChild(innerDiv);
+                freshDiv();
             }
-            charLength += segText.length;
 
             if ((charLength > charsPerViewport) || last) {
                 console.log(`client h, w ${div.clientHeight},${div.clientWidth}`);
                 let constraint = Math.floor(window.innerHeight * 0.95);
 
-                if (div.clientHeight > constraint) {
+                if ((div.clientHeight > constraint) || last) {
+                    if (innerDiv.childNodes.length > 0) {
+                        freshDiv();
+                    }
                     if (innerDiv.previousElementSibling) {
                         let pruneDiv = <HTMLDivElement>innerDiv.previousElementSibling;
                         let lastPruned: HTMLDivElement;
@@ -315,11 +283,15 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
                         }
                         if (lastPruned) {
                             div.appendChild(lastPruned);
+                            let lastSeg: SharedString.TextSegment;
+                            let lastSegOff = 0;
                             for (let i = 0; i < lastPruned.childElementCount; i++) {
                                 let prunedSpan = <ISegSpan>lastPruned.children[i];
                                 let bounds = prunedSpan.getBoundingClientRect();
                                 if (bounds.bottom <= constraint) {
                                     innerDiv.appendChild(prunedSpan);
+                                    lastSeg = prunedSpan.seg;
+                                    lastSegOff = lastSeg.text.length;
                                 } else {
                                     if ((constraint - bounds.top) > hEst) {
                                         let x = bounds.right;
@@ -334,14 +306,22 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
                                         if (segOff > 0) {
                                             segmentToSpan(textSeg.text.substring(0, segOff), textSeg);
                                         }
+                                        lastSegOff = segOff;
+                                        lastSeg = textSeg;
                                     }
                                     break;
                                 }
                             }
                             div.removeChild(lastPruned);
+                            if (lastSeg) {
+                                // tslint:disable:max-line-length
+                                let segStart = context.client.mergeTree.getOffset(lastSeg, context.client.getCurrentSeq(),
+                                    context.client.getClientId());
+                                context.viewportEndChar = segStart + lastSegOff;
+                            }
                         }
+                        return false;
                     }
-                    return false;
                 }
             }
         }
@@ -349,6 +329,9 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
     }
     client.mergeTree.mapRange({ leaf: renderSegment }, SharedString.UniversalSequenceNumber,
         client.getClientId(), undefined, pos);
+    if (context.viewportEndChar < 0) {
+        context.viewportEndChar = charLength + context.adjustedTopChar;
+    }
 }
 
 export let theString: StringView;
@@ -375,6 +358,7 @@ class StringView {
     public charsPerLine: number;
     public prevTopSegment: SharedString.TextSegment;
     public adjustedTopChar: number;
+    public viewportEndChar: number;
     public cursorSpan: HTMLSpanElement;
     public viewportDiv: HTMLDivElement;
     public client: SharedString.Client;
@@ -388,13 +372,17 @@ class StringView {
     private pendingRender = false;
 
     constructor(public sharedString: SharedString.SharedString, public totalSegmentCount,
-        public totalLengthChars) {
+        public totalLengthChars,
+        insights: API.IMap) {
         this.client = sharedString.client;
         this.updateGeometry();
 
-        sharedString.on("op", () => {
-            this.queueRender();
+        sharedString.on("op", (msg: API.IMessageBase) => {
+            let delta = <API.IMergeTreeDeltaMsg>msg.op;
+            this.queueRender(delta);
         });
+
+        this.trackInsights(insights);
     }
 
     public updateGeometry() {
@@ -499,21 +487,27 @@ class StringView {
         }
     }
 
+    public renderIfVisible(viewChar: number) {
+        // console.log(`view char: ${viewChar} top: ${this.topChar} adj: ${this.adjustedTopChar} bot: ${this.viewportEndChar}`);
+        let len = this.client.getLength();
+        if ((viewChar <= this.viewportEndChar)||(len<this.viewportCharCount)) {
+            this.render(this.topChar,true);
+        }
+    }
+
     public render(topChar?: number, changed = false) {
         let len = this.client.getLength();
-        let halfport = Math.floor(this.viewportCharCount / 2);
         if (topChar !== undefined) {
             if (((this.topChar === topChar) || ((this.topChar === 0) && (topChar <= 0)))
                 && (!changed)) {
-                // console.log("no change in top char");
                 return;
             }
             this.topChar = topChar;
+            if (this.topChar >= len) {
+                this.topChar = len-this.charsPerLine;
+            }
             if (this.topChar < 0) {
                 this.topChar = 0;
-            }
-            if (this.topChar >= (len - halfport)) {
-                this.topChar -= (halfport / 2);
             }
         }
         let clk = Date.now();
@@ -548,7 +542,7 @@ class StringView {
         if (word1) {
             let removeStart = word1.pos;
             let removeEnd = removeStart + word1.text.length;
-            this.sharedString.removeText(removeStart,removeEnd);
+            this.sharedString.removeText(removeStart, removeEnd);
             let word2 = SharedString.findRandomWord(client.mergeTree, client.getClientId());
             while (!word2) {
                 word2 = SharedString.findRandomWord(client.mergeTree, client.getClientId());
@@ -559,21 +553,29 @@ class StringView {
     }
 
     public randomWordMoveStart() {
-        this.randWordTimer = setInterval(()=> {
-            this.randomWordMove();
+        this.randWordTimer = setInterval(() => {
+            for (let i = 0; i < 3; i++) {
+                this.randomWordMove();
+            }
         }, 10);
     }
 
     public randomWordMoveEnd() {
-        clearInterval(this.randWordTimer);    
+        clearInterval(this.randWordTimer);
     }
 
-    private queueRender() {
-        if (!this.pendingRender) {
+    private queueRender(delta: API.IMergeTreeDeltaMsg) {
+        if ((!this.pendingRender) && delta) {
             this.pendingRender = true;
             window.requestAnimationFrame(() => {
                 this.pendingRender = false;
-                this.render();
+                let viewChar = 0;
+                if (delta.type === API.MergeTreeMsgType.INSERT) {
+                    viewChar = delta.pos1 + delta.text.length;
+                } else {
+                    viewChar = delta.pos2;
+                }
+                this.renderIfVisible(viewChar);
             });
         }
     }
@@ -599,17 +601,57 @@ class StringView {
         this.blinkTimer = setTimeout(this.blinker, 500);
     }
 
+    private async updateInsights(insights: API.IMap) {
+        const insightsElem = document.getElementById("insights");
+        const insightsText = insightsElem.querySelector(".insight-text");
+
+        const resumeP = insights.get("Resume");
+        const analyticsP = insights.get("TextAnalytics");
+        const results = await Promise.all([resumeP, analyticsP]);
+
+        if (results[0]) {
+            const probability = parseFloat(results[0]);
+            if (probability !== 1 && probability > 0.7) {
+                insightsElem.classList.remove("hidden");
+                insightsText.textContent = `${Math.round(probability * 100)}% sure I found a resume!`;
+            }
+        }
+
+        if (results[1]) {
+            if (results[1].language) {
+                document.getElementById("language-insight").textContent = results[1].language;
+            }
+
+            if (results[1].sentiment) {
+                const sentimentEmoji = results[1].sentiment > 0.7
+                    ? "🙂"
+                    : results[1].sentiment < 0.3 ? "🙁" : "😐";
+                document.getElementById("sentiment-insight").textContent = sentimentEmoji;
+            }
+        }
+    }
+
+    private trackInsights(insights: API.IMap) {
+        this.updateInsights(insights);
+        insights.on("valueChanged", () => {
+            this.updateInsights(insights);
+        });
+    }
 }
 
 export async function onLoad(id: string) {
-    const extension = api.defaultRegistry.getExtension(SharedString.CollaboritiveStringExtension.Type);
-    const sharedString = extension.load(id, api.getDefaultServices(), api.defaultRegistry) as SharedString.SharedString;
+    const extension = API.defaultRegistry.getExtension(SharedString.CollaboritiveStringExtension.Type);
+    const sharedString = extension.load(id, API.getDefaultServices(), API.defaultRegistry) as SharedString.SharedString;
+
+    // Retrive any stored insights
+    const mapExtension = API.defaultRegistry.getExtension(API.MapExtension.Type);
+    const insights = mapExtension.load(`${id}-insights`, API.getDefaultServices(), API.defaultRegistry) as API.IMap;
 
     sharedString.on("partialLoad", async (data: MergeTreeChunk) => {
         console.log("Partial load fired");
 
         widthEst("18px Times");
-        theString = new StringView(sharedString, data.totalSegmentCount, data.totalLengthChars);
+        theString = new StringView(sharedString, data.totalSegmentCount, data.totalLengthChars, insights);
         if (data.totalLengthChars > 0) {
             theString.render(0, true);
         }

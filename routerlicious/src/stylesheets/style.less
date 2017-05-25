@@ -74,6 +74,23 @@ body
 
 @import "./stickyNote.less";
 
+.navbar-shared-text {
+    background-color: #F1F1F1;
+    min-height: unset;
+
+    ul {
+        padding: 5px 15px;
+
+        @media (min-width: 768px) {
+            padding: 5px 0px;
+        }        
+
+        &.list-inline {
+            margin-bottom: 0px; 
+        }
+    }
+}
+
 .navbar-prague {
     background-color: #222;
 }
@@ -131,4 +148,28 @@ body
 
 .typing-details {
     margin-top: 25px;
+}
+
+// Insights
+.insights {
+    position: absolute;
+    right: 25px;
+    top: 25px;
+    background-color: rgba(0, 128, 0, 0.5);
+    border-radius: 10px;
+    padding: 5px;
+
+    .insight-text {
+        display: inline-block;
+        vertical-align: top;
+    }
+
+    &:not(.hidden) {
+        animation: fadein 1s
+    }
+}
+
+@keyframes fadein {
+    from { opacity: 0; }
+    to   { opacity: 1; }
 }

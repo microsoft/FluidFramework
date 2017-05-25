@@ -7,6 +7,7 @@ import * as sharedb from "sharedb/lib/client";
 sharedb.types.register(ink.type);
 sharedb.types.register(json.type);
 sharedb.types.register(richText.type);
+sharedb.types.register(ink.nocompose);
 
 let protocol = window.location.protocol.indexOf("https") !== -1 ? "wss" : "ws";
 

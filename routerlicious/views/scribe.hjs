@@ -14,7 +14,7 @@
                 </div>
                 <div class="form-group">
                     <label for="interval">Typing Interval (ms)</label>
-                    <input type="text" class="form-control" id="interval" value="1000">
+                    <input type="text" class="form-control" id="interval" value="100">
                 </div>
                 <div class="form-group">
                     <label for="file">Text</label>
@@ -23,12 +23,35 @@
                 <button type="submit" class="btn btn-default hidden" id="create">Create</button>
             </form>
 
-            <div class="typing-details">
-                <a href="" target="_blank" id="document-link"></a>
-                <div class="progress hidden" id="progress">
+            <div class="typing-details hidden" id="create-details">
+                <p>
+                    <a href="" target="_blank" id="document-link"></a>
+                </p>
+
+                <!-- Progress of the scribe writing the document -->
+                <h3>
+                    Typing progress
+                </h3>
+                <div class="progress" id="typing-progress">
                     <div class="progress-bar progress-bar-striped active" role="progressbar" style="width: 0%">
                     </div>
                 </div>
+                <p id="typing-rate">
+                </p>
+
+                <!-- Progress of the server ACKing the writing commands -->
+                <h3>
+                    Server acknowledgement progress
+                </h3>
+                <div class="progress" id="ack-progress">
+                    <div class="progress-bar progress-bar-striped active" role="progressbar" style="width: 0%">
+                    </div>
+                </div>
+                <p id="ack-rate">
+                </p>
+                <p id="avg-latency">
+                </p>
+
                 <div id="total-time">
                 </div>
             </div>

@@ -10,6 +10,7 @@ router.get("/:id", (req: express.Request, response: express.Response) => {
     response.render(
         "canvas",
         {
+            compose: "nocompose" in req.query ? false : true,
             id,
             partials: defaultPartials,
             title: `Canvas - ${id}`,
