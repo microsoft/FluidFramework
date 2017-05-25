@@ -616,6 +616,19 @@ class StringView {
                 insightsText.textContent = `${Math.round(probability * 100)}% sure I found a resume!`;
             }
         }
+
+        if (results[1]) {
+            if (results[1].language) {
+                document.getElementById("language-insight").textContent = results[1].language;
+            }
+
+            if (results[1].sentiment) {
+                const sentimentEmoji = results[1].sentiment > 0.7
+                    ? "🙂"
+                    : results[1].sentiment < 0.3 ? "🙁" : "😐";
+                document.getElementById("sentiment-insight").textContent = sentimentEmoji;
+            }
+        }
     }
 
     private trackInsights(insights: API.IMap) {
