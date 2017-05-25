@@ -50,7 +50,6 @@ async function processMessages(kafkaClient: kafka.Client, producer: kafka.Produc
     console.log("Waiting for messages");
     highLevelConsumer.on("message", async (message: any) => {
         const baseMessage = JSON.parse(message.value) as core.IMessage;
-        console.log(`Deli-Message partition: ${message.partition}, Offset: ${message.offset}`);
 
         if (baseMessage.type === core.UpdateReferenceSequenceNumberType ||
             baseMessage.type === core.RawOperationType) {
@@ -88,7 +87,6 @@ async function processMessages(kafkaClient: kafka.Client, producer: kafka.Produc
                 }
                 await Promise.all(checkpointQueue);
 
-                console.log(`Calling checkpointing for: ${message.offset}`);
                 // Finally call kafka checkpointing.
                 partitionManager.checkPoint();
             }
