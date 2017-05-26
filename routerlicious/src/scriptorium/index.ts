@@ -61,18 +61,18 @@ async function run() {
         const baseMessage = JSON.parse(message.value) as core.IMessage;
         if (baseMessage.type === core.SequencedOperationType) {
             const value = baseMessage as core.ISequencedOperationMessage;
-            const objectId = value.objectId;
+            // const objectId = value.objectId;
 
             // Serialize the message to backing store
-            console.log(`Inserting to mongodb ${objectId}@${value.operation.sequenceNumber}`);
-            console.log(`Operation is ${JSON.stringify(value.operation)}`);
+            // console.log(`Inserting to mongodb ${objectId}@${value.operation.sequenceNumber}`);
+            // console.log(`Operation is ${JSON.stringify(value.operation)}`);
             collection.insert(value).catch((error) => {
                 console.error("Error serializing to MongoDB");
                 console.error(error);
             });
 
             // Route the message to clients
-            console.log(`Routing message to clients ${value.objectId}@${value.operation.sequenceNumber}`);
+            // console.log(`Routing message to clients ${value.objectId}@${value.operation.sequenceNumber}`);
             io.to(value.objectId).emit("op", value.objectId, value.operation);
         }
 

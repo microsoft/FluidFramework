@@ -83,7 +83,7 @@ export class PartitionManager {
                         reject(error);
                     } else {
                         // tslint:disable-next-line:max-line-length
-                        console.log(`${this.groupId}: Checkpointed kafka with: ${JSON.stringify(commitDetails)}. Result: ${JSON.stringify(data)}`);
+                        // console.log(`${this.groupId}: Checkpointed kafka with: ${JSON.stringify(commitDetails)}. Result: ${JSON.stringify(data)}`);
                         resolve({ data: true });
                     }
             });

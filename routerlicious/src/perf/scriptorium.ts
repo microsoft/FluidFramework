@@ -1,14 +1,31 @@
+import * as _ from "lodash";
 import * as nconf from "nconf";
 import * as path from "path";
 import * as api from "../api";
 import * as core from "../core";
 import * as utils from "../utils";
+import * as redis from "redis";
+import * as msgpack from "msgpack-lite"
 
 
-// Setup the configuration system - pull arguments, then environment variables
+// Setup the configuration system - pull arguments, then environment letiables
 nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
 
-// Group this into some kind of an interface
+// Setup redis client
+let host = nconf.get("redis:host");
+let port = nconf.get("redis:port");
+let pass = nconf.get("redis:pass");
+
+let options: any = { auth_pass: pass, return_buffers: true };
+if (nconf.get("redis:tls")) {
+    options.tls = {
+        servername: host,
+    };
+}
+let subOptions = _.clone(options);
+// Subscriber to read from redis directly.
+let sub = redis.createClient(port, host, subOptions);
+
 const zookeeperEndpoint = nconf.get("zookeeper:endpoint");
 const kafkaSendClientId = nconf.get("perf:kafkaSendClientId");
 const topic = nconf.get("perf:receiveTopic");
@@ -22,9 +39,10 @@ let startTime: number;
 let sendStopTime: number;
 
 async function runTest() {
-    console.log("Wait for 10 seconds to warm up kafka and zookeeper....");
+    console.log("Wait for 10 seconds to warm up kafka, zookeeper, and redis....");
     await sleep(10000);
     produce();
+    consume();
 }
 
 async function produce() {
@@ -33,7 +51,6 @@ async function produce() {
     let messagesLeft = chunkSize;
     // Start sending
     for (let i = 0; i < chunkSize; ++i) {
-
         const sequencedOperation: api.ISequencedMessage = {
             clientId: "test-client",
             clientSequenceNumber: 123,
@@ -44,22 +61,18 @@ async function produce() {
             type: "op",
             userId: "test-user",
         };
-
         let outputMessage: api.IBase;
         outputMessage = sequencedOperation;
-
         const sequencedMessage: core.ISequencedOperationMessage = {
             objectId: objectId,
             operation: outputMessage,
             type: core.SequencedOperationType,
         };
-
         const payloads = [{
             key: objectId,
             messages: [JSON.stringify(sequencedMessage)],
             topic: "deltas"
         }];
-
         producer.send(payloads).then(
             (responseMessage) => {
                 if (messagesLeft === chunkSize) {
@@ -77,6 +90,15 @@ async function produce() {
                 console.error(`Error writing to kafka: ${error}`);
         });
     }
+}
+
+async function consume() {
+    sub.on("message", function(channel, message) {
+        let decodedMessage = msgpack.decode(message);
+        console.log(`Message from redis: ${decodedMessage[1].data[2].sequenceNumber}`);
+    });
+    // Subscribing to specific redis channel for this document.
+    sub.subscribe("socket.io#/#test-document#");
 }
 
 function sleep(ms) {
