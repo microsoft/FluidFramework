@@ -1,5 +1,7 @@
+
 // tslint:disable:align whitespace no-trailing-whitespace
-import * as request from "request";
+
+/* import * as request from "request";
 import * as url from "url";
 import * as API from "../../api";
 import { MergeTreeChunk } from "../../api";
@@ -712,4 +714,4 @@ export async function onLoad(id: string) {
             });
         }
     });
-}
+}*/

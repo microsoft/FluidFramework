@@ -59,7 +59,9 @@ async function run() {
         // NOTE the processing of the below messages must make sure to notify clients of the messages in increasing
         // order. Be aware of promise handling ordering possibly causing out of order messages to be delivered.
 
+        console.log(`Raw message: ${JSON.stringify(message)}`);
         const baseMessage = JSON.parse(message.value) as core.IMessage;
+        console.log(`Base message: ${JSON.stringify(baseMessage)}`);
         if (baseMessage.type === core.SequencedOperationType) {
             const value = baseMessage as core.ISequencedOperationMessage;
             const objectId = value.objectId;
