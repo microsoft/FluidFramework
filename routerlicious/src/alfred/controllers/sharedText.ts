@@ -292,7 +292,7 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
                                 } else {
                                     if ((constraint - spanBounds.top) > hEst) {
                                         let x = spanBounds.right;
-                                        let y = constraint - Math.floor(hEst / 2);
+                                        let y = bounds.top + constraint - Math.floor(hEst / 2);
                                         let elmOff = pointerToElementOffsetWebkit(x, y);
                                         let segOff = elmOffToSegOff(elmOff, prunedSpan) + 1;
                                         let textSeg = <SharedString.TextSegment>prunedSpan.seg;
@@ -420,6 +420,7 @@ class StringView {
     }
 
     public statusMessage(msg: string) {
+        this.statusDiv.style.zIndex = "2000";
         this.statusDiv.innerText = msg;
     }
 
@@ -554,6 +555,7 @@ class StringView {
         let bubbleDiv = makeScrollLosenge(bubbleHeight, bubbleLeft, bubbleTop);
         this.scrollDiv.appendChild(bubbleDiv);
         console.log(`render time: ${Date.now() - clk}ms`);
+        // this.statusMessage(`render time: ${Date.now() - clk}ms`);
         // this.setCursor();
     }
 
