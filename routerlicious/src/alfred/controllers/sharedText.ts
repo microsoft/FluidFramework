@@ -1,11 +1,11 @@
 // tslint:disable:align whitespace no-trailing-whitespace
 import * as request from "request";
 import * as url from "url";
-// import * as Geometry from "./geometry";
 import * as API from "../../api";
 import { MergeTreeChunk } from "../../api";
 import * as SharedString from "../../merge-tree";
 import * as socketStorage from "../../socket-storage";
+import * as Geometry from "./geometry";
 
 socketStorage.registerAsDefault(document.location.origin);
 
@@ -154,16 +154,13 @@ function makeScrollLosenge(height: number, left: number, top: number) {
 
 function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Client, context: StringView) {
     div.id = "renderedTree";
-    div.style.marginRight = "8%";
-    div.style.marginLeft = "5%";
-    div.style.marginTop = "5%";
-    div.style.marginBottom = "5%";
     div.style.whiteSpace = "pre-wrap";
     let splitTopSeg = true;
     let w = Math.floor(wEst);
     let h = hEst;
-    let charsPerLine = (window.innerWidth * 0.9) / w;
-    let charsPerViewport = Math.floor(((window.innerHeight * 0.9) / h) * charsPerLine);
+    let bounds = div.getBoundingClientRect();
+    let charsPerLine = bounds.width / w;
+    let charsPerViewport = Math.floor((bounds.height / h) * charsPerLine);
     let innerDiv = makeInnerDiv();
     div.appendChild(innerDiv);
     let charLength = 0;
@@ -198,14 +195,14 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
 
         function renderFirstSegment(text: string, textSegment: SharedString.TextSegment) {
             segmentToSpan(text, textSegment);
-            let bounds = innerDiv.getBoundingClientRect();
-            let x = bounds.left + Math.floor(wEst / 2);
-            let y = bounds.top + Math.floor(hEst / 2);
+            let innerBounds = innerDiv.getBoundingClientRect();
+            let x = innerBounds.left + Math.floor(wEst / 2);
+            let y = innerBounds.top + Math.floor(hEst / 2);
             let offset = 0;
             let prevOffset = 0;
             let segspan = <ISegSpan>innerDiv.children[0];
             do {
-                if (y > bounds.bottom) {
+                if (y > innerBounds.bottom) {
                     prevOffset = offset;
                     break;
                 }
@@ -261,10 +258,10 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
             }
 
             if ((charLength > charsPerViewport) || last) {
-                console.log(`client h, w ${div.clientHeight},${div.clientWidth}`);
-                let constraint = Math.floor(window.innerHeight * 0.95);
-
-                if ((div.clientHeight > constraint) || last) {
+                // console.log(`client h, w ${div.clientHeight},${div.clientWidth}`);
+                let constraint = bounds.height + bounds.top;
+                let lastInnerBounds = innerDiv.getBoundingClientRect();
+                if ((lastInnerBounds.bottom > constraint) || last) {
                     if (innerDiv.childNodes.length > 0) {
                         freshDiv();
                     }
@@ -287,14 +284,14 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
                             let lastSegOff = 0;
                             for (let i = 0; i < lastPruned.childElementCount; i++) {
                                 let prunedSpan = <ISegSpan>lastPruned.children[i];
-                                let bounds = prunedSpan.getBoundingClientRect();
-                                if (bounds.bottom <= constraint) {
+                                let spanBounds = prunedSpan.getBoundingClientRect();
+                                if (spanBounds.bottom <= constraint) {
                                     innerDiv.appendChild(prunedSpan);
                                     lastSeg = prunedSpan.seg;
                                     lastSegOff = lastSeg.text.length;
                                 } else {
-                                    if ((constraint - bounds.top) > hEst) {
-                                        let x = bounds.right;
+                                    if ((constraint - spanBounds.top) > hEst) {
+                                        let x = spanBounds.right;
                                         let y = constraint - Math.floor(hEst / 2);
                                         let elmOff = pointerToElementOffsetWebkit(x, y);
                                         let segOff = elmOffToSegOff(elmOff, prunedSpan) + 1;
@@ -349,7 +346,15 @@ function pointerToElementOffsetWebkit(x: number, y: number): IRangeInfo {
     }
 }
 
+export function clearSubtree(elm: HTMLElement) {
+    while (elm.lastChild) {
+        elm.removeChild(elm.lastChild);
+    }
+}
+
 class StringView {
+    public static scrollAreaWidth = 18;
+
     public timeToImpression: number;
     public timeToLoad: number;
     public timeToEdit: number;
@@ -361,6 +366,11 @@ class StringView {
     public viewportEndChar: number;
     public cursorSpan: HTMLSpanElement;
     public viewportDiv: HTMLDivElement;
+    public viewportRect: Geometry.Rectangle;
+    public scrollDiv: HTMLDivElement;
+    public scrollRect: Geometry.Rectangle;
+    public statusDiv: HTMLDivElement;
+    public statusRect: Geometry.Rectangle;
     public client: SharedString.Client;
     public ticking = false;
     public wheelTicking = false;
@@ -372,9 +382,15 @@ class StringView {
     private pendingRender = false;
 
     constructor(public sharedString: SharedString.SharedString, public totalSegmentCount,
-        public totalLengthChars,
+        public totalLengthChars, public container: HTMLDivElement,
         insights: API.IMap) {
         this.client = sharedString.client;
+        this.viewportDiv = document.createElement("div");
+        this.container.appendChild(this.viewportDiv);
+        this.scrollDiv = document.createElement("div");
+        this.container.appendChild(this.scrollDiv);
+        this.statusDiv = document.createElement("div");
+        this.container.appendChild(this.statusDiv);
         this.updateGeometry();
 
         sharedString.on("op", (msg: API.IMessageBase) => {
@@ -386,9 +402,25 @@ class StringView {
     }
 
     public updateGeometry() {
-        this.charsPerLine = window.innerWidth / Math.floor(wEst); // overestimate
-        let charsPerViewport = Math.floor((window.innerHeight / hEst) * this.charsPerLine);
+        // let bounds = Geometry.Rectangle.fromClientRect(this.container.getBoundingClientRect());
+        let bounds = Geometry.Rectangle.fromClientRect(document.body.getBoundingClientRect());
+        Geometry.Rectangle.conformElementToRect(this.container, bounds); 
+        // console.log(`bounds w h ${bounds.width} ${bounds.height}`);
+        let vertRects = bounds.nipVertBottom(hEst);
+        let panelScroll = vertRects[0].nipHorizRight(StringView.scrollAreaWidth);
+        this.scrollRect = panelScroll[1];
+        Geometry.Rectangle.conformElementToRect(this.scrollDiv, this.scrollRect);
+        this.viewportRect = panelScroll[0].inner(0.92);
+        Geometry.Rectangle.conformElementToRect(this.viewportDiv, this.viewportRect);
+        this.statusRect = vertRects[1];
+        Geometry.Rectangle.conformElementToRect(this.statusDiv, this.statusRect);
+        this.charsPerLine = this.viewportRect.width / Math.floor(wEst); // overestimate
+        let charsPerViewport = Math.floor((this.viewportRect.height / hEst) * this.charsPerLine);
         this.viewportCharCount = charsPerViewport;
+    }
+
+    public statusMessage(msg: string) {
+        this.statusDiv.innerText = msg;
     }
 
     public setEdit() {
@@ -431,7 +463,7 @@ class StringView {
         };
         window.onresize = () => {
             this.updateGeometry();
-            this.render();
+            this.render(this.topChar, true);
         };
         let handler = (e: KeyboardEvent) => {
             console.log(`key ${e.keyCode}`);
@@ -490,8 +522,8 @@ class StringView {
     public renderIfVisible(viewChar: number) {
         // console.log(`view char: ${viewChar} top: ${this.topChar} adj: ${this.adjustedTopChar} bot: ${this.viewportEndChar}`);
         let len = this.client.getLength();
-        if ((viewChar <= this.viewportEndChar)||(len<this.viewportCharCount)) {
-            this.render(this.topChar,true);
+        if ((viewChar <= this.viewportEndChar) || (len < this.viewportCharCount)) {
+            this.render(this.topChar, true);
         }
     }
 
@@ -504,7 +536,7 @@ class StringView {
             }
             this.topChar = topChar;
             if (this.topChar >= len) {
-                this.topChar = len-this.charsPerLine;
+                this.topChar = len - this.charsPerLine;
             }
             if (this.topChar < 0) {
                 this.topChar = 0;
@@ -513,19 +545,14 @@ class StringView {
         let clk = Date.now();
         let frac = this.topChar / len;
         let pos = Math.floor(frac * len);
-        let oldDiv = document.getElementById("renderedTree");
-        if (oldDiv) {
-            document.body.removeChild(oldDiv);
-        }
-        let viewportDiv = document.createElement("div");
-        document.body.appendChild(viewportDiv);
-        renderTree(viewportDiv, pos, this.client, this);
-        let bubbleHeight = Math.max(3, Math.floor((this.viewportCharCount / len) * window.innerHeight));
-        let bubbleTop = Math.floor(frac * window.innerHeight);
-        let bubbleLeft = window.innerWidth - 18;
-        let scrollDiv = makeScrollLosenge(bubbleHeight, bubbleLeft, bubbleTop);
-        viewportDiv.appendChild(scrollDiv);
-        this.viewportDiv = viewportDiv;
+        clearSubtree(this.viewportDiv);
+        renderTree(this.viewportDiv, pos, this.client, this);
+        clearSubtree(this.scrollDiv);
+        let bubbleHeight = Math.max(3, Math.floor((this.viewportCharCount / len) * this.scrollRect.height));
+        let bubbleTop = Math.floor(frac * this.scrollRect.height);
+        let bubbleLeft = 3;
+        let bubbleDiv = makeScrollLosenge(bubbleHeight, bubbleLeft, bubbleTop);
+        this.scrollDiv.appendChild(bubbleDiv);
         console.log(`render time: ${Date.now() - clk}ms`);
         // this.setCursor();
     }
@@ -639,6 +666,14 @@ class StringView {
     }
 }
 
+function createContainer() {
+    let container = document.createElement("div");
+    let bodBounds = document.body.getBoundingClientRect();
+    Geometry.Rectangle.conformElementToRect(container, Geometry.Rectangle.fromClientRect(bodBounds));
+    document.body.appendChild(container);
+    return container;
+}
+
 export async function onLoad(id: string) {
     const extension = API.defaultRegistry.getExtension(SharedString.CollaboritiveStringExtension.Type);
     const sharedString = extension.load(id, API.getDefaultServices(), API.defaultRegistry) as SharedString.SharedString;
@@ -651,7 +686,8 @@ export async function onLoad(id: string) {
         console.log("Partial load fired");
 
         widthEst("18px Times");
-        theString = new StringView(sharedString, data.totalSegmentCount, data.totalLengthChars, insights);
+        let container = createContainer();
+        theString = new StringView(sharedString, data.totalSegmentCount, data.totalLengthChars, container, insights);
         if (data.totalLengthChars > 0) {
             theString.render(0, true);
         }
