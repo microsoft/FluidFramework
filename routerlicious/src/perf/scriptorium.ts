@@ -11,7 +11,7 @@ nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use
 // Group this into some kind of an interface
 const zookeeperEndpoint = nconf.get("zookeeper:endpoint");
 const kafkaSendClientId = nconf.get("perf:kafkaSendClientId");
-const topic = nconf.get("perf:sendTopic");
+const topic = nconf.get("perf:receiveTopic");
 const chunkSize = nconf.get("perf:chunkSize");
 
 console.log("Perf testing scriptorium...");
@@ -30,27 +30,37 @@ async function runTest() {
 async function produce() {
     // Producer to push to kafka.
     const producer = new utils.kafka.Producer(zookeeperEndpoint, kafkaSendClientId, [topic]);
-
-    // Prepare the message that deli understands.
-    const message: api.IMessage = {
-        clientSequenceNumber: 100,
-        op: "test",
-        referenceSequenceNumber: 200,
-    };
-    const rawMessage: core.IRawOperationMessage = {
-        clientId: "test-client",
-        objectId,
-        operation: message,
-        timestamp: Date.now(),
-        type: core.RawOperationType,
-        userId: null,
-    };
-    const payload = [{ topic, messages: [JSON.stringify(rawMessage)], key: objectId }];
     let messagesLeft = chunkSize;
     // Start sending
     for (let i = 0; i < chunkSize; ++i) {
-        console.log(`Sending message: ${i}`);
-        producer.send(payload).then(
+
+        const sequencedOperation: api.ISequencedMessage = {
+            clientId: "test-client",
+            clientSequenceNumber: 123,
+            minimumSequenceNumber: 0,
+            op: "submitOp",
+            referenceSequenceNumber: 123,
+            sequenceNumber: i,
+            type: "op",
+            userId: "test-user",
+        };
+
+        let outputMessage: api.IBase;
+        outputMessage = sequencedOperation;
+
+        const sequencedMessage: core.ISequencedOperationMessage = {
+            objectId: objectId,
+            operation: outputMessage,
+            type: core.SequencedOperationType,
+        };
+
+        const payloads = [{
+            key: objectId,
+            messages: [JSON.stringify(sequencedMessage)],
+            topic: "deltas"
+        }];
+
+        producer.send(payloads).then(
             (responseMessage) => {
                 if (messagesLeft === chunkSize) {
                     startTime = Date.now();
