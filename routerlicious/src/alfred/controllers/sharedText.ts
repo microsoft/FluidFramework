@@ -32,6 +32,7 @@ class Status implements FlowView.IStatus {
     constructor(public div: HTMLDivElement, public overlayContainer: HTMLElement) {
         this.makeOverlay(overlayContainer);
         this.updateGeometry();
+        this.div.style.backgroundColor = "#F1F1F1";
     }
 
     public onresize() {

@@ -36,6 +36,8 @@ enum CharacterCodes {
     singleQuote = 39,           // '
     slash = 47,                 // /
     tilde = 126,                // ~
+    linefeed = 10,              // \n
+    cr = 13,                    // \r
     _0 = 48,
     _9 = 57,
     a = 97,
@@ -169,11 +171,6 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
                 span.pos = segOffset;
                 segOffset = 0;
             }
-            if ((textSegment.clientId === 0) && (textSegment.seq > 0)) {
-                span.style.backgroundColor = "lightskyblue";
-            } else if ((textSegment.clientId === 1) && (textSegment.seq > 0)) {
-                span.style.backgroundColor = "pink";
-            }
             innerDiv.appendChild(span);
             return segText;
         }
@@ -224,17 +221,16 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
             }
             firstSeg = false;
             let segText = textSegment.text;
-            context.adjustedTopChar = context.topChar;
             if (start > 0) {
                 if (splitTopSeg) {
                     segText = renderFirstSegment(segText, textSegment);
                     let actualStart = textSegment.text.length - segText.length;
-                    if (start !== actualStart) {
-                        context.adjustedTopChar = context.topChar + (actualStart - start);
-                    }
+                    context.adjustedTopChar = context.topChar + (actualStart - start);
                 } else {
                     context.adjustedTopChar = context.topChar - start;
                 }
+            } else {
+                context.adjustedTopChar = context.topChar;
             }
             charLength += segText.length;
             segText = segmentToSpan(segText, textSegment);
@@ -276,20 +272,33 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
                                     lastSegOff = lastSeg.text.length;
                                 } else {
                                     if ((constraint - spanBounds.top) > context.hEst) {
-                                        let x = spanBounds.right;
-                                        let y = bounds.top + constraint - Math.floor(context.hEst / 2);
-                                        let elmOff = pointerToElementOffsetWebkit(x, y);
-                                        let segOff = elmOffToSegOff(elmOff, prunedSpan) + 1;
-                                        let textSeg = <SharedString.TextSegment>prunedSpan.seg;
-                                        while ((segOff > 0) &&
-                                            (textSeg.text.charCodeAt(segOff) !== CharacterCodes.space)) {
-                                            segOff--;
+                                        let rects = prunedSpan.getClientRects();
+                                        let x = 0;
+                                        let y = 0;
+                                        let rect: ClientRect;
+                                        for (let j = rects.length - 1; j >= 0; j--) {
+                                            rect = rects.item(j);
+                                            if (rect.bottom <= constraint) {
+                                                x = rect.right-Math.floor(w/2);
+                                                y = rect.bottom - Math.floor(h/2);
+                                                break;
+                                            }
                                         }
-                                        if (segOff > 0) {
-                                            segmentToSpan(textSeg.text.substring(0, segOff), textSeg);
+                                        if (y > 0) {
+                                            let elmOff = pointerToElementOffsetWebkit(x, y);
+                                            let segOff = elmOffToSegOff(elmOff, prunedSpan) + 1;
+                                            let textSeg = <SharedString.TextSegment>prunedSpan.seg;
+                                            while ((segOff > 0) &&
+                                                (textSeg.text.charCodeAt(segOff) !== CharacterCodes.space) &&
+                                                (textSeg.text.charAt(segOff) !== "\n")) {
+                                                segOff--;
+                                            }
+                                            if (segOff > 0) {
+                                                segmentToSpan(textSeg.text.substring(0, segOff), textSeg);
+                                            }
+                                            lastSegOff = segOff;
+                                            lastSeg = textSeg;
                                         }
-                                        lastSegOff = segOff;
-                                        lastSeg = textSeg;
                                     }
                                     break;
                                 }
@@ -410,10 +419,8 @@ export class FlowView {
     }
 
     public updateGeometry() {
-        // let bounds = Geometry.Rectangle.fromClientRect(this.container.getBoundingClientRect());
-        let bounds = Geometry.Rectangle.fromClientRect(document.body.getBoundingClientRect());
+        let bounds = Geometry.Rectangle.fromClientRect(this.containerDiv.getBoundingClientRect());
         Geometry.Rectangle.conformElementToRect(this.containerDiv, bounds);
-        // console.log(`bounds w h ${bounds.width} ${bounds.height}`);
         let panelScroll = bounds.nipHorizRight(FlowView.scrollAreaWidth);
         this.scrollRect = panelScroll[1];
         Geometry.Rectangle.conformElementToRect(this.scrollDiv, this.scrollRect);
@@ -558,7 +565,7 @@ export class FlowView {
         let bubbleLeft = 3;
         let bubbleDiv = makeScrollLosenge(bubbleHeight, bubbleLeft, bubbleTop);
         this.scrollDiv.appendChild(bubbleDiv);
-        this.statusMessage("render", `${Date.now() - clk}ms`);
+        this.statusMessage("render", `&nbsp ${Date.now() - clk}ms`);
         // this.setCursor();
     }
 
@@ -645,7 +652,7 @@ export class FlowView {
             if (probability !== 1 && probability > 0.7) {
                 this.flowContainer.status.overlay(`${Math.round(probability * 100)}% sure I found a resume!`);
             }
-        } 
+        }
 
         if (results[1]) {
             if (results[1].language) {
