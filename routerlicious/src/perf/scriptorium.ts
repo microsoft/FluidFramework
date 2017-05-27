@@ -23,6 +23,7 @@ if (nconf.get("redis:tls")) {
     };
 }
 let subOptions = _.clone(options);
+
 // Subscriber to read from redis directly.
 let sub = redis.createClient(port, host, subOptions);
 
@@ -37,12 +38,18 @@ runTest();
 const objectId = "test-document";
 let startTime: number;
 let sendStopTime: number;
+let receiveStartTime: number;
+let endTime: number;
 
 async function runTest() {
     console.log("Wait for 10 seconds to warm up kafka, zookeeper, and redis....");
     await sleep(10000);
     produce();
-    consume();
+    await consume();
+    console.log("Done receiving from redis. Printing Final Metrics....");
+    console.log(`Send to Kafka Ack time: ${sendStopTime - startTime}`);
+    console.log(`Redis receiving time: ${endTime - receiveStartTime}`);
+    console.log(`Total time: ${endTime - startTime}`);
 }
 
 async function produce() {
@@ -50,7 +57,7 @@ async function produce() {
     const producer = new utils.kafka.Producer(zookeeperEndpoint, kafkaSendClientId, [topic]);
     let messagesLeft = chunkSize;
     // Start sending
-    for (let i = 0; i < chunkSize; ++i) {
+    for (let i = 1; i <= chunkSize; ++i) {
         const sequencedOperation: api.ISequencedMessage = {
             clientId: "test-client",
             clientSequenceNumber: 123,
@@ -93,12 +100,21 @@ async function produce() {
 }
 
 async function consume() {
-    sub.on("message", function(channel, message) {
-        let decodedMessage = msgpack.decode(message);
-        console.log(`Message from redis: ${decodedMessage[1].data[2].sequenceNumber}`);
+    return new Promise<any>((resolve, reject) => {
+        sub.on("message", function(channel, message) {
+            let decodedMessage = msgpack.decode(message);
+            let sequenceNumber = decodedMessage[1].data[2].sequenceNumber;
+            if (sequenceNumber === 1) {
+                receiveStartTime = Date.now();
+            }
+            if (sequenceNumber === chunkSize) {
+                endTime = Date.now();
+                resolve({data: true});
+            }
+        });
+        // Subscribing to specific redis channel for this document.
+        sub.subscribe("socket.io#/#test-document#");
     });
-    // Subscribing to specific redis channel for this document.
-    sub.subscribe("socket.io#/#test-document#");
 }
 
 function sleep(ms) {
