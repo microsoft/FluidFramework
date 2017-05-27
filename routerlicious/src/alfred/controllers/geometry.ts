@@ -11,11 +11,7 @@ export class Rectangle {
     }
 
     public static conformElementToRect(elm: HTMLElement, rect: Rectangle) {
-        elm.style.position = "absolute";
-        elm.style.left = `${rect.x}px`;
-        elm.style.top = `${rect.y}px`;
-        elm.style.width = `${rect.width}px`;
-        elm.style.height = `${rect.height}px`;
+        rect.conformElement(elm);
         return elm;
     }
 
@@ -59,8 +55,26 @@ export class Rectangle {
     public nipHorizRight(pixels: number) {
         return [
             new Rectangle(this.x, this.y, this.width - pixels, this.height),
-            new Rectangle(this.x + (this.width-pixels), this.y, pixels, this.height),
+            new Rectangle(this.x + (this.width - pixels), this.y, pixels, this.height),
         ];
+    }
+
+    public conformElement(elm: HTMLElement) {
+        elm.style.position = "absolute";
+        elm.style.left = `${this.x}px`;
+        elm.style.top = `${this.y}px`;
+        elm.style.width = `${this.width}px`;
+        elm.style.height = `${this.height}px`;
+        return elm;
+    }
+
+    public inner4(xfactor: number, yfactor: number, widthFactor: number,
+        heightFactor: number) {
+        let ix = this.x + Math.round(xfactor * this.width);
+        let iy = this.y + Math.round(yfactor * this.height);
+        let iw = Math.floor(this.width * widthFactor);
+        let ih = Math.floor(this.height * heightFactor);
+        return (new Rectangle(ix, iy, iw, ih));
     }
 
     public inner(factor: number) {

@@ -58,6 +58,9 @@ interface IRangeInfo {
 }
 
 function elmOffToSegOff(elmOff: IRangeInfo, span: HTMLSpanElement) {
+    if ((elmOff.elm !== span) && (elmOff.elm.parentElement !== span)) {
+        console.log("did not hit span");
+    }
     let offset = elmOff.offset;
     let prevSib = elmOff.node.previousSibling;
     if ((!prevSib) && (elmOff.elm !== span)) {
@@ -332,9 +335,19 @@ export function clearSubtree(elm: HTMLElement) {
     }
 }
 
+export interface IStatus {
+    add(key: string, msg: string);
+    remove(key: string);
+    overlay(msg: string);
+    removeOverlay();
+    onresize();
+}
+
 export interface IComponentContainer {
     div: HTMLDivElement;
     onresize: () => void;
+    onkeydown: (e: KeyboardEvent) => void;
+    status: IStatus;
 }
 
 export class FlowView {
@@ -378,12 +391,11 @@ export class FlowView {
         this.containerDiv.appendChild(this.viewportDiv);
         this.scrollDiv = document.createElement("div");
         this.containerDiv.appendChild(this.scrollDiv);
-        this.statusDiv = document.createElement("div");
-        this.containerDiv.appendChild(this.statusDiv);
         this.widthEst("18px Times");
 
         this.updateGeometry();
-
+        this.statusMessage("li", " ");
+        this.statusMessage("si", " ");
         sharedString.on("op", (msg: API.IMessageBase) => {
             let delta = <API.IMergeTreeDeltaMsg>msg.op;
             this.queueRender(delta);
@@ -402,22 +414,18 @@ export class FlowView {
         let bounds = Geometry.Rectangle.fromClientRect(document.body.getBoundingClientRect());
         Geometry.Rectangle.conformElementToRect(this.containerDiv, bounds);
         // console.log(`bounds w h ${bounds.width} ${bounds.height}`);
-        let vertRects = bounds.nipVertBottom(this.hEst);
-        let panelScroll = vertRects[0].nipHorizRight(FlowView.scrollAreaWidth);
+        let panelScroll = bounds.nipHorizRight(FlowView.scrollAreaWidth);
         this.scrollRect = panelScroll[1];
         Geometry.Rectangle.conformElementToRect(this.scrollDiv, this.scrollRect);
         this.viewportRect = panelScroll[0].inner(0.92);
         Geometry.Rectangle.conformElementToRect(this.viewportDiv, this.viewportRect);
-        this.statusRect = vertRects[1];
-        Geometry.Rectangle.conformElementToRect(this.statusDiv, this.statusRect);
         this.charsPerLine = this.viewportRect.width / Math.floor(this.wEst); // overestimate
         let charsPerViewport = Math.floor((this.viewportRect.height / this.hEst) * this.charsPerLine);
         this.viewportCharCount = charsPerViewport;
     }
 
-    public statusMessage(msg: string) {
-        this.statusDiv.style.zIndex = "2000";
-        this.statusDiv.innerText = msg;
+    public statusMessage(key: string, msg: string) {
+        this.flowContainer.status.add(key, msg);
     }
 
     public setEdit() {
@@ -481,7 +489,8 @@ export class FlowView {
                 e.returnValue = false;
             }
         };
-        this.containerDiv.onkeydown = handler;
+
+        this.flowContainer.onkeydown = handler;
     }
 
     public scroll(up: boolean) {
@@ -549,8 +558,7 @@ export class FlowView {
         let bubbleLeft = 3;
         let bubbleDiv = makeScrollLosenge(bubbleHeight, bubbleLeft, bubbleTop);
         this.scrollDiv.appendChild(bubbleDiv);
-        console.log(`render time: ${Date.now() - clk}ms`);
-        // this.statusMessage(`render time: ${Date.now() - clk}ms`);
+        this.statusMessage("render", `${Date.now() - clk}ms`);
         // this.setCursor();
     }
 
@@ -628,9 +636,6 @@ export class FlowView {
     }
 
     private async updateInsights(insights: API.IMap) {
-        const insightsElem = document.getElementById("insights");
-        const insightsText = insightsElem.querySelector(".insight-text");
-
         const resumeP = insights.get("Resume");
         const analyticsP = insights.get("TextAnalytics");
         const results = await Promise.all([resumeP, analyticsP]);
@@ -638,21 +643,20 @@ export class FlowView {
         if (results[0]) {
             const probability = parseFloat(results[0]);
             if (probability !== 1 && probability > 0.7) {
-                insightsElem.classList.remove("hidden");
-                insightsText.textContent = `${Math.round(probability * 100)}% sure I found a resume!`;
+                this.flowContainer.status.overlay(`${Math.round(probability * 100)}% sure I found a resume!`);
             }
-        }
+        } 
 
         if (results[1]) {
             if (results[1].language) {
-                document.getElementById("language-insight").textContent = results[1].language;
+                this.statusMessage("li", results[1].language);
             }
 
             if (results[1].sentiment) {
                 const sentimentEmoji = results[1].sentiment > 0.7
                     ? "🙂"
                     : results[1].sentiment < 0.3 ? "🙁" : "😐";
-                document.getElementById("sentiment-insight").textContent = sentimentEmoji;
+                this.statusMessage("si", sentimentEmoji);
             }
         }
     }
