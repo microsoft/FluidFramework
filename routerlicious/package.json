@@ -47,7 +47,11 @@
     "perf:scriptorium": "node dist/perf/scriptorium.js",
     "perf:scriptorium:debug": "nodemon --exitcrash --debug=0.0.0.0:5858 dist/perf/scriptorium.js -w dist",
     "pretest:perf:scriptorium": "docker-compose -f docker-compose.test.scriptorium.yml down --remove-orphans",
-    "test:perf:scriptorium": "npm run pretest:perf:scriptorium; docker-compose -f docker-compose.test.scriptorium.yml up"
+    "test:perf:scriptorium": "npm run pretest:perf:scriptorium; docker-compose -f docker-compose.test.scriptorium.yml up",
+    "perf:alfred": "node dist/perf/alfred.js",
+    "perf:alfred:debug": "nodemon --exitcrash --debug=0.0.0.0:5858 dist/perf/alfred.js -w dist",
+    "pretest:perf:alfred": "docker-compose -f docker-compose.test.alfred.yml down --remove-orphans",
+    "test:perf:alfred": "npm run pretest:perf:alfred; docker-compose -f docker-compose.test.alfred.yml up"    
   },
   "author": "Microsoft",
   "license": "Apache-2.0",
