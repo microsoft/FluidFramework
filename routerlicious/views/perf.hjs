@@ -1,0 +1,19 @@
+{{<layout}}
+    {{$styles}}
+        <link href="/public/stylesheets/dist/style.css" rel="stylesheet" />
+    {{/styles}}
+
+    {{$content}}
+        <div class="container-fluid">
+            <div id="perfViews">Sample perf page</div>
+        </div>
+    {{/content}}
+
+    {{$scripts}}
+        <script src="/socket.io/socket.io.js"></script>
+        <script src="/public/scripts/dist/cell.js"></script>
+        <script>
+            controller.load("{{ id }}");
+        </script>
+    {{/scripts}}
+{{/layout}}
