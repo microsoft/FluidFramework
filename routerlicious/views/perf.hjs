@@ -5,13 +5,13 @@
 
     {{$content}}
         <div class="container-fluid">
-            <div id="perfViews">Sample perf page</div>
+            <div id="mapViews"></div>
         </div>
     {{/content}}
 
     {{$scripts}}
         <script src="/socket.io/socket.io.js"></script>
-        <script src="/public/scripts/dist/cell.js"></script>
+        <script src="/public/scripts/dist/perf.js"></script>
         <script>
             controller.load("{{ id }}");
         </script>

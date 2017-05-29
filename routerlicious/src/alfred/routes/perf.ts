@@ -4,15 +4,16 @@ import { defaultPartials } from "./partials";
 const router = express.Router();
 
 /**
- * Script entry point root
+ * Loading of a specific collaborative map
  */
-router.get("/", (request, response, next) => {
+router.get("/:id?", (request, response, next) => {
+    const id = request.params.id ? request.params.id : "test";
     response.render(
         "perf",
         {
-            id: request.params.id,
+            id,
             partials: defaultPartials,
-            title: "Perf",
+            title: id,
         });
 });
 
