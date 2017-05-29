@@ -6,8 +6,6 @@ import * as path from "path";
 import * as socketIoEmitter from "socket.io-emitter";
 import * as api from "../api";
 import * as socketStorage from "../socket-storage";
-// import * as redis from "redis";
-// import * as msgpack from "msgpack-lite";
 import { ObjectStorageService } from "../paparazzi/objectStorageService";
 
 // Setup the configuration system - pull arguments, then environment variables
@@ -18,19 +16,21 @@ const mongoUrl = nconf.get("mongo:endpoint");
 const client = MongoClient.connect(mongoUrl);
 const objectsCollectionName = nconf.get("mongo:collectionNames:objects");
 const objectsCollectionP = client.then((db) => db.collection(objectsCollectionName));
-
 const minioConfig = nconf.get("minio");
 const storageBucket = nconf.get("paparazzi:bucket");
+const chunkSize = nconf.get("perf:chunkSize");
 
  // Connect to Alfred for default storage options
 const alfredUrl = nconf.get("paparazzi:alfred");
 
- interface IMapOperation {
+// Interface to mimic map operation.
+interface IMapOperation {
     type: string;
     key?: string;
     value?: any;
 }
 
+// Storage functions to make the API work.
 async function bucketExists(minioClient, bucket: string) {
     return new Promise<boolean>((resolve, reject) => {
         minioClient.bucketExists(bucket, (error) => {
@@ -78,8 +78,6 @@ async function getOrCreateObject(id: string, type: string): Promise<boolean> {
         });
 }
 
-const chunkSize = nconf.get("perf:chunkSize");
-
 async function loadObject(
     services: api.ICollaborationServices,
     collection: Collection,
@@ -96,8 +94,6 @@ async function loadObject(
     return sharedObject;
 }
 
-
-
 // Initialize Socket.io and connect to the Redis adapter
 let redisConfig = nconf.get("redis");
 let io = socketIoEmitter(({ host: redisConfig.host, port: redisConfig.port }));
@@ -105,46 +101,33 @@ io.redis.on("error", (error) => {
     console.error(`Error with socket io emitter: ${error}`);
 });
 
-/*
-// Setup redis client
-let host = nconf.get("redis:host");
-let port = nconf.get("redis:port");
-let pass = nconf.get("redis:pass");
-
-let options: any = { auth_pass: pass, return_buffers: true };
-if (nconf.get("redis:tls")) {
-    options.tls = {
-        servername: host,
-    };
-}
-let subOptions = _.clone(options);
-
-// Subscriber to read from redis directly.
-let sub = redis.createClient(port, host, subOptions);
-*/
-
 console.log("Perf testing alfred...");
 runTest();
 
 const objectId = "test-document";
-
+let startTime: number;
+let sendStopTime: number;
+let receiveStartTime: number;
+let endTime: number;
 async function runTest() {
     console.log("Wait for 10 seconds to warm up kafka, zookeeper, and redis....");
     await sleep(10000);
-    consume2();
-    console.log(`Done consumer prepping...`);
-    //produce();
+    await consume();
+    console.log("Done receiving from alfred. Printing Final Metrics....");
+    console.log(`Send to Kafka Socket IO time: ${sendStopTime - startTime}`);
+    console.log(`Receiving from alfred time: ${endTime - receiveStartTime}`);
+    console.log(`Total time: ${endTime - startTime}`);
 }
 
+// Producer to send messages to redis throguh socket io emitter.
 async function produce() {
+    const operation: IMapOperation = {
+        type: "set",
+        key: "testkey",
+        value: "testvalue"
+    };
+    startTime = Date.now();
     for (let i = 1; i <= chunkSize; ++i) {
-
-        const operation: IMapOperation = {
-            type: "set",
-            key: "testkey",
-            value: "testvalue"
-        };
-
         const sequencedOperation: api.ISequencedMessage = {
             clientId: "test-client",
             clientSequenceNumber: 123,
@@ -160,22 +143,11 @@ async function produce() {
 
         io.to(objectId).emit("op", objectId, outputMessage);
     }
+    sendStopTime = Date.now();
 }
 
-/*
+// Cosumer connects to alfred as a client and receives messages.
 async function consume() {
-    return new Promise<any>((resolve, reject) => {
-        sub.on("message", function(channel, message) {
-            let decodedMessage = msgpack.decode(message);
-            console.log(`From receiver: ${JSON.stringify(decodedMessage)}`);
-        });
-        // Subscribing to specific redis channel for this document.
-        sub.subscribe("socket.io#/#test-document#");
-    });
-}*/
-
-
-async function consume2() {
     // Create the object first in the DB.
     await getOrCreateObject(objectId, "https://graph.microsoft.com/types/map");
 
@@ -197,28 +169,33 @@ async function consume2() {
     const collection = await objectsCollectionP;
     let messagesLeft: number = chunkSize;
 
-    loadObject(services, collection, objectId).then(async (doc) => {
-        console.log(`Doc loaded id...: ${doc.id}`);
-        console.log(`Doc loaded type...: ${doc.type}`);
-        // Display the initial values and then listen for updates
-        doc.on("valueChanged", () => {
-            console.log(`Value changed received`);
-            --messagesLeft;
-            if (messagesLeft === 0) {
-                console.log(`We are done...`);
-            }
-        });
-        doc.on("op", () => {
-            console.log(`Operation received`);
-        });
-        await sleep(2000);
-        console.log(`Start producing....`);
-        produce();
-    },    
-    (error) => {
-        console.error(`Error: Couldn't connect ${error}`);
-    });    
+    return new Promise<any>((resolve, reject) => {
+        loadObject(services, collection, objectId).then(async (doc) => {
+            doc.on("valueChanged", () => {
+                console.log(`Value change received...`);
+                if (messagesLeft === chunkSize) {
+                    receiveStartTime = Date.now();
+                }
+                if (messagesLeft === 1) {
+                    endTime = Date.now();
+                    console.log(`We are done...`);
+                    resolve({data: true});
+                }
+                --messagesLeft;
+            });
 
+            // Wait for 2 seconds to make sure that the listener is set up.
+            // Then start producing messages. 
+            console.log("Wait for 2 seconds for the listener to set up....");
+            await sleep(2000);
+            console.log(`Start producing....`);
+            produce();
+        },    
+        (error) => {
+            console.error(`Error: Couldn't connect ${error}`);
+            reject(error);
+        });    
+    });
 }
 
 function sleep(ms) {
