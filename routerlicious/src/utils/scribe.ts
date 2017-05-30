@@ -4,7 +4,8 @@ import { RateCounter } from "./counters";
 
 export interface IScribeMetrics {
     // Average latency between when a message is sent and when it is ack'd by the server
-    averageLatency: number;
+    latencyAverage: number;
+    latencyStdDev: number;
 
     // The rate of both typing messages and receiving replies
     ackRate: number;
@@ -49,7 +50,8 @@ function typeFile(
         const metrics: IScribeMetrics = {
             ackProgress: undefined,
             ackRate: undefined,
-            averageLatency: undefined,
+            latencyAverage: undefined,
+            latencyStdDev: undefined,
             typingProgress: undefined,
             typingRate: undefined,
         };
@@ -62,6 +64,9 @@ function typeFile(
         const latencyCounter = new RateCounter();
         latencyCounter.reset();
         const messageStart = {};
+
+        let mean = 0;
+        let stdDev = 0;
 
         sharedString.on("op", (message) => {
             if (message.clientSequenceNumber) {
@@ -77,7 +82,15 @@ function typeFile(
                 const roundTrip = Date.now() - messageStart[message.clientSequenceNumber];
                 delete messageStart[message.clientSequenceNumber];
                 latencyCounter.increment(roundTrip);
-                metrics.averageLatency = latencyCounter.getValue() / message.clientSequenceNumber;
+                metrics.latencyAverage = latencyCounter.getValue() / message.clientSequenceNumber;
+
+                // Update std deviation using Welford's method
+                stdDev = stdDev + (roundTrip - metrics.latencyAverage) * (roundTrip - mean);
+                metrics.latencyStdDev =
+                    message.clientSequenceNumber > 1 ? Math.sqrt(stdDev / (message.clientSequenceNumber - 1)) : 0;
+
+                // Store the mean for use in the next round
+                mean = metrics.latencyAverage;
 
                 // We need a better way of hearing when our messages have been received and processed.
                 // For now I just assume we are the only writer and wait to receive a message with a client

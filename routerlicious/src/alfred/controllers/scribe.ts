@@ -50,9 +50,14 @@ function updateMetrics(metrics: scribe.IScribeMetrics) {
             `Ack rate: ${(metrics.ackRate).toFixed(2)} characters/second`;
     }
 
-    if (metrics.averageLatency) {
+    if (metrics.latencyAverage) {
         document.getElementById("avg-latency").innerText =
-            `Average latency: ${(metrics.averageLatency).toFixed(2)} ms`;
+            `Average latency: ${(metrics.latencyAverage).toFixed(2)} ms`;
+    }
+
+    if (metrics.latencyStdDev) {
+        document.getElementById("stddev-latency").innerText =
+            `Standard deviation: ${(metrics.latencyStdDev).toFixed(2)} ms`;
     }
 
     if (metrics.typingRate) {

@@ -49,7 +49,9 @@
                 </div>
                 <p id="ack-rate">
                 </p>
-                <p id="avg-latency">
+                <p>
+                    <span id="avg-latency"></span><br/>
+                    <span id="stddev-latency"></span>
                 </p>
 
                 <div id="total-time">
