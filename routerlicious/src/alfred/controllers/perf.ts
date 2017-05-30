@@ -57,7 +57,6 @@ async function displayValues(map: api.IMap, container: JQuery, doc: api.Document
         console.log(JSON.stringify(message));
     });
 
-
     container.append(values);
 }
 

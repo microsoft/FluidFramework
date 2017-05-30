@@ -1,12 +1,11 @@
-// import * as _ from "lodash";
-import { Collection, MongoClient } from "mongodb";
 import * as minio from "minio";
+import { Collection, MongoClient } from "mongodb";
 import * as nconf from "nconf";
 import * as path from "path";
 import * as socketIoEmitter from "socket.io-emitter";
 import * as api from "../api";
-import * as socketStorage from "../socket-storage";
 import { ObjectStorageService } from "../paparazzi/objectStorageService";
+import * as socketStorage from "../socket-storage";
 
 // Setup the configuration system - pull arguments, then environment variables
 nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
@@ -114,7 +113,7 @@ async function runTest() {
     await sleep(10000);
     await consume();
     console.log("Done receiving from alfred. Printing Final Metrics....");
-    console.log(`Send to Kafka Socket IO time: ${sendStopTime - startTime}`);
+    console.log(`Send to Socket IO time: ${sendStopTime - startTime}`);
     console.log(`Receiving from alfred time: ${endTime - receiveStartTime}`);
     console.log(`Total time: ${endTime - startTime}`);
 }
@@ -122,9 +121,9 @@ async function runTest() {
 // Producer to send messages to redis throguh socket io emitter.
 async function produce() {
     const operation: IMapOperation = {
-        type: "set",
         key: "testkey",
-        value: "testvalue"
+        type: "set",
+        value: "testvalue",
     };
     startTime = Date.now();
     for (let i = 1; i <= chunkSize; ++i) {
@@ -172,29 +171,27 @@ async function consume() {
     return new Promise<any>((resolve, reject) => {
         loadObject(services, collection, objectId).then(async (doc) => {
             doc.on("valueChanged", () => {
-                console.log(`Value change received...`);
                 if (messagesLeft === chunkSize) {
                     receiveStartTime = Date.now();
                 }
                 if (messagesLeft === 1) {
                     endTime = Date.now();
-                    console.log(`We are done...`);
                     resolve({data: true});
                 }
                 --messagesLeft;
             });
 
             // Wait for 2 seconds to make sure that the listener is set up.
-            // Then start producing messages. 
+            // Then start producing messages.
             console.log("Wait for 2 seconds for the listener to set up....");
             await sleep(2000);
             console.log(`Start producing....`);
             produce();
-        },    
+        },
         (error) => {
             console.error(`Error: Couldn't connect ${error}`);
             reject(error);
-        });    
+        });
     });
 }
 

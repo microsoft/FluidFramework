@@ -1,12 +1,11 @@
 import * as _ from "lodash";
+import * as msgpack from "msgpack-lite";
 import * as nconf from "nconf";
 import * as path from "path";
+import * as redis from "redis";
 import * as api from "../api";
 import * as core from "../core";
 import * as utils from "../utils";
-import * as redis from "redis";
-import * as msgpack from "msgpack-lite"
-
 
 // Setup the configuration system - pull arguments, then environment letiables
 nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
@@ -71,14 +70,14 @@ async function produce() {
         let outputMessage: api.IBase;
         outputMessage = sequencedOperation;
         const sequencedMessage: core.ISequencedOperationMessage = {
-            objectId: objectId,
+            objectId,
             operation: outputMessage,
             type: core.SequencedOperationType,
         };
         const payloads = [{
             key: objectId,
             messages: [JSON.stringify(sequencedMessage)],
-            topic: "deltas"
+            topic: "deltas",
         }];
         producer.send(payloads).then(
             (responseMessage) => {
@@ -101,7 +100,7 @@ async function produce() {
 
 async function consume() {
     return new Promise<any>((resolve, reject) => {
-        sub.on("message", function(channel, message) {
+        sub.on("message", (channel, message) => {
             let decodedMessage = msgpack.decode(message);
             let sequenceNumber = decodedMessage[1].data[2].sequenceNumber;
             if (sequenceNumber === 1) {
