@@ -72,7 +72,7 @@ async function run() {
             });
 
             // Route the message to clients
-            // console.log(`Routing message to clients ${value.objectId}@${value.operation.sequenceNumber}`);
+            console.log(`Routing message to clients ${value.objectId}@${JSON.stringify(value.operation)}`);
             io.to(value.objectId).emit("op", value.objectId, value.operation);
         }
 

@@ -2,8 +2,13 @@ import * as $ from "jquery";
 import * as _ from "lodash";
 import * as api from "../../api";
 import * as socketStorage from "../../socket-storage";
+import { RateCounter } from "../../utils/counters";
 
 socketStorage.registerAsDefault(document.location.origin);
+
+const messageStart = {};
+let avgLatency: number = 0;
+let index = 0;
 
 async function loadDocument(id: string): Promise<api.Document> {
     console.log("Loading in root document...");
@@ -39,25 +44,38 @@ async function displayValues(map: api.IMap, container: JQuery, doc: api.Document
     keys.sort();
 
     const values = $("<div></div>");
+    const latencyText = $("<div>Average latency: </div>");
+    const latencyValue = $("<div>0</div>");
     for (const key of keys) {
         updateOrCreateKey(key, map, values, doc);
     }
 
-    // Listen and process updates
+    // Listen and show updates
     map.on("valueChanged", async (changed) => {
-        console.log(`New: ${JSON.stringify(changed)}`);
         updateOrCreateKey(changed.key, map, values, doc);
     });
-
+    
+    // Initialize counters
+    const ackCounter = new RateCounter();
+    ackCounter.reset();
+    const latencyCounter = new RateCounter();
+    latencyCounter.reset();
+    
+    // Listen and calculate latency
     map.on("op", (message) => {
-        console.log(JSON.stringify(message));
+        if (message.clientSequenceNumber) {
+            ackCounter.increment(1);
+            const roundTrip = Date.now() - messageStart[message.clientSequenceNumber];
+            delete messageStart[message.clientSequenceNumber];
+            latencyCounter.increment(roundTrip);
+            avgLatency = latencyCounter.getValue() / message.clientSequenceNumber;
+            console.log(`Avg latency: ${avgLatency}`);
+            latencyValue.text(avgLatency);
+        }
+
     });
 
-    map.on("submitOp", (message) => {
-        console.log(JSON.stringify(message));
-    });
-
-    container.append(values);
+    container.append(values, latencyText, latencyValue);
 }
 
 /**
@@ -105,7 +123,8 @@ function randomizeMap(map: api.IMap) {
     setInterval(() => {
         const key = keys[Math.floor(Math.random() * keys.length)];
         map.set(key, Math.floor(Math.random() * 100000).toString());
-    }, 1000);
+        messageStart[++index] = Date.now();
+    }, 10);
 }
 
 export function load(id: string) {
