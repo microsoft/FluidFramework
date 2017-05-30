@@ -59,13 +59,13 @@ async function displayValues(map: api.IMap, container: JQuery, doc: api.Document
     map.on("valueChanged", async (changed) => {
         updateOrCreateKey(changed.key, map, values, doc);
     });
-    
+
     // Initialize counters
     const ackCounter = new RateCounter();
     ackCounter.reset();
     const latencyCounter = new RateCounter();
     latencyCounter.reset();
-    
+
     // Listen and calculate latency
     map.on("op", (message) => {
         if (message.clientSequenceNumber) {
@@ -74,7 +74,7 @@ async function displayValues(map: api.IMap, container: JQuery, doc: api.Document
             delete messageStart[message.clientSequenceNumber];
             latencyCounter.increment(roundTrip);
             avgLatency = latencyCounter.getValue() / message.clientSequenceNumber;
-            latencyValue.text(`${(avgLatency/1000).toFixed(2)} seconds`);
+            latencyValue.text(`${(avgLatency / 1000).toFixed(2)} seconds`);
         }
 
     });
@@ -101,7 +101,7 @@ form.addEventListener("submit", (event) => {
     randomizeMap(root, intervalTime);
     event.preventDefault();
     event.stopPropagation();
-})
+});
 
 /**
  * Randomly changes the values in the map

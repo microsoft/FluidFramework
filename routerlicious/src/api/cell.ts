@@ -64,7 +64,6 @@ class Cell extends api.CollaborativeObject implements api.ICell {
 
     // The last sequence number and offset retrieved from the server
     private sequenceNumber = 0;
-    private offset = 0;
     private minimumSequenceNumber = 0;
 
     // Sequence number for operations local to this client
@@ -158,7 +157,6 @@ class Cell extends api.CollaborativeObject implements api.ICell {
 
     public snapshot(): Promise<void> {
         const snapshot = {
-            offset: this.offset,
             sequenceNumber: this.sequenceNumber,
             snapshot: _.clone(this.data),
         };
@@ -205,18 +203,17 @@ class Cell extends api.CollaborativeObject implements api.ICell {
         const rawSnapshot = this.connection.existing ? await services.objectStorageService.read(id) : null;
         const snapshot: ICellSnapshot = rawSnapshot
             ? JSON.parse(rawSnapshot)
-            : { offset: 0, sequenceNumber: 0, snapshot: {} };
+            : { sequenceNumber: 0, snapshot: {} };
 
         this.data = snapshot.snapshot;
         this.sequenceNumber = snapshot.sequenceNumber;
-        this.offset = snapshot.offset;
 
         this.listenForUpdates();
     }
 
     private listenForUpdates() {
         this.deltaManager = new DeltaManager(
-            this.offset,
+            this.sequenceNumber,
             this.services.deltaStorageService,
             this.connection,
             {
@@ -244,7 +241,7 @@ class Cell extends api.CollaborativeObject implements api.ICell {
             }
         }
 
-        this.connection.submitOp(message);
+        this.deltaManager.submitOp(message);
     }
 
     /**
@@ -279,6 +276,7 @@ class Cell extends api.CollaborativeObject implements api.ICell {
         if (message.type === api.OperationType) {
             this.processRemoteOperation(message as api.ISequencedMessage);
         }
+        this.events.emit("op", message);
     }
 
     private processRemoteOperation(message: api.ISequencedMessage) {
