@@ -276,6 +276,7 @@ class Cell extends api.CollaborativeObject implements api.ICell {
         if (message.type === api.OperationType) {
             this.processRemoteOperation(message as api.ISequencedMessage);
         }
+        // Brodcast the message to listeners.
         this.events.emit("op", message);
     }
 
