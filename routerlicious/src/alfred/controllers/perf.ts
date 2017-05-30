@@ -6,6 +6,11 @@ import { RateCounter } from "../../utils/counters";
 
 socketStorage.registerAsDefault(document.location.origin);
 
+const form = document.getElementById("text-form") as HTMLFormElement;
+const intervalElement = document.getElementById("interval") as HTMLInputElement;
+
+let root: api.IMap;
+
 const messageStart = {};
 let avgLatency: number = 0;
 let index = 0;
@@ -69,8 +74,7 @@ async function displayValues(map: api.IMap, container: JQuery, doc: api.Document
             delete messageStart[message.clientSequenceNumber];
             latencyCounter.increment(roundTrip);
             avgLatency = latencyCounter.getValue() / message.clientSequenceNumber;
-            console.log(`Avg latency: ${avgLatency}`);
-            latencyValue.text(avgLatency);
+            latencyValue.text(`${(avgLatency/1000).toFixed(2)} seconds`);
         }
 
     });
@@ -86,45 +90,30 @@ async function displayMap(parentElement: JQuery, map: api.IMap, parent: api.IMap
     parentElement.append(header);
 
     const container = $(`<div></div>`);
-    const childMaps = $(`<div></div>`);
-
     displayValues(map, container, doc);
 
-    const randomize = $("<button>Randomize</button>");
-    randomize.click((event) => {
-        randomizeMap(map);
-    });
-    parentElement.append(randomize);
-
-    const addMap = $("<button>Add</button>");
-    addMap.click(() => {
-        const newMap = doc.createMap();
-        displayMap(childMaps, newMap, map, doc);
-    });
-    parentElement.append(addMap);
-
-    if (parent && map.isLocal()) {
-        const attach = $("<button>Attach</button>");
-        attach.click(() => {
-            parent.set(map.id, map);
-        });
-        parentElement.append(attach);
-    }
-
-    parentElement.append(container, childMaps);
+    $("#mapValues").append(container);
 }
+
+form.addEventListener("submit", (event) => {
+    const intervalTime = Number.parseInt(intervalElement.value);
+    console.log(`Submit with ${intervalTime}`);
+    randomizeMap(root, intervalTime);
+    event.preventDefault();
+    event.stopPropagation();
+})
 
 /**
  * Randomly changes the values in the map
  */
-function randomizeMap(map: api.IMap) {
+function randomizeMap(map: api.IMap, interval: number) {
     // link up the randomize button
     const keys = ["foo", "bar", "baz", "binky", "winky", "twinkie"];
     setInterval(() => {
         const key = keys[Math.floor(Math.random() * keys.length)];
         map.set(key, Math.floor(Math.random() * 100000).toString());
         messageStart[++index] = Date.now();
-    }, 10);
+    }, interval);
 }
 
 export function load(id: string) {
@@ -133,10 +122,10 @@ export function load(id: string) {
             // tslint:disable-next-line
             window["doc"] = doc;
 
-            const root = doc.getRoot();
+            root = doc.getRoot();
 
             // Display the initial values and then listen for updates
-            displayMap($("#mapViews"), root, null, doc);
+            displayMap($("#mapHeader"), root, null, doc);
         });
     });
 }
