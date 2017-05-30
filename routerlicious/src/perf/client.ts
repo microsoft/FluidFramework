@@ -17,14 +17,23 @@ const chunkSize = nconf.get("perf:chunkSize");
 console.log("Perf testing client.....");
 runTest();
 
-const objectId = "test-document";
 const socket = io("http://alfred:3000", { transports: ["websocket"] });
+
+const objectId = "test-document";
+let startTime: number;
+let sendStopTime: number;
+let receiveStartTime: number;
+let endTime: number;
 
 async function runTest() {
     console.log("Wait for 10 seconds to warm up kafka and zookeeper....");
     await sleep(10000);
     produce();  
     await consume(); 
+    console.log("Done receiving from kafka. Printing Final Metrics....");
+    console.log(`Send to SocketIO Ack time: ${sendStopTime - startTime}`);
+    console.log(`Kafka receiving time: ${endTime - receiveStartTime}`);
+    console.log(`Total time: ${endTime - startTime}`);    
 }
 
 async function consume() {
@@ -35,19 +44,22 @@ async function consume() {
         groupId,
         id: kafkaClientId,
     });
-    highLevelConsumer.on("error", (error) => {
-        // Workaround to resolve rebalance partition error.
-        // https://github.com/SOHU-Co/kafka-node/issues/90
-        console.error(`Error in kafka consumer: ${error}. Wait for 30 seconds and restart...`);
-        setTimeout(() => {
-            process.exit(1);
-        }, 30000);
-    });
 
-    highLevelConsumer.on("message", async (message: any) => {
-        console.log(`Received message: ${JSON.stringify(message)}`);
-    });
+    return new Promise<any>((resolve, reject) => {
+        highLevelConsumer.on("error", (error) => {
+            console.error(`Error in kafka consumer: ${error}...`);
+        });
 
+        highLevelConsumer.on("message", async (message: any) => {
+            if (message.offset === 0) {
+                receiveStartTime = Date.now();
+            }
+            if (message.offset === (chunkSize - 1)) {
+                endTime = Date.now();
+                resolve({data: true});
+            }
+        });
+    });
 }
 
 async function produce() {
@@ -58,12 +70,22 @@ async function produce() {
         op: "test",
         referenceSequenceNumber: 200,
     };
+    let messagesLeft = chunkSize;
+
     for (let i = 1; i <= chunkSize; ++i) {
         socket.emit("submitOp", objectId, message, (error) => {
             if (error) {
-                console.log(`Error: ${error}`);
+                console.log(`Error sending to socket: ${error}`);
             } else {
-                console.log(`Sent to socket`);
+                if (messagesLeft === chunkSize) {
+                    startTime = Date.now();
+                    console.log(`Ack for first message received.`);
+                }
+                if (messagesLeft === 1) {
+                    sendStopTime = Date.now();
+                    console.log(`Time to get ack for all messages: ${sendStopTime - startTime}`);
+                }
+                --messagesLeft;
             }
         });
     }
