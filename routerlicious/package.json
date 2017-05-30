@@ -52,7 +52,11 @@
     "perf:alfred": "node dist/perf/alfred.js",
     "perf:alfred:debug": "nodemon --exitcrash --debug=0.0.0.0:5858 dist/perf/alfred.js -w dist",
     "pretest:perf:alfred": "docker-compose -f docker-compose.test.alfred.yml down --remove-orphans",
-    "test:perf:alfred": "npm run pretest:perf:alfred; docker-compose -f docker-compose.test.alfred.yml up"    
+    "test:perf:alfred": "npm run pretest:perf:alfred; docker-compose -f docker-compose.test.alfred.yml up",
+    "perf:client": "node dist/perf/client.js",
+    "perf:client:debug": "nodemon --exitcrash --debug=0.0.0.0:5858 dist/perf/client.js -w dist",
+    "pretest:perf:client": "docker-compose -f docker-compose.test.client.yml down --remove-orphans",
+    "test:perf:client": "npm run pretest:perf:client; docker-compose -f docker-compose.test.client.yml up"        
   },
   "author": "Microsoft",
   "license": "Apache-2.0",
