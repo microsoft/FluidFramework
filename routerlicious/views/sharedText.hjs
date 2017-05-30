@@ -4,20 +4,6 @@
     {{/styles}}
 
     {{$content}}
-        <div id="insights" class="insights hidden">
-            <span class="insight-text"></span>
-            <img class="clippy" src="/public/images/clippy.gif"></img>
-        </div>
-        <nav class="navbar navbar-shared-text navbar-fixed-bottom">
-            <div class="container-fluid">
-                <div class="navbar-header">                    
-                    <ul class="list-inline">
-                        <li id="language-insight"></li>
-                        <li id="sentiment-insight"></li>
-                    </ul>
-                </div>
-            </div>
-        </nav>
     {{/content}}
 
     {{$scripts}}

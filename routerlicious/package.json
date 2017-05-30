@@ -80,6 +80,7 @@
     "@types/socket.io-redis": "^1.0.21",
     "browserify": "^14.1.0",
     "browserify-shim": "^3.8.13",
+    "concurrently": "^3.4.0",
     "less": "^2.7.2",
     "mkdirp": "^0.5.1",
     "mocha": "^3.2.0",
