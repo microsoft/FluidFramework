@@ -1,0 +1,12 @@
+version: '3'
+services:
+    alfred:
+        command: npm run alfred:debug:windows
+    deli:
+        command: npm run deli:debug:windows
+    paparazzi:
+        command: npm run paparazzi:debug:windows
+    scriptorium:
+        command: npm run scriptorium:debug:windows
+    tmz:
+        command: npm run tmz:debug:windows

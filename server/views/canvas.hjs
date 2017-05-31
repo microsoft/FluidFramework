@@ -47,7 +47,7 @@
         <script src="https://charts.azureedge.net/release/0.1.174206.1/microsoft-charts.min.js"></script>     
         <script src="/dist/canvas/canvas.js"></script> 
         <script>
-            canvas.initialize("{{id}}");
+            canvas.initialize("{{id}}", {{compose}});
         </script>
     {{/scripts}}            
 {{/layout}}

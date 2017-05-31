@@ -16,7 +16,6 @@ interface IMapOperation {
  * Map snapshot definition
  */
 export interface ISnapshot {
-    offset: number;
     sequenceNumber: number;
     snapshot: any;
 };
@@ -65,7 +64,6 @@ class Map extends api.CollaborativeObject implements api.IMap {
 
     // The last sequence number and offset retrieved from the server
     private sequenceNumber = 0;
-    private offset = 0;
     private minimumSequenceNumber = 0;
 
     // Sequence number for operations local to this client
@@ -93,6 +91,10 @@ class Map extends api.CollaborativeObject implements api.IMap {
      */
     public async get(key: string) {
         await this.loadingP;
+
+        if (!(key in this.data)) {
+            return undefined;
+        }
 
         const value = this.data[key];
         if (value.type === ValueType[ValueType.Collaborative]) {
@@ -169,7 +171,6 @@ class Map extends api.CollaborativeObject implements api.IMap {
 
     public snapshot(): Promise<void> {
         const snapshot = {
-            offset: this.offset,
             sequenceNumber: this.sequenceNumber,
             snapshot: _.clone(this.data),
         };
@@ -216,18 +217,17 @@ class Map extends api.CollaborativeObject implements api.IMap {
         const rawSnapshot = this.connection.existing ? await services.objectStorageService.read(id) : null;
         const snapshot: ISnapshot = rawSnapshot
             ? JSON.parse(rawSnapshot)
-            : { offset: 0, sequenceNumber: 0, snapshot: {} };
+            : { sequenceNumber: 0, snapshot: {} };
 
         this.data = snapshot.snapshot;
         this.sequenceNumber = snapshot.sequenceNumber;
-        this.offset = snapshot.offset;
 
         this.listenForUpdates();
     }
 
     private listenForUpdates() {
         this.deltaManager = new DeltaManager(
-            this.offset,
+            this.sequenceNumber,
             this.services.deltaStorageService,
             this.connection,
             {
@@ -283,14 +283,15 @@ class Map extends api.CollaborativeObject implements api.IMap {
      */
     private processRemoteMessage(message: api.IBase) {
         // server messages should only be delivered to this method in sequence number order
-        assert.equal(this.offset + 1, message.offset);
-        this.offset = message.offset;
+        assert.equal(this.sequenceNumber + 1, message.sequenceNumber);
         this.sequenceNumber = message.sequenceNumber;
         this.minimumSequenceNumber = message.minimumSequenceNumber;
 
         if (message.type === api.OperationType) {
             this.processRemoteOperation(message as api.ISequencedMessage);
         }
+        // Brodcast the message to listeners.
+        this.events.emit("op", message);
     }
 
     private processRemoteOperation(message: api.ISequencedMessage) {

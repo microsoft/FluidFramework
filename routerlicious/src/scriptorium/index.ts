@@ -1,3 +1,4 @@
+import { queue } from "async";
 import * as kafka from "kafka-node";
 import { MongoClient } from "mongodb";
 import * as nconf from "nconf";
@@ -30,7 +31,7 @@ async function run() {
     const collection = db.collection(deltasCollectionName);
     await collection.createIndex({
             "objectId": 1,
-            "operation.offset": 1,
+            "operation.sequenceNumber": 1,
         },
         { unique: true });
 
@@ -43,31 +44,32 @@ async function run() {
     const partitionManager = new core.PartitionManager(groupId, topic, consumerOffset,
                                                        checkpointBatchSize, checkpointTimeIntervalMsec);
 
-    const consumerGroup = new kafka.ConsumerGroup({
+    const highLevelConsumer = new kafka.HighLevelConsumer(kafkaClient, [{topic}], {
             autoCommit: false,
-            fromOffset: "earliest",
+            fromOffset: true,
             groupId,
-            host: zookeeperEndpoint,
             id: kafkaClientId,
-            protocol: ["roundrobin"],
-        },
-        [topic]);
-
-    consumerGroup.on("error", (error) => {
-        console.error(error);
     });
 
-    consumerGroup.on("message", async (message: any) => {
+    highLevelConsumer.on("error", (error) => {
+        // Workaround to resolve rebalance partition error.
+        // https://github.com/SOHU-Co/kafka-node/issues/90
+        console.error(`Error in kafka consumer: ${error}. Wait for 30 seconds and restart...`);
+        setTimeout(() => {
+            process.exit(1);
+        }, 30000);
+    });
+
+    const q = queue((message: any, callback) => {
         // NOTE the processing of the below messages must make sure to notify clients of the messages in increasing
         // order. Be aware of promise handling ordering possibly causing out of order messages to be delivered.
 
         const baseMessage = JSON.parse(message.value) as core.IMessage;
         if (baseMessage.type === core.SequencedOperationType) {
             const value = baseMessage as core.ISequencedOperationMessage;
-            const objectId = value.objectId;
 
             // Serialize the message to backing store
-            console.log(`Inserting to mongodb ${objectId}@${value.operation.offset}:${value.operation.sequenceNumber}`);
+            console.log(`Inserting to mongodb ${value.objectId}@${value.operation.sequenceNumber}`);
             collection.insert(value).catch((error) => {
                 console.error("Error serializing to MongoDB");
                 console.error(error);
@@ -87,6 +89,12 @@ async function run() {
             // Finally call kafka checkpointing.
             partitionManager.checkPoint();
         }
+
+        callback();
+    }, 1);
+
+    highLevelConsumer.on("message", async (message: any) => {
+        q.push(message);
     });
 }
 

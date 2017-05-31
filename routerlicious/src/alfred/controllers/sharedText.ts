@@ -1,553 +1,213 @@
 // tslint:disable:align whitespace no-trailing-whitespace
 import * as request from "request";
 import * as url from "url";
-// import * as Geometry from "./geometry";
-import * as api from "../../api";
+import * as API from "../../api";
 import { MergeTreeChunk } from "../../api";
 import * as SharedString from "../../merge-tree";
 import * as socketStorage from "../../socket-storage";
+import * as FlowView from "./flowView";
+import * as Geometry from "./geometry";
 
 socketStorage.registerAsDefault(document.location.origin);
 
 // first script loaded
 let clockStart = Date.now();
 
-enum CharacterCodes {
-    _ = 95,
-    $ = 36,
+export let theFlow: FlowView.FlowView;
 
-    ampersand = 38,             // &
-    asterisk = 42,              // *
-    at = 64,                    // @
-    backslash = 92,             // \
-    bar = 124,                  // |
-    caret = 94,                 // ^
-    closeBrace = 125,           // }
-    closeBracket = 93,          // ]
-    closeParen = 41,            // )
-    colon = 58,                 // : 
-    comma = 44,                 // ,
-    dot = 46,                   // .
-    doubleQuote = 34,           // "
-    equals = 61,                // =
-    exclamation = 33,           // !
-    hash = 35,                  // #
-    greaterThan = 62,           // >
-    lessThan = 60,              // <
-    minus = 45,                 // -
-    openBrace = 123,            // {
-    openBracket = 91,           // [
-    openParen = 40,             // (
-    percent = 37,               // %
-    plus = 43,                  // +
-    question = 63,              // ?
-    semicolon = 59,             // ;
-    singleQuote = 39,           // '
-    slash = 47,                 // /
-    tilde = 126,                // ~
-    _0 = 48,
-    _9 = 57,
-    a = 97,
-    z = 122,
-
-    A = 65,
-    Z = 90,
-    space = 0x0020,   // " "
+interface IKeyMsgPair {
+    key: string;
+    msg: string;
+    showKey?: boolean;
 }
 
-interface ISegSpan extends HTMLSpanElement {
-    seg: SharedString.TextSegment;
-    pos?: number;
-}
+class Status implements FlowView.IStatus {
+    public overlayDiv: HTMLDivElement;
+    public overlayImageElm: HTMLImageElement;
+    public overlayMsgBox: HTMLSpanElement;
+    public info: IKeyMsgPair[] = [];
+    public overlayInnerRects: Geometry.Rectangle[];
+    public overlayMsg: string;
 
-interface IRangeInfo {
-    elm: HTMLElement;
-    node: Node;
-    offset: number;
-}
-
-function elmOffToSegOff(elmOff: IRangeInfo, span: HTMLSpanElement) {
-    let offset = elmOff.offset;
-    let prevSib = elmOff.node.previousSibling;
-    if ((!prevSib) && (elmOff.elm !== span)) {
-        prevSib = elmOff.elm.previousSibling;
-    }
-    while (prevSib) {
-        switch (prevSib.nodeType) {
-            case Node.ELEMENT_NODE:
-                let innerSpan = <HTMLSpanElement>prevSib;
-                offset += innerSpan.innerText.length;
-                break;
-            case Node.TEXT_NODE:
-                offset += prevSib.nodeValue.length;
-                break;
-            default:
-                break;
-        }
-        prevSib = prevSib.previousSibling;
-    }
-    return offset;
-}
-
-let cachedCanvas: HTMLCanvasElement;
-function getTextWidth(text, font) {
-    // re-use canvas object for better performance
-    const canvas = cachedCanvas || (cachedCanvas = document.createElement("canvas"));
-    const context = canvas.getContext("2d");
-    context.font = font;
-    const metrics = context.measureText(text);
-    return metrics.width;
-}
-
-// for now global; later map from font info to width/height estimates
-let wEst = 0;
-let hEst = 23;
-
-function makeInnerDiv() {
-    let innerDiv = document.createElement("div");
-    innerDiv.style.font = "18px Times";
-    innerDiv.style.lineHeight = "125%";
-    innerDiv.onclick = (e) => {
-        let div = <HTMLDivElement>e.target;
-        if (div.lastElementChild) {
-            // tslint:disable-next-line:max-line-length
-            console.log(`div click at ${e.clientX},${e.clientY} rightmost span with text ${div.lastElementChild.innerHTML}`);
-        }
-    };
-    return innerDiv;
-}
-
-function onCursorStyle(span: HTMLSpanElement) {
-    span.style.backgroundColor = "blue";
-    span.style.visibility = "visible";
-}
-
-function offCursorStyle(span: HTMLSpanElement) {
-    span.style.visibility = "hidden";
-}
-
-function makeCursor() {
-    let editSpan = document.createElement("span");
-    editSpan.id = "cursor";
-    editSpan.innerText = "\uFEFF";
-    onCursorStyle(editSpan);
-    return editSpan;
-}
-
-function widthEst(fontInfo: string) {
-    let innerDiv = makeInnerDiv();
-    wEst = getTextWidth("abcdefghi jklmnopqrstuvwxyz", innerDiv.style.font) / 27;
-}
-
-function makeScrollLosenge(height: number, left: number, top: number) {
-    let div = document.createElement("div");
-    div.style.width = "12px";
-    div.style.height = `${height}px`;
-    div.style.left = `${left}px`;
-    div.style.top = `${top}px`;
-    div.style.backgroundColor = "pink";
-    let bordRad = height / 3;
-    div.style.borderRadius = `${bordRad}px`;
-    div.style.position = "absolute";
-    return div;
-}
-
-// TODO: ensure some text shows up in very small viewports
-function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Client, context: StringView) {
-    div.id = "renderedTree";
-    div.style.marginRight = "8%";
-    div.style.marginLeft = "5%";
-    div.style.marginTop = "5%";
-    div.style.marginBottom = "5%";
-    div.style.whiteSpace = "pre-wrap";
-    let splitTopSeg = true;
-    let w = Math.floor(wEst);
-    let h = hEst;
-    let charsPerLine = window.innerWidth / w;
-    let charsPerViewport = Math.floor((window.innerHeight / h) * charsPerLine);
-    let innerDiv = makeInnerDiv();
-    div.appendChild(innerDiv);
-    let charLength = 0;
-    function renderSegment(segment: SharedString.Segment, segPos: number, refSeq: number,
-        clientId: number, start: number, end: number) {
-        let segOffset = 0;
-        let prevWord: string;
-
-        function segmentToSpan(segText: string, textSegment: SharedString.TextSegment) {
-            let span = <ISegSpan>document.createElement("span");
-            if (segText.indexOf("Chapter") >= 0) {
-                span.style.fontSize = "140%";
-                span.style.lineHeight = "150%";
-            } else {
-                segText = segText.replace(/_([a-zA-Z]+)_/g, "<span style='font-style:italic'>$1</span>");
-            }
-            span.innerHTML = segText;
-            span.seg = textSegment;
-            if (segOffset > 0) {
-                span.pos = segOffset;
-                segOffset = 0;
-            }
-            innerDiv.appendChild(span);
-            return segText;
-        }
-
-        function renderFirstSegment(text: string) {
-            let segLength = 0;
-            let words = text.split(" ");
-            segOffset = 0;
-            for (let word of words) {
-                if (segLength >= start) {
-                    let rightSpan = <ISegSpan>innerDiv.lastElementChild;
-                    let onRightLeftBound = window.innerWidth * 2;
-                    let onRightCharOffset = 0;
-                    while (rightSpan) {
-                        let bounds = rightSpan.getBoundingClientRect();
-                        // console.log(`left: ${bounds.left}`);
-                        if (onRightLeftBound < bounds.left) {
-                            segOffset = onRightCharOffset;
-                            break;
-                        }
-                        onRightCharOffset = rightSpan.pos;
-                        let prev = <ISegSpan>rightSpan.previousElementSibling;
-                        innerDiv.removeChild(rightSpan);
-                        rightSpan = prev;
-                    }
-                    div.removeChild(innerDiv);
-                    div.appendChild(makeInnerDiv());
-                    break;
-                } else {
-                    let span = <ISegSpan>document.createElement("span");
-                    word = word.replace(/_([a-zA-Z]+)_/g, "<span style='font-style:italic'>$1</span>");
-                    if (prevWord) {
-                        // TODO: handle multi-space separators; incorporate separator as preceding word
-                        // as in view as sequence of /\s*\w+/ with a trailing \s*
-                        word = " " + word;
-                    }
-                    prevWord = word;
-                    span.innerHTML = word;
-                    innerDiv.appendChild(span);
-                    span.pos = segLength;
-                    segLength += word.length;
-                }
-            }
-            return text.substring(segOffset);
-        }
-        if (segment.getType() === SharedString.SegmentType.Text) {
-            let textSegment = <SharedString.TextSegment>segment;
-            let last = (textSegment.text.length === end);
-            if (textSegment !== context.prevTopSegment) {
-                splitTopSeg = false;
-                context.prevTopSegment = textSegment;
-            }
-            let segText = textSegment.text;
-            context.adjustedTopChar = context.topChar;
-            if ((start > 0) && splitTopSeg) {
-                segText = renderFirstSegment(segText);
-                let actualStart = textSegment.text.length - segText.length;
-                if (start !== actualStart) {
-                    context.adjustedTopChar = context.topChar + (actualStart - start);
-                }
-            }
-            segText = segmentToSpan(segText, textSegment);
-            if (segText.charAt(segText.length - 1) === "\n") {
-                innerDiv = makeInnerDiv();
-                div.appendChild(innerDiv);
-            }
-            charLength += segText.length;
-
-            if ((charLength > charsPerViewport) || last) {
-                console.log(`client h, w ${div.clientHeight},${div.clientWidth}`);
-                let constraint = Math.floor(window.innerHeight * 0.95);
-
-                if (div.clientHeight > constraint) {
-                    if (innerDiv.previousElementSibling) {
-                        let pruneDiv = <HTMLDivElement>innerDiv.previousElementSibling;
-                        let lastPruned: HTMLDivElement;
-                        while (pruneDiv) {
-                            if (pruneDiv.getBoundingClientRect().bottom > constraint) {
-                                let temp = <HTMLDivElement>pruneDiv.previousElementSibling;
-                                div.removeChild(pruneDiv);
-                                lastPruned = pruneDiv;
-                                pruneDiv = temp;
-                            } else {
-                                break;
-                            }
-                        }
-                        if (lastPruned) {
-                            div.appendChild(lastPruned);
-                            for (let i = 0; i < lastPruned.childElementCount; i++) {
-                                let prunedSpan = <ISegSpan>lastPruned.children[i];
-                                let bounds = prunedSpan.getBoundingClientRect();
-                                if (bounds.bottom <= constraint) {
-                                    innerDiv.appendChild(prunedSpan);
-                                } else {
-                                    if ((constraint - bounds.top) > hEst) {
-                                        let x = bounds.right;
-                                        let y = constraint - Math.floor(hEst / 2);
-                                        let elmOff = pointerToElementOffsetWebkit(x, y);
-                                        let segOff = elmOffToSegOff(elmOff, prunedSpan) + 1;
-                                        let textSeg = <SharedString.TextSegment>prunedSpan.seg;
-                                        while ((segOff > 0) &&
-                                            (textSeg.text.charCodeAt(segOff) !== CharacterCodes.space)) {
-                                            segOff--;
-                                        }
-                                        if (segOff > 0) {
-                                            segmentToSpan(textSeg.text.substring(0, segOff), textSeg);
-                                        }
-                                    }
-                                    break;
-                                }
-                            }
-                            div.removeChild(lastPruned);
-                        }
-                    }
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
-    client.mergeTree.mapRange({ leaf: renderSegment }, SharedString.UniversalSequenceNumber,
-        client.getClientId(), undefined, pos);
-}
-
-export let theString: StringView;
-
-function pointerToElementOffsetWebkit(x: number, y: number): IRangeInfo {
-    let range = document.caretRangeFromPoint(x, y);
-    let result = {
-        elm: <HTMLElement>range.startContainer.parentElement,
-        node: range.startContainer,
-        offset: range.startOffset,
-    };
-    range.detach();
-
-    return result;
-}
-
-class StringView {
-    public timeToImpression: number;
-    public timeToLoad: number;
-    public timeToEdit: number;
-    public timeToCollab: number;
-    public viewportCharCount: number;
-    public charsPerLine: number;
-    public prevTopSegment: SharedString.TextSegment;
-    public adjustedTopChar: number;
-    public cursorSpan: HTMLSpanElement;
-    public viewportDiv: HTMLDivElement;
-    public client: SharedString.Client;
-    public ticking = false;
-    public topChar = 0;
-    private off = true;
-    private cursorBlinkCount = 0;
-    private blinkTimer: any;
-    private pendingRender = false;
-
-    constructor(public sharedString: SharedString.SharedString, public totalSegmentCount,
-        public totalLengthChars) {
-        this.client = sharedString.client;
+    constructor(public div: HTMLDivElement, public overlayContainer: HTMLElement) {
+        this.makeOverlay(overlayContainer);
         this.updateGeometry();
+        this.div.style.backgroundColor = "#F1F1F1";
+    }
 
-        sharedString.on("op", () => {
-            this.queueRender();
+    public onresize() {
+        this.updateGeometry();
+    }
+
+    public add(key: string, msg: string, showKey = false) {
+        let i = this.findKV(key);
+        if (i < 0) {
+            i = this.info.length;
+            this.info.push({ key, msg, showKey });
+        } else {
+            this.info[i].msg = msg;
+            this.info[i].showKey = showKey;
+        }
+        this.renderBar();
+    }
+
+    public remove(key: string) {
+        let i = this.findKV(key);
+        if (i >= 0) {
+            this.info.splice(i, 1);
+        }
+        this.renderBar();
+    }
+
+    public renderBar() {
+        let buf = "";
+        let first = true;
+        for (let kv of this.info) {
+            buf += "<span>";
+            if (!first) {
+                if (kv.showKey) {
+                    buf += ";  ";
+                } else {
+                    buf += " ";
+                }
+            }
+            first = false;
+            if (kv.showKey) {
+                buf += `${kv.key}: ${kv.msg}`;
+            } else {
+                buf += `${kv.msg}`;
+            }
+            buf += "<\span>";
+        }
+
+        this.div.innerHTML = buf;
+    }
+
+    public overlay(msg: string) {
+        this.overlayMsg = msg;
+        this.overlayMsgBox.innerText = msg;
+        if (!this.overlayImageElm) {
+            this.overlayImageElm = document.createElement("img");
+            this.overlayImageElm.src = url.resolve(document.baseURI, "/public/images/clippy.gif");
+            this.overlayImageElm.alt = "Your Buddy!";
+            this.overlayDiv.appendChild(this.overlayImageElm);
+        }
+        this.overlayImageElm.style.height = "auto";
+        this.overlayInnerRects[1].conformElement(this.overlayImageElm);
+        this.overlayDiv.style.visibility = "visible";
+        this.overlayMsgBox.style.height = "auto";
+        this.overlayMsgBox.style.padding = "5px";
+        this.overlayMsgBox.style.borderRadius = "8px";
+        this.overlayMsgBox.style.backgroundColor = "rgba(0, 240, 20, 0.5)";
+        this.overlayMsgBox.style.visibility = "visible";
+    }
+
+    public removeOverlay() {
+        this.overlayMsg = undefined;
+        this.overlayDiv.style.visibility = "hidden";
+    }
+
+    private findKV(key: string) {
+        for (let i = 0, len = this.info.length; i < len; i++) {
+            if (this.info[i].key === key) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private updateGeometry() {
+        let bounds = Geometry.Rectangle.fromClientRect(this.overlayContainer.getBoundingClientRect());
+        let overlayRect = bounds.inner4(0.7, 0.05, 0.2, 0.1);
+        overlayRect.conformElement(this.overlayDiv);
+        overlayRect.x = 0;
+        overlayRect.y = 0;
+        this.overlayInnerRects = overlayRect.nipHoriz(Math.floor(overlayRect.width * 0.6));
+        this.overlayInnerRects[0].conformElement(this.overlayMsgBox);
+        if (this.overlayMsg) {
+            this.overlay(this.overlayMsg);
+        }
+    }
+
+    private makeOverlay(overlayContainer: HTMLElement) {
+        let overlayDiv = document.createElement("div");
+        overlayDiv.style.visibility = "hidden";
+        this.overlayMsgBox = document.createElement("span");
+        overlayDiv.appendChild(this.overlayMsgBox);
+        overlayContainer.appendChild(overlayDiv);
+        this.overlayDiv = overlayDiv;
+    }
+}
+
+class FlowContainer implements FlowView.IComponentContainer {
+    public onresize: () => void;
+    public onkeydown: (e: KeyboardEvent) => void;
+    public status: FlowView.IStatus;
+    public div: HTMLDivElement;
+    public statusDiv: HTMLDivElement;
+
+    constructor() {
+        this.createElements();
+        this.updateGeometry();
+        this.status = new Status(this.statusDiv, this.div);
+        window.addEventListener("resize", () => {
+            this.updateGeometry();
+            if (this.onresize) {
+                this.onresize();
+                if (this.status) {
+                    this.status.onresize();
+                }
+            }
         });
+        document.body.onkeydown = (e) => {
+            // TODO: filter by target
+            if (this.onkeydown) {
+                this.onkeydown(e);
+            }
+        };
+    }
+
+    public createElements() {
+        this.div = document.createElement("div");
+        this.statusDiv = document.createElement("div");
+        this.statusDiv.style.borderTop = "1px solid gray";
+        document.body.appendChild(this.div);
+        document.body.appendChild(this.statusDiv);
     }
 
     public updateGeometry() {
-        this.charsPerLine = window.innerWidth / Math.floor(wEst); // overestimate
-        let charsPerViewport = Math.floor((window.innerHeight / hEst) * this.charsPerLine);
-        this.viewportCharCount = charsPerViewport;
+        let bodBounds = Geometry.Rectangle.fromClientRect(document.body.getBoundingClientRect());
+        let vertSplit = bodBounds.nipVertBottom(22);
+        vertSplit[0].conformElement(this.div);
+        vertSplit[1].y++; vertSplit[1].height--; // room for 1px border
+        vertSplit[1].conformElement(this.statusDiv);
     }
-
-    public setEdit() {
-        document.body.onclick = (e) => {
-            let span = <ISegSpan>e.target;
-            let segspan: ISegSpan;
-            if (span.seg) {
-                segspan = span;
-            } else {
-                segspan = <ISegSpan>span.parentElement;
-            }
-            if (segspan && segspan.seg) {
-                let segOffset = this.client.mergeTree.getOffset(segspan.seg, this.client.getCurrentSeq(),
-                    this.client.getClientId());
-                let elmOff = pointerToElementOffsetWebkit(e.clientX, e.clientY);
-                // tslint:disable:max-line-length
-                console.log(`segment ${segspan.childNodes.length} children; at char offset ${segOffset} within: ${elmOff.offset} computed: ${elmOffToSegOff(elmOff, segspan)}`);
-            }
-        };
-
-        document.body.onmousewheel = (e) => {
-            let factor = this.viewportCharCount / 10;
-            let delta = Math.max(-factor, Math.min(factor, (e.wheelDelta || -e.detail)));
-            if (delta < 0) {
-                delta = Math.min(-factor, delta);
-            } else {
-                delta = Math.max(factor, delta);
-            }
-            // console.log(`delta: ${delta} wheel: ${e.wheelDeltaY} ${e.wheelDelta} ${e.detail}`);
-            setTimeout(() => {
-                this.render(this.topChar - delta);
-                this.ticking = false;
-            }, 20);
-            this.ticking = true;
-
-            e.preventDefault();
-            e.returnValue = false;
-        };
-        window.onresize = () => {
-            this.updateGeometry();
-            this.render();
-        };
-        let handler = (e: KeyboardEvent) => {
-            console.log(`key ${e.keyCode}`);
-            if (((e.keyCode === 33) || (e.keyCode === 34)) && (!this.ticking)) {
-                setTimeout(() => {
-                    console.log(`animation frame ${Date.now() - clockStart}`);
-                    this.scroll(e.keyCode === 33);
-                    this.ticking = false;
-                }, 20);
-                this.ticking = true;
-            } else if (e.keyCode === 36) {
-                this.render(0);
-                e.preventDefault();
-                e.returnValue = false;
-            } else if (e.keyCode === 35) {
-                let halfport = Math.floor(this.viewportCharCount / 2);
-                this.render(this.client.getLength() - halfport);
-                e.preventDefault();
-                e.returnValue = false;
-            }
-        };
-        document.body.onkeydown = handler;
-    }
-
-    public scroll(up: boolean) {
-        let len = this.client.getLength();
-        let halfport = Math.floor(this.viewportCharCount / 2);
-        if ((up && (this.topChar === 0)) || ((!up) && (this.topChar > (len - halfport)))) {
-            return;
-        }
-        let scrollTo = this.topChar;
-        if (up) {
-            scrollTo -= halfport;
-        } else {
-            scrollTo += halfport;
-        }
-        this.render(scrollTo);
-    }
-
-    public setCursor() {
-        if (this.viewportDiv.childElementCount > 0) {
-            let firstDiv = this.viewportDiv.children[0];
-            let firstSpan = <HTMLSpanElement>firstDiv.children[0];
-            firstSpan.style.position = "relative";
-            this.cursorSpan = makeCursor();
-            this.cursorSpan.style.position = "absolute";
-            this.cursorSpan.style.left = "0px";
-            this.cursorSpan.style.top = "0px";
-            this.cursorSpan.style.width = "1px";
-            firstSpan.appendChild(this.cursorSpan);
-            clearTimeout(this.blinkTimer);
-            this.blinkCursor();
-        }
-    }
-
-    public render(topChar?: number, changed = false) {
-        let len = this.client.getLength();
-        let halfport = Math.floor(this.viewportCharCount / 2);
-        if (topChar !== undefined) {
-            if ((this.topChar === topChar) && (!changed)) {
-                // console.log("no change in top char");
-                return;
-            }
-            this.topChar = topChar;
-            if (this.topChar < 0) {
-                this.topChar = 0;
-            }
-            if (this.topChar >= (len - halfport)) {
-                this.topChar -= (halfport / 2);
-            }
-        }
-        let clk = Date.now();
-        let frac = this.topChar / len;
-        let pos = Math.floor(frac * len);
-        let oldDiv = document.getElementById("renderedTree");
-        if (oldDiv) {
-            document.body.removeChild(oldDiv);
-        }
-        let viewportDiv = document.createElement("div");
-        document.body.appendChild(viewportDiv);
-        renderTree(viewportDiv, pos, this.client, this);
-        let bubbleHeight = Math.max(3, Math.floor((this.viewportCharCount / len) * window.innerHeight));
-        let bubbleTop = Math.floor(frac * window.innerHeight);
-        let bubbleLeft = window.innerWidth - 18;
-        let scrollDiv = makeScrollLosenge(bubbleHeight, bubbleLeft, bubbleTop);
-        viewportDiv.appendChild(scrollDiv);
-        this.viewportDiv = viewportDiv;
-        console.log(`render time: ${Date.now() - clk}ms`);
-        // this.setCursor();
-    }
-
-    public loadFinished() {
-        this.render(0, true);
-        // tslint:disable-next-line:max-line-length
-        console.log(`time to edit/impression: ${this.timeToEdit} time to load: ${Date.now() - clockStart}ms len: ${this.sharedString.client.getLength()}`);
-    }
-
-    private queueRender() {
-        if (!this.pendingRender) {
-            this.pendingRender = true;
-            window.requestAnimationFrame(() => {
-                this.pendingRender = false;
-                this.render();
-            });
-        }
-    }
-
-    private blinker = () => {
-        if (this.off) {
-            onCursorStyle(this.cursorSpan);
-        } else {
-            offCursorStyle(this.cursorSpan);
-        }
-        this.off = !this.off;
-        if (this.cursorBlinkCount > 0) {
-            this.cursorBlinkCount--;
-            this.blinkTimer = setTimeout(this.blinker, 500);
-        } else {
-            onCursorStyle(this.cursorSpan);
-        }
-    }
-
-    private blinkCursor() {
-        this.cursorBlinkCount = 30;
-        this.off = true;
-        this.blinkTimer = setTimeout(this.blinker, 500);
-    }
-
 }
 
 export async function onLoad(id: string) {
-    const extension = api.defaultRegistry.getExtension(SharedString.CollaboritiveStringExtension.Type);
-    const sharedString = extension.load(id, api.getDefaultServices(), api.defaultRegistry) as SharedString.SharedString;
+    const extension = API.defaultRegistry.getExtension(SharedString.CollaboritiveStringExtension.Type);
+    const sharedString = extension.load(id, API.getDefaultServices(), API.defaultRegistry) as SharedString.SharedString;
+
+    // Retrive any stored insights
+    const mapExtension = API.defaultRegistry.getExtension(API.MapExtension.Type);
+    const insights = mapExtension.load(`${id}-insights`, API.getDefaultServices(), API.defaultRegistry) as API.IMap;
 
     sharedString.on("partialLoad", async (data: MergeTreeChunk) => {
         console.log("Partial load fired");
 
-        widthEst("18px Times");
-        theString = new StringView(sharedString, data.totalSegmentCount, data.totalLengthChars);
+        let container = new FlowContainer();
+        theFlow = new FlowView.FlowView(sharedString, data.totalSegmentCount,
+            data.totalLengthChars, container, insights);
         if (data.totalLengthChars > 0) {
-            theString.render(0);
+            theFlow.render(0, true);
         }
-        theString.timeToEdit = theString.timeToImpression = Date.now() - clockStart;
-        theString.setEdit();
+        theFlow.timeToEdit = theFlow.timeToImpression = Date.now() - clockStart;
+        theFlow.setEdit();
     });
 
     sharedString.on("loadFinshed", (data: MergeTreeChunk) => {
         if (sharedString.client.getLength() !== 0) {
-            theString.loadFinished();
+            theFlow.loadFinished(clockStart);
         } else {
             console.log("local load...");
             request.get(url.resolve(document.baseURI, "/public/literature/pp.txt"), (error, response, body: string) => {
@@ -558,7 +218,7 @@ export async function onLoad(id: string) {
                 for (const segment of segments) {
                     sharedString.insertText((<SharedString.TextSegment>segment).text, sharedString.client.getLength());
                 }
-                theString.loadFinished();
+                theFlow.loadFinished(clockStart);
             });
         }
     });

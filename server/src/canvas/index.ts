@@ -14,11 +14,11 @@ utils.throttle("resize", "throttled-resize");
 
 let connection = collabClient.connect();
 
-export function initialize(id: string) {
-    let canvasP = CanvasModel.LoadOrCreate(connection, id);
+export function initialize(id: string, compose: boolean) {
+    let canvasP = CanvasModel.LoadOrCreate(connection, id, compose);
 
     $("document").ready(() => {
-        Canvas.Create(connection, canvasP);
+        Canvas.Create(connection, canvasP, compose);
         // let mainBoard = new BackBoard(canvas, "hitPlane");
     });
 }

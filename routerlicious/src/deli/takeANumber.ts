@@ -1,5 +1,3 @@
-// import { Sender } from "azure-event-hubs";
-import * as kafka from "kafka-node";
 import { Collection } from "mongodb";
 import * as api from "../api";
 import * as core from "../core";
@@ -41,7 +39,6 @@ export class TakeANumber {
     private error: any;
     private sequenceNumber: number = undefined;
     private logOffset: number;
-    private offset: number;
     private clientNodeMap: { [key: string]: utils.IHeapNode<IClientSequenceNumber> } = {};
     private clientSeqNumbers = new utils.Heap<IClientSequenceNumber>(SequenceNumberComparer);
     private minimumSequenceNumber;
@@ -49,8 +46,7 @@ export class TakeANumber {
     constructor(
         private objectId: string,
         private collection: Collection,
-        private producer: kafka.Producer,
-        private topic: string) {
+        private producer: utils.kafka.Producer) {
         // Lookup the last sequence number stored
         const dbObjectP = this.collection.findOne({ _id: this.objectId });
         dbObjectP.then(
@@ -72,7 +68,6 @@ export class TakeANumber {
                 }
 
                 this.sequenceNumber = dbObject.sequenceNumber ? dbObject.sequenceNumber : StartingSequenceNumber;
-                this.offset = dbObject.offset ? dbObject.offset : StartingSequenceNumber;
                 this.logOffset = dbObject.logOffset ? dbObject.logOffset : undefined;
 
                 this.resolvePending();
@@ -123,7 +118,6 @@ export class TakeANumber {
         for (const clientId in this.clientNodeMap) {
             clients.push(this.clientNodeMap[clientId].value);
         }
-        console.log(JSON.stringify(clients));
 
         return this.collection.updateOne(
             {
@@ -134,7 +128,6 @@ export class TakeANumber {
                     _id : this.objectId,
                     clients,
                     logOffset: this.logOffset,
-                    offset: this.offset,
                     sequenceNumber : this.sequenceNumber,
                 },
             },
@@ -179,34 +172,33 @@ export class TakeANumber {
         const lastMinimumSequenceNumber = this.minimumSequenceNumber;
         this.minimumSequenceNumber = this.getMinimumSequenceNumber(objectMessage.timestamp);
 
+        // If the client updating there reference sequence number did not result in a change to the minimum
+        // sequence number we can return early since no output packet will be generated.
+        if ((objectMessage.type === core.UpdateReferenceSequenceNumberType) &&
+            (lastMinimumSequenceNumber === this.minimumSequenceNumber)) {
+            return Promise.resolve();
+        }
+
+        // Increment and grab the next sequence number
+        const sequenceNumber = this.revSequenceNumber();
+
         // And now craft the output message
         let outputMessage: api.IBase;
         if (objectMessage.type === core.UpdateReferenceSequenceNumberType) {
-            // Only create a new message if the minimum sequence number actually has changed
-            if (lastMinimumSequenceNumber !== this.minimumSequenceNumber) {
-                const minimumSequenceNumberMessage: api.IBase = {
-                    minimumSequenceNumber: this.minimumSequenceNumber,
-                    offset: this.revOffset(),
-                    sequenceNumber: this.sequenceNumber,
-                    type: api.MinimumSequenceNumberUpdateType,
-                };
+            const minimumSequenceNumberMessage: api.IBase = {
+                minimumSequenceNumber: this.minimumSequenceNumber,
+                sequenceNumber,
+                type: api.MinimumSequenceNumberUpdateType,
+            };
 
-                outputMessage = minimumSequenceNumberMessage;
-            }
+            outputMessage = minimumSequenceNumberMessage;
         } else {
             const message = objectMessage as core.IRawOperationMessage;
             const operation = message.operation;
-
-            // Increment and grab the next sequence number as well as store the event hub offset mapping to it
-            const sequenceNumber = this.revSequenceNumber();
-
-            // tslint:disable-next-line:max-line-length
-            console.log(`Assigning ticket ${message.objectId}@${sequenceNumber}:${this.minimumSequenceNumber} at topic@${this.logOffset}`);
             const sequencedOperation: api.ISequencedMessage = {
                 clientId: message.clientId,
                 clientSequenceNumber: operation.clientSequenceNumber,
                 minimumSequenceNumber: this.minimumSequenceNumber,
-                offset: this.revOffset(),
                 op: operation.op,
                 referenceSequenceNumber: operation.referenceSequenceNumber,
                 sequenceNumber,
@@ -216,10 +208,8 @@ export class TakeANumber {
             outputMessage = sequencedOperation;
         }
 
-        // If no message then we can return early
-        if (!outputMessage) {
-            return Promise.resolve();
-        }
+        // tslint:disable-next-line:max-line-length
+        console.log(`Assigning ticket ${objectMessage.objectId}@${sequenceNumber}:${this.minimumSequenceNumber} at topic@${this.logOffset}`);
 
         const sequencedMessage: core.ISequencedOperationMessage = {
             objectId: objectMessage.objectId,
@@ -228,28 +218,7 @@ export class TakeANumber {
         };
 
         // Otherwise send the message to the event hub
-        const payloads = [{
-            key: sequencedMessage.objectId,
-            messages: [JSON.stringify(sequencedMessage)],
-            topic: this.topic,
-        }];
-        return new Promise<any>((resolve, reject) => {
-            this.producer.send(payloads, (error, data) => {
-                if (error) {
-                    return reject(error);
-                }
-
-                console.log(data);
-                resolve({ data: true });
-            });
-        });
-    }
-
-    /**
-     * Returns a new offset value
-     */
-    private revOffset(): number {
-        return ++this.offset;
+        return this.producer.send(JSON.stringify(sequencedMessage), sequencedMessage.objectId);
     }
 
     /**
