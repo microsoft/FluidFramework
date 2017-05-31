@@ -141,11 +141,11 @@ function typeFile(
         }
 
         // If the interval time is 0 and we have access to setImmediate (i.e. running in node) then make use of it
-        if (intervalTime === 0 && setImmediate) {
+        if (intervalTime === 0 && typeof setImmediate === "function") {
             typeFast();
         } else {
             const interval = setInterval(() => {
-                for (let i = 0; i < 6; i++) {
+                for (let i = 0; i < 1; i++) {
                     if (!type()) {
                         clearInterval(interval);
                         break;
