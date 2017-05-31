@@ -522,17 +522,20 @@ export class FlowView {
         if (this.viewportDiv.childElementCount > 0) {
             let firstDiv = this.viewportDiv.children[0];
             let firstSpan = <HTMLSpanElement>firstDiv.children[0];
-            firstSpan.style.position = "relative";
-            this.cursorSpan = makeCursor();
-            this.cursorSpan.style.position = "absolute";
-            this.cursorSpan.style.left = "0px";
-            this.cursorSpan.style.top = "0px";
-            this.cursorSpan.style.width = "1px";
-            firstSpan.appendChild(this.cursorSpan);
-            if (this.blinkTimer) {
-                clearTimeout(this.blinkTimer);
-            } 
-            this.blinkCursor();
+            if (firstSpan) {
+                firstSpan.style.position = "relative";
+                this.cursorSpan = makeCursor();
+                this.cursorSpan.style.position = "absolute";
+                this.cursorSpan.style.left = "0px";
+                this.cursorSpan.style.top = "0px";
+                this.cursorSpan.style.width = "1px";
+                firstSpan.appendChild(this.cursorSpan);
+                if (this.blinkTimer) {
+                    clearTimeout(this.blinkTimer);
+                }
+                this.blinkCursor();
+            }
+            // TODO: case of blank document
         }
     }
 
@@ -571,7 +574,7 @@ export class FlowView {
         let bubbleDiv = makeScrollLosenge(bubbleHeight, bubbleLeft, bubbleTop);
         this.scrollDiv.appendChild(bubbleDiv);
         this.statusMessage("render", `&nbsp ${Date.now() - clk}ms`);
-        // this.setCursor();
+    //    this.setCursor();
     }
 
     public loadFinished(clockStart = 0) {
