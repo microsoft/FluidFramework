@@ -35,7 +35,8 @@ fs.readFile(commander.file, "utf8", (error, data) => {
 
     // Start typing and register to update the UI
     const bar = new ProgressBar(
-        "[:bar] :current/:total; Typing: :typingRate char/s; Ack: :ackRate char/s; Latency: :latency ms",
+        // tslint:disable-next-line:max-line-length
+        "[:bar] :current/:total; Typing: :typingRate char/s; Ack: :ackRate char/s; Latency: :latency ms, StdDev :stdDev ms",
         {
             complete: "=",
             incomplete: " ",
@@ -48,7 +49,8 @@ fs.readFile(commander.file, "utf8", (error, data) => {
         (metrics) => {
             bar.update(metrics.ackProgress, {
                 ackRate: (metrics.ackRate ? metrics.ackRate : 0).toFixed(2),
-                latency: (metrics.averageLatency ? metrics.averageLatency : 0).toFixed(2),
+                latency: (metrics.latencyAverage ? metrics.latencyAverage : 0).toFixed(2),
+                stdDev: (metrics.latencyStdDev ? metrics.latencyStdDev : 0).toFixed(2),
                 typingRate: (metrics.typingRate ? metrics.typingRate : 0).toFixed(2),
             });
         });

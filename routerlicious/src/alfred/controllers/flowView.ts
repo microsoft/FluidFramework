@@ -159,6 +159,7 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
 
         function segmentToSpan(segText: string, textSegment: SharedString.TextSegment) {
             let span = <ISegSpan>document.createElement("span");
+            segPos += segOffset;
             if (segText.indexOf("Chapter") >= 0) {
                 span.style.fontSize = "140%";
                 span.style.lineHeight = "150%";
@@ -204,6 +205,7 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
             while ((offset >= 1) && (text.charCodeAt(offset - 1) !== CharacterCodes.space)) {
                 offset--;
             }
+            segOffset = offset;
             return text.substring(offset);
         }
 
@@ -279,8 +281,8 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
                                         for (let j = rects.length - 1; j >= 0; j--) {
                                             rect = rects.item(j);
                                             if (rect.bottom <= constraint) {
-                                                x = rect.right-Math.floor(w/2);
-                                                y = rect.bottom - Math.floor(h/2);
+                                                x = rect.right - Math.floor(w / 2);
+                                                y = rect.bottom - Math.floor(h / 2);
                                                 break;
                                             }
                                         }
@@ -385,6 +387,7 @@ export class FlowView {
     public ticking = false;
     public wheelTicking = false;
     public topChar = 0;
+    public cursorPos = 0;
     private off = true;
     private cursorBlinkCount = 0;
     private blinkTimer: any;
@@ -519,15 +522,20 @@ export class FlowView {
         if (this.viewportDiv.childElementCount > 0) {
             let firstDiv = this.viewportDiv.children[0];
             let firstSpan = <HTMLSpanElement>firstDiv.children[0];
-            firstSpan.style.position = "relative";
-            this.cursorSpan = makeCursor();
-            this.cursorSpan.style.position = "absolute";
-            this.cursorSpan.style.left = "0px";
-            this.cursorSpan.style.top = "0px";
-            this.cursorSpan.style.width = "1px";
-            firstSpan.appendChild(this.cursorSpan);
-            clearTimeout(this.blinkTimer);
-            this.blinkCursor();
+            if (firstSpan) {
+                firstSpan.style.position = "relative";
+                this.cursorSpan = makeCursor();
+                this.cursorSpan.style.position = "absolute";
+                this.cursorSpan.style.left = "0px";
+                this.cursorSpan.style.top = "0px";
+                this.cursorSpan.style.width = "1px";
+                firstSpan.appendChild(this.cursorSpan);
+                if (this.blinkTimer) {
+                    clearTimeout(this.blinkTimer);
+                }
+                this.blinkCursor();
+            }
+            // TODO: case of blank document
         }
     }
 
@@ -566,7 +574,7 @@ export class FlowView {
         let bubbleDiv = makeScrollLosenge(bubbleHeight, bubbleLeft, bubbleTop);
         this.scrollDiv.appendChild(bubbleDiv);
         this.statusMessage("render", `&nbsp ${Date.now() - clk}ms`);
-        // this.setCursor();
+    //    this.setCursor();
     }
 
     public loadFinished(clockStart = 0) {

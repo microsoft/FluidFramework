@@ -6,6 +6,14 @@
     "configurations": [
         {
             "type": "node",
+            "request": "launch",
+            "name": "Beast",
+            "sourceMaps": true,            
+            "outFiles": [ "${workspaceRoot}/dist/**/*.js" ],            
+            "program": "${workspaceRoot}/dist/merge-tree/beastTest.js"
+        },
+        {
+            "type": "node",
             "request": "attach",
             "name": "Attach to server",
             "address": "localhost",

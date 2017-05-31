@@ -64,9 +64,9 @@ export class SharedString implements API.ICollaborativeObject {
         let bodyChunkP = Paparazzo.Snapshot.loadChunk(services, this.id);
         let chunk = await headerChunkP;
 
-        this.events.emit('partialLoad', chunk);
         if (chunk.totalSegmentCount >= 0) {
             this.client.mergeTree.reloadFromSegments(textsToSegments(chunk.segmentTexts));
+            this.events.emit('partialLoad', chunk);
             chunk = await bodyChunkP;
             for (let text of chunk.segmentTexts) {
                 this.client.mergeTree.appendTextSegment(text);
@@ -74,6 +74,7 @@ export class SharedString implements API.ICollaborativeObject {
             this.initialSeq = chunk.chunkSequenceNumber;
         } else {
             this.initialSeq = 0;
+            this.events.emit('partialLoad', chunk);
         }
 
         this.events.emit('loadFinshed', chunk);

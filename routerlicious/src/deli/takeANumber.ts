@@ -1,5 +1,3 @@
-// import { Sender } from "azure-event-hubs";
-import * as kafka from "kafka-node";
 import { Collection } from "mongodb";
 import * as api from "../api";
 import * as core from "../core";
@@ -48,8 +46,7 @@ export class TakeANumber {
     constructor(
         private objectId: string,
         private collection: Collection,
-        private producer: kafka.Producer,
-        private topic: string) {
+        private producer: utils.kafka.Producer) {
         // Lookup the last sequence number stored
         const dbObjectP = this.collection.findOne({ _id: this.objectId });
         dbObjectP.then(
@@ -121,7 +118,6 @@ export class TakeANumber {
         for (const clientId in this.clientNodeMap) {
             clients.push(this.clientNodeMap[clientId].value);
         }
-        console.log(JSON.stringify(clients));
 
         return this.collection.updateOne(
             {
@@ -222,21 +218,7 @@ export class TakeANumber {
         };
 
         // Otherwise send the message to the event hub
-        const payloads = [{
-            key: sequencedMessage.objectId,
-            messages: [JSON.stringify(sequencedMessage)],
-            topic: this.topic,
-        }];
-        return new Promise<any>((resolve, reject) => {
-            this.producer.send(payloads, (error, data) => {
-                if (error) {
-                    return reject(error);
-                }
-
-                console.log(data);
-                resolve({ data: true });
-            });
-        });
+        return this.producer.send(JSON.stringify(sequencedMessage), sequencedMessage.objectId);
     }
 
     /**
