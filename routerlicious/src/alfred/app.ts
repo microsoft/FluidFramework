@@ -33,6 +33,7 @@ app.use("/canvas", routes.canvas);
 app.use("/sharedText", routes.sharedText);
 app.use("/cell", routes.cell);
 app.use("/scribe", routes.scribe);
+app.use("/perf", routes.perf);
 app.use(routes.home);
 
 // catch 404 and forward to error handler

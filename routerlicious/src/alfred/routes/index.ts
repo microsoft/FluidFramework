@@ -21,3 +21,6 @@ export { cell };
 
 import scribe from "./scribe";
 export { scribe };
+
+import perf from "./perf";
+export { perf };

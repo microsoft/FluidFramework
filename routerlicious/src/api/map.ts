@@ -290,6 +290,8 @@ class Map extends api.CollaborativeObject implements api.IMap {
         if (message.type === api.OperationType) {
             this.processRemoteOperation(message as api.ISequencedMessage);
         }
+        // Brodcast the message to listeners.
+        this.events.emit("op", message);
     }
 
     private processRemoteOperation(message: api.ISequencedMessage) {
