@@ -41,21 +41,23 @@ async function run() {
     const consumerOffset = new kafka.Offset(kafkaClient);
     const partitionManager = new core.PartitionManager(groupId, topic, consumerOffset, checkpointBatchSize);
 
-    const consumerGroup = new kafka.ConsumerGroup({
+    const highLevelConsumer = new kafka.HighLevelConsumer(kafkaClient, [{topic}], {
             autoCommit: false,
-            fromOffset: "earliest",
+            fromOffset: true,
             groupId,
-            host: zookeeperEndpoint,
             id: kafkaClientId,
-            protocol: ["roundrobin"],
-        },
-        [topic]);
-
-    consumerGroup.on("error", (error) => {
-        console.error(error);
     });
 
-    consumerGroup.on("message", async (message: any) => {
+    highLevelConsumer.on("error", (error) => {
+        // Workaround to resolve rebalance partition error.
+        // https://github.com/SOHU-Co/kafka-node/issues/90
+        console.error(`Error in kafka consumer: ${error}. Wait for 30 seconds and restart...`);
+        setTimeout(() => {
+            process.exit(1);
+        }, 30000);
+    });
+
+    highLevelConsumer.on("message", async (message: any) => {
         // NOTE the processing of the below messages must make sure to notify clients of the messages in increasing
         // order. Be aware of promise handling ordering possibly causing out of order messages to be delivered.
 
