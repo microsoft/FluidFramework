@@ -42,18 +42,20 @@ async function run() {
     const consumerOffset = new kafka.Offset(kafkaClient);
     const partitionManager = new core.PartitionManager(groupId, topic, consumerOffset, checkpointBatchSize);
 
-    const consumerGroup = new kafka.ConsumerGroup({
+    const highLevelConsumer = new kafka.HighLevelConsumer(kafkaClient, [{topic}], {
             autoCommit: false,
-            fromOffset: "earliest",
+            fromOffset: true,
             groupId,
-            host: zookeeperEndpoint,
             id: kafkaClientId,
-            protocol: ["roundrobin"],
-        },
-        [topic]);
+    });
 
-    consumerGroup.on("error", (error) => {
-        console.error(error);
+    highLevelConsumer.on("error", (error) => {
+        // Workaround to resolve rebalance partition error.
+        // https://github.com/SOHU-Co/kafka-node/issues/90
+        console.error(`Error in kafka consumer: ${error}. Wait for 30 seconds and restart...`);
+        setTimeout(() => {
+            process.exit(1);
+        }, 30000);
     });
 
     const q = queue((message: any, callback) => {
@@ -89,7 +91,7 @@ async function run() {
         callback();
     }, 1);
 
-    consumerGroup.on("message", async (message: any) => {
+    highLevelConsumer.on("message", async (message: any) => {
         q.push(message);
     });
 }
