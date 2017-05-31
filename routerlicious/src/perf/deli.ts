@@ -63,7 +63,7 @@ async function produce() {
     // Create the object first in the DB.
     await getOrCreateObject(objectId, "https://graph.microsoft.com/types/map");
     // Producer to push to kafka.
-    const producer = new utils.kafka.Producer(zookeeperEndpoint, kafkaSendClientId, [topic]);
+    const producer = new utils.kafka.Producer(zookeeperEndpoint, kafkaSendClientId, topic);
 
     // Prepare the message that deli understands.
     const message: api.IMessage = {
@@ -79,13 +79,12 @@ async function produce() {
         type: core.RawOperationType,
         userId: null,
     };
-    const payload = [{ topic, messages: [JSON.stringify(rawMessage)], key: objectId }];
 
     let messagesLeft = chunkSize;
 
     // Start sending
     for (let i = 0; i < chunkSize; ++i) {
-        producer.send(payload).then(
+        producer.send(JSON.stringify(rawMessage), objectId).then(
             (responseMessage) => {
                 if (messagesLeft === chunkSize) {
                     startTime = Date.now();

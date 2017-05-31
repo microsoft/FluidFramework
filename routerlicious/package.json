@@ -50,6 +50,7 @@
   "repository": "microsoft/prague",
   "devDependencies": {
     "@types/amqplib": "^0.5.1",
+    "@types/async": "^2.0.40",
     "@types/commander": "^2.9.0",
     "@types/diff": "^3.2.0",
     "@types/jquery": "^2.0.41",
@@ -85,6 +86,7 @@
   "dependencies": {
     "amqp10": "^3.0.0",
     "amqplib": "^0.5.1",
+    "async": "^2.4.1",
     "azure-event-hubs": "0.0.7",
     "azure-iot-device": "^1.1.12",
     "azure-iot-device-mqtt": "^1.1.12",

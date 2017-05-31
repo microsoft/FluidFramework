@@ -60,7 +60,7 @@ async function getOrCreateObject(id: string, type: string): Promise<boolean> {
 }
 
 // Producer used to publish messages
-const producer = new utils.kafka.Producer(zookeeperEndpoint, kafkaClientId, [topic]);
+const producer = new utils.kafka.Producer(zookeeperEndpoint, kafkaClientId, topic);
 
 io.on("connection", (socket) => {
     const clientId = moniker.choose();
@@ -103,8 +103,6 @@ io.on("connection", (socket) => {
 
     // Message sent when a new operation is submitted to the router
     socket.on("submitOp", (objectId: string, message: api.IMessage, response) => {
-        console.log(`Operation received for object ${objectId}`);
-
         // Verify the user has connected on this object id
         if (!connectionsMap[objectId]) {
             return response("Invalid object", null);
@@ -119,9 +117,10 @@ io.on("connection", (socket) => {
             userId: null,
         };
 
-        const payload = [{ topic, messages: [JSON.stringify(rawMessage)], key: objectId }];
-        producer.send(payload).then(
-            (responseMessage) => response(null, responseMessage),
+        producer.send(JSON.stringify(rawMessage), objectId).then(
+            (responseMessage) => {
+                response(null, responseMessage);
+            },
             (error) => {
                 console.error(error);
                 response(error, null);
@@ -130,8 +129,6 @@ io.on("connection", (socket) => {
 
     // Message sent to allow clients to update their sequence number
     socket.on("updateReferenceSequenceNumber", (objectId: string, sequenceNumber: number, response) => {
-        console.log(`${clientId} Updating ${objectId} to ${sequenceNumber}`);
-
         // Verify the user has connected on this object id
         if (!connectionsMap[objectId]) {
             return response("Invalid object", null);
@@ -146,8 +143,7 @@ io.on("connection", (socket) => {
             userId: null,
         };
 
-        const payload = [{ topic, messages: [JSON.stringify(message)], key: objectId }];
-        producer.send(payload).then(
+        producer.send(JSON.stringify(message), objectId).then(
             (responseMessage) => response(null, responseMessage),
             (error) => {
                 console.error(error);

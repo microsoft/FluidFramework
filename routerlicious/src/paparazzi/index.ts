@@ -90,7 +90,7 @@ function serialize(root: api.ICollaborativeObject) {
     pendingSerializeMap[root.id] = true;
     dirtyMap[root.id] = false;
 
-    console.log("Snapshotting");
+    console.log(`Snapshotting ${root.id}`);
     const snapshotP = root.snapshot().catch((error) => {
             // TODO we will just log errors for now. Will want a better strategy later on (replay, wait)
             if (error) {
