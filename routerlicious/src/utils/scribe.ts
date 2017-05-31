@@ -109,11 +109,10 @@ function typeFile(
         const typingCounter = new RateCounter();
         typingCounter.reset();
 
-        const interval = setInterval(() => {
+        function type(): boolean {
             // Stop typing once we reach the end
             if (readPosition === fileText.length) {
-                clearInterval(interval);
-                return;
+                return false;
             }
 
             typingCounter.increment(1);
@@ -129,7 +128,30 @@ function typeFile(
 
             metrics.typingProgress = readPosition / fileText.length;
             callback(metrics);
-        }, intervalTime);
+
+            return true;
+        }
+
+        // If the interval time is 0 and we have access to setImmediate (i.e. running in node) then make use of it
+        if (intervalTime === 0 && setImmediate) {
+            function typeFast() {
+                setImmediate(() => {
+                    if (type()) {
+                        typeFast();
+                    }
+                });
+            }
+            typeFast();
+        } else {
+            const interval = setInterval(() => {
+                for (let i = 0; i < 6; i++) {
+                    if (!type()) {
+                        clearInterval(interval);
+                        break;
+                    }
+                }
+            }, intervalTime);
+        }
     });
 }
 

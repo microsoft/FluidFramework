@@ -1,3 +1,4 @@
+import { queue } from "async";
 import * as kafka from "kafka-node";
 import * as _ from "lodash";
 import { Collection, MongoClient } from "mongodb";
@@ -19,7 +20,63 @@ const checkpointBatchSize = nconf.get("deli:checkpointBatchSize");
 const objectsCollectionName = nconf.get("mongo:collectionNames:objects");
 const groupId = nconf.get("deli:groupId");
 
-async function processMessages(kafkaClient: kafka.Client, producer: kafka.Producer, objectsCollection: Collection) {
+function processMessage(
+    message: any,
+    dispensers: { [key: string]: TakeANumber },
+    ticketQueue: {[id: string]: Promise<void> },
+    partitionManager: core.PartitionManager,
+    producer: utils.kafka.Producer,
+    objectsCollection: Collection) {
+
+    const baseMessage = JSON.parse(message.value) as core.IMessage;
+
+    if (baseMessage.type === core.UpdateReferenceSequenceNumberType ||
+        baseMessage.type === core.RawOperationType) {
+
+        const objectMessage = JSON.parse(message.value) as core.IObjectMessage;
+        const objectId = objectMessage.objectId;
+
+        // Go grab the takeANumber machine for the objectId and mark it as dirty.
+        // Store it in the partition map. We need to add an eviction strategy here.
+        if (!(objectId in dispensers)) {
+            dispensers[objectId] = new TakeANumber(objectId, objectsCollection, producer);
+            console.log(`Brand New object Found: ${objectId}`);
+        }
+        const dispenser = dispensers[objectId];
+
+        // Either ticket the message or update the sequence number depending on the message type
+        const ticketP = dispenser.ticket(message);
+        ticketQueue[objectId] = ticketP;
+    }
+
+    // Update partition manager entry.
+    partitionManager.update(message.partition, message.offset);
+}
+
+async function checkpoint(
+    partitionManager: core.PartitionManager,
+    dispensers: { [key: string]: TakeANumber },
+    pendingTickets: Array<Promise<void>>) {
+
+    // Ticket all messages and empty the queue.
+    await Promise.all(pendingTickets);
+
+    // Checkpoint to mongo now.
+    let checkpointQueue = [];
+    for (let doc of Object.keys(dispensers)) {
+        checkpointQueue.push(dispensers[doc].checkpoint());
+    }
+    await Promise.all(checkpointQueue);
+
+    // Finally call kafka checkpointing.
+    partitionManager.checkPoint();
+}
+
+async function processMessages(
+    kafkaClient: kafka.Client,
+    producer: utils.kafka.Producer,
+    objectsCollection: Collection) {
+
     const dispensers: { [key: string]: TakeANumber } = {};
 
     const consumerOffset = new kafka.Offset(kafkaClient);
@@ -48,49 +105,23 @@ async function processMessages(kafkaClient: kafka.Client, producer: kafka.Produc
     let ticketQueue: {[id: string]: Promise<void> } = {};
 
     console.log("Waiting for messages");
-    highLevelConsumer.on("message", async (message: any) => {
-        const baseMessage = JSON.parse(message.value) as core.IMessage;
+    const q = queue((message: any, callback) => {
+        processMessage(message, dispensers, ticketQueue, partitionManager, producer, objectsCollection);
+        callback();
 
-        if (baseMessage.type === core.UpdateReferenceSequenceNumberType ||
-            baseMessage.type === core.RawOperationType) {
-
-            const objectMessage = JSON.parse(message.value) as core.IObjectMessage;
-            const objectId = objectMessage.objectId;
-
-            // Go grab the takeANumber machine for the objectId and mark it as dirty.
-            // Store it in the partition map. We need to add an eviction strategy here.
-            if (!(objectId in dispensers)) {
-                dispensers[objectId] = new TakeANumber(objectId, objectsCollection, producer, sendTopic);
-                console.log(`Brand New object Found: ${objectId}`);
-            }
-            const dispenser = dispensers[objectId];
-
-            // Either ticket the message or update the sequence number depending on the message type
-            const ticketP = dispenser.ticket(message);
-            ticketQueue[objectId] = ticketP;
-
-            // Update partition manager entry.
-            partitionManager.update(message.partition, message.offset);
-
-            // Periodically checkpoints to mongo and checkpoints offset back to kafka.
-            // Ideally there should be a better strategy to figure out when to checkpoint.
-            if (message.offset % checkpointBatchSize === 0) {
-                // Ticket all messages and empty the queue.
-                let pendingTickets = _.values(ticketQueue);
-                ticketQueue = {};
-                await Promise.all(pendingTickets);
-
-                // Checkpoint to mongo now.
-                let checkpointQueue = [];
-                for (let doc of Object.keys(dispensers)) {
-                    checkpointQueue.push(dispensers[doc].checkpoint());
-                }
-                await Promise.all(checkpointQueue);
-
-                // Finally call kafka checkpointing.
-                partitionManager.checkPoint();
-            }
+        // Periodically checkpoints to mongo and checkpoints offset back to kafka.
+        // Ideally there should be a better strategy to figure out when to checkpoint.
+        if (message.offset % checkpointBatchSize === 0) {
+            const pendingTickets = _.values(ticketQueue);
+            ticketQueue = {};
+            checkpoint(partitionManager, dispensers, pendingTickets).catch((error) => {
+                console.error(error);
+            });
         }
+    }, 1);
+
+    highLevelConsumer.on("message", (message: any) => {
+        q.push(message);
     });
 }
 
@@ -103,21 +134,12 @@ async function run() {
 
     // Prep Kafka connection
     let kafkaClient = new kafka.Client(zookeeperEndpoint, kafkaClientId);
-    let producer = new kafka.Producer(kafkaClient, { partitionerType: 3 });
+    let producer = new utils.kafka.Producer(zookeeperEndpoint, kafkaClientId, sendTopic);
 
     // Return a promise that will never resolve (since we run forever) but will reject
     // should an error occur
-    return new Promise<void>((resolve, reject) => {
-        producer.on("error", (error) => {
-            reject(error);
-        });
-
-        producer.on("ready", () => {
-            utils.kafka.ensureTopics(kafkaClient, [sendTopic, receiveTopic])
-                    .then(() => processMessages(kafkaClient, producer, objectsCollection))
-                    .catch((error) => reject(error));
-        });
-    });
+    return utils.kafka.ensureTopics(kafkaClient, [sendTopic, receiveTopic])
+        .then(() => processMessages(kafkaClient, producer, objectsCollection));
 }
 
 // Start up the deli service

@@ -1,3 +1,4 @@
+import { queue } from "async";
 import * as kafka from "kafka-node";
 import { MongoClient } from "mongodb";
 import * as nconf from "nconf";
@@ -55,17 +56,16 @@ async function run() {
         console.error(error);
     });
 
-    consumerGroup.on("message", async (message: any) => {
+    const q = queue((message: any, callback) => {
         // NOTE the processing of the below messages must make sure to notify clients of the messages in increasing
         // order. Be aware of promise handling ordering possibly causing out of order messages to be delivered.
 
         const baseMessage = JSON.parse(message.value) as core.IMessage;
         if (baseMessage.type === core.SequencedOperationType) {
             const value = baseMessage as core.ISequencedOperationMessage;
-            const objectId = value.objectId;
 
             // Serialize the message to backing store
-            console.log(`Inserting to mongodb ${objectId}@${value.operation.sequenceNumber}`);
+            console.log(`Inserting to mongodb ${value.objectId}@${value.operation.sequenceNumber}`);
             collection.insert(value).catch((error) => {
                 console.error("Error serializing to MongoDB");
                 console.error(error);
@@ -85,6 +85,12 @@ async function run() {
             // Finally call kafka checkpointing.
             partitionManager.checkPoint();
         }
+
+        callback();
+    }, 1);
+
+    consumerGroup.on("message", async (message: any) => {
+        q.push(message);
     });
 }
 
