@@ -90,9 +90,25 @@ async function displayMap(parentElement: JQuery, map: api.IMap, parent: api.IMap
     parentElement.append(header);
 
     const container = $(`<div></div>`);
+    const childMaps = $(`<div></div>`);
     displayValues(map, container, doc);
 
-    $("#mapValues").append(container);
+    const addMap = $("<button>Add</button>");
+    addMap.click(() => {
+        const newMap = doc.createMap();
+        displayMap(childMaps, newMap, map, doc);
+    });
+    $("#mapValues").append(addMap);
+
+    if (parent && map.isLocal()) {
+        const attach = $("<button>Attach</button>");
+        attach.click(() => {
+            parent.set(map.id, map);
+        });
+        $("#mapValues").append(attach);
+    }
+
+    $("#mapValues").append(container, childMaps);
 }
 
 form.addEventListener("submit", (event) => {

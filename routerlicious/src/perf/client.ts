@@ -2,8 +2,8 @@ import * as kafka from "kafka-node";
 import * as nconf from "nconf";
 import * as path from "path";
 import * as io from "socket.io-client";
-import * as messages from "../socket-storage/messages";
 import * as api from "../api";
+import * as messages from "../socket-storage/messages";
 
 // Setup the configuration system - pull arguments, then environment variables
 nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
@@ -28,12 +28,12 @@ let endTime: number;
 async function runTest() {
     console.log("Wait for 10 seconds to warm up kafka and zookeeper....");
     await sleep(10000);
-    produce();  
-    await consume(); 
+    produce();
+    await consume();
     console.log("Done receiving from kafka. Printing Final Metrics....");
     console.log(`Send to SocketIO Ack time: ${sendStopTime - startTime}`);
     console.log(`Kafka receiving time: ${endTime - receiveStartTime}`);
-    console.log(`Total time: ${endTime - startTime}`);    
+    console.log(`Total time: ${endTime - startTime}`);
 }
 
 async function consume() {
@@ -107,7 +107,7 @@ async function connect() {
                     console.log(`Connection successful!`);
                     resolve({data: true});
                 }
-            });        
+            });
     });
 }
 

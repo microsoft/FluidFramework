@@ -11,7 +11,7 @@
     "browserify:sharedText": "browserify src/alfred/controllers/sharedText.ts -o public/scripts/dist/sharedText.js -s controller -p [ tsify -t es5 ]",
     "browserify:scribe": "browserify src/alfred/controllers/scribe.ts -o public/scripts/dist/scribe.js --debug -s controller -p [ tsify -t es5 ]",
     "browserify:perf": "browserify src/alfred/controllers/perf.ts -o public/scripts/dist/perf.js --debug -s controller -p [ tsify -t es5 ]",
-    "build": "npm run tsc && npm run tslint && npm run browserify && npm run less",
+    "build": "concurrently \"npm run tslint\" \"npm run tsc\" \"npm run browserify\" \"npm run less\"",
     "build:watch": "watch 'npm run tsc && npm run browserify' src",
     "less": "lessc src/stylesheets/style.less public/stylesheets/dist/style.css",
     "alfred": "node dist/alfred/www.js",
