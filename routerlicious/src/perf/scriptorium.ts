@@ -53,7 +53,7 @@ async function runTest() {
 
 async function produce() {
     // Producer to push to kafka.
-    const producer = new utils.kafka.Producer(zookeeperEndpoint, kafkaSendClientId, [topic]);
+    const producer = new utils.kafka.Producer(zookeeperEndpoint, kafkaSendClientId, topic);
     let messagesLeft = chunkSize;
     // Start sending
     for (let i = 1; i <= chunkSize; ++i) {
@@ -74,12 +74,7 @@ async function produce() {
             operation: outputMessage,
             type: core.SequencedOperationType,
         };
-        const payloads = [{
-            key: objectId,
-            messages: [JSON.stringify(sequencedMessage)],
-            topic: "deltas",
-        }];
-        producer.send(payloads).then(
+        producer.send(JSON.stringify(sequencedMessage), objectId).then(
             (responseMessage) => {
                 if (messagesLeft === chunkSize) {
                     startTime = Date.now();
