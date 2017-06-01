@@ -34,19 +34,31 @@ export class ResumeIntelligentSerivce implements IIntelligentService {
     private deviceId: string;
     private messagePromises: {[key: string]: utils.Deferred<any> } = {};
 
-    constructor(config: IConfig) {
+    constructor(private config: IConfig) {
         this.deviceId = config.deviceId;
 
         // tslint:disable-next-line:max-line-length
         const connectionString = `HostName=${config.host};SharedAccessKeyName=${config.sharedAccessKeyName};SharedAccessKey=${config.sharedAccessKey}`;
         this.registry = iothub.Registry.fromConnectionString(connectionString);
-
-        this.clientP = this.createClient(config.host, config.deviceId);
     }
 
     public async run(value: any): Promise<any> {
-        const client = await this.clientP;
+        const client = await this.getClient();
         return this.sendMessage(client, "resumeClassifier", value);
+    }
+
+    private async getClient(): Promise<Client> {
+        if (!this.clientP) {
+            this.clientP = this.createClient(this.config.host, this.config.deviceId);
+            this.clientP.catch((error) => {
+                // Log the error and then null out the client to cause the next request to try again
+                console.error("There was a problem creating the client");
+                console.error(error);
+                this.clientP = null;
+            });
+        }
+
+        return this.clientP;
     }
 
     private async sendMessage(client: Client, method: string, body: string) {

@@ -2,8 +2,8 @@ import * as api from "../api";
 import * as intelligence from "../intelligence";
 import * as mergeTree from "../merge-tree";
 
-// 15s wait time between intelligent service calls
-const defaultWaitTime = 15 * 1000;
+// 5s wait time between intelligent service calls
+const defaultWaitTime = 5 * 1000;
 
 /**
  * The rate limiter is a simple class that will defer running an async action
@@ -82,15 +82,12 @@ export class IntelligentServicesManager {
                     async () => {
                         // Run the collaborative services
                         const text = sharedString.client.getText();
-                        const results = await Promise.all(this.services.map((service) => service.run(text)));
+                        const setInsightsP = this.services.map(async (service) => {
+                            const result = await service.run(text);
+                            return insights.set(service.name, result);
+                        });
 
-                        // And then store the output values in the map
-                        const storedP = [];
-                        for (let i = 0; i < this.services.length; i++) {
-                            storedP.push(insights.set(this.services[i].name, results[i]));
-                        }
-
-                        return Promise.all(storedP);
+                        return Promise.all(setInsightsP);
                     },
                     defaultWaitTime);
             }
