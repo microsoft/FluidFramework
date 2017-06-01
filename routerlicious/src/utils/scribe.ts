@@ -1,11 +1,15 @@
 import * as api from "../api";
 import * as SharedString from "../merge-tree";
-import { RateCounter } from "./counters";
+import { Histogram, RateCounter } from "./counters";
 
 export interface IScribeMetrics {
+    histogram: Histogram;
+
     // Average latency between when a message is sent and when it is ack'd by the server
     latencyAverage: number;
     latencyStdDev: number;
+    latencyMinimum: number;
+    latencyMaximum: number;
 
     // The rate of both typing messages and receiving replies
     ackRate: number;
@@ -17,6 +21,8 @@ export interface IScribeMetrics {
 }
 
 declare type ScribeMetricsCallback = (metrics: IScribeMetrics) => void;
+
+const RunningCalculationDelay = 10000;
 
 /**
  * Processes the input text into a normalized form for the shared string
@@ -46,11 +52,17 @@ function typeFile(
         let insertPosition = sharedString.client.getLength();
         let readPosition = 0;
 
+        const historgramRange = 5;
+        const histogram = new Histogram(historgramRange);
+
         fileText = normalizeText(fileText);
         const metrics: IScribeMetrics = {
             ackProgress: undefined,
             ackRate: undefined,
+            histogram,
             latencyAverage: undefined,
+            latencyMaximum: undefined,
+            latencyMinimum: undefined,
             latencyStdDev: undefined,
             typingProgress: undefined,
             typingRate: undefined,
@@ -79,18 +91,25 @@ function typeFile(
                     ackCounter.reset();
                 }
 
-                const roundTrip = Date.now() - messageStart[message.clientSequenceNumber];
-                delete messageStart[message.clientSequenceNumber];
-                latencyCounter.increment(roundTrip);
-                metrics.latencyAverage = latencyCounter.getValue() / message.clientSequenceNumber;
+                // Wait for a bit prior to starting the running calculation
+                if (Date.now() - startTime > RunningCalculationDelay) {
+                    const roundTrip = Date.now() - messageStart[message.clientSequenceNumber];
+                    delete messageStart[message.clientSequenceNumber];
+                    latencyCounter.increment(roundTrip);
+                    histogram.add(roundTrip);
+                    const samples = latencyCounter.getSamples();
+                    metrics.latencyMinimum = latencyCounter.getMinimum();
+                    metrics.latencyMaximum = latencyCounter.getMaximum();
+                    metrics.latencyAverage = latencyCounter.getValue() / samples;
 
-                // Update std deviation using Welford's method
-                stdDev = stdDev + (roundTrip - metrics.latencyAverage) * (roundTrip - mean);
-                metrics.latencyStdDev =
-                    message.clientSequenceNumber > 1 ? Math.sqrt(stdDev / (message.clientSequenceNumber - 1)) : 0;
+                    // Update std deviation using Welford's method
+                    stdDev = stdDev + (roundTrip - metrics.latencyAverage) * (roundTrip - mean);
+                    metrics.latencyStdDev =
+                        samples > 1 ? Math.sqrt(stdDev / (samples - 1)) : 0;
 
-                // Store the mean for use in the next round
-                mean = metrics.latencyAverage;
+                    // Store the mean for use in the next round
+                    mean = metrics.latencyAverage;
+                }
 
                 // We need a better way of hearing when our messages have been received and processed.
                 // For now I just assume we are the only writer and wait to receive a message with a client
@@ -141,11 +160,11 @@ function typeFile(
         }
 
         // If the interval time is 0 and we have access to setImmediate (i.e. running in node) then make use of it
-        if (intervalTime === 0 && setImmediate) {
+        if (intervalTime === 0 && typeof setImmediate === "function") {
             typeFast();
         } else {
             const interval = setInterval(() => {
-                for (let i = 0; i < 6; i++) {
+                for (let i = 0; i < 1; i++) {
                     if (!type()) {
                         clearInterval(interval);
                         break;

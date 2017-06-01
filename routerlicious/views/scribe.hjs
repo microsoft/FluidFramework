@@ -1,6 +1,11 @@
 {{<layout}}
     {{$styles}}
         <link href="/public/stylesheets/dist/style.css" rel="stylesheet" />
+        <style>
+            body {
+                overflow: visible;
+            }
+        </style>
     {{/styles}}
 
     {{$content}}
@@ -54,13 +59,16 @@
                     <span id="stddev-latency"></span>
                 </p>
 
-                <div id="total-time">
-                </div>
+                <div id="total-time"></div>
+
+                <div id="chart"></div>
+                <div id="histogram"></div>
             </div>
         </div>
     {{/content}}
 
     {{$scripts}}
+        <script src="//charts.azureedge.net/release/0.1.215074.1/microsoft-charts.min.js"></script>
         <script src="/socket.io/socket.io.js"></script>
         <script src="/public/scripts/dist/scribe.js"></script>
     {{/scripts}}
