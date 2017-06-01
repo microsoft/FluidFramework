@@ -17,9 +17,23 @@ const kafkaClientId = nconf.get("scriptorium:kafkaClientId");
 const topic = nconf.get("scriptorium:topic");
 const groupId = nconf.get("scriptorium:groupId");
 const checkpointBatchSize = nconf.get("scriptorium:checkpointBatchSize");
-const checkpointTimeIntervalMsec = nconf.get("deli:checkpointTimeIntervalMsec");
+const checkpointTimeIntervalMsec = nconf.get("scriptorium:checkpointTimeIntervalMsec");
 const mongoUrl = nconf.get("mongo:endpoint");
 const deltasCollectionName = nconf.get("mongo:collectionNames:deltas");
+
+let checkpointTimer: any;
+
+async function checkpoint(partitionManager: core.PartitionManager) {
+    partitionManager.checkPoint();
+    // Clear timer since we just checkpointed.
+    if (checkpointTimer) {
+        clearTimeout(checkpointTimer);
+    }
+    // Set up next cycle.
+    checkpointTimer = setTimeout(() => {
+        checkpoint(partitionManager);
+    }, checkpointTimeIntervalMsec);
+}
 
 async function run() {
     let io = socketIoEmitter(({ host: redisConfig.host, port: redisConfig.port }));
@@ -86,10 +100,11 @@ async function run() {
         // Checkpoint to kafka after completing all operations.
         // We should experiment with 'CheckpointBatchSize' here.
         if (message.offset % checkpointBatchSize === 0) {
-            // Finally call kafka checkpointing.
-            partitionManager.checkPoint();
+            // Finally call checkpointing.
+            checkpoint(partitionManager).catch((error) => {
+                console.error(error);
+            });
         }
-
         callback();
     }, 1);
 

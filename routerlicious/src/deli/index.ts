@@ -21,6 +21,8 @@ const checkpointTimeIntervalMsec = nconf.get("deli:checkpointTimeIntervalMsec");
 const objectsCollectionName = nconf.get("mongo:collectionNames:objects");
 const groupId = nconf.get("deli:groupId");
 
+let checkpointTimer: any;
+
 function processMessage(
     message: any,
     dispensers: { [key: string]: TakeANumber },
@@ -71,6 +73,15 @@ async function checkpoint(
 
     // Finally call kafka checkpointing.
     partitionManager.checkPoint();
+
+    // Clear timer since we just checkpointed.
+    if (checkpointTimer) {
+        clearTimeout(checkpointTimer);
+    }
+    // Set up next cycle.
+    checkpointTimer = setTimeout(() => {
+        checkpoint(partitionManager, dispensers, pendingTickets);
+    }, checkpointTimeIntervalMsec);
 }
 
 async function processMessages(
@@ -105,8 +116,6 @@ async function processMessages(
     });
 
     let ticketQueue: {[id: string]: Promise<void> } = {};
-    let checkpointTimer: any;
-
 
     console.log("Waiting for messages");
     const q = queue((message: any, callback) => {
@@ -121,16 +130,6 @@ async function processMessages(
             checkpoint(partitionManager, dispensers, pendingTickets).catch((error) => {
                 console.error(error);
             });
-            if (checkpointTimer) {
-                console.log(`Clearing checkpoint timer since we just did checkpoint`);
-                clearTimeout(checkpointTimer);
-            }
-            checkpointTimer = setTimeout(() => {
-                console.log(`Kicking off checkpointing from timeout method`);
-                checkpoint(partitionManager, dispensers, pendingTickets).catch((error) => {
-                    console.error(error);
-                });
-            }, checkpointTimeIntervalMsec);
         }
     }, 1);
 
