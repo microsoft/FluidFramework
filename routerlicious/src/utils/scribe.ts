@@ -6,6 +6,8 @@ export interface IScribeMetrics {
     // Average latency between when a message is sent and when it is ack'd by the server
     latencyAverage: number;
     latencyStdDev: number;
+    latencyMinimum: number;
+    latencyMaximum: number;
 
     // The rate of both typing messages and receiving replies
     ackRate: number;
@@ -17,6 +19,8 @@ export interface IScribeMetrics {
 }
 
 declare type ScribeMetricsCallback = (metrics: IScribeMetrics) => void;
+
+const RunningCalculationDelay = 10000;
 
 /**
  * Processes the input text into a normalized form for the shared string
@@ -51,6 +55,8 @@ function typeFile(
             ackProgress: undefined,
             ackRate: undefined,
             latencyAverage: undefined,
+            latencyMaximum: undefined,
+            latencyMinimum: undefined,
             latencyStdDev: undefined,
             typingProgress: undefined,
             typingRate: undefined,
@@ -79,18 +85,24 @@ function typeFile(
                     ackCounter.reset();
                 }
 
-                const roundTrip = Date.now() - messageStart[message.clientSequenceNumber];
-                delete messageStart[message.clientSequenceNumber];
-                latencyCounter.increment(roundTrip);
-                metrics.latencyAverage = latencyCounter.getValue() / message.clientSequenceNumber;
+                // Wait for a bit prior to starting the running calculation
+                if (Date.now() - startTime > RunningCalculationDelay) {
+                    const roundTrip = Date.now() - messageStart[message.clientSequenceNumber];
+                    delete messageStart[message.clientSequenceNumber];
+                    latencyCounter.increment(roundTrip);
+                    const samples = latencyCounter.getSamples();
+                    metrics.latencyMinimum = latencyCounter.getMinimum();
+                    metrics.latencyMaximum = latencyCounter.getMaximum();
+                    metrics.latencyAverage = latencyCounter.getValue() / samples;
 
-                // Update std deviation using Welford's method
-                stdDev = stdDev + (roundTrip - metrics.latencyAverage) * (roundTrip - mean);
-                metrics.latencyStdDev =
-                    message.clientSequenceNumber > 1 ? Math.sqrt(stdDev / (message.clientSequenceNumber - 1)) : 0;
+                    // Update std deviation using Welford's method
+                    stdDev = stdDev + (roundTrip - metrics.latencyAverage) * (roundTrip - mean);
+                    metrics.latencyStdDev =
+                        samples > 1 ? Math.sqrt(stdDev / (samples - 1)) : 0;
 
-                // Store the mean for use in the next round
-                mean = metrics.latencyAverage;
+                    // Store the mean for use in the next round
+                    mean = metrics.latencyAverage;
+                }
 
                 // We need a better way of hearing when our messages have been received and processed.
                 // For now I just assume we are the only writer and wait to receive a message with a client

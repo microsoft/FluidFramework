@@ -3,10 +3,16 @@
  */
 export class RateCounter {
     private start: number;
+    private samples = 0;
     private value = 0;
+    private minimum: number;
+    private maximum: number;
 
     public increment(value: number) {
+        this.samples++;
         this.value += value;
+        this.minimum = this.minimum === undefined ? value : Math.min(this.minimum, value);
+        this.maximum = this.maximum === undefined ? value : Math.max(this.maximum, value);
     }
 
     /**
@@ -14,6 +20,9 @@ export class RateCounter {
      */
     public reset() {
         this.value = 0;
+        this.samples = 0;
+        this.minimum = undefined;
+        this.maximum = undefined;
         this.start = Date.now();
     }
 
@@ -26,6 +35,27 @@ export class RateCounter {
      */
     public getValue(): number {
         return this.value;
+    }
+
+    /**
+     * Minimum value seen
+     */
+    public getMinimum(): number {
+        return this.minimum;
+    }
+
+    /**
+     * Maximum value seen
+     */
+    public getMaximum(): number {
+        return this.maximum;
+    }
+
+    /**
+     * Total number of samples provided to the counter
+     */
+    public getSamples(): number {
+        return this.samples;
     }
 
     /**

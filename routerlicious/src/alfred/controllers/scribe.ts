@@ -1,3 +1,4 @@
+import * as _ from "lodash";
 import * as socketStorage from "../../socket-storage";
 import * as scribe from "../../utils/scribe";
 
@@ -19,6 +20,43 @@ const ackProgressBar = ackProgress.getElementsByClassName("progress-bar")[0] as 
 
 // Text represents the loaded file text
 let text: string;
+let lastMetrics: scribe.IScribeMetrics;
+
+// tslint:disable-next-line:no-string-literal
+const Microsoft = window["Microsoft"];
+let host = new Microsoft.Charts.Host({ base: "https://charts.microsoft.com" });
+
+const ChartSamples = 10;
+
+interface IChartData {
+    minimum: number[];
+    maximum: number[];
+    mean: number[];
+    stdDev: number[];
+    label: string[];
+    index: number;
+}
+
+/**
+ * Initializes empty chart data
+ */
+function createChartData(length: number): IChartData {
+    const empty = [];
+    const emptyLabel = [];
+    for (let i = 0; i < length; i++) {
+        empty.push(0);
+        emptyLabel.push("");
+    }
+
+    return {
+        index: 0,
+        label: emptyLabel,
+        maximum: _.clone(empty),
+        mean: _.clone(empty),
+        minimum: _.clone(empty),
+        stdDev: _.clone(empty),
+    };
+}
 
 inputElement.addEventListener(
     "change",
@@ -42,6 +80,8 @@ function resetProgressBar(progressBar: HTMLElement) {
 }
 
 function updateMetrics(metrics: scribe.IScribeMetrics) {
+    lastMetrics = _.clone(metrics);
+
     updateProgressBar(ackProgressBar, metrics.ackProgress);
     updateProgressBar(typingProgressBar, metrics.typingProgress);
 
@@ -66,6 +106,95 @@ function updateMetrics(metrics: scribe.IScribeMetrics) {
     }
 }
 
+function rearrange(array: any[], index: number): any[] {
+    const clone = _.clone(array);
+    const spliced = clone.splice(0, index + 1);
+    return clone.concat(spliced);
+}
+
+function combine(first: number[], second: number[], combine: (a, b) => number): number[] {
+    const result = [];
+    for (let i = 0; i < first.length; i++) {
+        result.push(combine(first[i], second[i]));
+    }
+
+    return result;
+}
+
+function padTime(value: number) {
+    return `0${value}`.slice(-2);
+}
+
+function getChartConfiguration(data: IChartData) {
+    const mean = rearrange(data.mean, data.index);
+    const stddev = rearrange(data.stdDev, data.index);
+    const plusStddev = combine(mean, stddev, (a, b) => a + b);
+    const negStddev = combine(mean, stddev, (a, b) => a - b);
+
+    return {
+        legend: {
+            position: {
+                edge: "Top",
+                edgePosition: "Minimum",
+            },
+        },
+        series: [
+            {
+                data: {
+                    categoryNames: rearrange(data.label, data.index),
+                    values: mean,
+                },
+                id: "mean",
+                layout: "Line",
+                title: "Mean",
+            },
+            {
+                data: {
+                    values: plusStddev,
+                },
+                id: "plusstddev",
+                layout: "Line",
+                title: "+StdDev",
+            },
+            {
+                data: {
+                    values: negStddev,
+                },
+                id: "negstddev",
+                layout: "Line",
+                title: "-StdDev",
+            },
+            {
+                data: {
+                    values: rearrange(data.minimum, data.index),
+                },
+                id: "minimum",
+                layout: "Line",
+                title: "Minimum",
+            },
+            {
+                data: {
+                    values: rearrange(data.maximum, data.index),
+                },
+                id: "maximum",
+                layout: "Line",
+                title: "Maximum",
+            },
+        ],
+        size: {
+            height: 480,
+            width: 768,
+        },
+        title: {
+            position: {
+                edge: "Top",
+                edgePosition: "Minimum",
+            },
+            text: "Performance",
+        },
+    };
+}
+
 form.addEventListener("submit", (event) => {
     const id = sharedTextId.value;
     const intervalTime = Number.parseInt(intervalElement.value);
@@ -80,14 +209,40 @@ form.addEventListener("submit", (event) => {
     // Start typing and register to update the UI
     const typeP = scribe.type(id, intervalTime, text, updateMetrics);
 
+    // Remove any old child divs and then add a new one
+    const chartHolder = document.getElementById("chart");
+    chartHolder.innerHTML = "";
+    const chartDiv = document.createElement("div");
+    chartHolder.appendChild(chartDiv);
+
+    const chart = new Microsoft.Charts.Chart(host, chartDiv);
+    chart.setRenderer(Microsoft.Charts.IvyRenderer.Svg);
+    const chartData = createChartData(ChartSamples);
+    const interval = setInterval(() => {
+        if (lastMetrics && lastMetrics.latencyStdDev !== undefined) {
+            const now = new Date();
+            const index = chartData.index;
+            chartData.label[index] =
+                `${padTime(now.getHours())}:${padTime(now.getMinutes())}:${padTime(now.getSeconds())}`;
+            chartData.maximum[index] = lastMetrics.latencyMaximum;
+            chartData.mean[index] = lastMetrics.latencyAverage;
+            chartData.minimum[index] = lastMetrics.latencyMinimum;
+            chartData.stdDev[index] = lastMetrics.latencyStdDev;
+            chart.setConfiguration(getChartConfiguration(chartData));
+            chartData.index = (chartData.index + 1) % chartData.maximum.length;
+        }
+    }, 1000);
+
     // Output the total time once typing is finished
     typeP.then(
         (time) => {
             document.getElementById("total-time").innerText =
                 `Total time: ${(time / 1000).toFixed(2)} seconds`;
+            clearInterval(interval);
             console.log("Done typing file");
         },
         (error) => {
+            clearInterval(interval);
             console.error(error);
         });
 
