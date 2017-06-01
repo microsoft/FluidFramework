@@ -1,4 +1,35 @@
 /**
+ * Computes a histogram of data values
+ */
+export class Histogram {
+    public buckets: number[] = [];
+
+    /**
+     * Constructs a new histogram. Increment is used to create buckets for the data
+     */
+    constructor(public increment: number) {
+    }
+
+    /**
+     * Adds a new value to the histogram
+     */
+    public add(value: number) {
+        const bucket = Math.floor(value / this.increment);
+        this.ensureBucket(bucket);
+        this.buckets[bucket]++;
+    }
+
+    /**
+     * Ensures the given bucket exists
+     */
+    private ensureBucket(bucket: number) {
+        for (let i = this.buckets.length; i <= bucket; i++) {
+            this.buckets.push(0);
+        }
+    }
+}
+
+/**
  * Simple class to help sample rate based counters
  */
 export class RateCounter {

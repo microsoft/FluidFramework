@@ -1,8 +1,10 @@
 import * as api from "../api";
 import * as SharedString from "../merge-tree";
-import { RateCounter } from "./counters";
+import { Histogram, RateCounter } from "./counters";
 
 export interface IScribeMetrics {
+    histogram: Histogram;
+
     // Average latency between when a message is sent and when it is ack'd by the server
     latencyAverage: number;
     latencyStdDev: number;
@@ -50,10 +52,14 @@ function typeFile(
         let insertPosition = sharedString.client.getLength();
         let readPosition = 0;
 
+        const historgramRange = 5;
+        const histogram = new Histogram(historgramRange);
+
         fileText = normalizeText(fileText);
         const metrics: IScribeMetrics = {
             ackProgress: undefined,
             ackRate: undefined,
+            histogram,
             latencyAverage: undefined,
             latencyMaximum: undefined,
             latencyMinimum: undefined,
@@ -90,6 +96,7 @@ function typeFile(
                     const roundTrip = Date.now() - messageStart[message.clientSequenceNumber];
                     delete messageStart[message.clientSequenceNumber];
                     latencyCounter.increment(roundTrip);
+                    histogram.add(roundTrip);
                     const samples = latencyCounter.getSamples();
                     metrics.latencyMinimum = latencyCounter.getMinimum();
                     metrics.latencyMaximum = latencyCounter.getMaximum();

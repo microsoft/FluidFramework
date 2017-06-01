@@ -1,5 +1,6 @@
 import * as _ from "lodash";
 import * as socketStorage from "../../socket-storage";
+import { Histogram } from "../../utils/counters";
 import * as scribe from "../../utils/scribe";
 
 // Mark socket storage as our default provider
@@ -195,6 +196,33 @@ function getChartConfiguration(data: IChartData) {
     };
 }
 
+function getHistogramConfiguration(histogram: Histogram) {
+    return {
+        series: [
+            {
+                data: {
+                    categoryNames: histogram.buckets.map((bucket, index) => (index * histogram.increment).toString()),
+                    values: histogram.buckets,
+                },
+                id: "buckets",
+                layout: "Column Clustered",
+                title: "Buckets",
+            },
+        ],
+        size: {
+            height: 480,
+            width: 768,
+        },
+        title: {
+            position: {
+                edge: "Top",
+                edgePosition: "Minimum",
+            },
+            text: "Histogram",
+        },
+    };
+}
+
 form.addEventListener("submit", (event) => {
     const id = sharedTextId.value;
     const intervalTime = Number.parseInt(intervalElement.value);
@@ -215,8 +243,16 @@ form.addEventListener("submit", (event) => {
     const chartDiv = document.createElement("div");
     chartHolder.appendChild(chartDiv);
 
+    const histogramHolder = document.getElementById("histogram");
+    histogramHolder.innerHTML = "";
+    const histogramDiv = document.createElement("div");
+    histogramHolder.appendChild(histogramDiv);
+
     const chart = new Microsoft.Charts.Chart(host, chartDiv);
     chart.setRenderer(Microsoft.Charts.IvyRenderer.Svg);
+    const histogram = new Microsoft.Charts.Chart(host, histogramDiv);
+    histogram.setRenderer(Microsoft.Charts.IvyRenderer.Svg);
+
     const chartData = createChartData(ChartSamples);
     const interval = setInterval(() => {
         if (lastMetrics && lastMetrics.latencyStdDev !== undefined) {
@@ -230,6 +266,8 @@ form.addEventListener("submit", (event) => {
             chartData.stdDev[index] = lastMetrics.latencyStdDev;
             chart.setConfiguration(getChartConfiguration(chartData));
             chartData.index = (chartData.index + 1) % chartData.maximum.length;
+
+            histogram.setConfiguration(getHistogramConfiguration(lastMetrics.histogram));
         }
     }, 1000);
 
