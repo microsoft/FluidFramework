@@ -12,7 +12,7 @@ export function loadTextFromFile(filename: string, mergeTree: MergeTree.MergeTre
 export function loadSegments(content: string, segLimit: number) {
     content = content.replace(/^\uFEFF/, "");
 
-    let paragraphs = content.split('\r\n\r\n');
+    let paragraphs = content.split('\r\n');
     for (let i = 0, len = paragraphs.length; i < len; i++) {
         paragraphs[i] = paragraphs[i].replace(/\r\n/g, ' ').replace(/\u201c|\u201d/g, '"').replace(/\u2019/g, "'") + '\n';
     }

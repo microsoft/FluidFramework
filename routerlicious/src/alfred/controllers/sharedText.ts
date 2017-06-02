@@ -210,16 +210,18 @@ export async function onLoad(id: string) {
             theFlow.loadFinished(clockStart);
         } else {
             console.log("local load...");
-            request.get(url.resolve(document.baseURI, "/public/literature/pp.txt"), (error, response, body: string) => {
-                if (error) {
-                    return console.error(error);
-                }
-                const segments = SharedString.loadSegments(body, 0);
-                for (const segment of segments) {
-                    sharedString.insertText((<SharedString.TextSegment>segment).text, sharedString.client.getLength());
-                }
-                theFlow.loadFinished(clockStart);
-            });
+            request.get(url.resolve(document.baseURI,
+                "/public/literature/pp.txt"), (error, response, body: string) => {
+                    if (error) {
+                        return console.error(error);
+                    }
+                    const segments = SharedString.loadSegments(body, 0);
+                    for (const segment of segments) {
+                        sharedString.insertText((<SharedString.TextSegment>segment).text,
+                            sharedString.client.getLength());
+                    }
+                    theFlow.loadFinished(clockStart);
+                });
         }
     });
 }
