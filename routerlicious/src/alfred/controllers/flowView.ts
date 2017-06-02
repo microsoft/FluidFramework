@@ -651,26 +651,26 @@ export class FlowView {
     }
 
     private async updateInsights(insights: API.IMap) {
-        const resumeP = insights.get("Resume");
-        const analyticsP = insights.get("TextAnalytics");
-        const results = await Promise.all([resumeP, analyticsP]);
+        const view = await insights.getView();
 
-        if (results[0]) {
-            const probability = parseFloat(results[0]);
+        if (view.has("Resume")) {
+            const resume = view.get("Resume");
+            const probability = parseFloat(resume);
             if (probability !== 1 && probability > 0.7) {
                 this.flowContainer.status.overlay(`${Math.round(probability * 100)}% sure I found a resume!`);
             }
         }
 
-        if (results[1]) {
-            if (results[1].language) {
-                this.statusMessage("li", results[1].language);
+        if (view.has("TextAnalytics")) {
+            const analytics = view.get("TextAnalytics");
+            if (analytics.language) {
+                this.statusMessage("li", analytics.language);
             }
 
-            if (results[1].sentiment) {
-                const sentimentEmoji = results[1].sentiment > 0.7
+            if (analytics.sentiment) {
+                const sentimentEmoji = analytics.sentiment > 0.7
                     ? "🙂"
-                    : results[1].sentiment < 0.3 ? "🙁" : "😐";
+                    : analytics.sentiment < 0.3 ? "🙁" : "😐";
                 this.statusMessage("si", sentimentEmoji);
             }
         }
