@@ -41,7 +41,7 @@ export class Snapshot {
     seq: number;
     buffer: Buffer;
     pendingChunk: SnapChunk;
-    texts: string[];
+    texts: API.IPropertyString[];
 
     constructor(public mergeTree: MergeTree.MergeTree, public filename?: string,
         public onCompletion?: () => void) {
@@ -54,16 +54,16 @@ export class Snapshot {
         });
     }
 
-    getCharLengthSegs(alltexts: string[], approxCharLength: number, startIndex = 0): API.MergeTreeChunk {
+    getCharLengthSegs(alltexts: API.IPropertyString[], approxCharLength: number, startIndex = 0): API.MergeTreeChunk {
         //console.log(`start index ${startIndex}`);
-        let texts = <string[]>[];
+        let texts = <API.IPropertyString[]>[];
         let lengthChars = 0;
         let segCount = 0;
         while ((lengthChars < approxCharLength) && ((startIndex + segCount) < alltexts.length)) {
-            let text = alltexts[startIndex + segCount];
+            let ptext = alltexts[startIndex + segCount];
             segCount++;
-            texts.push(text);
-            lengthChars += text.length;
+            texts.push(ptext);
+            lengthChars += ptext.text.length;
         }
         return {
             chunkStartSegmentIndex: startIndex,
@@ -93,7 +93,7 @@ export class Snapshot {
                 MergeTree.NonCollabClient),
             seq: this.mergeTree.collabWindow.minSeq,
         };
-        let texts = <string[]>[];
+        let texts = <API.IPropertyString[]>[];
         let extractSegment = (segment: MergeTree.Segment, pos: number, refSeq: number, clientId: number,
             start: number, end: number) => {
             if ((segment.seq != MergeTree.UnassignedSequenceNumber) && (segment.seq <= this.seq) &&
@@ -102,7 +102,7 @@ export class Snapshot {
                     (segment.removedSeq == MergeTree.UnassignedSequenceNumber) ||
                     (segment.removedSeq > this.seq)) {
                     let textSegment = <MergeTree.TextSegment>segment;
-                    texts.push(textSegment.text);
+                    texts.push({ props: textSegment.properties, text: textSegment.text});
                 }
             }
             return true;

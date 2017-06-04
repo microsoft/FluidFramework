@@ -11,6 +11,9 @@ export function loadTextFromFile(filename: string, mergeTree: MergeTree.MergeTre
 
 export function loadSegments(content: string, segLimit: number) {
     content = content.replace(/^\uFEFF/, "");
+    const seq = MergeTree.UniversalSequenceNumber;
+    const cli = MergeTree.LocalClientId;
+    let withProps = true;
 
     let paragraphs = content.split('\r\n');
     for (let i = 0, len = paragraphs.length; i < len; i++) {
@@ -18,13 +21,31 @@ export function loadSegments(content: string, segLimit: number) {
     }
     let segments = <MergeTree.Segment[]>[];
     for (let paragraph of paragraphs) {
-        let segment = new MergeTree.TextSegment(paragraph,
-            MergeTree.UniversalSequenceNumber,
-            MergeTree.LocalClientId);
-        
-        segments.push(segment);
+        // temporary code to bootstrap attributes
+        if (withProps) {
+            if (paragraph.indexOf("Chapter") >= 0) {
+                segments.push(MergeTree.TextSegment.make(paragraph, { fontSize: "140%", lineHeight: "150%" }, seq, cli));
+            } else {
+                let emphStrings = paragraph.split("_");
+                for (let i = 0, len = emphStrings.length; i < len; i++) {
+                    if (i & 1) {
+                        if (emphStrings[i].length > 0) {
+                            segments.push(MergeTree.TextSegment.make(emphStrings[i], { fontStyle: "italic" }, seq, cli));
+                        }
+                    }
+                    else {
+                        if (emphStrings[i].length > 0) {
+                            segments.push(new MergeTree.TextSegment(emphStrings[i], seq, cli));
+                        }
+                    }
+                }
+            }
+        } else {
+            segments.push(new MergeTree.TextSegment(paragraph, seq, cli));
+        }
     }
-    if (segLimit>0) {
+
+    if (segLimit > 0) {
         segments.length = segLimit;
     }
 
@@ -48,7 +69,7 @@ mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
 
 export function findRandomWord(mergeTree: MergeTree.MergeTree, clientId: number) {
     let len = mergeTree.getLength(MergeTree.UniversalSequenceNumber, clientId);
-    let pos = random.integer(0, len)(mt); 
+    let pos = random.integer(0, len)(mt);
     // let textAtPos = mergeTree.getText(MergeTree.UniversalSequenceNumber, clientId, pos, pos + 10);
     // console.log(textAtPos);
     let nextWord = mergeTree.searchFromPos(pos, /\s\w+\b/);

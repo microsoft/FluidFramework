@@ -160,14 +160,15 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
         function segmentToSpan(segText: string, textSegment: SharedString.TextSegment) {
             let span = <ISegSpan>document.createElement("span");
             segPos += segOffset;
-            if (segText.indexOf("Chapter") >= 0) {
-                span.style.fontSize = "140%";
-                span.style.lineHeight = "150%";
-            } else {
-                segText = segText.replace(/_([a-zA-Z]+)_/g, "<span style='font-style:italic'>$1</span>");
-            }
-            span.innerHTML = segText;
+            span.innerText = segText;
             span.seg = textSegment;
+            if (textSegment.properties) {
+                for (let key in textSegment.properties) {
+                    if (textSegment.properties.hasOwnProperty(key)) {
+                        span.style[key] = textSegment.properties[key];
+                    }
+                }
+            }
             if (segOffset > 0) {
                 span.pos = segOffset;
                 segOffset = 0;

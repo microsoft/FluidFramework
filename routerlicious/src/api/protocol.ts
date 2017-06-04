@@ -63,8 +63,14 @@ export interface IMergeTreeDeltaMsg extends IDelta {
      */
     type: MergeTreeMsgType;
     pos1: number;
+    props?: Object;
     pos2?: number;
     text?: string;
+}
+
+export interface IPropertyString {
+    props?: Object;
+    text: string;
 }
 
 // tslint:disable-next-line:interface-name
@@ -75,6 +81,5 @@ export interface MergeTreeChunk {
     totalLengthChars: number;
     totalSegmentCount: number;
     chunkSequenceNumber: number;
-    segmentTexts: string[];
-    // TODO: segment properties key
+    segmentTexts: IPropertyString[];
 }

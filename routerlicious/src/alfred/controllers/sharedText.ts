@@ -217,8 +217,9 @@ export async function onLoad(id: string) {
                     }
                     const segments = SharedString.loadSegments(body, 0);
                     for (const segment of segments) {
-                        sharedString.insertText((<SharedString.TextSegment>segment).text,
-                            sharedString.client.getLength());
+                        let textSegment = <SharedString.TextSegment>segment;
+                        sharedString.insertText(textSegment.text, sharedString.client.getLength(),
+                            textSegment.properties);
                     }
                     theFlow.loadFinished(clockStart);
                 });

@@ -10,7 +10,7 @@ import * as JsDiff from "diff";
 import * as Paparazzo from "./snapshot";
 import * as express from "express";
 import * as path from "path";
-import { MergeTreeChunk } from "../api";
+import { MergeTreeChunk, IPropertyString } from "../api";
 
 function compareStrings(a: string, b: string) {
     return a.localeCompare(b);
@@ -128,17 +128,17 @@ class Server {
         return buf;
     }
 
-    getCharLengthSegs(alltexts: string[], approxCharLength: number, clientId: string,
+    getCharLengthSegs(alltexts: IPropertyString[], approxCharLength: number, clientId: string,
         startIndex = 0): MergeTreeChunk {
         //console.log(`start index ${startIndex}`);
-        let texts = <string[]>[];
+        let texts = <IPropertyString[]>[];
         let lengthChars = 0;
         let segCount = 0;
         while ((lengthChars < approxCharLength) && ((startIndex + segCount) < alltexts.length)) {
-            let text = alltexts[startIndex + segCount];
+            let ptext = alltexts[startIndex + segCount];
             segCount++;
-            texts.push(text);
-            lengthChars += text.length;
+            texts.push(ptext);
+            lengthChars += ptext.text.length;
         }
         return {
             chunkStartSegmentIndex: startIndex,
@@ -1099,7 +1099,7 @@ export function TestPack() {
                     let text = randomString(textLen, String.fromCharCode(zedCode + (sequenceNumber % 50)));
                     let preLen = cliA.getLength();
                     let pos = random.integer(0, preLen)(mt);
-                    cliB.insertSegmentRemote(text, pos, sequenceNumber++, cliA.getCurrentSeq(), cliA.mergeTree.getCollabWindow().clientId);
+                    cliB.insertSegmentRemote(text, pos, undefined, sequenceNumber++, cliA.getCurrentSeq(), cliA.mergeTree.getCollabWindow().clientId);
                     cliA.insertSegmentLocal(text, pos);
                 }
                 for (let k = firstSeq; k < sequenceNumber; k++) {
@@ -1118,7 +1118,7 @@ export function TestPack() {
                     let text = randomString(textLen, String.fromCharCode(zedCode + (sequenceNumber % 50)));
                     let preLen = cliB.getLength();
                     let pos = random.integer(0, preLen)(mt);
-                    cliA.insertSegmentRemote(text, pos, sequenceNumber++, cliB.getCurrentSeq(), cliB.mergeTree.getCollabWindow().clientId);
+                    cliA.insertSegmentRemote(text, pos, undefined, sequenceNumber++, cliB.getCurrentSeq(), cliB.mergeTree.getCollabWindow().clientId);
                     cliB.insertSegmentLocal(text, pos);
                 }
                 for (let k = firstSeq; k < sequenceNumber; k++) {
@@ -1208,9 +1208,9 @@ export function TestPack() {
         for (let cname of clientNames) {
             cli.addLongClientId(cname);
         }
-        cli.insertSegmentRemote("that ", 0, 1, 0, 1);
+        cli.insertSegmentRemote("that ", 0, undefined, 1, 0, 1);
         console.log(cli.mergeTree.toString());
-        cli.insertSegmentRemote("fat ", 0, 2, 0, 2);
+        cli.insertSegmentRemote("fat ", 0, undefined, 2, 0, 2);
         console.log(cli.mergeTree.toString());
         cli.insertSegmentLocal("cat ", 5);
         console.log(cli.mergeTree.toString());
@@ -1226,7 +1226,7 @@ export function TestPack() {
                 console.log(cli.relText(clientId, refSeq));
             }
         }
-        cli.insertSegmentRemote("very ", 5, 4, 2, 2);
+        cli.insertSegmentRemote("very ", 5, undefined, 4, 2, 2);
         console.log(cli.mergeTree.toString());
         for (let clientId = 0; clientId < 4; clientId++) {
             for (let refSeq = 0; refSeq < 5; refSeq++) {
@@ -1238,13 +1238,13 @@ export function TestPack() {
         for (let cname of clientNames) {
             cli.addLongClientId(cname);
         }
-        cli.insertSegmentRemote("abcde", 0, 1, 0, 2);
-        cli.insertSegmentRemote("yyy", 0, 2, 0, 1);
-        cli.insertSegmentRemote("zzz", 2, 3, 1, 3);
-        cli.insertSegmentRemote("EAGLE", 1, 4, 1, 4);
-        cli.insertSegmentRemote("HAS", 4, 5, 1, 5);
+        cli.insertSegmentRemote("abcde", 0, undefined, 1, 0, 2);
+        cli.insertSegmentRemote("yyy", 0, undefined, 2, 0, 1);
+        cli.insertSegmentRemote("zzz", undefined, 2, 3, 1, 3);
+        cli.insertSegmentRemote("EAGLE", undefined, 1, 4, 1, 4);
+        cli.insertSegmentRemote("HAS", 4, undefined, 5, 1, 5);
         cli.insertSegmentLocal(" LANDED", 19);
-        cli.insertSegmentRemote("yowza: ", 0, 6, 4, 2);
+        cli.insertSegmentRemote("yowza: ", 0, undefined, 6, 4, 2);
         cli.mergeTree.ackPendingSegment(7);
         console.log(cli.mergeTree.toString());
         for (let clientId = 0; clientId < 6; clientId++) {
@@ -1266,14 +1266,14 @@ export function TestPack() {
         }
         cli.removeSegmentRemote(1, 3, 1, 0, 3);
         console.log(cli.mergeTree.toString());
-        cli.insertSegmentRemote("zzz", 2, 2, 0, 2);
+        cli.insertSegmentRemote("zzz", 2, undefined, 2, 0, 2);
         console.log(cli.mergeTree.toString());
         for (let clientId = 0; clientId < 4; clientId++) {
             for (let refSeq = 0; refSeq < 3; refSeq++) {
                 console.log(cli.relText(clientId, refSeq));
             }
         }
-        cli.insertSegmentRemote(" chaser", 9, 3, 2, 3);
+        cli.insertSegmentRemote(" chaser", 9, undefined, 3, 2, 3);
         cli.removeSegmentLocal(12, 14);
         cli.mergeTree.ackPendingSegment(4);
         console.log(cli.mergeTree.toString());
@@ -1285,7 +1285,7 @@ export function TestPack() {
         cli.insertSegmentLocal("*yolumba*", 14);
         cli.insertSegmentLocal("-zanzibar-", 17);
         cli.mergeTree.ackPendingSegment(5);
-        cli.insertSegmentRemote("(aaa)", 2, 6, 4, 2);
+        cli.insertSegmentRemote("(aaa)", 2, undefined, 6, 4, 2);
         cli.mergeTree.ackPendingSegment(7);
         console.log(cli.mergeTree.toString());
         for (let clientId = 0; clientId < 4; clientId++) {
