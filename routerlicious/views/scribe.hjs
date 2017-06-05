@@ -31,6 +31,8 @@
             <div class="typing-details hidden" id="create-details">
                 <p>
                     <a href="" target="_blank" id="document-link"></a>
+                    <br/>
+                    <a href="" target="_blank" id="metrics-link"></a>
                 </p>
 
                 <!-- Progress of the scribe writing the document -->
@@ -60,15 +62,11 @@
                 </p>
 
                 <div id="total-time"></div>
-
-                <div id="chart"></div>
-                <div id="histogram"></div>
             </div>
         </div>
     {{/content}}
 
     {{$scripts}}
-        <script src="//charts.azureedge.net/release/0.1.215074.1/microsoft-charts.min.js"></script>
         <script src="/socket.io/socket.io.js"></script>
         <script src="/public/scripts/dist/scribe.js"></script>
     {{/scripts}}

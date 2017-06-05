@@ -1,3 +1,4 @@
+import * as _ from "lodash";
 import * as api from "../api";
 import * as SharedString from "../merge-tree";
 import { Histogram, RateCounter } from "./counters";
@@ -20,9 +21,24 @@ export interface IScribeMetrics {
     ackProgress: number;
 }
 
+interface IChartData {
+    minimum: number[];
+    maximum: number[];
+    mean: number[];
+    stdDev: number[];
+    label: string[];
+    index: number;
+}
+
 declare type ScribeMetricsCallback = (metrics: IScribeMetrics) => void;
 
 const RunningCalculationDelay = 10000;
+
+const ChartSamples = 10;
+
+function padTime(value: number) {
+    return `0${value}`.slice(-2);
+}
 
 /**
  * Processes the input text into a normalized form for the shared string
@@ -38,13 +54,159 @@ function normalizeText(input: string): string {
 }
 
 /**
+ * Initializes empty chart data
+ */
+function createChartData(length: number): IChartData {
+    const empty = [];
+    const emptyLabel = [];
+    for (let i = 0; i < length; i++) {
+        empty.push(0);
+        emptyLabel.push("");
+    }
+
+    return {
+        index: 0,
+        label: emptyLabel,
+        maximum: _.clone(empty),
+        mean: _.clone(empty),
+        minimum: _.clone(empty),
+        stdDev: _.clone(empty),
+    };
+}
+
+function getChartConfiguration(data: IChartData) {
+    const mean = rearrange(data.mean, data.index);
+    const stddev = rearrange(data.stdDev, data.index);
+    const plusStddev = combine(mean, stddev, (a, b) => a + b);
+    const negStddev = combine(mean, stddev, (a, b) => a - b);
+
+    return {
+        legend: {
+            position: {
+                edge: "Top",
+                edgePosition: "Minimum",
+            },
+        },
+        series: [
+            {
+                data: {
+                    categoryNames: rearrange(data.label, data.index),
+                    values: mean,
+                },
+                id: "mean",
+                layout: "Line",
+                title: "Mean",
+            },
+            {
+                data: {
+                    values: plusStddev,
+                },
+                id: "plusstddev",
+                layout: "Line",
+                title: "+StdDev",
+            },
+            {
+                data: {
+                    values: negStddev,
+                },
+                id: "negstddev",
+                layout: "Line",
+                title: "-StdDev",
+            },
+            {
+                data: {
+                    values: rearrange(data.minimum, data.index),
+                },
+                id: "minimum",
+                layout: "Line",
+                title: "Minimum",
+            },
+            {
+                data: {
+                    values: rearrange(data.maximum, data.index),
+                },
+                id: "maximum",
+                layout: "Line",
+                title: "Maximum",
+            },
+        ],
+        title: {
+            position: {
+                edge: "Top",
+                edgePosition: "Minimum",
+            },
+            text: "Performance",
+        },
+    };
+}
+
+function getHistogramConfiguration(histogram: Histogram) {
+    return {
+        series: [
+            {
+                data: {
+                    categoryNames: histogram.buckets.map((bucket, index) => (index * histogram.increment).toString()),
+                    values: histogram.buckets,
+                },
+                id: "buckets",
+                layout: "Column Clustered",
+                title: "Buckets",
+            },
+        ],
+        title: {
+            position: {
+                edge: "Top",
+                edgePosition: "Minimum",
+            },
+            text: "Histogram",
+        },
+    };
+}
+
+function rearrange(array: any[], index: number): any[] {
+    const clone = _.clone(array);
+    const spliced = clone.splice(0, index + 1);
+    return clone.concat(spliced);
+}
+
+function combine(first: number[], second: number[], combine: (a, b) => number): number[] {
+    const result = [];
+    for (let i = 0; i < first.length; i++) {
+        result.push(combine(first[i], second[i]));
+    }
+
+    return result;
+}
+
+/**
  * Types the given file into the shared string - starting at the end of the string
  */
-function typeFile(
+async function typeFile(
     sharedString: SharedString.SharedString,
     fileText: string,
     intervalTime: number,
     callback: ScribeMetricsCallback): Promise<number> {
+
+    // And also load a canvas document where we will place the metrics
+    const metricsDoc = await api.load(`${sharedString.id}-metrics`);
+    const root = await metricsDoc.getRoot().getView();
+
+    const components = metricsDoc.createMap();
+    const componentsView = await components.getView();
+    root.set("components", components);
+
+    // Create the two chart windows
+    const performanceChart = metricsDoc.createMap();
+    componentsView.set("performance", performanceChart);
+    performanceChart.set("type", "chart");
+    performanceChart.set("size", { width: 760, height: 480 });
+    performanceChart.set("position", { x: 10, y: 10 });
+
+    const histogramChart = metricsDoc.createMap();
+    componentsView.set("histogram", histogramChart);
+    histogramChart.set("type", "chart");
+    histogramChart.set("size", { width: 760, height: 480 });
+    histogramChart.set("position", { x: 10, y: 500 });
 
     const startTime = Date.now();
 
@@ -80,14 +242,32 @@ function typeFile(
         let mean = 0;
         let stdDev = 0;
 
+        // Compute and update the metrics as time progresses
+        const chartData = createChartData(ChartSamples);
+        const metricsInterval = setInterval(() => {
+            if (metrics && metrics.latencyStdDev !== undefined) {
+                const now = new Date();
+                const index = chartData.index;
+                chartData.label[index] =
+                    `${padTime(now.getHours())}:${padTime(now.getMinutes())}:${padTime(now.getSeconds())}`;
+                chartData.maximum[index] = metrics.latencyMaximum;
+                chartData.mean[index] = metrics.latencyAverage;
+                chartData.minimum[index] = metrics.latencyMinimum;
+                chartData.stdDev[index] = metrics.latencyStdDev;
+
+                performanceChart.set("data", getChartConfiguration(chartData));
+                histogramChart.set("data", getHistogramConfiguration(histogram));
+
+                chartData.index = (chartData.index + 1) % chartData.maximum.length;
+            }
+        }, 1000);
+
         sharedString.on("op", (message) => {
             if (message.clientSequenceNumber) {
                 ackCounter.increment(1);
                 if (ackCounter.elapsed() > samplingRate) {
                     const rate = ackCounter.getRate() * 1000;
                     metrics.ackRate = rate;
-                    callback(metrics);
-
                     ackCounter.reset();
                 }
 
@@ -116,12 +296,14 @@ function typeFile(
                 // sequence number greater than the number of submitted operations.
                 if (message.clientSequenceNumber >= fileText.length) {
                     const endTime = Date.now();
+                    clearInterval(metricsInterval);
                     resolve(endTime - startTime);
                 }
 
                 // Notify of change in metrics
                 metrics.ackProgress = message.clientSequenceNumber / fileText.length;
-                callback(metrics);
+
+                callback(_.clone(metrics));
             }
         });
 
@@ -175,7 +357,13 @@ function typeFile(
     });
 }
 
-export function type(id: string, intervalTime: number, text: string, callback: ScribeMetricsCallback): Promise<number> {
+export async function type(
+    id: string,
+    intervalTime: number,
+    text: string,
+    callback: ScribeMetricsCallback): Promise<number> {
+
+    // Load the shared string extension we will type into
     const extension = api.defaultRegistry.getExtension(SharedString.CollaboritiveStringExtension.Type);
     const sharedString = extension.load(id, api.getDefaultServices(), api.defaultRegistry) as SharedString.SharedString;
 

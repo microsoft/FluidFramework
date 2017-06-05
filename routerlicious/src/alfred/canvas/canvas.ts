@@ -1,5 +1,6 @@
 // The main app code
 import * as $ from "jquery";
+import * as api from "../../api";
 import * as ink from "../../ink";
 import InkCanvas from "./inkCanvas";
 import StickyNote from "./stickyNote";
@@ -19,6 +20,10 @@ const colors: ink.IColor[] = [
     { r:   0 / 255, g:   0 / 255, b:   0 / 255, a: 1 },
 ];
 
+// tslint:disable-next-line:no-string-literal
+const Microsoft = window["Microsoft"];
+let chartsHost = new Microsoft.Charts.Host({ base: "https://charts.microsoft.com" });
+
 /**
  * Canvas app
  */
@@ -28,21 +33,16 @@ export class Canvas {
     public stickyCount: number = 0;
 
     // Map indicating whether or not we have processed a given object
-    // private canvasObjects: {[key: string]: any } = {};
+    private canvasObjects: {[key: string]: Promise<void> } = {};
 
-    constructor(model: ink.IInk) {
+    constructor(model: ink.IInk, private components: api.IMap) {
         // register all of the different handlers
         let p = document.getElementById("hitPlane");
 
-        // this.refreshCanvasObjects();
-        // model.on("op", (op, source) => {
-        //     if (source === this) {
-        //         return;
-        //     }
-
-        //     // Update the canvas
-        //     this.refreshCanvasObjects();
-        // });
+        this.refreshComponents();
+        this.components.on("op", () => {
+            this.refreshComponents();
+        });
 
         this.ink = new InkCanvas(model, p);
 
@@ -61,16 +61,6 @@ export class Canvas {
                 this.ink.setPenColor(elem.data("color"));
             });
         }
-
-        // toolbar buttons
-        // document.querySelector("#strokeColors")
-        // .addEventListener("click", (e) => { this.ink.inkColor(); }, false);
-        // document.querySelector("#clearButton").addEventListener("click", (e) => { this.clear(); }, false);
-        // document.querySelector("#undoButton").addEventListener("click", (e) => { this.ink.undo(); }, false);
-        // document.querySelector("#redoButton").addEventListener("click", (e) => { this.ink.redo(); }, false);
-        // document.querySelector("#testButton").addEventListener("click", (e) => { this.test(e); }, false);
-        // document.querySelector("#turnOnInk").addEventListener("click", (e) => { this.test(e); }, false);
-        // document.querySelector("#editor").addEventListener("click", (e) => { this.addDocument(); }, false);
     }
 
     //  Key Handlers:
@@ -176,120 +166,124 @@ export class Canvas {
         }
     }
 
-    // private handleChromeEvents(chrome: HTMLElement, object: IObject) {
-    //     let pointerDown = false;
-    //     let lastPoint: { x: number, y: number };
+    private handleChromeEvents(chrome: HTMLElement, object: api.IMapView) {
+        let pointerDown = false;
+        let lastPoint: { x: number, y: number };
 
-    //     chrome.addEventListener("pointerdown", (evt) => {
-    //         pointerDown = true;
-    //         lastPoint = { x: evt.clientX, y: evt.clientY };
-    //         evt.returnValue = false;
-    //         chrome.setPointerCapture(evt.pointerId);
-    //     }, false);
+        chrome.addEventListener("pointerdown", (evt) => {
+            pointerDown = true;
+            lastPoint = { x: evt.clientX, y: evt.clientY };
+            evt.returnValue = false;
+            chrome.setPointerCapture(evt.pointerId);
+        }, false);
 
-    //     chrome.addEventListener("pointermove", (evt) => {
-    //         if (pointerDown) {
-    //             let deltaX = evt.clientX - lastPoint.x;
-    //             let deltaY = evt.clientY - lastPoint.y;
+        chrome.addEventListener("pointermove", (evt) => {
+            if (pointerDown) {
+                let deltaX = evt.clientX - lastPoint.x;
+                let deltaY = evt.clientY - lastPoint.y;
 
-    //             object.location.x += deltaX;
-    //             object.location.y += deltaY;
+                const position = object.get("position");
+                position.x += deltaX;
+                position.y += deltaY;
+                object.set("position", position);
 
-    //             chrome.style.top = `${object.location.y}px`;
-    //             chrome.style.left = `${object.location.x}px`;
+                chrome.style.top = `${position.y}px`;
+                chrome.style.left = `${position.x}px`;
 
-    //             lastPoint = { x: evt.clientX, y: evt.clientY };
-    //             evt.returnValue = false;
+                lastPoint = { x: evt.clientX, y: evt.clientY };
+                evt.returnValue = false;
+            }
+        }, false);
 
-    //             // Update the object properties
-    //             let location = _.indexOf(this.model.data.objects, object);
-    //             this.model.submitOp(
-    //                 {p: ["objects", location, "location"], oi: object.location },
-    //                 { source: this });
-    //         }
-    //     }, false);
+        chrome.addEventListener("pointerup", (evt) => {
+            pointerDown = false;
+            chrome.releasePointerCapture(evt.pointerId);
+        }, false);
+    }
 
-    //     chrome.addEventListener("pointerup", (evt) => {
-    //         pointerDown = false;
-    //         chrome.releasePointerCapture(evt.pointerId);
-    //     }, false);
-    // }
+    private updateSizeAndPosition(chrome: HTMLDivElement, content: HTMLDivElement, position, size) {
+        chrome.style.top = `${position.y}px`;
+        chrome.style.left = `${position.x}px`;
+        chrome.style.width = `${size.width + 10}px`;
+        chrome.style.height = `${size.height + 10}px`;
+        content.style.width = `${size.width}px`;
+        content.style.height = `${size.height}px`;
+    }
 
-    // private addDocument(object: IObject = null) {
-    //     let create = !object;
-    //     if (create) {
-    //         object = {
-    //             id: uuid.v4(),
-    //             location: {
-    //                 x: 300 + this.model.data.objects.length * 400,
-    //                 y: 100,
-    //             },
-    //             type: "document",
-    //             width: 400,
-    //         };
-    //     }
+    private updateChart(chart, componentView: api.IMapView) {
+        const config = componentView.get("data");
+        const size = componentView.get("size");
+        if (config) {
+            config.size = size;
+            chart.setConfiguration(config);
+        }
+    }
 
-    //     // Mark that we've processed this object
-    //     this.canvasObjects[object.id] = true;
+    private loadChart(content: HTMLElement, component: api.IMap, componentView: api.IMapView) {
+        const chart = new Microsoft.Charts.Chart(chartsHost, content);
+        chart.setRenderer(Microsoft.Charts.IvyRenderer.Svg);
 
-    //     // let inkP = Ink.GetOrCreate(this.connection, )
-    //     let documentP = DocumentModel.GetOrCreate(this.connection, object.id);
-    //     documentP.then((richText) => {
-    //         // TODO/NOTES - We want some kind of loading animation here. But trying to avoid
-    //         // a race condition with creating the new document and broadcasting it exists to others.
-    //         // There's a chance we could update the JSON OT type Canvas uses before we actually create
-    //         // the Rich Text OT type.
-    //         // Going conservative for now and waiting for it to be created before updating the canvas.
-    //         // Will want to understand what the UX should do as well.
+        this.updateChart(chart, componentView);
+        component.on("valueChanged", (event) => {
+            if (event.key === "data" || event.key === "size") {
+                this.updateChart(chart, componentView);
+            }
+        });
+    }
 
-    //         // Generate the stub for where to place the document
-    //         let content = document.getElementById("content");
-    //         let chrome = document.createElement("div");
-    //         chrome.classList.add("canvas-chrome");
-    //         chrome.style.top = `${object.location.y}px`;
-    //         chrome.style.left = `${object.location.x}px`;
-    //         chrome.style.width = `${object.width + 10}px`;
-    //         this.handleChromeEvents(chrome, object);
+    private async addDocument(id: string, component: api.IMap): Promise<void> {
+        const componentView = await component.getView();
 
-    //         let newDocument = document.createElement("div");
-    //         newDocument.classList.add("collab-document");
+        const type = componentView.get("type");
+        console.log(`Loading ${id} of type ${type}`);
 
-    //         chrome.appendChild(newDocument);
-    //         content.appendChild(chrome);
+        // Generate the stub for where to place the document
+        let content = document.getElementById("content");
+        let chrome = document.createElement("div");
+        chrome.classList.add("canvas-chrome");
 
-    //         // TODO need a better way to reference these
-    //         this.canvasObjects[object.id] = chrome;
+        let newDocument = document.createElement("div");
+        newDocument.classList.add("collab-document");
 
-    //         // Don't let events inside the content bubble up to the chrome
-    //         newDocument.addEventListener("pointerdown", (evt) => {
-    //             evt.stopPropagation();
-    //             return false;
-    //         }, false);
+        chrome.appendChild(newDocument);
+        content.appendChild(chrome);
 
-    //         // TODO create the new remote object
-    //         if (create) {
-    //             let newObject = object;
-    //             this.model.submitOp(
-    //                 {p: ["objects", this.model.data.objects.length + 1], li: newObject },
-    //                 { source: this });
-    //         }
+        this.updateSizeAndPosition(chrome, newDocument, componentView.get("position"), componentView.get("size"));
+        this.handleChromeEvents(chrome, componentView);
 
-    //         // tslint:disable-next-line:no-unused-new
-    //         new Document(newDocument, richText);
-    //     });
-    // }
+        // Listen for updates to the positio of the element
+        component.on("valueChanged", (event) => {
+            if (event.key === "position" || event.key === "size") {
+                this.updateSizeAndPosition(
+                    chrome, newDocument, componentView.get("position"), componentView.get("size"));
+            }
+        });
 
-    // private refreshCanvasObjects() {
-    //     // Pull in all the objects on the canvas
-    //     for (let object of this.model.data.objects) {
-    //         let canvasObject = this.canvasObjects[object.id];
-    //         if (canvasObject === undefined) {
-    //             // Load in the referenced document and render
-    //             this.addDocument(object);
-    //         } else if (canvasObject !== true) {
-    //             canvasObject.style.top = `${object.location.y}px`;
-    //             canvasObject.style.left = `${object.location.x}px`;
-    //         }
-    //     }
-    // }
+        if (type === "chart") {
+            this.loadChart(newDocument, component, componentView);
+        }
+
+        // Don't let events inside the content bubble up to the chrome
+        newDocument.addEventListener("pointerdown", (evt) => {
+            evt.stopPropagation();
+            return false;
+        }, false);
+    }
+
+    private async refreshComponents() {
+        // TODO need to support deletion of components
+        const componentsView = await this.components.getView();
+
+        // Pull in all the objects on the canvas
+        // tslint:disable-next-line:forin
+        for (let componentName of componentsView.keys()) {
+            const component = componentsView.get(componentName) as api.IMap;
+            const canvasObject = this.canvasObjects[componentName];
+
+            if (canvasObject === undefined) {
+                // Load in the referenced document and render
+                this.canvasObjects[componentName] = this.addDocument(componentName, component);
+            }
+        }
+    }
 }

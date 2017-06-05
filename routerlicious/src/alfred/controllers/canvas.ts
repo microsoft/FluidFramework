@@ -21,17 +21,17 @@ let canvas: Canvas;
 
 export async function initialize(id: string) {
     const doc = await loadDocument(id);
-    const root = doc.getRoot();
+    const root = await doc.getRoot().getView();
 
-    let ink: ink.IInk;
-    if (await root.has("ink")) {
-        ink = await root.get("ink") as ink.IInk;
-    } else {
-        ink = doc.createInk() as ink.IInk;
-        root.set("ink", ink);
+    if (!root.has("ink")) {
+        root.set("ink", doc.createInk());
+    }
+
+    if (!root.has("components")) {
+        root.set("components", doc.createMap());
     }
 
     $("document").ready(() => {
-        canvas = new Canvas(ink);
+        canvas = new Canvas(root.get("ink") as ink.IInk, root.get("components") as api.IMap);
     });
 }

@@ -27,7 +27,7 @@ async function updateOrCreateKey(key: string, map: api.IMap, container: JQuery, 
 
     if (isCollab) {
         if (newElement) {
-            displayMap(keyElement, value, map, doc);
+            displayMap(keyElement, key, value, map, doc);
         }
     } else {
         keyElement.text(`${key}: ${JSON.stringify(value)}`);
@@ -54,8 +54,8 @@ async function displayValues(map: api.IMap, container: JQuery, doc: api.Document
 /**
  * Displays the keys in the map
  */
-async function displayMap(parentElement: JQuery, map: api.IMap, parent: api.IMap, doc: api.Document) {
-    const header = $(`<h2>${map.id}</h2>`);
+async function displayMap(parentElement: JQuery, key: string, map: api.IMap, parent: api.IMap, doc: api.Document) {
+    const header = key !== null ? $(`<h2>${key}: ${map.id}</h2>`) : $(`<h2>${map.id}</h2>`);
     parentElement.append(header);
 
     const container = $(`<div></div>`);
@@ -72,7 +72,7 @@ async function displayMap(parentElement: JQuery, map: api.IMap, parent: api.IMap
     const addMap = $("<button>Add</button>");
     addMap.click(() => {
         const newMap = doc.createMap();
-        displayMap(childMaps, newMap, map, doc);
+        displayMap(childMaps, null, newMap, map, doc);
     });
     parentElement.append(addMap);
 
@@ -108,7 +108,7 @@ export function load(id: string) {
             const root = doc.getRoot();
 
             // Display the initial values and then listen for updates
-            displayMap($("#mapViews"), root, null, doc);
+            displayMap($("#mapViews"), null, root, null, doc);
         });
     });
 }
