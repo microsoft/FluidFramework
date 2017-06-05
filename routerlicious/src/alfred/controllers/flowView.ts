@@ -50,7 +50,9 @@ enum CharacterCodes {
 
 interface ISegSpan extends HTMLSpanElement {
     seg: SharedString.TextSegment;
-    pos?: number;
+    segPos?: number;
+    offset?: number;
+    clipOffset?: number;
 }
 
 interface IRangeInfo {
@@ -109,23 +111,6 @@ function makeInnerDiv() {
     return innerDiv;
 }
 
-function offCursorStyle(span: HTMLSpanElement) {
-    span.style.visibility = "hidden";
-}
-
-function makeCursor() {
-    let editSpan = document.createElement("span");
-    editSpan.id = "cursor";
-    editSpan.innerText = "\uFEFF";
-    onCursorStyle(editSpan);
-    return editSpan;
-}
-
-function onCursorStyle(span: HTMLSpanElement) {
-    span.style.backgroundColor = "blue";
-    span.style.visibility = "visible";
-}
-
 function makeScrollLosenge(height: number, left: number, top: number) {
     let div = document.createElement("div");
     div.style.width = "12px";
@@ -152,16 +137,40 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
     div.appendChild(innerDiv);
     let charLength = 0;
     let firstSeg = true;
+    let firstDiv = innerDiv;
+    let cursorRendered = false;
     context.viewportEndChar = -1;
+
+    function findLastChar() {
+        if (div.children.length > 0) {
+            let child = div.lastElementChild;
+            if (child.children.length === 0) {
+                child = child.previousElementSibling;
+            }
+            if (child) {
+                let lastSpan = <ISegSpan>child.lastElementChild;
+                if (lastSpan) {
+                    if (lastSpan.clipOffset) {
+                        return lastSpan.clipOffset;
+                    } else {
+                        return lastSpan.segPos + lastSpan.innerText.length - 1;
+                    }
+                }
+            }
+        }
+        return -1;
+    }
+
     function renderSegment(segment: SharedString.Segment, segPos: number, refSeq: number,
         clientId: number, start: number, end: number) {
         let segOffset = 0;
 
-        function segmentToSpan(segText: string, textSegment: SharedString.TextSegment) {
+        function makeSegSpan(segText: string, textSegment: SharedString.TextSegment, offset: number,
+            startChar: number, clipChar?: number) {
             let span = <ISegSpan>document.createElement("span");
-            segPos += segOffset;
             span.innerText = segText;
             span.seg = textSegment;
+            span.segPos = startChar;
             if (textSegment.properties) {
                 for (let key in textSegment.properties) {
                     if (textSegment.properties.hasOwnProperty(key)) {
@@ -169,16 +178,36 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
                     }
                 }
             }
-            if (segOffset > 0) {
-                span.pos = segOffset;
-                segOffset = 0;
+            if (offset > 0) {
+                span.offset = offset;
             }
-            innerDiv.appendChild(span);
+            return span;
+        }
+
+        function segmentToSpan(segText: string, textSegment: SharedString.TextSegment, offset: number,
+            startChar: number, renderCursor: boolean, clipChar?: number) {
+            let startPos = startChar + offset;
+            let endPos = startPos + segText.length;
+            if (renderCursor && (context.cursor.pos >= startPos) && (context.cursor.pos < endPos)) {
+                let cursorRelPos = context.cursor.pos - startPos;
+                let relSpan = makeSegSpan(segText.substring(cursorRelPos), textSegment, cursorRelPos + offset,
+                    startChar);
+                if (cursorRelPos > 0) {
+                    let preSpan = makeSegSpan(segText.substring(0, cursorRelPos), textSegment, offset, startChar);
+                    innerDiv.appendChild(preSpan);
+                }
+                cursorRendered = true;
+                context.cursor.assign(relSpan);
+                innerDiv.appendChild(relSpan);
+            } else {
+                let span = makeSegSpan(segText, textSegment, offset, startChar);
+                innerDiv.appendChild(span);
+            }
             return segText;
         }
 
         function renderFirstSegment(text: string, textSegment: SharedString.TextSegment) {
-            segmentToSpan(text, textSegment);
+            segmentToSpan(text, textSegment, 0, segPos, false);
             let innerBounds = innerDiv.getBoundingClientRect();
             let x = innerBounds.left + Math.floor(context.wEst / 2);
             let y = innerBounds.top + Math.floor(context.hEst / 2);
@@ -222,7 +251,6 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
                 splitTopSeg = false;
                 context.prevTopSegment = textSegment;
             }
-            firstSeg = false;
             let segText = textSegment.text;
             if (start > 0) {
                 if (splitTopSeg) {
@@ -232,11 +260,18 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
                 } else {
                     context.adjustedTopChar = context.topChar - start;
                 }
+                if (context.cursor.pos < context.adjustedTopChar) {
+                    context.cursor.pos = context.adjustedTopChar;
+                }
             } else {
-                context.adjustedTopChar = context.topChar;
+                if (firstSeg) {
+                    context.adjustedTopChar = context.topChar;
+                }
             }
+            firstSeg = false;
             charLength += segText.length;
-            segText = segmentToSpan(segText, textSegment);
+            segText = segmentToSpan(segText, textSegment, segOffset, segPos, true);
+            segOffset = 0;
             if (segText.charAt(segText.length - 1) === "\n") {
                 freshDiv();
             }
@@ -289,17 +324,18 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
                                         }
                                         if (y > 0) {
                                             let elmOff = pointerToElementOffsetWebkit(x, y);
-                                            let segOff = elmOffToSegOff(elmOff, prunedSpan) + 1;
+                                            let segClip = elmOffToSegOff(elmOff, prunedSpan) + 1;
                                             let textSeg = <SharedString.TextSegment>prunedSpan.seg;
-                                            while ((segOff > 0) &&
-                                                (textSeg.text.charCodeAt(segOff) !== CharacterCodes.space) &&
-                                                (textSeg.text.charAt(segOff) !== "\n")) {
-                                                segOff--;
+                                            while ((segClip > 0) &&
+                                                (textSeg.text.charCodeAt(segClip) !== CharacterCodes.space) &&
+                                                (textSeg.text.charAt(segClip) !== "\n")) {
+                                                segClip--;
                                             }
-                                            if (segOff > 0) {
-                                                segmentToSpan(textSeg.text.substring(0, segOff), textSeg);
+                                            if (segClip > 0) {
+                                                segmentToSpan(textSeg.text.substring(0, segClip), textSeg, 0,
+                                                    prunedSpan.segPos, true, segClip + prunedSpan.segPos);
                                             }
-                                            lastSegOff = segOff;
+                                            lastSegOff = segClip;
                                             lastSeg = textSeg;
                                         }
                                     }
@@ -324,7 +360,23 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
     client.mergeTree.mapRange({ leaf: renderSegment }, SharedString.UniversalSequenceNumber,
         client.getClientId(), undefined, pos);
     if (context.viewportEndChar < 0) {
-        context.viewportEndChar = charLength + context.adjustedTopChar;
+        let endChar = findLastChar();
+        if (endChar < 0) {
+            context.viewportEndChar = charLength + context.adjustedTopChar;
+        } else {
+            context.viewportEndChar = endChar;
+        }
+    }
+    if ((!cursorRendered) || (context.cursor.pos > context.viewportEndChar)) {
+        if (firstDiv && (firstDiv.children.length > 0)) {
+            let firstSpan = <ISegSpan>firstDiv.children[0];
+            let curpos = firstSpan.segPos;
+            if (firstSpan.offset) {
+                curpos += firstSpan.offset;
+            }
+            context.cursor.pos = curpos;
+            context.cursor.assign(firstSpan);
+        }
     }
 }
 
@@ -362,6 +414,72 @@ export interface IComponentContainer {
     status: IStatus;
 }
 
+class Cursor {
+    public off = true;
+    public parentSpan: HTMLSpanElement;
+    public editSpan: HTMLSpanElement;
+    private blinkCount = 0;
+    private blinkTimer: any;
+
+    constructor(public pos = 0) {
+        this.makeSpan();
+    }
+
+    public hide() {
+        this.editSpan.style.visibility = "hidden";
+    }
+
+    public show() {
+        this.editSpan.style.backgroundColor = "blue";
+        this.editSpan.style.visibility = "visible";
+    }
+
+    public makeSpan() {
+        this.editSpan = document.createElement("span");
+        this.editSpan.id = "cursor";
+        this.editSpan.innerText = "\uFEFF";
+        this.editSpan.style.position = "absolute";
+        this.editSpan.style.left = "0px";
+        this.editSpan.style.top = "0px";
+        this.editSpan.style.width = "1px";
+        this.show();
+    }
+
+    public assign(parentSpan: HTMLSpanElement) {
+        if (this.editSpan.parentElement) {
+            this.editSpan.parentElement.removeChild(this.editSpan);
+        }
+        parentSpan.style.position = "relative";
+        parentSpan.appendChild(this.editSpan);
+        this.parentSpan = parentSpan;
+        if (this.blinkTimer) {
+            clearTimeout(this.blinkTimer);
+        }
+        this.blinkCursor();
+    }
+
+    private blinker = () => {
+        if (this.off) {
+            this.show();
+        } else {
+            this.hide();
+        }
+        this.off = !this.off;
+        if (this.blinkCount > 0) {
+            this.blinkCount--;
+            this.blinkTimer = setTimeout(this.blinker, 500);
+        } else {
+            this.show();
+        }
+    }
+
+    private blinkCursor() {
+        this.blinkCount = 30;
+        this.off = true;
+        this.blinkTimer = setTimeout(this.blinker, 20);
+    }
+}
+
 export class FlowView {
     public static scrollAreaWidth = 18;
 
@@ -388,12 +506,10 @@ export class FlowView {
     public ticking = false;
     public wheelTicking = false;
     public topChar = 0;
-    public cursorPos = 0;
-    private off = true;
-    private cursorBlinkCount = 0;
-    private blinkTimer: any;
+    public cursor: Cursor;
     private randWordTimer: any;
     private pendingRender = false;
+    private diagCharPort = true;
 
     constructor(public sharedString: SharedString.SharedString, public totalSegmentCount,
         public totalLengthChars, public flowContainer: IComponentContainer,
@@ -415,6 +531,7 @@ export class FlowView {
         });
 
         this.trackInsights(insights);
+        this.cursor = new Cursor();
     }
 
     public widthEst(fontInfo: string) {
@@ -452,8 +569,13 @@ export class FlowView {
                 let segOffset = this.client.mergeTree.getOffset(segspan.seg, this.client.getCurrentSeq(),
                     this.client.getClientId());
                 let elmOff = pointerToElementOffsetWebkit(e.clientX, e.clientY);
+                let computed = elmOffToSegOff(elmOff, segspan);
                 // tslint:disable:max-line-length
-                console.log(`segment ${segspan.childNodes.length} children; at char offset ${segOffset} within: ${elmOff.offset} computed: ${elmOffToSegOff(elmOff, segspan)}`);
+                let diag = `segment at char offset ${segOffset} within: ${elmOff.offset} computed: (${computed}, ${computed + segOffset})`;
+                if (this.diagCharPort) {
+                    this.statusMessage("segclick", diag);
+                }
+                console.log(diag);
             }
         };
 
@@ -490,12 +612,15 @@ export class FlowView {
                 }, 20);
                 this.ticking = true;
             } else if (e.keyCode === 36) {
+                this.cursor.pos = 0;
                 this.render(0);
                 e.preventDefault();
                 e.returnValue = false;
             } else if (e.keyCode === 35) {
                 let halfport = Math.floor(this.viewportCharCount / 2);
-                this.render(this.client.getLength() - halfport);
+                let topChar = this.client.getLength() - halfport;
+                this.cursor.pos = topChar;
+                this.render(topChar);
                 e.preventDefault();
                 e.returnValue = false;
             }
@@ -517,27 +642,6 @@ export class FlowView {
             scrollTo += halfport;
         }
         this.render(scrollTo);
-    }
-
-    public setCursor() {
-        if (this.viewportDiv.childElementCount > 0) {
-            let firstDiv = this.viewportDiv.children[0];
-            let firstSpan = <HTMLSpanElement>firstDiv.children[0];
-            if (firstSpan) {
-                firstSpan.style.position = "relative";
-                this.cursorSpan = makeCursor();
-                this.cursorSpan.style.position = "absolute";
-                this.cursorSpan.style.left = "0px";
-                this.cursorSpan.style.top = "0px";
-                this.cursorSpan.style.width = "1px";
-                firstSpan.appendChild(this.cursorSpan);
-                if (this.blinkTimer) {
-                    clearTimeout(this.blinkTimer);
-                }
-                this.blinkCursor();
-            }
-            // TODO: case of blank document
-        }
     }
 
     public renderIfVisible(viewChar: number) {
@@ -575,7 +679,10 @@ export class FlowView {
         let bubbleDiv = makeScrollLosenge(bubbleHeight, bubbleLeft, bubbleTop);
         this.scrollDiv.appendChild(bubbleDiv);
         this.statusMessage("render", `&nbsp ${Date.now() - clk}ms`);
-    //    this.setCursor();
+        if (this.diagCharPort) {
+            this.statusMessage("diagCharPort",
+                `&nbsp sp: (${this.topChar}, ${this.adjustedTopChar}) ep: ${this.viewportEndChar} cp: ${this.cursor.pos}`);
+        }
     }
 
     public loadFinished(clockStart = 0) {
@@ -628,27 +735,6 @@ export class FlowView {
                 this.renderIfVisible(viewChar);
             });
         }
-    }
-
-    private blinker = () => {
-        if (this.off) {
-            onCursorStyle(this.cursorSpan);
-        } else {
-            offCursorStyle(this.cursorSpan);
-        }
-        this.off = !this.off;
-        if (this.cursorBlinkCount > 0) {
-            this.cursorBlinkCount--;
-            this.blinkTimer = setTimeout(this.blinker, 500);
-        } else {
-            onCursorStyle(this.cursorSpan);
-        }
-    }
-
-    private blinkCursor() {
-        this.cursorBlinkCount = 30;
-        this.off = true;
-        this.blinkTimer = setTimeout(this.blinker, 500);
     }
 
     private async updateInsights(insights: API.IMap) {
