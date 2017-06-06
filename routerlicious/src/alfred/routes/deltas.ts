@@ -1,23 +1,18 @@
 import * as express from "express";
-import { MongoClient } from "mongodb";
 import * as nconf from "nconf";
+import * as utils from "../../utils";
+
+const mongoUrl = nconf.get("mongo:endpoint");
+const deltasCollectionName = nconf.get("mongo:collectionNames:deltas");
 
 const router = express.Router();
 
-// Connect to the database - TODO we should provide these as inputs to the module rather than have them
-// take a dependency on them
-const mongoUrl = nconf.get("mongo:endpoint");
-const mongoClientP = MongoClient.connect(mongoUrl);
-const collectionP = mongoClientP.then(async (db) => {
-    const deltasCollectionName = nconf.get("mongo:collectionNames:deltas");
-    const collection = db.collection(deltasCollectionName);
-    return collection;
-});
+const mongoManager = new utils.MongoManager(mongoUrl);
 
 /**
  * Retrieves deltas for the given document. With an optional from and to range (both exclusive) specified
  */
-router.get("/:id", async (request, response, next) => {
+router.get("/:id", (request, response, next) => {
     // Create an optional filter to restrict the delta range
     const query: any = { objectId: request.params.id };
     if (request.query.from || request.query.to) {
@@ -33,14 +28,23 @@ router.get("/:id", async (request, response, next) => {
     }
 
     // Query for the deltas and return a filtered version of just the operations field
-    const collection = await collectionP;
-    const dbDeltas = await collection
-        .find(query)
-        .sort({ "operation.sequenceNumber": 1 })
-        .toArray();
-    const deltas = dbDeltas.map((delta) => delta.operation);
+    const deltasP = mongoManager.getDatabase().then(async (db) => {
+        const collection = db.collection(deltasCollectionName);
+        const dbDeltas = await collection
+            .find(query)
+            .sort({ "operation.sequenceNumber": 1 })
+            .toArray();
 
-    response.status(200).json(deltas);
+        return dbDeltas.map((delta) => delta.operation);
+    });
+
+    deltasP.then(
+        (deltas) => {
+            response.status(200).json(deltas);
+        },
+        (error) => {
+            response.status(500).json(error);
+        });
 });
 
 export default router;
