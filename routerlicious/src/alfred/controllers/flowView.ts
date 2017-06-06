@@ -101,6 +101,7 @@ function makeInnerDiv() {
     let innerDiv = document.createElement("div");
     innerDiv.style.font = "18px Times";
     innerDiv.style.lineHeight = "125%";
+    innerDiv.style.fontFeatureSettings = "normal";
     innerDiv.onclick = (e) => {
         let div = <HTMLDivElement>e.target;
         if (div.lastElementChild) {
@@ -197,8 +198,8 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
                     innerDiv.appendChild(preSpan);
                 }
                 cursorRendered = true;
-                context.cursor.assign(relSpan);
                 innerDiv.appendChild(relSpan);
+                context.cursor.assign(relSpan);
             } else {
                 let span = makeSegSpan(segText, textSegment, offset, startChar);
                 innerDiv.appendChild(span);
@@ -420,9 +421,11 @@ class Cursor {
     public editSpan: HTMLSpanElement;
     private blinkCount = 0;
     private blinkTimer: any;
+    private viewportDivBounds: ClientRect;
 
-    constructor(public pos = 0) {
+    constructor(public viewportDiv: HTMLDivElement, public pos = 0) {
         this.makeSpan();
+        this.onresize();
     }
 
     public hide() {
@@ -438,11 +441,16 @@ class Cursor {
         this.editSpan = document.createElement("span");
         this.editSpan.id = "cursor";
         this.editSpan.innerText = "\uFEFF";
+        this.editSpan.style.zIndex = "1";
         this.editSpan.style.position = "absolute";
         this.editSpan.style.left = "0px";
         this.editSpan.style.top = "0px";
         this.editSpan.style.width = "1px";
         this.show();
+    }
+
+    public onresize() {
+        this.viewportDivBounds = this.viewportDiv.getBoundingClientRect();
     }
 
     public assign(parentSpan: HTMLSpanElement) {
@@ -452,6 +460,12 @@ class Cursor {
         parentSpan.style.position = "relative";
         parentSpan.appendChild(this.editSpan);
         this.parentSpan = parentSpan;
+        // let bounds = parentSpan.getBoundingClientRect();
+        // let left = bounds.left - this.viewportDivBounds.left;
+        // let top = bounds.top - this.viewportDivBounds.top;
+
+        // this.editSpan.style.left = `${left}px`;
+        // this.editSpan.style.top = `${top}px`;
         if (this.blinkTimer) {
             clearTimeout(this.blinkTimer);
         }
@@ -478,6 +492,18 @@ class Cursor {
         this.off = true;
         this.blinkTimer = setTimeout(this.blinker, 20);
     }
+}
+
+enum KeyCode {
+    esc = 27,
+    pageUp = 33,
+    pageDown = 34,
+    end = 35,
+    home = 36,
+    leftArrow = 37,
+    upArrow = 38,
+    rightArrow = 39,
+    downArrow = 40,
 }
 
 export class FlowView {
@@ -531,7 +557,7 @@ export class FlowView {
         });
 
         this.trackInsights(insights);
-        this.cursor = new Cursor();
+        this.cursor = new Cursor(this.viewportDiv);
     }
 
     public widthEst(fontInfo: string) {
@@ -601,28 +627,35 @@ export class FlowView {
         };
         this.flowContainer.onresize = () => {
             this.updateGeometry();
+            // this.cursor.onresize();
             this.render(this.topChar, true);
         };
         let handler = (e: KeyboardEvent) => {
             console.log(`key ${e.keyCode}`);
-            if (((e.keyCode === 33) || (e.keyCode === 34)) && (!this.ticking)) {
+            if (((e.keyCode === KeyCode.pageUp) || (e.keyCode === KeyCode.pageDown)) && (!this.ticking)) {
                 setTimeout(() => {
-                    this.scroll(e.keyCode === 33);
+                    this.scroll(e.keyCode === KeyCode.pageUp);
                     this.ticking = false;
                 }, 20);
                 this.ticking = true;
-            } else if (e.keyCode === 36) {
+            } else if (e.keyCode === KeyCode.home) {
                 this.cursor.pos = 0;
                 this.render(0);
                 e.preventDefault();
                 e.returnValue = false;
-            } else if (e.keyCode === 35) {
+            } else if (e.keyCode === KeyCode.end) {
                 let halfport = Math.floor(this.viewportCharCount / 2);
                 let topChar = this.client.getLength() - halfport;
                 this.cursor.pos = topChar;
                 this.render(topChar);
                 e.preventDefault();
                 e.returnValue = false;
+            } else if (e.keyCode === KeyCode.rightArrow) {
+                this.cursor.pos++;
+                this.render(this.topChar, true); // TODO: scroll first if cursor travels off page
+            } else if (e.keyCode === KeyCode.leftArrow) {
+                this.cursor.pos--;
+                this.render(this.topChar, true); // TODO: scroll first if cursor travels off page
             }
         };
 
@@ -646,10 +679,7 @@ export class FlowView {
 
     public renderIfVisible(viewChar: number) {
         // console.log(`view char: ${viewChar} top: ${this.topChar} adj: ${this.adjustedTopChar} bot: ${this.viewportEndChar}`);
-        let len = this.client.getLength();
-        if ((viewChar <= this.viewportEndChar) || (len < this.viewportCharCount)) {
-            this.render(this.topChar, true);
-        }
+        this.render(this.topChar, true);
     }
 
     public render(topChar?: number, changed = false) {
@@ -671,6 +701,7 @@ export class FlowView {
         let frac = this.topChar / len;
         let pos = Math.floor(frac * len);
         clearSubtree(this.viewportDiv);
+        // this.viewportDiv.appendChild(this.cursor.editSpan);
         renderTree(this.viewportDiv, pos, this.client, this);
         clearSubtree(this.scrollDiv);
         let bubbleHeight = Math.max(3, Math.floor((this.viewportCharCount / len) * this.scrollRect.height));
