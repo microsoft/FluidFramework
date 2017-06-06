@@ -68,18 +68,24 @@ async function run() {
 
     const ioBatchManager = new utils.BatchManager<core.ISequencedOperationMessage>((objectId, work) => {
         // console.log(`Inserting to mongodb ${value.objectId}@${value.operation.sequenceNumber}`);
-        collection.insertMany(work, <CollectionInsertManyOptions> (<any> { ordered: false })).catch((error) => {
-            // Ignore duplicate key errors since a replay may cause us to attempt to insert a second time
-            if (error.name !== "MongoError" || error.code !== 11000) {
+        const insertP = collection.insertMany(work, <CollectionInsertManyOptions> (<any> { ordered: false }))
+            .catch((error) => {
+                // Ignore duplicate key errors since a replay may cause us to attempt to insert a second time
+                if (error.name !== "MongoError" || error.code !== 11000) {
+                    return Promise.reject(error);
+                }
+            });
+
+        insertP.then(
+            () => {
+                // Route the message to clients
+                // console.log(`Routing message to clients ${value.objectId}@${value.operation.sequenceNumber}`);
+                io.to(objectId).emit("op", objectId, work.map((value) => value.operation));
+                throughput.acknolwedge(work.length);
+            },
+            (error) => {
                 deferred.reject(error);
-            }
-        });
-
-        // Route the message to clients
-        // console.log(`Routing message to clients ${value.objectId}@${value.operation.sequenceNumber}`);
-        io.to(objectId).emit("op", objectId, work.map((value) => value.operation));
-
-        throughput.acknolwedge(work.length);
+            });
     });
 
     const q = queue((message: any, callback) => {
