@@ -66,7 +66,17 @@ async function run() {
         }, 30000);
     });
 
+    // Mongo inserts don't order promises with respect to each other. To work around this we track the last
+    // Mongo insert we've made for each document. And then perform a then on this to maintain causal ordering
+    // for any dependent operations (i.e. socket.io writes)
+    const lastMongoInsertP: { [objectId: string]: Promise<any> } = {};
+
     const ioBatchManager = new utils.BatchManager<core.ISequencedOperationMessage>((objectId, work) => {
+        // Initialize the last promise if it doesn't exist
+        if (!(objectId in lastMongoInsertP)) {
+            lastMongoInsertP[objectId] = Promise.resolve();
+        }
+
         // console.log(`Inserting to mongodb ${value.objectId}@${value.operation.sequenceNumber}`);
         const insertP = collection.insertMany(work, <CollectionInsertManyOptions> (<any> { ordered: false }))
             .catch((error) => {
@@ -75,8 +85,9 @@ async function run() {
                     return Promise.reject(error);
                 }
             });
+        lastMongoInsertP[objectId] = lastMongoInsertP[objectId].then(() => insertP);
 
-        insertP.then(
+        lastMongoInsertP[objectId].then(
             () => {
                 // Route the message to clients
                 // console.log(`Routing message to clients ${value.objectId}@${value.operation.sequenceNumber}`);
