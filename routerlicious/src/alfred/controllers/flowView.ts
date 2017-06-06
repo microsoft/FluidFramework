@@ -101,7 +101,9 @@ function makeInnerDiv() {
     let innerDiv = document.createElement("div");
     innerDiv.style.font = "18px Times";
     innerDiv.style.lineHeight = "125%";
-    innerDiv.style.fontFeatureSettings = "normal";
+    // innerDiv.style.fontFeatureSettings = '"liga" off, "kern" off';
+    // (<any>innerDiv.style).fontKerning = "none";
+    // (<any>innerDiv.style).fontVariantLigatures = "none";
     innerDiv.onclick = (e) => {
         let div = <HTMLDivElement>e.target;
         if (div.lastElementChild) {
@@ -123,6 +125,84 @@ function makeScrollLosenge(height: number, left: number, top: number) {
     div.style.borderRadius = `${bordRad}px`;
     div.style.position = "absolute";
     return div;
+}
+
+function pixelsAtOffset(span: ISegSpan, offset: number, w: number) {
+    let rects = span.getClientRects();
+    if (offset === 0) {
+        return { left: rects[0].left, top: rects[0].top };
+    } else {
+        let halfwidth = Math.floor(w / 2);
+        let best = -1;
+        let bestOffset = -1;
+        let lo = 0;
+        let hi = rects.length - 1;
+        while (lo <= hi) {
+            let mid = lo + Math.floor((hi - lo) / 2);
+            let y = rects[mid].top + Math.floor(rects[mid].height / 2);
+            let x = rects[mid].left + halfwidth;
+            let elmOff = pointerToElementOffsetWebkit(x, y);
+            let xyOffset = elmOffToSegOff(elmOff, span);
+            if (xyOffset <= offset) {
+                if ((best < 0) || (bestOffset < xyOffset)) {
+                    best = mid;
+                    bestOffset = xyOffset;
+                }
+                lo = mid + 1;
+            } else if (xyOffset > offset) {
+                hi = mid - 1;
+            }
+        }
+        let rect = rects[best];
+        let diffOffset = offset - bestOffset;
+        if (diffOffset === 0) {
+            return { left: rect.left, top: rect.top };
+        } else {
+            let y = rects[best].top + Math.floor(rects[best].height / 2);
+            let x = rects[best].left + Math.floor(diffOffset * w);
+            let under = rects[best].left;
+            let over = rects[best].right;
+            while (diffOffset !== 0) {
+                let elmOff = pointerToElementOffsetWebkit(x, y);
+                let xyOffset = elmOffToSegOff(elmOff, span);
+                diffOffset = xyOffset - offset;
+                if (diffOffset > 0) {
+                    over = x;
+                } else if (diffOffset < 0) {
+                    under = x;
+                }
+                if ((over - under) < 10) {
+                    break;
+                }
+                x = x - (diffOffset * w);
+                if (x <= under) {
+                    x++;
+                } else if (x >= over) {
+                    x--;
+                }
+            }
+            if (diffOffset !== 0) {
+                let xlo = -1;
+                let xcount = 0;
+                for (x = under; x <= over; x++) {
+                    let elmOff = pointerToElementOffsetWebkit(x, y);
+                    let xyOffset = elmOffToSegOff(elmOff, span);
+                    diffOffset = xyOffset - offset;
+                    if (diffOffset === 0) {
+                        if (xlo < 0) {
+                            xlo = x;
+                        }
+                        xcount++;
+                    }
+                    if ((xlo >= 0) && (diffOffset === 1)) {
+                        x = xlo + Math.round(xcount / 2);
+                        break;
+                    }
+                }
+            }
+            return { left: x, top: rect.top };
+        }
+    }
 }
 
 function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Client, context: FlowView) {
@@ -412,6 +492,7 @@ export interface IComponentContainer {
     div: HTMLDivElement;
     onresize: () => void;
     onkeydown: (e: KeyboardEvent) => void;
+    onkeypress: (e: KeyboardEvent) => void;
     status: IStatus;
 }
 
@@ -495,6 +576,7 @@ class Cursor {
 }
 
 enum KeyCode {
+    backspace = 8, 
     esc = 27,
     pageUp = 33,
     pageDown = 34,
@@ -504,6 +586,8 @@ enum KeyCode {
     upArrow = 38,
     rightArrow = 39,
     downArrow = 40,
+    letter_a = 65,
+    letter_z = 90,
 }
 
 export class FlowView {
@@ -552,8 +636,7 @@ export class FlowView {
         this.statusMessage("li", " ");
         this.statusMessage("si", " ");
         sharedString.on("op", (msg: API.IMessageBase) => {
-            let delta = <API.IMergeTreeDeltaMsg>msg.op;
-            this.queueRender(delta);
+            this.queueRender(<API.ISequencedMessage>msg);
         });
 
         this.trackInsights(insights);
@@ -596,8 +679,11 @@ export class FlowView {
                     this.client.getClientId());
                 let elmOff = pointerToElementOffsetWebkit(e.clientX, e.clientY);
                 let computed = elmOffToSegOff(elmOff, segspan);
+                let c = Date.now();
+                let xy = pixelsAtOffset(segspan, computed, Math.floor(this.wEst));
+                c = Date.now() - c;
                 // tslint:disable:max-line-length
-                let diag = `segment at char offset ${segOffset} within: ${elmOff.offset} computed: (${computed}, ${computed + segOffset})`;
+                let diag = `segPos: ${segOffset} cxy: (${e.clientX}, ${e.clientY}) xy: (${xy.left}, ${xy.top}) ${c}ms within: ${elmOff.offset} computed: (${computed}, ${computed + segOffset})`;
                 if (this.diagCharPort) {
                     this.statusMessage("segclick", diag);
                 }
@@ -630,9 +716,12 @@ export class FlowView {
             // this.cursor.onresize();
             this.render(this.topChar, true);
         };
-        let handler = (e: KeyboardEvent) => {
-            console.log(`key ${e.keyCode}`);
-            if (((e.keyCode === KeyCode.pageUp) || (e.keyCode === KeyCode.pageDown)) && (!this.ticking)) {
+        let keydownHandler = (e: KeyboardEvent) => {
+            // console.log(`key ${e.keyCode}`);
+            if (e.keyCode === KeyCode.backspace) {
+                this.cursor.pos--;
+                this.sharedString.removeText(this.cursor.pos, this.cursor.pos + 1);
+            } else if (((e.keyCode === KeyCode.pageUp) || (e.keyCode === KeyCode.pageDown)) && (!this.ticking)) {
                 setTimeout(() => {
                     this.scroll(e.keyCode === KeyCode.pageUp);
                     this.ticking = false;
@@ -658,8 +747,17 @@ export class FlowView {
                 this.render(this.topChar, true); // TODO: scroll first if cursor travels off page
             }
         };
-
-        this.flowContainer.onkeydown = handler;
+        let keypressHandler = (e: KeyboardEvent) => {
+                let pos = this.cursor.pos;
+                this.cursor.pos++;
+                let code = e.charCode;
+                if (code === 13) {
+                    code = CharacterCodes.linefeed;
+                }
+                this.sharedString.insertText(String.fromCharCode(code), pos);
+        };
+        this.flowContainer.onkeydown = keydownHandler;
+        this.flowContainer.onkeypress = keypressHandler;
     }
 
     public scroll(up: boolean) {
@@ -752,15 +850,24 @@ export class FlowView {
         clearInterval(this.randWordTimer);
     }
 
-    private queueRender(delta: API.IMergeTreeDeltaMsg) {
-        if ((!this.pendingRender) && delta) {
+    private queueRender(msg: API.ISequencedMessage) {
+        if ((!this.pendingRender) && msg) {
             this.pendingRender = true;
             window.requestAnimationFrame(() => {
                 this.pendingRender = false;
                 let viewChar = 0;
+                let delta = <API.IMergeTreeDeltaMsg>msg.op;
                 if (delta.type === API.MergeTreeMsgType.INSERT) {
                     viewChar = delta.pos1 + delta.text.length;
+                    if ((delta.pos1 <= this.cursor.pos) && (msg.clientId !== this.client.longClientId)) {
+                        this.cursor.pos += delta.text.length;
+                    }
                 } else {
+                    if (delta.pos2<=this.cursor.pos) {
+                        this.cursor.pos-=(delta.pos2-delta.pos1);
+                    } else if (this.cursor.pos>=delta.pos1) {
+                        this.cursor.pos = delta.pos1;
+                    }
                     viewChar = delta.pos2;
                 }
                 this.renderIfVisible(viewChar);

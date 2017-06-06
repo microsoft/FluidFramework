@@ -142,6 +142,7 @@ class Status implements FlowView.IStatus {
 class FlowContainer implements FlowView.IComponentContainer {
     public onresize: () => void;
     public onkeydown: (e: KeyboardEvent) => void;
+    public onkeypress: (e: KeyboardEvent) => void;
     public status: FlowView.IStatus;
     public div: HTMLDivElement;
     public statusDiv: HTMLDivElement;
@@ -163,6 +164,12 @@ class FlowContainer implements FlowView.IComponentContainer {
             // TODO: filter by target
             if (this.onkeydown) {
                 this.onkeydown(e);
+            }
+        };
+        document.body.onkeypress = (e) => {
+            // TODO: filter by target
+            if (this.onkeypress) {
+                this.onkeypress(e);
             }
         };
     }
