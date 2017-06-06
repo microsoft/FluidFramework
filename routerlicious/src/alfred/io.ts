@@ -1,5 +1,4 @@
 import * as _ from "lodash";
-import { MongoClient } from "mongodb";
 import * as moniker from "moniker";
 import * as nconf from "nconf";
 import * as redis from "redis";
@@ -38,12 +37,14 @@ io.adapter(socketIoRedis({ pubClient: pub, subClient: sub }));
 
 // Connection to stored document details
 const mongoUrl = nconf.get("mongo:endpoint");
-const client = MongoClient.connect(mongoUrl);
 const objectsCollectionName = nconf.get("mongo:collectionNames:objects");
-const objectsCollectionP = client.then((db) => db.collection(objectsCollectionName));
+
+const mongoManager = new utils.MongoManager(mongoUrl);
 
 async function getOrCreateObject(id: string, type: string): Promise<boolean> {
-    const collection = await objectsCollectionP;
+    const db = await mongoManager.getDatabase();
+    const collection = db.collection(objectsCollectionName);
+
     const dbObjectP = collection.findOne({ _id: id });
     return dbObjectP.then(
         (dbObject) => {
