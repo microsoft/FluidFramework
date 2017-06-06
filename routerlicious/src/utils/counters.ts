@@ -64,13 +64,13 @@ export class ThroughputCounter {
 
         // Kick off the interval
         this.interval = setInterval(() => {
-            const produce = 1000 * this.produceCounter.getSamples() / this.produceCounter.elapsed();
-            const ack = 1000 * this.acknolwedgeCounter.getSamples() / this.acknolwedgeCounter.elapsed();
+            const produce = 1000 * this.produceCounter.getValue() / this.produceCounter.elapsed();
+            const ack = 1000 * this.acknolwedgeCounter.getValue() / this.acknolwedgeCounter.elapsed();
 
             this.log(`${this.prefix}Produce@ ${produce.toFixed(2)} msg/s - Ack@ ${ack.toFixed(2)} msg/s`);
 
             // If there was no activity within the interval disable it
-            if (this.produceCounter.getSamples() === 0 && this.acknolwedgeCounter.getSamples() === 0) {
+            if (this.produceCounter.getValue() === 0 && this.acknolwedgeCounter.getValue() === 0) {
                 clearInterval(this.interval);
                 this.interval = undefined;
             }

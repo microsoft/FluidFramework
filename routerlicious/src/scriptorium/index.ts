@@ -1,6 +1,6 @@
 import { queue } from "async";
 import * as kafka from "kafka-node";
-import { CollectionInsertManyOptions, MongoClient } from "mongodb";
+import { CollectionInsertManyOptions } from "mongodb";
 import * as nconf from "nconf";
 import * as path from "path";
 import * as socketIoEmitter from "socket.io-emitter";
@@ -21,12 +21,15 @@ const mongoUrl = nconf.get("mongo:endpoint");
 const deltasCollectionName = nconf.get("mongo:collectionNames:deltas");
 
 async function run() {
+    const deferred = new utils.Deferred<void>();
+
     let io = socketIoEmitter(({ host: redisConfig.host, port: redisConfig.port }));
     io.redis.on("error", (error) => {
-        console.error(error);
+        deferred.reject(error);
     });
 
-    const db = await MongoClient.connect(mongoUrl);
+    const mongoManager = new utils.MongoManager(mongoUrl, false);
+    const db = await mongoManager.getDatabase();
     const collection = db.collection(deltasCollectionName);
     await collection.createIndex({
             "objectId": 1,
@@ -59,20 +62,17 @@ async function run() {
         // https://github.com/SOHU-Co/kafka-node/issues/90
         console.error(`Error in kafka consumer: ${error}. Wait for 30 seconds and restart...`);
         setTimeout(() => {
-            process.exit(1);
+            deferred.reject(error);
         }, 30000);
     });
 
     const ioBatchManager = new utils.BatchManager<core.ISequencedOperationMessage>((objectId, work) => {
-        // Mongo timeout - exit early
-        // if (error.name === "Mongo" && (<string> error.message).indexOf("timed out") !== -1) {
-        //     process.exit(1);
-        // }
-
         // console.log(`Inserting to mongodb ${value.objectId}@${value.operation.sequenceNumber}`);
         collection.insertMany(work, <CollectionInsertManyOptions> (<any> { ordered: false })).catch((error) => {
-            console.error("Error serializing to MongoDB");
-            console.error(error);
+            // Ignore duplicate key errors since a replay may cause us to attempt to insert a second time
+            if (error.name !== "MongoError" || error.code !== 11000) {
+                deferred.reject(error);
+            }
         });
 
         // Route the message to clients
@@ -111,6 +111,8 @@ async function run() {
         throughput.produce();
         q.push(message);
     });
+
+    return deferred.promise;
 }
 
 // Start up the scriptorium service
