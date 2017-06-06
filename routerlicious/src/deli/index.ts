@@ -86,11 +86,14 @@ async function processMessages(
         consumerOffset,
         checkpointBatchSize);
 
-    const highLevelConsumer = new kafka.HighLevelConsumer(kafkaClient, [{topic: receiveTopic}], {
+    const highLevelConsumer = new kafka.HighLevelConsumer(kafkaClient, [{topic: receiveTopic}], <any> {
         autoCommit: false,
+        fetchMaxBytes: 1024 * 1024,
+        fetchMinBytes: 1,
         fromOffset: true,
         groupId,
         id: kafkaClientId,
+        maxTickMessages: 100000,
     });
 
     highLevelConsumer.on("error", (error) => {
@@ -103,6 +106,13 @@ async function processMessages(
     });
 
     let ticketQueue: {[id: string]: Promise<void> } = {};
+
+    const receiveRate = new utils.RateCounter();
+    setInterval(() => {
+        const receive = 1000 * receiveRate.getSamples() / receiveRate.elapsed();
+        console.log(`Receive@ ${receive.toFixed(2)} msg/s`);
+        receiveRate.reset();
+    }, 5000);
 
     console.log("Waiting for messages");
     const q = queue((message: any, callback) => {
@@ -121,6 +131,7 @@ async function processMessages(
     }, 1);
 
     highLevelConsumer.on("message", (message: any) => {
+        receiveRate.increment(1);
         q.push(message);
     });
 }

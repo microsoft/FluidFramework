@@ -31,6 +31,18 @@ const SequenceNumberComparer: utils.IComparer<IClientSequenceNumber> = {
     },
 };
 
+const producerRate = new utils.RateCounter();
+const ackRate = new utils.RateCounter();
+setInterval(() => {
+    const produce = 1000 * producerRate.getSamples() / producerRate.elapsed();
+    const ack = 1000 * ackRate.getSamples() / ackRate.elapsed();
+
+    console.log(`Produce@ ${produce.toFixed(2)} msg/s - Ack@ ${ack.toFixed(2)} msg/s`);
+
+    producerRate.reset();
+    ackRate.reset();
+}, 5000);
+
 /**
  * Class to handle distributing sequence numbers to a collaborative object
  */
@@ -209,7 +221,7 @@ export class TakeANumber {
         }
 
         // tslint:disable-next-line:max-line-length
-        console.log(`Assigning ticket ${objectMessage.objectId}@${sequenceNumber}:${this.minimumSequenceNumber} at topic@${this.logOffset}`);
+        // console.log(`Assigning ticket ${objectMessage.objectId}@${sequenceNumber}:${this.minimumSequenceNumber} at topic@${this.logOffset}`);
 
         const sequencedMessage: core.ISequencedOperationMessage = {
             objectId: objectMessage.objectId,
@@ -218,7 +230,12 @@ export class TakeANumber {
         };
 
         // Otherwise send the message to the event hub
-        return this.producer.send(JSON.stringify(sequencedMessage), sequencedMessage.objectId);
+        producerRate.increment(1);
+        return this.producer.send(JSON.stringify(sequencedMessage), sequencedMessage.objectId)
+            .then((result) => {
+                ackRate.increment(1);
+                return result;
+            });
     }
 
     /**
@@ -316,7 +333,7 @@ export class TakeANumber {
                 return client.value.referenceSequenceNumber;
             }
 
-            console.log(`Expiring ${client.value.clientId}`);
+            // console.log(`Expiring ${client.value.clientId}`);
             this.clientSeqNumbers.get();
             delete this.clientNodeMap[client.value.clientId];
         }

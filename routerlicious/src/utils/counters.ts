@@ -39,6 +39,10 @@ export class RateCounter {
     private minimum: number;
     private maximum: number;
 
+    constructor() {
+        this.reset();
+    }
+
     public increment(value: number) {
         this.samples++;
         this.value += value;

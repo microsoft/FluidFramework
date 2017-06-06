@@ -1,4 +1,5 @@
 import * as assert from "assert";
+import * as async from "async";
 import * as api from ".";
 
 export interface IDeltaListener {
@@ -40,9 +41,22 @@ export class DeltaManager {
         private deltaConnection: api.IDeltaConnection,
         private listener: IDeltaListener) {
 
+        const q = async.queue<api.ISequencedMessage, void>((op, callback) => {
+            // Handle the op
+            this.handleOp(op);
+            callback();
+        }, 1);
+
+        // When the queue is drained reset our timer
+        q.drain = () => {
+            q.resume();
+        };
+
         // listen for specific events
-        this.deltaConnection.on("op", (message: api.ISequencedMessage) => {
-            this.handleOp(message);
+        this.deltaConnection.on("op", (messages: api.ISequencedMessage[]) => {
+            for (const message of messages) {
+                q.push(message);
+            }
         });
 
         // Directly fetch all sequence numbers after base
@@ -78,7 +92,7 @@ export class DeltaManager {
             return;
         }
 
-        console.log(`Received out of order message ${this.baseSequenceNumber}`);
+        console.log(`Received out of order message ${message.sequenceNumber} ${this.baseSequenceNumber}`);
         this.pending.push(message);
         this.fetchMissingDeltas(this.baseSequenceNumber, message.sequenceNumber);
     }

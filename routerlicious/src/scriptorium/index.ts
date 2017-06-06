@@ -1,6 +1,6 @@
 import { queue } from "async";
 import * as kafka from "kafka-node";
-import { MongoClient } from "mongodb";
+import { CollectionInsertManyOptions, MongoClient } from "mongodb";
 import * as nconf from "nconf";
 import * as path from "path";
 import * as socketIoEmitter from "socket.io-emitter";
@@ -42,11 +42,14 @@ async function run() {
     const consumerOffset = new kafka.Offset(kafkaClient);
     const partitionManager = new core.PartitionManager(groupId, topic, consumerOffset, checkpointBatchSize);
 
-    const highLevelConsumer = new kafka.HighLevelConsumer(kafkaClient, [{topic}], {
-            autoCommit: false,
-            fromOffset: true,
-            groupId,
-            id: kafkaClientId,
+    const highLevelConsumer = new kafka.HighLevelConsumer(kafkaClient, [{topic}], <any> {
+        autoCommit: false,
+        fetchMaxBytes: 1024 * 1024,
+        fetchMinBytes: 1,
+        fromOffset: true,
+        groupId,
+        id: kafkaClientId,
+        maxTickMessages: 100000,
     });
 
     highLevelConsumer.on("error", (error) => {
@@ -58,6 +61,23 @@ async function run() {
         }, 30000);
     });
 
+    const ioBatchManager = new utils.BatchManager<core.ISequencedOperationMessage>((objectId, work) => {
+        // Mongo timeout - exit early
+        // if (error.name === "Mongo" && (<string> error.message).indexOf("timed out") !== -1) {
+        //     process.exit(1);
+        // }
+
+        // console.log(`Inserting to mongodb ${value.objectId}@${value.operation.sequenceNumber}`);
+        collection.insertMany(work, <CollectionInsertManyOptions> (<any> { ordered: false })).catch((error) => {
+            console.error("Error serializing to MongoDB");
+            console.error(error);
+        });
+
+        // Route the message to clients
+        // console.log(`Routing message to clients ${value.objectId}@${value.operation.sequenceNumber}`);
+        io.to(objectId).emit("op", objectId, work.map((value) => value.operation));
+    });
+
     const q = queue((message: any, callback) => {
         // NOTE the processing of the below messages must make sure to notify clients of the messages in increasing
         // order. Be aware of promise handling ordering possibly causing out of order messages to be delivered.
@@ -66,16 +86,8 @@ async function run() {
         if (baseMessage.type === core.SequencedOperationType) {
             const value = baseMessage as core.ISequencedOperationMessage;
 
-            // Serialize the message to backing store
-            console.log(`Inserting to mongodb ${value.objectId}@${value.operation.sequenceNumber}`);
-            collection.insert(value).catch((error) => {
-                console.error("Error serializing to MongoDB");
-                console.error(error);
-            });
-
-            // Route the message to clients
-            console.log(`Routing message to clients ${value.objectId}@${value.operation.sequenceNumber}`);
-            io.to(value.objectId).emit("op", value.objectId, value.operation);
+            // Batch up work to more efficiently send to socket.io and mongodb
+            ioBatchManager.add(value.objectId, value);
         }
 
         // Update partition manager.
@@ -91,7 +103,14 @@ async function run() {
         callback();
     }, 1);
 
+    const receiveRate = new utils.RateCounter();
+    setInterval(() => {
+        const receive = 1000 * receiveRate.getSamples() / receiveRate.elapsed();
+        console.log(`Receive@ ${receive.toFixed(2)} msg/s`);
+        receiveRate.reset();
+    }, 5000);
     highLevelConsumer.on("message", async (message: any) => {
+        receiveRate.increment(1);
         q.push(message);
     });
 }
