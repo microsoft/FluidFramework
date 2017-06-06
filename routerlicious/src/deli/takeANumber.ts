@@ -31,17 +31,7 @@ const SequenceNumberComparer: utils.IComparer<IClientSequenceNumber> = {
     },
 };
 
-const producerRate = new utils.RateCounter();
-const ackRate = new utils.RateCounter();
-setInterval(() => {
-    const produce = 1000 * producerRate.getSamples() / producerRate.elapsed();
-    const ack = 1000 * ackRate.getSamples() / ackRate.elapsed();
-
-    console.log(`Produce@ ${produce.toFixed(2)} msg/s - Ack@ ${ack.toFixed(2)} msg/s`);
-
-    producerRate.reset();
-    ackRate.reset();
-}, 5000);
+const throughput = new utils.ThroughputCounter("Delta Topic ");
 
 /**
  * Class to handle distributing sequence numbers to a collaborative object
@@ -230,10 +220,10 @@ export class TakeANumber {
         };
 
         // Otherwise send the message to the event hub
-        producerRate.increment(1);
+        throughput.produce();
         return this.producer.send(JSON.stringify(sequencedMessage), sequencedMessage.objectId)
             .then((result) => {
-                ackRate.increment(1);
+                throughput.acknolwedge();
                 return result;
             });
     }

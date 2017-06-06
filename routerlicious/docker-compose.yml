@@ -21,6 +21,8 @@ services:
             - alfred
             - rabbitmq
         command: npm run paparazzi
+        environment:
+            - DEBUG=api
     scriptorium:
         build: .
         depends_on:

@@ -61,18 +61,7 @@ async function getOrCreateObject(id: string, type: string): Promise<boolean> {
 
 // Producer used to publish messages
 const producer = new utils.kafka.Producer(zookeeperEndpoint, kafkaClientId, topic);
-
-const producerRate = new utils.RateCounter();
-const ackRate = new utils.RateCounter();
-setInterval(() => {
-    const produce = 1000 * producerRate.getSamples() / producerRate.elapsed();
-    const ack = 1000 * ackRate.getSamples() / ackRate.elapsed();
-
-    console.log(`Produce@ ${produce.toFixed(2)} msg/s - Ack@ ${ack.toFixed(2)} msg/s`);
-
-    producerRate.reset();
-    ackRate.reset();
-}, 5000);
+const throughput = new utils.ThroughputCounter();
 
 io.on("connection", (socket) => {
     const clientId = moniker.choose();
@@ -129,15 +118,16 @@ io.on("connection", (socket) => {
             userId: null,
         };
 
-        producerRate.increment(1);
+        throughput.produce();
         producer.send(JSON.stringify(rawMessage), objectId).then(
             (responseMessage) => {
-                ackRate.increment(1);
                 response(null, responseMessage);
+                throughput.acknolwedge();
             },
             (error) => {
                 console.error(error);
                 response(error, null);
+                throughput.acknolwedge();
             });
     });
 
@@ -157,11 +147,16 @@ io.on("connection", (socket) => {
             userId: null,
         };
 
+        throughput.produce();
         producer.send(JSON.stringify(message), objectId).then(
-            (responseMessage) => response(null, responseMessage),
+            (responseMessage) => {
+                response(null, responseMessage);
+                throughput.acknolwedge();
+            },
             (error) => {
                 console.error(error);
                 response(error, null);
+                throughput.acknolwedge();
             });
     });
 });

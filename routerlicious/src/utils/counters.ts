@@ -30,6 +30,58 @@ export class Histogram {
 }
 
 /**
+ * Helper class to monitor throughput
+ */
+export class ThroughputCounter {
+    private produceCounter = new RateCounter();
+    private acknolwedgeCounter = new RateCounter();
+    private interval;
+
+    constructor(
+        private prefix = "",
+        private log: (value: string) => void = console.error,
+        private intervalTime: number = 5000) {
+    }
+
+    public produce(count: number = 1) {
+        this.produceCounter.increment(count);
+        this.ensureTracking();
+    }
+
+    public acknolwedge(count: number = 1) {
+        this.acknolwedgeCounter.increment(count);
+        this.ensureTracking();
+    }
+
+    private ensureTracking() {
+        if (this.interval) {
+            return;
+        }
+
+        // Reset both counters when starting the interval
+        this.produceCounter.reset();
+        this.acknolwedgeCounter.reset();
+
+        // Kick off the interval
+        this.interval = setInterval(() => {
+            const produce = 1000 * this.produceCounter.getSamples() / this.produceCounter.elapsed();
+            const ack = 1000 * this.acknolwedgeCounter.getSamples() / this.acknolwedgeCounter.elapsed();
+
+            this.log(`${this.prefix}Produce@ ${produce.toFixed(2)} msg/s - Ack@ ${ack.toFixed(2)} msg/s`);
+
+            // If there was no activity within the interval disable it
+            if (this.produceCounter.getSamples() === 0 && this.acknolwedgeCounter.getSamples() === 0) {
+                clearInterval(this.interval);
+                this.interval = undefined;
+            }
+
+            this.produceCounter.reset();
+            this.acknolwedgeCounter.reset();
+        }, this.intervalTime);
+    }
+}
+
+/**
  * Simple class to help sample rate based counters
  */
 export class RateCounter {

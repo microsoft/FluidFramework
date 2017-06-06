@@ -43,18 +43,7 @@ let producerInterval;
 async function startProducer(batchSize: number) {
     // Producer used to publish messages
     const producer = new utils.kafka.Producer(zookeeperEndpoint, kafkaClientId, topic);
-
-    const producerRate = new utils.RateCounter();
-    const ackRate = new utils.RateCounter();
-    producerRateInterval = setInterval(() => {
-        const produce = 1000 * producerRate.getSamples() / producerRate.elapsed();
-        const ack = 1000 * ackRate.getSamples() / ackRate.elapsed();
-
-        console.log(`Produce@ ${produce.toFixed(2)} msg/s - Ack@ ${ack.toFixed(2)} msg/s`);
-
-        producerRate.reset();
-        ackRate.reset();
-    }, 5000);
+    const throughput = new utils.ThroughputCounter();
 
     await getOrCreateObject("producer", api.MapExtension.Type);
 
@@ -78,10 +67,10 @@ async function startProducer(batchSize: number) {
         };
 
         for (let i = 0; i < batchSize; i++) {
-            producerRate.increment(1);
+            throughput.produce();
             producer.send(JSON.stringify(rawMessage), "producer").then(
                 (responseMessage) => {
-                    ackRate.increment(1);
+                    throughput.acknolwedge();
                 },
                 (error) => {
                     console.error(error);

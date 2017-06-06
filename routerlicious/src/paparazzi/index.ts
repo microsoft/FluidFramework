@@ -6,7 +6,6 @@ import * as path from "path";
 import * as api from "../api";
 import { resume, textAnalytics } from "../intelligence";
 import * as socketStorage from "../socket-storage";
-import * as utils from "../utils";
 import { IntelligentServicesManager } from "./intelligence";
 import { ObjectStorageService } from "./objectStorageService";
 
@@ -116,20 +115,12 @@ function handleDocument(
     id: string,
     intelligenceManager: IntelligentServicesManager) {
 
-    const receiveRate = new utils.RateCounter();
-    setInterval(() => {
-        const receive = 1000 * receiveRate.getSamples() / receiveRate.elapsed();
-        console.log(`Receive ${id} @ ${receive.toFixed(2)} msg/s`);
-        receiveRate.reset();
-    }, 5000);
-
     loadObject(services, collection, id).then((doc) => {
         // TODO need a generic way to know that the object has 'changed'. Best thing here is to probably trigger
         // a message whenever the MSN changes since this is what will cause a snapshot
 
         // Display the initial values and then listen for updates
         doc.on("op", (op) => {
-            receiveRate.increment(1);
             serialize(doc);
             intelligenceManager.process(doc);
         });

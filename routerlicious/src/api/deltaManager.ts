@@ -1,6 +1,10 @@
 import * as assert from "assert";
 import * as async from "async";
+import * as registerDebug from "debug";
 import * as api from ".";
+import { ThroughputCounter } from "../utils/counters";
+
+const debug = registerDebug("api");
 
 export interface IDeltaListener {
     /**
@@ -41,10 +45,15 @@ export class DeltaManager {
         private deltaConnection: api.IDeltaConnection,
         private listener: IDeltaListener) {
 
+        const throughputCounter = new ThroughputCounter(
+            `${this.deltaConnection.objectId} `,
+            debug);
+
         const q = async.queue<api.ISequencedMessage, void>((op, callback) => {
             // Handle the op
             this.handleOp(op);
             callback();
+            throughputCounter.acknolwedge();
         }, 1);
 
         // When the queue is drained reset our timer
@@ -55,6 +64,7 @@ export class DeltaManager {
         // listen for specific events
         this.deltaConnection.on("op", (messages: api.ISequencedMessage[]) => {
             for (const message of messages) {
+                throughputCounter.produce();
                 q.push(message);
             }
         });

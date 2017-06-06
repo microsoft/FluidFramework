@@ -52,6 +52,8 @@ async function run() {
         maxTickMessages: 100000,
     });
 
+    const throughput = new utils.ThroughputCounter();
+
     highLevelConsumer.on("error", (error) => {
         // Workaround to resolve rebalance partition error.
         // https://github.com/SOHU-Co/kafka-node/issues/90
@@ -76,6 +78,8 @@ async function run() {
         // Route the message to clients
         // console.log(`Routing message to clients ${value.objectId}@${value.operation.sequenceNumber}`);
         io.to(objectId).emit("op", objectId, work.map((value) => value.operation));
+
+        throughput.acknolwedge(work.length);
     });
 
     const q = queue((message: any, callback) => {
@@ -103,14 +107,8 @@ async function run() {
         callback();
     }, 1);
 
-    const receiveRate = new utils.RateCounter();
-    setInterval(() => {
-        const receive = 1000 * receiveRate.getSamples() / receiveRate.elapsed();
-        console.log(`Receive@ ${receive.toFixed(2)} msg/s`);
-        receiveRate.reset();
-    }, 5000);
     highLevelConsumer.on("message", async (message: any) => {
-        receiveRate.increment(1);
+        throughput.produce();
         q.push(message);
     });
 }

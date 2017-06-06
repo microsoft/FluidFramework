@@ -107,12 +107,7 @@ async function processMessages(
 
     let ticketQueue: {[id: string]: Promise<void> } = {};
 
-    const receiveRate = new utils.RateCounter();
-    setInterval(() => {
-        const receive = 1000 * receiveRate.getSamples() / receiveRate.elapsed();
-        console.log(`Receive@ ${receive.toFixed(2)} msg/s`);
-        receiveRate.reset();
-    }, 5000);
+    const throughput = new utils.ThroughputCounter();
 
     console.log("Waiting for messages");
     const q = queue((message: any, callback) => {
@@ -128,10 +123,12 @@ async function processMessages(
                 console.error(error);
             });
         }
+
+        throughput.acknolwedge();
     }, 1);
 
     highLevelConsumer.on("message", (message: any) => {
-        receiveRate.increment(1);
+        throughput.produce();
         q.push(message);
     });
 }
