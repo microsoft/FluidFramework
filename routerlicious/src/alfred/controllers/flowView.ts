@@ -530,6 +530,10 @@ class Cursor {
         this.show();
     }
 
+    public rect() {
+        return this.editSpan.getBoundingClientRect();
+    }
+
     public onresize() {
         this.viewportDivBounds = this.viewportDiv.getBoundingClientRect();
     }
@@ -576,7 +580,7 @@ class Cursor {
 }
 
 enum KeyCode {
-    backspace = 8, 
+    backspace = 8,
     esc = 27,
     pageUp = 33,
     pageDown = 34,
@@ -617,9 +621,10 @@ export class FlowView {
     public wheelTicking = false;
     public topChar = 0;
     public cursor: Cursor;
+    private lastVerticalX = -1;
     private randWordTimer: any;
     private pendingRender = false;
-    private diagCharPort = true;
+    private diagCharPort = false;
 
     constructor(public sharedString: SharedString.SharedString, public totalSegmentCount,
         public totalLengthChars, public flowContainer: IComponentContainer,
@@ -665,8 +670,51 @@ export class FlowView {
         this.flowContainer.status.add(key, msg);
     }
 
+    public verticalMove(lineCount: number) {
+        let cursorRect = this.cursor.rect();
+        let x: number;
+        if (this.lastVerticalX >= 0) {
+            x = this.lastVerticalX;
+        } else {
+            x = Math.floor(cursorRect.left);
+            this.lastVerticalX = x;
+        }
+        let y = Math.floor(cursorRect.top + (cursorRect.height / 2));
+        y += Math.floor(lineCount * this.hEst);
+        if ((y >= this.viewportRect.y) && (y <= (this.viewportRect.y + this.viewportRect.height - this.hEst))) {
+            let elm = document.elementFromPoint(x, y);
+            if (elm.tagName === "DIV") {
+                let span = <ISegSpan>elm.lastElementChild;
+                if (span) {
+                    let tseg = span.seg;
+                    if (span.clipOffset) {
+                        this.cursor.pos = span.segPos + span.clipOffset - 1;
+                    } else {
+                        this.cursor.pos = span.segPos + tseg.cachedLength - 1;
+                    }
+                    return true;
+                }
+            } else if (elm.tagName === "SPAN") {
+                let span = <ISegSpan>elm;
+                let elmOff = pointerToElementOffsetWebkit(x, y);
+                if (elmOff) {
+                    let computed = elmOffToSegOff(elmOff, span);
+                    if (span.offset) {
+                        computed += span.offset;
+                    }
+                    this.cursor.pos = span.segPos + computed;
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     public setEdit() {
         this.containerDiv.onclick = (e) => {
+            if (!this.diagCharPort) {
+                return;
+            }
             let span = <ISegSpan>e.target;
             let segspan: ISegSpan;
             if (span.seg) {
@@ -717,6 +765,8 @@ export class FlowView {
             this.render(this.topChar, true);
         };
         let keydownHandler = (e: KeyboardEvent) => {
+            let saveLastVertX = this.lastVerticalX;
+            this.lastVerticalX = -1;
             // console.log(`key ${e.keyCode}`);
             if (e.keyCode === KeyCode.backspace) {
                 this.cursor.pos--;
@@ -745,16 +795,29 @@ export class FlowView {
             } else if (e.keyCode === KeyCode.leftArrow) {
                 this.cursor.pos--;
                 this.render(this.topChar, true); // TODO: scroll first if cursor travels off page
+            } else if ((e.keyCode === KeyCode.upArrow) || (e.keyCode === KeyCode.downArrow)) {
+                this.lastVerticalX = saveLastVertX;
+                let lineCount = 1;
+                if (e.keyCode === KeyCode.upArrow) {
+                    lineCount = -1;
+                }
+                if (this.verticalMove(lineCount)) {
+                    if (this.cursor.pos >= this.viewportEndChar) {
+                        this.cursor.pos = this.adjustedTopChar;
+                    }
+                    this.render(this.topChar, true);
+                }
             }
+
         };
         let keypressHandler = (e: KeyboardEvent) => {
-                let pos = this.cursor.pos;
-                this.cursor.pos++;
-                let code = e.charCode;
-                if (code === 13) {
-                    code = CharacterCodes.linefeed;
-                }
-                this.sharedString.insertText(String.fromCharCode(code), pos);
+            let pos = this.cursor.pos;
+            this.cursor.pos++;
+            let code = e.charCode;
+            if (code === 13) {
+                code = CharacterCodes.linefeed;
+            }
+            this.sharedString.insertText(String.fromCharCode(code), pos);
         };
         this.flowContainer.onkeydown = keydownHandler;
         this.flowContainer.onkeypress = keypressHandler;
@@ -807,7 +870,9 @@ export class FlowView {
         let bubbleLeft = 3;
         let bubbleDiv = makeScrollLosenge(bubbleHeight, bubbleLeft, bubbleTop);
         this.scrollDiv.appendChild(bubbleDiv);
-        this.statusMessage("render", `&nbsp ${Date.now() - clk}ms`);
+        if (this.diagCharPort) {
+            this.statusMessage("render", `&nbsp ${Date.now() - clk}ms`);
+        }
         if (this.diagCharPort) {
             this.statusMessage("diagCharPort",
                 `&nbsp sp: (${this.topChar}, ${this.adjustedTopChar}) ep: ${this.viewportEndChar} cp: ${this.cursor.pos}`);
@@ -851,7 +916,7 @@ export class FlowView {
     }
 
     private queueRender(msg: API.ISequencedMessage) {
-        if ((!this.pendingRender) && msg) {
+        if ((!this.pendingRender) && msg && msg.op) {
             this.pendingRender = true;
             window.requestAnimationFrame(() => {
                 this.pendingRender = false;
@@ -863,9 +928,9 @@ export class FlowView {
                         this.cursor.pos += delta.text.length;
                     }
                 } else {
-                    if (delta.pos2<=this.cursor.pos) {
-                        this.cursor.pos-=(delta.pos2-delta.pos1);
-                    } else if (this.cursor.pos>=delta.pos1) {
+                    if (delta.pos2 <= this.cursor.pos) {
+                        this.cursor.pos -= (delta.pos2 - delta.pos1);
+                    } else if (this.cursor.pos >= delta.pos1) {
                         this.cursor.pos = delta.pos1;
                     }
                     viewChar = delta.pos2;
