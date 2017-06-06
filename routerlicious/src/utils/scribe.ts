@@ -206,7 +206,7 @@ async function typeFile(
     componentsView.set("histogram", histogramChart);
     histogramChart.set("type", "chart");
     histogramChart.set("size", { width: 760, height: 480 });
-    histogramChart.set("position", { x: 10, y: 500 });
+    histogramChart.set("position", { x: 790, y: 10 });
 
     const startTime = Date.now();
 
