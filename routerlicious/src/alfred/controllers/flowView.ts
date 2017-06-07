@@ -101,9 +101,12 @@ function makeInnerDiv() {
     let innerDiv = document.createElement("div");
     innerDiv.style.font = "18px Times";
     innerDiv.style.lineHeight = "125%";
-    // innerDiv.style.fontFeatureSettings = '"liga" off, "kern" off';
-    // (<any>innerDiv.style).fontKerning = "none";
-    // (<any>innerDiv.style).fontVariantLigatures = "none";
+    innerDiv.style.fontFeatureSettings = '"liga" off, "kern" off';
+    (<any>innerDiv.style).fontKerning = "none";
+    (<any>innerDiv.style).fontVariantLigatures = "none";
+    (<any>innerDiv.style).webkitFontKerning = "none";
+    (<any>innerDiv.style).webkitFontVariantLigatures = "none";
+    (<any>innerDiv.style).webkitFontFeatureSettings = '"liga" off, "kern" off';
     innerDiv.onclick = (e) => {
         let div = <HTMLDivElement>e.target;
         if (div.lastElementChild) {
