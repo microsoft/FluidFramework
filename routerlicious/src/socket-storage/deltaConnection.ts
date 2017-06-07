@@ -29,7 +29,7 @@ export class DeltaConnection implements api.IDeltaConnection {
      */
     public submitOp(message: api.IMessage): Promise<void> {
         return new Promise<void>((resolve, reject) => {
-            this.service.emit("submitOp", this.objectId, message, (error) => {
+            this.service.emit("submitOp", this.clientId, message, (error) => {
                 if (error) {
                     reject(error);
                 } else {
@@ -44,7 +44,7 @@ export class DeltaConnection implements api.IDeltaConnection {
      */
     public updateReferenceSequenceNumber(sequenceNumber: number): Promise<void> {
         return new Promise<void>((resolve, reject) => {
-            this.service.emit("updateReferenceSequenceNumber", this.objectId, sequenceNumber, (error) => {
+            this.service.emit("updateReferenceSequenceNumber", this.clientId, sequenceNumber, (error) => {
                 if (error) {
                     reject(error);
                 } else {

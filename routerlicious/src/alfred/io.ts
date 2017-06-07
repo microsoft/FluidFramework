@@ -65,8 +65,8 @@ const producer = new utils.kafka.Producer(zookeeperEndpoint, kafkaClientId, topi
 const throughput = new utils.ThroughputCounter();
 
 io.on("connection", (socket) => {
-    const clientId = moniker.choose();
-    const connectionsMap: { [id: string]: boolean } = {};
+    // Map from client IDs on this connection to the object ID for them
+    const connectionsMap: { [clientId: string]: string } = {};
 
     // The loadObject call needs to see if the object already exists. If not it should offload to
     // the storage service to go and create it.
@@ -88,7 +88,8 @@ io.on("connection", (socket) => {
                     }
 
                     console.log(`Existing object ${existing}`);
-                    connectionsMap[message.objectId] = true;
+                    const clientId = moniker.choose();
+                    connectionsMap[clientId] = message.objectId;
                     const connectedMessage: socketStorage.IConnected = {
                         clientId,
                         existing,
@@ -104,12 +105,13 @@ io.on("connection", (socket) => {
     });
 
     // Message sent when a new operation is submitted to the router
-    socket.on("submitOp", (objectId: string, message: api.IMessage, response) => {
+    socket.on("submitOp", (clientId: string, message: api.IMessage, response) => {
         // Verify the user has connected on this object id
-        if (!connectionsMap[objectId]) {
-            return response("Invalid object", null);
+        if (!connectionsMap[clientId]) {
+            return response("Invalid client ID", null);
         }
 
+        const objectId = connectionsMap[clientId];
         const rawMessage: core.IRawOperationMessage = {
             clientId,
             operation: message,
@@ -133,12 +135,13 @@ io.on("connection", (socket) => {
     });
 
     // Message sent to allow clients to update their sequence number
-    socket.on("updateReferenceSequenceNumber", (objectId: string, sequenceNumber: number, response) => {
+    socket.on("updateReferenceSequenceNumber", (clientId: string, sequenceNumber: number, response) => {
         // Verify the user has connected on this object id
-        if (!connectionsMap[objectId]) {
+        if (!connectionsMap[clientId]) {
             return response("Invalid object", null);
         }
 
+        const objectId = connectionsMap[clientId];
         const message: core.IUpdateReferenceSequenceNumberMessage = {
             clientId,
             objectId,
