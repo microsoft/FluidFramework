@@ -133,6 +133,7 @@
     "socket.io": "^1.7.3",
     "socket.io-emitter": "^2.0.0",
     "socket.io-redis": "^4.0.0",
+    "static-expiry": "0.0.11",
     "winston": "^2.3.1"
   },
   "browserify": {

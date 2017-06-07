@@ -1,6 +1,6 @@
 {{<layout}}
     {{$styles}}
-        <link href="/public/stylesheets/dist/style.css" rel="stylesheet" />
+        <link href="{{#hfurl}}/public/stylesheets/dist/style.css{{/hfurl}}" rel="stylesheet" />
     {{/styles}}
 
     {{$content}}
@@ -47,7 +47,8 @@
     {{$scripts}}
         <script src="/socket.io/socket.io.js"></script>
         <script src="//charts.azureedge.net/release/0.1.215074.1/microsoft-charts.min.js"></script>
-        <script src="/public/scripts/dist/canvas.js"></script>
+        <script src="{{#hfurl}}/public/scripts/dist/canvas.js{{/hfurl}}"></script>
+        
         <script>
             controller.initialize("{{id}}");
         </script>

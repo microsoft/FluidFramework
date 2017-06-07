@@ -1,6 +1,6 @@
 {{<layout}}
     {{$styles}}
-        <link href="/public/stylesheets/dist/style.css" rel="stylesheet" />
+        <link href="{{#hfurl}}/public/stylesheets/dist/style.css{{/hfurl}}" rel="stylesheet" />
         <style>
             body {
                 overflow: visible;
@@ -68,6 +68,6 @@
 
     {{$scripts}}
         <script src="/socket.io/socket.io.js"></script>
-        <script src="/public/scripts/dist/scribe.js"></script>
+        <script src="{{#hfurl}}/public/scripts/dist/scribe.js{{/hfurl}}"></script>
     {{/scripts}}
 {{/layout}}

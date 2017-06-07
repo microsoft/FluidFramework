@@ -4,7 +4,17 @@ import * as logger from "morgan";
 import * as passport from "passport";
 import * as path from "path";
 import * as favicon from "serve-favicon";
+import * as expiry from "static-expiry";
 import * as routes from "./routes";
+
+// Base endpoint to expose static files at
+const staticFilesEndpoint = "/public";
+
+// Helper function to translate from a static files URL to the path to find the file
+// relative to the static assets directory
+function translateStaticUrl(url: string): string {
+    return staticFilesEndpoint + app.locals.furl(url.substring(staticFilesEndpoint.length));
+}
 
 // Express app configuration
 let app = express();
@@ -21,7 +31,10 @@ app.use(favicon(path.join(__dirname, "../../public", "favicon.ico")));
 app.use(logger("dev"));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
-app.use("/public", express.static(path.join(__dirname, "../../public")));
+
+app.use(staticFilesEndpoint, expiry(app, { dir: path.join(__dirname, "../../public") }));
+app.locals.hfurl = () => (value: string) => translateStaticUrl(value);
+app.use(staticFilesEndpoint, express.static(path.join(__dirname, "../../public")));
 app.use(passport.initialize());
 app.use(passport.session());
 
