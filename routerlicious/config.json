@@ -63,7 +63,9 @@
         },
         "kafkaClientId": "deli",
         "groupId": "deli",
-        "checkpointBatchSize": 10
+        "checkpointBatchSize": 10,
+        "checkpointTimeIntervalMsec": 1000
+
     },
     "paparazzi": {
         "queue": "snapshot",
@@ -74,7 +76,8 @@
         "topic": "deltas",
         "kafkaClientId": "scriptorium",
         "groupId": "scriptorium",
-        "checkpointBatchSize": 1
+        "checkpointBatchSize": 1,
+        "checkpointTimeIntervalMsec": 1000
     },
     "tmz": {
         "queue": "snapshot",

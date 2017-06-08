@@ -17,8 +17,11 @@ const kafkaClientId = nconf.get("deli:kafkaClientId");
 const receiveTopic = nconf.get("deli:topics:receive");
 const sendTopic = nconf.get("deli:topics:send");
 const checkpointBatchSize = nconf.get("deli:checkpointBatchSize");
+const checkpointTimeIntervalMsec = nconf.get("deli:checkpointTimeIntervalMsec");
 const objectsCollectionName = nconf.get("mongo:collectionNames:objects");
 const groupId = nconf.get("deli:groupId");
+
+let checkpointTimer: any;
 
 function processMessage(
     message: any,
@@ -67,6 +70,15 @@ async function checkpoint(
 
     // Finally call kafka checkpointing.
     partitionManager.checkPoint();
+
+    // Clear timer since we just checkpointed.
+    if (checkpointTimer) {
+        clearTimeout(checkpointTimer);
+    }
+    // Set up next cycle.
+    checkpointTimer = setTimeout(() => {
+        checkpoint(partitionManager, dispensers, pendingTickets);
+    }, checkpointTimeIntervalMsec);
 }
 
 function processMessages(
@@ -82,7 +94,8 @@ function processMessages(
         groupId,
         receiveTopic,
         consumerOffset,
-        checkpointBatchSize);
+        checkpointBatchSize,
+        checkpointTimeIntervalMsec);
 
     const highLevelConsumer = new kafka.HighLevelConsumer(kafkaClient, [{topic: receiveTopic}], <any> {
         autoCommit: false,
