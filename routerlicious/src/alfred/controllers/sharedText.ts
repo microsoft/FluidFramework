@@ -142,6 +142,7 @@ class Status implements FlowView.IStatus {
 class FlowContainer implements FlowView.IComponentContainer {
     public onresize: () => void;
     public onkeydown: (e: KeyboardEvent) => void;
+    public onkeypress: (e: KeyboardEvent) => void;
     public status: FlowView.IStatus;
     public div: HTMLDivElement;
     public statusDiv: HTMLDivElement;
@@ -163,6 +164,12 @@ class FlowContainer implements FlowView.IComponentContainer {
             // TODO: filter by target
             if (this.onkeydown) {
                 this.onkeydown(e);
+            }
+        };
+        document.body.onkeypress = (e) => {
+            // TODO: filter by target
+            if (this.onkeypress) {
+                this.onkeypress(e);
             }
         };
     }
@@ -210,16 +217,19 @@ export async function onLoad(id: string) {
             theFlow.loadFinished(clockStart);
         } else {
             console.log("local load...");
-            request.get(url.resolve(document.baseURI, "/public/literature/pp.txt"), (error, response, body: string) => {
-                if (error) {
-                    return console.error(error);
-                }
-                const segments = SharedString.loadSegments(body, 0);
-                for (const segment of segments) {
-                    sharedString.insertText((<SharedString.TextSegment>segment).text, sharedString.client.getLength());
-                }
-                theFlow.loadFinished(clockStart);
-            });
+            request.get(url.resolve(document.baseURI,
+                "/public/literature/pp.txt"), (error, response, body: string) => {
+                    if (error) {
+                        return console.error(error);
+                    }
+                    const segments = SharedString.loadSegments(body, 0);
+                    for (const segment of segments) {
+                        let textSegment = <SharedString.TextSegment>segment;
+                        sharedString.insertText(textSegment.text, sharedString.client.getLength(),
+                            textSegment.properties);
+                    }
+                    theFlow.loadFinished(clockStart);
+                });
         }
     });
 }

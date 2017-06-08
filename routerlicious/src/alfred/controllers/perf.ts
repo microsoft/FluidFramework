@@ -76,7 +76,6 @@ async function displayValues(map: api.IMap, container: JQuery, doc: api.Document
             avgLatency = latencyCounter.getValue() / message.clientSequenceNumber;
             latencyValue.text(`${(avgLatency / 1000).toFixed(2)} seconds`);
         }
-
     });
 
     container.append(values, latencyText, latencyValue);

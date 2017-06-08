@@ -49,7 +49,7 @@ export class PartitionManager {
                 this.checkPoint();
             },
             (error) => {
-                console.log(`${this.groupId}: Error checkpointing kafka offset: ${JSON.stringify(error)}`);
+                // console.log(`${this.groupId}: Error checkpointing kafka offset: ${JSON.stringify(error)}`);
                 this.checkpointing = false;
                 // Triggering another round.
                 this.checkPoint();
@@ -91,11 +91,11 @@ export class PartitionManager {
             this.consumerOffset.commit(this.groupId, commitDetails,
                 (error, data) => {
                     if (error) {
-                        console.error(`${this.groupId}: Error checkpointing kafka offsets: ${error}`);
+                        // console.error(`${this.groupId}: Error checkpointing kafka offsets: ${error}`);
                         reject(error);
                     } else {
                         // tslint:disable-next-line:max-line-length
-                        console.log(`${this.groupId}: Checkpointed kafka with: ${JSON.stringify(commitDetails)}. Result: ${JSON.stringify(data)}`);
+                        // console.log(`${this.groupId}: Checkpointed kafka with: ${JSON.stringify(commitDetails)}. Result: ${JSON.stringify(data)}`);
                         resolve({ data: true });
                     }
             });

@@ -27,10 +27,10 @@ export class CollaboritiveStringExtension implements API.IExtension {
     }
 }
 
-function textsToSegments(texts: string[]) {
+function textsToSegments(texts: API.IPropertyString[]) {
     let segments = <MergeTree.TextSegment[]>[];
-    for (let text of texts) {
-        let segment = new MergeTree.TextSegment(text,
+    for (let ptext of texts) {
+        let segment = MergeTree.TextSegment.make(ptext.text, ptext.props,
             MergeTree.UniversalSequenceNumber,
             MergeTree.LocalClientId);
         segments.push(segment);
@@ -69,7 +69,7 @@ export class SharedString implements API.ICollaborativeObject {
             this.events.emit('partialLoad', chunk);
             chunk = await bodyChunkP;
             for (let text of chunk.segmentTexts) {
-                this.client.mergeTree.appendTextSegment(text);
+                this.client.mergeTree.appendTextSegment(text.text, text.props);
             }
             this.initialSeq = chunk.chunkSequenceNumber;
         } else {
@@ -99,13 +99,13 @@ export class SharedString implements API.ICollaborativeObject {
         return this;
     }
 
-    private makeInsertMsg(text: string, pos: number) {
+    private makeInsertMsg(text: string, pos: number, props?: Object) {
         return <API.IMessage>{
             referenceSequenceNumber: this.client.getCurrentSeq(),
             objectId: this.id,
             clientSequenceNumber: this.clientSequenceNumber++,
             op: {
-                type: API.MergeTreeMsgType.INSERT, text: text, pos1: pos
+                type: API.MergeTreeMsgType.INSERT, text: text, pos1: pos, props,
             }
         };
     }
@@ -121,9 +121,9 @@ export class SharedString implements API.ICollaborativeObject {
         };
     }
 
-    public insertText(text: string, pos: number) {
-        const insertMessage = this.makeInsertMsg(text, pos);
-        this.client.insertSegmentLocal(text, pos);
+    public insertText(text: string, pos: number, props?: Object) {
+        const insertMessage = this.makeInsertMsg(text, pos, props);
+        this.client.insertSegmentLocal(text, pos, props);
         this.deltaManager.submitOp(insertMessage);
     }
 

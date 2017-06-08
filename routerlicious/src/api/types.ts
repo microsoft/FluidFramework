@@ -60,6 +60,38 @@ export interface ICollaborativeObject {
     snapshot(): Promise<void>;
 }
 
+export interface IMapView {
+    /**
+     * Retrieves the given key from the map
+     */
+    get(key: string): any;
+
+    /**
+     * Returns a boolean indicating whether or not the key exists in the map
+     */
+    has(key: string): boolean;
+
+    /**
+     * Sets the key to the provided value
+     */
+    set(key: string, value: any): Promise<void>;
+
+    /**
+     * Deletes the specified key from the map and returns the value of the key at the time of deletion.
+     */
+    delete(key: string): Promise<void>;
+
+    /**
+     * Retreives all the keys contained within the map
+     */
+    keys(): string[];
+
+    /**
+     * Removes all entries from the map
+     */
+    clear(): Promise<void>;
+}
+
 /**
  * Collaborative map interface
  */
@@ -93,6 +125,11 @@ export interface IMap extends ICollaborativeObject {
      * Removes all entries from the map
      */
     clear(): Promise<void>;
+
+    /**
+     * Retreives a synchronous view of the map
+     */
+    getView(): Promise<IMapView>;
 }
 
 /**

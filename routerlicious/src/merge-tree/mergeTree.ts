@@ -2,7 +2,8 @@
 
 import * as Base from "./base";
 import * as Collections from "./collections";
-import * as api from "../api";
+import * as API from "../api";
+import * as Properties from "./properties";
 
 export interface Node {
     parent: Block;
@@ -217,18 +218,38 @@ export class Marker extends BaseSegment {
     }
 }
 
-// TODO: segments without seq and clientid (if seq < minSeq)
 export class TextSegment extends BaseSegment {
+    public properties: Object;
+
+    public static make(text: string, props?: Object, seq?: number, clientId?: number) {
+        let tseg = new TextSegment(text, seq, clientId);
+        if (props) {
+            tseg.addProperties(props);
+        }
+        return tseg;
+    }
+
     constructor(public text: string, seq?: number, clientId?: number) {
         super(seq, clientId);
         this.cachedLength = text.length;
     }
+
+    addProperties(newProps: Object) {
+        if (!this.properties) {
+            this.properties = Properties.create();
+        }
+        Properties.extend(this.properties, newProps);
+    }
+
     splitAt(pos: number) {
         if (pos > 0) {
             let remainingText = this.text.substring(pos);
             this.text = this.text.substring(0, pos);
             this.cachedLength = this.text.length;
             let leafSegment = new TextSegment(remainingText, this.seq, this.clientId);
+            if (this.properties) {
+                leafSegment.addProperties(Properties.extend(Properties.create(), this.properties));
+            }
             segmentCopy(this, leafSegment, true);
             return leafSegment;
         }
@@ -238,9 +259,41 @@ export class TextSegment extends BaseSegment {
         return SegmentType.Text;
     }
 
+    matchProperties(b: TextSegment) {
+        if (this.properties) {
+            if (!b.properties) {
+                return false;
+            } else {
+                let bProps = b.properties;
+                // for now, straightforward; later use hashing
+                for (let key in this.properties) {
+                    if (this.properties.hasOwnProperty(key)) {
+                        if (bProps[key] === undefined) {
+                            return false;
+                        } else if (bProps[key] !== this.properties[key]) {
+                            return false;
+                        }
+                    }
+                }
+                for (let key in bProps) {
+                    if (bProps.hasOwnProperty(key)) {
+                        if (this.properties[key] === undefined) {
+                            return false;
+                        }
+                    }
+                }
+            }
+        } else {
+            if (b.properties) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     canAppend(segment: Segment) {
         if ((!this.removedSeq) && (this.text.charAt(this.text.length - 1) != '\n')) {
-            if (segment.getType() == SegmentType.Text) {
+            if ((segment.getType() == SegmentType.Text) && (this.matchProperties(<TextSegment>segment))) {
                 return ((this.cachedLength <= MergeTree.TextSegmentGranularity) ||
                     (segment.cachedLength <= MergeTree.TextSegmentGranularity));
             }
@@ -250,6 +303,7 @@ export class TextSegment extends BaseSegment {
     toString() {
         return this.text;
     }
+
     append(segment: Segment) {
         if (segment.getType() === SegmentType.Text) {
             this.text += (<TextSegment>segment).text;
@@ -954,7 +1008,7 @@ function elapsedMicroseconds(start: [number, number] | number) {
 export const useCheckQ = false;
 
 function checkTextMatchRelative(refSeq: number, clientId: number, server: TestServer,
-    msg: api.ISequencedMessage) {
+    msg: API.ISequencedMessage) {
     let client = server.clients[clientId];
     let serverText = server.mergeTree.getText(refSeq, clientId);
     let cliText = client.checkQ.dequeue();
@@ -992,7 +1046,7 @@ export class Client {
     accumOps = 0;
     verboseOps = false;
     measureOps = false;
-    q: Collections.List<api.IBase>;
+    q: Collections.List<API.IBase>;
     checkQ: Collections.List<string>;
     clientSequenceNumber = 1;
     clientNameToId = new Collections.RedBlackTree<string, number>(compareStrings);
@@ -1002,7 +1056,7 @@ export class Client {
     constructor(initText: string) {
         this.mergeTree = new MergeTree(initText);
         this.mergeTree.getLongClientId = id => this.getLongClientId(id);
-        this.q = Collections.ListMakeHead<api.ISequencedMessage>();
+        this.q = Collections.ListMakeHead<API.ISequencedMessage>();
         this.checkQ = Collections.ListMakeHead<string>();
     }
 
@@ -1032,7 +1086,7 @@ export class Client {
     }
 
     makeInsertMsg(text: string, pos: number, seq: number, refSeq: number, objectId: string) {
-        return <api.ISequencedMessage>{
+        return <API.ISequencedMessage>{
             clientId: this.longClientId,
             sequenceNumber: seq,
             referenceSequenceNumber: refSeq,
@@ -1042,14 +1096,14 @@ export class Client {
             minimumSequenceNumber: undefined,
             offset: seq,
             op: {
-                type: api.MergeTreeMsgType.INSERT, text: text, pos1: pos
+                type: API.MergeTreeMsgType.INSERT, text: text, pos1: pos
             },
-            type: api.OperationType,
+            type: API.OperationType,
         };
     }
 
     makeRemoveMsg(start: number, end: number, seq: number, refSeq: number, objectId: string) {
-        return <api.ISequencedMessage>{
+        return <API.ISequencedMessage>{
             clientId: this.longClientId,
             sequenceNumber: seq,
             referenceSequenceNumber: refSeq,
@@ -1059,13 +1113,13 @@ export class Client {
             minimumSequenceNumber: undefined,
             offset: seq,
             op: {
-                type: api.MergeTreeMsgType.REMOVE, pos1: start, pos2: end
+                type: API.MergeTreeMsgType.REMOVE, pos1: start, pos2: end
             },
-            type: api.OperationType,
+            type: API.OperationType,
         };
     }
 
-    enqueueMsg(msg: api.IBase) {
+    enqueueMsg(msg: API.IBase) {
         this.q.enqueue(msg);
     }
 
@@ -1073,29 +1127,29 @@ export class Client {
         this.checkQ.enqueue(this.getText());
     }
 
-    coreApplyMsg(msg: api.ISequencedMessage) {
-        let op = <api.IMergeTreeDeltaMsg>msg.op;
+    coreApplyMsg(msg: API.ISequencedMessage) {
+        let op = <API.IMergeTreeDeltaMsg>msg.op;
         let clid = this.getOrAddShortClientId(msg.clientId);
         switch (op.type) {
-            case api.MergeTreeMsgType.INSERT:
-                this.insertSegmentRemote(op.text, op.pos1, msg.sequenceNumber, msg.referenceSequenceNumber,
+            case API.MergeTreeMsgType.INSERT:
+                this.insertSegmentRemote(op.text, op.pos1, op.props, msg.sequenceNumber, msg.referenceSequenceNumber,
                     clid);
                 break;
-            case api.MergeTreeMsgType.REMOVE:
+            case API.MergeTreeMsgType.REMOVE:
                 this.removeSegmentRemote(op.pos1, op.pos2, msg.sequenceNumber, msg.referenceSequenceNumber,
                     clid);
                 break;
         }
     }
 
-    applyMsg(msg: api.IBase) {
+    applyMsg(msg: API.IBase) {
         if ((msg !== undefined) && (msg.minimumSequenceNumber > this.mergeTree.getCollabWindow().minSeq)) {
             this.updateMinSeq(msg.minimumSequenceNumber);
         }
 
         // Apply if an operation message
-        if (msg.type === api.OperationType) {
-            const operationMessage = msg as api.ISequencedMessage;
+        if (msg.type === API.OperationType) {
+            const operationMessage = msg as API.ISequencedMessage;
             if (operationMessage.clientId == this.longClientId) {
                 this.ackPendingSegment(operationMessage.sequenceNumber);
             }
@@ -1165,7 +1219,7 @@ export class Client {
         }
     }
 
-    insertSegmentLocal(text: string, pos: number) {
+    insertSegmentLocal(text: string, pos: number, props?: Object) {
         let segWindow = this.mergeTree.getCollabWindow();
         let clientId = segWindow.clientId;
         let refSeq = segWindow.currentSeq;
@@ -1175,7 +1229,7 @@ export class Client {
             clockStart = clock();
         }
 
-        this.mergeTree.insertText(pos, refSeq, clientId, seq, text);
+        this.mergeTree.insertText(pos, refSeq, clientId, seq, text, props);
 
         if (this.measureOps) {
             this.localTime += elapsedMicroseconds(clockStart);
@@ -1186,13 +1240,13 @@ export class Client {
         }
     }
 
-    insertSegmentRemote(text: string, pos: number, seq: number, refSeq: number, clientId: number) {
+    insertSegmentRemote(text: string, pos: number, props: Object, seq: number, refSeq: number, clientId: number) {
         let clockStart;
         if (this.measureOps) {
             clockStart = clock();
         }
 
-        this.mergeTree.insertText(pos, refSeq, clientId, seq, text);
+        this.mergeTree.insertText(pos, refSeq, clientId, seq, text, props);
         this.mergeTree.getCollabWindow().currentSeq = seq;
 
         if (this.measureOps) {
@@ -1306,7 +1360,7 @@ export class TestServer extends Client {
         this.listeners = listeners;
     }
 
-    applyMsg(msg: api.ISequencedMessage) {
+    applyMsg(msg: API.ISequencedMessage) {
         this.coreApplyMsg(msg);
         if (useCheckQ) {
             let clid = this.getShortClientId(msg.clientId);
@@ -1316,10 +1370,10 @@ export class TestServer extends Client {
             return false;
         }
     }
-    
+
     applyMessages(msgCount: number) {
         while (msgCount > 0) {
-            let msg = <api.ISequencedMessage> this.q.dequeue();
+            let msg = <API.ISequencedMessage>this.q.dequeue();
             if (msg) {
                 msg.sequenceNumber = this.seq++;
                 if (this.applyMsg(msg)) {
@@ -1433,7 +1487,7 @@ export class MergeTree {
     reloadFromSegments(segments: Segment[]) {
         let segCap = MergeTree.MaxNodesInBlock - 1;
         const measureReloadTime = false;
-        let buildMergeTree: (nodes: Node[]) => Block = (nodes: Segment[]) => {
+        let buildMergeBlock: (nodes: Node[]) => Block = (nodes: Segment[]) => {
             const nodeCount = Math.ceil(nodes.length / segCap);
             const blocks: Block[] = [];
             let nodeIndex = 0;
@@ -1455,18 +1509,24 @@ export class MergeTree {
                 return blocks[0];
             }
             else {
-                return buildMergeTree(blocks);
+                return buildMergeBlock(blocks);
             }
         }
         let clockStart;
         if (measureReloadTime) {
             clockStart = clock();
         }
-        this.root = this.makeBlock(1);
-        let mergeTree = buildMergeTree(segments);
-        mergeTree.parent = this.root;
-        this.root.children[0] = mergeTree;
-        this.root.cachedLength = mergeTree.cachedLength;
+        if (segments.length > 0) {
+            this.root = this.makeBlock(1);
+            let block = buildMergeBlock(segments);
+            block.parent = this.root;
+            this.root.children[0] = block;
+            this.root.cachedLength = block.cachedLength;
+        }
+        else {
+            this.root = this.makeBlock(0);
+            this.root.cachedLength = 0;
+        }
         if (measureReloadTime) {
             console.log(`reload time ${elapsedMicroseconds(clockStart)}`);
         }
@@ -1947,9 +2007,9 @@ export class MergeTree {
     }
 
     // assumes not collaborating for now
-    appendTextSegment(text: string) {
+    appendTextSegment(text: string, props?: Object) {
         let pos = this.root.cachedLength;
-        this.insertText(pos, UniversalSequenceNumber, LocalClientId, UniversalSequenceNumber, text);
+        this.insertText(pos, UniversalSequenceNumber, LocalClientId, UniversalSequenceNumber, text, props);
     }
 
     insert<T>(pos: number, refSeq: number, clientId: number, seq: number, segData: T,
@@ -1968,8 +2028,8 @@ export class MergeTree {
             this.blockInsert(block, pos, refSeq, clientId, seq, marker));
     }
 
-    insertText(pos: number, refSeq: number, clientId: number, seq: number, text: string) {
-        let newSegment = new TextSegment(text, seq, clientId);
+    insertText(pos: number, refSeq: number, clientId: number, seq: number, text: string, props?: Object) {
+        let newSegment = TextSegment.make(text, props, seq, clientId);
         this.insert(pos, refSeq, clientId, seq, text, (block, pos, refSeq, clientId, seq, text) =>
             this.blockInsert(this.root, pos, refSeq, clientId, seq, newSegment));
         if (this.collabWindow.collaborating && MergeTree.options.zamboniSegments &&

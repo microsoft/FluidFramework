@@ -31,6 +31,8 @@ const SequenceNumberComparer: utils.IComparer<IClientSequenceNumber> = {
     },
 };
 
+const throughput = new utils.ThroughputCounter("Delta Topic ");
+
 /**
  * Class to handle distributing sequence numbers to a collaborative object
  */
@@ -209,7 +211,7 @@ export class TakeANumber {
         }
 
         // tslint:disable-next-line:max-line-length
-        console.log(`Assigning ticket ${objectMessage.objectId}@${sequenceNumber}:${this.minimumSequenceNumber} at topic@${this.logOffset}`);
+        // console.log(`Assigning ticket ${objectMessage.objectId}@${sequenceNumber}:${this.minimumSequenceNumber} at topic@${this.logOffset}`);
 
         const sequencedMessage: core.ISequencedOperationMessage = {
             objectId: objectMessage.objectId,
@@ -218,7 +220,12 @@ export class TakeANumber {
         };
 
         // Otherwise send the message to the event hub
-        return this.producer.send(JSON.stringify(sequencedMessage), sequencedMessage.objectId);
+        throughput.produce();
+        return this.producer.send(JSON.stringify(sequencedMessage), sequencedMessage.objectId)
+            .then((result) => {
+                throughput.acknolwedge();
+                return result;
+            });
     }
 
     /**
@@ -316,7 +323,7 @@ export class TakeANumber {
                 return client.value.referenceSequenceNumber;
             }
 
-            console.log(`Expiring ${client.value.clientId}`);
+            // console.log(`Expiring ${client.value.clientId}`);
             this.clientSeqNumbers.get();
             delete this.clientNodeMap[client.value.clientId];
         }

@@ -1,5 +1,4 @@
 import * as _ from "lodash";
-import { MongoClient } from "mongodb";
 import * as moniker from "moniker";
 import * as nconf from "nconf";
 import * as redis from "redis";
@@ -38,12 +37,14 @@ io.adapter(socketIoRedis({ pubClient: pub, subClient: sub }));
 
 // Connection to stored document details
 const mongoUrl = nconf.get("mongo:endpoint");
-const client = MongoClient.connect(mongoUrl);
 const objectsCollectionName = nconf.get("mongo:collectionNames:objects");
-const objectsCollectionP = client.then((db) => db.collection(objectsCollectionName));
+
+const mongoManager = new utils.MongoManager(mongoUrl);
 
 async function getOrCreateObject(id: string, type: string): Promise<boolean> {
-    const collection = await objectsCollectionP;
+    const db = await mongoManager.getDatabase();
+    const collection = db.collection(objectsCollectionName);
+
     const dbObjectP = collection.findOne({ _id: id });
     return dbObjectP.then(
         (dbObject) => {
@@ -61,10 +62,11 @@ async function getOrCreateObject(id: string, type: string): Promise<boolean> {
 
 // Producer used to publish messages
 const producer = new utils.kafka.Producer(zookeeperEndpoint, kafkaClientId, topic);
+const throughput = new utils.ThroughputCounter();
 
 io.on("connection", (socket) => {
-    const clientId = moniker.choose();
-    const connectionsMap: { [id: string]: boolean } = {};
+    // Map from client IDs on this connection to the object ID for them
+    const connectionsMap: { [clientId: string]: string } = {};
 
     // The loadObject call needs to see if the object already exists. If not it should offload to
     // the storage service to go and create it.
@@ -86,7 +88,8 @@ io.on("connection", (socket) => {
                     }
 
                     console.log(`Existing object ${existing}`);
-                    connectionsMap[message.objectId] = true;
+                    const clientId = moniker.choose();
+                    connectionsMap[clientId] = message.objectId;
                     const connectedMessage: socketStorage.IConnected = {
                         clientId,
                         existing,
@@ -102,12 +105,13 @@ io.on("connection", (socket) => {
     });
 
     // Message sent when a new operation is submitted to the router
-    socket.on("submitOp", (objectId: string, message: api.IMessage, response) => {
+    socket.on("submitOp", (clientId: string, message: api.IMessage, response) => {
         // Verify the user has connected on this object id
-        if (!connectionsMap[objectId]) {
-            return response("Invalid object", null);
+        if (!connectionsMap[clientId]) {
+            return response("Invalid client ID", null);
         }
 
+        const objectId = connectionsMap[clientId];
         const rawMessage: core.IRawOperationMessage = {
             clientId,
             operation: message,
@@ -117,23 +121,27 @@ io.on("connection", (socket) => {
             userId: null,
         };
 
+        throughput.produce();
         producer.send(JSON.stringify(rawMessage), objectId).then(
             (responseMessage) => {
                 response(null, responseMessage);
+                throughput.acknolwedge();
             },
             (error) => {
                 console.error(error);
                 response(error, null);
+                throughput.acknolwedge();
             });
     });
 
     // Message sent to allow clients to update their sequence number
-    socket.on("updateReferenceSequenceNumber", (objectId: string, sequenceNumber: number, response) => {
+    socket.on("updateReferenceSequenceNumber", (clientId: string, sequenceNumber: number, response) => {
         // Verify the user has connected on this object id
-        if (!connectionsMap[objectId]) {
+        if (!connectionsMap[clientId]) {
             return response("Invalid object", null);
         }
 
+        const objectId = connectionsMap[clientId];
         const message: core.IUpdateReferenceSequenceNumberMessage = {
             clientId,
             objectId,
@@ -143,11 +151,16 @@ io.on("connection", (socket) => {
             userId: null,
         };
 
+        throughput.produce();
         producer.send(JSON.stringify(message), objectId).then(
-            (responseMessage) => response(null, responseMessage),
+            (responseMessage) => {
+                response(null, responseMessage);
+                throughput.acknolwedge();
+            },
             (error) => {
                 console.error(error);
                 response(error, null);
+                throughput.acknolwedge();
             });
     });
 });

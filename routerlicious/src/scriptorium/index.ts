@@ -1,6 +1,6 @@
 import { queue } from "async";
 import * as kafka from "kafka-node";
-import { MongoClient } from "mongodb";
+import { CollectionInsertManyOptions } from "mongodb";
 import * as nconf from "nconf";
 import * as path from "path";
 import * as socketIoEmitter from "socket.io-emitter";
@@ -36,12 +36,15 @@ async function checkpoint(partitionManager: core.PartitionManager) {
 }
 
 async function run() {
+    const deferred = new utils.Deferred<void>();
+
     let io = socketIoEmitter(({ host: redisConfig.host, port: redisConfig.port }));
     io.redis.on("error", (error) => {
-        console.error(error);
+        deferred.reject(error);
     });
 
-    const db = await MongoClient.connect(mongoUrl);
+    const mongoManager = new utils.MongoManager(mongoUrl, false);
+    const db = await mongoManager.getDatabase();
     const collection = db.collection(deltasCollectionName);
     await collection.createIndex({
             "objectId": 1,
@@ -58,20 +61,58 @@ async function run() {
     const partitionManager = new core.PartitionManager(groupId, topic, consumerOffset,
                                                        checkpointBatchSize, checkpointTimeIntervalMsec);
 
-    const highLevelConsumer = new kafka.HighLevelConsumer(kafkaClient, [{topic}], {
-            autoCommit: false,
-            fromOffset: true,
-            groupId,
-            id: kafkaClientId,
+    const highLevelConsumer = new kafka.HighLevelConsumer(kafkaClient, [{topic}], <any> {
+        autoCommit: false,
+        fetchMaxBytes: 1024 * 1024,
+        fetchMinBytes: 1,
+        fromOffset: true,
+        groupId,
+        id: kafkaClientId,
+        maxTickMessages: 100000,
     });
+
+    const throughput = new utils.ThroughputCounter();
 
     highLevelConsumer.on("error", (error) => {
         // Workaround to resolve rebalance partition error.
         // https://github.com/SOHU-Co/kafka-node/issues/90
         console.error(`Error in kafka consumer: ${error}. Wait for 30 seconds and restart...`);
         setTimeout(() => {
-            process.exit(1);
+            deferred.reject(error);
         }, 30000);
+    });
+
+    // Mongo inserts don't order promises with respect to each other. To work around this we track the last
+    // Mongo insert we've made for each document. And then perform a then on this to maintain causal ordering
+    // for any dependent operations (i.e. socket.io writes)
+    const lastMongoInsertP: { [objectId: string]: Promise<any> } = {};
+
+    const ioBatchManager = new utils.BatchManager<core.ISequencedOperationMessage>((objectId, work) => {
+        // Initialize the last promise if it doesn't exist
+        if (!(objectId in lastMongoInsertP)) {
+            lastMongoInsertP[objectId] = Promise.resolve();
+        }
+
+        // console.log(`Inserting to mongodb ${value.objectId}@${value.operation.sequenceNumber}`);
+        const insertP = collection.insertMany(work, <CollectionInsertManyOptions> (<any> { ordered: false }))
+            .catch((error) => {
+                // Ignore duplicate key errors since a replay may cause us to attempt to insert a second time
+                if (error.name !== "MongoError" || error.code !== 11000) {
+                    return Promise.reject(error);
+                }
+            });
+        lastMongoInsertP[objectId] = lastMongoInsertP[objectId].then(() => insertP);
+
+        lastMongoInsertP[objectId].then(
+            () => {
+                // Route the message to clients
+                // console.log(`Routing message to clients ${value.objectId}@${value.operation.sequenceNumber}`);
+                io.to(objectId).emit("op", objectId, work.map((value) => value.operation));
+                throughput.acknolwedge(work.length);
+            },
+            (error) => {
+                deferred.reject(error);
+            });
     });
 
     const q = queue((message: any, callback) => {
@@ -82,16 +123,8 @@ async function run() {
         if (baseMessage.type === core.SequencedOperationType) {
             const value = baseMessage as core.ISequencedOperationMessage;
 
-            // Serialize the message to backing store
-            console.log(`Inserting to mongodb ${value.objectId}@${value.operation.sequenceNumber}`);
-            collection.insert(value).catch((error) => {
-                console.error("Error serializing to MongoDB");
-                console.error(error);
-            });
-
-            // Route the message to clients
-            console.log(`Routing message to clients ${value.objectId}@${value.operation.sequenceNumber}`);
-            io.to(value.objectId).emit("op", value.objectId, value.operation);
+            // Batch up work to more efficiently send to socket.io and mongodb
+            ioBatchManager.add(value.objectId, value);
         }
 
         // Update partition manager.
@@ -109,8 +142,11 @@ async function run() {
     }, 1);
 
     highLevelConsumer.on("message", async (message: any) => {
+        throughput.produce();
         q.push(message);
     });
+
+    return deferred.promise;
 }
 
 // Start up the scriptorium service

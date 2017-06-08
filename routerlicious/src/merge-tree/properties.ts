@@ -11,15 +11,33 @@ export interface MapLike<T> {
 }
 
 export class PropertySet {
-    propertyMap:MapLike<Property> = createDictionaryObject<Property>();
+    propertyMap: MapLike<Property> = createDictionaryObject<Property>();
 }
 
 export interface PropertyDictionary {
     internProperty(name: string, value: string): Property;
 }
 
+export function extend(base: Object, extension: Object) {
+    if (extension !== undefined) {
+        if ((typeof extension !== "object")|| (typeof extension.hasOwnProperty !== "function")) {
+            console.log(`oh my ${extension}`);
+        }
+        for (let key in extension) {
+            if (extension.hasOwnProperty(key)) {
+                base[key] = extension[key];
+            }
+        }
+    }
+    return base;
+}
+
+export function create() {
+    return {};
+}
+
 /** Create a MapLike with good performance. */
-function createDictionaryObject<T>(): MapLike<T> {
+export function createDictionaryObject<T>(): MapLike<T> {
     const map = Object.create(null); // tslint:disable-line:no-null-keyword
 
     // Using 'delete' on an object causes V8 to put the object in dictionary mode.
@@ -33,7 +51,7 @@ function createDictionaryObject<T>(): MapLike<T> {
 
 export function makePropertyDictionary(): PropertyDictionary {
     let properties: Property[] = [];
-    let propertyMap:MapLike<Property> = createDictionaryObject<Property>(); 
+    let propertyMap: MapLike<Property> = createDictionaryObject<Property>();
     function internProperty(name: string, value: string) {
         let key = name + "_:_" + value;
         let prop = propertyMap[key];

@@ -1,7 +1,7 @@
 import { queue } from "async";
 import * as kafka from "kafka-node";
 import * as _ from "lodash";
-import { Collection, MongoClient } from "mongodb";
+import { Collection } from "mongodb";
 import * as nconf from "nconf";
 import * as path from "path";
 import * as core from "../core";
@@ -58,17 +58,14 @@ function processMessage(
 
 async function checkpoint(
     partitionManager: core.PartitionManager,
-    dispensers: { [key: string]: TakeANumber },
+    dispensers: TakeANumber[],
     pendingTickets: Array<Promise<void>>) {
 
     // Ticket all messages and empty the queue.
     await Promise.all(pendingTickets);
 
     // Checkpoint to mongo now.
-    let checkpointQueue = [];
-    for (let doc of Object.keys(dispensers)) {
-        checkpointQueue.push(dispensers[doc].checkpoint());
-    }
+    let checkpointQueue = dispensers.map((dispenser) => dispenser.checkpoint());
     await Promise.all(checkpointQueue);
 
     // Finally call kafka checkpointing.
@@ -84,11 +81,12 @@ async function checkpoint(
     }, checkpointTimeIntervalMsec);
 }
 
-async function processMessages(
+function processMessages(
     kafkaClient: kafka.Client,
     producer: utils.kafka.Producer,
-    objectsCollection: Collection) {
+    objectsCollection: Collection): Promise<void> {
 
+    const deferred = new utils.Deferred<void>();
     const dispensers: { [key: string]: TakeANumber } = {};
 
     const consumerOffset = new kafka.Offset(kafkaClient);
@@ -99,11 +97,14 @@ async function processMessages(
         checkpointBatchSize,
         checkpointTimeIntervalMsec);
 
-    const highLevelConsumer = new kafka.HighLevelConsumer(kafkaClient, [{topic: receiveTopic}], {
+    const highLevelConsumer = new kafka.HighLevelConsumer(kafkaClient, [{topic: receiveTopic}], <any> {
         autoCommit: false,
+        fetchMaxBytes: 1024 * 1024,
+        fetchMinBytes: 1,
         fromOffset: true,
         groupId,
         id: kafkaClientId,
+        maxTickMessages: 100000,
     });
 
     highLevelConsumer.on("error", (error) => {
@@ -111,11 +112,13 @@ async function processMessages(
         // https://github.com/SOHU-Co/kafka-node/issues/90
         console.error(`Error in kafka consumer: ${error}. Wait for 30 seconds and restart...`);
         setTimeout(() => {
-            process.exit(1);
+            deferred.reject(error);
         }, 30000);
     });
 
     let ticketQueue: {[id: string]: Promise<void> } = {};
+
+    const throughput = new utils.ThroughputCounter();
 
     console.log("Waiting for messages");
     const q = queue((message: any, callback) => {
@@ -125,23 +128,29 @@ async function processMessages(
         // Periodically checkpoints to mongo and checkpoints offset back to kafka.
         // Ideally there should be a better strategy to figure out when to checkpoint.
         if (message.offset % checkpointBatchSize === 0) {
+            const pendingDispensers = _.keys(ticketQueue).map((key) => dispensers[key]);
             const pendingTickets = _.values(ticketQueue);
             ticketQueue = {};
-            checkpoint(partitionManager, dispensers, pendingTickets).catch((error) => {
-                console.error(error);
+            checkpoint(partitionManager, pendingDispensers, pendingTickets).catch((error) => {
+                deferred.reject(error);
             });
         }
+
+        throughput.acknolwedge();
     }, 1);
 
     highLevelConsumer.on("message", (message: any) => {
+        throughput.produce();
         q.push(message);
     });
+
+    return deferred.promise;
 }
 
 async function run() {
     // Connection to stored document details
-    const client = await MongoClient.connect(mongoUrl);
-    console.log("Connected to Mongo");
+    const mongoManager = new utils.MongoManager(mongoUrl, false);
+    const client = await mongoManager.getDatabase();
     const objectsCollection = await client.collection(objectsCollectionName);
     console.log("Collection ready");
 

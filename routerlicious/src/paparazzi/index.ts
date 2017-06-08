@@ -90,7 +90,7 @@ function serialize(root: api.ICollaborativeObject) {
     pendingSerializeMap[root.id] = true;
     dirtyMap[root.id] = false;
 
-    console.log(`Snapshotting ${root.id}`);
+    // console.log(`Snapshotting ${root.id}`);
     const snapshotP = root.snapshot().catch((error) => {
             // TODO we will just log errors for now. Will want a better strategy later on (replay, wait)
             if (error) {
@@ -120,12 +120,7 @@ function handleDocument(
         // a message whenever the MSN changes since this is what will cause a snapshot
 
         // Display the initial values and then listen for updates
-        doc.on("valueChanged", () => {
-            serialize(doc);
-            intelligenceManager.process(doc);
-        });
-
-        doc.on("op", () => {
+        doc.on("op", (op) => {
             serialize(doc);
             intelligenceManager.process(doc);
         });

@@ -24,3 +24,6 @@ export { scribe };
 
 import perf from "./perf";
 export { perf };
+
+import producer from "./producer";
+export { producer };

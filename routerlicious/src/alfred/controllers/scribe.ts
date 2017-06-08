@@ -73,6 +73,11 @@ form.addEventListener("submit", (event) => {
     // Initialize the scribe progress UI
     documentLink.href = `/sharedText/${id}`;
     documentLink.innerText = documentLink.href;
+
+    const metricsLink = document.getElementById("metrics-link") as HTMLAnchorElement;
+    metricsLink.href = `/canvas/${id}-metrics`;
+    metricsLink.innerText = metricsLink.href;
+
     resetProgressBar(ackProgressBar);
     resetProgressBar(typingProgressBar);
     createDetails.classList.remove("hidden");
