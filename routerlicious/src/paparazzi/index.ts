@@ -6,6 +6,7 @@ import * as path from "path";
 import * as api from "../api";
 import { resume, textAnalytics } from "../intelligence";
 import * as socketStorage from "../socket-storage";
+import { logger } from "../utils";
 import { IntelligentServicesManager } from "./intelligence";
 import { ObjectStorageService } from "./objectStorageService";
 
@@ -63,14 +64,14 @@ async function loadObject(
     collection: Collection,
     id: string): Promise<api.ICollaborativeObject> {
 
-    console.log(`${id}: Loading`);
+    logger.info(`${id}: Loading`);
     const dbObject = await collection.findOne({ _id: id });
-    console.log(`${id}: Found`);
+    logger.info(`${id}: Found`);
 
     const extension = api.defaultRegistry.getExtension(dbObject.type);
     const sharedObject = extension.load(id, services, api.defaultRegistry);
 
-    console.log(`${id}: Loaded`);
+    logger.info(`${id}: Loaded`);
     return sharedObject;
 }
 
@@ -90,11 +91,11 @@ function serialize(root: api.ICollaborativeObject) {
     pendingSerializeMap[root.id] = true;
     dirtyMap[root.id] = false;
 
-    // console.log(`Snapshotting ${root.id}`);
+    logger.verbose(`Snapshotting ${root.id}`);
     const snapshotP = root.snapshot().catch((error) => {
             // TODO we will just log errors for now. Will want a better strategy later on (replay, wait)
             if (error) {
-                console.error(error);
+                logger.error(error);
             }
 
             return Promise.resolve();
@@ -126,7 +127,7 @@ function handleDocument(
         });
     },
     (error) => {
-        console.error(`Couldn't connect ${JSON.stringify(error)}`);
+        logger.error(`Couldn't connect ${JSON.stringify(error)}`);
     });
 }
 
@@ -177,8 +178,7 @@ async function run() {
     // The rabbitmq library does not support re-connect. We will simply exit and rely on being restarted once
     // we lose our connection to RabbitMQ.
     connection.on("error", (error) => {
-        console.error("Lost connection to RabbitMQ - exiting");
-        console.error(error);
+        logger.error("Lost connection to RabbitMQ - exiting", error);
         process.exit(1);
     });
 
@@ -193,7 +193,7 @@ async function run() {
                     channel.ack(message);
                 })
                 .catch((error) => {
-                    console.error(error);
+                    logger.error(error);
                     channel.nack(message);
                 });
         },
@@ -203,6 +203,6 @@ async function run() {
 // Start up the paparazzi service
 const runP = run();
 runP.catch((error) => {
-    console.error(error);
+    logger.error(error);
     process.exit(1);
 });

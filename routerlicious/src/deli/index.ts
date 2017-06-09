@@ -6,6 +6,7 @@ import * as nconf from "nconf";
 import * as path from "path";
 import * as core from "../core";
 import * as utils from "../utils";
+import { logger } from "../utils";
 import { TakeANumber } from "./takeANumber";
 
 // Setup the configuration system - pull arguments, then environment variables
@@ -43,7 +44,7 @@ function processMessage(
         // Store it in the partition map. We need to add an eviction strategy here.
         if (!(objectId in dispensers)) {
             dispensers[objectId] = new TakeANumber(objectId, objectsCollection, producer);
-            console.log(`Brand New object Found: ${objectId}`);
+            logger.info(`Brand New object Found: ${objectId}`);
         }
         const dispenser = dispensers[objectId];
 
@@ -110,7 +111,7 @@ function processMessages(
     highLevelConsumer.on("error", (error) => {
         // Workaround to resolve rebalance partition error.
         // https://github.com/SOHU-Co/kafka-node/issues/90
-        console.error(`Error in kafka consumer: ${error}. Wait for 30 seconds and restart...`);
+        logger.error(`Error in kafka consumer: ${error}. Wait for 30 seconds and restart...`);
         setTimeout(() => {
             deferred.reject(error);
         }, 30000);
@@ -120,7 +121,7 @@ function processMessages(
 
     const throughput = new utils.ThroughputCounter();
 
-    console.log("Waiting for messages");
+    logger.info("Waiting for messages");
     const q = queue((message: any, callback) => {
         processMessage(message, dispensers, ticketQueue, partitionManager, producer, objectsCollection);
         callback();
@@ -152,7 +153,7 @@ async function run() {
     const mongoManager = new utils.MongoManager(mongoUrl, false);
     const client = await mongoManager.getDatabase();
     const objectsCollection = await client.collection(objectsCollectionName);
-    console.log("Collection ready");
+    logger.info("Collection ready");
 
     // Prep Kafka connection
     let kafkaClient = new kafka.Client(zookeeperEndpoint, kafkaClientId);
@@ -165,9 +166,9 @@ async function run() {
 }
 
 // Start up the deli service
-console.log("Starting");
+logger.info("Starting");
 const runP = run();
 runP.catch((error) => {
-    console.error(error);
+    logger.error(error);
     process.exit(1);
 });

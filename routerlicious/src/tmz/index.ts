@@ -4,6 +4,7 @@ import * as nconf from "nconf";
 import * as path from "path";
 import * as core from "../core";
 import * as utils from "../utils";
+import { logger } from "../utils";
 
 // Setup the configuration system - pull arguments, then environment variables
 nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
@@ -20,16 +21,15 @@ const groupId = nconf.get("tmz:groupId");
 
 async function run() {
     const connection = await amqp.connect(rabbitmqConnectionString);
-    console.log("Connected to RabbitMQ");
+    logger.info("Connected to RabbitMQ");
     const channel = await connection.createChannel();
     await channel.assertQueue(snapshotQueue, { durable: true });
-    console.log("Channel ready");
+    logger.info("Channel ready");
 
     // The rabbitmq library does not support re-connect. We will simply exit and rely on being restarted once
     // we lose our connection to RabbitMQ.
     connection.on("error", (error) => {
-        console.error("Lost connection to RabbitMQ - exiting");
-        console.error(error);
+        logger.error("Lost connection to RabbitMQ - exiting", error);
         process.exit(1);
     });
 
@@ -48,7 +48,7 @@ async function run() {
         [topic]);
 
     consumerGroup.on("error", (error) => {
-        console.error(error);
+        logger.error(error);
     });
 
     const createdRequests: any = {};
@@ -60,16 +60,16 @@ async function run() {
         }
 
         createdRequests[value.objectId] = true;
-        console.log(`Requesting snapshots for ${value.objectId}`);
+        logger.info(`Requesting snapshots for ${value.objectId}`);
 
         channel.sendToQueue(snapshotQueue, new Buffer(value.objectId), { persistent: true });
     });
 }
 
 // Start up the TMZ service
-console.log("Starting");
+logger.info("Starting");
 const runP = run();
 runP.catch((error) => {
-    console.error(error);
+    logger.error(error);
     process.exit(1);
 });

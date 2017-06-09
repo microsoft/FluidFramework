@@ -4,6 +4,7 @@ import * as nconf from "nconf";
 import * as api from "../../api";
 import * as core from "../../core";
 import * as utils from "../../utils";
+import { logger } from "../../utils";
 
 const router = express.Router();
 
@@ -73,7 +74,7 @@ async function startProducer(batchSize: number) {
                     throughput.acknolwedge();
                 },
                 (error) => {
-                    console.error(error);
+                    logger.error(error);
                 });
         }
     }, 0);

@@ -2,6 +2,7 @@ import { Collection } from "mongodb";
 import * as api from "../api";
 import * as core from "../core";
 import * as utils from "../utils";
+import { logger } from "../utils";
 
 interface IPendingTicket<T> {
     message: any;
@@ -211,7 +212,7 @@ export class TakeANumber {
         }
 
         // tslint:disable-next-line:max-line-length
-        // console.log(`Assigning ticket ${objectMessage.objectId}@${sequenceNumber}:${this.minimumSequenceNumber} at topic@${this.logOffset}`);
+        logger.verbose(`Assigning ticket ${objectMessage.objectId}@${sequenceNumber}:${this.minimumSequenceNumber} at topic@${this.logOffset}`);
 
         const sequencedMessage: core.ISequencedOperationMessage = {
             objectId: objectMessage.objectId,
@@ -323,7 +324,7 @@ export class TakeANumber {
                 return client.value.referenceSequenceNumber;
             }
 
-            // console.log(`Expiring ${client.value.clientId}`);
+            logger.verbose(`Expiring ${client.value.clientId}`);
             this.clientSeqNumbers.get();
             delete this.clientNodeMap[client.value.clientId];
         }

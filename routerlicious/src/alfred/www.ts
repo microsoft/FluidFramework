@@ -1,18 +1,11 @@
-// Load in configuration first before resolving other modules
-import * as debug from "debug";
-import * as http from "http";
+// Setup the configuration system first since modules may depend on it being configured
 import * as nconf from "nconf";
 import * as path from "path";
-
-// Setup the configuration system - pull arguments, then environment letiables
 nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
 
-/**
- * Module dependencies.
- */
+import * as http from "http";
+import { logger } from "../utils";
 import app from "./app";
-
-let debugFn = debug("tmp:server");
 
 /**
  * Get port from environment and store in Express.
@@ -77,11 +70,11 @@ function onError(error) {
   // handle specific listen errors with friendly messages
   switch (error.code) {
     case "EACCES":
-      console.error(bind + " requires elevated privileges");
+      logger.error(bind + " requires elevated privileges");
       process.exit(1);
       break;
     case "EADDRINUSE":
-      console.error(bind + " is already in use");
+      logger.error(bind + " is already in use");
       process.exit(1);
       break;
     default:
@@ -98,5 +91,5 @@ function onListening() {
   let bind = typeof addr === "string"
     ? "pipe " + addr
     : "port " + addr.port;
-  debugFn("Listening on " + bind);
+  logger.info("Listening on " + bind);
 }

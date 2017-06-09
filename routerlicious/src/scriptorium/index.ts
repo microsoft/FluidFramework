@@ -6,6 +6,7 @@ import * as path from "path";
 import * as socketIoEmitter from "socket.io-emitter";
 import * as core from "../core";
 import * as utils from "../utils";
+import { logger } from "../utils";
 
 // Setup the configuration system - pull arguments, then environment variables
 nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
@@ -76,7 +77,7 @@ async function run() {
     highLevelConsumer.on("error", (error) => {
         // Workaround to resolve rebalance partition error.
         // https://github.com/SOHU-Co/kafka-node/issues/90
-        console.error(`Error in kafka consumer: ${error}. Wait for 30 seconds and restart...`);
+        logger.error(`Error in kafka consumer: ${error}. Wait for 30 seconds and restart...`);
         setTimeout(() => {
             deferred.reject(error);
         }, 30000);
@@ -93,7 +94,7 @@ async function run() {
             lastMongoInsertP[objectId] = Promise.resolve();
         }
 
-        // console.log(`Inserting to mongodb ${value.objectId}@${value.operation.sequenceNumber}`);
+        logger.verbose(`Inserting to mongodb ${objectId}@${work[0].operation.sequenceNumber}:${work.length}`);
         const insertP = collection.insertMany(work, <CollectionInsertManyOptions> (<any> { ordered: false }))
             .catch((error) => {
                 // Ignore duplicate key errors since a replay may cause us to attempt to insert a second time
@@ -106,7 +107,8 @@ async function run() {
         lastMongoInsertP[objectId].then(
             () => {
                 // Route the message to clients
-                // console.log(`Routing message to clients ${value.objectId}@${value.operation.sequenceNumber}`);
+                // tslint:disable-next-line:max-line-length
+                logger.verbose(`Routing message to clients ${objectId}@${work[0].operation.sequenceNumber}:${work.length}`);
                 io.to(objectId).emit("op", objectId, work.map((value) => value.operation));
                 throughput.acknolwedge(work.length);
             },
@@ -152,6 +154,6 @@ async function run() {
 // Start up the scriptorium service
 const runP = run();
 runP.catch((error) => {
-    console.error(error);
+    logger.error(error);
     process.exit(1);
 });
