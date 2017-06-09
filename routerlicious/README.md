@@ -14,22 +14,19 @@ via Redis.
 
 The server also hooks in the merge tree type as the core plugin.
 
-## Building
+## Building and Running
 
-Building Routerlicious is done via npm scripts.
-
-* `npm install`
-* `npm run build`
-
-## Running
-
-Docker Compose is used to run the service locally
+Docker Compose is used to run the service locally. To start up an instance of the service simply run the following two commands.
 
 * `docker-compose build`
 * `docker-compose up`
 
-For development you likely want to map your source tree into the container. There's an override compose file that does
-this for you. You can run it with
+For development you likely want to map your source tree into the container. In this case you'll need to first build the source locally.
+
+* `npm install`
+* `npm run build`
+
+There's then a docker-compose override file which will map your local source directly into the container. Since this is the usual workflow we've simplified the process by having npm start perform these steps for you.
 
 * `npm start` - which internally is doing a `docker-compose -f docker-compose.yml -f docker-compose.dev.yml up`
 
@@ -37,7 +34,9 @@ If you also need debugging you can do a
 
 * `npm run start:debug` - which will allow you to attach a debugger
 
-Docker will mount your source directory into the container so you need to build prior to running it.
+## CI/CD
+
+We make use of continuous integration and deployment via VSTS at https://offnet.visualstudio.com/officenet/
 
 ## Design principals
 
@@ -47,3 +46,13 @@ Docker will mount your source directory into the container so you need to build 
 ## Architecture
 
 ![Routerlicious architecture diagram](../doc/img/routerlicious-architecture.jpg)
+
+## Logging
+
+We make use of [Winston](https://github.com/winstonjs/winston) for logging on the service side. Winston adds in some nice features over the usual console like log levels, timestamps, formatting, etc...
+
+It's easy to use though. Just import our configured logger via:
+
+import { logger } from "../utils";
+
+And then you can do logger.info in place of console.log as well as logger.error, logger.warn, logger.verbose, logger.silly to target different levels. The default filter only displays info and above (so error, warning, and info). But you can change this within logger.ts.
