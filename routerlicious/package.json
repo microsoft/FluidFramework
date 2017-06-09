@@ -56,7 +56,15 @@
     "perf:client": "node dist/perf/client.js",
     "perf:client:debug": "nodemon --exitcrash --debug=0.0.0.0:5858 dist/perf/client.js -w dist",
     "pretest:perf:client": "docker-compose -f docker-compose.test.client.yml down --remove-orphans",
-    "test:perf:client": "npm run pretest:perf:client; docker-compose -f docker-compose.test.client.yml up"
+    "test:perf:client": "npm run pretest:perf:client; docker-compose -f docker-compose.test.client.yml up",
+    "perf:kafka:producer": "node dist/perf/kafkaproducer.js",
+    "perf:kafka:producer:debug": "nodemon --exitcrash --debug=0.0.0.0:5858 dist/perf/kafkaproducer.js -w dist",
+    "perf:kafka:consumer": "node dist/perf/kafkaconsumer.js",
+    "perf:kafka:consumer:debug": "nodemon --exitcrash --debug=0.0.0.0:5859 dist/perf/kafkaconsumer.js -w dist",
+    "perf:kafka": "concurrently \"npm run perf:kafka:producer\" \"npm run perf:kafka:consumer\"",
+    "perf:kafka:debug": "concurrently \"npm run perf:kafka:producer:debug\" \"npm run perf:kafka:consumer:debug\"",
+    "pretest:perf:kafka": "docker-compose -f docker-compose.test.kafka.yml down --remove-orphans",
+    "test:perf:kafka": "npm run pretest:perf:kafka; docker-compose -f docker-compose.test.kafka.yml up" 
   },
   "author": "Microsoft",
   "license": "Apache-2.0",

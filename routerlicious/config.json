@@ -101,7 +101,7 @@
         "sendTopic": "rawdeltas",
         "receiveTopic": "deltas",
         "bucket": "snapshots",
-        "chunkSize": 1000
+        "chunkSize": 100000
     },
     "intelligence": {
         "resume": {
