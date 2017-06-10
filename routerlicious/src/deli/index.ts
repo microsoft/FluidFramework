@@ -119,7 +119,7 @@ function processMessages(
 
     let ticketQueue: {[id: string]: Promise<void> } = {};
 
-    const throughput = new utils.ThroughputCounter();
+    const throughput = new utils.ThroughputCounter(logger.info);
 
     logger.info("Waiting for messages");
     const q = queue((message: any, callback) => {

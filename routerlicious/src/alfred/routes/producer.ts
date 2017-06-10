@@ -44,7 +44,7 @@ let producerInterval;
 async function startProducer(batchSize: number) {
     // Producer used to publish messages
     const producer = new utils.kafka.Producer(zookeeperEndpoint, kafkaClientId, topic);
-    const throughput = new utils.ThroughputCounter();
+    const throughput = new utils.ThroughputCounter(logger.info);
 
     await getOrCreateObject("producer", api.MapExtension.Type);
 

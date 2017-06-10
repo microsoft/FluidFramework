@@ -72,7 +72,7 @@ async function run() {
         maxTickMessages: 100000,
     });
 
-    const throughput = new utils.ThroughputCounter();
+    const throughput = new utils.ThroughputCounter(logger.info);
 
     highLevelConsumer.on("error", (error) => {
         // Workaround to resolve rebalance partition error.
@@ -137,7 +137,7 @@ async function run() {
         if (message.offset % checkpointBatchSize === 0) {
             // Finally call checkpointing.
             checkpoint(partitionManager).catch((error) => {
-                console.error(error);
+                logger.error(error);
             });
         }
         callback();

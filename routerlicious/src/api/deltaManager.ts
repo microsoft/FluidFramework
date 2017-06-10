@@ -1,10 +1,8 @@
 import * as assert from "assert";
 import * as async from "async";
-import * as registerDebug from "debug";
 import * as api from ".";
 import { ThroughputCounter } from "../utils/counters";
-
-const debug = registerDebug("api");
+import { debug } from "./debug";
 
 export interface IDeltaListener {
     /**
@@ -46,8 +44,8 @@ export class DeltaManager {
         private listener: IDeltaListener) {
 
         const throughputCounter = new ThroughputCounter(
-            `${this.deltaConnection.objectId} `,
-            debug);
+            debug,
+            `${this.deltaConnection.objectId} `);
 
         const q = async.queue<api.ISequencedMessage, void>((op, callback) => {
             // Handle the op
@@ -98,11 +96,11 @@ export class DeltaManager {
      */
     private handleOutOfOrderMessage(message: api.ISequencedMessage) {
         if (message.sequenceNumber <= this.baseSequenceNumber) {
-            console.log(`Received duplicate message ${this.deltaConnection.objectId}@${message.sequenceNumber}`);
+            debug(`Received duplicate message ${this.deltaConnection.objectId}@${message.sequenceNumber}`);
             return;
         }
 
-        console.log(`Received out of order message ${message.sequenceNumber} ${this.baseSequenceNumber}`);
+        debug(`Received out of order message ${message.sequenceNumber} ${this.baseSequenceNumber}`);
         this.pending.push(message);
         this.fetchMissingDeltas(this.baseSequenceNumber, message.sequenceNumber);
     }
@@ -124,7 +122,7 @@ export class DeltaManager {
             },
             (error) => {
                 // Retry on failure
-                console.error(error);
+                debug(error);
                 this.fetching = false;
                 this.fetchMissingDeltas(from, to);
             });

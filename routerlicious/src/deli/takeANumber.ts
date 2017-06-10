@@ -32,7 +32,7 @@ const SequenceNumberComparer: utils.IComparer<IClientSequenceNumber> = {
     },
 };
 
-const throughput = new utils.ThroughputCounter("Delta Topic ");
+const throughput = new utils.ThroughputCounter(logger.info, "Delta Topic ");
 
 /**
  * Class to handle distributing sequence numbers to a collaborative object

@@ -63,7 +63,7 @@ async function getOrCreateObject(id: string, type: string): Promise<boolean> {
 
 // Producer used to publish messages
 const producer = new utils.kafka.Producer(zookeeperEndpoint, kafkaClientId, topic);
-const throughput = new utils.ThroughputCounter();
+const throughput = new utils.ThroughputCounter(logger.info);
 
 io.on("connection", (socket) => {
     // Map from client IDs on this connection to the object ID for them
