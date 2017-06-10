@@ -1,6 +1,7 @@
 import * as assert from "assert";
 import * as _ from "lodash";
 import * as api from "../api";
+import { debug } from "./debug";
 import { IDelta } from "./delta";
 import { InkExtension } from "./extension";
 import { IInkLayer, ISnapshot, Snapshot } from "./snapshot";
@@ -164,7 +165,7 @@ export class InkCollaborativeObject extends api.CollaborativeObject implements I
                 this.localOps[0].clientSequenceNumber === message.clientSequenceNumber) {
                 this.localOps.shift();
             } else {
-                console.log(`Duplicate ack received ${message.clientSequenceNumber}`);
+                debug(`Duplicate ack received ${message.clientSequenceNumber}`);
             }
         } else {
             // Message has come from someone else - let's go and update now
