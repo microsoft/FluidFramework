@@ -1,6 +1,8 @@
 # Routerlicious
 
-Routerlicious handles the receiving of delta operations and is responsible for the ordering and assignment of a
+Routerlicious is a set of [twelve factor](https://12factor.net) apps that are considered [cattle and not pets](http://cloudscaling.com/blog/cloud-computing/the-history-of-pets-vs-cattle/)
+
+The system handles the receiving of delta operations and is responsible for the ordering and assignment of a
 sequence number to them. Once assigned it is also responsible for notifying connected clients of a new sequence
 number.
 
@@ -8,11 +10,9 @@ This repository splits the code into two separate sections. The core API is cont
 contains the core routerlicious code. But stubs out connections to external services behind provided interfaces.
 This code is shared between clients and services.
 
-A server implementation is contained within various other folders. These are named based on the image provided below. This makes use of the API but provides implementations of
+A server implementation is contained within various other folders. These are named based on the architecture image below. This makes use of the API but provides implementations of
 the interfaces. For instance connections are handled with socket.io. And cross machine communication is handled
 via Redis.
-
-The server also hooks in the merge tree type as the core plugin.
 
 ## Building and Running
 
@@ -46,6 +46,15 @@ We make use of continuous integration and deployment via VSTS at https://offnet.
 ## Architecture
 
 ![Routerlicious architecture diagram](../doc/img/routerlicious-architecture.jpg)
+
+## Distributed data structures
+
+The API currently exposes four distributed data structures
+
+* Text
+* Map
+* Cell
+* Ink
 
 ## Logging
 
