@@ -1,8 +1,6 @@
 # Routerlicious
 
-Routerlicious is a set of [twelve factor](https://12factor.net) apps that are considered [cattle and not pets](http://cloudscaling.com/blog/cloud-computing/the-history-of-pets-vs-cattle/)
-
-The system handles the receiving of delta operations and is responsible for the ordering and assignment of a
+Routerlicious handles the receiving of delta operations and is responsible for the ordering and assignment of a
 sequence number to them. Once assigned it is also responsible for notifying connected clients of a new sequence
 number.
 
@@ -13,6 +11,8 @@ This code is shared between clients and services.
 A server implementation is contained within various other folders. These are named based on the architecture image below. This makes use of the API but provides implementations of
 the interfaces. For instance connections are handled with socket.io. And cross machine communication is handled
 via Redis.
+
+The services follow the [twelve factor](https://12factor.net) methodology and are considered [cattle and not pets](http://cloudscaling.com/blog/cloud-computing/the-history-of-pets-vs-cattle/).
 
 ## Building and Running
 
