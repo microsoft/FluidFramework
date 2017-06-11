@@ -1,16 +1,17 @@
+// Setup the configuration system - pull arguments, then environment variables - prior to loading other modules that
+// may depend on the config already being initialized
+import * as nconf from "nconf";
+import * as path from "path";
+nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
+
 import { queue } from "async";
 import * as kafka from "kafka-node";
 import * as _ from "lodash";
 import { Collection } from "mongodb";
-import * as nconf from "nconf";
-import * as path from "path";
 import * as core from "../core";
 import * as utils from "../utils";
 import { logger } from "../utils";
 import { TakeANumber } from "./takeANumber";
-
-// Setup the configuration system - pull arguments, then environment variables
-nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
 
 const mongoUrl = nconf.get("mongo:endpoint");
 const zookeeperEndpoint = nconf.get("zookeeper:endpoint");

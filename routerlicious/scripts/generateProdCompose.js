@@ -10,14 +10,44 @@ services:
         image: ${composeFile}
         ports:
             - "80:3000"
+        environment:
+            - logger__colorize=false
+            - logger__morganFormat=combined
+            - logger__json=false
+            - logger__level=verbose
+            - logger__timestamp=false
     deli:
         image: ${composeFile}
+        environment:
+            - logger__colorize=false
+            - logger__morganFormat=combined
+            - logger__json=false
+            - logger__level=verbose
+            - logger__timestamp=false
     paparazzi:
         image: ${composeFile}
+        environment:
+            - logger__colorize=false
+            - logger__morganFormat=combined
+            - logger__json=false
+            - logger__level=verbose
+            - logger__timestamp=false
     scriptorium:
         image: ${composeFile}
+        environment:
+            - logger__colorize=false
+            - logger__morganFormat=combined
+            - logger__json=false
+            - logger__level=verbose
+            - logger__timestamp=false
     tmz:
-        image: ${composeFile}`;
+        image: ${composeFile}
+        environment:
+            - logger__colorize=false
+            - logger__morganFormat=combined
+            - logger__json=false
+            - logger__level=verbose
+            - logger__timestamp=false`;
 
 console.log(compose);
 

@@ -1,5 +1,10 @@
+import * as debug from "debug";
+import * as nconf from "nconf";
 import split = require("split");
 import * as winston from "winston";
+import * as utils from "../utils";
+
+const loggerConfig = nconf.get("logger");
 
 /**
  * Default logger setup
@@ -7,10 +12,12 @@ import * as winston from "winston";
 export const logger = new winston.Logger({
     transports: [
         new winston.transports.Console({
-            colorize: true,
+            colorize: utils.parseBoolean(loggerConfig.colorize),
             handleExceptions: true,
-            json: false,
-            level: "info",
+            json: utils.parseBoolean(loggerConfig.json),
+            level: loggerConfig.level,
+            stringify: (obj) => JSON.stringify(obj),
+            timestamp: utils.parseBoolean(loggerConfig.timestamp),
         }),
     ],
 });
@@ -21,3 +28,11 @@ export const logger = new winston.Logger({
 export const stream = split().on("data", (message) => {
   logger.info(message);
 });
+
+(<any> debug).log = (msg, ...args) => logger.info(msg, ...args);
+// override the default log format to not include the timestamp since winston will do this for us
+// tslint:disable-next-line:only-arrow-functions
+(<any> debug).formatArgs = function(args) {
+    const name = this.namespace;
+    args[0] = name + " " + args[0];
+};

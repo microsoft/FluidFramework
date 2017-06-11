@@ -25,6 +25,13 @@
             }
         }
     },
+    "logger": {
+        "colorize": true,
+        "morganFormat": "dev",
+        "json": false,
+        "level": "info",
+        "timestamp": true
+    },
     "serviceBus": {
         "snapshot": {
             "send": "Endpoint=sb://prague-dev.servicebus.windows.net/;SharedAccessKeyName=send;SharedAccessKey=wujZ6eW+OAjAYp9VTbV/Qp6GNhWiVGYJyzzXC7R5Gy4=",
