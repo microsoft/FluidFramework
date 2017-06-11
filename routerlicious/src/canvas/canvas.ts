@@ -1,7 +1,8 @@
 // The main app code
 import * as $ from "jquery";
-import * as api from "../../api";
-import * as ink from "../../ink";
+import * as api from "../api";
+import * as ink from "../ink";
+import { debug } from "./debug";
 import InkCanvas from "./inkCanvas";
 import StickyNote from "./stickyNote";
 import * as utils from "./utils";
@@ -83,33 +84,23 @@ export class Canvas {
 
         if (evt.keyCode === 27) { // Escape
             evt.preventDefault();
-            utils.displayStatus("Escape");
         } else if (evt.ctrlKey === true && evt.keyCode !== 17) {  // look for keys while control down
-            utils.displayStatus("KeyCode: " + evt.keyCode);
             if (evt.keyCode === 67) {        // Control c
                 evt.preventDefault();
-                utils.displayStatus("CTRL-C");
             } else if (evt.keyCode === 86) { // Control v
                 evt.preventDefault();
-                utils.displayStatus("CTRL-V");
             } else if (evt.keyCode === 79) { // Control o
                 evt.preventDefault();
-                utils.displayStatus("CTRL-O");
             } else if (evt.keyCode === 83) { // Control s
                 evt.preventDefault();
-                utils.displayStatus("CTRL-S");
             } else if (evt.keyCode === 82) { // Control r
                 evt.preventDefault();
-                utils.displayStatus("CTRL-R");
             } else if (evt.keyCode === 81) { // Control q
                 evt.preventDefault();
-                utils.displayStatus("CTRL-Q");
             } else if (evt.keyCode === 89) { // Control y
                 evt.preventDefault();
-                utils.displayStatus("CTRL-Y");
             } else if (evt.keyCode === 90) { // Control z
                 evt.preventDefault();
-                utils.displayStatus("CTRL-Z");
             }
         }
     }
@@ -235,7 +226,7 @@ export class Canvas {
         const componentView = await component.getView();
 
         const type = componentView.get("type");
-        console.log(`Loading ${id} of type ${type}`);
+        debug(`Loading ${id} of type ${type}`);
 
         // Generate the stub for where to place the document
         let content = document.getElementById("content");

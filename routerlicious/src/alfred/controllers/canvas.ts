@@ -1,8 +1,8 @@
 import * as $ from "jquery";
 import * as api from "../../api";
+import { Canvas, throttle } from "../../canvas";
 import * as ink from "../../ink";
 import * as socketStorage from "../../socket-storage";
-import { Canvas, throttle } from "../canvas";
 
 socketStorage.registerAsDefault(document.location.origin);
 

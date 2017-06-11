@@ -1,15 +1,16 @@
+// Setup the configuration system - pull arguments, then environment variables - prior to loading other modules that
+// may depend on the config already being initialized
+import * as nconf from "nconf";
+import * as path from "path";
+nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
+
 import { queue } from "async";
 import * as kafka from "kafka-node";
 import { CollectionInsertManyOptions } from "mongodb";
-import * as nconf from "nconf";
-import * as path from "path";
 import * as socketIoEmitter from "socket.io-emitter";
 import * as core from "../core";
 import * as utils from "../utils";
 import { logger } from "../utils";
-
-// Setup the configuration system - pull arguments, then environment variables
-nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
 
 // Initialize Socket.io and connect to the Redis adapter
 let redisConfig = nconf.get("redis");
@@ -72,7 +73,7 @@ async function run() {
         maxTickMessages: 100000,
     });
 
-    const throughput = new utils.ThroughputCounter();
+    const throughput = new utils.ThroughputCounter(logger.info);
 
     highLevelConsumer.on("error", (error) => {
         // Workaround to resolve rebalance partition error.
@@ -137,7 +138,7 @@ async function run() {
         if (message.offset % checkpointBatchSize === 0) {
             // Finally call checkpointing.
             checkpoint(partitionManager).catch((error) => {
-                console.error(error);
+                logger.error(error);
             });
         }
         callback();

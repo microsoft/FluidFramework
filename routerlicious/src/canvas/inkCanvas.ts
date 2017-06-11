@@ -1,6 +1,6 @@
 // This one is where a lot is going to happen
 
-import * as ink from "../../ink";
+import * as ink from "../ink";
 import * as geometry from "./geometry/index";
 import { Circle, IShape, Polygon } from "./shapes/index";
 import * as utils from "./utils";

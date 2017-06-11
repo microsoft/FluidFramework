@@ -8,6 +8,8 @@ services:
             - redis
             - mongodb
             - kafka
+        environment:
+            - DEBUG=routerlicious:*
     deli:
         build: .
         depends_on:
@@ -15,6 +17,8 @@ services:
             - mongodb
             - kafka
         command: npm run deli
+        environment:
+            - DEBUG=routerlicious:*
     paparazzi:
         build: .
         depends_on:
@@ -22,7 +26,7 @@ services:
             - rabbitmq
         command: npm run paparazzi
         environment:
-            - DEBUG=api
+            - DEBUG=routerlicious:*
     scriptorium:
         build: .
         depends_on:
@@ -30,6 +34,8 @@ services:
             - mongodb
             - kafka
         command: npm run scriptorium
+        environment:
+            - DEBUG=routerlicious:*
     tmz:
         build: .
         depends_on:
@@ -38,6 +44,8 @@ services:
             - rabbitmq
             - kafka
         command: npm run tmz
+        environment:
+            - DEBUG=routerlicious:*
     zookeeper:
         image: wurstmeister/zookeeper
         ports:

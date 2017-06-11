@@ -1,6 +1,7 @@
 import * as assert from "assert";
 import * as _ from "lodash";
 import * as api from ".";
+import { debug } from "./debug";
 import { DeltaManager } from "./deltaManager";
 
 /**
@@ -289,7 +290,7 @@ class Cell extends api.CollaborativeObject implements api.ICell {
                 this.localOps[0].clientSequenceNumber === message.clientSequenceNumber) {
                 this.localOps.shift();
             } else {
-                console.log(`Duplicate ack received ${message.clientSequenceNumber}`);
+                debug(`Duplicate ack received ${message.clientSequenceNumber}`);
             }
         } else {
             // Message has come from someone else - let's go and update now

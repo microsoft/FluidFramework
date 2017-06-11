@@ -1,4 +1,5 @@
 import * as kafka from "kafka-node";
+import { debug } from "./debug";
 import { Deferred } from "./promises";
 
 /**
@@ -11,7 +12,7 @@ export function ensureTopics(client: kafka.Client, topics: string[]): Promise<vo
             topics,
             (error, data) => {
                 if (error) {
-                    console.error(error);
+                    debug(error);
                     return reject();
                 }
 
@@ -163,7 +164,7 @@ export class Producer {
         if (this.client) {
             this.client.close((closeError) => {
                 if (closeError) {
-                    console.error(closeError);
+                    debug(closeError);
                 }
             });
             this.client = undefined;
@@ -172,8 +173,7 @@ export class Producer {
         // TODO should we reject any pending messages?
 
         this.connecting = this.connected = false;
-        console.error("Kafka error - attempting reconnect");
-        console.error(error);
+        debug("Kafka error - attempting reconnect", error);
         this.connect();
     }
 }

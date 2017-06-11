@@ -1,17 +1,18 @@
+// Setup the configuration system - pull arguments, then environment variables - prior to loading other modules that
+// may depend on the config already being initialized
+import * as nconf from "nconf";
+import * as path from "path";
+nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
+
 import * as amqp from "amqplib";
 import * as minio from "minio";
 import { Collection, MongoClient } from "mongodb";
-import * as nconf from "nconf";
-import * as path from "path";
 import * as api from "../api";
 import { resume, textAnalytics } from "../intelligence";
 import * as socketStorage from "../socket-storage";
 import { logger } from "../utils";
 import { IntelligentServicesManager } from "./intelligence";
 import { ObjectStorageService } from "./objectStorageService";
-
-// Setup the configuration system - pull arguments, then environment variables
-nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
 
 // Connection to stored document details
 const mongoUrl = nconf.get("mongo:endpoint");

@@ -49,6 +49,8 @@ We make use of continuous integration and deployment via VSTS at https://offnet.
 
 ## Logging
 
+### Service
+
 We make use of [Winston](https://github.com/winstonjs/winston) for logging on the service side. Winston adds in some nice features over the usual console like log levels, timestamps, formatting, etc...
 
 It's easy to use though. Just import our configured logger via:
@@ -56,3 +58,21 @@ It's easy to use though. Just import our configured logger via:
 import { logger } from "../utils";
 
 And then you can do logger.info in place of console.log as well as logger.error, logger.warn, logger.verbose, logger.silly to target different levels. The default filter only displays info and above (so error, warning, and info). But you can change this within logger.ts.
+
+### Libraries
+
+Within internal libraries we make use of the [debug](https://github.com/visionmedia/debug) library. Debug allows a
+library to log messages to a namespace. By default these messages aren't displayed but can be enabled by the app
+that is making use of the library. Debug is a popular package used by most major node modules (express, socket.io, etc...).
+
+For our node apps enabling library logging is as simple as setting the DEBUG environment variable - i.e.
+
+`DEBUG=routerlicious:*,connect:compress,connect:session`
+
+This is already done in our docker compose files for our own internal libraries which are all under the routerlicous namespace.
+
+In the browser you can enable them by setting localStorage.debug variable.
+
+`localStorage.debug = 'routerlicious:*'`
+
+After which you will need to reload the page.

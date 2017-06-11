@@ -1,4 +1,5 @@
 import { Db, MongoClient, MongoClientOptions } from "mongodb";
+import { debug } from "./debug";
 
 /**
  * Helper class to manage access to a MongoDb database
@@ -30,14 +31,12 @@ export class MongoManager {
                 }))
             .then((db) => {
                 db.on("error", (error) => {
-                    console.error("MongoDb Error");
-                    console.error(error);
+                    debug("MongoDb Error", error);
                     this.reconnect();
                 });
 
                 db.on("close", (value) => {
-                    console.error("MongoDb Close");
-                    console.error(value);
+                    debug("MongoDb Close", value);
                     this.reconnect();
                 });
 
@@ -45,8 +44,7 @@ export class MongoManager {
             });
 
         this.databaseP.catch((error) => {
-            console.error("MongoDb Connection Error");
-            console.error(error);
+            debug("MongoDb Connection Error", error);
             this.reconnect();
         });
     }
