@@ -2482,7 +2482,7 @@ export class MergeTree {
             }
         }
     }
-
+    
     map<TAccum>(actions: SegmentActions, refSeq: number, clientId: number, accum?: TAccum) {
         // TODO: optimize to avoid comparisons
         this.nodeMap(this.root, actions, 0, refSeq, clientId, accum);

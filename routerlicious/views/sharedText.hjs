@@ -8,7 +8,7 @@
 
     {{$scripts}}
         <script src="/socket.io/socket.io.js"></script>
-        <script src="{{#hfurl}}/public/scripts/dist/sharedText.js{{/hfurl}}"></script>
+        <script src="/public/scripts/dist/sharedText.js"></script>
         <script>
             controller.onLoad("{{ id }}");
         </script>

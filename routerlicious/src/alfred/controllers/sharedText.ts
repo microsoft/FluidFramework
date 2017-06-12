@@ -198,7 +198,7 @@ export async function onLoad(id: string) {
     // Retrive any stored insights
     const mapExtension = API.defaultRegistry.getExtension(API.MapExtension.Type);
     const insights = mapExtension.load(`${id}-insights`, API.getDefaultServices(), API.defaultRegistry) as API.IMap;
-
+    console.log(window.navigator.userAgent);
     sharedString.on("partialLoad", async (data: MergeTreeChunk) => {
         console.log("Partial load fired");
 
@@ -218,7 +218,7 @@ export async function onLoad(id: string) {
         } else {
             console.log("local load...");
             request.get(url.resolve(document.baseURI,
-                "/public/literature/pp.txt"), (error, response, body: string) => {
+                "/public/literature/knuth-grimm.txt"), (error, response, body: string) => {
                     if (error) {
                         return console.error(error);
                     }
