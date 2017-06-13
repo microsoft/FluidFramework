@@ -972,7 +972,7 @@ export class FlowView {
             // tslint:disable-next-line:max-line-length
             console.log(`time to edit/impression: ${this.timeToEdit} time to load: ${Date.now() - clockStart}ms len: ${this.sharedString.client.getLength()}`);
         }
-        this.testWordInfo();
+        // this.testWordInfo();
     }
 
     public randomWordMove() {

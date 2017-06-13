@@ -218,7 +218,7 @@ export async function onLoad(id: string) {
         } else {
             console.log("local load...");
             request.get(url.resolve(document.baseURI,
-                "/public/literature/knuth-grimm.txt"), (error, response, body: string) => {
+                "/public/literature/pp.txt"), (error, response, body: string) => {
                     if (error) {
                         return console.error(error);
                     }
