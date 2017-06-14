@@ -101,7 +101,9 @@
         "sendTopic": "rawdeltas",
         "receiveTopic": "deltas",
         "bucket": "snapshots",
-        "chunkSize": 300000
+        "chunkSize": 300000,
+        "endPoint": "http://kafka-rest:8082",
+        "groupId": "perf"
     },
     "intelligence": {
         "resume": {

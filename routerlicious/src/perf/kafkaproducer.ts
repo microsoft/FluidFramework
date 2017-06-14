@@ -19,42 +19,40 @@ async function runTest() {
     await sleep(10000);
     produce();
 }
-// let producerInterval;
+
 async function produce() {
     const throughput = new utils.ThroughputCounter("KafkaProducerPerformance: ", console.error, 1000);
     // Producer to push to kafka.
     const producer = new utils.kafka.Producer(zookeeperEndpoint, kafkaSendClientId, topic);
     // Start sending
     let clientSequenceNumber = 1;
-    // producerInterval = setInterval(() => {
-        const rawMessage: core.IRawOperationMessage = {
-            clientId: "producer",
-            objectId: "producer",
-            operation: {
-                clientSequenceNumber: clientSequenceNumber++,
-                op: {
-                    key: "binky",
-                    type: "set",
-                    value: "winky",
-                },
-                referenceSequenceNumber: 0,
+    const rawMessage: core.IRawOperationMessage = {
+        clientId: "producer",
+        objectId: "producer",
+        operation: {
+            clientSequenceNumber: clientSequenceNumber++,
+            op: {
+                key: "binky",
+                type: "set",
+                value: "winky",
             },
-            timestamp: Date.now(),
-            type: core.RawOperationType,
-            userId: "producer",
-        };
-        
-        for (let i = 0; i < chunkSize; i++) {
-            throughput.produce();
-            producer.send(JSON.stringify(rawMessage), "producer").then(
-                (responseMessage) => {
-                    throughput.acknolwedge();
-                },
-                (error) => {
-                    console.error(error);
-                });
-        }
-    // }, 0);
+            referenceSequenceNumber: 0,
+        },
+        timestamp: Date.now(),
+        type: core.RawOperationType,
+        userId: "producer",
+    };
+    
+    for (let i = 0; i < chunkSize; i++) {
+        throughput.produce();
+        producer.send(JSON.stringify(rawMessage), "producer").then(
+            (responseMessage) => {
+                throughput.acknolwedge();
+            },
+            (error) => {
+                console.error(error);
+            });
+    }
 }
 
 function sleep(ms) {

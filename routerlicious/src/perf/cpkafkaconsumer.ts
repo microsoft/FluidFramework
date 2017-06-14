@@ -7,6 +7,8 @@ import * as utils from "../utils";
 nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
 
 const topic = nconf.get("perf:sendTopic");
+const endPoint = nconf.get("perf:endPoint");
+const groupId = nconf.get("perf:groupId");
 
 console.log("Perf testing kafka rest consumer...");
 runTest();
@@ -19,7 +21,7 @@ async function runTest() {
 
 async function consume() {
     // Prep Kafka connection
-    let kafkaClient = new kafka({ 'url': 'http://kafka-rest:8082' });
+    let kafkaClient = new kafka({ 'url': endPoint });
     const throughput = new utils.ThroughputCounter("KafkaConsumerPerformance: ", console.error, 1000);
 
     console.log("Waiting for messages...");
@@ -29,40 +31,36 @@ async function consume() {
         throughput.acknolwedge();
     }, 1);
 
-    kafkaClient.consumer("my-consumer-group2").join({
+    kafkaClient.consumer(groupId).join({
         // "format": "avro",
         // "auto.commit.enable": "false"
         "auto.offset.reset": "smallest"
-    }, async function(err, consumer_instance) {
+    }, (err, consumerInstance) => {
         if (err) {
-           console.log(`Some error: ${err}`); 
+           console.log(`Consumer Instance Error: ${err}`); 
         } else {
-            console.log(`Joined a consumer instance group...`);
-            let stream = consumer_instance.subscribe(topic);
+            console.log(`Joined a consumer instance group: ${consumerInstance.getUri()}`);
+            let stream = consumerInstance.subscribe(topic);
             stream.on('data', (msgs) => {
-                console.log('Got data');
                 for( let i = 0; i < msgs.length; i++) {
                     throughput.produce();
                     q.push(msgs[i].value.toString('utf8'));
-                    // let jsonData = JSON.parse(msgs[i].value.toString('utf8'));
-                    // console.log(JSON.stringify(jsonData));
-                    // console.log(msgs[i].value.toString('utf8'));
                 }
             });
-            stream.on('error', function(err) {
-                console.log("Something broke: " + err);
+            stream.on('error', (err) => {
+                console.log(`Stream Error: ${err}`);
             });
             // Also trigger clean shutdown on Ctrl-C
-            process.on('SIGINT', function() {
+            process.on('SIGINT', () => {
                 console.log("Attempting to shut down consumer instance...");
-                consumer_instance.shutdown();
+                consumerInstance.shutdown();
             });
         }
     });    
 }
 
 function processMessage(message: string) {
-    // console.log(message);
+    // Not doing anything here.
 }
 
 function sleep(ms) {

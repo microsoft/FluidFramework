@@ -120,3 +120,47 @@ export class CPProducer {
     }
 
 }
+
+export class CPConsumer {
+    private stream: any;
+    private client: any;
+    private connected = false;
+    private connecting = false;
+    
+    constructor(private groupId: string, private endpoint: string, private topic: string) {
+        this.connect();
+    }
+
+    private connect(): Promise<void> {
+        if (this.connected || this.connecting) {
+            return;
+        }
+        this.connecting = true;
+        return new Promise<void>((resolve, reject) => {
+            this.client = new kafka({ 'url': this.endpoint });
+            this.client.consumer(this.groupId).join({
+                "auto.offset.reset": "smallest"
+            }, (error, instance) => {
+                if (error) {
+                    this.handleError(error);
+                } else {
+                    this.connected = true;
+                    this.connecting = false;
+                    this.stream = instance.subscribe(this.topic);
+                    return resolve();
+                }
+            });
+        });
+    }
+
+    private handleError(error: any) {
+        if (this.client) {
+            this.client = undefined;
+        }
+        this.connected = this.connecting = false;
+        console.error("Kafka consumer error - attempting reconnect");
+        console.error(error);
+        this.connect();
+    }
+
+}
