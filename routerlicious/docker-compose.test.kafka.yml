@@ -1,29 +1,45 @@
 version: '3'
 services:
-    perf:
-      build: . 
-      ports:
-            - "5858:5858"
-            - "5859:5859"
-      depends_on:
-            - kafka
-      command: npm run perf:kafka:debug
-      volumes:
-            - .:/usr/src/server
-      restart: always
-    zookeeper:
-        image: wurstmeister/zookeeper
-        ports:
-            - "2181:2181"
-    kafka:
-        image: wurstmeister/kafka
-        depends_on:
-            - zookeeper
-        ports:
-            - "9092:9092"
-        environment:
-            KAFKA_ADVERTISED_HOST_NAME: "kafka"
-            KAFKA_ADVERTISED_PORT: "9092"
-            KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'false'
-            KAFKA_CREATE_TOPICS: "test:1:1,deltas:8:1,rawdeltas:8:1"
-            KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+  perf:
+    build: . 
+    ports:
+      - "5858:5858"
+      - "5859:5859"
+    depends_on:
+      - kafka
+    command: npm run perf:kafka:debug
+    volumes:
+      - .:/usr/src/server
+    restart: always
+  zookeeper:
+    image: wurstmeister/zookeeper
+    hostname: zookeeper
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: wurstmeister/kafka
+    hostname: kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: "kafka"
+      KAFKA_ADVERTISED_PORT: "9092"
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'false'
+      KAFKA_CREATE_TOPICS: "deltas:8:1,rawdeltas:8:1"
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+
+  kafka-rest:
+    image: confluentinc/cp-kafka-rest:latest
+    hostname: kafka-rest
+    depends_on:
+      - zookeeper
+      - kafka
+    ports:
+      - "8082:8082"
+    environment:
+      KAFKA_REST_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_REST_LISTENERS: http://kafka-rest:8082
+      KAFKA_REST_HOST_NAME: kafka-rest

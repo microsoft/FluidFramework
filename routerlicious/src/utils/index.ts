@@ -24,3 +24,6 @@ export { kafka };
 
 import * as scribe from "./scribe";
 export { scribe };
+
+import * as cpkafka from "./cpkafka";
+export { cpkafka };
