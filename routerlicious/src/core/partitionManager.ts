@@ -108,17 +108,24 @@ export class PartitionManager {
      * Decides whether to kick off checkpointing or not.
      */
     private shouldCheckpoint(): boolean {
-        // Checks if threshold time has passed after the last chckpoint.
-        if (Date.now() - this.lastCheckpointTimestamp >= this.checkPointInterval) {
-            return true;
-        }
-        // Checks if any of the partitions has more than batchsize messages unprocessed.
-        for (let partition of Object.keys(this.partitionMap)) {
-            if (this.partitionMap[partition].latestOffset - this.partitionMap[partition].checkpointedOffset >=
-                this.batchSize) {
+        let partitions = Object.keys(this.partitionMap);
+
+        // No active partitions. So don't need to checkpoint.
+        if (partitions.length === 0) {
+            return false;
+        } else {
+            // Checks if threshold time has passed after the last chckpoint.
+            if (Date.now() - this.lastCheckpointTimestamp >= this.checkPointInterval) {
                 return true;
             }
+            // Checks if any of the partitions has more than batchsize messages unprocessed.
+            for (let partition of partitions) {
+                if (this.partitionMap[partition].latestOffset - this.partitionMap[partition].checkpointedOffset >=
+                    this.batchSize) {
+                    return true;
+                }
+            }
+            return false;
         }
-        return false;
     }
 }
