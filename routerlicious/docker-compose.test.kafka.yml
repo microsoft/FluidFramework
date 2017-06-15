@@ -12,13 +12,13 @@ services:
       - .:/usr/src/server
     restart: always
   zookeeper:
-    image: wurstmeister/zookeeper
+    image: wurstmeister/zookeeper:latest
     hostname: zookeeper
     ports:
       - "2181:2181"
 
   kafka:
-    image: wurstmeister/kafka
+    image: wurstmeister/kafka:latest
     hostname: kafka
     depends_on:
       - zookeeper

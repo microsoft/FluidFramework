@@ -32,8 +32,7 @@ async function consume() {
     }, 1);
 
     kafkaClient.consumer(groupId).join({
-        // "format": "avro",
-        // "auto.commit.enable": "false"
+        "auto.commit.enable": "false",
         "auto.offset.reset": "smallest"
     }, (err, consumerInstance) => {
         if (err) {
@@ -45,6 +44,23 @@ async function consume() {
                 for( let i = 0; i < msgs.length; i++) {
                     throughput.produce();
                     q.push(msgs[i].value.toString('utf8'));
+                    if (i === msgs.length - 1) {
+                        let offsetRequest = {offsets: [{
+                            topic: topic,
+                            partition: msgs[i].partition,
+                            offset: msgs[i].offset
+                        }]};
+                        console.log(`Commiting offsets...`);
+                        utils.cpkafka.commitOffset(kafkaClient, consumerInstance.getUri(), offsetRequest).then(
+                            (data) => {
+                                console.log(`Succ....${data}`);
+                            },
+                            (error) => {
+                                console.log(`Err....${error}`);
+                            }                         
+                        );
+
+                    }
                 }
             });
             stream.on('error', (err) => {

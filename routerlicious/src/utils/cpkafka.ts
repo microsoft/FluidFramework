@@ -118,7 +118,21 @@ export class CPProducer {
         this.connecting = false;
         this.sendPendingMessages();
     }
+}
 
+/**
+ * Commit the offset.
+ */
+export function commitOffset(client: any, path: string, commitRequest: any): Promise<void> {
+    return new Promise<any>((resolve, reject) => {
+        client.post(path + '/offsets', commitRequest, null, (err, data) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(JSON.stringify(data));
+            }
+        });
+    });
 }
 
 export class CPConsumer {
