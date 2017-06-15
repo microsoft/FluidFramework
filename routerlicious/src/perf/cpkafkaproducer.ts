@@ -22,7 +22,7 @@ async function runTest() {
 async function produce() {
     const throughput = new utils.ThroughputCounter("KafkaProducerPerformance: ", console.error, 1000);
     // Producer to push to kafka.
-    const producer = new utils.cpkafka.CPProducer(endPoint, topic);
+    const producer = new utils.kafka.Producer(endPoint, topic);
     // Start sending
     let clientSequenceNumber = 1;
     const rawMessage: core.IRawOperationMessage = {

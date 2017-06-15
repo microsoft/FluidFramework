@@ -49,7 +49,7 @@
         }
     },
     "zookeeper": {
-        "endpoint": "zookeeper:2181"
+        "endpoint": "http://kafka-rest:8082"
     },
     "alfred": {
         "kafkaClientId": "alfred",
@@ -101,7 +101,7 @@
         "sendTopic": "rawdeltas",
         "receiveTopic": "deltas",
         "bucket": "snapshots",
-        "chunkSize": 300000,
+        "chunkSize": 13,
         "endPoint": "http://kafka-rest:8082",
         "groupId": "perf"
     },

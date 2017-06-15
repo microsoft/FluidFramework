@@ -1,24 +1,5 @@
-import * as kafka from "kafka-node";
+import * as kafka from "kafka-rest";
 import { Deferred } from "./promises";
-
-/**
- * Ensures that the provided topics are ready
- */
-export function ensureTopics(client: kafka.Client, topics: string[]): Promise<void> {
-    return new Promise<void>((resolve, reject) => {
-        // We make use of a refreshMetadata call to validate the given topics exist
-        client.refreshMetadata(
-            topics,
-            (error, data) => {
-                if (error) {
-                    console.error(error);
-                    return reject();
-                }
-
-                return resolve();
-            });
-    });
-}
 
 /**
  * A pending message the producer is holding on to
@@ -36,13 +17,13 @@ interface IPendingMessage {
  */
 export class Producer {
     private messages: {[key: string]: IPendingMessage[]} = {};
-    private client: kafka.Client;
-    private producer: kafka.Producer;
+    private client: any;
+    private producer: any;
     private connecting = false;
     private connected = false;
     private sendPending = false;
 
-    constructor(private endpoint: string, private clientId: string, private topic: string) {
+    constructor(private endpoint: string, private topic: string) {
         this.connect();
     }
 
@@ -109,10 +90,11 @@ export class Producer {
      * Sends a single message to Kafka
      */
     private sendMessages(key: string, pendingMessages: IPendingMessage[]) {
-        // TODO we may wish to store the pending message direclty in an array to avoid the below map
-        const messages = pendingMessages.map((message) => message.message);
-        const kafkaMessage = [{ topic: this.topic, messages, key }];
-        this.producer.send(kafkaMessage, (error, data) => {
+        const messages = pendingMessages.map((message) => 
+        {
+            return {value: message.message, key: key};
+        });
+        this.producer.produce(messages, (error, data) => {
                 if (error) {
                     pendingMessages.forEach((message) => message.deferred.reject(error));
                 } else {
@@ -131,49 +113,27 @@ export class Producer {
         }
 
         this.connecting = true;
-        this.client = new kafka.Client(this.endpoint, this.clientId);
-        this.producer = new kafka.Producer(this.client, { partitionerType: 3 });
+        this.client = new kafka({ 'url': this.endpoint });
+        this.producer = this.client.topic(this.topic);
 
-        (<any> this.client).on("error", (error) => {
-            this.handleError(error);
-        });
-
-        this.producer.on("ready", () => {
-            ensureTopics(this.client, [this.topic]).then(
-                () => {
-                    this.connected = true;
-                    this.connecting = false;
-                    this.sendPendingMessages();
-                },
-                (error) => {
-                    this.handleError(error);
-                });
-        });
-
-        this.producer.on("error", (error) => {
-            this.handleError(error);
-        });
-    }
-
-    /**
-     * Handles an error that requires a reconnect to Kafka
-     */
-    private handleError(error: any) {
-        // Close the client if it exists
-        if (this.client) {
-            this.client.close((closeError) => {
-                if (closeError) {
-                    console.error(closeError);
-                }
-            });
-            this.client = undefined;
-        }
-
-        // TODO should we reject any pending messages?
-
-        this.connecting = this.connected = false;
-        console.error("Kafka error - attempting reconnect");
-        console.error(error);
-        this.connect();
+        this.connected = true;
+        this.connecting = false;
+        this.sendPendingMessages();
     }
 }
+
+/**
+ * Commit offsets using REST client directly.
+ */
+export function commitOffset(client: any, path: string, commitRequest: any): Promise<void> {
+    return new Promise<any>((resolve, reject) => {
+        client.post(path + '/offsets', commitRequest, null, (err, data) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(JSON.stringify(data));
+            }
+        });
+    });
+}
+

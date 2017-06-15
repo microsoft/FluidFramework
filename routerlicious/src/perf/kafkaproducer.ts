@@ -7,7 +7,6 @@ import * as utils from "../utils";
 nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
 
 const zookeeperEndpoint = nconf.get("zookeeper:endpoint");
-const kafkaSendClientId = nconf.get("perf:kafkaSendClientId");
 const topic = nconf.get("perf:sendTopic");
 const chunkSize = nconf.get("perf:chunkSize");
 
@@ -23,7 +22,7 @@ async function runTest() {
 async function produce() {
     const throughput = new utils.ThroughputCounter("KafkaProducerPerformance: ", console.error, 1000);
     // Producer to push to kafka.
-    const producer = new utils.kafka.Producer(zookeeperEndpoint, kafkaSendClientId, topic);
+    const producer = new utils.kafka.Producer(zookeeperEndpoint, topic);
     // Start sending
     let clientSequenceNumber = 1;
     const rawMessage: core.IRawOperationMessage = {

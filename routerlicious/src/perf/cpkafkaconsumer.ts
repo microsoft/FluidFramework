@@ -51,7 +51,7 @@ async function consume() {
                             offset: msgs[i].offset
                         }]};
                         console.log(`Commiting offsets...`);
-                        utils.cpkafka.commitOffset(kafkaClient, consumerInstance.getUri(), offsetRequest).then(
+                        utils.kafka.commitOffset(kafkaClient, consumerInstance.getUri(), offsetRequest).then(
                             (data) => {
                                 console.log(`Succ....${data}`);
                             },
@@ -59,7 +59,6 @@ async function consume() {
                                 console.log(`Err....${error}`);
                             }                         
                         );
-
                     }
                 }
             });

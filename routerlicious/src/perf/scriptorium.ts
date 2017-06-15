@@ -27,7 +27,6 @@ let subOptions = _.clone(options);
 let sub = redis.createClient(port, host, subOptions);
 
 const zookeeperEndpoint = nconf.get("zookeeper:endpoint");
-const kafkaSendClientId = nconf.get("perf:kafkaSendClientId");
 const topic = nconf.get("perf:receiveTopic");
 const chunkSize = nconf.get("perf:chunkSize");
 
@@ -53,7 +52,7 @@ async function runTest() {
 
 async function produce() {
     // Producer to push to kafka.
-    const producer = new utils.kafka.Producer(zookeeperEndpoint, kafkaSendClientId, topic);
+    const producer = new utils.kafka.Producer(zookeeperEndpoint, topic);
     let messagesLeft = chunkSize;
     // Start sending
     for (let i = 1; i <= chunkSize; ++i) {

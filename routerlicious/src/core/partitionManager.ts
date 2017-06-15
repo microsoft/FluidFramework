@@ -1,4 +1,4 @@
-import * as kafka from "kafka-node";
+import * as utils from "../utils";
 
 interface IPartitionRange {
     // Latest offset seen for the partition.
@@ -20,7 +20,8 @@ export class PartitionManager {
     constructor(
         private groupId: string,
         private topic: string,
-        private consumerOffset: kafka.Offset,
+        private kafkaClient: any,
+        private consumerUri: string,
         private batchSize: number,
         private checkPointInterval: number) {
     }
@@ -87,18 +88,19 @@ export class PartitionManager {
                 currentPartition.checkpointedOffset = currentPartition.latestOffset;
             }
 
+            let commitMessage = {offsets: commitDetails};
             // Commit all checkpoint offsets as a batch.
-            this.consumerOffset.commit(this.groupId, commitDetails,
-                (error, data) => {
-                    if (error) {
-                        // console.error(`${this.groupId}: Error checkpointing kafka offsets: ${error}`);
-                        reject(error);
-                    } else {
-                        // tslint:disable-next-line:max-line-length
-                        // console.log(`${this.groupId}: Checkpointed kafka with: ${JSON.stringify(commitDetails)}. Result: ${JSON.stringify(data)}`);
-                        resolve({ data: true });
-                    }
-            });
+            utils.kafka.commitOffset(this.kafkaClient, this.consumerUri, commitMessage).then(
+                (data) => {
+                    // tslint:disable-next-line:max-line-length
+                    console.log(`${this.groupId}: Checkpointed kafka with: ${JSON.stringify(commitDetails)}. Result: ${JSON.stringify(data)}`);
+                    resolve({ data: true });
+                },
+                (error) => {
+                    console.error(`${this.groupId}: Error checkpointing kafka offsets: ${error}`);
+                    reject(error);
+                }
+            );
         });
     }
 

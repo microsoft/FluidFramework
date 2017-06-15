@@ -13,7 +13,6 @@ let io = socketIo();
 
 // Group this into some kind of an interface
 const zookeeperEndpoint = nconf.get("zookeeper:endpoint");
-const kafkaClientId = nconf.get("alfred:kafkaClientId");
 const topic = nconf.get("alfred:topic");
 
 // Setup redis
@@ -61,7 +60,7 @@ async function getOrCreateObject(id: string, type: string): Promise<boolean> {
 }
 
 // Producer used to publish messages
-const producer = new utils.kafka.Producer(zookeeperEndpoint, kafkaClientId, topic);
+const producer = new utils.kafka.Producer(zookeeperEndpoint, topic);
 const throughput = new utils.ThroughputCounter();
 
 io.on("connection", (socket) => {

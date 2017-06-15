@@ -1,5 +1,5 @@
 import { queue } from "async";
-import * as kafka from "kafka-node";
+import * as kafka from "kafka-rest";
 import * as _ from "lodash";
 import { Collection } from "mongodb";
 import * as nconf from "nconf";
@@ -13,7 +13,6 @@ nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use
 
 const mongoUrl = nconf.get("mongo:endpoint");
 const zookeeperEndpoint = nconf.get("zookeeper:endpoint");
-const kafkaClientId = nconf.get("deli:kafkaClientId");
 const receiveTopic = nconf.get("deli:topics:receive");
 const sendTopic = nconf.get("deli:topics:send");
 const checkpointBatchSize = nconf.get("deli:checkpointBatchSize");
@@ -31,12 +30,11 @@ function processMessage(
     producer: utils.kafka.Producer,
     objectsCollection: Collection) {
 
-    const baseMessage = JSON.parse(message.value) as core.IMessage;
-
+    const baseMessage = JSON.parse(message.value.toString('utf8')) as core.IMessage;
     if (baseMessage.type === core.UpdateReferenceSequenceNumberType ||
         baseMessage.type === core.RawOperationType) {
 
-        const objectMessage = JSON.parse(message.value) as core.IObjectMessage;
+        const objectMessage = JSON.parse(message.value.toString('utf8')) as core.IObjectMessage;
         const objectId = objectMessage.objectId;
 
         // Go grab the takeANumber machine for the objectId and mark it as dirty.
@@ -61,59 +59,68 @@ async function checkpoint(
     dispensers: TakeANumber[],
     pendingTickets: Array<Promise<void>>) {
 
-    // Ticket all messages and empty the queue.
-    await Promise.all(pendingTickets);
-
-    // Checkpoint to mongo now.
-    let checkpointQueue = dispensers.map((dispenser) => dispenser.checkpoint());
-    await Promise.all(checkpointQueue);
-
-    // Finally call kafka checkpointing.
-    partitionManager.checkPoint();
-
-    // Clear timer since we just checkpointed.
+    // Clear timer since we will checkpoint now.
     if (checkpointTimer) {
         clearTimeout(checkpointTimer);
     }
+
+    if (pendingTickets.length === 0 && dispensers.length === 0) {
+        return;
+    }
+
+    // Ticket all messages and empty the queue.
+    await Promise.all(pendingTickets);
+    pendingTickets = [];
+
+    // Checkpoint to mongo and empty the dispensers.
+    let checkpointQueue = dispensers.map((dispenser) => dispenser.checkpoint());
+    await Promise.all(checkpointQueue);
+    dispensers = [];
+
+    // Finally call kafka checkpointing.
+    // partitionManager.checkPoint();
+
     // Set up next cycle.
     checkpointTimer = setTimeout(() => {
         checkpoint(partitionManager, dispensers, pendingTickets);
     }, checkpointTimeIntervalMsec);
 }
 
-function processMessages(
-    kafkaClient: kafka.Client,
+async function processMessages(
+    kafkaClient: any,
     producer: utils.kafka.Producer,
     objectsCollection: Collection): Promise<void> {
 
     const deferred = new utils.Deferred<void>();
     const dispensers: { [key: string]: TakeANumber } = {};
+    let partitionManager: core.PartitionManager;
 
-    const consumerOffset = new kafka.Offset(kafkaClient);
-    const partitionManager = new core.PartitionManager(
-        groupId,
-        receiveTopic,
-        consumerOffset,
-        checkpointBatchSize,
-        checkpointTimeIntervalMsec);
-
-    const highLevelConsumer = new kafka.HighLevelConsumer(kafkaClient, [{topic: receiveTopic}], <any> {
-        autoCommit: false,
-        fetchMaxBytes: 1024 * 1024,
-        fetchMinBytes: 1,
-        fromOffset: true,
-        groupId,
-        id: kafkaClientId,
-        maxTickMessages: 100000,
-    });
-
-    highLevelConsumer.on("error", (error) => {
-        // Workaround to resolve rebalance partition error.
-        // https://github.com/SOHU-Co/kafka-node/issues/90
-        console.error(`Error in kafka consumer: ${error}. Wait for 30 seconds and restart...`);
-        setTimeout(() => {
+    kafkaClient.consumer(groupId).join({
+        "auto.commit.enable": "false",
+        "auto.offset.reset": "smallest"
+    }, (error, consumerInstance) => {
+        if (error) {
             deferred.reject(error);
-        }, 30000);
+        } else {
+            partitionManager = new core.PartitionManager(
+                groupId,
+                receiveTopic,
+                kafkaClient,
+                consumerInstance.getUri(),
+                checkpointBatchSize,
+                checkpointTimeIntervalMsec);
+            let stream = consumerInstance.subscribe(receiveTopic);
+            stream.on('data', (messages) => {
+                for (let msg of messages) {
+                    throughput.produce();
+                    q.push(msg);
+                }
+            });
+            stream.on('error', (err) => {
+                consumerInstance.shutdown();
+                deferred.reject(err);
+            });
+        }
     });
 
     let ticketQueue: {[id: string]: Promise<void> } = {};
@@ -139,11 +146,6 @@ function processMessages(
         throughput.acknolwedge();
     }, 1);
 
-    highLevelConsumer.on("message", (message: any) => {
-        throughput.produce();
-        q.push(message);
-    });
-
     return deferred.promise;
 }
 
@@ -155,13 +157,12 @@ async function run() {
     console.log("Collection ready");
 
     // Prep Kafka connection
-    let kafkaClient = new kafka.Client(zookeeperEndpoint, kafkaClientId);
-    let producer = new utils.kafka.Producer(zookeeperEndpoint, kafkaClientId, sendTopic);
+    let kafkaClient = new kafka({ 'url': zookeeperEndpoint });
+    let producer = new utils.kafka.Producer(zookeeperEndpoint, sendTopic);
 
     // Return a promise that will never resolve (since we run forever) but will reject
     // should an error occur
-    return utils.kafka.ensureTopics(kafkaClient, [sendTopic, receiveTopic])
-        .then(() => processMessages(kafkaClient, producer, objectsCollection));
+    return processMessages(kafkaClient, producer, objectsCollection);
 }
 
 // Start up the deli service
