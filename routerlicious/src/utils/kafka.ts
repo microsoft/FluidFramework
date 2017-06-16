@@ -1,5 +1,25 @@
 import * as kafka from "kafka-rest";
+import { debug } from "./debug";
 import { Deferred } from "./promises";
+
+/**
+ * Ensures that the provided topics are ready
+ */
+export function ensureTopics(client: kafka.Client, topics: string[]): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+        // We make use of a refreshMetadata call to validate the given topics exist
+        client.refreshMetadata(
+            topics,
+            (error, data) => {
+                if (error) {
+                    debug(error);
+                    return reject();
+                }
+
+                return resolve();
+            });
+    });
+}
 
 /**
  * A pending message the producer is holding on to

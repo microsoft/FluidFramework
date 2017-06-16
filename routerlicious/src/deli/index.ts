@@ -1,15 +1,17 @@
+// Setup the configuration system - pull arguments, then environment variables - prior to loading other modules that
+// may depend on the config already being initialized
+import * as nconf from "nconf";
+import * as path from "path";
+nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
+
 import { queue } from "async";
 import * as kafka from "kafka-rest";
 import * as _ from "lodash";
 import { Collection } from "mongodb";
-import * as nconf from "nconf";
-import * as path from "path";
 import * as core from "../core";
 import * as utils from "../utils";
+import { logger } from "../utils";
 import { TakeANumber } from "./takeANumber";
-
-// Setup the configuration system - pull arguments, then environment variables
-nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
 
 const mongoUrl = nconf.get("mongo:endpoint");
 const zookeeperEndpoint = nconf.get("zookeeper:endpoint");
@@ -41,7 +43,7 @@ function processMessage(
         // Store it in the partition map. We need to add an eviction strategy here.
         if (!(objectId in dispensers)) {
             dispensers[objectId] = new TakeANumber(objectId, objectsCollection, producer);
-            console.log(`Brand New object Found: ${objectId}`);
+            logger.info(`Brand New object Found: ${objectId}`);
         }
         const dispenser = dispensers[objectId];
 
@@ -125,9 +127,9 @@ async function processMessages(
 
     let ticketQueue: {[id: string]: Promise<void> } = {};
 
-    const throughput = new utils.ThroughputCounter();
+    const throughput = new utils.ThroughputCounter(logger.info);
 
-    console.log("Waiting for messages");
+    logger.info("Waiting for messages");
     const q = queue((message: any, callback) => {
         processMessage(message, dispensers, ticketQueue, partitionManager, producer, objectsCollection);
         callback();
@@ -154,7 +156,7 @@ async function run() {
     const mongoManager = new utils.MongoManager(mongoUrl, false);
     const client = await mongoManager.getDatabase();
     const objectsCollection = await client.collection(objectsCollectionName);
-    console.log("Collection ready");
+    logger.info("Collection ready");
 
     // Prep Kafka connection
     let kafkaClient = new kafka({ 'url': zookeeperEndpoint });
@@ -166,9 +168,9 @@ async function run() {
 }
 
 // Start up the deli service
-console.log("Starting");
+logger.info("Starting");
 const runP = run();
 runP.catch((error) => {
-    console.error(error);
+    logger.error(error);
     process.exit(1);
 });

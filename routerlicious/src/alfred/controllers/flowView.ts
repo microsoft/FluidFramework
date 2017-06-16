@@ -48,6 +48,28 @@ enum CharacterCodes {
     space = 0x0020,   // " "
 }
 
+// enum TokenProperties {
+//     None = 0,
+//     HardHyphen = 1,
+//     SoftHyphen = 2,
+// }
+
+// enum TokenType {
+//     SingleSpace,
+//     Spaces,
+//     ExoticSpaces,
+//     Word,
+//     Syllable,
+// }
+
+// interface IToken {
+//     pos: number;
+//     start: number;
+//     type: TokenType;
+//     repeatCount?: number;
+//     properties: TokenProperties;
+// }
+
 interface ISegSpan extends HTMLSpanElement {
     seg: SharedString.TextSegment;
     segPos?: number;
@@ -88,7 +110,8 @@ function elmOffToSegOff(elmOff: IRangeInfo, span: HTMLSpanElement) {
 }
 
 let cachedCanvas: HTMLCanvasElement;
-function getTextWidth(text, font) {
+
+function getTextWidth(text: string, font: string) {
     // re-use canvas object for better performance
     const canvas = cachedCanvas || (cachedCanvas = document.createElement("canvas"));
     const context = canvas.getContext("2d");
@@ -97,16 +120,29 @@ function getTextWidth(text, font) {
     return metrics.width;
 }
 
+function getMultiTextWidth(texts: string[], font: string) {
+    // re-use canvas object for better performance
+    const canvas = cachedCanvas || (cachedCanvas = document.createElement("canvas"));
+    const context = canvas.getContext("2d");
+    context.font = font;
+    let sum = 0;
+    for (let text of texts) {
+        const metrics = context.measureText(text);
+        sum += metrics.width;
+    }
+    return sum;
+}
+
 function makeInnerDiv() {
     let innerDiv = document.createElement("div");
     innerDiv.style.font = "18px Times";
     innerDiv.style.lineHeight = "125%";
-    innerDiv.style.fontFeatureSettings = '"liga" off, "kern" off';
-    (<any>innerDiv.style).fontKerning = "none";
-    (<any>innerDiv.style).fontVariantLigatures = "none";
-    (<any>innerDiv.style).webkitFontKerning = "none";
-    (<any>innerDiv.style).webkitFontVariantLigatures = "none";
-    (<any>innerDiv.style).webkitFontFeatureSettings = '"liga" off, "kern" off';
+    // innerDiv.style.textAlign = "justify";
+    // innerDiv.style.textJustify = "newspaper";
+    // innerDiv.style.msHyphens = "auto";
+    // (<any>innerDiv.style).hyphens = "auto";
+    // innerDiv.style.fontFeatureSettings = '"liga" off, "kern" off';
+    // (<any>innerDiv.style).webkitFontFeatureSettings = '"liga" off, "kern" off';
     innerDiv.onclick = (e) => {
         let div = <HTMLDivElement>e.target;
         if (div.lastElementChild) {
@@ -769,6 +805,7 @@ export class FlowView {
         };
         let keydownHandler = (e: KeyboardEvent) => {
             let saveLastVertX = this.lastVerticalX;
+            let specialKey = true;
             this.lastVerticalX = -1;
             // console.log(`key ${e.keyCode}`);
             if (e.keyCode === KeyCode.backspace) {
@@ -783,15 +820,11 @@ export class FlowView {
             } else if (e.keyCode === KeyCode.home) {
                 this.cursor.pos = 0;
                 this.render(0);
-                e.preventDefault();
-                e.returnValue = false;
             } else if (e.keyCode === KeyCode.end) {
                 let halfport = Math.floor(this.viewportCharCount / 2);
                 let topChar = this.client.getLength() - halfport;
                 this.cursor.pos = topChar;
                 this.render(topChar);
-                e.preventDefault();
-                e.returnValue = false;
             } else if (e.keyCode === KeyCode.rightArrow) {
                 this.cursor.pos++;
                 this.render(this.topChar, true); // TODO: scroll first if cursor travels off page
@@ -810,8 +843,13 @@ export class FlowView {
                     }
                     this.render(this.topChar, true);
                 }
+            } else {
+                specialKey = false;
             }
-
+            if (specialKey) {
+                e.preventDefault();
+                e.returnValue = false;
+            }
         };
         let keypressHandler = (e: KeyboardEvent) => {
             let pos = this.cursor.pos;
@@ -824,6 +862,52 @@ export class FlowView {
         };
         this.flowContainer.onkeydown = keydownHandler;
         this.flowContainer.onkeypress = keypressHandler;
+    }
+
+    // public parseText() {
+    //     let text = this.sharedString.client.getText();
+    //     let pos = 0;
+    //     let len = text.length;
+    //     let start = 0;
+    //     let tokens= <IToken[]>[];
+
+    //     function endToken() {
+    //         if (pos>start) {
+    //             tokens.push({ start, pos, type: })
+    //         }
+    //     }
+    //     while (pos<len) {
+    //         let code = text.charCodeAt(pos);
+    //         switch (code) {
+    //             case CharacterCodes.space:
+
+    //         }
+    //     }        
+    // }
+    public testWordInfo() {
+        let text = this.sharedString.client.getText();
+        let nonWhitespace = text.split(/\s+/g);
+        console.log(`non ws count: ${nonWhitespace.length}`);
+        let obj = new Object();
+        for (let nws of nonWhitespace) {
+            if (!obj[nws]) {
+                obj[nws] = 1;
+            } else {
+                obj[nws]++;
+            }
+        }
+        let count = 0;
+        let uniques = <string[]>[];
+        for (let key in obj) {
+            if (obj.hasOwnProperty(key)) {
+                count++;
+                uniques.push(key);
+            }
+        }
+        console.log(`${count} unique`);
+        let clock = Date.now();
+        getMultiTextWidth(uniques, "18px Times");
+        console.log(`unique pp cost: ${Date.now() - clock}ms`);
     }
 
     public scroll(up: boolean) {
@@ -873,7 +957,7 @@ export class FlowView {
         let bubbleLeft = 3;
         let bubbleDiv = makeScrollLosenge(bubbleHeight, bubbleLeft, bubbleTop);
         this.scrollDiv.appendChild(bubbleDiv);
-        if (this.diagCharPort) {
+        if (this.diagCharPort || true) {
             this.statusMessage("render", `&nbsp ${Date.now() - clk}ms`);
         }
         if (this.diagCharPort) {
@@ -888,6 +972,7 @@ export class FlowView {
             // tslint:disable-next-line:max-line-length
             console.log(`time to edit/impression: ${this.timeToEdit} time to load: ${Date.now() - clockStart}ms len: ${this.sharedString.client.getLength()}`);
         }
+        // this.testWordInfo();
     }
 
     public randomWordMove() {

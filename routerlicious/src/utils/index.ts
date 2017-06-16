@@ -1,6 +1,8 @@
 export * from "./batchManager";
+export * from "./conversion";
 export * from "./counters";
 export * from "./heap";
+export * from "./logger";
 export * from "./mongo";
 export * from "./promises";
 

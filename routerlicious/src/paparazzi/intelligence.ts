@@ -1,6 +1,7 @@
 import * as api from "../api";
 import * as intelligence from "../intelligence";
 import * as mergeTree from "../merge-tree";
+import { logger } from "../utils";
 
 // 5s wait time between intelligent service calls
 const defaultWaitTime = 5 * 1000;
@@ -35,7 +36,7 @@ class RateLimiter {
         const completeP = this.action().catch((error) => {
             // TODO we will just log errors for now. Will want a better strategy later on (replay, wait).
             if (error) {
-                console.error(error);
+                logger.error(error);
             }
         });
 

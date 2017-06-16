@@ -8,6 +8,7 @@ import * as api from "../api";
 import * as core from "../core";
 import * as socketStorage from "../socket-storage";
 import * as utils from "../utils";
+import { logger } from "../utils";
 
 let io = socketIo();
 
@@ -61,7 +62,7 @@ async function getOrCreateObject(id: string, type: string): Promise<boolean> {
 
 // Producer used to publish messages
 const producer = new utils.kafka.Producer(zookeeperEndpoint, topic);
-const throughput = new utils.ThroughputCounter();
+const throughput = new utils.ThroughputCounter(logger.info);
 
 io.on("connection", (socket) => {
     // Map from client IDs on this connection to the object ID for them
@@ -76,7 +77,7 @@ io.on("connection", (socket) => {
     // Note connect is a reserved socket.io word so we use connectObject to represent the connect request
     socket.on("connectObject", (message: socketStorage.IConnect, response) => {
         // Join the room first to ensure the client will start receiving delta updates
-        console.log(`Client has requested to load ${message.objectId}`);
+        logger.info(`Client has requested to load ${message.objectId}`);
 
         const existingP = getOrCreateObject(message.objectId, message.type);
         existingP.then(
@@ -86,7 +87,7 @@ io.on("connection", (socket) => {
                         return response(joinError, null);
                     }
 
-                    console.log(`Existing object ${existing}`);
+                    logger.info(`Existing object ${existing}`);
                     const clientId = moniker.choose();
                     connectionsMap[clientId] = message.objectId;
                     const connectedMessage: socketStorage.IConnected = {
@@ -97,8 +98,7 @@ io.on("connection", (socket) => {
                 });
             },
             (error) => {
-                console.error("Error fetching");
-                console.error(error);
+                logger.error("Error fetching", error);
                 response(error, null);
             });
     });
@@ -127,7 +127,7 @@ io.on("connection", (socket) => {
                 throughput.acknolwedge();
             },
             (error) => {
-                console.error(error);
+                logger.error(error);
                 response(error, null);
                 throughput.acknolwedge();
             });
@@ -157,7 +157,7 @@ io.on("connection", (socket) => {
                 throughput.acknolwedge();
             },
             (error) => {
-                console.error(error);
+                logger.error(error);
                 response(error, null);
                 throughput.acknolwedge();
             });

@@ -1,4 +1,6 @@
 import * as utils from "../utils";
+import { debug } from "./debug";
+
 
 interface IPartitionRange {
     // Latest offset seen for the partition.
@@ -50,7 +52,7 @@ export class PartitionManager {
                 this.checkPoint();
             },
             (error) => {
-                // console.log(`${this.groupId}: Error checkpointing kafka offset: ${JSON.stringify(error)}`);
+                debug(`${this.groupId}: Error checkpointing kafka offset: ${JSON.stringify(error)}`);
                 this.checkpointing = false;
                 // Triggering another round.
                 this.checkPoint();
@@ -77,7 +79,7 @@ export class PartitionManager {
                 let currentPartition = this.partitionMap[partition];
                 // No update since last checkpoint. Delete the partition.
                 if (currentPartition.checkpointedOffset === currentPartition.latestOffset) {
-                    console.log(`${this.groupId}: Removing partition ${partition}`);
+                    debug(`${this.groupId}: Removing partition ${partition}`);
                     delete this.partitionMap[partition];
                     continue;
                 }
@@ -90,10 +92,11 @@ export class PartitionManager {
 
             let commitMessage = {offsets: commitDetails};
             // Commit all checkpoint offsets as a batch.
+
             utils.kafka.commitOffset(this.kafkaClient, this.consumerUri, commitMessage).then(
                 (data) => {
                     // tslint:disable-next-line:max-line-length
-                    console.log(`${this.groupId}: Checkpointed kafka with: ${JSON.stringify(commitDetails)}. Result: ${JSON.stringify(data)}`);
+                    debug(`${this.groupId}: Checkpointed kafka with: ${JSON.stringify(commitDetails)}. Result: ${JSON.stringify(data)}`);
                     resolve({ data: true });
                 },
                 (error) => {
@@ -101,6 +104,7 @@ export class PartitionManager {
                     reject(error);
                 }
             );
+
         });
     }
 

@@ -7,6 +7,7 @@ import * as redis from "redis";
 import * as api from "../api";
 import * as core from "../core";
 import * as utils from "../utils";
+import { logger } from "../utils";
 
 // Setup the configuration system - pull arguments, then environment letiables
 nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
@@ -44,7 +45,7 @@ async function runTest() {
 }
 
 async function produce() {
-    const throughput = new utils.ThroughputCounter("ToScriptorium-ProducerPerf: ", console.error, 1000);
+    const throughput = new utils.ThroughputCounter(logger.info, "ToScriptorium-ProducerPerf: ", 1000);
     // Producer to push to kafka.
     const producer = new utils.kafka.Producer(zookeeperEndpoint, topic);
     // Start sending
@@ -78,7 +79,7 @@ async function produce() {
 }
 
 async function consume() {
-    const throughput = new utils.ThroughputCounter("FromDeli-ConsumerPerf: ", console.error, 1000);
+    const throughput = new utils.ThroughputCounter(logger.info, "FromDeli-ConsumerPerf: ", 1000);
 
     console.log("Waiting for messages to arrive from redis...");
     const q = queue((message: any, callback) => {

@@ -4,6 +4,7 @@ import * as nconf from "nconf";
 import * as api from "../../api";
 import * as core from "../../core";
 import * as utils from "../../utils";
+import { logger } from "../../utils";
 
 const router = express.Router();
 
@@ -42,7 +43,7 @@ let producerInterval;
 async function startProducer(batchSize: number) {
     // Producer used to publish messages
     const producer = new utils.kafka.Producer(zookeeperEndpoint, topic);
-    const throughput = new utils.ThroughputCounter();
+    const throughput = new utils.ThroughputCounter(logger.info);
 
     await getOrCreateObject("producer", api.MapExtension.Type);
 
@@ -72,7 +73,7 @@ async function startProducer(batchSize: number) {
                     throughput.acknolwedge();
                 },
                 (error) => {
-                    console.error(error);
+                    logger.error(error);
                 });
         }
     }, 0);

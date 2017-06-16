@@ -38,8 +38,8 @@ export class ThroughputCounter {
     private interval;
 
     constructor(
+        private log: (value: string) => void,
         private prefix = "",
-        private log: (value: string) => void = console.error,
         private intervalTime: number = 5000) {
     }
 

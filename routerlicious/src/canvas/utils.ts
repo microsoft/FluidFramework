@@ -3,16 +3,6 @@ export function id(elementId: string): HTMLElement {
   return <HTMLElement> (document.getElementById(elementId));
 }
 
-export function displayStatus(message: string) {
-  // tslint:disable-next-line:no-console
-  console.log("status:", message);
-}
-
-export function displayError(message: string) {
-  // tslint:disable-next-line:no-console
-  console.log("error: ", message);
-}
-
 export function makeElementVisible(elem, visible) {
   elem.style.display = visible ? "block" : "none";
 }

@@ -1,14 +1,16 @@
+// Setup the configuration system - pull arguments, then environment variables - prior to loading other modules that
+// may depend on the config already being initialized
+import * as nconf from "nconf";
+import * as path from "path";
+nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
+
 import { queue } from "async";
 import * as kafka from "kafka-rest";
 import { CollectionInsertManyOptions } from "mongodb";
-import * as nconf from "nconf";
-import * as path from "path";
 import * as socketIoEmitter from "socket.io-emitter";
 import * as core from "../core";
 import * as utils from "../utils";
-
-// Setup the configuration system - pull arguments, then environment variables
-nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
+import { logger } from "../utils";
 
 // Initialize Socket.io and connect to the Redis adapter
 let redisConfig = nconf.get("redis");
@@ -82,8 +84,7 @@ async function run() {
         }
     });    
 
-    const throughput = new utils.ThroughputCounter();
-
+    const throughput = new utils.ThroughputCounter(logger.info);
     // Mongo inserts don't order promises with respect to each other. To work around this we track the last
     // Mongo insert we've made for each document. And then perform a then on this to maintain causal ordering
     // for any dependent operations (i.e. socket.io writes)
@@ -95,7 +96,7 @@ async function run() {
             lastMongoInsertP[objectId] = Promise.resolve();
         }
 
-        // console.log(`Inserting to mongodb ${value.objectId}@${value.operation.sequenceNumber}`);
+        logger.verbose(`Inserting to mongodb ${objectId}@${work[0].operation.sequenceNumber}:${work.length}`);
         const insertP = collection.insertMany(work, <CollectionInsertManyOptions> (<any> { ordered: false }))
             .catch((error) => {
                 // Ignore duplicate key errors since a replay may cause us to attempt to insert a second time
@@ -108,7 +109,8 @@ async function run() {
         lastMongoInsertP[objectId].then(
             () => {
                 // Route the message to clients
-                // console.log(`Routing message to clients ${value.objectId}@${value.operation.sequenceNumber}`);
+                // tslint:disable-next-line:max-line-length
+                logger.verbose(`Routing message to clients ${objectId}@${work[0].operation.sequenceNumber}:${work.length}`);
                 io.to(objectId).emit("op", objectId, work.map((value) => value.operation));
                 throughput.acknolwedge(work.length);
             },
@@ -137,7 +139,7 @@ async function run() {
         if (message.offset % checkpointBatchSize === 0) {
             // Finally call checkpointing.
             checkpoint(partitionManager).catch((error) => {
-                console.error(error);
+                logger.error(error);
             });
         }
         callback();
@@ -149,6 +151,6 @@ async function run() {
 // Start up the scriptorium service
 const runP = run();
 runP.catch((error) => {
-    console.error(error);
+    logger.error(error);
     process.exit(1);
 });

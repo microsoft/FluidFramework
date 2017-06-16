@@ -3,6 +3,7 @@ import * as kafka from "kafka-rest";
 import * as nconf from "nconf";
 import * as path from "path";
 import * as utils from "../utils";
+import { logger } from "../utils";
 
 nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
 
@@ -22,7 +23,7 @@ async function runTest() {
 async function consume() {
     // Prep Kafka connection
     let kafkaClient = new kafka({ 'url': endPoint });
-    const throughput = new utils.ThroughputCounter("KafkaConsumerPerformance: ", console.error, 1000);
+    const throughput = new utils.ThroughputCounter(logger.info, "KafkaConsumerPerformance: ", 1000);
 
     console.log("Waiting for messages...");
     const q = queue((message: any, callback) => {

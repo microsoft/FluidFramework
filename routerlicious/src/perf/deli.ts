@@ -6,6 +6,7 @@ import * as path from "path";
 import * as api from "../api";
 import * as core from "../core";
 import * as utils from "../utils";
+import { logger } from "../utils";
 
 // Setup the configuration system - pull arguments, then environment variables
 nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
@@ -51,7 +52,7 @@ async function runTest() {
 }
 
 async function produce() {
-    const throughput = new utils.ThroughputCounter("ToDeli-ProducerPerf: ", console.error, 1000);
+    const throughput = new utils.ThroughputCounter(logger.info, "ToDeli-ProducerPerf: ", 1000);
     // Create the object first in the DB.
     await getOrCreateObject(objectId, "https://graph.microsoft.com/types/map");
     // Producer to push to kafka.
@@ -88,7 +89,7 @@ async function produce() {
 async function consume() {
     // Bootstrap kafka client to consume.
     let kafkaClient = new kafka({ 'url': zookeeperEndpoint });
-    const throughput = new utils.ThroughputCounter("FromDeli-ConsumerPerf: ", console.error, 1000);
+    const throughput = new utils.ThroughputCounter(logger.info, "FromDeli-ConsumerPerf: ", 1000);
 
     console.log("Waiting for messages...");
     const q = queue((message: any, callback) => {

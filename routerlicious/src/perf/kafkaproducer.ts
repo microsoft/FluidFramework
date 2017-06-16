@@ -2,6 +2,7 @@ import * as nconf from "nconf";
 import * as path from "path";
 import * as core from "../core";
 import * as utils from "../utils";
+import { logger } from "../utils";
 
 // Setup the configuration system - pull arguments, then environment letiables
 nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
@@ -20,7 +21,7 @@ async function runTest() {
 }
 // let producerInterval;
 async function produce() {
-    const throughput = new utils.ThroughputCounter("KafkaProducerPerformance: ", console.error, 1000);
+    const throughput = new utils.ThroughputCounter(logger.info, "KafkaProducerPerformance: ", 1000);
     // Producer to push to kafka.
     const producer = new utils.kafka.Producer(endPoint, topic);
     // Start sending

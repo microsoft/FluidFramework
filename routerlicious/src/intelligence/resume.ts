@@ -2,6 +2,7 @@ import { Client, Message } from "azure-iot-device";
 import { Mqtt } from "azure-iot-device-mqtt";
 import * as iothub from "azure-iothub";
 import * as utils from "../utils";
+import { logger } from "../utils";
 import { IIntelligentService, IIntelligentServiceFactory } from "./api";
 
 interface IResumeResponse {
@@ -52,8 +53,7 @@ export class ResumeIntelligentSerivce implements IIntelligentService {
             this.clientP = this.createClient(this.config.host, this.config.deviceId);
             this.clientP.catch((error) => {
                 // Log the error and then null out the client to cause the next request to try again
-                console.error("There was a problem creating the client");
-                console.error(error);
+                logger.error("There was a problem creating the client", error);
                 this.clientP = null;
             });
         }
@@ -109,7 +109,7 @@ export class ResumeIntelligentSerivce implements IIntelligentService {
 
                 response.send(200, "Input was written to log.", (err) => {
                     if (err) {
-                        console.error(err);
+                        logger.error("Error writing to log", err);
                     }
                 });
 

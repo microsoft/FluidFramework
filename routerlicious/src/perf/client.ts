@@ -6,6 +6,7 @@ import * as io from "socket.io-client";
 import * as api from "../api";
 import * as messages from "../socket-storage/messages";
 import * as utils from "../utils";
+import { logger } from "../utils";
 
 // Setup the configuration system - pull arguments, then environment variables
 nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
@@ -33,7 +34,7 @@ async function runTest() {
 async function consume() {
     // Bootstrap kafka client to consume.
     let kafkaClient = new kafka({ 'url': zookeeperEndpoint });
-    const throughput = new utils.ThroughputCounter("FromClient-ConsumerPerf: ", console.error, 1000);
+    const throughput = new utils.ThroughputCounter(logger.info, "FromClient-ConsumerPerf: ", 1000);
 
     console.log("Waiting for messages...");
     const q = queue((message: any, callback) => {
@@ -74,7 +75,7 @@ function processMessage(message: string) {
 }
 
 async function produce() {
-    const throughput = new utils.ThroughputCounter("ToClient-ProducerPerf: ", console.error, 1000);    
+    const throughput = new utils.ThroughputCounter(logger.info, "ToClient-ProducerPerf: ", 1000);    
     let clientId = await connect();
     
     // Prepare the message that alfred understands.

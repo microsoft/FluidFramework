@@ -1,3 +1,5 @@
+// Setup the configuration system - pull arguments, then environment variables - prior to loading other modules that
+// may depend on the config already being initialized
 import * as amqp from "amqplib";
 import { queue } from "async";
 import * as kafka from "kafka-rest";
@@ -5,8 +7,8 @@ import * as nconf from "nconf";
 import * as path from "path";
 import * as core from "../core";
 import * as utils from "../utils";
+import { logger } from "../utils";
 
-// Setup the configuration system - pull arguments, then environment variables
 nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
 
 // Prep RabbitMQ
@@ -20,10 +22,10 @@ const groupId = nconf.get("tmz:groupId");
 
 async function run() {
     const connection = await amqp.connect(rabbitmqConnectionString);
-    console.log("Connected to RabbitMQ");
+    logger.info("Connected to RabbitMQ");
     const channel = await connection.createChannel();
     await channel.assertQueue(snapshotQueue, { durable: true });
-    console.log("Channel ready");
+    logger.info("Channel ready");
 
     const deferred = new utils.Deferred<void>();
 
@@ -57,19 +59,14 @@ async function run() {
         }
     });
 
-    const q = queue((message: any, callback) => {
-        
+    const q = queue((message: any, callback) => { 
         const value = JSON.parse(message.value.toString('utf8')) as core.IRawOperationMessage;
-
         if (createdRequests[value.objectId]) {
             return;
         }
-
         createdRequests[value.objectId] = true;
-        console.log(`Requesting snapshots for ${value.objectId}`);
-
+        logger.info(`Requesting snapshots for ${value.objectId}`);
         channel.sendToQueue(snapshotQueue, new Buffer(value.objectId), { persistent: true });
-
         callback();
     }, 1);
 
@@ -77,9 +74,9 @@ async function run() {
 }
 
 // Start up the TMZ service
-console.log("Starting");
+logger.info("Starting");
 const runP = run();
 runP.catch((error) => {
-    console.error(error);
+    logger.error(error);
     process.exit(1);
 });

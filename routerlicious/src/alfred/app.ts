@@ -1,10 +1,12 @@
 import * as bodyParser from "body-parser";
 import * as express from "express";
-import * as logger from "morgan";
+import * as morgan from "morgan";
+import * as nconf from "nconf";
 import * as passport from "passport";
 import * as path from "path";
 import * as favicon from "serve-favicon";
 import * as expiry from "static-expiry";
+import * as utils from "../utils";
 import * as routes from "./routes";
 
 // Base endpoint to expose static files at
@@ -28,7 +30,8 @@ app.set("view engine", "hjs");
 
 // uncomment after placing your favicon in /public
 app.use(favicon(path.join(__dirname, "../../public", "favicon.ico")));
-app.use(logger("dev"));
+// TODO we probably want to switch morgan to use the common format in prod
+app.use(morgan(nconf.get("logger:morganFormat"), { stream: utils.stream }));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 
