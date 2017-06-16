@@ -1,11 +1,13 @@
-import { queue } from "async";
-import * as kafka from "kafka-rest";
+// Setup the configuration system - pull arguments, then environment variables - prior to loading other modules that
+// may depend on the config already being initialized
 import * as nconf from "nconf";
 import * as path from "path";
+nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
+
+import { queue } from "async";
+import * as kafka from "kafka-rest";
 import * as utils from "../utils";
 import { logger } from "../utils";
-
-nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
 
 const topic = nconf.get("perf:sendTopic");
 const endPoint = nconf.get("perf:endPoint");

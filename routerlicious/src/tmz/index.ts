@@ -1,15 +1,15 @@
 // Setup the configuration system - pull arguments, then environment variables - prior to loading other modules that
 // may depend on the config already being initialized
+import * as nconf from "nconf";
+import * as path from "path";
+nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
+
 import * as amqp from "amqplib";
 import { queue } from "async";
 import * as kafka from "kafka-rest";
-import * as nconf from "nconf";
-import * as path from "path";
 import * as core from "../core";
 import * as utils from "../utils";
 import { logger } from "../utils";
-
-nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
 
 // Prep RabbitMQ
 const snapshotQueue = nconf.get("tmz:queue");

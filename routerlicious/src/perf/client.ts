@@ -1,15 +1,16 @@
-import { queue } from "async";
-import * as kafka from "kafka-rest";
+// Setup the configuration system - pull arguments, then environment variables - prior to loading other modules that
+// may depend on the config already being initialized
 import * as nconf from "nconf";
 import * as path from "path";
+nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
+
+import { queue } from "async";
+import * as kafka from "kafka-rest";
 import * as io from "socket.io-client";
 import * as api from "../api";
 import * as messages from "../socket-storage/messages";
 import * as utils from "../utils";
 import { logger } from "../utils";
-
-// Setup the configuration system - pull arguments, then environment variables
-nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
 
 const zookeeperEndpoint = nconf.get("zookeeper:endpoint");
 const receiveTopic = nconf.get("deli:topics:receive");
