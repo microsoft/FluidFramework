@@ -1,7 +1,6 @@
 import * as utils from "../utils";
 import { debug } from "./debug";
 
-
 interface IPartitionRange {
     // Latest offset seen for the partition.
     latestOffset: number;
@@ -100,11 +99,9 @@ export class PartitionManager {
                     resolve({ data: true });
                 },
                 (error) => {
-                    console.error(`${this.groupId}: Error checkpointing kafka offsets: ${error}`);
+                    debug(`${this.groupId}: Error checkpointing kafka offsets: ${error}`);
                     reject(error);
-                }
-            );
-
+                });
         });
     }
 

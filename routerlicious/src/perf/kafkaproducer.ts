@@ -17,7 +17,7 @@ runTest();
 
 async function runTest() {
     console.log("Wait for 10 seconds to warm up kafka and zookeeper....");
-    await sleep(10000);    
+    await sleep(10000);
     produce();
 }
 // let producerInterval;
@@ -52,8 +52,7 @@ async function produce() {
             },
             (error) => {
                 console.error(error);
-            }
-        );
+            });
     }
 }
 

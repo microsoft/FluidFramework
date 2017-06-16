@@ -5,7 +5,6 @@ import * as path from "path";
 nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
 
 import * as amqp from "amqplib";
-import { queue } from "async";
 import * as kafka from "kafka-rest";
 import * as core from "../core";
 import * as utils from "../utils";
@@ -36,40 +35,35 @@ async function run() {
         deferred.reject(error);
     });
 
-    const kafkaClient = new kafka({ 'url': zookeeperEndpoint });
+    const kafkaClient = new kafka({ url: zookeeperEndpoint });
+
     const createdRequests: any = {};
 
     kafkaClient.consumer(groupId).join({
         "auto.commit.enable": "false",
-        "auto.offset.reset": "smallest"
+        "auto.offset.reset": "smallest",
     }, (error, consumerInstance) => {
         if (error) {
             deferred.reject(error);
         } else {
             let stream = consumerInstance.subscribe(topic);
-            stream.on('data', (messages) => {
+            stream.on("data", (messages) => {
                 for (let msg of messages) {
-                    q.push(msg);
+                    const value = JSON.parse(msg.value.toString("utf8")) as core.IRawOperationMessage;
+                    if (createdRequests[value.objectId]) {
+                        return;
+                    }
+                    createdRequests[value.objectId] = true;
+                    logger.info(`Requesting snapshots for ${value.objectId}`);
+                    channel.sendToQueue(snapshotQueue, new Buffer(value.objectId), { persistent: true });
                 }
             });
-            stream.on('error', (err) => {
+            stream.on("error", (err) => {
                 consumerInstance.shutdown();
                 deferred.reject(err);
             });
         }
     });
-
-    const q = queue((message: any, callback) => { 
-        const value = JSON.parse(message.value.toString('utf8')) as core.IRawOperationMessage;
-        if (createdRequests[value.objectId]) {
-            return;
-        }
-        createdRequests[value.objectId] = true;
-        logger.info(`Requesting snapshots for ${value.objectId}`);
-        channel.sendToQueue(snapshotQueue, new Buffer(value.objectId), { persistent: true });
-        callback();
-    }, 1);
-
     return deferred.promise;
 }
 

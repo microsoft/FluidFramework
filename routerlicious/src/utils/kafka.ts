@@ -110,9 +110,8 @@ export class Producer {
      * Sends a single message to Kafka
      */
     private sendMessages(key: string, pendingMessages: IPendingMessage[]) {
-        const messages = pendingMessages.map((message) => 
-        {
-            return {value: message.message, key: key};
+        const messages = pendingMessages.map((message) => {
+            return {value: message.message, key};
         });
         this.producer.produce(messages, (error, data) => {
                 if (error) {
@@ -133,7 +132,7 @@ export class Producer {
         }
 
         this.connecting = true;
-        this.client = new kafka({ 'url': this.endpoint });
+        this.client = new kafka({ url: this.endpoint });
         this.producer = this.client.topic(this.topic);
 
         this.connected = true;
@@ -147,7 +146,7 @@ export class Producer {
  */
 export function commitOffset(client: any, path: string, commitRequest: any): Promise<void> {
     return new Promise<any>((resolve, reject) => {
-        client.post(path + '/offsets', commitRequest, null, (err, data) => {
+        client.post(path + "/offsets", commitRequest, null, (err, data) => {
             if (err) {
                 reject(err);
             } else {
@@ -156,4 +155,3 @@ export function commitOffset(client: any, path: string, commitRequest: any): Pro
         });
     });
 }
-

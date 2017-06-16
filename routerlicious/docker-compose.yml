@@ -72,10 +72,13 @@ services:
             - kafka
         ports:
             - "8082:8082"
+        logging:
+            driver: none
         environment:
             KAFKA_REST_ZOOKEEPER_CONNECT: 'zookeeper:2181'
             KAFKA_REST_LISTENERS: http://kafka-rest:8082
             KAFKA_REST_HOST_NAME: kafka-rest
+            KAFKA_REST_CONSUMER_REQUEST_TIMEOUT_MS: 1
     redis:
         image: "redis:alpine"
     mongodb:

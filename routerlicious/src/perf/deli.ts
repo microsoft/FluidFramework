@@ -89,45 +89,40 @@ async function produce() {
 
 async function consume() {
     // Bootstrap kafka client to consume.
-    let kafkaClient = new kafka({ 'url': zookeeperEndpoint });
+    let kafkaClient = new kafka({ url: zookeeperEndpoint });
     const throughput = new utils.ThroughputCounter(logger.info, "FromDeli-ConsumerPerf: ", 1000);
 
     console.log("Waiting for messages...");
     const q = queue((message: any, callback) => {
-        processMessage(message);
         callback();
         throughput.acknolwedge();
     }, 1);
 
     kafkaClient.consumer("scriptorium").join({
         "auto.commit.enable": "false",
-        "auto.offset.reset": "smallest"
-    }, (err, consumerInstance) => {
-        if (err) {
-           console.log(`Consumer Instance Error: ${err}`); 
+        "auto.offset.reset": "smallest",
+    }, (error, consumerInstance) => {
+        if (error) {
+           console.log(`Consumer Instance Error: ${error}`);
         } else {
             console.log(`Joined a consumer instance group: ${consumerInstance.getUri()}`);
             let stream = consumerInstance.subscribe(receiveTopic);
-            stream.on('data', (msgs) => {
-                for( let i = 0; i < msgs.length; i++) {
+            stream.on("data", (messages) => {
+                for (let msg of messages) {
                     throughput.produce();
-                    q.push(msgs[i].value.toString('utf8'));
+                    q.push(msg.value.toString("utf8"));
                 }
             });
-            stream.on('error', (err) => {
+            stream.on("error", (err) => {
                 console.log(`Stream Error: ${err}`);
             });
             // Also trigger clean shutdown on Ctrl-C
-            process.on('SIGINT', () => {
+            process.on("SIGINT", () => {
                 console.log("Attempting to shut down consumer instance...");
                 consumerInstance.shutdown();
             });
         }
     });
-}
-
-function processMessage(message: string) {
-    // console.log(message);
 }
 
 function sleep(ms) {

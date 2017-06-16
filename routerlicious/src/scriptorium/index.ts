@@ -53,12 +53,12 @@ async function run() {
         },
         { unique: true });
 
-    let kafkaClient = new kafka({ 'url': zookeeperEndpoint });
+    let kafkaClient = new kafka({ url: zookeeperEndpoint });
     let partitionManager: core.PartitionManager;
 
     kafkaClient.consumer(groupId).join({
         "auto.commit.enable": "false",
-        "auto.offset.reset": "smallest"
+        "auto.offset.reset": "smallest",
     }, (error, consumerInstance) => {
         if (error) {
             deferred.reject(error);
@@ -71,18 +71,18 @@ async function run() {
                 checkpointBatchSize,
                 checkpointTimeIntervalMsec);
             let stream = consumerInstance.subscribe(topic);
-            stream.on('data', (messages) => {
+            stream.on("data", (messages) => {
                 for (let msg of messages) {
                     throughput.produce();
                     q.push(msg);
                 }
             });
-            stream.on('error', (err) => {
+            stream.on("error", (err) => {
                 consumerInstance.shutdown();
                 deferred.reject(err);
             });
         }
-    });    
+    });
 
     const throughput = new utils.ThroughputCounter(logger.info);
     // Mongo inserts don't order promises with respect to each other. To work around this we track the last
@@ -123,7 +123,7 @@ async function run() {
         // NOTE the processing of the below messages must make sure to notify clients of the messages in increasing
         // order. Be aware of promise handling ordering possibly causing out of order messages to be delivered.
 
-        const baseMessage = JSON.parse(message.value.toString('utf8')) as core.IMessage;
+        const baseMessage = JSON.parse(message.value.toString("utf8")) as core.IMessage;
         if (baseMessage.type === core.SequencedOperationType) {
             const value = baseMessage as core.ISequencedOperationMessage;
 

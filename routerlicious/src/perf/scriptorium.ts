@@ -84,7 +84,6 @@ async function consume() {
 
     console.log("Waiting for messages to arrive from redis...");
     const q = queue((message: any, callback) => {
-        processMessage(message);
         callback();
         throughput.acknolwedge();
     }, 1);
@@ -99,8 +98,6 @@ async function consume() {
         sub.subscribe("socket.io#/#test-document#");
     });
 }
-
-function processMessage(message: any) {}
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));

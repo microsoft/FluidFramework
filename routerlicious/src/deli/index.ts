@@ -32,11 +32,11 @@ function processMessage(
     producer: utils.kafka.Producer,
     objectsCollection: Collection) {
 
-    const baseMessage = JSON.parse(message.value.toString('utf8')) as core.IMessage;
+    const baseMessage = JSON.parse(message.value.toString("utf8")) as core.IMessage;
     if (baseMessage.type === core.UpdateReferenceSequenceNumberType ||
         baseMessage.type === core.RawOperationType) {
 
-        const objectMessage = JSON.parse(message.value.toString('utf8')) as core.IObjectMessage;
+        const objectMessage = JSON.parse(message.value.toString("utf8")) as core.IObjectMessage;
         const objectId = objectMessage.objectId;
 
         // Go grab the takeANumber machine for the objectId and mark it as dirty.
@@ -99,7 +99,7 @@ async function processMessages(
 
     kafkaClient.consumer(groupId).join({
         "auto.commit.enable": "false",
-        "auto.offset.reset": "smallest"
+        "auto.offset.reset": "smallest",
     }, (error, consumerInstance) => {
         if (error) {
             deferred.reject(error);
@@ -112,13 +112,13 @@ async function processMessages(
                 checkpointBatchSize,
                 checkpointTimeIntervalMsec);
             let stream = consumerInstance.subscribe(receiveTopic);
-            stream.on('data', (messages) => {
+            stream.on("data", (messages) => {
                 for (let msg of messages) {
                     throughput.produce();
                     q.push(msg);
                 }
             });
-            stream.on('error', (err) => {
+            stream.on("error", (err) => {
                 consumerInstance.shutdown();
                 deferred.reject(err);
             });
@@ -159,7 +159,7 @@ async function run() {
     logger.info("Collection ready");
 
     // Prep Kafka connection
-    let kafkaClient = new kafka({ 'url': zookeeperEndpoint });
+    let kafkaClient = new kafka({ url: zookeeperEndpoint });
     let producer = new utils.kafka.Producer(zookeeperEndpoint, sendTopic);
 
     // Return a promise that will never resolve (since we run forever) but will reject
