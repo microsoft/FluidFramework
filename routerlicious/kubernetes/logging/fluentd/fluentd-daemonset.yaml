@@ -6,6 +6,8 @@ metadata:
     app: fluentd
     kubernetes.io/cluster-service: "true"
 spec:
+  updateStrategy:
+    type: RollingUpdate
   template:
     metadata:
       labels:
@@ -24,7 +26,7 @@ spec:
         effect: NoSchedule
       containers:
       - name: fluentd
-        image: fluent/fluentd-kubernetes-daemonset:debian-elasticsearch
+        image: fluent/fluentd-kubernetes-daemonset:elasticsearch
         env:
           - name:  FLUENT_ELASTICSEARCH_HOST
             value: "elasticsearch"
