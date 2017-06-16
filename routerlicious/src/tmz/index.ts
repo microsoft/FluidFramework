@@ -1,5 +1,6 @@
 import * as amqp from "amqplib";
-import * as kafka from "kafka-node";
+import { queue } from "async";
+import * as kafka from "kafka-rest";
 import * as nconf from "nconf";
 import * as path from "path";
 import * as core from "../core";
@@ -14,7 +15,6 @@ const rabbitmqConnectionString = nconf.get("rabbitmq:connectionString");
 
 // Setup Kafka connection
 const zookeeperEndpoint = nconf.get("zookeeper:endpoint");
-const kafkaClientId = nconf.get("tmz:kafkaClientId");
 const topic = nconf.get("tmz:topic");
 const groupId = nconf.get("tmz:groupId");
 
@@ -25,35 +25,41 @@ async function run() {
     await channel.assertQueue(snapshotQueue, { durable: true });
     console.log("Channel ready");
 
+    const deferred = new utils.Deferred<void>();
+
     // The rabbitmq library does not support re-connect. We will simply exit and rely on being restarted once
     // we lose our connection to RabbitMQ.
     connection.on("error", (error) => {
         console.error("Lost connection to RabbitMQ - exiting");
-        console.error(error);
-        process.exit(1);
+        deferred.reject(error);
     });
 
-    // Ensure topics exist
-    const kafkaClient = new kafka.Client(zookeeperEndpoint, kafkaClientId);
-    await utils.kafka.ensureTopics(kafkaClient, [topic]);
-
-    // Create the consumer group and wire up messages
-    const consumerGroup = new kafka.ConsumerGroup({
-            fromOffset: "earliest",
-            groupId,
-            host: zookeeperEndpoint,
-            id: kafkaClientId,
-            protocol: ["roundrobin"],
-        },
-        [topic]);
-
-    consumerGroup.on("error", (error) => {
-        console.error(error);
-    });
-
+    const kafkaClient = new kafka({ 'url': zookeeperEndpoint });
     const createdRequests: any = {};
-    consumerGroup.on("message", async (message: any) => {
-        const value = JSON.parse(message.value) as core.IRawOperationMessage;
+
+    kafkaClient.consumer(groupId).join({
+        "auto.commit.enable": "false",
+        "auto.offset.reset": "smallest"
+    }, (error, consumerInstance) => {
+        if (error) {
+            deferred.reject(error);
+        } else {
+            let stream = consumerInstance.subscribe(topic);
+            stream.on('data', (messages) => {
+                for (let msg of messages) {
+                    q.push(msg);
+                }
+            });
+            stream.on('error', (err) => {
+                consumerInstance.shutdown();
+                deferred.reject(err);
+            });
+        }
+    });
+
+    const q = queue((message: any, callback) => {
+        
+        const value = JSON.parse(message.value.toString('utf8')) as core.IRawOperationMessage;
 
         if (createdRequests[value.objectId]) {
             return;
@@ -63,7 +69,11 @@ async function run() {
         console.log(`Requesting snapshots for ${value.objectId}`);
 
         channel.sendToQueue(snapshotQueue, new Buffer(value.objectId), { persistent: true });
-    });
+
+        callback();
+    }, 1);
+
+    return deferred.promise;
 }
 
 // Start up the TMZ service
