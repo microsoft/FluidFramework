@@ -1,72 +1,80 @@
 import { queue } from "async";
-import * as kafka from "kafka-node";
+import * as kafka from "kafka-rest";
 import * as nconf from "nconf";
 import * as path from "path";
 import * as utils from "../utils";
 
-// Setup the configuration system - pull arguments, then environment variables
 nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
 
-const zookeeperEndpoint = nconf.get("zookeeper:endpoint");
-const kafkaClientId = nconf.get("deli:kafkaClientId");
 const topic = nconf.get("perf:sendTopic");
-const groupId = nconf.get("deli:groupId");
+const endPoint = nconf.get("perf:endPoint");
+const groupId = nconf.get("perf:groupId");
 
-
-console.log(`Perf testing kafka consumer...`);
+console.log("Perf testing kafka rest consumer...");
 runTest();
 
 async function runTest() {
-    console.log("Wait for 10 seconds to warm up kafka, zookeeper, and redis....");
+    console.log("Wait for 10 seconds to warm up kafka and zookeeper....");
     await sleep(10000);
     consume();
 }
 
 async function consume() {
     // Prep Kafka connection
-    let kafkaClient = new kafka.Client(zookeeperEndpoint, kafkaClientId);
-    return utils.kafka.ensureTopics(kafkaClient, [topic])
-        .then(() => processMessages(kafkaClient));
-}
-
-function processMessages(kafkaClient: kafka.Client) {
-    const deferred = new utils.Deferred<void>();
+    let kafkaClient = new kafka({ 'url': endPoint });
     const throughput = new utils.ThroughputCounter("KafkaConsumerPerformance: ", console.error, 1000);
 
-    const highLevelConsumer = new kafka.HighLevelConsumer(kafkaClient, [topic], <any> {
-        autoCommit: false,
-        fetchMaxBytes: 1024 * 1024 * 1024,
-        fetchMinBytes: 1,
-        fromOffset: true,
-        groupId,
-        id: kafkaClientId,
-        maxTickMessages: 100000,
-    });
-
-    console.log("Waiting for messages");
+    console.log("Waiting for messages...");
     const q = queue((message: any, callback) => {
         processMessage(message);
         callback();
         throughput.acknolwedge();
     }, 1);
 
-    highLevelConsumer.on("error", (error) => {
-        // Workaround to resolve rebalance partition error.
-        // https://github.com/SOHU-Co/kafka-node/issues/90
-        console.error(`Error in kafka consumer: ${error}. Wait for 30 seconds and restart...`);
-        setTimeout(() => {
-            deferred.reject(error);
-        }, 30000);
-    });
-
-
-    highLevelConsumer.on("message", (message: any) => {
-        throughput.produce();
-        q.push(message);
-    });
+    kafkaClient.consumer(groupId).join({
+        "auto.commit.enable": "false",
+        "auto.offset.reset": "smallest"
+    }, (err, consumerInstance) => {
+        if (err) {
+           console.log(`Consumer Instance Error: ${err}`); 
+        } else {
+            console.log(`Joined a consumer instance group: ${consumerInstance.getUri()}`);
+            let stream = consumerInstance.subscribe(topic);
+            stream.on('data', (msgs) => {
+                for( let i = 0; i < msgs.length; i++) {
+                    throughput.produce();
+                    q.push(msgs[i].value.toString('utf8'));
+                    if (i === msgs.length - 1) {
+                        let offsetRequest = {offsets: [{
+                            topic: topic,
+                            partition: msgs[i].partition,
+                            offset: msgs[i].offset
+                        }]};
+                        console.log(`Commiting offsets...`);
+                        utils.kafka.commitOffset(kafkaClient, consumerInstance.getUri(), offsetRequest).then(
+                            (data) => {
+                                console.log(`Succ....${data}`);
+                            },
+                            (error) => {
+                                console.log(`Err....${error}`);
+                            }                         
+                        );
+                    }
+                }
+            });
+            stream.on('error', (err) => {
+                console.log(`Stream Error: ${err}`);
+            });
+            // Also trigger clean shutdown on Ctrl-C
+            process.on('SIGINT', () => {
+                console.log("Attempting to shut down consumer instance...");
+                consumerInstance.shutdown();
+            });
+        }
+    });    
 }
 
-function processMessage(message: any) {
+function processMessage(message: string) {
     // Not doing anything here.
 }
 

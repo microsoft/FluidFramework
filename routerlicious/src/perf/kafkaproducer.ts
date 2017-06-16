@@ -6,23 +6,23 @@ import * as utils from "../utils";
 // Setup the configuration system - pull arguments, then environment letiables
 nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
 
-const zookeeperEndpoint = nconf.get("zookeeper:endpoint");
 const topic = nconf.get("perf:sendTopic");
 const chunkSize = nconf.get("perf:chunkSize");
+const endPoint = nconf.get("perf:endPoint");
 
 console.log("Perf testing kafka producer...");
 runTest();
 
 async function runTest() {
-    console.log("Wait for 10 seconds to warm up kafka, zookeeper, and redis....");
-    await sleep(10000);
+    console.log("Wait for 10 seconds to warm up kafka and zookeeper....");
+    await sleep(10000);    
     produce();
 }
-
+// let producerInterval;
 async function produce() {
     const throughput = new utils.ThroughputCounter("KafkaProducerPerformance: ", console.error, 1000);
     // Producer to push to kafka.
-    const producer = new utils.kafka.Producer(zookeeperEndpoint, topic);
+    const producer = new utils.kafka.Producer(endPoint, topic);
     // Start sending
     let clientSequenceNumber = 1;
     const rawMessage: core.IRawOperationMessage = {
@@ -41,7 +41,7 @@ async function produce() {
         type: core.RawOperationType,
         userId: "producer",
     };
-    
+
     for (let i = 0; i < chunkSize; i++) {
         throughput.produce();
         producer.send(JSON.stringify(rawMessage), "producer").then(
@@ -50,7 +50,8 @@ async function produce() {
             },
             (error) => {
                 console.error(error);
-            });
+            }
+        );
     }
 }
 
