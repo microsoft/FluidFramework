@@ -80,7 +80,7 @@ async function produce() {
 }
 
 async function consume() {
-    const throughput = new utils.ThroughputCounter(logger.info, "FromDeli-ConsumerPerf: ", 1000);
+    const throughput = new utils.ThroughputCounter(logger.info, "FromScriptorium-ConsumerPerf: ", 1000);
 
     console.log("Waiting for messages to arrive from redis...");
     const q = queue((message: any, callback) => {
