@@ -72,10 +72,7 @@ async function run() {
                 checkpointTimeIntervalMsec);
             let stream = consumerInstance.subscribe(topic);
             stream.on("data", (messages) => {
-                for (let msg of messages) {
-                    throughput.produce();
-                    q.push(msg);
-                }
+                q.push(messages);
             });
             stream.on("error", (err) => {
                 consumerInstance.shutdown();
@@ -123,6 +120,7 @@ async function run() {
         // NOTE the processing of the below messages must make sure to notify clients of the messages in increasing
         // order. Be aware of promise handling ordering possibly causing out of order messages to be delivered.
 
+        throughput.produce();
         const baseMessage = JSON.parse(message.value.toString("utf8")) as core.IMessage;
         if (baseMessage.type === core.SequencedOperationType) {
             const value = baseMessage as core.ISequencedOperationMessage;

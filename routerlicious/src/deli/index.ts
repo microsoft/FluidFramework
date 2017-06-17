@@ -80,7 +80,7 @@ async function checkpoint(
     dispensers = [];
 
     // Finally call kafka checkpointing.
-    // partitionManager.checkPoint();
+    partitionManager.checkPoint();
 
     // Set up next cycle.
     checkpointTimer = setTimeout(() => {
@@ -113,10 +113,7 @@ async function processMessages(
                 checkpointTimeIntervalMsec);
             let stream = consumerInstance.subscribe(receiveTopic);
             stream.on("data", (messages) => {
-                for (let msg of messages) {
-                    throughput.produce();
-                    q.push(msg);
-                }
+                q.push(messages);
             });
             stream.on("error", (err) => {
                 consumerInstance.shutdown();
@@ -131,8 +128,9 @@ async function processMessages(
 
     logger.info("Waiting for messages");
     const q = queue((message: any, callback) => {
+        throughput.produce();
         processMessage(message, dispensers, ticketQueue, partitionManager, producer, objectsCollection);
-        callback();
+        throughput.acknolwedge();
 
         // Periodically checkpoints to mongo and checkpoints offset back to kafka.
         // Ideally there should be a better strategy to figure out when to checkpoint.
@@ -144,8 +142,7 @@ async function processMessages(
                 deferred.reject(error);
             });
         }
-
-        throughput.acknolwedge();
+        callback();
     }, 1);
 
     return deferred.promise;
