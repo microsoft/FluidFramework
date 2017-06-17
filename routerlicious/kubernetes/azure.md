@@ -167,3 +167,12 @@ If you wish to leave the cluster follow the below steps.
 Then, on the node being removed, reset all kubeadm installed state:
 
 `kubeadm reset`
+
+
+## Helm
+
+Helm is a package manager for Kubernetes and allows for creating reusable components
+
+You need to create the helm service account for RBAC access first. after that you can initialize it with:
+
+`helm init --service-account helm`
