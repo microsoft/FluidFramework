@@ -1,0 +1,39 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: scriptorium
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: scriptorium
+    spec:
+      containers:
+      - name: prague
+        image: prague.azurecr.io/prague:443
+        command:
+          - 'npm'
+          - 'run'
+          - 'scriptorium'
+        env:
+        - name: logger__colorize
+          value: "false"
+        - name: logger__morganFormat
+          value: combined
+        - name: logger__json
+          value: "false"
+        - name: logger__level
+          value: verbose
+        - name: logger__timestamp
+          value: "false"
+        - name: DEBUG
+          value: "routerlicious:*"
+        - name: redis__host
+          value: "redis"
+        - name: mongo__endpoint
+          value: "mongodb://mongodb:27017"
+        - name: zookeeper__endpoint
+          value: "zookeeper:2181"
+      imagePullSecrets:
+      - name: regsecret

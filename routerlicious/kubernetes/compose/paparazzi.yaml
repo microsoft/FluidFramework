@@ -1,0 +1,49 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: paparazzi
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: paparazzi
+    spec:
+      containers:
+      - name: prague
+        image: prague.azurecr.io/prague:443
+        command:
+          - 'npm'
+          - 'run'
+          - 'paparazzi'
+        env:
+        - name: logger__colorize
+          value: "false"
+        - name: logger__morganFormat
+          value: combined
+        - name: logger__json
+          value: "false"
+        - name: logger__level
+          value: verbose
+        - name: logger__timestamp
+          value: "false"
+        - name: DEBUG
+          value: "routerlicious:*"
+        - name: redis__host
+          value: "redis"
+        - name: mongo__endpoint
+          value: "mongodb://mongodb:27017"
+        - name: minio__endpoint
+          value: minio-service
+        - name: minio__accessKey
+          value: prague
+        - name: minio__secretKey
+          value: "mhioAkNXTwdX4dXWgKgXVtHo"
+        - name: zookeeper_endpoint
+          value: "zookeeper:2181"
+        - name: rabbitmq__connectionString
+          value: "amqp://rabbitmq"
+        - name: paparazzi__alfred
+          value: "http://alfred"
+      imagePullSecrets:
+      - name: regsecret
