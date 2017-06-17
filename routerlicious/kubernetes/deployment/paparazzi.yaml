@@ -1,0 +1,31 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: paparazzi
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: paparazzi
+    spec:
+      containers:
+      - name: prague
+        image: prague.azurecr.io/prague:443
+        command:
+          - 'npm'
+          - 'run'
+          - 'paparazzi'
+        env:
+        - name: DEBUG
+          value: "routerlicious:*"
+        volumeMounts:
+        - name: config
+          mountPath: /usr/src/server/config.json
+          subPath: config.json
+      imagePullSecrets:
+      - name: regsecret
+      volumes:
+        - name: config
+          configMap:
+            name: prague

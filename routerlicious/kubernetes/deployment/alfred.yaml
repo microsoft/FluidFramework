@@ -1,0 +1,45 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: alfred
+spec:
+  replicas: 4
+  template:
+    metadata:
+      labels:
+        app: alfred
+    spec:
+      containers:
+      - name: routerlicious
+        image: prague.azurecr.io/prague:443
+        ports:
+        - name: ui
+          containerPort: 3000
+        env:
+        - name: DEBUG
+          value: "routerlicious:*"
+        volumeMounts:
+        - name: config
+          mountPath: /usr/src/server/config.json
+          subPath: config.json
+      imagePullSecrets:
+      - name: regsecret
+      volumes:
+        - name: config
+          configMap:
+            name: prague
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: alfred
+  labels:
+    app: alfred
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: ui
+  selector:
+    app: alfred

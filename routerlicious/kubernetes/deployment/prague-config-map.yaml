@@ -1,0 +1,92 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prague
+data:
+  config.json: |
+    {
+      "logger": {
+          "colorize": false,
+          "morganFormat": "combined",
+          "json": false,
+          "level": "verbose",
+          "timestamp": false
+      },
+      "rabbitmq": {
+          "connectionString": "amqp://rabbitmq"
+      },
+      "mongo": {
+          "endpoint": "mongodb://mongodb:27017",
+          "collectionNames": {
+              "deltas": "deltas",
+              "objects": "objects",
+              "partitions": "partitions"
+          }
+      },
+      "zookeeper": {
+          "endpoint": "zookeeper:2181"
+      },
+      "alfred": {
+          "kafkaClientId": "alfred",
+          "topic": "rawdeltas",
+          "bucket": "snapshots"
+      },
+      "deli": {
+          "topics": {
+              "receive": "rawdeltas",
+              "send": "deltas"
+          },
+          "kafkaClientId": "deli",
+          "groupId": "deli",
+          "checkpointBatchSize": 10,
+          "checkpointTimeIntervalMsec": 1000
+
+      },
+      "paparazzi": {
+          "queue": "snapshot",
+          "bucket": "snapshots",
+          "alfred": "http://alfred"
+      },
+      "scriptorium": {
+          "topic": "deltas",
+          "kafkaClientId": "scriptorium",
+          "groupId": "scriptorium",
+          "checkpointBatchSize": 1,
+          "checkpointTimeIntervalMsec": 1000
+      },
+      "tmz": {
+          "queue": "snapshot",
+          "topic": "deltas",
+          "kafkaClientId": "tmz",
+          "groupId": "tmz"
+      },
+      "redis": {
+          "host": "redis",
+          "port": 6379
+      },
+      "minio": {
+          "endpoint": "minio",
+          "port": 9000,
+          "accessKey": "prague",
+          "secretKey": "mhioAkNXTwdX4dXWgKgXVtHo"
+      },
+      "perf": {
+          "kafkaSendClientId": "perfsend",
+          "kafkaReceiveClientId": "perfreceive",
+          "sendTopic": "rawdeltas",
+          "receiveTopic": "deltas",
+          "bucket": "snapshots",
+          "chunkSize": 1000
+      },
+      "intelligence": {
+          "resume": {
+              "deviceId": "routerlicious",
+              "host": "pkarimov-paidIOT.azure-devices.net",
+              "sharedAccessKeyName": "iothubowner",
+              "sharedAccessKey": "8mvOmNnUklwnuzY+U96V51w+qCq262ZUpSkdw8nTZ18="
+          },
+          "textAnalytics": {
+              "key": "c8b60dc5e49849ce903d7d29a2dce550"
+          }
+      }
+    }

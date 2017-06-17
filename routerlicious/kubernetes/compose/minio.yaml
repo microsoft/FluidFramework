@@ -2,7 +2,7 @@ apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   # This name uniquely identifies the Deployment
-  name: minio-deployment
+  name: minio
 spec:
   strategy:
     type: Recreate
@@ -31,7 +31,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: minio-service
+  name: minio
 spec:
   ports:
     - port: 9000
