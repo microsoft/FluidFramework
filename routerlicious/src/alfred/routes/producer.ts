@@ -1,4 +1,4 @@
-import * as express from "express";
+import { Router } from "express";
 import { MongoClient } from "mongodb";
 import * as nconf from "nconf";
 import * as api from "../../api";
@@ -6,7 +6,7 @@ import * as core from "../../core";
 import * as utils from "../../utils";
 import { logger } from "../../utils";
 
-const router = express.Router();
+const router: Router = Router();
 
 let producerRunning = false;
 

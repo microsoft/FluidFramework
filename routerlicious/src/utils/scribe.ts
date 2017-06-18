@@ -30,7 +30,7 @@ interface IChartData {
     index: number;
 }
 
-declare type ScribeMetricsCallback = (metrics: IScribeMetrics) => void;
+export declare type ScribeMetricsCallback = (metrics: IScribeMetrics) => void;
 
 const RunningCalculationDelay = 10000;
 

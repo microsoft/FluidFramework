@@ -4,8 +4,9 @@ import * as Collections from "./collections";
 import * as fs from "fs";
 import * as MergeTree from "./mergeTree";
 import * as API from "../api";
+import { IPropertyString } from "../api";
 
-interface SnapshotHeader {
+export interface SnapshotHeader {
     chunkCount?: number;
     segmentsTotalLength: number;
     indexOffset?: number;
@@ -14,7 +15,7 @@ interface SnapshotHeader {
 }
 
 // first three are index entry
-interface SnapChunk {
+export interface SnapChunk {
     /**
      * Offset from beginning of segments.
      */
@@ -41,7 +42,7 @@ export class Snapshot {
     seq: number;
     buffer: Buffer;
     pendingChunk: SnapChunk;
-    texts: API.IPropertyString[];
+    texts: IPropertyString[];
 
     constructor(public mergeTree: MergeTree.MergeTree, public filename?: string,
         public onCompletion?: () => void) {

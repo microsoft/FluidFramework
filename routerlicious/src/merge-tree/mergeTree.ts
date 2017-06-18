@@ -3,6 +3,7 @@
 import * as Base from "./base";
 import * as Collections from "./collections";
 import * as API from "../api";
+import { ISequencedMessage } from "../api";
 import * as Properties from "./properties";
 
 export interface Node {
@@ -49,7 +50,7 @@ export interface SegmentAction {
         end: number, accum?: TAccum): boolean;
 }
 
-interface SegmentChanges {
+export interface SegmentChanges {
     next?: Segment;
     replaceCurrent?: Segment;
 }
@@ -104,7 +105,7 @@ export interface OverlapClient {
     seglen: number;
 }
 
-class MergeNode implements Node {
+export class MergeNode implements Node {
     parent: Block;
     cachedLength: number;
     isLeaf() {
@@ -112,7 +113,7 @@ class MergeNode implements Node {
     }
 }
 
-class MergeBlock extends MergeNode implements Block {
+export class MergeBlock extends MergeNode implements Block {
     constructor(public childCount: number) {
         super();
         this.children = new Array<Node>(childCount);
@@ -180,7 +181,7 @@ export class ExternalSegment extends BaseSegment {
     }
 }
 
-enum MarkerProperties {
+export enum MarkerProperties {
     Begin,
     End,
     SurvivesRemoval,
@@ -411,7 +412,7 @@ export const TreeMaintainanceSequenceNumber = -2;
 export const LocalClientId = -1;
 export const NonCollabClient = -2;
 
-interface PartialSequenceLength {
+export interface PartialSequenceLength {
     seq: number;
     len: number;
     seglen: number;
@@ -419,7 +420,7 @@ interface PartialSequenceLength {
     overlapClients?: Collections.RedBlackTree<number, OverlapClient>;
 }
 
-class CollaborationWindow {
+export class CollaborationWindow {
     clientId = LocalClientId;
     collaborating = false;
     // lowest-numbered segment in window; no client can reference a state before this one
@@ -468,7 +469,7 @@ function compareStrings(a: string, b: string) {
  * in the current collaboration window (if any).  Only used during active
  * collaboration.
  */
-class PartialSequenceLengths {
+export class PartialSequenceLengths {
     minLength = 0;
     segmentCount = 0;
     partialLengths: PartialSequenceLength[] = [];
@@ -1008,7 +1009,7 @@ function elapsedMicroseconds(start: [number, number] | number) {
 export const useCheckQ = false;
 
 function checkTextMatchRelative(refSeq: number, clientId: number, server: TestServer,
-    msg: API.ISequencedMessage) {
+    msg: ISequencedMessage) {
     let client = server.clients[clientId];
     let serverText = server.mergeTree.getText(refSeq, clientId);
     let cliText = client.checkQ.dequeue();
@@ -1086,7 +1087,7 @@ export class Client {
     }
 
     makeInsertMsg(text: string, pos: number, seq: number, refSeq: number, objectId: string) {
-        return <API.ISequencedMessage>{
+        return <ISequencedMessage>{
             clientId: this.longClientId,
             sequenceNumber: seq,
             referenceSequenceNumber: refSeq,
@@ -1103,7 +1104,7 @@ export class Client {
     }
 
     makeRemoveMsg(start: number, end: number, seq: number, refSeq: number, objectId: string) {
-        return <API.ISequencedMessage>{
+        return <ISequencedMessage>{
             clientId: this.longClientId,
             sequenceNumber: seq,
             referenceSequenceNumber: refSeq,
@@ -1413,7 +1414,7 @@ export class TestServer extends Client {
 
 }
 
-interface LRUSegment {
+export interface LRUSegment {
     segment?: Segment;
     maxSeq: number;
 }
