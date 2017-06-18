@@ -13,10 +13,10 @@ data:
           "timestamp": false
       },
       "rabbitmq": {
-          "connectionString": "amqp://rabbitmq"
+          "connectionString": "amqp://prague:mhioAkNXTwdX4dXWgKgXVtHo@alliterating-goose-rabbitmq"
       },
       "mongo": {
-          "endpoint": "mongodb://mongodb:27017",
+          "endpoint": "mongodb://knobby-catfish-mongodb:27017",
           "collectionNames": {
               "deltas": "deltas",
               "objects": "objects",
@@ -61,11 +61,11 @@ data:
           "groupId": "tmz"
       },
       "redis": {
-          "host": "redis",
+          "host": "youngling-bat-redis",
           "port": 6379
       },
       "minio": {
-          "endpoint": "minio",
+          "endpoint": "idolized-oyster-minio-svc",
           "port": 9000,
           "accessKey": "prague",
           "secretKey": "mhioAkNXTwdX4dXWgKgXVtHo"
