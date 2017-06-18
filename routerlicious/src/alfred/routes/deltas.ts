@@ -1,11 +1,11 @@
-import * as express from "express";
+import { Router } from "express";
 import * as nconf from "nconf";
 import * as utils from "../../utils";
 
 const mongoUrl = nconf.get("mongo:endpoint");
 const deltasCollectionName = nconf.get("mongo:collectionNames:deltas");
 
-const router = express.Router();
+const router: Router = Router();
 
 const mongoManager = new utils.MongoManager(mongoUrl);
 

@@ -5,7 +5,7 @@ const sentimentUrl = "https://westus.api.cognitive.microsoft.com/text/analytics/
 const keyPhrasesUrl = "https://westus.api.cognitive.microsoft.com/text/analytics/v2.0/keyPhrases";
 const languageUrl = "https://westus.api.cognitive.microsoft.com/text/analytics/v2.0/languages";
 
-interface IConfig {
+export interface IConfig {
     key: string;
 }
 
@@ -74,7 +74,7 @@ class TextAnalyticsIntelligentService implements IIntelligentService {
     }
 }
 
-class TextAnalyticsFactory implements IIntelligentServiceFactory {
+export class TextAnalyticsFactory implements IIntelligentServiceFactory {
     public create(config: IConfig): IIntelligentService {
         return new TextAnalyticsIntelligentService(config.key);
     }

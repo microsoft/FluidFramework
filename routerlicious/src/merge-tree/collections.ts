@@ -327,12 +327,12 @@ export function LinearDictionary<TKey, TData>(compareKeys: Base.KeyComparer<TKey
     }
 }
 
-const enum Color {
+export const enum Color {
     RED,
     BLACK
 }
 
-interface Node<TKey, TData> {
+export interface Node<TKey, TData> {
     key: TKey;
     data: TData;
     left: Node<TKey, TData>;

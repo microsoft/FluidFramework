@@ -2,7 +2,8 @@
   "name": "routerlicious",
   "version": "0.1.0",
   "description": "Server to assign sequence numbers and route deltas between connected clients",
-  "main": "index.js",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "browserify": "mkdirp public/scripts/dist && concurrently \"npm run browserify:canvas\" \"npm run browserify:maps\" \"npm run browserify:cell\" \"npm run browserify:sharedText\" \"npm run browserify:scribe\" \"npm run browserify:perf\"",
     "browserify:canvas": "browserify src/alfred/controllers/canvas.ts -o public/scripts/dist/canvas.js -s controller -p [ tsify -t es5 ]",

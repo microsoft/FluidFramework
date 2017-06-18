@@ -1,7 +1,7 @@
-import * as express from "express";
+import { Router } from "express";
 import { defaultPartials } from "./partials";
 
-const router = express.Router();
+const router: Router = Router();
 
 /**
  * Route to retrieve the home page for the app

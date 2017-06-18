@@ -1,4 +1,4 @@
-import * as express from "express";
+import { Router } from "express";
 import * as minio from "minio";
 import * as nconf from "nconf";
 import { Readable } from "stream";
@@ -44,7 +44,7 @@ async function getObject(objectId: string, bucket: string): Promise<string> {
     });
 }
 
-const router = express.Router();
+const router: Router = Router();
 
 /**
  * Retrieves deltas for the given document. With an optional from and to range (both exclusive) specified

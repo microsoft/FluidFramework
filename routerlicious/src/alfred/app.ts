@@ -1,5 +1,6 @@
 import * as bodyParser from "body-parser";
 import * as express from "express";
+import { Express } from "express";
 import * as morgan from "morgan";
 import * as nconf from "nconf";
 import * as passport from "passport";
@@ -19,7 +20,7 @@ function translateStaticUrl(url: string): string {
 }
 
 // Express app configuration
-let app = express();
+let app: Express = express();
 
 // Running behind iisnode
 app.set("trust proxy", 1);

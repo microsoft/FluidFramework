@@ -535,7 +535,7 @@ export interface IComponentContainer {
     status: IStatus;
 }
 
-class Cursor {
+export class Cursor {
     public off = true;
     public parentSpan: HTMLSpanElement;
     public editSpan: HTMLSpanElement;
