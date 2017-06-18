@@ -30,20 +30,18 @@ export function activate(context: vscode.ExtensionContext) {
     sharedString.on("loadFinshed", (data: api.MergeTreeChunk) => {
         vscode.window.showInformationMessage('load finished');
 
-        setTimeout(() => {
-            if (sharedString.client.getLength() !== 0) {
-                let sharedText = sharedString.client.getText();        
-            } else {
-                let text = doc.getText();
-                console.log("local load...");
-                const segments = SharedString.loadSrcSegments(text);
-                for (const segment of segments) {
-                    let textSegment = <SharedString.TextSegment>segment;
-                    sharedString.insertText(textSegment.text, sharedString.client.getLength(),
-                        textSegment.properties);
-                }
+        if (sharedString.client.getLength() !== 0) {
+            let sharedText = sharedString.client.getText();        
+        } else {
+            let text = doc.getText();
+            console.log("local load...");
+            const segments = SharedString.loadSrcSegments(text);
+            for (const segment of segments) {
+                let textSegment = <SharedString.TextSegment>segment;
+                sharedString.insertText(textSegment.text, sharedString.client.getLength(),
+                    textSegment.properties);
             }
-        }, 0);
+        }
     });
 
     // TODO: put all of the current file contents into the shared string

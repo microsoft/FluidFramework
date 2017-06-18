@@ -77,11 +77,11 @@ export class SharedString implements API.ICollaborativeObject {
             this.events.emit('partialLoad', chunk);
         }
 
-        this.events.emit('loadFinshed', chunk);
         this.isLoaded = true;
         this.client.startCollaboration(this.connection.clientId, this.initialSeq);
-
         this.listenForUpdates();
+
+        this.events.emit('loadFinshed', chunk);
     }
 
     public on(event: string, listener: Function): this {
