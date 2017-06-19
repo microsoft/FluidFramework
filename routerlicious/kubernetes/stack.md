@@ -49,7 +49,7 @@ don't need persistence anyone for our Redis cluster.
 There were definitely pauses when enabling mongodb. Switching over to the premium disk storage got rid of it. The SSD
 seems to be MUCH faster (as Azure tells us) for DB scenarios. We should use them when needed.
 
-Kafka is in an incubation stage as a plugin. We don't have access to it.
+Kafka is in an incubation stage as a plugin and the performance is quite slow relative to the wurstmeister setup. So
+for now we are not making use of it.
 
-NAME               	REVISION	UPDATED                 	STATUS  	CHART           	NAMESPACE
-wintering-marsupial	3       	Fri Jun 16 18:12:23 2017	DEPLOYED	kafka-0.1.2     	default
+`helm install incubator/kafka`
