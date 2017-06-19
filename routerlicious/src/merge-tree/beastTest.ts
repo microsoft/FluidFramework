@@ -671,15 +671,17 @@ export function TestPack() {
             initString = "don't ask for whom the bell tolls; it tolls for thee";
         }
         let server = new MergeTree.TestServer(initString);
+        server.measureOps = true;
         if (startFile) {
-            Text.loadText(startFile, server.mergeTree, fileSegCount);
+            Text.loadTextFromFile(startFile, server.mergeTree, fileSegCount);
         }
 
         let clients = <MergeTree.Client[]>Array(clientCount);
         for (let i = 0; i < clientCount; i++) {
             clients[i] = new MergeTree.Client(initString);
+            clients[i].measureOps = true;
             if (startFile) {
-                Text.loadText(startFile, clients[i].mergeTree, fileSegCount);
+                Text.loadTextFromFile(startFile, clients[i].mergeTree, fileSegCount);
             }
             clients[i].startCollaboration(`Fred${i}`);
         }
@@ -1323,5 +1325,6 @@ export function TestPack() {
 //mergeTreeCheckedTest();
 let testPack = TestPack();
 //testPack.randolicious();
-testPack.clientServer();
+let filename = path.join(__dirname, "../../public/literature", "pp.txt");
+testPack.clientServer(filename);
 new Server();

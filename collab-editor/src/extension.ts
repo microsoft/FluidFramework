@@ -9,16 +9,40 @@ let services = api.getDefaultServices();
 
 class FlowFilter {
     constructor(public sharedString: SharedString.SharedString) {
-        this.setEvents();
     }
 
     setEvents() {
         let editor = vscode.window.activeTextEditor;
-        vscode.workspace.onDidChangeTextDocument((e)=> {
+        vscode.workspace.onDidChangeTextDocument((e) => {
             for (let change of e.contentChanges) {
-                console.log(`change ${change.range.start.line}, ${change.range.end.line}`);
+                console.log(`change ${change.range.start.line}, ${change.range.start.character} ${change.text}`);
+                let pos1 = this.sharedString.client.mergeTree.lcToPos(change.range.start.line, change.range.start.character);
+                let pos2 = this.sharedString.client.mergeTree.lcToPos(change.range.end.line, change.range.end.character);
+                console.log(`change pos: ${pos1} ${pos2}`);
+                // assume insert for now
+                if (change.text.length < 100) {
+                    this.sharedString.insertText(change.text, pos1);
+                }
             }
         });
+        
+        this.sharedString.on("op", (msg: api.IMessageBase) => {
+            if (msg && msg.op) {
+                let seqmsg = <api.ISequencedMessage>msg;
+                if (seqmsg.clientId != this.sharedString.client.longClientId) {
+                    let delta = <api.IMergeTreeDeltaMsg>msg.op;
+                    if (delta.type === api.MergeTreeMsgType.INSERT) {
+                        let editor = vscode.window.activeTextEditor;
+                        editor.edit((editBuilder) => {
+                            let lc = this.sharedString.client.mergeTree.posToLc(delta.pos1);
+                            let vspos = new vscode.Position(lc.line, lc.column);
+                            editBuilder.insert(vspos, delta.text);
+                        });
+                    }
+                }
+            }
+        });
+
     }
 
     insertTree() {
@@ -34,6 +58,7 @@ class FlowFilter {
                 line++;
                 return true;
             }
+
             this.sharedString.client.mergeTree.mapRange({ leaf: renderSegment }, SharedString.UniversalSequenceNumber,
                 this.sharedString.client.getClientId());
         });
@@ -44,7 +69,7 @@ function initializeSnapshot() {
     let editor = vscode.window.activeTextEditor;
     let doc = editor.document;
 
-    const sharedString = extension.load("zzz", services, api.defaultRegistry) as SharedString.SharedString;
+    const sharedString = extension.load("ddd", services, api.defaultRegistry) as SharedString.SharedString;
 
     sharedString.on("partialLoad", (data: api.MergeTreeChunk) => {
     });
@@ -53,6 +78,7 @@ function initializeSnapshot() {
         if (sharedString.client.getLength() !== 0) {
             let flowFilter = new FlowFilter(sharedString);
             flowFilter.insertTree();
+            flowFilter.setEvents();
         } else {
             let text = doc.getText();
             console.log("local load...");

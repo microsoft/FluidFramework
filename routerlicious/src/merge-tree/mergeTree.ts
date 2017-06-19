@@ -18,6 +18,7 @@ export interface Block extends Node {
     children: Node[];
     partialLengths?: PartialSequenceLengths;
     lineCount?: number;
+    offset?: number;
 }
 
 // TODO: make this extensible 
@@ -122,6 +123,7 @@ export class MergeBlock extends MergeNode implements Block {
     children: Node[];
     cachedLength: number;
     lineCount = 0;
+    offset = 0;
 }
 
 export abstract class BaseSegment extends MergeNode implements Segment {
@@ -1513,17 +1515,20 @@ export class MergeTree {
             let nodeIndex = 0;
             for (let i = 0; i < nodeCount; i++) {
                 let len = 0;
+                let lineCount = 0;
                 blocks[i] = new MergeBlock(0);
                 for (let j = 0; j < segCap; j++) {
                     if (nodeIndex < nodes.length) {
                         this.addNode(blocks[i], nodes[nodeIndex]);
                         len += nodes[nodeIndex].cachedLength;
+                        lineCount += getLineCount(nodes[nodeIndex]);
                     } else {
                         break;
                     }
                     nodeIndex++;
                 }
                 blocks[i].cachedLength = len;
+                blocks[i].lineCount = lineCount;
             }
             if (blocks.length == 1) {
                 return blocks[0];
@@ -1542,6 +1547,7 @@ export class MergeTree {
             block.parent = this.root;
             this.root.children[0] = block;
             this.root.cachedLength = block.cachedLength;
+            this.root.lineCount = block.lineCount;
         }
         else {
             this.root = this.makeBlock(0);
@@ -2469,30 +2475,46 @@ export class MergeTree {
             prevParent = parent;
             parent = parent.parent;
         }
-        return {line: lineCount - 1, column: pos - totalOffset};
+        return { line: lineCount, column: pos - totalOffset };
     }
 
     lcToPos(line: number, column: number) {
-        return this.lcToPosBlock(this.root, line, column, 0);
+        return this.lcToPosBlock(this.root, line, column, 0, 0);
     }
 
-    lcToPosBlock(block: Block, line: number, column: number, pos: number) {
+    lcToPosBlock(block: Block, line: number, column: number, pos: number, offset: number) {
         let children = block.children;
         for (let childIndex = 0; childIndex < block.childCount; childIndex++) {
             let child = children[childIndex];
             let childLineCount = getLineCount(child);
-            if (line < childLineCount) {
+            let len = this.nodeLength(child, UniversalSequenceNumber, this.collabWindow.clientId);
+
+            if ((line == 0) && (childLineCount == 0) && (child.isLeaf()) &&
+                ((offset + len) > column)) {
+                return (column - offset) + pos;
+            } else if (line < childLineCount) {
                 if (child.isLeaf()) {
-                    return pos + column;
+                    return (column - offset) + pos;
                 }
                 else {
                     let childBlock = <Block>child;
-                    return this.lcToPosBlock(childBlock, line, column, pos);
+                    return this.lcToPosBlock(childBlock, line, column, pos, offset);
                 }
             }
             else {
                 line -= childLineCount;
-                pos += this.nodeLength(child, UniversalSequenceNumber, this.collabWindow.clientId);
+                pos += len;
+                if (childLineCount > 0) {
+                    if (child.isLeaf()) {
+                        offset = 0;
+                    }
+                    else {
+                        offset = (<Block>child).offset;
+                    }
+                }
+                else {
+                    offset += len;
+                }
             }
         }
     }
@@ -2500,12 +2522,28 @@ export class MergeTree {
     nodeUpdateTotalLength(block: Block) {
         let len = 0;
         let lineCount = 0;
+        let offset = 0;
         for (let i = 0; i < block.childCount; i++) {
-            len += this.nodeLength(block.children[i], UniversalSequenceNumber, this.collabWindow.clientId);
-            lineCount += getLineCount(block.children[i]);
+            let child = block.children[i];
+            let nodeLen = this.nodeLength(child, UniversalSequenceNumber, this.collabWindow.clientId);
+            len += nodeLen;
+            let lc = getLineCount(child);
+            lineCount += lc;
+            if (lc > 0) {
+                if (child.isLeaf()) {
+                    offset = 0;
+                }
+                else {
+                    offset = (<Block>child).offset;
+                }
+            }
+            else {
+                offset += len;
+            }
         }
         block.cachedLength = len;
         block.lineCount = lineCount;
+        block.offset = offset;
     }
 
     nodeUpdatePathLengths(node: Block, seq: number, clientId: number, newStructure = false) {
