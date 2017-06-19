@@ -30,7 +30,6 @@ spec:
     spec:
       accessModes: 
         - ReadWriteOnce
-      storageClassName: azure-premium
       resources:
         requests:
           storage: 100Gi
