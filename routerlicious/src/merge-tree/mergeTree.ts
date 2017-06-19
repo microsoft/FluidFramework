@@ -17,6 +17,7 @@ export interface Block extends Node {
     childCount: number;
     children: Node[];
     partialLengths?: PartialSequenceLengths;
+    lineCount?: number;
 }
 
 // TODO: make this extensible 
@@ -120,6 +121,7 @@ export class MergeBlock extends MergeNode implements Block {
     }
     children: Node[];
     cachedLength: number;
+    lineCount = 0;
 }
 
 export abstract class BaseSegment extends MergeNode implements Segment {
@@ -1433,6 +1435,23 @@ function glc(mergeTree: MergeTree, id: number) {
     }
 }
 
+function getLineCount(node: Node) {
+    if (node.isLeaf()) {
+        let segment = <Segment>node;
+        if (segment.getType() == SegmentType.Text) {
+            let textSegment = <TextSegment>segment;
+            if (textSegment.text.charAt(textSegment.text.length - 1) == '\n') {
+                return 1;
+            }
+        }
+        return 0;
+    }
+    else {
+        let childBlock = <Block>node;
+        return childBlock.lineCount;
+    }
+}
+
 // represents a sequence of text segments
 export class MergeTree {
     // must be an even number   
@@ -2426,12 +2445,67 @@ export class MergeTree {
         }
     }
 
-    nodeUpdateTotalLength(node: Block) {
-        let len = 0;
-        for (let i = 0; i < node.childCount; i++) {
-            len += this.nodeLength(node.children[i], UniversalSequenceNumber, this.collabWindow.clientId);
+    posToLc(pos: number) {
+        let seg = this.getContainingSegment(pos, UniversalSequenceNumber, this.collabWindow.clientId);
+        return this.getLineCol(seg, UniversalSequenceNumber, this.collabWindow.clientId, pos);
+    }
+
+    // TODO: rationalize dup code with getOffset
+    getLineCol(node: Node, refSeq: number, clientId: number, pos: number) {
+        let totalOffset = 0;
+        let parent = node.parent;
+        let prevParent: Block;
+        let lineCount = 0;
+        while (parent) {
+            let children = parent.children;
+            for (let childIndex = 0; childIndex < parent.childCount; childIndex++) {
+                let child = children[childIndex];
+                if ((prevParent && (child == prevParent)) || (child == node)) {
+                    break;
+                }
+                lineCount += getLineCount(child);
+                totalOffset += this.nodeLength(child, refSeq, clientId);
+            }
+            prevParent = parent;
+            parent = parent.parent;
         }
-        node.cachedLength = len;
+        return {line: lineCount - 1, column: pos - totalOffset};
+    }
+
+    lcToPos(line: number, column: number) {
+        return this.lcToPosBlock(this.root, line, column, 0);
+    }
+
+    lcToPosBlock(block: Block, line: number, column: number, pos: number) {
+        let children = block.children;
+        for (let childIndex = 0; childIndex < block.childCount; childIndex++) {
+            let child = children[childIndex];
+            let childLineCount = getLineCount(child);
+            if (line < childLineCount) {
+                if (child.isLeaf()) {
+                    return pos + column;
+                }
+                else {
+                    let childBlock = <Block>child;
+                    return this.lcToPosBlock(childBlock, line, column, pos);
+                }
+            }
+            else {
+                line -= childLineCount;
+                pos += this.nodeLength(child, UniversalSequenceNumber, this.collabWindow.clientId);
+            }
+        }
+    }
+
+    nodeUpdateTotalLength(block: Block) {
+        let len = 0;
+        let lineCount = 0;
+        for (let i = 0; i < block.childCount; i++) {
+            len += this.nodeLength(block.children[i], UniversalSequenceNumber, this.collabWindow.clientId);
+            lineCount += getLineCount(block.children[i]);
+        }
+        block.cachedLength = len;
+        block.lineCount = lineCount;
     }
 
     nodeUpdatePathLengths(node: Block, seq: number, clientId: number, newStructure = false) {
@@ -2483,7 +2557,7 @@ export class MergeTree {
             }
         }
     }
-    
+
     map<TAccum>(actions: SegmentActions, refSeq: number, clientId: number, accum?: TAccum) {
         // TODO: optimize to avoid comparisons
         this.nodeMap(this.root, actions, 0, refSeq, clientId, accum);

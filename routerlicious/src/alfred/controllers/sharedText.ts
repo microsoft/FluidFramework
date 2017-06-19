@@ -199,6 +199,7 @@ export async function onLoad(id: string) {
     const mapExtension = API.defaultRegistry.getExtension(API.MapExtension.Type);
     const insights = mapExtension.load(`${id}-insights`, API.getDefaultServices(), API.defaultRegistry) as API.IMap;
     console.log(window.navigator.userAgent);
+    console.log(`id is ${id}`);
     sharedString.on("partialLoad", async (data: MergeTreeChunk) => {
         console.log("Partial load fired");
 

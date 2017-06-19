@@ -4,34 +4,55 @@ import * as vscode from 'vscode';
 import { api, sharedString as SharedString, socketStorage } from 'routerlicious';
 
 socketStorage.registerAsDefault("http://localhost:3000");
+const extension = api.defaultRegistry.getExtension(SharedString.CollaboritiveStringExtension.Type);
+let services = api.getDefaultServices();
 
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
+class FlowFilter {
+    constructor(public sharedString: SharedString.SharedString) {
+        this.setEvents();
+    }
 
-// this method is called when your extension is activated
-// your extension is activated the very first time the command is executed
-export function activate(context: vscode.ExtensionContext) {
-    const extension = api.defaultRegistry.getExtension(SharedString.CollaboritiveStringExtension.Type);
-    let services = api.getDefaultServices();
+    setEvents() {
+        let editor = vscode.window.activeTextEditor;
+        vscode.workspace.onDidChangeTextDocument((e)=> {
+            for (let change of e.contentChanges) {
+                console.log(`change ${change.range.start.line}, ${change.range.end.line}`);
+            }
+        });
+    }
 
-    // Use the console to output diagnostic information (console.log) and errors (console.error)
-    // This line of code will only be executed once when your extension is activated
-    console.log('Congratulations, your extension "hello" is now active!');
+    insertTree() {
+        let editor = vscode.window.activeTextEditor;
+        editor.edit((editBuilder) => {
+            let line = 0;
+
+            function renderSegment(segment: SharedString.Segment, segPos: number, refSeq: number,
+                clientId: number, start: number, end: number) {
+                let textSegment = <SharedString.TextSegment>segment;
+                let vspos = new vscode.Position(line, 0);
+                editBuilder.insert(vspos, textSegment.text);
+                line++;
+                return true;
+            }
+            this.sharedString.client.mergeTree.mapRange({ leaf: renderSegment }, SharedString.UniversalSequenceNumber,
+                this.sharedString.client.getClientId());
+        });
+    }
+}
+
+function initializeSnapshot() {
     let editor = vscode.window.activeTextEditor;
-
     let doc = editor.document;
 
-    const sharedString = extension.load("vscode2", services, api.defaultRegistry) as SharedString.SharedString;
+    const sharedString = extension.load("zzz", services, api.defaultRegistry) as SharedString.SharedString;
 
     sharedString.on("partialLoad", (data: api.MergeTreeChunk) => {
-        vscode.window.showInformationMessage(`partial load ${data.chunkLengthChars}`);        
     });
 
     sharedString.on("loadFinshed", (data: api.MergeTreeChunk) => {
-        vscode.window.showInformationMessage('load finished');
-
         if (sharedString.client.getLength() !== 0) {
-            let sharedText = sharedString.client.getText();        
+            let flowFilter = new FlowFilter(sharedString);
+            flowFilter.insertTree();
         } else {
             let text = doc.getText();
             console.log("local load...");
@@ -43,16 +64,15 @@ export function activate(context: vscode.ExtensionContext) {
             }
         }
     });
+}
 
-    // TODO: put all of the current file contents into the shared string
+export function activate(context: vscode.ExtensionContext) {
     // The command has been defined in the package.json file
     // Now provide the implementation of the command with  registerCommand
     // The commandId parameter must match the command field in package.json
-    let disposable = vscode.commands.registerCommand('extension.sayHello', () => {
+    let disposable = vscode.commands.registerCommand('extension.collab', () => {
         // The code you place here will be executed every time your command is executed
-
-        // Display a message box to the user
-        vscode.window.showInformationMessage('Hello World!');
+        initializeSnapshot();
     });
 
     context.subscriptions.push(disposable);

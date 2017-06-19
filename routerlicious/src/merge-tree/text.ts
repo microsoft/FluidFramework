@@ -87,7 +87,7 @@ export function loadSrcSegments(content: string) {
     let segments = <MergeTree.Segment[]>[];
 
     for (let paragraph of paragraphs) {
-        segments.push(new MergeTree.TextSegment(paragraph, seq, cli));
+        segments.push(new MergeTree.TextSegment(paragraph + '\n', seq, cli));
     }
 
     return segments;
