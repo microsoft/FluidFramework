@@ -5,7 +5,6 @@ import * as path from "path";
 nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
 
 import { queue } from "async";
-import * as kafka from "kafka-rest";
 import * as utils from "../utils";
 import { logger } from "../utils";
 
@@ -23,54 +22,28 @@ async function runTest() {
 }
 
 async function consume() {
-    // Prep Kafka connection
-    let kafkaClient = new kafka({ url: endPoint });
     const throughput = new utils.ThroughputCounter(logger.info, "KafkaConsumerPerformance: ", 1000);
 
     console.log("Waiting for messages...");
     const q = queue((message: any, callback) => {
-        callback();
+        throughput.produce();
         throughput.acknolwedge();
+        callback();
     }, 1);
 
-    kafkaClient.consumer(groupId).join({
-        "auto.commit.enable": "false",
-        "auto.offset.reset": "smallest",
-    }, (error, consumerInstance) => {
-        if (error) {
-           console.log(`Consumer Instance Error: ${error}`);
-        } else {
-            console.log(`Joined a consumer instance group: ${consumerInstance.getUri()}`);
-            let stream = consumerInstance.subscribe(topic);
-            stream.on("data", (msgs) => {
-                for (let i = 0; i < msgs.length; i++) {
-                    throughput.produce();
-                    q.push(msgs[i].value.toString("utf8"));
-                    if (i === msgs.length - 1) {
-                        let offsetRequest = {offsets: [{
-                            offset: msgs[i].offset,
-                            partition: msgs[i].partition,
-                            topic,
-                        }]};
-                        utils.kafka.commitOffset(kafkaClient, consumerInstance.getUri(), offsetRequest).then(
-                            (data) => {
-                                console.log(`Success checkpointing: ${data}`);
-                            },
-                            (err) => {
-                                console.log(`Error checkpointing: ${err}`);
-                            });
-                    }
-                }
-            });
-            stream.on("error", (err) => {
-                console.log(`Stream Error: ${err}`);
-            });
-            // Also trigger clean shutdown on Ctrl-C
-            process.on("SIGINT", () => {
-                console.log("Attempting to shut down consumer instance...");
-                consumerInstance.shutdown();
-            });
-        }
+    let consumer = utils.consumer.create("kafka-rest", endPoint, groupId, topic);
+    consumer.on("data", (data) => {
+        q.push(data);
+    });
+
+    consumer.on("error", (err) => {
+        console.error(`Error on reading kafka data`);
+    });
+
+    // Also trigger clean shutdown on Ctrl-C
+    process.on("SIGINT", () => {
+        console.log("Attempting to shut down consumer instance...");
+        consumer.shutdown();
     });
 }
 
