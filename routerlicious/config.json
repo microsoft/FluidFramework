@@ -114,8 +114,8 @@
         "chunkSize": 400000,
         "groupId": "perf",
         "lib": {
-            "name": "kafka-node",
-            "endpoint": "zookeeper:2181"
+            "name": "kafka-rest",
+            "endpoint": "http://kafka-rest:8082"
         }
     },
     "intelligence": {

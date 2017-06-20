@@ -29,13 +29,11 @@ services:
 
     zookeeper:
         image: wurstmeister/zookeeper:latest
-        hostname: zookeeper
         ports:
             - "2181:2181"
 
     kafka:
         image: wurstmeister/kafka:latest
-        hostname: kafka
         depends_on:
             - zookeeper
         ports:
@@ -49,7 +47,6 @@ services:
 
     kafka-rest:
         image: confluentinc/cp-kafka-rest:latest
-        hostname: kafka-rest
         depends_on:
             - zookeeper
             - kafka
