@@ -21,9 +21,6 @@ export function getEventHubConnectionString(
     return `Endpoint=sb://${endpoint}/;SharedAccessKeyName=${policy.sharedAccessKeyName};SharedAccessKey=${policy.sharedAccessKey}`;
 }
 
-import * as kafka from "./kafka";
-export { kafka };
-
 import * as scribe from "./scribe";
 export { scribe };
 

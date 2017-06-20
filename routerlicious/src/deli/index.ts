@@ -5,7 +5,6 @@ import * as path from "path";
 nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
 
 import { queue } from "async";
-import * as kafka from "kafka-rest";
 import * as _ from "lodash";
 import { Collection } from "mongodb";
 import * as core from "../core";
@@ -14,7 +13,9 @@ import { logger } from "../utils";
 import { TakeANumber } from "./takeANumber";
 
 const mongoUrl = nconf.get("mongo:endpoint");
-const zookeeperEndpoint = nconf.get("zookeeper:endpoint");
+const kafkaEndpoint = nconf.get("kafka:lib:endpoint");
+const kafkaLibrary = nconf.get("kafka:lib:name");
+const kafkaClientId = nconf.get("deli:kafkaClientId");
 const receiveTopic = nconf.get("deli:topics:receive");
 const sendTopic = nconf.get("deli:topics:send");
 const checkpointBatchSize = nconf.get("deli:checkpointBatchSize");
@@ -29,7 +30,7 @@ function processMessage(
     dispensers: { [key: string]: TakeANumber },
     ticketQueue: {[id: string]: Promise<void> },
     partitionManager: core.PartitionManager,
-    producer: utils.kafka.Producer,
+    producer: utils.kafkaProducer.IProdcuer,
     objectsCollection: Collection) {
 
     const baseMessage = JSON.parse(message.value.toString("utf8")) as core.IMessage;
@@ -89,37 +90,27 @@ async function checkpoint(
 }
 
 async function processMessages(
-    kafkaClient: any,
-    producer: utils.kafka.Producer,
+    producer: utils.kafkaProducer.IProdcuer,
+    consumer: utils.kafkaConsumer.IConsumer,
     objectsCollection: Collection): Promise<void> {
 
     const deferred = new utils.Deferred<void>();
     const dispensers: { [key: string]: TakeANumber } = {};
-    let partitionManager: core.PartitionManager;
+    const partitionManager = new core.PartitionManager(
+        groupId,
+        receiveTopic,
+        consumer,
+        checkpointBatchSize,
+        checkpointTimeIntervalMsec,
+    );
 
-    kafkaClient.consumer(groupId).join({
-        "auto.commit.enable": "false",
-        "auto.offset.reset": "smallest",
-    }, (error, consumerInstance) => {
-        if (error) {
-            deferred.reject(error);
-        } else {
-            partitionManager = new core.PartitionManager(
-                groupId,
-                receiveTopic,
-                kafkaClient,
-                consumerInstance.getUri(),
-                checkpointBatchSize,
-                checkpointTimeIntervalMsec);
-            let stream = consumerInstance.subscribe(receiveTopic);
-            stream.on("data", (messages) => {
-                q.push(messages);
-            });
-            stream.on("error", (err) => {
-                consumerInstance.shutdown();
-                deferred.reject(err);
-            });
-        }
+    consumer.on("data", (message) => {
+        q.push(message);
+    });
+
+    consumer.on("error", (err) => {
+        consumer.close();
+        deferred.reject(err);
     });
 
     let ticketQueue: {[id: string]: Promise<void> } = {};
@@ -155,13 +146,13 @@ async function run() {
     const objectsCollection = await client.collection(objectsCollectionName);
     logger.info("Collection ready");
 
-    // Prep Kafka connection
-    let kafkaClient = new kafka({ url: zookeeperEndpoint });
-    let producer = new utils.kafka.Producer(zookeeperEndpoint, sendTopic);
+    // Prep Kafka producer and consumer
+    let producer = utils.kafkaProducer.create(kafkaLibrary, kafkaEndpoint, kafkaClientId, sendTopic);
+    let consumer = utils.kafkaConsumer.create(kafkaLibrary, kafkaEndpoint, groupId, receiveTopic);
 
     // Return a promise that will never resolve (since we run forever) but will reject
     // should an error occur
-    return processMessages(kafkaClient, producer, objectsCollection);
+    return processMessages(producer, consumer, objectsCollection);
 }
 
 // Start up the deli service

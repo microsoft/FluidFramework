@@ -55,8 +55,11 @@
             "partitions": "partitions"
         }
     },
-    "zookeeper": {
-        "endpoint": "http://kafka-rest:8082"
+    "kafka": {
+        "lib": {
+            "name": "kafka-node",
+            "endpoint": "zookeeper:2181"
+        }
     },
     "alfred": {
         "kafkaClientId": "alfred",
@@ -108,7 +111,7 @@
         "sendTopic": "rawdeltas",
         "receiveTopic": "deltas",
         "bucket": "snapshots",
-        "chunkSize": 200000,
+        "chunkSize": 400000,
         "restEndpoint": "http://kafka-rest:8082",
         "zookeeperEndpoint": "zookeeper:2181",
         "groupId": "perf"

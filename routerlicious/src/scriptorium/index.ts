@@ -5,7 +5,6 @@ import * as path from "path";
 nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
 
 import { queue } from "async";
-import * as kafka from "kafka-rest";
 import { CollectionInsertManyOptions } from "mongodb";
 import * as socketIoEmitter from "socket.io-emitter";
 import * as core from "../core";
@@ -14,7 +13,8 @@ import { logger } from "../utils";
 
 // Initialize Socket.io and connect to the Redis adapter
 let redisConfig = nconf.get("redis");
-const zookeeperEndpoint = nconf.get("zookeeper:endpoint");
+const kafkaEndpoint = nconf.get("kafka:lib:endpoint");
+const kafkaLibrary = nconf.get("kafka:lib:name");
 const topic = nconf.get("scriptorium:topic");
 const groupId = nconf.get("scriptorium:groupId");
 const checkpointBatchSize = nconf.get("scriptorium:checkpointBatchSize");
@@ -53,32 +53,22 @@ async function run() {
         },
         { unique: true });
 
-    let kafkaClient = new kafka({ url: zookeeperEndpoint });
-    let partitionManager: core.PartitionManager;
+    let consumer = utils.kafkaConsumer.create(kafkaLibrary, kafkaEndpoint, groupId, topic);
+    const partitionManager = new core.PartitionManager(
+        groupId,
+        topic,
+        consumer,
+        checkpointBatchSize,
+        checkpointTimeIntervalMsec,
+    );
 
-    kafkaClient.consumer(groupId).join({
-        "auto.commit.enable": "false",
-        "auto.offset.reset": "smallest",
-    }, (error, consumerInstance) => {
-        if (error) {
-            deferred.reject(error);
-        } else {
-            partitionManager = new core.PartitionManager(
-                groupId,
-                topic,
-                kafkaClient,
-                consumerInstance.getUri(),
-                checkpointBatchSize,
-                checkpointTimeIntervalMsec);
-            let stream = consumerInstance.subscribe(topic);
-            stream.on("data", (messages) => {
-                q.push(messages);
-            });
-            stream.on("error", (err) => {
-                consumerInstance.shutdown();
-                deferred.reject(err);
-            });
-        }
+    consumer.on("data", (message) => {
+        q.push(message);
+    });
+
+    consumer.on("error", (err) => {
+        consumer.close();
+        deferred.reject(err);
     });
 
     const throughput = new utils.ThroughputCounter(logger.info);

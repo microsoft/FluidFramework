@@ -5,7 +5,6 @@ import * as path from "path";
 nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
 
 import * as amqp from "amqplib";
-import { queue } from "async";
 import * as core from "../core";
 import * as utils from "../utils";
 import { logger } from "../utils";
@@ -40,26 +39,19 @@ async function run() {
     const createdRequests: any = {};
 
     consumer.on("data", (message) => {
-        q.push(message);
+        const value = JSON.parse(message.value.toString("utf8")) as core.IRawOperationMessage;
+        if (createdRequests[value.objectId]) {
+            return;
+        }
+        createdRequests[value.objectId] = true;
+        logger.info(`Requesting snapshots for ${value.objectId}`);
+        channel.sendToQueue(snapshotQueue, new Buffer(value.objectId), { persistent: true });
     });
 
     consumer.on("error", (err) => {
         consumer.close();
         deferred.reject(err);
     });
-
-    const q = queue((message: any, callback) => {
-        const value = JSON.parse(message.value.toString("utf8")) as core.IRawOperationMessage;
-        if (createdRequests[value.objectId]) {
-            callback();
-            return;
-        }
-        createdRequests[value.objectId] = true;
-        logger.info(`Requesting snapshots for ${value.objectId}`);
-        channel.sendToQueue(snapshotQueue, new Buffer(value.objectId), { persistent: true });
-
-        callback();
-    }, 1);
 
     return deferred.promise;
 }

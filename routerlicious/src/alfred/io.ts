@@ -13,7 +13,9 @@ import { logger } from "../utils";
 let io = socketIo();
 
 // Group this into some kind of an interface
-const zookeeperEndpoint = nconf.get("zookeeper:endpoint");
+const kafkaEndpoint = nconf.get("kafka:lib:endpoint");
+const kafkaLibrary = nconf.get("kafka:lib:name");
+const kafkaClientId = nconf.get("alfred:kafkaClientId");
 const topic = nconf.get("alfred:topic");
 
 // Setup redis
@@ -61,7 +63,7 @@ async function getOrCreateObject(id: string, type: string): Promise<boolean> {
 }
 
 // Producer used to publish messages
-const producer = new utils.kafka.Producer(zookeeperEndpoint, topic);
+const producer = utils.kafkaProducer.create(kafkaLibrary, kafkaEndpoint, kafkaClientId, topic);
 const throughput = new utils.ThroughputCounter(logger.info);
 
 io.on("connection", (socket) => {

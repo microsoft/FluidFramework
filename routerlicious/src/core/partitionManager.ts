@@ -21,8 +21,7 @@ export class PartitionManager {
     constructor(
         private groupId: string,
         private topic: string,
-        private kafkaClient: any,
-        private consumerUri: string,
+        private consumer: utils.kafkaConsumer.IConsumer,
         private batchSize: number,
         private checkPointInterval: number) {
     }
@@ -89,10 +88,8 @@ export class PartitionManager {
                 currentPartition.checkpointedOffset = currentPartition.latestOffset;
             }
 
-            let commitMessage = {offsets: commitDetails};
             // Commit all checkpoint offsets as a batch.
-
-            utils.kafka.commitOffset(this.kafkaClient, this.consumerUri, commitMessage).then(
+            this.consumer.commitOffset(commitDetails).then(
                 (data) => {
                     // tslint:disable-next-line:max-line-length
                     debug(`${this.groupId}: Checkpointed kafka with: ${JSON.stringify(commitDetails)}. Result: ${JSON.stringify(data)}`);

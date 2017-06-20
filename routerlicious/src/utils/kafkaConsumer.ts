@@ -33,7 +33,7 @@ class KafkaRestConsumer implements IConsumer {
 
     public commitOffset(commitRequest: any): Promise<void> {
         return new Promise<any>((resolve, reject) => {
-            this.client.post(this.instance.getUri() + "/offsets", commitRequest, null, (err, data) => {
+            this.client.post(this.instance.getUri() + "/offsets", {offsets: commitRequest}, null, (err, data) => {
                 if (err) {
                     reject(err);
                 } else {
@@ -76,6 +76,9 @@ class KafkaRestConsumer implements IConsumer {
                 const stream = instance.subscribe(this.topic);
 
                 stream.on("data", (messages) => {
+                    // for (let message of messages) {
+                        // this.events.emit("data", message);
+                    // }
                     this.events.emit("data", messages);
                 });
 
