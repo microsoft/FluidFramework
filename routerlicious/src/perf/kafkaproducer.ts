@@ -10,7 +10,7 @@ import { logger } from "../utils";
 
 const topic = nconf.get("perf:sendTopic");
 const chunkSize = nconf.get("perf:chunkSize");
-const restEndpoint = nconf.get("perf:restEndpoint");
+const restEndpoint = nconf.get("perf:zookeeperEndpoint");
 
 console.log("Perf testing kafka producer...");
 runTest();
@@ -24,7 +24,7 @@ async function runTest() {
 async function produce() {
     const throughput = new utils.ThroughputCounter(logger.info, "KafkaProducerPerformance: ", 1000);
     // Producer to push to kafka.
-    const producer = utils.producer.create("ss", restEndpoint, topic);
+    const producer = utils.producer.create("kafka-node", restEndpoint, "testclient" ,topic);
     // Start sending
     let clientSequenceNumber = 1;
     const rawMessage: core.IRawOperationMessage = {

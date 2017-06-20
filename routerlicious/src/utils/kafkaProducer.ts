@@ -1,6 +1,6 @@
-// import * as kafkaNode from "kafka-node";
+import * as kafkaNode from "kafka-node";
 import * as kafkaRest from "kafka-rest";
-// import { debug } from "./debug";
+import { debug } from "./debug";
 import { Deferred } from "./promises";
 
 /**
@@ -23,7 +23,7 @@ export interface IProdcuer {
 
 
 /**
- * Wrapper around a kafka producer that reconnects when the connection is lost
+ * Base producer responsible for batching and sending.
  */
 export class Producer {
     protected messages: {[key: string]: IPendingMessage[]} = {};
@@ -31,11 +31,11 @@ export class Producer {
     protected producer: any;
     protected connecting = false;
     protected connected = false;
-    protected sendPending = false;
-    protected sendMessages: (key: string, messages: IPendingMessage[]) => void;
+    private sendPending = false;
+    protected batchProducer: (key: string, messages: IPendingMessage[]) => void;
 
     /**
-     * Sends the provided message to Kafka
+     * Push messages locally and request send.
      */
     protected sendMessage(message: string, key: string): Promise<any> {
         // Get the list of pending messages for the given key
@@ -86,21 +86,36 @@ export class Producer {
 
         // tslint:disable-next-line:forin
         for (const key in this.messages) {
-            this.sendMessages(key, this.messages[key]);
+            this.batchProducer(key, this.messages[key]);
             count += this.messages[key].length;
         }
-
         this.messages = {};
     }
-
 }
 
+/**
+ * Kafka-Rest Producer.
+ */
 class KafkaRestProducer extends Producer implements IProdcuer {
 
     constructor(private endpoint: string, private topic: string) {
         super();
         this.connect();
-        this.sendMessages = function(key: string, pendingMessages: IPendingMessage[]) {
+        this.initBatchProducer();
+    }
+
+    /**
+     * Sends the provided message to Kafka
+     */
+    public send(message: string, key: string): Promise<any> {
+        return this.sendMessage(message, key);
+    }
+
+    /**
+     * Implements batch producer through kafka-rest.
+     */
+    private initBatchProducer() {
+        this.batchProducer = function(key: string, pendingMessages: IPendingMessage[]) {
             const messages = pendingMessages.map((message) => {
                 return {value: message.message, key};
             });
@@ -115,14 +130,7 @@ class KafkaRestProducer extends Producer implements IProdcuer {
     }
 
     /**
-     * Sends the provided message to Kafka
-     */
-    public send(message: string, key: string): Promise<any> {
-        return this.sendMessage(message, key);
-    }
-
-    /**
-     * Creates a connection to Kafka. Will reconnect on failure.
+     * Creates a connection to Kafka.
      */
     private connect() {
         // Exit out if we are already connected or are in the process of connecting
@@ -140,7 +148,115 @@ class KafkaRestProducer extends Producer implements IProdcuer {
     }
 }
 
-export function create(type: string, endPoint: string, topic: string) : IProdcuer{
-    return new KafkaRestProducer(endPoint, topic);
+/**
+ * Kafka-Node Producer.
+ */
+class KafkaNodeProducer extends Producer implements IProdcuer {
+
+    constructor(private endpoint: string, private clientId: string, private topic: string) {
+        super();
+        this.connect();
+        this.initBatchProducer();
+    }
+
+    /**
+     * Sends the provided message to Kafka
+     */
+    public send(message: string, key: string): Promise<any> {
+        return this.sendMessage(message, key);
+    }
+
+    /**
+     * Implements batch producer through kafka-rest.
+     */
+    private initBatchProducer() {
+        this.batchProducer = function(key: string, pendingMessages: IPendingMessage[]) {
+            const messages = pendingMessages.map((message) => message.message);
+            const kafkaMessage = [{ topic: this.topic, messages, key }];
+            this.producer.send(kafkaMessage, (error, data) => {
+                    if (error) {
+                        pendingMessages.forEach((message) => message.deferred.reject(error));
+                    } else {
+                        pendingMessages.forEach((message) => message.deferred.resolve(data));
+                    }
+            });
+        }
+    }
+
+    /**
+     * Creates a connection to Kafka. Will reconnect on failure.
+     */
+    private connect() {
+        // Exit out if we are already connected or are in the process of connecting
+        if (this.connected || this.connecting) {
+            return;
+        }
+
+        this.connecting = true;
+        this.client = new kafkaNode.Client(this.endpoint, this.clientId);
+        this.producer = new kafkaNode.Producer(this.client, { partitionerType: 3 });
+
+        (<any> this.client).on("error", (error) => {
+            this.handleError(error);
+        });
+
+        this.producer.on("ready", () => {
+            this.ensureTopics(this.client, [this.topic]).then(
+                () => {
+                    this.connected = true;
+                    this.connecting = false;
+                    this.sendPendingMessages();
+                },
+                (error) => {
+                    this.handleError(error);
+                });
+        });
+
+        this.producer.on("error", (error) => {
+            this.handleError(error);
+        });
+    }
+
+    /**
+     * Handles an error that requires a reconnect to Kafka
+     */
+    private handleError(error: any) {
+        // Close the client if it exists
+        if (this.client) {
+            this.client.close((closeError) => {
+                if (closeError) {
+                    debug(closeError);
+                }
+            });
+            this.client = undefined;
+        }
+
+        this.connecting = this.connected = false;
+        debug("Kafka error - attempting reconnect", error);
+        this.connect();
+    }
+    /**
+     * Ensures that the provided topics are ready
+     */
+    private ensureTopics(client: kafkaNode.Client, topics: string[]): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
+            // We make use of a refreshMetadata call to validate the given topics exist
+            client.refreshMetadata(
+                topics,
+                (error, data) => {
+                    if (error) {
+                        debug(error);
+                        return reject();
+                    }
+
+                    return resolve();
+                });
+        });
+    }
+}
+
+export function create(type: string, endPoint: string, clientId: string, topic: string) : IProdcuer{
+    return type === "kafka-rest" ? new KafkaRestProducer(endPoint, topic)
+                                 : new KafkaNodeProducer(endPoint, clientId, topic);
 }
 
