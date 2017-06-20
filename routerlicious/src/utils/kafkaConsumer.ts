@@ -1,30 +1,36 @@
 import * as kafkaRest from "kafka-rest";
 import { EventEmitter } from "events";
-// import * as kafkaNode from "kafka-node";
-// import { debug } from "./debug";
+import * as kafkaNode from "kafka-node";
+import { debug } from "./debug";
 
 export interface IConsumer {
-
+    /**
+     * Commits consumer offset.
+     */
     commitOffset(data: any): Promise<void>;
 
-    shutdown();
-
+    /**
+     * Event Handler.
+     */
     on(event: string, listener: Function): this;
+
+    /**
+     * Closes the consumer.
+     */
+    close();
 }
 
 class KafkaRestConsumer implements IConsumer {
-
     private client: any;
     private instance: any;
-    protected events = new EventEmitter();
+    private events = new EventEmitter();
+    private connecting = false;
+    private connected = false;
 
     constructor(private endpoint: string, private groupId: string, private topic: string) {
-        this.create();
+        this.connect();
     }
 
-    /**
-     * Commit offsets using REST client directly.
-     */
     public commitOffset(commitRequest: any): Promise<void> {
         return new Promise<any>((resolve, reject) => {
             this.client.post(this.instance.getUri() + "/offsets", commitRequest, null, (err, data) => {
@@ -37,7 +43,7 @@ class KafkaRestConsumer implements IConsumer {
         });
     }
 
-    public shutdown() {
+    public close() {
         this.instance.shutdown();
     }
 
@@ -46,49 +52,96 @@ class KafkaRestConsumer implements IConsumer {
         return this;
     }
 
-    private create(): Promise<any> {
+    private connect() {
+        // Exit out if we are already connected or are in the process of connecting
+        if (this.connected || this.connecting) {
+            return;
+        }
+
+        this.connecting = true;
+
         this.client = new kafkaRest({url: this.endpoint});
+
+        this.client.consumer(this.groupId).join({
+            "auto.commit.enable": "false",
+            "auto.offset.reset": "smallest",
+        }, (error, instance) => {
+            if (error) {
+                this.handleError(error);
+            } else {
+                this.connected = true;
+                this.connecting = false;
+
+                this.instance = instance;
+                const stream = instance.subscribe(this.topic);
+
+                stream.on("data", (messages) => {
+                    this.events.emit("data", messages);
+                });
+
+                stream.on("error", (err) => {
+                    this.events.emit("error", err);
+                });
+            }
+        });
+    }
+
+    /**
+     * Handles an error that requires a reconnect to Kafka
+     */
+    private handleError(error: any) {
+        // Close the client if it exists
+        if (this.client) {
+            this.client = undefined;
+        }
+
+        this.connecting = this.connected = false;
+        debug("Kafka error - attempting reconnect", error);
+        this.connect();
+    }
+}
+
+
+class KafkaNodeConsumer implements IConsumer {
+    private client: kafkaNode.Client;
+    private offset: kafkaNode.Offset;
+    private instance: kafkaNode.HighLevelConsumer;
+    private events = new EventEmitter();
+    private connecting = false;
+    private connected = false;
+
+    constructor(private endpoint: string, private groupId: string, private topic: string) {
+        this.connect();
+    }
+
+    public commitOffset(commitRequest: any): Promise<void> {
         return new Promise<any>((resolve, reject) => {
-            this.client.consumer(this.groupId).join({
-                "auto.commit.enable": "false",
-                "auto.offset.reset": "smallest",
-            }, (error, instance) => {
-                if (error) {
-                    reject(error);
+            this.offset.commit(this.groupId, commitRequest, (err, data) => {
+                if (err) {
+                    reject(err);
                 } else {
-                    this.instance = instance;
-                    const stream = instance.subscribe(this.topic);
-
-                    stream.on("data", (msgs) => {
-                        this.events.emit("data", msgs);
-                    });
-
-                    stream.on("error", (err) => {
-                        this.events.emit("error", err);
-                    });
-
-                    resolve(instance.subscribe(this.topic));
+                    resolve(JSON.stringify(data));
                 }
             });
         });
     }
-
-}
-
-
-/*
-class KafkaNodeConsumer implements IConsumer {
-
-    private client: any;
-    private offset: any;
-    private instance: any;
-
-    constructor(private endpoint: string, private groupId: string, private topic: string) {
-        this.client = new kafkaNode.Client(this.endpoint, this.groupId);
-        this.offset = new kafkaNode.Offset(this.client);
+    
+    public close() {
+        this.client.close((closeError) => {
+            if (closeError) {
+                debug(closeError);
+            }
+        });
     }
 
-    public create(): Promise<any> {
+    public on(event: string, listener: Function): this {
+        this.events.on(event, listener);
+        return this;
+    }    
+
+    private connect() {
+        this.client = new kafkaNode.Client(this.endpoint, this.groupId);
+        this.offset = new kafkaNode.Offset(this.client);
         const groupId = this.groupId;
         return new Promise<any>((resolve, reject) => {
             this.ensureTopics(this.client, [this.topic]).then(
@@ -102,6 +155,25 @@ class KafkaNodeConsumer implements IConsumer {
                         id: groupId,
                         maxTickMessages: 100000,
                     });
+
+                    this.connected = true;
+                    this.connecting = false;
+
+                    this.instance.on("message", (message: any) => {
+                        this.events.emit("data", message);
+                    });
+
+                    this.instance.on("error", (error) => {
+                        // Workaround to resolve rebalance partition error.
+                        // https://github.com/SOHU-Co/kafka-node/issues/90
+                        debug(`Error in kafka consumer: ${error}. Wait for 30 seconds and return error...`);
+                        setTimeout(() => {
+                            this.events.emit("error", error);
+                        }, 30000);
+                    });
+
+                }, (error) => {
+                    this.handleError(error);
                 }
             );
         });
@@ -117,19 +189,33 @@ class KafkaNodeConsumer implements IConsumer {
                         debug(error);
                         return reject();
                     }
-
                     return resolve();
                 });
         });
     }
 
+    /**
+     * Handles an error that requires a reconnect to Kafka
+     */
+    private handleError(error: any) {
+        // Close the client if it exists
+        if (this.client) {
+            this.client.close((closeError) => {
+                if (closeError) {
+                    debug(closeError);
+                }
+            });
+            this.client = undefined;
+        }
 
+        this.connecting = this.connected = false;
+        debug("Kafka error - attempting reconnect", error);
+        this.connect();
+    }    
 }
-*/
-
 
 
 export function create(type: string, endPoint: string, groupId: string, topic: string): IConsumer {
-    return new KafkaRestConsumer(endPoint, groupId, topic);
+    return type === "kafka-rest"? new KafkaRestConsumer(endPoint, groupId, topic)
+                                : new KafkaNodeConsumer(endPoint, groupId, topic);
 }
-

@@ -109,7 +109,8 @@
         "receiveTopic": "deltas",
         "bucket": "snapshots",
         "chunkSize": 200000,
-        "endPoint": "http://kafka-rest:8082",
+        "restEndpoint": "http://kafka-rest:8082",
+        "zookeeperEndpoint": "zookeeper:2181",
         "groupId": "perf"
     },
     "intelligence": {
