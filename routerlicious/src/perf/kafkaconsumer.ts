@@ -10,7 +10,8 @@ import { logger } from "../utils";
 
 const topic = nconf.get("perf:sendTopic");
 const groupId = nconf.get("perf:groupId");
-const zookeeperEndpoint = nconf.get("perf:restEndpoint");
+const kafkaEndpoint = nconf.get("perf:lib:endpoint");
+const kafkaLibrary = nconf.get("perf:lib:name");
 
 console.log("Perf testing kafka rest consumer...");
 runTest();
@@ -31,7 +32,7 @@ async function consume() {
         callback();
     }, 1);
 
-    let consumer = utils.kafkaConsumer.create("kafka-rest", zookeeperEndpoint, groupId, topic);
+    let consumer = utils.kafkaConsumer.create(kafkaLibrary, kafkaEndpoint, groupId, topic);
     consumer.on("data", (data) => {
         q.push(data);
     });

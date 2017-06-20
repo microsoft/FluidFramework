@@ -11,7 +11,8 @@ import * as messages from "../socket-storage/messages";
 import * as utils from "../utils";
 import { logger } from "../utils";
 
-const zookeeperEndpoint = nconf.get("perf:zookeeperEndpoint");
+const kafkaEndpoint = nconf.get("perf:lib:endpoint");
+const kafkaLibrary = nconf.get("perf:lib:name");
 const receiveTopic = nconf.get("deli:topics:receive");
 const chunkSize = nconf.get("perf:chunkSize");
 
@@ -39,7 +40,7 @@ async function consume() {
         callback();
     }, 1);
 
-    let consumer = utils.kafkaConsumer.create("kafka-node", zookeeperEndpoint, "client", receiveTopic);
+    let consumer = utils.kafkaConsumer.create(kafkaLibrary, kafkaEndpoint, "client", receiveTopic);
     consumer.on("data", (data) => {
         q.push(data);
     });

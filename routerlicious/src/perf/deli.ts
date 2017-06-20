@@ -12,7 +12,8 @@ import * as utils from "../utils";
 import { logger } from "../utils";
 
 // Group this into some kind of an interface
-const zookeeperEndpoint = nconf.get("perf:zookeeperEndpoint");
+const kafkaEndpoint = nconf.get("perf:lib:endpoint");
+const kafkaLibrary = nconf.get("perf:lib:name");
 const topic = nconf.get("perf:sendTopic");
 const receiveTopic = nconf.get("perf:receiveTopic");
 const chunkSize = nconf.get("perf:chunkSize");
@@ -56,7 +57,7 @@ async function produce() {
     // Create the object first in the DB.
     await getOrCreateObject(objectId, "https://graph.microsoft.com/types/map");
     // Producer to push to kafka.
-    const producer = utils.kafkaProducer.create("kafka-node", zookeeperEndpoint, "deliclient" , topic);
+    const producer = utils.kafkaProducer.create(kafkaLibrary, kafkaEndpoint, "deliclient" , topic);
 
     // Prepare the message that deli understands.
     const message: api.IMessage = {
@@ -96,7 +97,7 @@ async function consume() {
         throughput.acknolwedge();
     }, 1);
 
-    let consumer = utils.kafkaConsumer.create("kafka-node", zookeeperEndpoint, "deli", receiveTopic);
+    let consumer = utils.kafkaConsumer.create(kafkaLibrary, kafkaEndpoint, "deli", receiveTopic);
     consumer.on("data", (data) => {
         q.push(data);
     });

@@ -11,8 +11,8 @@ const router = express.Router();
 let producerRunning = false;
 
 // Group this into some kind of an interface
-const kafkaEndpoint = nconf.get("kafka:lib:endpoint");
-const kafkaLibrary = nconf.get("kafka:lib:name");
+const kafkaEndpoint = nconf.get("perf:lib:endpoint");
+const kafkaLibrary = nconf.get("perf:lib:name");
 const topic = nconf.get("alfred:topic");
 
 // Connection to stored document details
