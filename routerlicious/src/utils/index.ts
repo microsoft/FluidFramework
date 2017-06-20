@@ -29,3 +29,6 @@ export { scribe };
 
 import * as consumer from "./kafkaConsumer";
 export { consumer };
+
+import * as producer from "./kafkaProducer";
+export { producer };
