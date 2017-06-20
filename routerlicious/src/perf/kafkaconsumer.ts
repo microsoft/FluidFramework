@@ -32,7 +32,7 @@ async function consume() {
         callback();
     }, 1);
 
-    let consumer = utils.consumer.create("kafka-node", zookeeperEndpoint, groupId, topic);
+    let consumer = utils.kafkaConsumer.create("kafka-node", zookeeperEndpoint, groupId, topic);
     consumer.on("data", (data) => {
         q.push(data);
     });

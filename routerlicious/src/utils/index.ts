@@ -27,8 +27,8 @@ export { kafka };
 import * as scribe from "./scribe";
 export { scribe };
 
-import * as consumer from "./kafkaConsumer";
-export { consumer };
+import * as kafkaConsumer from "./kafkaConsumer";
+export { kafkaConsumer };
 
-import * as producer from "./kafkaProducer";
-export { producer };
+import * as kafkaProducer from "./kafkaProducer";
+export { kafkaProducer };

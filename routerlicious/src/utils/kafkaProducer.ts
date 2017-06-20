@@ -21,7 +21,6 @@ export interface IProdcuer {
     send(message: string, key: string): Promise<any>;
 }
 
-
 /**
  * Base producer responsible for batching and sending.
  */
@@ -31,8 +30,8 @@ export class Producer {
     protected producer: any;
     protected connecting = false;
     protected connected = false;
-    private sendPending = false;
     protected batchProducer: (key: string, messages: IPendingMessage[]) => void;
+    protected sendPending = false;
 
     /**
      * Push messages locally and request send.
@@ -52,6 +51,20 @@ export class Producer {
         this.requestSend();
 
         return deferred.promise;
+    }
+
+    /**
+     * Sends all pending messages
+     */
+    protected sendPendingMessages() {
+        let count = 0;
+
+        // tslint:disable-next-line:forin
+        for (const key in this.messages) {
+            this.batchProducer(key, this.messages[key]);
+            count += this.messages[key].length;
+        }
+        this.messages = {};
     }
 
     /**
@@ -77,20 +90,6 @@ export class Producer {
             this.sendPending = false;
         });
     }
-
-    /**
-     * Sends all pending messages
-     */
-    protected sendPendingMessages() {
-        let count = 0;
-
-        // tslint:disable-next-line:forin
-        for (const key in this.messages) {
-            this.batchProducer(key, this.messages[key]);
-            count += this.messages[key].length;
-        }
-        this.messages = {};
-    }
 }
 
 /**
@@ -115,7 +114,7 @@ class KafkaRestProducer extends Producer implements IProdcuer {
      * Implements batch producer through kafka-rest.
      */
     private initBatchProducer() {
-        this.batchProducer = function(key: string, pendingMessages: IPendingMessage[]) {
+        this.batchProducer = (key: string, pendingMessages: IPendingMessage[]) => {
             const messages = pendingMessages.map((message) => {
                 return {value: message.message, key};
             });
@@ -126,7 +125,7 @@ class KafkaRestProducer extends Producer implements IProdcuer {
                         pendingMessages.forEach((message) => message.deferred.resolve(data));
                     }
             });
-        }
+        };
     }
 
     /**
@@ -170,7 +169,7 @@ class KafkaNodeProducer extends Producer implements IProdcuer {
      * Implements batch producer through kafka-rest.
      */
     private initBatchProducer() {
-        this.batchProducer = function(key: string, pendingMessages: IPendingMessage[]) {
+        this.batchProducer = (key: string, pendingMessages: IPendingMessage[]) => {
             const messages = pendingMessages.map((message) => message.message);
             const kafkaMessage = [{ topic: this.topic, messages, key }];
             this.producer.send(kafkaMessage, (error, data) => {
@@ -180,7 +179,7 @@ class KafkaNodeProducer extends Producer implements IProdcuer {
                         pendingMessages.forEach((message) => message.deferred.resolve(data));
                     }
             });
-        }
+        };
     }
 
     /**
@@ -255,8 +254,7 @@ class KafkaNodeProducer extends Producer implements IProdcuer {
     }
 }
 
-export function create(type: string, endPoint: string, clientId: string, topic: string) : IProdcuer{
+export function create(type: string, endPoint: string, clientId: string, topic: string): IProdcuer {
     return type === "kafka-rest" ? new KafkaRestProducer(endPoint, topic)
                                  : new KafkaNodeProducer(endPoint, clientId, topic);
 }
-
