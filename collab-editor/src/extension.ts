@@ -8,24 +8,25 @@ const extension = api.defaultRegistry.getExtension(SharedString.CollaboritiveStr
 let services = api.getDefaultServices();
 
 class FlowFilter {
+    serverChange = false;
     constructor(public sharedString: SharedString.SharedString) {
     }
 
     setEvents() {
         let editor = vscode.window.activeTextEditor;
         vscode.workspace.onDidChangeTextDocument((e) => {
-            for (let change of e.contentChanges) {
-                console.log(`change ${change.range.start.line}, ${change.range.start.character} ${change.text}`);
-                let pos1 = this.sharedString.client.mergeTree.lcToPos(change.range.start.line, change.range.start.character);
-                let pos2 = this.sharedString.client.mergeTree.lcToPos(change.range.end.line, change.range.end.character);
-                console.log(`change pos: ${pos1} ${pos2}`);
-                // assume insert for now
-                if (change.text.length < 100) {
+            if (!this.serverChange) {
+                for (let change of e.contentChanges) {
+                    console.log(`change ${change.range.start.line}, ${change.range.start.character} ${change.text}`);
+                    let pos1 = this.sharedString.client.mergeTree.lcToPos(change.range.start.line, change.range.start.character);
+                    let pos2 = this.sharedString.client.mergeTree.lcToPos(change.range.end.line, change.range.end.character);
+                    console.log(`change pos: ${pos1} ${pos2}`);
+                    // assume insert for now
                     this.sharedString.insertText(change.text, pos1);
                 }
             }
         });
-        
+
         this.sharedString.on("op", (msg: api.IMessageBase) => {
             if (msg && msg.op) {
                 let seqmsg = <api.ISequencedMessage>msg;
@@ -33,10 +34,13 @@ class FlowFilter {
                     let delta = <api.IMergeTreeDeltaMsg>msg.op;
                     if (delta.type === api.MergeTreeMsgType.INSERT) {
                         let editor = vscode.window.activeTextEditor;
+                        this.serverChange = true;
                         editor.edit((editBuilder) => {
                             let lc = this.sharedString.client.mergeTree.posToLc(delta.pos1);
                             let vspos = new vscode.Position(lc.line, lc.column);
                             editBuilder.insert(vspos, delta.text);
+                        }).then((b) => {
+                            this.serverChange = false;
                         });
                     }
                 }
@@ -69,7 +73,7 @@ function initializeSnapshot() {
     let editor = vscode.window.activeTextEditor;
     let doc = editor.document;
 
-    const sharedString = extension.load("ddd", services, api.defaultRegistry) as SharedString.SharedString;
+    const sharedString = extension.load("eee", services, api.defaultRegistry) as SharedString.SharedString;
 
     sharedString.on("partialLoad", (data: api.MergeTreeChunk) => {
     });
