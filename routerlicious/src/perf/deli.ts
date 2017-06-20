@@ -1,18 +1,19 @@
-import * as kafka from "kafka-node";
-import { MongoClient } from "mongodb";
+// Setup the configuration system - pull arguments, then environment variables - prior to loading other modules that
+// may depend on the config already being initialized
 import * as nconf from "nconf";
 import * as path from "path";
+nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
+
+import { queue } from "async";
+import { MongoClient } from "mongodb";
 import * as api from "../api";
 import * as core from "../core";
 import * as utils from "../utils";
-
-// Setup the configuration system - pull arguments, then environment variables
-nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
+import { logger } from "../utils";
 
 // Group this into some kind of an interface
-const zookeeperEndpoint = nconf.get("zookeeper:endpoint");
-const kafkaSendClientId = nconf.get("perf:kafkaSendClientId");
-const kafkaReceiveClientId = nconf.get("perf:kafkaReceiveClientId");
+const kafkaEndpoint = nconf.get("perf:lib:endpoint");
+const kafkaLibrary = nconf.get("perf:lib:name");
 const topic = nconf.get("perf:sendTopic");
 const receiveTopic = nconf.get("perf:receiveTopic");
 const chunkSize = nconf.get("perf:chunkSize");
@@ -43,27 +44,20 @@ console.log("Perf testing deli...");
 runTest();
 
 const objectId = "test-document";
-let startTime: number;
-let sendStopTime: number;
-let receiveStartTime: number;
-let endTime: number;
 
 async function runTest() {
     console.log("Wait for 10 seconds to warm up kafka and zookeeper....");
     await sleep(10000);
     produce();
     await consume();
-    console.log("Done receiving from kafka. Printing Final Metrics....");
-    console.log(`Send to Kafka Ack time: ${sendStopTime - startTime}`);
-    console.log(`Kafka receiving time: ${endTime - receiveStartTime}`);
-    console.log(`Total time: ${endTime - startTime}`);
 }
 
 async function produce() {
+    const throughput = new utils.ThroughputCounter(logger.info, "ToDeli-ProducerPerf: ", 1000);
     // Create the object first in the DB.
     await getOrCreateObject(objectId, "https://graph.microsoft.com/types/map");
     // Producer to push to kafka.
-    const producer = new utils.kafka.Producer(zookeeperEndpoint, kafkaSendClientId, topic);
+    const producer = utils.kafkaProducer.create(kafkaLibrary, kafkaEndpoint, "deliclient" , topic);
 
     // Prepare the message that deli understands.
     const message: api.IMessage = {
@@ -80,22 +74,12 @@ async function produce() {
         userId: null,
     };
 
-    let messagesLeft = chunkSize;
-
     // Start sending
     for (let i = 0; i < chunkSize; ++i) {
+        throughput.produce();
         producer.send(JSON.stringify(rawMessage), objectId).then(
             (responseMessage) => {
-                if (messagesLeft === chunkSize) {
-                    startTime = Date.now();
-                    console.log(`Ack for first message received: ${JSON.stringify(responseMessage)}`);
-                }
-                if (messagesLeft === 1) {
-                    sendStopTime = Date.now();
-                    console.log(`Time to get ack for all messages: ${sendStopTime - startTime}`);
-                    console.log(`Ack for ${chunkSize}th message received: ${JSON.stringify(responseMessage)}`);
-                }
-                --messagesLeft;
+                throughput.acknolwedge();
             },
             (error) => {
                 console.error(`Error writing to kafka: ${error}`);
@@ -103,48 +87,29 @@ async function produce() {
     }
 }
 
-async function consume(): Promise<void> {
-    // Bootstrap kafka client to consume.
-    let kafkaClient = new kafka.Client(zookeeperEndpoint, kafkaReceiveClientId);
-    await utils.kafka.ensureTopics(kafkaClient, [receiveTopic]);
-
-    const consumerGroup = new kafka.ConsumerGroup({
-            autoCommit: false,
-            fromOffset: "earliest",
-            groupId: "scriptorium",
-            host: zookeeperEndpoint,
-            id: "scriptorium",
-            protocol: ["roundrobin"],
-        },
-        [receiveTopic]);
+async function consume() {
+    const throughput = new utils.ThroughputCounter(logger.info, "FromDeli-ConsumerPerf: ", 1000);
 
     console.log("Waiting for messages...");
+    const q = queue((message: any, callback) => {
+        throughput.produce();
+        callback();
+        throughput.acknolwedge();
+    }, 1);
 
-    return new Promise<any>((resolve, reject) => {
-        consumerGroup.on("error", (error) => {
-            console.error(error);
-            reject(error);
-        });
+    let consumer = utils.kafkaConsumer.create(kafkaLibrary, kafkaEndpoint, "deli", receiveTopic);
+    consumer.on("data", (data) => {
+        q.push(data);
+    });
 
-        consumerGroup.on("message", async (message: any) => {
-            if (message.offset === 0) {
-                receiveStartTime = Date.now();
-            }
-            if (message.offset === (chunkSize - 1)) {
-                endTime = Date.now();
+    consumer.on("error", (err) => {
+        console.error(`Error on reading kafka data`);
+    });
 
-                // Checkpoint to kafka before leaving.
-                consumerGroup.commit((err, data) => {
-                    if (err) {
-                        console.log(`Error checkpointing: ${err}`);
-                        reject(err);
-                    } else {
-                        console.log(`Success checkpointing: ${JSON.stringify(data)}`);
-                        resolve({data: true});
-                    }
-                });
-            }
-        });
+    // Also trigger clean shutdown on Ctrl-C
+    process.on("SIGINT", () => {
+        console.log("Attempting to shut down consumer instance...");
+        consumer.close();
     });
 }
 

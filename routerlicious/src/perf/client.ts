@@ -1,17 +1,19 @@
-import * as kafka from "kafka-node";
+// Setup the configuration system - pull arguments, then environment variables - prior to loading other modules that
+// may depend on the config already being initialized
 import * as nconf from "nconf";
 import * as path from "path";
+nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
+
+import { queue } from "async";
 import * as io from "socket.io-client";
 import * as api from "../api";
 import * as messages from "../socket-storage/messages";
+import * as utils from "../utils";
+import { logger } from "../utils";
 
-// Setup the configuration system - pull arguments, then environment variables
-nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
-
-const kafkaClientId = nconf.get("deli:kafkaClientId");
-const zookeeperEndpoint = nconf.get("zookeeper:endpoint");
+const kafkaEndpoint = nconf.get("perf:lib:endpoint");
+const kafkaLibrary = nconf.get("perf:lib:name");
 const receiveTopic = nconf.get("deli:topics:receive");
-const groupId = nconf.get("deli:groupId");
 const chunkSize = nconf.get("perf:chunkSize");
 
 console.log("Perf testing client.....");
@@ -20,73 +22,58 @@ runTest();
 const socket = io("http://alfred:3000", { transports: ["websocket"] });
 
 const objectId = "test-document";
-let startTime: number;
-let sendStopTime: number;
-let receiveStartTime: number;
-let endTime: number;
 
 async function runTest() {
     console.log("Wait for 10 seconds to warm up kafka and zookeeper....");
     await sleep(10000);
     produce();
     await consume();
-    console.log("Done receiving from kafka. Printing Final Metrics....");
-    console.log(`Send to SocketIO Ack time: ${sendStopTime - startTime}`);
-    console.log(`Kafka receiving time: ${endTime - receiveStartTime}`);
-    console.log(`Total time: ${endTime - startTime}`);
 }
 
 async function consume() {
-    let kafkaClient = new kafka.Client(zookeeperEndpoint, kafkaClientId);
-    const highLevelConsumer = new kafka.HighLevelConsumer(kafkaClient, [{topic: receiveTopic}], {
-        autoCommit: false,
-        fromOffset: true,
-        groupId,
-        id: kafkaClientId,
+    const throughput = new utils.ThroughputCounter(logger.info, "FromClient-ConsumerPerf: ", 1000);
+
+    console.log("Waiting for messages...");
+    const q = queue((message: any, callback) => {
+        throughput.produce();
+        throughput.acknolwedge();
+        callback();
+    }, 1);
+
+    let consumer = utils.kafkaConsumer.create(kafkaLibrary, kafkaEndpoint, "client", receiveTopic);
+    consumer.on("data", (data) => {
+        q.push(data);
     });
 
-    return new Promise<any>((resolve, reject) => {
-        highLevelConsumer.on("error", (error) => {
-            console.error(`Error in kafka consumer: ${error}...`);
-        });
+    consumer.on("error", (err) => {
+        console.error(`Error on reading kafka data`);
+    });
 
-        highLevelConsumer.on("message", async (message: any) => {
-            if (message.offset === 0) {
-                receiveStartTime = Date.now();
-            }
-            if (message.offset === (chunkSize - 1)) {
-                endTime = Date.now();
-                resolve({data: true});
-            }
-        });
+    // Also trigger clean shutdown on Ctrl-C
+    process.on("SIGINT", () => {
+        console.log("Attempting to shut down consumer instance...");
+        consumer.close();
     });
 }
 
 async function produce() {
-    await connect();
+    const throughput = new utils.ThroughputCounter(logger.info, "ToClient-ProducerPerf: ", 1000);
+    let clientId = await connect();
+
     // Prepare the message that alfred understands.
     const message: api.IMessage = {
         clientSequenceNumber: 100,
         op: "test",
         referenceSequenceNumber: 200,
     };
-    let messagesLeft = chunkSize;
 
     for (let i = 1; i <= chunkSize; ++i) {
-        socket.emit("submitOp", objectId, message, (error) => {
+        throughput.produce();
+        socket.emit("submitOp", clientId, message, (error) => {
             if (error) {
                 console.log(`Error sending to socket: ${error}`);
-            } else {
-                if (messagesLeft === chunkSize) {
-                    startTime = Date.now();
-                    console.log(`Ack for first message received.`);
-                }
-                if (messagesLeft === 1) {
-                    sendStopTime = Date.now();
-                    console.log(`Time to get ack for all messages: ${sendStopTime - startTime}`);
-                }
-                --messagesLeft;
             }
+            throughput.acknolwedge();
         });
     }
 }
@@ -105,7 +92,7 @@ async function connect() {
                     return reject(error);
                 } else {
                     console.log(`Connection successful!`);
-                    resolve({data: true});
+                    resolve(response.clientId);
                 }
             });
     });

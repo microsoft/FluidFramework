@@ -3,12 +3,11 @@ services:
     perf:
       build: . 
       ports:
-            - "3000:3000"
             - "5858:5858"
       depends_on:
             - redis
             - mongodb
-            - kafka
+            - kafka-rest
       command: npm run perf:scriptorium:debug
       volumes:
             - .:/usr/src/server
@@ -20,17 +19,19 @@ services:
       depends_on:
             - redis
             - mongodb
-            - kafka
+            - kafka-rest
       command: npm run scriptorium:debug
       volumes:
             - .:/usr/src/server
       restart: always
+
     zookeeper:
-        image: wurstmeister/zookeeper
+        image: wurstmeister/zookeeper:latest
         ports:
             - "2181:2181"
+
     kafka:
-        image: wurstmeister/kafka
+        image: wurstmeister/kafka:latest
         depends_on:
             - zookeeper
         ports:
@@ -39,8 +40,24 @@ services:
             KAFKA_ADVERTISED_HOST_NAME: "kafka"
             KAFKA_ADVERTISED_PORT: "9092"
             KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'false'
-            KAFKA_CREATE_TOPICS: "test:1:1,deltas:8:1,rawdeltas:8:1"
+            KAFKA_CREATE_TOPICS: "deltas:8:1,rawdeltas:8:1"
             KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+
+    kafka-rest:
+        image: confluentinc/cp-kafka-rest:latest
+        depends_on:
+            - zookeeper
+            - kafka
+        ports:
+            - "8082:8082"
+        logging:
+            driver: none
+        environment:
+            KAFKA_REST_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+            KAFKA_REST_LISTENERS: http://kafka-rest:8082
+            KAFKA_REST_HOST_NAME: kafka-rest
+            KAFKA_REST_CONSUMER_REQUEST_TIMEOUT_MS: 1
+            
     redis:
         image: "redis:alpine"
     mongodb:

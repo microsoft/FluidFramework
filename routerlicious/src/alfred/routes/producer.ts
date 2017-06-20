@@ -11,8 +11,8 @@ const router: Router = Router();
 let producerRunning = false;
 
 // Group this into some kind of an interface
-const zookeeperEndpoint = nconf.get("zookeeper:endpoint");
-const kafkaClientId = nconf.get("alfred:kafkaClientId");
+const kafkaEndpoint = nconf.get("perf:lib:endpoint");
+const kafkaLibrary = nconf.get("perf:lib:name");
 const topic = nconf.get("alfred:topic");
 
 // Connection to stored document details
@@ -43,7 +43,7 @@ let producerInterval;
 
 async function startProducer(batchSize: number) {
     // Producer used to publish messages
-    const producer = new utils.kafka.Producer(zookeeperEndpoint, kafkaClientId, topic);
+    const producer = utils.kafkaProducer.create(kafkaLibrary, kafkaEndpoint, "testproducer", topic);
     const throughput = new utils.ThroughputCounter(logger.info);
 
     await getOrCreateObject("producer", api.MapExtension.Type);

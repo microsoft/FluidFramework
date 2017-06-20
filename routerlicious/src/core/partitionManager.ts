@@ -1,4 +1,4 @@
-import * as kafka from "kafka-node";
+import * as utils from "../utils";
 import { debug } from "./debug";
 
 interface IPartitionRange {
@@ -21,7 +21,7 @@ export class PartitionManager {
     constructor(
         private groupId: string,
         private topic: string,
-        private consumerOffset: kafka.Offset,
+        private consumer: utils.kafkaConsumer.IConsumer,
         private batchSize: number,
         private checkPointInterval: number) {
     }
@@ -89,17 +89,16 @@ export class PartitionManager {
             }
 
             // Commit all checkpoint offsets as a batch.
-            this.consumerOffset.commit(this.groupId, commitDetails,
-                (error, data) => {
-                    if (error) {
-                        debug(`${this.groupId}: Error checkpointing kafka offsets: ${error}`);
-                        reject(error);
-                    } else {
-                        // tslint:disable-next-line:max-line-length
-                        debug(`${this.groupId}: Checkpointed kafka with: ${JSON.stringify(commitDetails)}. Result: ${JSON.stringify(data)}`);
-                        resolve({ data: true });
-                    }
-            });
+            this.consumer.commitOffset(commitDetails).then(
+                (data) => {
+                    // tslint:disable-next-line:max-line-length
+                    debug(`${this.groupId}: Checkpointed kafka with: ${JSON.stringify(commitDetails)}. Result: ${JSON.stringify(data)}`);
+                    resolve({ data: true });
+                },
+                (error) => {
+                    debug(`${this.groupId}: Error checkpointing kafka offsets: ${error}`);
+                    reject(error);
+                });
         });
     }
 
@@ -107,17 +106,24 @@ export class PartitionManager {
      * Decides whether to kick off checkpointing or not.
      */
     private shouldCheckpoint(): boolean {
-        // Checks if threshold time has passed after the last chckpoint.
-        if (Date.now() - this.lastCheckpointTimestamp >= this.checkPointInterval) {
-            return true;
-        }
-        // Checks if any of the partitions has more than batchsize messages unprocessed.
-        for (let partition of Object.keys(this.partitionMap)) {
-            if (this.partitionMap[partition].latestOffset - this.partitionMap[partition].checkpointedOffset >=
-                this.batchSize) {
+        let partitions = Object.keys(this.partitionMap);
+
+        // No active partitions. So don't need to checkpoint.
+        if (partitions.length === 0) {
+            return false;
+        } else {
+            // Checks if threshold time has passed after the last chckpoint.
+            if (Date.now() - this.lastCheckpointTimestamp >= this.checkPointInterval) {
                 return true;
             }
+            // Checks if any of the partitions has more than batchsize messages unprocessed.
+            for (let partition of partitions) {
+                if (this.partitionMap[partition].latestOffset - this.partitionMap[partition].checkpointedOffset >=
+                    this.batchSize) {
+                    return true;
+                }
+            }
+            return false;
         }
-        return false;
     }
 }

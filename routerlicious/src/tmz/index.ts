@@ -5,7 +5,7 @@ import * as path from "path";
 nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
 
 import * as amqp from "amqplib";
-import * as kafka from "kafka-node";
+import { queue } from "async";
 import * as core from "../core";
 import * as utils from "../utils";
 import { logger } from "../utils";
@@ -15,8 +15,8 @@ const snapshotQueue = nconf.get("tmz:queue");
 const rabbitmqConnectionString = nconf.get("rabbitmq:connectionString");
 
 // Setup Kafka connection
-const zookeeperEndpoint = nconf.get("zookeeper:endpoint");
-const kafkaClientId = nconf.get("tmz:kafkaClientId");
+const kafkaEndpoint = nconf.get("kafka:lib:endpoint");
+const kafkaLibrary = nconf.get("kafka:lib:name");
 const topic = nconf.get("tmz:topic");
 const groupId = nconf.get("tmz:groupId");
 
@@ -27,44 +27,41 @@ async function run() {
     await channel.assertQueue(snapshotQueue, { durable: true });
     logger.info("Channel ready");
 
+    const deferred = new utils.Deferred<void>();
+
     // The rabbitmq library does not support re-connect. We will simply exit and rely on being restarted once
     // we lose our connection to RabbitMQ.
     connection.on("error", (error) => {
-        logger.error("Lost connection to RabbitMQ - exiting", error);
-        process.exit(1);
+        console.error("Lost connection to RabbitMQ - exiting");
+        deferred.reject(error);
     });
 
-    // Ensure topics exist
-    const kafkaClient = new kafka.Client(zookeeperEndpoint, kafkaClientId);
-    await utils.kafka.ensureTopics(kafkaClient, [topic]);
-
-    // Create the consumer group and wire up messages
-    const consumerGroup = new kafka.ConsumerGroup({
-            fromOffset: "earliest",
-            groupId,
-            host: zookeeperEndpoint,
-            id: kafkaClientId,
-            protocol: ["roundrobin"],
-        },
-        [topic]);
-
-    consumerGroup.on("error", (error) => {
-        logger.error(error);
-    });
-
+    let consumer = utils.kafkaConsumer.create(kafkaLibrary, kafkaEndpoint, groupId, topic);
     const createdRequests: any = {};
-    consumerGroup.on("message", async (message: any) => {
-        const value = JSON.parse(message.value) as core.IRawOperationMessage;
 
+    consumer.on("data", (message) => {
+        q.push(message);
+    });
+
+    consumer.on("error", (err) => {
+        consumer.close();
+        deferred.reject(err);
+    });
+
+    const q = queue((message: any, callback) => {
+        const value = JSON.parse(message.value.toString("utf8")) as core.IRawOperationMessage;
         if (createdRequests[value.objectId]) {
+            callback();
             return;
         }
-
         createdRequests[value.objectId] = true;
         logger.info(`Requesting snapshots for ${value.objectId}`);
-
         channel.sendToQueue(snapshotQueue, new Buffer(value.objectId), { persistent: true });
-    });
+
+        callback();
+    }, 1);
+
+    return deferred.promise;
 }
 
 // Start up the TMZ service

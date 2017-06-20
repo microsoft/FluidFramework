@@ -5,7 +5,6 @@ import * as path from "path";
 nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
 
 import { queue } from "async";
-import * as kafka from "kafka-node";
 import * as _ from "lodash";
 import { Collection } from "mongodb";
 import * as core from "../core";
@@ -14,7 +13,8 @@ import { logger } from "../utils";
 import { TakeANumber } from "./takeANumber";
 
 const mongoUrl = nconf.get("mongo:endpoint");
-const zookeeperEndpoint = nconf.get("zookeeper:endpoint");
+const kafkaEndpoint = nconf.get("kafka:lib:endpoint");
+const kafkaLibrary = nconf.get("kafka:lib:name");
 const kafkaClientId = nconf.get("deli:kafkaClientId");
 const receiveTopic = nconf.get("deli:topics:receive");
 const sendTopic = nconf.get("deli:topics:send");
@@ -30,15 +30,14 @@ function processMessage(
     dispensers: { [key: string]: TakeANumber },
     ticketQueue: {[id: string]: Promise<void> },
     partitionManager: core.PartitionManager,
-    producer: utils.kafka.Producer,
+    producer: utils.kafkaProducer.IProdcuer,
     objectsCollection: Collection) {
 
-    const baseMessage = JSON.parse(message.value) as core.IMessage;
-
+    const baseMessage = JSON.parse(message.value.toString("utf8")) as core.IMessage;
     if (baseMessage.type === core.UpdateReferenceSequenceNumberType ||
         baseMessage.type === core.RawOperationType) {
 
-        const objectMessage = JSON.parse(message.value) as core.IObjectMessage;
+        const objectMessage = JSON.parse(message.value.toString("utf8")) as core.IObjectMessage;
         const objectId = objectMessage.objectId;
 
         // Go grab the takeANumber machine for the objectId and mark it as dirty.
@@ -63,59 +62,55 @@ async function checkpoint(
     dispensers: TakeANumber[],
     pendingTickets: Array<Promise<void>>) {
 
+    // Clear timer since we will checkpoint now.
+    if (checkpointTimer) {
+        clearTimeout(checkpointTimer);
+    }
+
+    if (pendingTickets.length === 0 && dispensers.length === 0) {
+        return;
+    }
+
     // Ticket all messages and empty the queue.
     await Promise.all(pendingTickets);
+    pendingTickets = [];
 
-    // Checkpoint to mongo now.
+    // Checkpoint to mongo and empty the dispensers.
     let checkpointQueue = dispensers.map((dispenser) => dispenser.checkpoint());
     await Promise.all(checkpointQueue);
+    dispensers = [];
 
     // Finally call kafka checkpointing.
     partitionManager.checkPoint();
 
-    // Clear timer since we just checkpointed.
-    if (checkpointTimer) {
-        clearTimeout(checkpointTimer);
-    }
     // Set up next cycle.
     checkpointTimer = setTimeout(() => {
         checkpoint(partitionManager, dispensers, pendingTickets);
     }, checkpointTimeIntervalMsec);
 }
 
-function processMessages(
-    kafkaClient: kafka.Client,
-    producer: utils.kafka.Producer,
+async function processMessages(
+    producer: utils.kafkaProducer.IProdcuer,
+    consumer: utils.kafkaConsumer.IConsumer,
     objectsCollection: Collection): Promise<void> {
 
     const deferred = new utils.Deferred<void>();
     const dispensers: { [key: string]: TakeANumber } = {};
-
-    const consumerOffset = new kafka.Offset(kafkaClient);
     const partitionManager = new core.PartitionManager(
         groupId,
         receiveTopic,
-        consumerOffset,
+        consumer,
         checkpointBatchSize,
-        checkpointTimeIntervalMsec);
+        checkpointTimeIntervalMsec,
+    );
 
-    const highLevelConsumer = new kafka.HighLevelConsumer(kafkaClient, [{topic: receiveTopic}], <any> {
-        autoCommit: false,
-        fetchMaxBytes: 1024 * 1024,
-        fetchMinBytes: 1,
-        fromOffset: true,
-        groupId,
-        id: kafkaClientId,
-        maxTickMessages: 100000,
+    consumer.on("data", (message) => {
+        q.push(message);
     });
 
-    highLevelConsumer.on("error", (error) => {
-        // Workaround to resolve rebalance partition error.
-        // https://github.com/SOHU-Co/kafka-node/issues/90
-        logger.error(`Error in kafka consumer: ${error}. Wait for 30 seconds and restart...`);
-        setTimeout(() => {
-            deferred.reject(error);
-        }, 30000);
+    consumer.on("error", (err) => {
+        consumer.close();
+        deferred.reject(err);
     });
 
     let ticketQueue: {[id: string]: Promise<void> } = {};
@@ -124,8 +119,9 @@ function processMessages(
 
     logger.info("Waiting for messages");
     const q = queue((message: any, callback) => {
+        throughput.produce();
         processMessage(message, dispensers, ticketQueue, partitionManager, producer, objectsCollection);
-        callback();
+        throughput.acknolwedge();
 
         // Periodically checkpoints to mongo and checkpoints offset back to kafka.
         // Ideally there should be a better strategy to figure out when to checkpoint.
@@ -137,14 +133,8 @@ function processMessages(
                 deferred.reject(error);
             });
         }
-
-        throughput.acknolwedge();
+        callback();
     }, 1);
-
-    highLevelConsumer.on("message", (message: any) => {
-        throughput.produce();
-        q.push(message);
-    });
 
     return deferred.promise;
 }
@@ -156,14 +146,13 @@ async function run() {
     const objectsCollection = await client.collection(objectsCollectionName);
     logger.info("Collection ready");
 
-    // Prep Kafka connection
-    let kafkaClient = new kafka.Client(zookeeperEndpoint, kafkaClientId);
-    let producer = new utils.kafka.Producer(zookeeperEndpoint, kafkaClientId, sendTopic);
+    // Prep Kafka producer and consumer
+    let producer = utils.kafkaProducer.create(kafkaLibrary, kafkaEndpoint, kafkaClientId, sendTopic);
+    let consumer = utils.kafkaConsumer.create(kafkaLibrary, kafkaEndpoint, groupId, receiveTopic);
 
     // Return a promise that will never resolve (since we run forever) but will reject
     // should an error occur
-    return utils.kafka.ensureTopics(kafkaClient, [sendTopic, receiveTopic])
-        .then(() => processMessages(kafkaClient, producer, objectsCollection));
+    return processMessages(producer, consumer, objectsCollection);
 }
 
 // Start up the deli service

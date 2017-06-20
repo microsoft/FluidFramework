@@ -49,7 +49,7 @@ export class TakeANumber {
     constructor(
         private objectId: string,
         private collection: Collection,
-        private producer: utils.kafka.Producer) {
+        private producer: utils.kafkaProducer.IProdcuer) {
         // Lookup the last sequence number stored
         const dbObjectP = this.collection.findOne({ _id: this.objectId });
         dbObjectP.then(
@@ -155,7 +155,7 @@ export class TakeANumber {
         this.logOffset = rawMessage.offset;
 
         // Update the client's reference sequence number based on the message type
-        const objectMessage = JSON.parse(rawMessage.value) as core.IObjectMessage;
+        const objectMessage = JSON.parse(rawMessage.value.toString("utf8")) as core.IObjectMessage;
         if (objectMessage.type === core.UpdateReferenceSequenceNumberType) {
             const message = objectMessage as core.IUpdateReferenceSequenceNumberMessage;
             this.updateClient(message.clientId, message.timestamp, message.sequenceNumber);

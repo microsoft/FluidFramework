@@ -5,7 +5,6 @@ import * as path from "path";
 nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
 
 import { queue } from "async";
-import * as kafka from "kafka-node";
 import { CollectionInsertManyOptions } from "mongodb";
 import * as socketIoEmitter from "socket.io-emitter";
 import * as core from "../core";
@@ -14,8 +13,8 @@ import { logger } from "../utils";
 
 // Initialize Socket.io and connect to the Redis adapter
 let redisConfig = nconf.get("redis");
-const zookeeperEndpoint = nconf.get("zookeeper:endpoint");
-const kafkaClientId = nconf.get("scriptorium:kafkaClientId");
+const kafkaEndpoint = nconf.get("kafka:lib:endpoint");
+const kafkaLibrary = nconf.get("kafka:lib:name");
 const topic = nconf.get("scriptorium:topic");
 const groupId = nconf.get("scriptorium:groupId");
 const checkpointBatchSize = nconf.get("scriptorium:checkpointBatchSize");
@@ -54,36 +53,25 @@ async function run() {
         },
         { unique: true });
 
-    let kafkaClient = new kafka.Client(zookeeperEndpoint, kafkaClientId);
-
-    // Validate the required topics exist
-    await utils.kafka.ensureTopics(kafkaClient, [topic]);
-
-    const consumerOffset = new kafka.Offset(kafkaClient);
-    const partitionManager = new core.PartitionManager(groupId, topic, consumerOffset,
-                                                       checkpointBatchSize, checkpointTimeIntervalMsec);
-
-    const highLevelConsumer = new kafka.HighLevelConsumer(kafkaClient, [{topic}], <any> {
-        autoCommit: false,
-        fetchMaxBytes: 1024 * 1024,
-        fetchMinBytes: 1,
-        fromOffset: true,
+    let consumer = utils.kafkaConsumer.create(kafkaLibrary, kafkaEndpoint, groupId, topic);
+    const partitionManager = new core.PartitionManager(
         groupId,
-        id: kafkaClientId,
-        maxTickMessages: 100000,
+        topic,
+        consumer,
+        checkpointBatchSize,
+        checkpointTimeIntervalMsec,
+    );
+
+    consumer.on("data", (message) => {
+        q.push(message);
+    });
+
+    consumer.on("error", (err) => {
+        consumer.close();
+        deferred.reject(err);
     });
 
     const throughput = new utils.ThroughputCounter(logger.info);
-
-    highLevelConsumer.on("error", (error) => {
-        // Workaround to resolve rebalance partition error.
-        // https://github.com/SOHU-Co/kafka-node/issues/90
-        logger.error(`Error in kafka consumer: ${error}. Wait for 30 seconds and restart...`);
-        setTimeout(() => {
-            deferred.reject(error);
-        }, 30000);
-    });
-
     // Mongo inserts don't order promises with respect to each other. To work around this we track the last
     // Mongo insert we've made for each document. And then perform a then on this to maintain causal ordering
     // for any dependent operations (i.e. socket.io writes)
@@ -122,7 +110,8 @@ async function run() {
         // NOTE the processing of the below messages must make sure to notify clients of the messages in increasing
         // order. Be aware of promise handling ordering possibly causing out of order messages to be delivered.
 
-        const baseMessage = JSON.parse(message.value) as core.IMessage;
+        throughput.produce();
+        const baseMessage = JSON.parse(message.value.toString("utf8")) as core.IMessage;
         if (baseMessage.type === core.SequencedOperationType) {
             const value = baseMessage as core.ISequencedOperationMessage;
 
@@ -143,11 +132,6 @@ async function run() {
         }
         callback();
     }, 1);
-
-    highLevelConsumer.on("message", async (message: any) => {
-        throughput.produce();
-        q.push(message);
-    });
 
     return deferred.promise;
 }
