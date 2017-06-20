@@ -1,6 +1,6 @@
-import * as kafkaRest from "kafka-rest";
 import { EventEmitter } from "events";
 import * as kafkaNode from "kafka-node";
+import * as kafkaRest from "kafka-rest";
 import { debug } from "./debug";
 
 export interface IConsumer {
@@ -101,7 +101,6 @@ class KafkaRestConsumer implements IConsumer {
     }
 }
 
-
 class KafkaNodeConsumer implements IConsumer {
     private client: kafkaNode.Client;
     private offset: kafkaNode.Offset;
@@ -125,7 +124,7 @@ class KafkaNodeConsumer implements IConsumer {
             });
         });
     }
-    
+
     public close() {
         this.client.close((closeError) => {
             if (closeError) {
@@ -137,7 +136,7 @@ class KafkaNodeConsumer implements IConsumer {
     public on(event: string, listener: Function): this {
         this.events.on(event, listener);
         return this;
-    }    
+    }
 
     private connect() {
         this.client = new kafkaNode.Client(this.endpoint, this.groupId);
@@ -174,8 +173,7 @@ class KafkaNodeConsumer implements IConsumer {
 
                 }, (error) => {
                     this.handleError(error);
-                }
-            );
+                });
         });
     }
 
@@ -211,11 +209,10 @@ class KafkaNodeConsumer implements IConsumer {
         this.connecting = this.connected = false;
         debug("Kafka error - attempting reconnect", error);
         this.connect();
-    }    
+    }
 }
 
-
 export function create(type: string, endPoint: string, groupId: string, topic: string): IConsumer {
-    return type === "kafka-rest"? new KafkaRestConsumer(endPoint, groupId, topic)
-                                : new KafkaNodeConsumer(endPoint, groupId, topic);
+    return type === "kafka-rest" ? new KafkaRestConsumer(endPoint, groupId, topic)
+                                 : new KafkaNodeConsumer(endPoint, groupId, topic);
 }
