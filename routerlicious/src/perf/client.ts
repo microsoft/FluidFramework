@@ -5,16 +5,14 @@ import * as path from "path";
 nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
 
 import { queue } from "async";
-import * as kafka from "kafka-rest";
 import * as io from "socket.io-client";
 import * as api from "../api";
 import * as messages from "../socket-storage/messages";
 import * as utils from "../utils";
 import { logger } from "../utils";
 
-const zookeeperEndpoint = nconf.get("zookeeper:endpoint");
+const zookeeperEndpoint = nconf.get("perf:zookeeperEndpoint");
 const receiveTopic = nconf.get("deli:topics:receive");
-const groupId = nconf.get("deli:groupId");
 const chunkSize = nconf.get("perf:chunkSize");
 
 console.log("Perf testing client.....");
@@ -32,40 +30,28 @@ async function runTest() {
 }
 
 async function consume() {
-    // Bootstrap kafka client to consume.
-    let kafkaClient = new kafka({ url: zookeeperEndpoint });
     const throughput = new utils.ThroughputCounter(logger.info, "FromClient-ConsumerPerf: ", 1000);
 
     console.log("Waiting for messages...");
     const q = queue((message: any, callback) => {
-        callback();
+        throughput.produce();
         throughput.acknolwedge();
+        callback();
     }, 1);
 
-    kafkaClient.consumer(groupId).join({
-        "auto.commit.enable": "false",
-        "auto.offset.reset": "smallest",
-    }, (error, consumerInstance) => {
-        if (error) {
-           console.log(`Consumer Instance Error: ${error}`);
-        } else {
-            console.log(`Joined a consumer instance group: ${consumerInstance.getUri()}`);
-            let stream = consumerInstance.subscribe(receiveTopic);
-            stream.on("data", (messages) => {
-                for (let msg of messages) {
-                    throughput.produce();
-                    q.push(msg.value.toString("utf8"));
-                }
-            });
-            stream.on("error", (err) => {
-                console.log(`Stream Error: ${err}`);
-            });
-            // Also trigger clean shutdown on Ctrl-C
-            process.on("SIGINT", () => {
-                console.log("Attempting to shut down consumer instance...");
-                consumerInstance.shutdown();
-            });
-        }
+    let consumer = utils.kafkaConsumer.create("kafka-node", zookeeperEndpoint, "client", receiveTopic);
+    consumer.on("data", (data) => {
+        q.push(data);
+    });
+
+    consumer.on("error", (err) => {
+        console.error(`Error on reading kafka data`);
+    });
+
+    // Also trigger clean shutdown on Ctrl-C
+    process.on("SIGINT", () => {
+        console.log("Attempting to shut down consumer instance...");
+        consumer.close();
     });
 }
 

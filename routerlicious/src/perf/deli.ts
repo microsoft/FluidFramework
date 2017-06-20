@@ -5,7 +5,6 @@ import * as path from "path";
 nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
 
 import { queue } from "async";
-import * as kafka from "kafka-rest";
 import { MongoClient } from "mongodb";
 import * as api from "../api";
 import * as core from "../core";
@@ -13,7 +12,7 @@ import * as utils from "../utils";
 import { logger } from "../utils";
 
 // Group this into some kind of an interface
-const zookeeperEndpoint = nconf.get("zookeeper:endpoint");
+const zookeeperEndpoint = nconf.get("perf:zookeeperEndpoint");
 const topic = nconf.get("perf:sendTopic");
 const receiveTopic = nconf.get("perf:receiveTopic");
 const chunkSize = nconf.get("perf:chunkSize");
@@ -57,7 +56,7 @@ async function produce() {
     // Create the object first in the DB.
     await getOrCreateObject(objectId, "https://graph.microsoft.com/types/map");
     // Producer to push to kafka.
-    const producer = new utils.kafka.Producer(zookeeperEndpoint, topic);
+    const producer = utils.kafkaProducer.create("kafka-node", zookeeperEndpoint, "deliclient" , topic);
 
     // Prepare the message that deli understands.
     const message: api.IMessage = {
@@ -88,40 +87,28 @@ async function produce() {
 }
 
 async function consume() {
-    // Bootstrap kafka client to consume.
-    let kafkaClient = new kafka({ url: zookeeperEndpoint });
     const throughput = new utils.ThroughputCounter(logger.info, "FromDeli-ConsumerPerf: ", 1000);
 
     console.log("Waiting for messages...");
     const q = queue((message: any, callback) => {
+        throughput.produce();
         callback();
         throughput.acknolwedge();
     }, 1);
 
-    kafkaClient.consumer("scriptorium").join({
-        "auto.commit.enable": "false",
-        "auto.offset.reset": "smallest",
-    }, (error, consumerInstance) => {
-        if (error) {
-           console.log(`Consumer Instance Error: ${error}`);
-        } else {
-            console.log(`Joined a consumer instance group: ${consumerInstance.getUri()}`);
-            let stream = consumerInstance.subscribe(receiveTopic);
-            stream.on("data", (messages) => {
-                for (let msg of messages) {
-                    throughput.produce();
-                    q.push(msg.value.toString("utf8"));
-                }
-            });
-            stream.on("error", (err) => {
-                console.log(`Stream Error: ${err}`);
-            });
-            // Also trigger clean shutdown on Ctrl-C
-            process.on("SIGINT", () => {
-                console.log("Attempting to shut down consumer instance...");
-                consumerInstance.shutdown();
-            });
-        }
+    let consumer = utils.kafkaConsumer.create("kafka-node", zookeeperEndpoint, "deli", receiveTopic);
+    consumer.on("data", (data) => {
+        q.push(data);
+    });
+
+    consumer.on("error", (err) => {
+        console.error(`Error on reading kafka data`);
+    });
+
+    // Also trigger clean shutdown on Ctrl-C
+    process.on("SIGINT", () => {
+        console.log("Attempting to shut down consumer instance...");
+        consumer.close();
     });
 }
 

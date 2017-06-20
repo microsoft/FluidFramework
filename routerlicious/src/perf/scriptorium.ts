@@ -29,7 +29,7 @@ let subOptions = _.clone(options);
 // Subscriber to read from redis directly.
 let sub = redis.createClient(port, host, subOptions);
 
-const zookeeperEndpoint = nconf.get("zookeeper:endpoint");
+const zookeeperEndpoint = nconf.get("perf:zookeeperEndpoint");
 const topic = nconf.get("perf:receiveTopic");
 const chunkSize = nconf.get("perf:chunkSize");
 
@@ -48,7 +48,7 @@ async function runTest() {
 async function produce() {
     const throughput = new utils.ThroughputCounter(logger.info, "ToScriptorium-ProducerPerf: ", 1000);
     // Producer to push to kafka.
-    const producer = new utils.kafka.Producer(zookeeperEndpoint, topic);
+    const producer = utils.kafkaProducer.create("kafka-node", zookeeperEndpoint, "scriptoriumclient" , topic);
     // Start sending
     for (let i = 1; i <= chunkSize; ++i) {
         const sequencedOperation: api.ISequencedMessage = {
