@@ -24,7 +24,7 @@ export interface IProdcuer {
 /**
  * Base producer responsible for batching and sending.
  */
-export class Producer {
+class Producer {
     protected messages: {[key: string]: IPendingMessage[]} = {};
     protected client: any;
     protected producer: any;
