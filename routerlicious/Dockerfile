@@ -9,6 +9,10 @@ WORKDIR /usr/src/server
 RUN npm install
 RUN npm run build
 
+# Install python library and dependencies
+RUN apk add --update python py-pip
+RUN pip install -r src/ml/deps.txt
+
 # Expose the port the app runs under
 EXPOSE 3000
 

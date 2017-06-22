@@ -35,6 +35,7 @@
     "tmz:debug": "nodemon --exitcrash --debug=0.0.0.0:5858 dist/tmz/index.js",
     "tmz:debug:windows": "nodemon --exitcrash -L --debug=0.0.0.0:5858 dist/tmz/index.js",
     "tmz:watch": "nodemon --exitcrash dist/tmz/index.js -w dist",
+    "ml": "python src/ml/server.py",
     "start": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml up",
     "start:debug": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.debug.yml up",
     "start:debug:windows": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.debug.windows.yml up",
@@ -58,7 +59,8 @@
     "perf:kafka:consumer:debug": "nodemon --exitcrash --debug=0.0.0.0:5859 dist/perf/kafkaconsumer.js -w dist",
     "perf:kafka:debug": "concurrently \"npm run perf:kafka:producer:debug\" \"npm run perf:kafka:consumer:debug\"",
     "pretest:perf:kafka": "docker-compose -f docker-compose.test.kafka.yml down --remove-orphans",
-    "test:perf:kafka": "npm run pretest:perf:kafka; docker-compose -f docker-compose.test.kafka.yml up"
+    "test:perf:kafka": "npm run pretest:perf:kafka; docker-compose -f docker-compose.test.kafka.yml up",
+    "test:ml:debug": "nodemon --exitcrash --debug=0.0.0.0:5858 dist/perf/mltest.js -w dist"
   },
   "author": "Microsoft",
   "license": "Apache-2.0",

@@ -4,6 +4,7 @@ import { IIntelligentService, IIntelligentServiceFactory } from "./api";
 const sentimentUrl = "https://westus.api.cognitive.microsoft.com/text/analytics/v2.0/sentiment";
 const keyPhrasesUrl = "https://westus.api.cognitive.microsoft.com/text/analytics/v2.0/keyPhrases";
 const languageUrl = "https://westus.api.cognitive.microsoft.com/text/analytics/v2.0/languages";
+const nativeSentimentUrl = "http://ml:8080/api/sentiment/query";
 
 export interface IConfig {
     key: string;
@@ -34,15 +35,18 @@ class TextAnalyticsIntelligentService implements IIntelligentService {
         data.documents[0].language = language;
         const sentimentResultP = this.invokeRequest(sentimentUrl, data);
         const keyPhrasesResultP = this.invokeRequest(keyPhrasesUrl, data);
-        const results = await Promise.all([sentimentResultP, keyPhrasesResultP]);
+        const nativeSentimentResultP = this.invokeRequest(nativeSentimentUrl, data);
+        const results = await Promise.all([sentimentResultP, keyPhrasesResultP, nativeSentimentResultP]);
 
         const sentiment = results[0].documents[0].score;
         const keyPhrases = results[1].documents[0].keyPhrases;
+        const nativeSentiment = results[2];
 
         return {
             language,
             keyPhrases,
             sentiment,
+            nativeSentiment,
         };
     }
 
