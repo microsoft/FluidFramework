@@ -5,3 +5,6 @@ export { resume };
 
 import * as textAnalytics from "./textAnalytics";
 export { textAnalytics };
+
+import * as nativeTextAnalytics from "./nativeTextAnalytics";
+export { nativeTextAnalytics };
