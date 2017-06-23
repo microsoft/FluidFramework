@@ -35,7 +35,6 @@
     "tmz:debug": "nodemon --exitcrash --debug=0.0.0.0:5858 dist/tmz/index.js",
     "tmz:debug:windows": "nodemon --exitcrash -L --debug=0.0.0.0:5858 dist/tmz/index.js",
     "tmz:watch": "nodemon --exitcrash dist/tmz/index.js -w dist",
-    "ml": "python src/ml/server.py",
     "start": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml up",
     "start:debug": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.debug.yml up",
     "start:debug:windows": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.debug.windows.yml up",

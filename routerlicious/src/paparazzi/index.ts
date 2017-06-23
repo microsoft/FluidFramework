@@ -8,7 +8,7 @@ import * as amqp from "amqplib";
 import * as minio from "minio";
 import { Collection, MongoClient } from "mongodb";
 import * as api from "../api";
-import { resume, textAnalytics } from "../intelligence";
+import { nativeTextAnalytics, resume, textAnalytics } from "../intelligence";
 import * as socketStorage from "../socket-storage";
 import { logger } from "../utils";
 import { IntelligentServicesManager } from "./intelligence";
@@ -165,6 +165,8 @@ async function run() {
     const intelligenceManager = new IntelligentServicesManager(services);
     intelligenceManager.registerService(resume.factory.create(nconf.get("intelligence:resume")));
     intelligenceManager.registerService(textAnalytics.factory.create(nconf.get("intelligence:textAnalytics")));
+    intelligenceManager.registerService(nativeTextAnalytics.factory.create(nconf.get(
+        "intelligence:nativeTextAnalytics")));
 
     // Prep minio
     await getOrCreateBucket(minioClient, storageBucket);

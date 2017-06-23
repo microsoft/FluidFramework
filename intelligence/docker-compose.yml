@@ -1,0 +1,7 @@
+version: '3'
+services:
+  text-analytics:
+    build: .
+    ports:
+      - "8080:8080"
+    command: python text-analytics/server.py

@@ -5,8 +5,6 @@ console.log("Testing ml service...");
 runTest();
 
 async function runTest() {
-    console.log("Wait for 10 seconds to warm up everything....");
-    await sleep(10000);
     await test();
 }
 
@@ -16,7 +14,7 @@ async function test() {
     }]};
     return new Promise<any>((resolve, reject) => {
         request.post(
-            "http://ml:8080/api/sentiment/query",
+            "http://172.20.0.1:8080/api/sentiment/query",
             {
                 body: data,
                 headers: {
@@ -40,8 +38,4 @@ async function test() {
                 return resolve(body);
             });
     });
-}
-
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }

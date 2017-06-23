@@ -24,7 +24,6 @@ services:
         depends_on:
             - alfred
             - rabbitmq
-            - ml
         command: npm run paparazzi
         environment:
             - DEBUG=routerlicious:*
@@ -47,11 +46,6 @@ services:
         command: npm run tmz
         environment:
             - DEBUG=routerlicious:*
-    ml:
-        build: .
-        ports:
-            - "8080:8080"
-        command: npm run ml
     zookeeper:
         image: wurstmeister/zookeeper:latest
         ports:

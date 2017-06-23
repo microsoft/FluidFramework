@@ -4,14 +4,6 @@ services:
     build: . 
     ports:
       - "5858:5858"
-    depends_on:
-      - ml
     command: npm run test:ml:debug
     volumes:
       - .:/usr/src/server
-
-  ml:
-    build: .
-    ports:
-      - "8080:8080"
-    command: npm run ml
