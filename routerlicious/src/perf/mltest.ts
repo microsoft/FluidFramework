@@ -1,5 +1,13 @@
-// We should probably move this file to somewhere else. perf folder is not the right place.
+// Setup the configuration system - pull arguments, then environment variables - prior to loading other modules that
+// may depend on the config already being initialized
+import * as nconf from "nconf";
+import * as path from "path";
+nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
+
+// We should probably move this test to somewhere else. perf folder is not the right place.
 import * as request from "request";
+
+const endPoint = nconf.get("intelligence:nativeTextAnalytics:url") + "api/sentiment/query";
 
 console.log("Testing ml service...");
 runTest();
@@ -14,7 +22,7 @@ async function test() {
     }]};
     return new Promise<any>((resolve, reject) => {
         request.post(
-            "http://172.20.0.1:8080/api/sentiment/query",
+            endPoint,
             {
                 body: data,
                 headers: {
