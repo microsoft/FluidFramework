@@ -16,9 +16,9 @@ export interface Node {
 export interface Block extends Node {
     childCount: number;
     children: Node[];
+    rightmostMarkers: Object;
     partialLengths?: PartialSequenceLengths;
-    lineCount?: number;
-    offset?: number;
+    addNodeMarkers(node: Node);
 }
 
 // TODO: make this extensible 
@@ -70,6 +70,10 @@ export interface IncrementalBlockAction {
     <TContext>(state: IncrementalMapState<TContext>);
 }
 
+export interface BlockUpdateActions {
+    child: (block: Block, index: number) => void;
+}
+
 export interface SegmentActions {
     leaf: SegmentAction;
     pre?: BlockAction;
@@ -119,11 +123,42 @@ export class MergeBlock extends MergeNode implements Block {
     constructor(public childCount: number) {
         super();
         this.children = new Array<Node>(childCount);
+        this.rightmostMarkers = {};
     }
+
+    addNodeMarkers(node: Node) {
+        if (node.isLeaf() && ((<Segment>node).getType() == SegmentType.Marker) &&
+            ((<Marker>node).behavior & MarkerBehaviors.PropagatesForward)) {
+            this.addMarker(<Marker>node);
+        }
+        else {
+            this.addMarkers(<Block>node);
+        }
+    }
+
+    addMarker(marker: Marker) {
+        this.rightmostMarkers[marker.type] = marker;
+    }
+
+    addMarkers(block: Block) {
+        for (let type in block.rightmostMarkers) {
+            if (block.rightmostMarkers.hasOwnProperty(type)) {
+                this.rightmostMarkers[type] = block.rightmostMarkers[type];
+            }
+        }
+    }
+
     children: Node[];
-    cachedLength: number;
-    lineCount = 0;
-    offset = 0;
+    rightmostMarkers: Object;
+}
+
+function nodeTotalLength(node: Node) {
+    if (!node.isLeaf()) {
+        return node.cachedLength;
+    }
+    else {
+        return (<Segment>node).netLength();
+    }
 }
 
 export abstract class BaseSegment extends MergeNode implements Segment {
@@ -134,6 +169,15 @@ export abstract class BaseSegment extends MergeNode implements Segment {
     removedClientId: number;
     removedClientOverlap: number[];
     segmentGroup: SegmentGroup;
+    properties: Object;
+
+    addProperties(newProps: Object) {
+        if (!this.properties) {
+            this.properties = Properties.create();
+        }
+        Properties.extend(this.properties, newProps);
+    }
+
     isLeaf() {
         return true;
     }
@@ -185,7 +229,8 @@ export class ExternalSegment extends BaseSegment {
     }
 }
 
-export enum MarkerProperties {
+export enum MarkerBehaviors {
+    PropagatesForward,
     Begin,
     End,
     SurvivesRemoval,
@@ -193,7 +238,15 @@ export enum MarkerProperties {
 }
 
 export class Marker extends BaseSegment {
-    constructor(public properties: MarkerProperties, seq?: number, clientId?: number) {
+    public static make(type: string, behavior: MarkerBehaviors, props?: Object, seq?: number, clientId?: number) {
+        let marker = new Marker(type, behavior, seq, clientId);
+        if (props) {
+            marker.addProperties(props);
+        }
+        return marker;
+    }
+
+    constructor(public type: string, public behavior: MarkerBehaviors, seq?: number, clientId?: number) {
         super(seq, clientId);
         this.cachedLength = 0;
     }
@@ -224,8 +277,6 @@ export class Marker extends BaseSegment {
 }
 
 export class TextSegment extends BaseSegment {
-    public properties: Object;
-
     public static make(text: string, props?: Object, seq?: number, clientId?: number) {
         let tseg = new TextSegment(text, seq, clientId);
         if (props) {
@@ -237,13 +288,6 @@ export class TextSegment extends BaseSegment {
     constructor(public text: string, seq?: number, clientId?: number) {
         super(seq, clientId);
         this.cachedLength = text.length;
-    }
-
-    addProperties(newProps: Object) {
-        if (!this.properties) {
-            this.properties = Properties.create();
-        }
-        Properties.extend(this.properties, newProps);
     }
 
     splitAt(pos: number) {
@@ -1437,23 +1481,6 @@ function glc(mergeTree: MergeTree, id: number) {
     }
 }
 
-function getLineCount(node: Node) {
-    if (node.isLeaf()) {
-        let segment = <Segment>node;
-        if (segment.getType() == SegmentType.Text) {
-            let textSegment = <TextSegment>segment;
-            if (textSegment.text.charAt(textSegment.text.length - 1) == '\n') {
-                return 1;
-            }
-        }
-        return 0;
-    }
-    else {
-        let childBlock = <Block>node;
-        return childBlock.lineCount;
-    }
-}
-
 // represents a sequence of text segments
 export class MergeTree {
     // must be an even number   
@@ -1479,6 +1506,7 @@ export class MergeTree {
     packTime = 0;
 
     root: Block;
+    blockUpdateActions: BlockUpdateActions;
     collabWindow = new CollaborationWindow();
     pendingSegments: Collections.List<SegmentGroup>;
     segmentsToScour: Collections.Heap<LRUSegment>;
@@ -1515,20 +1543,17 @@ export class MergeTree {
             let nodeIndex = 0;
             for (let i = 0; i < nodeCount; i++) {
                 let len = 0;
-                let lineCount = 0;
                 blocks[i] = new MergeBlock(0);
                 for (let j = 0; j < segCap; j++) {
                     if (nodeIndex < nodes.length) {
                         this.addNode(blocks[i], nodes[nodeIndex]);
                         len += nodes[nodeIndex].cachedLength;
-                        lineCount += getLineCount(nodes[nodeIndex]);
                     } else {
                         break;
                     }
                     nodeIndex++;
                 }
                 blocks[i].cachedLength = len;
-                blocks[i].lineCount = lineCount;
             }
             if (blocks.length == 1) {
                 return blocks[0];
@@ -1547,7 +1572,6 @@ export class MergeTree {
             block.parent = this.root;
             this.root.children[0] = block;
             this.root.cachedLength = block.cachedLength;
-            this.root.lineCount = block.lineCount;
         }
         else {
             this.root = this.makeBlock(0);
@@ -2047,9 +2071,9 @@ export class MergeTree {
         this.updateRoot(splitNode, refSeq, clientId, seq);
     }
 
-
-    insertMarker(pos: number, refSeq: number, clientId: number, seq: number, props: MarkerProperties) {
-        let marker = new Marker(props, seq, clientId);
+    insertMarker(pos: number, refSeq: number, clientId: number, seq: number, type: string,
+        behavior: MarkerBehaviors, props?: Object) {
+        let marker = Marker.make(type, behavior, props, seq, clientId);
         this.insert(pos, refSeq, clientId, seq, marker, (block, pos, refSeq, clientId, seq, marker) =>
             this.blockInsert(block, pos, refSeq, clientId, seq, marker));
     }
@@ -2445,105 +2469,24 @@ export class MergeTree {
     }
 
     nodeUpdateLengthNewStructure(node: Block, recur = false) {
-        this.nodeUpdateTotalLength(node);
+        this.blockUpdate(node);
         if (this.collabWindow.collaborating) {
             node.partialLengths = PartialSequenceLengths.combine(node, this.collabWindow, recur);
         }
     }
 
-    posToLc(pos: number) {
-        let seg = this.getContainingSegment(pos, UniversalSequenceNumber, this.collabWindow.clientId);
-        return this.getLineCol(seg, UniversalSequenceNumber, this.collabWindow.clientId, pos);
-    }
-
-    // TODO: rationalize dup code with getOffset
-    getLineCol(node: Node, refSeq: number, clientId: number, pos: number) {
-        let totalOffset = 0;
-        let parent = node.parent;
-        let prevParent: Block;
-        let lineCount = 0;
-        while (parent) {
-            let children = parent.children;
-            for (let childIndex = 0; childIndex < parent.childCount; childIndex++) {
-                let child = children[childIndex];
-                if ((prevParent && (child == prevParent)) || (child == node)) {
-                    break;
-                }
-                lineCount += getLineCount(child);
-                totalOffset += this.nodeLength(child, refSeq, clientId);
-            }
-            prevParent = parent;
-            parent = parent.parent;
-        }
-        return { line: lineCount, column: pos - totalOffset };
-    }
-
-    lcToPos(line: number, column: number) {
-        return this.lcToPosBlock(this.root, line, column, 0, 0);
-    }
-
-    lcToPosBlock(block: Block, line: number, column: number, pos: number, offset: number) {
-        let children = block.children;
-        for (let childIndex = 0; childIndex < block.childCount; childIndex++) {
-            let child = children[childIndex];
-            let childLineCount = getLineCount(child);
-            let len = this.nodeLength(child, UniversalSequenceNumber, this.collabWindow.clientId);
-
-            if ((line == 0) && (childLineCount == 0) && (child.isLeaf()) &&
-                ((offset + len) > column)) {
-                return (column - offset) + pos;
-            } else if (line < childLineCount) {
-                if (child.isLeaf()) {
-                    return (column - offset) + pos;
-                }
-                else {
-                    let childBlock = <Block>child;
-                    return this.lcToPosBlock(childBlock, line, column, pos, offset);
-                }
-            }
-            else {
-                line -= childLineCount;
-                pos += len;
-                if (childLineCount > 0) {
-                    if (child.isLeaf()) {
-                        offset = 0;
-                    }
-                    else {
-                        offset = (<Block>child).offset;
-                    }
-                }
-                else {
-                    offset += len;
-                }
-            }
-        }
-    }
-
-    nodeUpdateTotalLength(block: Block) {
+    blockUpdate(block: Block) {
         let len = 0;
-        let lineCount = 0;
-        let offset = 0;
         for (let i = 0; i < block.childCount; i++) {
             let child = block.children[i];
-            let nodeLen = this.nodeLength(child, UniversalSequenceNumber, this.collabWindow.clientId);
-            len += nodeLen;
-            let lc = getLineCount(child);
-            lineCount += lc;
-            if (lc > 0) {
-                if (child.isLeaf()) {
-                    offset = 0;
-                }
-                else {
-                    offset = (<Block>child).offset;
-                }
-            }
-            else {
-                offset += len;
+            //        len += this.nodeLength(block.children[i], UniversalSequenceNumber, this.collabWindow.clientId);
+            len += nodeTotalLength(child);
+            block.addNodeMarkers(child);
+            if (this.blockUpdateActions) {
+                this.blockUpdateActions.child(block, i);
             }
         }
         block.cachedLength = len;
-        block.lineCount = lineCount;
-        block.offset = offset;
     }
 
     nodeUpdatePathLengths(node: Block, seq: number, clientId: number, newStructure = false) {
@@ -2559,7 +2502,7 @@ export class MergeTree {
     }
 
     nodeCompareUpdateLength(node: Block, seq: number, clientId: number) {
-        this.nodeUpdateTotalLength(node);
+        this.blockUpdate(node);
         if (this.collabWindow.collaborating && (seq != UnassignedSequenceNumber) && (seq != TreeMaintainanceSequenceNumber)) {
             if (node.partialLengths !== undefined) {
                 let bplStr = node.partialLengths.toString();
@@ -2579,7 +2522,7 @@ export class MergeTree {
     }
 
     blockUpdateLength(node: Block, seq: number, clientId: number) {
-        this.nodeUpdateTotalLength(node);
+        this.blockUpdate(node);
         if (this.collabWindow.collaborating && (seq != UnassignedSequenceNumber) && (seq != TreeMaintainanceSequenceNumber)) {
             if (node.partialLengths !== undefined) {
                 //nodeCompareUpdateLength(node, seq, clientId);

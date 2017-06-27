@@ -1325,6 +1325,6 @@ export function TestPack() {
 //mergeTreeCheckedTest();
 let testPack = TestPack();
 //testPack.randolicious();
-let filename = path.join(__dirname, "../../public/literature", "pp.txt");
-testPack.clientServer(filename);
+// let filename = path.join(__dirname, "../../public/literature", "pp.txt");
+testPack.clientServer();
 new Server();
