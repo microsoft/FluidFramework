@@ -4,15 +4,15 @@ import * as nconf from "nconf";
 import * as path from "path";
 nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
 
-import * as amqp from "amqplib";
 import { queue } from "async";
+import * as _ from "lodash";
+import * as redis from "redis";
+import * as socketIo from "socket.io";
+import * as socketIoRedis from "socket.io-redis";
 import * as core from "../core";
-import * as utils from "../utils";
+import * as socketStorage from "../socket-storage";
 import { logger } from "../utils";
-
-// Prep RabbitMQ
-const snapshotQueue = nconf.get("tmz:queue");
-const rabbitmqConnectionString = nconf.get("rabbitmq:connectionString");
+import * as utils from "../utils";
 
 // Setup Kafka connection
 const kafkaEndpoint = nconf.get("kafka:lib:endpoint");
@@ -20,21 +20,46 @@ const kafkaLibrary = nconf.get("kafka:lib:name");
 const topic = nconf.get("tmz:topic");
 const groupId = nconf.get("tmz:groupId");
 
+// Setup redis for socketio
+let io = socketIo();
+
+let host = nconf.get("redis:host");
+let port = nconf.get("redis:port");
+let pass = nconf.get("redis:pass");
+
+let options: any = { auth_pass: pass };
+if (nconf.get("redis:tls")) {
+    options.tls = {
+        servername: host,
+    };
+}
+
+let pubOptions = _.clone(options);
+let subOptions = _.clone(options);
+
+let pub = redis.createClient(port, host, pubOptions);
+let sub = redis.createClient(port, host, subOptions);
+io.adapter(socketIoRedis({ pubClient: pub, subClient: sub }));
+
 async function run() {
-    const connection = await amqp.connect(rabbitmqConnectionString);
-    logger.info("Connected to RabbitMQ");
-    const channel = await connection.createChannel();
-    await channel.assertQueue(snapshotQueue, { durable: true });
-    logger.info("Channel ready");
-
     const deferred = new utils.Deferred<void>();
+    console.log(`Trying to launch io`);
+    const clientPool = [];
+    let socketObj : SocketIO.Socket;
 
-    // The rabbitmq library does not support re-connect. We will simply exit and rely on being restarted once
-    // we lose our connection to RabbitMQ.
-    connection.on("error", (error) => {
-        console.error("Lost connection to RabbitMQ - exiting");
-        deferred.reject(error);
+    io.on("connection", (socket) => {
+        socketObj = socket;
+        socket.on("workerObject", (clientId: string, message: socketStorage.IWork, response) => {
+            console.log(`TMZ received a new connection from ${clientId}: ${JSON.stringify(message)}`);
+            clientPool.push(clientId);
+            socket.emit("TaskObject", "Test-Task", (error) => {
+                console.log(`Error sending reply`);
+            });
+        });
     });
+
+    console.log(`Listening to port 4000`);
+    io.listen(4000);
 
     let consumer = utils.kafkaConsumer.create(kafkaLibrary, kafkaEndpoint, groupId, topic);
     const createdRequests: any = {};
@@ -54,10 +79,11 @@ async function run() {
             callback();
             return;
         }
-        createdRequests[value.objectId] = true;
         logger.info(`Requesting snapshots for ${value.objectId}`);
-        channel.sendToQueue(snapshotQueue, new Buffer(value.objectId), { persistent: true });
-
+        socketObj.emit("TaskObject", value.objectId, (error) => {
+            console.log(`Some error happened: ${error}`);
+        });
+        createdRequests[value.objectId] = true;
         callback();
     }, 1);
 

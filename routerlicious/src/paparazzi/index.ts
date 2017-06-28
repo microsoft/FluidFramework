@@ -4,9 +4,9 @@ import * as nconf from "nconf";
 import * as path from "path";
 nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
 
-import * as amqp from "amqplib";
 import * as minio from "minio";
 import { Collection, MongoClient } from "mongodb";
+import * as io from "socket.io-client";
 import * as api from "../api";
 import { nativeTextAnalytics, resume, textAnalytics } from "../intelligence";
 import * as socketStorage from "../socket-storage";
@@ -20,14 +20,15 @@ const client = MongoClient.connect(mongoUrl);
 const objectsCollectionName = nconf.get("mongo:collectionNames:objects");
 const objectsCollectionP = client.then((db) => db.collection(objectsCollectionName));
 
-// Queue configuration
-const queueName = nconf.get("tmz:queue");
-const connectionString = nconf.get("rabbitmq:connectionString");
 const minioConfig = nconf.get("minio");
 const storageBucket = nconf.get("paparazzi:bucket");
 
 // Connect to Alfred for default storage options
 const alfredUrl = nconf.get("paparazzi:alfred");
+
+// Connect to tmz
+const tmzUrl = nconf.get("paparazzi:tmz");
+const socket = io(tmzUrl, { transports: ["websocket"] });
 
 async function bucketExists(minioClient, bucket: string) {
     return new Promise<boolean>((resolve, reject) => {
@@ -174,33 +175,24 @@ async function run() {
     // Load the mongodb collection
     const collection = await objectsCollectionP;
 
-    // Connect to the queue
-    const connection = await amqp.connect(connectionString);
-    const channel = await connection.createChannel();
+    const clientDetail: socketStorage.IWork = {
+        clientId: "papa-1",
+        type: "Paparazzi",
+    };            
 
-    // The rabbitmq library does not support re-connect. We will simply exit and rely on being restarted once
-    // we lose our connection to RabbitMQ.
-    connection.on("error", (error) => {
-        logger.error("Lost connection to RabbitMQ - exiting", error);
-        process.exit(1);
+    // Connect to tmz
+    socket.emit("workerObject", "papa-1", clientDetail, (error) => {
+        if (error) {
+            console.log(`Error sending to socket: ${error}`);
+        }        
     });
 
-    channel.assertQueue(queueName, { durable: true });
-    channel.prefetch(1);
-
-    channel.consume(
-        queueName,
-        (message) => {
-            processMessage(message.content.toString(), collection, services, intelligenceManager)
-                .then(() => {
-                    channel.ack(message);
-                })
-                .catch((error) => {
-                    logger.error(error);
-                    channel.nack(message);
-                });
-        },
-        { noAck: false });
+    socket.on("TaskObject", (msg: string, response) => {
+        console.log(`Reply from Paparazzi. Task: ${msg}`);
+        processMessage(msg.toString(), collection, services, intelligenceManager).catch((err) => {
+            logger.error(err);
+        });
+    });    
 }
 
 // Start up the paparazzi service

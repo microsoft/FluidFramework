@@ -80,7 +80,8 @@
     "paparazzi": {
         "queue": "snapshot",
         "bucket": "snapshots",
-        "alfred": "http://alfred:3000"
+        "alfred": "http://alfred:3000",
+        "tmz": "http://tmz:4000"
     },
     "scriptorium": {
         "topic": "deltas",

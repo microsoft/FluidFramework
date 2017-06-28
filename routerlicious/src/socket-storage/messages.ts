@@ -19,3 +19,14 @@ export interface IConnected {
     // Whether or not this is an existing object
     existing: boolean;
 }
+
+/**
+ * Message sent to connect to the given object
+ */
+export interface IWork {
+    // Worker Id.
+    clientId: string;
+
+    // Type
+    type: string;
+}
