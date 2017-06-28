@@ -6,11 +6,14 @@ nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use
 
 import * as minio from "minio";
 import { Collection, MongoClient } from "mongodb";
+import * as moniker from "moniker";
 import * as io from "socket.io-client";
 import * as api from "../api";
 import { nativeTextAnalytics, resume, textAnalytics } from "../intelligence";
 import * as socketStorage from "../socket-storage";
 import { logger } from "../utils";
+import * as utils from "../utils";
+
 import { IntelligentServicesManager } from "./intelligence";
 import { ObjectStorageService } from "./objectStorageService";
 
@@ -26,7 +29,7 @@ const storageBucket = nconf.get("paparazzi:bucket");
 // Connect to Alfred for default storage options
 const alfredUrl = nconf.get("paparazzi:alfred");
 
-// Connect to tmz
+// Subscribe to tmz to receive work.
 const tmzUrl = nconf.get("paparazzi:tmz");
 const socket = io(tmzUrl, { transports: ["websocket"] });
 
@@ -148,6 +151,8 @@ function processMessage(
 }
 
 async function run() {
+    const deferred = new utils.Deferred<void>();
+
     const minioClient = new minio.Client({
         accessKey: minioConfig.accessKey,
         endPoint: minioConfig.endpoint,
@@ -175,24 +180,23 @@ async function run() {
     // Load the mongodb collection
     const collection = await objectsCollectionP;
 
-    const clientDetail: socketStorage.IWork = {
-        clientId: "papa-1",
+    // Subscribe to tmz
+    const clientDetail: socketStorage.IWorker = {
+        clientId: moniker.choose(),
         type: "Paparazzi",
-    };            
-
-    // Connect to tmz
-    socket.emit("workerObject", "papa-1", clientDetail, (error) => {
+    };
+    socket.emit("workerObject", clientDetail, (error) => {
         if (error) {
-            console.log(`Error sending to socket: ${error}`);
-        }        
+            deferred.reject(error);
+        }
     });
 
     socket.on("TaskObject", (msg: string, response) => {
-        console.log(`Reply from Paparazzi. Task: ${msg}`);
-        processMessage(msg.toString(), collection, services, intelligenceManager).catch((err) => {
+        logger.info(`Received work for: ${msg}`);
+        processMessage(msg, collection, services, intelligenceManager).catch((err) => {
             logger.error(err);
         });
-    });    
+    });
 }
 
 // Start up the paparazzi service

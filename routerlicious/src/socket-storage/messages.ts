@@ -23,7 +23,7 @@ export interface IConnected {
 /**
  * Message sent to connect to the given object
  */
-export interface IWork {
+export interface IWorker {
     // Worker Id.
     clientId: string;
 

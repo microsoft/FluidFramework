@@ -24,7 +24,7 @@ const groupId = nconf.get("tmz:groupId");
 let io = socketIo();
 
 let host = nconf.get("redis:host");
-let port = nconf.get("redis:port");
+let redisPort = nconf.get("redis:port");
 let pass = nconf.get("redis:pass");
 
 let options: any = { auth_pass: pass };
@@ -37,29 +37,25 @@ if (nconf.get("redis:tls")) {
 let pubOptions = _.clone(options);
 let subOptions = _.clone(options);
 
-let pub = redis.createClient(port, host, pubOptions);
-let sub = redis.createClient(port, host, subOptions);
+let pub = redis.createClient(redisPort, host, pubOptions);
+let sub = redis.createClient(redisPort, host, subOptions);
 io.adapter(socketIoRedis({ pubClient: pub, subClient: sub }));
+
+let port = nconf.get("tmz:port");
 
 async function run() {
     const deferred = new utils.Deferred<void>();
-    console.log(`Trying to launch io`);
     const clientPool = [];
-    let socketObj : SocketIO.Socket;
+    let socketObj: SocketIO.Socket;
 
+    // open a socketio connection and start listening for workers.
     io.on("connection", (socket) => {
         socketObj = socket;
-        socket.on("workerObject", (clientId: string, message: socketStorage.IWork, response) => {
-            console.log(`TMZ received a new connection from ${clientId}: ${JSON.stringify(message)}`);
-            clientPool.push(clientId);
-            socket.emit("TaskObject", "Test-Task", (error) => {
-                console.log(`Error sending reply`);
-            });
+        socket.on("workerObject", (message: socketStorage.IWorker, response) => {
+            clientPool.push(message.clientId);
         });
     });
-
-    console.log(`Listening to port 4000`);
-    io.listen(4000);
+    io.listen(port);
 
     let consumer = utils.kafkaConsumer.create(kafkaLibrary, kafkaEndpoint, groupId, topic);
     const createdRequests: any = {};
@@ -81,7 +77,7 @@ async function run() {
         }
         logger.info(`Requesting snapshots for ${value.objectId}`);
         socketObj.emit("TaskObject", value.objectId, (error) => {
-            console.log(`Some error happened: ${error}`);
+            deferred.reject(error);
         });
         createdRequests[value.objectId] = true;
         callback();

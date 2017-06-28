@@ -94,7 +94,8 @@
         "queue": "snapshot",
         "topic": "deltas",
         "kafkaClientId": "tmz",
-        "groupId": "tmz"
+        "groupId": "tmz",
+        "port": 4000
     },
     "redis": {
         "host": "redis",

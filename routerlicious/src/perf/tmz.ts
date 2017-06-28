@@ -9,7 +9,7 @@ async function runTest() {
     console.log(`Sleep for 10 seconds`);
     await sleep(10000);
 
-    const message: socketStorage.IWork = {
+    const message: socketStorage.IWorker = {
         clientId: "Papa-1",
         type: "Papa",
     };
