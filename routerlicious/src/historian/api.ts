@@ -12,7 +12,9 @@ export const router: Router = Router();
  * Retrieves commits for the given branch
  */
 router.get("/documents/:id/:branch/commits", (request, response, next) => {
-    git.getCommits(request.params.id, request.params.branch)
+    const count = request.query.count || 10;
+
+    git.getCommits(request.params.id, request.params.branch, count, request.query.from)
         .then((commits) => {
             response.json(commits);
         },

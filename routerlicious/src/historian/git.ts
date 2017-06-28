@@ -57,10 +57,11 @@ class GitManager {
     /**
      * Reads the object with the given ID. We defer to the client implementation to do the actual read.
      */
-    public async getCommits(id: string, branch: string): Promise<any> {
+    public async getCommits(id: string, branch: string, sha: string, count: string): Promise<any> {
         const client = await this.clientP;
 
-        const commits = await (<any> client).log([`refs/remotes/origin/${id}`, "-n", "10"]);
+        const from = sha || `refs/remotes/origin/${id}`;
+        const commits = await (<any> client).log([from, "-n", count]);
 
         return commits.all;
     }
@@ -68,6 +69,6 @@ class GitManager {
 
 const manager = new GitManager(repo, storagePath);
 
-export async function getCommits(id: string, branch: string): Promise<any> {
-    return manager.getCommits(id, branch);
+export async function getCommits(id: string, branch: string, count: string, from: string): Promise<any> {
+    return manager.getCommits(id, branch, from, count);
 }
