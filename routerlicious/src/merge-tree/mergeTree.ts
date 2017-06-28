@@ -62,6 +62,11 @@ export interface BlockAction {
         accum?: TAccum): boolean;
 }
 
+export interface NodeAction {
+    <TAccum>(node: Node, pos: number, refSeq: number, clientId: number, start: number, end: number,
+        accum?: TAccum): boolean;
+}
+
 export interface IncrementalSegmentAction {
     <TContext>(segment: Segment, state: IncrementalMapState<TContext>);
 }
@@ -75,7 +80,8 @@ export interface BlockUpdateActions {
 }
 
 export interface SegmentActions {
-    leaf: SegmentAction;
+    leaf?: SegmentAction;
+    shift?: NodeAction;
     pre?: BlockAction;
     post?: BlockAction;
 }
@@ -119,6 +125,20 @@ export class MergeNode implements Node {
     }
 }
 
+function addMarker(marker: Marker, markers: Object) {
+    markers[marker.type] = marker;
+}
+
+function addNodeMarkers(node: Node, markers: Object) {
+    if (node.isLeaf() && ((<Segment>node).getType() == SegmentType.Marker) &&
+        ((<Marker>node).behaviors & API.MarkerBehaviors.PropagatesForward)) {
+        addMarker(<Marker>node, markers);
+    }
+    else {
+        Properties.extend(markers, (<Block>node).rightmostMarkers);
+    }
+}
+
 export class MergeBlock extends MergeNode implements Block {
     constructor(public childCount: number) {
         super();
@@ -127,25 +147,7 @@ export class MergeBlock extends MergeNode implements Block {
     }
 
     addNodeMarkers(node: Node) {
-        if (node.isLeaf() && ((<Segment>node).getType() == SegmentType.Marker) &&
-            ((<Marker>node).behavior & MarkerBehaviors.PropagatesForward)) {
-            this.addMarker(<Marker>node);
-        }
-        else {
-            this.addMarkers(<Block>node);
-        }
-    }
-
-    addMarker(marker: Marker) {
-        this.rightmostMarkers[marker.type] = marker;
-    }
-
-    addMarkers(block: Block) {
-        for (let type in block.rightmostMarkers) {
-            if (block.rightmostMarkers.hasOwnProperty(type)) {
-                this.rightmostMarkers[type] = block.rightmostMarkers[type];
-            }
-        }
+        addNodeMarkers(node, this.rightmostMarkers);
     }
 
     children: Node[];
@@ -229,16 +231,8 @@ export class ExternalSegment extends BaseSegment {
     }
 }
 
-export enum MarkerBehaviors {
-    PropagatesForward,
-    Begin,
-    End,
-    SurvivesRemoval,
-    Temporal
-}
-
 export class Marker extends BaseSegment {
-    public static make(type: string, behavior: MarkerBehaviors, props?: Object, seq?: number, clientId?: number) {
+    public static make(type: string, behavior: API.MarkerBehaviors, props?: Object, seq?: number, clientId?: number) {
         let marker = new Marker(type, behavior, seq, clientId);
         if (props) {
             marker.addProperties(props);
@@ -246,7 +240,7 @@ export class Marker extends BaseSegment {
         return marker;
     }
 
-    constructor(public type: string, public behavior: MarkerBehaviors, seq?: number, clientId?: number) {
+    constructor(public type: string, public behaviors: API.MarkerBehaviors, seq?: number, clientId?: number) {
         super(seq, clientId);
         this.cachedLength = 0;
     }
@@ -1145,7 +1139,7 @@ export class Client {
             minimumSequenceNumber: undefined,
             offset: seq,
             op: {
-                type: API.MergeTreeMsgType.INSERT, text: text, pos1: pos
+                type: API.MergeTreeDeltaType.INSERT, text: text, pos1: pos
             },
             type: API.OperationType,
         };
@@ -1162,7 +1156,7 @@ export class Client {
             minimumSequenceNumber: undefined,
             offset: seq,
             op: {
-                type: API.MergeTreeMsgType.REMOVE, pos1: start, pos2: end
+                type: API.MergeTreeDeltaType.REMOVE, pos1: start, pos2: end
             },
             type: API.OperationType,
         };
@@ -1177,14 +1171,14 @@ export class Client {
     }
 
     coreApplyMsg(msg: API.ISequencedMessage) {
-        let op = <API.IMergeTreeDeltaMsg>msg.op;
+        let op = <API.IMergeTreeOp>msg.op;
         let clid = this.getOrAddShortClientId(msg.clientId);
         switch (op.type) {
-            case API.MergeTreeMsgType.INSERT:
+            case API.MergeTreeDeltaType.INSERT:
                 this.insertSegmentRemote(op.text, op.pos1, op.props, msg.sequenceNumber, msg.referenceSequenceNumber,
                     clid);
                 break;
-            case API.MergeTreeMsgType.REMOVE:
+            case API.MergeTreeDeltaType.REMOVE:
                 this.removeSegmentRemote(op.pos1, op.pos2, msg.sequenceNumber, msg.referenceSequenceNumber,
                     clid);
                 break;
@@ -1268,7 +1262,7 @@ export class Client {
         }
     }
 
-    insertSegmentLocal(text: string, pos: number, props?: Object) {
+    insertTextLocal(text: string, pos: number, props?: Object) {
         let segWindow = this.mergeTree.getCollabWindow();
         let clientId = segWindow.clientId;
         let refSeq = segWindow.currentSeq;
@@ -1286,6 +1280,28 @@ export class Client {
         }
         if (this.verboseOps) {
             console.log(`insert local text ${text} pos ${pos} cli ${this.getLongClientId(clientId)} ref seq ${refSeq}`);
+        }
+    }
+
+    insertMarkerLocal(pos: number, type: string, behaviors: API.MarkerBehaviors, props?: Object, end?: number) {
+        let segWindow = this.mergeTree.getCollabWindow();
+        let clientId = segWindow.clientId;
+        let refSeq = segWindow.currentSeq;
+        let seq = UnassignedSequenceNumber;
+        let clockStart;
+        if (this.measureOps) {
+            clockStart = clock();
+        }
+
+        // TODO: add end
+        this.mergeTree.insertMarker(pos, refSeq, clientId, seq, type, behaviors, props);
+
+        if (this.measureOps) {
+            this.localTime += elapsedMicroseconds(clockStart);
+            this.localOps++;
+        }
+        if (this.verboseOps) {
+            console.log(`insert local marker of type ${type} pos ${pos} cli ${this.getLongClientId(clientId)} ref seq ${refSeq}`);
         }
     }
 
@@ -1697,7 +1713,7 @@ export class MergeTree {
             this.pack(parent);
         }
         else {
-            this.nodeUpdatePathLengths(parent, UnassignedSequenceNumber, -1, true);
+            this.blockUpdatePathLengths(parent, UnassignedSequenceNumber, -1, true);
         }
     }
 
@@ -1737,7 +1753,7 @@ export class MergeTree {
                             }
                         }
                         else {
-                            this.nodeUpdatePathLengths(block, UnassignedSequenceNumber, -1, true);
+                            this.blockUpdatePathLengths(block, UnassignedSequenceNumber, -1, true);
                         }
 
                     }
@@ -1911,7 +1927,7 @@ export class MergeTree {
 
     getContainingSegment(pos: number, refSeq: number, clientId: number) {
         if (pos !== undefined) {
-            return this.search(this.root, refSeq, clientId, pos);
+            return this.searchBlock(this.root, refSeq, clientId, pos);
         }
         // TODO: error on undefined
     }
@@ -1969,27 +1985,43 @@ export class MergeTree {
         }
     }
 
-    search<TAccum>(node: Block, pos: number, refSeq: number, clientId: number, action?: SegmentAction, accum?: TAccum): Segment {
-        let children = node.children;
+    search<TAccum>(pos: number, refSeq: number, clientId: number,
+        actions?: SegmentActions, accum?: TAccum): Segment {
+        return this.searchBlock(this.root, pos, refSeq, clientId, actions);
+    }
+
+    searchBlock<TAccum>(block: Block, pos: number, refSeq: number, clientId: number, actions?: SegmentActions, accum?: TAccum): Segment {
+        let children = block.children;
         let start = pos;
-        for (let childIndex = 0; childIndex < node.childCount; childIndex++) {
+        let segpos = 0;
+        if (actions && actions.pre) {
+            actions.pre(block, segpos, refSeq, clientId, undefined, undefined, accum);
+        }
+        for (let childIndex = 0; childIndex < block.childCount; childIndex++) {
             let child = children[childIndex];
             let len = this.nodeLength(child, refSeq, clientId);
             if (start < len) {
                 // found entry containing pos
                 if (!child.isLeaf()) {
-                    return this.search(<Block>child, pos, refSeq, clientId, action);
+                    return this.searchBlock(<Block>child, pos, refSeq, clientId, actions);
                 }
                 else {
-                    if (action) {
-                        action(<Segment>child, pos, refSeq, clientId, start, -1, accum);
+                    if (actions && actions.leaf) {
+                        actions.leaf(<Segment>child, segpos, refSeq, clientId, start, -1, accum);
                     }
                     return <Segment>child;
                 }
             }
             else {
                 start -= len;
+                segpos += len;
+                if (actions && actions.shift) {
+                    actions.shift(child, segpos, refSeq, clientId, start, undefined, accum);
+                }
             }
+        }
+        if (actions && actions.post) {
+            actions.post(block, segpos, refSeq, clientId, undefined, undefined, accum);
         }
     }
 
@@ -2039,7 +2071,7 @@ export class MergeTree {
                 }
             });
             for (let node of nodesToUpdate) {
-                this.nodeUpdatePathLengths(node, seq, clientId, overwrite);
+                this.blockUpdatePathLengths(node, seq, clientId, overwrite);
                 //nodeUpdatePathLengths(node, seq, clientId, true);
             }
         }
@@ -2072,8 +2104,8 @@ export class MergeTree {
     }
 
     insertMarker(pos: number, refSeq: number, clientId: number, seq: number, type: string,
-        behavior: MarkerBehaviors, props?: Object) {
-        let marker = Marker.make(type, behavior, props, seq, clientId);
+        behaviors: API.MarkerBehaviors, props?: Object) {
+        let marker = Marker.make(type, behaviors, props, seq, clientId);
         this.insert(pos, refSeq, clientId, seq, marker, (block, pos, refSeq, clientId, seq, marker) =>
             this.blockInsert(block, pos, refSeq, clientId, seq, marker));
     }
@@ -2479,7 +2511,6 @@ export class MergeTree {
         let len = 0;
         for (let i = 0; i < block.childCount; i++) {
             let child = block.children[i];
-            //        len += this.nodeLength(block.children[i], UniversalSequenceNumber, this.collabWindow.clientId);
             len += nodeTotalLength(child);
             block.addNodeMarkers(child);
             if (this.blockUpdateActions) {
@@ -2489,15 +2520,15 @@ export class MergeTree {
         block.cachedLength = len;
     }
 
-    nodeUpdatePathLengths(node: Block, seq: number, clientId: number, newStructure = false) {
-        while (node !== undefined) {
+    blockUpdatePathLengths(block: Block, seq: number, clientId: number, newStructure = false) {
+        while (block !== undefined) {
             if (newStructure) {
-                this.nodeUpdateLengthNewStructure(node);
+                this.nodeUpdateLengthNewStructure(block);
             }
             else {
-                this.blockUpdateLength(node, seq, clientId);
+                this.blockUpdateLength(block, seq, clientId);
             }
-            node = node.parent;
+            block = block.parent;
         }
     }
 
@@ -2542,6 +2573,19 @@ export class MergeTree {
     map<TAccum>(actions: SegmentActions, refSeq: number, clientId: number, accum?: TAccum) {
         // TODO: optimize to avoid comparisons
         this.nodeMap(this.root, actions, 0, refSeq, clientId, accum);
+    }
+
+    mapRangeWithMarkers(actions: SegmentActions, refSeq: number, clientId: number, start?: number, end?: number) {
+        let markers: Object = {};
+        let shift = actions.shift;
+        actions.shift = (node, pos, refSeq, clientId, start, end) => {
+            addNodeMarkers(node, markers);
+            if (shift) {
+                shift(node, pos, refSeq, clientId, start, end);
+            }
+            return true;
+        };
+        this.nodeMap(this.root, actions, 0, refSeq, clientId, markers, start, end);
     }
 
     mapRange<TAccum>(actions: SegmentActions, refSeq: number, clientId: number, accum?: TAccum, start?: number, end?: number) {
@@ -2636,7 +2680,6 @@ export class MergeTree {
         }
     }
 
-
     nodeMap<TAccum>(node: Block, actions: SegmentActions, pos: number, refSeq: number,
         clientId: number, accum?: TAccum, start?: number, end?: number) {
         if (start === undefined) {
@@ -2667,9 +2710,11 @@ export class MergeTree {
                 }
                 console.log(`@tcli ${glc(this, this.collabWindow.clientId)}: map len: ${len} start: ${start} end: ${end} ` + segInfo);
             }
-            if (go && (len > 0) && (start < len) && (end > 0)) {
+            let isLeaf = child.isLeaf();
+            if (go && ((len > 0) || (isLeaf && ((<Segment>child).getType() == SegmentType.Marker)))
+                && (start < len) && (end > 0)) {
                 // found entry containing pos
-                if (!child.isLeaf()) {
+                if (!isLeaf) {
                     if (go) {
                         go = this.nodeMap(<Block>child, actions, pos, refSeq, clientId, accum, start, end);
                     }
@@ -2683,6 +2728,9 @@ export class MergeTree {
             }
             if (!go) {
                 break;
+            }
+            if (actions.shift) {
+                actions.shift(child, pos, refSeq, clientId, start, end, accum);
             }
             pos += len;
             start -= len;

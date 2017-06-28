@@ -52,21 +52,72 @@ export interface ISequencedMessage extends IMessageBase, IBase {
 export interface IDelta {
 }
 
-export const enum MergeTreeMsgType {
-    INSERT,
-    REMOVE,
+export interface IMergeTreeMsg extends IMessage {
+    op: IMergeTreeDelta;
 }
 
-export interface IMergeTreeDeltaMsg extends IDelta {
+export enum MarkerBehaviors {
+    PropagatesForward,
+    Begin,
+    End,
+    SurvivesRemoval,
+    Temporal,
+}
+
+export interface IMarkerDef {
+    type: string;
+    behaviors?: MarkerBehaviors;
+    end?: number;
+}
+
+export interface IComponentDef {
+    url: string;
+}
+
+export const enum MergeTreeDeltaType {
+    INSERT,
+    REMOVE,
+    ASSIGN,
+    GROUP,
+}
+
+export interface IMergeTreeDelta extends IDelta {
     /**
      * Type of this change.
      */
-    type: MergeTreeMsgType;
+    type: MergeTreeDeltaType;
+}
+
+export interface IMergeTreeInsertMsg extends IMergeTreeDelta {
+    type: MergeTreeDeltaType.INSERT;
     pos1: number;
     props?: Object;
-    pos2?: number;
     text?: string;
+    marker?: IMarkerDef;
+    component?: IComponentDef;
 }
+
+export interface IMergeTreeRemoveMsg extends IMergeTreeDelta {
+    type: MergeTreeDeltaType.REMOVE;
+    pos1: number;
+    pos2?: number;
+    marker?: IMarkerDef;
+}
+
+export interface IMergeTreeAssignMsg extends IMergeTreeDelta {
+    type: MergeTreeDeltaType.ASSIGN;
+    pos1: number;
+    props: Object;
+    pos2?: number;
+    marker?: IMarkerDef;
+}
+
+export interface IMergeTreeGroupMsg extends IMergeTreeDelta {
+    type: MergeTreeDeltaType.GROUP;
+    ops: IMergeTreeDelta[];
+}
+
+export type IMergeTreeOp = IMergeTreeInsertMsg | IMergeTreeRemoveMsg | IMergeTreeAssignMsg | IMergeTreeGroupMsg;
 
 export interface IPropertyString {
     props?: Object;

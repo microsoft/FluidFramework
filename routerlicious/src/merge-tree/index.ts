@@ -7,8 +7,8 @@ import * as API from "../api";
 
 export * from "./mergeTree";
 
-import { loadSegments, loadSrcSegments, findRandomWord } from "./text";
-export { loadSegments, loadSrcSegments, findRandomWord };
+import { loadSegments, findRandomWord } from "./text";
+export { loadSegments, findRandomWord };
 
 export class CollaboritiveStringExtension implements API.IExtension {
     public static Type = "https://graph.microsoft.com/types/mergeTree";
@@ -99,13 +99,24 @@ export class SharedString implements API.ICollaborativeObject {
         return this;
     }
 
+    private makeInsertMarkerMsg(pos: number, type: string, behaviors: API.MarkerBehaviors, props?: Object, end?: number) {
+        return <API.IMessage>{
+            referenceSequenceNumber: this.client.getCurrentSeq(),
+            objectId: this.id,
+            clientSequenceNumber: this.clientSequenceNumber++,
+            op: <API.IMergeTreeInsertMsg>{
+                type: API.MergeTreeDeltaType.INSERT,  pos1: pos, props, marker: { type, behaviors, end},
+            }
+        };
+        
+    }
     private makeInsertMsg(text: string, pos: number, props?: Object) {
         return <API.IMessage>{
             referenceSequenceNumber: this.client.getCurrentSeq(),
             objectId: this.id,
             clientSequenceNumber: this.clientSequenceNumber++,
             op: {
-                type: API.MergeTreeMsgType.INSERT, text: text, pos1: pos, props,
+                type: API.MergeTreeDeltaType.INSERT, text, pos1: pos, props,
             }
         };
     }
@@ -116,14 +127,20 @@ export class SharedString implements API.ICollaborativeObject {
             objectId: this.id,
             clientSequenceNumber: this.clientSequenceNumber++,
             op: {
-                type: API.MergeTreeMsgType.REMOVE, pos1: start, pos2: end
+                type: API.MergeTreeDeltaType.REMOVE, pos1: start, pos2: end
             }
         };
     }
 
+    public insertMarker(pos: number, type: string, behaviors: API.MarkerBehaviors, props?: Object, end?: number) {
+        const insertMessage = this.makeInsertMarkerMsg(pos, type, behaviors, props, end);
+        this.client.insertMarkerLocal(pos, type, behaviors, props, end);
+        this.deltaManager.submitOp(insertMessage);
+    }
+
     public insertText(text: string, pos: number, props?: Object) {
         const insertMessage = this.makeInsertMsg(text, pos, props);
-        this.client.insertSegmentLocal(text, pos, props);
+        this.client.insertTextLocal(text, pos, props);
         this.deltaManager.submitOp(insertMessage);
     }
 

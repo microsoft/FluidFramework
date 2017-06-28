@@ -1009,13 +1009,13 @@ export class FlowView {
             window.requestAnimationFrame(() => {
                 this.pendingRender = false;
                 let viewChar = 0;
-                let delta = <API.IMergeTreeDeltaMsg>msg.op;
-                if (delta.type === API.MergeTreeMsgType.INSERT) {
+                let delta = <API.IMergeTreeOp>msg.op;
+                if (delta.type === API.MergeTreeDeltaType.INSERT) {
                     viewChar = delta.pos1 + delta.text.length;
                     if ((delta.pos1 <= this.cursor.pos) && (msg.clientId !== this.client.longClientId)) {
                         this.cursor.pos += delta.text.length;
                     }
-                } else {
+                } else if (delta.type === API.MergeTreeDeltaType.REMOVE) {
                     if (delta.pos2 <= this.cursor.pos) {
                         this.cursor.pos -= (delta.pos2 - delta.pos1);
                     } else if (this.cursor.pos >= delta.pos1) {
