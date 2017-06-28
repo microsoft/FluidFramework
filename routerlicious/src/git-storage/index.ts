@@ -16,7 +16,7 @@ socketStorage.registerAsDefault(alfredUrl);
 
 const writeFile = promisify(fs.writeFile);
 
-const repo = "https://kurtb:<PAT>@github.com/kurtb/praguedocs.git";
+const repo = "git@git:praguedocs.git";
 
 export class GitStorageService implements api.IObjectStorageService {
     private clients: { [id: string]: Promise<simpleGit.SimpleGit> } = {};
@@ -137,7 +137,7 @@ async function handleDocument(id: string) {
 }
 
 // Start up the paparazzi service
-const runP = handleDocument("gitmap3");
+const runP = handleDocument("gitmap4");
 runP.catch((error) => {
     logger.error(error);
     process.exit(1);

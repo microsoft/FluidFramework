@@ -25,3 +25,5 @@ services:
             - .:/usr/src/server
         command: npm run tmz:watch
         restart: always
+    git:
+        build: ./docker/gitssh
