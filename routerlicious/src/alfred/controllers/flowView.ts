@@ -925,11 +925,6 @@ export class FlowView {
         this.render(scrollTo);
     }
 
-    public renderIfVisible(viewChar: number) {
-        // console.log(`view char: ${viewChar} top: ${this.topChar} adj: ${this.adjustedTopChar} bot: ${this.viewportEndChar}`);
-        this.render(this.topChar, true);
-    }
-
     public render(topChar?: number, changed = false) {
         let len = this.client.getLength();
         if (topChar !== undefined) {
@@ -1008,22 +1003,21 @@ export class FlowView {
             this.pendingRender = true;
             window.requestAnimationFrame(() => {
                 this.pendingRender = false;
-                let viewChar = 0;
-                let delta = <API.IMergeTreeOp>msg.op;
-                if (delta.type === API.MergeTreeDeltaType.INSERT) {
-                    viewChar = delta.pos1 + delta.text.length;
-                    if ((delta.pos1 <= this.cursor.pos) && (msg.clientId !== this.client.longClientId)) {
-                        this.cursor.pos += delta.text.length;
+                if (msg.clientId !== this.client.longClientId) {
+                    let delta = <API.IMergeTreeOp>msg.op;
+                    if (delta.type === API.MergeTreeDeltaType.INSERT) {
+                        if (delta.pos1 <= this.cursor.pos) {
+                            this.cursor.pos += delta.text.length;
+                        }
+                    } else if (delta.type === API.MergeTreeDeltaType.REMOVE) {
+                        if (delta.pos2 <= this.cursor.pos) {
+                            this.cursor.pos -= (delta.pos2 - delta.pos1);
+                        } else if (this.cursor.pos >= delta.pos1) {
+                            this.cursor.pos = delta.pos1;
+                        }
                     }
-                } else if (delta.type === API.MergeTreeDeltaType.REMOVE) {
-                    if (delta.pos2 <= this.cursor.pos) {
-                        this.cursor.pos -= (delta.pos2 - delta.pos1);
-                    } else if (this.cursor.pos >= delta.pos1) {
-                        this.cursor.pos = delta.pos1;
-                    }
-                    viewChar = delta.pos2;
                 }
-                this.renderIfVisible(viewChar);
+                this.render(this.topChar, true);
             });
         }
     }

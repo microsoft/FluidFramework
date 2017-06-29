@@ -62,7 +62,12 @@ function getLineCount(node: SharedString.Node) {
         return 0;
     }
     else {
-        return (<ILineCountBlock>node).lineCount;
+        if ((<ILineCountBlock>node).lineCount !== undefined) {
+            return (<ILineCountBlock>node).lineCount;
+        }
+        else {
+            return 0;
+        }
     }
 }
 
@@ -103,18 +108,23 @@ class FlowFilter {
             if (msg && msg.op) {
                 let seqmsg = <api.ISequencedMessage>msg;
                 if (seqmsg.clientId != this.sharedString.client.longClientId) {
-                    let delta = <api.IMergeTreeDeltaMsg>msg.op;
-                    if (delta.type === api.MergeTreeMsgType.INSERT) {
+                    let delta = <api.IMergeTreeOp>msg.op;
+                    if (delta.type === api.MergeTreeDeltaType.INSERT) {
                         let editor = vscode.window.activeTextEditor;
                         this.serverChange = true;
-                        editor.edit((editBuilder) => {
-                            let lc = posToLc(this.sharedString.client.mergeTree, delta.pos1);
-                            let vspos = new vscode.Position(lc.line, lc.column);
-                            editBuilder.insert(vspos, delta.text);
-                        }).then((b) => {
-                            this.serverChange = false;
-                        });
+                        if (delta.text !== undefined) {
+                            let text = delta.text;
+                            let pos = delta.pos1;
+                            editor.edit((editBuilder) => {
+                                let lc = posToLc(this.sharedString.client.mergeTree, pos);
+                                let vspos = new vscode.Position(lc.line, lc.column);
+                                editBuilder.insert(vspos, text);
+                            }).then((b) => {
+                                this.serverChange = false;
+                            });
+                        }
                     }
+                    // TODO: remove
                 }
             }
         });
@@ -147,7 +157,7 @@ function initializeSnapshot() {
     let editor = vscode.window.activeTextEditor;
     let doc = editor.document;
 
-    const sharedString = extension.load("eee", services, api.defaultRegistry) as SharedString.SharedString;
+    const sharedString = extension.load("fff", services, api.defaultRegistry) as SharedString.SharedString;
 
     sharedString.on("partialLoad", (data: api.MergeTreeChunk) => {
     });
@@ -162,12 +172,8 @@ function initializeSnapshot() {
             console.log("local load...");
             const lines = text.split(/\n|\r\n/);
             for (const line of lines) {
-                sharedString
-                else {
-                    let textSegment = <SharedString.TextSegment>segment;
-                    sharedString.insertText(textSegment.text, sharedString.client.getLength(),
-                        textSegment.properties);
-                }
+                sharedString.insertMarker(sharedString.client.getLength(), "line", api.MarkerBehaviors.PropagatesForward);
+                sharedString.insertText(line, sharedString.client.getLength());
             }
         }
     });

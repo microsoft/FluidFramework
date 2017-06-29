@@ -121,7 +121,8 @@ export type IMergeTreeOp = IMergeTreeInsertMsg | IMergeTreeRemoveMsg | IMergeTre
 
 export interface IPropertyString {
     props?: Object;
-    text: string;
+    text?: string;
+    marker?: IMarkerDef;
 }
 
 // tslint:disable-next-line:interface-name

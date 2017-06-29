@@ -28,11 +28,19 @@ export class CollaboritiveStringExtension implements API.IExtension {
 }
 
 function textsToSegments(texts: API.IPropertyString[]) {
-    let segments = <MergeTree.TextSegment[]>[];
+    let segments = <MergeTree.Segment[]>[];
     for (let ptext of texts) {
-        let segment = MergeTree.TextSegment.make(ptext.text, ptext.props,
-            MergeTree.UniversalSequenceNumber,
-            MergeTree.LocalClientId);
+        let segment: MergeTree.Segment;
+        if (ptext.text!==undefined) {
+            segment = MergeTree.TextSegment.make(ptext.text, ptext.props,
+                MergeTree.UniversalSequenceNumber,
+                MergeTree.LocalClientId);
+        }
+        else {
+            // for now assume marker
+            segment = MergeTree.Marker.make(ptext.marker.type, ptext.marker.behaviors, ptext.props,
+                MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
+        }
         segments.push(segment);
     }
     return segments;
@@ -68,8 +76,8 @@ export class SharedString implements API.ICollaborativeObject {
             this.client.mergeTree.reloadFromSegments(textsToSegments(chunk.segmentTexts));
             this.events.emit('partialLoad', chunk);
             chunk = await bodyChunkP;
-            for (let text of chunk.segmentTexts) {
-                this.client.mergeTree.appendTextSegment(text.text, text.props);
+            for (let segSpec of chunk.segmentTexts) {
+                this.client.mergeTree.appendSegment(segSpec);
             }
             this.initialSeq = chunk.chunkSequenceNumber;
         } else {
@@ -105,10 +113,10 @@ export class SharedString implements API.ICollaborativeObject {
             objectId: this.id,
             clientSequenceNumber: this.clientSequenceNumber++,
             op: <API.IMergeTreeInsertMsg>{
-                type: API.MergeTreeDeltaType.INSERT,  pos1: pos, props, marker: { type, behaviors, end},
+                type: API.MergeTreeDeltaType.INSERT, pos1: pos, props, marker: { type, behaviors, end },
             }
         };
-        
+
     }
     private makeInsertMsg(text: string, pos: number, props?: Object) {
         return <API.IMessage>{

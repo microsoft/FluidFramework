@@ -81,9 +81,9 @@ export class Snapshot {
         let storage = services.objectStorageService;
         let chunk1 = this.getCharLengthSegs(this.texts, 10000);
         let chunk2 = this.getCharLengthSegs(this.texts, chunk1.totalLengthChars, chunk1.chunkSegmentCount);
-        let p1 = storage.write(id+"header", chunk1);
+        let p1 = storage.write(id + "header", chunk1);
         let p2 = storage.write(id, chunk2);
-        return Promise.all([p1,p2]);
+        return Promise.all([p1, p2]);
     }
 
     extractSync() {
@@ -98,12 +98,21 @@ export class Snapshot {
         let extractSegment = (segment: MergeTree.Segment, pos: number, refSeq: number, clientId: number,
             start: number, end: number) => {
             if ((segment.seq != MergeTree.UnassignedSequenceNumber) && (segment.seq <= this.seq) &&
-                (segment.getType() == MergeTree.SegmentType.Text)) {
-                if ((segment.removedSeq === undefined) ||
-                    (segment.removedSeq == MergeTree.UnassignedSequenceNumber) ||
-                    (segment.removedSeq > this.seq)) {
-                    let textSegment = <MergeTree.TextSegment>segment;
-                    texts.push({ props: textSegment.properties, text: textSegment.text});
+                ((segment.removedSeq === undefined) || (segment.removedSeq == MergeTree.UnassignedSequenceNumber) ||
+                    (segment.removedSeq > this.seq))) {
+                switch (segment.getType()) {
+                    case MergeTree.SegmentType.Text:
+                        let textSegment = <MergeTree.TextSegment>segment;
+                        texts.push({ props: textSegment.properties, text: textSegment.text });
+                        break;
+                    case MergeTree.SegmentType.Marker:
+                        let markerSeg = <MergeTree.Marker>segment;
+                        texts.push({
+                            props: markerSeg.properties,
+                            // TODO: marker end position
+                            marker: { behaviors: markerSeg.behaviors, type: markerSeg.type },
+                        })
+                        break;
                 }
             }
             return true;
@@ -290,7 +299,7 @@ export class Snapshot {
                 offset += 4;
                 let text = buf.toString('utf8', offset, offset + segmentLengthBytes);
                 offset += segmentLengthBytes;
-                mergeTree.appendTextSegment(text);
+                mergeTree.appendSegment(text);
                 remainingBytes -= (offset - prevOffset);
             }
             position += actualBytes;

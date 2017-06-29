@@ -1175,8 +1175,14 @@ export class Client {
         let clid = this.getOrAddShortClientId(msg.clientId);
         switch (op.type) {
             case API.MergeTreeDeltaType.INSERT:
-                this.insertSegmentRemote(op.text, op.pos1, op.props, msg.sequenceNumber, msg.referenceSequenceNumber,
-                    clid);
+                if (op.text !== undefined) {
+                    this.insertTextRemote(op.text, op.pos1, op.props, msg.sequenceNumber, msg.referenceSequenceNumber,
+                        clid);
+                }
+                else {
+                    this.insertMarkerRemote(op.marker, op.pos1, op.props, msg.sequenceNumber, msg.referenceSequenceNumber,
+                        clid);
+                }
                 break;
             case API.MergeTreeDeltaType.REMOVE:
                 this.removeSegmentRemote(op.pos1, op.pos2, msg.sequenceNumber, msg.referenceSequenceNumber,
@@ -1305,7 +1311,26 @@ export class Client {
         }
     }
 
-    insertSegmentRemote(text: string, pos: number, props: Object, seq: number, refSeq: number, clientId: number) {
+    insertMarkerRemote(marker: API.IMarkerDef, pos: number, props: Object, seq: number, refSeq: number, clientId: number) {
+        let clockStart;
+        if (this.measureOps) {
+            clockStart = clock();
+        }
+
+        this.mergeTree.insertMarker(pos, refSeq, clientId, seq, marker.type, marker.behaviors, props);
+        this.mergeTree.getCollabWindow().currentSeq = seq;
+
+        if (this.measureOps) {
+            this.accumTime += elapsedMicroseconds(clockStart);
+            this.accumOps++;
+            this.accumWindow += (this.getCurrentSeq() - this.mergeTree.getCollabWindow().minSeq);
+        }
+        if (this.verboseOps) {
+            console.log(`@cli ${this.getLongClientId(this.mergeTree.getCollabWindow().clientId)} type ${marker.type} seq ${seq} insert remote pos ${pos} refseq ${refSeq} cli ${clientId}`);
+        }
+    }
+
+    insertTextRemote(text: string, pos: number, props: Object, seq: number, refSeq: number, clientId: number) {
         let clockStart;
         if (this.measureOps) {
             clockStart = clock();
@@ -2089,9 +2114,16 @@ export class MergeTree {
     }
 
     // assumes not collaborating for now
-    appendTextSegment(text: string, props?: Object) {
+    appendSegment(segSpec: API.IPropertyString) {
         let pos = this.root.cachedLength;
-        this.insertText(pos, UniversalSequenceNumber, LocalClientId, UniversalSequenceNumber, text, props);
+        if (segSpec.text) {
+            this.insertText(pos, UniversalSequenceNumber, LocalClientId, UniversalSequenceNumber, segSpec.text, segSpec.props);
+        }
+        else {
+            // assume marker for now
+            this.insertMarker(pos, UniversalSequenceNumber, LocalClientId, UniversalSequenceNumber, segSpec.marker.type,
+                segSpec.marker.behaviors, segSpec.props);
+        }
     }
 
     insert<T>(pos: number, refSeq: number, clientId: number, seq: number, segData: T,
