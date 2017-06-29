@@ -60,10 +60,22 @@ class GitManager {
     public async getCommits(id: string, branch: string, sha: string, count: string): Promise<any> {
         const client = await this.clientP;
 
+        // Use this as an opportunity to update the repo
+        await client.fetch("origin");
+
+        // And then go and grab the revision range
         const from = sha || `refs/remotes/origin/${id}`;
         const commits = await (<any> client).log([from, "-n", count]);
 
         return commits.all;
+    }
+
+    /**
+     * Retrieves the object at the given revision number
+     */
+    public async getObject(id: string, branch: string, sha: string, path: string): Promise<any> {
+        const client = await this.clientP;
+        return await (<any> client).show(`${sha}:${path}`);
     }
 }
 
@@ -71,4 +83,8 @@ const manager = new GitManager(repo, storagePath);
 
 export async function getCommits(id: string, branch: string, count: string, from: string): Promise<any> {
     return manager.getCommits(id, branch, from, count);
+}
+
+export async function getObject(id: string, branch: string, from: string, path: string): Promise<any> {
+    return manager.getObject(id, branch, from, path);
 }
