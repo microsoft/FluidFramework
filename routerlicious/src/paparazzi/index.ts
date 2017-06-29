@@ -185,9 +185,11 @@ async function run() {
         clientId: moniker.choose(),
         type: "Paparazzi",
     };
-    socket.emit("workerObject", clientDetail, (error) => {
+    socket.emit("workerObject", clientDetail, (error, ack) => {
         if (error) {
             deferred.reject(error);
+        } else {
+            logger.info(`Successfully subscribed to tmz`);
         }
     });
 
@@ -196,6 +198,7 @@ async function run() {
         processMessage(msg, collection, services, intelligenceManager).catch((err) => {
             logger.error(err);
         });
+        response(null, clientDetail);
     });
 }
 

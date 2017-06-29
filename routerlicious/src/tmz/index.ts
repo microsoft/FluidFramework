@@ -42,6 +42,7 @@ let sub = redis.createClient(redisPort, host, subOptions);
 io.adapter(socketIoRedis({ pubClient: pub, subClient: sub }));
 
 let port = nconf.get("tmz:port");
+let connected = false;
 
 async function run() {
     const deferred = new utils.Deferred<void>();
@@ -52,13 +53,24 @@ async function run() {
     io.on("connection", (socket) => {
         socketObj = socket;
         socket.on("workerObject", (message: socketStorage.IWorker, response) => {
+            // Process all pending tasks once the first worker joins.
+            if (!connected) {
+                let workIds = Array.from(pendingWork);
+                for (let doc of workIds) {
+                    requestWork(socket, doc, createdRequests);
+                }
+                pendingWork.clear();
+                connected = true;
+            }
             clientPool.push(message.clientId);
+            response(null, "Added");
         });
     });
     io.listen(port);
 
     let consumer = utils.kafkaConsumer.create(kafkaLibrary, kafkaEndpoint, groupId, topic);
     const createdRequests: any = {};
+    const pendingWork: Set<string> = new Set();
 
     consumer.on("data", (message) => {
         q.push(message);
@@ -71,19 +83,38 @@ async function run() {
 
     const q = queue((message: any, callback) => {
         const value = JSON.parse(message.value.toString("utf8")) as core.IRawOperationMessage;
-        if (createdRequests[value.objectId]) {
+        const objectId = value.objectId;
+
+        if (createdRequests[objectId]) {
             callback();
             return;
         }
-        logger.info(`Requesting snapshots for ${value.objectId}`);
-        socketObj.emit("TaskObject", value.objectId, (error) => {
-            deferred.reject(error);
-        });
-        createdRequests[value.objectId] = true;
+
+        // No worker joined yet. Store document to process later.
+        if (!connected) {
+            pendingWork.add(objectId);
+            callback();
+            return;
+        }
+
+        logger.info(`Requesting snapshots for ${objectId}`);
+        requestWork(socketObj, objectId, createdRequests);
         callback();
     }, 1);
 
     return deferred.promise;
+}
+
+// Request subscribers to pick up the work.
+function requestWork(socket: SocketIO.Socket, id: string, requestMap: any) {
+    socket.emit("TaskObject", id, (error, ack: socketStorage.IWorker) => {
+        if (ack) {
+            logger.info(`Client ${ack.clientId} acknowledged the work`);
+            requestMap[id] = true;
+        } else {
+            logger.error(error);
+        }
+    });
 }
 
 // Start up the TMZ service
