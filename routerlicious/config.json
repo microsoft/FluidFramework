@@ -131,6 +131,7 @@
     },
     "git": {
         "repository": "git@git:prague.git",
-        "storagePath": "/var/lib/prague"
+        "storagePath": "/var/lib/prague",
+        "historian": "http://historian:3000"
     }
 }

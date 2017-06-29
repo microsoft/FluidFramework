@@ -421,7 +421,9 @@ class Map extends api.CollaborativeObject implements api.IMap {
         const connection = await services.deltaNotificationService.connect(id, this.type);
 
         // Load from the snapshot if it exists
-        const rawSnapshot = connection.existing ? await services.objectStorageService.read(id, id) : null;
+        const rawSnapshot = connection.existing && connection.versions.length > 0
+            ? await services.objectStorageService.read(id, connection.versions[0].hash, id)
+            : null;
         const snapshot: ISnapshot = rawSnapshot
             ? JSON.parse(rawSnapshot)
             : { sequenceNumber: 0, snapshot: {} };

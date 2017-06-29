@@ -213,8 +213,8 @@ export async function onLoad(id: string) {
         theFlow.setEdit();
     });
 
-    sharedString.on("loadFinshed", (data: MergeTreeChunk) => {
-        if (sharedString.client.getLength() !== 0) {
+    sharedString.on("loadFinshed", (data: MergeTreeChunk, existing: boolean) => {
+        if (existing) {
             theFlow.loadFinished(clockStart);
         } else {
             console.log("local load...");

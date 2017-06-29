@@ -59,14 +59,15 @@ export class SharedString implements API.ICollaborativeObject {
         this.services = services;
 
         this.connection = await this.services.deltaNotificationService.connect(this.id, this.type);
+        const version = this.connection.versions.length > 0 ? this.connection.versions[0].hash : null;
 
-        let headerChunkP = Paparazzo.Snapshot.loadChunk(services, this.id, "header");
-        let bodyChunkP = Paparazzo.Snapshot.loadChunk(services, this.id, this.id);
+        let headerChunkP = Paparazzo.Snapshot.loadChunk(services, this.id, version, "header");
+        let bodyChunkP = Paparazzo.Snapshot.loadChunk(services, this.id, version, this.id);
         let chunk = await headerChunkP;
 
         if (chunk.totalSegmentCount >= 0) {
             this.client.mergeTree.reloadFromSegments(textsToSegments(chunk.segmentTexts));
-            this.events.emit('partialLoad', chunk);
+            this.events.emit('partialLoad', chunk, this.connection.existing);
             chunk = await bodyChunkP;
             for (let text of chunk.segmentTexts) {
                 this.client.mergeTree.appendTextSegment(text.text, text.props);
@@ -74,14 +75,14 @@ export class SharedString implements API.ICollaborativeObject {
             this.initialSeq = chunk.chunkSequenceNumber;
         } else {
             this.initialSeq = 0;
-            this.events.emit('partialLoad', chunk);
+            this.events.emit('partialLoad', chunk, this.connection.existing);
         }
 
         this.isLoaded = true;
         this.client.startCollaboration(this.connection.clientId, this.initialSeq);
         this.listenForUpdates();
 
-        this.events.emit('loadFinshed', chunk);
+        this.events.emit('loadFinshed', chunk, this.connection.existing);
     }
 
     public on(event: string, listener: Function): this {

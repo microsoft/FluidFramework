@@ -70,7 +70,7 @@ export class GitManager {
         }
 
         const client = await this.clientP;
-        await writeFile(`${this.basePath}/${branch}/${path}`, JSON.stringify(data));
+        await writeFile(`${this.basePath}/${branch}/${path}`, data);
 
         await (<any> client).add(".");
         await (<any> client).commit(message);

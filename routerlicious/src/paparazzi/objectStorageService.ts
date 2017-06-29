@@ -19,8 +19,8 @@ export class ObjectStorageService implements api.IObjectStorageService {
     /**
      * Reads the object with the given ID. We defer to the client implementation to do the actual read.
      */
-    public read(id: string, path: string): Promise<any> {
-        return this.clientStorageService.read(id, path);
+    public read(id: string, version: string, path: string): Promise<any> {
+        return this.clientStorageService.read(id, version, path);
     }
 
     /**

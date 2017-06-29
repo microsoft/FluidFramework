@@ -113,9 +113,14 @@ export class Snapshot {
         return texts;
     }
 
-    static async loadChunk(services: API.ICollaborationServices, id: string, path: string): Promise<API.MergeTreeChunk> {
-        let chunkAsString: string = await services.objectStorageService.read(id, path);
-        if (chunkAsString.length !== 0) {
+    static async loadChunk(
+        services: API.ICollaborationServices,
+        id: string,
+        version: string,
+        path: string): Promise<API.MergeTreeChunk> {
+
+        if (version) {
+            let chunkAsString: string = await services.objectStorageService.read(id, version, path);
             return JSON.parse(chunkAsString) as API.MergeTreeChunk;
         } else {
             return {

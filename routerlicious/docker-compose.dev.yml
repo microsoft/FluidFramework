@@ -26,14 +26,8 @@ services:
         command: npm run tmz:watch
         restart: always
     historian:
-        build: .
         volumes:
             - .:/usr/src/server
         ports:
             - "3001:3000"
-        environment:
-            - DEBUG=routerlicious:*
-        command: npm run historian
         restart: always
-    git:
-        build: ./docker/gitssh

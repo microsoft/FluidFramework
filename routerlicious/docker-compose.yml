@@ -46,6 +46,11 @@ services:
         command: npm run tmz
         environment:
             - DEBUG=routerlicious:*
+    historian:
+        build: .
+        environment:
+            - DEBUG=routerlicious:*
+        command: npm run historian
     zookeeper:
         image: wurstmeister/zookeeper:latest
         ports:
@@ -90,3 +95,5 @@ services:
             MINIO_ACCESS_KEY: prague
             MINIO_SECRET_KEY: mhioAkNXTwdX4dXWgKgXVtHo
         command: server /export
+    git:
+        build: ./docker/gitssh

@@ -8,7 +8,7 @@ export interface IObjectStorageService {
      * Reads the object with the given ID
      */
     // TODO should we just provide file system like semantics here or expose block level access
-    read(id: string, path: string): Promise<any>;
+    read(id: string, version: string, path: string): Promise<any>;
 
     /**
      * Writes to the object with the given ID
@@ -44,6 +44,11 @@ export interface IDeltaConnection {
      * Whether or not the document existed prior to connection
      */
     existing: boolean;
+
+    /**
+     * Available versions of the collaborative object
+     */
+    versions: any[];
 
     /**
      * Subscribe to events emitted by the document

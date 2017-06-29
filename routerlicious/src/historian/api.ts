@@ -7,6 +7,9 @@ export const router: Router = Router();
 const gitSettings = nconf.get("git");
 const manager = new gitStorage.GitManager("master", gitSettings.repository, gitSettings.storagePath);
 
+// TODO need to rationalize the document/object id against branches of it - and if we need to store this
+// For sure ID probably selects a 'repository'
+
 /**
  * Helper function to retrieve the git branch for the given document id and document branch
  */
