@@ -1,4 +1,5 @@
 import { IMessage, ISequencedMessage } from "./protocol";
+import { ICollaborativeObject} from "./types";
 
 /**
  * Interface to provide access to snapshots saved for a collaborative object
@@ -71,6 +72,16 @@ export interface IDeltaNotificationService {
      * will also create it.
      */
     connect(id: string, type: string): Promise<IDeltaConnection>;
+}
+
+/**
+ * The worker service connects to work manager (TMZ) and registers itself to receive work.
+ */
+export interface IWorkerService {
+    /**
+     * Connects to tmz and subscribes to start working.
+     */
+    connect(object: ICollaborativeObject): Promise<any>;
 }
 
 export interface ICollaborationServices {

@@ -2,6 +2,7 @@ import * as assert from "assert";
 import { EventEmitter } from "events";
 import * as _ from "lodash";
 import * as api from ".";
+import { WorkerService } from "../socket-storage";
 import { debug } from "./debug";
 import { DeltaManager } from "./deltaManager";
 
@@ -419,6 +420,10 @@ class Map extends api.CollaborativeObject implements api.IMap {
     private async load(id: string, services: api.ICollaborationServices, registry?: api.Registry): Promise<MapView> {
         // Load the snapshot and begin listening for messages
         const connection = await services.deltaNotificationService.connect(id, this.type);
+
+        // Register as worker and connect
+        const worker: api.IWorkerService = new WorkerService();
+        worker.connect(this);
 
         // Load from the snapshot if it exists
         const rawSnapshot = connection.existing ? await services.objectStorageService.read(id) : null;
