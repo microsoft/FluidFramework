@@ -162,7 +162,7 @@ class Cell extends api.CollaborativeObject implements api.ICell {
             snapshot: _.clone(this.data),
         };
 
-        return this.services.objectStorageService.write(this.id, snapshot);
+        return this.services.objectStorageService.write(this.id, this.id, snapshot);
     }
 
     /**
@@ -201,7 +201,7 @@ class Cell extends api.CollaborativeObject implements api.ICell {
         this.connection = await services.deltaNotificationService.connect(id, this.type);
 
         // Load from the snapshot if it exists
-        const rawSnapshot = this.connection.existing ? await services.objectStorageService.read(id) : null;
+        const rawSnapshot = this.connection.existing ? await services.objectStorageService.read(id, id) : null;
         const snapshot: ICellSnapshot = rawSnapshot
             ? JSON.parse(rawSnapshot)
             : { sequenceNumber: 0, snapshot: {} };

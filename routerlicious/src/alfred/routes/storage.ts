@@ -18,9 +18,9 @@ const minioClient = new minio.Client({
 /**
  * Retrieves the stored object
  */
-async function getObject(objectId: string, bucket: string): Promise<string> {
+async function getObject(objectId: string, path: string, bucket: string): Promise<string> {
     return new Promise<string>((resolve, reject) => {
-        minioClient.getObject(bucket, objectId, (error, stream: Readable) => {
+        minioClient.getObject(bucket, `${objectId}/${path}`, (error, stream: Readable) => {
             if (error) {
                 return error.code === "NoSuchKey" ? resolve(null) : reject(error);
             }
@@ -49,9 +49,9 @@ const router: Router = Router();
 /**
  * Retrieves deltas for the given document. With an optional from and to range (both exclusive) specified
  */
-router.get("/:id", async (request, response, next) => {
+router.get("/:id/*", async (request, response, next) => {
     // Now grab the snapshot, any deltas post snapshot, and send to the client
-    const resultP = getObject(request.params.id, storageBucket);
+    const resultP = getObject(request.params.id, request.params[0], storageBucket);
     resultP.then(
         (result) => {
             response.end(result);

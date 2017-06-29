@@ -167,7 +167,7 @@ class MapView implements api.IMapView {
             snapshot: _.clone(this.data),
         };
 
-        return this.services.objectStorageService.write(this.id, snapshot);
+        return this.services.objectStorageService.write(this.id, this.id, snapshot);
     }
 
     public async attach(
@@ -421,7 +421,7 @@ class Map extends api.CollaborativeObject implements api.IMap {
         const connection = await services.deltaNotificationService.connect(id, this.type);
 
         // Load from the snapshot if it exists
-        const rawSnapshot = connection.existing ? await services.objectStorageService.read(id) : null;
+        const rawSnapshot = connection.existing ? await services.objectStorageService.read(id, id) : null;
         const snapshot: ISnapshot = rawSnapshot
             ? JSON.parse(rawSnapshot)
             : { sequenceNumber: 0, snapshot: {} };

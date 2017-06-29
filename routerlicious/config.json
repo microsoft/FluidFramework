@@ -128,5 +128,9 @@
         "textAnalytics": {
             "key": "c8b60dc5e49849ce903d7d29a2dce550"
         }
+    },
+    "git": {
+        "repository": "git@git:prague.git",
+        "storagePath": "/var/lib/prague"
     }
 }

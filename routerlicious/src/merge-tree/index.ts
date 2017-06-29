@@ -60,8 +60,8 @@ export class SharedString implements API.ICollaborativeObject {
 
         this.connection = await this.services.deltaNotificationService.connect(this.id, this.type);
 
-        let headerChunkP = Paparazzo.Snapshot.loadChunk(services, this.id + "header");
-        let bodyChunkP = Paparazzo.Snapshot.loadChunk(services, this.id);
+        let headerChunkP = Paparazzo.Snapshot.loadChunk(services, this.id, "header");
+        let bodyChunkP = Paparazzo.Snapshot.loadChunk(services, this.id, this.id);
         let chunk = await headerChunkP;
 
         if (chunk.totalSegmentCount >= 0) {
