@@ -13,6 +13,7 @@ import * as core from "../core";
 import * as socketStorage from "../socket-storage";
 import { logger } from "../utils";
 import * as utils from "../utils";
+import * as messages from "./messages";
 
 // Setup Kafka connection
 const kafkaEndpoint = nconf.get("kafka:lib:endpoint");
@@ -44,25 +45,30 @@ io.adapter(socketIoRedis({ pubClient: pub, subClient: sub }));
 let port = nconf.get("tmz:port");
 let connected = false;
 
+// pool of connected clients to hand out work.
+const clientPool: messages.IWorkerDetail[] = [];
+
 async function run() {
     const deferred = new utils.Deferred<void>();
-    const clientPool = [];
-    let socketObj: SocketIO.Socket;
 
     // open a socketio connection and start listening for workers.
     io.on("connection", (socket) => {
-        socketObj = socket;
         socket.on("workerObject", (message: socketStorage.IWorker, response) => {
             // Process all pending tasks once the first worker joins.
             if (!connected) {
                 let workIds = Array.from(pendingWork);
                 for (let doc of workIds) {
-                    requestWork(socket, doc, createdRequests);
+                    requestWork(doc, createdRequests);
                 }
                 pendingWork.clear();
                 connected = true;
             }
-            clientPool.push(message.clientId);
+            console.log(`New worker: ${socket.id}. ${message.clientId}`);
+            const workerDetail: messages.IWorkerDetail = {
+                worker: message,
+                socket,
+            };
+            clientPool.push(workerDetail);
             response(null, "Added");
         });
     });
@@ -98,7 +104,7 @@ async function run() {
         }
 
         logger.info(`Requesting snapshots for ${objectId}`);
-        requestWork(socketObj, objectId, createdRequests);
+        requestWork(objectId, createdRequests);
         callback();
     }, 1);
 
@@ -106,8 +112,11 @@ async function run() {
 }
 
 // Request subscribers to pick up the work.
-function requestWork(socket: SocketIO.Socket, id: string, requestMap: any) {
-    socket.emit("TaskObject", id, (error, ack: socketStorage.IWorker) => {
+function requestWork(id: string, requestMap: any) {
+    let worker = clientPool[Math.floor(Math.random() * clientPool.length)];
+    logger.info(`Chosen worker: ${JSON.stringify(worker.worker.clientId)}`);
+
+    worker.socket.emit("TaskObject", worker.worker.clientId, id, (error, ack: socketStorage.IWorker) => {
         if (ack) {
             logger.info(`Client ${ack.clientId} acknowledged the work`);
             requestMap[id] = true;

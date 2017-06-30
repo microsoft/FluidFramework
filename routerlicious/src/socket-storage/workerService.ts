@@ -13,8 +13,9 @@ export class WorkerService implements api.IWorkerService {
     }
 
     public connect(doc: api.ICollaborativeObject): Promise<api.IDeltaConnection> {
+        const clientId = "Client-" + Math.floor(Math.random() * 10000);
         const clientDetail: messages.IWorker = {
-            clientId: "Client-1",
+            clientId,
             type: "Client",
         };
 
@@ -40,8 +41,11 @@ export class WorkerService implements api.IWorkerService {
                     if (error) {
                         return reject(error);
                     } else {
-                        console.log(`Client-1 Successfully subscribed to TMZ: ${JSON.stringify(ack)}`);
-                        resolve(ack);
+                        console.log(`${clientId} Successfully subscribed to TMZ: ${JSON.stringify(ack)}`);
+                        this.socket.on("TaskObject", (client: string, msg: string, response) => {
+                            console.log(`Received work for client: ${client}, object: ${msg}`);
+                            response(null, clientDetail);
+                        });
                     }
                 });
         });
