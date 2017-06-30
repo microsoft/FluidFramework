@@ -193,9 +193,8 @@ async function run() {
         }
     });
 
-    socket.on("TaskObject", (cid: string, msg: string, response) => {
-        logger.info(`Received work for client: ${cid}, object: ${msg}`);
-        processMessage(msg, collection, services, intelligenceManager).catch((err) => {
+    socket.on("TaskObject", (clientId: string, message: string, response) => {
+        processMessage(message, collection, services, intelligenceManager).catch((err) => {
             logger.error(err);
         });
         response(null, clientDetail);

@@ -44,6 +44,21 @@ async function getObject(objectId: string, bucket: string): Promise<string> {
     });
 }
 
+/**
+ * Stores the object
+ */
+async function putObject(id: string, data: any): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+        minioClient.putObject(storageBucket, id, JSON.stringify(data), "application/json", (error) => {
+            if (error) {
+                reject(error);
+            } else {
+                resolve();
+            }
+        });
+    });
+}
+
 const router: Router = Router();
 
 /**
@@ -52,6 +67,20 @@ const router: Router = Router();
 router.get("/:id", async (request, response, next) => {
     // Now grab the snapshot, any deltas post snapshot, and send to the client
     const resultP = getObject(request.params.id, storageBucket);
+    resultP.then(
+        (result) => {
+            response.end(result);
+        },
+        (error) => {
+            response.status(400).json({ error });
+        });
+});
+
+/**
+ * Stores data for the given document.
+ */
+router.post("/:id", async (request, response, next) => {
+    const resultP = putObject(request.params.id, request.body);
     resultP.then(
         (result) => {
             response.end(result);

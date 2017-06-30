@@ -20,7 +20,15 @@ export class ClientObjectStorageService implements api.IObjectStorageService {
         });
     }
 
-    public write(id: string): Promise<void> {
-        throw new Error("Method not implemented.");
+    public write(id: string, data: any): Promise<void> {
+        return new Promise<any>((resolve, reject) => {
+            request.post(`${this.url}/storage/${id}`, {body: data, json: true}, (error, response, body) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    resolve(body);
+                }
+            });
+        });
     }
 }
