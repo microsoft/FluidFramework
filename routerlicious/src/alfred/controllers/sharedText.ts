@@ -225,9 +225,16 @@ export async function onLoad(id: string) {
                     }
                     const segments = SharedString.loadSegments(body, 0);
                     for (const segment of segments) {
-                        let textSegment = <SharedString.TextSegment>segment;
-                        sharedString.insertText(textSegment.text, sharedString.client.getLength(),
-                            textSegment.properties);
+                        if (segment.getType() === SharedString.SegmentType.Text) {
+                            let textSegment = <SharedString.TextSegment>segment;
+                            sharedString.insertText(textSegment.text, sharedString.client.getLength(),
+                                textSegment.properties);
+                        } else {
+                            // assume marker
+                            let marker = <SharedString.Marker>segment;
+                            // tslint:disable:max-line-length
+                            sharedString.insertMarker(sharedString.client.getLength(), marker.type, marker.behaviors, marker.properties);
+                        }
                     }
                     theFlow.loadFinished(clockStart);
                 });

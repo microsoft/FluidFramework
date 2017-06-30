@@ -36,7 +36,7 @@ export function loadSegments(content: string, segLimit: number) {
                     }
                     else {
                         if (emphStrings[i].length > 0) {
-                            segments.push(MergeTree.Marker.make("pg", api.MarkerBehaviors.PropagatesForward, undefined, seq, cli));
+                            // segments.push(MergeTree.Marker.make("pg", api.MarkerBehaviors.PropagatesForward, undefined, seq, cli));
                             segments.push(new MergeTree.TextSegment(emphStrings[i], seq, cli));
                         }
                     }

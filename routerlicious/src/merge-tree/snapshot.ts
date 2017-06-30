@@ -64,7 +64,9 @@ export class Snapshot {
             let ptext = alltexts[startIndex + segCount];
             segCount++;
             texts.push(ptext);
-            lengthChars += ptext.text.length;
+            if (ptext.text != undefined) {
+                lengthChars += ptext.text.length;
+            }
         }
         return {
             chunkStartSegmentIndex: startIndex,
@@ -106,6 +108,7 @@ export class Snapshot {
                         texts.push({ props: textSegment.properties, text: textSegment.text });
                         break;
                     case MergeTree.SegmentType.Marker:
+                        console.log("got here");
                         let markerSeg = <MergeTree.Marker>segment;
                         texts.push({
                             props: markerSeg.properties,
