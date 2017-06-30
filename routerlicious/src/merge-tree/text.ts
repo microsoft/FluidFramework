@@ -3,6 +3,7 @@
 import * as random from "random-js";
 import * as MergeTree from "./mergeTree";
 import * as fs from "fs";
+// import * as api from "../api";
 
 export function loadTextFromFile(filename: string, mergeTree: MergeTree.MergeTree, segLimit = 0) {
     let content = fs.readFileSync(filename, "utf8");
@@ -35,6 +36,7 @@ export function loadSegments(content: string, segLimit: number) {
                     }
                     else {
                         if (emphStrings[i].length > 0) {
+                            // segments.push(MergeTree.Marker.make("pg", api.MarkerBehaviors.PropagatesForward, undefined, seq, cli));
                             segments.push(new MergeTree.TextSegment(emphStrings[i], seq, cli));
                         }
                     }
@@ -80,15 +82,3 @@ export function findRandomWord(mergeTree: MergeTree.MergeTree, clientId: number)
     return nextWord;
 }
 
-export function loadSrcSegments(content: string) {
-    const seq = MergeTree.UniversalSequenceNumber;
-    const cli = MergeTree.LocalClientId;
-    let paragraphs = content.split('\n');
-    let segments = <MergeTree.Segment[]>[];
-
-    for (let paragraph of paragraphs) {
-        segments.push(new MergeTree.TextSegment(paragraph + '\n', seq, cli));
-    }
-
-    return segments;
-}

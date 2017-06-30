@@ -47,7 +47,7 @@ class KafkaRestConsumer implements IConsumer {
         this.instance.shutdown();
     }
 
-    public on(event: string, listener: Function): this {
+    public on(event: string, listener: (...args: any[]) => void): this {
         this.events.on(event, listener);
         return this;
     }
@@ -136,7 +136,7 @@ class KafkaNodeConsumer implements IConsumer {
         });
     }
 
-    public on(event: string, listener: Function): this {
+    public on(event: string, listener: (...args: any[]) => void): this {
         this.events.on(event, listener);
         return this;
     }

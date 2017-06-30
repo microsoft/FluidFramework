@@ -42,3 +42,7 @@ that can identify speakers in a document like Pride and Prejudice.
 ### Git for interactive document storage
 
 We believe git can be used for the storage of our distributed objects and delta messages. This gives us revision history as well as snapshots at points in time. Git also gives us a proven system and robust ecosystem of tools. And the git mechanics (branches, forks, pull requests) open up innovative ways to create and manage interactive documents. Sprint 2 will investigate the feasability of git as a storage mechanism. A key implementation item of this is learning how to replace git's standard diff with an op-oriented diff. Should it be a good fit we also will begin implementing it within our system.
+
+### Run services on the client
+
+Our system currently runs snapshot and intelligent services on the server. We believe these operations can be easily executed on the client. We need to build a scheduler that can offload these work to a chosen client. The scheduler will also bring up and execute intelligent services based on document type/content.

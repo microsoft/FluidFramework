@@ -6,12 +6,12 @@ export class CollaborativeObject {
 
     protected events = new EventEmitter();
 
-    public on(event: string, listener: Function): this {
+    public on(event: string, listener: (...args: any[]) => void): this {
         this.events.on(event, listener);
         return this;
     }
 
-    public removeListener(event: string, listener: Function): this {
+    public removeListener(event: string, listener: (...args: any[]) => void): this {
         this.events.removeListener(event, listener);
         return this;
     }

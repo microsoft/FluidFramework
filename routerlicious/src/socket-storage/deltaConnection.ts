@@ -19,7 +19,7 @@ export class DeltaConnection implements api.IDeltaConnection {
     /**
      * Subscribe to events emitted by the document
      */
-    public on(event: string, listener: Function): this {
+    public on(event: string, listener: (...args: any[]) => void): this {
         this.service.registerForEvent(event, this);
         this.emitter.on(event, listener);
         return this;
