@@ -1,6 +1,17 @@
 import { IMessage, ISequencedMessage } from "./protocol";
 
 /**
+ * Interface representing a storage object
+ */
+export interface IObject {
+    // The path to the object
+    path: string;
+
+    // The data to store for the object
+    data: any;
+}
+
+/**
  * Interface to provide access to snapshots saved for a collaborative object
  */
 export interface IObjectStorageService {
@@ -13,7 +24,7 @@ export interface IObjectStorageService {
     /**
      * Writes to the object with the given ID
      */
-    write(id: string, path: string, data: any): Promise<void>;
+    write(id: string, objects: IObject[]): Promise<void>;
 }
 
 /**

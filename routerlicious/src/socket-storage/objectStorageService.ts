@@ -22,7 +22,7 @@ export class ClientObjectStorageService implements api.IObjectStorageService {
         });
     }
 
-    public write(id: string, path: string): Promise<void> {
+    public write(id: string, objects: api.IObject[]): Promise<void> {
         throw new Error("Method not implemented.");
     }
 }

@@ -83,9 +83,13 @@ export class Snapshot {
         let storage = services.objectStorageService;
         let chunk1 = this.getCharLengthSegs(this.texts, 10000);
         let chunk2 = this.getCharLengthSegs(this.texts, chunk1.totalLengthChars, chunk1.chunkSegmentCount);
-        let p1 = storage.write(id, "header", chunk1);
-        let p2 = storage.write(id, "body", chunk2);
-        return Promise.all([p1,p2]);
+        let writeP = storage.write(
+            id, 
+            [
+                { path: "header", data: chunk1 },
+                { path: "body", data: chunk2 }
+            ]);
+        return writeP;
     }
 
     extractSync() {

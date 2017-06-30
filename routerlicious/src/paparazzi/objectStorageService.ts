@@ -23,12 +23,13 @@ export class ObjectStorageService implements api.IObjectStorageService {
     /**
      * Writes to the object with the given ID
      */
-    public async write(id: string, path: string, data: any): Promise<void> {
+    public async write(id: string, objects: api.IObject[]): Promise<void> {
         if (!(id in this.clients)) {
             this.clients[id] = new gitStorage.GitManager(id, this.repository, this.basePath);
         }
 
         const client = await this.clients[id];
-        return client.write(id, JSON.stringify(data), path, "Commit @{TODO seq #}");
+        const files = objects.map((object) => ({ path: object.path, data: JSON.stringify(object.data) }));
+        return client.write(id, files, "Commit @{TODO seq #}");
     }
 }

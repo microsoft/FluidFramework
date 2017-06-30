@@ -74,7 +74,7 @@ export class InkCollaborativeObject extends api.CollaborativeObject implements I
             snapshot: _.clone(this.inkSnapshot),
         };
 
-        return this.services.objectStorageService.write(this.id, snapshotFileName, snapshot);
+        return this.services.objectStorageService.write(this.id, [{ path: snapshotFileName, data: snapshot}]);
     }
 
     public getLayers(): IInkLayer[] {

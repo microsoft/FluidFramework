@@ -1,6 +1,17 @@
 import * as simpleGit from "simple-git/promise";
 import { mkdirp, pathExists, writeFile } from "../utils";
 
+/**
+ * File stored in a git repo
+ */
+export interface IGitFile {
+    // Path to the file
+    path: string;
+
+    // Data for the file
+    data: any;
+}
+
 export class GitManager {
     private static async getClient(branch: string, repository: string, basePath: string): Promise<simpleGit.SimpleGit> {
         const repositoryPath = `${basePath}/${branch}`;
@@ -52,8 +63,8 @@ export class GitManager {
     /**
      * Writes to the object with the given ID
      */
-    public async write(branch: string, data: any, path: string, message: string): Promise<void> {
-        return this.sequence(() => this.writeInternal(branch, data, path, message));
+    public async write(branch: string, files: IGitFile[], message: string): Promise<void> {
+        return this.sequence(() => this.writeInternal(branch, files, message));
     }
 
     /**
@@ -85,13 +96,16 @@ export class GitManager {
     /**
      * Writes to the object with the given ID
      */
-    private async writeInternal(branch: string, data: any, path: string, message: string): Promise<any> {
+    private async writeInternal(branch: string, files: IGitFile[], message: string): Promise<any> {
         if (branch !== this.branch) {
             throw new Error("Can only write to checked out branch");
         }
 
         const client = await this.clientP;
-        await writeFile(`${this.basePath}/${branch}/${path}`, data);
+
+        for (const file of files) {
+            await writeFile(`${this.basePath}/${branch}/${file.path}`, file.data);
+        }
 
         await (<any> client).add(".");
         await (<any> client).commit(message);

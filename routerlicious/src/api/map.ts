@@ -169,7 +169,7 @@ class MapView implements api.IMapView {
             snapshot: _.clone(this.data),
         };
 
-        return this.services.objectStorageService.write(this.id, snapshotFileName, snapshot);
+        return this.services.objectStorageService.write(this.id, [{ path: snapshotFileName, data: snapshot}]);
     }
 
     public async attach(

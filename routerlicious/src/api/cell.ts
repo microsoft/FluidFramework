@@ -164,7 +164,7 @@ class Cell extends api.CollaborativeObject implements api.ICell {
             snapshot: _.clone(this.data),
         };
 
-        return this.services.objectStorageService.write(this.id, snapshotFileName, snapshot);
+        return this.services.objectStorageService.write(this.id, [{ path: snapshotFileName, data: snapshot}]);
     }
 
     /**
