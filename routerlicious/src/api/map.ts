@@ -46,6 +46,8 @@ export interface IMapValue {
     value: any;
 }
 
+const snapshotFileName = "value";
+
 class MapView implements api.IMapView {
     // Map of collaborative objects stored inside of the map
     private collaborativeObjects: {[id: string]: api.ICollaborativeObject} = {};
@@ -167,7 +169,7 @@ class MapView implements api.IMapView {
             snapshot: _.clone(this.data),
         };
 
-        return this.services.objectStorageService.write(this.id, this.id, snapshot);
+        return this.services.objectStorageService.write(this.id, snapshotFileName, snapshot);
     }
 
     public async attach(
@@ -422,7 +424,7 @@ class Map extends api.CollaborativeObject implements api.IMap {
 
         // Load from the snapshot if it exists
         const rawSnapshot = connection.existing && connection.versions.length > 0
-            ? await services.objectStorageService.read(id, connection.versions[0].hash, id)
+            ? await services.objectStorageService.read(id, connection.versions[0].hash, snapshotFileName)
             : null;
         const snapshot: ISnapshot = rawSnapshot
             ? JSON.parse(rawSnapshot)

@@ -62,7 +62,7 @@ export class SharedString implements API.ICollaborativeObject {
         const version = this.connection.versions.length > 0 ? this.connection.versions[0].hash : null;
 
         let headerChunkP = Paparazzo.Snapshot.loadChunk(services, this.id, version, "header");
-        let bodyChunkP = Paparazzo.Snapshot.loadChunk(services, this.id, version, this.id);
+        let bodyChunkP = Paparazzo.Snapshot.loadChunk(services, this.id, version, "body");
         let chunk = await headerChunkP;
 
         if (chunk.totalSegmentCount >= 0) {

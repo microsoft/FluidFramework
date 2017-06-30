@@ -45,6 +45,8 @@ export interface ICellValue {
     value: any;
 }
 
+const snapshotFileName = "value";
+
 /**
  * Implementation of a cell collaborative object
  */
@@ -162,7 +164,7 @@ class Cell extends api.CollaborativeObject implements api.ICell {
             snapshot: _.clone(this.data),
         };
 
-        return this.services.objectStorageService.write(this.id, this.id, snapshot);
+        return this.services.objectStorageService.write(this.id, snapshotFileName, snapshot);
     }
 
     /**
@@ -202,7 +204,7 @@ class Cell extends api.CollaborativeObject implements api.ICell {
 
         // Load from the snapshot if it exists
         const rawSnapshot = this.connection.existing && this.connection.versions.length > 0
-            ? await services.objectStorageService.read(id, this.connection.versions[0].hash, id)
+            ? await services.objectStorageService.read(id, this.connection.versions[0].hash, snapshotFileName)
             : null;
         const snapshot: ICellSnapshot = rawSnapshot
             ? JSON.parse(rawSnapshot)
