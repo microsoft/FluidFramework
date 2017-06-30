@@ -755,7 +755,7 @@ export function TestPack() {
             return false;
         }
 
-        let rounds = 200000;
+        let rounds = 8;
         function clientProcessSome(client: MergeTree.Client, all = false) {
             let cliMsgCount = client.q.count();
             let countToApply: number;
@@ -781,10 +781,17 @@ export function TestPack() {
         }
 
         function randomSpateOfInserts(client: MergeTree.Client, charIndex: number) {
+            let includeMarkers = true;
+
             let textLen = randTextLength();
             let text = randomString(textLen, String.fromCharCode(zedCode + ((client.getCurrentSeq() + charIndex) % 50)));
             let preLen = client.getLength();
             let pos = random.integer(0, preLen)(mt);
+            if (includeMarkers) {
+                server.enqueueMsg(client.makeInsertMarkerMsg("test", api.MarkerBehaviors.PropagatesForward,
+                    pos, MergeTree.UnassignedSequenceNumber, client.getCurrentSeq(), ""));
+                client.insertMarkerLocal(pos, "test", api.MarkerBehaviors.PropagatesForward);
+            }
             server.enqueueMsg(client.makeInsertMsg(text, pos, MergeTree.UnassignedSequenceNumber,
                 client.getCurrentSeq(), ""));
             client.insertTextLocal(text, pos);
@@ -1058,7 +1065,7 @@ export function TestPack() {
             reportTiming(server);
             reportTiming(clients[2]);
             //console.log(server.getText());
-            //console.log(server.mergeTree.toString());
+            console.log(server.mergeTree.toString());
         }
     }
 
@@ -1241,7 +1248,7 @@ export function TestPack() {
         cli.updateMinSeq(6);
         let segs = new Paparazzo.Snapshot(cli.mergeTree).extractSync();
         for (let seg of segs) {
-            if (seg.text!==undefined) {
+            if (seg.text !== undefined) {
                 console.log(seg.text);
             }
             else {
@@ -1339,6 +1346,6 @@ export function TestPack() {
 let testPack = TestPack();
 // testPack.firstTest();
 //testPack.randolicious();
-let filename = path.join(__dirname, "../../public/literature", "pp.txt");
-testPack.clientServer(filename);
+//let filename = path.join(__dirname, "../../public/literature", "pp.txt");
+testPack.clientServer();
 new Server();

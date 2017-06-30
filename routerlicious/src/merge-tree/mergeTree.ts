@@ -1132,6 +1132,25 @@ export class Client {
         this.shortClientIdMap.push(longClientId);
     }
 
+    // TODO: props, end
+    makeInsertMarkerMsg(markerType: string, behaviors: API.MarkerBehaviors, pos: number, seq: number,
+        refSeq: number, objectId: string) {
+        return <ISequencedMessage>{
+            clientId: this.longClientId,
+            sequenceNumber: seq,
+            referenceSequenceNumber: refSeq,
+            objectId: objectId,
+            clientSequenceNumber: this.clientSequenceNumber,
+            userId: undefined,
+            minimumSequenceNumber: undefined,
+            offset: seq,
+            op: {
+                type: API.MergeTreeDeltaType.INSERT, marker: { type: markerType, behaviors}, pos1: pos
+            },
+            type: API.OperationType,
+        };
+    }
+
     makeInsertMsg(text: string, pos: number, seq: number, refSeq: number, objectId: string) {
         return <ISequencedMessage>{
             clientId: this.longClientId,
@@ -2760,7 +2779,7 @@ export class MergeTree {
             }
             let isLeaf = child.isLeaf();
             if (go && (end > 0) && (((len > 0) && (start < len)) ||
-                (isLeaf && ((<Segment>child).getType() == SegmentType.Marker) && (start<=0)))) {
+                (isLeaf && ((<Segment>child).getType() == SegmentType.Marker) && (start <= 0)))) {
                 // found entry containing pos
                 if (!isLeaf) {
                     if (go) {
