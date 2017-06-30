@@ -72,7 +72,9 @@ export class GitManager {
         await client.fetch("origin");
 
         const from = sha || `refs/remotes/origin/${branch}`;
-        return (<any> client).log([from, "-n", count]);
+        const commits = await (<any> client).log([from, "-n", count]);
+
+        return commits.all;
     }
 
     private async getObjectInternal(sha: string, path: string): Promise<any> {

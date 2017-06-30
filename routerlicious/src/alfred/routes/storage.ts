@@ -14,6 +14,8 @@ async function getObject(objectId: string, version: string, path: string): Promi
             (error, response, body) => {
                 if (error) {
                     reject(error);
+                } else if (response.statusCode !== 200) {
+                    reject(response.statusCode);
                 } else {
                     resolve(body);
                 }

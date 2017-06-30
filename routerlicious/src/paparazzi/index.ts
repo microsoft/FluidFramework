@@ -163,8 +163,6 @@ async function run() {
         deltaStorageService: new socketStorage.DeltaStorageService(alfredUrl),
         objectStorageService: new ObjectStorageService(
             alfredUrl,
-            minioClient,
-            storageBucket,
             gitSettings.repository,
             gitSettings.storagePath),
     };

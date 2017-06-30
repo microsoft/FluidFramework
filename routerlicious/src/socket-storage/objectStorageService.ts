@@ -13,6 +13,8 @@ export class ClientObjectStorageService implements api.IObjectStorageService {
             request.get(`${this.url}/storage/${id}/${version}/${path}`, (error, response, body) => {
                 if (error) {
                     reject(error);
+                } else if (response.statusCode !== 200) {
+                    reject(response.statusCode);
                 } else {
                     resolve(body);
                 }

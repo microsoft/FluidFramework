@@ -1,4 +1,3 @@
-import * as minio from "minio";
 import * as api from "../api";
 import * as gitStorage from "../git-storage";
 import * as socketStorage from "../socket-storage";
@@ -9,8 +8,6 @@ export class ObjectStorageService implements api.IObjectStorageService {
 
     constructor(
         url: string,
-        private client: minio.Client,
-        private bucket: string,
         private repository: string,
         private basePath: string) {
         this.clientStorageService = new socketStorage.ClientObjectStorageService(url);
@@ -27,27 +24,11 @@ export class ObjectStorageService implements api.IObjectStorageService {
      * Writes to the object with the given ID
      */
     public async write(id: string, path: string, data: any): Promise<void> {
-        await Promise.all([this.writeMinio(id, path, data), this.writeGit(id, path, data)]);
-    }
-
-    private writeMinio(id: string, path: string, data: any): Promise<void> {
-        return new Promise<void>((resolve, reject) => {
-            this.client.putObject(this.bucket, `${id}/${path}`, JSON.stringify(data), "application/json", (error) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    resolve();
-                }
-            });
-        });
-    }
-
-    private async writeGit(id: string, path: string, data: any): Promise<void> {
         if (!(id in this.clients)) {
             this.clients[id] = new gitStorage.GitManager(id, this.repository, this.basePath);
         }
 
         const client = await this.clients[id];
-        await client.write(id, JSON.stringify(data), path, "Commit @{TODO seq #}");
+        return client.write(id, JSON.stringify(data), path, "Commit @{TODO seq #}");
     }
 }
