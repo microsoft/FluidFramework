@@ -73,8 +73,8 @@ async function getRevisions(id: string, branch: string): Promise<any[]> {
         request.get(
             { url: `${historian}/api/documents/${id}/${branch}/commits`, json: true },
             (error, response, body) => {
-                if (error) {
-                    reject([]);
+                if (error || response.statusCode !== 200) {
+                    resolve([]);
                 } else {
                     resolve(body);
                 }
@@ -108,7 +108,6 @@ io.on("connection", (socket) => {
             (results) => {
                 const existing = results[0];
                 const revisions = results[1];
-                logger.info(<any> revisions);
 
                 socket.join(message.objectId, (joinError) => {
                     if (joinError) {

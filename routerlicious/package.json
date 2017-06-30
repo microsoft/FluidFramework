@@ -7,7 +7,7 @@
   "scripts": {
     "browserify": "mkdirp public/scripts/dist && concurrently \"npm run browserify:canvas\" \"npm run browserify:maps\" \"npm run browserify:cell\" \"npm run browserify:sharedText\" \"npm run browserify:scribe\" \"npm run browserify:perf\"",
     "browserify:canvas": "browserify src/alfred/controllers/canvas.ts -o public/scripts/dist/canvas.js -s controller -p [ tsify -t es5 ]",
-    "browserify:maps": "browserify src/alfred/controllers/maps.ts -o public/scripts/dist/maps.js -s controller -p [ tsify -t es5 ]",
+    "browserify:maps": "browserify src/alfred/controllers/maps.ts --debug -o public/scripts/dist/maps.js -s controller -p [ tsify -t es5 ]",
     "browserify:cell": "browserify src/alfred/controllers/cell.ts -o public/scripts/dist/cell.js -s controller -p [ tsify -t es5 ]",
     "browserify:sharedText": "browserify src/alfred/controllers/sharedText.ts -o public/scripts/dist/sharedText.js -s controller -p [ tsify -t es5 ]",
     "browserify:scribe": "browserify src/alfred/controllers/scribe.ts -o public/scripts/dist/scribe.js --debug -s controller -p [ tsify -t es5 ]",
