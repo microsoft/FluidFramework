@@ -10,7 +10,7 @@ import * as JsDiff from "diff";
 import * as Paparazzo from "./snapshot";
 import * as express from "express";
 import * as path from "path";
-import { MergeTreeChunk, IPropertyString } from "../api";
+import * as api from "../api";
 
 function compareStrings(a: string, b: string) {
     return a.localeCompare(b);
@@ -128,10 +128,10 @@ class Server {
         return buf;
     }
 
-    getCharLengthSegs(alltexts: IPropertyString[], approxCharLength: number, clientId: string,
-        startIndex = 0): MergeTreeChunk {
+    getCharLengthSegs(alltexts: api.IPropertyString[], approxCharLength: number, clientId: string,
+        startIndex = 0): api.MergeTreeChunk {
         //console.log(`start index ${startIndex}`);
-        let texts = <IPropertyString[]>[];
+        let texts = <api.IPropertyString[]>[];
         let lengthChars = 0;
         let segCount = 0;
         while ((lengthChars < approxCharLength) && ((startIndex + segCount) < alltexts.length)) {
@@ -702,7 +702,7 @@ export function TestPack() {
         if (addSnapClient) {
             snapClient = new MergeTree.Client(initString);
             if (startFile) {
-                Text.loadText(startFile, snapClient.mergeTree, fileSegCount);
+                Text.loadTextFromFile(startFile, snapClient.mergeTree, fileSegCount);
             }
             snapClient.startCollaboration("snapshot");
             server.addListeners([snapClient]);
@@ -913,7 +913,8 @@ export function TestPack() {
 
             if (extractSnap) {
                 let clockStart = clock();
-                /* let texts = */ new Paparazzo.Snapshot(snapClient.mergeTree).extractSync();
+                let snapshot = new Paparazzo.Snapshot(snapClient.mergeTree);
+                snapshot.extractSync();
                 extractSnapTime += elapsedMicroseconds(clockStart);
                 extractSnapOps++;
             }
@@ -1216,7 +1217,7 @@ export function TestPack() {
         console.log(cli.mergeTree.toString());
         cli.insertTextLocal("cat ", 5);
         console.log(cli.mergeTree.toString());
-        for (let i = 0; i < 3; i++) {
+        for (let i = 0; i < 4; i++) {
             for (let j = 0; j < 3; j++) {
                 console.log(cli.relText(i, j));
             }
@@ -1228,11 +1229,23 @@ export function TestPack() {
                 console.log(cli.relText(clientId, refSeq));
             }
         }
-        cli.insertTextRemote("very ", 5, undefined, 4, 2, 2);
+        cli.insertMarkerRemote({ type: "peach", behaviors: api.MarkerBehaviors.PropagatesForward }, 0, {},
+            5, 0, 2)
+        cli.insertTextRemote("very ", 6, undefined, 4, 2, 2);
         console.log(cli.mergeTree.toString());
         for (let clientId = 0; clientId < 4; clientId++) {
-            for (let refSeq = 0; refSeq < 5; refSeq++) {
+            for (let refSeq = 0; refSeq < 7; refSeq++) {
                 console.log(cli.relText(clientId, refSeq));
+            }
+        }
+        cli.updateMinSeq(6);
+        let segs = new Paparazzo.Snapshot(cli.mergeTree).extractSync();
+        for (let seg of segs) {
+            if (seg.text!==undefined) {
+                console.log(seg.text);
+            }
+            else {
+                console.log(`M:${seg.marker.type}`);
             }
         }
         cli = new MergeTree.Client(" old sock!");
@@ -1261,7 +1274,7 @@ export function TestPack() {
                 console.log(cli.relText(clientId, refSeq));
             }
         }
-        cli = new MergeTree.Client("abcdefgh"); 
+        cli = new MergeTree.Client("abcdefgh");
         cli.startCollaboration("Fred3");
         for (let cname of clientNames) {
             cli.addLongClientId(cname);
@@ -1324,6 +1337,7 @@ export function TestPack() {
 //mergeTreeLargeTest();
 //mergeTreeCheckedTest();
 let testPack = TestPack();
+// testPack.firstTest();
 //testPack.randolicious();
 let filename = path.join(__dirname, "../../public/literature", "pp.txt");
 testPack.clientServer(filename);

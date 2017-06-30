@@ -71,22 +71,20 @@ function getLineCount(node: SharedString.Node) {
     }
 }
 
+function blockUpdateChild(block: SharedString.Block, index: number) {
+    let lineBlock = <ILineCountBlock>block;
+    if (index == 0) {
+        lineBlock.lineCount = 0;
+    }
+    let node = block.children[index];
+    lineBlock.lineCount += getLineCount(node);
+}
+
+
 class FlowFilter {
     serverChange = false;
     constructor(public sharedString: SharedString.SharedString) {
-        sharedString.client.mergeTree.blockUpdateActions = {
-            child: (block, index) => {
-                this.blockUpdateChild(<ILineCountBlock>block, index);
-            }
-        }
-    }
-
-    blockUpdateChild(block: ILineCountBlock, index: number) {
-        if (index == 0) {
-            block.lineCount = 0;
-        }
-        let node = block.children[index];
-        block.lineCount += getLineCount(node);
+        sharedString.client.mergeTree.blockUpdateActions = { child: blockUpdateChild };
     }
 
     setEvents() {
@@ -156,7 +154,7 @@ class FlowFilter {
 function initializeSnapshot() {
     let editor = vscode.window.activeTextEditor;
     let doc = editor.document;
-
+    SharedString.MergeTree.initBlockUpdateActions = { child: blockUpdateChild };
     const sharedString = extension.load("fff", services, api.defaultRegistry) as SharedString.SharedString;
 
     sharedString.on("partialLoad", (data: api.MergeTreeChunk) => {
@@ -173,7 +171,9 @@ function initializeSnapshot() {
             const lines = text.split(/\n|\r\n/);
             for (const line of lines) {
                 sharedString.insertMarker(sharedString.client.getLength(), "line", api.MarkerBehaviors.PropagatesForward);
-                sharedString.insertText(line, sharedString.client.getLength());
+                if (line.length > 0) {
+                    sharedString.insertText(line, sharedString.client.getLength());
+                }
             }
         }
     });

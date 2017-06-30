@@ -107,13 +107,13 @@ export class SharedString implements API.ICollaborativeObject {
         return this;
     }
 
-    private makeInsertMarkerMsg(pos: number, type: string, behaviors: API.MarkerBehaviors, props?: Object, end?: number) {
+    private makeInsertMarkerMsg(pos: number, markerType: string, behaviors: API.MarkerBehaviors, props?: Object, end?: number) {
         return <API.IMessage>{
             referenceSequenceNumber: this.client.getCurrentSeq(),
             objectId: this.id,
             clientSequenceNumber: this.clientSequenceNumber++,
             op: <API.IMergeTreeInsertMsg>{
-                type: API.MergeTreeDeltaType.INSERT, pos1: pos, props, marker: { type, behaviors, end },
+                type: API.MergeTreeDeltaType.INSERT, pos1: pos, props, marker: { type: markerType, behaviors, end },
             }
         };
 

@@ -245,6 +245,10 @@ export class Marker extends BaseSegment {
         this.cachedLength = 0;
     }
 
+    toString() {
+        return `M:${this.type}`;
+    }
+
     netLength() {
         return 0;
     }
@@ -1540,6 +1544,7 @@ export class MergeTree {
     static diagOverlappingRemove = false;
     static traceTraversal = false;
     static traceIncrTraversal = false;
+    static initBlockUpdateActions: BlockUpdateActions;
 
     static theUnfinishedNode = <Block>{ childCount: -1 };
 
@@ -1555,6 +1560,7 @@ export class MergeTree {
     getLongClientId: (id: number) => string;
 
     constructor(public text: string) {
+        this.blockUpdateActions = MergeTree.initBlockUpdateActions;
         this.root = this.initialTextNode(this.text);
     }
 
@@ -1571,8 +1577,10 @@ export class MergeTree {
     }
 
     addNode(block: Block, node: Node) {
+        let index = block.childCount;
         block.children[block.childCount++] = node;
         node.parent = block;
+        return index;
     }
 
     reloadFromSegments(segments: Segment[]) {
@@ -1587,8 +1595,12 @@ export class MergeTree {
                 blocks[i] = new MergeBlock(0);
                 for (let j = 0; j < segCap; j++) {
                     if (nodeIndex < nodes.length) {
-                        this.addNode(blocks[i], nodes[nodeIndex]);
+                        let childIndex = this.addNode(blocks[i], nodes[nodeIndex]);
                         len += nodes[nodeIndex].cachedLength;
+                        blocks[i].addNodeMarkers(nodes[nodeIndex]);
+                        if (this.blockUpdateActions) {
+                            this.blockUpdateActions.child(blocks[i], childIndex);
+                        }
                     } else {
                         break;
                     }
@@ -1612,6 +1624,10 @@ export class MergeTree {
             let block = buildMergeBlock(segments);
             block.parent = this.root;
             this.root.children[0] = block;
+            this.root.addNodeMarkers(block);
+            if (this.blockUpdateActions) {
+                this.blockUpdateActions.child(this.root, 0);
+            }
             this.root.cachedLength = block.cachedLength;
         }
         else {
@@ -2743,8 +2759,8 @@ export class MergeTree {
                 console.log(`@tcli ${glc(this, this.collabWindow.clientId)}: map len: ${len} start: ${start} end: ${end} ` + segInfo);
             }
             let isLeaf = child.isLeaf();
-            if (go && ((len > 0) || (isLeaf && ((<Segment>child).getType() == SegmentType.Marker)))
-                && (start < len) && (end > 0)) {
+            if (go && (end > 0) && (((len > 0) && (start < len)) ||
+                (isLeaf && ((<Segment>child).getType() == SegmentType.Marker) && (start<=0)))) {
                 // found entry containing pos
                 if (!isLeaf) {
                     if (go) {
