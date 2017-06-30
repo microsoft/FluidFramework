@@ -131,5 +131,10 @@
         "nativeTextAnalytics": {
             "url": "http://prague.westus2.cloudapp.azure.com:8080/"
         }
+    },
+    "git": {
+        "repository": "git@git:prague.git",
+        "storagePath": "/var/lib/prague",
+        "historian": "http://historian:3000"
     }
 }

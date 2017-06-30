@@ -12,7 +12,8 @@ export class DeltaConnection implements api.IDeltaConnection {
         private service: DeltaNotificationService,
         public objectId: string,
         public clientId: string,
-        public existing: boolean) {
+        public existing: boolean,
+        public versions: any[]) {
     }
 
     /**

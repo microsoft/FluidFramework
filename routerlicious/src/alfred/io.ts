@@ -2,6 +2,7 @@ import * as _ from "lodash";
 import * as moniker from "moniker";
 import * as nconf from "nconf";
 import * as redis from "redis";
+import * as request from "request";
 import * as socketIo from "socket.io";
 import * as socketIoRedis from "socket.io-redis";
 import * as api from "../api";
@@ -17,6 +18,8 @@ const kafkaEndpoint = nconf.get("kafka:lib:endpoint");
 const kafkaLibrary = nconf.get("kafka:lib:name");
 const kafkaClientId = nconf.get("alfred:kafkaClientId");
 const topic = nconf.get("alfred:topic");
+
+const historian = nconf.get("git:historian");
 
 // Setup redis
 let host = nconf.get("redis:host");
@@ -62,6 +65,23 @@ async function getOrCreateObject(id: string, type: string): Promise<boolean> {
         });
 }
 
+/**
+ * Retrieves revisions for the given document
+ */
+async function getRevisions(id: string, branch: string): Promise<any[]> {
+    return new Promise<any[]>((resolve, reject) => {
+        request.get(
+            { url: `${historian}/api/documents/${id}/${branch}/commits`, json: true },
+            (error, response, body) => {
+                if (error || response.statusCode !== 200) {
+                    resolve([]);
+                } else {
+                    resolve(body);
+                }
+            });
+    });
+}
+
 // Producer used to publish messages
 const producer = utils.kafkaProducer.create(kafkaLibrary, kafkaEndpoint, kafkaClientId, topic);
 const throughput = new utils.ThroughputCounter(logger.info);
@@ -82,8 +102,13 @@ io.on("connection", (socket) => {
         logger.info(`Client has requested to load ${message.objectId}`);
 
         const existingP = getOrCreateObject(message.objectId, message.type);
-        existingP.then(
-            (existing) => {
+        const revisionsP = getRevisions(message.objectId, "master");
+
+        Promise.all([existingP, revisionsP]).then(
+            (results) => {
+                const existing = results[0];
+                const revisions = results[1];
+
                 socket.join(message.objectId, (joinError) => {
                     if (joinError) {
                         return response(joinError, null);
@@ -95,6 +120,7 @@ io.on("connection", (socket) => {
                     const connectedMessage: socketStorage.IConnected = {
                         clientId,
                         existing,
+                        revisions,
                     };
                     response(null, connectedMessage);
                 });

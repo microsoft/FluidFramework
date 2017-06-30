@@ -29,6 +29,9 @@ const storageBucket = nconf.get("paparazzi:bucket");
 // Connect to Alfred for default storage options
 const alfredUrl = nconf.get("paparazzi:alfred");
 
+// Git configuration
+const gitSettings = nconf.get("git");
+
 async function bucketExists(minioClient, bucket: string) {
     return new Promise<boolean>((resolve, reject) => {
         minioClient.bucketExists(bucket, (error) => {
@@ -158,7 +161,10 @@ async function run() {
     const services: api.ICollaborationServices = {
         deltaNotificationService: new socketStorage.DeltaNotificationService(alfredUrl),
         deltaStorageService: new socketStorage.DeltaStorageService(alfredUrl),
-        objectStorageService: new ObjectStorageService(alfredUrl, minioClient, storageBucket),
+        objectStorageService: new ObjectStorageService(
+            alfredUrl,
+            gitSettings.repository,
+            gitSettings.storagePath),
     };
 
     // Create the resume intelligent service and manager
