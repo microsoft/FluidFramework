@@ -108,7 +108,7 @@ export class Snapshot {
                         texts.push({ props: textSegment.properties, text: textSegment.text });
                         break;
                     case MergeTree.SegmentType.Marker:
-                        console.log("got here");
+                        // console.log("got here");
                         let markerSeg = <MergeTree.Marker>segment;
                         texts.push({
                             props: markerSeg.properties,
