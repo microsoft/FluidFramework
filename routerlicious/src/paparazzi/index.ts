@@ -21,41 +21,6 @@ const alfredUrl = nconf.get("paparazzi:alfred");
 const tmzUrl = nconf.get("paparazzi:tmz");
 const socket = io(tmzUrl, { transports: ["websocket"] });
 
-const pendingSerializeMap: { [key: string]: boolean } = {};
-const dirtyMap: { [key: string]: boolean } = {};
-
-/**
- * Serializes the document to blob storage and then marks the latest version in mongodb
- */
-function serialize(root: api.ICollaborativeObject) {
-    if (pendingSerializeMap[root.id]) {
-        dirtyMap[root.id] = true;
-        return;
-    }
-
-    // Set a pending operation and clear any dirty flags
-    pendingSerializeMap[root.id] = true;
-    dirtyMap[root.id] = false;
-
-    logger.verbose(`Snapshotting ${root.id}`);
-    const snapshotP = root.snapshot().catch((error) => {
-            // TODO we will just log errors for now. Will want a better strategy later on (replay, wait)
-            if (error) {
-                logger.error(error);
-            }
-
-            return Promise.resolve();
-        });
-
-    // Finally clause to start snapshotting again once we finish
-    snapshotP.then(() => {
-        pendingSerializeMap[root.id] = false;
-        if (dirtyMap[root.id]) {
-            serialize(root);
-        }
-    });
-}
-
 function handleDocument(
     services: api.ICollaborationServices,
     id: string,
@@ -64,12 +29,12 @@ function handleDocument(
     const docLoader = new shared.DocumentLoader(id, services);
 
     docLoader.load().then((doc) => {
-        // TODO need a generic way to know that the object has 'changed'. Best thing here is to probably trigger
-        // a message whenever the MSN changes since this is what will cause a snapshot
+        const serializer = new shared.Serializer(doc);
 
-        // Display the initial values and then listen for updates
+        // TODO need a generic way to know that the object has 'changed'. Best thing here is to probably trigger
+        // a message whenever the MSN changes since this is what will cause a snapshot.
         doc.on("op", (op) => {
-            serialize(doc);
+            serializer.run();
             intelligenceManager.process(doc);
         });
     },
