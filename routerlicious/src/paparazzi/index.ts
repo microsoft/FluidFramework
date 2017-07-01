@@ -4,27 +4,15 @@ import * as nconf from "nconf";
 import * as path from "path";
 nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
 
-import * as minio from "minio";
-import { Collection, MongoClient } from "mongodb";
 import * as moniker from "moniker";
 import * as io from "socket.io-client";
 import * as api from "../api";
 import { nativeTextAnalytics, resume, textAnalytics } from "../intelligence";
+import * as shared from "../shared";
 import * as socketStorage from "../socket-storage";
 import { logger } from "../utils";
 import * as utils from "../utils";
-
 import { IntelligentServicesManager } from "./intelligence";
-import { ObjectStorageService } from "./objectStorageService";
-
-// Connection to stored document details
-const mongoUrl = nconf.get("mongo:endpoint");
-const client = MongoClient.connect(mongoUrl);
-const objectsCollectionName = nconf.get("mongo:collectionNames:objects");
-const objectsCollectionP = client.then((db) => db.collection(objectsCollectionName));
-
-const minioConfig = nconf.get("minio");
-const storageBucket = nconf.get("paparazzi:bucket");
 
 // Connect to Alfred for default storage options
 const alfredUrl = nconf.get("paparazzi:alfred");
@@ -32,53 +20,6 @@ const alfredUrl = nconf.get("paparazzi:alfred");
 // Subscribe to tmz to receive work.
 const tmzUrl = nconf.get("paparazzi:tmz");
 const socket = io(tmzUrl, { transports: ["websocket"] });
-
-async function bucketExists(minioClient, bucket: string) {
-    return new Promise<boolean>((resolve, reject) => {
-        minioClient.bucketExists(bucket, (error) => {
-            if (error && error.code !== "NoSuchBucket") {
-                reject(error);
-            } else {
-                resolve(error ? false : true);
-            }
-        });
-    });
-}
-
-async function makeBucket(minioClient, bucket: string) {
-    return new Promise<void>((resolve, reject) => {
-        minioClient.makeBucket(bucket, "us-east-1", (error) => {
-            if (error) {
-                return reject(error);
-            } else {
-                return resolve();
-            }
-        });
-    });
-}
-
-async function getOrCreateBucket(minioClient, bucket: string) {
-    const exists = await bucketExists(minioClient, bucket);
-    if (!exists) {
-        return await makeBucket(minioClient, bucket);
-    }
-}
-
-async function loadObject(
-    services: api.ICollaborationServices,
-    collection: Collection,
-    id: string): Promise<api.ICollaborativeObject> {
-
-    logger.info(`${id}: Loading`);
-    const dbObject = await collection.findOne({ _id: id });
-    logger.info(`${id}: Found`);
-
-    const extension = api.defaultRegistry.getExtension(dbObject.type);
-    const sharedObject = extension.load(id, services, api.defaultRegistry);
-
-    logger.info(`${id}: Loaded`);
-    return sharedObject;
-}
 
 const pendingSerializeMap: { [key: string]: boolean } = {};
 const dirtyMap: { [key: string]: boolean } = {};
@@ -117,11 +58,12 @@ function serialize(root: api.ICollaborativeObject) {
 
 function handleDocument(
     services: api.ICollaborationServices,
-    collection: Collection,
     id: string,
     intelligenceManager: IntelligentServicesManager) {
 
-    loadObject(services, collection, id).then((doc) => {
+    const docLoader = new shared.DocumentLoader(id, services);
+
+    docLoader.load().then((doc) => {
         // TODO need a generic way to know that the object has 'changed'. Best thing here is to probably trigger
         // a message whenever the MSN changes since this is what will cause a snapshot
 
@@ -141,30 +83,24 @@ function handleDocument(
  */
 function processMessage(
     message: string,
-    collection: Collection,
     services: api.ICollaborationServices,
     intelligenceManager: IntelligentServicesManager): Promise<void> {
     return new Promise<void>((resolve, reject) => {
-        handleDocument(services, collection, message, intelligenceManager);
+        handleDocument(services, message, intelligenceManager);
         resolve();
     });
 }
 
 async function run() {
     const deferred = new utils.Deferred<void>();
+    const objectStorageService = new shared.ObjectStorageService(alfredUrl);
 
-    const minioClient = new minio.Client({
-        accessKey: minioConfig.accessKey,
-        endPoint: minioConfig.endpoint,
-        port: minioConfig.port,
-        secretKey: minioConfig.secretKey,
-        secure: false,
-    });
+    await objectStorageService.ready();
 
     const services: api.ICollaborationServices = {
         deltaNotificationService: new socketStorage.DeltaNotificationService(alfredUrl),
         deltaStorageService: new socketStorage.DeltaStorageService(alfredUrl),
-        objectStorageService: new ObjectStorageService(alfredUrl, minioClient, storageBucket),
+        objectStorageService,
     };
 
     // Create the resume intelligent service and manager
@@ -173,12 +109,6 @@ async function run() {
     intelligenceManager.registerService(textAnalytics.factory.create(nconf.get("intelligence:textAnalytics")));
     intelligenceManager.registerService(nativeTextAnalytics.factory.create(nconf.get(
         "intelligence:nativeTextAnalytics")));
-
-    // Prep minio
-    await getOrCreateBucket(minioClient, storageBucket);
-
-    // Load the mongodb collection
-    const collection = await objectsCollectionP;
 
     // Subscribe to tmz
     const clientDetail: socketStorage.IWorker = {
@@ -193,8 +123,9 @@ async function run() {
         }
     });
 
-    socket.on("TaskObject", (clientId: string, message: string, response) => {
-        processMessage(message, collection, services, intelligenceManager).catch((err) => {
+    socket.on("TaskObject", (cid: string, msg: string, response) => {
+        logger.info(`Received work for: ${msg}`);
+        processMessage(msg, services, intelligenceManager).catch((err) => {
             logger.error(err);
         });
         response(null, clientDetail);

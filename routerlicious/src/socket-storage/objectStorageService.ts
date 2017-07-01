@@ -2,7 +2,7 @@ import * as request from "request";
 import * as api from "../api";
 
 /**
- * Client side access to object storage. Only provides read only access to the object.
+ * Client side access to object storage.
  */
 export class ClientObjectStorageService implements api.IObjectStorageService {
     constructor(private url: string) {
