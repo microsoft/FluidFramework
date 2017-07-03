@@ -1,5 +1,6 @@
 import * as io from "socket.io-client";
 import * as api from "../api";
+import * as shared from "../shared";
 import * as messages from "./messages";
 
 /**
@@ -9,8 +10,6 @@ export class WorkerService implements api.IWorkerService {
 
     private socket;
     private root: api.ICollaborativeObject;
-    private pendingSerializeMap: { [key: string]: boolean } = {};
-    private dirtyMap: { [key: string]: boolean } = {};
 
     constructor() {
         this.socket = io("http://localhost:4000", { transports: ["websocket"] });
@@ -34,7 +33,7 @@ export class WorkerService implements api.IWorkerService {
                     if (error) {
                         reject(error);
                     } else {
-                        console.log(`${clientId} Successfully subscribed to TMZ: ${JSON.stringify(ack)}`);
+                        console.log(`${clientId} subscribed to TMZ: ${JSON.stringify(ack)}`);
                         this.socket.on("TaskObject", (cId: string, msg: string, response) => {
                             this.processWork();
                             response(null, clientDetail);
@@ -54,37 +53,10 @@ export class WorkerService implements api.IWorkerService {
     }
 
     private handleDocument() {
+        const serializer = new shared.Serializer(this.root);
         this.root.on("op", (op) => {
-            this.serialize();
+            serializer.run();
         });
     }
 
-    private serialize() {
-        if (this.pendingSerializeMap[this.root.id]) {
-            this.dirtyMap[this.root.id] = true;
-            return;
-        }
-
-        // Set a pending operation and clear any dirty flags
-        this.pendingSerializeMap[this.root.id] = true;
-        this.dirtyMap[this.root.id] = false;
-
-        console.log(`Snapshotting ${this.root.id}.`);
-        const snapshotP = this.root.snapshot().catch((error) => {
-                // TODO we will just log errors for now. Will want a better strategy later on (replay, wait)
-                if (error) {
-                    console.error(error);
-                }
-
-                return Promise.resolve();
-            });
-
-        // Finally clause to start snapshotting again once we finish
-        snapshotP.then(() => {
-            this.pendingSerializeMap[this.root.id] = false;
-            if (this.dirtyMap[this.root.id]) {
-                this.serialize();
-            }
-        });
-    }
 }

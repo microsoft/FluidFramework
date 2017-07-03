@@ -59,10 +59,53 @@ async function putObject(id: string, data: any): Promise<void> {
     });
 }
 
+async function bucketExists(bucket: string) {
+    return new Promise<boolean>((resolve, reject) => {
+        minioClient.bucketExists(bucket, (error) => {
+            if (error && error.code !== "NoSuchBucket") {
+                reject(false);
+            } else {
+                resolve(error ? false : true);
+            }
+        });
+    });
+}
+
+async function makeBucket(bucket: string) {
+    return new Promise<boolean>((resolve, reject) => {
+        minioClient.makeBucket(bucket, "us-east-1", (error) => {
+            if (error) {
+                reject(false);
+            } else {
+                resolve(error ? false : true);
+            }
+        });
+    });
+}
+
+/**
+ * Creates a new bucket.
+ */
+async function createBucket(id: string): Promise<void> {
+    return new Promise<void>(async (resolve, reject) => {
+        const exists = await bucketExists(id);
+        if (!exists) {
+            const newBucket = await makeBucket(id);
+            if (newBucket) {
+                resolve();
+            } else {
+                reject();
+            }
+        } else {
+            resolve();
+        }
+    });
+}
+
 const router: Router = Router();
 
 /**
- * Retrieves deltas for the given document. With an optional from and to range (both exclusive) specified
+ * Retrieves the given document.
  */
 router.get("/:id", async (request, response, next) => {
     // Now grab the snapshot, any deltas post snapshot, and send to the client
@@ -81,6 +124,20 @@ router.get("/:id", async (request, response, next) => {
  */
 router.post("/:id", async (request, response, next) => {
     const resultP = putObject(request.params.id, request.body);
+    resultP.then(
+        (result) => {
+            response.end(result);
+        },
+        (error) => {
+            response.status(400).json({ error });
+        });
+});
+
+/**
+ * creates a new bucket.
+ */
+router.post("/create/:id", async (request, response, next) => {
+    const resultP = createBucket(request.params.id);
     resultP.then(
         (result) => {
             response.end(result);

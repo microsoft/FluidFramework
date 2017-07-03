@@ -31,4 +31,16 @@ export class ClientObjectStorageService implements api.IObjectStorageService {
             });
         });
     }
+
+    public create(name: string): Promise<void> {
+        return new Promise<any>((resolve, reject) => {
+            request.post(`${this.url}/storage/create/${name}`, (error, response, body) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    resolve(body);
+                }
+            });
+        });
+    }
 }

@@ -15,6 +15,11 @@ export interface IObjectStorageService {
      * Writes to the object with the given ID
      */
     write(id: string, data: any): Promise<void>;
+
+    /**
+     * Creates a bucket with a given name
+     */
+    create(name: string): Promise<void>;
 }
 
 /**

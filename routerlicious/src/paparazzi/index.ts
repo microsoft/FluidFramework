@@ -16,6 +16,7 @@ import { IntelligentServicesManager } from "./intelligence";
 
 // Connect to Alfred for default storage options
 const alfredUrl = nconf.get("paparazzi:alfred");
+const storageBucket = nconf.get("paparazzi:bucket");
 
 // Subscribe to tmz to receive work.
 const tmzUrl = nconf.get("paparazzi:tmz");
@@ -26,7 +27,7 @@ function handleDocument(
     id: string,
     intelligenceManager: IntelligentServicesManager) {
 
-    const docLoader = new shared.DocumentLoader(id, services);
+    const docLoader = new shared.DocumentLoader(alfredUrl, id, services);
 
     docLoader.load().then((doc) => {
         const serializer = new shared.Serializer(doc);
@@ -60,7 +61,7 @@ async function run() {
     const deferred = new utils.Deferred<void>();
     const objectStorageService = new shared.ObjectStorageService(alfredUrl);
 
-    await objectStorageService.ready();
+    await objectStorageService.create(storageBucket);
 
     const services: api.ICollaborationServices = {
         deltaNotificationService: new socketStorage.DeltaNotificationService(alfredUrl),
