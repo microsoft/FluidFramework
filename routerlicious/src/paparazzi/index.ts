@@ -12,7 +12,6 @@ import * as shared from "../shared";
 import * as socketStorage from "../socket-storage";
 import { logger } from "../utils";
 import * as utils from "../utils";
-import { IntelligentServicesManager } from "./intelligence";
 
 // Connect to Alfred for default storage options
 const alfredUrl = nconf.get("paparazzi:alfred");
@@ -24,13 +23,21 @@ const socket = io(tmzUrl, { transports: ["websocket"] });
 
 function handleDocument(
     services: api.ICollaborationServices,
-    id: string,
-    intelligenceManager: IntelligentServicesManager) {
+    id: string) {
 
-    const docLoader = new shared.DocumentLoader(alfredUrl, id, services);
-
-    docLoader.load().then((doc) => {
+    const docManager = new shared.DocumentManager(alfredUrl, services);
+    docManager.load(id).then(async (doc) => {
         const serializer = new shared.Serializer(doc);
+
+        // Create a map object to hold intelligent insights.
+        const insightsMap = await docManager.createMap(id);
+
+        // Create the resume intelligent service and manager
+        const intelligenceManager = new shared.IntelligentServicesManager(insightsMap);
+        intelligenceManager.registerService(resume.factory.create(nconf.get("intelligence:resume")));
+        intelligenceManager.registerService(textAnalytics.factory.create(nconf.get("intelligence:textAnalytics")));
+        intelligenceManager.registerService(nativeTextAnalytics.factory.create(nconf.get(
+            "intelligence:nativeTextAnalytics")));
 
         // TODO need a generic way to know that the object has 'changed'. Best thing here is to probably trigger
         // a message whenever the MSN changes since this is what will cause a snapshot.
@@ -49,10 +56,9 @@ function handleDocument(
  */
 function processMessage(
     message: string,
-    services: api.ICollaborationServices,
-    intelligenceManager: IntelligentServicesManager): Promise<void> {
+    services: api.ICollaborationServices): Promise<void> {
     return new Promise<void>((resolve, reject) => {
-        handleDocument(services, message, intelligenceManager);
+        handleDocument(services, message);
         resolve();
     });
 }
@@ -69,13 +75,6 @@ async function run() {
         objectStorageService,
     };
 
-    // Create the resume intelligent service and manager
-    const intelligenceManager = new IntelligentServicesManager(services);
-    intelligenceManager.registerService(resume.factory.create(nconf.get("intelligence:resume")));
-    intelligenceManager.registerService(textAnalytics.factory.create(nconf.get("intelligence:textAnalytics")));
-    intelligenceManager.registerService(nativeTextAnalytics.factory.create(nconf.get(
-        "intelligence:nativeTextAnalytics")));
-
     // Subscribe to tmz
     const clientDetail: socketStorage.IWorker = {
         clientId: moniker.choose(),
@@ -91,7 +90,7 @@ async function run() {
 
     socket.on("TaskObject", (cid: string, msg: string, response) => {
         logger.info(`Received work for: ${msg}`);
-        processMessage(msg, services, intelligenceManager).catch((err) => {
+        processMessage(msg, services).catch((err) => {
             logger.error(err);
         });
         response(null, clientDetail);
