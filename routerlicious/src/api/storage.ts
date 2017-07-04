@@ -93,6 +93,7 @@ export interface ICollaborationServices {
     objectStorageService: IObjectStorageService;
     deltaStorageService: IDeltaStorageService;
     deltaNotificationService: IDeltaNotificationService;
+    workerService?: IWorkerService;
 }
 
 export interface IOptions {

@@ -11,8 +11,8 @@ export class WorkerService implements api.IWorkerService {
     private socket;
     private root: api.ICollaborativeObject;
 
-    constructor() {
-        this.socket = io("http://localhost:4000", { transports: ["websocket"] });
+    constructor(url: string) {
+        this.socket = io(url, { transports: ["websocket"] });
     }
 
     public connect(doc: api.ICollaborativeObject): Promise<any> {
