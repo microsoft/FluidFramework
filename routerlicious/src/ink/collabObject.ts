@@ -93,7 +93,7 @@ export class InkCollaborativeObject extends api.CollaborativeObject implements I
 
         // Register as worker and connect
         if (services.workerService) {
-            await services.workerService.connect(this);
+            await services.workerService.connect("Client");
         }
 
         // Load from the snapshot if it exists

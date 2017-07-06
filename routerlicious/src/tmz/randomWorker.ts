@@ -14,8 +14,9 @@ export class RandomWorker implements IWorkManager {
 
     private assignOne(id: string, workers: IWorkerDetail[]): Promise<void> {
         const candidates = [];
+        const shuffledWorkers = this.shuffle(workers);
         const readyP =  new Promise<any>((resolve, reject) => {
-            for (let worker of workers) {
+            for (let worker of shuffledWorkers) {
                 worker.socket.emit("ReadyObject", worker.worker.clientId, id, (error, ack: socketStorage.IWorker) => {
                     if (ack) {
                         logger.info(`Client ${ack.clientId} is ready for the work`);
@@ -42,6 +43,22 @@ export class RandomWorker implements IWorkManager {
                 });
             });
         });
+    }
+
+    private shuffle(array: any[]): any[] {
+        let currentIndex = array.length;
+        let temporaryValue: any;
+        let randomIndex: number;
+
+        while (0 !== currentIndex) {
+            randomIndex = Math.floor(Math.random() * currentIndex);
+            --currentIndex;
+
+            temporaryValue = array[currentIndex];
+            array[currentIndex] = array[randomIndex];
+            array[randomIndex] = temporaryValue;
+        }
+        return array;
     }
 
 }

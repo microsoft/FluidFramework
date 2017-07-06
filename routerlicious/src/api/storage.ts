@@ -1,5 +1,4 @@
 import { IMessage, ISequencedMessage } from "./protocol";
-import { ICollaborativeObject} from "./types";
 
 /**
  * Interface to provide access to snapshots saved for a collaborative object
@@ -86,7 +85,7 @@ export interface IWorkerService {
     /**
      * Connects to tmz and subscribes to start working.
      */
-    connect(object: ICollaborativeObject): Promise<any>;
+    connect(type: string): Promise<any>;
 }
 
 export interface ICollaborationServices {

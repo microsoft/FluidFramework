@@ -9,33 +9,36 @@ interface IWorkerState {
 }
 
 export class StateManager {
-
-    private workerToDocumentMap: { [workerId: string]: IWorkerState} = {};
+    private workerToDocumentMap: { [socketId: string]: IWorkerState} = {};
     private documentToWorkerMap: { [docId: string]: IWorkerDetail} = {};
 
     public addWorker(worker: IWorkerDetail) {
-        this.workerToDocumentMap[worker.worker.clientId] = {worker, documents: []};
+        this.workerToDocumentMap[worker.socket.id] = {worker, documents: []};
     }
 
     public removeWorker(worker: IWorkerDetail) {
-        delete this.workerToDocumentMap[worker.worker.clientId];
+        delete this.workerToDocumentMap[worker.socket.id];
     }
 
     public assignWork(worker: IWorkerDetail, docId: string) {
-        if (!(worker.worker.clientId in this.workerToDocumentMap)) {
-            this.workerToDocumentMap[worker.worker.clientId] = {worker, documents: [docId]};
+        if (!(worker.socket.id in this.workerToDocumentMap)) {
+            this.workerToDocumentMap[worker.socket.id] = {worker, documents: [docId]};
         } else {
-            this.workerToDocumentMap[worker.worker.clientId].documents.push(docId);
+            this.workerToDocumentMap[worker.socket.id].documents.push(docId);
         }
         this.documentToWorkerMap[docId] = worker;
     }
 
     public revokeWork(worker: IWorkerDetail, docId: string) {
-        let index = this.workerToDocumentMap[worker.worker.clientId].documents.indexOf(docId, 0);
+        let index = this.workerToDocumentMap[worker.socket.id].documents.indexOf(docId, 0);
         if (index > -1) {
-            this.workerToDocumentMap[worker.worker.clientId].documents.splice(index, 1);
+            this.workerToDocumentMap[worker.socket.id].documents.splice(index, 1);
         }
         delete this.documentToWorkerMap[docId];
+    }
+
+    public getWorker(socketId: string): IWorkerDetail {
+        return this.workerToDocumentMap[socketId].worker;
     }
 
     public getWorkers(): IWorkerDetail[] {
@@ -43,7 +46,7 @@ export class StateManager {
     }
 
     public getDocuments(worker: IWorkerDetail): string[] {
-        return this.workerToDocumentMap[worker.worker.clientId].documents;
+        return this.workerToDocumentMap[worker.socket.id].documents;
     }
 
 }

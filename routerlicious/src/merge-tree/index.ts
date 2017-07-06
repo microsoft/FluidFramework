@@ -62,7 +62,7 @@ export class SharedString implements API.ICollaborativeObject {
 
         // Register as worker and connect
         if (services.workerService) {
-            await services.workerService.connect(this);
+            await services.workerService.connect("Client");
         }
 
         let headerChunkP = Paparazzo.Snapshot.loadChunk(services, this.id + "header");

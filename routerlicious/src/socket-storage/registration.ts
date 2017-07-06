@@ -7,7 +7,7 @@ export function registerAsDefault(url: string) {
         deltaNotificationService: new socketStorage.DeltaNotificationService(url),
         deltaStorageService: new socketStorage.DeltaStorageService(url),
         objectStorageService: new socketStorage.ClientObjectStorageService(url),
-        workerService: new socketStorage.WorkerService("http://localhost:4000"),
+        workerService: new socketStorage.WorkerService("http://localhost:3000", "http://localhost:4000"),
     };
 
     api.registerDefaultServices(services);

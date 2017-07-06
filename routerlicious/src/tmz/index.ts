@@ -75,8 +75,12 @@ async function run() {
             console.log(`TMZ received a heartbeat: ${message.clientId}`);
             response(null, "Heartbeat");
         });
-        socket.on("disconnect", () => {
+        socket.on("disconnect", async () => {
             console.log(`${socket.id} just disconnected`);
+            const worker = stateManager.getWorker(socket.id);
+            const tasks = stateManager.getDocuments(worker);
+            stateManager.removeWorker(worker);
+            await processWork(tasks, createdRequests);
         });
 
     });

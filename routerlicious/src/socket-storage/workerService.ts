@@ -10,18 +10,16 @@ import * as messages from "./messages";
 export class WorkerService implements api.IWorkerService {
 
     private socket;
-    private root: api.ICollaborativeObject;
     private documentMap: { [docId: string]: api.ICollaborativeObject} = {};
 
-    constructor(url: string) {
-        this.socket = io(url, { transports: ["websocket"] });
+    constructor(private serverUrl: string, private workerUrl: string) {
+        this.socket = io(this.workerUrl, { transports: ["websocket"] });
     }
 
-    public connect(doc: api.ICollaborativeObject): Promise<any> {
-        this.root = doc;
+    public connect(type: string): Promise<any> {
 
         // Generate random id since moniker does not work in client side.
-        const clientId = "Client-" + Math.floor(Math.random() * 10000);
+        const clientId = type + Math.floor(Math.random() * 10000);
         const clientDetail: messages.IWorker = {
             clientId,
             type: "Client",
@@ -35,7 +33,7 @@ export class WorkerService implements api.IWorkerService {
                     if (error) {
                         reject(error);
                     } else {
-                        console.log(`${clientId} subscribed to TMZ for doc ${doc.id}: ${JSON.stringify(ack)}`);
+                        console.log(`${clientId} subscribed to TMZ: ${JSON.stringify(ack)}`);
                         this.socket.on("ReadyObject", (cId: string, id: string, response) => {
                             console.log(`${clientId} acked that it's ready for work: ${id}: ${JSON.stringify(ack)}`);
                             response(null, clientDetail);
@@ -71,16 +69,16 @@ export class WorkerService implements api.IWorkerService {
 
     // TODO (mdaumi): Need to fix this.
     private async processWork(id: string) {
-        const objectStorageService = new shared.ObjectStorageService("http://localhost:3000");
+        const objectStorageService = new shared.ObjectStorageService(this.serverUrl);
         await objectStorageService.create("snapshots");
 
         const services: api.ICollaborationServices = {
-            deltaNotificationService: new socketStorage.DeltaNotificationService("http://localhost:3000"),
-            deltaStorageService: new socketStorage.DeltaStorageService("http://localhost:3000"),
+            deltaNotificationService: new socketStorage.DeltaNotificationService(this.serverUrl),
+            deltaStorageService: new socketStorage.DeltaStorageService(this.serverUrl),
             objectStorageService,
         };
 
-        const docManager = new shared.DocumentManager("http://localhost:3000", services);
+        const docManager = new shared.DocumentManager(this.serverUrl, services);
         console.log(`Loaded a new doc...${id}`);
 
         docManager.load(id).then(async (doc) => {
