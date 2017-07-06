@@ -14,6 +14,30 @@ export interface IWorkerDetail {
 }
 
 /**
+ * State of a worker.
+ */
+export interface IWorkerState {
+
+    worker: IWorkerDetail;
+
+    documents: string[];
+
+    activeTS: number;
+}
+
+/**
+ * State of a document.
+ */
+export interface IDocumentState {
+
+    id: string;
+
+    worker: IWorkerDetail;
+
+    activeTS: number;
+}
+
+/**
  * Interface to choose the next worker
  */
 export interface IWorkManager {

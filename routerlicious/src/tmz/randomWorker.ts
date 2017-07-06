@@ -9,7 +9,28 @@ export class RandomWorker implements IWorkManager {
     }
 
     public assignWork(ids: string[]): Array<Promise<void>> {
-        return ids.map((id) => this.assignOne(id, this.manager.getWorkers()));
+        const activeWorkers = this.manager.getActiveWorkers();
+        return ids.map((id) => this.assignOne(id, activeWorkers));
+    }
+
+    public revokeWork(): Array<Promise<void>> {
+        const docs = this.manager.getExpiredDocuments();
+        return docs.map((doc) => this.revokeOne(doc.id, doc.worker));
+    }
+
+    private revokeOne(id: string, worker: IWorkerDetail): Promise<void> {
+        return new Promise<any>((resolve, reject) => {
+            worker.socket.emit("RevokeObject", worker.worker.clientId, id,
+                (error, ack: socketStorage.IWorker) => {
+                    if (ack) {
+                        logger.info(`Client ${ack.clientId} started the work`);
+                        this.manager.revokeWork(worker, id);
+                        resolve();
+                    } else {
+                        logger.error(error);
+                    }
+            });
+        });
     }
 
     private assignOne(id: string, workers: IWorkerDetail[]): Promise<void> {

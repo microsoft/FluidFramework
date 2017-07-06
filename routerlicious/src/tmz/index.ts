@@ -47,8 +47,9 @@ io.adapter(socketIoRedis({ pubClient: pub, subClient: sub }));
 let port = nconf.get("tmz:port");
 let connected = false;
 
-const stateManager = new state.StateManager();
+const stateManager = new state.StateManager(15000, 20000);
 const workManager = new work.RandomWorker(stateManager);
+const pendingWork: Set<string> = new Set();
 
 async function run() {
     const deferred = new utils.Deferred<void>();
@@ -65,7 +66,7 @@ async function run() {
             // Process all pending tasks once the first worker joins.
             if (!connected) {
                 let workIds = Array.from(pendingWork);
-                await processWork(workIds, createdRequests);
+                await processWork(workIds);
                 pendingWork.clear();
                 connected = true;
             }
@@ -73,6 +74,7 @@ async function run() {
         });
         socket.on("heartbeatObject", async (message: socketStorage.IWorker, response) => {
             console.log(`TMZ received a heartbeat: ${message.clientId}`);
+            stateManager.refreshWorker(socket.id);
             response(null, "Heartbeat");
         });
         socket.on("disconnect", async () => {
@@ -80,15 +82,18 @@ async function run() {
             const worker = stateManager.getWorker(socket.id);
             const tasks = stateManager.getDocuments(worker);
             stateManager.removeWorker(worker);
-            await processWork(tasks, createdRequests);
+            await processWork(tasks);
         });
 
     });
     io.listen(port);
 
+    setInterval(async () => {
+        await reassignWork();
+        await expireDocument();
+    }, 10000);
+
     let consumer = utils.kafkaConsumer.create(kafkaLibrary, kafkaEndpoint, groupId, topic);
-    const createdRequests: any = {};
-    const pendingWork: Set<string> = new Set();
 
     consumer.on("data", (message) => {
         q.push(message);
@@ -103,7 +108,8 @@ async function run() {
         const value = JSON.parse(message.value.toString("utf8")) as core.IRawOperationMessage;
         const objectId = value.objectId;
 
-        if (createdRequests[objectId]) {
+        // Check if already requested. Update the Timestamp in the process.
+        if (stateManager.updateDocumentIfFound(objectId)) {
             callback();
             return;
         }
@@ -115,18 +121,28 @@ async function run() {
             return;
         }
 
-        logger.info(`Requesting snapshots for ${objectId}`);
-        await processWork([objectId], createdRequests);
+        logger.info(`Requesting work for ${objectId}`);
+        await processWork([objectId]);
         callback();
     }, 1);
 
     return deferred.promise;
 }
 
+async function reassignWork() {
+    const documents = stateManager.getDocumentsFromInactiveWorkers();
+    if (documents.length > 0) {
+        await processWork(documents);
+    }
+}
+
+async function expireDocument() {
+    await Promise.all(workManager.revokeWork());
+}
+
 // Request subscribers to pick up the work.
-async function processWork(ids: string[], requestMap: any) {
+async function processWork(ids: string[]) {
     await Promise.all(workManager.assignWork(ids));
-    ids.map((id) => requestMap[id] = true);
 }
 
 // Start up the TMZ service

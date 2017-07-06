@@ -43,8 +43,8 @@ export class WorkerService implements api.IWorkerService {
                             this.processWork(id);
                             response(null, clientDetail);
                         });
-                        this.socket.on("revokeObject", (cId: string, id: string, response) => {
-                            console.log(`${clientId} Revoking work from TMZ doc ${id}: ${JSON.stringify(ack)}`);
+                        this.socket.on("RevokeObject", (cId: string, id: string, response) => {
+                            console.log(`${clientId} Revoking work for doc ${id}: ${JSON.stringify(ack)}`);
                             this.revokeWork(id);
                             response(null, clientDetail);
                         });
@@ -92,8 +92,8 @@ export class WorkerService implements api.IWorkerService {
         if (id in this.documentMap) {
             this.documentMap[id].removeListener("op", (op) => {
                 console.log(`Done revoking listener from ${id}`);
-                delete this.documentMap[id];
             });
+            delete this.documentMap[id];
         }
     }
 
