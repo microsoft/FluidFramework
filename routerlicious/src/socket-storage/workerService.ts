@@ -11,6 +11,7 @@ export class WorkerService implements api.IWorkerService {
 
     private socket;
     private root: api.ICollaborativeObject;
+    private documentMap: { [docId: string]: api.ICollaborativeObject} = {};
 
     constructor(url: string) {
         this.socket = io(url, { transports: ["websocket"] });
@@ -35,11 +36,33 @@ export class WorkerService implements api.IWorkerService {
                         reject(error);
                     } else {
                         console.log(`${clientId} subscribed to TMZ for doc ${doc.id}: ${JSON.stringify(ack)}`);
-                        this.socket.on("TaskObject", (cId: string, msg: string, response) => {
-                            console.log(`${clientId} acked work from TMZ for doc ${doc.id}: ${JSON.stringify(ack)}`);
-                            this.processWork(doc.id);
+                        this.socket.on("ReadyObject", (cId: string, id: string, response) => {
+                            console.log(`${clientId} acked that it's ready for work: ${id}: ${JSON.stringify(ack)}`);
                             response(null, clientDetail);
                         });
+                        this.socket.on("TaskObject", (cId: string, id: string, response) => {
+                            console.log(`${clientId} acked work from TMZ for doc ${id}: ${JSON.stringify(ack)}`);
+                            this.processWork(id);
+                            response(null, clientDetail);
+                        });
+                        this.socket.on("revokeObject", (cId: string, id: string, response) => {
+                            console.log(`${clientId} Revoking work from TMZ doc ${id}: ${JSON.stringify(ack)}`);
+                            this.revokeWork(id);
+                            response(null, clientDetail);
+                        });
+                        setInterval(() => {
+                            this.socket.emit(
+                                "heartbeatObject",
+                                clientDetail,
+                                (err, ackMessage) => {
+                                    if (err) {
+                                        console.error(`Error sending heartbeat: ${err}`);
+                                    } else {
+                                        console.log(`${clientId} sent heartbeat: ${JSON.stringify(ackMessage)}`);
+                                    }
+                                });
+                        }, 10000);
+
                         resolve(ack);
                     }
                 });
@@ -62,11 +85,21 @@ export class WorkerService implements api.IWorkerService {
 
         docManager.load(id).then(async (doc) => {
             console.log(`Loaded another doc...${doc.id}`);
-            this.handleDocument(doc);
+            this.documentMap[doc.id] = doc;
+            this.processDocument(doc);
         });
     }
 
-    private handleDocument(doc: api.ICollaborativeObject) {
+    private revokeWork(id: string) {
+        if (id in this.documentMap) {
+            this.documentMap[id].removeListener("op", (op) => {
+                console.log(`Done revoking listener from ${id}`);
+                delete this.documentMap[id];
+            });
+        }
+    }
+
+    private processDocument(doc: api.ICollaborativeObject) {
         const serializer = new shared.Serializer(doc);
         console.log(`Handling serialization: ${doc.id}`);
         doc.on("op", (op) => {

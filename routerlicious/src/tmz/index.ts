@@ -14,6 +14,8 @@ import * as socketStorage from "../socket-storage";
 import { logger } from "../utils";
 import * as utils from "../utils";
 import * as messages from "./messages";
+import * as work from "./randomWorker";
+import * as state from "./stateManager";
 
 // Setup Kafka connection
 const kafkaEndpoint = nconf.get("kafka:lib:endpoint");
@@ -45,32 +47,38 @@ io.adapter(socketIoRedis({ pubClient: pub, subClient: sub }));
 let port = nconf.get("tmz:port");
 let connected = false;
 
-// pool of connected clients to hand out work.
-const clientPool: messages.IWorkerDetail[] = [];
+const stateManager = new state.StateManager();
+const workManager = new work.RandomWorker(stateManager);
 
 async function run() {
     const deferred = new utils.Deferred<void>();
 
     // open a socketio connection and start listening for workers.
     io.on("connection", (socket) => {
-        socket.on("workerObject", (message: socketStorage.IWorker, response) => {
-            // Process all pending tasks once the first worker joins.
-            if (!connected) {
-                let workIds = Array.from(pendingWork);
-                for (let doc of workIds) {
-                    requestWork(doc, createdRequests);
-                }
-                pendingWork.clear();
-                connected = true;
-            }
-            console.log(`New worker: ${socket.id}. ${message.clientId}`);
-            const workerDetail: messages.IWorkerDetail = {
+        socket.on("workerObject", async (message: socketStorage.IWorker, response) => {
+            const newWorker: messages.IWorkerDetail = {
                 worker: message,
                 socket,
             };
-            clientPool.push(workerDetail);
+            console.log(`New worker: ${socket.id}. ${message.clientId}`);
+            stateManager.addWorker(newWorker);
+            // Process all pending tasks once the first worker joins.
+            if (!connected) {
+                let workIds = Array.from(pendingWork);
+                await processWork(workIds, createdRequests);
+                pendingWork.clear();
+                connected = true;
+            }
             response(null, "Added");
         });
+        socket.on("heartbeatObject", async (message: socketStorage.IWorker, response) => {
+            console.log(`TMZ received a heartbeat: ${message.clientId}`);
+            response(null, "Heartbeat");
+        });
+        socket.on("disconnect", () => {
+            console.log(`${socket.id} just disconnected`);
+        });
+
     });
     io.listen(port);
 
@@ -87,7 +95,7 @@ async function run() {
         deferred.reject(err);
     });
 
-    const q = queue((message: any, callback) => {
+    const q = queue(async (message: any, callback) => {
         const value = JSON.parse(message.value.toString("utf8")) as core.IRawOperationMessage;
         const objectId = value.objectId;
 
@@ -104,7 +112,7 @@ async function run() {
         }
 
         logger.info(`Requesting snapshots for ${objectId}`);
-        requestWork(objectId, createdRequests);
+        await processWork([objectId], createdRequests);
         callback();
     }, 1);
 
@@ -112,18 +120,9 @@ async function run() {
 }
 
 // Request subscribers to pick up the work.
-function requestWork(id: string, requestMap: any) {
-    let worker = clientPool[Math.floor(Math.random() * clientPool.length)];
-    logger.info(`Chosen worker: ${JSON.stringify(worker.worker.clientId)}`);
-
-    worker.socket.emit("TaskObject", worker.worker.clientId, id, (error, ack: socketStorage.IWorker) => {
-        if (ack) {
-            logger.info(`Client ${ack.clientId} acknowledged the work`);
-            requestMap[id] = true;
-        } else {
-            logger.error(error);
-        }
-    });
+async function processWork(ids: string[], requestMap: any) {
+    await Promise.all(workManager.assignWork(ids));
+    ids.map((id) => requestMap[id] = true);
 }
 
 // Start up the TMZ service

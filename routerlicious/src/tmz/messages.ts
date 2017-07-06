@@ -12,3 +12,13 @@ export interface IWorkerDetail {
     socket: any;
 
 }
+
+/**
+ * Interface to choose the next worker
+ */
+export interface IWorkManager {
+    /**
+     * Assigns tasks to workers based on some heuristics.
+     */
+    assignWork(id: string[]): Array<Promise<void>>;
+}
