@@ -47,8 +47,8 @@ export interface Segment extends Node {
     removeRange(start: number, end: number): boolean;
 }
 
-export interface SegmentAction {
-    <TAccum>(segment: Segment, pos: number, refSeq: number, clientId: number, start: number,
+export interface SegmentAction<TAccum> {
+    (segment: Segment, pos: number, refSeq: number, clientId: number, start: number,
         end: number, accum?: TAccum): boolean;
 }
 
@@ -57,39 +57,39 @@ export interface SegmentChanges {
     replaceCurrent?: Segment;
 }
 
-export interface BlockAction {
-    <TAccum>(block: Block, pos: number, refSeq: number, clientId: number, start: number, end: number,
+export interface BlockAction<TAccum> {
+    (block: Block, pos: number, refSeq: number, clientId: number, start: number, end: number,
         accum?: TAccum): boolean;
 }
 
-export interface NodeAction {
-    <TAccum>(node: Node, pos: number, refSeq: number, clientId: number, start: number, end: number,
+export interface NodeAction<TAccum> {
+    (node: Node, pos: number, refSeq: number, clientId: number, start: number, end: number,
         accum?: TAccum): boolean;
 }
 
-export interface IncrementalSegmentAction {
-    <TContext>(segment: Segment, state: IncrementalMapState<TContext>);
+export interface IncrementalSegmentAction<TContext> {
+    (segment: Segment, state: IncrementalMapState<TContext>);
 }
 
-export interface IncrementalBlockAction {
-    <TContext>(state: IncrementalMapState<TContext>);
+export interface IncrementalBlockAction<TContext> {
+    (state: IncrementalMapState<TContext>);
 }
 
 export interface BlockUpdateActions {
     child: (block: Block, index: number) => void;
 }
 
-export interface SegmentActions {
-    leaf?: SegmentAction;
-    shift?: NodeAction;
-    pre?: BlockAction;
-    post?: BlockAction;
+export interface SegmentActions<TAccum> {
+    leaf?: SegmentAction<TAccum>;
+    shift?: NodeAction<TAccum>;
+    pre?: BlockAction<TAccum>;
+    post?: BlockAction<TAccum>;
 }
 
-export interface IncrementalSegmentActions {
-    leaf: IncrementalSegmentAction;
-    pre?: IncrementalBlockAction;
-    post?: IncrementalBlockAction;
+export interface IncrementalSegmentActions<TContext> {
+    leaf: IncrementalSegmentAction<TContext>;
+    pre?: IncrementalBlockAction<TContext>;
+    post?: IncrementalBlockAction<TContext>;
 }
 
 export interface SearchResult {
@@ -436,7 +436,7 @@ export class IncrementalMapState<TContext> {
     op = IncrementalExecOp.Go;
     constructor(
         public block: Block,
-        public actions: IncrementalSegmentActions,
+        public actions: IncrementalSegmentActions<TContext>,
         public pos: number,
         public refSeq: number,
         public clientId: number,
@@ -1981,7 +1981,7 @@ export class MergeTree {
         if (MergeTree.traceGatherText) {
             console.log(`get text on cli ${glc(this, this.collabWindow.clientId)} ref cli ${glc(this, clientId)} refSeq ${refSeq}`);
         }
-        this.mapRange({ leaf: this.gatherText }, refSeq, clientId, accum, start, end);
+        this.mapRange<TextSegment>({ leaf: this.gatherText }, refSeq, clientId, accum, start, end);
         return accum.text;
     }
 
@@ -2046,11 +2046,11 @@ export class MergeTree {
     }
 
     search<TAccum>(pos: number, refSeq: number, clientId: number,
-        actions?: SegmentActions, accum?: TAccum): Segment {
+        actions?: SegmentActions<TAccum>, accum?: TAccum): Segment {
         return this.searchBlock(this.root, pos, refSeq, clientId, actions);
     }
 
-    searchBlock<TAccum>(block: Block, pos: number, refSeq: number, clientId: number, actions?: SegmentActions, accum?: TAccum): Segment {
+    searchBlock<TAccum>(block: Block, pos: number, refSeq: number, clientId: number, actions?: SegmentActions<TAccum>, accum?: TAccum): Segment {
         let children = block.children;
         let start = pos;
         let segpos = 0;
@@ -2270,7 +2270,7 @@ export class MergeTree {
     }
 
     // visit segments starting from node's right siblings, then up to node's parent
-    excursion(node: Block, leafAction: SegmentAction) {
+    excursion<TAccum>(node: Block, leafAction: SegmentAction<TAccum>) {
         let actions = { leaf: leafAction };
         let go = true;
         let startNode = node;
@@ -2637,12 +2637,12 @@ export class MergeTree {
         }
     }
 
-    map<TAccum>(actions: SegmentActions, refSeq: number, clientId: number, accum?: TAccum) {
+    map<TAccum>(actions: SegmentActions<TAccum>, refSeq: number, clientId: number, accum?: TAccum) {
         // TODO: optimize to avoid comparisons
         this.nodeMap(this.root, actions, 0, refSeq, clientId, accum);
     }
 
-    mapRangeWithMarkers(actions: SegmentActions, refSeq: number, clientId: number, start?: number, end?: number) {
+    mapRangeWithMarkers<TAccum>(actions: SegmentActions<TAccum>, refSeq: number, clientId: number, start?: number, end?: number) {
         let markers: Object = {};
         let shift = actions.shift;
         actions.shift = (node, pos, refSeq, clientId, start, end) => {
@@ -2655,7 +2655,7 @@ export class MergeTree {
         this.nodeMap(this.root, actions, 0, refSeq, clientId, markers, start, end);
     }
 
-    mapRange<TAccum>(actions: SegmentActions, refSeq: number, clientId: number, accum?: TAccum, start?: number, end?: number) {
+    mapRange<TAccum>(actions: SegmentActions<TAccum>, refSeq: number, clientId: number, accum?: TAccum, start?: number, end?: number) {
         this.nodeMap(this.root, actions, 0, refSeq, clientId, accum, start, end);
     }
 
@@ -2747,7 +2747,7 @@ export class MergeTree {
         }
     }
 
-    nodeMap<TAccum>(node: Block, actions: SegmentActions, pos: number, refSeq: number,
+    nodeMap<TAccum>(node: Block, actions: SegmentActions<TAccum>, pos: number, refSeq: number,
         clientId: number, accum?: TAccum, start?: number, end?: number) {
         if (start === undefined) {
             start = 0;

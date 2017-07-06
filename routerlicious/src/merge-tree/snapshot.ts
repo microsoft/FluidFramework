@@ -311,7 +311,7 @@ export class Snapshot {
                 offset += 4;
                 let text = buf.toString('utf8', offset, offset + segmentLengthBytes);
                 offset += segmentLengthBytes;
-                mergeTree.appendSegment(text);
+                mergeTree.appendSegment({ text: text });
                 remainingBytes -= (offset - prevOffset);
             }
             position += actualBytes;
