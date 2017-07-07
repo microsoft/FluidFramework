@@ -61,6 +61,7 @@ async function run() {
 
     // open a socketio connection and start listening for workers.
     io.on("connection", (socket) => {
+        // On joining, add the worker to manager.
         socket.on("workerObject", async (message: socketStorage.IWorker, response) => {
             const newWorker: messages.IWorkerDetail = {
                 worker: message,
@@ -77,10 +78,12 @@ async function run() {
             }
             response(null, "Added");
         });
+        // On a heartbeat, refresh worker state.
         socket.on("heartbeatObject", async (message: socketStorage.IWorker, response) => {
             stateManager.refreshWorker(socket.id);
             response(null, "Heartbeat");
         });
+        // On disconnect, reassign the work to other workers.
         socket.on("disconnect", async () => {
             logger.info(`Worker id ${socket.id} got disconnected.`);
             const worker = stateManager.getWorker(socket.id);
@@ -92,9 +95,9 @@ async function run() {
     });
     io.listen(port);
 
+    // Periodically check and update work assigment.
     setInterval(async () => {
-        await reassignWork();
-        await expireDocument();
+        await adjustWorkAssignment();
     }, checkerTimeout);
 
     let consumer = utils.kafkaConsumer.create(kafkaLibrary, kafkaEndpoint, groupId, topic);
@@ -133,20 +136,19 @@ async function run() {
     return deferred.promise;
 }
 
-async function reassignWork() {
+// Request subscribers to pick up the work.
+async function processWork(ids: string[]) {
+    await Promise.all(workManager.assignWork(ids));
+}
+
+async function adjustWorkAssignment() {
+    // Get work form inactive workers and reassign them
     const documents = stateManager.revokeDocumentsFromInactiveWorkers();
     if (documents.length > 0) {
         await processWork(documents);
     }
-}
-
-async function expireDocument() {
+    // Check Expired documents and update the state.
     await Promise.all(workManager.revokeExpiredWork());
-}
-
-// Request subscribers to pick up the work.
-async function processWork(ids: string[]) {
-    await Promise.all(workManager.assignWork(ids));
 }
 
 // Start up the TMZ service
