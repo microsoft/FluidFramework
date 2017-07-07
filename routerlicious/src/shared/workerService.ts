@@ -2,7 +2,7 @@ import * as io from "socket.io-client";
 import * as api from "../api";
 import * as shared from "../shared";
 import * as socketStorage from "../socket-storage";
-import * as messages from "./messages";
+import * as messages from "../socket-storage/messages";
 
 /**
  * The WorkerService manages the Socket.IO connection and manages work sent to it.

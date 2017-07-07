@@ -4,7 +4,7 @@ import * as nconf from "nconf";
 import * as path from "path";
 nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
 
-import * as socketStorage from "../socket-storage";
+import { WorkerService} from "../shared";
 import { logger } from "../utils";
 import * as utils from "../utils";
 
@@ -16,7 +16,7 @@ const tmzUrl = nconf.get("paparazzi:tmz");
 
 async function run() {
     const deferred = new utils.Deferred<void>();
-    const workerService = new socketStorage.WorkerService(alfredUrl, tmzUrl);
+    const workerService = new WorkerService(alfredUrl, tmzUrl);
     workerService.connect("Paparazzi").catch((error) => {
         deferred.reject(error);
     });
