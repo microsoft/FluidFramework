@@ -130,14 +130,14 @@ async function run() {
 }
 
 async function reassignWork() {
-    const documents = stateManager.getDocumentsFromInactiveWorkers();
+    const documents = stateManager.revokeDocumentsFromInactiveWorkers();
     if (documents.length > 0) {
         await processWork(documents);
     }
 }
 
 async function expireDocument() {
-    await Promise.all(workManager.revokeWork());
+    await Promise.all(workManager.revokeExpiredWork());
 }
 
 // Request subscribers to pick up the work.

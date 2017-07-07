@@ -13,6 +13,11 @@ export class StateManager {
     }
 
     public removeWorker(worker: IWorkerDetail) {
+        // Remove all documents associated with the worker first.
+        this.workerToDocumentMap[worker.socket.id].documents.map((document) => {
+            delete this.documentToWorkerMap[document];
+        });
+        // Delete the worker now.
         delete this.workerToDocumentMap[worker.socket.id];
     }
 
@@ -22,9 +27,9 @@ export class StateManager {
     }
 
     public revokeWork(worker: IWorkerDetail, docId: string) {
-        let index = this.workerToDocumentMap[worker.socket.id].documents.indexOf(docId, 0);
-        if (index > -1) {
-            this.workerToDocumentMap[worker.socket.id].documents.splice(index, 1);
+        let docIndex = this.workerToDocumentMap[worker.socket.id].documents.indexOf(docId, 0);
+        if (docIndex > -1) {
+            this.workerToDocumentMap[worker.socket.id].documents.splice(docIndex, 1);
         }
         delete this.documentToWorkerMap[docId];
     }
@@ -37,21 +42,21 @@ export class StateManager {
         return this.workerToDocumentMap[socketId].worker;
     }
 
-    public getWorkers(): IWorkerDetail[] {
-        return _.values(this.workerToDocumentMap).map((worker) => worker.worker);
-    }
-
     public getActiveWorkers(): IWorkerDetail[] {
         return _.values(this.workerToDocumentMap)
                 .filter((workerState) => { return (Date.now() - workerState.activeTS) <= this.workerTimeout; })
                 .map((workerState) => workerState.worker);
     }
 
-    public getDocumentsFromInactiveWorkers(): string[] {
-        return _.flatten(
-               _.values(this.workerToDocumentMap)
-                .filter((workerState) => { return (Date.now() - workerState.activeTS) > this.workerTimeout; })
-                .map((workerState) => workerState.documents));
+    public revokeDocumentsFromInactiveWorkers(): string[] {
+        const documents = [];
+        for (let worker of _.keys(this.workerToDocumentMap)) {
+            if (Date.now() - this.workerToDocumentMap[worker].activeTS > this.workerTimeout) {
+                documents.push(this.workerToDocumentMap[worker].documents);
+                this.workerToDocumentMap[worker].documents = [];
+            }
+        }
+        return documents;
     }
 
     public getDocuments(worker: IWorkerDetail): string[] {

@@ -38,11 +38,16 @@ export interface IDocumentState {
 }
 
 /**
- * Interface to choose the next worker
+ * Interface to implement the Work manager.
  */
 export interface IWorkManager {
     /**
      * Assigns tasks to workers based on some heuristics.
      */
     assignWork(id: string[]): Array<Promise<void>>;
+
+    /**
+     * Revokes expired work. Already implemented in base class.
+     */
+    revokeExpiredWork(): Array<Promise<void>>;
 }

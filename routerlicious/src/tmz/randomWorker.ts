@@ -1,11 +1,17 @@
 import * as socketStorage from "../socket-storage";
 import { logger } from "../utils";
+import { BaseWorker } from "./baseWorker";
 import { IWorkerDetail, IWorkManager } from "./messages";
 import { StateManager} from "./stateManager";
 
-export class RandomWorker implements IWorkManager {
+/**
+ * Worker that picks worker randomly.
+ */
+export class RandomWorker extends BaseWorker implements IWorkManager {
 
-    constructor(private manager: StateManager) {
+    constructor(private mngr: StateManager) {
+        super();
+        this.manager = this.mngr;
     }
 
     public assignWork(ids: string[]): Array<Promise<void>> {
@@ -13,34 +19,14 @@ export class RandomWorker implements IWorkManager {
         return ids.map((id) => this.assignOne(id, activeWorkers));
     }
 
-    public revokeWork(): Array<Promise<void>> {
-        const docs = this.manager.getExpiredDocuments();
-        return docs.map((doc) => this.revokeOne(doc.id, doc.worker));
-    }
-
-    private revokeOne(id: string, worker: IWorkerDetail): Promise<void> {
-        return new Promise<any>((resolve, reject) => {
-            worker.socket.emit("RevokeObject", worker.worker.clientId, id,
-                (error, ack: socketStorage.IWorker) => {
-                    if (ack) {
-                        logger.info(`Client ${ack.clientId} started the work`);
-                        this.manager.revokeWork(worker, id);
-                        resolve();
-                    } else {
-                        logger.error(error);
-                    }
-            });
-        });
-    }
-
     private assignOne(id: string, workers: IWorkerDetail[]): Promise<void> {
         const candidates = [];
         const shuffledWorkers = this.shuffle(workers);
+        // Check how many workers are on board. Then pick one randomly.
         const readyP =  new Promise<any>((resolve, reject) => {
             for (let worker of shuffledWorkers) {
                 worker.socket.emit("ReadyObject", worker.worker.clientId, id, (error, ack: socketStorage.IWorker) => {
                     if (ack) {
-                        logger.info(`Client ${ack.clientId} is ready for the work`);
                         candidates.push(worker);
                         resolve();
                     } else {
@@ -55,7 +41,6 @@ export class RandomWorker implements IWorkManager {
                 pickedWorker.socket.emit("TaskObject", pickedWorker.worker.clientId, id,
                     (error, ack: socketStorage.IWorker) => {
                         if (ack) {
-                            logger.info(`Client ${ack.clientId} started the work`);
                             this.manager.assignWork(pickedWorker, id);
                             resolve();
                         } else {
@@ -82,4 +67,11 @@ export class RandomWorker implements IWorkManager {
         return array;
     }
 
+}
+
+/**
+ * Creates an worker based on parameter.
+ */
+export function workerFactory(type: string, manager: StateManager): IWorkManager {
+    return new RandomWorker(manager);
 }
