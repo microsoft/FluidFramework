@@ -14,7 +14,7 @@ import * as socketStorage from "../socket-storage";
 import { logger } from "../utils";
 import * as utils from "../utils";
 import * as messages from "./messages";
-import * as work from "./randomWorker";
+import * as worker from "./randomWorker";
 import * as state from "./stateManager";
 
 // Setup Kafka connection
@@ -44,12 +44,17 @@ let pub = redis.createClient(redisPort, host, pubOptions);
 let sub = redis.createClient(redisPort, host, subOptions);
 io.adapter(socketIoRedis({ pubClient: pub, subClient: sub }));
 
+// setup state manager and work manager.
 let port = nconf.get("tmz:port");
-let connected = false;
+const checkerTimeout = nconf.get("tmz:timeoutMSec:checker");
+const workerTimeout = nconf.get("tmz:timeoutMSec:worker");
+const documentTimeout = nconf.get("tmz:timeoutMSec:document");
+const schedulerType = nconf.get("tmz:workerType");
 
-const stateManager = new state.StateManager(15000, 20000);
-const workManager = new work.RandomWorker(stateManager);
+const stateManager = new state.StateManager(workerTimeout, documentTimeout);
+const workManager = worker.workerFactory(schedulerType, stateManager);
 const pendingWork: Set<string> = new Set();
+let workerJoined = false;
 
 async function run() {
     const deferred = new utils.Deferred<void>();
@@ -61,24 +66,23 @@ async function run() {
                 worker: message,
                 socket,
             };
-            console.log(`New worker: ${socket.id}. ${message.clientId}`);
+            logger.info(`New worker joined. ${socket.id} : ${message.clientId}`);
             stateManager.addWorker(newWorker);
             // Process all pending tasks once the first worker joins.
-            if (!connected) {
+            if (!workerJoined) {
                 let workIds = Array.from(pendingWork);
                 await processWork(workIds);
                 pendingWork.clear();
-                connected = true;
+                workerJoined = true;
             }
             response(null, "Added");
         });
         socket.on("heartbeatObject", async (message: socketStorage.IWorker, response) => {
-            console.log(`TMZ received a heartbeat: ${message.clientId}`);
             stateManager.refreshWorker(socket.id);
             response(null, "Heartbeat");
         });
         socket.on("disconnect", async () => {
-            console.log(`${socket.id} just disconnected`);
+            logger.info(`Worker id ${socket.id} got disconnected.`);
             const worker = stateManager.getWorker(socket.id);
             const tasks = stateManager.getDocuments(worker);
             stateManager.removeWorker(worker);
@@ -91,7 +95,7 @@ async function run() {
     setInterval(async () => {
         await reassignWork();
         await expireDocument();
-    }, 10000);
+    }, checkerTimeout);
 
     let consumer = utils.kafkaConsumer.create(kafkaLibrary, kafkaEndpoint, groupId, topic);
 
@@ -115,7 +119,7 @@ async function run() {
         }
 
         // No worker joined yet. Store document to process later.
-        if (!connected) {
+        if (!workerJoined) {
             pendingWork.add(objectId);
             callback();
             return;
