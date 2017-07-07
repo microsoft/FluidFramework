@@ -242,15 +242,11 @@ export class Marker extends BaseSegment {
 
     constructor(public type: string, public behaviors: API.MarkerBehaviors, seq?: number, clientId?: number) {
         super(seq, clientId);
-        this.cachedLength = 0;
+        this.cachedLength = 1;
     }
 
     toString() {
         return `M:${this.type}`;
-    }
-
-    netLength() {
-        return 0;
     }
 
     getType() {
@@ -2778,8 +2774,7 @@ export class MergeTree {
                 console.log(`@tcli ${glc(this, this.collabWindow.clientId)}: map len: ${len} start: ${start} end: ${end} ` + segInfo);
             }
             let isLeaf = child.isLeaf();
-            if (go && (end > 0) && (((len > 0) && (start < len)) ||
-                (isLeaf && ((<Segment>child).getType() == SegmentType.Marker) && (start <= 0)))) {
+            if (go && (end > 0) && (len > 0) && (start < len)) {
                 // found entry containing pos
                 if (!isLeaf) {
                     if (go) {

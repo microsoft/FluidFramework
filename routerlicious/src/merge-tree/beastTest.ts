@@ -755,7 +755,7 @@ export function TestPack() {
             return false;
         }
 
-        let rounds = 8;
+        let rounds = 8000;
         function clientProcessSome(client: MergeTree.Client, all = false) {
             let cliMsgCount = client.q.count();
             let countToApply: number;
@@ -1065,7 +1065,7 @@ export function TestPack() {
             reportTiming(server);
             reportTiming(clients[2]);
             //console.log(server.getText());
-            console.log(server.mergeTree.toString());
+            //console.log(server.mergeTree.toString());
         }
     }
 
@@ -1346,6 +1346,6 @@ export function TestPack() {
 let testPack = TestPack();
 // testPack.firstTest();
 //testPack.randolicious();
-//let filename = path.join(__dirname, "../../public/literature", "pp.txt");
-testPack.clientServer();
+let filename = path.join(__dirname, "../../public/literature", "pp.txt");
+testPack.clientServer(filename);
 new Server();
