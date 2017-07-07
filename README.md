@@ -8,4 +8,4 @@ The [server](./server) folder contains a set of legacy prototypes around a colla
 
 [Routerlicious](./routerlicious) contains our latest prototype around new approaches to collaborative objects as well as a server backend to enable them with minimal COGS.
 
-The other folders contain other prototypes that have exited during the project.
+The other folders contain past prototypes.
