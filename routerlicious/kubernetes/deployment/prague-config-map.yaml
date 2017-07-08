@@ -5,88 +5,90 @@ metadata:
 data:
   config.json: |
     {
-      "logger": {
-          "colorize": false,
-          "morganFormat": "combined",
-          "json": false,
-          "level": "verbose",
-          "timestamp": false
-      },
-      "rabbitmq": {
-          "connectionString": "amqp://prague:mhioAkNXTwdX4dXWgKgXVtHo@alliterating-goose-rabbitmq"
-      },
-      "mongo": {
-          "endpoint": "mongodb://knobby-catfish-mongodb:27017",
-          "collectionNames": {
-              "deltas": "deltas",
-              "objects": "objects",
-              "partitions": "partitions"
-          }
-      },
-      "zookeeper": {
-          "endpoint": "zookeeper:2181"
-      },
-      "alfred": {
-          "kafkaClientId": "alfred",
-          "topic": "rawdeltas",
-          "bucket": "snapshots"
-      },
-      "deli": {
-          "topics": {
-              "receive": "rawdeltas",
-              "send": "deltas"
-          },
-          "kafkaClientId": "deli",
-          "groupId": "deli",
-          "checkpointBatchSize": 10,
-          "checkpointTimeIntervalMsec": 1000
-
-      },
-      "paparazzi": {
-          "queue": "snapshot",
-          "bucket": "snapshots",
-          "alfred": "http://alfred"
-      },
-      "scriptorium": {
-          "topic": "deltas",
-          "kafkaClientId": "scriptorium",
-          "groupId": "scriptorium",
-          "checkpointBatchSize": 1,
-          "checkpointTimeIntervalMsec": 1000
-      },
-      "tmz": {
-          "queue": "snapshot",
-          "topic": "deltas",
-          "kafkaClientId": "tmz",
-          "groupId": "tmz"
-      },
-      "redis": {
-          "host": "youngling-bat-redis",
-          "port": 6379
-      },
-      "minio": {
-          "endpoint": "idolized-oyster-minio-svc",
-          "port": 9000,
-          "accessKey": "prague",
-          "secretKey": "mhioAkNXTwdX4dXWgKgXVtHo"
-      },
-      "perf": {
-          "kafkaSendClientId": "perfsend",
-          "kafkaReceiveClientId": "perfreceive",
-          "sendTopic": "rawdeltas",
-          "receiveTopic": "deltas",
-          "bucket": "snapshots",
-          "chunkSize": 1000
-      },
-      "intelligence": {
-          "resume": {
-              "deviceId": "routerlicious",
-              "host": "pkarimov-paidIOT.azure-devices.net",
-              "sharedAccessKeyName": "iothubowner",
-              "sharedAccessKey": "8mvOmNnUklwnuzY+U96V51w+qCq262ZUpSkdw8nTZ18="
-          },
-          "textAnalytics": {
-              "key": "c8b60dc5e49849ce903d7d29a2dce550"
-          }
-      }
+        "logger": {
+            "colorize": false,
+            "morganFormat": "combined",
+            "json": false,
+            "level": "verbose",
+            "timestamp": false
+        },
+        "rabbitmq": {
+            "connectionString": "amqp://prague:mhioAkNXTwdX4dXWgKgXVtHo@kindred-waterbuffalo-rabbitmq"
+        },
+        "mongo": {
+            "endpoint": "mongodb://worn-stoat-mongodb:27017",
+            "collectionNames": {
+                "deltas": "deltas",
+                "objects": "objects",
+                "partitions": "partitions"
+            }
+        },
+        "kafka": {
+            "lib": {
+                "name": "kafka-node",
+                "endpoint": "zookeeper:2181"
+            }
+        },
+        "alfred": {
+            "kafkaClientId": "alfred",
+            "topic": "rawdeltas",
+            "bucket": "snapshots"
+        },
+        "deli": {
+            "topics": {
+                "receive": "rawdeltas",
+                "send": "deltas"
+            },
+            "kafkaClientId": "deli",
+            "groupId": "deli",
+            "checkpointBatchSize": 10,
+            "checkpointTimeIntervalMsec": 1000
+        },
+        "paparazzi": {
+            "queue": "snapshot",
+            "bucket": "snapshots",
+            "alfred": "http://alfred"
+        },
+        "scriptorium": {
+            "topic": "deltas",
+            "kafkaClientId": "scriptorium",
+            "groupId": "scriptorium",
+            "checkpointBatchSize": 1,
+            "checkpointTimeIntervalMsec": 1000
+        },
+        "tmz": {
+            "queue": "snapshot",
+            "topic": "deltas",
+            "kafkaClientId": "tmz",
+            "groupId": "tmz"
+        },
+        "redis": {
+            "host": "steely-ant-redis",
+            "port": 6379
+        },
+        "minio": {
+            "endpoint": "eyewitness-bee-minio-svc",
+            "port": 9000,
+            "accessKey": "prague",
+            "secretKey": "mhioAkNXTwdX4dXWgKgXVtHo"
+        },
+        "intelligence": {
+            "resume": {
+                "deviceId": "routerlicious",
+                "host": "pkarimov-paidIOT.azure-devices.net",
+                "sharedAccessKeyName": "iothubowner",
+                "sharedAccessKey": "8mvOmNnUklwnuzY+U96V51w+qCq262ZUpSkdw8nTZ18="
+            },
+            "textAnalytics": {
+                "key": "c8b60dc5e49849ce903d7d29a2dce550"
+            },
+            "nativeTextAnalytics": {
+                "url": "http://prague.westus2.cloudapp.azure.com:8080/"
+            }
+        },
+        "git": {
+            "repository": "git@git:prague.git",
+            "storagePath": "/var/lib/prague",
+            "historian": "http://historian:3000"
+        }
     }

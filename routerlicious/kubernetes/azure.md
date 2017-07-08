@@ -186,3 +186,13 @@ If you wish to leave the cluster follow the below steps.
 Then, on the node being removed, reset all kubeadm installed state:
 
 `kubeadm reset`
+
+## Useful add-ons
+
+For a custom deployment these addons can be valuable
+
+### Kubernetes dashboard
+`kubectl create -f https://git.io/kube-dashboard`
+
+### Weave dashboard
+`kubectl apply --namespace kube-system -f "https://cloud.weave.works/k8s/scope.yaml?k8s-version=$(kubectl version | base64 | tr -d '\n')"`

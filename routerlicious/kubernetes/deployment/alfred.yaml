@@ -11,7 +11,7 @@ spec:
     spec:
       containers:
       - name: routerlicious
-        image: prague.azurecr.io/prague:443
+        image: prague.azurecr.io/prague:507
         ports:
         - name: ui
           containerPort: 3000
