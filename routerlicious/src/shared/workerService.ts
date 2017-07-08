@@ -1,8 +1,26 @@
 import * as io from "socket.io-client";
 import * as api from "../api";
-import * as shared from "../shared";
+import * as intelligence from "../intelligence";
 import * as socketStorage from "../socket-storage";
 import * as messages from "../socket-storage/messages";
+import * as shared from "./";
+
+const resumeConfig: any = {
+    resume: {
+        deviceId: "routerlicious",
+        host: "pkarimov-paidIOT.azure-devices.net",
+        sharedAccessKey: "8mvOmNnUklwnuzY+U96V51w+qCq262ZUpSkdw8nTZ18=",
+        sharedAccessKeyName: "iothubowner",
+    },
+};
+
+const textAnalyticsConfig: any = {
+    key: "c8b60dc5e49849ce903d7d29a2dce550",
+};
+
+const nativeAnalyticsConfig: any = {
+    url: "http://prague.westus2.cloudapp.azure.com:8080/",
+};
 
 /**
  * The WorkerService manages the Socket.IO connection and manages work sent to it.
@@ -79,12 +97,26 @@ export class WorkerService implements api.IWorkerService {
         };
 
         const docManager = new shared.DocumentManager(this.serverUrl, services);
-        console.log(`Loaded a new doc...${id}`);
 
         docManager.load(id).then(async (doc) => {
-            console.log(`Loaded another doc...${doc.id}`);
-            this.documentMap[doc.id] = doc;
-            this.processDocument(doc);
+            console.log(`Loaded a doc...${doc.id}`);
+            this.documentMap[id] = doc;
+            const insightsMap = await docManager.createMap(`${id}-insights`);
+            this.processDocument(doc, insightsMap);
+        });
+    }
+
+    private processDocument(doc: api.ICollaborativeObject, insightsMap: api.IMap) {
+        const serializer = new shared.Serializer(doc);
+
+        const intelligenceManager = new shared.IntelligentServicesManager(insightsMap);
+        intelligenceManager.registerService(intelligence.resumeAnalytics.factory.create(resumeConfig));
+        intelligenceManager.registerService(intelligence.textAnalytics.factory.create(textAnalyticsConfig));
+        intelligenceManager.registerService(intelligence.nativeTextAnalytics.factory.create(nativeAnalyticsConfig));
+
+        doc.on("op", (op) => {
+            serializer.run();
+            intelligenceManager.process(doc);
         });
     }
 
@@ -95,14 +127,6 @@ export class WorkerService implements api.IWorkerService {
             });
             delete this.documentMap[id];
         }
-    }
-
-    private processDocument(doc: api.ICollaborativeObject) {
-        const serializer = new shared.Serializer(doc);
-        console.log(`Handling serialization: ${doc.id}`);
-        doc.on("op", (op) => {
-            serializer.run();
-        });
     }
 
 }

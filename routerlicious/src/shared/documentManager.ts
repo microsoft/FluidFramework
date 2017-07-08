@@ -26,7 +26,7 @@ export class DocumentManager {
     public async createMap(id: string): Promise<api.IMap> {
         const extension = api.defaultRegistry.getExtension(api.MapExtension.Type);
         return extension.load(
-            `${id}-insights`,
+            id,
             this.services,
             api.defaultRegistry) as api.IMap;
     }

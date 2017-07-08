@@ -30,3 +30,6 @@ export { producer };
 
 import object from "./object";
 export { object };
+
+import intelligence from "./intelligence";
+export { intelligence };
