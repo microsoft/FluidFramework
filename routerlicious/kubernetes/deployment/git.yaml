@@ -1,0 +1,32 @@
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name: git
+spec:
+  serviceName: git
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: git
+    spec:
+      containers:
+      - name: git
+        image: prague.azurecr.io/gitssh:508
+        ports:
+        - name: git
+          containerPort: 22
+      imagePullSecrets:
+      - name: regsecret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: git
+spec:
+  ports:
+    - name: git
+      port: 22
+      targetPort: git
+  selector:
+    app: git

@@ -2,6 +2,16 @@
 
 Managed disk are not yet supported with Kubernetes persistent volume claims. So unfortunately we need aren't able to use this feature yet and so must provision VMs with this disabled.
 
+## Environment creation
+
+* Virtual network
+* Create VMs (same subnet - no public IP)
+* Load balancer
+* Network security group
+* Inbound NAT rule to 22 to be able to SSH to master machine
+* Also load balance rule for kubectl on 6443
+* Update NSG for both 22 and 6443
+
 ### VM Setup
 
 Since we can't use managed disks it also looks like we can't easily create a new VM from an image. Run the following steps to setup a new Kubernetes machine. There are easier ways to do this (Chef, Puppet, etc...) not to mention Azure probably does support creating a VM with unmanaged disk from a VHD. But our clusters are small so it's easier for now to just do this manually.
@@ -32,7 +42,12 @@ sudo apt-get update
 
 sudo apt-get install docker-ce
 
+... or for 1.12 https://docs.docker.com/v1.12/engine/installation/linux/ubuntulinux/#/install-the-latest-version
+
 # Install kubectl
+curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.6.5/bin/linux/amd64/kubectl
+
+.. or if you want the latest ... 
 curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
 
 chmod +x ./kubectl
@@ -57,6 +72,9 @@ EOF
 apt-get update
 
 apt-get install -y kubelet kubeadm kubernetes-cni
+
+# To go to an earlier version
+apt-get install -y kubelet=1.6.5-00 kubeadm=1.6.5-00 kubernetes-cni
 
 exit
 
@@ -101,6 +119,7 @@ The last thing you need to create is the config file to pass to kubeadm which al
 kind: MasterConfiguration
 apiVersion: kubeadm.k8s.io/v1alpha1
 cloudProvider: azure
+kubernetesVersion: v1.6.5 # (optional) version specification
 apiServerCertSANs:
   - praguekubemgmt.westus2.cloudapp.azure.com
 ```
@@ -119,13 +138,24 @@ The final step is to enable a pod network. We've gone with weave since it's easy
 
 Once `kubectl get pods -n kube-system` Reports that DNS is up and running you're ready to join agents to the cluster.
 
+### Copy SSH keys to manager
+
+To access the agents from within the cluster you'll need to also copy over the private keys.
+
+`scp -i ~/.ssh/azure_kubernetes_rsa ~/.ssh/azure_kubernetes_rsa prague@praguekubemgmt.westeurope.cloudapp.azure.com:~/.ssh/`
+`scp -i ~/.ssh/azure_kubernetes_rsa ~/.ssh/azure_kubernetes_rsa.pub prague@praguekubemgmt.westeurope.cloudapp.azure.com:~/.ssh/`
+
 ### Setting up kubectl locally
 
-You'll want to go grab the created admin.conf from the master server
+You'll want to go grab the created config from the master server
 
-`scp -i ~/.ssh/azure_kubernetes_rsa prague@praguekubemgmt.westus2.cloudapp.azure.com:/home/prague/admin.conf .`
+`scp -i ~/.ssh/azure_kubernetes_rsa prague@praguekubemgmt.westus2.cloudapp.azure.com:/home/prague/.kube/config .`
 
 And then update your ~/.kube/config accordingly. There probably is a way to merge config files but I haven't found it yet.
+
+### Restart!
+
+Make sure to reboot prior to starting kubelet. Some of the above updates may require it.
 
 ### Joining the cluster
 
@@ -146,17 +176,6 @@ as root:
 
   kubeadm join --token token 10.240.0.4:6443
 
-
-### Useful add-ons
-
-Kubernetes Dashbaord
-
-`kubectl create -f https://git.io/kube-dashboard`
-
-Weave dashboard
-
-`kubectl apply --namespace kube-system -f "https://cloud.weave.works/k8s/scope.yaml?k8s-version=$(kubectl version | base64 | tr -d '\n')"`
-
 ## Leaving
 
 If you wish to leave the cluster follow the below steps.
@@ -168,11 +187,12 @@ Then, on the node being removed, reset all kubeadm installed state:
 
 `kubeadm reset`
 
+## Useful add-ons
 
-## Helm
+For a custom deployment these addons can be valuable
 
-Helm is a package manager for Kubernetes and allows for creating reusable components
+### Kubernetes dashboard
+`kubectl create -f https://git.io/kube-dashboard`
 
-You need to create the helm service account for RBAC access first. after that you can initialize it with:
-
-`helm init --service-account helm`
+### Weave dashboard
+`kubectl apply --namespace kube-system -f "https://cloud.weave.works/k8s/scope.yaml?k8s-version=$(kubectl version | base64 | tr -d '\n')"`

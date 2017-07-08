@@ -1,30 +1,4 @@
 {
-    "eventHub": {
-        "raw-deltas": {
-            "endpoint": "delta-stream-dev.servicebus.windows.net",
-            "entityPath": "raw-deltas",
-            "listen": {
-                "sharedAccessKeyName": "reader",
-                "sharedAccessKey": "spdhQ3pQEPEd+J24xcVwS2huukQ07v/4LFKu+MP2WG0="
-            },
-            "send": {
-                "sharedAccessKeyName": "sender",
-                "sharedAccessKey": "p/dClJHt/VhUjlGJcGCG5gPuUu2vAYpViXaLI124USU="
-            }
-        },
-        "deltas": {
-            "endpoint": "delta-stream-dev.servicebus.windows.net",
-            "entityPath": "deltas",
-            "listen": {
-                "sharedAccessKeyName": "listen",
-                "sharedAccessKey": "/yMm6/DduZy/yOqHxj7bdD4JrFnAPZP63FvX/kVYWK8="
-            },
-            "send": {
-                "sharedAccessKeyName": "sender",
-                "sharedAccessKey": "OseppLfZtnn2VRo+0XWFgxmurMybiWBxoCnSQdVqut0="
-            }
-        }
-    },
     "logger": {
         "colorize": true,
         "morganFormat": "dev",
@@ -32,20 +6,8 @@
         "level": "info",
         "timestamp": true
     },
-    "serviceBus": {
-        "snapshot": {
-            "send": "Endpoint=sb://prague-dev.servicebus.windows.net/;SharedAccessKeyName=send;SharedAccessKey=wujZ6eW+OAjAYp9VTbV/Qp6GNhWiVGYJyzzXC7R5Gy4=",
-            "listen": "Endpoint=sb://prague-dev.servicebus.windows.net/;SharedAccessKeyName=listen;SharedAccessKey=8wV5L6Hvl0nBSR43rP674bTp2UYBUk/wu/F2M7dCxhA="
-        }
-    },
     "rabbitmq": {
         "connectionString": "amqp://rabbitmq"
-    },
-    "blobStorage": {
-        "connectionString": "DefaultEndpointsProtocol=https;AccountName=praguedev;AccountKey=Si7wdPPwjedgYTUSyKBU4aYoz3U3HcHEfZWziXshCf8w3kxRP6H4g7QThWHGB8kFX0Wrm/mHe8+1b596yA4mlg==;EndpointSuffix=core.windows.net",
-        "containers": {
-            "snapshots": "snapshots"
-        }
     },
     "mongo": {
         "endpoint": "mongodb://mongodb:27017",

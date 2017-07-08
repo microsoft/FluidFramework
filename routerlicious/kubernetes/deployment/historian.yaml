@@ -1,21 +1,24 @@
 apiVersion: apps/v1beta1
 kind: Deployment
 metadata:
-  name: scriptorium
+  name: historian
 spec:
   replicas: 1
   template:
     metadata:
       labels:
-        app: scriptorium
+        app: historian
     spec:
       containers:
-      - name: prague
+      - name: routerlicious
         image: prague.azurecr.io/prague:507
         command:
           - 'npm'
           - 'run'
-          - 'scriptorium'
+          - 'historian'
+        ports:
+        - name: ui
+          containerPort: 3000
         env:
         - name: DEBUG
           value: "routerlicious:*"
@@ -29,3 +32,17 @@ spec:
         - name: config
           configMap:
             name: prague
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: historian
+  labels:
+    app: historian
+spec:
+  ports:
+  - port: 3000
+    protocol: TCP
+    targetPort: ui
+  selector:
+    app: historian
