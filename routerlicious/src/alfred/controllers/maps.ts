@@ -1,9 +1,19 @@
 import * as $ from "jquery";
 import * as _ from "lodash";
 import * as api from "../../api";
+import { WorkerService } from "../../shared";
 import * as socketStorage from "../../socket-storage";
 
 socketStorage.registerAsDefault(document.location.origin);
+
+function startWorker(config: any) {
+    const workerUrl = document.location.protocol + "//" + document.location.hostname + ":" + config.port.worker;
+    console.log(workerUrl);
+    const workerService = new WorkerService(document.location.origin, workerUrl);
+    workerService.connect("client").catch(() => {
+        console.log(`Error initiating worker`);
+    });
+}
 
 async function loadDocument(id: string): Promise<api.Document> {
     console.log("Loading in root document...");
@@ -99,11 +109,14 @@ function randomizeMap(map: api.IMap) {
     }, 1000);
 }
 
-export function load(id: string) {
+export function load(id: string, config: string) {
     $(document).ready(() => {
         loadDocument(id).then(async (doc) => {
             // tslint:disable-next-line
             window["doc"] = doc;
+            
+            const workerConfig = JSON.parse(config.replace(/&quot;/g, '"'));
+            startWorker(workerConfig);
 
             const root = doc.getRoot();
 

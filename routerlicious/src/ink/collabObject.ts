@@ -91,11 +91,6 @@ export class InkCollaborativeObject extends api.CollaborativeObject implements I
         // Load the snapshot and begin listening for messages
         this.connection = await services.deltaNotificationService.connect(id, this.type);
 
-        // Register as worker and connect
-        if (services.workerService) {
-            await services.workerService.connect("Client");
-        }
-
         // Load from the snapshot if it exists
         const rawSnapshot = this.connection.existing ? await services.objectStorageService.read(id) : null;
         const snapshot: IInkSnapshot = rawSnapshot

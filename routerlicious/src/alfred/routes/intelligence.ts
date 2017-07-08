@@ -1,8 +1,13 @@
+// Setup the configuration system - pull arguments, then environment variables - prior to loading other modules that
+// may depend on the config already being initialized
+import * as nconf from "nconf";
+import * as path from "path";
+nconf.argv().env(<any> "__").file(path.join(__dirname, "../../../config.json")).use("memory");
+
 import { Client, Message } from "azure-iot-device";
 import { Mqtt } from "azure-iot-device-mqtt";
 import * as iothub from "azure-iothub";
 import { Router } from "express";
-import * as nconf from "nconf";
 import { IIntelligentService } from "../../intelligence/api";
 import * as utils from "../../utils";
 
@@ -143,7 +148,7 @@ export class ResumeIntelligentSerivce implements IIntelligentService {
     }
 }
 
-const service = new ResumeIntelligentSerivce(nconf.get("intelligence:resume"));
+const service = new ResumeIntelligentSerivce(nconf.get("worker:intelligence:resume"));
 
 const router: Router = Router();
 

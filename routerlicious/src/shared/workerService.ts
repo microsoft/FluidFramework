@@ -36,6 +36,8 @@ export class WorkerService implements api.IWorkerService {
 
     public connect(type: string): Promise<any> {
 
+        console.log(`Connecting worker service`);
+
         // Generate random id since moniker does not work in client side.
         const clientId = type + Math.floor(Math.random() * 10000);
         const clientDetail: messages.IWorker = {
