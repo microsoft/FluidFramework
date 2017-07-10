@@ -8,10 +8,8 @@ import { WorkerService} from "../shared";
 import { logger } from "../utils";
 import * as utils from "../utils";
 
-// Connect to Alfred for default storage options
+// Connect to alfred and tmz and subscribes for work.
 const alfredUrl = nconf.get("paparazzi:alfred");
-
-// Subscribe to tmz to receive work.
 const tmzUrl = nconf.get("paparazzi:tmz");
 const workerConfig = nconf.get("worker");
 

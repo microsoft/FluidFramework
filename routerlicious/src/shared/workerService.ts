@@ -6,7 +6,7 @@ import * as messages from "../socket-storage/messages";
 import * as shared from "./";
 
 /**
- * The WorkerService manages the Socket.IO connection and manages work sent to it.
+ * The WorkerService manages the Socket.IO connection and work sent to it.
  */
 export class WorkerService implements api.IWorkerService {
 
@@ -17,17 +17,18 @@ export class WorkerService implements api.IWorkerService {
         this.socket = io(this.workerUrl, { transports: ["websocket"] });
     }
 
+    /**
+     * Connects to socketio and subscribes for work.
+     */
     public connect(type: string): Promise<any> {
-
-        console.log(`Connecting worker service`);
-
         // Generate random id since moniker does not work in client side.
-        const clientId = type + Math.floor(Math.random() * 10000);
+        const clientId = type + Math.floor(Math.random() * 100000);
         const clientDetail: messages.IWorker = {
             clientId,
             type: "Client",
         };
 
+        // Subscribes to TMZ and starts receiving messages.
         return new Promise((resolve, reject) => {
             this.socket.emit(
                 "workerObject",
@@ -36,21 +37,21 @@ export class WorkerService implements api.IWorkerService {
                     if (error) {
                         reject(error);
                     } else {
-                        console.log(`${clientId} subscribed to TMZ: ${JSON.stringify(ack)}`);
+                        // Check whether worker is ready to work.
                         this.socket.on("ReadyObject", (cId: string, id: string, response) => {
-                            console.log(`${clientId} acked that it's ready for work: ${id}: ${JSON.stringify(ack)}`);
                             response(null, clientDetail);
                         });
+                        // Start working on an object.
                         this.socket.on("TaskObject", (cId: string, id: string, response) => {
-                            console.log(`${clientId} acked work from TMZ for doc ${id}: ${JSON.stringify(ack)}`);
-                            this.processWork(id);
+                            this.processDocument(id);
                             response(null, clientDetail);
                         });
+                        // Stop working on an object.
                         this.socket.on("RevokeObject", (cId: string, id: string, response) => {
-                            console.log(`${clientId} Revoking work for doc ${id}: ${JSON.stringify(ack)}`);
                             this.revokeWork(id);
                             response(null, clientDetail);
                         });
+                        // Periodically sends heartbeat to manager.
                         setInterval(() => {
                             this.socket.emit(
                                 "heartbeatObject",
@@ -58,11 +59,9 @@ export class WorkerService implements api.IWorkerService {
                                 (err, ackMessage) => {
                                     if (err) {
                                         console.error(`Error sending heartbeat: ${err}`);
-                                    } else {
-                                        console.log(`${clientId} sent heartbeat: ${JSON.stringify(ackMessage)}`);
                                     }
                                 });
-                        }, 10000);
+                        }, this.config.intervalMSec);
 
                         resolve(ack);
                     }
@@ -70,10 +69,9 @@ export class WorkerService implements api.IWorkerService {
         });
     }
 
-    // TODO (mdaumi): Need to fix this.
-    private async processWork(id: string) {
+    private async processDocument(id: string) {
         const objectStorageService = new shared.ObjectStorageService(this.serverUrl);
-        await objectStorageService.create("snapshots");
+        await objectStorageService.create(this.config.storageBucket);
 
         const services: api.ICollaborationServices = {
             deltaNotificationService: new socketStorage.DeltaNotificationService(this.serverUrl),
@@ -82,16 +80,15 @@ export class WorkerService implements api.IWorkerService {
         };
 
         const docManager = new shared.DocumentManager(this.serverUrl, services);
-
         docManager.load(id).then(async (doc) => {
-            console.log(`Loaded a doc...${doc.id}`);
+            console.log(`Loaded a document...${doc.id}`);
             this.documentMap[id] = doc;
             const insightsMap = await docManager.createMap(`${id}-insights`);
-            this.processDocument(doc, insightsMap);
+            this.processWork(doc, insightsMap);
         });
     }
 
-    private processDocument(doc: api.ICollaborativeObject, insightsMap: api.IMap) {
+    private processWork(doc: api.ICollaborativeObject, insightsMap: api.IMap) {
         const serializer = new shared.Serializer(doc);
 
         const intelligenceManager = new shared.IntelligentServicesManager(insightsMap);
@@ -110,7 +107,7 @@ export class WorkerService implements api.IWorkerService {
     private revokeWork(id: string) {
         if (id in this.documentMap) {
             this.documentMap[id].removeListener("op", (op) => {
-                console.log(`Done revoking listener from ${id}`);
+                console.log(`Revoked listener from ${id}`);
             });
             delete this.documentMap[id];
         }

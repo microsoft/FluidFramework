@@ -144,6 +144,8 @@
         "port": {
             "server": 3000,
             "worker": 4000
-        }
+        },
+        "storageBucket": "snapshots",
+        "intervalMSec": 10000
     }
 }
