@@ -15,7 +15,13 @@ class ResumeAnalyticsIntelligentService implements IIntelligentService {
 
     public async run(value: string): Promise<any> {
         const condensed = value.substring(0, Math.min(value.length, 5012));
-        const resumeAnalyticsResult = await this.invokeRequest(this.url + route, condensed);
+        const data: any = {
+            documents: [{
+                id: "1",
+                text: condensed,
+            }],
+        };
+        const resumeAnalyticsResult = await this.invokeRequest(this.url + route, data);
         return {
             resumeAnalyticsResult,
         };
@@ -27,6 +33,11 @@ class ResumeAnalyticsIntelligentService implements IIntelligentService {
                 service,
                 {
                     body: data,
+                    headers: {
+                        "Accept": "application/json",
+                        "Content-Type": "application/json",
+                    },
+                    json: true,
                 },
                 (error, result, body) => {
                     if (error) {

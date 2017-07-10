@@ -156,7 +156,7 @@ const router: Router = Router();
  * Retrieves document for the given id.
  */
 router.post("/resume", async (request, response, next) => {
-    const text = "This is pure craziness";
+    const text = request.body.documents[0].text;
     const client = await service.getClient();
     service.sendMessage(client, "resumeClassifier", text).then((result) => {
         response.status(200).json(result);
