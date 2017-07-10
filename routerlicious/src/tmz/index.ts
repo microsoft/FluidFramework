@@ -14,8 +14,8 @@ import * as socketStorage from "../socket-storage";
 import { logger } from "../utils";
 import * as utils from "../utils";
 import * as messages from "./messages";
-import * as worker from "./randomWorker";
 import * as state from "./stateManager";
+import * as workerFactory from "./workerFactory";
 
 // Setup Kafka connection
 const kafkaEndpoint = nconf.get("kafka:lib:endpoint");
@@ -52,7 +52,7 @@ const documentTimeout = nconf.get("tmz:timeoutMSec:document");
 const schedulerType = nconf.get("tmz:workerType");
 
 const stateManager = new state.StateManager(workerTimeout, documentTimeout);
-const workManager = worker.workerFactory(schedulerType, stateManager);
+const workManager = workerFactory.create(schedulerType, stateManager);
 const pendingWork: Set<string> = new Set();
 let workerJoined = false;
 

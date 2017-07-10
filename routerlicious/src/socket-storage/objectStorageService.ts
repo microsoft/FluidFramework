@@ -20,6 +20,7 @@ export class ClientObjectStorageService implements api.IObjectStorageService {
         });
     }
 
+    // TODO (mdaumi): Need to implement some kind of auth mechanism here.
     public write(id: string, data: any): Promise<void> {
         return new Promise<any>((resolve, reject) => {
             request.post(`${this.url}/storage/${id}`, {body: data, json: true}, (error, response, body) => {

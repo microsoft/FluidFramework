@@ -68,10 +68,3 @@ export class RandomWorker extends BaseWorker implements IWorkManager {
     }
 
 }
-
-/**
- * Creates an worker based on parameter.
- */
-export function workerFactory(type: string, manager: StateManager): IWorkManager {
-    return new RandomWorker(manager);
-}

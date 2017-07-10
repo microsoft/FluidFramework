@@ -107,7 +107,7 @@ const router: Router = Router();
 /**
  * Retrieves the given document.
  */
-router.get("/:id", async (request, response, next) => {
+router.get("/:id", (request, response, next) => {
     // Now grab the snapshot, any deltas post snapshot, and send to the client
     const resultP = getObject(request.params.id, storageBucket);
     resultP.then(
@@ -115,35 +115,35 @@ router.get("/:id", async (request, response, next) => {
             response.end(result);
         },
         (error) => {
-            response.status(400).json({ error });
+            response.status(400).json(error);
         });
 });
 
 /**
  * Stores data for the given document.
  */
-router.post("/:id", async (request, response, next) => {
+router.post("/:id", (request, response, next) => {
     const resultP = putObject(request.params.id, request.body);
     resultP.then(
         (result) => {
             response.end(result);
         },
         (error) => {
-            response.status(400).json({ error });
+            response.status(400).json(error);
         });
 });
 
 /**
  * creates a new bucket.
  */
-router.post("/create/:id", async (request, response, next) => {
+router.post("/create/:id", (request, response, next) => {
     const resultP = createBucket(request.params.id);
     resultP.then(
         (result) => {
             response.end(result);
         },
         (error) => {
-            response.status(400).json({ error });
+            response.status(400).json(error);
         });
 });
 
