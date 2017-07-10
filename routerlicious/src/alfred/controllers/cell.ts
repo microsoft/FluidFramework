@@ -1,5 +1,6 @@
 import * as $ from "jquery";
 import * as api from "../../api";
+import * as shared from "../../shared";
 import * as socketStorage from "../../socket-storage";
 
 socketStorage.registerAsDefault(document.location.origin);
@@ -108,7 +109,7 @@ function randomizeCell(cell: api.ICell, element1: JQuery, element2: JQuery) {
     }, 3000);
 }
 
-export async function load(id: string) {
+export async function load(id: string, config: string) {
     const doc = await loadDocument(id);
     const root = doc.getRoot();
 
@@ -119,6 +120,9 @@ export async function load(id: string) {
         cell = doc.createCell() as api.ICell;
         root.set("cell", cell);
     }
+
+    // Bootstrap worker service.
+    shared.registerWorker(config);
 
     $("document").ready(() => {
         // Display the initial value and then listen for updates

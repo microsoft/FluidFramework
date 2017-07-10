@@ -33,8 +33,8 @@ app.set("view engine", "hjs");
 app.use(favicon(path.join(__dirname, "../../public", "favicon.ico")));
 // TODO we probably want to switch morgan to use the common format in prod
 app.use(morgan(nconf.get("logger:morganFormat"), { stream: utils.stream }));
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json({ limit: "50mb" }));
+app.use(bodyParser.urlencoded({ limit: "50mb", extended: false }));
 
 app.use(staticFilesEndpoint, expiry(app, { dir: path.join(__dirname, "../../public") }));
 app.locals.hfurl = () => (value: string) => translateStaticUrl(value);

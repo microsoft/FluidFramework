@@ -50,7 +50,7 @@
         <script src="{{#hfurl}}/public/scripts/dist/canvas.js{{/hfurl}}"></script>
         
         <script>
-            controller.initialize("{{id}}");
+            controller.initialize("{{ id }}", "{{ config }}");
         </script>
     {{/scripts}}
 {{/layout}}
