@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: alfred
 spec:
-  replicas: 4
+  replicas: 1
   template:
     metadata:
       labels:
@@ -11,7 +11,7 @@ spec:
     spec:
       containers:
       - name: routerlicious
-        image: prague.azurecr.io/prague:507
+        image: prague.azurecr.io/prague:local
         ports:
         - name: ui
           containerPort: 3000

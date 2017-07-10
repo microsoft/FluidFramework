@@ -11,7 +11,7 @@ Optionally instructions on how to manually prepare a Kubernetes cluster on Azure
 
 Helm service principal for Helm chart creation
 
-`kubectl apply -f helm.yaml`
+`kubectl apply -f system/helm.yaml`
 
 And add in SSD disk support (note you will need to create a a premium blob storage account with premium SSDs)
 
@@ -26,10 +26,10 @@ And add in SSD disk support (note you will need to create a a premium blob stora
 
 `helm init --service-account helm`
 
-`helm install -f services/minio-helm-conf.yaml stable/minio`
-`helm install -f services/redis-helm-conf.yaml stable/redis`
-`helm install -f services/rabbitmq-helm-conf.yaml stable/rabbitmq`
-`helm install -f services/mongodb-helm-conf.yaml stable/mongodb`
+`helm install -n eyewitness-bee -f services/minio-helm-conf.yaml stable/minio`
+`helm install -n steely-ant -f services/redis-helm-conf.yaml stable/redis`
+`helm install -n kindred-waterbuffalo -f services/rabbitmq-helm-conf.yaml stable/rabbitmq`
+`helm install -n worn-stoat -f services/mongodb-helm-conf.yaml stable/mongodb`
 
 ### Routerlicious services
 
