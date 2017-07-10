@@ -7,8 +7,8 @@ export interface IConfig {
     url: string;
 }
 
-class NativeTextAnalyticsIntelligentService implements IIntelligentService {
-    public name: string = "Resume";
+class ResumeAnalyticsIntelligentService implements IIntelligentService {
+    public name: string = "ResumeAnalytics";
 
     constructor(private url: string) {
     }
@@ -44,8 +44,8 @@ class NativeTextAnalyticsIntelligentService implements IIntelligentService {
 }
 
 export class ResumeAnalyticsFactory implements IIntelligentServiceFactory {
-    public create(config: IConfig): IIntelligentService {
-        return new NativeTextAnalyticsIntelligentService("http://alfred:3000/intelligence/");
+    public create(url: string): IIntelligentService {
+        return new ResumeAnalyticsIntelligentService(url);
     }
 }
 

@@ -13,10 +13,11 @@ const alfredUrl = nconf.get("paparazzi:alfred");
 
 // Subscribe to tmz to receive work.
 const tmzUrl = nconf.get("paparazzi:tmz");
+const workerConfig = nconf.get("worker");
 
 async function run() {
     const deferred = new utils.Deferred<void>();
-    const workerService = new WorkerService(alfredUrl, tmzUrl);
+    const workerService = new WorkerService(alfredUrl, tmzUrl, workerConfig);
     workerService.connect("Paparazzi").catch((error) => {
         deferred.reject(error);
     });

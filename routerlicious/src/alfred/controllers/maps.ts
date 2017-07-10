@@ -9,7 +9,7 @@ socketStorage.registerAsDefault(document.location.origin);
 function startWorker(config: any) {
     const workerUrl = document.location.protocol + "//" + document.location.hostname + ":" + config.port.worker;
     console.log(workerUrl);
-    const workerService = new WorkerService(document.location.origin, workerUrl);
+    const workerService = new WorkerService(document.location.origin, workerUrl, config);
     workerService.connect("client").catch(() => {
         console.log(`Error initiating worker`);
     });

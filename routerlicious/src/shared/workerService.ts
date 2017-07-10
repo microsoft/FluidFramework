@@ -1,26 +1,9 @@
 import * as io from "socket.io-client";
 import * as api from "../api";
-import * as intelligence from "../intelligence";
+import { nativeTextAnalytics, resumeAnalytics, textAnalytics } from "../intelligence";
 import * as socketStorage from "../socket-storage";
 import * as messages from "../socket-storage/messages";
 import * as shared from "./";
-
-const resumeConfig: any = {
-    resume: {
-        deviceId: "routerlicious",
-        host: "pkarimov-paidIOT.azure-devices.net",
-        sharedAccessKey: "8mvOmNnUklwnuzY+U96V51w+qCq262ZUpSkdw8nTZ18=",
-        sharedAccessKeyName: "iothubowner",
-    },
-};
-
-const textAnalyticsConfig: any = {
-    key: "c8b60dc5e49849ce903d7d29a2dce550",
-};
-
-const nativeAnalyticsConfig: any = {
-    url: "http://prague.westus2.cloudapp.azure.com:8080/",
-};
 
 /**
  * The WorkerService manages the Socket.IO connection and manages work sent to it.
@@ -30,7 +13,7 @@ export class WorkerService implements api.IWorkerService {
     private socket;
     private documentMap: { [docId: string]: api.ICollaborativeObject} = {};
 
-    constructor(private serverUrl: string, private workerUrl: string) {
+    constructor(private serverUrl: string, private workerUrl: string, private config: any) {
         this.socket = io(this.workerUrl, { transports: ["websocket"] });
     }
 
@@ -112,10 +95,12 @@ export class WorkerService implements api.IWorkerService {
         const serializer = new shared.Serializer(doc);
 
         const intelligenceManager = new shared.IntelligentServicesManager(insightsMap);
-        intelligenceManager.registerService(intelligence.resumeAnalytics.factory.create(resumeConfig));
-        intelligenceManager.registerService(intelligence.textAnalytics.factory.create(textAnalyticsConfig));
-        intelligenceManager.registerService(intelligence.nativeTextAnalytics.factory.create(nativeAnalyticsConfig));
-
+        // Temporary workaround. Passing url directly instead of config to use the REST API. Will fix once the
+        // REST API is deployed.
+        intelligenceManager.registerService(resumeAnalytics.factory.create(this.serverUrl + "/intelligence/"));
+        intelligenceManager.registerService(textAnalytics.factory.create(this.config.intelligence.textAnalytics));
+        intelligenceManager.registerService(nativeTextAnalytics.factory.create(
+                                            this.config.intelligence.nativeTextAnalytics));
         doc.on("op", (op) => {
             serializer.run();
             intelligenceManager.process(doc);
