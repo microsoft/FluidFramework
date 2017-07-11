@@ -6,12 +6,12 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "browserify": "mkdirp public/scripts/dist && concurrently \"npm run browserify:canvas\" \"npm run browserify:maps\" \"npm run browserify:cell\" \"npm run browserify:sharedText\" \"npm run browserify:scribe\" \"npm run browserify:perf\"",
-    "browserify:canvas": "browserify src/alfred/controllers/canvas.ts --debug -o public/scripts/dist/canvas.js -s controller -p [ tsify -t es5 ]",
-    "browserify:maps": "browserify src/alfred/controllers/maps.ts --debug -o public/scripts/dist/maps.js -s controller -p [ tsify -t es5 ]",
-    "browserify:cell": "browserify src/alfred/controllers/cell.ts --debug -o public/scripts/dist/cell.js -s controller -p [ tsify -t es5 ]",
-    "browserify:sharedText": "browserify src/alfred/controllers/sharedText.ts --debug -o public/scripts/dist/sharedText.js -s controller -p [ tsify -t es5 ]",
-    "browserify:scribe": "browserify src/alfred/controllers/scribe.ts --debug -o public/scripts/dist/scribe.js --debug -s controller -p [ tsify -t es5 ]",
-    "browserify:perf": "browserify src/alfred/controllers/perf.ts --debug -o public/scripts/dist/perf.js --debug -s controller -p [ tsify -t es5 ]",
+    "browserify:canvas": "browserify src/alfred/controllers/canvas.ts --debug -s controller -p [ tsify -t es5 ] | uglifyjs --source-map content=inline,url=canvas.js.map -o public/scripts/dist/canvas.js",
+    "browserify:maps": "browserify src/alfred/controllers/maps.ts --debug -s controller -p [ tsify -t es5 ] | uglifyjs --source-map content=inline,url=maps.js.map -o public/scripts/dist/maps.js",
+    "browserify:cell": "browserify src/alfred/controllers/cell.ts --debug -s controller -p [ tsify -t es5 ] | uglifyjs --source-map content=inline,url=cell.js.map -o public/scripts/dist/cell.js",
+    "browserify:sharedText": "browserify src/alfred/controllers/sharedText.ts --debug -s controller -p [ tsify -t es5 ] | uglifyjs --source-map content=inline,url=sharedText.js.map -o public/scripts/dist/sharedText.js",
+    "browserify:scribe": "browserify src/alfred/controllers/scribe.ts --debug -s controller -p [ tsify -t es5 ] | uglifyjs --source-map content=inline,url=scribe.js.map -o public/scripts/dist/scribe.js",
+    "browserify:perf": "browserify src/alfred/controllers/perf.ts --debug -s controller -p [ tsify -t es5 ] | uglifyjs --source-map content=inline,url=perf.js.map -o public/scripts/dist/perf.js",
     "build": "concurrently \"npm run tslint\" \"npm run tsc\" \"npm run browserify\" \"npm run less\"",
     "build:watch": "watch 'npm run tsc && npm run browserify' src",
     "less": "lessc src/stylesheets/style.less public/stylesheets/dist/style.css",
@@ -106,6 +106,7 @@
     "tsify": "^3.0.1",
     "tslint": "^4.5.1",
     "typescript": "2.3.x",
+    "uglify-js": "^3.0.24",
     "watch": "^1.0.2"
   },
   "dependencies": {
