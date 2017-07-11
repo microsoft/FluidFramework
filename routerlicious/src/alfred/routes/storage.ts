@@ -33,6 +33,8 @@ router.get("/:id/:version/*", async (request, response, next) => {
     const resultP = getObject(request.params.id, request.params.version, request.params[0]);
     resultP.then(
         (result) => {
+            // TODO we will want clients to set the encoding - but for now default to text/plain to enable gzip
+            response.set("Content-Type", "text/plain");
             response.end(result);
         },
         (error) => {
