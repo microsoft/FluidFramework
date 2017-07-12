@@ -1,0 +1,31 @@
+{
+  "name": "historian",
+  "version": "0.1.0",
+  "description": "Git REST API",
+  "main": "index.js",
+  "scripts": {
+    "build": "npm run tslint && npm run tsc",
+    "tsc": "tsc",
+    "tslint": "tslint 'src/**/*.ts'"
+  },
+  "dependencies": {
+    "body-parser": "^1.17.2",
+    "compression": "^1.7.0",
+    "express": "^4.15.3",
+    "morgan": "^1.8.2",
+    "nconf": "^0.8.4",
+    "nodegit": "^0.18.3",
+    "split": "^1.0.0",
+    "winston": "^2.3.1"
+  },
+  "devDependencies": {
+    "@types/mocha": "^2.2.41",
+    "@types/morgan": "^1.7.32",
+    "@types/nconf": "0.0.34",
+    "@types/winston": "^2.3.3",
+    "mocha": "^3.4.2",
+    "nyc": "^11.0.3",
+    "tslint": "^5.5.0",
+    "typescript": "^2.4.1"
+  }
+}

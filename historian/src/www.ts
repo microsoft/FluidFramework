@@ -1,24 +1,24 @@
 // Setup the configuration system first since modules may depend on it being configured
 import * as nconf from "nconf";
 import * as path from "path";
-nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
+nconf.argv().env("__" as any).file(path.join(__dirname, "../config.json")).use("memory");
 
 import * as http from "http";
-import { logger } from "../utils";
 import app from "./app";
+import { logger } from "./logger";
 
 /**
  * Get port from environment and store in Express.
  */
 // tslint:disable-next-line:no-string-literal
-let port = normalizePort(process.env["PORT"] || "3000");
+const port = normalizePort(process.env["PORT"] || "3000");
 app.set("port", port);
 
 /**
  * Create HTTP server.
  */
 
-let server = http.createServer(app);
+const server = http.createServer(app);
 
 /**
  * Listen on provided port, on all network interfaces.
@@ -33,7 +33,7 @@ server.on("listening", onListening);
  */
 
 function normalizePort(val) {
-  let normalizedPort = parseInt(val, 10);
+  const normalizedPort = parseInt(val, 10);
 
   if (isNaN(normalizedPort)) {
     // named pipe
@@ -57,7 +57,7 @@ function onError(error) {
     throw error;
   }
 
-  let bind = typeof port === "string"
+  const bind = typeof port === "string"
     ? "Pipe " + port
     : "Port " + port;
 
@@ -81,8 +81,8 @@ function onError(error) {
  */
 
 function onListening() {
-  let addr = server.address();
-  let bind = typeof addr === "string"
+  const addr = server.address();
+  const bind = typeof addr === "string"
     ? "pipe " + addr
     : "port " + addr.port;
   logger.info("Listening on " + bind);
