@@ -38,5 +38,20 @@ describe("Historian", () => {
                 .send({ name: "new-repo"})
                 .expect(201);
         });
+
+        it("Rejects invalid repo names", () => {
+            return supertest
+                .post("/repos")
+                .set("Accept", "application/json")
+                .set("Content-Type", "application/json")
+                .send({ name: "../evilrepo"})
+                .expect(400);
+        });
+
+        it("Rejects missing repo names", () => {
+            return supertest
+                .post("/repos")
+                .expect(400);
+        });
     });
 });
