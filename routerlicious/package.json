@@ -23,6 +23,7 @@
     "deli:debug": "nodemon --exitcrash --debug=0.0.0.0:5858 dist/deli/index.js -w dist",
     "deli:debug:windows": "nodemon --exitcrash -L --debug=0.0.0.0:5858 dist/deli/index.js -w dist",
     "deli:watch": "nodemon --exitcrash dist/deli/index.js -w dist",
+    "docker-build": "docker run -v $(pwd):/usr/src/server -w /usr/src/server -it node:8.1.4-alpine",
     "historian": "node dist/historian/www.js",
     "historian:debug": "nodemon --exitcrash --debug=0.0.0.0:5858 dist/historian/www.js -w dist",
     "historian:debug:windows": "nodemon --exitcrash -L --debug=0.0.0.0:5858 dist/historian/www.js -w dist",
