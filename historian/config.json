@@ -5,5 +5,6 @@
         "json": false,
         "level": "info",
         "timestamp": true
-    }
+    },
+    "storageDir": "/home/node/documents"
 }

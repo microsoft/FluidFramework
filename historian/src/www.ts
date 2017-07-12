@@ -1,24 +1,51 @@
-// Setup the configuration system first since modules may depend on it being configured
+import * as debug from "debug";
+import * as http from "http";
 import * as nconf from "nconf";
 import * as path from "path";
-nconf.argv().env("__" as any).file(path.join(__dirname, "../config.json")).use("memory");
+import * as winston from "winston";
+import * as app from "./app";
 
-import * as http from "http";
-import app from "./app";
-import { logger } from "./logger";
+const provider = nconf.argv().env("__" as any).file(path.join(__dirname, "../config.json")).use("memory");
+
+/**
+ * Default logger setup
+ */
+const loggerConfig = provider.get("logger");
+winston.configure({
+    transports: [
+        new winston.transports.Console({
+            colorize: loggerConfig.colorize,
+            handleExceptions: true,
+            json: loggerConfig.json,
+            level: loggerConfig.level,
+            stringify: (obj) => JSON.stringify(obj),
+            timestamp: loggerConfig.timestamp,
+        }),
+    ],
+});
+
+// Update debug library to output to winston
+(debug as any).log = (msg, ...args) => winston.info(msg, ...args);
+// override the default log format to not include the timestamp since winston will do this for us
+// tslint:disable-next-line:only-arrow-functions
+(debug as any).formatArgs = function(args) {
+    const name = this.namespace;
+    args[0] = name + " " + args[0];
+};
 
 /**
  * Get port from environment and store in Express.
  */
 // tslint:disable-next-line:no-string-literal
 const port = normalizePort(process.env["PORT"] || "3000");
-app.set("port", port);
+const historian = app.create(provider);
+historian.set("port", port);
 
 /**
  * Create HTTP server.
  */
 
-const server = http.createServer(app);
+const server = http.createServer(historian);
 
 /**
  * Listen on provided port, on all network interfaces.
@@ -64,11 +91,11 @@ function onError(error) {
   // handle specific listen errors with friendly messages
   switch (error.code) {
     case "EACCES":
-      logger.error(bind + " requires elevated privileges");
+      winston.error(bind + " requires elevated privileges");
       process.exit(1);
       break;
     case "EADDRINUSE":
-      logger.error(bind + " is already in use");
+      winston.error(bind + " is already in use");
       process.exit(1);
       break;
     default:
@@ -85,5 +112,5 @@ function onListening() {
   const bind = typeof addr === "string"
     ? "pipe " + addr
     : "port " + addr.port;
-  logger.info("Listening on " + bind);
+  winston.info("Listening on " + bind);
 }
