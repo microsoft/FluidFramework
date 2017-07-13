@@ -16,7 +16,7 @@ export function create(store: nconf.Provider): Router {
     /**
      * Creates a new git repository
      */
-    router.post("/", (request, response, next) => {
+    router.post("/repos", (request, response, next) => {
         const createParams = request.body as ICreateRepoParams;
         if (!createParams || !createParams.name) {
             return response.status(400).json("Invalid repo name");

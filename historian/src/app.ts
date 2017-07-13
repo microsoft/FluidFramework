@@ -24,7 +24,8 @@ export function create(store: nconf.Provider) {
     app.use(bodyParser.urlencoded({ extended: false }));
 
     const apiRoutes = routes.create(store);
-    app.use("/repos", apiRoutes.repos);
+    app.use(apiRoutes.blobs);
+    app.use(apiRoutes.repos);
 
     // catch 404 and forward to error handler
     app.use((req, res, next) => {
