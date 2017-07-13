@@ -1,0 +1,4 @@
+version: '3'
+services:
+    intelligence:
+        image: prague.azurecr.io/editorservicerelay:276197
