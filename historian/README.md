@@ -23,7 +23,11 @@ And then mount it for development by running.
 
 ## Testing
 
-`curl -H "Content-Type: application/json" -X POST -d '{"name": "test"}' --verbose localhost:3000/repos`
-`curl -H "Content-Type: application/json" -X POST -d '{"content": "Hello, World!", "encoding": "utf-8"}' --verbose localhost:3000/repos/test/git/blobs`
-`curl -H "Content-Type: application/json" -X POST -d '{"tree": [{"path": "file.txt", "mode": "100644", "type": "blob", "sha": "b45ef6fec89518d314f546fd6c3025367b721684"}]}' --verbose localhost:3000/repos/test/git/trees`
-`curl --verbose localhost:3000/repos/test/git/trees/bf4db183cbd07f48546a5dde098b4510745d79a1`
+```
+curl -H "Content-Type: application/json" -X POST -d '{"name": "test"}' --verbose localhost:3000/repos
+curl -H "Content-Type: application/json" -X POST -d '{"content": "Hello, World!", "encoding": "utf-8"}' --verbose localhost:3000/repos/test/git/blobs
+curl -H "Content-Type: application/json" -X POST -d '{"tree": [{"path": "file.txt", "mode": "100644", "type": "blob", "sha": "b45ef6fec89518d314f546fd6c3025367b721684"}]}' --verbose localhost:3000/repos/test/git/trees
+curl --verbose localhost:3000/repos/test/git/trees/bf4db183cbd07f48546a5dde098b4510745d79a1
+curl -H "Content-Type: application/json" -X POST -d '{"message": "first commit", "tree": "bf4db183cbd07f48546a5dde098b4510745d79a1", "parents": [], "author": { "name": "Kurt Berglund", "email": "kurtb@microsoft.com", "date": "Thu Jul 13 2017 20:17:40 GMT-0700 (PDT)" }}' --verbose localhost:3000/repos/test/git/commits
+curl --verbose localhost:3000/repos/test/git/commits/cf0b592907d683143b28edd64d274ca70f68998e
+```
