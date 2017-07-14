@@ -1,12 +1,16 @@
 
-FROM node:8.1.4-alpine
+FROM prague.azurecr.io/editorservicerelay:276197
 
-# Add git since we reference certain npm modules with git
-RUN apk update && apk upgrade && apk add --no-cache git
+# Install Node.js
+RUN apt-get install --yes curl
+RUN curl --silent --location https://deb.nodesource.com/setup_4.x | bash -
+RUN apt-get install --yes nodejs
+RUN apt-get install --yes build-essential
 
 # Copy over and build the server
 COPY . /usr/src/server
 WORKDIR /usr/src/server
+
 RUN npm install
 RUN npm run build
 
