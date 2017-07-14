@@ -23,4 +23,7 @@ And then mount it for development by running.
 
 ## Testing
 
-`curl -H "Content-Type: application/json" -X POST -d '{"name": "test.git"}' --verbose localhost:3000/repos`
+`curl -H "Content-Type: application/json" -X POST -d '{"name": "test"}' --verbose localhost:3000/repos`
+`curl -H "Content-Type: application/json" -X POST -d '{"content": "Hello, World!", "encoding": "utf-8"}' --verbose localhost:3000/repos/test/git/blobs`
+`curl -H "Content-Type: application/json" -X POST -d '{"tree": [{"path": "file.txt", "mode": "100644", "type": "blob", "sha": "b45ef6fec89518d314f546fd6c3025367b721684"}]}' --verbose localhost:3000/repos/test/git/trees`
+`curl --verbose localhost:3000/repos/test/git/trees/bf4db183cbd07f48546a5dde098b4510745d79a1`
