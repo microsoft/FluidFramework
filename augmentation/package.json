@@ -6,7 +6,8 @@
         "build": "concurrently \"npm run tslint\" \"npm run tsc\"",
         "tsc": "tsc",
         "tslint": "tslint 'src/*.ts'",
-        "start": "docker-compose up"
+        "start": "docker-compose up",
+        "start:debug": "docker-compose -f docker-compose.yml -f docker-compose.debug.yml up"
     },
     "author": "Microsoft",
     "license": "Apache-2.0",
@@ -14,6 +15,7 @@
     "devDependencies": {
         "@types/node": "^8.0.13",
         "concurrently": "^3.4.0",
+        "nodemon": "^1.11.0",
         "tslint": "^4.5.1",
         "typescript": "2.3.x"
     },

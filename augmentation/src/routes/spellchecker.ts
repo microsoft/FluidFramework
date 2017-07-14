@@ -7,6 +7,8 @@ const router: Router = Router();
  * Retrieves deltas for the given document. With an optional from and to range (both exclusive) specified
  */
 router.get("/", async (request, response, next) => {
+    const fileContent = await service.readFile("../../../../app/ParameterCollection.json");
+    console.log(`File content: ${JSON.stringify(fileContent)}`);
     const result = await service.runCommand("../../../../app", "dotnet editorservicerelay.dll");
     const resultBody = extractJSON(result);
     console.log(`From router: ${JSON.stringify(resultBody)}`);
