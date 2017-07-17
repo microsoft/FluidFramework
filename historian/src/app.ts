@@ -25,6 +25,7 @@ export function create(store: nconf.Provider) {
 
     const apiRoutes = routes.create(store);
     app.use(apiRoutes.blobs);
+    app.use(apiRoutes.refs);
     app.use(apiRoutes.repos);
     app.use(apiRoutes.trees);
     app.use(apiRoutes.commits);
