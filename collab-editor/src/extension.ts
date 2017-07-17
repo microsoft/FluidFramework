@@ -116,6 +116,7 @@ class FlowFilter {
                             editor.edit((editBuilder) => {
                                 let lc = posToLc(this.sharedString.client.mergeTree, pos);
                                 let vspos = new vscode.Position(lc.line, lc.column);
+                                console.log(`change pos ${pos} lc ${lc.line} ${lc.column} txt: ${text}`);
                                 editBuilder.insert(vspos, text);
                             }).then((b) => {
                                 this.serverChange = false;
@@ -131,15 +132,26 @@ class FlowFilter {
 
     insertTree() {
         let editor = vscode.window.activeTextEditor;
+        this.serverChange = true;
         editor.edit((editBuilder) => {
-            let line = 0;
+            let line = -1;
+            let col = 0;
 
             function renderSegment(segment: SharedString.Segment, segPos: number, refSeq: number,
                 clientId: number, start: number, end: number) {
                 if (segment.getType() == SharedString.SegmentType.Text) {
                     let textSegment = <SharedString.TextSegment>segment;
-                    let vspos = new vscode.Position(line, 0);
-                    editBuilder.insert(vspos, textSegment.text + '\n');
+                    let vspos = new vscode.Position(line, col);
+                    editBuilder.insert(vspos, textSegment.text);
+                    col += textSegment.text.length;
+                }
+                else if (segment.getType() == SharedString.SegmentType.Marker) {
+                    // assume line marker
+                    if (line >= 0) {
+                        let vspos = new vscode.Position(line, col);
+                        editBuilder.insert(vspos, "\n");
+                    }
+                    col = 0;
                     line++;
                 }
                 return true;
@@ -147,6 +159,8 @@ class FlowFilter {
 
             this.sharedString.client.mergeTree.mapRange({ leaf: renderSegment }, SharedString.UniversalSequenceNumber,
                 this.sharedString.client.getClientId());
+        }).then((b) => {
+            this.serverChange = false;
         });
     }
 }
@@ -155,7 +169,7 @@ function initializeSnapshot() {
     let editor = vscode.window.activeTextEditor;
     let doc = editor.document;
     SharedString.MergeTree.initBlockUpdateActions = { child: blockUpdateChild };
-    const sharedString = extension.load("fff", services, api.defaultRegistry) as SharedString.SharedString;
+    const sharedString = extension.load("jjj", services, api.defaultRegistry) as SharedString.SharedString;
 
     sharedString.on("partialLoad", (data: api.MergeTreeChunk) => {
     });
@@ -163,12 +177,12 @@ function initializeSnapshot() {
     sharedString.on("loadFinshed", (data: api.MergeTreeChunk) => {
         if (sharedString.client.getLength() !== 0) {
             let flowFilter = new FlowFilter(sharedString);
-            flowFilter.insertTree();
             flowFilter.setEvents();
+            flowFilter.insertTree();
         } else {
             let text = doc.getText();
             console.log("local load...");
-            const lines = text.split(/\n|\r\n/);
+            const lines = text.split(/\r\n|\n/);
             for (const line of lines) {
                 sharedString.insertMarker(sharedString.client.getLength(), "line", api.MarkerBehaviors.PropagatesForward);
                 if (line.length > 0) {
