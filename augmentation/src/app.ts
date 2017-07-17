@@ -17,7 +17,6 @@ app.use(bodyParser.urlencoded({ extended: false }));
 
 // bind routes
 app.use("/spellchecker", routes.spellchecker);
-app.use(routes.home);
 
 // catch 404 and forward to error handler
 app.use((req, res, next) => {
