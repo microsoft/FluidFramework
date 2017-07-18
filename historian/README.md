@@ -30,4 +30,11 @@ curl -H "Content-Type: application/json" -X POST -d '{"tree": [{"path": "file.tx
 curl --verbose localhost:3000/repos/test/git/trees/bf4db183cbd07f48546a5dde098b4510745d79a1
 curl -H "Content-Type: application/json" -X POST -d '{"message": "first commit", "tree": "bf4db183cbd07f48546a5dde098b4510745d79a1", "parents": [], "author": { "name": "Kurt Berglund", "email": "kurtb@microsoft.com", "date": "Thu Jul 13 2017 20:17:40 GMT-0700 (PDT)" }}' --verbose localhost:3000/repos/test/git/commits
 curl --verbose localhost:3000/repos/test/git/commits/cf0b592907d683143b28edd64d274ca70f68998e
+curl -H "Content-Type: application/json" -X POST -d '{"ref": "refs/heads/master", "sha": "cf0b592907d683143b28edd64d274ca70f68998e"}' --verbose localhost:3000/repos/test/git/refs
+curl --verbose http://localhost:3000/repos/test/git/refs
+curl -X DELETE --verbose http://localhost:3000/repos/test/git/refs/heads/master
+curl -H "Content-Type: application/json" -X POST -d '{"ref": "refs/heads/master", "sha": "cf0b592907d683143b28edd64d274ca70f68998e"}' --verbose localhost:3000/repos/test/git/refs
+# first fails - second works
+curl -H "Content-Type: application/json" -X PATCH -d '{"force": false, "sha": "cf0b592907d683143b28edd64d274ca70f68998e"}' --verbose http://localhost:3000/repos/test/git/refs/heads/master
+curl -H "Content-Type: application/json" -X PATCH -d '{"force": true, "sha": "cf0b592907d683143b28edd64d274ca70f68998e"}' --verbose http://localhost:3000/repos/test/git/refs/heads/master
 ```
