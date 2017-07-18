@@ -1,4 +1,5 @@
 import * as socketStorage from "../socket-storage";
+import { StateManager} from "./stateManager";
 
 /**
  * Detail Description of worker used by tmz
@@ -41,6 +42,7 @@ export interface IDocumentState {
  * Interface to implement the Work manager.
  */
 export interface IWorkManager {
+
     /**
      * Assigns tasks to workers based on some heuristics.
      */
@@ -50,4 +52,10 @@ export interface IWorkManager {
      * Revokes expired work. Already implemented in base class.
      */
     revokeExpiredWork(): Array<Promise<void>>;
+
+    /**
+     * Returns underlying State Manager. Already implemented in base class.
+     */
+    getManager(): StateManager;
+
 }

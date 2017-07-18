@@ -2,16 +2,14 @@ import * as socketStorage from "../socket-storage";
 import { logger } from "../utils";
 import { BaseWorker } from "./baseWorker";
 import { IWorkerDetail, IWorkManager } from "./messages";
-import { StateManager} from "./stateManager";
 
 /**
  * Worker that picks worker randomly.
  */
 export class RandomWorker extends BaseWorker implements IWorkManager {
 
-    constructor(private mngr: StateManager) {
+    constructor() {
         super();
-        this.manager = this.mngr;
     }
 
     public assignWork(ids: string[]): Array<Promise<void>> {

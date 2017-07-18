@@ -1,3 +1,4 @@
+import * as nconf from "nconf";
 import * as socketStorage from "../socket-storage";
 import { logger } from "../utils";
 import { IWorkerDetail } from "./messages";
@@ -8,7 +9,15 @@ import { StateManager} from "./stateManager";
  */
 export class BaseWorker {
 
-    protected manager: StateManager;
+    public manager: StateManager;
+
+    constructor() {
+        this.manager = new StateManager(nconf.get("tmz:timeoutMSec:worker"), nconf.get("tmz:timeoutMSec:document"));
+    }
+
+    public getManager(): StateManager {
+        return this.manager;
+    }
 
     public revokeExpiredWork(): Array<Promise<void>> {
         const docs = this.manager.getExpiredDocuments();

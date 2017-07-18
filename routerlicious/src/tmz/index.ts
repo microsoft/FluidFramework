@@ -14,7 +14,6 @@ import * as socketStorage from "../socket-storage";
 import { logger } from "../utils";
 import * as utils from "../utils";
 import * as messages from "./messages";
-import * as state from "./stateManager";
 import * as workerFactory from "./workerFactory";
 
 // Setup Kafka connection
@@ -47,12 +46,9 @@ io.adapter(socketIoRedis({ pubClient: pub, subClient: sub }));
 // setup state manager and work manager.
 let port = nconf.get("tmz:port");
 const checkerTimeout = nconf.get("tmz:timeoutMSec:checker");
-const workerTimeout = nconf.get("tmz:timeoutMSec:worker");
-const documentTimeout = nconf.get("tmz:timeoutMSec:document");
 const schedulerType = nconf.get("tmz:workerType");
 
-const stateManager = new state.StateManager(workerTimeout, documentTimeout);
-const workManager = workerFactory.create(schedulerType, stateManager);
+const workManager = workerFactory.create(schedulerType);
 const pendingWork: Set<string> = new Set();
 let workerJoined = false;
 
@@ -68,7 +64,7 @@ async function run() {
                 socket,
             };
             logger.info(`New worker joined. ${socket.id} : ${message.clientId}`);
-            stateManager.addWorker(newWorker);
+            workManager.getManager().addWorker(newWorker);
             // Process all pending tasks once the first worker joins.
             if (!workerJoined) {
                 let workIds = Array.from(pendingWork);
@@ -80,15 +76,15 @@ async function run() {
         });
         // On a heartbeat, refresh worker state.
         socket.on("heartbeatObject", async (message: socketStorage.IWorker, response) => {
-            stateManager.refreshWorker(socket.id);
+            workManager.getManager().refreshWorker(socket.id);
             response(null, "Heartbeat");
         });
         // On disconnect, reassign the work to other workers.
         socket.on("disconnect", async () => {
             logger.info(`Worker id ${socket.id} got disconnected.`);
-            const worker = stateManager.getWorker(socket.id);
-            const tasks = stateManager.getDocuments(worker);
-            stateManager.removeWorker(worker);
+            const worker = workManager.getManager().getWorker(socket.id);
+            const tasks = workManager.getManager().getDocuments(worker);
+            workManager.getManager().removeWorker(worker);
             await processWork(tasks);
         });
 
@@ -116,7 +112,7 @@ async function run() {
         const objectId = value.objectId;
 
         // Check if already requested. Update the Timestamp in the process.
-        if (stateManager.updateDocumentIfFound(objectId)) {
+        if (workManager.getManager().updateDocumentIfFound(objectId)) {
             callback();
             return;
         }
@@ -143,7 +139,7 @@ async function processWork(ids: string[]) {
 
 async function adjustWorkAssignment() {
     // Get work form inactive workers and reassign them
-    const documents = stateManager.revokeDocumentsFromInactiveWorkers();
+    const documents = workManager.getManager().revokeDocumentsFromInactiveWorkers();
     if (documents.length > 0) {
         await processWork(documents);
     }
