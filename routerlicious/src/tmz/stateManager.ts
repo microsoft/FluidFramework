@@ -2,7 +2,7 @@ import * as _ from "lodash";
 import { IDocumentState, IWorkerDetail, IWorkerState } from "./messages";
 
 export class StateManager {
-    private workerToDocumentMap: { [socketId: string]: IWorkerState} = {};
+    private workerToDocumentMap: { [workerId: string]: IWorkerState} = {};
     private documentToWorkerMap: { [docId: string]: IDocumentState} = {};
 
     constructor(private workerTimeout: number, private documentTimeout: number) {
@@ -34,12 +34,12 @@ export class StateManager {
         delete this.documentToWorkerMap[docId];
     }
 
-    public refreshWorker(socketId: string) {
-        this.workerToDocumentMap[socketId].activeTS = Date.now();
+    public refreshWorker(workerId: string) {
+        this.workerToDocumentMap[workerId].activeTS = Date.now();
     }
 
-    public getWorker(socketId: string): IWorkerDetail {
-        return this.workerToDocumentMap[socketId].worker;
+    public getWorker(workerId: string): IWorkerDetail {
+        return this.workerToDocumentMap[workerId].worker;
     }
 
     public getActiveWorkers(): IWorkerDetail[] {

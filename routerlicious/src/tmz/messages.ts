@@ -41,7 +41,7 @@ export interface IDocumentState {
 /**
  * Interface to implement the Work manager.
  */
-export interface IWorkManager {
+export interface IForeman {
 
     /**
      * Assigns tasks to workers based on some heuristics.

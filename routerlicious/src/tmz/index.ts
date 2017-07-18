@@ -48,7 +48,7 @@ let port = nconf.get("tmz:port");
 const checkerTimeout = nconf.get("tmz:timeoutMSec:checker");
 const schedulerType = nconf.get("tmz:workerType");
 
-const workManager = workerFactory.create(schedulerType);
+const foreman = workerFactory.create(schedulerType);
 const pendingWork: Set<string> = new Set();
 let workerJoined = false;
 
@@ -64,7 +64,7 @@ async function run() {
                 socket,
             };
             logger.info(`New worker joined. ${socket.id} : ${message.clientId}`);
-            workManager.getManager().addWorker(newWorker);
+            foreman.getManager().addWorker(newWorker);
             // Process all pending tasks once the first worker joins.
             if (!workerJoined) {
                 let workIds = Array.from(pendingWork);
@@ -76,15 +76,15 @@ async function run() {
         });
         // On a heartbeat, refresh worker state.
         socket.on("heartbeatObject", async (message: socketStorage.IWorker, response) => {
-            workManager.getManager().refreshWorker(socket.id);
+            foreman.getManager().refreshWorker(socket.id);
             response(null, "Heartbeat");
         });
         // On disconnect, reassign the work to other workers.
         socket.on("disconnect", async () => {
             logger.info(`Worker id ${socket.id} got disconnected.`);
-            const worker = workManager.getManager().getWorker(socket.id);
-            const tasks = workManager.getManager().getDocuments(worker);
-            workManager.getManager().removeWorker(worker);
+            const worker = foreman.getManager().getWorker(socket.id);
+            const tasks = foreman.getManager().getDocuments(worker);
+            foreman.getManager().removeWorker(worker);
             await processWork(tasks);
         });
 
@@ -112,7 +112,7 @@ async function run() {
         const objectId = value.objectId;
 
         // Check if already requested. Update the Timestamp in the process.
-        if (workManager.getManager().updateDocumentIfFound(objectId)) {
+        if (foreman.getManager().updateDocumentIfFound(objectId)) {
             callback();
             return;
         }
@@ -134,17 +134,17 @@ async function run() {
 
 // Request subscribers to pick up the work.
 async function processWork(ids: string[]) {
-    await Promise.all(workManager.assignWork(ids));
+    await Promise.all(foreman.assignWork(ids));
 }
 
 async function adjustWorkAssignment() {
     // Get work form inactive workers and reassign them
-    const documents = workManager.getManager().revokeDocumentsFromInactiveWorkers();
+    const documents = foreman.getManager().revokeDocumentsFromInactiveWorkers();
     if (documents.length > 0) {
         await processWork(documents);
     }
     // Check Expired documents and update the state.
-    await Promise.all(workManager.revokeExpiredWork());
+    await Promise.all(foreman.revokeExpiredWork());
 }
 
 // Start up the TMZ service

@@ -1,9 +1,9 @@
-import { IWorkManager} from "./messages";
-import { RandomWorker } from "./randomWorker";
+import { IForeman} from "./messages";
+import { RandomForeman } from "./randomForeman";
 
 /**
  * Creates an worker based on parameter.
  */
-export function create(type: string): IWorkManager {
-    return new RandomWorker();
+export function create(type: string): IForeman {
+    return new RandomForeman();
 }

@@ -7,12 +7,14 @@ import { StateManager} from "./stateManager";
 /**
  * Worker methods shared by all implementations.
  */
-export class BaseWorker {
+export class BaseForeman {
 
     public manager: StateManager;
+    protected ackTimeout: number;
 
     constructor() {
         this.manager = new StateManager(nconf.get("tmz:timeoutMSec:worker"), nconf.get("tmz:timeoutMSec:document"));
+        this.ackTimeout = nconf.get("tmz:workerAckTimeMSec");
     }
 
     public getManager(): StateManager {

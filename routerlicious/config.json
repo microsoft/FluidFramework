@@ -64,7 +64,8 @@
     "alfred": {
         "kafkaClientId": "alfred",
         "topic": "rawdeltas",
-        "bucket": "snapshots"
+        "bucket": "snapshots",
+        "restJsonSize": "50mb"
     },
     "deli": {
         "topics": {
@@ -101,7 +102,8 @@
             "worker": 10000,
             "document": 15000
         },
-        "workerType": "random"
+        "workerType": "random",
+        "workerAckTimeMSec": 100
     },
     "redis": {
         "host": "redis",
