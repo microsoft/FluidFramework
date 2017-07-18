@@ -9,7 +9,7 @@ const router: Router = Router();
  */
 router.post("/", async (request, response, next) => {
     const text = request.body.documents[0].text;
-    console.info(`Text to check: ${text}`);
+    console.info(`Text to check spelling: ${text}`);
     
     // Writes the text to the file that service reads as an input.
     await service.writeFile("../../../../app/ParameterCollection.json", text).catch((error) => {
