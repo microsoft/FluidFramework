@@ -77,7 +77,6 @@ export class PartitionManager {
                 let currentPartition = this.partitionMap[partition];
                 // No update since last checkpoint. Delete the partition.
                 if (currentPartition.checkpointedOffset === currentPartition.latestOffset) {
-                    // debug(`${this.groupId}: Removing partition ${partition}`);
                     delete this.partitionMap[partition];
                     continue;
                 }
@@ -91,8 +90,6 @@ export class PartitionManager {
             // Commit all checkpoint offsets as a batch.
             this.consumer.commitOffset(commitDetails).then(
                 (data) => {
-                    // tslint:disable-next-line:max-line-length
-                    // debug(`${this.groupId}: Checkpointed kafka with: ${JSON.stringify(commitDetails)}. Result: ${JSON.stringify(data)}`);
                     resolve({ data: true });
                 },
                 (error) => {
