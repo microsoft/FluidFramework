@@ -23,6 +23,7 @@ And then mount it for development by running.
 
 ## Testing
 
+## Example REST API usage
 ```
 curl -H "Content-Type: application/json" -X POST -d '{"name": "test"}' --verbose localhost:3000/repos
 curl -H "Content-Type: application/json" -X POST -d '{"content": "Hello, World!", "encoding": "utf-8"}' --verbose localhost:3000/repos/test/git/blobs
@@ -37,4 +38,6 @@ curl -H "Content-Type: application/json" -X POST -d '{"ref": "refs/heads/master"
 # first fails - second works
 curl -H "Content-Type: application/json" -X PATCH -d '{"force": false, "sha": "cf0b592907d683143b28edd64d274ca70f68998e"}' --verbose http://localhost:3000/repos/test/git/refs/heads/master
 curl -H "Content-Type: application/json" -X PATCH -d '{"force": true, "sha": "cf0b592907d683143b28edd64d274ca70f68998e"}' --verbose http://localhost:3000/repos/test/git/refs/heads/master
+curl -H "Content-Type: application/json" -X POST -d '{"tag": "v1.0", "message": "Hello, World!", "object": "cf0b592907d683143b28edd64d274ca70f68998e", "type": "commit", "tagger": { "name": "Kurt Berglund", "email": "kurtb@microsoft.com", "date": "Thu Jul 13 2017 20:17:40 GMT-0700 (PDT)" }}' --verbose localhost:3000/repos/test/git/tags
+curl --verbose localhost:3000/repos/test/git/tags/a8588b3913aa692c3642697d6f136cec470dd82c
 ```
