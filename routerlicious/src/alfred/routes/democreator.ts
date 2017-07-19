@@ -19,9 +19,9 @@ router.get("/:id?", (request, response, next) => {
 
     /**
      * Generate monikers for Prague demos. Note that beginning with a single
-     * slash will cause Hogan/HTML to automatically fill-in the root of the 
+     * slash will cause Hogan/HTML to automatically fill-in the root of the
      * URL (and use these monikers as relative paths)!
-     */    
+     */
     const mapsMoniker = "/maps/" + currentDate + "-" + moniker.choose();
     const cellMoniker = "/cell/" + currentDate + "-" + moniker.choose();
     const canvasMoniker = "/canvas/" + currentDate + "-" + moniker.choose();
