@@ -109,7 +109,7 @@ function randomizeCell(cell: api.ICell, element1: JQuery, element2: JQuery) {
     }, 3000);
 }
 
-export async function load(id: string, config: string) {
+export async function load(id: string, config: any) {
     const doc = await loadDocument(id);
     const root = doc.getRoot();
 

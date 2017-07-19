@@ -100,7 +100,7 @@ function randomizeMap(map: api.IMap) {
     }, 1000);
 }
 
-export function load(id: string, config: string) {
+export function load(id: string, config: any) {
     $(document).ready(() => {
         loadDocument(id).then(async (doc) => {
             // tslint:disable-next-line

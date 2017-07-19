@@ -20,7 +20,7 @@ throttle("resize", "throttled-resize");
 
 let canvas: Canvas;
 
-export async function initialize(id: string, config: string) {
+export async function initialize(id: string, config: any) {
     const doc = await loadDocument(id);
     const root = await doc.getRoot().getView();
 

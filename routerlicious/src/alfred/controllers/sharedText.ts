@@ -192,7 +192,7 @@ class FlowContainer implements FlowView.IComponentContainer {
     }
 }
 
-export async function onLoad(id: string, config: string) {
+export async function onLoad(id: string, config: any) {
     const extension = API.defaultRegistry.getExtension(SharedString.CollaboritiveStringExtension.Type);
     const sharedString = extension.load(id, API.getDefaultServices(), API.defaultRegistry) as SharedString.SharedString;
 
