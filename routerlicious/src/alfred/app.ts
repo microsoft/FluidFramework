@@ -53,6 +53,7 @@ app.use("/cell", routes.cell);
 app.use("/scribe", routes.scribe);
 app.use("/perf", routes.perf);
 app.use("/producer", routes.producer);
+app.use("/democreator", routes.democreator);
 app.use(routes.home);
 
 // catch 404 and forward to error handler
