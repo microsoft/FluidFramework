@@ -72,7 +72,7 @@ export function create(store: nconf.Provider): Router {
         const blobP = createBlob(gitDir, request.params.repo, request.body as ICreateBlobParams);
         return blobP.then(
             (blob) => {
-                response.status(200).json(blob);
+                response.status(201).json(blob);
             },
             (error) => {
                 response.status(400).json(error);

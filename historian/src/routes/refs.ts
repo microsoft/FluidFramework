@@ -77,10 +77,10 @@ async function patchRef(gitDir: string, repo: string, refId: string, patchParams
     return refToIRef(ref);
 }
 
-function handleResponse(resultP: Promise<any>, response: Response) {
+function handleResponse(resultP: Promise<any>, response: Response, successCode: number = 200) {
     return resultP.then(
         (blob) => {
-            response.status(200).json(blob);
+            response.status(successCode).json(blob);
         },
         (error) => {
             response.status(400).json(error);
@@ -113,7 +113,7 @@ export function create(store: nconf.Provider): Router {
 
     router.post("/repos/:repo/git/refs", (request, response, next) => {
         const resultP = createRef(gitDir, request.params.repo, request.body as ICreateRefParams);
-        handleResponse(resultP, response);
+        handleResponse(resultP, response, 201);
     });
 
     router.patch("/repos/:repo/git/refs/*", (request, response, next) => {

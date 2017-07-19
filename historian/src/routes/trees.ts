@@ -12,7 +12,7 @@ export interface ICreateTreeEntry {
 }
 
 export interface ICreateTreeParams {
-    base_tree: string;
+    base_tree?: string;
     tree: ICreateTreeEntry[];
 }
 
@@ -88,7 +88,7 @@ export function create(store: nconf.Provider): Router {
         const blobP = createTree(gitDir, request.params.repo, request.body as ICreateTreeParams);
         return blobP.then(
             (blob) => {
-                response.status(200).json(blob);
+                response.status(201).json(blob);
             },
             (error) => {
                 response.status(400).json(error);
