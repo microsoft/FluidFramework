@@ -300,7 +300,7 @@ describe("Historian", () => {
                 it("Can list recent commits", async () => {
                     await initBaseRepo(supertest, testRepoName, testBlob, testTree, testCommit, testRef);
                     return supertest
-                        .get(`/repos/${testRepoName}/commits?sha=refs/heads/master`)
+                        .get(`/repos/${testRepoName}/commits?sha=master`)
                         .expect(200)
                         .expect((result) => {
                             assert.equal(result.body.length, 1);
