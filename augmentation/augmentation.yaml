@@ -1,0 +1,37 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: augmentation
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: augmentation
+    spec:
+      containers:
+      - name: augmentation
+        image: prague.azurecr.io/augmentation:525
+        command:
+          - 'node'
+          - 'dist/index.js'
+        ports:
+        - name: ui
+          containerPort: 5000
+      imagePullSecrets:
+      - name: regsecret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: augmentation
+  labels:
+    app: augmentation
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: ui
+  selector:
+    app: augmentation

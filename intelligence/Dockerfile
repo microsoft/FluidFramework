@@ -10,3 +10,5 @@ WORKDIR /usr/src/server
 # Install python library and dependencies
 RUN apk add --update python py-pip
 RUN pip install -r dependencies.txt
+
+EXPOSE 8080
