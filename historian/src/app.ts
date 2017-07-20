@@ -24,12 +24,13 @@ export function create(store: nconf.Provider) {
     app.use(bodyParser.urlencoded({ extended: false }));
 
     const apiRoutes = routes.create(store);
-    app.use(apiRoutes.blobs);
-    app.use(apiRoutes.refs);
-    app.use(apiRoutes.repos);
-    app.use(apiRoutes.tags);
-    app.use(apiRoutes.trees);
-    app.use(apiRoutes.commits);
+    app.use(apiRoutes.git.blobs);
+    app.use(apiRoutes.git.refs);
+    app.use(apiRoutes.git.repos);
+    app.use(apiRoutes.git.tags);
+    app.use(apiRoutes.git.trees);
+    app.use(apiRoutes.git.commits);
+    app.use(apiRoutes.repository.commits);
 
     // catch 404 and forward to error handler
     app.use((req, res, next) => {

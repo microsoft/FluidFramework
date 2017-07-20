@@ -2,35 +2,8 @@ import { Router } from "express";
 import * as nconf from "nconf";
 import * as git from "nodegit";
 import * as path from "path";
-import * as utils from "../utils";
-
-export interface ITagger {
-    name: string;
-    email: string;
-    // ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ
-    date: string;
-}
-
-export interface ICreateTagParams {
-    tag: string;
-    message: string;
-    object: string;
-    type: string;
-    tagger: ITagger;
-}
-
-export interface ITag {
-    tag: string;
-    sha: string;
-    url: string;
-    message: string;
-    tagger: ITagger;
-    object: {
-        type: string;
-        sha: string;
-        url: string;
-    };
-}
+import { ICreateTagParams, ITag } from "../../resources";
+import * as utils from "../../utils";
 
 function tagToITag(tag: git.Tag): ITag {
     // TODO there's a bug in the nodegit d.ts file that thinks name and email and properties and not methods

@@ -2,34 +2,8 @@ import { Router } from "express";
 import * as nconf from "nconf";
 import * as git from "nodegit";
 import * as path from "path";
-import * as utils from "../utils";
-
-export interface ICreateTreeEntry {
-    path: string;
-    mode: string;
-    type: string;
-    sha: string;
-}
-
-export interface ICreateTreeParams {
-    base_tree?: string;
-    tree: ICreateTreeEntry[];
-}
-
-export interface ITreeEntry {
-    path: string;
-    mode: string;
-    type: string;
-    size: number;
-    sha: string;
-    url: string;
-}
-
-export interface ITree {
-    sha: string;
-    url: string;
-    tree: ITreeEntry[];
-}
+import { ICreateTreeParams, ITree, ITreeEntry } from "../../resources";
+import * as utils from "../../utils";
 
 async function createTree(gitDir: string, repo: string, tree: ICreateTreeParams): Promise<ITree> {
     const repository = await utils.openRepo(gitDir, repo);

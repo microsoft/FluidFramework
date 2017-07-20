@@ -3,27 +3,8 @@ import * as nconf from "nconf";
 import * as git from "nodegit";
 import * as path from "path";
 import * as winston from "winston";
-import * as utils from "../utils";
-
-export interface IAuthor {
-    name: string;
-    email: string;
-    // ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ
-    date: string;
-}
-
-export interface ICreateCommitParams {
-    message: string;
-    tree: string;
-    parents: string[];
-    // GitHub has signature verification on the author
-    author: IAuthor;
-}
-
-export interface ICommit {
-    sha: string;
-    url: string;
-}
+import { commitToICommit, ICommit, ICreateCommitParams } from "../../resources";
+import * as utils from "../../utils";
 
 async function createCommit(gitDir: string, repo: string, blob: ICreateCommitParams): Promise<ICommit> {
     const date = Date.parse(blob.author.date);
@@ -51,10 +32,7 @@ async function getCommit(gitDir: string, repo: string, sha: string): Promise<ICo
     const author = commit.author();
     winston.info(JSON.stringify(author));
 
-    return {
-        sha: commit.id().tostrS(),
-        url: "",
-    };
+    return commitToICommit(commit);
 }
 
 export function create(store: nconf.Provider): Router {

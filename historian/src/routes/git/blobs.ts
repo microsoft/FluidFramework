@@ -2,28 +2,8 @@ import { Router } from "express";
 import * as nconf from "nconf";
 import * as path from "path";
 import * as winston from "winston";
-import * as utils from "../utils";
-
-export interface IBlob {
-    content: string;
-    encoding: string;
-    url: string;
-    sha: string;
-    size: number;
-}
-
-export interface ICreateBlobParams {
-    // The encoded content
-    content: string;
-
-    // The encoding of the content. Either utf8 or base64.
-    encoding: string;
-}
-
-export interface ICreateBlobResponse {
-    sha: string;
-    url: string;
-}
+import { IBlob, ICreateBlobParams, ICreateBlobResponse } from "../../resources";
+import * as utils from "../../utils";
 
 /**
  * Validates that the input encoding is valid

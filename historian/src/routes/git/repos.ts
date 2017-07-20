@@ -2,11 +2,8 @@ import { Router } from "express";
 import * as nconf from "nconf";
 import * as git from "nodegit";
 import * as path from "path";
-
-export interface ICreateRepoParams {
-    // name of the repository
-    name: string;
-}
+import { ICreateRepoParams } from "../../resources";
+import * as utils from "../../utils";
 
 export function create(store: nconf.Provider): Router {
     const gitDir = path.resolve(store.get("storageDir"));
@@ -35,6 +32,20 @@ export function create(store: nconf.Provider): Router {
             },
             (error) => {
                 return response.status(400).json();
+            });
+    });
+
+    /**
+     * Retrieves an existing get repository
+     */
+    router.get("/repos/:repo", (request, response, next) => {
+        const repoP = utils.openRepo(gitDir, request.params.repo);
+        repoP.then(
+            (repository) => {
+                return response.status(200).json({ name: request.params.repo });
+            },
+            (error) => {
+                return response.status(400).end();
             });
     });
 
