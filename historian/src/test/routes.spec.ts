@@ -312,7 +312,7 @@ describe("Historian", () => {
                 it("Can retrieve a stored object", async () => {
                     await initBaseRepo(supertest, testRepoName, testBlob, testTree, testCommit, testRef);
                     return supertest
-                        .get(`/repos/${testRepoName}/contents/${testTree.tree[0].path}?ref=master`)
+                        .get(`/repos/${testRepoName}/contents/${testTree.tree[0].path}?ref=${testRef.sha}`)
                         .expect(200)
                         .expect((result) => {
                             // tslint:disable
