@@ -144,7 +144,6 @@
     "request": "^2.81.0",
     "resize-observer-polyfill": "^1.4.2",
     "serve-favicon": "^2.4.1",
-    "simple-git": "^1.73.0",
     "socket.io": "^1.7.3",
     "socket.io-emitter": "^2.0.0",
     "socket.io-redis": "^4.0.0",

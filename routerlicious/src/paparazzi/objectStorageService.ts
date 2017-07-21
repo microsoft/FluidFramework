@@ -3,13 +3,9 @@ import * as gitStorage from "../git-storage";
 import * as socketStorage from "../socket-storage";
 
 export class ObjectStorageService implements api.IObjectStorageService {
-    private clients: { [id: string]: gitStorage.GitManager } = {};
     private clientStorageService: api.IObjectStorageService;
 
-    constructor(
-        url: string,
-        private repository: string,
-        private basePath: string) {
+    constructor(url: string, private gitManager: gitStorage.GitManager) {
         this.clientStorageService = new socketStorage.ClientObjectStorageService(url);
     }
 
@@ -24,12 +20,7 @@ export class ObjectStorageService implements api.IObjectStorageService {
      * Writes to the object with the given ID
      */
     public async write(id: string, objects: api.IObject[]): Promise<void> {
-        if (!(id in this.clients)) {
-            this.clients[id] = new gitStorage.GitManager(id, this.repository, this.basePath);
-        }
-
-        const client = await this.clients[id];
         const files = objects.map((object) => ({ path: object.path, data: JSON.stringify(object.data) }));
-        return client.write(id, files, "Commit @{TODO seq #}");
+        return this.gitManager.write(id, files, "Commit @{TODO seq #}");
     }
 }
