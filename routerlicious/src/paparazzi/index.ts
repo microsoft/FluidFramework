@@ -8,6 +8,7 @@ import * as amqp from "amqplib";
 import * as minio from "minio";
 import { Collection, MongoClient } from "mongodb";
 import * as api from "../api";
+import * as gitStorage from "../git-storage";
 import { nativeTextAnalytics, resume, textAnalytics } from "../intelligence";
 import * as socketStorage from "../socket-storage";
 import { logger } from "../utils";
@@ -158,13 +159,13 @@ async function run() {
         secure: false,
     });
 
+    const gitManager = await gitStorage.getOrCreateRepository(gitSettings.historian, gitSettings.repository);
     const services: api.ICollaborationServices = {
         deltaNotificationService: new socketStorage.DeltaNotificationService(alfredUrl),
         deltaStorageService: new socketStorage.DeltaStorageService(alfredUrl),
         objectStorageService: new ObjectStorageService(
             alfredUrl,
-            gitSettings.repository,
-            gitSettings.storagePath),
+            gitManager),
     };
 
     // Create the resume intelligent service and manager

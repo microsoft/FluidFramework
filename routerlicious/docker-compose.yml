@@ -47,10 +47,12 @@ services:
         environment:
             - DEBUG=routerlicious:*
     historian:
-        build: .
+        build: ../historian
+        ports:
+            - "3001:3000"
         environment:
             - DEBUG=routerlicious:*
-        command: npm run historian
+        restart: always
     zookeeper:
         image: wurstmeister/zookeeper:latest
         ports:
@@ -95,5 +97,3 @@ services:
             MINIO_ACCESS_KEY: prague
             MINIO_SECRET_KEY: mhioAkNXTwdX4dXWgKgXVtHo
         command: server /export
-    git:
-        build: ./docker/gitssh

@@ -204,7 +204,7 @@ class Cell extends api.CollaborativeObject implements api.ICell {
 
         // Load from the snapshot if it exists
         const rawSnapshot = this.connection.existing && this.connection.versions.length > 0
-            ? await services.objectStorageService.read(id, this.connection.versions[0].hash, snapshotFileName)
+            ? await services.objectStorageService.read(id, this.connection.versions[0].sha, snapshotFileName)
             : null;
         const snapshot: ICellSnapshot = rawSnapshot
             ? JSON.parse(rawSnapshot)

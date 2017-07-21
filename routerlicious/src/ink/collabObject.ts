@@ -95,7 +95,7 @@ export class InkCollaborativeObject extends api.CollaborativeObject implements I
 
         // Load from the snapshot if it exists
         const rawSnapshot = this.connection.existing && this.connection.versions.length > 0
-            ? await services.objectStorageService.read(id, this.connection.versions[0].hash, snapshotFileName)
+            ? await services.objectStorageService.read(id, this.connection.versions[0].sha, snapshotFileName)
             : null;
         const snapshot: IInkSnapshot = rawSnapshot
             ? JSON.parse(rawSnapshot)

@@ -91,12 +91,11 @@
             "key": "c8b60dc5e49849ce903d7d29a2dce550"
         },
         "nativeTextAnalytics": {
-            "url": "http://prague.westus2.cloudapp.azure.com:8080/"
+            "url": "http://praguepy.westus2.cloudapp.azure.com/"
         }
     },
     "git": {
-        "repository": "git@git:prague.git",
-        "storagePath": "/var/lib/prague",
+        "repository": "prague",
         "historian": "http://historian:3000"
     }
 }
