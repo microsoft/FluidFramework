@@ -235,6 +235,18 @@ describe("Historian", () => {
                         });
                 });
 
+                // TODO need to verify the GitHub API works this way - odd to create a new commit via a patch command
+                // but this simplfiies cases where we want to upsert
+                it("Can patch to create a reference", async () => {
+                    await initBaseRepo(supertest, testRepoName, testBlob, testTree, testCommit, testRef);
+                    return supertest
+                        .patch(`/repos/${testRepoName}/git/refs/heads/patch`)
+                        .set("Accept", "application/json")
+                        .set("Content-Type", "application/json")
+                        .send({ force: true, sha: "cf0b592907d683143b28edd64d274ca70f68998e" })
+                        .expect(200);
+                });
+
                 it("Can't patch an existing reference without force flag set", async () => {
                     await initBaseRepo(supertest, testRepoName, testBlob, testTree, testCommit, testRef);
                     return supertest
