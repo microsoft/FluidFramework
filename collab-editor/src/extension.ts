@@ -107,11 +107,16 @@ function blockUpdateChild(block: SharedString.Block, index: number) {
 }
 
 
+interface LCMessage extends api.ISequencedMessage {
+    vspos1: vscode.Position;
+    vspos2?: vscode.Position;
+}
+
 class FlowAdapter {
     serverChange = false;
     serverLive = false;
     editorBusy = false;
-    checkOnCursor = false;
+    checkOnCursor = true;
     serverEventQ = SharedString.Collections.ListMakeHead<api.IMessageBase>();
     editor: vscode.TextEditor; // for now assume 1:1 document and editor and that editor doesn't change
 
@@ -131,10 +136,17 @@ class FlowAdapter {
                             this.sharedString.removeText(pos1, pos2);
                         }
                         if (change.text && (change.text.length > 0)) {
-                            // TODO: split by lines; for now, assume only '\n'
-                            if (change.text == "\n") {
-                                this.sharedString.insertMarker(pos1, "line",
-                                    api.MarkerBehaviors.PropagatesForward);
+                            if (change.text.indexOf("\n") >= 0) {
+                                let texts = change.text.split("\n");
+                                for (let i = 0; i < texts.length; i++) {
+                                    if (i > 0) {
+                                        this.sharedString.insertMarker(pos1, "line",
+                                            api.MarkerBehaviors.PropagatesForward);
+                                        pos1++;
+                                    }
+                                    this.sharedString.insertText(texts[i], pos1);
+                                    pos1 += texts[i].length;
+                                }
                             }
                             else {
                                 this.sharedString.insertText(change.text, pos1);
@@ -165,6 +177,33 @@ class FlowAdapter {
     }
 
     setServerEvents() {
+        // pre-compute pos to lc mappings before op applied to shared string
+        // TODO: handle split delete range by converting ref range to set of local ranges; then to
+        // vspos array
+        this.sharedString.on("pre-op", (msg: api.IMessageBase) => {
+            if (msg && msg.op) {
+                let lcmsg = <LCMessage>msg;
+                if (lcmsg.clientId != this.sharedString.client.longClientId) {
+                    let delta = <api.IMergeTreeOp>msg.op;
+                    if (delta.type === api.MergeTreeDeltaType.INSERT) {
+                        let localPos1 = this.sharedString.client.mergeTree.refPosToLocalPos(delta.pos1, lcmsg.referenceSequenceNumber,
+                            this.sharedString.client.getOrAddShortClientId(lcmsg.clientId));
+                        let lc1 = posToLc(this.sharedString.client.mergeTree, localPos1);
+                        lcmsg.vspos1 = new vscode.Position(lc1.line, lc1.column);
+                    }
+                    else if (delta.type === api.MergeTreeDeltaType.REMOVE) {
+                        let localPos1 = this.sharedString.client.mergeTree.refPosToLocalPos(delta.pos1, lcmsg.referenceSequenceNumber,
+                            this.sharedString.client.getOrAddShortClientId(lcmsg.clientId));
+                        let lc1 = posToLc(this.sharedString.client.mergeTree, localPos1);
+                        lcmsg.vspos1 = new vscode.Position(lc1.line, lc1.column);
+                        let localPos2 = this.sharedString.client.mergeTree.refPosToLocalPos(delta.pos2, lcmsg.referenceSequenceNumber,
+                            this.sharedString.client.getOrAddShortClientId(lcmsg.clientId));
+                        let lc2 = posToLc(this.sharedString.client.mergeTree, localPos2);
+                        lcmsg.vspos2 = new vscode.Position(lc2.line, lc2.column);
+                    }
+                }
+            }
+        });
         this.sharedString.on("op", (msg: api.IMessageBase) => {
             if (msg && msg.op) {
                 if (this.serverLive && (!this.editorBusy)) {
@@ -192,8 +231,8 @@ class FlowAdapter {
     }
 
     processServerEvent(msg: api.IMessageBase) {
-        let seqmsg = <api.ISequencedMessage>msg;
-        if (seqmsg.clientId != this.sharedString.client.longClientId) {
+        let lcmsg = <LCMessage>msg;
+        if (lcmsg.clientId != this.sharedString.client.longClientId) {
             let editor = this.editor;
             let delta = <api.IMergeTreeOp>msg.op;
             if (delta.type === api.MergeTreeDeltaType.INSERT) {
@@ -205,15 +244,10 @@ class FlowAdapter {
                     text = "\n";
                 }
                 if (text.length > 0) {
-                    let pos = delta.pos1;
                     this.setEditorBusy();
+                    console.log(`inserting "${text} at (${lcmsg.vspos1.line},${lcmsg.vspos1.character}`);
                     editor.edit((editBuilder) => {
-                        let localPos = this.sharedString.client.mergeTree.refPosToLocalPos(pos, seqmsg.referenceSequenceNumber,
-                            this.sharedString.client.getShortClientId(seqmsg.clientId));
-                        let lc = posToLc(this.sharedString.client.mergeTree, localPos);
-                        let vspos = new vscode.Position(lc.line, lc.column);
-                        console.log(`insert pos ${pos} localPos ${localPos} lc ${lc.line} ${lc.column} txt: ${text}`);
-                        editBuilder.insert(vspos, text);
+                        editBuilder.insert(lcmsg.vspos1, text);
                     }).then((b) => {
                         this.setEditorAvailable();
                     });
@@ -221,21 +255,10 @@ class FlowAdapter {
             }
             else if (delta.type === api.MergeTreeDeltaType.REMOVE) {
                 this.setEditorBusy();
-                let pos1 = delta.pos1;
-                let pos2 = delta.pos2;
                 // TODO: deal with local insert splitting remove range
                 // need segment list from actual remove and can then get multiple ranges from this
                 editor.edit((editBuilder) => {
-                    let localPos1 = this.sharedString.client.mergeTree.refPosToLocalPos(pos1, seqmsg.referenceSequenceNumber,
-                        this.sharedString.client.getShortClientId(seqmsg.clientId));
-                    let lc1 = posToLc(this.sharedString.client.mergeTree, localPos1);
-                    let vspos1 = new vscode.Position(lc1.line, lc1.column);
-                    let localPos2 = this.sharedString.client.mergeTree.refPosToLocalPos(pos2, seqmsg.referenceSequenceNumber,
-                        this.sharedString.client.getShortClientId(seqmsg.clientId));
-                    let lc2 = posToLc(this.sharedString.client.mergeTree, localPos2);
-                    let vspos2 = new vscode.Position(lc2.line, lc2.column);
-                    let range = new vscode.Range(vspos1, vspos2);
-                    console.log(`remove pos1 ${pos1} localPos1 ${localPos1} lc1 ${lc1.line} ${lc1.column} pos2 ${pos2} localPos2 ${localPos2} lc2 ${lc2.line} ${lc2.column}`);
+                    let range = new vscode.Range(lcmsg.vspos1, lcmsg.vspos2);
                     editBuilder.delete(range);
                 }).then((b) => {
                     this.setEditorAvailable();

@@ -161,6 +161,8 @@ export class SharedString implements API.ICollaborativeObject {
     }
 
     private processRemoteOperation(message: API.IBase) {
+        this.events.emit("pre-op", message);
+        
         if (this.isLoaded) {
             this.client.applyMsg(message);
         } else {
