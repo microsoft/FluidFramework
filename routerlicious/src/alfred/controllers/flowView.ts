@@ -811,6 +811,7 @@ export class FlowView {
             if (e.keyCode === KeyCode.backspace) {
                 this.cursor.pos--;
                 this.sharedString.removeText(this.cursor.pos, this.cursor.pos + 1);
+                this.localQueueRender();
             } else if (((e.keyCode === KeyCode.pageUp) || (e.keyCode === KeyCode.pageDown)) && (!this.ticking)) {
                 setTimeout(() => {
                     this.scroll(e.keyCode === KeyCode.pageUp);
@@ -859,6 +860,7 @@ export class FlowView {
                 code = CharacterCodes.linefeed;
             }
             this.sharedString.insertText(String.fromCharCode(code), pos);
+            this.localQueueRender();
         };
         this.flowContainer.onkeydown = keydownHandler;
         this.flowContainer.onkeypress = keypressHandler;
@@ -996,6 +998,14 @@ export class FlowView {
 
     public randomWordMoveEnd() {
         clearInterval(this.randWordTimer);
+    }
+
+    private localQueueRender() {
+        this.pendingRender = true;
+        window.requestAnimationFrame(() => {
+            this.pendingRender = false;
+            this.render(this.topChar, true);
+        });
     }
 
     private queueRender(msg: API.ISequencedMessage) {

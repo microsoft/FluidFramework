@@ -36,7 +36,7 @@ And add in SSD disk support (note you will need to create a a premium blob stora
 You'll need to update the below with the services created by Helm above. A work item for us is to either package
 this into a chart. Or standardize on the name of the services.
 
-`kubectl apply -f deployment/prague-config-map.yaml`
+`kubectl apply -f deployment/config/prague-config-map.yaml`
 
 To actually deploy our services you'll need to provide the cluster with credentials to our private container as
 documented at https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/. This boils

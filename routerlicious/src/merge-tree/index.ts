@@ -4,9 +4,10 @@ import * as MergeTree from "./mergeTree";
 import { EventEmitter } from "events";
 import * as Paparazzo from "./snapshot";
 import * as API from "../api";
+import * as Collections from "./collections";
 
 export * from "./mergeTree";
-
+export { Collections };
 import { loadSegments, findRandomWord } from "./text";
 export { loadSegments, findRandomWord };
 

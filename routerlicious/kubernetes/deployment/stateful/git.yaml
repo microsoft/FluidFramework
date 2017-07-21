@@ -27,7 +27,7 @@ spec:
     spec:
       containers:
       - name: git
-        image: prague.azurecr.io/gitssh:local
+        image: prague.azurecr.io/gitssh:508
         ports:
         - name: git
           containerPort: 22

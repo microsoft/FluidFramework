@@ -349,8 +349,8 @@ export function mergeTreeTest1() {
     //checkRemoveSegTree(segTree, 4, 13);
     checkInsertMergeTree(mergeTree, 4, makeCollabTextSegment("fi"));
     mergeTree.map({ leaf: printTextSegment }, MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
-    let segment = mergeTree.getContainingSegment(4, MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
-    console.log(mergeTree.getOffset(segment, MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId));
+    let segoff = mergeTree.getContainingSegment(4, MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
+    console.log(mergeTree.getOffset(segoff.segment, MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId));
     console.log(mergeTree.getText(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId));
     console.log(mergeTree.toString());
     TestPack().firstTest();

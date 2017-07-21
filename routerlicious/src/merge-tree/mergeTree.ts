@@ -82,6 +82,7 @@ export interface BlockUpdateActions {
 export interface SegmentActions<TAccum> {
     leaf?: SegmentAction<TAccum>;
     shift?: NodeAction<TAccum>;
+    contains?: NodeAction<TAccum>;
     pre?: BlockAction<TAccum>;
     post?: BlockAction<TAccum>;
 }
@@ -130,9 +131,11 @@ function addMarker(marker: Marker, markers: Object) {
 }
 
 function addNodeMarkers(node: Node, markers: Object) {
-    if (node.isLeaf() && ((<Segment>node).getType() == SegmentType.Marker) &&
-        ((<Marker>node).behaviors & API.MarkerBehaviors.PropagatesForward)) {
-        addMarker(<Marker>node, markers);
+    if (node.isLeaf()) {
+        if (((<Segment>node).getType() == SegmentType.Marker) &&
+            ((<Marker>node).behaviors & API.MarkerBehaviors.PropagatesForward)) {
+            addMarker(<Marker>node, markers);
+        }
     }
     else {
         Properties.extend(markers, (<Block>node).rightmostMarkers);
@@ -1141,7 +1144,7 @@ export class Client {
             minimumSequenceNumber: undefined,
             offset: seq,
             op: {
-                type: API.MergeTreeDeltaType.INSERT, marker: { type: markerType, behaviors}, pos1: pos
+                type: API.MergeTreeDeltaType.INSERT, marker: { type: markerType, behaviors }, pos1: pos
             },
             type: API.OperationType,
         };
@@ -1982,10 +1985,16 @@ export class MergeTree {
     }
 
     getContainingSegment(pos: number, refSeq: number, clientId: number) {
-        if (pos !== undefined) {
-            return this.searchBlock(this.root, refSeq, clientId, pos);
-        }
-        // TODO: error on undefined
+        let segment: Segment;
+        let offset: number;
+
+        let leaf = (leafSeg: Segment, segpos: number, refSeq: number, clientId: number, start: number) => {
+            segment = leafSeg;
+            offset = start;
+            return false;
+        };
+        this.searchBlock(this.root, pos, 0, refSeq, clientId, { leaf });
+        return { segment, offset };
     }
 
     blockLength(node: Block, refSeq: number, clientId: number) {
@@ -2041,38 +2050,44 @@ export class MergeTree {
         }
     }
 
-    search<TAccum>(pos: number, refSeq: number, clientId: number,
-        actions?: SegmentActions<TAccum>, accum?: TAccum): Segment {
-        return this.searchBlock(this.root, pos, refSeq, clientId, actions);
+    refPosToLocalPos(pos: number, refSeq: number, clientId: number) {
+        let segoff = this.getContainingSegment(pos, refSeq, clientId);
+        let localPos = segoff.offset + this.getOffset(segoff.segment, UniversalSequenceNumber,
+            this.collabWindow.clientId);
+        return localPos;
     }
 
-    searchBlock<TAccum>(block: Block, pos: number, refSeq: number, clientId: number, actions?: SegmentActions<TAccum>, accum?: TAccum): Segment {
+    search<TAccum>(pos: number, refSeq: number, clientId: number,
+        actions?: SegmentActions<TAccum>, accum?: TAccum): Segment {
+        return this.searchBlock(this.root, pos, 0, refSeq, clientId, actions);
+    }
+
+    searchBlock<TAccum>(block: Block, pos: number, segpos: number, refSeq: number, clientId: number, actions?: SegmentActions<TAccum>, accum?: TAccum): Segment {
         let children = block.children;
-        let start = pos;
-        let segpos = 0;
         if (actions && actions.pre) {
             actions.pre(block, segpos, refSeq, clientId, undefined, undefined, accum);
         }
+        let contains = actions && actions.contains;
         for (let childIndex = 0; childIndex < block.childCount; childIndex++) {
             let child = children[childIndex];
             let len = this.nodeLength(child, refSeq, clientId);
-            if (start < len) {
+            if (((!contains) && (pos < len)) || (contains && contains(child, pos, refSeq, clientId, undefined, undefined, accum))) {
                 // found entry containing pos
                 if (!child.isLeaf()) {
-                    return this.searchBlock(<Block>child, pos, refSeq, clientId, actions);
+                    return this.searchBlock(<Block>child, pos, segpos, refSeq, clientId, actions);
                 }
                 else {
                     if (actions && actions.leaf) {
-                        actions.leaf(<Segment>child, segpos, refSeq, clientId, start, -1, accum);
+                        actions.leaf(<Segment>child, segpos, refSeq, clientId, pos, -1, accum);
                     }
                     return <Segment>child;
                 }
             }
             else {
-                start -= len;
+                pos -= len;
                 segpos += len;
                 if (actions && actions.shift) {
-                    actions.shift(child, segpos, refSeq, clientId, start, undefined, accum);
+                    actions.shift(child, segpos, refSeq, clientId, pos, undefined, accum);
                 }
             }
         }
@@ -2572,6 +2587,7 @@ export class MergeTree {
 
     blockUpdate(block: Block) {
         let len = 0;
+        block.rightmostMarkers = {};
         for (let i = 0; i < block.childCount; i++) {
             let child = block.children[i];
             len += nodeTotalLength(child);

@@ -1,21 +1,21 @@
 apiVersion: apps/v1beta1
 kind: Deployment
 metadata:
-  name: scriptorium
+  name: paparazzi
 spec:
   replicas: 1
   template:
     metadata:
       labels:
-        app: scriptorium
+        app: paparazzi
     spec:
       containers:
       - name: prague
-        image: prague.azurecr.io/prague:local
+        image: prague.azurecr.io/prague:511
         command:
           - 'npm'
           - 'run'
-          - 'scriptorium'
+          - 'paparazzi'
         env:
         - name: DEBUG
           value: "routerlicious:*"

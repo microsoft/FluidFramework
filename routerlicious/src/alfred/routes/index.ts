@@ -27,3 +27,6 @@ export { perf };
 
 import producer from "./producer";
 export { producer };
+
+import democreator from "./democreator";
+export { democreator };

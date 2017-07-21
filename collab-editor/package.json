@@ -11,14 +11,19 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:extension.collab"
+    "onCommand:extension.collabInvite",
+    "onCommand:extension.collabJoin"
   ],
   "main": "./out/src/extension",
   "contributes": {
     "commands": [
       {
-        "command": "extension.collab",
-        "title": "Collaborate"
+        "command": "extension.collabInvite",
+        "title": "CollabInvite"
+      },
+      {
+        "command": "extension.collabJoin",
+        "title": "CollabJoin"
       }
     ]
   },

@@ -1,4 +1,4 @@
-FROM node:7.7.4-alpine
+FROM node:8.1.4-alpine
 
 # Add git since we reference certain npm modules with git
 RUN apk update && apk upgrade && apk add --no-cache git
