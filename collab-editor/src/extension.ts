@@ -242,7 +242,9 @@ class FlowAdapter {
                 });
             }
         }
-        // TODO: remove
+        else {
+            this.setEditorAvailable();
+        }
     }
 
     insertTree() {
@@ -302,8 +304,8 @@ function initializeSnapshot(invite: boolean) {
                     flowAdapter.insertTree();
                 }
                 else {
-                    this.setEditorAvailable();
-                    this.serverLive = true;
+                    flowAdapter.setEditorAvailable();
+                    flowAdapter.serverLive = true;
                 }
             }
 
