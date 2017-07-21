@@ -98,7 +98,7 @@ export class GitManager {
 
         // Construct a new tree from the collection of hashes
         const tree: any[] = [];
-        for (var i = 0; i < blobs.length; i++) {
+        for (let i = 0; i < blobs.length; i++) {
             tree.push({
                 mode: "100644",
                 path: files[i].path,
