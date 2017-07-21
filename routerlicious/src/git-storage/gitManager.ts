@@ -1,4 +1,5 @@
 import * as request from "request";
+import { debug } from "./debug";
 
 /**
  * File stored in a git repo
@@ -22,7 +23,7 @@ export class GitManager {
     /**
      * Reads the object with the given ID. We defer to the client implementation to do the actual read.
      */
-    public async getCommits(branch: string, sha: string, count: string): Promise<any> {
+    public async getCommits(sha: string, count: number): Promise<any> {
         return new Promise<any>((resolve, reject) => {
             request.get(
                 {
@@ -33,7 +34,7 @@ export class GitManager {
                     if (error) {
                         return reject(error);
                     } else if (response.statusCode !== 200) {
-                        return reject(response.statusCode);
+                        return resolve([]);
                     } else {
                         return resolve(response.body);
                     }
@@ -70,7 +71,7 @@ export class GitManager {
      */
     public async write(branch: string, files: IGitFile[], message: string): Promise<void> {
         // Iterate through all the files and create blobs for them and retrieve the hashes
-        const blobs = await Promise.all(files.map((file) => {
+        const blobsP = Promise.all(files.map((file) => {
             return new Promise<string>((resolve, reject) => {
                 request.post(
                     {
@@ -95,6 +96,10 @@ export class GitManager {
                     });
             });
         }));
+        const lastCommitP = this.getCommits(branch, 1);
+        const blobsAndHead = await Promise.all([blobsP, lastCommitP]);
+        const blobs = blobsAndHead[0];
+        const lastCommit = blobsAndHead[1];
 
         // Construct a new tree from the collection of hashes
         const tree: any[] = [];
@@ -109,7 +114,7 @@ export class GitManager {
         const treeSha = await new Promise<string>((resolve, reject) => {
             request.post(
                 {
-                    body: tree,
+                    body: { tree },
                     headers: {
                         "Content-Type": "application/json",
                     },
@@ -130,12 +135,12 @@ export class GitManager {
         // Construct a commit for the tree
         const commit = {
             author: {
-                date: Date.now(),
+                date: new Date().toISOString(),
                 email: "kurtb@microsoft.com",
                 name: "Kurt Berglund",
             },
             message: "Commit @{TODO seq #}",
-            parents: [],
+            parents: lastCommit.length > 0 ? [lastCommit[0].sha] : [],
             tree: treeSha,
         };
         const commitSha = await new Promise<string>((resolve, reject) => {
@@ -164,6 +169,7 @@ export class GitManager {
             force: true,
             sha: commitSha,
         };
+        debug(commitSha);
         await new Promise<string>((resolve, reject) => {
             request.patch(
                 {
@@ -177,7 +183,7 @@ export class GitManager {
                 (error, response, body) => {
                     if (error) {
                         return reject(error);
-                    } else if (response.statusCode !== 201) {
+                    } else if (response.statusCode !== 200) {
                         return reject(response.statusCode);
                     } else {
                         return resolve(response.body.sha);
@@ -204,7 +210,7 @@ function repositoryExists(apiBaseUrl: string, repository: string) {
 function createRepository(apiBaseUrl: string, repository: string): Promise<void> {
     return new Promise<void>((resolve, reject) => {
         request.post({
-                body: { repository },
+                body: { name: repository },
                 headers: {
                     "Content-Type": "application/json",
                 },

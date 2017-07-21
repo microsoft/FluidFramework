@@ -2,22 +2,27 @@ import { Router } from "express";
 import * as nconf from "nconf";
 import * as request from "request";
 
-const historian = nconf.get("git:historian");
+const gitConfig = nconf.get("git");
 
 /**
  * Retrieves the stored object
  */
 async function getObject(objectId: string, version: string, path: string): Promise<string> {
+    const url =
+        `${gitConfig.historian}/repos/${gitConfig.repository}/contents/${path}?ref=${encodeURIComponent(version)}`;
     return new Promise<string>((resolve, reject) => {
         request.get(
-            { url: `${historian}/api/documents/${objectId}/master/object/${version}/${path}`, json: true },
+            {
+                url,
+                json: true,
+            },
             (error, response, body) => {
                 if (error) {
                     reject(error);
                 } else if (response.statusCode !== 200) {
                     reject(response.statusCode);
                 } else {
-                    resolve(body);
+                    resolve(Buffer.from(body.content, body.encoding).toString("utf-8"));
                 }
             });
     });

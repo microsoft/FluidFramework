@@ -20,8 +20,10 @@ export function create(store: nconf.Provider) {
 
     // TODO we probably want to switch morgan to use the common format in prod
     app.use(morgan(store.get("logger:morganFormat"), { stream }));
-    app.use(bodyParser.json());
-    app.use(bodyParser.urlencoded({ extended: false }));
+
+    const requestSize = store.get("requestSizeLimit");
+    app.use(bodyParser.json({ limit: requestSize }));
+    app.use(bodyParser.urlencoded({ limit: requestSize, extended: false }));
 
     const apiRoutes = routes.create(store);
     app.use(apiRoutes.git.blobs);

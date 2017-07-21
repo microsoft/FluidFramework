@@ -6,5 +6,6 @@
         "level": "info",
         "timestamp": true
     },
+    "requestSizeLimit": "1gb",
     "storageDir": "/home/node/documents"
 }
