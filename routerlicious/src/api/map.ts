@@ -424,7 +424,7 @@ class Map extends api.CollaborativeObject implements api.IMap {
 
         // Load from the snapshot if it exists
         const rawSnapshot = connection.existing && connection.versions.length > 0
-            ? await services.objectStorageService.read(id, connection.versions[0].hash, snapshotFileName)
+            ? await services.objectStorageService.read(id, connection.versions[0].sha, snapshotFileName)
             : null;
         const snapshot: ISnapshot = rawSnapshot
             ? JSON.parse(rawSnapshot)

@@ -25,9 +25,3 @@ services:
             - .:/usr/src/server
         command: npm run tmz:watch
         restart: always
-    historian:
-        volumes:
-            - .:/usr/src/server
-        ports:
-            - "3001:3000"
-        restart: always
