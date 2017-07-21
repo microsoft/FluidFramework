@@ -166,6 +166,12 @@ describe("Historian", () => {
                             assert.equal(getResult.body.sha, result.body.sha);
                         });
                 });
+
+                it("Can create an existing blob without error", async () => {
+                    await createRepo(supertest, testRepoName);
+                    await createBlob(supertest, testRepoName, testBlob);
+                    await createBlob(supertest, testRepoName, testBlob);
+                });
             });
 
             describe("Trees", () => {
