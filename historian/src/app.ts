@@ -31,6 +31,7 @@ export function create(store: nconf.Provider) {
     app.use(apiRoutes.git.trees);
     app.use(apiRoutes.git.commits);
     app.use(apiRoutes.repository.commits);
+    app.use(apiRoutes.repository.contents);
 
     // catch 404 and forward to error handler
     app.use((req, res, next) => {

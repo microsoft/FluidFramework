@@ -129,3 +129,16 @@ export function commitToICommit(commit: git.Commit): ICommit {
         url: "",
     };
 }
+
+export function blobToIBlob(blob: git.Blob, repo: string): IBlob {
+    const buffer = blob.content();
+    const sha = blob.id().tostrS();
+
+    return {
+        content: buffer.toString("base64"),
+        encoding: "base64",
+        sha,
+        size: buffer.length,
+        url: `/repos/${repo}/git/blobs/${sha}`,
+    };
+}

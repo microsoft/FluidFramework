@@ -7,6 +7,7 @@ import * as repos from "./git/repos";
 import * as tags from "./git/tags";
 import * as trees from "./git/trees";
 import * as repositoryCommits from "./repository/commits";
+import * as contents from "./repository/contents";
 
 export interface IRoutes {
     git: {
@@ -19,6 +20,7 @@ export interface IRoutes {
     };
     repository: {
         commits: Router;
+        contents: Router;
     };
 }
 
@@ -34,6 +36,7 @@ export function create(store: nconf.Provider): IRoutes {
         },
         repository: {
             commits: repositoryCommits.create(store),
+            contents: contents.create(store),
         },
     };
 }

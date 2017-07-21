@@ -2,7 +2,7 @@ import { Router } from "express";
 import * as nconf from "nconf";
 import * as path from "path";
 import * as winston from "winston";
-import { IBlob, ICreateBlobParams, ICreateBlobResponse } from "../../resources";
+import { blobToIBlob, IBlob, ICreateBlobParams, ICreateBlobResponse } from "../../resources";
 import * as utils from "../../utils";
 
 /**
@@ -16,15 +16,7 @@ async function getBlob(gitDir: string, repo: string, sha: string): Promise<IBlob
     const repository = await utils.openRepo(gitDir, repo);
     const blob = await repository.getBlob(sha);
 
-    const buffer = blob.content();
-
-    return {
-        content: buffer.toString("base64"),
-        encoding: "base64",
-        sha,
-        size: buffer.length,
-        url: `/repos/${repo}/git/blobs/${sha}`,
-    };
+    return blobToIBlob(blob, repo);
 }
 
 async function createBlob(gitDir: string, repo: string, blob: ICreateBlobParams): Promise<ICreateBlobResponse> {

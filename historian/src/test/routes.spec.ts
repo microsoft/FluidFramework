@@ -307,6 +307,19 @@ describe("Historian", () => {
                         });
                 });
             });
+
+            describe("Content", () => {
+                it("Can retrieve a stored object", async () => {
+                    await initBaseRepo(supertest, testRepoName, testBlob, testTree, testCommit, testRef);
+                    return supertest
+                        .get(`/repos/${testRepoName}/contents/${testTree.tree[0].path}?ref=master`)
+                        .expect(200)
+                        .expect((result) => {
+                            // tslint:disable
+                            console.log(result.body);
+                        });
+                });
+            });
         });
     });
 });
