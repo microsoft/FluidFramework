@@ -22,13 +22,8 @@ RUN sed -i "s/#PermitEmptyPasswords.*/PermitEmptyPasswords\ yes/" /etc/ssh/sshd_
 RUN ssh-keygen -A
 # COPY entrypoint.sh /usr/local/bin/
 
-# Switch to the git user and setup the repo
-USER git
-RUN mkdir /home/git/prague.git
-WORKDIR /home/git/prague.git
-RUN git init --bare
+WORKDIR /home/git
 
-# Switch back to root and expose and select the startup command
 USER root
 
 EXPOSE 22

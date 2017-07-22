@@ -19,8 +19,12 @@ RUN npm run build
 # Expose the port the app runs under
 EXPOSE 3000
 
+# GITHUB#162
+# To allow for ssh access to the repo (to clone locally) we share the volume within a k8s pod with a ssh service.
+# Mounted volumes with non-root users get tricky in this case. For now simply running as root for simplicity but
+# ideally the node user could gain write permissions to this volume.
 # Switch to the node user for security
-USER node
+# USER node
 
 # And set the default command to start the server
 CMD ["npm", "start"]

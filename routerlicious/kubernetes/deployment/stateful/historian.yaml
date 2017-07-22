@@ -1,0 +1,60 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: historian
+  labels:
+    app: historian
+spec:
+  ports:
+    - name: ssh
+      port: 22
+      targetPort: ssh
+    - name: http
+      port: 80
+      targetPort: http
+  clusterIP: None
+  selector:
+    app: historian
+---
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name: historian
+spec:
+  serviceName: historian
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: historian
+    spec:
+      containers:
+      - name: git
+        image: prague.azurecr.io/gitssh:539
+        ports:
+        - name: ssh
+          containerPort: 22
+        volumeMounts:
+        - name: data
+          mountPath: /home/git
+      - name: historian
+        image: prague.azurecr.io/historian:540
+        ports:
+        - name: http
+          containerPort: 3000
+        volumeMounts:
+        - name: data
+          mountPath: /home/node/documents
+      imagePullSecrets:
+      - name: regsecret
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+      annotations:
+        volume.beta.kubernetes.io/storage-class: ssd
+    spec:
+      accessModes: 
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 128Gi
