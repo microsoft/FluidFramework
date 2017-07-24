@@ -7,22 +7,17 @@ export class ObjectStorageService implements api.IObjectStorageService {
     constructor(url: string) {
         this.clientStorageService = new socketStorage.ClientObjectStorageService(url);
     }
-
-    public create(name: string): Promise<void> {
-        return this.clientStorageService.create(name);
-    }
-
     /**
      * Reads the object with the given ID. We defer to the client implementation to do the actual read.
      */
-    public read(id: string): Promise<any> {
-        return this.clientStorageService.read(id);
+    public read(id: string, version: string, path: string): Promise<any> {
+        return this.clientStorageService.read(id, version, path);
     }
 
     /**
      * Writes to the object with the given ID
      */
-    public write(id: string, data: any): Promise<void> {
-        return this.clientStorageService.write(id, data);
+    public write(id: string, objects: api.IObject[]): Promise<void> {
+        return this.clientStorageService.write(id, objects);
     }
 }

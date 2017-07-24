@@ -1,0 +1,9 @@
+version: '3'
+services:
+    augmentation:
+        build: .
+        ports:
+            - "5000:5000"
+        command: node dist/index.js
+        volumes:
+            - .:/usr/src/server

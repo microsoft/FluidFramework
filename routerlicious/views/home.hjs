@@ -12,6 +12,7 @@
                 <li><a href="/canvas/canvas">Ink Canvas</a></li>
                 <li><a href="/sharedText/string">Shared String</a></li>
                 <li><a href="/scribe">Scribe</a></li>
+                <li><a href="/democreator">Demo Creator</a></li>
             </ul>
         </div>
     {{/content}}

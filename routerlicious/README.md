@@ -85,3 +85,7 @@ In the browser you can enable them by setting localStorage.debug variable.
 `localStorage.debug = 'routerlicious:*'`
 
 After which you will need to reload the page.
+
+## Viewing Snapshots
+
+git clone ssh://git@localhost:8022/home/git/test

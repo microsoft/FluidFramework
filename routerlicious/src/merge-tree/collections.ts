@@ -660,7 +660,7 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
         return node;
     }
 
-    mapRange(action: Base.PropertyAction<TKey, TData>, start?: TKey, end?: TKey) {
+    mapRange<TAccum>(action: Base.PropertyAction<TKey, TData>, accum?: TAccum, start?: TKey, end?: TKey) {
         this.nodeMap(this.root, action, start, end);
     }
 

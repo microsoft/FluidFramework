@@ -22,6 +22,8 @@ export interface IInkSnapshot {
     snapshot: ISnapshot;
 };
 
+const snapshotFileName = "value";
+
 export class InkCollaborativeObject extends api.CollaborativeObject implements IInk {
     public type: string = InkExtension.Type;
 
@@ -72,7 +74,7 @@ export class InkCollaborativeObject extends api.CollaborativeObject implements I
             snapshot: _.clone(this.inkSnapshot),
         };
 
-        return this.services.objectStorageService.write(this.id, snapshot);
+        return this.services.objectStorageService.write(this.id, [{ path: snapshotFileName, data: snapshot}]);
     }
 
     public getLayers(): IInkLayer[] {
@@ -92,7 +94,9 @@ export class InkCollaborativeObject extends api.CollaborativeObject implements I
         this.connection = await services.deltaNotificationService.connect(id, this.type);
 
         // Load from the snapshot if it exists
-        const rawSnapshot = this.connection.existing ? await services.objectStorageService.read(id) : null;
+        const rawSnapshot = this.connection.existing && this.connection.versions.length > 0
+            ? await services.objectStorageService.read(id, this.connection.versions[0].sha, snapshotFileName)
+            : null;
         const snapshot: IInkSnapshot = rawSnapshot
             ? JSON.parse(rawSnapshot)
             : { sequenceNumber: 0, snapshot: {} };

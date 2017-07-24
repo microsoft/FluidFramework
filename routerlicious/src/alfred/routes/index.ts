@@ -33,3 +33,6 @@ export { object };
 
 import intelligence from "./intelligence";
 export { intelligence };
+
+import democreator from "./democreator";
+export { democreator };

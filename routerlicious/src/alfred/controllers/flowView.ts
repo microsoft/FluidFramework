@@ -811,6 +811,7 @@ export class FlowView {
             if (e.keyCode === KeyCode.backspace) {
                 this.cursor.pos--;
                 this.sharedString.removeText(this.cursor.pos, this.cursor.pos + 1);
+                this.localQueueRender();
             } else if (((e.keyCode === KeyCode.pageUp) || (e.keyCode === KeyCode.pageDown)) && (!this.ticking)) {
                 setTimeout(() => {
                     this.scroll(e.keyCode === KeyCode.pageUp);
@@ -859,6 +860,7 @@ export class FlowView {
                 code = CharacterCodes.linefeed;
             }
             this.sharedString.insertText(String.fromCharCode(code), pos);
+            this.localQueueRender();
         };
         this.flowContainer.onkeydown = keydownHandler;
         this.flowContainer.onkeypress = keypressHandler;
@@ -923,11 +925,6 @@ export class FlowView {
             scrollTo += halfport;
         }
         this.render(scrollTo);
-    }
-
-    public renderIfVisible(viewChar: number) {
-        // console.log(`view char: ${viewChar} top: ${this.topChar} adj: ${this.adjustedTopChar} bot: ${this.viewportEndChar}`);
-        this.render(this.topChar, true);
     }
 
     public render(topChar?: number, changed = false) {
@@ -1003,27 +1000,34 @@ export class FlowView {
         clearInterval(this.randWordTimer);
     }
 
+    private localQueueRender() {
+        this.pendingRender = true;
+        window.requestAnimationFrame(() => {
+            this.pendingRender = false;
+            this.render(this.topChar, true);
+        });
+    }
+
     private queueRender(msg: API.ISequencedMessage) {
         if ((!this.pendingRender) && msg && msg.op) {
             this.pendingRender = true;
             window.requestAnimationFrame(() => {
                 this.pendingRender = false;
-                let viewChar = 0;
-                let delta = <API.IMergeTreeDeltaMsg>msg.op;
-                if (delta.type === API.MergeTreeMsgType.INSERT) {
-                    viewChar = delta.pos1 + delta.text.length;
-                    if ((delta.pos1 <= this.cursor.pos) && (msg.clientId !== this.client.longClientId)) {
-                        this.cursor.pos += delta.text.length;
+                if (msg.clientId !== this.client.longClientId) {
+                    let delta = <API.IMergeTreeOp>msg.op;
+                    if (delta.type === API.MergeTreeDeltaType.INSERT) {
+                        if (delta.pos1 <= this.cursor.pos) {
+                            this.cursor.pos += delta.text.length;
+                        }
+                    } else if (delta.type === API.MergeTreeDeltaType.REMOVE) {
+                        if (delta.pos2 <= this.cursor.pos) {
+                            this.cursor.pos -= (delta.pos2 - delta.pos1);
+                        } else if (this.cursor.pos >= delta.pos1) {
+                            this.cursor.pos = delta.pos1;
+                        }
                     }
-                } else {
-                    if (delta.pos2 <= this.cursor.pos) {
-                        this.cursor.pos -= (delta.pos2 - delta.pos1);
-                    } else if (this.cursor.pos >= delta.pos1) {
-                        this.cursor.pos = delta.pos1;
-                    }
-                    viewChar = delta.pos2;
                 }
-                this.renderIfVisible(viewChar);
+                this.render(this.topChar, true);
             });
         }
     }

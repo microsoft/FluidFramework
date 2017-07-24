@@ -48,6 +48,13 @@ services:
         command: npm run tmz
         environment:
             - DEBUG=routerlicious:*
+    historian:
+        build: ../historian
+        ports:
+            - "3001:3000"
+        environment:
+            - DEBUG=routerlicious:*
+        restart: always
     zookeeper:
         image: wurstmeister/zookeeper:latest
         ports:

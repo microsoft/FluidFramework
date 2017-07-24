@@ -64,7 +64,9 @@ export class Snapshot {
             let ptext = alltexts[startIndex + segCount];
             segCount++;
             texts.push(ptext);
-            lengthChars += ptext.text.length;
+            if (ptext.text != undefined) {
+                lengthChars += ptext.text.length;
+            }
         }
         return {
             chunkStartSegmentIndex: startIndex,
@@ -81,9 +83,13 @@ export class Snapshot {
         let storage = services.objectStorageService;
         let chunk1 = this.getCharLengthSegs(this.texts, 10000);
         let chunk2 = this.getCharLengthSegs(this.texts, chunk1.totalLengthChars, chunk1.chunkSegmentCount);
-        let p1 = storage.write(id+"header", chunk1);
-        let p2 = storage.write(id, chunk2);
-        return Promise.all([p1,p2]);
+        let writeP = storage.write(
+            id, 
+            [
+                { path: "header", data: chunk1 },
+                { path: "body", data: chunk2 }
+            ]);
+        return writeP;
     }
 
     extractSync() {
@@ -98,12 +104,22 @@ export class Snapshot {
         let extractSegment = (segment: MergeTree.Segment, pos: number, refSeq: number, clientId: number,
             start: number, end: number) => {
             if ((segment.seq != MergeTree.UnassignedSequenceNumber) && (segment.seq <= this.seq) &&
-                (segment.getType() == MergeTree.SegmentType.Text)) {
-                if ((segment.removedSeq === undefined) ||
-                    (segment.removedSeq == MergeTree.UnassignedSequenceNumber) ||
-                    (segment.removedSeq > this.seq)) {
-                    let textSegment = <MergeTree.TextSegment>segment;
-                    texts.push({ props: textSegment.properties, text: textSegment.text});
+                ((segment.removedSeq === undefined) || (segment.removedSeq == MergeTree.UnassignedSequenceNumber) ||
+                    (segment.removedSeq > this.seq))) {
+                switch (segment.getType()) {
+                    case MergeTree.SegmentType.Text:
+                        let textSegment = <MergeTree.TextSegment>segment;
+                        texts.push({ props: textSegment.properties, text: textSegment.text });
+                        break;
+                    case MergeTree.SegmentType.Marker:
+                        // console.log("got here");
+                        let markerSeg = <MergeTree.Marker>segment;
+                        texts.push({
+                            props: markerSeg.properties,
+                            // TODO: marker end position
+                            marker: { behaviors: markerSeg.behaviors, type: markerSeg.type },
+                        })
+                        break;
                 }
             }
             return true;
@@ -113,9 +129,14 @@ export class Snapshot {
         return texts;
     }
 
-    static async loadChunk(services: API.ICollaborationServices, id: string): Promise<API.MergeTreeChunk> {
-        let chunkAsString: string = await services.objectStorageService.read(id);
-        if (chunkAsString.length !== 0) {
+    static async loadChunk(
+        services: API.ICollaborationServices,
+        id: string,
+        version: string,
+        path: string): Promise<API.MergeTreeChunk> {
+
+        if (version) {
+            let chunkAsString: string = await services.objectStorageService.read(id, version, path);
             return JSON.parse(chunkAsString) as API.MergeTreeChunk;
         } else {
             return {
@@ -290,7 +311,7 @@ export class Snapshot {
                 offset += 4;
                 let text = buf.toString('utf8', offset, offset + segmentLengthBytes);
                 offset += segmentLengthBytes;
-                mergeTree.appendTextSegment(text);
+                mergeTree.appendSegment({ text: text });
                 remainingBytes -= (offset - prevOffset);
             }
             position += actualBytes;

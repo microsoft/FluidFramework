@@ -18,6 +18,9 @@ export interface IConnected {
 
     // Whether or not this is an existing object
     existing: boolean;
+
+    // Available revisions for this document
+    revisions: any[];
 }
 
 /**

@@ -18,6 +18,8 @@ export class DeltaStorageService implements api.IDeltaStorageService {
                 (error, response, body) => {
                     if (error) {
                         reject(error);
+                    } else if (response.statusCode !== 200) {
+                        reject(response.statusCode);
                     } else {
                         resolve(body);
                     }

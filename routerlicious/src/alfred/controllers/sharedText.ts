@@ -214,11 +214,10 @@ export async function onLoad(id: string, config: any) {
         theFlow.setEdit();
     });
 
-    sharedString.on("loadFinshed", (data: MergeTreeChunk) => {
+    sharedString.on("loadFinshed", (data: MergeTreeChunk, existing: boolean) => {
         // Bootstrap worker service.
         shared.registerWorker(config);
-
-        if (sharedString.client.getLength() !== 0) {
+        if (existing) {
             theFlow.loadFinished(clockStart);
         } else {
             console.log("local load...");
@@ -229,9 +228,16 @@ export async function onLoad(id: string, config: any) {
                     }
                     const segments = SharedString.loadSegments(body, 0);
                     for (const segment of segments) {
-                        let textSegment = <SharedString.TextSegment>segment;
-                        sharedString.insertText(textSegment.text, sharedString.client.getLength(),
-                            textSegment.properties);
+                        if (segment.getType() === SharedString.SegmentType.Text) {
+                            let textSegment = <SharedString.TextSegment>segment;
+                            sharedString.insertText(textSegment.text, sharedString.client.getLength(),
+                                textSegment.properties);
+                        } else {
+                            // assume marker
+                            let marker = <SharedString.Marker>segment;
+                            // tslint:disable:max-line-length
+                            sharedString.insertMarker(sharedString.client.getLength(), marker.type, marker.behaviors, marker.properties);
+                        }
                     }
                     theFlow.loadFinished(clockStart);
                 });

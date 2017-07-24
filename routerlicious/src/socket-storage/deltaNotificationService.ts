@@ -39,7 +39,8 @@ export class DeltaNotificationService implements api.IDeltaNotificationService {
                             this,
                             id,
                             response.clientId,
-                            response.existing);
+                            response.existing,
+                            response.revisions);
                         resolve(connection);
                     }
                 });

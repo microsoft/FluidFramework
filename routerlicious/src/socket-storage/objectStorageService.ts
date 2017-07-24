@@ -8,11 +8,13 @@ export class ClientObjectStorageService implements api.IObjectStorageService {
     constructor(private url: string) {
     }
 
-    public read(id: string): Promise<any> {
+    public read(id: string, version: string, path: string): Promise<any> {
         return new Promise<any>((resolve, reject) => {
-            request.get(`${this.url}/storage/${id}`, (error, response, body) => {
+            request.get(`${this.url}/storage/${id}/${version}/${path}`, (error, response, body) => {
                 if (error) {
                     reject(error);
+                } else if (response.statusCode !== 200) {
+                    reject(response.statusCode);
                 } else {
                     resolve(body);
                 }
@@ -21,9 +23,9 @@ export class ClientObjectStorageService implements api.IObjectStorageService {
     }
 
     // TODO (mdaumi): Need to implement some kind of auth mechanism here.
-    public write(id: string, data: any): Promise<void> {
+    public write(id: string, objects: api.IObject[]): Promise<void> {
         return new Promise<any>((resolve, reject) => {
-            request.post(`${this.url}/storage/${id}`, {body: data, json: true}, (error, response, body) => {
+            request.post(`${this.url}/storage/${id}`, {body: objects, json: true}, (error, response, body) => {
                 if (error) {
                     reject(error);
                 } else {
@@ -33,15 +35,4 @@ export class ClientObjectStorageService implements api.IObjectStorageService {
         });
     }
 
-    public create(name: string): Promise<void> {
-        return new Promise<any>((resolve, reject) => {
-            request.post(`${this.url}/storage/create/${name}`, (error, response, body) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    resolve(body);
-                }
-            });
-        });
-    }
 }

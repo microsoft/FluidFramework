@@ -1,21 +1,20 @@
 apiVersion: apps/v1beta1
 kind: Deployment
 metadata:
-  name: scriptorium
+  name: alfred
 spec:
-  replicas: 1
+  replicas: 4
   template:
     metadata:
       labels:
-        app: scriptorium
+        app: alfred
     spec:
       containers:
-      - name: prague
-        image: prague.azurecr.io/prague:443
-        command:
-          - 'npm'
-          - 'run'
-          - 'scriptorium'
+      - name: routerlicious
+        image: prague.azurecr.io/prague:511
+        ports:
+        - name: ui
+          containerPort: 3000
         env:
         - name: DEBUG
           value: "routerlicious:*"
@@ -29,3 +28,18 @@ spec:
         - name: config
           configMap:
             name: prague
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: alfred
+  labels:
+    app: alfred
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: ui
+  selector:
+    app: alfred

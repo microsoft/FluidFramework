@@ -4,7 +4,6 @@ import * as nconf from "nconf";
 import * as path from "path";
 import * as socketIoEmitter from "socket.io-emitter";
 import * as api from "../api";
-import { ObjectStorageService } from "../shared/objectStorageService";
 import * as socketStorage from "../socket-storage";
 
 // Setup the configuration system - pull arguments, then environment variables
@@ -161,7 +160,7 @@ async function consume() {
     const services: api.ICollaborationServices = {
         deltaNotificationService: new socketStorage.DeltaNotificationService(alfredUrl),
         deltaStorageService: new socketStorage.DeltaStorageService(alfredUrl),
-        objectStorageService: new ObjectStorageService(alfredUrl),
+        objectStorageService: new socketStorage.ClientObjectStorageService(alfredUrl),
     };
 
     await getOrCreateBucket(minioClient, storageBucket);

@@ -1,3 +1,4 @@
+
 // Setup the configuration system - pull arguments, then environment variables - prior to loading other modules that
 // may depend on the config already being initialized
 import * as nconf from "nconf";

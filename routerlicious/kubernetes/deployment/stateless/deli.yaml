@@ -1,21 +1,21 @@
 apiVersion: apps/v1beta1
 kind: Deployment
 metadata:
-  name: paparazzi
+  name: deli
 spec:
   replicas: 1
   template:
     metadata:
       labels:
-        app: paparazzi
+        app: deli
     spec:
       containers:
       - name: prague
-        image: prague.azurecr.io/prague:443
+        image: prague.azurecr.io/prague:511
         command:
           - 'npm'
           - 'run'
-          - 'paparazzi'
+          - 'deli'
         env:
         - name: DEBUG
           value: "routerlicious:*"

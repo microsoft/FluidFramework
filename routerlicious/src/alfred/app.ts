@@ -1,4 +1,5 @@
 import * as bodyParser from "body-parser";
+import * as compression from "compression";
 import * as express from "express";
 import { Express } from "express";
 import * as morgan from "morgan";
@@ -32,7 +33,7 @@ app.set("trust proxy", 1);
 app.set("views", path.join(__dirname, "../../views"));
 app.set("view engine", "hjs");
 
-// uncomment after placing your favicon in /public
+app.use(compression());
 app.use(favicon(path.join(__dirname, "../../public", "favicon.ico")));
 // TODO we probably want to switch morgan to use the common format in prod
 app.use(morgan(nconf.get("logger:morganFormat"), { stream: utils.stream }));
@@ -57,6 +58,7 @@ app.use("/perf", routes.perf);
 app.use("/producer", routes.producer);
 app.use("/object", routes.object);
 app.use("/intelligence", routes.intelligence);
+app.use("/democreator", routes.democreator);
 app.use(routes.home);
 
 // catch 404 and forward to error handler

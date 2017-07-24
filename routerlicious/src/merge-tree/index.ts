@@ -4,11 +4,12 @@ import * as MergeTree from "./mergeTree";
 import { EventEmitter } from "events";
 import * as Paparazzo from "./snapshot";
 import * as API from "../api";
+import * as Collections from "./collections";
 
 export * from "./mergeTree";
-
-import { loadSegments, loadSrcSegments, findRandomWord } from "./text";
-export { loadSegments, loadSrcSegments, findRandomWord };
+export { Collections };
+import { loadSegments, findRandomWord } from "./text";
+export { loadSegments, findRandomWord };
 
 export class CollaboritiveStringExtension implements API.IExtension {
     public static Type = "https://graph.microsoft.com/types/mergeTree";
@@ -28,11 +29,19 @@ export class CollaboritiveStringExtension implements API.IExtension {
 }
 
 function textsToSegments(texts: API.IPropertyString[]) {
-    let segments = <MergeTree.TextSegment[]>[];
+    let segments = <MergeTree.Segment[]>[];
     for (let ptext of texts) {
-        let segment = MergeTree.TextSegment.make(ptext.text, ptext.props,
-            MergeTree.UniversalSequenceNumber,
-            MergeTree.LocalClientId);
+        let segment: MergeTree.Segment;
+        if (ptext.text!==undefined) {
+            segment = MergeTree.TextSegment.make(ptext.text, ptext.props,
+                MergeTree.UniversalSequenceNumber,
+                MergeTree.LocalClientId);
+        }
+        else {
+            // for now assume marker
+            segment = MergeTree.Marker.make(ptext.marker.type, ptext.marker.behaviors, ptext.props,
+                MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
+        }
         segments.push(segment);
     }
     return segments;
@@ -59,29 +68,30 @@ export class SharedString implements API.ICollaborativeObject {
         this.services = services;
 
         this.connection = await this.services.deltaNotificationService.connect(this.id, this.type);
+        const version = this.connection.versions.length > 0 ? this.connection.versions[0].sha : null;
 
-        let headerChunkP = Paparazzo.Snapshot.loadChunk(services, this.id + "header");
-        let bodyChunkP = Paparazzo.Snapshot.loadChunk(services, this.id);
+        let headerChunkP = Paparazzo.Snapshot.loadChunk(services, this.id, version, "header");
+        let bodyChunkP = Paparazzo.Snapshot.loadChunk(services, this.id, version, "body");
         let chunk = await headerChunkP;
 
         if (chunk.totalSegmentCount >= 0) {
             this.client.mergeTree.reloadFromSegments(textsToSegments(chunk.segmentTexts));
-            this.events.emit('partialLoad', chunk);
+            this.events.emit('partialLoad', chunk, this.connection.existing);
             chunk = await bodyChunkP;
-            for (let text of chunk.segmentTexts) {
-                this.client.mergeTree.appendTextSegment(text.text, text.props);
+            for (let segSpec of chunk.segmentTexts) {
+                this.client.mergeTree.appendSegment(segSpec);
             }
             this.initialSeq = chunk.chunkSequenceNumber;
         } else {
             this.initialSeq = 0;
-            this.events.emit('partialLoad', chunk);
+            this.events.emit('partialLoad', chunk, this.connection.existing);
         }
 
         this.isLoaded = true;
         this.client.startCollaboration(this.connection.clientId, this.initialSeq);
         this.listenForUpdates();
 
-        this.events.emit('loadFinshed', chunk);
+        this.events.emit('loadFinshed', chunk, this.connection.existing);
     }
 
     public on(event: string, listener: (...args: any[]) => void): this {
@@ -99,13 +109,24 @@ export class SharedString implements API.ICollaborativeObject {
         return this;
     }
 
+    private makeInsertMarkerMsg(pos: number, markerType: string, behaviors: API.MarkerBehaviors, props?: Object, end?: number) {
+        return <API.IMessage>{
+            referenceSequenceNumber: this.client.getCurrentSeq(),
+            objectId: this.id,
+            clientSequenceNumber: this.clientSequenceNumber++,
+            op: <API.IMergeTreeInsertMsg>{
+                type: API.MergeTreeDeltaType.INSERT, pos1: pos, props, marker: { type: markerType, behaviors, end },
+            }
+        };
+
+    }
     private makeInsertMsg(text: string, pos: number, props?: Object) {
         return <API.IMessage>{
             referenceSequenceNumber: this.client.getCurrentSeq(),
             objectId: this.id,
             clientSequenceNumber: this.clientSequenceNumber++,
             op: {
-                type: API.MergeTreeMsgType.INSERT, text: text, pos1: pos, props,
+                type: API.MergeTreeDeltaType.INSERT, text, pos1: pos, props,
             }
         };
     }
@@ -116,14 +137,20 @@ export class SharedString implements API.ICollaborativeObject {
             objectId: this.id,
             clientSequenceNumber: this.clientSequenceNumber++,
             op: {
-                type: API.MergeTreeMsgType.REMOVE, pos1: start, pos2: end
+                type: API.MergeTreeDeltaType.REMOVE, pos1: start, pos2: end
             }
         };
     }
 
+    public insertMarker(pos: number, type: string, behaviors: API.MarkerBehaviors, props?: Object, end?: number) {
+        const insertMessage = this.makeInsertMarkerMsg(pos, type, behaviors, props, end);
+        this.client.insertMarkerLocal(pos, type, behaviors, props, end);
+        this.deltaManager.submitOp(insertMessage);
+    }
+
     public insertText(text: string, pos: number, props?: Object) {
         const insertMessage = this.makeInsertMsg(text, pos, props);
-        this.client.insertSegmentLocal(text, pos, props);
+        this.client.insertTextLocal(text, pos, props);
         this.deltaManager.submitOp(insertMessage);
     }
 
@@ -134,6 +161,8 @@ export class SharedString implements API.ICollaborativeObject {
     }
 
     private processRemoteOperation(message: API.IBase) {
+        this.events.emit("pre-op", message);
+        
         if (this.isLoaded) {
             this.client.applyMsg(message);
         } else {
