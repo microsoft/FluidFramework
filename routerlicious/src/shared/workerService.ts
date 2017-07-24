@@ -71,7 +71,6 @@ export class WorkerService implements api.IWorkerService {
 
     private async processDocument(id: string) {
         const objectStorageService = new shared.ObjectStorageService(this.serverUrl);
-        await objectStorageService.create(this.config.storageBucket);
 
         const services: api.ICollaborationServices = {
             deltaNotificationService: new socketStorage.DeltaNotificationService(this.serverUrl),
