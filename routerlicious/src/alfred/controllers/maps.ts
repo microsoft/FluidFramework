@@ -1,6 +1,7 @@
 import * as $ from "jquery";
 import * as _ from "lodash";
 import * as api from "../../api";
+import * as shared from "../../shared";
 import * as socketStorage from "../../socket-storage";
 
 socketStorage.registerAsDefault(document.location.origin);
@@ -99,13 +100,16 @@ function randomizeMap(map: api.IMap) {
     }, 1000);
 }
 
-export function load(id: string) {
+export function load(id: string, config: any) {
     $(document).ready(() => {
         loadDocument(id).then(async (doc) => {
             // tslint:disable-next-line
             window["doc"] = doc;
 
             const root = doc.getRoot();
+
+            // Bootstrap worker service.
+            shared.registerWorker(config);
 
             // Display the initial values and then listen for updates
             displayMap($("#mapViews"), null, root, null, doc);

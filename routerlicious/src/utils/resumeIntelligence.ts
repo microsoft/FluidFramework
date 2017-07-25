@@ -1,8 +1,8 @@
 import { Client, Message } from "azure-iot-device";
 import { Mqtt } from "azure-iot-device-mqtt";
 import * as iothub from "azure-iothub";
+import { IIntelligentService } from "../intelligence/api";
 import * as utils from "../utils";
-import { IIntelligentService, IIntelligentServiceFactory } from "./api";
 
 interface IResumeResponse {
     MessageId: string;
@@ -47,7 +47,7 @@ export class ResumeIntelligentSerivce implements IIntelligentService {
         return this.sendMessage(client, "resumeClassifier", value);
     }
 
-    private async getClient(): Promise<Client> {
+    public async getClient(): Promise<Client> {
         if (!this.clientP) {
             this.clientP = this.createClient(this.config.host, this.config.deviceId);
             this.clientP.catch((error) => {
@@ -60,7 +60,7 @@ export class ResumeIntelligentSerivce implements IIntelligentService {
         return this.clientP;
     }
 
-    private async sendMessage(client: Client, method: string, body: string) {
+    public async sendMessage(client: Client, method: string, body: string) {
         const messageId = Math.floor((Math.random() * 10000) + 1);
         const data = JSON.stringify({
             body: body.substring(0, Math.min(body.length, 200000)),
@@ -140,14 +140,3 @@ export class ResumeIntelligentSerivce implements IIntelligentService {
         });
     }
 }
-
-/**
- * Factory to create new resume classifier intelligent services
- */
-class ResumeFactory implements IIntelligentServiceFactory {
-    public create(config: IConfig): IIntelligentService {
-        return new ResumeIntelligentSerivce(config);
-    }
-}
-
-export const factory: IIntelligentServiceFactory = new ResumeFactory();

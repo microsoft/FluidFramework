@@ -1,6 +1,7 @@
 import { Router } from "express";
 import * as nconf from "nconf";
 import * as request from "request";
+import * as gitStorage from "../../git-storage";
 
 const gitConfig = nconf.get("git");
 
@@ -28,10 +29,12 @@ async function getObject(objectId: string, version: string, path: string): Promi
     });
 }
 
+const repoP = gitStorage.getOrCreateRepository(gitConfig.historian, gitConfig.repository);
+
 const router: Router = Router();
 
 /**
- * Retrieves deltas for the given document. With an optional from and to range (both exclusive) specified
+ * Retrieves the given document.
  */
 router.get("/:id/:version/*", async (request, response, next) => {
     // Now grab the snapshot, any deltas post snapshot, and send to the client
@@ -43,7 +46,26 @@ router.get("/:id/:version/*", async (request, response, next) => {
             response.end(result);
         },
         (error) => {
-            response.status(400).json({ error });
+            response.status(400).json(error);
+        });
+});
+
+/**
+ * Stores data for the given document.
+ */
+router.post("/:id", (request, response, next) => {
+    repoP.then((manager) => {
+        const files = request.body.map((object) => ({ path: object.path, data: JSON.stringify(object.data) }));
+        const resultP = manager.write(request.params.id, files, "Commit @{TODO seq #}");
+        resultP.then(
+            (result) => {
+                response.end(result);
+            },
+            (error) => {
+                response.status(400).json(error);
+            });
+        }, (error) => {
+            response.status(400).json(error);
         });
 });
 

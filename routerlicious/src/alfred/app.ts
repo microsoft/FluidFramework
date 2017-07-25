@@ -14,6 +14,9 @@ import * as routes from "./routes";
 // Base endpoint to expose static files at
 const staticFilesEndpoint = "/public";
 
+// Maximum REST request size
+const requestSize = nconf.get("alfred:restJsonSize");
+
 // Helper function to translate from a static files URL to the path to find the file
 // relative to the static assets directory
 function translateStaticUrl(url: string): string {
@@ -34,8 +37,8 @@ app.use(compression());
 app.use(favicon(path.join(__dirname, "../../public", "favicon.ico")));
 // TODO we probably want to switch morgan to use the common format in prod
 app.use(morgan(nconf.get("logger:morganFormat"), { stream: utils.stream }));
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json({ limit: requestSize }));
+app.use(bodyParser.urlencoded({ limit: requestSize, extended: false }));
 
 app.use(staticFilesEndpoint, expiry(app, { dir: path.join(__dirname, "../../public") }));
 app.locals.hfurl = () => (value: string) => translateStaticUrl(value);
@@ -53,6 +56,8 @@ app.use("/cell", routes.cell);
 app.use("/scribe", routes.scribe);
 app.use("/perf", routes.perf);
 app.use("/producer", routes.producer);
+app.use("/object", routes.object);
+app.use("/intelligence", routes.intelligence);
 app.use("/democreator", routes.democreator);
 app.use(routes.home);
 
