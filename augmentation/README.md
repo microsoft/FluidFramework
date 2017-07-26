@@ -1,1 +1,1 @@
-Experimenting with augmentation loop.
+Wraps the spellchecker container with a REST API.
