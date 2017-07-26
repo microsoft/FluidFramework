@@ -12,3 +12,5 @@ RUN apk add --update python py-pip
 RUN pip install -r dependencies.txt
 
 EXPOSE 8080
+
+CMD ["python", "text-analytics/server.py"]
