@@ -55,16 +55,16 @@ services:
             - DEBUG=routerlicious:*
         restart: always
     historian:
-        image: prague.azurecr.io/historian:latest
-        ports:
-            - "3001:3000"
+        image: prague.azurecr.io/historian:551
         environment:
             - DEBUG=routerlicious:*
         volumes:
-            - git:/home/node/server
+            - git:/home/node/documents
         restart: always
     git:
-        image: prague.azurecr.io/gitssh:latest
+        image: prague.azurecr.io/gitssh:552
+        ports:
+            - "3022:22"
         volumes:
             - git:/home/git
     zookeeper:

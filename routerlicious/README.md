@@ -16,6 +16,11 @@ The services follow the [twelve factor](https://12factor.net) methodology and ar
 
 ## Building and Running
 
+We make use of a handful of of private containers. To gain access you first need to authenticate to our private
+container registry by running
+
+* `docker login -u prague -p /vM3i=D+K4+vj+pgha=cg=55OQLDWj3w prague.azurecr.io`
+
 Docker Compose is used to run the service locally. To start up an instance of the service simply run the following two commands.
 
 * `docker-compose build`
