@@ -1642,8 +1642,7 @@ export class MergeTree {
     // for diagnostics
     getLongClientId: (id: number) => string;
 
-    constructor(public text: string, updateMarkers = false) {
-        MergeTree.blockUpdateMarkers = updateMarkers;
+    constructor(public text: string) {
         this.blockUpdateActions = MergeTree.initBlockUpdateActions;
         this.root = this.initialTextNode(this.text);
     }
@@ -1681,7 +1680,7 @@ export class MergeTree {
             let nodeIndex = 0;
             for (let i = 0; i < nodeCount; i++) {
                 let len = 0;
-                blocks[i] = new MergeBlock(0);
+                blocks[i] = this.makeBlock(0);
                 for (let j = 0; j < segCap; j++) {
                     if (nodeIndex < nodes.length) {
                         let childIndex = this.addNode(blocks[i], nodes[nodeIndex]);
