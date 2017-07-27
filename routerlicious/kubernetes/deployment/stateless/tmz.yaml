@@ -1,3 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: tmz
+  labels:
+    app: tmz
+spec:
+  ports:
+  - port: 4000
+    protocol: TCP
+    targetPort: ui
+  selector:
+    app: tmz
+---
 apiVersion: apps/v1beta1
 kind: Deployment
 metadata:
@@ -11,7 +25,10 @@ spec:
     spec:
       containers:
       - name: prague
-        image: prague.azurecr.io/prague:511
+        image: prague.azurecr.io/prague:550
+        ports:
+        - name: ui
+          containerPort: 4000
         command:
           - 'npm'
           - 'run'
@@ -19,6 +36,8 @@ spec:
         env:
         - name: DEBUG
           value: "routerlicious:*"
+        - name: NODE_ENV
+          value: production
         volumeMounts:
         - name: config
           mountPath: /usr/src/server/config.json
