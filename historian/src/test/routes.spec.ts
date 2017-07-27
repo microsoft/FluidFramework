@@ -1,23 +1,8 @@
 import * as assert from "assert";
-import * as nconf from "nconf";
-import * as rimrafCallback from "rimraf";
 import * as request from "supertest";
-import * as util from "util";
 import * as app from "../app";
 import { ICreateBlobParams, ICreateCommitParams, ICreateRefParams, ICreateTreeParams } from "../resources";
-
-const rimraf = util.promisify(rimrafCallback);
-
-const provider = new nconf.Provider({}).defaults({
-    logger: {
-        colorize: true,
-        json: false,
-        level: "info",
-        morganFormat: "dev",
-        timestamp: true,
-    },
-    storageDir: "/tmp/historian",
-});
+import * as testUtils from "./utils";
 
 function createRepo(supertest: request.SuperTest<request.Test>, name: string) {
     return supertest
@@ -109,16 +94,13 @@ describe("Historian", () => {
             sha: "cf0b592907d683143b28edd64d274ca70f68998e",
         };
 
-        let supertest: request.SuperTest<request.Test>;
+        testUtils.initializeBeforeAfterTestHooks(testUtils.defaultProvider);
 
         // Create the git repo before and after each test
+        let supertest: request.SuperTest<request.Test>;
         beforeEach(() => {
-            const testApp = app.create(provider);
+            const testApp = app.create(testUtils.defaultProvider);
             supertest = request(testApp);
-        });
-
-        afterEach(() => {
-            return rimraf(provider.get("storageDir"));
         });
 
         // Git data API tests

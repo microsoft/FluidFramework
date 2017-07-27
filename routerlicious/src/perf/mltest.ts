@@ -7,7 +7,7 @@ nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use
 // We should probably move this test to somewhere else. perf folder is not the right place.
 import * as request from "request";
 
-const endPoint = nconf.get("intelligence:nativeTextAnalytics:url") + "api/sentiment/query";
+const endPoint = nconf.get("worker:intelligence:nativeTextAnalytics:url") + "api/sentiment/query";
 
 console.log("Testing ml service...");
 runTest();

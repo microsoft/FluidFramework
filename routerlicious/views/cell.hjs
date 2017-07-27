@@ -13,7 +13,8 @@
         <script src="/socket.io/socket.io.js"></script>
         <script src="{{#hfurl}}/public/scripts/dist/cell.js{{/hfurl}}"></script>
         <script>
-            controller.load("{{ id }}");
+            var config = {{{ config }}};
+            controller.load("{{ id }}", config);
         </script>
     {{/scripts}}
 {{/layout}}

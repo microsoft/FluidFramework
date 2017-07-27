@@ -28,5 +28,11 @@ export { perf };
 import producer from "./producer";
 export { producer };
 
+import object from "./object";
+export { object };
+
+import intelligence from "./intelligence";
+export { intelligence };
+
 import democreator from "./democreator";
 export { democreator };

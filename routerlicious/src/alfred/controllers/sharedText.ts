@@ -4,6 +4,7 @@ import * as url from "url";
 import * as API from "../../api";
 import { MergeTreeChunk } from "../../api";
 import * as SharedString from "../../merge-tree";
+import * as shared from "../../shared";
 import * as socketStorage from "../../socket-storage";
 import * as FlowView from "./flowView";
 import * as Geometry from "./geometry";
@@ -191,7 +192,7 @@ class FlowContainer implements FlowView.IComponentContainer {
     }
 }
 
-export async function onLoad(id: string) {
+export async function onLoad(id: string, config: any) {
     const extension = API.defaultRegistry.getExtension(SharedString.CollaboritiveStringExtension.Type);
     const sharedString = extension.load(id, API.getDefaultServices(), API.defaultRegistry) as SharedString.SharedString;
 
@@ -214,6 +215,8 @@ export async function onLoad(id: string) {
     });
 
     sharedString.on("loadFinshed", (data: MergeTreeChunk, existing: boolean) => {
+        // Bootstrap worker service.
+        shared.registerWorker(config);
         if (existing) {
             theFlow.loadFinished(clockStart);
         } else {

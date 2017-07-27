@@ -1034,9 +1034,9 @@ export class FlowView {
     private async updateInsights(insights: API.IMap) {
         const view = await insights.getView();
 
-        if (view.has("Resume")) {
-            const resume = view.get("Resume");
-            const probability = parseFloat(resume);
+        if (view.has("ResumeAnalytics")) {
+            const resume = view.get("ResumeAnalytics");
+            const probability = parseFloat(resume.resumeAnalyticsResult);
             if (probability !== 1 && probability > 0.7) {
                 this.flowContainer.status.overlay(`${Math.round(probability * 100)}% sure I found a resume!`);
             }

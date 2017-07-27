@@ -1,7 +1,6 @@
 import * as api from "../api";
 import * as intelligence from "../intelligence";
 import * as mergeTree from "../merge-tree";
-import { logger } from "../utils";
 
 // 5s wait time between intelligent service calls
 const defaultWaitTime = 5 * 1000;
@@ -36,7 +35,7 @@ class RateLimiter {
         const completeP = this.action().catch((error) => {
             // TODO we will just log errors for now. Will want a better strategy later on (replay, wait).
             if (error) {
-                logger.error(error);
+                console.error(error);
             }
         });
 
@@ -57,7 +56,7 @@ export class IntelligentServicesManager {
     private services: intelligence.IIntelligentService[] = [];
     private trackedDocuments: { [id: string]: RateLimiter } = {};
 
-    constructor(private collaborationServices: api.ICollaborationServices) {
+    constructor(private output: api.IMap) {
     }
 
     /**
@@ -73,19 +72,13 @@ export class IntelligentServicesManager {
             if (!(object.id in this.trackedDocuments)) {
                 const sharedString = object as mergeTree.SharedString;
 
-                const extension = api.defaultRegistry.getExtension(api.MapExtension.Type);
-                const insights = extension.load(
-                    `${object.id}-insights`,
-                    this.collaborationServices,
-                    api.defaultRegistry) as api.IMap;
-
                 this.trackedDocuments[object.id] = new RateLimiter(
                     async () => {
                         // Run the collaborative services
                         const text = sharedString.client.getText();
                         const setInsightsP = this.services.map(async (service) => {
                             const result = await service.run(text);
-                            return insights.set(service.name, result);
+                            return this.output.set(service.name, result);
                         });
 
                         return Promise.all(setInsightsP);

@@ -15,7 +15,7 @@
             "localRoot": "${workspaceRoot}",
             "remoteRoot": "/usr/src/server",
             "outFiles": [ "${workspaceRoot}/dist/*.js" ],
-            "protocol":"legacy",
+            "protocol":"inspector",
             "trace": "sm"
         }
     ]

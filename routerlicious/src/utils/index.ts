@@ -30,3 +30,5 @@ export { kafkaConsumer };
 
 import * as kafkaProducer from "./kafkaProducer";
 export { kafkaProducer };
+
+export { ResumeIntelligentSerivce } from "./resumeIntelligence";

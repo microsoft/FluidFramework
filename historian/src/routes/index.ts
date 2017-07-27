@@ -1,5 +1,6 @@
 import { Router } from "express";
 import * as nconf from "nconf";
+import * as utils from "../utils";
 import * as blobs from "./git/blobs";
 import * as commits from "./git/commits";
 import * as refs from "./git/refs";
@@ -24,19 +25,19 @@ export interface IRoutes {
     };
 }
 
-export function create(store: nconf.Provider): IRoutes {
+export function create(store: nconf.Provider, repoManager: utils.RepositoryManager): IRoutes {
     return {
         git: {
-            blobs: blobs.create(store),
-            commits: commits.create(store),
-            refs: refs.create(store),
-            repos: repos.create(store),
-            tags: tags.create(store),
-            trees: trees.create(store),
+            blobs: blobs.create(store, repoManager),
+            commits: commits.create(store, repoManager),
+            refs: refs.create(store, repoManager),
+            repos: repos.create(store, repoManager),
+            tags: tags.create(store, repoManager),
+            trees: trees.create(store, repoManager),
         },
         repository: {
-            commits: repositoryCommits.create(store),
-            contents: contents.create(store),
+            commits: repositoryCommits.create(store, repoManager),
+            contents: contents.create(store, repoManager),
         },
     };
 }

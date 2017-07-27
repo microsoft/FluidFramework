@@ -32,7 +32,8 @@ data:
         "alfred": {
             "kafkaClientId": "alfred",
             "topic": "rawdeltas",
-            "bucket": "snapshots"
+            "bucket": "snapshots",
+            "restJsonSize": "50mb"
         },
         "deli": {
             "topics": {
@@ -47,7 +48,8 @@ data:
         "paparazzi": {
             "queue": "snapshot",
             "bucket": "snapshots",
-            "alfred": "http://alfred"
+            "alfred": "http://alfred",
+            "tmz": "http://tmz:4000"
         },
         "scriptorium": {
             "topic": "deltas",
@@ -60,7 +62,15 @@ data:
             "queue": "snapshot",
             "topic": "deltas",
             "kafkaClientId": "tmz",
-            "groupId": "tmz"
+            "groupId": "tmz",
+            "port": 4000,
+            "timeoutMSec": {
+                "checker": 10000,
+                "worker": 10000,
+                "document": 15000
+            },
+            "workerType": "random",
+            "workerAckTimeMSec": 100
         },
         "redis": {
             "host": "steely-ant-redis",
@@ -72,22 +82,30 @@ data:
             "accessKey": "prague",
             "secretKey": "mhioAkNXTwdX4dXWgKgXVtHo"
         },
-        "intelligence": {
-            "resume": {
-                "deviceId": "routerlicious",
-                "host": "pkarimov-paidIOT.azure-devices.net",
-                "sharedAccessKeyName": "iothubowner",
-                "sharedAccessKey": "8mvOmNnUklwnuzY+U96V51w+qCq262ZUpSkdw8nTZ18="
+        "worker": {
+            "intelligence": {
+                "resume": {
+                    "deviceId": "routerlicious",
+                    "host": "pkarimov-paidIOT.azure-devices.net",
+                    "sharedAccessKeyName": "iothubowner",
+                    "sharedAccessKey": "8mvOmNnUklwnuzY+U96V51w+qCq262ZUpSkdw8nTZ18="
+                },
+                "textAnalytics": {
+                    "key": "c8b60dc5e49849ce903d7d29a2dce550"
+                },
+                "nativeTextAnalytics": {
+                    "url": "http://praguepy.westus2.cloudapp.azure.com/"
+                }
             },
-            "textAnalytics": {
-                "key": "c8b60dc5e49849ce903d7d29a2dce550"
+            "port": {
+                "server": 3000,
+                "worker": 4000
             },
-            "nativeTextAnalytics": {
-                "url": "http://praguepy.westus2.cloudapp.azure.com/"
-            }
+            "storageBucket": "snapshots",
+            "intervalMSec": 10000
         },
         "git": {
             "repository": "prague",
-            "historian": "http://historian"
+            "historian": "http://historian:3000"
         }
     }

@@ -22,3 +22,14 @@ export interface IConnected {
     // Available revisions for this document
     revisions: any[];
 }
+
+/**
+ * Message sent to connect to the given object
+ */
+export interface IWorker {
+    // Worker Id.
+    clientId: string;
+
+    // Type
+    type: string;
+}

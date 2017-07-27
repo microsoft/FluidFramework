@@ -2,7 +2,7 @@ import * as request from "request";
 import * as api from "../api";
 
 /**
- * Client side access to object storage. Only provides read only access to the object.
+ * Client side access to object storage.
  */
 export class ClientObjectStorageService implements api.IObjectStorageService {
     constructor(private url: string) {
@@ -22,7 +22,17 @@ export class ClientObjectStorageService implements api.IObjectStorageService {
         });
     }
 
+    // TODO (mdaumi): Need to implement some kind of auth mechanism here.
     public write(id: string, objects: api.IObject[]): Promise<void> {
-        throw new Error("Method not implemented.");
+        return new Promise<any>((resolve, reject) => {
+            request.post(`${this.url}/storage/${id}`, {body: objects, json: true}, (error, response, body) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    resolve(body);
+                }
+            });
+        });
     }
+
 }

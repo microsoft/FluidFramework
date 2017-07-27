@@ -8,8 +8,10 @@ services:
             - redis
             - mongodb
             - kafka-rest
+        command: npm run alfred
         environment:
             - DEBUG=routerlicious:*
+        restart: always
     deli:
         build: .
         depends_on:
@@ -19,6 +21,7 @@ services:
         command: npm run deli
         environment:
             - DEBUG=routerlicious:*
+        restart: always
     paparazzi:
         build: .
         depends_on:
@@ -27,6 +30,7 @@ services:
         command: npm run paparazzi
         environment:
             - DEBUG=routerlicious:*
+        restart: always
     scriptorium:
         build: .
         depends_on:
@@ -36,8 +40,11 @@ services:
         command: npm run scriptorium
         environment:
             - DEBUG=routerlicious:*
+        restart: always
     tmz:
         build: .
+        ports:
+            - "4000:4000"
         depends_on:
             - redis
             - mongodb
@@ -46,13 +53,20 @@ services:
         command: npm run tmz
         environment:
             - DEBUG=routerlicious:*
+        restart: always
     historian:
-        build: ../historian
-        ports:
-            - "3001:3000"
+        image: prague.azurecr.io/historian:551
         environment:
             - DEBUG=routerlicious:*
+        volumes:
+            - git:/home/node/documents
         restart: always
+    git:
+        image: prague.azurecr.io/gitssh:552
+        ports:
+            - "3022:22"
+        volumes:
+            - git:/home/git
     zookeeper:
         image: wurstmeister/zookeeper:latest
         ports:
@@ -97,3 +111,6 @@ services:
             MINIO_ACCESS_KEY: prague
             MINIO_SECRET_KEY: mhioAkNXTwdX4dXWgKgXVtHo
         command: server /export
+volumes:
+  git:
+    driver: local

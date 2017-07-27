@@ -3,25 +3,15 @@ services:
     alfred:
         volumes:
             - .:/usr/src/server
-        command: npm run alfred:watch
-        restart: always
     deli:
         volumes:
             - .:/usr/src/server
-        command: npm run deli:watch
-        restart: always
     paparazzi:
         volumes:
             - .:/usr/src/server
-        command: npm run paparazzi:watch
-        restart: always
     scriptorium:
         volumes:
             - .:/usr/src/server
-        command: npm run scriptorium:watch
-        restart: always
     tmz:
         volumes:
             - .:/usr/src/server
-        command: npm run tmz:watch
-        restart: always
