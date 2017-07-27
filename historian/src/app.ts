@@ -6,6 +6,7 @@ import * as nconf from "nconf";
 import split = require("split");
 import * as winston from "winston";
 import * as routes from "./routes";
+import * as utils from "./utils";
 
 /**
  * Basic stream logging interface for libraries that require a stream to pipe output to
@@ -25,7 +26,8 @@ export function create(store: nconf.Provider) {
     app.use(bodyParser.json({ limit: requestSize }));
     app.use(bodyParser.urlencoded({ limit: requestSize, extended: false }));
 
-    const apiRoutes = routes.create(store);
+    const repoManager = new utils.RepositoryManager(store.get("storageDir"));
+    const apiRoutes = routes.create(store, repoManager);
     app.use(apiRoutes.git.blobs);
     app.use(apiRoutes.git.refs);
     app.use(apiRoutes.git.repos);

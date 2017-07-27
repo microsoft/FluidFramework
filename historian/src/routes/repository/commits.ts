@@ -1,12 +1,15 @@
 import { Router } from "express";
 import * as nconf from "nconf";
 import * as git from "nodegit";
-import * as path from "path";
 import * as resources from "../../resources";
 import * as utils from "../../utils";
 
-async function getCommits(gitDir: string, repo: string, ref: string): Promise<resources.ICommit[]> {
-    const repository = await utils.openRepo(gitDir, repo);
+async function getCommits(
+    repoManager: utils.RepositoryManager,
+    repo: string,
+    ref: string): Promise<resources.ICommit[]> {
+
+    const repository = await repoManager.open(repo);
     const walker = git.Revwalk.create(repository);
 
     // tslint:disable-next-line:no-bitwise
@@ -20,9 +23,7 @@ async function getCommits(gitDir: string, repo: string, ref: string): Promise<re
     return commits.map((commit) => resources.commitToICommit(commit));
 }
 
-export function create(store: nconf.Provider): Router {
-    const gitDir = path.resolve(store.get("storageDir"));
-
+export function create(store: nconf.Provider, repoManager: utils.RepositoryManager): Router {
     const router: Router = Router();
 
     // https://developer.github.com/v3/repos/commits/
@@ -32,7 +33,7 @@ export function create(store: nconf.Provider): Router {
     // since
     // until
     router.get("/repos/:repo/commits", (request, response, next) => {
-        const resultP = getCommits(gitDir, request.params.repo, request.query.sha);
+        const resultP = getCommits(repoManager, request.params.repo, request.query.sha);
         return resultP.then(
             (blob) => {
                 response.status(200).json(blob);

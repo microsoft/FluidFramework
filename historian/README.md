@@ -23,6 +23,25 @@ And then mount it for development by running.
 
 ## Testing
 
+`docker run -t historian npm test`
+
+## Nodegit Workarounds
+
+We hit a nodegit bug around tree_entry so are using a private version until it can get merged in. The private version is
+hosted via a gzipped tar file stored on Azure.
+
+This led to a couple issues itself. One is with node-pre-gyp and the package-lock.json https://github.com/mapbox/node-pre-gyp/issues/298
+
+To workaround this we are temporarily disabling the package-lock.json file.
+
+Should the above get fixed and we can go back to package-lock there would still be an issue running npm update with
+the gzipped reference https://github.com/npm/npm/issues/17835
+
+Should you need to update you'll want to remove the nodegit reference first, perform the update, then install it
+back in.
+
+There is a PR out to nodegit. Once they merge it in and publish a new version we can avoid both issues.
+
 ## Example REST API usage
 ```
 curl -H "Content-Type: application/json" -X POST -d '{"name": "test"}' --verbose localhost:3000/repos

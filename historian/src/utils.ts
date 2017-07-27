@@ -1,5 +1,9 @@
+import * as fs from "fs";
 import * as git from "nodegit";
 import * as path from "path";
+import * as util from "util";
+
+const exists = util.promisify(fs.exists);
 
 // 100644 for file (blob)
 // 100755 for executable (blob)
@@ -21,11 +25,41 @@ export enum GitObjectType {
     refdelta = 7,   /** < A delta, base is given by object id. */
 }
 
-export function openRepo(baseDir: string, name: string): Promise<git.Repository> {
-    const parsed = path.parse(name);
-    if (parsed.dir !== "") {
-        return Promise.reject("Invalid repo name");
+export class RepositoryManager {
+    // Cache repositories to allow for reuse
+    private repositoryCache: { [key: string]: Promise<git.Repository> } = {};
+
+    constructor(private baseDir) {
     }
 
-    return git.Repository.open(`${baseDir}/${parsed.base}`);
+    public async create(name: string): Promise<git.Repository> {
+        const parsed = path.parse(name);
+        if (parsed.dir !== "") {
+            return Promise.reject("Invalid repo name");
+        }
+
+        // Create and then cache the repository
+        const isBare: any = 1;
+        const repository = await git.Repository.init(`${this.baseDir}/${parsed.base}`, isBare);
+        this.repositoryCache[parsed.base] = Promise.resolve(repository);
+    }
+
+    public async open(name: string): Promise<git.Repository> {
+        const parsed = path.parse(name);
+        if (parsed.dir !== "") {
+            return Promise.reject("Invalid repo name");
+        }
+
+        if (!(parsed.base in this.repositoryCache)) {
+            const directory = `${this.baseDir}/${parsed.base}`;
+
+            if (!await exists(directory)) {
+                return Promise.reject("Repo does not exist");
+            }
+
+            this.repositoryCache[parsed.base] = git.Repository.open(directory);
+        }
+
+        return this.repositoryCache[parsed.base];
+    }
 }
