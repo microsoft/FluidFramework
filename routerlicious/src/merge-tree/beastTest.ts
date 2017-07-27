@@ -788,9 +788,9 @@ export function TestPack() {
             let preLen = client.getLength();
             let pos = random.integer(0, preLen)(mt);
             if (includeMarkers) {
-                server.enqueueMsg(client.makeInsertMarkerMsg("test", api.MarkerBehaviors.PropagatesForward,
+                server.enqueueMsg(client.makeInsertMarkerMsg("test", api.MarkerBehaviors.Tile,
                     pos, MergeTree.UnassignedSequenceNumber, client.getCurrentSeq(), ""));
-                client.insertMarkerLocal(pos, "test", api.MarkerBehaviors.PropagatesForward);
+                client.insertMarkerLocal(pos, "test", api.MarkerBehaviors.Tile);
             }
             server.enqueueMsg(client.makeInsertMsg(text, pos, MergeTree.UnassignedSequenceNumber,
                 client.getCurrentSeq(), ""));
@@ -1236,7 +1236,7 @@ export function TestPack() {
                 console.log(cli.relText(clientId, refSeq));
             }
         }
-        cli.insertMarkerRemote({ type: "peach", behaviors: api.MarkerBehaviors.PropagatesForward }, 0, {},
+        cli.insertMarkerRemote({ type: "peach", behaviors: api.MarkerBehaviors.Tile }, 0, {},
             5, 0, 2)
         cli.insertTextRemote("very ", 6, undefined, 4, 2, 2);
         console.log(cli.mergeTree.toString());
@@ -1262,8 +1262,8 @@ export function TestPack() {
         }
         cli.insertTextRemote("abcde", 0, undefined, 1, 0, 2);
         cli.insertTextRemote("yyy", 0, undefined, 2, 0, 1);
-        cli.insertTextRemote("zzz", undefined, 2, 3, 1, 3);
-        cli.insertTextRemote("EAGLE", undefined, 1, 4, 1, 4);
+        cli.insertTextRemote("zzz", 2, undefined, 3, 1, 3);
+        cli.insertTextRemote("EAGLE", 1, undefined, 4, 1, 4);
         cli.insertTextRemote("HAS", 4, undefined, 5, 1, 5);
         cli.insertTextLocal(" LANDED", 19);
         cli.insertTextRemote("yowza: ", 0, undefined, 6, 4, 2);

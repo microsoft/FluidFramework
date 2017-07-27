@@ -58,11 +58,10 @@ export interface IMergeTreeMsg extends IMessage {
 
 export enum MarkerBehaviors {
     None =              0x0,
-    PropagatesForward = 0x1,
-    Tile =              0x2,
+    Tile =              0x1,
+    Range =             0x2,
     Begin =             0x4,
     End =               0x10,
-    Region =            0x20,
 }
 
 export interface IMarkerDef {

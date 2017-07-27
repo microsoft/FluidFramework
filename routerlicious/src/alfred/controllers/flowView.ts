@@ -292,10 +292,9 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
             span.seg = textSegment;
             span.segPos = startChar;
             if (textSegment.properties) {
+                // tslint:disable-next-line
                 for (let key in textSegment.properties) {
-                    if (textSegment.properties.hasOwnProperty(key)) {
-                        span.style[key] = textSegment.properties[key];
-                    }
+                    span.style[key] = textSegment.properties[key];
                 }
             }
             if (offset > 0) {
