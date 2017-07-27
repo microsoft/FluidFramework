@@ -93,4 +93,17 @@ After which you will need to reload the page.
 
 ## Viewing Snapshots
 
-git clone ssh://git@localhost:8022/home/git/test
+Git is used to store document snapshots and provide revision history. The git storage model maps well to our own
+stream of delta messages. And git semantics as applied to document collaboration provide interesting areas for further
+exploration (i.e. branching, forking, merging documents).
+
+To view the git stored snapshots simply run
+
+```
+git clone ssh://git@localhost:3022/home/git/prague
+cd prague
+git checkout <document id>
+```
+
+From there you can use your git repository management tool of choice to inspect the various documents and revisions
+stored in the repository.
