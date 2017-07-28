@@ -26,7 +26,7 @@ spec:
     spec:
       containers:
       - name: prague
-        image: prague.azurecr.io/prague:tanvir-6
+        image: prague.azurecr.io/prague:565
         ports:
         - name: ui
           containerPort: 4000
