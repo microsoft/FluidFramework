@@ -4,6 +4,7 @@ import * as _ from "lodash";
 import * as api from ".";
 import { debug } from "./debug";
 import { DeltaManager } from "./deltaManager";
+import { Document } from "./document";
 
 /**
  * Description of a map delta operation
@@ -67,6 +68,7 @@ class MapView implements api.IMapView {
     private localOps: api.IMessage[] = [];
 
     constructor(
+        private document: Document,
         private id: string,
         private events: EventEmitter,
         private connection?: api.IDeltaConnection,
@@ -97,7 +99,7 @@ class MapView implements api.IMapView {
             if (!(collabMapValue.id in this.collaborativeObjects)) {
                 const extension = this.registry.getExtension(collabMapValue.type);
                 this.collaborativeObjects[collabMapValue.id] =
-                    extension.load(collabMapValue.id, this.services, this.registry);
+                    extension.load(this.document, collabMapValue.id, this.services, this.registry);
             }
 
             return this.collaborativeObjects[collabMapValue.id];
@@ -321,11 +323,16 @@ class Map extends api.CollaborativeObject implements api.IMap {
      * Constructs a new collaborative map. If the object is non-local an id and service interfaces will
      * be provided
      */
-    constructor(public id: string, services?: api.ICollaborationServices, registry?: api.Registry) {
+    constructor(
+        private document: Document,
+        public id: string,
+        services?: api.ICollaborationServices,
+        registry?: api.Registry) {
+
         super();
         this.local = !services;
         this.viewP = this.local
-            ? Promise.resolve(new MapView(id, this.events))
+            ? Promise.resolve(new MapView(this.document, id, this.events))
             : this.load(id, services, registry);
     }
 
@@ -430,7 +437,7 @@ class Map extends api.CollaborativeObject implements api.IMap {
             ? JSON.parse(rawSnapshot)
             : { sequenceNumber: 0, snapshot: {} };
 
-        return new MapView(id, this.events, connection, services, registry, snapshot);
+        return new MapView(this.document, id, this.events, connection, services, registry, snapshot);
     }
 }
 
@@ -442,11 +449,16 @@ export class MapExtension implements api.IExtension {
 
     public type: string = MapExtension.Type;
 
-    public load(id: string, services: api.ICollaborationServices, registry: api.Registry): api.IMap {
-        return new Map(id, services, registry);
+    public load(
+        document: Document,
+        id: string,
+        services: api.ICollaborationServices,
+        registry: api.Registry): api.IMap {
+
+        return new Map(document, id, services, registry);
     }
 
-    public create(id: string): api.IMap {
-        return new Map(id);
+    public create(document: Document, id: string): api.IMap {
+        return new Map(document, id);
     }
 }

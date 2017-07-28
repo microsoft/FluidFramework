@@ -6,6 +6,11 @@ export class DocumentManager {
     constructor(private url: string, private services: api.ICollaborationServices) {
     }
 
+    // TODO
+    // TODO
+    // TODO
+    // This one could be trickier - need to know the document ID and object ID we care about
+
     // Loads a document from DB.
     public async load(id: string): Promise<api.ICollaborativeObject> {
         return new Promise<api.ICollaborativeObject>((resolve, reject) => {

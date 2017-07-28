@@ -43,7 +43,7 @@ export class InkCollaborativeObject extends api.CollaborativeObject implements I
     // Sequence number for operations local to this client
     private clientSequenceNumber = 0;
 
-    constructor(public id: string, private services?: api.ICollaborationServices) {
+    constructor(document: api.Document, public id: string, private services?: api.ICollaborationServices) {
         super();
 
         if (services) {

@@ -79,9 +79,14 @@ class Cell extends api.CollaborativeObject implements api.ICell {
      * Constructs a new collaborative cell. If the object is non-local an id and service interfaces will
      * be provided
      */
-    constructor(public id: string, private services?: api.ICollaborationServices, private registry?: api.Registry) {
+    constructor(
+        private document: api.Document,
+        public id: string,
+        private services?: api.ICollaborationServices,
+        private registry?: api.Registry) {
+
         super();
-        this.loadingP = services ? this.load(id, services) : Promise.resolve();
+        this.loadingP = services ? this.load(document, id, services) : Promise.resolve();
     }
 
     /**
@@ -96,7 +101,7 @@ class Cell extends api.CollaborativeObject implements api.ICell {
             if (!(collabCellValue.id in this.collaborativeObjects)) {
                 const extension = this.registry.getExtension(collabCellValue.type);
                 this.collaborativeObjects[collabCellValue.id] =
-                    extension.load(collabCellValue.id, this.services, this.registry);
+                    extension.load(this.document, collabCellValue.id, this.services, this.registry);
             }
 
             return this.collaborativeObjects[collabCellValue.id];
@@ -198,7 +203,7 @@ class Cell extends api.CollaborativeObject implements api.ICell {
     /**
      * Loads the cell from an existing storage service
      */
-    private async load(id: string, services: api.ICollaborationServices): Promise<void> {
+    private async load(document: api.Document, id: string, services: api.ICollaborationServices): Promise<void> {
         // Load the snapshot and begin listening for messages
         this.connection = await services.deltaNotificationService.connect(id, this.type);
 
@@ -334,11 +339,16 @@ export class CellExtension implements api.IExtension {
 
     public type: string = CellExtension.Type;
 
-    public load(id: string, services: api.ICollaborationServices, registry: api.Registry): api.ICell {
-        return new Cell(id, services, registry);
+    public load(
+        document: api.Document,
+        id: string,
+        services: api.ICollaborationServices,
+        registry: api.Registry): api.ICell {
+
+        return new Cell(document, id, services, registry);
     }
 
-    public create(id: string): api.ICell {
-        return new Cell(id);
+    public create(document: api.Document, id: string): api.ICell {
+        return new Cell(document, id);
     }
 }

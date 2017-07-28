@@ -193,6 +193,10 @@ class FlowContainer implements FlowView.IComponentContainer {
 }
 
 export async function onLoad(id: string, config: any) {
+    // TODO
+    // TODO
+    // TODO 
+    // We need to swap this to load a document - and then a string inside the document
     const extension = API.defaultRegistry.getExtension(SharedString.CollaboritiveStringExtension.Type);
     const sharedString = extension.load(id, API.getDefaultServices(), API.defaultRegistry) as SharedString.SharedString;
 

@@ -11,12 +11,22 @@ import * as types from "./types";
  * A document is a collection of collaborative types.
  */
 export class Document {
+    private map: types.IMap;
+
     /**
      * Constructs a new document from the provided details
      */
     constructor(
-        private map: types.IMap,
-        private registry: extensions.Registry) {
+        public id: string,
+        private registry: extensions.Registry,
+        services: ICollaborationServices) {
+
+        // TODO
+        // TODO
+        // TODO
+        // we should tag the map with a common name - maybe "root"
+        const extension = registry.getExtension(mapExtension.MapExtension.Type);
+        this.map = extension.load(this, id /* TODO this needs to be swapped */, services, registry) as types.IMap;
     }
 
     /**
@@ -25,7 +35,7 @@ export class Document {
      */
     public create(type: string): types.ICollaborativeObject {
         const extension = this.registry.getExtension(type);
-        const object = extension.create(uuid.v4());
+        const object = extension.create(this, uuid.v4());
 
         return object;
     }
@@ -119,8 +129,5 @@ export async function load(
         throw new Error("Services not provided to load call");
     }
 
-    const extension = registry.getExtension(mapExtension.MapExtension.Type);
-    const map = extension.load(id, services, registry) as types.IMap;
-
-    return new Document(map, registry);
+    return new Document(id, registry, services);
 }

@@ -85,6 +85,10 @@ async function loadObject(
     const dbObject = await collection.findOne({ _id: id });
     console.log(`${id}: Found`);
 
+    // TODO
+    // TODO
+    // TODO
+    // This needs to load in an extension as well
     const extension = api.defaultRegistry.getExtension(dbObject.type);
     const sharedObject = extension.load(id, services, api.defaultRegistry);
 

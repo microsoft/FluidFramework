@@ -1,3 +1,4 @@
+import { Document } from "./document";
 import * as storage from "./storage";
 import * as types from "./types";
 
@@ -9,14 +10,18 @@ export interface IExtension {
     type: string;
 
     /**
-     * Loads the given service backed collaborative object.
+     * Loads the given distributed object
      */
-    load(id: string, services: storage.ICollaborationServices, registry: Registry): types.ICollaborativeObject;
+    load(
+        document: Document,
+        id: string,
+        services: storage.ICollaborationServices,
+        registry: Registry): types.ICollaborativeObject;
 
     /**
      * Creates a local version of the collaborative object.
      */
-    create(id: string): types.ICollaborativeObject;
+    create(document: Document, id: string): types.ICollaborativeObject;
 }
 
 /**
