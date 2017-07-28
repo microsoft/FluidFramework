@@ -8,6 +8,7 @@ import { queue } from "async";
 import { CollectionInsertManyOptions } from "mongodb";
 import * as socketIoEmitter from "socket.io-emitter";
 import * as core from "../core";
+import * as shared from "../shared";
 import * as utils from "../utils";
 import { logger } from "../utils";
 
@@ -37,7 +38,7 @@ async function checkpoint(partitionManager: core.PartitionManager) {
 }
 
 async function run() {
-    const deferred = new utils.Deferred<void>();
+    const deferred = new shared.Deferred<void>();
 
     let io = socketIoEmitter(({ host: redisConfig.host, port: redisConfig.port }));
     io.redis.on("error", (error) => {

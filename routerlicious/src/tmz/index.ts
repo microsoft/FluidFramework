@@ -10,9 +10,10 @@ import * as redis from "redis";
 import * as socketIo from "socket.io";
 import * as socketIoRedis from "socket.io-redis";
 import * as core from "../core";
+import * as shared from "../shared";
 import * as socketStorage from "../socket-storage";
-import { logger } from "../utils";
 import * as utils from "../utils";
+import { logger } from "../utils";
 import * as messages from "./messages";
 import * as workerFactory from "./workerFactory";
 
@@ -53,7 +54,7 @@ const pendingWork: Set<string> = new Set();
 let workerJoined = false;
 
 async function run() {
-    const deferred = new utils.Deferred<void>();
+    const deferred = new shared.Deferred<void>();
 
     // open a socketio connection and start listening for workers.
     io.on("connection", (socket) => {

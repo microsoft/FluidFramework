@@ -5,9 +5,8 @@ import * as nconf from "nconf";
 import * as path from "path";
 nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
 
-import { WorkerService} from "../shared";
+import * as shared from "../shared";
 import { logger } from "../utils";
-import * as utils from "../utils";
 
 // Connect to alfred and tmz and subscribes for work.
 const alfredUrl = nconf.get("paparazzi:alfred");
@@ -15,12 +14,12 @@ const tmzUrl = nconf.get("paparazzi:tmz");
 const workerConfig = nconf.get("worker");
 
 async function run() {
-    const deferred = new utils.Deferred<void>();
-    const workerService = new WorkerService(alfredUrl, tmzUrl, workerConfig);
-    workerService.connect("Paparazzi").catch((error) => {
+    const deferred = new shared.Deferred<void>();
+    const workerService = new shared.WorkerService(alfredUrl, tmzUrl, workerConfig);
+    const workerP = workerService.connect("Paparazzi");
+    workerP.catch((error) => {
         deferred.reject(error);
     });
-
     return deferred.promise;
 }
 

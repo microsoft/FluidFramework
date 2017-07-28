@@ -18,9 +18,10 @@ export class WorkerService implements api.IWorkerService {
     }
 
     /**
-     * Connects to socketio and subscribes for work.
+     * Connects to socketio and subscribes for work. Returns a promise that will never resolve.
+     * But will reject should an error occur so that the caller can reconnect.
      */
-    public connect(type: string): Promise<any> {
+    public connect(type: string): Promise<void> {
         // Generate random id since moniker does not work in client side.
         const clientId = type + Math.floor(Math.random() * 100000);
         const clientDetail: messages.IWorker = {
@@ -28,45 +29,45 @@ export class WorkerService implements api.IWorkerService {
             type: "Client",
         };
 
+        const deferred = new shared.Deferred<void>();
         // Subscribes to TMZ and starts receiving messages.
-        return new Promise((resolve, reject) => {
-            this.socket.emit(
-                "workerObject",
-                clientDetail,
-                (error, ack) => {
-                    if (error) {
-                        reject(error);
-                    } else {
-                        // Check whether worker is ready to work.
-                        this.socket.on("ReadyObject", (cId: string, id: string, response) => {
-                            response(null, clientDetail);
-                        });
-                        // Start working on an object.
-                        this.socket.on("TaskObject", (cId: string, id: string, response) => {
-                            this.processDocument(id);
-                            response(null, clientDetail);
-                        });
-                        // Stop working on an object.
-                        this.socket.on("RevokeObject", (cId: string, id: string, response) => {
-                            this.revokeWork(id);
-                            response(null, clientDetail);
-                        });
-                        // Periodically sends heartbeat to manager.
-                        setInterval(() => {
-                            this.socket.emit(
-                                "heartbeatObject",
-                                clientDetail,
-                                (err, ackMessage) => {
-                                    if (err) {
-                                        console.error(`Error sending heartbeat: ${err}`);
-                                    }
-                                });
-                        }, this.config.intervalMSec);
+        this.socket.emit(
+            "workerObject",
+            clientDetail,
+            (error, ack) => {
+                if (error) {
+                    deferred.reject(error);
+                } else {
+                    // Check whether worker is ready to work.
+                    this.socket.on("ReadyObject", (cId: string, id: string, response) => {
+                        response(null, clientDetail);
+                    });
+                    // Start working on an object.
+                    this.socket.on("TaskObject", (cId: string, id: string, response) => {
+                        this.processDocument(id);
+                        response(null, clientDetail);
+                    });
+                    // Stop working on an object.
+                    this.socket.on("RevokeObject", (cId: string, id: string, response) => {
+                        this.revokeWork(id);
+                        response(null, clientDetail);
+                    });
+                    // Periodically sends heartbeat to manager.
+                    setInterval(() => {
+                        this.socket.emit(
+                            "heartbeatObject",
+                            clientDetail,
+                            (err, ackMessage) => {
+                                if (err) {
+                                    console.error(`Error sending heartbeat: ${err}`);
+                                    deferred.reject(error);
+                                }
+                            });
+                    }, this.config.intervalMSec);
+                }
+            });
 
-                        resolve(ack);
-                    }
-                });
-        });
+        return deferred.promise;
     }
 
     private async processDocument(id: string) {
