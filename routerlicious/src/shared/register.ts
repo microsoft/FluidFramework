@@ -1,7 +1,7 @@
 import { WorkerService} from ".";
 
 export function registerWorker(config: any) {
-    const workerUrl =  `${document.location.protocol}//${document.location.hostname}:${config.port.worker}`;
+    const workerUrl =  config.url;
 
     // Bootstrap service and connect.
     const workerService = new WorkerService(document.location.origin, workerUrl, config);
