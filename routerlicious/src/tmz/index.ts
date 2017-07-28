@@ -87,9 +87,11 @@ async function run() {
         socket.on("disconnect", async () => {
             logger.info(`Worker id ${socket.id} got disconnected.`);
             const worker = foreman.getManager().getWorker(socket.id);
-            const tasks = foreman.getManager().getDocuments(worker);
-            foreman.getManager().removeWorker(worker);
-            await processWork(tasks);
+            if (worker) {
+                const tasks = foreman.getManager().getDocuments(worker);
+                foreman.getManager().removeWorker(worker);
+                await processWork(tasks);
+            }
         });
 
     });
@@ -138,7 +140,11 @@ async function run() {
 
 // Request subscribers to pick up the work.
 async function processWork(ids: string[]) {
-    await Promise.all(foreman.assignWork(ids));
+    try {
+        return await Promise.all(foreman.assignWork(ids));
+    } catch (err) {
+        return err;
+    }
 }
 
 async function adjustWorkAssignment() {

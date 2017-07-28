@@ -42,7 +42,10 @@ export class StateManager {
         }
     }
 
-    public getWorker(workerId: string): IWorkerDetail {
+    public getWorker(workerId: string): any {
+        if (!(workerId in this.workerToDocumentMap)) {
+            return;
+        }
         return this.workerToDocumentMap[workerId].worker;
     }
 
