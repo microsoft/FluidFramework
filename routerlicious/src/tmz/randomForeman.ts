@@ -32,6 +32,7 @@ export class RandomForeman extends BaseForeman implements IForeman {
         return new Promise<any>((resolve, reject) => {
             setTimeout(() => {
                 const pickedWorker = candidates[Math.floor(Math.random() * candidates.length)];
+                logger.info(`Picked worker ${pickedWorker.worker.clientId} for document ${id}`);
                 pickedWorker.socket.emit("TaskObject", pickedWorker.worker.clientId, id,
                     (error, ack: socketStorage.IWorker) => {
                         if (ack) {

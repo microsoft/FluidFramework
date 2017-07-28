@@ -97,13 +97,10 @@ data:
                     "url": "http://praguepy.westus2.cloudapp.azure.com/"
                 }
             },
-            "port": {
-                "server": 3000,
-                "worker": 4000
-            },
+            "url": "http://tmz.westus2.cloudapp.azure.com",
             "storageBucket": "snapshots",
             "intervalMSec": 10000
-        },
+        },        
         "git": {
             "repository": "prague",
             "historian": "http://historian:3000"

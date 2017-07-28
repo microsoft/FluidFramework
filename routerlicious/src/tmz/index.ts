@@ -76,7 +76,11 @@ async function run() {
         });
         // On a heartbeat, refresh worker state.
         socket.on("heartbeatObject", async (message: socketStorage.IWorker, response) => {
-            foreman.getManager().refreshWorker(socket.id);
+            const worker: messages.IWorkerDetail = {
+                worker: message,
+                socket,
+            };
+            foreman.getManager().refreshWorker(worker);
             response(null, "Heartbeat");
         });
         // On disconnect, reassign the work to other workers.
