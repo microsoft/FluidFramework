@@ -49,7 +49,7 @@ data:
             "queue": "snapshot",
             "bucket": "snapshots",
             "alfred": "http://alfred",
-            "tmz": "http://tmz:4000"
+            "tmz": "http://tmz"
         },
         "scriptorium": {
             "topic": "deltas",
@@ -97,10 +97,10 @@ data:
                     "url": "http://praguepy.westus2.cloudapp.azure.com/"
                 }
             },
-            "url": "http://tmz.westus2.cloudapp.azure.com",
+            "url": "http://praguetmz.westus2.cloudapp.azure.com",
             "storageBucket": "snapshots",
             "intervalMSec": 10000
-        },        
+        },
         "git": {
             "repository": "prague",
             "historian": "http://historian:3000"
