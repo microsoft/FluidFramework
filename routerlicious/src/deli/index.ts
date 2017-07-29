@@ -149,7 +149,7 @@ async function run() {
 
     // Prep Kafka producer and consumer
     let producer = utils.kafkaProducer.create(kafkaLibrary, kafkaEndpoint, kafkaClientId, sendTopic);
-    let consumer = utils.kafkaConsumer.create(kafkaLibrary, kafkaEndpoint, groupId, receiveTopic);
+    let consumer = utils.kafkaConsumer.create(kafkaLibrary, kafkaEndpoint, groupId, receiveTopic, false);
 
     // Return a promise that will never resolve (since we run forever) but will reject
     // should an error occur

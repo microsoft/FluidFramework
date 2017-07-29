@@ -97,7 +97,7 @@ async function consume() {
         throughput.acknolwedge();
     }, 1);
 
-    let consumer = utils.kafkaConsumer.create(kafkaLibrary, kafkaEndpoint, "deli", receiveTopic);
+    let consumer = utils.kafkaConsumer.create(kafkaLibrary, kafkaEndpoint, "deli", receiveTopic, true);
     consumer.on("data", (data) => {
         q.push(data);
     });

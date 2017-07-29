@@ -27,7 +27,7 @@ class KafkaRestConsumer implements IConsumer {
     private connecting = false;
     private connected = false;
 
-    constructor(private endpoint: string, private groupId: string, private topic: string) {
+    constructor(private endpoint: string, private groupId: string, private topic: string, private autoCommit: boolean) {
         this.connect();
     }
 
@@ -63,7 +63,7 @@ class KafkaRestConsumer implements IConsumer {
         this.client = new kafkaRest({url: this.endpoint});
 
         this.client.consumer(this.groupId).join({
-            "auto.commit.enable": "false",
+            "auto.commit.enable": this.autoCommit ? "true" : "false",
             "auto.offset.reset": "smallest",
         }, (error, instance) => {
             if (error) {
@@ -112,7 +112,7 @@ class KafkaNodeConsumer implements IConsumer {
     private connecting = false;
     private connected = false;
 
-    constructor(private endpoint: string, private groupId: string, private topic: string) {
+    constructor(private endpoint: string, private groupId: string, private topic: string, private autoCommit: boolean) {
         this.connect();
     }
 
@@ -149,7 +149,7 @@ class KafkaNodeConsumer implements IConsumer {
             this.ensureTopics(this.client, [this.topic]).then(
                 () => {
                     this.instance = new kafkaNode.HighLevelConsumer(this.client, [{topic: this.topic}], <any> {
-                        autoCommit: false,
+                        autoCommit: this.autoCommit,
                         fetchMaxBytes: 1024 * 1024,
                         fetchMinBytes: 1,
                         fromOffset: true,
@@ -215,7 +215,7 @@ class KafkaNodeConsumer implements IConsumer {
     }
 }
 
-export function create(type: string, endPoint: string, groupId: string, topic: string): IConsumer {
-    return type === "kafka-rest" ? new KafkaRestConsumer(endPoint, groupId, topic)
-                                 : new KafkaNodeConsumer(endPoint, groupId, topic);
+export function create(type: string, endPoint: string, groupId: string, topic: string, autoCommit: boolean): IConsumer {
+    return type === "kafka-rest" ? new KafkaRestConsumer(endPoint, groupId, topic, autoCommit)
+                                 : new KafkaNodeConsumer(endPoint, groupId, topic, autoCommit);
 }

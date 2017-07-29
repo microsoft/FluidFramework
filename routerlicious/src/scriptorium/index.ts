@@ -54,7 +54,7 @@ async function run() {
         },
         { unique: true });
 
-    let consumer = utils.kafkaConsumer.create(kafkaLibrary, kafkaEndpoint, groupId, topic);
+    let consumer = utils.kafkaConsumer.create(kafkaLibrary, kafkaEndpoint, groupId, topic, false);
     const partitionManager = new core.PartitionManager(
         groupId,
         topic,

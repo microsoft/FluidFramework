@@ -103,7 +103,7 @@ async function run() {
         await adjustWorkAssignment();
     }, checkerTimeout);
 
-    let consumer = utils.kafkaConsumer.create(kafkaLibrary, kafkaEndpoint, groupId, topic);
+    let consumer = utils.kafkaConsumer.create(kafkaLibrary, kafkaEndpoint, groupId, topic, true);
 
     consumer.on("data", (message) => {
         q.push(message);

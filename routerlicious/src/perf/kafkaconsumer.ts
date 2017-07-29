@@ -32,7 +32,7 @@ async function consume() {
         callback();
     }, 1);
 
-    let consumer = utils.kafkaConsumer.create(kafkaLibrary, kafkaEndpoint, groupId, topic);
+    let consumer = utils.kafkaConsumer.create(kafkaLibrary, kafkaEndpoint, groupId, topic, true);
     consumer.on("data", (data) => {
         q.push(data);
     });
