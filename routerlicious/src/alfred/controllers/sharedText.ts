@@ -192,17 +192,61 @@ class FlowContainer implements FlowView.IComponentContainer {
     }
 }
 
+const prideAndPrejudice = "/public/literature/pp.txt";
+
+function downloadRawText(textUrl: string): Promise<string> {
+    return new Promise<string>((resolve, reject) => {
+        request.get(url.resolve(document.baseURI, textUrl), (error, response, body: string) => {
+            if (error) {
+                reject(error);
+            } else if (response.statusCode !== 200) {
+                reject(response.statusCode);
+            } else {
+                resolve(body);
+            }
+        });
+    });
+}
+
 export async function onLoad(id: string, config: any) {
-    // TODO
-    // TODO
-    // TODO 
-    // We need to swap this to load a document - and then a string inside the document
-    const extension = API.defaultRegistry.getExtension(SharedString.CollaboritiveStringExtension.Type);
-    const sharedString = extension.load(id, API.getDefaultServices(), API.defaultRegistry) as SharedString.SharedString;
+    const document = await API.load(id);
+    const root = await document.getRoot().getView();
+
+    // If a text element already exists load it direclty - otherwise load in price + prejudice
+    const existing = root.has("text");
+    if (!existing) {
+        const mewString = document.createString() as SharedString.SharedString;
+        const starterText = await downloadRawText(prideAndPrejudice);
+        const segments = SharedString.loadSegments(starterText, 0);
+        for (const segment of segments) {
+            if (segment.getType() === SharedString.SegmentType.Text) {
+                let textSegment = <SharedString.TextSegment>segment;
+                mewString.insertText(textSegment.text, mewString.client.getLength(),
+                    textSegment.properties);
+            } else {
+                // assume marker
+                let marker = <SharedString.Marker>segment;
+                mewString.insertMarker(
+                    mewString.client.getLength(),
+                    marker.type,
+                    marker.behaviors,
+                    marker.properties);
+            }
+        }
+
+        root.set("text", mewString);
+    }
+
+    const sharedString = root.get("text") as SharedString.SharedString;
 
     // Retrive any stored insights
-    const mapExtension = API.defaultRegistry.getExtension(API.MapExtension.Type);
-    const insights = mapExtension.load(`${id}-insights`, API.getDefaultServices(), API.defaultRegistry) as API.IMap;
+    // TODO I probably want some kind of a "get or create" here - or the ability to create a document at the root
+    // of the map rather than having to create and attach
+    if (!root.has("insights")) {
+        root.set("insights", document.createMap());
+    }
+    const insights = root.get("insights") as API.IMap;
+
     console.log(window.navigator.userAgent);
     console.log(`id is ${id}`);
     sharedString.on("partialLoad", async (data: MergeTreeChunk) => {
@@ -218,33 +262,9 @@ export async function onLoad(id: string, config: any) {
         theFlow.setEdit();
     });
 
-    sharedString.on("loadFinshed", (data: MergeTreeChunk, existing: boolean) => {
+    sharedString.on("loadFinshed", async (data: MergeTreeChunk) => {
         // Bootstrap worker service.
         shared.registerWorker(config);
-        if (existing) {
-            theFlow.loadFinished(clockStart);
-        } else {
-            console.log("local load...");
-            request.get(url.resolve(document.baseURI,
-                "/public/literature/pp.txt"), (error, response, body: string) => {
-                    if (error) {
-                        return console.error(error);
-                    }
-                    const segments = SharedString.loadSegments(body, 0);
-                    for (const segment of segments) {
-                        if (segment.getType() === SharedString.SegmentType.Text) {
-                            let textSegment = <SharedString.TextSegment>segment;
-                            sharedString.insertText(textSegment.text, sharedString.client.getLength(),
-                                textSegment.properties);
-                        } else {
-                            // assume marker
-                            let marker = <SharedString.Marker>segment;
-                            // tslint:disable:max-line-length
-                            sharedString.insertMarker(sharedString.client.getLength(), marker.type, marker.behaviors, marker.properties);
-                        }
-                    }
-                    theFlow.loadFinished(clockStart);
-                });
-        }
+        theFlow.loadFinished(clockStart);
     });
 }

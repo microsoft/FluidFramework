@@ -364,18 +364,17 @@ export async function type(
     callback: ScribeMetricsCallback): Promise<number> {
 
     // Load the shared string extension we will type into
-    const extension = api.defaultRegistry.getExtension(SharedString.CollaboritiveStringExtension.Type);
-    const sharedString = extension.load(id, api.getDefaultServices(), api.defaultRegistry) as SharedString.SharedString;
+    const document = await api.load(id);
+    const sharedString = document.createString() as SharedString.SharedString;
+    await document.getRoot().set("text", sharedString);
 
     return new Promise<number>((resolve, reject) => {
-        sharedString.on("loadFinshed", (data: api.MergeTreeChunk) => {
-            typeFile(sharedString, text, intervalTime, callback).then(
-                (totalTime) => {
-                    resolve(totalTime);
-                },
-                (error) => {
-                    reject(error);
-                });
-        });
+        typeFile(sharedString, text, intervalTime, callback).then(
+            (totalTime) => {
+                resolve(totalTime);
+            },
+            (error) => {
+                reject(error);
+            });
     });
 }

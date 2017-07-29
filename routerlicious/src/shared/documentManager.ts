@@ -12,7 +12,7 @@ export class DocumentManager {
     // This one could be trickier - need to know the document ID and object ID we care about
 
     // Loads a document from DB.
-    public async load(id: string): Promise<api.ICollaborativeObject> {
+    public async load(document: api.Document, id: string): Promise<api.ICollaborativeObject> {
         return new Promise<api.ICollaborativeObject>((resolve, reject) => {
             request.get(`${this.url}/object/${id}`, (error, response, body) => {
                 if (error) {
@@ -20,7 +20,7 @@ export class DocumentManager {
                 } else {
                     const type = JSON.parse(body).type;
                     const extension = api.defaultRegistry.getExtension(type);
-                    const sharedObject = extension.load(id, this.services, api.defaultRegistry);
+                    const sharedObject = extension.load(document, id, this.services, api.defaultRegistry);
                     resolve(sharedObject);
                 }
             });
@@ -28,9 +28,10 @@ export class DocumentManager {
     }
 
     // Creates a new map
-    public async createMap(id: string): Promise<api.IMap> {
+    public async createMap(document: api.Document, id: string): Promise<api.IMap> {
         const extension = api.defaultRegistry.getExtension(api.MapExtension.Type);
         return extension.load(
+            document,
             id,
             this.services,
             api.defaultRegistry) as api.IMap;

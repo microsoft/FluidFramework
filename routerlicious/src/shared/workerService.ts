@@ -42,8 +42,9 @@ export class WorkerService implements api.IWorkerService {
                             response(null, clientDetail);
                         });
                         // Start working on an object.
-                        this.socket.on("TaskObject", (cId: string, id: string, response) => {
-                            this.processDocument(id);
+                        this.socket.on("TaskObject", (cId: string, documentId: string, id: string, response) => {
+                            // TODO TODO TODO need to add in the documentID
+                            this.processDocument(documentId, id);
                             response(null, clientDetail);
                         });
                         // Stop working on an object.
@@ -69,7 +70,9 @@ export class WorkerService implements api.IWorkerService {
         });
     }
 
-    private async processDocument(id: string) {
+    private async processDocument(documentId: string, id: string) {
+        const document = await api.load(documentId);
+
         const objectStorageService = new shared.ObjectStorageService(this.serverUrl);
 
         const services: api.ICollaborationServices = {
@@ -79,10 +82,10 @@ export class WorkerService implements api.IWorkerService {
         };
 
         const docManager = new shared.DocumentManager(this.serverUrl, services);
-        docManager.load(id).then(async (doc) => {
+        docManager.load(document, id).then(async (doc) => {
             console.log(`Loaded a document...${doc.id}`);
             this.documentMap[id] = doc;
-            const insightsMap = await docManager.createMap(`${id}-insights`);
+            const insightsMap = await docManager.createMap(document, `${id}-insights`);
             this.processWork(doc, insightsMap);
         });
     }
