@@ -11,7 +11,7 @@ spec:
     spec:
       containers:
       - name: prague
-        image: prague.azurecr.io/prague:565
+        image: prague.azurecr.io/prague:567
         command:
           - 'npm'
           - 'run'
