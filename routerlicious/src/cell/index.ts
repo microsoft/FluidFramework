@@ -1,8 +1,7 @@
 import * as assert from "assert";
 import * as _ from "lodash";
-import * as api from ".";
+import * as api from "../api";
 import { debug } from "./debug";
-import { DeltaManager } from "./deltaManager";
 
 /**
  * Description of a cell delta operation
@@ -60,7 +59,7 @@ class Cell extends api.CollaborativeObject implements api.ICell {
 
     // The last sequence number processed
     private connection: api.IDeltaConnection;
-    private deltaManager: DeltaManager = null;
+    private deltaManager: api.DeltaManager = null;
 
     // Locally applied operations not yet sent to the server
     private localOps: api.IMessage[] = [];
@@ -222,7 +221,7 @@ class Cell extends api.CollaborativeObject implements api.ICell {
     }
 
     private listenForUpdates() {
-        this.deltaManager = new DeltaManager(
+        this.deltaManager = new api.DeltaManager(
             this.sequenceNumber,
             this.services.deltaStorageService,
             this.connection,
