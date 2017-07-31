@@ -12,9 +12,11 @@ export class WorkerService implements api.IWorkerService {
 
     private socket;
     private documentMap: { [docId: string]: api.ICollaborativeObject} = {};
+    private services: api.ICollaborationServices;
 
     constructor(private serverUrl: string, private workerUrl: string, private config: any) {
         this.socket = io(this.workerUrl, { transports: ["websocket"] });
+        this.initializeServices();
     }
 
     /**
@@ -70,16 +72,21 @@ export class WorkerService implements api.IWorkerService {
         return deferred.promise;
     }
 
-    private async processDocument(id: string) {
+    private initializeServices() {
         const objectStorageService = new shared.ObjectStorageService(this.serverUrl);
-
-        const services: api.ICollaborationServices = {
+        this.services = {
             deltaNotificationService: new socketStorage.DeltaNotificationService(this.serverUrl),
             deltaStorageService: new socketStorage.DeltaStorageService(this.serverUrl),
             objectStorageService,
         };
+    }
 
-        const docManager = new shared.DocumentManager(this.serverUrl, services);
+    private async processDocument(id: string) {
+        if (id.length === 0) {
+            return;
+        }
+
+        const docManager = new shared.DocumentManager(this.serverUrl, this.services);
         docManager.load(id).then(async (doc) => {
             console.log(`Loaded a document...${doc.id}`);
             this.documentMap[id] = doc;
@@ -92,9 +99,7 @@ export class WorkerService implements api.IWorkerService {
         const serializer = new shared.Serializer(doc);
 
         const intelligenceManager = new shared.IntelligentServicesManager(insightsMap);
-        // Temporary workaround. Passing url directly instead of config to use the REST API. Will fix once the
-        // REST API is deployed.
-        intelligenceManager.registerService(resumeAnalytics.factory.create(this.serverUrl + "/intelligence/"));
+        intelligenceManager.registerService(resumeAnalytics.factory.create(this.config.intelligence.resume));
         intelligenceManager.registerService(textAnalytics.factory.create(this.config.intelligence.textAnalytics));
         intelligenceManager.registerService(nativeTextAnalytics.factory.create(
                                             this.config.intelligence.nativeTextAnalytics));
