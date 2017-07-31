@@ -28,18 +28,19 @@ export class WorkerService implements api.IWorkerService {
         const clientId = type + Math.floor(Math.random() * 100000);
         const clientDetail: messages.IWorker = {
             clientId,
-            type: "Client",
+            type,
         };
 
         const deferred = new shared.Deferred<void>();
-        // Subscribes to TMZ and starts receiving messages.
+        // Subscribes to TMZ. Starts listening to messages if TMZ acked the subscribtion.
+        // Otherwise just resolve. On any error, reject and caller will be responsible reconnecting.
         this.socket.emit(
             "workerObject",
             clientDetail,
             (error, ack) => {
                 if (error) {
                     deferred.reject(error);
-                } else {
+                } else if (ack === "Acked") {
                     // Check whether worker is ready to work.
                     this.socket.on("ReadyObject", (cId: string, id: string, response) => {
                         response(null, clientDetail);
@@ -66,6 +67,8 @@ export class WorkerService implements api.IWorkerService {
                                 }
                             });
                     }, this.config.intervalMSec);
+                } else {
+                    deferred.resolve();
                 }
             });
 

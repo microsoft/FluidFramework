@@ -65,7 +65,8 @@
             "document": 15000
         },
         "workerType": "random",
-        "workerAckTimeMSec": 100
+        "workerAckTimeMSec": 100,
+        "onlyServer": false
     },
     "redis": {
         "host": "redis",
@@ -108,7 +109,14 @@
         },
         "url": "http://localhost:4000",
         "storageBucket": "snapshots",
-        "intervalMSec": 10000
+        "intervalMSec": 10000,
+        "onlyServer": false,
+        "permission": {
+            "canvas": false,
+            "cell": true,
+            "maps": true,
+            "sharedText": false
+        }
     },
     "git": {
         "repository": "prague",

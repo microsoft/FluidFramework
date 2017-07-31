@@ -48,6 +48,7 @@ io.adapter(socketIoRedis({ pubClient: pub, subClient: sub }));
 let port = nconf.get("tmz:port");
 const checkerTimeout = nconf.get("tmz:timeoutMSec:checker");
 const schedulerType = nconf.get("tmz:workerType");
+const onlyServer = nconf.get("tmz:onlyServer");
 
 const foreman = workerFactory.create(schedulerType);
 const pendingWork: Set<string> = new Set();
@@ -60,20 +61,25 @@ async function run() {
     io.on("connection", (socket) => {
         // On joining, add the worker to manager.
         socket.on("workerObject", async (message: socketStorage.IWorker, response) => {
-            const newWorker: messages.IWorkerDetail = {
-                worker: message,
-                socket,
-            };
-            logger.info(`New worker joined. ${socket.id} : ${message.clientId}`);
-            foreman.getManager().addWorker(newWorker);
-            // Process all pending tasks once the first worker joins.
-            if (!workerJoined) {
-                let workIds = Array.from(pendingWork);
-                await processWork(workIds);
-                pendingWork.clear();
-                workerJoined = true;
+            if (!(onlyServer && message.type === "Client")) {
+                const newWorker: messages.IWorkerDetail = {
+                    worker: message,
+                    socket,
+                };
+                logger.info(`New worker joined. ${socket.id} : ${message.clientId}`);
+                foreman.getManager().addWorker(newWorker);
+                // Process all pending tasks once the first worker joins.
+                if (!workerJoined) {
+                    let workIds = Array.from(pendingWork);
+                    await processWork(workIds);
+                    pendingWork.clear();
+                    workerJoined = true;
+                }
+                response(null, "Acked");
+            } else {
+                response(null, "Nacked");
             }
-            response(null, "Added");
+
         });
         // On a heartbeat, refresh worker state.
         socket.on("heartbeatObject", async (message: socketStorage.IWorker, response) => {

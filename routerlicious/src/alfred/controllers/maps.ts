@@ -109,7 +109,9 @@ export function load(id: string, config: any) {
             const root = doc.getRoot();
 
             // Bootstrap worker service.
-            shared.registerWorker(config);
+            if (config.permission.maps) {
+                shared.registerWorker(config);
+            }
 
             // Display the initial values and then listen for updates
             displayMap($("#mapViews"), null, root, null, doc);
