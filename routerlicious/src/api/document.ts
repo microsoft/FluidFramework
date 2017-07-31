@@ -1,9 +1,9 @@
 import * as uuid from "node-uuid";
 import * as ink from "../ink";
+import * as mapExtension from "../map";
 import * as mergeTree from "../merge-tree";
 import * as cell from "./cell";
 import * as extensions from "./extension";
-import * as mapExtension from "./map";
 import { ICollaborationServices } from "./storage";
 import * as types from "./types";
 

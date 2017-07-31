@@ -1,8 +1,8 @@
 import { Router } from "express";
 import { MongoClient } from "mongodb";
 import * as nconf from "nconf";
-import * as api from "../../api";
 import * as core from "../../core";
+import * as map from "../../map";
 import * as utils from "../../utils";
 import { logger } from "../../utils";
 
@@ -46,7 +46,7 @@ async function startProducer(batchSize: number) {
     const producer = utils.kafkaProducer.create(kafkaLibrary, kafkaEndpoint, "testproducer", topic);
     const throughput = new utils.ThroughputCounter(logger.info);
 
-    await getOrCreateObject("producer", api.MapExtension.Type);
+    await getOrCreateObject("producer", map.MapExtension.Type);
 
     let clientSequenceNumber = 1;
     producerInterval = setInterval(() => {

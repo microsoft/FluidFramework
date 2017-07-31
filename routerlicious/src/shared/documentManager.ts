@@ -1,5 +1,6 @@
 import * as request from "request";
 import * as api from "../api";
+import * as map from "../map";
 
 export class DocumentManager {
 
@@ -29,7 +30,7 @@ export class DocumentManager {
 
     // Creates a new map
     public async createMap(document: api.Document, id: string): Promise<api.IMap> {
-        const extension = api.defaultRegistry.getExtension(api.MapExtension.Type);
+        const extension = api.defaultRegistry.getExtension(map.MapExtension.Type);
         return extension.load(
             document,
             id,

@@ -1,10 +1,8 @@
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import * as _ from "lodash";
-import * as api from ".";
+import * as api from "../api";
 import { debug } from "./debug";
-import { DeltaManager } from "./deltaManager";
-import { Document } from "./document";
 
 /**
  * Description of a map delta operation
@@ -62,13 +60,13 @@ class MapView implements api.IMapView {
     // Sequence number for operations local to this client
     private clientSequenceNumber = 0;
 
-    private deltaManager: DeltaManager = null;
+    private deltaManager: api.DeltaManager = null;
 
     // Locally applied operations not yet sent to the server
     private localOps: api.IMessage[] = [];
 
     constructor(
-        private document: Document,
+        private document: api.Document,
         private id: string,
         private events: EventEmitter,
         private connection?: api.IDeltaConnection,
@@ -276,7 +274,7 @@ class MapView implements api.IMapView {
     }
 
     private listenForUpdates() {
-        this.deltaManager = new DeltaManager(
+        this.deltaManager = new api.DeltaManager(
             this.sequenceNumber,
             this.services.deltaStorageService,
             this.connection,
@@ -324,7 +322,7 @@ class Map extends api.CollaborativeObject implements api.IMap {
      * be provided
      */
     constructor(
-        private document: Document,
+        private document: api.Document,
         public id: string,
         services?: api.ICollaborationServices,
         registry?: api.Registry) {
@@ -450,7 +448,7 @@ export class MapExtension implements api.IExtension {
     public type: string = MapExtension.Type;
 
     public load(
-        document: Document,
+        document: api.Document,
         id: string,
         services: api.ICollaborationServices,
         registry: api.Registry): api.IMap {
@@ -458,7 +456,7 @@ export class MapExtension implements api.IExtension {
         return new Map(document, id, services, registry);
     }
 
-    public create(document: Document, id: string): api.IMap {
+    public create(document: api.Document, id: string): api.IMap {
         return new Map(document, id);
     }
 }
