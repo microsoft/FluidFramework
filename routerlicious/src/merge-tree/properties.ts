@@ -1,22 +1,13 @@
 // tslint:disable
 
-export class Property {
-    name: string;
-    value: string;
-    id: number;
-}
-
 export interface MapLike<T> {
     [index: string]: T;
 }
 
-export class PropertySet {
-    propertyMap: MapLike<Property> = createMap<Property>();
-}
-
-export interface PropertyDictionary {
-    internProperty(name: string, value: string): Property;
-}
+// we use any because when you include custom methods 
+// such as toJSON(), JSON.stringify accepts most types other
+// than functions 
+export type PropertySet = MapLike<any>;
 
 // assume these are created with Object.create(null)
 
@@ -45,24 +36,3 @@ export function createMap<T>(): MapLike<T> {
     return map;
 }
 
-export function makePropertyDictionary(): PropertyDictionary {
-    let properties: Property[] = [];
-    let propertyMap: MapLike<Property> = createMap<Property>();
-    function internProperty(name: string, value: string) {
-        let key = name + "_:_" + value;
-        let prop = propertyMap[key];
-        if (!prop) {
-            prop = <Property>{
-                name: name,
-                value: value,
-                id: properties.length
-            }
-            properties.push(prop);
-            propertyMap[key] = prop;
-        }
-        return prop;
-    }
-    return {
-        internProperty: internProperty
-    }
-}

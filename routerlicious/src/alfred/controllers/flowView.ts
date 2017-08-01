@@ -1,4 +1,5 @@
 // tslint:disable:align whitespace no-trailing-whitespace
+import * as url from "url";
 import * as API from "../../api";
 import * as SharedString from "../../merge-tree";
 import * as Geometry from "./geometry";
@@ -110,6 +111,7 @@ function elmOffToSegOff(elmOff: IRangeInfo, span: HTMLSpanElement) {
 }
 
 let cachedCanvas: HTMLCanvasElement;
+let underlineStringURL = `url(${url.resolve(document.baseURI, "/public/images/underline.gif")}) bottom repeat-x`;
 
 function getTextWidth(text: string, font: string) {
     // re-use canvas object for better performance
@@ -294,7 +296,11 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
             if (textSegment.properties) {
                 // tslint:disable-next-line
                 for (let key in textSegment.properties) {
-                    span.style[key] = textSegment.properties[key];
+                    if (key === "textError") {
+                        span.style.background = underlineStringURL;
+                    } else {
+                        span.style[key] = textSegment.properties[key];
+                    }
                 }
             }
             if (offset > 0) {

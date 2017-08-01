@@ -6,8 +6,9 @@ import * as API from "../api";
 import { ISequencedMessage } from "../api";
 import * as Properties from "./properties";
 
+export type MapLike<T> = Properties.MapLike<T>;
+export type PropertySet = Properties.PropertySet;
 export type RangeStackMap = Properties.MapLike<Collections.Stack<Marker>>;
-export type PropertySet = Properties.MapLike<string>;
 
 export interface Node {
     parent: Block;
@@ -25,7 +26,7 @@ export interface Block extends Node {
 
 export interface HierBlock extends Block {
     addNodeMarkers(node: Node);
-    rightmostTiles: Properties.MapLike<Marker>;
+    rightmostTiles: MapLike<Marker>;
     rangeStacks: RangeStackMap;
 }
 
@@ -170,7 +171,7 @@ function applyRangeMarker(stack: Collections.Stack<Marker>, delta: Marker) {
     }
 }
 
-function addNodeMarkers(node: Node, tiles: Properties.MapLike<Marker>, rangeStacks: RangeStackMap) {
+function addNodeMarkers(node: Node, tiles: MapLike<Marker>, rangeStacks: RangeStackMap) {
     if (node.isLeaf()) {
         if (((<Segment>node).getType() == SegmentType.Marker)) {
             let marker = <Marker>node;
@@ -221,8 +222,8 @@ class HierMergeBlock extends MergeBlock implements Block {
         return this;
     }
 
-    rightmostTiles: Properties.MapLike<Marker>;
-    rangeStacks: Properties.MapLike<Collections.Stack<Marker>>;
+    rightmostTiles: MapLike<Marker>;
+    rangeStacks: MapLike<Collections.Stack<Marker>>;
 }
 
 function nodeTotalLength(node: Node) {
@@ -1243,7 +1244,24 @@ export class Client {
             minimumSequenceNumber: undefined,
             offset: seq,
             op: {
-                type: API.MergeTreeDeltaType.REMOVE, pos1: start, pos2: end
+                type: API.MergeTreeDeltaType.REMOVE, pos1: start, pos2: end,
+            },
+            type: API.OperationType,
+        };
+    }
+
+    makeAnnotateMsg(props: PropertySet, start: number, end: number, seq: number, refSeq: number, objectId: string) {
+        return <ISequencedMessage>{
+            clientId: this.longClientId,
+            sequenceNumber: seq,
+            referenceSequenceNumber: refSeq,
+            objectId: objectId,
+            clientSequenceNumber: this.clientSequenceNumber,
+            userId: undefined,
+            minimumSequenceNumber: undefined,
+            offset: seq,
+            op: {
+                type: API.MergeTreeDeltaType.ANNOTATE, pos1: start, pos2: end, props
             },
             type: API.OperationType,
         };
@@ -1273,6 +1291,10 @@ export class Client {
                 break;
             case API.MergeTreeDeltaType.REMOVE:
                 this.removeSegmentRemote(op.pos1, op.pos2, msg.sequenceNumber, msg.referenceSequenceNumber,
+                    clid);
+                break;
+                case API.MergeTreeDeltaType.ANNOTATE:
+                this.annotateSegmentRemote(op.props, op.pos1, op.pos2,msg.sequenceNumber, msg.referenceSequenceNumber,
                     clid);
                 break;
         }
@@ -1311,6 +1333,47 @@ export class Client {
     applyAll() {
         while (!this.q.empty()) {
             this.applyMsg(this.q.dequeue());
+        }
+    }
+
+    annotateSegmentLocal(props: PropertySet, start: number, end: number) {
+        let segWindow = this.mergeTree.getCollabWindow();
+        let clientId = segWindow.clientId;
+        let refSeq = segWindow.currentSeq;
+        let seq = UnassignedSequenceNumber;
+
+        let clockStart;
+        if (this.measureOps) {
+            clockStart = clock();
+        }
+
+        this.mergeTree.annotateRange(props, start, end, refSeq, clientId, seq);
+
+        if (this.measureOps) {
+            this.localTime += elapsedMicroseconds(clockStart);
+            this.localOps++;
+        }
+        if (this.verboseOps) {
+            console.log(`annotate local cli ${this.getLongClientId(clientId)} ref seq ${refSeq}`);
+        }
+    }
+
+    annotateSegmentRemote(props: PropertySet, start: number, end: number, seq: number, refSeq: number, clientId: number) {
+        let clockStart;
+        if (this.measureOps) {
+            clockStart = clock();
+        }
+
+        this.mergeTree.annotateRange(props, start, end, refSeq, clientId, seq);
+        this.mergeTree.getCollabWindow().currentSeq = seq;
+
+        if (this.measureOps) {
+            this.accumTime += elapsedMicroseconds(clockStart);
+            this.accumOps++;
+            this.accumWindow += (this.getCurrentSeq() - this.mergeTree.getCollabWindow().minSeq);
+        }
+        if (this.verboseOps) {
+            console.log(`@cli ${this.getLongClientId(this.mergeTree.getCollabWindow().clientId)} seq ${seq} annotate remote start ${start} end ${end} refseq ${refSeq} cli ${clientId}`);
         }
     }
 
@@ -1485,6 +1548,14 @@ export class Client {
         return this.mergeTree.getText(segmentWindow.currentSeq, segmentWindow.clientId);
     }
 
+    /**
+     * Adds spaces for markers and components, so that position calculations account for them
+     */
+    getTextWithPlaceholders() {
+        let segmentWindow = this.mergeTree.getCollabWindow();
+        return this.mergeTree.getText(segmentWindow.currentSeq, segmentWindow.clientId, true);
+    }
+
     getLength() {
         let segmentWindow = this.mergeTree.getCollabWindow();
         return this.mergeTree.getLength(segmentWindow.currentSeq, segmentWindow.clientId);
@@ -1607,6 +1678,11 @@ function glc(mergeTree: MergeTree, id: number) {
     else {
         return id.toString();
     }
+}
+
+export interface TextAccumulator {
+    textSegment: TextSegment;
+    placeholders?: boolean;
 }
 
 // represents a sequence of text segments
@@ -1984,7 +2060,7 @@ export class MergeTree {
             if (end > this.root.cachedLength) {
                 end = this.root.cachedLength;
             }
-            chunk += this.getText(UniversalSequenceNumber, this.collabWindow.clientId, start, end);
+            chunk += this.getText(UniversalSequenceNumber, this.collabWindow.clientId, false, start, end);
             let result = chunk.match(target);
             if (result !== null) {
                 return { text: result[0], pos: result.index };
@@ -1998,7 +2074,7 @@ export class MergeTree {
     }
 
     gatherText = (segment: Segment, pos: number, refSeq: number, clientId: number, start: number,
-        end: number, accumText: TextSegment) => {
+        end: number, accumText: TextAccumulator) => {
         if (segment.getType() == SegmentType.Text) {
             let textSegment = <TextSegment>segment;
             if ((textSegment.removedSeq === undefined) || (textSegment.removedSeq == UnassignedSequenceNumber) || (textSegment.removedSeq > refSeq)) {
@@ -2006,14 +2082,14 @@ export class MergeTree {
                     console.log(`@cli ${this.getLongClientId(this.collabWindow.clientId)} gather seg seq ${textSegment.seq} rseq ${textSegment.removedSeq} text ${textSegment.text}`);
                 }
                 if ((start <= 0) && (end >= textSegment.text.length)) {
-                    accumText.text += textSegment.text;
+                    accumText.textSegment.text += textSegment.text;
                 }
                 else {
                     if (end >= textSegment.text.length) {
-                        accumText.text += textSegment.text.substring(start);
+                        accumText.textSegment.text += textSegment.text.substring(start);
                     }
                     else {
-                        accumText.text += textSegment.text.substring(start, end);
+                        accumText.textSegment.text += textSegment.text.substring(start, end);
                     }
                 }
             }
@@ -2021,6 +2097,11 @@ export class MergeTree {
                 if (MergeTree.traceGatherText) {
                     console.log(`ignore seg seq ${textSegment.seq} rseq ${textSegment.removedSeq} text ${textSegment.text}`);
                 }
+            }
+        }
+        else if (accumText.placeholders) {
+            for (let i = 0; i < segment.cachedLength; i++) {
+                accumText.textSegment.text += " ";
             }
         }
         return true;
@@ -2045,19 +2126,20 @@ export class MergeTree {
         return context.text;
     }
 
-    getText(refSeq: number, clientId: number, start?: number, end?: number) {
+    getText(refSeq: number, clientId: number, placeholders?: boolean, start?: number, end?: number) {
         if (start === undefined) {
             start = 0;
         }
         if (end === undefined) {
             end = this.blockLength(this.root, refSeq, clientId);
         }
-        let accum = new TextSegment("");
+        let accum = <TextAccumulator>{ textSegment: new TextSegment(""), placeholders };
+        
         if (MergeTree.traceGatherText) {
             console.log(`get text on cli ${glc(this, this.collabWindow.clientId)} ref cli ${glc(this, clientId)} refSeq ${refSeq}`);
         }
-        this.mapRange<TextSegment>({ leaf: this.gatherText }, refSeq, clientId, accum, start, end);
-        return accum.text;
+        this.mapRange<TextAccumulator>({ leaf: this.gatherText }, refSeq, clientId, accum, start, end);
+        return accum.textSegment.text;
     }
 
     getContainingSegment(pos: number, refSeq: number, clientId: number) {
@@ -2528,6 +2610,20 @@ export class MergeTree {
             console.log(`added cli ${glc(this, clientId)} to rseq: ${textSegment.removedSeq} text ${textSegment.toString()}`);
         }
         textSegment.removedClientOverlap.push(clientId);
+    }
+
+    annotateRange(props: PropertySet, start: number, end: number, refSeq: number, clientId: number, seq: number) {
+        this.ensureIntervalBoundary(start, refSeq, clientId);
+        this.ensureIntervalBoundary(end, refSeq, clientId);
+        let annotateSegment = (segment: Segment) => {
+            let segType = segment.getType();
+            if ((segType == SegmentType.Marker) || (segType == SegmentType.Text)) {
+                let baseSeg = <BaseSegment>segment;
+                baseSeg.addProperties(props);
+            }
+            return true;
+        }
+        this.mapRange({ leaf: annotateSegment }, refSeq, clientId, undefined, start, end);
     }
 
     markRangeRemoved(start: number, end: number, refSeq: number, clientId: number, seq: number) {

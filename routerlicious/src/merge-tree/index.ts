@@ -142,6 +142,17 @@ export class SharedString implements API.ICollaborativeObject {
         };
     }
 
+    private makeAnnotateMsg(props: MergeTree.PropertySet, start: number, end: number) {
+        return <API.IMessage>{
+            referenceSequenceNumber: this.client.getCurrentSeq(),
+            objectId: this.id,
+            clientSequenceNumber: this.clientSequenceNumber++,
+            op: {
+                type: API.MergeTreeDeltaType.ANNOTATE, pos1: start, pos2: end, props
+            }
+        };
+    }
+
     public insertMarker(pos: number, type: string, behaviors: API.MarkerBehaviors, props?: MergeTree.PropertySet, end?: number) {
         const insertMessage = this.makeInsertMarkerMsg(pos, type, behaviors, props, end);
         this.client.insertMarkerLocal(pos, type, behaviors, props, end);
@@ -158,6 +169,12 @@ export class SharedString implements API.ICollaborativeObject {
         const removeMessage = this.makeRemoveMsg(start, end);
         this.client.removeSegmentLocal(start, end);
         this.deltaManager.submitOp(removeMessage);
+    }
+
+    public annotateRange(props: MergeTree.PropertySet, start: number, end: number) {
+        const annotateMessage = this.makeAnnotateMsg(props, start, end);
+        this.client.annotateSegmentLocal(props, start, end);
+        this.deltaManager.submitOp(annotateMessage);
     }
 
     private processRemoteOperation(message: API.IBase) {
