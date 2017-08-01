@@ -91,10 +91,13 @@ export class WorkerService implements api.IWorkerService {
 
         const docManager = new shared.DocumentManager(this.serverUrl, this.services);
         docManager.load(id).then(async (doc) => {
-            console.log(`Loaded a document...${doc.id}`);
+            console.log(`Loaded the document ${id}`);
             this.documentMap[id] = doc;
             const insightsMap = await docManager.createMap(`${id}-insights`);
             this.processWork(doc, insightsMap);
+        }, (error) => {
+            console.log(`Document ${id} not found!`);
+            return;
         });
     }
 
