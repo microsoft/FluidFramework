@@ -110,7 +110,7 @@ export class WorkerService implements api.IWorkerService {
         intelligenceManager.registerService(nativeTextAnalytics.factory.create(
                                             this.config.intelligence.nativeTextAnalytics));
         doc.on("op", (op) => {
-            serializer.run();
+            serializer.run(op);
             intelligenceManager.process(doc);
         });
     }
