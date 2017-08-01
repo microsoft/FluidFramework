@@ -4,11 +4,13 @@ import logging
 from flask import Flask
 from flask import jsonify
 from flask import request
+from flask_cors import CORS, cross_origin
 from textblob import TextBlob
 
 app = Flask(__name__)
 
 @app.route('/api/sentiment/query',methods=['POST','GET'])
+@cross_origin()
 def query_sentiment():
 	try:
 		req_json = request.get_json()
