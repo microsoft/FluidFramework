@@ -70,7 +70,8 @@ data:
                 "document": 15000
             },
             "workerType": "random",
-            "workerAckTimeMSec": 100
+            "workerAckTimeMSec": 100,
+            "onlyServer": false
         },
         "redis": {
             "host": "steely-ant-redis",
@@ -100,7 +101,14 @@ data:
             },
             "url": "http://praguetmz.westus2.cloudapp.azure.com",
             "storageBucket": "snapshots",
-            "intervalMSec": 10000
+            "intervalMSec": 10000,
+            "onlyServer": false,
+            "permission": {
+                "canvas": false,
+                "cell": true,
+                "maps": true,
+                "sharedText": false
+            }
         },
         "git": {
             "repository": "prague",
