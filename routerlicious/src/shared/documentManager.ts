@@ -13,10 +13,14 @@ export class DocumentManager {
                 if (error) {
                     reject(error);
                 } else {
-                    const type = JSON.parse(body).type;
-                    const extension = api.defaultRegistry.getExtension(type);
-                    const sharedObject = extension.load(id, this.services, api.defaultRegistry);
-                    resolve(sharedObject);
+                    if (response.statusCode === 200) {
+                        const type = JSON.parse(body).type;
+                        const extension = api.defaultRegistry.getExtension(type);
+                        const sharedObject = extension.load(id, this.services, api.defaultRegistry);
+                        resolve(sharedObject);
+                    } else {
+                        reject(response.statusMessage);
+                    }
                 }
             });
         });

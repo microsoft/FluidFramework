@@ -1,9 +1,11 @@
 import * as request from "request";
 import { IIntelligentService, IIntelligentServiceFactory } from "./api";
 
-const route = "resume";
-
 export interface IConfig {
+    deviceId: string;
+    host: string;
+    sharedAccessKey: string;
+    sharedAccessKeyName: string;
     url: string;
 }
 
@@ -21,7 +23,7 @@ class ResumeAnalyticsIntelligentService implements IIntelligentService {
                 text: condensed,
             }],
         };
-        const resumeAnalyticsResult = await this.invokeRequest(this.url + route, data);
+        const resumeAnalyticsResult = await this.invokeRequest(this.url, data);
         return {
             resumeAnalyticsResult,
         };
@@ -55,8 +57,8 @@ class ResumeAnalyticsIntelligentService implements IIntelligentService {
 }
 
 export class ResumeAnalyticsFactory implements IIntelligentServiceFactory {
-    public create(url: string): IIntelligentService {
-        return new ResumeAnalyticsIntelligentService(url);
+    public create(config: IConfig): IIntelligentService {
+        return new ResumeAnalyticsIntelligentService(config.url);
     }
 }
 

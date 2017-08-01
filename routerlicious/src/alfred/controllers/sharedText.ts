@@ -216,7 +216,10 @@ export async function onLoad(id: string, config: any) {
 
     sharedString.on("loadFinshed", (data: MergeTreeChunk, existing: boolean) => {
         // Bootstrap worker service.
-        shared.registerWorker(config);
+        if (config.permission.sharedText) {
+            shared.registerWorker(config);
+        }
+
         if (existing) {
             theFlow.loadFinished(clockStart);
         } else {

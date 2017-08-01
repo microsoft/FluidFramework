@@ -12,9 +12,11 @@ export class WorkerService implements api.IWorkerService {
 
     private socket;
     private documentMap: { [docId: string]: api.ICollaborativeObject} = {};
+    private services: api.ICollaborationServices;
 
     constructor(private serverUrl: string, private workerUrl: string, private config: any) {
         this.socket = io(this.workerUrl, { transports: ["websocket"] });
+        this.initializeServices();
     }
 
     /**
@@ -26,18 +28,19 @@ export class WorkerService implements api.IWorkerService {
         const clientId = type + Math.floor(Math.random() * 100000);
         const clientDetail: messages.IWorker = {
             clientId,
-            type: "Client",
+            type,
         };
 
         const deferred = new shared.Deferred<void>();
-        // Subscribes to TMZ and starts receiving messages.
+        // Subscribes to TMZ. Starts listening to messages if TMZ acked the subscribtion.
+        // Otherwise just resolve. On any error, reject and caller will be responsible reconnecting.
         this.socket.emit(
             "workerObject",
             clientDetail,
             (error, ack) => {
                 if (error) {
                     deferred.reject(error);
-                } else {
+                } else if (ack === "Acked") {
                     // Check whether worker is ready to work.
                     this.socket.on("ReadyObject", (cId: string, id: string, response) => {
                         response(null, clientDetail);
@@ -64,27 +67,37 @@ export class WorkerService implements api.IWorkerService {
                                 }
                             });
                     }, this.config.intervalMSec);
+                } else {
+                    deferred.resolve();
                 }
             });
 
         return deferred.promise;
     }
 
-    private async processDocument(id: string) {
+    private initializeServices() {
         const objectStorageService = new shared.ObjectStorageService(this.serverUrl);
-
-        const services: api.ICollaborationServices = {
+        this.services = {
             deltaNotificationService: new socketStorage.DeltaNotificationService(this.serverUrl),
             deltaStorageService: new socketStorage.DeltaStorageService(this.serverUrl),
             objectStorageService,
         };
+    }
 
-        const docManager = new shared.DocumentManager(this.serverUrl, services);
+    private async processDocument(id: string) {
+        if (id.length === 0) {
+            return;
+        }
+
+        const docManager = new shared.DocumentManager(this.serverUrl, this.services);
         docManager.load(id).then(async (doc) => {
-            console.log(`Loaded a document...${doc.id}`);
+            console.log(`Loaded the document ${id}`);
             this.documentMap[id] = doc;
             const insightsMap = await docManager.createMap(`${id}-insights`);
             this.processWork(doc, insightsMap);
+        }, (error) => {
+            console.log(`Document ${id} not found!`);
+            return;
         });
     }
 
@@ -92,9 +105,7 @@ export class WorkerService implements api.IWorkerService {
         const serializer = new shared.Serializer(doc);
 
         const intelligenceManager = new shared.IntelligentServicesManager(insightsMap);
-        // Temporary workaround. Passing url directly instead of config to use the REST API. Will fix once the
-        // REST API is deployed.
-        intelligenceManager.registerService(resumeAnalytics.factory.create(this.serverUrl + "/intelligence/"));
+        intelligenceManager.registerService(resumeAnalytics.factory.create(this.config.intelligence.resume));
         intelligenceManager.registerService(textAnalytics.factory.create(this.config.intelligence.textAnalytics));
         intelligenceManager.registerService(nativeTextAnalytics.factory.create(
                                             this.config.intelligence.nativeTextAnalytics));

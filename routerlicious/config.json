@@ -65,7 +65,8 @@
             "document": 15000
         },
         "workerType": "random",
-        "workerAckTimeMSec": 100
+        "workerAckTimeMSec": 100,
+        "onlyServer": false
     },
     "redis": {
         "host": "redis",
@@ -96,7 +97,8 @@
                 "deviceId": "routerlicious",
                 "host": "pkarimov-paidIOT.azure-devices.net",
                 "sharedAccessKeyName": "iothubowner",
-                "sharedAccessKey": "8mvOmNnUklwnuzY+U96V51w+qCq262ZUpSkdw8nTZ18="
+                "sharedAccessKey": "8mvOmNnUklwnuzY+U96V51w+qCq262ZUpSkdw8nTZ18=",
+                "url": "http://praguekube.westus2.cloudapp.azure.com/intelligence/resume"
             },
             "textAnalytics": {
                 "key": "c8b60dc5e49849ce903d7d29a2dce550"
@@ -107,7 +109,14 @@
         },
         "url": "http://localhost:4000",
         "storageBucket": "snapshots",
-        "intervalMSec": 10000
+        "intervalMSec": 10000,
+        "onlyServer": false,
+        "permission": {
+            "canvas": false,
+            "cell": true,
+            "maps": true,
+            "sharedText": false
+        }
     },
     "git": {
         "repository": "prague",
