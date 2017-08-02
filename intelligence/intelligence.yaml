@@ -11,7 +11,7 @@ spec:
     spec:
       containers:
       - name: intelligence
-        image: prague.azurecr.io/intelligence:526
+        image: prague.azurecr.io/intelligence:578
         command:
           - 'python'
           - 'text-analytics/server.py'
