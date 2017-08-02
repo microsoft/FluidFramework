@@ -1556,6 +1556,11 @@ export class Client {
         return this.mergeTree.getText(segmentWindow.currentSeq, segmentWindow.clientId, true);
     }
 
+    getTextRangeWithPlaceholders(start: number, end: number) {
+        let segmentWindow = this.mergeTree.getCollabWindow();
+        return this.mergeTree.getText(segmentWindow.currentSeq, segmentWindow.clientId, true, start, end);
+    }
+
     getLength() {
         let segmentWindow = this.mergeTree.getCollabWindow();
         return this.mergeTree.getLength(segmentWindow.currentSeq, segmentWindow.clientId);

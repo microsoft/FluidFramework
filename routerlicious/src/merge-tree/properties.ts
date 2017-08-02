@@ -17,7 +17,12 @@ export function extend<T>(base: MapLike<T>, extension: MapLike<T>) {
             console.log(`oh my ${extension}`);
         }
         for (let key in extension) {
-            base[key] = extension[key];
+            let v = extension[key];
+            if (v === null) {
+                delete base[key];
+            } else {
+                base[key] = extension[key];
+            }
         }
     }
     return base;

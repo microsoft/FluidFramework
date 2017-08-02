@@ -3,23 +3,23 @@
 import * as Base from "./base";
 
 export class Stack<T> {
-  items: T[] = [];
-  push(val: T) {
-    this.items.push(val);
-  }
+    items: T[] = [];
+    push(val: T) {
+        this.items.push(val);
+    }
 
-  empty() {
-      return this.items.length == 0;
-  }
+    empty() {
+        return this.items.length == 0;
+    }
 
-  top(): T | undefined {
-    return this.items[this.items.length-1];   
-  }
+    top(): T | undefined {
+        return this.items[this.items.length - 1];
+    }
 
-  pop(): T | undefined {
-    return this.items.pop();
-  }
-  
+    pop(): T | undefined {
+        return this.items.pop();
+    }
+
 }
 
 export function ListRemoveEntry<U>(entry: List<U>): List<U> {
@@ -697,4 +697,172 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
     diag() {
         console.log(`Height is ${this.height()}`);
     }
+}
+
+export interface TSTNode<TValue> {
+    c: string;
+    left?: TSTNode<TValue>;
+    mid?: TSTNode<TValue>;
+    right?: TSTNode<TValue>;
+    val?: TValue;
+}
+
+export interface TSTPrefix {
+    text: string;
+}
+
+export class TST<TValue> {
+    private n = 0;
+    private root: TSTNode<TValue>;
+
+    constructor() {
+
+    }
+
+    size() {
+        return this.n;
+    }
+
+    contains(key: string) {
+        return this.get(key);
+    }
+
+    get(key: string) {
+        let x = this.nodeGet(this.root, key, 0);
+        if (x === undefined) {
+            return undefined;
+        }
+        return x.val;
+    }
+
+    nodeGet(x: TSTNode<TValue>, key: string, d: number): TSTNode<TValue> {
+        if (x === undefined) {
+            return undefined;
+        }
+        let c = key.charAt(d);
+        if (c < x.c) {
+            return this.nodeGet(x.left, key, d);
+        }
+        else if (c > x.c) {
+            return this.nodeGet(x.right, key, d);
+        }
+        else if (d < (key.length - 1)) {
+            return this.nodeGet(x.mid, key, d + 1);
+        }
+        else return x;
+    }
+
+    put(key: string, val: TValue) {
+        if (!this.contains(key)) {
+            this.n++;
+        }
+        this.root = this.nodePut(this.root, key, val, 0);
+    }
+
+    nodePut(x: TSTNode<TValue>, key: string, val: TValue, d: number) {
+        let c = key.charAt(d);
+        if (x === undefined) {
+            x = { c };
+        }
+        if (c < x.c) {
+            x.left = this.nodePut(x.left, key, val, d);
+        }
+        else if (c > x.c) {
+            x.right = this.nodePut(x.right, key, val, d);
+        }
+        else if (d < (key.length - 1)) {
+            x.mid = this.nodePut(x.mid, key, val, d + 1);
+        }
+        else {
+            x.val = val;
+        }
+        return x;
+    }
+
+    neighbors(text: string, distance = 2) {
+        let q = <string[]>[];
+        this.nodeProximity(this.root, { text: "" }, 0, text, distance, q);
+        return q;
+    }
+
+    keysWithPrefix(text: string) {
+        let q = <string[]>[];
+        let x = this.nodeGet(this.root, text, 0);
+        if (x === undefined) {
+            return q;
+        }
+        if (x.val !== undefined) {
+            q.push(text);
+        }
+        this.collect(x.mid, { text }, q);
+        return q;
+    }
+
+    collect(x: TSTNode<TValue>, prefix: TSTPrefix, q: string[]) {
+        if (x === undefined) {
+            return;
+        }
+        this.collect(x.left, prefix, q);
+        if (x.val !== undefined) {
+            q.push(prefix.text + x.c);
+        }
+        this.collect(x.mid, { text: prefix.text + x.c }, q);
+        this.collect(x.right, prefix, q);
+    }
+
+    patternCollect(x: TSTNode<TValue>, prefix: TSTPrefix, d: number, pattern: string, q: string[]) {
+        if (x === undefined) {
+            return;
+        }
+        let c = pattern.charAt(d);
+        if ((c === '.') || (c < x.c)) {
+            this.patternCollect(x.left, prefix, d, pattern, q);
+        }
+        else if ((c === '.') || (c === x.c)) {
+            if ((d === (pattern.length - 1)) && (x.val !== undefined)) {
+                q.push(prefix.text + x.c);
+            }
+            else if (d < (pattern.length - 1)) {
+                this.patternCollect(x.mid, { text: prefix.text + x.c },
+                    d + 1, pattern, q);
+            }
+        }
+        if ((c === '.') || (c > x.c)) {
+            this.patternCollect(x.right, prefix, d, pattern, q);
+        }
+    }
+
+    nodeProximity(x: TSTNode<TValue>, prefix: TSTPrefix, d: number,
+        pattern: string, distance: number, q: string[]) {
+        if ((x === undefined) || (distance < 0)) {
+            return;
+        }
+        let c = pattern.charAt(d);
+        if ((distance > 0) || (c < x.c)) {
+            this.nodeProximity(x.left, prefix, d, pattern, distance, q);
+        }
+        if (x.val !== undefined) {
+            if (distance >= (pattern.length - d)) {
+                q.push(prefix.text + x.c);
+            }
+        } else {
+            let recurD = (d < (pattern.length - 1)) ? d + 1 : d;
+            if (c === x.c) {
+                this.nodeProximity(x.mid, { text: prefix.text + x.c }, recurD, pattern, distance, q);
+            }
+            else {
+                this.nodeProximity(x.mid, { text: prefix.text + x.c }, recurD, pattern, distance - 1, q);
+            }
+        }
+        if ((distance > 0) || (c > x.c)) {
+            this.nodeProximity(x.right, prefix, d, pattern, distance, q);
+        }
+    }
+
+    match(pattern: string) {
+        let q = <string[]>[];
+        this.patternCollect(this.root, { text: "" }, 0, pattern, q);
+        return q;
+    }
+
 }

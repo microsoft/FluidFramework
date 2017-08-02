@@ -10,7 +10,26 @@ function spellingError(candidate: string) {
 }
 
 class Speller {
+    static maxWord = 256;
     constructor(public sharedString: SharedString.SharedString) {
+    }
+
+    setEvents() {
+        this.sharedString.on("op", (msg: API.ISequencedMessage) => {
+            if (msg && msg.op) {
+                let delta = <API.IMergeTreeOp>msg.op;
+                if (delta.type === API.MergeTreeDeltaType.INSERT) {
+                    this.currentWordSpellCheck(delta.pos1);
+                } else if (delta.type === API.MergeTreeDeltaType.REMOVE) {
+                    let pos= delta.pos1;
+                    if (pos>0) {
+                        // ensure pos within word
+                        pos--;
+                    }
+                    this.currentWordSpellCheck(pos);
+                }
+            }
+        });
     }
 
     initialSpellCheck() {
@@ -24,12 +43,48 @@ class Speller {
                 if (spellingError(candidate)) {
                     let start = result.index;
                     let end = re.lastIndex;
-                    let textErrorInfo = { text: text.substring(start,end), alternates: ["giraffe", "bunny"] };
+                    let textErrorInfo = { text: text.substring(start, end), alternates: ["giraffe", "bunny"] };
                     console.log(`spell (${start}, ${end}): ${textErrorInfo.text}`);
-                    this.sharedString.annotateRange({ textError: textErrorInfo }, start, end);                    
+                    this.sharedString.annotateRange({ textError: textErrorInfo }, start, end);
                 }
             }
         } while (result);
+        this.setEvents();
+    }
+
+    currentWordSpellCheck(pos: number) {
+        let startPos = pos - Speller.maxWord;
+        let endPos = pos + Speller.maxWord;
+
+        if (startPos < 0) {
+            startPos = 0;
+        }
+        let text = this.sharedString.client.getTextRangeWithPlaceholders(startPos, endPos);
+        let re = /\b\w+\b/g;
+        let result: RegExpExecArray;
+        do {
+            result = re.exec(text);
+            if (result) {
+                let start = result.index + startPos;
+                let end = re.lastIndex + startPos;
+                if ((start <= pos) && (end > pos)) {
+                    let candidate = result[0];
+                    if (spellingError(candidate)) {
+                        let textErrorInfo = {
+                            text: text.substring(result.index, re.lastIndex),
+                            alternates: ["giraffe", "bunny"]
+                        };
+                        console.log(`respell (${start}, ${end}): ${textErrorInfo.text}`);
+                        this.sharedString.annotateRange({ textError: textErrorInfo }, start, end);
+                    }
+                    else {
+                        console.log(`spell ok (${start}, ${end}): ${text.substring(result.index, re.lastIndex)}`);
+                        this.sharedString.annotateRange({ textError: null }, start, end);
+                    }
+                }
+            }
+        }
+        while ((re.lastIndex <= pos) && result);
     }
 }
 

@@ -1337,6 +1337,31 @@ export function TestPack() {
         manyMergeTrees: manyMergeTrees
     }
 }
+
+function tst() {
+    let tree =  new Collections.TST<boolean>();
+    let entries = ["giraffe","hut","aardvark","gold", "hover", "yurt","hot","antelope","gift","banana"];
+    for (let entry of entries) {
+        tree.put(entry, true);
+    }
+    for (let entry of entries) {
+        console.log(`get ${entry}: ${tree.get(entry)}`);
+    }
+    let p1 = tree.keysWithPrefix("g");
+    let p2 = tree.keysWithPrefix("gi");
+    console.log(p1);
+    console.log(p2);
+    p2 = tree.neighbors("hat");
+    console.log(p2);
+    tree = new Collections.TST<boolean>();
+/*    let content = fs.readFileSync("dict.txt", "utf8");
+    let a = content.split('\n');
+    console.log(a.length);
+    */
+}
+//tst();
+
+
 //simpleTest();
 //fileTest1();
 //integerTest1();
