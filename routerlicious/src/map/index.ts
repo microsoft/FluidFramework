@@ -392,11 +392,12 @@ export class MapExtension implements api.IExtension {
 
     public load(
         document: api.Document,
+        id: string,
         services: api.IDistributedObjectServices,
         version: string,
         header: string): api.IMap {
 
-        return new Map(document, services.deltaConnection.objectId, services, version, header);
+        return new Map(document, id, services, version, header);
     }
 
     public create(document: api.Document, id: string): api.IMap {

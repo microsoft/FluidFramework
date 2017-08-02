@@ -1,12 +1,11 @@
+import * as api from "../api";
+
 /**
  * Message sent to connect to the given object
  */
 export interface IConnect {
-    // The collaborative object the operation is intended for
-    objectId: string;
-
-    // The type of the collaborative object
-    type: string;
+    // The document that is being connected to
+    id: string;
 }
 
 /**
@@ -20,7 +19,16 @@ export interface IConnected {
     existing: boolean;
 
     // Available revisions for this document
-    revisions: any[];
+    version: string;
+
+    // The latest sequence number for the document
+    sequenceNumber: number;
+
+    // Distributed objects contained within the document
+    distributedObjects: api.IDistributedObject[];
+
+    // Pending deltas that have not yet been included in a snapshot
+    pendingDeltas: api.ISequencedMessage[];
 }
 
 /**

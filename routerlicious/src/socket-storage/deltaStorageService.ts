@@ -3,9 +3,21 @@ import * as request from "request";
 import * as api from "../api";
 
 /**
- * Provides access to the underlying delta storage
+ * Storage service limited to only being able to fetch documents for a specific document
  */
-export class DeltaStorageService implements api.IDeltaStorageService {
+export class DocumentDeltaStorageService implements api.IDeltaStorageService {
+    constructor(private id: string, private storageService: DeltaStorageService) {
+    }
+
+    public get(from?: number, to?: number): Promise<api.ISequencedMessage[]> {
+        return this.storageService.get(this.id, from, to);
+    }
+}
+
+/**
+ * Provides access to the underlying delta storage on the server
+ */
+export class DeltaStorageService {
     constructor(private url: string) {
     }
 

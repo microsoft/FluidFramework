@@ -1,10 +1,16 @@
+export interface ISendPosition {
+    clientSequenceNumber: number;
+
+    referenceSequenceNumber: number;
+}
+
 /**
  * Base collaborative object message
  */
 export interface IMessageBase {
-    clientSequenceNumber: number;
+    document: ISendPosition;
 
-    referenceSequenceNumber: number;
+    object: ISendPosition;
 
     op: any;
 }
@@ -15,15 +21,26 @@ export interface IMessageBase {
 export interface IMessage extends IMessageBase {
 }
 
-export interface IBase {
-    // The sequence number for the message
+export interface ISequencedPosition extends ISendPosition{
     sequenceNumber: number;
 
-    // The minimum sequence number for the message
     minimumSequenceNumber: number;
+}
+
+export interface IBase {
+    // The sequence number for the document
+    document: ISequencedPosition;
+
+    // The sequence number for the object
+    object: ISequencedPosition;
 
     // The type of operation
     type: string;
+
+    // Identifier for the distributed object the message applies to
+    objectId: string;
+
+    op: any;
 }
 
 // Delta operation application type
@@ -35,19 +52,15 @@ export const MinimumSequenceNumberUpdateType = "msn";
 /**
  * Message sent to clients when an operation has been assigned a sequence number and is being routed to clients
  */
-export interface ISequencedMessage extends IMessageBase, IBase {
+export interface ISequencedMessage extends IBase {
     // The user that submitted the delta
     userId: string;
 
     // The client ID that submitted the delta
     clientId: string;
-
-    // The assigned sequence number
-    sequenceNumber: number;
-
-    // Minimum sequence number of connected clients
-    minimumSequenceNumber: number;
 }
+
+// TODO I probably need to distinguish document vs. object events
 
 export interface IDelta {
 }

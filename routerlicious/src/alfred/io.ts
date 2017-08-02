@@ -94,6 +94,12 @@ io.on("connection", (socket) => {
     // Map from client IDs on this connection to the object ID for them
     const connectionsMap: { [clientId: string]: string } = {};
 
+    //
+    // Message sent when attempting to connect to a given document
+    //
+    socket.on("connect", (message: socketStorage.IConnect, response) => {
+    });
+
     // The loadObject call needs to see if the object already exists. If not it should offload to
     // the storage service to go and create it.
     //

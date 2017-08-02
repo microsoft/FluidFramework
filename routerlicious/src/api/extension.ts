@@ -26,10 +26,10 @@ export interface IExtension {
      */
     load(
         document: Document,
+        id: string,
         services: storage.IDistributedObjectServices,
         version: string,
-        header: string,
-        storage: storage.IObjectStorageService): types.ICollaborativeObject;
+        header: string): types.ICollaborativeObject;
 
     /**
      * Creates a local version of the distributive object.

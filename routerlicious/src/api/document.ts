@@ -1,15 +1,19 @@
 import * as assert from "assert";
+import { EventEmitter } from "events";
 import * as uuid from "node-uuid";
 import * as cell from "../cell";
 import * as ink from "../ink";
 import * as mapExtension from "../map";
 import * as mergeTree from "../merge-tree";
+import { DeltaManager } from "./deltaManager";
 import * as extensions from "./extension";
+import { IBase, IMessage, OperationType } from "./protocol";
 import {
     IDeltaConnection,
     IDistributedObject,
     IDistributedObjectServices,
     IDocument,
+    IDocumentDeltaConnection,
     IDocumentService,
     IDocumentStorageService,
     IObjectStorageService } from "./storage";
@@ -45,25 +49,108 @@ export function getDefaultDocumentService(): IDocumentService {
 }
 
 class ObjectStorageService implements IObjectStorageService {
-    constructor(private documentId: string, private storage: IDocumentStorageService, private version: string) {
+    constructor(private storage: IDocumentStorageService) {
     }
 
     public read(path: string): Promise<string> {
-        return this.storage.read(this.documentId, this.version, path);
+        return this.storage.read(path);
     }
 }
 
 class DeltaConnection implements IDeltaConnection {
-    constructor(public objectId: string) {
+    protected events = new EventEmitter();
+
+    // Flag indicating whether or not we need to udpate the reference sequence number
+    private updateHasBeenRequested = false;
+    private updateSequenceNumberTimer: any;
+
+    // Flag indicating whether the client has only received messages
+    private readonly = true;
+
+    // The last sequence number we received from the server
+    private referenceSequenceNumber;
+
+    constructor(public objectId: string, private connection: IDocumentDeltaConnection) {
     }
 
-    public on(event: string, listener: Function): this {
-        throw new Error("Method not implemented.");
+    public on(event: string, listener: (...args: any[]) => void): this {
+        this.events.on(event, listener);
+        return this;
     }
 
-    public updateReferenceSequenceNumber(sequenceNumber: number): Promise<void> {
-        throw new Error("Method not implemented.");
+    public emit(message: IBase) {
+        this.referenceSequenceNumber = message.object.sequenceNumber;
+        this.events.emit("op", message);
+
+        // We will queue a message to update our reference sequence number upon receiving a server operation. This
+        // allows the server to know our true reference sequence number and be able to correctly update the minimum
+        // sequence number (MSN). We don't ackowledge other message types similarly (like a min sequence number update)
+        // to avoid ackowledgement cycles (i.e. ack the MSN update, which updates the MSN, then ack the update, etc...).
+        if (message.type === OperationType) {
+            this.updateSequenceNumber();
+        }
     }
+
+    /**
+     * Send new messages to the server
+     */
+    public submitOp(message: IMessage): Promise<void> {
+        this.readonly = false;
+        this.stopSequenceNumberUpdate();
+
+        // TODO this probably needs to be appended with other stuff
+
+        return this.connection.submitOp(message);
+    }
+
+    /**
+     * Acks the server to update the reference sequence number
+     */
+    private updateSequenceNumber() {
+        // Exit early for readonly clients. They don't take part in the minimum sequence number calculation.
+        if (this.readonly) {
+            return;
+        }
+
+        // If an update has already been requeested then mark this fact. We will wait until no updates have
+        // been requested before sending the updated sequence number.
+        if (this.updateSequenceNumberTimer) {
+            this.updateHasBeenRequested = true;
+            return;
+        }
+
+        // Clear an update in 100 ms
+        this.updateSequenceNumberTimer = setTimeout(() => {
+            this.updateSequenceNumberTimer = undefined;
+
+            // If a second update wasn't requested then send an update message. Otherwise defer this until we
+            // stop processing new messages.
+            if (!this.updateHasBeenRequested) {
+                // TODO this probably needs the object its updating the ref seq # for
+                this.connection.updateReferenceSequenceNumber(this.objectId, this.referenceSequenceNumber);
+            } else {
+                this.updateHasBeenRequested = false;
+                this.updateSequenceNumber();
+            }
+        }, 100);
+    }
+
+    private stopSequenceNumberUpdate() {
+        if (this.updateSequenceNumberTimer) {
+            clearTimeout(this.updateSequenceNumberTimer);
+        }
+
+        this.updateHasBeenRequested = false;
+        this.updateSequenceNumberTimer = undefined;
+    }
+}
+
+interface IDistributedObjectState {
+    object: types.ICollaborativeObject;
+
+    storage: ObjectStorageService;
+
+    connection: DeltaConnection;
 }
 
 /**
@@ -94,7 +181,9 @@ export class Document {
     }
 
     // Map from the object ID to the collaborative object for it
-    private distributedObjects: { [key: string]: types.ICollaborativeObject } = {};
+    private distributedObjects: { [key: string]: IDistributedObjectState } = {};
+
+    private deltaManager: DeltaManager;
 
     public get clientId(): string {
         return this.document.clientId;
@@ -104,6 +193,12 @@ export class Document {
      * Constructs a new document from the provided details
      */
     private constructor(private document: IDocument, private registry: extensions.Registry) {
+        this.deltaManager = new DeltaManager(
+            this.document.documentId,
+            this.document.sequenceNumber,
+            this.document.deltaStorageService,
+            this.document.deltaConnection);
+        this.deltaManager.onDelta((message) => this.processRemoteMessage(message));
     }
 
     /**
@@ -126,7 +221,7 @@ export class Document {
      * @param id Identifier of the object to load
      */
     public get(id: string): types.ICollaborativeObject {
-        return id in this.distributedObjects ? this.distributedObjects[id] : null;
+        return id in this.distributedObjects ? this.distributedObjects[id].object : null;
     }
 
     /**
@@ -174,7 +269,7 @@ export class Document {
      * Retrieves the root collaborative object that the document is based on
      */
     public getRoot(): types.IMap {
-        return this.distributedObjects[rootMapId] as types.IMap;
+        return this.distributedObjects[rootMapId].object as types.IMap;
     }
 
     /**
@@ -194,39 +289,31 @@ export class Document {
         const extension = this.registry.getExtension(mapExtension.MapExtension.Type);
         const value = extension.load(
             this,
+            distributedObject.id,
             services,
             this.document.version,
             distributedObject.header);
 
-        this.distributedObjects[distributedObject.id] = value;
+        this.distributedObjects[distributedObject.id] = {
+            connection: services.deltaConnection,
+            object: value,
+            storage: services.objectStorage,
+        };
     }
 
-    private listenForUpdates() {
-        this.deltaManager = new api.DeltaManager(
-            this.sequenceNumber,
-            this.services.deltaStorageService,
-            this.connection,
-            {
-                getReferenceSequenceNumber: () => {
-                    return this.sequenceNumber;
-                },
-                op: (message) => {
-                    this.processRemoteMessage(message);
-                },
-            });
-    }
-
-    private getObjectServices(id: string): IDistributedObjectServices {
-        const connection = new DeltaConnection(id);
-        const storage = new ObjectStorageService(
-            this.document.documentId,
-            this.document.documentStorageService,
-            this.document.version);
+    private getObjectServices(id: string): { deltaConnection: DeltaConnection, objectStorage: ObjectStorageService } {
+        const connection = new DeltaConnection(id, this.document.deltaConnection);
+        const storage = new ObjectStorageService(this.document.documentStorageService);
 
         return {
             deltaConnection: connection,
             objectStorage: storage,
         };
+    }
+
+    private processRemoteMessage(message: IBase) {
+        const objectDetails = this.distributedObjects[message.objectId];
+        objectDetails.connection.emit(message);
     }
 }
 

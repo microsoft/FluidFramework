@@ -35,12 +35,12 @@ export interface IDocumentStorageService {
      * Reads the object with the given ID
      */
     // TODO should we just provide file system like semantics here or expose block level access
-    read(id: string, version: string, path: string): Promise<any>;
+    read(path: string): Promise<string>;
 
     /**
      * Writes to the object with the given ID
      */
-    write(id: string, objects: IObject[]): Promise<void>;
+    write(objects: IObject[]): Promise<void>;
 }
 
 /**
@@ -50,7 +50,7 @@ export interface IDeltaStorageService {
     /**
      * Retrieves all the delta operations within the inclusive sequence number range
      */
-    get(id: string, from?: number, to?: number): Promise<ISequencedMessage[]>;
+    get(from?: number, to?: number): Promise<ISequencedMessage[]>;
 }
 
 export interface IObjectStorageService {
@@ -64,17 +64,15 @@ export interface IObjectStorageService {
  * Interface to represent a connection to a delta notification stream
  */
 export interface IDeltaConnection {
-    objectId: string;
-
     /**
      * Subscribe to events emitted by the object
      */
     on(event: string, listener: Function): this;
 
     /**
-     * Updates the reference sequence number on the given connection
+     * Send new messages to the server
      */
-    updateReferenceSequenceNumber(sequenceNumber: number): Promise<void>;
+    submitOp(message: IMessage): Promise<void>;
 }
 
 /**
@@ -90,6 +88,23 @@ export interface IDistributedObject {
 
     // Base 64 encoded snapshot information
     header: string;
+}
+
+export interface IDocumentDeltaConnection {
+    /**
+     * Subscribe to events emitted by the document
+     */
+    on(event: string, listener: Function): this;
+
+    /**
+     * Send new messages to the server
+     */
+    submitOp(message: IMessage): Promise<void>;
+
+    /**
+     * Updates the reference sequence number on the given connection
+     */
+    updateReferenceSequenceNumber(objectId: string, sequenceNumber: number): Promise<void>;
 }
 
 export interface IDocument {
@@ -114,6 +129,11 @@ export interface IDocument {
     version: string;
 
     /**
+     * Connection to receive delta notification
+     */
+    deltaConnection: IDocumentDeltaConnection;
+
+    /**
      * Access to storage associated with the document
      */
     documentStorageService: IDocumentStorageService;
@@ -128,12 +148,15 @@ export interface IDocument {
      */
     distributedObjects: IDistributedObject[];
 
-    // TODO pending deltas go here
+    /**
+     * Pending deltas that have not yet been included in a snapshot
+     */
+    pendingDeltas: ISequencedMessage[];
 
     /**
-     * Submit new messages to the server
+     * The sequence number represented by this version of the document
      */
-    submitOp(message: IMessage): Promise<void>;
+    sequenceNumber: number;
 }
 
 export interface IDocumentService {

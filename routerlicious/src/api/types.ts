@@ -1,4 +1,3 @@
-import { Registry } from "./extension";
 import * as storage from "./storage";
 
 /**
