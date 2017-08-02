@@ -47,7 +47,7 @@ const objectsCollectionName = nconf.get("mongo:collectionNames:objects");
 
 const mongoManager = new utils.MongoManager(mongoUrl);
 
-async function getOrCreateObject(id: string, type: string): Promise<boolean> {
+async function getOrCreateObject(id: string): Promise<boolean> {
     const db = await mongoManager.getDatabase();
     const collection = db.collection(objectsCollectionName);
 
@@ -55,13 +55,10 @@ async function getOrCreateObject(id: string, type: string): Promise<boolean> {
     return dbObjectP.then(
         (dbObject) => {
             if (dbObject) {
-                if (dbObject.type !== type) {
-                    throw new Error("Mismatched shared types");
-                }
-
                 return true;
             } else {
-                return collection.insertOne({ _id: id, type }).then(() => false);
+                // TODO should I inject a "new document" message in the stream?
+                return collection.insertOne({ _id: id }).then(() => false);
             }
         });
 }
@@ -86,6 +83,58 @@ async function getRevisions(id: string): Promise<any[]> {
     });
 }
 
+export interface IDocumentDetails {
+    existing: boolean;
+
+    version: string;
+
+    sequenceNumber: number;
+
+    distributedObjects: api.IDistributedObject[];
+
+    pendingDeltas: api.ISequencedMessage[];
+
+}
+
+async function getDistributedObjects(id: string, version: string): Promise<api.IDistributedObject[]> {
+    return Promise.reject("Not implemented");
+}
+
+async function getPendingDeltas(id: string, from: number): Promise<api.ISequencedMessage[]> {
+    return Promise.reject("Not implemented");
+}
+
+async function getOrCreateDocument(id: string): Promise<IDocumentDetails> {
+    const existingP = getOrCreateObject(id);
+
+    const revisions = await getRevisions(id);
+    const version = revisions.length > 0 ? revisions[0] : null;
+
+    // If there has been a snapshot made use it to retrieve object state as well as any pending deltas. Otherwise
+    // we just load all deltas
+    let sequenceNumber: number;
+    let distributedObjects: api.IDistributedObject[];
+
+    if (version) {
+        distributedObjects = await getDistributedObjects(id, version);
+        return Promise.reject("Need to obtain sequence number from snapshot");
+    } else {
+        sequenceNumber = 0;
+        distributedObjects = null;
+    }
+
+    const pendingDeltas = await getPendingDeltas(id, sequenceNumber);
+    const existing = await existingP;
+
+    return {
+        distributedObjects,
+        existing,
+        pendingDeltas,
+        sequenceNumber,
+        version,
+    };
+}
+
 // Producer used to publish messages
 const producer = utils.kafkaProducer.create(kafkaLibrary, kafkaEndpoint, kafkaClientId, topic);
 const throughput = new utils.ThroughputCounter(logger.info);
@@ -94,48 +143,33 @@ io.on("connection", (socket) => {
     // Map from client IDs on this connection to the object ID for them
     const connectionsMap: { [clientId: string]: string } = {};
 
-    //
-    // Message sent when attempting to connect to a given document
-    //
-    socket.on("connect", (message: socketStorage.IConnect, response) => {
-    });
-
-    // The loadObject call needs to see if the object already exists. If not it should offload to
-    // the storage service to go and create it.
-    //
-    // If it does exist it should query that same service to pull in the current snapshot.
-    //
-    // Given a client is then going to send us deltas on that service we need routerlicious to kick in as well.
-    // Note connect is a reserved socket.io word so we use connectObject to represent the connect request
-    socket.on("connectObject", (message: socketStorage.IConnect, response) => {
+    // Note connect is a reserved socket.io word so we use connectDocument to represent the connect request
+    socket.on("connectDocument", (message: socketStorage.IConnect, response) => {
         // Join the room first to ensure the client will start receiving delta updates
-        logger.info(`Client has requested to load ${message.objectId}`);
+        logger.info(`Client has requested to load ${message.id}`);
 
-        const existingP = getOrCreateObject(message.objectId, message.type);
-        const revisionsP = getRevisions(message.objectId);
-
-        Promise.all([existingP, revisionsP]).then(
-            (results) => {
-                const existing = results[0];
-                const revisions = results[1];
-
-                socket.join(message.objectId, (joinError) => {
+        const documentDetailsP = getOrCreateDocument(message.id);
+        documentDetailsP.then(
+            (documentDetails) => {
+                socket.join(message.id, (joinError) => {
                     if (joinError) {
                         return response(joinError, null);
                     }
 
-                    logger.info(`Existing object ${existing}`);
                     const clientId = moniker.choose();
-                    connectionsMap[clientId] = message.objectId;
+                    connectionsMap[clientId] = message.id;
+
                     const connectedMessage: socketStorage.IConnected = {
                         clientId,
-                        existing,
-                        revisions,
+                        distributedObjects: documentDetails.distributedObjects,
+                        existing: documentDetails.existing,
+                        pendingDeltas: documentDetails.pendingDeltas,
+                        sequenceNumber: documentDetails.sequenceNumber,
+                        version: documentDetails.version,
                     };
                     response(null, connectedMessage);
                 });
-            },
-            (error) => {
+            }, (error) => {
                 logger.error("Error fetching", error);
                 response(error, null);
             });
@@ -148,18 +182,18 @@ io.on("connection", (socket) => {
             return response("Invalid client ID", null);
         }
 
-        const objectId = connectionsMap[clientId];
+        const documentId = connectionsMap[clientId];
         const rawMessage: core.IRawOperationMessage = {
             clientId,
+            documentId,
             operation: message,
-            objectId,
             timestamp: Date.now(),
             type: core.RawOperationType,
             userId: null,
         };
 
         throughput.produce();
-        producer.send(JSON.stringify(rawMessage), objectId).then(
+        producer.send(JSON.stringify(rawMessage), documentId).then(
             (responseMessage) => {
                 response(null, responseMessage);
                 throughput.acknolwedge();
@@ -178,10 +212,10 @@ io.on("connection", (socket) => {
             return response("Invalid object", null);
         }
 
-        const objectId = connectionsMap[clientId];
+        const documentId = connectionsMap[clientId];
         const message: core.IUpdateReferenceSequenceNumberMessage = {
             clientId,
-            objectId,
+            documentId,
             sequenceNumber,
             timestamp: Date.now(),
             type: core.UpdateReferenceSequenceNumberType,
@@ -189,7 +223,7 @@ io.on("connection", (socket) => {
         };
 
         throughput.produce();
-        producer.send(JSON.stringify(message), objectId).then(
+        producer.send(JSON.stringify(message), documentId).then(
             (responseMessage) => {
                 response(null, responseMessage);
                 throughput.acknolwedge();

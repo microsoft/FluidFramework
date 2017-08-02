@@ -43,7 +43,7 @@ export class DocumentService implements api.IDocumentService {
 
         return new Promise((resolve, reject) => {
             this.socket.emit(
-                "connect",
+                "connectDocument",
                 connectMessage,
                 (error, response: messages.IConnected) => {
                     if (error) {

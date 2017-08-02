@@ -16,7 +16,7 @@ export interface IObjectMessage extends IMessage {
     userId: string;
 
     // The object the message is intended for
-    objectId: string;
+    documentId: string;
 
     // The client who submitted the message
     clientId: string;
