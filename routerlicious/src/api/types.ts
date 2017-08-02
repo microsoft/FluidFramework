@@ -42,10 +42,9 @@ export interface ICollaborativeObject {
     removeAllListeners(event?: string): this;
 
     /**
-     * Attaches the given collaborative object to an upstream storage location.
-     * This marks it as a collaborative object.
+     * Attaches the given collaborative object to its containing document
      */
-    attach(services: storage.ICollaborationServices, registry: Registry): Promise<void>;
+    attach(): this;
 
     /**
      * Returns whether the given collaborative object is local
@@ -57,7 +56,7 @@ export interface ICollaborativeObject {
      * TODO this is temporary to bootstrap the process. For performance/dynamic load/etc... we'll likely expose
      * access to the snapshot behind the storage objects.
      */
-    snapshot(): Promise<void>;
+    snapshot(): Promise<storage.IObject[]>;
 }
 
 export interface IMapView {

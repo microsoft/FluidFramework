@@ -45,12 +45,9 @@ export interface IMapValue {
     value: any;
 }
 
-const snapshotFileName = "value";
+const snapshotFileName = "header";
 
 class MapView implements api.IMapView {
-    // Map of collaborative objects stored inside of the map
-    private collaborativeObjects: {[id: string]: api.ICollaborativeObject} = {};
-
     private data: {[key: string]: IMapValue };
 
     // The last sequence number and offset retrieved from the server
@@ -67,14 +64,12 @@ class MapView implements api.IMapView {
 
     constructor(
         private document: api.Document,
-        private id: string,
+        id: string,
         private events: EventEmitter,
-        private connection?: api.IDeltaConnection,
-        private services?: api.ICollaborationServices,
-        private registry?: api.Registry,
+        private services?: api.IDistributedObjectServices,
         snapshot?: ISnapshot) {
 
-        if (connection) {
+        if (this.services) {
             this.data = snapshot.snapshot;
             this.sequenceNumber = snapshot.sequenceNumber;
 
@@ -94,13 +89,7 @@ class MapView implements api.IMapView {
         const value = this.data[key];
         if (value.type === ValueType[ValueType.Collaborative]) {
             const collabMapValue = value.value as ICollaborativeMapValue;
-            if (!(collabMapValue.id in this.collaborativeObjects)) {
-                const extension = this.registry.getExtension(collabMapValue.type);
-                this.collaborativeObjects[collabMapValue.id] =
-                    extension.load(this.document, collabMapValue.id, this.services, this.registry);
-            }
-
-            return this.collaborativeObjects[collabMapValue.id];
+            return this.document.get(collabMapValue.id);
         } else {
             return this.data[key].value;
         }
@@ -115,8 +104,6 @@ class MapView implements api.IMapView {
         if (_.hasIn(value, "__collaborativeObject__")) {
             // Convert any local collaborative objects to our internal storage format
             const collaborativeObject = value as api.ICollaborativeObject;
-            this.collaborativeObjects[collaborativeObject.id] = collaborativeObject;
-
             const collabMapValue: ICollaborativeMapValue = {
                 id: collaborativeObject.id,
                 type: collaborativeObject.type,
@@ -163,23 +150,17 @@ class MapView implements api.IMapView {
         return this.processLocalOperation(op);
     }
 
-    public snapshot(): Promise<void> {
+    public snapshot(): Promise<api.IObject[]> {
         const snapshot = {
             sequenceNumber: this.sequenceNumber,
             snapshot: _.clone(this.data),
         };
 
-        return this.services.objectStorageService.write(this.id, [{ path: snapshotFileName, data: snapshot}]);
+        return Promise.resolve([{ path: snapshotFileName, data: snapshot}]);
     }
 
-    public async attach(
-        connection: api.IDeltaConnection,
-        services: api.ICollaborationServices,
-        registry: api.Registry): Promise<void> {
-
-        this.connection = connection;
+    public attach(services: api.IDistributedObjectServices): void {
         this.services = services;
-        this.registry = registry;
 
         // Listen for updates to create the delta manager
         this.listenForUpdates();
@@ -203,7 +184,7 @@ class MapView implements api.IMapView {
 
         // Store the message for when it is ACKed and then submit to the server if connected
         this.localOps.push(message);
-        if (this.connection) {
+        if (this.services) {
             this.submit(message);
         }
 
@@ -227,7 +208,7 @@ class MapView implements api.IMapView {
     }
 
     private processRemoteOperation(message: api.ISequencedMessage) {
-        if (message.clientId === this.connection.clientId) {
+        if (message.clientId === this.document.clientId) {
             // One of our messages was sequenced. We can remove it from the local message list. Given these arrive
             // in order we only need to check the beginning of the local list.
             if (this.localOps.length > 0 &&
@@ -276,7 +257,6 @@ class MapView implements api.IMapView {
     private listenForUpdates() {
         this.deltaManager = new api.DeltaManager(
             this.sequenceNumber,
-            this.services.deltaStorageService,
             this.connection,
             {
                 getReferenceSequenceNumber: () => {
@@ -294,13 +274,11 @@ class MapView implements api.IMapView {
 
         // We need to translate any local collaborative object sets to the serialized form
         if (op.type === "set" && op.value.type === ValueType[ValueType.Collaborative]) {
-            // We need to attach the object prior to submitting the message
+            // We need to attach the object prior to submitting the message so that its state is available
+            // to upstream users following the attach
             const collabMapValue = op.value.value as ICollaborativeMapValue;
-            const collabObject = this.collaborativeObjects[collabMapValue.id];
-
-            if (collabObject.isLocal()) {
-                await collabObject.attach(this.services, this.registry);
-            }
+            const collabObject = this.document.get(collabMapValue.id);
+            collabObject.attach();
         }
 
         this.deltaManager.submitOp(message);
@@ -313,9 +291,8 @@ class MapView implements api.IMapView {
 class Map extends api.CollaborativeObject implements api.IMap {
     public type = MapExtension.Type;
 
-    private viewP: Promise<MapView>;
+    private view: MapView;
     private local: boolean;
-    private attaching = false;
 
     /**
      * Constructs a new collaborative map. If the object is non-local an id and service interfaces will
@@ -324,75 +301,56 @@ class Map extends api.CollaborativeObject implements api.IMap {
     constructor(
         private document: api.Document,
         public id: string,
-        services?: api.ICollaborationServices,
-        registry?: api.Registry) {
+        private services?: api.IDistributedObjectServices,
+        version?: string,
+        header?: string) {
 
         super();
-        this.local = !services;
-        this.viewP = this.local
-            ? Promise.resolve(new MapView(this.document, id, this.events))
-            : this.load(id, services, registry);
+
+        if (this.services) {
+            this.local = false;
+
+            // Load from the snapshot if available
+            const snapshot: ISnapshot = header
+                ? JSON.parse(header)
+                : { sequenceNumber: 0, snapshot: {} };
+
+            this.view = new MapView(this.document, id, this.events, services, snapshot);
+        } else {
+            this.local = true;
+            this.view = new MapView(this.document, id, this.events);
+        }
     }
 
     public async keys(): Promise<string[]> {
-        const view = await this.viewP;
-        return view.keys();
+        return Promise.resolve(this.view.keys());
     }
 
     /**
      * Retrieves the value with the given key from the map.
      */
-    public async get(key: string) {
-        const view = await this.viewP;
-        return view.get(key);
+    public get(key: string) {
+        return Promise.resolve(this.view.get(key));
     }
 
-    public async has(key: string): Promise<boolean> {
-        const view = await this.viewP;
-        return view.has(key);
+    public has(key: string): Promise<boolean> {
+        return Promise.resolve(this.view.has(key));
     }
 
-    public async set(key: string, value: any): Promise<void> {
-        const view = await this.viewP;
-        return view.set(key, value);
+    public set(key: string, value: any): Promise<void> {
+        return Promise.resolve(this.view.set(key, value));
     }
 
-    public async delete(key: string): Promise<void> {
-        const view = await this.viewP;
-        return view.delete(key);
+    public delete(key: string): Promise<void> {
+        return Promise.resolve(this.view.delete(key));
     }
 
-    public async clear(): Promise<void> {
-        const view = await this.viewP;
-        return view.clear();
+    public clear(): Promise<void> {
+        return Promise.resolve(this.view.clear());
     }
 
-    public async snapshot(): Promise<void> {
-        const view = await this.viewP;
-        return view.snapshot();
-    }
-
-    /**
-     * Attaches the document to the given backend service.
-     */
-    public async attach(services: api.ICollaborationServices, registry: api.Registry): Promise<void> {
-        if (!this.local) {
-            throw new Error("Already attached");
-        }
-
-        if (this.attaching) {
-            throw new Error("Attach in progress");
-        }
-
-        this.attaching = true;
-        return this.attachCore(services, registry).then(
-            () => {
-                this.attaching = false;
-                this.local = false;
-            },
-            (error) => {
-                this.attaching = false;
-            });
+    public snapshot(): Promise<api.IObject[]> {
+        return Promise.resolve(this.view.snapshot());
     }
 
     /**
@@ -405,37 +363,22 @@ class Map extends api.CollaborativeObject implements api.IMap {
     /**
      * Returns a synchronous view of the map
      */
-    public async getView(): Promise<api.IMapView> {
-        return this.viewP;
-    }
-
-    private async attachCore(services: api.ICollaborationServices, registry: api.Registry) {
-        const view = await this.viewP;
-
-        // Attaching makes a local document available for collaboration. The connect call should create the object.
-        // We assert the return type to validate this is the case.
-        const connection = await services.deltaNotificationService.connect(this.id, this.type);
-        assert.ok(!connection.existing);
-
-        return view.attach(connection, services, registry);
+    public getView(): Promise<api.IMapView> {
+        return Promise.resolve(this.view);
     }
 
     /**
-     * Loads the map from an existing storage service
+     * Attaches the document to the given backend service.
      */
-    private async load(id: string, services: api.ICollaborationServices, registry?: api.Registry): Promise<MapView> {
-        // Load the snapshot and begin listening for messages
-        const connection = await services.deltaNotificationService.connect(id, this.type);
+    public attach(): this {
+        if (!this.local) {
+            return this;
+        }
 
-        // Load from the snapshot if it exists
-        const rawSnapshot = connection.existing && connection.versions.length > 0
-            ? await services.objectStorageService.read(id, connection.versions[0].sha, snapshotFileName)
-            : null;
-        const snapshot: ISnapshot = rawSnapshot
-            ? JSON.parse(rawSnapshot)
-            : { sequenceNumber: 0, snapshot: {} };
+        const services = this.document.attach(this);
+        this.view.attach(services);
 
-        return new MapView(this.document, id, this.events, connection, services, registry, snapshot);
+        return this;
     }
 }
 
@@ -449,11 +392,11 @@ export class MapExtension implements api.IExtension {
 
     public load(
         document: api.Document,
-        id: string,
-        services: api.ICollaborationServices,
-        registry: api.Registry): api.IMap {
+        services: api.IDistributedObjectServices,
+        version: string,
+        header: string): api.IMap {
 
-        return new Map(document, id, services, registry);
+        return new Map(document, services.deltaConnection.objectId, services, version, header);
     }
 
     public create(document: api.Document, id: string): api.IMap {

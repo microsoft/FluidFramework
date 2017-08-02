@@ -1,6 +1,16 @@
 import { IMessage, ISequencedMessage } from "./protocol";
 
 /**
+ * The worker service connects to work manager (TMZ) and registers itself to receive work.
+ */
+export interface IWorkerService {
+    /**
+     * Connects to tmz and subscribes to start working.
+     */
+    connect(type: string): Promise<any>;
+}
+
+/**
  * Interface representing a storage object
  */
 export interface IObject {
@@ -11,10 +21,16 @@ export interface IObject {
     data: any;
 }
 
+export interface IDistributedObjectServices {
+    deltaConnection: IDeltaConnection;
+
+    objectStorage: IObjectStorageService;
+}
+
 /**
  * Interface to provide access to snapshots saved for a collaborative object
  */
-export interface IObjectStorageService {
+export interface IDocumentStorageService {
     /**
      * Reads the object with the given ID
      */
@@ -37,39 +53,23 @@ export interface IDeltaStorageService {
     get(id: string, from?: number, to?: number): Promise<ISequencedMessage[]>;
 }
 
+export interface IObjectStorageService {
+    /**
+     * Reads the object contained at the given path. Returns a base64 string representation for the object.
+     */
+    read(path: string): Promise<string>;
+}
+
 /**
  * Interface to represent a connection to a delta notification stream
  */
 export interface IDeltaConnection {
-    /**
-     * The object the connection is for
-     */
     objectId: string;
 
     /**
-     * Client identifier for this session
-     */
-    clientId: string;
-
-    /**
-     * Whether or not the document existed prior to connection
-     */
-    existing: boolean;
-
-    /**
-     * Available versions of the collaborative object
-     */
-    versions: any[];
-
-    /**
-     * Subscribe to events emitted by the document
+     * Subscribe to events emitted by the object
      */
     on(event: string, listener: Function): this;
-
-    /**
-     * Send new messages to the server
-     */
-    submitOp(message: IMessage): Promise<void>;
 
     /**
      * Updates the reference sequence number on the given connection
@@ -78,36 +78,64 @@ export interface IDeltaConnection {
 }
 
 /**
- * The delta notification service provides the ability to connect to a collaborative object's delta stream
- * to send and receive notifications
+ * A distributed object is enough information to fully load a distributed object. The object may then require
+ * a server call to load in more state.
  */
-export interface IDeltaNotificationService {
-    /**
-     * Connects to the given object ID to send and receive Delta updates. If the object doesn't exist this call
-     * will also create it.
-     */
-    connect(id: string, type: string): Promise<IDeltaConnection>;
+export interface IDistributedObject {
+    // The ID for the distributed object
+    id: string;
+
+    // The type of the distributed object
+    type: string;
+
+    // Base 64 encoded snapshot information
+    header: string;
 }
 
-/**
- * The worker service connects to work manager (TMZ) and registers itself to receive work.
- */
-export interface IWorkerService {
+export interface IDocument {
     /**
-     * Connects to tmz and subscribes to start working.
+     * Client identifier for this session
      */
-    connect(type: string): Promise<any>;
-}
+    clientId: string;
 
-export interface ICollaborationServices {
-    objectStorageService: IObjectStorageService;
+    /**
+     * Document identifier
+     */
+    documentId: string;
+
+    /**
+     * Whether or not the document existed prior to connection
+     */
+    existing: boolean;
+
+    /**
+     * The latest snapshot version of the document at the time of connect. Or null if no snapshots have been taken.
+     */
+    version: string;
+
+    /**
+     * Access to storage associated with the document
+     */
+    documentStorageService: IDocumentStorageService;
+
+    /**
+     * Access to delta storage associated with the document
+     */
     deltaStorageService: IDeltaStorageService;
-    deltaNotificationService: IDeltaNotificationService;
+
+    /**
+     * Distributed objects contained within the document
+     */
+    distributedObjects: IDistributedObject[];
+
+    // TODO pending deltas go here
+
+    /**
+     * Submit new messages to the server
+     */
+    submitOp(message: IMessage): Promise<void>;
 }
 
-export interface IOptions {
-    /**
-     * Access token to the storage system
-     */
-    token: string;
+export interface IDocumentService {
+    connect(id: string): Promise<IDocument>;
 }
