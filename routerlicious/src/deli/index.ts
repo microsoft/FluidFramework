@@ -38,19 +38,19 @@ function processMessage(
         baseMessage.type === core.RawOperationType) {
 
         const objectMessage = JSON.parse(message.value.toString("utf8")) as core.IObjectMessage;
-        const objectId = objectMessage.objectId;
+        const documentId = objectMessage.documentId;
 
         // Go grab the takeANumber machine for the objectId and mark it as dirty.
         // Store it in the partition map. We need to add an eviction strategy here.
-        if (!(objectId in dispensers)) {
-            dispensers[objectId] = new TakeANumber(objectId, objectsCollection, producer);
-            logger.info(`Brand New object Found: ${objectId}`);
+        if (!(documentId in dispensers)) {
+            dispensers[documentId] = new TakeANumber(documentId, objectsCollection, producer);
+            logger.info(`Brand New object Found: ${documentId}`);
         }
-        const dispenser = dispensers[objectId];
+        const dispenser = dispensers[documentId];
 
         // Either ticket the message or update the sequence number depending on the message type
         const ticketP = dispenser.ticket(message);
-        ticketQueue[objectId] = ticketP;
+        ticketQueue[documentId] = ticketP;
     }
 
     // Update partition manager entry.
