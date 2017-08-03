@@ -11,10 +11,12 @@ import * as shared from "./";
 export class WorkerService implements api.IWorkerService {
 
     private socket;
-    private documentMap: { [docId: string]: api.ICollaborativeObject} = {};
+    private documentMap: { [docId: string]: api.Document} = {};
+    private service: api.IDocumentService;
 
     constructor(private serverUrl: string, private workerUrl: string, private config: any) {
         this.socket = io(this.workerUrl, { transports: ["websocket"] });
+        this.service = socketStorage.getDefaultService(serverUrl);
     }
 
     /**
@@ -71,23 +73,18 @@ export class WorkerService implements api.IWorkerService {
     }
 
     private async processDocument(documentId: string, id: string) {
-        const document = await api.load(documentId);
+        const document = await api.load(documentId, api.defaultRegistry, this.service);
+        console.log(`Loaded a document...${documentId}`);
+        this.documentMap[documentId] = document;
+        const rootView = await document.getRoot().getView();
+        if (!rootView.has("insights")) {
+            rootView.set("insights", document.createMap());
+        }
 
-        const objectStorageService = new shared.ObjectStorageService(this.serverUrl);
-
-        const services: api.ICollaborationServices = {
-            deltaNotificationService: new socketStorage.DeltaNotificationService(this.serverUrl),
-            deltaStorageService: new socketStorage.DeltaStorageService(this.serverUrl),
-            objectStorageService,
-        };
-
-        const docManager = new shared.DocumentManager(this.serverUrl, services);
-        docManager.load(document, id).then(async (doc) => {
-            console.log(`Loaded a document...${doc.id}`);
-            this.documentMap[id] = doc;
-            const insightsMap = await docManager.createMap(document, `${id}-insights`);
-            this.processWork(doc, insightsMap);
-        });
+        // TODO fix below when ready
+        const insightsMap = rootView.get("insights");
+        // TODO the null below is wrong
+        this.processWork(null, insightsMap);
     }
 
     private processWork(doc: api.ICollaborativeObject, insightsMap: api.IMap) {
@@ -104,14 +101,18 @@ export class WorkerService implements api.IWorkerService {
             serializer.run();
             intelligenceManager.process(doc);
         });
+
+        throw new Error("Not implemented");
     }
 
     private revokeWork(id: string) {
         if (id in this.documentMap) {
-            this.documentMap[id].removeListener("op", (op) => {
-                console.log(`Revoked listener from ${id}`);
-            });
-            delete this.documentMap[id];
+            // TODO fix below when ready
+            throw new Error("Not implemented");
+            // this.documentMap[id].removeListener("op", (op) => {
+            //     console.log(`Revoked listener from ${id}`);
+            // });
+            // delete this.documentMap[id];
         }
     }
 

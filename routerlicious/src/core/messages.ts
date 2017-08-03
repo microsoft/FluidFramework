@@ -50,7 +50,7 @@ export interface IRawOperationMessage extends IObjectMessage {
 
 export interface ITicketedMessage extends IMessage {
     // The object the message is intended for
-    objectId: string;
+    documentId: string;
 }
 
 // String identifying the sequenced operation message

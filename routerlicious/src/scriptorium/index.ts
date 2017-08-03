@@ -47,6 +47,7 @@ async function run() {
     const mongoManager = new utils.MongoManager(mongoUrl, false);
     const db = await mongoManager.getDatabase();
     const collection = db.collection(deltasCollectionName);
+    // TODO this index needs to be updated
     await collection.createIndex({
             "objectId": 1,
             "operation.sequenceNumber": 1,
@@ -83,7 +84,7 @@ async function run() {
             lastMongoInsertP[objectId] = Promise.resolve();
         }
 
-        logger.verbose(`Inserting to mongodb ${objectId}@${work[0].operation.sequenceNumber}:${work.length}`);
+        logger.verbose(`Inserting to mongodb ${objectId}@${work[0].operation.document.sequenceNumber}:${work.length}`);
         const insertP = collection.insertMany(work, <CollectionInsertManyOptions> (<any> { ordered: false }))
             .catch((error) => {
                 // Ignore duplicate key errors since a replay may cause us to attempt to insert a second time
@@ -97,7 +98,7 @@ async function run() {
             () => {
                 // Route the message to clients
                 // tslint:disable-next-line:max-line-length
-                logger.verbose(`Routing message to clients ${objectId}@${work[0].operation.sequenceNumber}:${work.length}`);
+                logger.verbose(`Routing message to clients ${objectId}@${work[0].operation.document.sequenceNumber}:${work.length}`);
                 io.to(objectId).emit("op", objectId, work.map((value) => value.operation));
                 throughput.acknolwedge(work.length);
             },
@@ -116,7 +117,7 @@ async function run() {
             const value = baseMessage as core.ISequencedOperationMessage;
 
             // Batch up work to more efficiently send to socket.io and mongodb
-            ioBatchManager.add(value.objectId, value);
+            ioBatchManager.add(value.documentId, value);
         }
 
         // Update partition manager.

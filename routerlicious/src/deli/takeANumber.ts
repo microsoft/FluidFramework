@@ -34,6 +34,8 @@ const SequenceNumberComparer: utils.IComparer<IClientSequenceNumber> = {
 
 const throughput = new utils.ThroughputCounter(logger.info, "Delta Topic ");
 
+// TODO clients need to include seq# for all objets they're playing with
+
 /**
  * Class to handle distributing sequence numbers to a collaborative object
  */
@@ -47,11 +49,11 @@ export class TakeANumber {
     private minimumSequenceNumber;
 
     constructor(
-        private objectId: string,
+        private documentId: string,
         private collection: Collection,
         private producer: utils.kafkaProducer.IProdcuer) {
         // Lookup the last sequence number stored
-        const dbObjectP = this.collection.findOne({ _id: this.objectId });
+        const dbObjectP = this.collection.findOne({ _id: this.documentId });
         dbObjectP.then(
             (dbObject) => {
                 if (!dbObject) {
@@ -124,11 +126,11 @@ export class TakeANumber {
 
         return this.collection.updateOne(
             {
-                _id: this.objectId,
+                _id: this.documentId,
             },
             {
                 $set: {
-                    _id : this.objectId,
+                    _id : this.documentId,
                     clients,
                     logOffset: this.logOffset,
                     sequenceNumber : this.sequenceNumber,
@@ -166,8 +168,8 @@ export class TakeANumber {
             // Update and retrieve the minimum sequence number
             this.upsertClient(
                 message.clientId,
-                message.operation.clientSequenceNumber,
-                message.operation.referenceSequenceNumber,
+                message.operation.document.clientSequenceNumber,
+                message.operation.document.referenceSequenceNumber,
                 message.timestamp);
         }
 
@@ -188,41 +190,57 @@ export class TakeANumber {
         // And now craft the output message
         let outputMessage: api.IBase;
         if (objectMessage.type === core.UpdateReferenceSequenceNumberType) {
-            const minimumSequenceNumberMessage: api.IBase = {
-                minimumSequenceNumber: this.minimumSequenceNumber,
-                sequenceNumber,
-                type: api.MinimumSequenceNumberUpdateType,
-            };
+            // const minimumSequenceNumberMessage: api.IBase = {
+            //     document: {
+            //         minimumSequenceNumber: this.minimumSequenceNumber,
+            //         sequenceNumber,
+            //     },
+            //     object: {
+            //         minimumSequenceNumber: 0,
+            //         sequenceNumber: 0,
+            //     },
+            //     objectId: objectMessage.objectId,
+            //     type: api.MinimumSequenceNumberUpdateType,
+            // };
 
-            outputMessage = minimumSequenceNumberMessage;
+            outputMessage = null; // minimumSequenceNumberMessage;
         } else {
-            const message = objectMessage as core.IRawOperationMessage;
-            const operation = message.operation;
-            const sequencedOperation: api.ISequencedMessage = {
-                clientId: message.clientId,
-                clientSequenceNumber: operation.clientSequenceNumber,
-                minimumSequenceNumber: this.minimumSequenceNumber,
-                op: operation.op,
-                referenceSequenceNumber: operation.referenceSequenceNumber,
-                sequenceNumber,
-                type: api.OperationType,
-                userId: message.userId,
-            };
-            outputMessage = sequencedOperation;
+            // const message = objectMessage as core.IRawOperationMessage;
+            // const operation = message.operation;
+            // const sequencedOperation: api.ISequencedMessage = {
+            //     clientId: message.clientId,
+            //     document: {
+            //         clientSequenceNumber: operation.document.clientSequenceNumber,
+            //         minimumSequenceNumber: this.minimumSequenceNumber,
+            //         referenceSequenceNumber: operation.document.referenceSequenceNumber,
+            //         sequenceNumber,
+            //     },
+            //     object: {
+            //         clientSequenceNumber: operation.object.clientSequenceNumber,
+            //         minimumSequenceNumber: 0,
+            //         referenceSequenceNumber: operation.object.referenceSequenceNumber,
+            //         sequenceNumber: 0,
+            //     },
+            //     objectId: operation.objectId,
+            //     op: operation.op,
+            //     type: api.OperationType,
+            //     userId: message.userId,
+            // };
+            outputMessage = null; // sequencedOperation;
         }
 
         // tslint:disable-next-line:max-line-length
-        logger.verbose(`Assigning ticket ${objectMessage.objectId}@${sequenceNumber}:${this.minimumSequenceNumber} at topic@${this.logOffset}`);
+        logger.verbose(`Assigning ticket ${objectMessage.documentId}@${sequenceNumber}:${this.minimumSequenceNumber} at topic@${this.logOffset}`);
 
         const sequencedMessage: core.ISequencedOperationMessage = {
-            objectId: objectMessage.objectId,
+            documentId: objectMessage.documentId,
             operation: outputMessage,
             type: core.SequencedOperationType,
         };
 
         // Otherwise send the message to the event hub
         throughput.produce();
-        return this.producer.send(JSON.stringify(sequencedMessage), sequencedMessage.objectId)
+        return this.producer.send(JSON.stringify(sequencedMessage), sequencedMessage.documentId)
             .then((result) => {
                 throughput.acknolwedge();
                 return result;

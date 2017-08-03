@@ -21,7 +21,7 @@ export interface IMessageBase {
 export interface IMessage extends IMessageBase {
 }
 
-export interface ISequencedPosition extends ISendPosition{
+export interface ISequencedPosition extends ISendPosition {
     sequenceNumber: number;
 
     minimumSequenceNumber: number;

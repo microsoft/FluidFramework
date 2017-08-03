@@ -109,7 +109,7 @@ async function run() {
 
     const q = queue(async (message: any, callback) => {
         const value = JSON.parse(message.value.toString("utf8")) as core.IRawOperationMessage;
-        const objectId = value.objectId;
+        const objectId = value.documentId;
 
         // Check if already requested. Update the Timestamp in the process.
         if (foreman.getManager().updateDocumentIfFound(objectId)) {
