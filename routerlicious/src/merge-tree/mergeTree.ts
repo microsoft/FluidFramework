@@ -1136,12 +1136,20 @@ export class Client {
         refSeq: number, objectId: string) {
         return <ISequencedMessage>{
             clientId: this.longClientId,
-            sequenceNumber: seq,
-            referenceSequenceNumber: refSeq,
+            document: {
+                minimumSequenceNumber: 0,
+                clientSequenceNumber: 0,
+                referenceSequenceNumber: 0,
+                sequenceNumber: 0,
+            },
+            object: {
+                minimumSequenceNumber: undefined,
+                clientSequenceNumber: this.clientSequenceNumber,
+                sequenceNumber: seq,
+                referenceSequenceNumber: refSeq,
+            },
             objectId: objectId,
-            clientSequenceNumber: this.clientSequenceNumber,
             userId: undefined,
-            minimumSequenceNumber: undefined,
             offset: seq,
             op: {
                 type: API.MergeTreeDeltaType.INSERT, marker: { type: markerType, behaviors }, pos1: pos
@@ -1153,12 +1161,20 @@ export class Client {
     makeInsertMsg(text: string, pos: number, seq: number, refSeq: number, objectId: string) {
         return <ISequencedMessage>{
             clientId: this.longClientId,
-            sequenceNumber: seq,
-            referenceSequenceNumber: refSeq,
+            document: {
+                minimumSequenceNumber: 0,
+                clientSequenceNumber: 0,
+                referenceSequenceNumber: 0,
+                sequenceNumber: 0,
+            },
+            object: {
+                sequenceNumber: seq,
+                referenceSequenceNumber: refSeq,
+                clientSequenceNumber: this.clientSequenceNumber,
+                minimumSequenceNumber: undefined,
+            },
             objectId: objectId,
-            clientSequenceNumber: this.clientSequenceNumber,
             userId: undefined,
-            minimumSequenceNumber: undefined,
             offset: seq,
             op: {
                 type: API.MergeTreeDeltaType.INSERT, text: text, pos1: pos
@@ -1170,12 +1186,20 @@ export class Client {
     makeRemoveMsg(start: number, end: number, seq: number, refSeq: number, objectId: string) {
         return <ISequencedMessage>{
             clientId: this.longClientId,
-            sequenceNumber: seq,
-            referenceSequenceNumber: refSeq,
+            document: {
+                minimumSequenceNumber: 0,
+                clientSequenceNumber: 0,
+                referenceSequenceNumber: 0,
+                sequenceNumber: 0,
+            },
+            object: {
+                sequenceNumber: seq,
+                referenceSequenceNumber: refSeq,
+                clientSequenceNumber: this.clientSequenceNumber,
+                minimumSequenceNumber: undefined,
+            },
             objectId: objectId,
-            clientSequenceNumber: this.clientSequenceNumber,
             userId: undefined,
-            minimumSequenceNumber: undefined,
             offset: seq,
             op: {
                 type: API.MergeTreeDeltaType.REMOVE, pos1: start, pos2: end
@@ -1198,31 +1222,31 @@ export class Client {
         switch (op.type) {
             case API.MergeTreeDeltaType.INSERT:
                 if (op.text !== undefined) {
-                    this.insertTextRemote(op.text, op.pos1, op.props, msg.sequenceNumber, msg.referenceSequenceNumber,
+                    this.insertTextRemote(op.text, op.pos1, op.props, msg.object.sequenceNumber, msg.object.referenceSequenceNumber,
                         clid);
                 }
                 else {
-                    this.insertMarkerRemote(op.marker, op.pos1, op.props, msg.sequenceNumber, msg.referenceSequenceNumber,
+                    this.insertMarkerRemote(op.marker, op.pos1, op.props, msg.object.sequenceNumber, msg.object.referenceSequenceNumber,
                         clid);
                 }
                 break;
             case API.MergeTreeDeltaType.REMOVE:
-                this.removeSegmentRemote(op.pos1, op.pos2, msg.sequenceNumber, msg.referenceSequenceNumber,
+                this.removeSegmentRemote(op.pos1, op.pos2, msg.object.sequenceNumber, msg.object.referenceSequenceNumber,
                     clid);
                 break;
         }
     }
 
     applyMsg(msg: API.IBase) {
-        if ((msg !== undefined) && (msg.minimumSequenceNumber > this.mergeTree.getCollabWindow().minSeq)) {
-            this.updateMinSeq(msg.minimumSequenceNumber);
+        if ((msg !== undefined) && (msg.object.minimumSequenceNumber > this.mergeTree.getCollabWindow().minSeq)) {
+            this.updateMinSeq(msg.object.minimumSequenceNumber);
         }
 
         // Apply if an operation message
         if (msg.type === API.OperationType) {
             const operationMessage = msg as API.ISequencedMessage;
             if (operationMessage.clientId == this.longClientId) {
-                this.ackPendingSegment(operationMessage.sequenceNumber);
+                this.ackPendingSegment(operationMessage.object.sequenceNumber);
             }
             else {
                 this.coreApplyMsg(operationMessage);
@@ -1476,7 +1500,7 @@ export class TestServer extends Client {
         this.coreApplyMsg(msg);
         if (useCheckQ) {
             let clid = this.getShortClientId(msg.clientId);
-            return checkTextMatchRelative(msg.referenceSequenceNumber, clid, this, msg);
+            return checkTextMatchRelative(msg.object.referenceSequenceNumber, clid, this, msg);
         }
         else {
             return false;
@@ -1487,21 +1511,21 @@ export class TestServer extends Client {
         while (msgCount > 0) {
             let msg = <API.ISequencedMessage>this.q.dequeue();
             if (msg) {
-                msg.sequenceNumber = this.seq++;
+                msg.object.sequenceNumber = this.seq++;
                 if (this.applyMsg(msg)) {
                     return true;
                 }
                 if (this.clients) {
                     let minCli = this.clientSeqNumbers.peek();
                     if (minCli && (minCli.clientId == msg.clientId) &&
-                        (minCli.refSeq < msg.referenceSequenceNumber)) {
+                        (minCli.refSeq < msg.object.referenceSequenceNumber)) {
                         let cliSeq = this.clientSeqNumbers.get();
                         let oldSeq = cliSeq.refSeq;
-                        cliSeq.refSeq = msg.referenceSequenceNumber;
+                        cliSeq.refSeq = msg.object.referenceSequenceNumber;
                         this.clientSeqNumbers.add(cliSeq);
                         minCli = this.clientSeqNumbers.peek();
                         if (minCli.refSeq > oldSeq) {
-                            msg.minimumSequenceNumber = minCli.refSeq;
+                            msg.object.minimumSequenceNumber = minCli.refSeq;
                             this.updateMinSeq(minCli.refSeq);
                         }
                     }

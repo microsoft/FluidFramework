@@ -52,20 +52,27 @@ async function startProducer(batchSize: number) {
     producerInterval = setInterval(() => {
         const rawMessage: core.IRawOperationMessage = {
             clientId: "producer",
-            objectId: "producer",
+            documentId: "producer",
             operation: {
-                clientSequenceNumber: clientSequenceNumber++,
+                document: {
+                    clientSequenceNumber,
+                    referenceSequenceNumber: 0,
+                },
+                object: {
+                    clientSequenceNumber,
+                    referenceSequenceNumber: 0,
+                },
                 op: {
                     key: "binky",
                     type: "set",
                     value: "winky",
                 },
-                referenceSequenceNumber: 0,
             },
             timestamp: Date.now(),
             type: core.RawOperationType,
             userId: "producer",
         };
+        clientSequenceNumber++;
 
         for (let i = 0; i < batchSize; i++) {
             throughput.produce();

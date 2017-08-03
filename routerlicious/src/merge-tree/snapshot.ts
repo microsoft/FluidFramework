@@ -79,17 +79,13 @@ export class Snapshot {
         }
     }
 
-    async emit(services: API.ICollaborationServices, id: string) {
-        let storage = services.objectStorageService;
+    emit(): Promise<API.IObject[]> {
         let chunk1 = this.getCharLengthSegs(this.texts, 10000);
         let chunk2 = this.getCharLengthSegs(this.texts, chunk1.totalLengthChars, chunk1.chunkSegmentCount);
-        let writeP = storage.write(
-            id, 
-            [
-                { path: "header", data: chunk1 },
-                { path: "body", data: chunk2 }
-            ]);
-        return writeP;
+        return Promise.resolve([
+            { path: "header", data: chunk1 },
+            { path: "body", data: chunk2 },
+        ]);
     }
 
     extractSync() {
@@ -129,15 +125,19 @@ export class Snapshot {
         return texts;
     }
 
-    static async loadChunk(
-        services: API.ICollaborationServices,
+    public static async loadChunk(
+        services: API.IDistributedObjectServices,
         id: string,
         version: string,
         path: string): Promise<API.MergeTreeChunk> {
 
-        if (version) {
-            let chunkAsString: string = await services.objectStorageService.read(id, version, path);
-            return JSON.parse(chunkAsString) as API.MergeTreeChunk;
+        let chunkAsString: string = version ? await services.objectStorage.read(path) : null;
+        return Snapshot.processChunk(chunkAsString);
+    }
+
+    public static processChunk(chunk: string): API.MergeTreeChunk {
+        if (chunk) {
+            return JSON.parse(chunk) as API.MergeTreeChunk;
         } else {
             return {
                 chunkStartSegmentIndex: -1,
