@@ -8,6 +8,8 @@ import * as Collections from "./collections";
 
 export * from "./mergeTree";
 export { Collections };
+import { MergeTreeDeltaType, IMergeTreeInsertMsg, IPropertyString, MarkerBehaviors } from "./ops";
+export * from "./ops";
 import { loadSegments, findRandomWord } from "./text";
 export { loadSegments, findRandomWord };
 
@@ -34,7 +36,7 @@ export class CollaboritiveStringExtension implements api.IExtension {
     }
 }
 
-function textsToSegments(texts: api.IPropertyString[]) {
+function textsToSegments(texts: IPropertyString[]) {
     let segments = <MergeTree.Segment[]>[];
     for (let ptext of texts) {
         let segment: MergeTree.Segment;
@@ -111,7 +113,7 @@ export class SharedString implements api.ICollaborativeObject {
         return this;
     }
 
-    private makeInsertMarkerMsg(pos: number, markerType: string, behaviors: api.MarkerBehaviors, props?: Object, end?: number) {
+    private makeInsertMarkerMsg(pos: number, markerType: string, behaviors: MarkerBehaviors, props?: Object, end?: number) {
         return <api.IMessage>{
             document: {
                 clientSequenceNumber: 0,
@@ -122,8 +124,8 @@ export class SharedString implements api.ICollaborativeObject {
                 referenceSequenceNumber: this.client.getCurrentSeq(),
             },
             objectId: this.id,
-            op: <api.IMergeTreeInsertMsg>{
-                type: api.MergeTreeDeltaType.INSERT, pos1: pos, props, marker: { type: markerType, behaviors, end },
+            op: <IMergeTreeInsertMsg>{
+                type: MergeTreeDeltaType.INSERT, pos1: pos, props, marker: { type: markerType, behaviors, end },
             }
         };
 
@@ -140,7 +142,7 @@ export class SharedString implements api.ICollaborativeObject {
             },
             objectId: this.id,
             op: {
-                type: api.MergeTreeDeltaType.INSERT, text, pos1: pos, props,
+                type: MergeTreeDeltaType.INSERT, text, pos1: pos, props,
             }
         };
     }
@@ -157,12 +159,12 @@ export class SharedString implements api.ICollaborativeObject {
             },
             objectId: this.id,
             op: {
-                type: api.MergeTreeDeltaType.REMOVE, pos1: start, pos2: end
+                type: MergeTreeDeltaType.REMOVE, pos1: start, pos2: end
             }
         };
     }
 
-    public insertMarker(pos: number, type: string, behaviors: api.MarkerBehaviors, props?: Object, end?: number) {
+    public insertMarker(pos: number, type: string, behaviors: MarkerBehaviors, props?: Object, end?: number) {
         const insertMessage = this.makeInsertMarkerMsg(pos, type, behaviors, props, end);
         this.client.insertMarkerLocal(pos, type, behaviors, props, end);
         this.deltaManager.submitOp(insertMessage);

@@ -3,8 +3,8 @@
 import * as Collections from "./collections";
 import * as fs from "fs";
 import * as MergeTree from "./mergeTree";
+import * as ops from "./ops";
 import * as API from "../api";
-import { IPropertyString } from "../api";
 
 export interface SnapshotHeader {
     chunkCount?: number;
@@ -42,7 +42,7 @@ export class Snapshot {
     seq: number;
     buffer: Buffer;
     pendingChunk: SnapChunk;
-    texts: IPropertyString[];
+    texts: ops.IPropertyString[];
 
     constructor(public mergeTree: MergeTree.MergeTree, public filename?: string,
         public onCompletion?: () => void) {
@@ -55,9 +55,9 @@ export class Snapshot {
         });
     }
 
-    getCharLengthSegs(alltexts: API.IPropertyString[], approxCharLength: number, startIndex = 0): API.MergeTreeChunk {
+    getCharLengthSegs(alltexts: ops.IPropertyString[], approxCharLength: number, startIndex = 0): ops.MergeTreeChunk {
         //console.log(`start index ${startIndex}`);
-        let texts = <API.IPropertyString[]>[];
+        let texts = <ops.IPropertyString[]>[];
         let lengthChars = 0;
         let segCount = 0;
         while ((lengthChars < approxCharLength) && ((startIndex + segCount) < alltexts.length)) {
@@ -96,7 +96,7 @@ export class Snapshot {
                 MergeTree.NonCollabClient),
             seq: this.mergeTree.collabWindow.minSeq,
         };
-        let texts = <API.IPropertyString[]>[];
+        let texts = <ops.IPropertyString[]>[];
         let extractSegment = (segment: MergeTree.Segment, pos: number, refSeq: number, clientId: number,
             start: number, end: number) => {
             if ((segment.seq != MergeTree.UnassignedSequenceNumber) && (segment.seq <= this.seq) &&
@@ -129,15 +129,15 @@ export class Snapshot {
         services: API.IDistributedObjectServices,
         id: string,
         version: string,
-        path: string): Promise<API.MergeTreeChunk> {
+        path: string): Promise<ops.MergeTreeChunk> {
 
         let chunkAsString: string = version ? await services.objectStorage.read(path) : null;
         return Snapshot.processChunk(chunkAsString);
     }
 
-    public static processChunk(chunk: string): API.MergeTreeChunk {
+    public static processChunk(chunk: string): ops.MergeTreeChunk {
         if (chunk) {
-            return JSON.parse(chunk) as API.MergeTreeChunk;
+            return JSON.parse(chunk) as ops.MergeTreeChunk;
         } else {
             return {
                 chunkStartSegmentIndex: -1,

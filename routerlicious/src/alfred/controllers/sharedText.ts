@@ -2,7 +2,6 @@
 import * as request from "request";
 import * as url from "url";
 import * as API from "../../api";
-import { MergeTreeChunk } from "../../api";
 import * as SharedString from "../../merge-tree";
 import * as shared from "../../shared";
 import * as socketStorage from "../../socket-storage";
@@ -249,7 +248,7 @@ export async function onLoad(id: string, config: any) {
 
     console.log(window.navigator.userAgent);
     console.log(`id is ${id}`);
-    sharedString.on("partialLoad", async (data: MergeTreeChunk) => {
+    sharedString.on("partialLoad", async (data: SharedString.MergeTreeChunk) => {
         console.log("Partial load fired");
 
         let container = new FlowContainer();
@@ -262,7 +261,7 @@ export async function onLoad(id: string, config: any) {
         theFlow.setEdit();
     });
 
-    sharedString.on("loadFinshed", async (data: MergeTreeChunk) => {
+    sharedString.on("loadFinshed", async (data: SharedString.MergeTreeChunk) => {
         // Bootstrap worker service.
         shared.registerWorker(config);
         theFlow.loadFinished(clockStart);

@@ -5,12 +5,12 @@ import * as Collections from "./collections";
 import * as random from "random-js";
 import * as MergeTree from "./mergeTree";
 import * as Base from "./base";
+import * as ops from "./ops";
 import * as Text from "./text";
 import * as JsDiff from "diff";
 import * as Paparazzo from "./snapshot";
 import * as express from "express";
 import * as path from "path";
-import * as api from "../api";
 
 function compareStrings(a: string, b: string) {
     return a.localeCompare(b);
@@ -128,10 +128,10 @@ class Server {
         return buf;
     }
 
-    getCharLengthSegs(alltexts: api.IPropertyString[], approxCharLength: number, clientId: string,
-        startIndex = 0): api.MergeTreeChunk {
+    getCharLengthSegs(alltexts: ops.IPropertyString[], approxCharLength: number, clientId: string,
+        startIndex = 0): ops.MergeTreeChunk {
         //console.log(`start index ${startIndex}`);
-        let texts = <api.IPropertyString[]>[];
+        let texts = <ops.IPropertyString[]>[];
         let lengthChars = 0;
         let segCount = 0;
         while ((lengthChars < approxCharLength) && ((startIndex + segCount) < alltexts.length)) {
@@ -788,9 +788,9 @@ export function TestPack() {
             let preLen = client.getLength();
             let pos = random.integer(0, preLen)(mt);
             if (includeMarkers) {
-                server.enqueueMsg(client.makeInsertMarkerMsg("test", api.MarkerBehaviors.PropagatesForward,
+                server.enqueueMsg(client.makeInsertMarkerMsg("test", ops.MarkerBehaviors.PropagatesForward,
                     pos, MergeTree.UnassignedSequenceNumber, client.getCurrentSeq(), ""));
-                client.insertMarkerLocal(pos, "test", api.MarkerBehaviors.PropagatesForward);
+                client.insertMarkerLocal(pos, "test", ops.MarkerBehaviors.PropagatesForward);
             }
             server.enqueueMsg(client.makeInsertMsg(text, pos, MergeTree.UnassignedSequenceNumber,
                 client.getCurrentSeq(), ""));
@@ -1236,7 +1236,7 @@ export function TestPack() {
                 console.log(cli.relText(clientId, refSeq));
             }
         }
-        cli.insertMarkerRemote({ type: "peach", behaviors: api.MarkerBehaviors.PropagatesForward }, 0, {},
+        cli.insertMarkerRemote({ type: "peach", behaviors: ops.MarkerBehaviors.PropagatesForward }, 0, {},
             5, 0, 2)
         cli.insertTextRemote("very ", 6, undefined, 4, 2, 2);
         console.log(cli.mergeTree.toString());

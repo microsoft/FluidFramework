@@ -1014,12 +1014,12 @@ export class FlowView {
             window.requestAnimationFrame(() => {
                 this.pendingRender = false;
                 if (msg.clientId !== this.client.longClientId) {
-                    let delta = <API.IMergeTreeOp>msg.op;
-                    if (delta.type === API.MergeTreeDeltaType.INSERT) {
+                    let delta = <SharedString.IMergeTreeOp>msg.op;
+                    if (delta.type === SharedString.MergeTreeDeltaType.INSERT) {
                         if (delta.pos1 <= this.cursor.pos) {
                             this.cursor.pos += delta.text.length;
                         }
-                    } else if (delta.type === API.MergeTreeDeltaType.REMOVE) {
+                    } else if (delta.type === SharedString.MergeTreeDeltaType.REMOVE) {
                         if (delta.pos2 <= this.cursor.pos) {
                             this.cursor.pos -= (delta.pos2 - delta.pos1);
                         } else if (this.cursor.pos >= delta.pos1) {

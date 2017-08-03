@@ -2,6 +2,7 @@
 
 import * as Base from "./base";
 import * as Collections from "./collections";
+import * as ops from "./ops";
 import * as API from "../api";
 import { ISequencedMessage } from "../api";
 import * as Properties from "./properties";
@@ -133,7 +134,7 @@ function addMarker(marker: Marker, markers: Object) {
 function addNodeMarkers(node: Node, markers: Object) {
     if (node.isLeaf()) {
         if (((<Segment>node).getType() == SegmentType.Marker) &&
-            ((<Marker>node).behaviors & API.MarkerBehaviors.PropagatesForward)) {
+            ((<Marker>node).behaviors & ops.MarkerBehaviors.PropagatesForward)) {
             addMarker(<Marker>node, markers);
         }
     }
@@ -235,7 +236,7 @@ export class ExternalSegment extends BaseSegment {
 }
 
 export class Marker extends BaseSegment {
-    public static make(type: string, behavior: API.MarkerBehaviors, props?: Object, seq?: number, clientId?: number) {
+    public static make(type: string, behavior: ops.MarkerBehaviors, props?: Object, seq?: number, clientId?: number) {
         let marker = new Marker(type, behavior, seq, clientId);
         if (props) {
             marker.addProperties(props);
@@ -243,7 +244,7 @@ export class Marker extends BaseSegment {
         return marker;
     }
 
-    constructor(public type: string, public behaviors: API.MarkerBehaviors, seq?: number, clientId?: number) {
+    constructor(public type: string, public behaviors: ops.MarkerBehaviors, seq?: number, clientId?: number) {
         super(seq, clientId);
         this.cachedLength = 1;
     }
@@ -1132,7 +1133,7 @@ export class Client {
     }
 
     // TODO: props, end
-    makeInsertMarkerMsg(markerType: string, behaviors: API.MarkerBehaviors, pos: number, seq: number,
+    makeInsertMarkerMsg(markerType: string, behaviors: ops.MarkerBehaviors, pos: number, seq: number,
         refSeq: number, objectId: string) {
         return <ISequencedMessage>{
             clientId: this.longClientId,
@@ -1152,7 +1153,7 @@ export class Client {
             userId: undefined,
             offset: seq,
             op: {
-                type: API.MergeTreeDeltaType.INSERT, marker: { type: markerType, behaviors }, pos1: pos
+                type: ops.MergeTreeDeltaType.INSERT, marker: { type: markerType, behaviors }, pos1: pos
             },
             type: API.OperationType,
         };
@@ -1177,7 +1178,7 @@ export class Client {
             userId: undefined,
             offset: seq,
             op: {
-                type: API.MergeTreeDeltaType.INSERT, text: text, pos1: pos
+                type: ops.MergeTreeDeltaType.INSERT, text: text, pos1: pos
             },
             type: API.OperationType,
         };
@@ -1202,7 +1203,7 @@ export class Client {
             userId: undefined,
             offset: seq,
             op: {
-                type: API.MergeTreeDeltaType.REMOVE, pos1: start, pos2: end
+                type: ops.MergeTreeDeltaType.REMOVE, pos1: start, pos2: end
             },
             type: API.OperationType,
         };
@@ -1217,10 +1218,10 @@ export class Client {
     }
 
     coreApplyMsg(msg: API.ISequencedMessage) {
-        let op = <API.IMergeTreeOp>msg.op;
+        let op = <ops.IMergeTreeOp>msg.op;
         let clid = this.getOrAddShortClientId(msg.clientId);
         switch (op.type) {
-            case API.MergeTreeDeltaType.INSERT:
+            case ops.MergeTreeDeltaType.INSERT:
                 if (op.text !== undefined) {
                     this.insertTextRemote(op.text, op.pos1, op.props, msg.object.sequenceNumber, msg.object.referenceSequenceNumber,
                         clid);
@@ -1230,7 +1231,7 @@ export class Client {
                         clid);
                 }
                 break;
-            case API.MergeTreeDeltaType.REMOVE:
+            case ops.MergeTreeDeltaType.REMOVE:
                 this.removeSegmentRemote(op.pos1, op.pos2, msg.object.sequenceNumber, msg.object.referenceSequenceNumber,
                     clid);
                 break;
@@ -1335,7 +1336,7 @@ export class Client {
         }
     }
 
-    insertMarkerLocal(pos: number, type: string, behaviors: API.MarkerBehaviors, props?: Object, end?: number) {
+    insertMarkerLocal(pos: number, type: string, behaviors: ops.MarkerBehaviors, props?: Object, end?: number) {
         let segWindow = this.mergeTree.getCollabWindow();
         let clientId = segWindow.clientId;
         let refSeq = segWindow.currentSeq;
@@ -1357,7 +1358,7 @@ export class Client {
         }
     }
 
-    insertMarkerRemote(marker: API.IMarkerDef, pos: number, props: Object, seq: number, refSeq: number, clientId: number) {
+    insertMarkerRemote(marker: ops.IMarkerDef, pos: number, props: Object, seq: number, refSeq: number, clientId: number) {
         let clockStart;
         if (this.measureOps) {
             clockStart = clock();
@@ -2184,7 +2185,7 @@ export class MergeTree {
     }
 
     // assumes not collaborating for now
-    appendSegment(segSpec: API.IPropertyString) {
+    appendSegment(segSpec: ops.IPropertyString) {
         let pos = this.root.cachedLength;
         if (segSpec.text) {
             this.insertText(pos, UniversalSequenceNumber, LocalClientId, UniversalSequenceNumber, segSpec.text, segSpec.props);
@@ -2206,7 +2207,7 @@ export class MergeTree {
     }
 
     insertMarker(pos: number, refSeq: number, clientId: number, seq: number, type: string,
-        behaviors: API.MarkerBehaviors, props?: Object) {
+        behaviors: ops.MarkerBehaviors, props?: Object) {
         let marker = Marker.make(type, behaviors, props, seq, clientId);
         this.insert(pos, refSeq, clientId, seq, marker, (block, pos, refSeq, clientId, seq, marker) =>
             this.blockInsert(block, pos, refSeq, clientId, seq, marker));
