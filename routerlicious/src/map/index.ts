@@ -1,8 +1,6 @@
-import * as assert from "assert";
 import { EventEmitter } from "events";
 import * as _ from "lodash";
 import * as api from "../api";
-import { debug } from "./debug";
 
 /**
  * Description of a map delta operation
@@ -17,6 +15,7 @@ interface IMapOperation {
  * Map snapshot definition
  */
 export interface ISnapshot {
+    minimumSequenceNumber: number;
     sequenceNumber: number;
     snapshot: any;
 };
@@ -48,35 +47,12 @@ export interface IMapValue {
 const snapshotFileName = "header";
 
 class MapView implements api.IMapView {
-    private data: {[key: string]: IMapValue };
-
-    // The last sequence number and offset retrieved from the server
-    private sequenceNumber: number;
-    private minimumSequenceNumber = 0;
-
-    // Sequence number for operations local to this client
-    private clientSequenceNumber = 0;
-
-    // Locally applied operations not yet sent to the server
-    private localOps: api.IMessage[] = [];
-
     constructor(
         private document: api.Document,
         id: string,
+        private data: {[key: string]: IMapValue },
         private events: EventEmitter,
-        private services?: api.IDistributedObjectServices,
-        snapshot?: ISnapshot) {
-
-        if (this.services) {
-            this.data = snapshot.snapshot;
-            this.sequenceNumber = snapshot.sequenceNumber;
-
-            // Listen for updates to create the delta manager
-            this.listenForUpdates();
-        } else {
-            this.data = {};
-            this.sequenceNumber = 0;
-        }
+        private processLocalOperation: (op) => Promise<void>) {
     }
 
     public get(key: string) {
@@ -148,136 +124,23 @@ class MapView implements api.IMapView {
         return this.processLocalOperation(op);
     }
 
-    public snapshot(): Promise<api.IObject[]> {
-        const snapshot = {
-            sequenceNumber: this.sequenceNumber,
-            snapshot: _.clone(this.data),
-        };
-
-        return Promise.resolve([{ path: snapshotFileName, data: snapshot}]);
+    public getData(): {[key: string]: IMapValue } {
+        return _.clone(this.data);
     }
 
-    public attach(services: api.IDistributedObjectServices): void {
-        this.services = services;
-
-        // Listen for updates to create the delta manager
-        this.listenForUpdates();
-
-        // And then submit all pending operations
-        for (const localOp of this.localOps) {
-            this.submit(localOp);
-        }
-    }
-
-    /**
-     * Processes a message by the local client
-     */
-    private async processLocalOperation(op: IMapOperation): Promise<void> {
-        // Prep the message
-        const message: api.IMessage = {
-            document: {
-                clientSequenceNumber: null,
-                referenceSequenceNumber: null,
-            },
-            object: {
-                clientSequenceNumber: this.clientSequenceNumber++,
-                referenceSequenceNumber: this.sequenceNumber,
-            },
-            op,
-        };
-
-        // Store the message for when it is ACKed and then submit to the server if connected
-        this.localOps.push(message);
-        if (this.services) {
-            this.submit(message);
-        }
-
-        this.processOperation(op);
-    }
-
-    /**
-     * Handles a message coming from the remote service
-     */
-    private processRemoteMessage(message: api.IBase) {
-        // server messages should only be delivered to this method in sequence number order
-        assert.equal(this.sequenceNumber + 1, message.object.sequenceNumber);
-        this.sequenceNumber = message.object.sequenceNumber;
-        this.minimumSequenceNumber = message.object.minimumSequenceNumber;
-
-        if (message.type === api.OperationType) {
-            this.processRemoteOperation(message as api.ISequencedMessage);
-        }
-        // Brodcast the message to listeners.
-        this.events.emit("op", message);
-    }
-
-    private processRemoteOperation(message: api.ISequencedMessage) {
-        if (message.clientId === this.document.clientId) {
-            // One of our messages was sequenced. We can remove it from the local message list. Given these arrive
-            // in order we only need to check the beginning of the local list.
-            if (this.localOps.length > 0 &&
-                this.localOps[0].object.clientSequenceNumber === message.object.clientSequenceNumber) {
-                this.localOps.shift();
-            } else {
-                debug(`Duplicate ack received ${message.object.clientSequenceNumber}`);
-            }
-        } else {
-            // Message has come from someone else - let's go and update now
-            this.processOperation(message.op);
-        }
-    }
-
-    private processOperation(op: IMapOperation) {
-        switch (op.type) {
-            case "clear":
-                this.clearCore();
-                break;
-            case "delete":
-                this.deleteCore(op.key);
-                break;
-            case "set":
-                this.setCore(op.key, op.value);
-                break;
-            default:
-                throw new Error("Unknown operation");
-        }
-    }
-
-    private setCore(key: string, value: IMapValue) {
+    public setCore(key: string, value: IMapValue) {
         this.data[key] = value;
         this.events.emit("valueChanged", { key });
     }
 
-    private clearCore() {
+    public clearCore() {
         this.data = {};
         this.events.emit("clear");
     }
 
-    private deleteCore(key: string) {
+    public deleteCore(key: string) {
         delete this.data[key];
         this.events.emit("valueChanged", { key });
-    }
-
-    private listenForUpdates() {
-        this.services.deltaConnection.on("op", (message) => {
-            this.processRemoteMessage(message);
-        });
-    }
-
-    private async submit(message: api.IMessage): Promise<void> {
-        // TODO chain these requests given the attach is async
-        const op = message.op as IMapOperation;
-
-        // We need to translate any local collaborative object sets to the serialized form
-        if (op.type === "set" && op.value.type === ValueType[ValueType.Collaborative]) {
-            // We need to attach the object prior to submitting the message so that its state is available
-            // to upstream users following the attach
-            const collabMapValue = op.value.value as ICollaborativeMapValue;
-            const collabObject = this.document.get(collabMapValue.id);
-            collabObject.attach();
-        }
-
-        this.services.deltaConnection.submitOp(message);
     }
 }
 
@@ -285,37 +148,25 @@ class MapView implements api.IMapView {
  * Implementation of a map collaborative object
  */
 class Map extends api.CollaborativeObject implements api.IMap {
-    public type = MapExtension.Type;
-
     private view: MapView;
-    private local: boolean;
 
     /**
      * Constructs a new collaborative map. If the object is non-local an id and service interfaces will
      * be provided
      */
     constructor(
-        private document: api.Document,
-        public id: string,
-        private services?: api.IDistributedObjectServices,
+        document: api.Document,
+        id: string,
+        services?: api.IDistributedObjectServices,
         version?: string,
         header?: string) {
+        let snapshot: ISnapshot = services && header
+            ? JSON.parse(header)
+            : { minimumSequenceNumber: 0, sequenceNumber: 0, snapshot: {} };
 
-        super();
+        super(document, id, MapExtension.Type, snapshot.sequenceNumber, snapshot.minimumSequenceNumber, services);
 
-        if (this.services) {
-            this.local = false;
-
-            // Load from the snapshot if available
-            const snapshot: ISnapshot = header
-                ? JSON.parse(header)
-                : { sequenceNumber: 0, snapshot: {} };
-
-            this.view = new MapView(this.document, id, this.events, services, snapshot);
-        } else {
-            this.local = true;
-            this.view = new MapView(this.document, id, this.events);
-        }
+        this.view = new MapView(document, id, snapshot.snapshot, this.events, (op) => this.processLocalOperation(op));
     }
 
     public async keys(): Promise<string[]> {
@@ -346,14 +197,13 @@ class Map extends api.CollaborativeObject implements api.IMap {
     }
 
     public snapshot(): Promise<api.IObject[]> {
-        return Promise.resolve(this.view.snapshot());
-    }
+        const snapshot = {
+            minimumSequenceNumber: this.minimumSequenceNumber,
+            sequenceNumber: this.sequenceNumber,
+            snapshot: this.view.getData(),
+        };
 
-    /**
-     * Returns true if the object is local only
-     */
-    public isLocal(): boolean {
-        return this.local;
+        return Promise.resolve([{ path: snapshotFileName, data: snapshot}]);
     }
 
     /**
@@ -363,18 +213,34 @@ class Map extends api.CollaborativeObject implements api.IMap {
         return Promise.resolve(this.view);
     }
 
-    /**
-     * Attaches the document to the given backend service.
-     */
-    public attach(): this {
-        if (!this.local) {
-            return this;
+    protected submitCore(message: api.IMessage) {
+        // TODO chain these requests given the attach is async
+        const op = message.op as IMapOperation;
+
+        // We need to translate any local collaborative object sets to the serialized form
+        if (op.type === "set" && op.value.type === ValueType[ValueType.Collaborative]) {
+            // We need to attach the object prior to submitting the message so that its state is available
+            // to upstream users following the attach
+            const collabMapValue = op.value.value as ICollaborativeMapValue;
+            const collabObject = this.document.get(collabMapValue.id);
+            collabObject.attach();
         }
+    }
 
-        const services = this.document.attach(this);
-        this.view.attach(services);
-
-        return this;
+    protected processCore(op: IMapOperation) {
+        switch (op.type) {
+            case "clear":
+                this.view.clearCore();
+                break;
+            case "delete":
+                this.view.deleteCore(op.key);
+                break;
+            case "set":
+                this.view.setCore(op.key, op.value);
+                break;
+            default:
+                throw new Error("Unknown operation");
+        }
     }
 }
 

@@ -1,7 +1,5 @@
-import * as assert from "assert";
 import * as _ from "lodash";
 import * as api from "../api";
-import { debug } from "./debug";
 
 /**
  * Description of a cell delta operation
@@ -15,6 +13,7 @@ interface ICellOperation {
  * Cell snapshot definition
  */
 export interface ICellSnapshot {
+    minimumSequenceNumber: number;
     offset: number;
     sequenceNumber: number;
     snapshot: any;
@@ -50,46 +49,26 @@ const snapshotFileName = "value";
  * Implementation of a cell collaborative object
  */
 class Cell extends api.CollaborativeObject implements api.ICell {
-    public type = CellExtension.Type;
-
     // Cell data
     private data: ICellValue;
-
-    // Locally applied operations not yet sent to the server
-    private localOps: api.IMessage[] = [];
-
-    // The last sequence number and offset retrieved from the server
-    private sequenceNumber = 0;
-    private minimumSequenceNumber = 0;
-
-    // Sequence number for operations local to this client
-    private clientSequenceNumber = 0;
-
-    // Map of collaborative objects stored inside of the cell
-    private collaborativeObjects: {[id: string]: api.ICollaborativeObject} = {};
 
     /**
      * Constructs a new collaborative cell. If the object is non-local an id and service interfaces will
      * be provided
      */
     constructor(
-        private document: api.Document,
-        public id: string,
-        private services?: api.IDistributedObjectServices,
+        document: api.Document,
+        id: string,
+        services?: api.IDistributedObjectServices,
         version?: string,
         header?: string) {
-        super();
 
-        if (services) {
-            // Load from the snapshot if it exists
-            const snapshot: ICellSnapshot = header
-                ? JSON.parse(header)
-                : { sequenceNumber: 0, snapshot: {} };
-            this.data = snapshot.snapshot;
-            this.sequenceNumber = snapshot.sequenceNumber;
+        const snapshot: ICellSnapshot = services && header
+            ? JSON.parse(header)
+            : { minimumSequenceNumber: 0, sequenceNumber: 0, snapshot: undefined };
+        super(document, id, CellExtension.Type, snapshot.sequenceNumber, snapshot.minimumSequenceNumber, services);
 
-            this.listenForUpdates();
-        }
+        this.data = snapshot.snapshot;
     }
 
     /**
@@ -113,7 +92,6 @@ class Cell extends api.CollaborativeObject implements api.ICell {
         if (_.hasIn(value, "__collaborativeObject__")) {
             // Convert any local collaborative objects to our internal storage format
             const collaborativeObject = value as api.ICollaborativeObject;
-            this.collaborativeObjects[collaborativeObject.id] = collaborativeObject;
 
             const collabCellValue: ICollaborativeCellValue = {
                 id: collaborativeObject.id,
@@ -156,6 +134,7 @@ class Cell extends api.CollaborativeObject implements api.ICell {
 
     public snapshot(): Promise<api.IObject[]> {
         const snapshot = {
+            minimumSequenceNumber: this.minimumSequenceNumber,
             sequenceNumber: this.sequenceNumber,
             snapshot: _.clone(this.data),
         };
@@ -163,116 +142,22 @@ class Cell extends api.CollaborativeObject implements api.ICell {
         return Promise.resolve([{ path: snapshotFileName, data: snapshot}]);
     }
 
-    /**
-     * Attaches the document to the given backend service.
-     */
-    public attach(): this {
-        if (!this.isLocal()) {
-            return this;
-        }
-
-        this.services = this.document.attach(this);
-
-        // Listen for updates to create the delta manager
-        this.listenForUpdates();
-
-        // And then submit all pending operations.
-        for (const localOp of this.localOps) {
-            this.submit(localOp);
-        }
-    }
-
-    /**
-     * Returns true if the object is local only
-     */
-    public isLocal(): boolean {
-        return !this.services;
-    }
-
-    private listenForUpdates() {
-        this.services.deltaConnection.on("op", (message) => {
-            this.processRemoteMessage(message);
-        });
-    }
-
-    private async submit(message: api.IMessage): Promise<void> {
-        // TODO chain these requests given the attach is async
+    protected submitCore(message: api.IMessage) {
         const op = message.op as ICellOperation;
 
         // We need to translate any local collaborative object sets to the serialized form
         if (op.type === "set" && op.value.type === CellValueType[CellValueType.Collaborative]) {
             // We need to attach the object prior to submitting the message
             const collabMapValue = op.value.value as ICollaborativeCellValue;
-            const collabObject = this.collaborativeObjects[collabMapValue.id];
+            const collabObject = this.document.get(collabMapValue.id);
 
             if (collabObject.isLocal()) {
                 collabObject.attach();
             }
         }
-
-        this.services.deltaConnection.submitOp(message);
     }
 
-    /**
-     * Processes a message by the local client
-     */
-    private async processLocalOperation(op: ICellOperation): Promise<void> {
-        // Prep the message
-        const message: api.IMessage = {
-            document: {
-                clientSequenceNumber: null,
-                referenceSequenceNumber: null,
-            },
-            object: {
-                clientSequenceNumber: this.clientSequenceNumber++,
-                referenceSequenceNumber: this.sequenceNumber,
-            },
-            op,
-        };
-
-        // Store the message for when it is ACKed and then submit to the server if connected
-        this.localOps.push(message);
-        if (this.services) {
-            this.submit(message);
-        }
-
-        this.processOperation(op);
-    }
-
-    /**
-     * Handles a message coming from the remote service
-     */
-    private processRemoteMessage(message: api.IBase) {
-        // server messages should only be delivered to this method in sequence number order
-        assert.equal(this.sequenceNumber + 1, message.object.sequenceNumber);
-        this.sequenceNumber = message.object.sequenceNumber;
-        this.minimumSequenceNumber = message.object.minimumSequenceNumber;
-
-        if (message.type === api.OperationType) {
-            this.processRemoteOperation(message as api.ISequencedMessage);
-        }
-        // Brodcast the message to listeners.
-        this.events.emit("op", message);
-    }
-
-    private processRemoteOperation(message: api.ISequencedMessage) {
-        // server messages should only be delivered to this method in sequence number order
-        if (message.clientId === this.document.clientId) {
-            // One of our messages was sequenced. We can remove it from the local message list. Given these arrive
-            // in order we only need to check the beginning of the local list.
-            if (this.localOps.length > 0 &&
-                this.localOps[0].object.clientSequenceNumber === message.object.clientSequenceNumber) {
-                this.localOps.shift();
-            } else {
-                debug(`Duplicate ack received ${message.object.clientSequenceNumber}`);
-            }
-        } else {
-            // Message has come from someone else - let's go and update now
-            this.processOperation(message.op);
-        }
-    }
-
-    private processOperation(op: ICellOperation) {
+    protected processCore(op: ICellOperation) {
         switch (op.type) {
             case "set":
                 this.setCore(op.value);
