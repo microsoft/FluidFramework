@@ -699,21 +699,27 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
     }
 }
 
-export interface TSTNode<TValue> {
+export interface TSTNode<T> {
     c: string;
-    left?: TSTNode<TValue>;
-    mid?: TSTNode<TValue>;
-    right?: TSTNode<TValue>;
-    val?: TValue;
+    left?: TSTNode<T>;
+    mid?: TSTNode<T>;
+    right?: TSTNode<T>;
+    val?: T;
 }
 
 export interface TSTPrefix {
     text: string;
 }
 
-export class TST<TValue> {
+export interface ProxString<T> {
+    text: string;
+    invDistance: number;
+    val: T;
+}
+
+export class TST<T> {
     private n = 0;
-    private root: TSTNode<TValue>;
+    private root: TSTNode<T>;
 
     constructor() {
 
@@ -735,7 +741,7 @@ export class TST<TValue> {
         return x.val;
     }
 
-    nodeGet(x: TSTNode<TValue>, key: string, d: number): TSTNode<TValue> {
+    nodeGet(x: TSTNode<T>, key: string, d: number): TSTNode<T> {
         if (x === undefined) {
             return undefined;
         }
@@ -752,14 +758,15 @@ export class TST<TValue> {
         else return x;
     }
 
-    put(key: string, val: TValue) {
+    put(key: string, val: T) {
         if (!this.contains(key)) {
             this.n++;
         }
         this.root = this.nodePut(this.root, key, val, 0);
+        // console.log(`put ${key}`);
     }
 
-    nodePut(x: TSTNode<TValue>, key: string, val: TValue, d: number) {
+    nodePut(x: TSTNode<T>, key: string, val: T, d: number) {
         let c = key.charAt(d);
         if (x === undefined) {
             x = { c };
@@ -780,8 +787,9 @@ export class TST<TValue> {
     }
 
     neighbors(text: string, distance = 2) {
-        let q = <string[]>[];
+        let q = <ProxString<T>[]>[];
         this.nodeProximity(this.root, { text: "" }, 0, text, distance, q);
+        q = q.filter(value => (value.text.length>0));
         return q;
     }
 
@@ -798,7 +806,7 @@ export class TST<TValue> {
         return q;
     }
 
-    collect(x: TSTNode<TValue>, prefix: TSTPrefix, q: string[]) {
+    collect(x: TSTNode<T>, prefix: TSTPrefix, q: string[]) {
         if (x === undefined) {
             return;
         }
@@ -810,7 +818,7 @@ export class TST<TValue> {
         this.collect(x.right, prefix, q);
     }
 
-    patternCollect(x: TSTNode<TValue>, prefix: TSTPrefix, d: number, pattern: string, q: string[]) {
+    patternCollect(x: TSTNode<T>, prefix: TSTPrefix, d: number, pattern: string, q: string[]) {
         if (x === undefined) {
             return;
         }
@@ -832,8 +840,8 @@ export class TST<TValue> {
         }
     }
 
-    nodeProximity(x: TSTNode<TValue>, prefix: TSTPrefix, d: number,
-        pattern: string, distance: number, q: string[]) {
+    nodeProximity(x: TSTNode<T>, prefix: TSTPrefix, d: number,
+        pattern: string, distance: number, q: ProxString<T>[]) {
         if ((x === undefined) || (distance < 0)) {
             return;
         }
@@ -842,17 +850,21 @@ export class TST<TValue> {
             this.nodeProximity(x.left, prefix, d, pattern, distance, q);
         }
         if (x.val !== undefined) {
-            if (distance >= (pattern.length - d)) {
-                q.push(prefix.text + x.c);
+            let remD = distance - (pattern.length - d); 
+            if (remD >= 0) {
+                let invD = distance;
+                if (c !== x.c) {
+                    invD--;
+                }
+                q.push({text: prefix.text + x.c, val: x.val, invDistance: invD });
             }
-        } else {
-            let recurD = (d < (pattern.length - 1)) ? d + 1 : d;
-            if (c === x.c) {
-                this.nodeProximity(x.mid, { text: prefix.text + x.c }, recurD, pattern, distance, q);
-            }
-            else {
-                this.nodeProximity(x.mid, { text: prefix.text + x.c }, recurD, pattern, distance - 1, q);
-            }
+        }
+        let recurD = (d < (pattern.length - 1)) ? d + 1 : d;
+        if (c === x.c) {
+            this.nodeProximity(x.mid, { text: prefix.text + x.c }, recurD, pattern, distance, q);
+        }
+        else {
+            this.nodeProximity(x.mid, { text: prefix.text + x.c }, recurD, pattern, distance - 1, q);
         }
         if ((distance > 0) || (c > x.c)) {
             this.nodeProximity(x.right, prefix, d, pattern, distance, q);

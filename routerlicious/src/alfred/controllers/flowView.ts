@@ -755,31 +755,48 @@ export class FlowView {
     }
 
     public setEdit() {
-        this.containerDiv.onclick = (e) => {
-            if (!this.diagCharPort) {
-                return;
-            }
-            let span = <ISegSpan>e.target;
-            let segspan: ISegSpan;
-            if (span.seg) {
-                segspan = span;
-            } else {
-                segspan = <ISegSpan>span.parentElement;
-            }
-            if (segspan && segspan.seg) {
-                let segOffset = this.client.mergeTree.getOffset(segspan.seg, this.client.getCurrentSeq(),
-                    this.client.getClientId());
-                let elmOff = pointerToElementOffsetWebkit(e.clientX, e.clientY);
-                let computed = elmOffToSegOff(elmOff, segspan);
-                let c = Date.now();
-                let xy = pixelsAtOffset(segspan, computed, Math.floor(this.wEst));
-                c = Date.now() - c;
-                // tslint:disable:max-line-length
-                let diag = `segPos: ${segOffset} cxy: (${e.clientX}, ${e.clientY}) xy: (${xy.left}, ${xy.top}) ${c}ms within: ${elmOff.offset} computed: (${computed}, ${computed + segOffset})`;
-                if (this.diagCharPort) {
-                    this.statusMessage("segclick", diag);
+        let preventD =  (e) => {
+            e.returnValue = false;
+            e.preventDefault();
+            return false;
+        };
+
+        window.oncontextmenu = preventD;
+        this.containerDiv.onmousemove = preventD;
+        this.containerDiv.onmouseup = preventD;
+        this.containerDiv.onselectstart = preventD;
+
+        this.containerDiv.onmousedown = (e) => {
+            if (e.button === 0) {
+                if (!this.diagCharPort) {
+                    return;
                 }
-                console.log(diag);
+                let span = <ISegSpan>e.target;
+                let segspan: ISegSpan;
+                if (span.seg) {
+                    segspan = span;
+                } else {
+                    segspan = <ISegSpan>span.parentElement;
+                }
+                if (segspan && segspan.seg) {
+                    let segOffset = this.client.mergeTree.getOffset(segspan.seg, this.client.getCurrentSeq(),
+                        this.client.getClientId());
+                    let elmOff = pointerToElementOffsetWebkit(e.clientX, e.clientY);
+                    let computed = elmOffToSegOff(elmOff, segspan);
+                    let c = Date.now();
+                    let xy = pixelsAtOffset(segspan, computed, Math.floor(this.wEst));
+                    c = Date.now() - c;
+                    // tslint:disable:max-line-length
+                    let diag = `segPos: ${segOffset} cxy: (${e.clientX}, ${e.clientY}) xy: (${xy.left}, ${xy.top}) ${c}ms within: ${elmOff.offset} computed: (${computed}, ${computed + segOffset})`;
+                    if (this.diagCharPort) {
+                        this.statusMessage("segclick", diag);
+                    }
+                    console.log(diag);
+                }
+            } else if (e.button === 2) {
+                e.preventDefault();
+                e.returnValue = false;
+                return false;
             }
         };
 
