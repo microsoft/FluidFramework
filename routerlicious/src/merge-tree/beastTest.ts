@@ -1359,7 +1359,7 @@ function tst() {
     console.log(a.length);
     */
 }
-//tst();
+tst();
 
 
 //simpleTest();

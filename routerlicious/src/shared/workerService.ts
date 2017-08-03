@@ -1,6 +1,7 @@
 import * as io from "socket.io-client";
 import * as api from "../api";
-import { nativeTextAnalytics, resumeAnalytics, textAnalytics } from "../intelligence";
+import { nativeTextAnalytics, resumeAnalytics, spellcheckerService, textAnalytics } from "../intelligence";
+import * as mergeTree from "../merge-tree";
 import * as socketStorage from "../socket-storage";
 import * as messages from "../socket-storage/messages";
 import * as shared from "./";
@@ -109,6 +110,12 @@ export class WorkerService implements api.IWorkerService {
         intelligenceManager.registerService(textAnalytics.factory.create(this.config.intelligence.textAnalytics));
         intelligenceManager.registerService(nativeTextAnalytics.factory.create(
                                             this.config.intelligence.nativeTextAnalytics));
+
+        if (doc.type === mergeTree.CollaboritiveStringExtension.Type) {
+            const spellcheckerClient = spellcheckerService.factory.create(this.config.intelligence.spellchecker);
+            const spellchecker = new shared.Spellcheker(doc as mergeTree.SharedString, spellcheckerClient);
+            spellchecker.run();
+        }
         doc.on("op", (op) => {
             serializer.run(op);
             intelligenceManager.process(doc);
