@@ -1293,8 +1293,8 @@ export class Client {
                 this.removeSegmentRemote(op.pos1, op.pos2, msg.sequenceNumber, msg.referenceSequenceNumber,
                     clid);
                 break;
-                case API.MergeTreeDeltaType.ANNOTATE:
-                this.annotateSegmentRemote(op.props, op.pos1, op.pos2,msg.sequenceNumber, msg.referenceSequenceNumber,
+            case API.MergeTreeDeltaType.ANNOTATE:
+                this.annotateSegmentRemote(op.props, op.pos1, op.pos2, msg.sequenceNumber, msg.referenceSequenceNumber,
                     clid);
                 break;
         }
@@ -2139,7 +2139,7 @@ export class MergeTree {
             end = this.blockLength(this.root, refSeq, clientId);
         }
         let accum = <TextAccumulator>{ textSegment: new TextSegment(""), placeholders };
-        
+
         if (MergeTree.traceGatherText) {
             console.log(`get text on cli ${glc(this, this.collabWindow.clientId)} ref cli ${glc(this, clientId)} refSeq ${refSeq}`);
         }
@@ -2377,7 +2377,7 @@ export class MergeTree {
 
         let continueFrom = (node: Block) => {
             segIsLocal = false;
-            this.excursion(node, checkSegmentIsLocal);
+            this.rightExcursion(node, checkSegmentIsLocal);
             if (MergeTree.diagInsertTie && segIsLocal && (newSegment.getType() === SegmentType.Text)) {
                 let text = newSegment.toString();
                 console.log(`@cli ${glc(this, this.collabWindow.clientId)}: attempting continue with seq ${seq} text ${text} ref ${refSeq}`);
@@ -2445,7 +2445,42 @@ export class MergeTree {
     }
 
     // visit segments starting from node's right siblings, then up to node's parent
-    excursion<TAccum>(node: Block, leafAction: SegmentAction<TAccum>) {
+    leftExcursion<TAccum>(node: Node, leafAction: SegmentAction<TAccum>) {
+        let actions = { leaf: leafAction };
+        let go = true;
+        let startNode = node;
+        let parent = startNode.parent;
+        while (parent) {
+            let children = parent.children;
+            let childIndex: number;
+            let node: Node;
+            let matchedStart = false;
+            for (childIndex = parent.childCount - 1; childIndex >= 0; childIndex--) {
+                node = children[childIndex];
+                if (matchedStart) {
+                    if (!node.isLeaf()) {
+                        let childBlock = <Block>node;
+                        go = this.nodeMapReverse(childBlock, actions, 0, UniversalSequenceNumber, 
+                            this.collabWindow.clientId, undefined);
+                    }
+                    else {
+                        go = leafAction(<Segment>node, 0, UniversalSequenceNumber, this.collabWindow.clientId, 0, 0);
+                    }
+                    if (!go) {
+                        return;
+                    }
+                }
+                else {
+                    matchedStart = (startNode === node);
+                }
+            }
+            startNode = parent;
+            parent = parent.parent;
+        }
+    }
+
+    // visit segments starting from node's right siblings, then up to node's parent
+    rightExcursion<TAccum>(node: Node, leafAction: SegmentAction<TAccum>) {
         let actions = { leaf: leafAction };
         let go = true;
         let startNode = node;
@@ -2460,7 +2495,8 @@ export class MergeTree {
                 if (matchedStart) {
                     if (!node.isLeaf()) {
                         let childBlock = <Block>node;
-                        go = this.nodeMap(childBlock, actions, 0, UniversalSequenceNumber, this.collabWindow.clientId, undefined);
+                        go = this.nodeMap(childBlock, actions, 0, UniversalSequenceNumber, this.collabWindow.clientId, 
+                            undefined);
                     }
                     else {
                         go = leafAction(<Segment>node, 0, UniversalSequenceNumber, this.collabWindow.clientId, 0, 0);
@@ -2470,8 +2506,7 @@ export class MergeTree {
                     }
                 }
                 else {
-                    let childBlock = <Block>node;
-                    matchedStart = (startNode === childBlock);
+                    matchedStart = (startNode === node);
                 }
             }
             startNode = parent;
@@ -3005,6 +3040,32 @@ export class MergeTree {
             go = actions.post(node, pos, refSeq, clientId, start, end, accum);
         }
 
+        return go;
+    }
+
+    // straight call every segment; goes until leaf action returns false
+    nodeMapReverse<TAccum>(block: Block, actions: SegmentActions<TAccum>, pos: number, refSeq: number,
+        clientId: number, accum?: TAccum) {
+        let go = true;
+        let children = block.children;
+        for (let childIndex = block.childCount - 1; childIndex>= 0; childIndex--) {
+            let child = children[childIndex];
+            let isLeaf = child.isLeaf();
+            if (go) {
+                // found entry containing pos
+                if (!isLeaf) {
+                    if (go) {
+                        go = this.nodeMapReverse(<Block>child, actions, pos, refSeq, clientId, accum);
+                    }
+                }
+                else {
+                    go = actions.leaf(<Segment>child, pos, refSeq, clientId, 0, 0, accum);
+                }
+            }
+            if (!go) {
+                break;
+            }
+        }
         return go;
     }
 

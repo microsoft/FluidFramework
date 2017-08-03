@@ -1,17 +1,43 @@
 // tslint:disable
-
+import * as fs from "fs";
+import * as path from "path";
+import * as Collections from "../merge-tree/collections";
 import * as commander from "commander";
 import * as API from "../api";
 import * as SharedString from "../merge-tree";
 import * as socketStorage from "../socket-storage";
 
-function spellingError(candidate: string) {
-    return (candidate.length > 4) && (candidate.length < 8) && candidate.startsWith("B");
+function clock() {
+    return process.hrtime();
+}
+
+function elapsedMilliseconds(start: [number, number]) {
+    let end: number[] = process.hrtime(start);
+    let duration = Math.round((end[0] * 1000) + (end[1] / 1000000));
+    return duration;
+}
+
+function compareProxStrings(a: Collections.ProxString<number>, b: Collections.ProxString<number>) {
+    let ascore = ((a.invDistance * 200) * a.val) + a.val;
+    let bscore = ((b.invDistance * 200) * b.val) + b.val;
+    return bscore - ascore;
 }
 
 class Speller {
     static maxWord = 256;
+    dict = new Collections.TST<number>();
+    verbose = false;
+
     constructor(public sharedString: SharedString.SharedString) {
+    }
+
+    spellingError(word: string) {
+        if (/\b\d+\b/.test(word)) {
+            return false;
+        }
+        else {
+            return !this.dict.contains(word);
+        }
     }
 
     setEvents() {
@@ -21,18 +47,26 @@ class Speller {
                 if (delta.type === API.MergeTreeDeltaType.INSERT) {
                     this.currentWordSpellCheck(delta.pos1);
                 } else if (delta.type === API.MergeTreeDeltaType.REMOVE) {
-                    let pos= delta.pos1;
-                    if (pos>0) {
-                        // ensure pos within word
-                        pos--;
-                    }
-                    this.currentWordSpellCheck(pos);
+                    this.currentWordSpellCheck(delta.pos1, true);
                 }
             }
         });
     }
 
+    loadDict() {
+        let clockStart = clock();
+        let dictFilename = path.join(__dirname, "../../public/literature/dictfreq.txt");
+        let dictContent = fs.readFileSync(dictFilename, "utf8");
+        let splitContent = dictContent.split("\n");
+        for (let entry of splitContent) {
+            let splitEntry = entry.split(";");
+            this.dict.put(splitEntry[0], parseInt(splitEntry[1]));
+        }
+        console.log(`size: ${this.dict.size()}; load time ${elapsedMilliseconds(clockStart)}ms`);
+    }
+
     initialSpellCheck() {
+        this.loadDict();
         let text = this.sharedString.client.getTextWithPlaceholders();
         let re = /\b\w+\b/g;
         let result: RegExpExecArray;
@@ -40,11 +74,13 @@ class Speller {
             result = re.exec(text);
             if (result) {
                 let candidate = result[0];
-                if (spellingError(candidate)) {
+                if (this.spellingError(candidate.toLocaleLowerCase())) {
                     let start = result.index;
                     let end = re.lastIndex;
                     let textErrorInfo = { text: text.substring(start, end), alternates: ["giraffe", "bunny"] };
-                    console.log(`spell (${start}, ${end}): ${textErrorInfo.text}`);
+                    if (this.verbose) {
+                        console.log(`spell (${start}, ${end}): ${textErrorInfo.text}`);
+                    }
                     this.sharedString.annotateRange({ textError: textErrorInfo }, start, end);
                 }
             }
@@ -52,39 +88,104 @@ class Speller {
         this.setEvents();
     }
 
-    currentWordSpellCheck(pos: number) {
-        let startPos = pos - Speller.maxWord;
-        let endPos = pos + Speller.maxWord;
+    currentWordSpellCheck(pos: number, rev = false) {
+        let text = "";
+        let fwdText = "";
+        let gatherReverse = (segment: SharedString.Segment) => {
+            switch (segment.getType()) {
+                case SharedString.SegmentType.Marker:
+                    text = " " + text;
+                    break;
+                case SharedString.SegmentType.Text:
+                    let textSegment = <SharedString.TextSegment>segment;
+                    if (textSegment.netLength()) {
+                        // not removed
+                        text = textSegment.text + text;
+                    }
+                    break;
+                // TODO: component
+            }
+            // console.log(`rev: -${text}-`);
+            if (/\s+\w+/.test(text)) {
+                return false;
+            }
+            else {
+                return true;
+            }
+        };
 
-        if (startPos < 0) {
-            startPos = 0;
+        let gatherForward = (segment: SharedString.Segment) => {
+            switch (segment.getType()) {
+                case SharedString.SegmentType.Marker:
+                    fwdText = fwdText + " ";
+                    break;
+                case SharedString.SegmentType.Text:
+                    let textSegment = <SharedString.TextSegment>segment;
+                    if (textSegment.netLength()) {
+                        // not removed
+                        fwdText = fwdText + textSegment.text;
+                    }
+                    break;
+                // TODO: component
+            }
+            // console.log(`fwd: -${fwdText}-`);
+            if (/\w+\s+/.test(fwdText)) {
+                return false;
+            }
+            else {
+                return true;
+            }
+        };
+        let segoff = this.sharedString.client.mergeTree.getContainingSegment(pos,
+            SharedString.UniversalSequenceNumber, this.sharedString.client.getClientId());
+        if (segoff.offset !== 0) {
+            console.log("expected pos only at segment boundary");
         }
-        let text = this.sharedString.client.getTextRangeWithPlaceholders(startPos, endPos);
-        let re = /\b\w+\b/g;
-        let result: RegExpExecArray;
-        do {
-            result = re.exec(text);
-            if (result) {
-                let start = result.index + startPos;
-                let end = re.lastIndex + startPos;
-                if ((start <= pos) && (end > pos)) {
+        // assumes op has made pos a segment boundary
+        this.sharedString.client.mergeTree.leftExcursion(segoff.segment, gatherReverse);
+        let startPos = pos - text.length;
+        if (segoff.segment) {
+            if (gatherForward(segoff.segment)) {
+                this.sharedString.client.mergeTree.rightExcursion(segoff.segment, gatherForward);
+            }
+            text = text + fwdText;
+            let re = /\b\w+\b/g;
+            let result: RegExpExecArray;
+            do {
+                result = re.exec(text);
+                if (result) {
+                    let start = result.index + startPos;
+                    let end = re.lastIndex + startPos;
                     let candidate = result[0];
-                    if (spellingError(candidate)) {
+                    if (this.spellingError(candidate.toLocaleLowerCase())) {
+                        let alternates = this.dict.neighbors(candidate, 2).sort(compareProxStrings);
+                        if (alternates.length > 7) {
+                            alternates.length = 7;
+                        }
                         let textErrorInfo = {
                             text: text.substring(result.index, re.lastIndex),
-                            alternates: ["giraffe", "bunny"]
+                            alternates: alternates
                         };
-                        console.log(`respell (${start}, ${end}): ${textErrorInfo.text}`);
+                        if (this.verbose) {
+                            console.log(`respell (${start}, ${end}): ${textErrorInfo.text}`);
+                            let buf = "alternates: ";
+                            for (let alt of alternates) {
+                                buf += ` ${alt.text}:${alt.invDistance}:${alt.val}`;
+                            }
+                            console.log(buf);
+                        }
                         this.sharedString.annotateRange({ textError: textErrorInfo }, start, end);
                     }
                     else {
-                        console.log(`spell ok (${start}, ${end}): ${text.substring(result.index, re.lastIndex)}`);
+                        if (this.verbose) {
+                            console.log(`spell ok (${start}, ${end}): ${text.substring(result.index, re.lastIndex)}`);
+                        }
                         this.sharedString.annotateRange({ textError: null }, start, end);
                     }
                 }
             }
+            while (result);
         }
-        while ((re.lastIndex <= pos) && result);
     }
 }
 

@@ -1436,7 +1436,7 @@ function tst() {
     console.log(p4);
 }
 
-let testTST = true;
+let testTST = false;
 if (testTST) {
     tst();
 }
@@ -1448,9 +1448,9 @@ if (testTST) {
 //mergeTreeTest1();
 //mergeTreeLargeTest();
 //mergeTreeCheckedTest();
-//let testPack = TestPack();
+let testPack = TestPack();
 // testPack.firstTest();
 //testPack.randolicious();
-//let filename = path.join(__dirname, "../../public/literature", "pp.txt");
-//testPack.clientServer(filename);
+let filename = path.join(__dirname, "../../public/literature", "pp.txt");
+testPack.clientServer(filename);
 new Server();

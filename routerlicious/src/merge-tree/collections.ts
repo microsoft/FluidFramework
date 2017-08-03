@@ -789,6 +789,7 @@ export class TST<T> {
     neighbors(text: string, distance = 2) {
         let q = <ProxString<T>[]>[];
         this.nodeProximity(this.root, { text: "" }, 0, text, distance, q);
+        q = q.filter(value => (value.text.length>0));
         return q;
     }
 
