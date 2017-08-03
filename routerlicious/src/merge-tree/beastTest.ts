@@ -1338,9 +1338,36 @@ export function TestPack() {
     }
 }
 
+function compareProxStrings(a: Collections.ProxString<number>, b: Collections.ProxString<number>) {
+    let ascore = (a.invDistance * 200) + a.val;
+    let bscore = (b.invDistance * 200) + b.val;
+    return bscore - ascore;
+}
+
+function shuffle<T>(a: Array<T>) {
+    let currentIndex = a.length;
+    let temp: T;
+    let randomIndex: number;
+
+    // While there remain elements to shuffle...
+    while (0 !== currentIndex) {
+
+        // Pick a remaining element...
+        randomIndex = Math.floor(Math.random() * currentIndex);
+        currentIndex--;
+
+        // And swap it with the current element.
+        temp = a[currentIndex];
+        a[currentIndex] = a[randomIndex];
+        a[randomIndex] = temp;
+    }
+
+    return a;
+}
+
 function tst() {
-    let tree =  new Collections.TST<boolean>();
-    let entries = ["giraffe","hut","aardvark","gold", "hover", "yurt","hot","antelope","gift","banana"];
+    let tree = new Collections.TST<boolean>();
+    let entries = ["giraffe", "hut", "aardvark", "gold", "hover", "yurt", "hot", "antelope", "gift", "banana"];
     for (let entry of entries) {
         tree.put(entry, true);
     }
@@ -1351,15 +1378,68 @@ function tst() {
     let p2 = tree.keysWithPrefix("gi");
     console.log(p1);
     console.log(p2);
-    p2 = tree.neighbors("hat");
-    console.log(p2);
-    tree = new Collections.TST<boolean>();
-/*    let content = fs.readFileSync("dict.txt", "utf8");
-    let a = content.split('\n');
-    console.log(a.length);
-    */
+    let p3 = tree.neighbors("hat");
+    console.log(p3);
+    let ntree = new Collections.TST<number>();
+    let filename = path.join(__dirname, "../../public/literature/dict.txt")
+    let content = fs.readFileSync(filename, "utf8");
+    let splitContent = content.split(/\r\n|\n/g);
+    let corpusFilename = path.join(__dirname, "../../public/literature/pp.txt")
+    let corpusContent = fs.readFileSync(corpusFilename, "utf8");
+    let corpusTree = new Collections.TST<number>();
+    function addCorpus(corpusContent: string, corpusTree: Collections.TST<number>) {
+        let count = 0;
+        let re = /\b\w+\b/g;
+        let result: RegExpExecArray;
+        do {
+            result = re.exec(corpusContent);
+            if (result) {
+                let candidate = result[0];
+                count++;
+                let val = corpusTree.get(candidate);
+                if (val !== undefined) {
+                    corpusTree.put(candidate, val+1);
+                }
+                else {
+                    corpusTree.put(candidate, 1);
+                }
+            }
+        } while (result);
+        return count;
+    }
+    let clockStart = clock();
+    let count = addCorpus(corpusContent, corpusTree);
+    corpusFilename = path.join(__dirname, "../../public/literature/shakespeare.txt")
+    corpusContent = fs.readFileSync(corpusFilename, "utf8");
+    count += addCorpus(corpusContent, corpusTree);
+    let a = shuffle(splitContent);
+    for (let entry of a) {
+        let freq = corpusTree.get(entry);
+        if (freq !== undefined) {
+            ntree.put(entry, freq);
+        }
+        else {
+            ntree.put(entry, 1);
+        }
+    }
+    console.log(`size: ${ntree.size()}; random insert takes ${elapsedMilliseconds(clockStart)}ms`);
+    for (let entry of a) {
+        if (!ntree.get(entry)) {
+            console.log(`biff ${entry}`);
+        }
+    }
+    let p4= ntree.neighbors("het").sort(compareProxStrings);
+    console.log(p4);
+    p4 = ntree.neighbors("peech").sort(compareProxStrings);
+    console.log(p4);
+    p4 = ntree.neighbors("tihs").sort(compareProxStrings);
+    console.log(p4);
 }
-//tst();
+
+let testTST = true;
+if (testTST) {
+    tst();
+}
 
 
 //simpleTest();
@@ -1368,9 +1448,9 @@ function tst() {
 //mergeTreeTest1();
 //mergeTreeLargeTest();
 //mergeTreeCheckedTest();
-let testPack = TestPack();
+//let testPack = TestPack();
 // testPack.firstTest();
 //testPack.randolicious();
-let filename = path.join(__dirname, "../../public/literature", "pp.txt");
-testPack.clientServer(filename);
+//let filename = path.join(__dirname, "../../public/literature", "pp.txt");
+//testPack.clientServer(filename);
 new Server();
