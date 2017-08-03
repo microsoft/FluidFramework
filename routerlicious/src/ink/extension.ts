@@ -9,10 +9,11 @@ export class InkExtension implements api.IExtension {
     public load(
         document: api.Document,
         id: string,
-        services: api.ICollaborationServices,
-        registry: api.Registry): api.ICollaborativeObject {
+        services: api.IDistributedObjectServices,
+        version: string,
+        header: string): api.ICollaborativeObject {
 
-        return new InkCollaborativeObject(document, id, services);
+        return new InkCollaborativeObject(document, id, services, version, header);
     }
 
     public create(document: api.Document, id: string): api.ICollaborativeObject {

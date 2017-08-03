@@ -43,38 +43,52 @@ export class InkCollaborativeObject extends api.CollaborativeObject implements I
     // Sequence number for operations local to this client
     private clientSequenceNumber = 0;
 
-    constructor(document: api.Document, public id: string, private services?: api.ICollaborationServices) {
+    constructor(
+        private document: api.Document,
+        public id: string,
+        private services?: api.IDistributedObjectServices,
+        version?: string,
+        header?: string) {
         super();
 
         if (services) {
-            this.load(id, services);
+            const snapshot: IInkSnapshot = header
+                ? JSON.parse(header)
+                : { sequenceNumber: 0, snapshot: {} };
+
+            this.inkSnapshot = Snapshot.Clone(snapshot.snapshot);
+            this.sequenceNumber = snapshot.sequenceNumber;
+
+            this.listenForUpdates();
         }
     }
 
-    public async attach(services: api.ICollaborationServices, registry: api.Registry): Promise<void> {
-        this.services = services;
+    public attach(): this {
+        if (!this.isLocal()) {
+            return this;
+        }
 
-        // Attaching makes a local document available for collaboration. The connect call should create the object.
-        // We assert the return type to validate this is the case.
-        this.connection = await services.deltaNotificationService.connect(this.id, this.type);
+        this.services = this.document.attach(this);
         this.listenForUpdates();
 
         for (const localOp of this.localOps) {
             this.submit(localOp);
         }
+
+        return this;
     }
 
     public isLocal(): boolean {
         return !this.connection;
     }
 
-    public snapshot(): Promise<void> {
+    public snapshot(): Promise<api.IObject[]> {
         const snapshot: IInkSnapshot = {
             sequenceNumber: this.sequenceNumber,
             snapshot: _.clone(this.inkSnapshot),
         };
 
-        return this.services.objectStorageService.write(this.id, [{ path: snapshotFileName, data: snapshot}]);
+        return Promise.resolve([{ path: snapshotFileName, data: snapshot}]);
     }
 
     public getLayers(): IInkLayer[] {
@@ -89,40 +103,10 @@ export class InkCollaborativeObject extends api.CollaborativeObject implements I
         this.processLocalOperation(op);
     }
 
-    private async load(id: string, services: api.ICollaborationServices): Promise<void> {
-        // Load the snapshot and begin listening for messages
-        this.connection = await services.deltaNotificationService.connect(id, this.type);
-
-        // Load from the snapshot if it exists
-        const rawSnapshot = this.connection.existing && this.connection.versions.length > 0
-            ? await services.objectStorageService.read(id, this.connection.versions[0].sha, snapshotFileName)
-            : null;
-        const snapshot: IInkSnapshot = rawSnapshot
-            ? JSON.parse(rawSnapshot)
-            : { sequenceNumber: 0, snapshot: {} };
-
-        this.inkSnapshot = Snapshot.Clone(snapshot.snapshot);
-        this.sequenceNumber = snapshot.sequenceNumber;
-
-        // Emit the load event so listeners can redraw the new information
-        this.events.emit("load");
-
-        this.listenForUpdates();
-    }
-
     private listenForUpdates() {
-        this.deltaManager = new api.DeltaManager(
-            this.sequenceNumber,
-            this.services.deltaStorageService,
-            this.connection,
-            {
-                getReferenceSequenceNumber: () => {
-                    return this.sequenceNumber;
-                },
-                op: (message) => {
-                    this.processRemoteMessage(message);
-                },
-            });
+        this.services.deltaConnection.on("op", (message) => {
+            this.processRemoteMessage(message);
+        });
     }
 
     /**
@@ -131,9 +115,15 @@ export class InkCollaborativeObject extends api.CollaborativeObject implements I
     private async processLocalOperation(op: IDelta): Promise<void> {
         // Prep the message
         const message: api.IMessage = {
-            clientSequenceNumber: this.clientSequenceNumber++,
+            document: {
+                clientSequenceNumber: null,
+                referenceSequenceNumber: null,
+            },
+            object: {
+                clientSequenceNumber: this.clientSequenceNumber++,
+                referenceSequenceNumber: this.sequenceNumber,
+            },
             op,
-            referenceSequenceNumber: this.sequenceNumber,
         };
 
         // Store the message for when it is ACKed and then submit to the server if connected
@@ -150,8 +140,8 @@ export class InkCollaborativeObject extends api.CollaborativeObject implements I
      */
     private processRemoteMessage(message: api.IBase) {
         // server messages should only be delivered to this method in sequence number order
-        assert.equal(this.sequenceNumber + 1, message.sequenceNumber);
-        this.sequenceNumber = message.sequenceNumber;
+        assert.equal(this.sequenceNumber + 1, message.object.sequenceNumber);
+        this.sequenceNumber = message.object.sequenceNumber;
 
         if (message.type === api.OperationType) {
             this.processRemoteOperation(message as api.ISequencedMessage);
@@ -162,14 +152,14 @@ export class InkCollaborativeObject extends api.CollaborativeObject implements I
      * Processed a remote operation
      */
     private processRemoteOperation(message: api.ISequencedMessage) {
-        if (message.clientId === this.connection.clientId) {
+        if (message.clientId === this.document.clientId) {
             // One of our messages was sequenced. We can remove it from the local message list. Given these arrive
             // in order we only need to check the beginning of the local list.
             if (this.localOps.length > 0 &&
-                this.localOps[0].clientSequenceNumber === message.clientSequenceNumber) {
+                this.localOps[0].object.clientSequenceNumber === message.object.clientSequenceNumber) {
                 this.localOps.shift();
             } else {
-                debug(`Duplicate ack received ${message.clientSequenceNumber}`);
+                debug(`Duplicate ack received ${message.object.clientSequenceNumber}`);
             }
         } else {
             // Message has come from someone else - let's go and update now
