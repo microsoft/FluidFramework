@@ -1,4 +1,5 @@
-import { IDocumentStorageService, IObjectStorageService } from "./storage";
+import { IObjectStorageService } from "./document";
+import { IDocumentStorageService } from "./storage";
 
 export class ObjectStorageService implements IObjectStorageService {
     constructor(private storage: IDocumentStorageService) {

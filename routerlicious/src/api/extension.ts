@@ -1,5 +1,4 @@
-import { Document } from "./document";
-import * as storage from "./storage";
+import { Document, IDistributedObjectServices } from "./document";
 import * as types from "./types";
 
 /**
@@ -27,7 +26,7 @@ export interface IExtension {
     load(
         document: Document,
         id: string,
-        services: storage.IDistributedObjectServices,
+        services: IDistributedObjectServices,
         version: string,
         header: string): types.ICollaborativeObject;
 

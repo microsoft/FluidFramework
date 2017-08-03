@@ -1,6 +1,7 @@
 import { EventEmitter } from "events";
+import { IDeltaConnection } from "./document";
 import { IBase, IMessage, OperationType } from "./protocol";
-import { IDeltaConnection, IDocumentDeltaConnection } from "./storage";
+import { IDocumentDeltaConnection } from "./storage";
 
 export class DeltaConnection implements IDeltaConnection {
     protected events = new EventEmitter();

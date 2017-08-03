@@ -1,3 +1,9 @@
+// Delta operation application type
+export const OperationType = "op";
+
+// Type representing a minimum sequence number update
+export const MinimumSequenceNumberUpdateType = "msn";
+
 export interface ISendPosition {
     clientSequenceNumber: number;
 
@@ -42,12 +48,6 @@ export interface IBase {
 
     op: any;
 }
-
-// Delta operation application type
-export const OperationType = "op";
-
-// Type representing a minimum sequence number update
-export const MinimumSequenceNumberUpdateType = "msn";
 
 /**
  * Message sent to clients when an operation has been assigned a sequence number and is being routed to clients

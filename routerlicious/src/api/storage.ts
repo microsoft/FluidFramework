@@ -21,12 +21,6 @@ export interface IObject {
     data: any;
 }
 
-export interface IDistributedObjectServices {
-    deltaConnection: IDeltaConnection;
-
-    objectStorage: IObjectStorageService;
-}
-
 /**
  * Interface to provide access to snapshots saved for a collaborative object
  */
@@ -51,28 +45,6 @@ export interface IDeltaStorageService {
      * Retrieves all the delta operations within the inclusive sequence number range
      */
     get(from?: number, to?: number): Promise<ISequencedMessage[]>;
-}
-
-export interface IObjectStorageService {
-    /**
-     * Reads the object contained at the given path. Returns a base64 string representation for the object.
-     */
-    read(path: string): Promise<string>;
-}
-
-/**
- * Interface to represent a connection to a delta notification stream
- */
-export interface IDeltaConnection {
-    /**
-     * Subscribe to events emitted by the object
-     */
-    on(event: string, listener: Function): this;
-
-    /**
-     * Send new messages to the server
-     */
-    submitOp(message: IMessage): Promise<void>;
 }
 
 /**

@@ -8,10 +8,9 @@ import { DeltaConnection } from "./deltaConnection";
 import { DeltaManager } from "./deltaManager";
 import * as extensions from "./extension";
 import { ObjectStorageService } from "./objectStorageService";
-import { IBase } from "./protocol";
+import { IBase, IMessage } from "./protocol";
 import {
     IDistributedObject,
-    IDistributedObjectServices,
     IDocument,
     IDocumentService } from "./storage";
 import * as types from "./types";
@@ -51,6 +50,34 @@ interface IDistributedObjectState {
     storage: ObjectStorageService;
 
     connection: DeltaConnection;
+}
+
+export interface IDistributedObjectServices {
+    deltaConnection: IDeltaConnection;
+
+    objectStorage: IObjectStorageService;
+}
+
+/**
+ * Interface to represent a connection to a delta notification stream
+ */
+export interface IDeltaConnection {
+    /**
+     * Subscribe to events emitted by the object
+     */
+    on(event: string, listener: Function): this;
+
+    /**
+     * Send new messages to the server
+     */
+    submitOp(message: IMessage): Promise<void>;
+}
+
+export interface IObjectStorageService {
+    /**
+     * Reads the object contained at the given path. Returns a base64 string representation for the object.
+     */
+    read(path: string): Promise<string>;
 }
 
 /**
