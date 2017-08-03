@@ -52,14 +52,8 @@ const snapshotFileName = "value";
 class Cell extends api.CollaborativeObject implements api.ICell {
     public type = CellExtension.Type;
 
-    private loadingP: Promise<void>;
-
     // Cell data
     private data: ICellValue;
-
-    // The last sequence number processed
-    private connection: api.IDeltaConnection;
-    private deltaManager: api.DeltaManager = null;
 
     // Locally applied operations not yet sent to the server
     private localOps: api.IMessage[] = [];
@@ -81,29 +75,31 @@ class Cell extends api.CollaborativeObject implements api.ICell {
     constructor(
         private document: api.Document,
         public id: string,
-        private services?: api.ICollaborationServices,
-        private registry?: api.Registry) {
-
+        private services?: api.IDistributedObjectServices,
+        version?: string,
+        header?: string) {
         super();
-        this.loadingP = services ? this.load(document, id, services) : Promise.resolve();
+
+        if (services) {
+            // Load from the snapshot if it exists
+            const snapshot: ICellSnapshot = header
+                ? JSON.parse(header)
+                : { sequenceNumber: 0, snapshot: {} };
+            this.data = snapshot.snapshot;
+            this.sequenceNumber = snapshot.sequenceNumber;
+
+            this.listenForUpdates();
+        }
     }
 
     /**
      * Retrieves the value of the cell.
      */
     public async get() {
-        await this.loadingP;
-
         const value = this.data;
         if (value.type === CellValueType[CellValueType.Collaborative]) {
             const collabCellValue = value.value as ICollaborativeCellValue;
-            if (!(collabCellValue.id in this.collaborativeObjects)) {
-                const extension = this.registry.getExtension(collabCellValue.type);
-                this.collaborativeObjects[collabCellValue.id] =
-                    extension.load(this.document, collabCellValue.id, this.services, this.registry);
-            }
-
-            return this.collaborativeObjects[collabCellValue.id];
+            this.document.get(collabCellValue.id);
         } else {
             return value.value;
         }
@@ -113,8 +109,6 @@ class Cell extends api.CollaborativeObject implements api.ICell {
      * Sets the value of the cell.
      */
     public async set(value: any): Promise<void> {
-        await this.loadingP;
-
         let operationValue: ICellValue;
         if (_.hasIn(value, "__collaborativeObject__")) {
             // Convert any local collaborative objects to our internal storage format
@@ -147,7 +141,6 @@ class Cell extends api.CollaborativeObject implements api.ICell {
 
     // Deletes the value from the cell.
     public async delete(): Promise<void> {
-        await this.loadingP;
         const op: ICellOperation = {
             type: "delete",
         };
@@ -158,30 +151,27 @@ class Cell extends api.CollaborativeObject implements api.ICell {
      * Returns whether cell is empty or not.
      */
      public async empty() {
-         await this.loadingP;
          return this.data === undefined ? true : false;
      }
 
-    public snapshot(): Promise<void> {
+    public snapshot(): Promise<api.IObject[]> {
         const snapshot = {
             sequenceNumber: this.sequenceNumber,
             snapshot: _.clone(this.data),
         };
 
-        return this.services.objectStorageService.write(this.id, [{ path: snapshotFileName, data: snapshot}]);
+        return Promise.resolve([{ path: snapshotFileName, data: snapshot}]);
     }
 
     /**
      * Attaches the document to the given backend service.
      */
-    public async attach(services: api.ICollaborationServices, registry: api.Registry): Promise<void> {
-        this.services = services;
-        this.registry = registry;
+    public attach(): this {
+        if (!this.isLocal()) {
+            return this;
+        }
 
-        // Attaching makes a local document available for collaboration. The connect call should create the object.
-        // We assert the return type to validate this is the case.
-        this.connection = await services.deltaNotificationService.connect(this.id, this.type);
-        assert.ok(!this.connection.existing);
+        this.services = this.document.attach(this);
 
         // Listen for updates to create the delta manager
         this.listenForUpdates();
@@ -196,43 +186,13 @@ class Cell extends api.CollaborativeObject implements api.ICell {
      * Returns true if the object is local only
      */
     public isLocal(): boolean {
-        return !this.connection;
-    }
-
-    /**
-     * Loads the cell from an existing storage service
-     */
-    private async load(document: api.Document, id: string, services: api.ICollaborationServices): Promise<void> {
-        // Load the snapshot and begin listening for messages
-        this.connection = await services.deltaNotificationService.connect(id, this.type);
-
-        // Load from the snapshot if it exists
-        const rawSnapshot = this.connection.existing && this.connection.versions.length > 0
-            ? await services.objectStorageService.read(id, this.connection.versions[0].sha, snapshotFileName)
-            : null;
-        const snapshot: ICellSnapshot = rawSnapshot
-            ? JSON.parse(rawSnapshot)
-            : { sequenceNumber: 0, snapshot: {} };
-
-        this.data = snapshot.snapshot;
-        this.sequenceNumber = snapshot.sequenceNumber;
-
-        this.listenForUpdates();
+        return !this.services;
     }
 
     private listenForUpdates() {
-        this.deltaManager = new api.DeltaManager(
-            this.sequenceNumber,
-            this.services.deltaStorageService,
-            this.connection,
-            {
-                getReferenceSequenceNumber: () => {
-                    return this.sequenceNumber;
-                },
-                op: (message) => {
-                    this.processRemoteMessage(message);
-                },
-            });
+        this.services.deltaConnection.on("op", (message) => {
+            this.processRemoteMessage(message);
+        });
     }
 
     private async submit(message: api.IMessage): Promise<void> {
@@ -246,11 +206,11 @@ class Cell extends api.CollaborativeObject implements api.ICell {
             const collabObject = this.collaborativeObjects[collabMapValue.id];
 
             if (collabObject.isLocal()) {
-                await collabObject.attach(this.services, this.registry);
+                collabObject.attach();
             }
         }
 
-        this.deltaManager.submitOp(message);
+        this.services.deltaConnection.submitOp(message);
     }
 
     /**
@@ -259,14 +219,20 @@ class Cell extends api.CollaborativeObject implements api.ICell {
     private async processLocalOperation(op: ICellOperation): Promise<void> {
         // Prep the message
         const message: api.IMessage = {
-            clientSequenceNumber: this.clientSequenceNumber++,
+            document: {
+                clientSequenceNumber: null,
+                referenceSequenceNumber: null,
+            },
+            object: {
+                clientSequenceNumber: this.clientSequenceNumber++,
+                referenceSequenceNumber: this.sequenceNumber,
+            },
             op,
-            referenceSequenceNumber: this.sequenceNumber,
         };
 
         // Store the message for when it is ACKed and then submit to the server if connected
         this.localOps.push(message);
-        if (this.connection) {
+        if (this.services) {
             this.submit(message);
         }
 
@@ -278,9 +244,9 @@ class Cell extends api.CollaborativeObject implements api.ICell {
      */
     private processRemoteMessage(message: api.IBase) {
         // server messages should only be delivered to this method in sequence number order
-        assert.equal(this.sequenceNumber + 1, message.sequenceNumber);
-        this.sequenceNumber = message.sequenceNumber;
-        this.minimumSequenceNumber = message.minimumSequenceNumber;
+        assert.equal(this.sequenceNumber + 1, message.object.sequenceNumber);
+        this.sequenceNumber = message.object.sequenceNumber;
+        this.minimumSequenceNumber = message.object.minimumSequenceNumber;
 
         if (message.type === api.OperationType) {
             this.processRemoteOperation(message as api.ISequencedMessage);
@@ -291,14 +257,14 @@ class Cell extends api.CollaborativeObject implements api.ICell {
 
     private processRemoteOperation(message: api.ISequencedMessage) {
         // server messages should only be delivered to this method in sequence number order
-        if (message.clientId === this.connection.clientId) {
+        if (message.clientId === this.document.clientId) {
             // One of our messages was sequenced. We can remove it from the local message list. Given these arrive
             // in order we only need to check the beginning of the local list.
             if (this.localOps.length > 0 &&
-                this.localOps[0].clientSequenceNumber === message.clientSequenceNumber) {
+                this.localOps[0].object.clientSequenceNumber === message.object.clientSequenceNumber) {
                 this.localOps.shift();
             } else {
-                debug(`Duplicate ack received ${message.clientSequenceNumber}`);
+                debug(`Duplicate ack received ${message.object.clientSequenceNumber}`);
             }
         } else {
             // Message has come from someone else - let's go and update now
@@ -341,10 +307,11 @@ export class CellExtension implements api.IExtension {
     public load(
         document: api.Document,
         id: string,
-        services: api.ICollaborationServices,
-        registry: api.Registry): api.ICell {
+        services: api.IDistributedObjectServices,
+        version: string,
+        header: string): api.ICell {
 
-        return new Cell(document, id, services, registry);
+        return new Cell(document, id, services, version, header);
     }
 
     public create(document: api.Document, id: string): api.ICell {

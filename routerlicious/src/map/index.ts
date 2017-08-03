@@ -57,8 +57,6 @@ class MapView implements api.IMapView {
     // Sequence number for operations local to this client
     private clientSequenceNumber = 0;
 
-    private deltaManager: api.DeltaManager = null;
-
     // Locally applied operations not yet sent to the server
     private localOps: api.IMessage[] = [];
 
@@ -177,9 +175,15 @@ class MapView implements api.IMapView {
     private async processLocalOperation(op: IMapOperation): Promise<void> {
         // Prep the message
         const message: api.IMessage = {
-            clientSequenceNumber: this.clientSequenceNumber++,
+            document: {
+                clientSequenceNumber: null,
+                referenceSequenceNumber: null,
+            },
+            object: {
+                clientSequenceNumber: this.clientSequenceNumber++,
+                referenceSequenceNumber: this.sequenceNumber,
+            },
             op,
-            referenceSequenceNumber: this.sequenceNumber,
         };
 
         // Store the message for when it is ACKed and then submit to the server if connected
@@ -196,9 +200,9 @@ class MapView implements api.IMapView {
      */
     private processRemoteMessage(message: api.IBase) {
         // server messages should only be delivered to this method in sequence number order
-        assert.equal(this.sequenceNumber + 1, message.sequenceNumber);
-        this.sequenceNumber = message.sequenceNumber;
-        this.minimumSequenceNumber = message.minimumSequenceNumber;
+        assert.equal(this.sequenceNumber + 1, message.object.sequenceNumber);
+        this.sequenceNumber = message.object.sequenceNumber;
+        this.minimumSequenceNumber = message.object.minimumSequenceNumber;
 
         if (message.type === api.OperationType) {
             this.processRemoteOperation(message as api.ISequencedMessage);
@@ -212,10 +216,10 @@ class MapView implements api.IMapView {
             // One of our messages was sequenced. We can remove it from the local message list. Given these arrive
             // in order we only need to check the beginning of the local list.
             if (this.localOps.length > 0 &&
-                this.localOps[0].clientSequenceNumber === message.clientSequenceNumber) {
+                this.localOps[0].object.clientSequenceNumber === message.object.clientSequenceNumber) {
                 this.localOps.shift();
             } else {
-                debug(`Duplicate ack received ${message.clientSequenceNumber}`);
+                debug(`Duplicate ack received ${message.object.clientSequenceNumber}`);
             }
         } else {
             // Message has come from someone else - let's go and update now
@@ -255,17 +259,9 @@ class MapView implements api.IMapView {
     }
 
     private listenForUpdates() {
-        this.deltaManager = new api.DeltaManager(
-            this.sequenceNumber,
-            this.connection,
-            {
-                getReferenceSequenceNumber: () => {
-                    return this.sequenceNumber;
-                },
-                op: (message) => {
-                    this.processRemoteMessage(message);
-                },
-            });
+        this.services.deltaConnection.on("op", (message) => {
+            this.processRemoteMessage(message);
+        });
     }
 
     private async submit(message: api.IMessage): Promise<void> {
@@ -281,7 +277,7 @@ class MapView implements api.IMapView {
             collabObject.attach();
         }
 
-        this.deltaManager.submitOp(message);
+        this.services.deltaConnection.submitOp(message);
     }
 }
 
