@@ -1,10 +1,25 @@
+// tslint:disable
+
+import * as fs from "fs";
+import * as path from "path";
 import * as io from "socket.io-client";
 import * as api from "../api";
 import { nativeTextAnalytics, resumeAnalytics, spellcheckerService, textAnalytics } from "../intelligence";
 import * as mergeTree from "../merge-tree";
+import * as Collections from "../merge-tree/collections";
 import * as socketStorage from "../socket-storage";
 import * as messages from "../socket-storage/messages";
 import * as shared from "./";
+
+function clock() {
+    return process.hrtime();
+}
+
+function elapsedMilliseconds(start: [number, number]) {
+    let end: number[] = process.hrtime(start);
+    let duration = Math.round((end[0] * 1000) + (end[1] / 1000000));
+    return duration;
+}
 
 /**
  * The WorkerService manages the Socket.IO connection and work sent to it.
@@ -14,9 +29,11 @@ export class WorkerService implements api.IWorkerService {
     private socket;
     private documentMap: { [docId: string]: api.ICollaborativeObject} = {};
     private services: api.ICollaborationServices;
+    private dict = new Collections.TST<number>();
 
     constructor(private serverUrl: string, private workerUrl: string, private config: any) {
         this.socket = io(this.workerUrl, { transports: ["websocket"] });
+        this.loadDict();
         this.initializeServices();
     }
 
@@ -76,6 +93,18 @@ export class WorkerService implements api.IWorkerService {
         return deferred.promise;
     }
 
+    loadDict() {
+        let clockStart = clock();
+        let dictFilename = path.join(__dirname, "../../public/literature/dictfreq.txt");
+        let dictContent = fs.readFileSync(dictFilename, "utf8");
+        let splitContent = dictContent.split("\n");
+        for (let entry of splitContent) {
+            let splitEntry = entry.split(";");
+            this.dict.put(splitEntry[0], parseInt(splitEntry[1]));
+        }
+        console.log(`size: ${this.dict.size()}; load time ${elapsedMilliseconds(clockStart)}ms`);
+    }
+
     private initializeServices() {
         const objectStorageService = new shared.ObjectStorageService(this.serverUrl);
         this.services = {
@@ -113,9 +142,10 @@ export class WorkerService implements api.IWorkerService {
 
         if (doc.type === mergeTree.CollaboritiveStringExtension.Type) {
             const spellcheckerClient = spellcheckerService.factory.create(this.config.intelligence.spellchecker);
-            const spellchecker = new shared.Spellcheker(doc as mergeTree.SharedString, spellcheckerClient);
+            const spellchecker = new shared.Spellcheker(doc as mergeTree.SharedString, this.dict, spellcheckerClient);
             spellchecker.run();
         }
+
         doc.on("op", (op) => {
             serializer.run(op);
             intelligenceManager.process(doc);
