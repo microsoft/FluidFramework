@@ -1,12 +1,13 @@
 import * as _ from "lodash";
 import * as moniker from "moniker";
 import * as nconf from "nconf";
+import * as path from "path";
 import * as redis from "redis";
-import * as request from "request";
 import * as socketIo from "socket.io";
 import * as socketIoRedis from "socket.io-redis";
 import * as api from "../api";
 import * as core from "../core";
+import * as git from "../git-storage";
 import * as socketStorage from "../socket-storage";
 import * as utils from "../utils";
 import { logger } from "../utils";
@@ -63,26 +64,6 @@ async function getOrCreateObject(id: string): Promise<boolean> {
         });
 }
 
-/**
- * Retrieves revisions for the given document
- */
-async function getRevisions(id: string): Promise<any[]> {
-    return new Promise<any[]>((resolve, reject) => {
-        request.get(
-            { url: `${historian}/repos/${historianBranch}/commits?sha=${id}`, json: true },
-            (error, response, body) => {
-                if (error) {
-                    reject(error);
-                }
-                if (response.statusCode !== 200) {
-                    resolve([]);
-                } else {
-                    resolve(body);
-                }
-            });
-    });
-}
-
 export interface IDocumentDetails {
     existing: boolean;
 
@@ -93,11 +74,59 @@ export interface IDocumentDetails {
     distributedObjects: api.IDistributedObject[];
 
     pendingDeltas: api.ISequencedDocumentMessage[];
-
 }
 
-async function getDistributedObjects(id: string, version: string): Promise<api.IDistributedObject[]> {
-    return Promise.reject("Not implemented");
+/**
+ * Retrieves revisions for the given document
+ */
+async function getRevisions(gitManager: git.GitManager, id: string): Promise<any[]> {
+    const commits = await gitManager.getCommits(id, 1);
+
+    return commits;
+}
+
+async function getDistributedObjects(
+    gitManager: git.GitManager,
+    id: string,
+    version: any): Promise<api.IDistributedObject[]> {
+
+    if (!version) {
+        return [];
+    }
+
+    // NOTE we currently grab the entire repository. Should this ever become a bottleneck we can move to manually
+    // walking and looking for entries. But this will requre more round trips.
+    const tree = await gitManager.getTree(version.tree.sha);
+    const objectBlobs: Array<{ sha: string, objectId: string }> = [];
+    for (const entry of tree.tree) {
+        // Walk the tree looking for objects with a path of 1 and a value of header
+        // As well as the root object which will con
+        // Use that commit to do a recursive tree query
+        if (entry.type === "blob") {
+            // Check if it passes our tests
+            const entryPath = path.parse(entry.path);
+            const pathEntries = entryPath.dir.split("/");
+            if (entryPath.base === "header" && pathEntries.length === 1) {
+                objectBlobs.push({ sha: entry.sha, objectId: pathEntries[0] });
+            }
+        }
+    }
+
+    // Go and fetch each blob specified above
+    const fetchedBlobsP: Array<Promise<any>> = [];
+    for (const blob of objectBlobs) {
+        fetchedBlobsP.push(gitManager.getBlob(blob.sha));
+    }
+    const fetchedBlobs = await Promise.all(fetchedBlobsP);
+
+    const distributedObjects: api.IDistributedObject[] = [];
+    // tslint:disable-next-line:prefer-for-of
+    for (let i = 0; i < fetchedBlobs.length; i++) {
+        // TODO I need to fill in the type below
+        distributedObjects.push({ header: fetchedBlobs[i].content, id: objectBlobs[i].objectId, type: "" });
+    }
+
+    return distributedObjects;
 }
 
 async function getPendingDeltas(id: string, from: number): Promise<api.ISequencedDocumentMessage[]> {
@@ -107,7 +136,8 @@ async function getPendingDeltas(id: string, from: number): Promise<api.ISequence
 async function getOrCreateDocument(id: string): Promise<IDocumentDetails> {
     const existingP = getOrCreateObject(id);
 
-    const revisions = await getRevisions(id);
+    const gitManager = new git.GitManager(historian, historianBranch);
+    const revisions = await getRevisions(gitManager, id);
     const version = revisions.length > 0 ? revisions[0] : null;
 
     // If there has been a snapshot made use it to retrieve object state as well as any pending deltas. Otherwise
@@ -116,7 +146,7 @@ async function getOrCreateDocument(id: string): Promise<IDocumentDetails> {
     let distributedObjects: api.IDistributedObject[];
 
     if (version) {
-        distributedObjects = await getDistributedObjects(id, version);
+        distributedObjects = await getDistributedObjects(gitManager, id, version);
         return Promise.reject("Need to obtain sequence number from snapshot");
     } else {
         sequenceNumber = 0;

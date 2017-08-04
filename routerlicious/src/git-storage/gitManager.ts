@@ -43,6 +43,48 @@ export class GitManager {
     }
 
     /**
+     * Reads the object with the given ID. We defer to the client implementation to do the actual read.
+     */
+    public async getTree(root: string, recursive = true): Promise<any> {
+        return new Promise<any>((resolve, reject) => {
+            const recursiveParam = recursive ? "1" : "0";
+            request.get(
+                {
+                    json: true,
+                    url: `${this.apiBaseUrl}/repos/${this.repository}/git/trees/${root}?recursive=${recursiveParam}`,
+                },
+                (error, response, body) => {
+                    if (error) {
+                        return reject(error);
+                    } else if (response.statusCode !== 200) {
+                        return reject(response.statusCode);
+                    } else {
+                        return resolve(response.body);
+                    }
+                });
+        });
+    }
+
+    public async getBlob(sha: string): Promise<any> {
+        return new Promise<any>((resolve, reject) => {
+            request.get(
+                {
+                    json: true,
+                    url: `${this.apiBaseUrl}/repos/${this.repository}/git/blobs/${sha}`,
+                },
+                (error, response, body) => {
+                    if (error) {
+                        return reject(error);
+                    } else if (response.statusCode !== 200) {
+                        return reject(response.statusCode);
+                    } else {
+                        return resolve(response.body);
+                    }
+                });
+        });
+    }
+
+    /**
      * Retrieves the object at the given revision number
      */
     public getObject(commit: string, path: string): Promise<any> {
