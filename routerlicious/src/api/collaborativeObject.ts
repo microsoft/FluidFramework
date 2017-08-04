@@ -160,8 +160,8 @@ export abstract class CollaborativeObject implements api.ICollaborativeObject {
         }
     }
 
-    private async submit(message: api.IObjectMessage): Promise<void> {
+    private submit(message: api.IObjectMessage): void {
         this.submitCore(message);
-        return this.services.deltaConnection.submit(message);
+        this.services.deltaConnection.submit(message);
     }
 }

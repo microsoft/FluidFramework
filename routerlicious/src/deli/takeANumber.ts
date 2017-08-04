@@ -168,8 +168,8 @@ export class TakeANumber {
             // Update and retrieve the minimum sequence number
             this.upsertClient(
                 message.clientId,
-                message.operation.document.clientSequenceNumber,
-                message.operation.document.referenceSequenceNumber,
+                message.operation.clientSequenceNumber,
+                message.operation.referenceSequenceNumber,
                 message.timestamp);
         }
 
@@ -188,7 +188,7 @@ export class TakeANumber {
         const sequenceNumber = this.revSequenceNumber();
 
         // And now craft the output message
-        let outputMessage: api.IBase;
+        let outputMessage: api.ISequencedDocumentMessage;
         if (objectMessage.type === core.UpdateReferenceSequenceNumberType) {
             // const minimumSequenceNumberMessage: api.IBase = {
             //     document: {

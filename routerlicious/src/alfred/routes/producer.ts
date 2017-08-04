@@ -54,19 +54,14 @@ async function startProducer(batchSize: number) {
             clientId: "producer",
             documentId: "producer",
             operation: {
-                document: {
-                    clientSequenceNumber,
-                    referenceSequenceNumber: 0,
-                },
-                object: {
-                    clientSequenceNumber,
-                    referenceSequenceNumber: 0,
-                },
-                op: {
+                clientSequenceNumber,
+                contents: {
                     key: "binky",
                     type: "set",
                     value: "winky",
                 },
+                referenceSequenceNumber: 0,
+                type: "test",
             },
             timestamp: Date.now(),
             type: core.RawOperationType,

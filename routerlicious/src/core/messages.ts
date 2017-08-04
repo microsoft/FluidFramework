@@ -45,7 +45,7 @@ export interface IUpdateReferenceSequenceNumberMessage extends IObjectMessage {
  */
 export interface IRawOperationMessage extends IObjectMessage {
     // The message that was submitted
-    operation: api.IMessage;
+    operation: api.IDocumentMessage;
 }
 
 export interface ITicketedMessage extends IMessage {
@@ -61,5 +61,5 @@ export const SequencedOperationType = "SequencedOperation";
  */
 export interface ISequencedOperationMessage extends ITicketedMessage {
     // The sequenced operation
-    operation: api.IBase;
+    operation: api.ISequencedDocumentMessage;
 }

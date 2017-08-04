@@ -84,7 +84,7 @@ async function run() {
             lastMongoInsertP[objectId] = Promise.resolve();
         }
 
-        logger.verbose(`Inserting to mongodb ${objectId}@${work[0].operation.document.sequenceNumber}:${work.length}`);
+        logger.verbose(`Inserting to mongodb ${objectId}@${work[0].operation.sequenceNumber}:${work.length}`);
         const insertP = collection.insertMany(work, <CollectionInsertManyOptions> (<any> { ordered: false }))
             .catch((error) => {
                 // Ignore duplicate key errors since a replay may cause us to attempt to insert a second time
@@ -98,7 +98,7 @@ async function run() {
             () => {
                 // Route the message to clients
                 // tslint:disable-next-line:max-line-length
-                logger.verbose(`Routing message to clients ${objectId}@${work[0].operation.document.sequenceNumber}:${work.length}`);
+                logger.verbose(`Routing message to clients ${objectId}@${work[0].operation.sequenceNumber}:${work.length}`);
                 io.to(objectId).emit("op", objectId, work.map((value) => value.operation));
                 throughput.acknolwedge(work.length);
             },

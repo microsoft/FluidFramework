@@ -1,9 +1,3 @@
-import * as api from "../api";
-
-export interface IMergeTreeMsg extends api.IMessage {
-    op: IMergeTreeDelta;
-}
-
 export enum MarkerBehaviors {
     None =              0x0,
     PropagatesForward = 0x1,

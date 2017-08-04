@@ -114,53 +114,38 @@ export class SharedString implements api.ICollaborativeObject {
     }
 
     private makeInsertMarkerMsg(pos: number, markerType: string, behaviors: MarkerBehaviors, props?: Object, end?: number) {
-        return <api.IMessage>{
-            document: {
-                clientSequenceNumber: 0,
-                referenceSequenceNumber: 0,
-            },
-            object: {
-                clientSequenceNumber: this.clientSequenceNumber++,
-                referenceSequenceNumber: this.client.getCurrentSeq(),
+        return <api.IObjectMessage>{
+            clientSequenceNumber: this.clientSequenceNumber++,
+            contents: <IMergeTreeInsertMsg>{
+                type: MergeTreeDeltaType.INSERT, pos1: pos, props, marker: { type: markerType, behaviors, end },
             },
             objectId: this.id,
-            op: <IMergeTreeInsertMsg>{
-                type: MergeTreeDeltaType.INSERT, pos1: pos, props, marker: { type: markerType, behaviors, end },
-            }
+            referenceSequenceNumber: this.client.getCurrentSeq(),
+            type: api.ObjectOperation,
         };
 
     }
     private makeInsertMsg(text: string, pos: number, props?: Object) {
-        return <api.IMessage>{
-            document: {
-                clientSequenceNumber: 0,
-                referenceSequenceNumber: 0,
-            },
-            object: {
-                clientSequenceNumber: this.clientSequenceNumber++,
-                referenceSequenceNumber: this.client.getCurrentSeq(),
-            },
+        return <api.IObjectMessage>{
+            clientSequenceNumber: this.clientSequenceNumber++,
+            referenceSequenceNumber: this.client.getCurrentSeq(),
             objectId: this.id,
-            op: {
+            contents: {
                 type: MergeTreeDeltaType.INSERT, text, pos1: pos, props,
-            }
+            },
+            type: api.ObjectOperation,
         };
     }
 
     private makeRemoveMsg(start: number, end: number) {
-        return <api.IMessage>{
-            document: {
-                clientSequenceNumber: 0,
-                referenceSequenceNumber: 0,
-            },
-            object: {
-                clientSequenceNumber: this.clientSequenceNumber++,
-                referenceSequenceNumber: this.client.getCurrentSeq(),
-            },
+        return <api.IObjectMessage>{
+            clientSequenceNumber: this.clientSequenceNumber++,
+            referenceSequenceNumber: this.client.getCurrentSeq(),
             objectId: this.id,
-            op: {
+            contents: {
                 type: MergeTreeDeltaType.REMOVE, pos1: start, pos2: end
-            }
+            },
+            type: api.ObjectOperation,
         };
     }
 
@@ -182,21 +167,21 @@ export class SharedString implements api.ICollaborativeObject {
         this.deltaManager.submitOp(removeMessage);
     }
 
-    private processRemoteOperation(message: api.IBase) {
+    private processRemoteOperation(message: api.ISequencedDocumentMessage, clientId: string) {
         this.events.emit("pre-op", message);
         
         if (this.isLoaded) {
-            this.client.applyMsg(message);
+            this.client.applyMsg(message, clientId);
         } else {
-            this.client.enqueueMsg(message);
+            this.client.enqueueMsg(message, clientId);
         }
 
         this.events.emit("op", message);
     }
 
     private listenForUpdates() {
-        this.services.deltaConnection.on("op", (message) => {
-            this.processRemoteOperation(message);
+        this.services.deltaConnection.on("op", (message, clientId) => {
+            this.processRemoteOperation(message, clientId);
         });
     }
 

@@ -92,7 +92,7 @@ export interface IDocumentDetails {
 
     distributedObjects: api.IDistributedObject[];
 
-    pendingDeltas: api.ISequencedMessage[];
+    pendingDeltas: api.ISequencedDocumentMessage[];
 
 }
 
@@ -100,7 +100,7 @@ async function getDistributedObjects(id: string, version: string): Promise<api.I
     return Promise.reject("Not implemented");
 }
 
-async function getPendingDeltas(id: string, from: number): Promise<api.ISequencedMessage[]> {
+async function getPendingDeltas(id: string, from: number): Promise<api.ISequencedDocumentMessage[]> {
     return Promise.reject("Not implemented");
 }
 
@@ -176,7 +176,7 @@ io.on("connection", (socket) => {
     });
 
     // Message sent when a new operation is submitted to the router
-    socket.on("submitOp", (clientId: string, message: api.IMessage, response) => {
+    socket.on("submitOp", (clientId: string, message: api.IDocumentMessage, response) => {
         // Verify the user has connected on this object id
         if (!connectionsMap[clientId]) {
             return response("Invalid client ID", null);

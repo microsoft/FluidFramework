@@ -213,9 +213,9 @@ class Map extends api.CollaborativeObject implements api.IMap {
         return Promise.resolve(this.view);
     }
 
-    protected submitCore(message: api.IMessage) {
+    protected submitCore(message: api.IObjectMessage) {
         // TODO chain these requests given the attach is async
-        const op = message.op as IMapOperation;
+        const op = message.contents as IMapOperation;
 
         // We need to translate any local collaborative object sets to the serialized form
         if (op.type === "set" && op.value.type === ValueType[ValueType.Collaborative]) {

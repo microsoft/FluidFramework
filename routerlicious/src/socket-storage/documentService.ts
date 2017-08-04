@@ -21,7 +21,7 @@ class Document implements api.IDocument {
         public documentStorageService: api.IDocumentStorageService,
         public deltaStorageService: api.IDeltaStorageService,
         public distributedObjects: api.IDistributedObject[],
-        public pendingDeltas: api.ISequencedMessage[],
+        public pendingDeltas: api.ISequencedDocumentMessage[],
         public sequenceNumber: number) {
     }
 }

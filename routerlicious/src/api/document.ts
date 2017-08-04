@@ -105,8 +105,10 @@ export class Document {
 
         assert(returnValue.getRoot(), "Root map must always exist");
 
-        // TODO TODO TODO
-        // TODO patch into delta manager to do operations
+        // Apply pending deltas
+        for (const delta of document.pendingDeltas) {
+            returnValue.processRemoteMessage(delta);
+        }
 
         // And return the new object
         return returnValue;

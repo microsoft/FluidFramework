@@ -679,8 +679,8 @@ export class FlowView {
         this.updateGeometry();
         this.statusMessage("li", " ");
         this.statusMessage("si", " ");
-        sharedString.on("op", (msg: API.IMessageBase) => {
-            this.queueRender(<API.ISequencedMessage>msg);
+        sharedString.on("op", (msg: API.ISequencedObjectMessage, clientId: string) => {
+            this.queueRender(msg, clientId);
         });
 
         this.trackInsights(insights);
@@ -1008,13 +1008,13 @@ export class FlowView {
         });
     }
 
-    private queueRender(msg: API.ISequencedMessage) {
-        if ((!this.pendingRender) && msg && msg.op) {
+    private queueRender(msg: API.ISequencedObjectMessage, clientId: string) {
+        if ((!this.pendingRender) && msg && msg.contents) {
             this.pendingRender = true;
             window.requestAnimationFrame(() => {
                 this.pendingRender = false;
-                if (msg.clientId !== this.client.longClientId) {
-                    let delta = <SharedString.IMergeTreeOp>msg.op;
+                if (clientId !== this.client.longClientId) {
+                    let delta = <SharedString.IMergeTreeOp> msg.contents;
                     if (delta.type === SharedString.MergeTreeDeltaType.INSERT) {
                         if (delta.pos1 <= this.cursor.pos) {
                             this.cursor.pos += delta.text.length;

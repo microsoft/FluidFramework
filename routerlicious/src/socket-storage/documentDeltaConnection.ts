@@ -23,7 +23,7 @@ export class DocumentDeltaConnection implements api.IDocumentDeltaConnection {
     /**
      * Submits a new delta operation to the server
      */
-    public submitOp(message: api.IMessage): Promise<void> {
+    public submit(message: api.IDocumentMessage): Promise<void> {
         return new Promise<void>((resolve, reject) => {
             this.service.emit("submitOp", this.clientId, message, (error) => {
                 if (error) {

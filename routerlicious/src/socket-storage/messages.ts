@@ -28,7 +28,7 @@ export interface IConnected {
     distributedObjects: api.IDistributedObject[];
 
     // Pending deltas that have not yet been included in a snapshot
-    pendingDeltas: api.ISequencedMessage[];
+    pendingDeltas: api.ISequencedDocumentMessage[];
 }
 
 /**

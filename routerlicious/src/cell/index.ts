@@ -142,8 +142,8 @@ class Cell extends api.CollaborativeObject implements api.ICell {
         return Promise.resolve([{ path: snapshotFileName, data: snapshot}]);
     }
 
-    protected submitCore(message: api.IMessage) {
-        const op = message.op as ICellOperation;
+    protected submitCore(message: api.IObjectMessage) {
+        const op = message.contents as ICellOperation;
 
         // We need to translate any local collaborative object sets to the serialized form
         if (op.type === "set" && op.value.type === CellValueType[CellValueType.Collaborative]) {
