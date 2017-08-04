@@ -10,7 +10,7 @@ export abstract class CollaborativeObject implements api.ICollaborativeObject {
     protected events = new EventEmitter();
 
     // Locally applied operations not yet sent to the server
-    private localOps: api.IMessage[] = [];
+    private localOps: api.IObjectMessage[] = [];
 
     // Sequence number for operations local to this client
     private clientSequenceNumber = 0;
@@ -91,7 +91,7 @@ export abstract class CollaborativeObject implements api.ICollaborativeObject {
      * being submitted to the server
      */
     // tslint:disable-next-line:no-empty
-    protected submitCore(message: api.IMessage) {
+    protected submitCore(message: api.IObjectMessage) {
     }
 
     protected abstract processCore(operation: any);
@@ -99,18 +99,13 @@ export abstract class CollaborativeObject implements api.ICollaborativeObject {
     /**
      * Processes a message by the local client
      */
-    protected async processLocalOperation(op: any): Promise<void> {
+    protected async processLocalOperation(contents: any): Promise<void> {
         // Prep the message
-        const message: api.IMessage = {
-            document: {
-                clientSequenceNumber: null,
-                referenceSequenceNumber: null,
-            },
-            object: {
-                clientSequenceNumber: this.clientSequenceNumber++,
-                referenceSequenceNumber: this.sequenceNumber,
-            },
-            op,
+        const message: api.IObjectMessage = {
+            clientSequenceNumber: this.clientSequenceNumber++,
+            contents,
+            referenceSequenceNumber: this.sequenceNumber,
+            type: api.OperationType,
         };
 
         // Store the message for when it is ACKed and then submit to the server if connected
@@ -119,7 +114,7 @@ export abstract class CollaborativeObject implements api.ICollaborativeObject {
             this.submit(message);
         }
 
-        this.processCore(op);
+        this.processCore(contents);
 
         // TODO op will fire after any map events - which is possibly confusing ordering - to fix we will need
         // to somehow batch events to be fired after the operation completes
@@ -127,46 +122,46 @@ export abstract class CollaborativeObject implements api.ICollaborativeObject {
     }
 
     private listenForUpdates() {
-        this.services.deltaConnection.on("op", (message) => {
-            this.processRemoteMessage(message);
+        this.services.deltaConnection.on("op", (message, clientId) => {
+            this.processRemoteMessage(message, clientId);
         });
     }
 
     /**
      * Handles a message coming from the remote service
      */
-    private processRemoteMessage(message: api.IBase) {
+    private processRemoteMessage(message: api.ISequencedObjectMessage, clientId: string) {
         // server messages should only be delivered to this method in sequence number order
-        assert.equal(this.sequenceNumber + 1, message.object.sequenceNumber);
-        this.sequenceNum = message.object.sequenceNumber;
-        this.minSequenceNumber = message.object.minimumSequenceNumber;
+        assert.equal(this.sequenceNumber + 1, message.sequenceNumber);
+        this.sequenceNum = message.sequenceNumber;
+        this.minSequenceNumber = message.minimumSequenceNumber;
 
         if (message.type === api.OperationType) {
-            this.processRemoteOperation(message as api.ISequencedMessage);
+            this.processRemoteOperation(message as api.ISequencedObjectMessage, clientId);
         }
         // Brodcast the message to listeners.
         this.events.emit("op", message, false);
     }
 
-    private processRemoteOperation(message: api.ISequencedMessage) {
+    private processRemoteOperation(message: api.ISequencedObjectMessage, clientId: string) {
         // server messages should only be delivered to this method in sequence number order
-        if (message.clientId === this.document.clientId) {
+        if (clientId === this.document.clientId) {
             // One of our messages was sequenced. We can remove it from the local message list. Given these arrive
             // in order we only need to check the beginning of the local list.
             if (this.localOps.length > 0 &&
-                this.localOps[0].object.clientSequenceNumber === message.object.clientSequenceNumber) {
+                this.localOps[0].clientSequenceNumber === message.clientSequenceNumber) {
                 this.localOps.shift();
             } else {
-                debug(`Duplicate ack received ${message.object.clientSequenceNumber}`);
+                debug(`Duplicate ack received ${message.clientSequenceNumber}`);
             }
         } else {
             // Message has come from someone else - let's go and update now
-            this.processCore(message.op);
+            this.processCore(message.contents);
         }
     }
 
-    private async submit(message: api.IMessage): Promise<void> {
+    private async submit(message: api.IObjectMessage): Promise<void> {
         this.submitCore(message);
-        return this.services.deltaConnection.submitOp(message);
+        return this.services.deltaConnection.submit(message);
     }
 }

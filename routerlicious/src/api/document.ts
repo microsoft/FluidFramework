@@ -8,7 +8,12 @@ import { DeltaConnection } from "./deltaConnection";
 import { DeltaManager } from "./deltaManager";
 import * as extensions from "./extension";
 import { ObjectStorageService } from "./objectStorageService";
-import { IBase, IMessage } from "./protocol";
+import {
+    IDocumentMessage,
+    IEnvelope,
+    IObjectMessage,
+    ISequencedDocumentMessage,
+    ObjectOperation } from "./protocol";
 import {
     IDistributedObject,
     IDocument,
@@ -70,7 +75,7 @@ export interface IDeltaConnection {
     /**
      * Send new messages to the server
      */
-    submitOp(message: IMessage): Promise<void>;
+    submit(message: IObjectMessage): this;
 }
 
 export interface IObjectStorageService {
@@ -100,8 +105,8 @@ export class Document {
 
         assert(returnValue.getRoot(), "Root map must always exist");
 
-        // TODO process all pending delta operations on those objects
-        // This will need a delta map
+        // TODO TODO TODO
+        // TODO patch into delta manager to do operations
 
         // And return the new object
         return returnValue;
@@ -112,6 +117,10 @@ export class Document {
 
     private deltaManager: DeltaManager;
 
+    private clientSequenceNumber = 0;
+    private referenceSequenceNumber;
+    private minimumSequenceNumber = 0;
+
     public get clientId(): string {
         return this.document.clientId;
     }
@@ -120,6 +129,7 @@ export class Document {
      * Constructs a new document from the provided details
      */
     private constructor(private document: IDocument, private registry: extensions.Registry) {
+        this.minimumSequenceNumber = this.referenceSequenceNumber = document.sequenceNumber;
         this.deltaManager = new DeltaManager(
             this.document.documentId,
             this.document.sequenceNumber,
@@ -206,6 +216,20 @@ export class Document {
         throw new Error("Not yet implemented");
     }
 
+    public submitObjectMessage(envelope: IEnvelope): void {
+        const documentMessage: IDocumentMessage = {
+            clientSequenceNumber: this.clientSequenceNumber++,
+            contents: envelope,
+            referenceSequenceNumber: this.referenceSequenceNumber,
+            type: ObjectOperation,
+        };
+        this.deltaManager.submitOp(documentMessage);
+    }
+
+    public updateReferenceSequenceNumber(objectId: string, referenceSequenceNumber: number) {
+        throw new Error("Not Implemented");
+    }
+
     /**
      * Loads in a distributed object and stores it in the internal Document object map
      * @param distributedObject The distributed object to load
@@ -229,7 +253,7 @@ export class Document {
     }
 
     private getObjectServices(id: string): { deltaConnection: DeltaConnection, objectStorage: ObjectStorageService } {
-        const connection = new DeltaConnection(id, this.document.deltaConnection);
+        const connection = new DeltaConnection(id, this);
         const storage = new ObjectStorageService(this.document.documentStorageService);
 
         return {
@@ -238,9 +262,15 @@ export class Document {
         };
     }
 
-    private processRemoteMessage(message: IBase) {
-        const objectDetails = this.distributedObjects[message.objectId];
-        objectDetails.connection.emit(message);
+    private processRemoteMessage(message: ISequencedDocumentMessage) {
+        this.referenceSequenceNumber = message.referenceSequenceNumber;
+        this.minimumSequenceNumber = message.minimumSequenceNumber;
+
+        if (message.type === ObjectOperation) {
+            const envelope = message.contents as IEnvelope;
+            const objectDetails = this.distributedObjects[envelope.address];
+            objectDetails.connection.emit(envelope.contents, message.clientId);
+        }
     }
 }
 

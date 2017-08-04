@@ -4,6 +4,9 @@ export const OperationType = "op";
 // Type representing a minimum sequence number update
 export const MinimumSequenceNumberUpdateType = "msn";
 
+// Operation performed on a distributed data type
+export const ObjectOperation = "objOp";
+
 /**
  * An envelope wraps the contents with the intended target
  */

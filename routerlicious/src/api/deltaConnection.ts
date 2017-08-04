@@ -1,7 +1,6 @@
 import { EventEmitter } from "events";
-import { IDeltaConnection } from "./document";
-import { IBase, IMessage, OperationType } from "./protocol";
-import { IDocumentDeltaConnection } from "./storage";
+import { Document, IDeltaConnection } from "./document";
+import { IObjectMessage, ISequencedObjectMessage, OperationType } from "./protocol";
 
 export class DeltaConnection implements IDeltaConnection {
     protected events = new EventEmitter();
@@ -16,7 +15,7 @@ export class DeltaConnection implements IDeltaConnection {
     // The last sequence number we received from the server
     private referenceSequenceNumber;
 
-    constructor(public objectId: string, private connection: IDocumentDeltaConnection) {
+    constructor(public objectId: string, private document: Document) {
     }
 
     public on(event: string, listener: (...args: any[]) => void): this {
@@ -24,8 +23,8 @@ export class DeltaConnection implements IDeltaConnection {
         return this;
     }
 
-    public emit(message: IBase) {
-        this.referenceSequenceNumber = message.object.sequenceNumber;
+    public emit(message: ISequencedObjectMessage, clientId: string) {
+        this.referenceSequenceNumber = message.sequenceNumber;
         this.events.emit("op", message);
 
         // We will queue a message to update our reference sequence number upon receiving a server operation. This
@@ -40,13 +39,12 @@ export class DeltaConnection implements IDeltaConnection {
     /**
      * Send new messages to the server
      */
-    public submitOp(message: IMessage): Promise<void> {
+    public submit(message: IObjectMessage): this {
         this.readonly = false;
         this.stopSequenceNumberUpdate();
+        this.document.submitObjectMessage({ address: this.objectId, contents: message });
 
-        // TODO this probably needs to be appended with other stuff
-
-        return this.connection.submitOp(message);
+        return this;
     }
 
     /**
@@ -73,7 +71,7 @@ export class DeltaConnection implements IDeltaConnection {
             // stop processing new messages.
             if (!this.updateHasBeenRequested) {
                 // TODO this probably needs the object its updating the ref seq # for
-                this.connection.updateReferenceSequenceNumber(this.objectId, this.referenceSequenceNumber);
+                this.document.updateReferenceSequenceNumber(this.objectId, this.referenceSequenceNumber);
             } else {
                 this.updateHasBeenRequested = false;
                 this.updateSequenceNumber();

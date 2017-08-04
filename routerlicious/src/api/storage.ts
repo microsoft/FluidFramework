@@ -1,4 +1,4 @@
-import { IMessage, ISequencedMessage } from "./protocol";
+import { IDocumentMessage, ISequencedDocumentMessage } from "./protocol";
 
 /**
  * The worker service connects to work manager (TMZ) and registers itself to receive work.
@@ -44,7 +44,7 @@ export interface IDeltaStorageService {
     /**
      * Retrieves all the delta operations within the inclusive sequence number range
      */
-    get(from?: number, to?: number): Promise<ISequencedMessage[]>;
+    get(from?: number, to?: number): Promise<ISequencedDocumentMessage[]>;
 }
 
 /**
@@ -69,14 +69,9 @@ export interface IDocumentDeltaConnection {
     on(event: string, listener: Function): this;
 
     /**
-     * Send new messages to the server
+     * Submit a new message to the server
      */
-    submitOp(message: IMessage): Promise<void>;
-
-    /**
-     * Updates the reference sequence number on the given connection
-     */
-    updateReferenceSequenceNumber(objectId: string, sequenceNumber: number): Promise<void>;
+    submit(message: IDocumentMessage): Promise<void>;
 }
 
 export interface IDocument {
@@ -123,7 +118,7 @@ export interface IDocument {
     /**
      * Pending deltas that have not yet been included in a snapshot
      */
-    pendingDeltas: ISequencedMessage[];
+    pendingDeltas: ISequencedDocumentMessage[];
 
     /**
      * The sequence number represented by this version of the document
