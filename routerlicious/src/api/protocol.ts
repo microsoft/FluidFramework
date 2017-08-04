@@ -4,58 +4,101 @@ export const OperationType = "op";
 // Type representing a minimum sequence number update
 export const MinimumSequenceNumberUpdateType = "msn";
 
-export interface ISendPosition {
+/**
+ * An envelope wraps the contents with the intended target
+ */
+export interface IEnvelope {
+    // The target for the envelope
+    address: string;
+
+    // The contents of the envelope
+    contents: any;
+}
+
+/**
+ * Message related to a distributed data type
+ */
+export interface IObjectMessage {
+    // The object's client sequence number
     clientSequenceNumber: number;
 
+    // The reference object sequence number the message was sent relative to
     referenceSequenceNumber: number;
+
+    // The type of message for the object
+    type: string;
+
+    // The operation to perform on the object
+    contents: any;
 }
 
 /**
- * Base collaborative object message
+ * Document specific message
  */
-export interface IMessageBase {
-    document: ISendPosition;
+export interface IDocumentMessage {
+    // The document's client sequence number
+    clientSequenceNumber: number;
 
-    object: ISendPosition;
+    // The reference sequence number the message was sent relative to
+    referenceSequenceNumber: number;
 
-    op: any;
+    // The type of document message being sent
+    type: string;
+
+    // The contents of the message
+    contents: any;
 }
+
+// Sequenced messages
 
 /**
- * Message sent when a new operation is submitted to the server
+ * Sequenced message for a distributed data type
  */
-export interface IMessage extends IMessageBase {
-}
-
-export interface ISequencedPosition extends ISendPosition {
+export interface ISequencedObjectMessage {
+    // The sequenced identifier
     sequenceNumber: number;
 
+    // The minimum sequence number for all connected clients
     minimumSequenceNumber: number;
-}
 
-export interface IBase {
-    // The sequence number for the document
-    document: ISequencedPosition;
+    // The document's client sequence number
+    clientSequenceNumber: number;
 
-    // The sequence number for the object
-    object: ISequencedPosition;
+    // The reference sequence number the message was sent relative to
+    referenceSequenceNumber: number;
 
     // The type of operation
     type: string;
 
-    // Identifier for the distributed object the message applies to
-    objectId: string;
-
-    op: any;
+    // The contents of the message
+    contents: any;
 }
 
 /**
- * Message sent to clients when an operation has been assigned a sequence number and is being routed to clients
+ * Sequenced message for a distribute document
  */
-export interface ISequencedMessage extends IBase {
+export interface ISequencedDocumentMessage {
     // The user that submitted the delta
     userId: string;
 
     // The client ID that submitted the delta
     clientId: string;
+
+    // The sequenced identifier
+    sequenceNumber: number;
+
+    // The minimum sequence number for all connected clients
+    minimumSequenceNumber: number;
+
+    // The document's client sequence number
+    clientSequenceNumber: number;
+
+    // The reference sequence number the message was sent relative to
+    referenceSequenceNumber: number;
+
+    // The type of operation
+    type: string;
+
+    // The contents of the message
+    contents: any;
 }
