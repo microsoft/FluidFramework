@@ -23,6 +23,10 @@ async function createCommit(
 
     return {
         sha: commit.tostrS(),
+        tree: {
+            sha: blob.tree,
+            url: "",
+        },
         url: "",
     };
 }

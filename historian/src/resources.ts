@@ -17,6 +17,10 @@ export interface ICreateCommitParams {
 
 export interface ICommit {
     sha: string;
+    tree: {
+        url: string,
+        sha: string,
+    },
     url: string;
 }
 
@@ -123,9 +127,14 @@ export interface ITag {
 /**
  * Helper function to convert from a nodegit commit to our resource representation
  */
-export function commitToICommit(commit: git.Commit): ICommit {
+export async function commitToICommit(commit: git.Commit): Promise<ICommit> {
+    const tree = await commit.getTree();
     return {
         sha: commit.id().tostrS(),
+        tree: {
+            url: "",
+            sha: tree.id().tostrS(),
+        },
         url: "",
     };
 }
