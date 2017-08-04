@@ -76,12 +76,275 @@ interface ISegSpan extends HTMLSpanElement {
     segPos?: number;
     offset?: number;
     clipOffset?: number;
+    textErrorRun?: IRange;
 }
 
 interface IRangeInfo {
     elm: HTMLElement;
     node: Node;
     offset: number;
+}
+
+export interface Item {
+    key: string;
+    div?: HTMLDivElement;
+    iconURL?: string;
+}
+
+export function namesToItems(names: string[]): Item[] {
+    let items: Item[] = new Array(names.length);
+
+    for (let i = 0, len = names.length; i < len; i++) {
+        items[i] = { key: names[i] };
+    }
+
+    return items;
+}
+
+function altsToItems(alts: Alt[]) {
+    return alts.map((v) => { return { key: v.text }; });
+}
+
+type Alt = SharedString.Collections.ProxString<number>;
+// TODO: mechanism for intelligent services to publish interfaces like this
+interface ITextErrorInfo {
+    text: string;
+    alternates: Alt[];
+}
+
+export interface ISelectionListBox {
+    elm: HTMLDivElement;
+    show();
+    hide();
+    prevItem();
+    nextItem();
+    removeHighlight();
+    showSelectionList(selectionItems: Item[], hintSelection?: string);
+    selectItem(key: string);
+    items(): Item[];
+    getSelectedKey(): string;
+}
+
+export function selectionListBoxCreate(textRect: Geometry.Rectangle, container: HTMLElement,
+    itemHeight: number, offsetY: number, varHeight?: number): ISelectionListBox {
+    let listContainer = document.createElement("div");
+    let items: Item[];
+    let itemCapacity: number;
+    let bubble: HTMLDivElement;
+    let bubbleDelta: number;
+    let selectionIndex = -1;
+    let topSelection = 0;
+
+    init();
+
+    return {
+        elm: listContainer,
+        getSelectedKey,
+        hide: () => {
+            listContainer.style.visibility = "hidden";
+        },
+        items: () => items,
+        prevItem,
+        nextItem,
+        removeHighlight,
+        selectItem: selectItemByKey,
+        show: () => {
+            listContainer.style.visibility = "visible";
+        },
+        showSelectionList,
+    };
+
+    function selectItemByKey(key: string) {
+        key = key.trim();
+        if (selectionIndex >= 0) {
+            if (items[selectionIndex].key === key) {
+                return;
+            }
+        }
+        for (let i = 0, len = items.length; i < len; i++) {
+            if (items[i].key === key) {
+                selectItem(i);
+                break;
+            }
+        }
+    }
+
+    function getSelectedKey() {
+        if (selectionIndex >= 0) {
+            return items[selectionIndex].key;
+        }
+    }
+
+    function prevItem() {
+        if (selectionIndex > 0) {
+            selectItem(selectionIndex - 1);
+        }
+    }
+
+    function nextItem() {
+        if (selectionIndex < (items.length - 1)) {
+            selectItem(selectionIndex + 1);
+        }
+    }
+
+    function init() {
+        listContainer.style.boxShadow = "0px 3px 2px #bbbbbb";
+        listContainer.style.backgroundColor = "white";
+        listContainer.style.border = "#e5e5e5 solid 2px";
+
+        updateRectangles();
+        container.appendChild(listContainer);
+    }
+
+    function updateRectangles() {
+        let width = textRect.width;
+        let height = window.innerHeight / 3;
+        let top: number;
+        let bottom: number;
+        // TODO: use container div instead of window/doc body
+        // TODO: right/left (for now assume go right)
+        if ((height + textRect.y + offsetY + textRect.height) >= window.innerHeight) {
+            bottom = window.innerHeight - textRect.y;
+        } else {
+            top = textRect.y + textRect.height;
+        }
+        itemCapacity = Math.floor(height / itemHeight);
+        if (top !== undefined) {
+            let listContainerRect = new Geometry.Rectangle(textRect.x, top, width, height);
+            listContainerRect.height = itemCapacity * itemHeight;
+            listContainerRect.conformElementMaxHeight(listContainer);
+        } else {
+            let listContainerRect = new Geometry.Rectangle(textRect.x, 0, width, height);
+            listContainerRect.height = itemCapacity * itemHeight;
+            listContainerRect.conformElementMaxHeightFromBottom(listContainer, bottom);
+        }
+        if (varHeight) {
+            listContainer.style.paddingBottom = varHeight + "px";
+        }
+    }
+
+    function removeHighlight() {
+        if (selectionIndex >= 0) {
+            if (items[selectionIndex].div) {
+                items[selectionIndex].div.style.backgroundColor = "white";
+            }
+        }
+    }
+
+    function selectItem(indx: number) {
+        // then scroll if necessary
+        if (indx < topSelection) {
+            topSelection = indx;
+        } else if ((indx - topSelection) >= itemCapacity) {
+            topSelection = (indx - itemCapacity) + 1;
+        }
+        if (selectionIndex !== indx) {
+            selectionIndex = indx;
+            updateSelectionList();
+        }
+    }
+
+    function addScrollbar() {
+        let scrollbarWidth = 10;
+        let scrollbar = document.createElement("div");
+        bubble = document.createElement("div");
+
+        let rect = Geometry.Rectangle.fromClientRect(listContainer.getBoundingClientRect());
+        // adjust for 2px border
+        rect.x = (rect.width - scrollbarWidth) - 4;
+        rect.width = scrollbarWidth;
+        rect.y = 0;
+        rect.height -= 4;
+        rect.conformElement(scrollbar);
+        scrollbar.style.backgroundColor = "white";
+        rect.y = 0;
+        rect.x = 0;
+        bubbleDelta = rect.height * (1 / items.length);
+        rect.height = Math.round(itemCapacity * bubbleDelta);
+        rect.conformElement(bubble);
+        bubble.style.backgroundColor = "#cccccc";
+        listContainer.appendChild(scrollbar);
+        scrollbar.appendChild(bubble);
+        scrollbar.style.zIndex = "2";
+    }
+
+    function adjustScrollbar() {
+        bubble.style.top = Math.round(bubbleDelta * topSelection) + "px";
+    }
+
+    function makeItemDiv(i: number, div: HTMLDivElement) {
+        let item = items[i];
+        let itemDiv = div;
+        itemDiv.style.fontSize = "18px";
+        itemDiv.style.fontFamily = "Segoe UI";
+        itemDiv.style.lineHeight = itemHeight + "px";
+        itemDiv.style.whiteSpace = "pre";
+        items[i].div = itemDiv;
+        let itemSpan = document.createElement("span");
+        itemSpan.innerText = "  " + item.key;
+        itemDiv.appendChild(itemSpan);
+
+        if (item.iconURL) {
+            let icon = document.createElement("img");
+            icon.style.cssFloat = "left";
+            icon.style.height = itemHeight + "px";
+            icon.style.width = itemHeight + "px";
+            icon.setAttribute("src", item.iconURL);
+            itemDiv.insertBefore(icon, itemSpan);
+        }
+        return itemDiv;
+    }
+
+    function showSelectionList(selectionItems: Item[], hintSelection?: string) {
+        topSelection = 0;
+        items = selectionItems;
+        clearSubtree(listContainer);
+        selectionIndex = -1;
+        if (selectionItems.length === 0) {
+            return;
+        }
+        bubble = undefined;
+        if (items.length > itemCapacity) {
+            setTimeout(addScrollbar, 0);
+        }
+        updateSelectionList();
+
+        if (hintSelection) {
+            selectItemByKey(hintSelection);
+        } else {
+            selectItem(0);
+        }
+    }
+
+    function updateSelectionList() {
+        let render = false;
+        clearSubtree(listContainer);
+        let len = items.length;
+        for (let i = 0; i < itemCapacity; i++) {
+            let indx = i + topSelection;
+            if (indx === len) {
+                break;
+            } else {
+                let item = items[indx];
+                if (!item.div) {
+                    item.div = document.createElement("div");
+                    listContainer.appendChild(item.div);
+                    makeItemDiv(indx, item.div);
+                    render = true;
+                } else {
+                    listContainer.appendChild(item.div);
+                }
+                if (indx === selectionIndex) {
+                    item.div.style.backgroundColor = "#aaaaff";
+                } else {
+                    item.div.style.backgroundColor = "white";
+                }
+            }
+        }
+        if (bubble) {
+            adjustScrollbar();
+        }
+    }
 }
 
 function elmOffToSegOff(elmOff: IRangeInfo, span: HTMLSpanElement) {
@@ -246,6 +509,11 @@ function pixelsAtOffset(span: ISegSpan, offset: number, w: number) {
     }
 }
 
+interface IRange {
+    start: number;
+    end: number;
+}
+
 function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Client, context: FlowView) {
     div.id = "renderedTree";
     div.style.whiteSpace = "pre-wrap";
@@ -262,6 +530,7 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
     let firstDiv = innerDiv;
     let cursorRendered = false;
     context.viewportEndChar = -1;
+    let textErrorRun: IRange;
 
     function findLastChar() {
         if (div.children.length > 0) {
@@ -293,15 +562,63 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
             span.innerText = segText;
             span.seg = textSegment;
             span.segPos = startChar;
+            let textErr = false;
             if (textSegment.properties) {
                 // tslint:disable-next-line
                 for (let key in textSegment.properties) {
                     if (key === "textError") {
+                        textErr = true;
+                        if (textErrorRun === undefined) {
+                            textErrorRun = { start: startChar, end: startChar + segText.length };
+                        } else {
+                            textErrorRun.end += segText.length;
+                        }
+                        let textErrorInfo = <ITextErrorInfo>textSegment.properties[key];
+                        let slb: ISelectionListBox;
+                        span.textErrorRun = textErrorRun;
                         span.style.background = underlineStringURL;
+                        if (textErrorInfo.alternates.length > 0) {
+                            span.onmousedown = (e) => {
+                                function cancelIntellisense(ev: MouseEvent) {
+                                    if (slb) {
+                                        document.body.removeChild(slb.elm);
+                                        slb = undefined;
+                                    }
+                                }
+                                function acceptIntellisense(ev: MouseEvent) {
+                                    cancelIntellisense(ev);
+                                    let itemElm = <HTMLElement>ev.target;
+                                    let text = itemElm.innerText.trim();
+                                    context.sharedString.removeText(span.textErrorRun.start, span.textErrorRun.end);
+                                    context.sharedString.insertText(text, span.textErrorRun.start);
+                                    context.localQueueRender();
+                                }
+                                function selectItem(ev: MouseEvent) {
+                                    let itemElm = <HTMLElement>ev.target;
+                                    if (slb) {
+                                        slb.selectItem(itemElm.innerText);
+                                    }
+                                    // console.log(`highlight ${itemElm.innerText}`);
+                                }
+                                if (e.button === 2) {
+                                    let spanBounds = Geometry.Rectangle.fromClientRect(span.getBoundingClientRect());
+                                    spanBounds.width = Math.floor(window.innerWidth / 4);
+                                    slb = selectionListBoxCreate(spanBounds, document.body, 24, 0, 12);
+                                    slb.showSelectionList(altsToItems(textErrorInfo.alternates));
+                                    span.onmouseup = cancelIntellisense;
+                                    document.body.onmouseup = cancelIntellisense;
+                                    slb.elm.onmouseup = acceptIntellisense;
+                                    slb.elm.onmousemove = selectItem;
+                                }
+                            };
+                        }
                     } else {
                         span.style[key] = textSegment.properties[key];
                     }
                 }
+            }
+            if (!textErr) {
+                textErrorRun = undefined;
             }
             if (offset > 0) {
                 span.offset = offset;
@@ -755,7 +1072,7 @@ export class FlowView {
     }
 
     public setEdit() {
-        let preventD =  (e) => {
+        let preventD = (e) => {
             e.returnValue = false;
             e.preventDefault();
             return false;
@@ -1022,7 +1339,7 @@ export class FlowView {
         clearInterval(this.randWordTimer);
     }
 
-    private localQueueRender() {
+    public localQueueRender() {
         this.pendingRender = true;
         window.requestAnimationFrame(() => {
             this.pendingRender = false;

@@ -77,7 +77,7 @@ class Speller {
                 if (this.spellingError(candidate.toLocaleLowerCase())) {
                     let start = result.index;
                     let end = re.lastIndex;
-                    let textErrorInfo = { text: text.substring(start, end), alternates: ["giraffe", "bunny"] };
+                    let textErrorInfo = this.makeTextErrorInfo(candidate);
                     if (this.verbose) {
                         console.log(`spell (${start}, ${end}): ${textErrorInfo.text}`);
                     }
@@ -86,6 +86,17 @@ class Speller {
             }
         } while (result);
         this.setEvents();
+    }
+
+    makeTextErrorInfo(candidate: string) {
+        let alternates = this.dict.neighbors(candidate, 2).sort(compareProxStrings);
+        if (alternates.length > 7) {
+            alternates.length = 7;
+        }
+        return {
+            text: candidate,
+            alternates: alternates
+        };
     }
 
     currentWordSpellCheck(pos: number, rev = false) {
@@ -158,18 +169,11 @@ class Speller {
                     let end = re.lastIndex + startPos;
                     let candidate = result[0];
                     if (this.spellingError(candidate.toLocaleLowerCase())) {
-                        let alternates = this.dict.neighbors(candidate, 2).sort(compareProxStrings);
-                        if (alternates.length > 7) {
-                            alternates.length = 7;
-                        }
-                        let textErrorInfo = {
-                            text: text.substring(result.index, re.lastIndex),
-                            alternates: alternates
-                        };
+                        let textErrorInfo = this.makeTextErrorInfo(candidate);
                         if (this.verbose) {
                             console.log(`respell (${start}, ${end}): ${textErrorInfo.text}`);
                             let buf = "alternates: ";
-                            for (let alt of alternates) {
+                            for (let alt of textErrorInfo.alternates) {
                                 buf += ` ${alt.text}:${alt.invDistance}:${alt.val}`;
                             }
                             console.log(buf);
