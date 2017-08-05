@@ -18,9 +18,9 @@ export interface ICreateCommitParams {
 export interface ICommit {
     sha: string;
     tree: {
-        url: string,
         sha: string,
-    },
+        url: string,
+    };
     url: string;
 }
 
@@ -132,8 +132,8 @@ export async function commitToICommit(commit: git.Commit): Promise<ICommit> {
     return {
         sha: commit.id().tostrS(),
         tree: {
-            url: "",
             sha: tree.id().tostrS(),
+            url: "",
         },
         url: "",
     };

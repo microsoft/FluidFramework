@@ -199,7 +199,7 @@ describe("Historian", () => {
                     const tree = await createTree(supertest, testRepoName, parentTree);
 
                     // And then a commit to reference it
-                    const testCommit: ICreateCommitParams = {
+                    const treeCommit: ICreateCommitParams = {
                         author: {
                             date: "Thu Jul 13 2017 20:17:40 GMT-0700 (PDT)",
                             email: "kurtb@microsoft.com",
@@ -209,7 +209,7 @@ describe("Historian", () => {
                         parents: [],
                         tree: tree.body.sha,
                     };
-                    const commit = await createCommit(supertest, testRepoName, testCommit);
+                    const commit = await createCommit(supertest, testRepoName, treeCommit);
 
                     return supertest
                         .get(`/repos/${testRepoName}/git/trees/${commit.body.tree.sha}?recursive=1`)
