@@ -188,7 +188,7 @@ export class TakeANumber {
             minimumSequenceNumber: this.minimumSequenceNumber,
             referenceSequenceNumber: message.operation.referenceSequenceNumber,
             sequenceNumber,
-            type: api.OperationType,
+            type: message.operation.type,
             userId: message.userId,
         };
 

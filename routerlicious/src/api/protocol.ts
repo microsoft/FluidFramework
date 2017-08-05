@@ -7,6 +7,9 @@ export const MinimumSequenceNumberUpdateType = "msn";
 // Operation performed on a distributed data type
 export const ObjectOperation = "objOp";
 
+// Attaches a new object to the document
+export const AttachObject = "attach";
+
 /**
  * An envelope wraps the contents with the intended target
  */
@@ -33,6 +36,14 @@ export interface IObjectMessage {
 
     // The operation to perform on the object
     contents: any;
+}
+
+export interface IAttachMessage {
+    // The identifier for the object
+    id: string;
+
+    // The type of object
+    type: string;
 }
 
 /**

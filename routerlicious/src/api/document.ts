@@ -9,6 +9,8 @@ import { DeltaManager } from "./deltaManager";
 import * as extensions from "./extension";
 import { ObjectStorageService } from "./objectStorageService";
 import {
+    AttachObject,
+    IAttachMessage,
     IDocumentMessage,
     IEnvelope,
     IObjectMessage,
@@ -135,8 +137,7 @@ export class Document {
 
         // If it's a new document we create the root map object - otherwise we wait for it to become available
         if (!document.existing) {
-            const map = returnValue.createMapInternal("root");
-            map.attach();
+            returnValue.createAttached("root", mapExtension.MapExtension.Type);
         } else {
             await waitForRoot(returnValue);
         }
@@ -201,7 +202,11 @@ export class Document {
      * @param object
      */
     public attach(object: types.ICollaborativeObject): IDistributedObjectServices {
-        // TODO this also probably creates the attach message in the delta stream
+        const message: IAttachMessage = {
+            id: object.id,
+            type: object.type,
+        };
+        this.submitMessage(AttachObject, message);
 
         // Store a reference to the object in our list of objects and then get the services
         // used to attach it to the stream
@@ -217,7 +222,7 @@ export class Document {
      * Creates a new collaborative map
      */
     public createMap(): types.IMap {
-        return this.createMapInternal();
+        return this.create(mapExtension.MapExtension.Type) as types.IMap;
     }
 
     /**
@@ -257,21 +262,26 @@ export class Document {
     }
 
     public submitObjectMessage(envelope: IEnvelope): void {
-        const documentMessage: IDocumentMessage = {
-            clientSequenceNumber: this.clientSequenceNumber++,
-            contents: envelope,
-            referenceSequenceNumber: this.referenceSequenceNumber,
-            type: ObjectOperation,
-        };
-        this.deltaManager.submitOp(documentMessage);
+        this.submitMessage(ObjectOperation, envelope);
     }
 
     public updateReferenceSequenceNumber(objectId: string, referenceSequenceNumber: number) {
         throw new Error("Not Implemented");
     }
 
-    private createMapInternal(name?: string): types.IMap {
-        return this.create(mapExtension.MapExtension.Type, name) as types.IMap;
+    private submitMessage(type: string, contents: any) {
+        const documentMessage: IDocumentMessage = {
+            clientSequenceNumber: this.clientSequenceNumber++,
+            contents,
+            referenceSequenceNumber: this.referenceSequenceNumber,
+            type,
+        };
+        this.deltaManager.submitOp(documentMessage);
+    }
+
+    private createAttached(id: string, type: string) {
+        const object = this.create(type, id);
+        object.attach();
     }
 
     /**
@@ -318,6 +328,12 @@ export class Document {
             const envelope = message.contents as IEnvelope;
             const objectDetails = this.distributedObjects[envelope.address];
             objectDetails.connection.emit(envelope.contents, message.clientId);
+        } else if (message.type === AttachObject) {
+            const attachMessage = message.contents as IAttachMessage;
+            // TODO formalize the first load scenario below
+            // The below is potentially GREAT - I can provide the header on first load to avoid sending all the deltas.
+            // or the object can decide to send the deltas
+            this.loadInternal({ header: null, id: attachMessage.id, type: attachMessage.type });
         }
     }
 }
