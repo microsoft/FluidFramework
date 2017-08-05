@@ -11,6 +11,7 @@ import * as git from "../git-storage";
 import * as socketStorage from "../socket-storage";
 import * as utils from "../utils";
 import { logger } from "../utils";
+import { getDeltas } from "./routes/deltas";
 
 let io = socketIo();
 
@@ -77,6 +78,39 @@ export interface IDocumentDetails {
 }
 
 /**
+ * Interface used to go from the flat tree structure returned by the git manager to a hierarchy for easier
+ * processing
+ */
+interface ITree {
+    blobs: { [path: string]: string };
+    trees: { [path: string]: ITree };
+}
+
+function buildHierarchy(flatTree: any): ITree {
+    const lookup: { [path: string]: ITree } = {};
+    const root: ITree = { blobs: {}, trees: {} };
+    lookup[""] = root;
+
+    for (const entry of flatTree.tree) {
+        const entryPath = path.parse(entry.path);
+
+        // The flat output is breadth-first so we can assume we see tree nodes prior to their contents
+        const node = lookup[entryPath.dir];
+
+        // Add in either the blob or tree
+        if (entry.type === "tree") {
+            const newTree = { blobs: {}, trees: {} };
+            node.trees[entryPath.base] = newTree;
+            lookup[entry.path] = newTree;
+        } else if (entry.type === "blob") {
+            node.blobs[entryPath.base] = entry.sha;
+        }
+    }
+
+    return root;
+}
+
+/**
  * Retrieves revisions for the given document
  */
 async function getRevisions(gitManager: git.GitManager, id: string): Promise<any[]> {
@@ -85,52 +119,62 @@ async function getRevisions(gitManager: git.GitManager, id: string): Promise<any
     return commits;
 }
 
-async function getDistributedObjects(
+export interface IDocumentAttributes {
+    sequenceNumber: number;
+}
+
+interface IDocumentDetails2 {
+    documentAttributes: IDocumentAttributes;
+
+    distributedObjects: api.IDistributedObject[];
+}
+
+async function getDocumentDetails(
     gitManager: git.GitManager,
     id: string,
-    version: any): Promise<api.IDistributedObject[]> {
+    version: any): Promise<IDocumentDetails2> {
 
     if (!version) {
-        return [];
+        return { documentAttributes: undefined, distributedObjects: [] };
     }
 
     // NOTE we currently grab the entire repository. Should this ever become a bottleneck we can move to manually
     // walking and looking for entries. But this will requre more round trips.
-    const tree = await gitManager.getTree(version.tree.sha);
-    const objectBlobs: Array<{ sha: string, objectId: string }> = [];
-    for (const entry of tree.tree) {
-        // Walk the tree looking for objects with a path of 1 and a value of header
-        // As well as the root object which will con
-        // Use that commit to do a recursive tree query
-        if (entry.type === "blob") {
-            // Check if it passes our tests
-            const entryPath = path.parse(entry.path);
-            const pathEntries = entryPath.dir.split("/");
-            if (entryPath.base === "header" && pathEntries.length === 1) {
-                objectBlobs.push({ sha: entry.sha, objectId: pathEntries[0] });
-            }
-        }
+    const rawTree = await gitManager.getTree(version.tree.sha);
+    const tree = buildHierarchy(rawTree);
+
+    // Pull out the root attributes file
+    const docAttributesSha = tree.blobs[".attributes"];
+    const objectBlobs: Array<{ id: string, headerSha: string, typeSha: string }> = [];
+    // tslint:disable-next-line:forin
+    for (const path in tree.trees) {
+        const entry = tree.trees[path];
+        objectBlobs.push({ id: path, headerSha: entry.blobs.header, typeSha: entry.blobs[".attributes"] });
     }
 
-    // Go and fetch each blob specified above
-    const fetchedBlobsP: Array<Promise<any>> = [];
+    // Fetch the attributes and distirbuted object headers
+    const docAttributesP = gitManager.getBlob(docAttributesSha).then((docAttributes) => {
+        const attributes = Buffer.from(docAttributes.content, "base64").toString();
+        return JSON.parse(attributes);
+    });
+
+    const blobsP: Array<Promise<any>> = [];
     for (const blob of objectBlobs) {
-        fetchedBlobsP.push(gitManager.getBlob(blob.sha));
-    }
-    const fetchedBlobs = await Promise.all(fetchedBlobsP);
-
-    const distributedObjects: api.IDistributedObject[] = [];
-    // tslint:disable-next-line:prefer-for-of
-    for (let i = 0; i < fetchedBlobs.length; i++) {
-        // TODO I need to fill in the type below
-        distributedObjects.push({ header: fetchedBlobs[i].content, id: objectBlobs[i].objectId, type: "" });
+        const headerP = gitManager.getBlob(blob.headerSha).then((header) => header.content);
+        const typeP = gitManager.getBlob(blob.typeSha).then((objectType) => {
+            const attributes = Buffer.from(objectType.content, "base64").toString();
+            return JSON.parse(attributes);
+        });
+        blobsP.push(Promise.all([Promise.resolve(blob.id), headerP, typeP]));
     }
 
-    return distributedObjects;
-}
+    const fetched = await Promise.all([docAttributesP, blobsP]);
 
-async function getPendingDeltas(id: string, from: number): Promise<api.ISequencedDocumentMessage[]> {
-    return Promise.reject("Not implemented");
+    return {
+        distributedObjects: fetched[1].map(
+            (fetch) => ({ header: fetch[1], id: fetch[0], type: fetch[2] })),
+        documentAttributes: fetched[0].content,
+    };
 }
 
 async function getOrCreateDocument(id: string): Promise<IDocumentDetails> {
@@ -146,14 +190,15 @@ async function getOrCreateDocument(id: string): Promise<IDocumentDetails> {
     let distributedObjects: api.IDistributedObject[];
 
     if (version) {
-        distributedObjects = await getDistributedObjects(gitManager, id, version);
-        return Promise.reject("Need to obtain sequence number from snapshot");
+        const details = await getDocumentDetails(gitManager, id, version);
+        sequenceNumber = details.documentAttributes.sequenceNumber;
+        distributedObjects = details.distributedObjects;
     } else {
         sequenceNumber = 0;
         distributedObjects = null;
     }
 
-    const pendingDeltas = await getPendingDeltas(id, sequenceNumber);
+    const pendingDeltas = await getDeltas(id, sequenceNumber);
     const existing = await existingP;
 
     return {
