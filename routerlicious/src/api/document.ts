@@ -1,9 +1,9 @@
-import * as assert from "assert";
 import * as uuid from "node-uuid";
 import * as cell from "../cell";
 import * as ink from "../ink";
 import * as mapExtension from "../map";
 import * as mergeTree from "../merge-tree";
+import { debug } from "./debug";
 import { DeltaConnection } from "./deltaConnection";
 import { DeltaManager } from "./deltaManager";
 import * as extensions from "./extension";
@@ -86,6 +86,31 @@ export interface IObjectStorageService {
 }
 
 /**
+ * Polls for the root document
+ */
+function pollRoot(document: Document, resolve, reject) {
+    if (document.get("root")) {
+        resolve();
+    } else {
+        const pauseAmount = 100;
+        debug(`Did not find root - waiting ${pauseAmount}ms`);
+        setTimeout(() => pollRoot(document, resolve, reject), pauseAmount);
+    }
+}
+
+/**
+ * Returns a promie that resolves once the root map is available
+ */
+function waitForRoot(document: Document): Promise<void> {
+    return new Promise<void>((resolve, reject) => pollRoot(document, resolve, reject));
+}
+
+interface IAttachedServices {
+    deltaConnection: DeltaConnection;
+    objectStorage: ObjectStorageService;
+}
+
+/**
  * A document is a collection of collaborative types.
  */
 export class Document {
@@ -103,11 +128,17 @@ export class Document {
             returnValue.loadInternal(distributedObject);
         }
 
-        assert(returnValue.getRoot(), "Root map must always exist");
-
         // Apply pending deltas
         for (const delta of document.pendingDeltas) {
             returnValue.processRemoteMessage(delta);
+        }
+
+        // If it's a new document we create the root map object - otherwise we wait for it to become available
+        if (!document.existing) {
+            const map = returnValue.createMapInternal("root");
+            map.attach();
+        } else {
+            await waitForRoot(returnValue);
         }
 
         // And return the new object
@@ -144,9 +175,9 @@ export class Document {
      * Constructs a new collaborative object that can be attached to the document
      * @param type the identifier for the collaborative object type
      */
-    public create(type: string): types.ICollaborativeObject {
+    public create(type: string, id = uuid.v4()): types.ICollaborativeObject {
         const extension = this.registry.getExtension(type);
-        const object = extension.create(this, uuid.v4());
+        const object = extension.create(this, id);
 
         return object;
     }
@@ -170,7 +201,14 @@ export class Document {
      * @param object
      */
     public attach(object: types.ICollaborativeObject): IDistributedObjectServices {
-        return this.getObjectServices(object.id);
+        // TODO this also probably creates the attach message in the delta stream
+
+        // Store a reference to the object in our list of objects and then get the services
+        // used to attach it to the stream
+        const services = this.getObjectServices(object.id);
+        this.storeDistributedObject(object, services);
+
+        return services;
     }
 
     // pause + resume semantics on the op stream? To load a doc at a veresion?
@@ -179,7 +217,7 @@ export class Document {
      * Creates a new collaborative map
      */
     public createMap(): types.IMap {
-        return this.create(mapExtension.MapExtension.Type) as types.IMap;
+        return this.createMapInternal();
     }
 
     /**
@@ -232,6 +270,10 @@ export class Document {
         throw new Error("Not Implemented");
     }
 
+    private createMapInternal(name?: string): types.IMap {
+        return this.create(mapExtension.MapExtension.Type, name) as types.IMap;
+    }
+
     /**
      * Loads in a distributed object and stores it in the internal Document object map
      * @param distributedObject The distributed object to load
@@ -247,20 +289,24 @@ export class Document {
             this.document.version,
             distributedObject.header);
 
-        this.distributedObjects[distributedObject.id] = {
-            connection: services.deltaConnection,
-            object: value,
-            storage: services.objectStorage,
-        };
+        this.storeDistributedObject(value, services);
     }
 
-    private getObjectServices(id: string): { deltaConnection: DeltaConnection, objectStorage: ObjectStorageService } {
+    private getObjectServices(id: string): IAttachedServices {
         const connection = new DeltaConnection(id, this);
         const storage = new ObjectStorageService(this.document.documentStorageService);
 
         return {
             deltaConnection: connection,
             objectStorage: storage,
+        };
+    }
+
+    private storeDistributedObject(object: types.ICollaborativeObject, services: IAttachedServices) {
+        this.distributedObjects[object.id] = {
+            connection: services.deltaConnection,
+            object,
+            storage: services.objectStorage,
         };
     }
 

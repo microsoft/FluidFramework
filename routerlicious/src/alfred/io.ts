@@ -53,6 +53,7 @@ async function getOrCreateObject(id: string): Promise<boolean> {
     const db = await mongoManager.getDatabase();
     const collection = db.collection(objectsCollectionName);
 
+    // TODO there is probably a bit of a race condition with the below between the find and the insert
     const dbObjectP = collection.findOne({ _id: id });
     return dbObjectP.then(
         (dbObject) => {
@@ -195,7 +196,7 @@ async function getOrCreateDocument(id: string): Promise<IDocumentDetails> {
         distributedObjects = details.distributedObjects;
     } else {
         sequenceNumber = 0;
-        distributedObjects = null;
+        distributedObjects = [];
     }
 
     const pendingDeltas = await getDeltas(id, sequenceNumber);
