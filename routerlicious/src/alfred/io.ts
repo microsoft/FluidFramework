@@ -45,13 +45,13 @@ io.adapter(socketIoRedis({ pubClient: pub, subClient: sub }));
 
 // Connection to stored document details
 const mongoUrl = nconf.get("mongo:endpoint");
-const objectsCollectionName = nconf.get("mongo:collectionNames:objects");
+const documentsCollectionName = nconf.get("mongo:collectionNames:documents");
 
 const mongoManager = new utils.MongoManager(mongoUrl);
 
 async function getOrCreateObject(id: string): Promise<boolean> {
     const db = await mongoManager.getDatabase();
-    const collection = db.collection(objectsCollectionName);
+    const collection = db.collection(documentsCollectionName);
 
     // TODO there is probably a bit of a race condition with the below between the find and the insert
     const dbObjectP = collection.findOne({ _id: id });
@@ -270,36 +270,6 @@ io.on("connection", (socket) => {
 
         throughput.produce();
         producer.send(JSON.stringify(rawMessage), documentId).then(
-            (responseMessage) => {
-                response(null, responseMessage);
-                throughput.acknolwedge();
-            },
-            (error) => {
-                logger.error(error);
-                response(error, null);
-                throughput.acknolwedge();
-            });
-    });
-
-    // Message sent to allow clients to update their sequence number
-    socket.on("updateReferenceSequenceNumber", (clientId: string, sequenceNumber: number, response) => {
-        // Verify the user has connected on this object id
-        if (!connectionsMap[clientId]) {
-            return response("Invalid object", null);
-        }
-
-        const documentId = connectionsMap[clientId];
-        const message: core.IUpdateReferenceSequenceNumberMessage = {
-            clientId,
-            documentId,
-            sequenceNumber,
-            timestamp: Date.now(),
-            type: core.UpdateReferenceSequenceNumberType,
-            userId: null,
-        };
-
-        throughput.produce();
-        producer.send(JSON.stringify(message), documentId).then(
             (responseMessage) => {
                 response(null, responseMessage);
                 throughput.acknolwedge();

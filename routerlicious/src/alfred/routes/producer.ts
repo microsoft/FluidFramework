@@ -18,11 +18,11 @@ const topic = nconf.get("alfred:topic");
 // Connection to stored document details
 const mongoUrl = nconf.get("mongo:endpoint");
 const client = MongoClient.connect(mongoUrl);
-const objectsCollectionName = nconf.get("mongo:collectionNames:objects");
-const objectsCollectionP = client.then((db) => db.collection(objectsCollectionName));
+const documentsCollectionName = nconf.get("mongo:collectionNames:documents");
+const documentsCollectionP = client.then((db) => db.collection(documentsCollectionName));
 
 async function getOrCreateObject(id: string, type: string): Promise<boolean> {
-    const collection = await objectsCollectionP;
+    const collection = await documentsCollectionP;
     const dbObjectP = collection.findOne({ _id: id });
     return dbObjectP.then(
         (dbObject) => {

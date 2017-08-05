@@ -12,8 +12,8 @@ nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use
 // Connection to stored document details
 const mongoUrl = nconf.get("mongo:endpoint");
 const client = MongoClient.connect(mongoUrl);
-const objectsCollectionName = nconf.get("mongo:collectionNames:objects");
-const objectsCollectionP = client.then((db) => db.collection(objectsCollectionName));
+const documentsCollectionName = nconf.get("mongo:collectionNames:documents");
+const objectsCollectionP = client.then((db) => db.collection(documentsCollectionName));
 const minioConfig = nconf.get("minio");
 const storageBucket = nconf.get("paparazzi:bucket");
 const chunkSize = nconf.get("perf:chunkSize");

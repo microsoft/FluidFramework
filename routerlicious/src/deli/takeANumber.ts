@@ -34,8 +34,6 @@ const SequenceNumberComparer: utils.IComparer<IClientSequenceNumber> = {
 
 const throughput = new utils.ThroughputCounter(logger.info, "Delta Topic ");
 
-// TODO clients need to include seq# for all objets they're playing with
-
 /**
  * Class to handle distributing sequence numbers to a collaborative object
  */
@@ -158,76 +156,41 @@ export class TakeANumber {
 
         // Update the client's reference sequence number based on the message type
         const objectMessage = JSON.parse(rawMessage.value.toString("utf8")) as core.IObjectMessage;
-        if (objectMessage.type === core.UpdateReferenceSequenceNumberType) {
-            const message = objectMessage as core.IUpdateReferenceSequenceNumberMessage;
-            this.updateClient(message.clientId, message.timestamp, message.sequenceNumber);
 
-        } else {
-            const message = objectMessage as core.IRawOperationMessage;
+        // NOTE at one point we had a custom min sequence number update packet. This one would exit early
+        // and not sequence a packet that didn't cause a change to the min sequence number. There shouldn't be
+        // so many of these that we need to not include them. They are also easy to elide later.
 
-            // Update and retrieve the minimum sequence number
-            this.upsertClient(
-                message.clientId,
-                message.operation.clientSequenceNumber,
-                message.operation.referenceSequenceNumber,
-                message.timestamp);
-        }
-
-        // Store the previous minimum sequene number we returned and then update it
-        const lastMinimumSequenceNumber = this.minimumSequenceNumber;
-        this.minimumSequenceNumber = this.getMinimumSequenceNumber(objectMessage.timestamp);
-
-        // If the client updating there reference sequence number did not result in a change to the minimum
-        // sequence number we can return early since no output packet will be generated.
-        if ((objectMessage.type === core.UpdateReferenceSequenceNumberType) &&
-            (lastMinimumSequenceNumber === this.minimumSequenceNumber)) {
+        // Exit out early for unknown messages
+        if (objectMessage.type !== core.RawOperationType) {
             return Promise.resolve();
         }
+
+        // Update and retrieve the minimum sequence number
+        const message = objectMessage as core.IRawOperationMessage;
+        this.upsertClient(
+            message.clientId,
+            message.operation.clientSequenceNumber,
+            message.operation.referenceSequenceNumber,
+            message.timestamp);
+
+        // Store the previous minimum sequene number we returned and then update it
+        this.minimumSequenceNumber = this.getMinimumSequenceNumber(objectMessage.timestamp);
 
         // Increment and grab the next sequence number
         const sequenceNumber = this.revSequenceNumber();
 
         // And now craft the output message
-        let outputMessage: api.ISequencedDocumentMessage;
-        if (objectMessage.type === core.UpdateReferenceSequenceNumberType) {
-            // const minimumSequenceNumberMessage: api.IBase = {
-            //     document: {
-            //         minimumSequenceNumber: this.minimumSequenceNumber,
-            //         sequenceNumber,
-            //     },
-            //     object: {
-            //         minimumSequenceNumber: 0,
-            //         sequenceNumber: 0,
-            //     },
-            //     objectId: objectMessage.objectId,
-            //     type: api.MinimumSequenceNumberUpdateType,
-            // };
-
-            outputMessage = null; // minimumSequenceNumberMessage;
-        } else {
-            // const message = objectMessage as core.IRawOperationMessage;
-            // const operation = message.operation;
-            // const sequencedOperation: api.ISequencedMessage = {
-            //     clientId: message.clientId,
-            //     document: {
-            //         clientSequenceNumber: operation.document.clientSequenceNumber,
-            //         minimumSequenceNumber: this.minimumSequenceNumber,
-            //         referenceSequenceNumber: operation.document.referenceSequenceNumber,
-            //         sequenceNumber,
-            //     },
-            //     object: {
-            //         clientSequenceNumber: operation.object.clientSequenceNumber,
-            //         minimumSequenceNumber: 0,
-            //         referenceSequenceNumber: operation.object.referenceSequenceNumber,
-            //         sequenceNumber: 0,
-            //     },
-            //     objectId: operation.objectId,
-            //     op: operation.op,
-            //     type: api.OperationType,
-            //     userId: message.userId,
-            // };
-            outputMessage = null; // sequencedOperation;
-        }
+        let outputMessage: api.ISequencedDocumentMessage = {
+            clientId: message.clientId,
+            clientSequenceNumber: message.operation.clientSequenceNumber,
+            contents: message.operation.contents,
+            minimumSequenceNumber: this.minimumSequenceNumber,
+            referenceSequenceNumber: message.operation.referenceSequenceNumber,
+            sequenceNumber,
+            type: api.OperationType,
+            userId: message.userId,
+        };
 
         // tslint:disable-next-line:max-line-length
         logger.verbose(`Assigning ticket ${objectMessage.documentId}@${sequenceNumber}:${this.minimumSequenceNumber} at topic@${this.logOffset}`);

@@ -13,7 +13,7 @@
         "endpoint": "mongodb://mongodb:27017",
         "collectionNames": {
             "deltas": "deltas",
-            "objects": "objects",
+            "documents": "documents",
             "partitions": "partitions"
         }
     },
