@@ -38,6 +38,32 @@ export interface IObjectMessage {
     contents: any;
 }
 
+/**
+ * Sequenced message for a distributed data type
+ */
+export interface ISequencedObjectMessage {
+    // The sequenced identifier
+    sequenceNumber: number;
+
+    // The minimum sequence number for all connected clients
+    minimumSequenceNumber: number;
+
+    // The document's client sequence number
+    clientSequenceNumber: number;
+
+    // The reference sequence number the message was sent relative to
+    referenceSequenceNumber: number;
+
+    // The client ID that submitted the delta
+    clientId: string;
+
+    // The type of operation
+    type: string;
+
+    // The contents of the message
+    contents: any;
+}
+
 export interface IAttachMessage {
     // The identifier for the object
     id: string;
@@ -57,31 +83,6 @@ export interface IDocumentMessage {
     referenceSequenceNumber: number;
 
     // The type of document message being sent
-    type: string;
-
-    // The contents of the message
-    contents: any;
-}
-
-// Sequenced messages
-
-/**
- * Sequenced message for a distributed data type
- */
-export interface ISequencedObjectMessage {
-    // The sequenced identifier
-    sequenceNumber: number;
-
-    // The minimum sequence number for all connected clients
-    minimumSequenceNumber: number;
-
-    // The document's client sequence number
-    clientSequenceNumber: number;
-
-    // The reference sequence number the message was sent relative to
-    referenceSequenceNumber: number;
-
-    // The type of operation
     type: string;
 
     // The contents of the message

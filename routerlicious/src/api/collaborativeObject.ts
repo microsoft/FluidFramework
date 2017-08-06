@@ -122,30 +122,30 @@ export abstract class CollaborativeObject implements api.ICollaborativeObject {
     }
 
     private listenForUpdates() {
-        this.services.deltaConnection.on("op", (message, clientId) => {
-            this.processRemoteMessage(message, clientId);
+        this.services.deltaConnection.on("op", (message) => {
+            this.processRemoteMessage(message);
         });
     }
 
     /**
      * Handles a message coming from the remote service
      */
-    private processRemoteMessage(message: api.ISequencedObjectMessage, clientId: string) {
+    private processRemoteMessage(message: api.ISequencedObjectMessage) {
         // server messages should only be delivered to this method in sequence number order
         assert.equal(this.sequenceNumber + 1, message.sequenceNumber);
         this.sequenceNum = message.sequenceNumber;
         this.minSequenceNumber = message.minimumSequenceNumber;
 
         if (message.type === api.OperationType) {
-            this.processRemoteOperation(message as api.ISequencedObjectMessage, clientId);
+            this.processRemoteOperation(message as api.ISequencedObjectMessage);
         }
         // Brodcast the message to listeners.
         this.events.emit("op", message, false);
     }
 
-    private processRemoteOperation(message: api.ISequencedObjectMessage, clientId: string) {
+    private processRemoteOperation(message: api.ISequencedObjectMessage) {
         // server messages should only be delivered to this method in sequence number order
-        if (clientId === this.document.clientId) {
+        if (message.clientId === this.document.clientId) {
             // One of our messages was sequenced. We can remove it from the local message list. Given these arrive
             // in order we only need to check the beginning of the local list.
             if (this.localOps.length > 0 &&

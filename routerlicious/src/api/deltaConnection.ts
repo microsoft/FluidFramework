@@ -15,7 +15,10 @@ export class DeltaConnection implements IDeltaConnection {
     // The last sequence number we received from the server
     private referenceSequenceNumber;
 
-    constructor(public objectId: string, private document: Document) {
+    // The minimum sequence number for the object
+    private minimumSequenceNumber = 0;
+
+    constructor(public objectId: string, private document: Document, private sequenceNumber) {
     }
 
     public on(event: string, listener: (...args: any[]) => void): this {
@@ -23,9 +26,20 @@ export class DeltaConnection implements IDeltaConnection {
         return this;
     }
 
-    public emit(message: ISequencedObjectMessage, clientId: string) {
-        this.referenceSequenceNumber = message.sequenceNumber;
-        this.events.emit("op", message);
+    public emit(message: IObjectMessage, clientId: string) {
+        // TODO here is when I need to process the sequence number
+        const sequencedObjectMessage: ISequencedObjectMessage = {
+            clientId,
+            clientSequenceNumber: message.clientSequenceNumber,
+            contents: message.contents,
+            minimumSequenceNumber: this.minimumSequenceNumber,
+            referenceSequenceNumber: message.referenceSequenceNumber,
+            sequenceNumber: ++this.sequenceNumber,
+            type: message.type,
+        };
+
+        this.referenceSequenceNumber = sequencedObjectMessage.sequenceNumber;
+        this.events.emit("op", sequencedObjectMessage);
 
         // We will queue a message to update our reference sequence number upon receiving a server operation. This
         // allows the server to know our true reference sequence number and be able to correctly update the minimum

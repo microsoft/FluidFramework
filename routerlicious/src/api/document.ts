@@ -1,3 +1,4 @@
+import * as assert from "assert";
 import * as uuid from "node-uuid";
 import * as cell from "../cell";
 import * as ink from "../ink";
@@ -131,9 +132,7 @@ export class Document {
         }
 
         // Apply pending deltas
-        for (const delta of document.pendingDeltas) {
-            returnValue.processRemoteMessage(delta);
-        }
+        returnValue.processPendingMessages(document.pendingDeltas);
 
         // If it's a new document we create the root map object - otherwise we wait for it to become available
         if (!document.existing) {
@@ -146,7 +145,8 @@ export class Document {
         return returnValue;
     }
 
-    // Map from the object ID to the collaborative object for it
+    // Map from the object ID to the collaborative object for it. If the object is not yet attached its service
+    // entries will be null
     private distributedObjects: { [key: string]: IDistributedObjectState } = {};
 
     private deltaManager: DeltaManager;
@@ -180,6 +180,9 @@ export class Document {
         const extension = this.registry.getExtension(type);
         const object = extension.create(this, id);
 
+        // Store the unattached service in the object map
+        this.upsertDistributedObject(object, null);
+
         return object;
     }
 
@@ -210,8 +213,8 @@ export class Document {
 
         // Store a reference to the object in our list of objects and then get the services
         // used to attach it to the stream
-        const services = this.getObjectServices(object.id);
-        this.storeDistributedObject(object, services);
+        const services = this.getObjectServices(object.id, 0);
+        this.upsertDistributedObject(object, services);
 
         return services;
     }
@@ -266,7 +269,13 @@ export class Document {
     }
 
     public updateReferenceSequenceNumber(objectId: string, referenceSequenceNumber: number) {
-        throw new Error("Not Implemented");
+        // throw new Error("Not Implemented");
+    }
+
+    private processPendingMessages(messages: ISequencedDocumentMessage[]) {
+        for (const message of messages) {
+            this.deltaManager.handleOp(message);
+        }
     }
 
     private submitMessage(type: string, contents: any) {
@@ -289,7 +298,7 @@ export class Document {
      * @param distributedObject The distributed object to load
      */
     private loadInternal(distributedObject: IDistributedObject) {
-        const services = this.getObjectServices(distributedObject.id);
+        const services = this.getObjectServices(distributedObject.id, distributedObject.sequenceNumber);
 
         const extension = this.registry.getExtension(mapExtension.MapExtension.Type);
         const value = extension.load(
@@ -299,11 +308,11 @@ export class Document {
             this.document.version,
             distributedObject.header);
 
-        this.storeDistributedObject(value, services);
+        this.upsertDistributedObject(value, services);
     }
 
-    private getObjectServices(id: string): IAttachedServices {
-        const connection = new DeltaConnection(id, this);
+    private getObjectServices(id: string, sequenceNumber: number): IAttachedServices {
+        const connection = new DeltaConnection(id, this, sequenceNumber);
         const storage = new ObjectStorageService(this.document.documentStorageService);
 
         return {
@@ -312,12 +321,19 @@ export class Document {
         };
     }
 
-    private storeDistributedObject(object: types.ICollaborativeObject, services: IAttachedServices) {
-        this.distributedObjects[object.id] = {
-            connection: services.deltaConnection,
-            object,
-            storage: services.objectStorage,
-        };
+    private upsertDistributedObject(object: types.ICollaborativeObject, services: IAttachedServices) {
+        if (!(object.id in this.distributedObjects)) {
+            this.distributedObjects[object.id] = {
+                connection: services ? services.deltaConnection : null,
+                object,
+                storage: services ? services.objectStorage : null,
+            };
+        } else {
+            const entry = this.distributedObjects[object.id];
+            assert.equal(entry.object, object);
+            entry.connection = services.deltaConnection;
+            entry.storage = services.objectStorage;
+        }
     }
 
     private processRemoteMessage(message: ISequencedDocumentMessage) {
@@ -329,11 +345,14 @@ export class Document {
             const objectDetails = this.distributedObjects[envelope.address];
             objectDetails.connection.emit(envelope.contents, message.clientId);
         } else if (message.type === AttachObject) {
-            const attachMessage = message.contents as IAttachMessage;
-            // TODO formalize the first load scenario below
-            // The below is potentially GREAT - I can provide the header on first load to avoid sending all the deltas.
-            // or the object can decide to send the deltas
-            this.loadInternal({ header: null, id: attachMessage.id, type: attachMessage.type });
+            // Skip attach messages that are local
+            if (message.clientId !== this.document.clientId) {
+                const attachMessage = message.contents as IAttachMessage;
+                // TODO formalize the first load scenario below
+                // The below is potentially GREAT - I can provide the header on first load to avoid sending
+                // all the deltas. Or the object can decide to send the deltas
+                this.loadInternal({ header: null, id: attachMessage.id, type: attachMessage.type, sequenceNumber: 0 });
+            }
         }
     }
 }

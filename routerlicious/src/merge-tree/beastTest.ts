@@ -789,11 +789,11 @@ export function TestPack() {
             let pos = random.integer(0, preLen)(mt);
             if (includeMarkers) {
                 server.enqueueMsg(client.makeInsertMarkerMsg("test", ops.MarkerBehaviors.PropagatesForward,
-                    pos, MergeTree.UnassignedSequenceNumber, client.getCurrentSeq(), ""), server.longClientId);
+                    pos, MergeTree.UnassignedSequenceNumber, client.getCurrentSeq(), server.longClientId));
                 client.insertMarkerLocal(pos, "test", ops.MarkerBehaviors.PropagatesForward);
             }
             server.enqueueMsg(client.makeInsertMsg(text, pos, MergeTree.UnassignedSequenceNumber,
-                client.getCurrentSeq(), ""), server.longClientId);
+                client.getCurrentSeq(), server.longClientId));
             client.insertTextLocal(text, pos);
             if (MergeTree.useCheckQ) {
                 client.enqueueTestString();
@@ -805,7 +805,7 @@ export function TestPack() {
             let preLen = client.getLength();
             let pos = random.integer(0, preLen)(mt);
             server.enqueueMsg(client.makeRemoveMsg(pos, pos + dlen, MergeTree.UnassignedSequenceNumber,
-                client.getCurrentSeq(), ""), server.longClientId);
+                client.getCurrentSeq(), server.longClientId));
             client.removeSegmentLocal(pos, pos + dlen);
             if (MergeTree.useCheckQ) {
                 client.enqueueTestString();
@@ -818,7 +818,7 @@ export function TestPack() {
                 let removeStart = word1.pos;
                 let removeEnd = removeStart + word1.text.length;
                 server.enqueueMsg(client.makeRemoveMsg(removeStart, removeEnd, MergeTree.UnassignedSequenceNumber,
-                    client.getCurrentSeq(), ""), server.longClientId);
+                    client.getCurrentSeq(), server.longClientId));
                 client.removeSegmentLocal(removeStart, removeEnd);
                 if (MergeTree.useCheckQ) {
                     client.enqueueTestString();
@@ -829,7 +829,7 @@ export function TestPack() {
                 }
                 let pos = word2.pos + word2.text.length;
                 server.enqueueMsg(client.makeInsertMsg(word1.text, pos, MergeTree.UnassignedSequenceNumber,
-                    client.getCurrentSeq(), ""), server.longClientId);
+                    client.getCurrentSeq(), server.longClientId));
                 client.insertTextLocal(word1.text, pos);
                 if (MergeTree.useCheckQ) {
                     client.enqueueTestString();

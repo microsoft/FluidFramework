@@ -167,21 +167,21 @@ export class SharedString implements api.ICollaborativeObject {
         this.deltaManager.submitOp(removeMessage);
     }
 
-    private processRemoteOperation(message: api.ISequencedDocumentMessage, clientId: string) {
+    private processRemoteOperation(message: api.ISequencedDocumentMessage) {
         this.events.emit("pre-op", message);
         
         if (this.isLoaded) {
-            this.client.applyMsg(message, clientId);
+            this.client.applyMsg(message);
         } else {
-            this.client.enqueueMsg(message, clientId);
+            this.client.enqueueMsg(message);
         }
 
         this.events.emit("op", message);
     }
 
     private listenForUpdates() {
-        this.services.deltaConnection.on("op", (message, clientId) => {
-            this.processRemoteOperation(message, clientId);
+        this.services.deltaConnection.on("op", (message) => {
+            this.processRemoteOperation(message);
         });
     }
 

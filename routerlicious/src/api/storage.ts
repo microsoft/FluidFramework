@@ -60,6 +60,9 @@ export interface IDistributedObject {
 
     // Base 64 encoded snapshot information
     header: string;
+
+    // The sequence number for the object
+    sequenceNumber: number;
 }
 
 export interface IDocumentDeltaConnection {

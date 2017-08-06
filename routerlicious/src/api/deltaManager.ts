@@ -44,9 +44,6 @@ export class DeltaManager {
                 q.push(message);
             }
         });
-
-        // Directly fetch all sequence numbers after base
-        this.fetchMissingDeltas(this.baseSequenceNumber);
     }
 
     /**
@@ -60,7 +57,7 @@ export class DeltaManager {
         this.emitter.addListener("op", listener);
     }
 
-    private handleOp(message: api.ISequencedDocumentMessage) {
+    public handleOp(message: api.ISequencedDocumentMessage) {
         // Incoming sequence numbers should be one higher than the previous ones seen. If not we have missed the
         // stream and need to query the server for the missing deltas.
         if (message.sequenceNumber !== this.baseSequenceNumber + 1) {
