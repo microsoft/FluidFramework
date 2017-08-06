@@ -300,7 +300,7 @@ export class Document {
     private loadInternal(distributedObject: IDistributedObject) {
         const services = this.getObjectServices(distributedObject.id, distributedObject.sequenceNumber);
 
-        const extension = this.registry.getExtension(mapExtension.MapExtension.Type);
+        const extension = this.registry.getExtension(distributedObject.type);
         const value = extension.load(
             this,
             distributedObject.id,

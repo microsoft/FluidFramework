@@ -59,7 +59,7 @@ export default class InkCanvas {
             }
 
             // Update the canvas
-            this.addAndDrawStroke(op as ink.IDelta, false);
+            this.addAndDrawStroke(op.contents as ink.IDelta, false);
         });
 
         this.model.on("load", () => {
