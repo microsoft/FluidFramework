@@ -59,6 +59,22 @@ export class Rectangle {
         ];
     }
 
+    public conformElementMaxHeight(elm: HTMLElement) {
+        elm.style.position = "absolute";
+        elm.style.left = this.x + "px";
+        elm.style.width = this.width + "px";
+        elm.style.top = this.y + "px";
+        elm.style.maxHeight = this.height + "px";
+    }
+
+    public conformElementMaxHeightFromBottom(elm: HTMLElement, bottom: number) {
+        elm.style.position = "absolute";
+        elm.style.left = this.x + "px";
+        elm.style.width = this.width + "px";
+        elm.style.bottom = bottom + "px";
+        elm.style.maxHeight = this.height + "px";
+    }
+
     public conformElement(elm: HTMLElement) {
         elm.style.position = "absolute";
         elm.style.left = `${this.x}px`;
