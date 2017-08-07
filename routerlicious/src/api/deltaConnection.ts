@@ -1,24 +1,31 @@
 import { EventEmitter } from "events";
 import { Document, IDeltaConnection } from "./document";
-import { IObjectMessage, ISequencedObjectMessage, OperationType } from "./protocol";
+import { IObjectMessage, ISequencedObjectMessage } from "./protocol";
+
+/**
+ * Helper class that keeps track of the mapping between a primary and secondary number.
+ */
+interface IRangeMap {
+
+    updateBase(primary: number);
+
+    addMapping(primary: number, secondary: number);
+
+    getClosest(primary: number);
+}
 
 export class DeltaConnection implements IDeltaConnection {
     protected events = new EventEmitter();
 
-    // Flag indicating whether or not we need to udpate the reference sequence number
-    private updateHasBeenRequested = false;
-    private updateSequenceNumberTimer: any;
+    private map: IRangeMap;
 
-    // Flag indicating whether the client has only received messages
-    private readonly = true;
+    constructor(
+        public objectId: string,
+        private document: Document,
+        private sequenceNumber,
+        documentSequenceNumber: number) {
 
-    // The last sequence number we received from the server
-    private referenceSequenceNumber;
-
-    // The minimum sequence number for the object
-    private minimumSequenceNumber = 0;
-
-    constructor(public objectId: string, private document: Document, private sequenceNumber) {
+        this.map.addMapping(documentSequenceNumber, sequenceNumber);
     }
 
     public on(event: string, listener: (...args: any[]) => void): this {
@@ -26,79 +33,37 @@ export class DeltaConnection implements IDeltaConnection {
         return this;
     }
 
-    public emit(message: IObjectMessage, clientId: string) {
+    public emit(
+        message: IObjectMessage,
+        clientId: string,
+        documentMinimumSequenceNumber: number,
+        documentSequenceNumber: number) {
+
+        const sequenceNumber = this.sequenceNumber++;
+        this.map.addMapping(documentSequenceNumber, sequenceNumber);
+
+        // Store a mapping from a documentSequenceNumber to the assigned sequenceNumber
+
         // TODO here is when I need to process the sequence number
         const sequencedObjectMessage: ISequencedObjectMessage = {
             clientId,
             clientSequenceNumber: message.clientSequenceNumber,
             contents: message.contents,
-            minimumSequenceNumber: this.minimumSequenceNumber,
+            minimumSequenceNumber: this.map.getClosest(documentMinimumSequenceNumber),
             referenceSequenceNumber: message.referenceSequenceNumber,
-            sequenceNumber: ++this.sequenceNumber,
+            sequenceNumber,
             type: message.type,
         };
 
-        this.referenceSequenceNumber = sequencedObjectMessage.sequenceNumber;
         this.events.emit("op", sequencedObjectMessage);
-
-        // We will queue a message to update our reference sequence number upon receiving a server operation. This
-        // allows the server to know our true reference sequence number and be able to correctly update the minimum
-        // sequence number (MSN). We don't ackowledge other message types similarly (like a min sequence number update)
-        // to avoid ackowledgement cycles (i.e. ack the MSN update, which updates the MSN, then ack the update, etc...).
-        if (message.type === OperationType) {
-            this.updateSequenceNumber();
-        }
     }
 
     /**
      * Send new messages to the server
      */
     public submit(message: IObjectMessage): this {
-        this.readonly = false;
-        this.stopSequenceNumberUpdate();
         this.document.submitObjectMessage({ address: this.objectId, contents: message });
 
         return this;
-    }
-
-    /**
-     * Acks the server to update the reference sequence number
-     */
-    private updateSequenceNumber() {
-        // Exit early for readonly clients. They don't take part in the minimum sequence number calculation.
-        if (this.readonly) {
-            return;
-        }
-
-        // If an update has already been requeested then mark this fact. We will wait until no updates have
-        // been requested before sending the updated sequence number.
-        if (this.updateSequenceNumberTimer) {
-            this.updateHasBeenRequested = true;
-            return;
-        }
-
-        // Clear an update in 100 ms
-        this.updateSequenceNumberTimer = setTimeout(() => {
-            this.updateSequenceNumberTimer = undefined;
-
-            // If a second update wasn't requested then send an update message. Otherwise defer this until we
-            // stop processing new messages.
-            if (!this.updateHasBeenRequested) {
-                // TODO this probably needs the object its updating the ref seq # for
-                this.document.updateReferenceSequenceNumber(this.objectId, this.referenceSequenceNumber);
-            } else {
-                this.updateHasBeenRequested = false;
-                this.updateSequenceNumber();
-            }
-        }, 100);
-    }
-
-    private stopSequenceNumberUpdate() {
-        if (this.updateSequenceNumberTimer) {
-            clearTimeout(this.updateSequenceNumberTimer);
-        }
-
-        this.updateHasBeenRequested = false;
-        this.updateSequenceNumberTimer = undefined;
     }
 }

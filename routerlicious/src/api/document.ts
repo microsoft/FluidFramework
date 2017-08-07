@@ -12,7 +12,6 @@ import { ObjectStorageService } from "./objectStorageService";
 import {
     AttachObject,
     IAttachMessage,
-    IDocumentMessage,
     IEnvelope,
     IObjectMessage,
     ISequencedDocumentMessage,
@@ -151,7 +150,6 @@ export class Document {
 
     private deltaManager: DeltaManager;
 
-    private clientSequenceNumber = 0;
     private referenceSequenceNumber;
     private minimumSequenceNumber = 0;
 
@@ -279,13 +277,7 @@ export class Document {
     }
 
     private submitMessage(type: string, contents: any) {
-        const documentMessage: IDocumentMessage = {
-            clientSequenceNumber: this.clientSequenceNumber++,
-            contents,
-            referenceSequenceNumber: this.referenceSequenceNumber,
-            type,
-        };
-        this.deltaManager.submitOp(documentMessage);
+        this.deltaManager.submit(type, contents);
     }
 
     private createAttached(id: string, type: string) {
@@ -312,7 +304,10 @@ export class Document {
     }
 
     private getObjectServices(id: string, sequenceNumber: number): IAttachedServices {
-        const connection = new DeltaConnection(id, this, sequenceNumber);
+        // TODO I think the below is probably correct - we can associate the given delta with the latest seq #?
+        // Although maybe I just want to store this value in any snapshot and be able to retrieve it later to be safe?
+        // Or is the MSN the base and I can just go off of that?
+        const connection = new DeltaConnection(id, this, sequenceNumber, this.deltaManager.minimumSequenceNumber);
         const storage = new ObjectStorageService(this.document.documentStorageService);
 
         return {
@@ -338,12 +333,17 @@ export class Document {
 
     private processRemoteMessage(message: ISequencedDocumentMessage) {
         this.referenceSequenceNumber = message.referenceSequenceNumber;
+        const minSequenceNumberChanged = this.minimumSequenceNumber !== message.minimumSequenceNumber;
         this.minimumSequenceNumber = message.minimumSequenceNumber;
 
         if (message.type === ObjectOperation) {
             const envelope = message.contents as IEnvelope;
             const objectDetails = this.distributedObjects[envelope.address];
-            objectDetails.connection.emit(envelope.contents, message.clientId);
+            objectDetails.connection.emit(
+                envelope.contents,
+                message.clientId,
+                message.sequenceNumber,
+                message.minimumSequenceNumber);
         } else if (message.type === AttachObject) {
             // Skip attach messages that are local
             if (message.clientId !== this.document.clientId) {
@@ -353,6 +353,10 @@ export class Document {
                 // all the deltas. Or the object can decide to send the deltas
                 this.loadInternal({ header: null, id: attachMessage.id, type: attachMessage.type, sequenceNumber: 0 });
             }
+        }
+
+        if (minSequenceNumberChanged) {
+            // TODO go through all the messages and upate accordingly
         }
     }
 }

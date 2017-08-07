@@ -4,6 +4,9 @@ export const OperationType = "op";
 // Type representing a minimum sequence number update
 export const MinimumSequenceNumberUpdateType = "msn";
 
+// Empty operation message. Used to send an updated reference sequence number.
+export const NoOp = "noop";
+
 // Operation performed on a distributed data type
 export const ObjectOperation = "objOp";
 

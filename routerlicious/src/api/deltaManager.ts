@@ -4,6 +4,7 @@ import { EventEmitter } from "events";
 import * as api from ".";
 import { ThroughputCounter } from "../utils/counters";
 import { debug } from "./debug";
+import * as protocol from "./protocol";
 
 /**
  * Helper class that manages incoming delta messages. This class ensures that collaborative objects receive delta
@@ -13,16 +14,35 @@ export class DeltaManager {
     private pending: api.ISequencedDocumentMessage[] = [];
     private fetching = false;
 
+    // Flag indicating whether or not we need to udpate the reference sequence number
+    private updateHasBeenRequested = false;
+    private updateSequenceNumberTimer: any;
+
+    // Flag indicating whether the client has only received messages
+    private readonly = true;
+
     // The minimum sequence number and last sequence number received from the server
-    private minimumSequenceNumber = 0;
+    private minSequenceNumber = 0;
+    private clientSequenceNumber = 0;
 
     private emitter = new EventEmitter();
+
+    public get referenceSequenceNumber(): number {
+        return this.baseSequenceNumber;
+    }
+
+    public get minimumSequenceNumber(): number {
+        return this.minSequenceNumber;
+    }
 
     constructor(
         private documentId: string,
         private baseSequenceNumber: number,
         private deltaStorage: api.IDeltaStorageService,
         private deltaConnection: api.IDocumentDeltaConnection) {
+
+        // The MSN starts at the base the manager is initialized to
+        this.minSequenceNumber = this.baseSequenceNumber;
 
         const throughputCounter = new ThroughputCounter(debug, `${this.documentId} `);
         const q = async.queue<api.ISequencedDocumentMessage, void>((op, callback) => {
@@ -49,7 +69,16 @@ export class DeltaManager {
     /**
      * Submits a new delta operation
      */
-    public submitOp(message: api.IDocumentMessage) {
+    public submit(type: string, contents: any) {
+        const message: api.IDocumentMessage = {
+            clientSequenceNumber: this.clientSequenceNumber++,
+            contents,
+            referenceSequenceNumber: this.baseSequenceNumber,
+            type,
+        };
+
+        this.readonly = false;
+        this.stopSequenceNumberUpdate();
         this.deltaConnection.submit(message);
     }
 
@@ -130,8 +159,56 @@ export class DeltaManager {
      */
     private emit(message: api.ISequencedDocumentMessage) {
         // Watch the minimum sequence number and be ready to update as needed
-        this.minimumSequenceNumber = message.minimumSequenceNumber;
+        this.minSequenceNumber = message.minimumSequenceNumber;
         this.baseSequenceNumber = message.sequenceNumber;
         this.emitter.emit("op", message);
+
+        // We will queue a message to update our reference sequence number upon receiving a server operation. This
+        // allows the server to know our true reference sequence number and be able to correctly update the minimum
+        // sequence number (MSN). We don't ackowledge other message types similarly (like a min sequence number update)
+        // to avoid ackowledgement cycles (i.e. ack the MSN update, which updates the MSN, then ack the update, etc...).
+        if (message.type !== protocol.MinimumSequenceNumberUpdateType) {
+            this.updateSequenceNumber();
+        }
+    }
+
+    /**
+     * Acks the server to update the reference sequence number
+     */
+    private updateSequenceNumber() {
+        // Exit early for readonly clients. They don't take part in the minimum sequence number calculation.
+        if (this.readonly) {
+            return;
+        }
+
+        // If an update has already been requeested then mark this fact. We will wait until no updates have
+        // been requested before sending the updated sequence number.
+        if (this.updateSequenceNumberTimer) {
+            this.updateHasBeenRequested = true;
+            return;
+        }
+
+        // Clear an update in 100 ms
+        this.updateSequenceNumberTimer = setTimeout(() => {
+            this.updateSequenceNumberTimer = undefined;
+
+            // If a second update wasn't requested then send an update message. Otherwise defer this until we
+            // stop processing new messages.
+            if (!this.updateHasBeenRequested) {
+                this.submit(api.NoOp, null);
+            } else {
+                this.updateHasBeenRequested = false;
+                this.updateSequenceNumber();
+            }
+        }, 100);
+    }
+
+    private stopSequenceNumberUpdate() {
+        if (this.updateSequenceNumberTimer) {
+            clearTimeout(this.updateSequenceNumberTimer);
+        }
+
+        this.updateHasBeenRequested = false;
+        this.updateSequenceNumberTimer = undefined;
     }
 }

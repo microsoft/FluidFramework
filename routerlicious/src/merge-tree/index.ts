@@ -60,7 +60,6 @@ export class SharedString implements api.ICollaborativeObject {
     type: string = CollaboritiveStringExtension.Type;
     services: api.IDistributedObjectServices;
     connection: api.IDeltaConnection;
-    deltaManager: api.DeltaManager;
     __collaborativeObject__: boolean = true;
     initialSeq: number;
     private events = new EventEmitter();
@@ -152,19 +151,25 @@ export class SharedString implements api.ICollaborativeObject {
     public insertMarker(pos: number, type: string, behaviors: MarkerBehaviors, props?: Object, end?: number) {
         const insertMessage = this.makeInsertMarkerMsg(pos, type, behaviors, props, end);
         this.client.insertMarkerLocal(pos, type, behaviors, props, end);
-        this.deltaManager.submitOp(insertMessage);
+        if (this.services) {
+            this.services.deltaConnection.submit(insertMessage);
+        }
     }
 
     public insertText(text: string, pos: number, props?: Object) {
         const insertMessage = this.makeInsertMsg(text, pos, props);
         this.client.insertTextLocal(text, pos, props);
-        this.deltaManager.submitOp(insertMessage);
+        if (this.services) {
+            this.services.deltaConnection.submit(insertMessage);
+        }
     }
 
     public removeText(start: number, end: number) {
         const removeMessage = this.makeRemoveMsg(start, end);
         this.client.removeSegmentLocal(start, end);
-        this.deltaManager.submitOp(removeMessage);
+        if (this.services) {
+            this.services.deltaConnection.submit(removeMessage);
+        }
     }
 
     private processRemoteOperation(message: api.ISequencedDocumentMessage) {
