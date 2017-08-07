@@ -31,4 +31,11 @@ router.get("/:id", (request, response, next) => {
         });
 });
 
+/**
+ * Empty object id should return error.
+ */
+router.get("/", (request, response, next) => {
+    response.status(500).json("No object found");
+});
+
 export default router;

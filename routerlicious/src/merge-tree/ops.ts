@@ -1,10 +1,9 @@
 export enum MarkerBehaviors {
-    None =              0x0,
-    PropagatesForward = 0x1,
-    Tile =              0x2,
-    Begin =             0x4,
-    End =               0x10,
-    Region =            0x20,
+    None =     0x0,
+    Tile =     0x1,
+    Range =    0x2,
+    Begin =    0x4,
+    End =      0x10,
 }
 
 export interface IMarkerDef {
@@ -20,7 +19,7 @@ export interface IComponentDef {
 export const enum MergeTreeDeltaType {
     INSERT,
     REMOVE,
-    ASSIGN,
+    ANNOTATE,
     GROUP,
 }
 
@@ -47,8 +46,8 @@ export interface IMergeTreeRemoveMsg extends IMergeTreeDelta {
     marker?: IMarkerDef;
 }
 
-export interface IMergeTreeAssignMsg extends IMergeTreeDelta {
-    type: MergeTreeDeltaType.ASSIGN;
+export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
+    type: MergeTreeDeltaType.ANNOTATE;
     pos1: number;
     props: Object;
     pos2?: number;
@@ -60,7 +59,7 @@ export interface IMergeTreeGroupMsg extends IMergeTreeDelta {
     ops: IMergeTreeDelta[];
 }
 
-export type IMergeTreeOp = IMergeTreeInsertMsg | IMergeTreeRemoveMsg | IMergeTreeAssignMsg | IMergeTreeGroupMsg;
+export type IMergeTreeOp = IMergeTreeInsertMsg | IMergeTreeRemoveMsg | IMergeTreeAnnotateMsg | IMergeTreeGroupMsg;
 
 export interface IPropertyString {
     props?: Object;

@@ -10,9 +10,10 @@ import * as redis from "redis";
 import * as socketIo from "socket.io";
 import * as socketIoRedis from "socket.io-redis";
 import * as core from "../core";
+import * as shared from "../shared";
 import * as socketStorage from "../socket-storage";
-import { logger } from "../utils";
 import * as utils from "../utils";
+import { logger } from "../utils";
 import * as messages from "./messages";
 import * as workerFactory from "./workerFactory";
 
@@ -47,45 +48,57 @@ io.adapter(socketIoRedis({ pubClient: pub, subClient: sub }));
 let port = nconf.get("tmz:port");
 const checkerTimeout = nconf.get("tmz:timeoutMSec:checker");
 const schedulerType = nconf.get("tmz:workerType");
+const onlyServer = nconf.get("tmz:onlyServer");
 
 const foreman = workerFactory.create(schedulerType);
 const pendingWork: Set<string> = new Set();
 let workerJoined = false;
 
 async function run() {
-    const deferred = new utils.Deferred<void>();
+    const deferred = new shared.Deferred<void>();
 
     // open a socketio connection and start listening for workers.
     io.on("connection", (socket) => {
         // On joining, add the worker to manager.
         socket.on("workerObject", async (message: socketStorage.IWorker, response) => {
-            const newWorker: messages.IWorkerDetail = {
-                worker: message,
-                socket,
-            };
-            logger.info(`New worker joined. ${socket.id} : ${message.clientId}`);
-            foreman.getManager().addWorker(newWorker);
-            // Process all pending tasks once the first worker joins.
-            if (!workerJoined) {
-                let workIds = Array.from(pendingWork);
-                await processWork(workIds);
-                pendingWork.clear();
-                workerJoined = true;
+            if (!(onlyServer && message.type === "Client")) {
+                const newWorker: messages.IWorkerDetail = {
+                    worker: message,
+                    socket,
+                };
+                logger.info(`New worker joined. ${socket.id} : ${message.clientId}`);
+                foreman.getManager().addWorker(newWorker);
+                // Process all pending tasks once the first worker joins.
+                if (!workerJoined) {
+                    let workIds = Array.from(pendingWork);
+                    await processWork(workIds);
+                    pendingWork.clear();
+                    workerJoined = true;
+                }
+                response(null, "Acked");
+            } else {
+                response(null, "Nacked");
             }
-            response(null, "Added");
+
         });
         // On a heartbeat, refresh worker state.
         socket.on("heartbeatObject", async (message: socketStorage.IWorker, response) => {
-            foreman.getManager().refreshWorker(socket.id);
+            const worker: messages.IWorkerDetail = {
+                worker: message,
+                socket,
+            };
+            foreman.getManager().refreshWorker(worker);
             response(null, "Heartbeat");
         });
         // On disconnect, reassign the work to other workers.
         socket.on("disconnect", async () => {
             logger.info(`Worker id ${socket.id} got disconnected.`);
             const worker = foreman.getManager().getWorker(socket.id);
-            const tasks = foreman.getManager().getDocuments(worker);
-            foreman.getManager().removeWorker(worker);
-            await processWork(tasks);
+            if (worker) {
+                const tasks = foreman.getManager().getDocuments(worker);
+                foreman.getManager().removeWorker(worker);
+                await processWork(tasks);
+            }
         });
 
     });
@@ -96,7 +109,7 @@ async function run() {
         await adjustWorkAssignment();
     }, checkerTimeout);
 
-    let consumer = utils.kafkaConsumer.create(kafkaLibrary, kafkaEndpoint, groupId, topic);
+    let consumer = utils.kafkaConsumer.create(kafkaLibrary, kafkaEndpoint, groupId, topic, true);
 
     consumer.on("data", (message) => {
         q.push(message);
@@ -134,7 +147,11 @@ async function run() {
 
 // Request subscribers to pick up the work.
 async function processWork(ids: string[]) {
-    await Promise.all(foreman.assignWork(ids));
+    try {
+        return await Promise.all(foreman.assignWork(ids));
+    } catch (err) {
+        return err;
+    }
 }
 
 async function adjustWorkAssignment() {

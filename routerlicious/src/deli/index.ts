@@ -8,6 +8,7 @@ import { queue } from "async";
 import * as _ from "lodash";
 import { Collection } from "mongodb";
 import * as core from "../core";
+import * as shared from "../shared";
 import * as utils from "../utils";
 import { logger } from "../utils";
 import { TakeANumber } from "./takeANumber";
@@ -94,7 +95,7 @@ async function processMessages(
     consumer: utils.kafkaConsumer.IConsumer,
     objectsCollection: Collection): Promise<void> {
 
-    const deferred = new utils.Deferred<void>();
+    const deferred = new shared.Deferred<void>();
     const dispensers: { [key: string]: TakeANumber } = {};
     const partitionManager = new core.PartitionManager(
         groupId,
@@ -148,7 +149,7 @@ async function run() {
 
     // Prep Kafka producer and consumer
     let producer = utils.kafkaProducer.create(kafkaLibrary, kafkaEndpoint, kafkaClientId, sendTopic);
-    let consumer = utils.kafkaConsumer.create(kafkaLibrary, kafkaEndpoint, groupId, receiveTopic);
+    let consumer = utils.kafkaConsumer.create(kafkaLibrary, kafkaEndpoint, groupId, receiveTopic, false);
 
     // Return a promise that will never resolve (since we run forever) but will reject
     // should an error occur

@@ -788,9 +788,9 @@ export function TestPack() {
             let preLen = client.getLength();
             let pos = random.integer(0, preLen)(mt);
             if (includeMarkers) {
-                server.enqueueMsg(client.makeInsertMarkerMsg("test", ops.MarkerBehaviors.PropagatesForward,
-                    pos, MergeTree.UnassignedSequenceNumber, client.getCurrentSeq(), server.longClientId));
-                client.insertMarkerLocal(pos, "test", ops.MarkerBehaviors.PropagatesForward);
+                server.enqueueMsg(client.makeInsertMarkerMsg("test", ops.MarkerBehaviors.Tile,
+                    pos, MergeTree.UnassignedSequenceNumber, client.getCurrentSeq(), ""));
+                client.insertMarkerLocal(pos, "test", ops.MarkerBehaviors.Tile);
             }
             server.enqueueMsg(client.makeInsertMsg(text, pos, MergeTree.UnassignedSequenceNumber,
                 client.getCurrentSeq(), server.longClientId));
@@ -1236,7 +1236,7 @@ export function TestPack() {
                 console.log(cli.relText(clientId, refSeq));
             }
         }
-        cli.insertMarkerRemote({ type: "peach", behaviors: ops.MarkerBehaviors.PropagatesForward }, 0, {},
+        cli.insertMarkerRemote({ type: "peach", behaviors: ops.MarkerBehaviors.Tile }, 0, {},
             5, 0, 2)
         cli.insertTextRemote("very ", 6, undefined, 4, 2, 2);
         console.log(cli.mergeTree.toString());
@@ -1262,8 +1262,8 @@ export function TestPack() {
         }
         cli.insertTextRemote("abcde", 0, undefined, 1, 0, 2);
         cli.insertTextRemote("yyy", 0, undefined, 2, 0, 1);
-        cli.insertTextRemote("zzz", undefined, 2, 3, 1, 3);
-        cli.insertTextRemote("EAGLE", undefined, 1, 4, 1, 4);
+        cli.insertTextRemote("zzz", 2, undefined, 3, 1, 3);
+        cli.insertTextRemote("EAGLE", 1, undefined, 4, 1, 4);
         cli.insertTextRemote("HAS", 4, undefined, 5, 1, 5);
         cli.insertTextLocal(" LANDED", 19);
         cli.insertTextRemote("yowza: ", 0, undefined, 6, 4, 2);
@@ -1337,6 +1337,111 @@ export function TestPack() {
         manyMergeTrees: manyMergeTrees
     }
 }
+
+function compareProxStrings(a: Collections.ProxString<number>, b: Collections.ProxString<number>) {
+    let ascore = (a.invDistance * 200) + a.val;
+    let bscore = (b.invDistance * 200) + b.val;
+    return bscore - ascore;
+}
+
+function shuffle<T>(a: Array<T>) {
+    let currentIndex = a.length;
+    let temp: T;
+    let randomIndex: number;
+
+    // While there remain elements to shuffle...
+    while (0 !== currentIndex) {
+
+        // Pick a remaining element...
+        randomIndex = Math.floor(Math.random() * currentIndex);
+        currentIndex--;
+
+        // And swap it with the current element.
+        temp = a[currentIndex];
+        a[currentIndex] = a[randomIndex];
+        a[randomIndex] = temp;
+    }
+
+    return a;
+}
+
+function tst() {
+    let tree = new Collections.TST<boolean>();
+    let entries = ["giraffe", "hut", "aardvark", "gold", "hover", "yurt", "hot", "antelope", "gift", "banana"];
+    for (let entry of entries) {
+        tree.put(entry, true);
+    }
+    for (let entry of entries) {
+        console.log(`get ${entry}: ${tree.get(entry)}`);
+    }
+    let p1 = tree.keysWithPrefix("g");
+    let p2 = tree.keysWithPrefix("gi");
+    console.log(p1);
+    console.log(p2);
+    let p3 = tree.neighbors("hat");
+    console.log(p3);
+    let ntree = new Collections.TST<number>();
+    let filename = path.join(__dirname, "../../public/literature/dict.txt")
+    let content = fs.readFileSync(filename, "utf8");
+    let splitContent = content.split(/\r\n|\n/g);
+    let corpusFilename = path.join(__dirname, "../../public/literature/pp.txt")
+    let corpusContent = fs.readFileSync(corpusFilename, "utf8");
+    let corpusTree = new Collections.TST<number>();
+    function addCorpus(corpusContent: string, corpusTree: Collections.TST<number>) {
+        let count = 0;
+        let re = /\b\w+\b/g;
+        let result: RegExpExecArray;
+        do {
+            result = re.exec(corpusContent);
+            if (result) {
+                let candidate = result[0];
+                count++;
+                let val = corpusTree.get(candidate);
+                if (val !== undefined) {
+                    corpusTree.put(candidate, val+1);
+                }
+                else {
+                    corpusTree.put(candidate, 1);
+                }
+            }
+        } while (result);
+        return count;
+    }
+    let clockStart = clock();
+    let count = addCorpus(corpusContent, corpusTree);
+    corpusFilename = path.join(__dirname, "../../public/literature/shakespeare.txt")
+    corpusContent = fs.readFileSync(corpusFilename, "utf8");
+    count += addCorpus(corpusContent, corpusTree);
+    let a = shuffle(splitContent);
+    for (let entry of a) {
+        let freq = corpusTree.get(entry);
+        if (freq !== undefined) {
+            ntree.put(entry, freq);
+        }
+        else {
+            ntree.put(entry, 1);
+        }
+    }
+    console.log(`size: ${ntree.size()}; random insert takes ${elapsedMilliseconds(clockStart)}ms`);
+    for (let entry of a) {
+        if (!ntree.get(entry)) {
+            console.log(`biff ${entry}`);
+        }
+    }
+    let p4= ntree.neighbors("het").sort(compareProxStrings);
+    console.log(p4);
+    p4 = ntree.neighbors("peech").sort(compareProxStrings);
+    console.log(p4);
+    p4 = ntree.neighbors("tihs").sort(compareProxStrings);
+    console.log(p4);
+}
+
+let testTST = false;
+if (testTST) {
+    tst();
+}
+
+
 //simpleTest();
 //fileTest1();
 //integerTest1();

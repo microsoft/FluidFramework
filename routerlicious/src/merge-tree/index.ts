@@ -41,13 +41,13 @@ function textsToSegments(texts: IPropertyString[]) {
     for (let ptext of texts) {
         let segment: MergeTree.Segment;
         if (ptext.text!==undefined) {
-            segment = MergeTree.TextSegment.make(ptext.text, ptext.props,
+            segment = MergeTree.TextSegment.make(ptext.text, ptext.props as MergeTree.PropertySet,
                 MergeTree.UniversalSequenceNumber,
                 MergeTree.LocalClientId);
         }
         else {
             // for now assume marker
-            segment = MergeTree.Marker.make(ptext.marker.type, ptext.marker.behaviors, ptext.props,
+            segment = MergeTree.Marker.make(ptext.marker.type, ptext.marker.behaviors, ptext.props as MergeTree.PropertySet,
                 MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
         }
         segments.push(segment);
@@ -148,7 +148,19 @@ export class SharedString implements api.ICollaborativeObject {
         };
     }
 
-    public insertMarker(pos: number, type: string, behaviors: MarkerBehaviors, props?: Object, end?: number) {
+    private makeAnnotateMsg(props: MergeTree.PropertySet, start: number, end: number) {
+        return <api.IObjectMessage>{
+            clientSequenceNumber: this.clientSequenceNumber++,
+            referenceSequenceNumber: this.client.getCurrentSeq(),
+            objectId: this.id,
+            contents: {
+                type: MergeTreeDeltaType.ANNOTATE, pos1: start, pos2: end, props
+            },
+            type: api.ObjectOperation,
+        };
+    }
+
+    public insertMarker(pos: number, type: string, behaviors: MarkerBehaviors, props?: MergeTree.PropertySet, end?: number) {
         const insertMessage = this.makeInsertMarkerMsg(pos, type, behaviors, props, end);
         this.client.insertMarkerLocal(pos, type, behaviors, props, end);
         if (this.services) {
@@ -156,7 +168,7 @@ export class SharedString implements api.ICollaborativeObject {
         }
     }
 
-    public insertText(text: string, pos: number, props?: Object) {
+    public insertText(text: string, pos: number, props?: MergeTree.PropertySet) {
         const insertMessage = this.makeInsertMsg(text, pos, props);
         this.client.insertTextLocal(text, pos, props);
         if (this.services) {
@@ -172,7 +184,15 @@ export class SharedString implements api.ICollaborativeObject {
         }
     }
 
-    private processRemoteOperation(message: api.ISequencedDocumentMessage) {
+    public annotateRange(props: MergeTree.PropertySet, start: number, end: number) {
+        const annotateMessage = this.makeAnnotateMsg(props, start, end);
+        this.client.annotateSegmentLocal(props, start, end);
+        if (this.services) {
+            this.services.deltaConnection.submit(annotateMessage);
+        }
+    }
+
+    private processRemoteOperation(message: api.ISequencedObjectMessage) {
         this.events.emit("pre-op", message);
         
         if (this.isLoaded) {

@@ -44,8 +44,8 @@ function getRightmostMarker(node: SharedString.Node): SharedString.Marker {
         return <SharedString.Marker>node;
     }
     else {
-        let block = <SharedString.Block>node;
-        return block.rightmostMarkers["line"];
+        let block = <SharedString.HierBlock>node;
+        return block.rightmostTiles["line"];
     }
 }
 
@@ -141,7 +141,7 @@ class FlowAdapter {
                                 for (let i = 0; i < texts.length; i++) {
                                     if (i > 0) {
                                         this.sharedString.insertMarker(pos1, "line",
-                                            api.MarkerBehaviors.PropagatesForward);
+                                            api.MarkerBehaviors.Tile);
                                         pos1++;
                                     }
                                     this.sharedString.insertText(texts[i], pos1);
@@ -310,6 +310,7 @@ function initializeSnapshot(invite: boolean) {
     let editor = vscode.window.activeTextEditor;
     let doc = editor.document;
     SharedString.MergeTree.initBlockUpdateActions = { child: blockUpdateChild };
+    SharedString.MergeTree.blockUpdateMarkers = true;
     vscode.window.showInputBox({ prompt: "sessionId: " }).then((sessionId?: string) => {
         if (sessionId) {
             const sharedString = extension.load(sessionId, services, api.defaultRegistry) as SharedString.SharedString;
@@ -340,7 +341,7 @@ function initializeSnapshot(invite: boolean) {
                     console.log("local load...");
                     const lines = text.split(/\r\n|\n/);
                     for (const line of lines) {
-                        sharedString.insertMarker(sharedString.client.getLength(), "line", api.MarkerBehaviors.PropagatesForward);
+                        sharedString.insertMarker(sharedString.client.getLength(), "line", api.MarkerBehaviors.Tile);
                         if (line.length > 0) {
                             sharedString.insertText(line, sharedString.client.getLength());
                         }

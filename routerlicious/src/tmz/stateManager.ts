@@ -34,11 +34,18 @@ export class StateManager {
         delete this.documentToWorkerMap[docId];
     }
 
-    public refreshWorker(workerId: string) {
-        this.workerToDocumentMap[workerId].activeTS = Date.now();
+    public refreshWorker(worker: IWorkerDetail) {
+        if (!(worker.socket.id in this.workerToDocumentMap)) {
+            this.addWorker(worker);
+        } else {
+            this.workerToDocumentMap[worker.socket.id].activeTS = Date.now();
+        }
     }
 
-    public getWorker(workerId: string): IWorkerDetail {
+    public getWorker(workerId: string): any {
+        if (!(workerId in this.workerToDocumentMap)) {
+            return;
+        }
         return this.workerToDocumentMap[workerId].worker;
     }
 

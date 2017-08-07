@@ -122,7 +122,9 @@ export async function load(id: string, config: any) {
     }
 
     // Bootstrap worker service.
-    shared.registerWorker(config);
+    if (config.permission.cell) {
+        shared.registerWorker(config);
+    }
 
     $("document").ready(() => {
         // Display the initial value and then listen for updates

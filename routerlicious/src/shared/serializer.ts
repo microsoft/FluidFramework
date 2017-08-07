@@ -5,13 +5,23 @@ export class Serializer {
 
     private pendingSerialize: boolean = false;
     private dirty: boolean = false;
+    private lastSerializedMsn: number = 0;
+    private currentMsn: number = 0;
 
     constructor(private root: api.Document) {
     }
 
-    public run() {
+    public run(op: api.ISequencedMessage) {
+        this.currentMsn = op.minimumSequenceNumber;
+        this.snapshot();
+    }
+
+    private snapshot() {
         if (this.pendingSerialize) {
             this.dirty = true;
+            return;
+        }
+        if (this.lastSerializedMsn >= this.currentMsn) {
             return;
         }
 
@@ -31,10 +41,10 @@ export class Serializer {
         // Finally clause to start snapshotting again once we finish
         snapshotP.then(() => {
             this.pendingSerialize = false;
+            this.lastSerializedMsn = this.currentMsn;
             if (this.dirty) {
-                this.run();
+                this.snapshot();
             }
         });
     }
-
 }

@@ -263,7 +263,10 @@ export async function onLoad(id: string, config: any) {
 
     sharedString.on("loadFinshed", async (data: SharedString.MergeTreeChunk) => {
         // Bootstrap worker service.
-        shared.registerWorker(config);
+        if (config.permission.sharedText) {
+            shared.registerWorker(config);
+        }
+
         theFlow.loadFinished(clockStart);
     });
 }

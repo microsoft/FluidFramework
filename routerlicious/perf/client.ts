@@ -40,7 +40,7 @@ async function consume() {
         callback();
     }, 1);
 
-    let consumer = utils.kafkaConsumer.create(kafkaLibrary, kafkaEndpoint, "client", receiveTopic);
+    let consumer = utils.kafkaConsumer.create(kafkaLibrary, kafkaEndpoint, "client", receiveTopic, true);
     consumer.on("data", (data) => {
         q.push(data);
     });

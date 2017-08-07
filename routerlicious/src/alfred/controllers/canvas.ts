@@ -25,7 +25,9 @@ export async function initialize(id: string, config: any) {
     const root = await doc.getRoot().getView();
 
     // Bootstrap worker service.
-    shared.registerWorker(config);
+    if (config.permission.canvas) {
+        shared.registerWorker(config);
+    }
 
     if (!root.has("ink")) {
         root.set("ink", doc.createInk());

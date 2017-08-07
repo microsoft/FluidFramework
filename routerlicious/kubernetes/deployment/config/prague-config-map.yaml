@@ -26,19 +26,19 @@ data:
         "kafka": {
             "lib": {
                 "name": "kafka-node",
-                "endpoint": "zookeeper:2181"
+                "endpoint": "praguekafka-broker-1:2181"
             }
         },
         "alfred": {
             "kafkaClientId": "alfred",
-            "topic": "rawdeltas",
+            "topic": "rawdeltasrep",
             "bucket": "snapshots",
             "restJsonSize": "50mb"
         },
         "deli": {
             "topics": {
-                "receive": "rawdeltas",
-                "send": "deltas"
+                "receive": "rawdeltasrep",
+                "send": "deltasrep"
             },
             "kafkaClientId": "deli",
             "groupId": "deli",
@@ -49,10 +49,10 @@ data:
             "queue": "snapshot",
             "bucket": "snapshots",
             "alfred": "http://alfred",
-            "tmz": "http://tmz:4000"
+            "tmz": "http://tmz"
         },
         "scriptorium": {
-            "topic": "deltas",
+            "topic": "deltasrep",
             "kafkaClientId": "scriptorium",
             "groupId": "scriptorium",
             "checkpointBatchSize": 1,
@@ -60,7 +60,7 @@ data:
         },
         "tmz": {
             "queue": "snapshot",
-            "topic": "deltas",
+            "topic": "deltasrep",
             "kafkaClientId": "tmz",
             "groupId": "tmz",
             "port": 4000,
@@ -70,7 +70,8 @@ data:
                 "document": 15000
             },
             "workerType": "random",
-            "workerAckTimeMSec": 100
+            "workerAckTimeMSec": 100,
+            "onlyServer": false
         },
         "redis": {
             "host": "steely-ant-redis",
@@ -88,7 +89,8 @@ data:
                     "deviceId": "routerlicious",
                     "host": "pkarimov-paidIOT.azure-devices.net",
                     "sharedAccessKeyName": "iothubowner",
-                    "sharedAccessKey": "8mvOmNnUklwnuzY+U96V51w+qCq262ZUpSkdw8nTZ18="
+                    "sharedAccessKey": "8mvOmNnUklwnuzY+U96V51w+qCq262ZUpSkdw8nTZ18=",
+                    "url": "http://praguekube.westus2.cloudapp.azure.com/intelligence/resume"
                 },
                 "textAnalytics": {
                     "key": "c8b60dc5e49849ce903d7d29a2dce550"
@@ -97,12 +99,16 @@ data:
                     "url": "http://praguepy.westus2.cloudapp.azure.com/"
                 }
             },
-            "port": {
-                "server": 3000,
-                "worker": 4000
-            },
+            "url": "http://praguetmz.westus2.cloudapp.azure.com",
             "storageBucket": "snapshots",
-            "intervalMSec": 10000
+            "intervalMSec": 10000,
+            "onlyServer": false,
+            "permission": {
+                "canvas": false,
+                "cell": true,
+                "maps": true,
+                "sharedText": false
+            }
         },
         "git": {
             "repository": "prague",

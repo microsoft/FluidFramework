@@ -5,7 +5,6 @@ export * from "./file";
 export * from "./heap";
 export * from "./logger";
 export * from "./mongo";
-export * from "./promises";
 
 export interface ISharedAccessPolicy {
     sharedAccessKeyName: string;

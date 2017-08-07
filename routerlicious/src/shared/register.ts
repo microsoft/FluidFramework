@@ -1,11 +1,16 @@
 import { WorkerService } from "./workerService";
 
 export function registerWorker(config: any) {
-    const workerUrl =  `${document.location.protocol}//${document.location.hostname}:${config.port.worker}`;
+    if (!config.onlyServer) {
+        const workerUrl =  config.url;
 
-    // Bootstrap service and connect.
-    const workerService = new WorkerService(document.location.origin, workerUrl, config);
-    workerService.connect("client").catch(() => {
-        console.log(`Error initiating worker`);
-    });
+        // Bootstrap service and connect. On failure, try to connect again.
+        console.log(`Registering as worker`);
+        const workerService = new WorkerService(document.location.origin, workerUrl, config);
+        let workerP = workerService.connect("Client");
+        workerP.catch((error) => {
+            console.log(`Error connecting to worker`);
+            workerP = workerService.connect("Client");
+        });
+    }
 }
