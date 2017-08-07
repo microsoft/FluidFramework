@@ -165,9 +165,10 @@ export class DeltaManager {
 
         // We will queue a message to update our reference sequence number upon receiving a server operation. This
         // allows the server to know our true reference sequence number and be able to correctly update the minimum
-        // sequence number (MSN). We don't ackowledge other message types similarly (like a min sequence number update)
-        // to avoid ackowledgement cycles (i.e. ack the MSN update, which updates the MSN, then ack the update, etc...).
-        if (message.type !== protocol.MinimumSequenceNumberUpdateType) {
+        // sequence number (MSN). We don't ackowledge other message types similarly (like a min sequence number update
+        // or a no-op) to avoid ackowledgement cycles (i.e. ack the MSN update, which updates the MSN,
+        // then ack the update, etc...).
+        if (message.type !== protocol.NoOp) {
             this.updateSequenceNumber();
         }
     }
