@@ -151,7 +151,7 @@ class Speller {
                     }
                     else {
                         // console.log(`spell ok (${start}, ${end}): ${text.substring(result.index, re.lastIndex)}`);
-                        this.sharedString.annotateRange({ textError: null }, start, end);
+                        // this.sharedString.annotateRange({ textError: null }, start, end);
                     }
                 }
             }
