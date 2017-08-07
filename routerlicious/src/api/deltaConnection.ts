@@ -46,7 +46,7 @@ class RangeTracker {
         range.primary = primary;
 
         // And remove unnecessary ranges
-        this.ranges = this.ranges.slice(index);
+        this.ranges = this.ranges.slice(index - 1);
     }
 
     public ticket(primary: number): number {
@@ -121,6 +121,11 @@ export class DeltaConnection implements IDeltaConnection {
         };
 
         this.events.emit("op", sequencedObjectMessage);
+    }
+
+    public updateMinSequenceNumber(value: number) {
+        this.map.updateBase(value);
+        this.events.emit("minSequenceNumber", this.map.getClosest(value));
     }
 
     /**

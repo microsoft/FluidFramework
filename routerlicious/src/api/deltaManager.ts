@@ -1,17 +1,17 @@
 import * as assert from "assert";
 import * as async from "async";
 import { EventEmitter } from "events";
-import * as api from ".";
 import { ThroughputCounter } from "../utils/counters";
 import { debug } from "./debug";
 import * as protocol from "./protocol";
+import * as storage from "./storage";
 
 /**
  * Helper class that manages incoming delta messages. This class ensures that collaborative objects receive delta
  * messages in order regardless of possible network conditions or timings causing out of order delivery.
  */
 export class DeltaManager {
-    private pending: api.ISequencedDocumentMessage[] = [];
+    private pending: protocol.ISequencedDocumentMessage[] = [];
     private fetching = false;
 
     // Flag indicating whether or not we need to udpate the reference sequence number
@@ -38,14 +38,14 @@ export class DeltaManager {
     constructor(
         private documentId: string,
         private baseSequenceNumber: number,
-        private deltaStorage: api.IDeltaStorageService,
-        private deltaConnection: api.IDocumentDeltaConnection) {
+        private deltaStorage: storage.IDeltaStorageService,
+        private deltaConnection: storage.IDocumentDeltaConnection) {
 
         // The MSN starts at the base the manager is initialized to
         this.minSequenceNumber = this.baseSequenceNumber;
 
         const throughputCounter = new ThroughputCounter(debug, `${this.documentId} `);
-        const q = async.queue<api.ISequencedDocumentMessage, void>((op, callback) => {
+        const q = async.queue<protocol.ISequencedDocumentMessage, void>((op, callback) => {
             // Handle the op
             this.handleOp(op);
             callback();
@@ -58,7 +58,7 @@ export class DeltaManager {
         };
 
         // listen for specific events
-        this.deltaConnection.on("op", (messages: api.ISequencedDocumentMessage[]) => {
+        this.deltaConnection.on("op", (messages: protocol.ISequencedDocumentMessage[]) => {
             for (const message of messages) {
                 throughputCounter.produce();
                 q.push(message);
@@ -70,7 +70,7 @@ export class DeltaManager {
      * Submits a new delta operation
      */
     public submit(type: string, contents: any) {
-        const message: api.IDocumentMessage = {
+        const message: protocol.IDocumentMessage = {
             clientSequenceNumber: this.clientSequenceNumber++,
             contents,
             referenceSequenceNumber: this.baseSequenceNumber,
@@ -82,11 +82,11 @@ export class DeltaManager {
         this.deltaConnection.submit(message);
     }
 
-    public onDelta(listener: (message: api.ISequencedDocumentMessage) => void) {
+    public onDelta(listener: (message: protocol.ISequencedDocumentMessage) => void) {
         this.emitter.addListener("op", listener);
     }
 
-    public handleOp(message: api.ISequencedDocumentMessage) {
+    public handleOp(message: protocol.ISequencedDocumentMessage) {
         // Incoming sequence numbers should be one higher than the previous ones seen. If not we have missed the
         // stream and need to query the server for the missing deltas.
         if (message.sequenceNumber !== this.baseSequenceNumber + 1) {
@@ -99,7 +99,7 @@ export class DeltaManager {
     /**
      * Handles an out of order message retrieved from the server
      */
-    private handleOutOfOrderMessage(message: api.ISequencedDocumentMessage) {
+    private handleOutOfOrderMessage(message: protocol.ISequencedDocumentMessage) {
         if (message.sequenceNumber <= this.baseSequenceNumber) {
             debug(`Received duplicate message ${this.documentId}@${message.sequenceNumber}`);
             return;
@@ -133,7 +133,7 @@ export class DeltaManager {
             });
     }
 
-    private catchUp(messages: api.ISequencedDocumentMessage[]) {
+    private catchUp(messages: protocol.ISequencedDocumentMessage[]) {
         // Apply current operations
         for (const message of messages) {
             // Ignore sequence numbers prior to the base. This can happen at startup when we fetch all missing
@@ -157,7 +157,7 @@ export class DeltaManager {
     /**
      * Revs the base sequence number based on the message and notifices the listener of the new message
      */
-    private emit(message: api.ISequencedDocumentMessage) {
+    private emit(message: protocol.ISequencedDocumentMessage) {
         // Watch the minimum sequence number and be ready to update as needed
         this.minSequenceNumber = message.minimumSequenceNumber;
         this.baseSequenceNumber = message.sequenceNumber;
@@ -196,7 +196,7 @@ export class DeltaManager {
             // If a second update wasn't requested then send an update message. Otherwise defer this until we
             // stop processing new messages.
             if (!this.updateHasBeenRequested) {
-                this.submit(api.NoOp, null);
+                this.submit(protocol.NoOp, null);
             } else {
                 this.updateHasBeenRequested = false;
                 this.updateSequenceNumber();

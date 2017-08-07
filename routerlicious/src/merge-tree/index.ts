@@ -1,17 +1,17 @@
-// tslint:disable
-
-import * as MergeTree from "./mergeTree";
 import { EventEmitter } from "events";
-import * as Paparazzo from "./snapshot";
-import * as api from "../api";
 import * as Collections from "./collections";
-
+import * as MergeTree from "./mergeTree";
+import { IMergeTreeInsertMsg, IPropertyString, MarkerBehaviors, MergeTreeDeltaType } from "./ops";
+import * as Paparazzo from "./snapshot";
+import { findRandomWord, loadSegments } from "./text";
 export * from "./mergeTree";
-export { Collections };
-import { MergeTreeDeltaType, IMergeTreeInsertMsg, IPropertyString, MarkerBehaviors } from "./ops";
+import * as api from "../api";
+
 export * from "./ops";
-import { loadSegments, findRandomWord } from "./text";
+export { Collections };
 export { loadSegments, findRandomWord };
+
+// tslint:disable
 
 export class CollaboritiveStringExtension implements api.IExtension {
     public static Type = "https://graph.microsoft.com/types/mergeTree";

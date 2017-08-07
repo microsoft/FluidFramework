@@ -3,7 +3,6 @@
 import * as random from "random-js";
 import * as MergeTree from "./mergeTree";
 import * as fs from "fs";
-// import * as api from "../api";
 
 export function loadTextFromFile(filename: string, mergeTree: MergeTree.MergeTree, segLimit = 0) {
     let content = fs.readFileSync(filename, "utf8");

@@ -1,4 +1,5 @@
 import * as assert from "assert";
+import { EventEmitter } from "events";
 import * as uuid from "node-uuid";
 import * as cell from "../cell";
 import * as ink from "../ink";
@@ -150,11 +151,17 @@ export class Document {
 
     private deltaManager: DeltaManager;
 
+    private events = new EventEmitter();
+
     private referenceSequenceNumber;
     private minimumSequenceNumber = 0;
 
     public get clientId(): string {
         return this.document.clientId;
+    }
+
+    public get id(): string {
+        return this.document.documentId;
     }
 
     /**
@@ -266,8 +273,17 @@ export class Document {
         this.submitMessage(ObjectOperation, envelope);
     }
 
-    public updateReferenceSequenceNumber(objectId: string, referenceSequenceNumber: number) {
-        // throw new Error("Not Implemented");
+    public on(event: string, listener: (...args: any[]) => void): this {
+        this.events.on(event, listener);
+        return this;
+    }
+
+    /**
+     * Called to snapshot the given document
+     */
+    public snapshot(): Promise<void> {
+        debug("I would snapshot!");
+        return Promise.resolve();
     }
 
     private processPendingMessages(messages: ISequencedDocumentMessage[]) {
@@ -357,7 +373,16 @@ export class Document {
 
         if (minSequenceNumberChanged) {
             // TODO go through all the messages and upate accordingly
+            // tslint:disable-next-line:forin
+            for (const objectId in this.distributedObjects) {
+                const object = this.distributedObjects[objectId];
+                if (!object.object.isLocal()) {
+                    object.connection.updateMinSequenceNumber(message.minimumSequenceNumber);
+                }
+            }
         }
+
+        this.events.emit("op", message);
     }
 }
 

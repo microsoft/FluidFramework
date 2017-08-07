@@ -6,7 +6,7 @@ export class Serializer {
     private pendingSerialize: boolean = false;
     private dirty: boolean = false;
 
-    constructor(private root: api.ICollaborativeObject) {
+    constructor(private root: api.Document) {
     }
 
     public run() {

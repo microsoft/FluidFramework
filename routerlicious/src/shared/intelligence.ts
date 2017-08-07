@@ -8,7 +8,7 @@ const defaultWaitTime = 5 * 1000;
 /**
  * The rate limiter is a simple class that will defer running an async action
  */
-class RateLimiter {
+export class RateLimiter {
     private pending = false;
     private dirty = false;
 

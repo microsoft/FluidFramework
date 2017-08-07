@@ -109,23 +109,23 @@ async function run() {
 
     const q = queue(async (message: any, callback) => {
         const value = JSON.parse(message.value.toString("utf8")) as core.IRawOperationMessage;
-        const objectId = value.documentId;
+        const documentId = value.documentId;
 
         // Check if already requested. Update the Timestamp in the process.
-        if (foreman.getManager().updateDocumentIfFound(objectId)) {
+        if (foreman.getManager().updateDocumentIfFound(documentId)) {
             callback();
             return;
         }
 
         // No worker joined yet. Store document to process later.
         if (!workerJoined) {
-            pendingWork.add(objectId);
+            pendingWork.add(documentId);
             callback();
             return;
         }
 
-        logger.info(`Requesting work for ${objectId}`);
-        await processWork([objectId]);
+        logger.info(`Requesting work for ${documentId}`);
+        await processWork([documentId]);
         callback();
     }, 1);
 

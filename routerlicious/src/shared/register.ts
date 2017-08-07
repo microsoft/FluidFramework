@@ -1,4 +1,4 @@
-import { WorkerService} from ".";
+import { WorkerService } from "./workerService";
 
 export function registerWorker(config: any) {
     const workerUrl =  `${document.location.protocol}//${document.location.hostname}:${config.port.worker}`;

@@ -84,10 +84,10 @@ export class WorkerService implements api.IWorkerService {
         // TODO fix below when ready
         const insightsMap = rootView.get("insights");
         // TODO the null below is wrong
-        this.processWork(null, insightsMap);
+        this.processWork(document, insightsMap);
     }
 
-    private processWork(doc: api.ICollaborativeObject, insightsMap: api.IMap) {
+    private processWork(doc: api.Document, insightsMap: api.IMap) {
         const serializer = new shared.Serializer(doc);
 
         const intelligenceManager = new shared.IntelligentServicesManager(insightsMap);
@@ -99,7 +99,7 @@ export class WorkerService implements api.IWorkerService {
                                             this.config.intelligence.nativeTextAnalytics));
         doc.on("op", (op) => {
             serializer.run();
-            intelligenceManager.process(doc);
+            // intelligenceManager.process(doc);
         });
 
         throw new Error("Not implemented");
