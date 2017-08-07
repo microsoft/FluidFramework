@@ -11,7 +11,7 @@ export class Serializer {
     constructor(private root: api.Document) {
     }
 
-    public run(op: api.ISequencedMessage) {
+    public run(op: api.ISequencedDocumentMessage) {
         this.currentMsn = op.minimumSequenceNumber;
         this.snapshot();
     }

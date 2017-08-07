@@ -11,8 +11,8 @@ import * as shared from "./";
 export class WorkerService implements api.IWorkerService {
 
     private socket;
-    private documentMap: { [docId: string]: api.ICollaborativeObject} = {};
-    private services: api.ICollaborationServices;
+    private documentMap: { [docId: string]: api.Document} = {};
+    private opHandlerMap: { [docId: string]: (op: any) => void} = {};
 
     constructor(private serverUrl: string, private workerUrl: string, private config: any) {
         this.socket = io(this.workerUrl, { transports: ["websocket"] });
@@ -30,7 +30,6 @@ export class WorkerService implements api.IWorkerService {
             clientId,
             type,
         };
-
 
         const deferred = new shared.Deferred<void>();
         // Subscribes to TMZ. Starts listening to messages if TMZ acked the subscribtion.
@@ -77,12 +76,7 @@ export class WorkerService implements api.IWorkerService {
     }
 
     private initializeServices() {
-        const objectStorageService = new shared.ObjectStorageService(this.serverUrl);
-        this.services = {
-            deltaNotificationService: new socketStorage.DeltaNotificationService(this.serverUrl),
-            deltaStorageService: new socketStorage.DeltaStorageService(this.serverUrl),
-            objectStorageService,
-        };
+        socketStorage.registerAsDefault(this.serverUrl);
     }
 
     private async processDocument(id: string) {
@@ -90,11 +84,14 @@ export class WorkerService implements api.IWorkerService {
             return;
         }
 
-        const docManager = new shared.DocumentManager(this.serverUrl, this.services);
-        docManager.load(id).then(async (doc) => {
+        api.load(id).then(async (doc) => {
             console.log(`Loaded the document ${id}`);
             this.documentMap[id] = doc;
-            const insightsMap = await docManager.createMap(`${id}-insights`);
+            const root = await doc.getRoot().getView();
+            if (!root.has("insights")) {
+                root.set("insights", doc.createMap());
+            }
+            const insightsMap = root.get("insights");
             this.processWork(doc, insightsMap);
         }, (error) => {
             console.log(`Document ${id} not found!`);
@@ -110,23 +107,21 @@ export class WorkerService implements api.IWorkerService {
         intelligenceManager.registerService(textAnalytics.factory.create(this.config.intelligence.textAnalytics));
         intelligenceManager.registerService(nativeTextAnalytics.factory.create(
                                             this.config.intelligence.nativeTextAnalytics));
-        doc.on("op", (op) => {
-            serializer.run(op);
-            intelligenceManager.process(doc);
-        });
 
-        throw new Error("Not implemented");
+        const eventHandler = (op) => {
+            serializer.run(op);
+            // TODO turn back on
+            // intelligenceManager.process(doc);
+        };
+        this.opHandlerMap[doc.id] = eventHandler;
+        doc.on("op", eventHandler);
     }
 
     private revokeWork(id: string) {
         if (id in this.documentMap) {
-            // TODO fix below when ready
-            throw new Error("Not implemented");
-            // this.documentMap[id].removeListener("op", (op) => {
-            //     console.log(`Revoked listener from ${id}`);
-            // });
-            // delete this.documentMap[id];
+            this.documentMap[id].removeListener("op", this.opHandlerMap[id]);
+            delete this.documentMap[id];
+            delete this.opHandlerMap[id];
         }
     }
-
 }

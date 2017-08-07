@@ -278,6 +278,11 @@ export class Document {
         return this;
     }
 
+    public removeListener(event: string, listener: (...args: any[]) => void): this {
+        this.events.removeListener(event, listener);
+        return this;
+    }
+
     /**
      * Called to snapshot the given document
      */

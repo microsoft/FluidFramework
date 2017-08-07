@@ -41,12 +41,12 @@ class Speller {
     }
 
     setEvents() {
-        this.sharedString.on("op", (msg: API.ISequencedMessage) => {
-            if (msg && msg.op) {
-                let delta = <API.IMergeTreeOp>msg.op;
-                if (delta.type === API.MergeTreeDeltaType.INSERT) {
+        this.sharedString.on("op", (msg: API.ISequencedObjectMessage) => {
+            if (msg && msg.contents) {
+                let delta = <SharedString.IMergeTreeOp>msg.contents;
+                if (delta.type === SharedString.MergeTreeDeltaType.INSERT) {
                     this.currentWordSpellCheck(delta.pos1);
-                } else if (delta.type === API.MergeTreeDeltaType.REMOVE) {
+                } else if (delta.type === SharedString.MergeTreeDeltaType.REMOVE) {
                     this.currentWordSpellCheck(delta.pos1, true);
                 }
             }
@@ -194,13 +194,15 @@ class Speller {
 }
 
 let theSpeller: Speller;
-function initSpell(id: string) {
-    const extension = API.defaultRegistry.getExtension(SharedString.CollaboritiveStringExtension.Type);
-    const sharedString = extension.load(id, API.getDefaultServices(), API.defaultRegistry) as SharedString.SharedString;
-    sharedString.on("partialLoad", (data) => {
-        console.log("partial load fired");
-    });
-    sharedString.on("loadFinshed", (data: API.MergeTreeChunk, existing: boolean) => {
+async function initSpell(id: string) {
+    const document = await API.load(id);
+    const root = await document.getRoot().getView();
+    if (!root.has("text")) {
+        root.set("text", document.createString());
+    }
+    const sharedString = root.get("text");
+    console.log("partial load fired");
+    sharedString.on("loadFinshed", (data: SharedString.MergeTreeChunk, existing: boolean) => {
         theSpeller = new Speller(sharedString);
         theSpeller.initialSpellCheck();
     });
