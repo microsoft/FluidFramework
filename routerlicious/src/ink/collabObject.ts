@@ -1,4 +1,3 @@
-import * as _ from "lodash";
 import * as api from "../api";
 import { IDelta } from "./delta";
 import { InkExtension } from "./extension";
@@ -21,7 +20,7 @@ export interface IInkSnapshot {
     snapshot: ISnapshot;
 };
 
-const snapshotFileName = "value";
+const snapshotFileName = "header";
 
 export class InkCollaborativeObject extends api.CollaborativeObject implements IInk {
     // The current ink snapshot
@@ -30,27 +29,33 @@ export class InkCollaborativeObject extends api.CollaborativeObject implements I
     constructor(
         document: api.Document,
         id: string,
+        sequenceNumber: number,
         services?: api.IDistributedObjectServices,
         version?: string,
         header?: string) {
+        super(document, id, InkExtension.Type, sequenceNumber, services);
+        const data = header
+            ? JSON.parse(Buffer.from(header, "base64").toString("utf-8"))
+            : { layers: [], layerIndex: {} };
 
-        const snapshot: IInkSnapshot = services && header
-            ? JSON.parse(header)
-            : { minimumSequenceNumber: 0, sequenceNumber: 0, snapshot: { layers: [], layerIndex: {} } };
-
-        super(document, id, InkExtension.Type, snapshot.sequenceNumber, snapshot.minimumSequenceNumber, services);
-
-        this.inkSnapshot = Snapshot.Clone(snapshot.snapshot);
+        this.inkSnapshot = Snapshot.Clone(data);
     }
 
-    public snapshot(): Promise<api.IObject[]> {
-        const snapshot: IInkSnapshot = {
-            minimumSequenceNumber: this.minimumSequenceNumber,
-            sequenceNumber: this.sequenceNumber,
-            snapshot: _.clone(this.inkSnapshot),
+    public snapshot(): api.ITree {
+        const tree: api.ITree = {
+            entries: [
+                {
+                    path: snapshotFileName,
+                    type: api.TreeEntry[api.TreeEntry.Blob],
+                    value: {
+                        contents: JSON.stringify(this.inkSnapshot),
+                        encoding: "utf-8",
+                    },
+                },
+            ],
         };
 
-        return Promise.resolve([{ path: snapshotFileName, data: snapshot}]);
+        return tree;
     }
 
     public getLayers(): IInkLayer[] {

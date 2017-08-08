@@ -21,6 +21,7 @@ export class CollaboritiveStringExtension implements api.IExtension {
     public load(
         document: api.Document,
         id: string,
+        sequenceNumber: number,
         services: api.IDistributedObjectServices,
         version: string,
         header: string): api.ICollaborativeObject {
@@ -74,7 +75,7 @@ export class SharedString implements api.ICollaborativeObject {
     async load(services: api.IDistributedObjectServices, version: string, header: string) {
         this.services = services;
 
-        let chunk = Paparazzo.Snapshot.processChunk(header);
+        let chunk = Paparazzo.Snapshot.processChunk(Buffer.from(header, "base64").toString("utf-8"));
         let bodyChunkP = Paparazzo.Snapshot.loadChunk(services, this.id, version, "body");
 
         if (chunk.totalSegmentCount >= 0) {
@@ -228,7 +229,7 @@ export class SharedString implements api.ICollaborativeObject {
         return !this.client.mergeTree.collabWindow.collaborating;
     }
 
-    public snapshot(): Promise<api.IObject[]> {
+    public snapshot(): api.ITree {
         let snap = new Paparazzo.Snapshot(this.client.mergeTree);
         snap.extractSync();
         return snap.emit();

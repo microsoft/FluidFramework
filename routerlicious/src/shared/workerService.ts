@@ -14,7 +14,13 @@ export class WorkerService implements api.IWorkerService {
     private documentMap: { [docId: string]: api.Document} = {};
     private opHandlerMap: { [docId: string]: (op: any) => void} = {};
 
-    constructor(private serverUrl: string, private workerUrl: string, private config: any) {
+    constructor(
+        private serverUrl: string,
+        private workerUrl: string,
+        private storageUrl: string,
+        private repo: string,
+        private config: any) {
+
         this.socket = io(this.workerUrl, { transports: ["websocket"] });
         this.initializeServices();
     }
@@ -76,7 +82,7 @@ export class WorkerService implements api.IWorkerService {
     }
 
     private initializeServices() {
-        socketStorage.registerAsDefault(this.serverUrl);
+        socketStorage.registerAsDefault(this.serverUrl, this.storageUrl, this.repo);
     }
 
     private async processDocument(id: string) {

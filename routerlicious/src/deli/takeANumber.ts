@@ -17,7 +17,6 @@ const ClientSequenceTimeout = 5 * 60 * 1000;
 
 interface IClientSequenceNumber {
     clientId: string;
-    clientSequenceNumber: number;
     lastUpdate: number;
     referenceSequenceNumber: number;
 }
@@ -26,7 +25,6 @@ const SequenceNumberComparer: utils.IComparer<IClientSequenceNumber> = {
     compare: (a, b) => a.referenceSequenceNumber - b.referenceSequenceNumber,
     min: {
         clientId: undefined,
-        clientSequenceNumber: -1,
         lastUpdate: -1,
         referenceSequenceNumber: -1,
     },
@@ -64,7 +62,6 @@ export class TakeANumber {
                     for (const client of dbObject.clients) {
                         this.upsertClient(
                             client.clientId,
-                            client.clientSequenceNumber,
                             client.referenceSequenceNumber,
                             client.lastUpdate);
                     }
@@ -170,12 +167,14 @@ export class TakeANumber {
         const message = objectMessage as core.IRawOperationMessage;
         this.upsertClient(
             message.clientId,
-            message.operation.clientSequenceNumber,
             message.operation.referenceSequenceNumber,
             message.timestamp);
 
         // Store the previous minimum sequene number we returned and then update it
         this.minimumSequenceNumber = this.getMinimumSequenceNumber(objectMessage.timestamp);
+
+        // tslint:disable-next-line
+        logger.info(`${message.documentId}:${message.clientId} ${message.operation.referenceSequenceNumber} ${this.minimumSequenceNumber}`);
 
         // Increment and grab the next sequence number
         const sequenceNumber = this.revSequenceNumber();
@@ -255,15 +254,16 @@ export class TakeANumber {
 
     private upsertClient(
         clientId: string,
-        clientSequenceNumber: number,
         referenceSequenceNumber: number,
         timestamp: number) {
+
+        logger.info(`${this.documentId}:${clientId} ${referenceSequenceNumber}`);
+        logger.info(JSON.stringify(this.clientNodeMap));
 
         // Add the client ID to our map if this is the first time we've seen it
         if (!(clientId in this.clientNodeMap)) {
             const newNode = this.clientSeqNumbers.add({
                 clientId,
-                clientSequenceNumber,
                 lastUpdate: timestamp,
                 referenceSequenceNumber,
             });
@@ -271,7 +271,7 @@ export class TakeANumber {
         }
 
         // And then update its values
-        this.updateClient(clientId, timestamp, referenceSequenceNumber, clientSequenceNumber);
+        this.updateClient(clientId, timestamp, referenceSequenceNumber);
     }
 
     /**
@@ -280,19 +280,18 @@ export class TakeANumber {
     private updateClient(
         clientId: string,
         timestamp: number,
-        referenceSequenceNumber: number,
-        clientSequenceNumber?: number) {
+        referenceSequenceNumber: number) {
+
+        logger.info("Before", JSON.stringify(this.clientSeqNumbers.L));
 
         // Lookup the node and then update its value based on the message
         const heapNode = this.clientNodeMap[clientId];
-        if (heapNode) {
-            heapNode.value.referenceSequenceNumber = referenceSequenceNumber;
-            heapNode.value.lastUpdate = timestamp;
-            if (clientSequenceNumber !== undefined) {
-                heapNode.value.clientSequenceNumber = clientSequenceNumber;
-            }
-            this.clientSeqNumbers.update(heapNode);
-        }
+
+        heapNode.value.referenceSequenceNumber = referenceSequenceNumber;
+        heapNode.value.lastUpdate = timestamp;
+        this.clientSeqNumbers.update(heapNode);
+
+        logger.info("After", JSON.stringify(this.clientSeqNumbers.L));
     }
 
     /**

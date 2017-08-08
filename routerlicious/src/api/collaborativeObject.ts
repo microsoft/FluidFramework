@@ -14,6 +14,7 @@ export abstract class CollaborativeObject implements api.ICollaborativeObject {
 
     // Sequence number for operations local to this client
     private clientSequenceNumber = 0;
+    private minSequenceNumber;
 
     public get sequenceNumber(): number {
         return this.sequenceNum;
@@ -28,8 +29,10 @@ export abstract class CollaborativeObject implements api.ICollaborativeObject {
         public id: string,
         public type: string,
         private sequenceNum: number,
-        private minSequenceNumber = 0,
         protected services?: api.IDistributedObjectServices) {
+
+        // Min sequence number starts off at the initialized sequence number
+        this.minSequenceNumber = sequenceNum;
 
         if (this.services) {
             this.listenForUpdates();
@@ -81,10 +84,8 @@ export abstract class CollaborativeObject implements api.ICollaborativeObject {
 
     /**
      * Gets a form of the object that can be serialized.
-     * TODO this is temporary to bootstrap the process. For performance/dynamic load/etc... we'll likely expose
-     * access to the snapshot behind the storage objects.
      */
-    public abstract snapshot(): Promise<api.IObject[]>;
+    public abstract snapshot(): api.ITree;
 
     /**
      * Allows the distributive data type the ability to perform custom processing prior to a delta

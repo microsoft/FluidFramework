@@ -55,7 +55,7 @@ export interface ICollaborativeObject {
      * TODO this is temporary to bootstrap the process. For performance/dynamic load/etc... we'll likely expose
      * access to the snapshot behind the storage objects.
      */
-    snapshot(): Promise<storage.IObject[]>;
+    snapshot(): storage.ITree;
 }
 
 export interface IMapView {

@@ -43,7 +43,7 @@ export interface ICellValue {
     value: any;
 }
 
-const snapshotFileName = "value";
+const snapshotFileName = "header";
 
 /**
  * Implementation of a cell collaborative object
@@ -59,16 +59,14 @@ class Cell extends api.CollaborativeObject implements api.ICell {
     constructor(
         document: api.Document,
         id: string,
+        sequenceNumber: number,
         services?: api.IDistributedObjectServices,
         version?: string,
         header?: string) {
 
-        const snapshot: ICellSnapshot = services && header
-            ? JSON.parse(header)
-            : { minimumSequenceNumber: 0, sequenceNumber: 0, snapshot: undefined };
-        super(document, id, CellExtension.Type, snapshot.sequenceNumber, snapshot.minimumSequenceNumber, services);
+        super(document, id, CellExtension.Type, sequenceNumber, services);
 
-        this.data = snapshot.snapshot;
+        this.data = header ? JSON.parse(Buffer.from(header, "base64").toString("utf-8")) : undefined;
     }
 
     /**
@@ -132,14 +130,21 @@ class Cell extends api.CollaborativeObject implements api.ICell {
          return this.data === undefined ? true : false;
      }
 
-    public snapshot(): Promise<api.IObject[]> {
-        const snapshot = {
-            minimumSequenceNumber: this.minimumSequenceNumber,
-            sequenceNumber: this.sequenceNumber,
-            snapshot: _.clone(this.data),
+    public snapshot(): api.ITree {
+        const tree: api.ITree = {
+            entries: [
+                {
+                    path: snapshotFileName,
+                    type: api.TreeEntry[api.TreeEntry.Blob],
+                    value: {
+                        contents: JSON.stringify(this.data),
+                        encoding: "utf-8",
+                    },
+                },
+            ],
         };
 
-        return Promise.resolve([{ path: snapshotFileName, data: snapshot}]);
+        return tree;
     }
 
     protected submitCore(message: api.IObjectMessage) {
@@ -192,14 +197,15 @@ export class CellExtension implements api.IExtension {
     public load(
         document: api.Document,
         id: string,
+        sequenceNumber: number,
         services: api.IDistributedObjectServices,
         version: string,
         header: string): api.ICell {
 
-        return new Cell(document, id, services, version, header);
+        return new Cell(document, id, sequenceNumber, services, version, header);
     }
 
     public create(document: api.Document, id: string): api.ICell {
-        return new Cell(document, id);
+        return new Cell(document, id, 0);
     }
 }

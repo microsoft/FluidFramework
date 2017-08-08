@@ -4,8 +4,6 @@ import * as api from "../../api";
 import * as socketStorage from "../../socket-storage";
 import { RateCounter } from "../../utils/counters";
 
-socketStorage.registerAsDefault(document.location.origin);
-
 const form = document.getElementById("text-form") as HTMLFormElement;
 const intervalElement = document.getElementById("interval") as HTMLInputElement;
 
@@ -131,7 +129,9 @@ function randomizeMap(map: api.IMap, interval: number) {
     }, interval);
 }
 
-export function load(id: string) {
+export function load(id: string, config: any) {
+    socketStorage.registerAsDefault(document.location.origin, config.blobStorageUrl, config.repository);
+
     $(document).ready(() => {
         loadDocument(id).then(async (doc) => {
             // tslint:disable-next-line

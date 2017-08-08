@@ -1,3 +1,4 @@
+import * as assert from "assert";
 import * as _ from "lodash";
 import * as moniker from "moniker";
 import * as nconf from "nconf";
@@ -120,12 +121,8 @@ async function getRevisions(gitManager: git.GitManager, id: string): Promise<any
     return commits;
 }
 
-export interface IDocumentAttributes {
-    sequenceNumber: number;
-}
-
-interface IDocumentDetails2 {
-    documentAttributes: IDocumentAttributes;
+interface IDocumentSnapshot {
+    documentAttributes: api.IDocumentAttributes;
 
     distributedObjects: api.IDistributedObject[];
 }
@@ -133,11 +130,9 @@ interface IDocumentDetails2 {
 async function getDocumentDetails(
     gitManager: git.GitManager,
     id: string,
-    version: any): Promise<IDocumentDetails2> {
+    version: any): Promise<IDocumentSnapshot> {
 
-    if (!version) {
-        return { documentAttributes: undefined, distributedObjects: [] };
-    }
+    assert(version);
 
     // NOTE we currently grab the entire repository. Should this ever become a bottleneck we can move to manually
     // walking and looking for entries. But this will requre more round trips.
@@ -146,11 +141,11 @@ async function getDocumentDetails(
 
     // Pull out the root attributes file
     const docAttributesSha = tree.blobs[".attributes"];
-    const objectBlobs: Array<{ id: string, headerSha: string, typeSha: string }> = [];
+    const objectBlobs: Array<{ id: string, headerSha: string, attributesSha: string }> = [];
     // tslint:disable-next-line:forin
     for (const path in tree.trees) {
         const entry = tree.trees[path];
-        objectBlobs.push({ id: path, headerSha: entry.blobs.header, typeSha: entry.blobs[".attributes"] });
+        objectBlobs.push({ id: path, headerSha: entry.blobs.header, attributesSha: entry.blobs[".attributes"] });
     }
 
     // Fetch the attributes and distirbuted object headers
@@ -162,26 +157,31 @@ async function getDocumentDetails(
     const blobsP: Array<Promise<any>> = [];
     for (const blob of objectBlobs) {
         const headerP = gitManager.getBlob(blob.headerSha).then((header) => header.content);
-        const typeP = gitManager.getBlob(blob.typeSha).then((objectType) => {
+        const attributesP = gitManager.getBlob(blob.attributesSha).then((objectType) => {
             const attributes = Buffer.from(objectType.content, "base64").toString();
             return JSON.parse(attributes);
         });
-        blobsP.push(Promise.all([Promise.resolve(blob.id), headerP, typeP]));
+        blobsP.push(Promise.all([Promise.resolve(blob.id), headerP, attributesP]));
     }
 
-    const fetched = await Promise.all([docAttributesP, blobsP]);
-
-    return {
-        distributedObjects: fetched[1].map(
-            (fetch) => ({ header: fetch[1], id: fetch[0], type: fetch[2] })),
-        documentAttributes: fetched[0].content,
+    const fetched = await Promise.all([docAttributesP, Promise.all(blobsP)]);
+    const result: IDocumentSnapshot = {
+        distributedObjects: fetched[1].map((fetch) => ({
+                header: fetch[1],
+                id: fetch[0],
+                sequenceNumber: fetch[2].sequenceNumber,
+                type: fetch[2].type,
+        })),
+        documentAttributes: fetched[0],
     };
+
+    return result;
 }
 
 async function getOrCreateDocument(id: string): Promise<IDocumentDetails> {
     const existingP = getOrCreateObject(id);
 
-    const gitManager = new git.GitManager(historian, historianBranch);
+    const gitManager = await git.getOrCreateRepository(historian, historianBranch);
     const revisions = await getRevisions(gitManager, id);
     const version = revisions.length > 0 ? revisions[0] : null;
 

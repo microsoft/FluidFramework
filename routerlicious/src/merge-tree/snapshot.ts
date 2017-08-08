@@ -79,13 +79,32 @@ export class Snapshot {
         }
     }
 
-    emit(): Promise<API.IObject[]> {
+    emit(): API.ITree {
         let chunk1 = this.getCharLengthSegs(this.texts, 10000);
         let chunk2 = this.getCharLengthSegs(this.texts, chunk1.totalLengthChars, chunk1.chunkSegmentCount);
-        return Promise.resolve([
-            { path: "header", data: chunk1 },
-            { path: "body", data: chunk2 },
-        ]);
+
+        const tree: API.ITree = {
+            entries: [
+                {
+                    path: "header",
+                    type: API.TreeEntry[API.TreeEntry.Blob],
+                    value: {
+                        contents: JSON.stringify(chunk1),
+                        encoding: "utf-8",
+                    },
+                },
+                {
+                    path: "body",
+                    type: API.TreeEntry[API.TreeEntry.Blob],
+                    value: {
+                        contents: JSON.stringify(chunk2),
+                        encoding: "utf-8",
+                    },
+                },
+            ],
+        };
+
+        return tree;
     }
 
     extractSync() {
@@ -137,7 +156,7 @@ export class Snapshot {
 
     public static processChunk(chunk: string): ops.MergeTreeChunk {
         if (chunk) {
-            return JSON.parse(chunk) as ops.MergeTreeChunk;
+            return JSON.parse(Buffer.from(chunk, "base64").toString("utf-8")) as ops.MergeTreeChunk;
         } else {
             return {
                 chunkStartSegmentIndex: -1,

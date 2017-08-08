@@ -17,16 +17,13 @@ import {
     IObjectMessage,
     ISequencedDocumentMessage,
     ObjectOperation } from "./protocol";
-import {
-    IDistributedObject,
-    IDocument,
-    IDocumentService } from "./storage";
+import * as storage from "./storage";
 import * as types from "./types";
 
 const rootMapId = "root";
 
 // Registered services to use when loading a document
-let defaultDocumentService: IDocumentService;
+let defaultDocumentService: storage.IDocumentService;
 
 // The default registry for extensions
 export const defaultRegistry = new extensions.Registry();
@@ -44,11 +41,11 @@ export function registerExtension(extension: extensions.IExtension) {
  * expected that the implementation provider of these will register themselves during startup prior to the user
  * requesting to load a collaborative object.
  */
-export function registerDocumentService(service: IDocumentService) {
+export function registerDocumentService(service: storage.IDocumentService) {
     defaultDocumentService = service;
 }
 
-export function getDefaultDocumentService(): IDocumentService {
+export function getDefaultDocumentService(): storage.IDocumentService {
     return defaultDocumentService;
 }
 
@@ -70,6 +67,8 @@ export interface IDistributedObjectServices {
  * Interface to represent a connection to a delta notification stream
  */
 export interface IDeltaConnection {
+    minimumSequenceNumber: number;
+
     /**
      * Subscribe to events emitted by the object
      */
@@ -120,7 +119,7 @@ export class Document {
     public static async Create(
         id: string,
         registry: extensions.Registry,
-        service: IDocumentService): Promise<Document> {
+        service: storage.IDocumentService): Promise<Document> {
 
         // Connect to the document
         const document = await service.connect(id);
@@ -153,8 +152,7 @@ export class Document {
 
     private events = new EventEmitter();
 
-    private referenceSequenceNumber;
-    private minimumSequenceNumber = 0;
+    private lastMinSequenceNumber;
 
     public get clientId(): string {
         return this.document.clientId;
@@ -167,8 +165,8 @@ export class Document {
     /**
      * Constructs a new document from the provided details
      */
-    private constructor(private document: IDocument, private registry: extensions.Registry) {
-        this.minimumSequenceNumber = this.referenceSequenceNumber = document.sequenceNumber;
+    private constructor(private document: storage.IDocument, private registry: extensions.Registry) {
+        this.lastMinSequenceNumber = this.document.sequenceNumber;
         this.deltaManager = new DeltaManager(
             this.document.documentId,
             this.document.sequenceNumber,
@@ -286,13 +284,71 @@ export class Document {
     /**
      * Called to snapshot the given document
      */
-    public snapshot(): Promise<void> {
-        debug("I would snapshot!");
+    public async snapshot(): Promise<void> {
+        const entries: storage.ITreeEntry[] = [];
+
+        // tslint:disable-next-line:forin
+        for (const objectId in this.distributedObjects) {
+            const object = this.distributedObjects[objectId];
+            if (!object.object.isLocal()) {
+                const snapshot = object.object.snapshot();
+
+                debug(`${object.object.id} has msn of ${object.connection.minimumSequenceNumber}`);
+
+                // Add in the object attributes to the returned tree
+                const objectAttributes: storage.IObjectAttributes = {
+                    sequenceNumber: object.connection.minimumSequenceNumber,
+                    type: object.object.type,
+                };
+                snapshot.entries.push({
+                    path: ".attributes",
+                    type: storage.TreeEntry[storage.TreeEntry.Blob],
+                    value: {
+                        contents: JSON.stringify(objectAttributes),
+                        encoding: "utf-8",
+                    },
+                });
+
+                // And then store the tree
+                entries.push({
+                    path: objectId,
+                    type: storage.TreeEntry[storage.TreeEntry.Tree],
+                    value: snapshot,
+                });
+            }
+        }
+
+        // Save attributes for the document
+        const documentAttributes: storage.IDocumentAttributes = {
+            sequenceNumber: this.deltaManager.minimumSequenceNumber,
+        };
+        entries.push({
+            path: ".attributes",
+            type: storage.TreeEntry[storage.TreeEntry.Blob],
+            value: {
+                contents: JSON.stringify(documentAttributes),
+                encoding: "utf-8",
+            },
+        });
+
+        // Output the tree
+        const root: storage.ITree = {
+            entries,
+        };
+
+        const message = `Commit @${this.deltaManager.minimumSequenceNumber}`;
+        this.document.documentStorageService.write(root, message);
+
         return Promise.resolve();
     }
 
     private processPendingMessages(messages: ISequencedDocumentMessage[]) {
         for (const message of messages) {
+            // When processing pending messages we make sure the min sequence number (msn) is greater than the set
+            // min sequence number. This is because the msn for the packet whose msn we would have snapshotted
+            // will likely be less than the msn. To avoid confusing invariants expecting this to only increase
+            // we guarantee all packets stay above this number.
+            message.minimumSequenceNumber = Math.max(message.minimumSequenceNumber, this.lastMinSequenceNumber);
             this.deltaManager.handleOp(message);
         }
     }
@@ -310,13 +366,14 @@ export class Document {
      * Loads in a distributed object and stores it in the internal Document object map
      * @param distributedObject The distributed object to load
      */
-    private loadInternal(distributedObject: IDistributedObject) {
+    private loadInternal(distributedObject: storage.IDistributedObject) {
         const services = this.getObjectServices(distributedObject.id, distributedObject.sequenceNumber);
 
         const extension = this.registry.getExtension(distributedObject.type);
         const value = extension.load(
             this,
             distributedObject.id,
+            distributedObject.sequenceNumber,
             services,
             this.document.version,
             distributedObject.header);
@@ -353,9 +410,8 @@ export class Document {
     }
 
     private processRemoteMessage(message: ISequencedDocumentMessage) {
-        this.referenceSequenceNumber = message.referenceSequenceNumber;
-        const minSequenceNumberChanged = this.minimumSequenceNumber !== message.minimumSequenceNumber;
-        this.minimumSequenceNumber = message.minimumSequenceNumber;
+        const minSequenceNumberChanged = this.lastMinSequenceNumber !== message.minimumSequenceNumber;
+        this.lastMinSequenceNumber = message.minimumSequenceNumber;
 
         if (message.type === ObjectOperation) {
             const envelope = message.contents as IEnvelope;
@@ -399,7 +455,7 @@ export class Document {
 export async function load(
     id: string,
     registry: extensions.Registry = defaultRegistry,
-    service: IDocumentService = defaultDocumentService): Promise<Document> {
+    service: storage.IDocumentService = defaultDocumentService): Promise<Document> {
 
     // Verify an extensions registry was provided
     if (!registry) {

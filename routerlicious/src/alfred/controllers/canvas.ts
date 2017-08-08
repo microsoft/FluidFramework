@@ -5,8 +5,6 @@ import * as ink from "../../ink";
 import * as shared from "../../shared";
 import * as socketStorage from "../../socket-storage";
 
-socketStorage.registerAsDefault(document.location.origin);
-
 async function loadDocument(id: string): Promise<api.Document> {
     console.log("Loading in root document...");
     const document = await api.load(id);
@@ -21,6 +19,8 @@ throttle("resize", "throttled-resize");
 let canvas: Canvas;
 
 export async function initialize(id: string, config: any) {
+    socketStorage.registerAsDefault(document.location.origin, config.blobStorageUrl, config.repository);
+
     const doc = await loadDocument(id);
     const root = await doc.getRoot().getView();
 

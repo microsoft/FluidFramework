@@ -11,6 +11,8 @@ commander
     .version("0.0.1")
     .option("-i, --interval [interval]", "typing interval", parseFloat, 50)
     .option("-s, --server [server]", "server url", "http://localhost:3000")
+    .option("-t, --storage [server]", "storage server url", "http://localhost:3001")
+    .option("-r, --repository [repo]", "git repository", "prague")
     .option("-f, --file [file]", "input file", path.join(__dirname, "../../public/literature/pp.txt"))
     .arguments("<id>")
     .action((id: string) => {
@@ -23,7 +25,7 @@ if (!sharedStringId) {
 }
 
 // Mark socket storage as our default provider
-socketStorage.registerAsDefault(commander.server);
+socketStorage.registerAsDefault(commander.server, commander.storage, commander.repository);
 
 fs.readFile(commander.file, "utf8", (error, data) => {
     if (error) {

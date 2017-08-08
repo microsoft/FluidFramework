@@ -26,6 +26,7 @@ export interface IExtension {
     load(
         document: Document,
         id: string,
+        sequenceNumber: number,
         services: IDistributedObjectServices,
         version: string,
         header: string): types.ICollaborativeObject;

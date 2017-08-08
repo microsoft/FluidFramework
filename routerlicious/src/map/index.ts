@@ -11,15 +11,6 @@ interface IMapOperation {
     value?: IMapValue;
 }
 
-/**
- * Map snapshot definition
- */
-export interface ISnapshot {
-    minimumSequenceNumber: number;
-    sequenceNumber: number;
-    snapshot: any;
-};
-
 export enum ValueType {
     // The value is a collaborative object
     Collaborative,
@@ -157,16 +148,14 @@ class Map extends api.CollaborativeObject implements api.IMap {
     constructor(
         document: api.Document,
         id: string,
+        sequenceNumber: number,
         services?: api.IDistributedObjectServices,
         version?: string,
         header?: string) {
-        let snapshot: ISnapshot = services && header
-            ? JSON.parse(header)
-            : { minimumSequenceNumber: 0, sequenceNumber: 0, snapshot: {} };
+        super(document, id, MapExtension.Type, sequenceNumber, services);
 
-        super(document, id, MapExtension.Type, snapshot.sequenceNumber, snapshot.minimumSequenceNumber, services);
-
-        this.view = new MapView(document, id, snapshot.snapshot, this.events, (op) => this.processLocalOperation(op));
+        const data = header ? JSON.parse(Buffer.from(header, "base64").toString("utf-8")) : {};
+        this.view = new MapView(document, id, data, this.events, (op) => this.processLocalOperation(op));
     }
 
     public async keys(): Promise<string[]> {
@@ -196,14 +185,21 @@ class Map extends api.CollaborativeObject implements api.IMap {
         return Promise.resolve(this.view.clear());
     }
 
-    public snapshot(): Promise<api.IObject[]> {
-        const snapshot = {
-            minimumSequenceNumber: this.minimumSequenceNumber,
-            sequenceNumber: this.sequenceNumber,
-            snapshot: this.view.getData(),
+    public snapshot(): api.ITree {
+        const tree: api.ITree = {
+            entries: [
+                {
+                    path: snapshotFileName,
+                    type: api.TreeEntry[api.TreeEntry.Blob],
+                    value: {
+                        contents: JSON.stringify(this.view.getData()),
+                        encoding: "utf-8",
+                    },
+                },
+            ],
         };
 
-        return Promise.resolve([{ path: snapshotFileName, data: snapshot}]);
+        return tree;
     }
 
     /**
@@ -255,14 +251,15 @@ export class MapExtension implements api.IExtension {
     public load(
         document: api.Document,
         id: string,
+        sequenceNumber: number,
         services: api.IDistributedObjectServices,
         version: string,
         header: string): api.IMap {
 
-        return new Map(document, id, services, version, header);
+        return new Map(document, id, sequenceNumber, services, version, header);
     }
 
     public create(document: api.Document, id: string): api.IMap {
-        return new Map(document, id);
+        return new Map(document, id, 0);
     }
 }

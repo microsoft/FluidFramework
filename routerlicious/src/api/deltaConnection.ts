@@ -1,5 +1,6 @@
 import * as assert from "assert";
 import { EventEmitter } from "events";
+import { debug } from "./debug";
 import { Document, IDeltaConnection } from "./document";
 import { IObjectMessage, ISequencedObjectMessage } from "./protocol";
 
@@ -80,7 +81,7 @@ class RangeTracker {
         // If the difference is within the stored range use it - otherwise add in the length - 1 as the highest
         // stored secondary value to use.
         const closestRange = this.ranges[index - 1];
-        return Math.min(primary - closestRange.primary, closestRange.length - 1) + closestRange.primary;
+        return Math.min(primary - closestRange.primary, closestRange.length - 1) + closestRange.secondary;
     }
 }
 
@@ -89,12 +90,19 @@ export class DeltaConnection implements IDeltaConnection {
 
     private map: RangeTracker;
 
+    private minSequenceNumber;
+
+    public get minimumSequenceNumber(): number {
+        return this.minSequenceNumber;
+    }
+
     constructor(
         public objectId: string,
         private document: Document,
         sequenceNumber,
         documentSequenceNumber: number) {
 
+        this.minSequenceNumber = sequenceNumber;
         this.map = new RangeTracker(documentSequenceNumber, sequenceNumber);
     }
 
@@ -109,12 +117,15 @@ export class DeltaConnection implements IDeltaConnection {
         documentMinimumSequenceNumber: number,
         documentSequenceNumber: number) {
 
+        this.minSequenceNumber = this.map.getClosest(documentMinimumSequenceNumber);
+        debug(this.objectId, `${documentMinimumSequenceNumber} msn maps to local ${this.minSequenceNumber}`);
         const sequenceNumber = this.map.ticket(documentSequenceNumber);
+        debug(this.objectId, `${documentSequenceNumber} maps to assigned ${sequenceNumber}`);
         const sequencedObjectMessage: ISequencedObjectMessage = {
             clientId,
             clientSequenceNumber: message.clientSequenceNumber,
             contents: message.contents,
-            minimumSequenceNumber: this.map.getClosest(documentMinimumSequenceNumber),
+            minimumSequenceNumber: this.minSequenceNumber,
             referenceSequenceNumber: message.referenceSequenceNumber,
             sequenceNumber,
             type: message.type,
@@ -125,7 +136,9 @@ export class DeltaConnection implements IDeltaConnection {
 
     public updateMinSequenceNumber(value: number) {
         this.map.updateBase(value);
-        this.events.emit("minSequenceNumber", this.map.getClosest(value));
+        this.minSequenceNumber = this.map.getClosest(value);
+        debug(this.objectId, `MSN update of ${value} maps to ${this.minSequenceNumber}`);
+        this.events.emit("minSequenceNumber", this.minSequenceNumber);
     }
 
     /**

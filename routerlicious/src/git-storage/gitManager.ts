@@ -1,20 +1,6 @@
+import * as assert from "assert";
 import * as request from "request";
-import { debug } from "./debug";
-
-/**
- * File stored in a git repo
- */
-export interface IGitFile {
-    // Path to the file
-    path: string;
-
-    // Data for the file
-    data: any;
-}
-
-export class GitRepository {
-
-}
+import * as api from "../api";
 
 export class GitManager {
     constructor(private apiBaseUrl: string, private repository: string) {
@@ -108,51 +94,70 @@ export class GitManager {
         });
     }
 
-    /**
-     * Writes to the object with the given ID
-     */
-    public async write(branch: string, files: IGitFile[], message: string): Promise<void> {
-        // Iterate through all the files and create blobs for them and retrieve the hashes
-        const blobsP = Promise.all(files.map((file) => {
-            return new Promise<string>((resolve, reject) => {
-                request.post(
-                    {
-                        body: {
-                            content: file.data,
-                            encoding: "utf-8",
-                        },
-                        headers: {
-                            "Content-Type": "application/json",
-                        },
-                        json: true,
-                        url: `${this.apiBaseUrl}/repos/${this.repository}/git/blobs`,
+    public createBlob(content: string, encoding: string) {
+        return new Promise<string>((resolve, reject) => {
+            request.post(
+                {
+                    body: {
+                        content,
+                        encoding,
                     },
-                    (error, response, body) => {
-                        if (error) {
-                            return reject(error);
-                        } else if (response.statusCode !== 201) {
-                            return reject(response.statusCode);
-                        } else {
-                            return resolve(response.body.sha);
-                        }
-                    });
-            });
-        }));
-        const lastCommitP = this.getCommits(branch, 1);
-        const blobsAndHead = await Promise.all([blobsP, lastCommitP]);
-        const blobs = blobsAndHead[0];
-        const lastCommit = blobsAndHead[1];
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    json: true,
+                    url: `${this.apiBaseUrl}/repos/${this.repository}/git/blobs`,
+                },
+                (error, response, body) => {
+                    if (error) {
+                        return reject(error);
+                    } else if (response.statusCode !== 201) {
+                        return reject(response.statusCode);
+                    } else {
+                        return resolve(response.body.sha);
+                    }
+                });
+        });
+    }
+
+    public async createTree(files: api.ITree): Promise<string> {
+        // Kick off the work to create all the tree values
+        const shaValuesP: Array<Promise<string>> = [];
+        for (const entry of files.entries) {
+            switch (api.TreeEntry[entry.type]) {
+                case api.TreeEntry.Blob:
+                    const entryAsBlob = entry.value as api.IBlob;
+                    const shaBlobP = this.createBlob(entryAsBlob.contents, entryAsBlob.encoding);
+                    shaValuesP.push(shaBlobP);
+                    break;
+
+                case api.TreeEntry.Tree:
+                    const entryAsTree = entry.value as api.ITree;
+                    const treeBlobP = this.createTree(entryAsTree);
+                    shaValuesP.push(treeBlobP);
+                    break;
+
+                default:
+                    return Promise.reject("Unknown entry type");
+            }
+        }
+
+        // Wait for them all to resolve
+        const shaValues = await Promise.all(shaValuesP);
+        const tree: any[] = [];
+        assert(shaValues.length === files.entries.length);
 
         // Construct a new tree from the collection of hashes
-        const tree: any[] = [];
-        for (let i = 0; i < blobs.length; i++) {
+        for (let i = 0; i < files.entries.length; i++) {
+            const isTree = files.entries[i].type === api.TreeEntry[api.TreeEntry.Tree];
             tree.push({
-                mode: "100644",
-                path: files[i].path,
-                sha: blobs[i],
-                type: "blob",
+                mode: isTree ? "040000" : "100644",
+                path: files.entries[i].path,
+                sha: shaValues[i],
+                type: isTree ? "tree" : "blob",
             });
         }
+
         const treeSha = await new Promise<string>((resolve, reject) => {
             request.post(
                 {
@@ -173,18 +178,10 @@ export class GitManager {
                     }
                 });
         });
+        return treeSha;
+    }
 
-        // Construct a commit for the tree
-        const commit = {
-            author: {
-                date: new Date().toISOString(),
-                email: "kurtb@microsoft.com",
-                name: "Kurt Berglund",
-            },
-            message: "Commit @{TODO seq #}",
-            parents: lastCommit.length > 0 ? [lastCommit[0].sha] : [],
-            tree: treeSha,
-        };
+    public async createCommit(commit: any): Promise<string> {
         const commitSha = await new Promise<string>((resolve, reject) => {
             request.post(
                 {
@@ -206,12 +203,15 @@ export class GitManager {
                 });
         });
 
+        return commitSha;
+    }
+
+    public async upsertRef(branch: string, commitSha: string): Promise<void> {
         // Update (force) the ref to the new commit
         const ref = {
             force: true,
             sha: commitSha,
         };
-        debug(commitSha);
         await new Promise<string>((resolve, reject) => {
             request.patch(
                 {
@@ -232,6 +232,35 @@ export class GitManager {
                     }
                 });
         });
+    }
+
+    /**
+     * Writes to the object with the given ID
+     */
+    public async write(branch: string, tree: api.ITree, message: string): Promise<string> {
+        const treeShaP = this.createTree(tree);
+        const lastCommitP = this.getCommits(branch, 1);
+
+        // TODO maybe I should make people provide the parent commit rather than get the last one?
+        const joined = await Promise.all([treeShaP, lastCommitP]);
+        const treeSha = joined[0];
+        const lastCommit = joined[1];
+
+        // Construct a commit for the tree
+        const commit = {
+            author: {
+                date: new Date().toISOString(),
+                email: "kurtb@microsoft.com",
+                name: "Kurt Berglund",
+            },
+            message,
+            parents: lastCommit.length > 0 ? [lastCommit[0].sha] : [],
+            tree: treeSha,
+        };
+        const commitSha = await this.createCommit(commit);
+        await this.upsertRef(branch, commitSha);
+
+        return commitSha;
     }
 }
 

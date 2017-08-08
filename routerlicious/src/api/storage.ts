@@ -1,5 +1,15 @@
 import { IDocumentMessage, ISequencedDocumentMessage } from "./protocol";
 
+export interface IDocumentAttributes {
+    sequenceNumber: number;
+}
+
+export interface IObjectAttributes {
+    sequenceNumber: number;
+
+    type: string;
+}
+
 /**
  * The worker service connects to work manager (TMZ) and registers itself to receive work.
  */
@@ -11,14 +21,43 @@ export interface IWorkerService {
 }
 
 /**
- * Interface representing a storage object
+ * Type of entries that can be stored in a tree
  */
-export interface IObject {
-    // The path to the object
+export enum TreeEntry {
+    Blob,
+    Tree,
+}
+
+/**
+ * Tree storage
+ */
+export interface ITree {
+    entries: ITreeEntry[];
+}
+
+/**
+ * A tree entry wraps a path with a type of node
+ */
+export interface ITreeEntry {
+    // Path to the object
     path: string;
 
-    // The data to store for the object
-    data: any;
+    // One of the above enum string values
+    type: string;
+
+    // The value of the entry - either a tree or a blob
+    value: IBlob | ITree;
+}
+
+/**
+ * Raw blob stored within the tree
+ */
+export interface IBlob {
+    // Contents of the blob
+    contents: string;
+
+    // The encoding of the contents string (utf-8 or base64)
+    encoding: string;
 }
 
 /**
@@ -34,7 +73,7 @@ export interface IDocumentStorageService {
     /**
      * Writes to the object with the given ID
      */
-    write(objects: IObject[]): Promise<void>;
+    write(root: ITree, message: string): Promise<string>;
 }
 
 /**

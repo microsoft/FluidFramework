@@ -8,8 +8,6 @@ import * as socketStorage from "../../socket-storage";
 import * as FlowView from "./flowView";
 import * as Geometry from "./geometry";
 
-socketStorage.registerAsDefault(document.location.origin);
-
 // first script loaded
 let clockStart = Date.now();
 
@@ -208,13 +206,15 @@ function downloadRawText(textUrl: string): Promise<string> {
 }
 
 export async function onLoad(id: string, config: any) {
-    const document = await API.load(id);
-    const root = await document.getRoot().getView();
+    socketStorage.registerAsDefault(document.location.origin, config.blobStorageUrl, config.repository);
+
+    const collabDoc = await API.load(id);
+    const root = await collabDoc.getRoot().getView();
 
     // If a text element already exists load it direclty - otherwise load in price + prejudice
     const existing = root.has("text");
     if (!existing) {
-        const mewString = document.createString() as SharedString.SharedString;
+        const mewString = collabDoc.createString() as SharedString.SharedString;
         const starterText = await downloadRawText(prideAndPrejudice);
         const segments = SharedString.loadSegments(starterText, 0);
         for (const segment of segments) {
@@ -242,7 +242,7 @@ export async function onLoad(id: string, config: any) {
     // TODO I probably want some kind of a "get or create" here - or the ability to create a document at the root
     // of the map rather than having to create and attach
     if (!root.has("insights")) {
-        root.set("insights", document.createMap());
+        root.set("insights", collabDoc.createMap());
     }
     const insights = root.get("insights") as API.IMap;
 
