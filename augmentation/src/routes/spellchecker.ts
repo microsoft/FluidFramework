@@ -7,6 +7,15 @@ interface ITask {
     // Request text to spellcheck.
     text: string;
 
+    // Reference sequence number.
+    rsn: number;
+
+    // Start position.
+    start: number;
+
+    // End position
+    end: number;
+
     // Response associated with the request.
     response: any;
 };
@@ -33,10 +42,16 @@ async function processRequest(text: string): Promise<any> {
 
 // queue to process requests sequentially. Callback invoked to process the next request for both success/error case.
 const q = queue((task: ITask, callback) => {
-    console.info(`Text to check spelling: ${task.text}`);
+    console.info(`Quere Object -> Text: ${task.text} RSN: ${task.rsn} Start: ${task.start} End: ${task.end}`);
     const resultP = processRequest(task.text);
     resultP.then((result) => {
-        task.response.status(200).json(result);
+        task.response.status(200).json({
+            answer: result,
+            text: task.text,
+            rsn: task.rsn,
+            start: task.start,
+            end: task.end
+        });
         callback();
     }, (error) => {
         task.response.status(400).json({ error });
@@ -49,7 +64,10 @@ const q = queue((task: ITask, callback) => {
  */
 router.post("/", async (request, response, next) => {
     const text = request.body.documents[0].text;
-    q.push( {text, response});
+    const rsn = request.body.documents[0].rsn;
+    const start = request.body.documents[0].start;
+    const end = request.body.documents[0].end;
+    q.push( {text, rsn, start, end, response});
 });
 
 export default router;
