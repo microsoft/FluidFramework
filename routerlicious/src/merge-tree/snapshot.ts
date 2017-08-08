@@ -144,30 +144,25 @@ export class Snapshot {
         return texts;
     }
 
-    public static async loadChunk(
-        services: API.IDistributedObjectServices,
-        id: string,
-        version: string,
-        path: string): Promise<ops.MergeTreeChunk> {
-
-        let chunkAsString: string = version ? await services.objectStorage.read(path) : null;
+    public static async loadChunk(services: API.IDistributedObjectServices, path: string): Promise<ops.MergeTreeChunk> {
+        let chunkAsString: string = await services.objectStorage.read(path);
         return Snapshot.processChunk(chunkAsString);
     }
 
+    public static EmptyChunk: ops.MergeTreeChunk = {
+        chunkStartSegmentIndex: -1,
+        chunkSegmentCount: -1,
+        chunkLengthChars: -1,
+        totalLengthChars: -1,
+        totalSegmentCount: -1,
+        chunkSequenceNumber: 0,
+        segmentTexts: [],
+    }
+
     public static processChunk(chunk: string): ops.MergeTreeChunk {
-        if (chunk) {
-            return JSON.parse(Buffer.from(chunk, "base64").toString("utf-8")) as ops.MergeTreeChunk;
-        } else {
-            return {
-                chunkStartSegmentIndex: -1,
-                chunkSegmentCount: -1,
-                chunkLengthChars: -1,
-                totalLengthChars: -1,
-                totalSegmentCount: -1,
-                chunkSequenceNumber: -1,
-                segmentTexts: [],
-            }
-        }
+        return chunk
+            ? JSON.parse(Buffer.from(chunk, "base64").toString("utf-8")) as ops.MergeTreeChunk
+            : Snapshot.EmptyChunk;
     }
 
     static loadSync(filename: string) {

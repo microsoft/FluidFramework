@@ -112,7 +112,8 @@ class Cell extends api.CollaborativeObject implements api.ICell {
             value: operationValue,
         };
 
-        return this.processLocalOperation(op);
+        this.setCore(op.value);
+        this.submitLocalOperation(op);
     }
 
     // Deletes the value from the cell.
@@ -120,7 +121,9 @@ class Cell extends api.CollaborativeObject implements api.ICell {
         const op: ICellOperation = {
             type: "delete",
         };
-        return this.processLocalOperation(op);
+
+        this.deleteCore();
+        this.submitLocalOperation(op);
     }
 
     /**
@@ -162,7 +165,14 @@ class Cell extends api.CollaborativeObject implements api.ICell {
         }
     }
 
-    protected processCore(op: ICellOperation) {
+    protected processCore(message: api.ISequencedObjectMessage, local: boolean) {
+        if (local) {
+            // TODO consolidate local ack with any in flight changes
+            return;
+        }
+
+        const op: ICellOperation = message.contents;
+
         switch (op.type) {
             case "set":
                 this.setCore(op.value);

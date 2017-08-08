@@ -72,12 +72,12 @@ export interface IMapView {
     /**
      * Sets the key to the provided value
      */
-    set(key: string, value: any): Promise<void>;
+    set(key: string, value: any): void;
 
     /**
      * Deletes the specified key from the map and returns the value of the key at the time of deletion.
      */
-    delete(key: string): Promise<void>;
+    delete(key: string): void;
 
     /**
      * Retreives all the keys contained within the map
@@ -87,7 +87,7 @@ export interface IMapView {
     /**
      * Removes all entries from the map
      */
-    clear(): Promise<void>;
+    clear(): void;
 }
 
 /**

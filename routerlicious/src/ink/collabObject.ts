@@ -67,10 +67,15 @@ export class InkCollaborativeObject extends api.CollaborativeObject implements I
     }
 
     public submitOp(op: IDelta) {
-        this.processLocalOperation(op);
+        this.submitLocalOperation(op);
     }
 
-    protected processCore(op: IDelta) {
-        this.inkSnapshot.apply(op);
+    protected processCore(message: api.ISequencedObjectMessage, local: boolean) {
+        if (local) {
+            // TODO consolidate local ack with any in flight changes
+            return;
+        }
+
+        this.inkSnapshot.apply(message.contents as IDelta);
     }
 }

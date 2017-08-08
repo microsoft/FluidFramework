@@ -43,7 +43,7 @@ class MapView implements api.IMapView {
         id: string,
         private data: {[key: string]: IMapValue },
         private events: EventEmitter,
-        private processLocalOperation: (op) => Promise<void>) {
+        private submitLocalOperation: (op) => void) {
     }
 
     public get(key: string) {
@@ -64,7 +64,7 @@ class MapView implements api.IMapView {
         return key in this.data;
     }
 
-    public set(key: string, value: any): Promise<void> {
+    public set(key: string, value: any): void {
         let operationValue: IMapValue;
         if (_.hasIn(value, "__collaborativeObject__")) {
             // Convert any local collaborative objects to our internal storage format
@@ -91,28 +91,31 @@ class MapView implements api.IMapView {
             value: operationValue,
         };
 
-        return this.processLocalOperation(op);
+        this.setCore(op.key, op.value);
+        this.submitLocalOperation(op);
     }
 
-    public delete(key: string): Promise<void> {
+    public delete(key: string): void {
         const op: IMapOperation = {
             key,
             type: "delete",
         };
 
-        return this.processLocalOperation(op);
+        this.deleteCore(op.key);
+        this.submitLocalOperation(op);
     }
 
     public keys(): string[] {
         return _.keys(this.data);
     }
 
-    public clear(): Promise<void> {
+    public clear(): void {
         const op: IMapOperation = {
             type: "clear",
         };
 
-        return this.processLocalOperation(op);
+        this.clearCore();
+        this.submitLocalOperation(op);
     }
 
     public getData(): {[key: string]: IMapValue } {
@@ -155,7 +158,7 @@ class Map extends api.CollaborativeObject implements api.IMap {
         super(document, id, MapExtension.Type, sequenceNumber, services);
 
         const data = header ? JSON.parse(Buffer.from(header, "base64").toString("utf-8")) : {};
-        this.view = new MapView(document, id, data, this.events, (op) => this.processLocalOperation(op));
+        this.view = new MapView(document, id, data, this.events, (op) => this.submitLocalOperation(op));
     }
 
     public async keys(): Promise<string[]> {
@@ -223,7 +226,12 @@ class Map extends api.CollaborativeObject implements api.IMap {
         }
     }
 
-    protected processCore(op: IMapOperation) {
+    protected processCore(op: IMapOperation, local: boolean) {
+        if (local) {
+            // TODO consolidate local ack with any in flight changes
+            return;
+        }
+
         switch (op.type) {
             case "clear":
                 this.view.clearCore();

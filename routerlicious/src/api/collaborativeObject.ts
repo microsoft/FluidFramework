@@ -72,6 +72,9 @@ export abstract class CollaborativeObject implements api.ICollaborativeObject {
             this.submit(localOp);
         }
 
+        // Allow derived classes to perform custom operations
+        this.attachCore();
+
         return this;
     }
 
@@ -95,12 +98,19 @@ export abstract class CollaborativeObject implements api.ICollaborativeObject {
     protected submitCore(message: api.IObjectMessage) {
     }
 
-    protected abstract processCore(operation: any);
+    /**
+     * Allows the distributive data type the ability to perform custom processing once an attach has happened
+     */
+    // tslint:disable-next-line:no-empty
+    protected attachCore() {
+    }
+
+    protected abstract processCore(message: api.ISequencedObjectMessage, local: boolean);
 
     /**
      * Processes a message by the local client
      */
-    protected async processLocalOperation(contents: any): Promise<void> {
+    protected submitLocalOperation(contents: any): void {
         // Prep the message
         const message: api.IObjectMessage = {
             clientSequenceNumber: this.clientSequenceNumber++,
@@ -115,10 +125,6 @@ export abstract class CollaborativeObject implements api.ICollaborativeObject {
             this.submit(message);
         }
 
-        this.processCore(contents);
-
-        // TODO op will fire after any map events - which is possibly confusing ordering - to fix we will need
-        // to somehow batch events to be fired after the operation completes
         this.events.emit("op", message, true);
     }
 
@@ -140,13 +146,16 @@ export abstract class CollaborativeObject implements api.ICollaborativeObject {
         if (message.type === api.OperationType) {
             this.processRemoteOperation(message as api.ISequencedObjectMessage);
         }
+
         // Brodcast the message to listeners.
         this.events.emit("op", message, false);
     }
 
     private processRemoteOperation(message: api.ISequencedObjectMessage) {
+        const local = message.clientId === this.document.clientId;
+
         // server messages should only be delivered to this method in sequence number order
-        if (message.clientId === this.document.clientId) {
+        if (local) {
             // One of our messages was sequenced. We can remove it from the local message list. Given these arrive
             // in order we only need to check the beginning of the local list.
             if (this.localOps.length > 0 &&
@@ -155,10 +164,9 @@ export abstract class CollaborativeObject implements api.ICollaborativeObject {
             } else {
                 debug(`Duplicate ack received ${message.clientSequenceNumber}`);
             }
-        } else {
-            // Message has come from someone else - let's go and update now
-            this.processCore(message.contents);
         }
+
+        this.processCore(message, local);
     }
 
     private submit(message: api.IObjectMessage): void {
