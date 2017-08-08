@@ -185,6 +185,10 @@ class Cell extends api.CollaborativeObject implements api.ICell {
         }
     }
 
+    protected processMinSequenceNumberChanged(value: number) {
+        // TODO need our own concept of the zamboni here
+    }
+
     private setCore(value: ICellValue) {
         this.data = value;
         this.events.emit("valueChanged", { value });

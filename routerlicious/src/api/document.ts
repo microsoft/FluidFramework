@@ -386,7 +386,7 @@ export class Document {
         // Although maybe I just want to store this value in any snapshot and be able to retrieve it later to be safe?
         // Or is the MSN the base and I can just go off of that?
         const connection = new DeltaConnection(id, this, sequenceNumber, this.deltaManager.minimumSequenceNumber);
-        const storage = new ObjectStorageService(this.document.documentStorageService);
+        const storage = new ObjectStorageService(id, this.document.documentStorageService);
 
         return {
             deltaConnection: connection,

@@ -136,9 +136,14 @@ export class DeltaConnection implements IDeltaConnection {
 
     public updateMinSequenceNumber(value: number) {
         this.map.updateBase(value);
-        this.minSequenceNumber = this.map.getClosest(value);
-        debug(this.objectId, `MSN update of ${value} maps to ${this.minSequenceNumber}`);
-        this.events.emit("minSequenceNumber", this.minSequenceNumber);
+        const newMinSequenceNumber = this.map.getClosest(value);
+
+        // Notify clients when then number changed
+        if (newMinSequenceNumber !== this.minimumSequenceNumber) {
+            this.minSequenceNumber = newMinSequenceNumber;
+            debug(this.objectId, `MSN update of ${value} maps to ${this.minSequenceNumber}`);
+            this.events.emit("minSequenceNumber", this.minSequenceNumber);
+        }
     }
 
     /**

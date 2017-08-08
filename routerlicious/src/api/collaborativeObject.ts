@@ -107,6 +107,8 @@ export abstract class CollaborativeObject implements api.ICollaborativeObject {
 
     protected abstract processCore(message: api.ISequencedObjectMessage, local: boolean);
 
+    protected abstract processMinSequenceNumberChanged(value: number);
+
     /**
      * Processes a message by the local client
      */
@@ -131,6 +133,13 @@ export abstract class CollaborativeObject implements api.ICollaborativeObject {
     private listenForUpdates() {
         this.services.deltaConnection.on("op", (message) => {
             this.processRemoteMessage(message);
+        });
+
+        // Min sequence number changed
+        this.services.deltaConnection.on("minSequenceNumber", (value) => {
+            debug(this.id, `New MSN ${value}`);
+            this.minSequenceNumber = value;
+            this.processMinSequenceNumberChanged(this.minimumSequenceNumber);
         });
     }
 

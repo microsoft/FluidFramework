@@ -54,6 +54,7 @@ function textsToSegments(texts: ops.IPropertyString[]) {
 export class SharedString extends api.CollaborativeObject {
     public client: MergeTree.Client;
     private isLoaded = false;
+    private pendingMinSequenceNumber: number = 0;
 
     constructor(
         document: api.Document,
@@ -68,7 +69,7 @@ export class SharedString extends api.CollaborativeObject {
         let chunk: ops.MergeTreeChunk;
 
         if (header) {
-            chunk = Paparazzo.Snapshot.processChunk(Buffer.from(header, "base64").toString("utf-8"));
+            chunk = Paparazzo.Snapshot.processChunk(header);
             this.client.mergeTree.reloadFromSegments(textsToSegments(chunk.segmentTexts));
             chunk = await Paparazzo.Snapshot.loadChunk(this.services, "body");
             for (let segSpec of chunk.segmentTexts) {
@@ -82,6 +83,7 @@ export class SharedString extends api.CollaborativeObject {
         this.isLoaded = true;
         assert.equal(sequenceNumber, chunk.chunkSequenceNumber);
         this.client.startCollaboration(this.document.clientId, sequenceNumber);
+        this.applyPending();
         this.events.emit("loadFinshed", chunk, true);
     }
 
@@ -145,15 +147,12 @@ export class SharedString extends api.CollaborativeObject {
     }
 
     protected processCore(message: api.ISequencedObjectMessage, local: boolean) {
-        this.events.emit("pre-op", message);
-
-        if (this.isLoaded) {
-            this.client.applyMsg(message);
-        } else {
+        if (!this.isLoaded) {
             this.client.enqueueMsg(message);
+            return;
         }
 
-        this.events.emit("op", message);
+        this.applyMessage(message);
     }
 
     protected attachCore(): this {
@@ -161,5 +160,32 @@ export class SharedString extends api.CollaborativeObject {
         this.client.startCollaboration(this.document.clientId, 0);
 
         return this;
+    }
+
+    protected processMinSequenceNumberChanged(value: number) {
+        // Apply directly once loaded - otherwise track so we can update later
+        if (this.isLoaded) {
+            this.client.updateMinSeq(value);
+        } else {
+            this.pendingMinSequenceNumber = value;
+        }
+    }
+
+    private applyPending() {
+        while (this.client.hasMessages()) {
+            const message = this.client.dequeueMsg();
+            this.applyMessage(message);
+        }
+
+        // Update the MSN if larger than the set value
+        if (this.pendingMinSequenceNumber > this.client.mergeTree.getCollabWindow().minSeq) {
+            this.client.updateMinSeq(this.pendingMinSequenceNumber);
+        }
+    }
+
+    private applyMessage(message: api.ISequencedObjectMessage) {
+        this.events.emit("pre-op", message);
+        this.client.applyMsg(message);
+        this.events.emit("op", message);
     }
 }

@@ -226,6 +226,10 @@ class Map extends api.CollaborativeObject implements api.IMap {
         }
     }
 
+    protected processMinSequenceNumberChanged(value: number) {
+        // TODO need our own concept of the zamboni here
+    }
+
     protected processCore(message: api.ISequencedObjectMessage, local: boolean) {
         if (local) {
             // TODO consolidate local ack with any in flight changes

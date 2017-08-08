@@ -1268,8 +1268,16 @@ export class Client {
         };
     }
 
+    hasMessages(): boolean {
+        return this.q.count() > 0;
+    }
+
     enqueueMsg(msg: API.ISequencedObjectMessage) {
         this.q.enqueue(msg);
+    }
+
+    dequeueMsg(): API.ISequencedObjectMessage {
+        return this.q.dequeue();
     }
 
     enqueueTestString() {
@@ -1328,13 +1336,6 @@ export class Client {
                 break;
             }
             msgCount--;
-        }
-    }
-
-    applyAll() {
-        while (!this.q.empty()) {
-            const msg = this.q.dequeue()
-            this.applyMsg(msg);
         }
     }
 
@@ -1520,7 +1521,7 @@ export class Client {
         }
     }
 
-    updateMinSeq(minSeq: number) {
+    updateMinSeq(minSeq: number) { 
         let clockStart;
         if (this.measureOps) {
             clockStart = clock();
@@ -2209,6 +2210,7 @@ export class MergeTree {
     }
 
     updateMinSeq(minSeq: number) {
+        console.log(`Updating minSeq to ${minSeq}`);
         this.collabWindow.minSeq = minSeq;
         if (MergeTree.options.zamboniSegments) {
             this.zamboniSegments();

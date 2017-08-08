@@ -110,6 +110,7 @@ export class Snapshot {
     extractSync() {
         let collabWindow = this.mergeTree.getCollabWindow();
         this.seq = collabWindow.minSeq;
+        console.log(`msn ${collabWindow.minSeq}`);
         this.header = {
             segmentsTotalLength: this.mergeTree.getLength(this.mergeTree.collabWindow.minSeq,
                 MergeTree.NonCollabClient),
@@ -160,9 +161,7 @@ export class Snapshot {
     }
 
     public static processChunk(chunk: string): ops.MergeTreeChunk {
-        return chunk
-            ? JSON.parse(Buffer.from(chunk, "base64").toString("utf-8")) as ops.MergeTreeChunk
-            : Snapshot.EmptyChunk;
+        return JSON.parse(Buffer.from(chunk, "base64").toString("utf-8")) as ops.MergeTreeChunk;
     }
 
     static loadSync(filename: string) {

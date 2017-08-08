@@ -27,8 +27,9 @@ export class BlobStorageService  {
         this.manager = new gitStorage.GitManager(baseUrl, repository);
     }
 
-    public read(id: string, version: string, path: string): Promise<string> {
-        return this.manager.getObject(version, path);
+    public async read(id: string, version: any, path: string): Promise<string> {
+        const value = await this.manager.getObject(version.sha, path);
+        return value.content;
     }
 
     // TODO (mdaumi): Need to implement some kind of auth mechanism here.

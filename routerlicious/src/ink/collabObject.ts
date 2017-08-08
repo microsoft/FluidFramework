@@ -79,4 +79,8 @@ export class InkCollaborativeObject extends api.CollaborativeObject implements I
 
         this.inkSnapshot.apply(message.contents as IDelta);
     }
+
+    protected processMinSequenceNumberChanged(value: number) {
+        // TODO need our own concept of the zamboni here
+    }
 }
