@@ -56,7 +56,7 @@ export class IntelligentServicesManager {
     private services: intelligence.IIntelligentService[] = [];
     private trackedDocuments: { [id: string]: RateLimiter } = {};
 
-    constructor(private output: api.IMap) {
+    constructor(private doc: api.Document, private documentInsights: api.IMapView) {
     }
 
     /**
@@ -74,11 +74,18 @@ export class IntelligentServicesManager {
 
                 this.trackedDocuments[object.id] = new RateLimiter(
                     async () => {
+                        // Create a map for the object if it doesn't exist yet
+                        if (!this.documentInsights.has(object.id)) {
+                            this.documentInsights.set(object.id, this.doc.createMap());
+                        }
+
+                        const output = this.documentInsights.get(object.id) as api.IMap;
+
                         // Run the collaborative services
                         const text = sharedString.client.getText();
                         const setInsightsP = this.services.map(async (service) => {
                             const result = await service.run(text);
-                            return this.output.set(service.name, result);
+                            return output.set(service.name, result);
                         });
 
                         return Promise.all(setInsightsP);

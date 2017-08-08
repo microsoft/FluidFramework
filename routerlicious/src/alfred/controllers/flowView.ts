@@ -987,9 +987,11 @@ export class FlowView {
     private pendingRender = false;
     private diagCharPort = false;
 
-    constructor(public sharedString: SharedString.SharedString, public totalSegmentCount,
-        public totalLengthChars, public flowContainer: IComponentContainer,
+    constructor(
+        public sharedString: SharedString.SharedString,
+        public flowContainer: IComponentContainer,
         insights: API.IMap) {
+
         this.containerDiv = flowContainer.div;
         this.client = sharedString.client;
         this.viewportDiv = document.createElement("div");

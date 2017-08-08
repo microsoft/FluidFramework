@@ -239,27 +239,25 @@ export async function onLoad(id: string, config: any) {
     const sharedString = root.get("text") as SharedString.SharedString;
 
     // Retrive any stored insights
+    const insights = collabDoc.createMap();
     // TODO I probably want some kind of a "get or create" here - or the ability to create a document at the root
     // of the map rather than having to create and attach
-    if (!root.has("insights")) {
-        root.set("insights", collabDoc.createMap());
-    }
-    const insights = root.get("insights") as API.IMap;
+    // if (!root.has("insights")) {
+    //     root.set("insights", collabDoc.createMap());
+    // }
+    // const insights = root.get("insights") as API.IMap;
 
     console.log(window.navigator.userAgent);
     console.log(`id is ${id}`);
-    sharedString.on("partialLoad", async (data: SharedString.MergeTreeChunk) => {
-        console.log("Partial load fired");
+    console.log("Partial load fired");
 
-        let container = new FlowContainer();
-        theFlow = new FlowView.FlowView(sharedString, data.totalSegmentCount,
-            data.totalLengthChars, container, insights);
-        if (data.totalLengthChars > 0) {
-            theFlow.render(0, true);
-        }
-        theFlow.timeToEdit = theFlow.timeToImpression = Date.now() - clockStart;
-        theFlow.setEdit();
-    });
+    let container = new FlowContainer();
+    theFlow = new FlowView.FlowView(sharedString, container, insights);
+    if (sharedString.client.getLength() > 0) {
+        theFlow.render(0, true);
+    }
+    theFlow.timeToEdit = theFlow.timeToImpression = Date.now() - clockStart;
+    theFlow.setEdit();
 
     sharedString.on("loadFinshed", async (data: SharedString.MergeTreeChunk) => {
         // Bootstrap worker service.

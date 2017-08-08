@@ -97,27 +97,31 @@ export class WorkerService implements api.IWorkerService {
             if (!root.has("insights")) {
                 root.set("insights", doc.createMap());
             }
-            const insightsMap = root.get("insights");
-            this.processWork(doc, insightsMap);
+            const insightsMap = root.get("insights") as api.IMap;
+            const insightsMapView = await insightsMap.getView();
+            this.processWork(doc, insightsMapView);
         }, (error) => {
             console.log(`Document ${id} not found!`);
             return;
         });
     }
 
-    private processWork(doc: api.Document, insightsMap: api.IMap) {
+    private processWork(doc: api.Document, insightsMap: api.IMapView) {
         const serializer = new shared.Serializer(doc);
 
-        const intelligenceManager = new shared.IntelligentServicesManager(insightsMap);
+        const intelligenceManager = new shared.IntelligentServicesManager(doc, insightsMap);
         intelligenceManager.registerService(resumeAnalytics.factory.create(this.config.intelligence.resume));
         intelligenceManager.registerService(textAnalytics.factory.create(this.config.intelligence.textAnalytics));
         intelligenceManager.registerService(nativeTextAnalytics.factory.create(
                                             this.config.intelligence.nativeTextAnalytics));
 
-        const eventHandler = (op) => {
+        const eventHandler = (op: api.ISequencedDocumentMessage) => {
             serializer.run(op);
-            // TODO turn back on
-            // intelligenceManager.process(doc);
+
+            if (op.type === api.ObjectOperation) {
+                const objectId = op.contents.address;
+                intelligenceManager.process(doc.get(objectId));
+            }
         };
         this.opHandlerMap[doc.id] = eventHandler;
         doc.on("op", eventHandler);
