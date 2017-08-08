@@ -226,11 +226,13 @@ class Map extends api.CollaborativeObject implements api.IMap {
         }
     }
 
-    protected processCore(op: IMapOperation, local: boolean) {
+    protected processCore(message: api.ISequencedObjectMessage, local: boolean) {
         if (local) {
             // TODO consolidate local ack with any in flight changes
             return;
         }
+
+        const op: IMapOperation = message.contents;
 
         switch (op.type) {
             case "clear":
