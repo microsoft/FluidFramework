@@ -3,14 +3,14 @@
 import * as random from "random-js";
 import * as MergeTree from "./mergeTree";
 import * as fs from "fs";
-// import * as api from "../api";
+import * as api from "../api";
 
 export function loadTextFromFile(filename: string, mergeTree: MergeTree.MergeTree, segLimit = 0) {
     let content = fs.readFileSync(filename, "utf8");
     return loadText(content, mergeTree, segLimit);
 }
 
-export function loadSegments(content: string, segLimit: number) {
+export function loadSegments(content: string, segLimit: number, markers = false) {
     content = content.replace(/^\uFEFF/, "");
     const seq = MergeTree.UniversalSequenceNumber;
     const cli = MergeTree.LocalClientId;
@@ -18,11 +18,16 @@ export function loadSegments(content: string, segLimit: number) {
 
     let paragraphs = content.split('\r\n');
     for (let i = 0, len = paragraphs.length; i < len; i++) {
-        paragraphs[i] = paragraphs[i].replace(/\r\n/g, ' ').replace(/\u201c|\u201d/g, '"').replace(/\u2019/g, "'") + '\n';
+        paragraphs[i] = paragraphs[i].replace(/\r\n/g, ' ').replace(/\u201c|\u201d/g, '"').replace(/\u2019/g, "'");
+        if (!markers) {
+            paragraphs[i] += "\n";
+        }
     }
     let segments = <MergeTree.Segment[]>[];
     for (let paragraph of paragraphs) {
-        // temporary code to bootstrap attributes
+        if (markers) {
+            segments.push(MergeTree.Marker.make("pg", api.MarkerBehaviors.Tile, undefined, seq, cli));
+        }
         if (withProps) {
             if (paragraph.indexOf("Chapter") >= 0) {
                 segments.push(MergeTree.TextSegment.make(paragraph, { fontSize: "140%", lineHeight: "150%" }, seq, cli));
@@ -54,8 +59,8 @@ export function loadSegments(content: string, segLimit: number) {
     return segments;
 }
 
-export function loadText(content: string, mergeTree: MergeTree.MergeTree, segLimit: number) {
-    const segments = loadSegments(content, segLimit);
+export function loadText(content: string, mergeTree: MergeTree.MergeTree, segLimit: number, markers = false) {
+    const segments = loadSegments(content, segLimit, markers);
     mergeTree.reloadFromSegments(segments);
     // for (let segment of segments) {
     //     segTree.insertInterval(segTree.getLength(0,SegTree.LocalClientId),0,SegTree.LocalClientId,0,segment);

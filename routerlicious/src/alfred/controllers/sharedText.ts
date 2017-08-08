@@ -193,6 +193,7 @@ class FlowContainer implements FlowView.IComponentContainer {
 }
 
 export async function onLoad(id: string, config: any) {
+    SharedString.MergeTree.blockUpdateMarkers = true;
     const extension = API.defaultRegistry.getExtension(SharedString.CollaboritiveStringExtension.Type);
     const sharedString = extension.load(id, API.getDefaultServices(), API.defaultRegistry) as SharedString.SharedString;
 
@@ -229,7 +230,7 @@ export async function onLoad(id: string, config: any) {
                     if (error) {
                         return console.error(error);
                     }
-                    const segments = SharedString.loadSegments(body, 0);
+                    const segments = SharedString.loadSegments(body, 0, true);
                     for (const segment of segments) {
                         if (segment.getType() === SharedString.SegmentType.Text) {
                             let textSegment = <SharedString.TextSegment>segment;

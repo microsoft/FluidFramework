@@ -203,19 +203,19 @@ export class Rectangle {
         return rects;
     }
 
-    public subDivideVertAbs(height: number) {
+    public subDivideVertAbs(height: number, peanutButter = true) {
         let n = Math.ceil(this.height / height);
-        return this.subDivideVert(n);
+        return this.subDivideVert(n, peanutButter);
     }
 
-    public subDivideVert(n: number) {
+    public subDivideVert(n: number, peanutButter = true) {
         let rects: Rectangle[] = [];
-        let tileHeight = this.height / n;
+        let tileHeight = Math.floor(this.height / n);
         let rem = this.height % n;
         let tileY = this.y;
         for (let i = 0; i < n; i++) {
             rects[i] = new Rectangle(this.x, tileY, this.width, tileHeight);
-            if (rem > 0) {
+            if (peanutButter && (rem > 0)) {
                 rects[i].height++;
                 rem--;
             }

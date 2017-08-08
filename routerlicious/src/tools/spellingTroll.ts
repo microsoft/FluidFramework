@@ -100,24 +100,25 @@ class Speller {
     }
 
     currentWordSpellCheck(pos: number, rev = false) {
-        let text = "";
+        let words = "";
         let fwdText = "";
+
         let gatherReverse = (segment: SharedString.Segment) => {
             switch (segment.getType()) {
                 case SharedString.SegmentType.Marker:
-                    text = " " + text;
+                    words = " " + words;
                     break;
                 case SharedString.SegmentType.Text:
                     let textSegment = <SharedString.TextSegment>segment;
                     if (textSegment.netLength()) {
                         // not removed
-                        text = textSegment.text + text;
+                        words = textSegment.text + words;
                     }
                     break;
                 // TODO: component
             }
             // console.log(`rev: -${text}-`);
-            if (/\s+\w+/.test(text)) {
+            if (/\s+\w+/.test(words)) {
                 return false;
             }
             else {
@@ -154,16 +155,16 @@ class Speller {
         }
         // assumes op has made pos a segment boundary
         this.sharedString.client.mergeTree.leftExcursion(segoff.segment, gatherReverse);
-        let startPos = pos - text.length;
+        let startPos = pos - words.length;
         if (segoff.segment) {
             if (gatherForward(segoff.segment)) {
                 this.sharedString.client.mergeTree.rightExcursion(segoff.segment, gatherForward);
             }
-            text = text + fwdText;
+            words = words + fwdText;
             let re = /\b\w+\b/g;
             let result: RegExpExecArray;
             do {
-                result = re.exec(text);
+                result = re.exec(words);
                 if (result) {
                     let start = result.index + startPos;
                     let end = re.lastIndex + startPos;
@@ -182,7 +183,7 @@ class Speller {
                     }
                     else {
                         if (this.verbose) {
-                            console.log(`spell ok (${start}, ${end}): ${text.substring(result.index, re.lastIndex)}`);
+                            console.log(`spell ok (${start}, ${end}): ${words.substring(result.index, re.lastIndex)}`);
                         }
                         this.sharedString.annotateRange({ textError: null }, start, end);
                     }
@@ -195,6 +196,7 @@ class Speller {
 
 let theSpeller: Speller;
 function initSpell(id: string) {
+    SharedString.MergeTree.blockUpdateMarkers = true;
     const extension = API.defaultRegistry.getExtension(SharedString.CollaboritiveStringExtension.Type);
     const sharedString = extension.load(id, API.getDefaultServices(), API.defaultRegistry) as SharedString.SharedString;
     sharedString.on("partialLoad", (data) => {
