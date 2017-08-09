@@ -753,7 +753,8 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
                                     }
                                     // console.log(`highlight ${itemElm.innerText}`);
                                 }
-                                if (e.button === 2) {
+                                console.log(`button ${e.button}`);
+                                if ((e.button === 2)||((e.button === 0) && (e.ctrlKey))) {
                                     let spanBounds = Geometry.Rectangle.fromClientRect(span.getBoundingClientRect());
                                     spanBounds.width = Math.floor(window.innerWidth / 4);
                                     slb = selectionListBoxCreate(spanBounds, document.body, 24, 0, 12);

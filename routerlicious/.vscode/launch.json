@@ -20,7 +20,7 @@
             "sourceMaps": true,            
             "outFiles": [ "${workspaceRoot}/dist/**/*.js" ],            
             "program": "${workspaceRoot}/dist/tools/spellingTroll.js",
-            "args": ["aug3-2"]
+            "args": ["aug8-5"]
         },
         {
             "type": "node",

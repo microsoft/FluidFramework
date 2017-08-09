@@ -24,9 +24,9 @@ function compareProxStrings(a: Collections.ProxString<number>, b: Collections.Pr
 }
 
 class Speller {
-    static maxWord = 256;
+    static altMax = 7;
     dict = new Collections.TST<number>();
-    verbose = false;
+    verbose = true;
 
     constructor(public sharedString: SharedString.SharedString) {
     }
@@ -67,31 +67,83 @@ class Speller {
 
     initialSpellCheck() {
         this.loadDict();
-        let text = this.sharedString.client.getTextWithPlaceholders();
-        let re = /\b\w+\b/g;
-        let result: RegExpExecArray;
-        do {
-            result = re.exec(text);
-            if (result) {
-                let candidate = result[0];
-                if (this.spellingError(candidate.toLocaleLowerCase())) {
-                    let start = result.index;
-                    let end = re.lastIndex;
-                    let textErrorInfo = this.makeTextErrorInfo(candidate);
-                    if (this.verbose) {
-                        console.log(`spell (${start}, ${end}): ${textErrorInfo.text}`);
+        let spellParagraph = (startPG: number, endPG: number, text: string) => {
+            let re = /\b\w+\b/g;
+            let result: RegExpExecArray;
+            do {
+                result = re.exec(text);
+                if (result) {
+                    let candidate = result[0];
+                    if (this.spellingError(candidate.toLocaleLowerCase())) {
+                        let start = result.index;
+                        let end = re.lastIndex;
+                        let textErrorInfo = this.makeTextErrorInfo(candidate);
+                        if (this.verbose) {
+                            console.log(`spell (${startPG + start}, ${startPG + end}): ${textErrorInfo.text}`);
+                        }
+                        this.sharedString.annotateRange({ textError: textErrorInfo }, startPG + start, startPG + end);
                     }
-                    this.sharedString.annotateRange({ textError: textErrorInfo }, start, end);
                 }
+            } while (result);
+        }
+        let prevPG: SharedString.Marker;
+        let startPGPos = 0;
+        let pgText = "";
+        let endMarkerFound = false;
+
+        function gatherPG(segment: SharedString.Segment, segpos: number) {
+            switch (segment.getType()) {
+                case SharedString.SegmentType.Marker:
+                    let marker = <SharedString.Marker>segment;
+                    if (marker.netLength()) {
+                        if (marker.type === "pg") {
+                            if (prevPG) {
+                                // TODO: send paragraph to service
+                                spellParagraph(startPGPos, segpos, pgText);
+                                endMarkerFound = true;
+                            }
+                            startPGPos = segpos + marker.netLength();
+                            prevPG = marker;
+                            pgText = "";
+                            if (endMarkerFound) {
+                                return false;
+                            }
+                        }
+                        else {
+                            for (let i = 0; i < marker.netLength(); i++) {
+                                pgText += " ";
+                            }
+                        }
+                    }
+                    break;
+                case SharedString.SegmentType.Text:
+                    let textSegment = <SharedString.TextSegment>segment;
+                    if (textSegment.netLength()) {
+                        pgText += textSegment.text;
+                    }
+                    break;
             }
-        } while (result);
+            return true;
+        }
+
+        do {
+            endMarkerFound = false;
+            this.sharedString.client.mergeTree.mapRange({ leaf: gatherPG }, SharedString.UniversalSequenceNumber,
+                this.sharedString.client.getClientId(), undefined, startPGPos);
+        } while (endMarkerFound);
+
+        if (prevPG) {
+            // TODO: send paragraph to service
+            spellParagraph(startPGPos, startPGPos + pgText.length, pgText);
+        }
+        
         this.setEvents();
     }
 
     makeTextErrorInfo(candidate: string) {
         let alternates = this.dict.neighbors(candidate, 2).sort(compareProxStrings);
-        if (alternates.length > 7) {
-            alternates.length = 7;
+        if (alternates.length > Speller.altMax) {
+            alternates.length = Speller.altMax;
         }
         return {
             text: candidate,
@@ -101,53 +153,76 @@ class Speller {
 
     currentWordSpellCheck(pos: number, rev = false) {
         let words = "";
-        let fwdText = "";
+        let fwdWords = "";
+        let sentence = "";
+        let fwdSentence = "";
+        let wordsFound = false;
 
         let gatherReverse = (segment: SharedString.Segment) => {
             switch (segment.getType()) {
                 case SharedString.SegmentType.Marker:
-                    words = " " + words;
+                    if (!wordsFound) {
+                        words = " " + words;
+                    }
+                    sentence = " " + sentence;
+                    let marker = <SharedString.Marker>segment;
+                    if (marker.type === "pg") {
+                        return false;
+                    }
                     break;
                 case SharedString.SegmentType.Text:
                     let textSegment = <SharedString.TextSegment>segment;
                     if (textSegment.netLength()) {
-                        // not removed
-                        words = textSegment.text + words;
+                        if (!wordsFound) {
+                            words = textSegment.text + words;
+                        }
+                        sentence = textSegment.text + sentence;
                     }
                     break;
                 // TODO: component
             }
             // console.log(`rev: -${text}-`);
             if (/\s+\w+/.test(words)) {
+                wordsFound = true;
+            }
+            if (/[\?\.\!]\s*\w+/.test(sentence)) {
                 return false;
             }
-            else {
-                return true;
-            }
+            return true;
         };
 
         let gatherForward = (segment: SharedString.Segment) => {
             switch (segment.getType()) {
                 case SharedString.SegmentType.Marker:
-                    fwdText = fwdText + " ";
+                    if (!wordsFound) {
+                        fwdWords = fwdWords + " ";
+                    }
+                    fwdSentence = fwdSentence + " ";
+                    let marker = <SharedString.Marker>segment;
+                    if (marker.type === "pg") {
+                        return false;
+                    }
                     break;
                 case SharedString.SegmentType.Text:
                     let textSegment = <SharedString.TextSegment>segment;
                     if (textSegment.netLength()) {
-                        // not removed
-                        fwdText = fwdText + textSegment.text;
+                        if (!wordsFound) {
+                            fwdWords = fwdWords + textSegment.text;
+                        }
+                        fwdSentence = fwdSentence + textSegment.text;
                     }
                     break;
                 // TODO: component
             }
-            // console.log(`fwd: -${fwdText}-`);
-            if (/\w+\s+/.test(fwdText)) {
+            if (/\w+\s+/.test(fwdWords)) {
+                wordsFound = true;
+            }
+            if (/\w+\s*[\.\?\!]/.test(fwdSentence)) {
                 return false;
             }
-            else {
-                return true;
-            }
+            return true;
         };
+
         let segoff = this.sharedString.client.mergeTree.getContainingSegment(pos,
             SharedString.UniversalSequenceNumber, this.sharedString.client.getClientId());
         if (segoff.offset !== 0) {
@@ -156,11 +231,19 @@ class Speller {
         // assumes op has made pos a segment boundary
         this.sharedString.client.mergeTree.leftExcursion(segoff.segment, gatherReverse);
         let startPos = pos - words.length;
+        let sentenceStartPos = pos - sentence.length;
+
         if (segoff.segment) {
+            wordsFound = false;
             if (gatherForward(segoff.segment)) {
                 this.sharedString.client.mergeTree.rightExcursion(segoff.segment, gatherForward);
             }
-            words = words + fwdText;
+            words = words + fwdWords;
+            sentence = sentence + fwdSentence;
+            if (this.verbose) {
+                console.log(`found sentence ${sentence} (start ${sentenceStartPos}, end ${sentenceStartPos + sentence.length}) around change`);
+            }
+            // TODO: send this sentence to service for analysis 
             let re = /\b\w+\b/g;
             let result: RegExpExecArray;
             do {
