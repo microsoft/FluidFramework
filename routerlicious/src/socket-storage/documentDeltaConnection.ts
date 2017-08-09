@@ -1,19 +1,14 @@
 import { EventEmitter } from "events";
 import * as api from "../api";
-import { DeltaNotificationService } from "./deltaNotificationService";
+import { DocumentService } from "./documentService";
 
 /**
  * Represents a connection to a stream of delta updates
  */
-export class DeltaConnection implements api.IDeltaConnection {
+export class DocumentDeltaConnection implements api.IDocumentDeltaConnection {
     private emitter = new EventEmitter();
 
-    constructor(
-        private service: DeltaNotificationService,
-        public objectId: string,
-        public clientId: string,
-        public existing: boolean,
-        public versions: any[]) {
+    constructor(private service: DocumentService, public documentId: string, public clientId: string) {
     }
 
     /**
@@ -28,7 +23,7 @@ export class DeltaConnection implements api.IDeltaConnection {
     /**
      * Submits a new delta operation to the server
      */
-    public submitOp(message: api.IMessage): Promise<void> {
+    public submit(message: api.IDocumentMessage): Promise<void> {
         return new Promise<void>((resolve, reject) => {
             this.service.emit("submitOp", this.clientId, message, (error) => {
                 if (error) {
@@ -43,7 +38,7 @@ export class DeltaConnection implements api.IDeltaConnection {
     /**
      * Updates the reference sequence number on the given connection to the provided value
      */
-    public updateReferenceSequenceNumber(sequenceNumber: number): Promise<void> {
+    public updateReferenceSequenceNumber(objectId: string, sequenceNumber: number): Promise<void> {
         return new Promise<void>((resolve, reject) => {
             this.service.emit("updateReferenceSequenceNumber", this.clientId, sequenceNumber, (error) => {
                 if (error) {

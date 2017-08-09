@@ -3,8 +3,6 @@ import * as api from "../../api";
 import * as shared from "../../shared";
 import * as socketStorage from "../../socket-storage";
 
-socketStorage.registerAsDefault(document.location.origin);
-
 async function loadDocument(id: string): Promise<api.Document> {
     console.log("Loading in root document...");
     const document = await api.load(id);
@@ -110,6 +108,8 @@ function randomizeCell(cell: api.ICell, element1: JQuery, element2: JQuery) {
 }
 
 export async function load(id: string, config: any) {
+    socketStorage.registerAsDefault(document.location.origin, config.blobStorageUrl, config.repository);
+
     const doc = await loadDocument(id);
     const root = doc.getRoot();
 

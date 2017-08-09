@@ -53,13 +53,9 @@ export default class InkCanvas {
 
     // constructor
     constructor(private model: ink.IInk, parent: HTMLElement, private entryTarget: HTMLElement = null) {
-        this.model.on("op", (op, isLocal) => {
-            if (isLocal) {
-                return;
-            }
-
+        this.model.on("op", (op) => {
             // Update the canvas
-            this.addAndDrawStroke(op as ink.IDelta, false);
+            this.addAndDrawStroke(op.contents as ink.IDelta, false);
         });
 
         this.model.on("load", () => {

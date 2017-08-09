@@ -8,10 +8,10 @@ export class Serializer {
     private lastSerializedMsn: number = 0;
     private currentMsn: number = 0;
 
-    constructor(private root: api.ICollaborativeObject) {
+    constructor(private root: api.Document) {
     }
 
-    public run(op: api.ISequencedMessage) {
+    public run(op: api.ISequencedDocumentMessage) {
         this.currentMsn = op.minimumSequenceNumber;
         this.snapshot();
     }

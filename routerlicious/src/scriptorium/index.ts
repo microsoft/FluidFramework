@@ -49,7 +49,7 @@ async function run() {
     const db = await mongoManager.getDatabase();
     const collection = db.collection(deltasCollectionName);
     await collection.createIndex({
-            "objectId": 1,
+            "documentId": 1,
             "operation.sequenceNumber": 1,
         },
         { unique: true });
@@ -76,15 +76,15 @@ async function run() {
     // Mongo inserts don't order promises with respect to each other. To work around this we track the last
     // Mongo insert we've made for each document. And then perform a then on this to maintain causal ordering
     // for any dependent operations (i.e. socket.io writes)
-    const lastMongoInsertP: { [objectId: string]: Promise<any> } = {};
+    const lastMongoInsertP: { [documentId: string]: Promise<any> } = {};
 
-    const ioBatchManager = new utils.BatchManager<core.ISequencedOperationMessage>((objectId, work) => {
+    const ioBatchManager = new utils.BatchManager<core.ISequencedOperationMessage>((documentId, work) => {
         // Initialize the last promise if it doesn't exist
-        if (!(objectId in lastMongoInsertP)) {
-            lastMongoInsertP[objectId] = Promise.resolve();
+        if (!(documentId in lastMongoInsertP)) {
+            lastMongoInsertP[documentId] = Promise.resolve();
         }
 
-        logger.verbose(`Inserting to mongodb ${objectId}@${work[0].operation.sequenceNumber}:${work.length}`);
+        logger.verbose(`Inserting to mongodb ${documentId}@${work[0].operation.sequenceNumber}:${work.length}`);
         const insertP = collection.insertMany(work, <CollectionInsertManyOptions> (<any> { ordered: false }))
             .catch((error) => {
                 // Ignore duplicate key errors since a replay may cause us to attempt to insert a second time
@@ -92,14 +92,14 @@ async function run() {
                     return Promise.reject(error);
                 }
             });
-        lastMongoInsertP[objectId] = lastMongoInsertP[objectId].then(() => insertP);
+        lastMongoInsertP[documentId] = lastMongoInsertP[documentId].then(() => insertP);
 
-        lastMongoInsertP[objectId].then(
+        lastMongoInsertP[documentId].then(
             () => {
                 // Route the message to clients
                 // tslint:disable-next-line:max-line-length
-                logger.verbose(`Routing message to clients ${objectId}@${work[0].operation.sequenceNumber}:${work.length}`);
-                io.to(objectId).emit("op", objectId, work.map((value) => value.operation));
+                logger.verbose(`Routing message to clients ${documentId}@${work[0].operation.sequenceNumber}:${work.length}`);
+                io.to(documentId).emit("op", documentId, work.map((value) => value.operation));
                 throughput.acknolwedge(work.length);
             },
             (error) => {
@@ -117,7 +117,7 @@ async function run() {
             const value = baseMessage as core.ISequencedOperationMessage;
 
             // Batch up work to more efficiently send to socket.io and mongodb
-            ioBatchManager.add(value.objectId, value);
+            ioBatchManager.add(value.documentId, value);
         }
 
         // Update partition manager.

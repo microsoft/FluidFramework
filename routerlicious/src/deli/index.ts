@@ -21,7 +21,7 @@ const receiveTopic = nconf.get("deli:topics:receive");
 const sendTopic = nconf.get("deli:topics:send");
 const checkpointBatchSize = nconf.get("deli:checkpointBatchSize");
 const checkpointTimeIntervalMsec = nconf.get("deli:checkpointTimeIntervalMsec");
-const objectsCollectionName = nconf.get("mongo:collectionNames:objects");
+const documentsCollectionName = nconf.get("mongo:collectionNames:documents");
 const groupId = nconf.get("deli:groupId");
 
 let checkpointTimer: any;
@@ -39,19 +39,19 @@ function processMessage(
         baseMessage.type === core.RawOperationType) {
 
         const objectMessage = JSON.parse(message.value.toString("utf8")) as core.IObjectMessage;
-        const objectId = objectMessage.objectId;
+        const documentId = objectMessage.documentId;
 
         // Go grab the takeANumber machine for the objectId and mark it as dirty.
         // Store it in the partition map. We need to add an eviction strategy here.
-        if (!(objectId in dispensers)) {
-            dispensers[objectId] = new TakeANumber(objectId, objectsCollection, producer);
-            logger.info(`Brand New object Found: ${objectId}`);
+        if (!(documentId in dispensers)) {
+            dispensers[documentId] = new TakeANumber(documentId, objectsCollection, producer);
+            logger.info(`New document ${documentId}`);
         }
-        const dispenser = dispensers[objectId];
+        const dispenser = dispensers[documentId];
 
         // Either ticket the message or update the sequence number depending on the message type
         const ticketP = dispenser.ticket(message);
-        ticketQueue[objectId] = ticketP;
+        ticketQueue[documentId] = ticketP;
     }
 
     // Update partition manager entry.
@@ -124,7 +124,7 @@ async function processMessages(
         processMessage(message, dispensers, ticketQueue, partitionManager, producer, objectsCollection);
         throughput.acknolwedge();
 
-        // Periodically checkpoints to mongo and checkpoints offset back to kafka.
+        // Periodically checkpoint to mongo and checkpoints offset back to kafka.
         // Ideally there should be a better strategy to figure out when to checkpoint.
         if (message.offset % checkpointBatchSize === 0) {
             const pendingDispensers = _.keys(ticketQueue).map((key) => dispensers[key]);
@@ -144,8 +144,8 @@ async function run() {
     // Connection to stored document details
     const mongoManager = new utils.MongoManager(mongoUrl, false);
     const client = await mongoManager.getDatabase();
-    const objectsCollection = await client.collection(objectsCollectionName);
-    logger.info("Collection ready");
+    const documentsCollection = await client.collection(documentsCollectionName);
+    logger.info("Documents collection ready");
 
     // Prep Kafka producer and consumer
     let producer = utils.kafkaProducer.create(kafkaLibrary, kafkaEndpoint, kafkaClientId, sendTopic);
@@ -153,7 +153,7 @@ async function run() {
 
     // Return a promise that will never resolve (since we run forever) but will reject
     // should an error occur
-    return processMessages(producer, consumer, objectsCollection);
+    return processMessages(producer, consumer, documentsCollection);
 }
 
 // Start up the deli service

@@ -1,8 +1,8 @@
 import { Router } from "express";
 import { MongoClient } from "mongodb";
 import * as nconf from "nconf";
-import * as api from "../../api";
 import * as core from "../../core";
+import * as map from "../../map";
 import * as utils from "../../utils";
 import { logger } from "../../utils";
 
@@ -18,11 +18,11 @@ const topic = nconf.get("alfred:topic");
 // Connection to stored document details
 const mongoUrl = nconf.get("mongo:endpoint");
 const client = MongoClient.connect(mongoUrl);
-const objectsCollectionName = nconf.get("mongo:collectionNames:objects");
-const objectsCollectionP = client.then((db) => db.collection(objectsCollectionName));
+const documentsCollectionName = nconf.get("mongo:collectionNames:documents");
+const documentsCollectionP = client.then((db) => db.collection(documentsCollectionName));
 
 async function getOrCreateObject(id: string, type: string): Promise<boolean> {
-    const collection = await objectsCollectionP;
+    const collection = await documentsCollectionP;
     const dbObjectP = collection.findOne({ _id: id });
     return dbObjectP.then(
         (dbObject) => {
@@ -46,26 +46,28 @@ async function startProducer(batchSize: number) {
     const producer = utils.kafkaProducer.create(kafkaLibrary, kafkaEndpoint, "testproducer", topic);
     const throughput = new utils.ThroughputCounter(logger.info);
 
-    await getOrCreateObject("producer", api.MapExtension.Type);
+    await getOrCreateObject("producer", map.MapExtension.Type);
 
     let clientSequenceNumber = 1;
     producerInterval = setInterval(() => {
         const rawMessage: core.IRawOperationMessage = {
             clientId: "producer",
-            objectId: "producer",
+            documentId: "producer",
             operation: {
-                clientSequenceNumber: clientSequenceNumber++,
-                op: {
+                clientSequenceNumber,
+                contents: {
                     key: "binky",
                     type: "set",
                     value: "winky",
                 },
                 referenceSequenceNumber: 0,
+                type: "test",
             },
             timestamp: Date.now(),
             type: core.RawOperationType,
             userId: "producer",
         };
+        clientSequenceNumber++;
 
         for (let i = 0; i < batchSize; i++) {
             throughput.produce();

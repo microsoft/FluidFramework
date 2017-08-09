@@ -41,12 +41,12 @@ class Speller {
     }
 
     setEvents() {
-        this.sharedString.on("op", (msg: API.ISequencedMessage) => {
-            if (msg && msg.op) {
-                let delta = <API.IMergeTreeOp>msg.op;
-                if (delta.type === API.MergeTreeDeltaType.INSERT) {
+        this.sharedString.on("op", (msg: API.ISequencedObjectMessage) => {
+            if (msg && msg.contents) {
+                let delta = <SharedString.IMergeTreeOp>msg.contents;
+                if (delta.type === SharedString.MergeTreeDeltaType.INSERT) {
                     this.currentWordSpellCheck(delta.pos1);
-                } else if (delta.type === API.MergeTreeDeltaType.REMOVE) {
+                } else if (delta.type === SharedString.MergeTreeDeltaType.REMOVE) {
                     this.currentWordSpellCheck(delta.pos1, true);
                 }
             }
@@ -195,14 +195,17 @@ class Speller {
 }
 
 let theSpeller: Speller;
-function initSpell(id: string) {
+async function initSpell(id: string) {
     SharedString.MergeTree.blockUpdateMarkers = true;
-    const extension = API.defaultRegistry.getExtension(SharedString.CollaboritiveStringExtension.Type);
-    const sharedString = extension.load(id, API.getDefaultServices(), API.defaultRegistry) as SharedString.SharedString;
-    sharedString.on("partialLoad", (data) => {
-        console.log("partial load fired");
-    });
-    sharedString.on("loadFinshed", (data: API.MergeTreeChunk, existing: boolean) => {
+
+    const document = await API.load(id);
+    const root = await document.getRoot().getView();
+    if (!root.has("text")) {
+        root.set("text", document.createString());
+    }
+    const sharedString = root.get("text") as SharedString.SharedString;
+    console.log("partial load fired");
+    sharedString.loaded.then(() => {
         theSpeller = new Speller(sharedString);
         theSpeller.initialSpellCheck();
     });
@@ -213,6 +216,8 @@ let sharedStringId;
 
 commander.version("0.0.1")
     .option("-s, --server [server]", "server url", "http://localhost:3000")
+    .option("-t, --storage [server]", "storage server url", "http://localhost:3001")
+    .option("-r, --repository [repo]", "git repository", "prague")
     .arguments("<id>")
     .action((id: string) => {
         sharedStringId = id;
@@ -225,6 +230,6 @@ if (!sharedStringId) {
 }
 else {
     // Mark socket storage as our default provider
-    socketStorage.registerAsDefault(commander.server);
+    socketStorage.registerAsDefault(commander.server, commander.storage, commander.repository);
     initSpell(sharedStringId);
 }

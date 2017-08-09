@@ -1,5 +1,6 @@
 import { Router } from "express";
 import * as nconf from "nconf";
+import * as api from "../../api";
 import * as utils from "../../utils";
 
 const mongoUrl = nconf.get("mongo:endpoint");
@@ -9,21 +10,18 @@ const router: Router = Router();
 
 const mongoManager = new utils.MongoManager(mongoUrl);
 
-/**
- * Retrieves deltas for the given document. With an optional from and to range (both exclusive) specified
- */
-router.get("/:id", (request, response, next) => {
+export function getDeltas(documentId: string, from?: number, to?: number): Promise<api.ISequencedDocumentMessage[]> {
     // Create an optional filter to restrict the delta range
-    const query: any = { objectId: request.params.id };
-    if (request.query.from || request.query.to) {
+    const query: any = { documentId };
+    if (from !== undefined || to !== undefined) {
         query["operation.sequenceNumber"] = {};
 
-        if (request.query.from) {
-            query["operation.sequenceNumber"].$gt = parseInt(request.query.from, 10);
+        if (from !== undefined) {
+            query["operation.sequenceNumber"].$gt = from;
         }
 
-        if (request.query.to) {
-            query["operation.sequenceNumber"].$lt = parseInt(request.query.to, 10);
+        if (to !== undefined) {
+            query["operation.sequenceNumber"].$lt = to;
         }
     }
 
@@ -37,6 +35,24 @@ router.get("/:id", (request, response, next) => {
 
         return dbDeltas.map((delta) => delta.operation);
     });
+
+    return deltasP;
+}
+
+function stringToSequenceNumber(value: string): number {
+    const parsedValue = parseInt(value, 10);
+    return isNaN(parsedValue) ? undefined : parsedValue;
+}
+
+/**
+ * Retrieves deltas for the given document. With an optional from and to range (both exclusive) specified
+ */
+router.get("/:id", (request, response, next) => {
+    const from = stringToSequenceNumber(request.params.from);
+    const to = stringToSequenceNumber(request.params.to);
+
+    // Query for the deltas and return a filtered version of just the operations field
+    const deltasP = getDeltas(request.params.id, from, to);
 
     deltasP.then(
         (deltas) => {

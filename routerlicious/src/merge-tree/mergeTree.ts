@@ -2,8 +2,9 @@
 
 import * as Base from "./base";
 import * as Collections from "./collections";
+import * as ops from "./ops";
 import * as API from "../api";
-import { ISequencedMessage } from "../api";
+import { ISequencedObjectMessage } from "../api";
 import * as Properties from "./properties";
 
 export type MapLike<T> = Properties.MapLike<T>;
@@ -156,13 +157,13 @@ function applyStackDelta(stacks: RangeStackMap, delta: RangeStackMap) {
 }
 
 function applyRangeMarker(stack: Collections.Stack<Marker>, delta: Marker) {
-    if (delta.behaviors & API.MarkerBehaviors.Begin) {
+    if (delta.behaviors & ops.MarkerBehaviors.Begin) {
         stack.push(delta);
     }
     else {
         // assume delta is end marker
         let top = stack.top();
-        if (top && (top.behaviors & API.MarkerBehaviors.Begin)) {
+        if (top && (top.behaviors & ops.MarkerBehaviors.Begin)) {
             stack.pop();
         }
         else {
@@ -175,10 +176,10 @@ function addNodeMarkers(node: Node, tiles: MapLike<Marker>, rangeStacks: RangeSt
     if (node.isLeaf()) {
         if (((<Segment>node).getType() == SegmentType.Marker)) {
             let marker = <Marker>node;
-            if (marker.behaviors & API.MarkerBehaviors.Tile) {
+            if (marker.behaviors & ops.MarkerBehaviors.Tile) {
                 addTile(marker, tiles);
             }
-            else if (marker.behaviors & API.MarkerBehaviors.Range) {
+            else if (marker.behaviors & ops.MarkerBehaviors.Range) {
                 let type = marker.type;
                 let stack = rangeStacks[type];
                 if (stack === undefined) {
@@ -304,7 +305,7 @@ export class ExternalSegment extends BaseSegment {
 }
 
 export class Marker extends BaseSegment {
-    public static make(type: string, behavior: API.MarkerBehaviors, props?: PropertySet,
+    public static make(type: string, behavior: ops.MarkerBehaviors, props?: PropertySet,
         seq?: number, clientId?: number) {
         let marker = new Marker(type, behavior, seq, clientId);
         if (props) {
@@ -313,7 +314,7 @@ export class Marker extends BaseSegment {
         return marker;
     }
 
-    constructor(public type: string, public behaviors: API.MarkerBehaviors, seq?: number, clientId?: number) {
+    constructor(public type: string, public behaviors: ops.MarkerBehaviors, seq?: number, clientId?: number) {
         super(seq, clientId);
         this.cachedLength = 1;
     }
@@ -1120,7 +1121,7 @@ function elapsedMicroseconds(start: [number, number] | number) {
 export const useCheckQ = false;
 
 function checkTextMatchRelative(refSeq: number, clientId: number, server: TestServer,
-    msg: ISequencedMessage) {
+    msg: API.ISequencedObjectMessage) {
     let client = server.clients[clientId];
     let serverText = server.mergeTree.getText(refSeq, clientId);
     let cliText = client.checkQ.dequeue();
@@ -1158,7 +1159,7 @@ export class Client {
     accumOps = 0;
     verboseOps = false;
     measureOps = false;
-    q: Collections.List<API.IBase>;
+    q: Collections.List<API.ISequencedObjectMessage>;
     checkQ: Collections.List<string>;
     clientSequenceNumber = 1;
     clientNameToId = new Collections.RedBlackTree<string, number>(compareStrings);
@@ -1168,7 +1169,7 @@ export class Client {
     constructor(initText: string) {
         this.mergeTree = new MergeTree(initText);
         this.mergeTree.getLongClientId = id => this.getLongClientId(id);
-        this.q = Collections.ListMakeHead<API.ISequencedMessage>();
+        this.q = Collections.ListMakeHead<API.ISequencedObjectMessage>();
         this.checkQ = Collections.ListMakeHead<string>();
     }
 
@@ -1198,60 +1199,60 @@ export class Client {
     }
 
     // TODO: props, end
-    makeInsertMarkerMsg(markerType: string, behaviors: API.MarkerBehaviors, pos: number, seq: number,
+    makeInsertMarkerMsg(markerType: string, behaviors: ops.MarkerBehaviors, pos: number, seq: number,
         refSeq: number, objectId: string) {
-        return <ISequencedMessage>{
+        return <ISequencedObjectMessage>{
             clientId: this.longClientId,
+            minimumSequenceNumber: undefined,
+            clientSequenceNumber: this.clientSequenceNumber,
             sequenceNumber: seq,
             referenceSequenceNumber: refSeq,
             objectId: objectId,
-            clientSequenceNumber: this.clientSequenceNumber,
             userId: undefined,
-            minimumSequenceNumber: undefined,
             offset: seq,
-            op: {
-                type: API.MergeTreeDeltaType.INSERT, marker: { type: markerType, behaviors }, pos1: pos
+            contents: {
+                type: ops.MergeTreeDeltaType.INSERT, marker: { type: markerType, behaviors }, pos1: pos
             },
             type: API.OperationType,
         };
     }
 
     makeInsertMsg(text: string, pos: number, seq: number, refSeq: number, objectId: string) {
-        return <ISequencedMessage>{
+        return <ISequencedObjectMessage>{
             clientId: this.longClientId,
             sequenceNumber: seq,
             referenceSequenceNumber: refSeq,
-            objectId: objectId,
             clientSequenceNumber: this.clientSequenceNumber,
-            userId: undefined,
             minimumSequenceNumber: undefined,
+            objectId: objectId,
+            userId: undefined,
             offset: seq,
-            op: {
-                type: API.MergeTreeDeltaType.INSERT, text: text, pos1: pos
+            contents: {
+                type: ops.MergeTreeDeltaType.INSERT, text: text, pos1: pos
             },
             type: API.OperationType,
         };
     }
 
     makeRemoveMsg(start: number, end: number, seq: number, refSeq: number, objectId: string) {
-        return <ISequencedMessage>{
+        return <ISequencedObjectMessage>{
             clientId: this.longClientId,
             sequenceNumber: seq,
             referenceSequenceNumber: refSeq,
-            objectId: objectId,
             clientSequenceNumber: this.clientSequenceNumber,
-            userId: undefined,
             minimumSequenceNumber: undefined,
+            objectId: objectId,
+            userId: undefined,
             offset: seq,
-            op: {
-                type: API.MergeTreeDeltaType.REMOVE, pos1: start, pos2: end,
+            contents: {
+                type: ops.MergeTreeDeltaType.REMOVE, pos1: start, pos2: end,
             },
             type: API.OperationType,
         };
     }
 
     makeAnnotateMsg(props: PropertySet, start: number, end: number, seq: number, refSeq: number, objectId: string) {
-        return <ISequencedMessage>{
+        return <ISequencedObjectMessage>{
             clientId: this.longClientId,
             sequenceNumber: seq,
             referenceSequenceNumber: refSeq,
@@ -1260,26 +1261,34 @@ export class Client {
             userId: undefined,
             minimumSequenceNumber: undefined,
             offset: seq,
-            op: {
-                type: API.MergeTreeDeltaType.ANNOTATE, pos1: start, pos2: end, props
+            contents: {
+                type: ops.MergeTreeDeltaType.ANNOTATE, pos1: start, pos2: end, props
             },
             type: API.OperationType,
         };
     }
 
-    enqueueMsg(msg: API.IBase) {
+    hasMessages(): boolean {
+        return this.q.count() > 0;
+    }
+
+    enqueueMsg(msg: API.ISequencedObjectMessage) {
         this.q.enqueue(msg);
+    }
+
+    dequeueMsg(): API.ISequencedObjectMessage {
+        return this.q.dequeue();
     }
 
     enqueueTestString() {
         this.checkQ.enqueue(this.getText());
     }
 
-    coreApplyMsg(msg: API.ISequencedMessage) {
-        let op = <API.IMergeTreeOp>msg.op;
+    coreApplyMsg(msg: API.ISequencedObjectMessage) {
+        let op = <ops.IMergeTreeOp>msg.contents;
         let clid = this.getOrAddShortClientId(msg.clientId);
         switch (op.type) {
-            case API.MergeTreeDeltaType.INSERT:
+            case ops.MergeTreeDeltaType.INSERT:
                 if (op.text !== undefined) {
                     this.insertTextRemote(op.text, op.pos1, op.props as PropertySet, msg.sequenceNumber, msg.referenceSequenceNumber,
                         clid);
@@ -1289,26 +1298,26 @@ export class Client {
                         clid);
                 }
                 break;
-            case API.MergeTreeDeltaType.REMOVE:
+            case ops.MergeTreeDeltaType.REMOVE:
                 this.removeSegmentRemote(op.pos1, op.pos2, msg.sequenceNumber, msg.referenceSequenceNumber,
                     clid);
                 break;
-            case API.MergeTreeDeltaType.ANNOTATE:
+            case ops.MergeTreeDeltaType.ANNOTATE:
                 this.annotateSegmentRemote(op.props, op.pos1, op.pos2, msg.sequenceNumber, msg.referenceSequenceNumber,
                     clid);
                 break;
         }
     }
 
-    applyMsg(msg: API.IBase) {
+    applyMsg(msg: API.ISequencedObjectMessage) {
         if ((msg !== undefined) && (msg.minimumSequenceNumber > this.mergeTree.getCollabWindow().minSeq)) {
             this.updateMinSeq(msg.minimumSequenceNumber);
         }
 
         // Apply if an operation message
         if (msg.type === API.OperationType) {
-            const operationMessage = msg as API.ISequencedMessage;
-            if (operationMessage.clientId == this.longClientId) {
+            const operationMessage = msg as API.ISequencedObjectMessage;
+            if (msg.clientId == this.longClientId) {
                 this.ackPendingSegment(operationMessage.sequenceNumber);
             }
             else {
@@ -1327,12 +1336,6 @@ export class Client {
                 break;
             }
             msgCount--;
-        }
-    }
-
-    applyAll() {
-        while (!this.q.empty()) {
-            this.applyMsg(this.q.dequeue());
         }
     }
 
@@ -1439,7 +1442,7 @@ export class Client {
         }
     }
 
-    insertMarkerLocal(pos: number, type: string, behaviors: API.MarkerBehaviors, props?: PropertySet, end?: number) {
+    insertMarkerLocal(pos: number, type: string, behaviors: ops.MarkerBehaviors, props?: PropertySet, end?: number) {
         let segWindow = this.mergeTree.getCollabWindow();
         let clientId = segWindow.clientId;
         let refSeq = segWindow.currentSeq;
@@ -1461,7 +1464,7 @@ export class Client {
         }
     }
 
-    insertMarkerRemote(marker: API.IMarkerDef, pos: number, props: PropertySet, seq: number, refSeq: number, clientId: number) {
+    insertMarkerRemote(marker: ops.IMarkerDef, pos: number, props: PropertySet, seq: number, refSeq: number, clientId: number) {
         let clockStart;
         if (this.measureOps) {
             clockStart = clock();
@@ -1518,7 +1521,7 @@ export class Client {
         }
     }
 
-    updateMinSeq(minSeq: number) {
+    updateMinSeq(minSeq: number) { 
         let clockStart;
         if (this.measureOps) {
             clockStart = clock();
@@ -1613,7 +1616,7 @@ export class TestServer extends Client {
         this.listeners = listeners;
     }
 
-    applyMsg(msg: API.ISequencedMessage) {
+    applyMsg(msg: API.ISequencedObjectMessage) {
         this.coreApplyMsg(msg);
         if (useCheckQ) {
             let clid = this.getShortClientId(msg.clientId);
@@ -1626,7 +1629,7 @@ export class TestServer extends Client {
 
     applyMessages(msgCount: number) {
         while (msgCount > 0) {
-            let msg = <API.ISequencedMessage>this.q.dequeue();
+            let msg = this.q.dequeue();
             if (msg) {
                 msg.sequenceNumber = this.seq++;
                 if (this.applyMsg(msg)) {
@@ -2323,7 +2326,7 @@ export class MergeTree {
     }
 
     // assumes not collaborating for now
-    appendSegment(segSpec: API.IPropertyString) {
+    appendSegment(segSpec: ops.IPropertyString) {
         let pos = this.root.cachedLength;
         if (segSpec.text) {
             this.insertText(pos, UniversalSequenceNumber, LocalClientId, UniversalSequenceNumber, segSpec.text,
@@ -2346,7 +2349,7 @@ export class MergeTree {
     }
 
     insertMarker(pos: number, refSeq: number, clientId: number, seq: number, type: string,
-        behaviors: API.MarkerBehaviors, props?: PropertySet) {
+        behaviors: ops.MarkerBehaviors, props?: PropertySet) {
         let marker = Marker.make(type, behaviors, props, seq, clientId);
         this.insert(pos, refSeq, clientId, seq, marker, (block, pos, refSeq, clientId, seq, marker) =>
             this.blockInsert(block, pos, refSeq, clientId, seq, marker));

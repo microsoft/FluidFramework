@@ -1,92 +1,13 @@
-import { IMessage, ISequencedMessage } from "./protocol";
+import { IDocumentMessage, ISequencedDocumentMessage } from "./protocol";
 
-/**
- * Interface representing a storage object
- */
-export interface IObject {
-    // The path to the object
-    path: string;
-
-    // The data to store for the object
-    data: any;
+export interface IDocumentAttributes {
+    sequenceNumber: number;
 }
 
-/**
- * Interface to provide access to snapshots saved for a collaborative object
- */
-export interface IObjectStorageService {
-    /**
-     * Reads the object with the given ID
-     */
-    // TODO should we just provide file system like semantics here or expose block level access
-    read(id: string, version: string, path: string): Promise<any>;
+export interface IObjectAttributes {
+    sequenceNumber: number;
 
-    /**
-     * Writes to the object with the given ID
-     */
-    write(id: string, objects: IObject[]): Promise<void>;
-}
-
-/**
- * Interface to provide access to stored deltas for a collaborative object
- */
-export interface IDeltaStorageService {
-    /**
-     * Retrieves all the delta operations within the inclusive sequence number range
-     */
-    get(id: string, from?: number, to?: number): Promise<ISequencedMessage[]>;
-}
-
-/**
- * Interface to represent a connection to a delta notification stream
- */
-export interface IDeltaConnection {
-    /**
-     * The object the connection is for
-     */
-    objectId: string;
-
-    /**
-     * Client identifier for this session
-     */
-    clientId: string;
-
-    /**
-     * Whether or not the document existed prior to connection
-     */
-    existing: boolean;
-
-    /**
-     * Available versions of the collaborative object
-     */
-    versions: any[];
-
-    /**
-     * Subscribe to events emitted by the document
-     */
-    on(event: string, listener: Function): this;
-
-    /**
-     * Send new messages to the server
-     */
-    submitOp(message: IMessage): Promise<void>;
-
-    /**
-     * Updates the reference sequence number on the given connection
-     */
-    updateReferenceSequenceNumber(sequenceNumber: number): Promise<void>;
-}
-
-/**
- * The delta notification service provides the ability to connect to a collaborative object's delta stream
- * to send and receive notifications
- */
-export interface IDeltaNotificationService {
-    /**
-     * Connects to the given object ID to send and receive Delta updates. If the object doesn't exist this call
-     * will also create it.
-     */
-    connect(id: string, type: string): Promise<IDeltaConnection>;
+    type: string;
 }
 
 /**
@@ -99,15 +20,154 @@ export interface IWorkerService {
     connect(type: string): Promise<any>;
 }
 
-export interface ICollaborationServices {
-    objectStorageService: IObjectStorageService;
-    deltaStorageService: IDeltaStorageService;
-    deltaNotificationService: IDeltaNotificationService;
+/**
+ * Type of entries that can be stored in a tree
+ */
+export enum TreeEntry {
+    Blob,
+    Tree,
 }
 
-export interface IOptions {
+/**
+ * Tree storage
+ */
+export interface ITree {
+    entries: ITreeEntry[];
+}
+
+/**
+ * A tree entry wraps a path with a type of node
+ */
+export interface ITreeEntry {
+    // Path to the object
+    path: string;
+
+    // One of the above enum string values
+    type: string;
+
+    // The value of the entry - either a tree or a blob
+    value: IBlob | ITree;
+}
+
+/**
+ * Raw blob stored within the tree
+ */
+export interface IBlob {
+    // Contents of the blob
+    contents: string;
+
+    // The encoding of the contents string (utf-8 or base64)
+    encoding: string;
+}
+
+/**
+ * Interface to provide access to snapshots saved for a collaborative object
+ */
+export interface IDocumentStorageService {
     /**
-     * Access token to the storage system
+     * Reads the object with the given ID
      */
-    token: string;
+    // TODO should we just provide file system like semantics here or expose block level access
+    read(path: string): Promise<string>;
+
+    /**
+     * Writes to the object with the given ID
+     */
+    write(root: ITree, message: string): Promise<string>;
+}
+
+/**
+ * Interface to provide access to stored deltas for a collaborative object
+ */
+export interface IDeltaStorageService {
+    /**
+     * Retrieves all the delta operations within the inclusive sequence number range
+     */
+    get(from?: number, to?: number): Promise<ISequencedDocumentMessage[]>;
+}
+
+/**
+ * A distributed object is enough information to fully load a distributed object. The object may then require
+ * a server call to load in more state.
+ */
+export interface IDistributedObject {
+    // The ID for the distributed object
+    id: string;
+
+    // The type of the distributed object
+    type: string;
+
+    // Base 64 encoded snapshot information
+    header: string;
+
+    // The sequence number for the object
+    sequenceNumber: number;
+}
+
+export interface IDocumentDeltaConnection {
+    /**
+     * Subscribe to events emitted by the document
+     */
+    on(event: string, listener: Function): this;
+
+    /**
+     * Submit a new message to the server
+     */
+    submit(message: IDocumentMessage): Promise<void>;
+}
+
+export interface IDocument {
+    /**
+     * Client identifier for this session
+     */
+    clientId: string;
+
+    /**
+     * Document identifier
+     */
+    documentId: string;
+
+    /**
+     * Whether or not the document existed prior to connection
+     */
+    existing: boolean;
+
+    /**
+     * The latest snapshot version of the document at the time of connect. Or null if no snapshots have been taken.
+     */
+    version: string;
+
+    /**
+     * Connection to receive delta notification
+     */
+    deltaConnection: IDocumentDeltaConnection;
+
+    /**
+     * Access to storage associated with the document
+     */
+    documentStorageService: IDocumentStorageService;
+
+    /**
+     * Access to delta storage associated with the document
+     */
+    deltaStorageService: IDeltaStorageService;
+
+    /**
+     * Distributed objects contained within the document
+     */
+    distributedObjects: IDistributedObject[];
+
+    /**
+     * Pending deltas that have not yet been included in a snapshot
+     */
+    pendingDeltas: ISequencedDocumentMessage[];
+
+    /**
+     * The sequence number represented by this version of the document
+     */
+    sequenceNumber: number;
+}
+
+export interface IDocumentService {
+    connect(id: string): Promise<IDocument>;
 }

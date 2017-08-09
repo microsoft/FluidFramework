@@ -1,34 +1,18 @@
 import * as assert from "assert";
 import * as async from "async";
-import * as api from ".";
+import { EventEmitter } from "events";
 import { ThroughputCounter } from "../utils/counters";
 import { debug } from "./debug";
-
-export interface IDeltaListener {
-    /**
-     * Fired when a new delta operation is recieved
-     */
-    op(message: api.IBase);
-
-    /**
-     * Returns the current reference sequence number for the client.
-     */
-    getReferenceSequenceNumber(): number;
-}
+import * as protocol from "./protocol";
+import * as storage from "./storage";
 
 /**
  * Helper class that manages incoming delta messages. This class ensures that collaborative objects receive delta
  * messages in order regardless of possible network conditions or timings causing out of order delivery.
  */
 export class DeltaManager {
-    private pending: api.ISequencedMessage[] = [];
+    private pending: protocol.ISequencedDocumentMessage[] = [];
     private fetching = false;
-
-    // The referenceSequenceNumber identifies the last sent sequence number by the client
-    private referenceSequenceNumber = 0;
-
-    // The minimum sequence number and last sequence number received from the server
-    private minimumSequenceNumber = 0;
 
     // Flag indicating whether or not we need to udpate the reference sequence number
     private updateHasBeenRequested = false;
@@ -37,17 +21,31 @@ export class DeltaManager {
     // Flag indicating whether the client has only received messages
     private readonly = true;
 
+    // The minimum sequence number and last sequence number received from the server
+    private minSequenceNumber = 0;
+    private clientSequenceNumber = 0;
+
+    private emitter = new EventEmitter();
+
+    public get referenceSequenceNumber(): number {
+        return this.baseSequenceNumber;
+    }
+
+    public get minimumSequenceNumber(): number {
+        return this.minSequenceNumber;
+    }
+
     constructor(
+        private documentId: string,
         private baseSequenceNumber: number,
-        private deltaStorage: api.IDeltaStorageService,
-        private deltaConnection: api.IDeltaConnection,
-        private listener: IDeltaListener) {
+        private deltaStorage: storage.IDeltaStorageService,
+        private deltaConnection: storage.IDocumentDeltaConnection) {
 
-        const throughputCounter = new ThroughputCounter(
-            debug,
-            `${this.deltaConnection.objectId} `);
+        // The MSN starts at the base the manager is initialized to
+        this.minSequenceNumber = this.baseSequenceNumber;
 
-        const q = async.queue<api.ISequencedMessage, void>((op, callback) => {
+        const throughputCounter = new ThroughputCounter(debug, `${this.documentId} `);
+        const q = async.queue<protocol.ISequencedDocumentMessage, void>((op, callback) => {
             // Handle the op
             this.handleOp(op);
             callback();
@@ -60,28 +58,35 @@ export class DeltaManager {
         };
 
         // listen for specific events
-        this.deltaConnection.on("op", (messages: api.ISequencedMessage[]) => {
+        this.deltaConnection.on("op", (messages: protocol.ISequencedDocumentMessage[]) => {
             for (const message of messages) {
                 throughputCounter.produce();
                 q.push(message);
             }
         });
-
-        // Directly fetch all sequence numbers after base
-        this.fetchMissingDeltas(this.baseSequenceNumber);
     }
 
     /**
      * Submits a new delta operation
      */
-    public submitOp(message: api.IMessage) {
+    public submit(type: string, contents: any) {
+        const message: protocol.IDocumentMessage = {
+            clientSequenceNumber: this.clientSequenceNumber++,
+            contents,
+            referenceSequenceNumber: this.baseSequenceNumber,
+            type,
+        };
+
         this.readonly = false;
         this.stopSequenceNumberUpdate();
-        this.referenceSequenceNumber = message.referenceSequenceNumber;
-        this.deltaConnection.submitOp(message);
+        this.deltaConnection.submit(message);
     }
 
-    private handleOp(message: api.ISequencedMessage) {
+    public onDelta(listener: (message: protocol.ISequencedDocumentMessage) => void) {
+        this.emitter.addListener("op", listener);
+    }
+
+    public handleOp(message: protocol.ISequencedDocumentMessage) {
         // Incoming sequence numbers should be one higher than the previous ones seen. If not we have missed the
         // stream and need to query the server for the missing deltas.
         if (message.sequenceNumber !== this.baseSequenceNumber + 1) {
@@ -94,9 +99,9 @@ export class DeltaManager {
     /**
      * Handles an out of order message retrieved from the server
      */
-    private handleOutOfOrderMessage(message: api.ISequencedMessage) {
+    private handleOutOfOrderMessage(message: protocol.ISequencedDocumentMessage) {
         if (message.sequenceNumber <= this.baseSequenceNumber) {
-            debug(`Received duplicate message ${this.deltaConnection.objectId}@${message.sequenceNumber}`);
+            debug(`Received duplicate message ${this.documentId}@${message.sequenceNumber}`);
             return;
         }
 
@@ -115,7 +120,7 @@ export class DeltaManager {
         }
 
         this.fetching = true;
-        this.deltaStorage.get(this.deltaConnection.objectId, from, to).then(
+        this.deltaStorage.get(from, to).then(
             (messages) => {
                 this.fetching = false;
                 this.catchUp(messages);
@@ -128,7 +133,7 @@ export class DeltaManager {
             });
     }
 
-    private catchUp(messages: api.ISequencedMessage[]) {
+    private catchUp(messages: protocol.ISequencedDocumentMessage[]) {
         // Apply current operations
         for (const message of messages) {
             // Ignore sequence numbers prior to the base. This can happen at startup when we fetch all missing
@@ -146,6 +151,25 @@ export class DeltaManager {
         this.pending = [];
         for (const pendingMessage of pendingSorted) {
             this.handleOp(pendingMessage);
+        }
+    }
+
+    /**
+     * Revs the base sequence number based on the message and notifices the listener of the new message
+     */
+    private emit(message: protocol.ISequencedDocumentMessage) {
+        // Watch the minimum sequence number and be ready to update as needed
+        this.minSequenceNumber = message.minimumSequenceNumber;
+        this.baseSequenceNumber = message.sequenceNumber;
+        this.emitter.emit("op", message);
+
+        // We will queue a message to update our reference sequence number upon receiving a server operation. This
+        // allows the server to know our true reference sequence number and be able to correctly update the minimum
+        // sequence number (MSN). We don't ackowledge other message types similarly (like a min sequence number update
+        // or a no-op) to avoid ackowledgement cycles (i.e. ack the MSN update, which updates the MSN,
+        // then ack the update, etc...).
+        if (message.type !== protocol.NoOp) {
+            this.updateSequenceNumber();
         }
     }
 
@@ -172,8 +196,7 @@ export class DeltaManager {
             // If a second update wasn't requested then send an update message. Otherwise defer this until we
             // stop processing new messages.
             if (!this.updateHasBeenRequested) {
-                let sequenceNumber = this.listener.getReferenceSequenceNumber();
-                this.deltaConnection.updateReferenceSequenceNumber(sequenceNumber);
+                this.submit(protocol.NoOp, null);
             } else {
                 this.updateHasBeenRequested = false;
                 this.updateSequenceNumber();
@@ -188,25 +211,5 @@ export class DeltaManager {
 
         this.updateHasBeenRequested = false;
         this.updateSequenceNumberTimer = undefined;
-    }
-
-    /**
-     * Revs the base sequence number based on the message and notifices the listener of the new message
-     */
-    private emit(message: api.ISequencedMessage) {
-        // Watch the minimum sequence number and be ready to update as needed
-        this.minimumSequenceNumber = message.minimumSequenceNumber;
-        this.baseSequenceNumber = message.sequenceNumber;
-
-        // Fire all listeners
-        this.listener.op(message);
-
-        // We will queue a message to update our reference sequence number upon receiving a server operation. This
-        // allows the server to know our true reference sequence number and be able to correctly update the minimum
-        // sequence number (MSN). We don't ackowledge other message types similarly (like a min sequence number update)
-        // to avoid ackowledgement cycles (i.e. ack the MSN update, which updates the MSN, then ack the update, etc...).
-        if (message.type === api.OperationType) {
-            this.updateSequenceNumber();
-        }
     }
 }

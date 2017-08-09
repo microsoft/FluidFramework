@@ -12,10 +12,16 @@ import { logger } from "../utils";
 const alfredUrl = nconf.get("paparazzi:alfred");
 const tmzUrl = nconf.get("paparazzi:tmz");
 const workerConfig = nconf.get("worker");
+const gitConfig = nconf.get("git");
 
 async function run() {
     const deferred = new shared.Deferred<void>();
-    const workerService = new shared.WorkerService(alfredUrl, tmzUrl, workerConfig);
+    const workerService = new shared.WorkerService(
+        alfredUrl,
+        tmzUrl,
+        gitConfig.historian,
+        gitConfig.repository,
+        workerConfig);
     const workerP = workerService.connect("Paparazzi");
     workerP.catch((error) => {
         deferred.reject(error);

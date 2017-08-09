@@ -27,12 +27,12 @@ class Speller {
     }
 
     setEvents(intelligence: IIntelligentService) {
-        this.sharedString.on("op", (msg: api.ISequencedMessage) => {
-            if (msg && msg.op) {
-                let delta = <api.IMergeTreeOp>msg.op;
-                if (delta.type === api.MergeTreeDeltaType.INSERT) {
+        this.sharedString.on("op", (msg: api.ISequencedObjectMessage) => {
+            if (msg && msg.contents) {
+                let delta = msg.contents as mergeTree.IMergeTreeOp;
+                if (delta.type === mergeTree.MergeTreeDeltaType.INSERT) {
                     this.currentWordSpellCheck(intelligence, delta.pos1);
-                } else if (delta.type === api.MergeTreeDeltaType.REMOVE) {
+                } else if (delta.type === mergeTree.MergeTreeDeltaType.REMOVE) {
                     this.currentWordSpellCheck(intelligence, delta.pos1, true);
                 }
             }
@@ -160,23 +160,17 @@ class Speller {
     }
 }
 
-
 export class Spellcheker {
-
-    constructor(private root: mergeTree.SharedString, private dict: Collections.TST<number>, private intelligence: IIntelligentService) {
+    constructor(
+        private root: mergeTree.SharedString,
+        private dict: Collections.TST<number>,
+        private intelligence: IIntelligentService) {
     }
 
     public run() {
-        this.root.on("partialLoad", (data) => {
-            console.log("partial load fired");
-        });
-        this.root.on("loadFinshed", (data: api.MergeTreeChunk, existing: boolean) => {
+        this.root.loaded.then(() => {
             const theSpeller = new Speller(this.root, this.dict);
             theSpeller.initialSpellCheck(this.intelligence);
         });
-    }
-
-    public dummy() {
-
     }
 }

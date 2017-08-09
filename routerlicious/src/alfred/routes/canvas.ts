@@ -1,9 +1,5 @@
-// Load environment varaibles and pass to the controller.
-import * as nconf from "nconf";
-import * as path from "path";
-nconf.argv().env(<any> "__").file(path.join(__dirname, "../../../config.json")).use("memory");
-
 import { Router } from "express";
+import * as nconf from "nconf";
 import { defaultPartials } from "./partials";
 
 const router: Router = Router();

@@ -3,8 +3,8 @@
 import * as Collections from "./collections";
 import * as fs from "fs";
 import * as MergeTree from "./mergeTree";
+import * as ops from "./ops";
 import * as API from "../api";
-import { IPropertyString } from "../api";
 
 export interface SnapshotHeader {
     chunkCount?: number;
@@ -42,7 +42,7 @@ export class Snapshot {
     seq: number;
     buffer: Buffer;
     pendingChunk: SnapChunk;
-    texts: IPropertyString[];
+    texts: ops.IPropertyString[];
 
     constructor(public mergeTree: MergeTree.MergeTree, public filename?: string,
         public onCompletion?: () => void) {
@@ -55,9 +55,9 @@ export class Snapshot {
         });
     }
 
-    getCharLengthSegs(alltexts: API.IPropertyString[], approxCharLength: number, startIndex = 0): API.MergeTreeChunk {
+    getCharLengthSegs(alltexts: ops.IPropertyString[], approxCharLength: number, startIndex = 0): ops.MergeTreeChunk {
         //console.log(`start index ${startIndex}`);
-        let texts = <API.IPropertyString[]>[];
+        let texts = <ops.IPropertyString[]>[];
         let lengthChars = 0;
         let segCount = 0;
         while ((lengthChars < approxCharLength) && ((startIndex + segCount) < alltexts.length)) {
@@ -79,28 +79,44 @@ export class Snapshot {
         }
     }
 
-    async emit(services: API.ICollaborationServices, id: string) {
-        let storage = services.objectStorageService;
+    emit(): API.ITree {
         let chunk1 = this.getCharLengthSegs(this.texts, 10000);
         let chunk2 = this.getCharLengthSegs(this.texts, chunk1.totalLengthChars, chunk1.chunkSegmentCount);
-        let writeP = storage.write(
-            id, 
-            [
-                { path: "header", data: chunk1 },
-                { path: "body", data: chunk2 }
-            ]);
-        return writeP;
+
+        const tree: API.ITree = {
+            entries: [
+                {
+                    path: "header",
+                    type: API.TreeEntry[API.TreeEntry.Blob],
+                    value: {
+                        contents: JSON.stringify(chunk1),
+                        encoding: "utf-8",
+                    },
+                },
+                {
+                    path: "body",
+                    type: API.TreeEntry[API.TreeEntry.Blob],
+                    value: {
+                        contents: JSON.stringify(chunk2),
+                        encoding: "utf-8",
+                    },
+                },
+            ],
+        };
+
+        return tree;
     }
 
     extractSync() {
         let collabWindow = this.mergeTree.getCollabWindow();
         this.seq = collabWindow.minSeq;
+        console.log(`msn ${collabWindow.minSeq}`);
         this.header = {
             segmentsTotalLength: this.mergeTree.getLength(this.mergeTree.collabWindow.minSeq,
                 MergeTree.NonCollabClient),
             seq: this.mergeTree.collabWindow.minSeq,
         };
-        let texts = <API.IPropertyString[]>[];
+        let texts = <ops.IPropertyString[]>[];
         let extractSegment = (segment: MergeTree.Segment, pos: number, refSeq: number, clientId: number,
             start: number, end: number) => {
             if ((segment.seq != MergeTree.UnassignedSequenceNumber) && (segment.seq <= this.seq) &&
@@ -129,26 +145,23 @@ export class Snapshot {
         return texts;
     }
 
-    static async loadChunk(
-        services: API.ICollaborationServices,
-        id: string,
-        version: string,
-        path: string): Promise<API.MergeTreeChunk> {
+    public static async loadChunk(services: API.IDistributedObjectServices, path: string): Promise<ops.MergeTreeChunk> {
+        let chunkAsString: string = await services.objectStorage.read(path);
+        return Snapshot.processChunk(chunkAsString);
+    }
 
-        if (version) {
-            let chunkAsString: string = await services.objectStorageService.read(id, version, path);
-            return JSON.parse(chunkAsString) as API.MergeTreeChunk;
-        } else {
-            return {
-                chunkStartSegmentIndex: -1,
-                chunkSegmentCount: -1,
-                chunkLengthChars: -1,
-                totalLengthChars: -1,
-                totalSegmentCount: -1,
-                chunkSequenceNumber: -1,
-                segmentTexts: [],
-            }
-        }
+    public static EmptyChunk: ops.MergeTreeChunk = {
+        chunkStartSegmentIndex: -1,
+        chunkSegmentCount: -1,
+        chunkLengthChars: -1,
+        totalLengthChars: -1,
+        totalSegmentCount: -1,
+        chunkSequenceNumber: 0,
+        segmentTexts: [],
+    }
+
+    public static processChunk(chunk: string): ops.MergeTreeChunk {
+        return JSON.parse(Buffer.from(chunk, "base64").toString("utf-8")) as ops.MergeTreeChunk;
     }
 
     static loadSync(filename: string) {

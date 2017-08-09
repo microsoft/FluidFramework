@@ -13,7 +13,7 @@
         "endpoint": "mongodb://mongodb:27017",
         "collectionNames": {
             "deltas": "deltas",
-            "objects": "objects",
+            "documents": "documents",
             "partitions": "partitions"
         }
     },
@@ -111,6 +111,8 @@
             }
         },
         "url": "http://localhost:4000",
+        "blobStorageUrl": "http://localhost:3001",
+        "repository": "prague",
         "storageBucket": "snapshots",
         "intervalMSec": 10000,
         "onlyServer": true,

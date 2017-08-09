@@ -69,5 +69,9 @@
     {{$scripts}}
         <script src="/socket.io/socket.io.js"></script>
         <script src="{{#hfurl}}/public/scripts/dist/scribe.js{{/hfurl}}"></script>
+        <script>
+            var config = {{{ config }}};
+            controller.initialize("{{ id }}", config);
+        </script>
     {{/scripts}}
 {{/layout}}

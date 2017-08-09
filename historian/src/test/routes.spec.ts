@@ -1,5 +1,6 @@
 import * as assert from "assert";
 import * as request from "supertest";
+import * as winston from "winston";
 import * as app from "../app";
 import { ICreateBlobParams, ICreateCommitParams, ICreateRefParams, ICreateTreeParams } from "../resources";
 import * as testUtils from "./utils";
@@ -168,6 +169,53 @@ describe("Historian", () => {
                         .expect(200)
                         .expect((getResult) => {
                             assert.equal(getResult.body.sha, tree.body.sha);
+                        });
+                });
+
+                it("Can recursively retrieve a tree", async () => {
+                    // Create a tree with a single sub directory
+                    await createRepo(supertest, testRepoName);
+                    await createBlob(supertest, testRepoName, testBlob);
+                    await createTree(supertest, testRepoName, testTree);
+                    const parentBlob = await createBlob(
+                        supertest,
+                        testRepoName,
+                        { content: "Parent", encoding: "utf-8" });
+                    const parentTree = {
+                        tree: [
+                            {
+                                mode: "100644",
+                                path: "parentBlob.txt",
+                                sha: parentBlob.body.sha,
+                                type: "blob",
+                            },
+                            {
+                                mode: "040000",
+                                path: "subdir",
+                                sha: "bf4db183cbd07f48546a5dde098b4510745d79a1",
+                                type: "tree",
+                            }],
+                    };
+                    const tree = await createTree(supertest, testRepoName, parentTree);
+
+                    // And then a commit to reference it
+                    const treeCommit: ICreateCommitParams = {
+                        author: {
+                            date: "Thu Jul 13 2017 20:17:40 GMT-0700 (PDT)",
+                            email: "kurtb@microsoft.com",
+                            name: "Kurt Berglund",
+                        },
+                        message: "complex tree",
+                        parents: [],
+                        tree: tree.body.sha,
+                    };
+                    const commit = await createCommit(supertest, testRepoName, treeCommit);
+
+                    return supertest
+                        .get(`/repos/${testRepoName}/git/trees/${commit.body.tree.sha}?recursive=1`)
+                        .expect(200)
+                        .expect((treeResult) => {
+                            winston.info(JSON.stringify(treeResult.body, null, 2));
                         });
                 });
             });
