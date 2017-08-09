@@ -1,5 +1,6 @@
 import * as assert from "assert";
 import * as api from "../api";
+import * as shared from "../shared";
 import * as MergeTree from "./mergeTree";
 import * as ops from "./ops";
 import * as Paparazzo from "./snapshot";
@@ -56,6 +57,13 @@ export class SharedString extends api.CollaborativeObject {
     private isLoaded = false;
     private pendingMinSequenceNumber: number = 0;
 
+    // Deferred that triggers once the object is loaded
+    private loadedDeferred = new shared.Deferred<void>();
+
+    get loaded(): Promise<void> {
+        return this.loadedDeferred.promise;
+    }
+
     constructor(
         document: api.Document,
         public id: string,
@@ -80,11 +88,10 @@ export class SharedString extends api.CollaborativeObject {
         }
 
         // This should happen if we have collab services
-        this.isLoaded = true;
         assert.equal(sequenceNumber, chunk.chunkSequenceNumber);
         this.client.startCollaboration(this.document.clientId, sequenceNumber);
         this.applyPending();
-        this.events.emit("loadFinshed", chunk, true);
+        this.loadFinished(chunk);
     }
 
     public insertMarker(
@@ -156,8 +163,8 @@ export class SharedString extends api.CollaborativeObject {
     }
 
     protected attachCore(): this {
-        this.isLoaded = true;
         this.client.startCollaboration(this.document.clientId, 0);
+        this.loadFinished(Paparazzo.Snapshot.EmptyChunk);
 
         return this;
     }
@@ -169,6 +176,12 @@ export class SharedString extends api.CollaborativeObject {
         } else {
             this.pendingMinSequenceNumber = value;
         }
+    }
+
+    private loadFinished(chunk: ops.MergeTreeChunk) {
+        this.isLoaded = true;
+        this.loadedDeferred.resolve();
+        this.events.emit("loadFinished", chunk, true);
     }
 
     private applyPending() {

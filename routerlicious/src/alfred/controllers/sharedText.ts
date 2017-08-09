@@ -274,7 +274,7 @@ export async function onLoad(id: string, config: any) {
     theFlow.timeToEdit = theFlow.timeToImpression = Date.now() - clockStart;
     theFlow.setEdit();
 
-    sharedString.on("loadFinshed", async (data: SharedString.MergeTreeChunk) => {
+    sharedString.loaded.then(() => {
         // Bootstrap worker service.
         if (config.permission.sharedText) {
             shared.registerWorker(config);

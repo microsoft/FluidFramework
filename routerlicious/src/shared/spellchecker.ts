@@ -160,23 +160,17 @@ class Speller {
     }
 }
 
-
 export class Spellcheker {
-
-    constructor(private root: mergeTree.SharedString, private dict: Collections.TST<number>, private intelligence: IIntelligentService) {
+    constructor(
+        private root: mergeTree.SharedString,
+        private dict: Collections.TST<number>,
+        private intelligence: IIntelligentService) {
     }
 
     public run() {
-        this.root.on("partialLoad", (data) => {
-            console.log("partial load fired");
-        });
-        this.root.on("loadFinshed", (data: mergeTree.MergeTreeChunk, existing: boolean) => {
+        this.root.loaded.then(() => {
             const theSpeller = new Speller(this.root, this.dict);
             theSpeller.initialSpellCheck(this.intelligence);
         });
-    }
-
-    public dummy() {
-
     }
 }

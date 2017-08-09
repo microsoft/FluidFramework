@@ -203,9 +203,9 @@ async function initSpell(id: string) {
     if (!root.has("text")) {
         root.set("text", document.createString());
     }
-    const sharedString = root.get("text");
+    const sharedString = root.get("text") as SharedString.SharedString;
     console.log("partial load fired");
-    sharedString.on("loadFinshed", (data: SharedString.MergeTreeChunk, existing: boolean) => {
+    sharedString.loaded.then(() => {
         theSpeller = new Speller(sharedString);
         theSpeller.initialSpellCheck();
     });
