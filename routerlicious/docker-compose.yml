@@ -55,7 +55,9 @@ services:
             - DEBUG=routerlicious:*
         restart: always
     historian:
-        image: prague.azurecr.io/historian:551
+        image: prague.azurecr.io/historian:591
+        ports:
+            - "3001:3000"
         environment:
             - DEBUG=routerlicious:*
         volumes:
