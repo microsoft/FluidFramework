@@ -16,8 +16,14 @@ The services follow the [twelve factor](https://12factor.net) methodology and ar
 
 ## Building and Running
 
-To run the service standalone you simply need [Docker](https://www.docker.com/) installed. For development you will
-need to also install [Node v8.x](https://nodejs.org/en/).
+### Prerequisities
+
+Standalone 
+* [Git LFS](https://git-lfs.github.com/) (comes by default with most git installations)
+* [Docker](https://www.docker.com/)
+
+For Development
+* [Node v8.x](https://nodejs.org/en/)
 
 ### Development 
 
