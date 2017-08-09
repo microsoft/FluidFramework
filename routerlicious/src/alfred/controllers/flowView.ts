@@ -1,4 +1,4 @@
-// tslint:disable:align whitespace no-trailing-whitespace
+// tslint:disable:align whitespace no-trailing-whitespace no-string-literal object-literal-sort-keys
 import * as url from "url";
 import * as API from "../../api";
 import * as SharedString from "../../merge-tree";
@@ -102,7 +102,7 @@ export function namesToItems(names: string[]): Item[] {
 }
 
 function altsToItems(alts: Alt[]) {
-    return alts.map((v) => { return { key: v.text }; });
+    return alts.map((v) => ({ key: v.text }));
 }
 
 type Alt = SharedString.Collections.ProxString<number>;
@@ -201,6 +201,10 @@ export function selectionListBoxCreate(textRect: Geometry.Rectangle, container: 
         let height = window.innerHeight / 3;
         let top: number;
         let bottom: number;
+        let right: number;
+        if ((textRect.x + textRect.width) > window.innerWidth) {
+            right = textRect.x;
+        }
         // TODO: use container div instead of window/doc body
         // TODO: right/left (for now assume go right)
         if ((height + textRect.y + offsetY + textRect.height) >= window.innerHeight) {
@@ -217,6 +221,10 @@ export function selectionListBoxCreate(textRect: Geometry.Rectangle, container: 
             let listContainerRect = new Geometry.Rectangle(textRect.x, 0, width, height);
             listContainerRect.height = itemCapacity * itemHeight;
             listContainerRect.conformElementMaxHeightFromBottom(listContainer, bottom);
+        }
+        if (right !== undefined) {
+            listContainer.style.right = (window.innerWidth - right) + "px";
+            listContainer.style.left = "";
         }
         if (varHeight) {
             listContainer.style.paddingBottom = varHeight + "px";
@@ -514,6 +522,151 @@ interface IRange {
     end: number;
 }
 
+enum PGItemType {
+    Block,
+    Glue,
+    Penalty,
+}
+
+interface IPGItem {
+    type: PGItemType;
+    width: number;
+}
+
+interface IPGBlock extends IPGItem {
+    type: PGItemType.Block;
+}
+
+function makeIPGBlock(width: number) {
+    return <IPGBlock>{ type: PGItemType.Block, width };
+}
+
+interface IPGGlue extends IPGItem {
+    type: PGItemType.Glue;
+    stretch: number;
+    shrink: number;
+}
+
+interface IPGPenalty extends IPGItem {
+    type: PGItemType.Penalty;
+    cost: number;
+}
+
+type PGItem = IPGBlock | IPGGlue | IPGPenalty;
+
+function renderTreeByPG(div: HTMLDivElement, pos: number, client: SharedString.Client, context: FlowView) {
+    let fontstr = "18px Times";
+    // TODO: for stable viewports cache the geometry and the divs 
+
+    let bounds = Geometry.Rectangle.fromClientRect(div.getBoundingClientRect());
+    let h = context.hEst;
+    let pgCount = 0;
+    let lineRects = bounds.subDivideVertAbs(h, false);
+    div.style.font = fontstr;
+    let wordSpacing = getTextWidth(" ", fontstr);
+    let lineCount = lineRects.length;
+    let totalWidth = lineCount * bounds.width;
+    let cumulativeWidth = 0;
+    let standardGlue = <IPGGlue>{
+        type: PGItemType.Glue, width: wordSpacing,
+        stretch: wordSpacing / 2, shrink: wordSpacing / 3,
+    };
+    /*        let divs = lineRects.map((r) => {
+                let lineDiv = document.createElement("div");
+                lineDiv.style.font = fontstr;
+                r.conformElement(lineDiv);
+                div.appendChild(lineDiv);
+            });
+        */
+    let items = <PGItem[]>[];
+    let pgMarker: SharedString.Marker;
+    let markerPos: number;
+
+    function recordPGStart(segment: SharedString.Segment) {
+        if (segment.getType() === SharedString.SegmentType.Marker) {
+            let marker = <SharedString.Marker>segment;
+            if (marker.type === "pg") {
+                pgMarker = marker;
+            }
+        }
+        return false;
+    }
+
+    function shift(node: SharedString.Node, segpos: number, refSeq: number, clientId: number, offset: number) {
+        if (node.isLeaf()) {
+            let seg = <SharedString.Segment>node;
+            if (seg.getType() === SharedString.SegmentType.Marker) {
+                let marker = <SharedString.Marker>seg;
+                if (marker.type === "pg") {
+                    pgMarker = marker;
+                }
+            }
+        } else {
+            let block = <SharedString.HierBlock>node;
+            let marker = <SharedString.Marker>block.rightmostTiles["pg"];
+            if (marker !== undefined) {
+                pgMarker = marker;
+            }
+
+        }
+        return true;
+    }
+
+    function segmentToItems(segment: SharedString.Segment, segpos: number) {
+        if (segment.getType() === SharedString.SegmentType.Text) {
+            let textSegment = <SharedString.TextSegment>segment;
+            let words = textSegment.text.split(/\s+/g);
+            let lfontstr = fontstr;
+            if (textSegment.properties) {
+                let fontSize = textSegment.properties.fontSize;
+                if (fontSize) {
+                    lfontstr = `${fontSize} Times`;
+                }
+                let fontStyle = textSegment.properties.fontStyle;
+                if (fontStyle) {
+                    lfontstr = fontStyle + " " + lfontstr;
+                }
+            }
+            let first = true;
+            for (let word of words) {
+                let wordWidth = getTextWidth(word, lfontstr);
+                let wordBlock = makeIPGBlock(wordWidth);
+                if (!first) {
+                    items.push(standardGlue);
+                    cumulativeWidth += standardGlue.width;
+                } else {
+                    first = false;
+                }
+                items.push(wordBlock);
+                cumulativeWidth += wordBlock.width;
+                if (cumulativeWidth >= totalWidth) {
+                    return false;
+                }
+            }
+        } else if (segment.getType() === SharedString.SegmentType.Marker) {
+            let marker = <SharedString.Marker>segment;
+            if (marker.type === "pg") {
+                pgMarker = marker;
+                markerPos = segpos;
+                return false;
+            }
+        }
+        return true;
+    }
+
+    client.mergeTree.search(pos, SharedString.UniversalSequenceNumber, client.getClientId(),
+        { leaf: recordPGStart, shift });
+    markerPos = client.mergeTree.getOffset(pgMarker, SharedString.UniversalSequenceNumber, client.getClientId());
+    do {
+        pgMarker = undefined;
+        pgCount++;
+        client.mergeTree.mapRange({ leaf: segmentToItems }, SharedString.UniversalSequenceNumber,
+            client.getClientId(), undefined, markerPos + 1);
+    } while ((pgMarker !== undefined) && (cumulativeWidth < totalWidth));
+    // tslint:disable:max-line-length
+    console.log(`pg count ${pgCount} lw ${bounds.width} cw ${cumulativeWidth} tw ${totalWidth} items ${items.length} word spacing: ${wordSpacing}`);
+}
+
 function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Client, context: FlowView) {
     div.id = "renderedTree";
     div.style.whiteSpace = "pre-wrap";
@@ -686,7 +839,14 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
             div.appendChild(innerDiv);
         }
 
-        if (segment.getType() === SharedString.SegmentType.Text) {
+        if (segment.getType() === SharedString.SegmentType.Marker) {
+            let marker = <SharedString.Marker>segment;
+            if (marker.type === "pg") {
+                if (segPos > 0) {
+                    freshDiv();
+                }
+            }
+        } else if (segment.getType() === SharedString.SegmentType.Text) {
             let textSegment = <SharedString.TextSegment>segment;
             let last = (textSegment.text.length === end);
             if (firstSeg && (textSegment !== context.prevTopSegment)) {
@@ -714,9 +874,6 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
             charLength += segText.length;
             segText = segmentToSpan(segText, textSegment, segOffset, segPos, true);
             segOffset = 0;
-            if (segText.charAt(segText.length - 1) === "\n") {
-                freshDiv();
-            }
 
             if ((charLength > charsPerViewport) || last) {
                 // console.log(`client h, w ${div.clientHeight},${div.clientWidth}`);
@@ -1129,7 +1286,7 @@ export class FlowView {
                     inputDelta = e.wheelDelta / 2;
                 }
                 let delta = factor * inputDelta;
-                console.log(`top char: ${this.topChar - delta} factor ${factor}; delta: ${delta} wheel: ${e.wheelDeltaY} ${e.wheelDelta} ${e.detail}`);
+                // console.log(`top char: ${this.topChar - delta} factor ${factor}; delta: ${delta} wheel: ${e.wheelDeltaY} ${e.wheelDelta} ${e.detail}`);
                 setTimeout(() => {
                     this.render(Math.floor(this.topChar - delta));
                     this.wheelTicking = false;
@@ -1269,6 +1426,7 @@ export class FlowView {
     }
 
     public render(topChar?: number, changed = false) {
+        let testPG = false;
         let len = this.client.getLength();
         if (topChar !== undefined) {
             if (((this.topChar === topChar) || ((this.topChar === 0) && (topChar <= 0)))
@@ -1289,6 +1447,9 @@ export class FlowView {
         clearSubtree(this.viewportDiv);
         // this.viewportDiv.appendChild(this.cursor.editSpan);
         renderTree(this.viewportDiv, pos, this.client, this);
+        if (testPG) {
+            renderTreeByPG(this.viewportDiv, pos, this.client, this);
+        }
         clearSubtree(this.scrollDiv);
         let bubbleHeight = Math.max(3, Math.floor((this.viewportCharCount / len) * this.scrollRect.height));
         let bubbleTop = Math.floor(frac * this.scrollRect.height);
