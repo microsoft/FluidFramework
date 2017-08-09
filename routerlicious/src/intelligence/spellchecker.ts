@@ -14,7 +14,10 @@ class SpellcheckerService implements IIntelligentService {
     public async run(value: string): Promise<any> {
         const data: any = {
             documents: [{
+                end: 20,
                 id: "1",
+                rsn: 100,
+                start: 0,
                 text: value,
             }],
         };
