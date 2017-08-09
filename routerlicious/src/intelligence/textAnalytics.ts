@@ -17,33 +17,38 @@ class TextAnalyticsIntelligentService implements IIntelligentService {
 
     public async run(value: string): Promise<any> {
         const condensed = value.substring(0, Math.min(value.length, 5012));
-        const data: any = {
-            documents: [{
-                id: "1",
-                text: condensed,
-            }],
-        };
+        if (condensed.length > 0) {
+            const data: any = {
+                documents: [{
+                    id: "1",
+                    text: condensed,
+                }],
+            };
 
-        // Start by detecting the language
-        const languageResult = await this.invokeRequest(languageUrl, data);
-        const detectedLanguages = languageResult.documents[0].detectedLanguages as any[];
-        detectedLanguages.sort((a, b) => a.score - b.score);
+            // Start by detecting the language. Default is set to en.
+            const languageResult = await this.invokeRequest(languageUrl, data);
+            let language = "en";
+            if (languageResult.documents.length > 0) {
+                const detectedLanguages = languageResult.documents[0].detectedLanguages as any[];
+                detectedLanguages.sort((a, b) => a.score - b.score);
+                language = detectedLanguages[0].iso6391Name;
+            }
 
-        // And then use the top rank to trigger the remaining calls
-        const language = detectedLanguages[0].iso6391Name;
-        data.documents[0].language = language;
-        const sentimentResultP = this.invokeRequest(sentimentUrl, data);
-        const keyPhrasesResultP = this.invokeRequest(keyPhrasesUrl, data);
-        const results = await Promise.all([sentimentResultP, keyPhrasesResultP]);
+            // And then use the top rank to trigger the remaining calls
+            data.documents[0].language = language;
+            const sentimentResultP = this.invokeRequest(sentimentUrl, data);
+            const keyPhrasesResultP = this.invokeRequest(keyPhrasesUrl, data);
+            const results = await Promise.all([sentimentResultP, keyPhrasesResultP]);
 
-        const sentiment = results[0].documents[0].score;
-        const keyPhrases = results[1].documents[0].keyPhrases;
+            const sentiment = results[0].documents[0].score;
+            const keyPhrases = results[1].documents[0].keyPhrases;
 
-        return {
-            language,
-            keyPhrases,
-            sentiment,
-        };
+            return {
+                language,
+                keyPhrases,
+                sentiment,
+            };
+        }
     }
 
     private invokeRequest(service: string, data: any): Promise<any> {
