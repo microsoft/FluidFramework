@@ -2210,7 +2210,6 @@ export class MergeTree {
     }
 
     updateMinSeq(minSeq: number) {
-        console.log(`Updating minSeq to ${minSeq}`);
         this.collabWindow.minSeq = minSeq;
         if (MergeTree.options.zamboniSegments) {
             this.zamboniSegments();

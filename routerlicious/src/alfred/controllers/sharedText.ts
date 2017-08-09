@@ -212,8 +212,10 @@ async function waitForKey<T>(parent: API.IMap, key: string): Promise<T> {
     } else {
         return new Promise<T>((resolve, reject) => {
             const callback = (value: { key: string }) => {
-                resolve(view.get(value.key));
-                parent.removeListener("valueChanged", callback);
+                if (key === value.key) {
+                    resolve(view.get(value.key));
+                    parent.removeListener("valueChanged", callback);
+                }
             };
 
             parent.on("valueChanged", callback);
@@ -237,7 +239,7 @@ export async function onLoad(id: string, config: any) {
     if (!existing) {
         const mewString = collabDoc.createString() as SharedString.SharedString;
         const starterText = await downloadRawText(prideAndPrejudice);
-        const segments = SharedString.loadSegments(starterText, 0);
+        const segments = SharedString.loadSegments(starterText, 0, true);
         for (const segment of segments) {
             if (segment.getType() === SharedString.SegmentType.Text) {
                 let textSegment = <SharedString.TextSegment>segment;
@@ -246,11 +248,8 @@ export async function onLoad(id: string, config: any) {
             } else {
                 // assume marker
                 let marker = <SharedString.Marker>segment;
-                mewString.insertMarker(
-                    mewString.client.getLength(),
-                    marker.type,
-                    marker.behaviors,
-                    marker.properties);
+                // tslint:disable:max-line-length
+                mewString.insertMarker(mewString.client.getLength(), marker.type, marker.behaviors, marker.properties);
             }
         }
 
