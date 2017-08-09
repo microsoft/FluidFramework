@@ -18,15 +18,17 @@ export class CollaboritiveStringExtension implements api.IExtension {
         version: string,
         header: string): api.ICollaborativeObject {
 
-        let coString = new SharedString(document, id, sequenceNumber, services);
-        coString.load(sequenceNumber, header);
+        let collaborativeString = new SharedString(document, id, sequenceNumber, services);
+        collaborativeString.load(sequenceNumber, header);
 
-        return coString;
+        return collaborativeString;
     }
 
     public create(document: api.Document, id: string): api.ICollaborativeObject {
-        let coString = new SharedString(document, id, 0);
-        return coString;
+        let collaborativeString = new SharedString(document, id, 0);
+        collaborativeString.load(0, null);
+
+        return collaborativeString;
     }
 }
 
@@ -160,13 +162,6 @@ export class SharedString extends api.CollaborativeObject {
         }
 
         this.applyMessage(message);
-    }
-
-    protected attachCore(): this {
-        this.client.startCollaboration(this.document.clientId, 0);
-        this.loadFinished(Paparazzo.Snapshot.EmptyChunk);
-
-        return this;
     }
 
     protected processMinSequenceNumberChanged(value: number) {
