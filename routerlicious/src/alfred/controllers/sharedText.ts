@@ -237,23 +237,23 @@ export async function onLoad(id: string, config: any) {
     // If a text element already exists load it direclty - otherwise load in price + prejudice
     const existing = root.has("text");
     if (!existing) {
-        const mewString = collabDoc.createString() as SharedString.SharedString;
+        const newString = collabDoc.createString() as SharedString.SharedString;
         const starterText = await downloadRawText(prideAndPrejudice);
         const segments = SharedString.loadSegments(starterText, 0, true);
         for (const segment of segments) {
             if (segment.getType() === SharedString.SegmentType.Text) {
                 let textSegment = <SharedString.TextSegment>segment;
-                mewString.insertText(textSegment.text, mewString.client.getLength(),
+                newString.insertText(textSegment.text, newString.client.getLength(),
                     textSegment.properties);
             } else {
                 // assume marker
                 let marker = <SharedString.Marker>segment;
                 // tslint:disable:max-line-length
-                mewString.insertMarker(mewString.client.getLength(), marker.type, marker.behaviors, marker.properties);
+                newString.insertMarker(newString.client.getLength(), marker.type, marker.behaviors, marker.properties);
             }
         }
 
-        root.set("text", mewString);
+        root.set("text", newString);
     }
 
     const sharedString = root.get("text") as SharedString.SharedString;

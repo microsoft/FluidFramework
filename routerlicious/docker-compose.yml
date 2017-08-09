@@ -30,6 +30,7 @@ services:
         command: npm run paparazzi
         environment:
             - DEBUG=routerlicious:*
+            - worker__intelligence__resume__url=http://alfred:3000/intelligence/resume
         restart: always
     scriptorium:
         build: .
@@ -55,7 +56,9 @@ services:
             - DEBUG=routerlicious:*
         restart: always
     historian:
-        image: prague.azurecr.io/historian:551
+        image: prague.azurecr.io/historian:591
+        ports:
+            - "3001:3000"
         environment:
             - DEBUG=routerlicious:*
         volumes:
