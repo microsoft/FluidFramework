@@ -181,9 +181,6 @@ export class TakeANumber {
         // Store the previous minimum sequene number we returned and then update it
         this.minimumSequenceNumber = this.getMinimumSequenceNumber(objectMessage.timestamp);
 
-        // tslint:disable-next-line
-        logger.info(`${message.documentId}:${message.clientId} ${message.operation.referenceSequenceNumber} ${this.minimumSequenceNumber}`);
-
         // Increment and grab the next sequence number
         const sequenceNumber = this.revSequenceNumber();
 
@@ -265,9 +262,6 @@ export class TakeANumber {
         referenceSequenceNumber: number,
         timestamp: number) {
 
-        logger.info(`${this.documentId}:${clientId} ${referenceSequenceNumber}`);
-        logger.info(JSON.stringify(this.clientNodeMap));
-
         // Add the client ID to our map if this is the first time we've seen it
         if (!(clientId in this.clientNodeMap)) {
             const newNode = this.clientSeqNumbers.add({
@@ -290,16 +284,12 @@ export class TakeANumber {
         timestamp: number,
         referenceSequenceNumber: number) {
 
-        logger.info("Before", JSON.stringify(this.clientSeqNumbers.L));
-
         // Lookup the node and then update its value based on the message
         const heapNode = this.clientNodeMap[clientId];
 
         heapNode.value.referenceSequenceNumber = referenceSequenceNumber;
         heapNode.value.lastUpdate = timestamp;
         this.clientSeqNumbers.update(heapNode);
-
-        logger.info("After", JSON.stringify(this.clientSeqNumbers.L));
     }
 
     /**

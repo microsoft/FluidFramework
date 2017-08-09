@@ -205,6 +205,27 @@ function downloadRawText(textUrl: string): Promise<string> {
     });
 }
 
+async function waitForKey<T>(parent: API.IMap, key: string): Promise<T> {
+    const view = await parent.getView();
+    if (view.has(key)) {
+        return view.get(key);
+    } else {
+        return new Promise<T>((resolve, reject) => {
+            const callback = (value: { key: string }) => {
+                resolve(view.get(value.key));
+                parent.removeListener("valueChanged", callback);
+            };
+
+            parent.on("valueChanged", callback);
+        });
+    }
+}
+
+async function getInsights(map: API.IMap, id: string): Promise<API.IMap> {
+    const insights = await waitForKey<API.IMap>(map, "insights");
+    return waitForKey<API.IMap>(insights, id);
+}
+
 export async function onLoad(id: string, config: any) {
     socketStorage.registerAsDefault(document.location.origin, config.blobStorageUrl, config.repository);
 
@@ -238,21 +259,16 @@ export async function onLoad(id: string, config: any) {
 
     const sharedString = root.get("text") as SharedString.SharedString;
 
-    // Retrive any stored insights
-    const insights = collabDoc.createMap();
-    // TODO I probably want some kind of a "get or create" here - or the ability to create a document at the root
-    // of the map rather than having to create and attach
-    // if (!root.has("insights")) {
-    //     root.set("insights", collabDoc.createMap());
-    // }
-    // const insights = root.get("insights") as API.IMap;
+    getInsights(collabDoc.getRoot(), sharedString.id).then((insightsMap) => {
+        theFlow.trackInsights(insightsMap);
+    });
 
     console.log(window.navigator.userAgent);
     console.log(`id is ${id}`);
     console.log("Partial load fired");
 
     let container = new FlowContainer();
-    theFlow = new FlowView.FlowView(sharedString, container, insights);
+    theFlow = new FlowView.FlowView(sharedString, container);
     if (sharedString.client.getLength() > 0) {
         theFlow.render(0, true);
     }

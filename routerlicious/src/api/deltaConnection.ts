@@ -1,6 +1,5 @@
 import * as assert from "assert";
 import { EventEmitter } from "events";
-import { debug } from "./debug";
 import { Document, IDeltaConnection } from "./document";
 import { IObjectMessage, ISequencedObjectMessage } from "./protocol";
 
@@ -118,9 +117,7 @@ export class DeltaConnection implements IDeltaConnection {
         documentSequenceNumber: number) {
 
         this.minSequenceNumber = this.map.getClosest(documentMinimumSequenceNumber);
-        debug(this.objectId, `${documentMinimumSequenceNumber} msn maps to local ${this.minSequenceNumber}`);
         const sequenceNumber = this.map.ticket(documentSequenceNumber);
-        debug(this.objectId, `${documentSequenceNumber} maps to assigned ${sequenceNumber}`);
         const sequencedObjectMessage: ISequencedObjectMessage = {
             clientId,
             clientSequenceNumber: message.clientSequenceNumber,
@@ -141,7 +138,6 @@ export class DeltaConnection implements IDeltaConnection {
         if (newMinSequenceNumber !== this.minimumSequenceNumber) {
             this.map.updateBase(value);
             this.minSequenceNumber = newMinSequenceNumber;
-            debug(this.objectId, `MSN update of ${value} maps to ${this.minSequenceNumber}`);
             this.events.emit("minSequenceNumber", this.minSequenceNumber);
         }
     }

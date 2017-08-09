@@ -1146,8 +1146,7 @@ export class FlowView {
 
     constructor(
         public sharedString: SharedString.SharedString,
-        public flowContainer: IComponentContainer,
-        insights: API.IMap) {
+        public flowContainer: IComponentContainer) {
 
         this.containerDiv = flowContainer.div;
         this.client = sharedString.client;
@@ -1164,7 +1163,6 @@ export class FlowView {
             this.queueRender(msg);
         });
 
-        this.trackInsights(insights);
         this.cursor = new Cursor(this.viewportDiv);
     }
 
@@ -1510,6 +1508,13 @@ export class FlowView {
         });
     }
 
+    public trackInsights(insights: API.IMap) {
+        this.updateInsights(insights);
+        insights.on("valueChanged", () => {
+            this.updateInsights(insights);
+        });
+    }
+
     private queueRender(msg: API.ISequencedObjectMessage) {
         if ((!this.pendingRender) && msg && msg.contents) {
             this.pendingRender = true;
@@ -1558,12 +1563,5 @@ export class FlowView {
                 this.statusMessage("si", sentimentEmoji);
             }
         }
-    }
-
-    private trackInsights(insights: API.IMap) {
-        this.updateInsights(insights);
-        insights.on("valueChanged", () => {
-            this.updateInsights(insights);
-        });
     }
 }

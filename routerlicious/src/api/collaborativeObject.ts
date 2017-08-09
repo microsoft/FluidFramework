@@ -135,7 +135,6 @@ export abstract class CollaborativeObject implements api.ICollaborativeObject {
 
         // Min sequence number changed
         this.services.deltaConnection.on("minSequenceNumber", (value) => {
-            debug(this.id, `New MSN ${value}`);
             this.minSequenceNumber = value;
             this.processMinSequenceNumberChanged(this.minimumSequenceNumber);
         });
