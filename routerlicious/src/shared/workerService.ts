@@ -141,8 +141,11 @@ export class WorkerService implements api.IWorkerService {
         const intelligenceManager = new shared.IntelligentServicesManager(doc, insightsMap, this.config, this.dict);
         intelligenceManager.registerService(resumeAnalytics.factory.create(this.config.intelligence.resume));
         intelligenceManager.registerService(textAnalytics.factory.create(this.config.intelligence.textAnalytics));
-        intelligenceManager.registerService(nativeTextAnalytics.factory.create(
-                                            this.config.intelligence.nativeTextAnalytics));
+
+        if (this.config.intelligence.nativeTextAnalytics.enable) {
+            intelligenceManager.registerService(
+                nativeTextAnalytics.factory.create(this.config.intelligence.nativeTextAnalytics));
+        }
 
         const eventHandler = (op: api.ISequencedDocumentMessage) => {
             serializer.run(op);

@@ -30,6 +30,7 @@ services:
         command: npm run paparazzi
         environment:
             - DEBUG=routerlicious:*
+            - worker__intelligence__resume__url=http://alfred:3000/intelligence/resume
         restart: always
     scriptorium:
         build: .
