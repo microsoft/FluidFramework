@@ -2,8 +2,8 @@
 
 import * as random from "random-js";
 import * as MergeTree from "./mergeTree";
+import * as ops from "./ops";
 import * as fs from "fs";
-import * as api from "../api";
 
 export function loadTextFromFile(filename: string, mergeTree: MergeTree.MergeTree, segLimit = 0) {
     let content = fs.readFileSync(filename, "utf8");
@@ -26,7 +26,7 @@ export function loadSegments(content: string, segLimit: number, markers = false)
     let segments = <MergeTree.Segment[]>[];
     for (let paragraph of paragraphs) {
         if (markers) {
-            segments.push(MergeTree.Marker.make("pg", api.MarkerBehaviors.Tile, undefined, seq, cli));
+            segments.push(MergeTree.Marker.make("pg", ops.MarkerBehaviors.Tile, undefined, seq, cli));
         }
         if (withProps) {
             if (paragraph.indexOf("Chapter") >= 0) {
