@@ -16,8 +16,34 @@ The services follow the [twelve factor](https://12factor.net) methodology and ar
 
 ## Building and Running
 
-We make use of a handful of of private containers. To gain access you first need to authenticate to our private
-container registry by running
+### Prerequisities
+
+Standalone 
+* [Git LFS](https://git-lfs.github.com/) (comes by default with most git installations)
+* [Docker](https://www.docker.com/)
+
+For Development
+* [Node v8.x](https://nodejs.org/en/)
+
+### Development 
+
+For the development setup we map your source tree directly into the container. This allows you to build/edit on your local
+machine with your toolchain of choice. And the output is then run inside the container.
+
+To start the service for development run the following commands:
+
+* `npm install`
+* `npm run build`
+* `npm start`
+
+If you also need debugging you can run:
+
+* `npm run start:debug` - which will allow you to attach a debugger
+
+### Standalone
+
+You can also just run the service directly with Docker. To do so you first need to authenticate to our private
+container registry by running:
 
 * `docker login -u prague -p /vM3i=D+K4+vj+pgha=cg=55OQLDWj3w prague.azurecr.io`
 
@@ -25,19 +51,6 @@ Docker Compose is used to run the service locally. To start up an instance of th
 
 * `docker-compose build`
 * `docker-compose up`
-
-For development you likely want to map your source tree into the container. In this case you'll need to first build the source locally.
-
-* `npm install`
-* `npm run build`
-
-There's then a docker-compose override file which will map your local source directly into the container. Since this is the usual workflow we've simplified the process by having npm start perform these steps for you.
-
-* `npm start` - which internally is doing a `docker-compose -f docker-compose.yml -f docker-compose.dev.yml up`
-
-If you also need debugging you can do a
-
-* `npm run start:debug` - which will allow you to attach a debugger
 
 ## CI/CD
 

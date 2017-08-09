@@ -16,7 +16,7 @@ export interface IObjectMessage extends IMessage {
     userId: string;
 
     // The object the message is intended for
-    objectId: string;
+    documentId: string;
 
     // The client who submitted the message
     clientId: string;
@@ -45,12 +45,12 @@ export interface IUpdateReferenceSequenceNumberMessage extends IObjectMessage {
  */
 export interface IRawOperationMessage extends IObjectMessage {
     // The message that was submitted
-    operation: api.IMessage;
+    operation: api.IDocumentMessage;
 }
 
 export interface ITicketedMessage extends IMessage {
     // The object the message is intended for
-    objectId: string;
+    documentId: string;
 }
 
 // String identifying the sequenced operation message
@@ -61,5 +61,5 @@ export const SequencedOperationType = "SequencedOperation";
  */
 export interface ISequencedOperationMessage extends ITicketedMessage {
     // The sequenced operation
-    operation: api.IBase;
+    operation: api.ISequencedDocumentMessage;
 }

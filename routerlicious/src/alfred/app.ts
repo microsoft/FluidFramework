@@ -48,7 +48,6 @@ app.use(passport.session());
 
 // bind routes
 app.use("/deltas", routes.deltas);
-app.use("/storage", routes.storage);
 app.use("/maps", routes.maps);
 app.use("/canvas", routes.canvas);
 app.use("/sharedText", routes.sharedText);

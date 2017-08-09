@@ -1,6 +1,8 @@
 import * as api from "../api";
 import * as intelligence from "../intelligence";
 import * as mergeTree from "../merge-tree";
+import * as Collections from "../merge-tree/collections";
+import * as shared from "./";
 
 // 5s wait time between intelligent service calls
 const defaultWaitTime = 5 * 1000;
@@ -8,7 +10,7 @@ const defaultWaitTime = 5 * 1000;
 /**
  * The rate limiter is a simple class that will defer running an async action
  */
-class RateLimiter {
+export class RateLimiter {
     private pending = false;
     private dirty = false;
 
@@ -56,7 +58,11 @@ export class IntelligentServicesManager {
     private services: intelligence.IIntelligentService[] = [];
     private trackedDocuments: { [id: string]: RateLimiter } = {};
 
-    constructor(private output: api.IMap) {
+    constructor(
+        private doc: api.Document,
+        private documentInsights: api.IMapView,
+        private config: any,
+        private dict: Collections.TST<number>) {
     }
 
     /**
@@ -72,13 +78,28 @@ export class IntelligentServicesManager {
             if (!(object.id in this.trackedDocuments)) {
                 const sharedString = object as mergeTree.SharedString;
 
+                // Enable spell checking for the document
+                // TODO will want to configure this as a pluggable insight
+                const spellcheckerClient = intelligence.spellcheckerService.factory.create(
+                    this.config.intelligence.spellchecker);
+                const spellchecker = new shared.Spellcheker(sharedString, this.dict, spellcheckerClient);
+                spellchecker.run();
+
+                // And then run plugin insights rate limited
                 this.trackedDocuments[object.id] = new RateLimiter(
                     async () => {
+                        // Create a map for the object if it doesn't exist yet
+                        if (!this.documentInsights.has(object.id)) {
+                            this.documentInsights.set(object.id, this.doc.createMap());
+                        }
+
+                        const output = this.documentInsights.get(object.id) as api.IMap;
+
                         // Run the collaborative services
                         const text = sharedString.client.getText();
                         const setInsightsP = this.services.map(async (service) => {
                             const result = await service.run(text);
-                            return this.output.set(service.name, result);
+                            return output.set(service.name, result);
                         });
 
                         return Promise.all(setInsightsP);

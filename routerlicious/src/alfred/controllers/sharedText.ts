@@ -2,14 +2,11 @@
 import * as request from "request";
 import * as url from "url";
 import * as API from "../../api";
-import { MergeTreeChunk } from "../../api";
 import * as SharedString from "../../merge-tree";
 import * as shared from "../../shared";
 import * as socketStorage from "../../socket-storage";
 import * as FlowView from "./flowView";
 import * as Geometry from "./geometry";
-
-socketStorage.registerAsDefault(document.location.origin);
 
 // first script loaded
 let clockStart = Date.now();
@@ -192,59 +189,97 @@ class FlowContainer implements FlowView.IComponentContainer {
     }
 }
 
+const prideAndPrejudice = "/public/literature/pp.txt";
+
+function downloadRawText(textUrl: string): Promise<string> {
+    return new Promise<string>((resolve, reject) => {
+        request.get(url.resolve(document.baseURI, textUrl), (error, response, body: string) => {
+            if (error) {
+                reject(error);
+            } else if (response.statusCode !== 200) {
+                reject(response.statusCode);
+            } else {
+                resolve(body);
+            }
+        });
+    });
+}
+
+async function waitForKey<T>(parent: API.IMap, key: string): Promise<T> {
+    const view = await parent.getView();
+    if (view.has(key)) {
+        return view.get(key);
+    } else {
+        return new Promise<T>((resolve, reject) => {
+            const callback = (value: { key: string }) => {
+                if (key === value.key) {
+                    resolve(view.get(value.key));
+                    parent.removeListener("valueChanged", callback);
+                }
+            };
+
+            parent.on("valueChanged", callback);
+        });
+    }
+}
+
+async function getInsights(map: API.IMap, id: string): Promise<API.IMap> {
+    const insights = await waitForKey<API.IMap>(map, "insights");
+    return waitForKey<API.IMap>(insights, id);
+}
+
 export async function onLoad(id: string, config: any) {
-    SharedString.MergeTree.blockUpdateMarkers = true;
-    const extension = API.defaultRegistry.getExtension(SharedString.CollaboritiveStringExtension.Type);
-    const sharedString = extension.load(id, API.getDefaultServices(), API.defaultRegistry) as SharedString.SharedString;
+    socketStorage.registerAsDefault(document.location.origin, config.blobStorageUrl, config.repository);
 
-    // Retrive any stored insights
-    const mapExtension = API.defaultRegistry.getExtension(API.MapExtension.Type);
-    const insights = mapExtension.load(`${id}-insights`, API.getDefaultServices(), API.defaultRegistry) as API.IMap;
-    console.log(window.navigator.userAgent);
-    console.log(`id is ${id}`);
-    sharedString.on("partialLoad", async (data: MergeTreeChunk) => {
-        console.log("Partial load fired");
+    const collabDoc = await API.load(id);
+    const root = await collabDoc.getRoot().getView();
 
-        let container = new FlowContainer();
-        theFlow = new FlowView.FlowView(sharedString, data.totalSegmentCount,
-            data.totalLengthChars, container, insights);
-        if (data.totalLengthChars > 0) {
-            theFlow.render(0, true);
+    // If a text element already exists load it direclty - otherwise load in price + prejudice
+    const existing = root.has("text");
+    if (!existing) {
+        const newString = collabDoc.createString() as SharedString.SharedString;
+        const starterText = await downloadRawText(prideAndPrejudice);
+        const segments = SharedString.loadSegments(starterText, 0, true);
+        for (const segment of segments) {
+            if (segment.getType() === SharedString.SegmentType.Text) {
+                let textSegment = <SharedString.TextSegment>segment;
+                newString.insertText(textSegment.text, newString.client.getLength(),
+                    textSegment.properties);
+            } else {
+                // assume marker
+                let marker = <SharedString.Marker>segment;
+                // tslint:disable:max-line-length
+                newString.insertMarker(newString.client.getLength(), marker.type, marker.behaviors, marker.properties);
+            }
         }
-        theFlow.timeToEdit = theFlow.timeToImpression = Date.now() - clockStart;
-        theFlow.setEdit();
+
+        root.set("text", newString);
+    }
+
+    const sharedString = root.get("text") as SharedString.SharedString;
+
+    getInsights(collabDoc.getRoot(), sharedString.id).then((insightsMap) => {
+        theFlow.trackInsights(insightsMap);
     });
 
-    sharedString.on("loadFinshed", (data: MergeTreeChunk, existing: boolean) => {
+    console.log(window.navigator.userAgent);
+    console.log(`id is ${id}`);
+    console.log("Partial load fired");
+
+    let container = new FlowContainer();
+    theFlow = new FlowView.FlowView(sharedString, container);
+    if (sharedString.client.getLength() > 0) {
+        theFlow.render(0, true);
+    }
+    theFlow.timeToEdit = theFlow.timeToImpression = Date.now() - clockStart;
+    theFlow.setEdit();
+
+    sharedString.loaded.then(() => {
         // Bootstrap worker service.
         if (config.permission.sharedText) {
             shared.registerWorker(config);
         }
 
-        if (existing) {
-            theFlow.loadFinished(clockStart);
-        } else {
-            console.log("local load...");
-            request.get(url.resolve(document.baseURI,
-                "/public/literature/pp.txt"), (error, response, body: string) => {
-                    if (error) {
-                        return console.error(error);
-                    }
-                    const segments = SharedString.loadSegments(body, 0, true);
-                    for (const segment of segments) {
-                        if (segment.getType() === SharedString.SegmentType.Text) {
-                            let textSegment = <SharedString.TextSegment>segment;
-                            sharedString.insertText(textSegment.text, sharedString.client.getLength(),
-                                textSegment.properties);
-                        } else {
-                            // assume marker
-                            let marker = <SharedString.Marker>segment;
-                            // tslint:disable:max-line-length
-                            sharedString.insertMarker(sharedString.client.getLength(), marker.type, marker.behaviors, marker.properties);
-                        }
-                    }
-                    theFlow.loadFinished(clockStart);
-                });
-        }
+        theFlow.loadFinished(clockStart);
     });
 }

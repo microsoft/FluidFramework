@@ -12,8 +12,8 @@ nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use
 // Connection to stored document details
 const mongoUrl = nconf.get("mongo:endpoint");
 const client = MongoClient.connect(mongoUrl);
-const objectsCollectionName = nconf.get("mongo:collectionNames:objects");
-const objectsCollectionP = client.then((db) => db.collection(objectsCollectionName));
+const documentsCollectionName = nconf.get("mongo:collectionNames:documents");
+const objectsCollectionP = client.then((db) => db.collection(documentsCollectionName));
 const minioConfig = nconf.get("minio");
 const storageBucket = nconf.get("paparazzi:bucket");
 const chunkSize = nconf.get("perf:chunkSize");
@@ -60,36 +60,13 @@ async function getOrCreateBucket(minioClient, bucket: string) {
     }
 }
 
-async function getOrCreateObject(id: string, type: string): Promise<boolean> {
-    const collection = await objectsCollectionP;
-    const dbObjectP = collection.findOne({ _id: id });
-    return dbObjectP.then(
-        (dbObject) => {
-            if (dbObject) {
-                if (dbObject.type !== type) {
-                    throw new Error("Mismatched shared types");
-                }
-                return true;
-            } else {
-                return collection.insertOne({ _id: id, type }).then(() => false);
-            }
-        });
-}
-
 async function loadObject(
     services: api.ICollaborationServices,
     collection: Collection,
     id: string): Promise<api.ICollaborativeObject> {
 
-    console.log(`${id}: Loading`);
-    const dbObject = await collection.findOne({ _id: id });
-    console.log(`${id}: Found`);
-
-    const extension = api.defaultRegistry.getExtension(dbObject.type);
-    const sharedObject = extension.load(id, services, api.defaultRegistry);
-
-    console.log(`${id}: Loaded`);
-    return sharedObject;
+    const document = await api.load(id);
+    return document.getRoot();
 }
 
 // Initialize Socket.io and connect to the Redis adapter
@@ -147,7 +124,7 @@ async function produce() {
 // Cosumer connects to alfred as a client and receives messages.
 async function consume() {
     // Create the object first in the DB.
-    await getOrCreateObject(objectId, "https://graph.microsoft.com/types/map");
+    await api.load(objectId);
 
     const minioClient = new minio.Client({
         accessKey: minioConfig.accessKey,

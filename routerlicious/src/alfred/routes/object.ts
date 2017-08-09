@@ -3,7 +3,7 @@ import * as nconf from "nconf";
 import * as utils from "../../utils";
 
 const mongoUrl = nconf.get("mongo:endpoint");
-const objectsCollectionName = nconf.get("mongo:collectionNames:objects");
+const documentsCollectionName = nconf.get("mongo:collectionNames:documents");
 
 const router: Router = Router();
 
@@ -15,7 +15,7 @@ const mongoManager = new utils.MongoManager(mongoUrl);
 router.get("/:id", (request, response, next) => {
     const id = request.params.id;
     const objectP = mongoManager.getDatabase().then(async (db) => {
-        const collection = db.collection(objectsCollectionName);
+        const collection = db.collection(documentsCollectionName);
         const dbObject = await collection
             .findOne({ _id: id });
 

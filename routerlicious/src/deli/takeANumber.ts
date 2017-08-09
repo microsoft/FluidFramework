@@ -17,7 +17,6 @@ const ClientSequenceTimeout = 5 * 60 * 1000;
 
 interface IClientSequenceNumber {
     clientId: string;
-    clientSequenceNumber: number;
     lastUpdate: number;
     referenceSequenceNumber: number;
 }
@@ -26,7 +25,6 @@ const SequenceNumberComparer: utils.IComparer<IClientSequenceNumber> = {
     compare: (a, b) => a.referenceSequenceNumber - b.referenceSequenceNumber,
     min: {
         clientId: undefined,
-        clientSequenceNumber: -1,
         lastUpdate: -1,
         referenceSequenceNumber: -1,
     },
@@ -47,11 +45,11 @@ export class TakeANumber {
     private minimumSequenceNumber;
 
     constructor(
-        private objectId: string,
+        private documentId: string,
         private collection: Collection,
         private producer: utils.kafkaProducer.IProdcuer) {
         // Lookup the last sequence number stored
-        const dbObjectP = this.collection.findOne({ _id: this.objectId });
+        const dbObjectP = this.collection.findOne({ _id: this.documentId });
         dbObjectP.then(
             (dbObject) => {
                 if (!dbObject) {
@@ -64,7 +62,6 @@ export class TakeANumber {
                     for (const client of dbObject.clients) {
                         this.upsertClient(
                             client.clientId,
-                            client.clientSequenceNumber,
                             client.referenceSequenceNumber,
                             client.lastUpdate);
                     }
@@ -124,11 +121,11 @@ export class TakeANumber {
 
         return this.collection.updateOne(
             {
-                _id: this.objectId,
+                _id: this.documentId,
             },
             {
                 $set: {
-                    _id : this.objectId,
+                    _id : this.documentId,
                     clients,
                     logOffset: this.logOffset,
                     sequenceNumber : this.sequenceNumber,
@@ -156,73 +153,61 @@ export class TakeANumber {
 
         // Update the client's reference sequence number based on the message type
         const objectMessage = JSON.parse(rawMessage.value.toString("utf8")) as core.IObjectMessage;
-        if (objectMessage.type === core.UpdateReferenceSequenceNumberType) {
-            const message = objectMessage as core.IUpdateReferenceSequenceNumberMessage;
-            this.updateClient(message.clientId, message.timestamp, message.sequenceNumber);
 
-        } else {
-            const message = objectMessage as core.IRawOperationMessage;
+        // NOTE at one point we had a custom min sequence number update packet. This one would exit early
+        // and not sequence a packet that didn't cause a change to the min sequence number. There shouldn't be
+        // so many of these that we need to not include them. They are also easy to elide later.
 
-            // Update and retrieve the minimum sequence number
-            this.upsertClient(
-                message.clientId,
-                message.operation.clientSequenceNumber,
-                message.operation.referenceSequenceNumber,
-                message.timestamp);
-        }
-
-        // Store the previous minimum sequene number we returned and then update it
-        const lastMinimumSequenceNumber = this.minimumSequenceNumber;
-        this.minimumSequenceNumber = this.getMinimumSequenceNumber(objectMessage.timestamp);
-
-        // If the client updating there reference sequence number did not result in a change to the minimum
-        // sequence number we can return early since no output packet will be generated.
-        if ((objectMessage.type === core.UpdateReferenceSequenceNumberType) &&
-            (lastMinimumSequenceNumber === this.minimumSequenceNumber)) {
+        // Exit out early for unknown messages
+        if (objectMessage.type !== core.RawOperationType) {
             return Promise.resolve();
         }
+
+        // Update and retrieve the minimum sequence number
+        const message = objectMessage as core.IRawOperationMessage;
+
+        if (message.operation.referenceSequenceNumber < this.minimumSequenceNumber) {
+            // TODO support nacking of clients
+            // This can happen today as a new write client joins but is not fully up to date with the stream of events.
+            // Especially if they are being created quickly. Below is a very temporary workaround
+            message.operation.referenceSequenceNumber = this.minimumSequenceNumber;
+        }
+
+        this.upsertClient(
+            message.clientId,
+            message.operation.referenceSequenceNumber,
+            message.timestamp);
+
+        // Store the previous minimum sequene number we returned and then update it
+        this.minimumSequenceNumber = this.getMinimumSequenceNumber(objectMessage.timestamp);
 
         // Increment and grab the next sequence number
         const sequenceNumber = this.revSequenceNumber();
 
         // And now craft the output message
-        let outputMessage: api.IBase;
-        if (objectMessage.type === core.UpdateReferenceSequenceNumberType) {
-            const minimumSequenceNumberMessage: api.IBase = {
-                minimumSequenceNumber: this.minimumSequenceNumber,
-                sequenceNumber,
-                type: api.MinimumSequenceNumberUpdateType,
-            };
-
-            outputMessage = minimumSequenceNumberMessage;
-        } else {
-            const message = objectMessage as core.IRawOperationMessage;
-            const operation = message.operation;
-            const sequencedOperation: api.ISequencedMessage = {
-                clientId: message.clientId,
-                clientSequenceNumber: operation.clientSequenceNumber,
-                minimumSequenceNumber: this.minimumSequenceNumber,
-                op: operation.op,
-                referenceSequenceNumber: operation.referenceSequenceNumber,
-                sequenceNumber,
-                type: api.OperationType,
-                userId: message.userId,
-            };
-            outputMessage = sequencedOperation;
-        }
+        let outputMessage: api.ISequencedDocumentMessage = {
+            clientId: message.clientId,
+            clientSequenceNumber: message.operation.clientSequenceNumber,
+            contents: message.operation.contents,
+            minimumSequenceNumber: this.minimumSequenceNumber,
+            referenceSequenceNumber: message.operation.referenceSequenceNumber,
+            sequenceNumber,
+            type: message.operation.type,
+            userId: message.userId,
+        };
 
         // tslint:disable-next-line:max-line-length
-        logger.verbose(`Assigning ticket ${objectMessage.objectId}@${sequenceNumber}:${this.minimumSequenceNumber} at topic@${this.logOffset}`);
+        logger.verbose(`Assigning ticket ${objectMessage.documentId}@${sequenceNumber}:${this.minimumSequenceNumber} at topic@${this.logOffset}`);
 
         const sequencedMessage: core.ISequencedOperationMessage = {
-            objectId: objectMessage.objectId,
+            documentId: objectMessage.documentId,
             operation: outputMessage,
             type: core.SequencedOperationType,
         };
 
         // Otherwise send the message to the event hub
         throughput.produce();
-        return this.producer.send(JSON.stringify(sequencedMessage), sequencedMessage.objectId)
+        return this.producer.send(JSON.stringify(sequencedMessage), sequencedMessage.documentId)
             .then((result) => {
                 throughput.acknolwedge();
                 return result;
@@ -274,7 +259,6 @@ export class TakeANumber {
 
     private upsertClient(
         clientId: string,
-        clientSequenceNumber: number,
         referenceSequenceNumber: number,
         timestamp: number) {
 
@@ -282,7 +266,6 @@ export class TakeANumber {
         if (!(clientId in this.clientNodeMap)) {
             const newNode = this.clientSeqNumbers.add({
                 clientId,
-                clientSequenceNumber,
                 lastUpdate: timestamp,
                 referenceSequenceNumber,
             });
@@ -290,7 +273,7 @@ export class TakeANumber {
         }
 
         // And then update its values
-        this.updateClient(clientId, timestamp, referenceSequenceNumber, clientSequenceNumber);
+        this.updateClient(clientId, timestamp, referenceSequenceNumber);
     }
 
     /**
@@ -299,19 +282,14 @@ export class TakeANumber {
     private updateClient(
         clientId: string,
         timestamp: number,
-        referenceSequenceNumber: number,
-        clientSequenceNumber?: number) {
+        referenceSequenceNumber: number) {
 
         // Lookup the node and then update its value based on the message
         const heapNode = this.clientNodeMap[clientId];
-        if (heapNode) {
-            heapNode.value.referenceSequenceNumber = referenceSequenceNumber;
-            heapNode.value.lastUpdate = timestamp;
-            if (clientSequenceNumber !== undefined) {
-                heapNode.value.clientSequenceNumber = clientSequenceNumber;
-            }
-            this.clientSeqNumbers.update(heapNode);
-        }
+
+        heapNode.value.referenceSequenceNumber = referenceSequenceNumber;
+        heapNode.value.lastUpdate = timestamp;
+        this.clientSeqNumbers.update(heapNode);
     }
 
     /**

@@ -1,4 +1,3 @@
-import { Registry } from "./extension";
 import * as storage from "./storage";
 
 /**
@@ -42,10 +41,9 @@ export interface ICollaborativeObject {
     removeAllListeners(event?: string): this;
 
     /**
-     * Attaches the given collaborative object to an upstream storage location.
-     * This marks it as a collaborative object.
+     * Attaches the given collaborative object to its containing document
      */
-    attach(services: storage.ICollaborationServices, registry: Registry): Promise<void>;
+    attach(): this;
 
     /**
      * Returns whether the given collaborative object is local
@@ -57,7 +55,7 @@ export interface ICollaborativeObject {
      * TODO this is temporary to bootstrap the process. For performance/dynamic load/etc... we'll likely expose
      * access to the snapshot behind the storage objects.
      */
-    snapshot(): Promise<void>;
+    snapshot(): storage.ITree;
 }
 
 export interface IMapView {
@@ -74,12 +72,12 @@ export interface IMapView {
     /**
      * Sets the key to the provided value
      */
-    set(key: string, value: any): Promise<void>;
+    set(key: string, value: any): void;
 
     /**
      * Deletes the specified key from the map and returns the value of the key at the time of deletion.
      */
-    delete(key: string): Promise<void>;
+    delete(key: string): void;
 
     /**
      * Retreives all the keys contained within the map
@@ -89,7 +87,7 @@ export interface IMapView {
     /**
      * Removes all entries from the map
      */
-    clear(): Promise<void>;
+    clear(): void;
 }
 
 /**

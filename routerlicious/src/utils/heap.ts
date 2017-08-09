@@ -17,7 +17,8 @@ export interface IHeapNode<T> {
 }
 
 export class Heap<T> {
-    private L: Array<IHeapNode<T>>;
+    // TODO temporarily public while validating bug fix. Make private once fixed.
+    public L: Array<IHeapNode<T>>;
 
     constructor(public comp: IComparer<T>) {
         this.L = [{ value: comp.min, position: 0}];
@@ -35,7 +36,7 @@ export class Heap<T> {
     }
 
     public add(x: T): IHeapNode<T> {
-        const node = { value: x, position: this.count() };
+        const node = { value: x, position: this.L.length };
         this.L.push(node);
         this.fixup(this.count());
 
@@ -71,7 +72,7 @@ export class Heap<T> {
     }
 
     private fixdown(k: number) {
-        while ((k << 1) <= (this.count())) {
+        while ((k << 1) <= this.count()) {
             let j = k << 1;
             if ((j < this.count()) && (this.comp.compare(this.L[j].value, this.L[j + 1].value) > 0)) {
                 j++;

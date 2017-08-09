@@ -1,5 +1,6 @@
 import * as assert from "assert";
 import * as api from "../api";
+import * as map from "../map";
 
 describe("Routerlicious", () => {
     describe("Extensions", () => {
@@ -19,10 +20,10 @@ describe("Routerlicious", () => {
         });
 
         it("Can register and lookup an extension", () => {
-            const extension = new api.MapExtension();
+            const extension = new map.MapExtension();
             registry.register(extension);
             assert.equal(registry.extensions.length, 1);
-            assert.equal(registry.getExtension(api.MapExtension.Type), extension);
+            assert.equal(registry.getExtension(map.MapExtension.Type), extension);
         });
     });
 });

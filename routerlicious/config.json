@@ -13,7 +13,7 @@
         "endpoint": "mongodb://mongodb:27017",
         "collectionNames": {
             "deltas": "deltas",
-            "objects": "objects",
+            "documents": "documents",
             "partitions": "partitions"
         }
     },
@@ -104,6 +104,7 @@
                 "key": "c8b60dc5e49849ce903d7d29a2dce550"
             },
             "nativeTextAnalytics": {
+                "enable": false,
                 "url": "http://praguepy.westus2.cloudapp.azure.com/"
             },
             "spellchecker": {
@@ -111,6 +112,8 @@
             }
         },
         "url": "http://localhost:4000",
+        "blobStorageUrl": "http://localhost:3001",
+        "repository": "prague",
         "storageBucket": "snapshots",
         "intervalMSec": 10000,
         "onlyServer": true,

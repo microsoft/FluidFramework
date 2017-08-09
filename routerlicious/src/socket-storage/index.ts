@@ -1,5 +1,5 @@
 export * from "./messages";
-export * from "./deltaNotificationService";
 export * from "./deltaStorageService";
-export * from "./objectStorageService";
+export * from "./documentService";
+export * from "./blobStorageService";
 export * from "./registration";

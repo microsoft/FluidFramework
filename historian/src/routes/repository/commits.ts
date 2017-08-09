@@ -20,7 +20,7 @@ async function getCommits(
     walker.push(revObj.id());
     const commits = await walker.getCommits(10);
 
-    return commits.map((commit) => resources.commitToICommit(commit));
+    return await Promise.all(commits.map((commit) => resources.commitToICommit(commit)));
 }
 
 export function create(store: nconf.Provider, repoManager: utils.RepositoryManager): Router {

@@ -1145,9 +1145,10 @@ export class FlowView {
     private pendingRender = false;
     private diagCharPort = false;
 
-    constructor(public sharedString: SharedString.SharedString, public totalSegmentCount,
-        public totalLengthChars, public flowContainer: IComponentContainer,
-        insights: API.IMap) {
+    constructor(
+        public sharedString: SharedString.SharedString,
+        public flowContainer: IComponentContainer) {
+
         this.containerDiv = flowContainer.div;
         this.client = sharedString.client;
         this.viewportDiv = document.createElement("div");
@@ -1159,11 +1160,10 @@ export class FlowView {
         this.updateGeometry();
         this.statusMessage("li", " ");
         this.statusMessage("si", " ");
-        sharedString.on("op", (msg: API.IMessageBase) => {
-            this.queueRender(<API.ISequencedMessage>msg);
+        sharedString.on("op", (msg: API.ISequencedObjectMessage) => {
+            this.queueRender(msg);
         });
 
-        this.trackInsights(insights);
         this.cursor = new Cursor(this.viewportDiv);
     }
 
@@ -1509,18 +1509,25 @@ export class FlowView {
         });
     }
 
-    private queueRender(msg: API.ISequencedMessage) {
-        if ((!this.pendingRender) && msg && msg.op) {
+    public trackInsights(insights: API.IMap) {
+        this.updateInsights(insights);
+        insights.on("valueChanged", () => {
+            this.updateInsights(insights);
+        });
+    }
+
+    private queueRender(msg: API.ISequencedObjectMessage) {
+        if ((!this.pendingRender) && msg && msg.contents) {
             this.pendingRender = true;
             window.requestAnimationFrame(() => {
                 this.pendingRender = false;
                 if (msg.clientId !== this.client.longClientId) {
-                    let delta = <API.IMergeTreeOp>msg.op;
-                    if (delta.type === API.MergeTreeDeltaType.INSERT) {
+                    let delta = <SharedString.IMergeTreeOp> msg.contents;
+                    if (delta.type === SharedString.MergeTreeDeltaType.INSERT) {
                         if (delta.pos1 <= this.cursor.pos) {
                             this.cursor.pos += delta.text.length;
                         }
-                    } else if (delta.type === API.MergeTreeDeltaType.REMOVE) {
+                    } else if (delta.type === SharedString.MergeTreeDeltaType.REMOVE) {
                         if (delta.pos2 <= this.cursor.pos) {
                             this.cursor.pos -= (delta.pos2 - delta.pos1);
                         } else if (this.cursor.pos >= delta.pos1) {
@@ -1557,12 +1564,5 @@ export class FlowView {
                 this.statusMessage("si", sentimentEmoji);
             }
         }
-    }
-
-    private trackInsights(insights: API.IMap) {
-        this.updateInsights(insights);
-        insights.on("valueChanged", () => {
-            this.updateInsights(insights);
-        });
     }
 }

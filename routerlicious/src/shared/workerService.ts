@@ -5,7 +5,6 @@ import * as path from "path";
 import * as io from "socket.io-client";
 import * as api from "../api";
 import { nativeTextAnalytics, resumeAnalytics, textAnalytics } from "../intelligence";
-// import * as mergeTree from "../merge-tree";
 import * as Collections from "../merge-tree/collections";
 import * as socketStorage from "../socket-storage";
 import * as messages from "../socket-storage/messages";
@@ -27,11 +26,17 @@ function elapsedMilliseconds(start: [number, number]) {
 export class WorkerService implements api.IWorkerService {
 
     private socket;
-    private documentMap: { [docId: string]: api.ICollaborativeObject} = {};
-    private services: api.ICollaborationServices;
+    private documentMap: { [docId: string]: api.Document} = {};
+    private opHandlerMap: { [docId: string]: (op: any) => void} = {};
     private dict = new Collections.TST<number>();
 
-    constructor(private serverUrl: string, private workerUrl: string, private config: any) {
+    constructor(
+        private serverUrl: string,
+        private workerUrl: string,
+        private storageUrl: string,
+        private repo: string,
+        private config: any) {
+
         this.socket = io(this.workerUrl, { transports: ["websocket"] });
         this.loadDict();
         this.initializeServices();
@@ -106,12 +111,7 @@ export class WorkerService implements api.IWorkerService {
     }
 
     private initializeServices() {
-        const objectStorageService = new shared.ObjectStorageService(this.serverUrl);
-        this.services = {
-            deltaNotificationService: new socketStorage.DeltaNotificationService(this.serverUrl),
-            deltaStorageService: new socketStorage.DeltaStorageService(this.serverUrl),
-            objectStorageService,
-        };
+        socketStorage.registerAsDefault(this.serverUrl, this.storageUrl, this.repo);
     }
 
     private async processDocument(id: string) {
@@ -119,46 +119,53 @@ export class WorkerService implements api.IWorkerService {
             return;
         }
 
-        const docManager = new shared.DocumentManager(this.serverUrl, this.services);
-        docManager.load(id).then(async (doc) => {
+        api.load(id).then(async (doc) => {
             console.log(`Loaded the document ${id}`);
             this.documentMap[id] = doc;
-            const insightsMap = await docManager.createMap(`${id}-insights`);
-            this.processWork(doc, insightsMap);
+            const root = await doc.getRoot().getView();
+            if (!root.has("insights")) {
+                root.set("insights", doc.createMap());
+            }
+            const insightsMap = root.get("insights") as api.IMap;
+            const insightsMapView = await insightsMap.getView();
+            this.processWork(doc, insightsMapView);
         }, (error) => {
             console.log(`Document ${id} not found!`);
             return;
         });
     }
 
-    private processWork(doc: api.ICollaborativeObject, insightsMap: api.IMap) {
+    private processWork(doc: api.Document, insightsMap: api.IMapView) {
         const serializer = new shared.Serializer(doc);
 
-        const intelligenceManager = new shared.IntelligentServicesManager(insightsMap);
+        const intelligenceManager = new shared.IntelligentServicesManager(doc, insightsMap, this.config, this.dict);
         intelligenceManager.registerService(resumeAnalytics.factory.create(this.config.intelligence.resume));
         intelligenceManager.registerService(textAnalytics.factory.create(this.config.intelligence.textAnalytics));
-        intelligenceManager.registerService(nativeTextAnalytics.factory.create(
-                                            this.config.intelligence.nativeTextAnalytics));
 
-        // if (doc.type === mergeTree.CollaboritiveStringExtension.Type) {
-        //     const spellcheckerClient = spellcheckerService.factory.create(this.config.intelligence.spellchecker);
-        //     const spellchecker = new shared.Spellcheker(doc as mergeTree.SharedString, this.dict, spellcheckerClient);
-        //     spellchecker.run();
-        // }
+        if (this.config.intelligence.nativeTextAnalytics.enable) {
+            intelligenceManager.registerService(
+                nativeTextAnalytics.factory.create(this.config.intelligence.nativeTextAnalytics));
+        }
 
-        doc.on("op", (op) => {
+        const eventHandler = (op: api.ISequencedDocumentMessage) => {
             serializer.run(op);
-            intelligenceManager.process(doc);
-        });
+
+            if (op.type === api.ObjectOperation) {
+                const objectId = op.contents.address;
+                const object = doc.get(objectId);
+                intelligenceManager.process(object);
+            }
+        };
+
+        this.opHandlerMap[doc.id] = eventHandler;
+        doc.on("op", eventHandler);
     }
 
     private revokeWork(id: string) {
         if (id in this.documentMap) {
-            this.documentMap[id].removeListener("op", (op) => {
-                console.log(`Revoked listener from ${id}`);
-            });
+            this.documentMap[id].removeListener("op", this.opHandlerMap[id]);
             delete this.documentMap[id];
+            delete this.opHandlerMap[id];
         }
     }
-
 }

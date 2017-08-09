@@ -1,9 +1,6 @@
 import * as socketStorage from "../../socket-storage";
 import * as scribe from "../../utils/scribe";
 
-// Mark socket storage as our default provider
-socketStorage.registerAsDefault(document.location.origin);
-
 // Easy access to a couple of page elements
 const form = document.getElementById("text-form") as HTMLFormElement;
 const inputElement = document.getElementById("file") as HTMLInputElement;
@@ -118,4 +115,9 @@ function handleFiles(files: FileList) {
     // Read the selected file
     const file = files.item(0);
     reader.readAsText(file);
+}
+
+export function initialize(config: any) {
+    // Mark socket storage as our default provider
+    socketStorage.registerAsDefault(document.location.origin, config.blobStorageUrl, config.repository);
 }

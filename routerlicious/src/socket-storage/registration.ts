@@ -1,12 +1,15 @@
 import * as socketStorage from ".";
 import * as api from "../api";
 
-export function registerAsDefault(url: string) {
-    const services: api.ICollaborationServices = {
-        deltaNotificationService: new socketStorage.DeltaNotificationService(url),
-        deltaStorageService: new socketStorage.DeltaStorageService(url),
-        objectStorageService: new socketStorage.ClientObjectStorageService(url),
-    };
+export function getDefaultService(deltaUrl: string, blobUrl: string, repository: string): api.IDocumentService {
+    const blobStorage = new socketStorage.BlobStorageService(blobUrl, repository);
+    const deltaStorage = new socketStorage.DeltaStorageService(deltaUrl);
+    const service = new socketStorage.DocumentService(deltaUrl, deltaStorage, blobStorage);
 
-    api.registerDefaultServices(services);
+    return service;
+}
+
+export function registerAsDefault(deltaUrl: string, blobUrl: string, repository: string) {
+    const service = getDefaultService(deltaUrl, blobUrl, repository);
+    api.registerDocumentService(service);
 }

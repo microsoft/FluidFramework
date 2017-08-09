@@ -1,4 +1,5 @@
 import * as bodyParser from "body-parser";
+import * as cors from "cors";
 import * as express from "express";
 import { Express } from "express";
 import * as morgan from "morgan";
@@ -26,6 +27,7 @@ export function create(store: nconf.Provider) {
     app.use(bodyParser.json({ limit: requestSize }));
     app.use(bodyParser.urlencoded({ limit: requestSize, extended: false }));
 
+    app.use(cors());
     const repoManager = new utils.RepositoryManager(store.get("storageDir"));
     const apiRoutes = routes.create(store, repoManager);
     app.use(apiRoutes.git.blobs);

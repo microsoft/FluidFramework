@@ -24,20 +24,37 @@ async function getTree(repoManager: utils.RepositoryManager, repo: string, sha: 
     return getTreeInternal(repository, sha);
 }
 
+async function getTreeRecursive(repoManager: utils.RepositoryManager, repo: string, sha: string): Promise<ITree> {
+    const repository = await repoManager.open(repo);
+    const root = await repository.getTree(sha);
+
+    const walker = root.walk(false);
+    return new Promise<ITree>((resolve, reject) => {
+        walker.on("end", (entries: git.TreeEntry[]) => {
+            const tree: ITree = {
+                sha,
+                tree: entries.map((entry) => treeEntryToITreeEntry(entry)),
+                url: "",
+            };
+            resolve(tree);
+        });
+
+        walker.on("error", (error) => {
+            reject(error);
+        });
+
+        // BUG:TYPINGS Missing definition leads to the below cast
+        (walker as any).start();
+    });
+}
+
 async function getTreeInternal(repository: git.Repository, sha: string): Promise<ITree> {
     const tree = await repository.getTree(sha);
 
     const entries = tree.entries();
     const outputEntries: ITreeEntry[] = [];
     for (const entry of entries) {
-        const output: ITreeEntry = {
-            mode: entry.filemode().toString(8),
-            path: entry.path(),
-            sha: entry.id().tostrS(),
-            size: 0, // TODO
-            type: utils.GitObjectType[entry.type()],
-            url: "", // TODO
-        };
+        const output = treeEntryToITreeEntry(entry);
         outputEntries.push(output);
     }
 
@@ -48,11 +65,24 @@ async function getTreeInternal(repository: git.Repository, sha: string): Promise
     };
 }
 
+/**
+ * Helper function to convert from a nodegit TreeEntry to our ITreeEntry
+ */
+function treeEntryToITreeEntry(entry: git.TreeEntry): ITreeEntry {
+    return {
+        mode: entry.filemode().toString(8),
+        path: entry.path(),
+        sha: entry.id().tostrS(),
+        size: 0, // TODO
+        type: utils.GitObjectType[entry.type()],
+        url: "", // TODO
+    };
+}
+
 export function create(store: nconf.Provider, repoManager: utils.RepositoryManager): Router {
     const router: Router = Router();
 
     router.post("/repos/:repo/git/trees", (request, response, next) => {
-        // TODO check for recursive /repos/:owner/:repo/git/trees/:sha?recursive=1
         const blobP = createTree(repoManager, request.params.repo, request.body as ICreateTreeParams);
         return blobP.then(
             (blob) => {
@@ -64,7 +94,9 @@ export function create(store: nconf.Provider, repoManager: utils.RepositoryManag
     });
 
     router.get("/repos/:repo/git/trees/:sha", (request, response, next) => {
-        const blobP = getTree(repoManager, request.params.repo, request.params.sha);
+        const blobP = request.query.recursive === "1"
+            ? getTreeRecursive(repoManager, request.params.repo, request.params.sha)
+            : getTree(repoManager, request.params.repo, request.params.sha);
         return blobP.then(
             (blob) => {
                 response.status(200).json(blob);

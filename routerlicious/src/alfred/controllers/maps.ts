@@ -4,8 +4,6 @@ import * as api from "../../api";
 import * as shared from "../../shared";
 import * as socketStorage from "../../socket-storage";
 
-socketStorage.registerAsDefault(document.location.origin);
-
 async function loadDocument(id: string): Promise<api.Document> {
     console.log("Loading in root document...");
     const document = await api.load(id);
@@ -101,6 +99,8 @@ function randomizeMap(map: api.IMap) {
 }
 
 export function load(id: string, config: any) {
+    socketStorage.registerAsDefault(document.location.origin, config.blobStorageUrl, config.repository);
+
     $(document).ready(() => {
         loadDocument(id).then(async (doc) => {
             // tslint:disable-next-line
