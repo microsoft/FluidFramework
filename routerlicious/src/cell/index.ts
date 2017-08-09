@@ -165,24 +165,23 @@ class Cell extends api.CollaborativeObject implements api.ICell {
         }
     }
 
-    protected processCore(message: api.ISequencedObjectMessage, local: boolean) {
-        if (local) {
-            // TODO consolidate local ack with any in flight changes
-            return;
+    protected processCore(message: api.ISequencedObjectMessage) {
+        if (message.type === api.OperationType && message.clientId !== this.document.clientId) {
+            const op: ICellOperation = message.contents;
+
+            switch (op.type) {
+                case "set":
+                    this.setCore(op.value);
+                    break;
+                case "delete":
+                    this.deleteCore();
+                    break;
+                default:
+                    throw new Error("Unknown operation");
+            }
         }
 
-        const op: ICellOperation = message.contents;
-
-        switch (op.type) {
-            case "set":
-                this.setCore(op.value);
-                break;
-            case "delete":
-                this.deleteCore();
-                break;
-            default:
-                throw new Error("Unknown operation");
-        }
+        this.events.emit("op", message);
     }
 
     protected processMinSequenceNumberChanged(value: number) {

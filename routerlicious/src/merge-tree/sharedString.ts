@@ -146,7 +146,7 @@ export class SharedString extends api.CollaborativeObject {
         return snap.emit();
     }
 
-    protected processCore(message: api.ISequencedObjectMessage, local: boolean) {
+    protected processCore(message: api.ISequencedObjectMessage) {
         if (!this.isLoaded) {
             this.client.enqueueMsg(message);
             return;

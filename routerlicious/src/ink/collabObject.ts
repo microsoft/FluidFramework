@@ -71,13 +71,12 @@ export class InkCollaborativeObject extends api.CollaborativeObject implements I
         this.inkSnapshot.apply(op);
     }
 
-    protected processCore(message: api.ISequencedObjectMessage, local: boolean) {
-        if (local) {
-            // TODO consolidate local ack with any in flight changes
-            return;
+    protected processCore(message: api.ISequencedObjectMessage) {
+        if (message.type === api.OperationType && message.clientId !== this.document.clientId) {
+            this.inkSnapshot.apply(message.contents as IDelta);
         }
 
-        this.inkSnapshot.apply(message.contents as IDelta);
+        this.events.emit("op", message);
     }
 
     protected processMinSequenceNumberChanged(value: number) {

@@ -165,6 +165,14 @@ export class TakeANumber {
 
         // Update and retrieve the minimum sequence number
         const message = objectMessage as core.IRawOperationMessage;
+
+        if (message.operation.referenceSequenceNumber < this.minimumSequenceNumber) {
+            // TODO support nacking of clients
+            // This can happen today as a new write client joins but is not fully up to date with the stream of events.
+            // Especially if they are being created quickly. Below is a very temporary workaround
+            message.operation.referenceSequenceNumber = this.minimumSequenceNumber;
+        }
+
         this.upsertClient(
             message.clientId,
             message.operation.referenceSequenceNumber,

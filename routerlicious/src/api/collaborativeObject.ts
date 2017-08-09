@@ -105,7 +105,7 @@ export abstract class CollaborativeObject implements api.ICollaborativeObject {
     protected attachCore() {
     }
 
-    protected abstract processCore(message: api.ISequencedObjectMessage, local: boolean);
+    protected abstract processCore(message: api.ISequencedObjectMessage);
 
     protected abstract processMinSequenceNumberChanged(value: number);
 
@@ -115,7 +115,7 @@ export abstract class CollaborativeObject implements api.ICollaborativeObject {
     protected submitLocalOperation(contents: any): void {
         // Prep the message
         const message: api.IObjectMessage = {
-            clientSequenceNumber: this.clientSequenceNumber++,
+            clientSequenceNumber: ++this.clientSequenceNumber,
             contents,
             referenceSequenceNumber: this.sequenceNumber,
             type: api.OperationType,
@@ -126,8 +126,6 @@ export abstract class CollaborativeObject implements api.ICollaborativeObject {
         if (this.services) {
             this.submit(message);
         }
-
-        this.events.emit("op", message, true);
     }
 
     private listenForUpdates() {
@@ -152,19 +150,7 @@ export abstract class CollaborativeObject implements api.ICollaborativeObject {
         this.sequenceNum = message.sequenceNumber;
         this.minSequenceNumber = message.minimumSequenceNumber;
 
-        if (message.type === api.OperationType) {
-            this.processRemoteOperation(message as api.ISequencedObjectMessage);
-        }
-
-        // Brodcast the message to listeners.
-        this.events.emit("op", message, false);
-    }
-
-    private processRemoteOperation(message: api.ISequencedObjectMessage) {
-        const local = message.clientId === this.document.clientId;
-
-        // server messages should only be delivered to this method in sequence number order
-        if (local) {
+        if (message.type === api.OperationType && message.clientId === this.document.clientId) {
             // One of our messages was sequenced. We can remove it from the local message list. Given these arrive
             // in order we only need to check the beginning of the local list.
             if (this.localOps.length > 0 &&
@@ -175,7 +161,7 @@ export abstract class CollaborativeObject implements api.ICollaborativeObject {
             }
         }
 
-        this.processCore(message, local);
+        this.processCore(message);
     }
 
     private submit(message: api.IObjectMessage): void {

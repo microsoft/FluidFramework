@@ -230,27 +230,26 @@ class Map extends api.CollaborativeObject implements api.IMap {
         // TODO need our own concept of the zamboni here
     }
 
-    protected processCore(message: api.ISequencedObjectMessage, local: boolean) {
-        if (local) {
-            // TODO consolidate local ack with any in flight changes
-            return;
+    protected processCore(message: api.ISequencedObjectMessage) {
+        if (message.type === api.OperationType && message.clientId !== this.document.clientId) {
+            const op: IMapOperation = message.contents;
+
+            switch (op.type) {
+                case "clear":
+                    this.view.clearCore();
+                    break;
+                case "delete":
+                    this.view.deleteCore(op.key);
+                    break;
+                case "set":
+                    this.view.setCore(op.key, op.value);
+                    break;
+                default:
+                    throw new Error("Unknown operation");
+            }
         }
 
-        const op: IMapOperation = message.contents;
-
-        switch (op.type) {
-            case "clear":
-                this.view.clearCore();
-                break;
-            case "delete":
-                this.view.deleteCore(op.key);
-                break;
-            case "set":
-                this.view.setCore(op.key, op.value);
-                break;
-            default:
-                throw new Error("Unknown operation");
-        }
+        this.events.emit("op", message);
     }
 }
 
