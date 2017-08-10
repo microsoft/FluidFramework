@@ -1,6 +1,7 @@
 import { Collection } from "mongodb";
 import * as api from "../api";
 import * as core from "../core";
+import * as shared from "../shared";
 import * as utils from "../utils";
 import { logger } from "../utils";
 
@@ -43,6 +44,7 @@ export class TakeANumber {
     private clientNodeMap: { [key: string]: utils.IHeapNode<IClientSequenceNumber> } = {};
     private clientSeqNumbers = new utils.Heap<IClientSequenceNumber>(SequenceNumberComparer);
     private minimumSequenceNumber;
+    private window: shared.RangeTracker;
 
     constructor(
         private documentId: string,
@@ -168,9 +170,9 @@ export class TakeANumber {
 
         if (message.operation.referenceSequenceNumber < this.minimumSequenceNumber) {
             // TODO support nacking of clients
-            // This can happen today as a new write client joins but is not fully up to date with the stream of events.
-            // Especially if they are being created quickly. Below is a very temporary workaround
-            message.operation.referenceSequenceNumber = this.minimumSequenceNumber;
+            // Do not assign a ticket to a message outside the MSN. We will need to NACK clients in this case.
+            logger.error(`${message.clientId} sent packet less than MSN of ${this.minimumSequenceNumber}`);
+            return Promise.resolve();
         }
 
         this.upsertClient(
@@ -292,10 +294,30 @@ export class TakeANumber {
         this.clientSeqNumbers.update(heapNode);
     }
 
+    private getMinimumSequenceNumber(timestamp: number) {
+        const MinSequenceNumberWindow = 2000;
+
+        // Get the sequence number as tracked by the clients
+        const msn = this.getClientMinimumSequenceNumber(timestamp);
+
+        // Create the window if it doesn't yet exist
+        if (!this.window) {
+            this.window = new shared.RangeTracker(timestamp - MinSequenceNumberWindow, msn);
+        }
+
+        // And retrieve the window relative MSN
+        this.window.add(timestamp, msn);
+        this.window.updateBase(timestamp - MinSequenceNumberWindow);
+        const windowStamp = this.window.get(timestamp - MinSequenceNumberWindow);
+        logger.info(this.documentId, `window: ${windowStamp} : true: ${msn}`);
+
+        return windowStamp;
+    }
+
     /**
      * Retrieves the minimum sequence number. A timestamp is provided to expire old clients.
      */
-    private getMinimumSequenceNumber(timestamp: number): number {
+    private getClientMinimumSequenceNumber(timestamp: number): number {
         while (this.clientSeqNumbers.count() > 0) {
             const client = this.clientSeqNumbers.peek();
             if (timestamp - client.value.lastUpdate < ClientSequenceTimeout) {
