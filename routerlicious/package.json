@@ -27,7 +27,7 @@
     "paparazzi:watch": "nodemon --exitcrash dist/paparazzi/index.js -w dist",
     "registryAuth": "docker login -u prague -p /vM3i=D+K4+vj+pgha=cg=55OQLDWj3w prague.azurecr.io",
     "scriptorium": "node dist/scriptorium/index.js",
-    "scriptorium:debug": "nodemon --inspect=0.0.0.0:5858 dist/scriptorium/index.js",
+    "scriptorium:debug": "node --inspect=0.0.0.0:5858 dist/scriptorium/index.js",
     "scriptorium:watch": "nodemon --exitcrash dist/scriptorium/index.js -w dist",
     "tmz": "node dist/tmz/index.js",
     "tmz:debug": "node --inspect=0.0.0.0:5858 dist/tmz/index.js",

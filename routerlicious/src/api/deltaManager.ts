@@ -1,6 +1,7 @@
 import * as assert from "assert";
 import * as async from "async";
 import { EventEmitter } from "events";
+import { constants } from "../shared";
 import { ThroughputCounter } from "../utils/counters";
 import { debug } from "./debug";
 import * as protocol from "./protocol";
@@ -24,6 +25,8 @@ export class DeltaManager {
     // The minimum sequence number and last sequence number received from the server
     private minSequenceNumber = 0;
     private clientSequenceNumber = 0;
+
+    private heartbeatTimer: any;
 
     private emitter = new EventEmitter();
 
@@ -181,6 +184,15 @@ export class DeltaManager {
         if (this.readonly) {
             return;
         }
+
+        // The server maintains a time based window for the min sequence number. As such we want to periodically
+        // send a heartbeat to get the latest sequence number once the window has moved past where we currently are.
+        if (this.heartbeatTimer) {
+            clearTimeout(this.heartbeatTimer);
+        }
+        this.heartbeatTimer = setTimeout(() => {
+            this.submit(protocol.NoOp, null);
+        }, constants.MinSequenceNumberWindow + 1000);
 
         // If an update has already been requeested then mark this fact. We will wait until no updates have
         // been requested before sending the updated sequence number.

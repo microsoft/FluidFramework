@@ -295,7 +295,7 @@ export class TakeANumber {
     }
 
     private getMinimumSequenceNumber(timestamp: number) {
-        const MinSequenceNumberWindow = 2000;
+        const MinSequenceNumberWindow = shared.constants.MinSequenceNumberWindow;
 
         // Get the sequence number as tracked by the clients
         const msn = this.getClientMinimumSequenceNumber(timestamp);
