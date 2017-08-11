@@ -6,7 +6,7 @@ import { IObjectMessage, ISequencedObjectMessage } from "./protocol";
 export class DeltaConnection implements IDeltaConnection {
     protected events = new EventEmitter();
 
-    private map: RangeTracker;
+    private rangeTracker: RangeTracker;
 
     private minSequenceNumber;
 
@@ -21,7 +21,7 @@ export class DeltaConnection implements IDeltaConnection {
         documentSequenceNumber: number) {
 
         this.minSequenceNumber = sequenceNumber;
-        this.map = new RangeTracker(documentSequenceNumber, sequenceNumber);
+        this.rangeTracker = new RangeTracker(documentSequenceNumber, sequenceNumber);
     }
 
     public on(event: string, listener: (...args: any[]) => void): this {
@@ -32,12 +32,12 @@ export class DeltaConnection implements IDeltaConnection {
     public emit(
         message: IObjectMessage,
         clientId: string,
-        documentMinimumSequenceNumber: number,
-        documentSequenceNumber: number) {
+        documentSequenceNumber: number,
+        documentMinimumSequenceNumber: number) {
 
         const sequenceNumber = ++this.sequenceNumber;
-        this.map.add(documentSequenceNumber, sequenceNumber);
-        this.minSequenceNumber = this.map.get(documentMinimumSequenceNumber);
+        this.rangeTracker.add(documentSequenceNumber, sequenceNumber);
+        this.minSequenceNumber = this.rangeTracker.get(documentMinimumSequenceNumber);
 
         const sequencedObjectMessage: ISequencedObjectMessage = {
             clientId,
@@ -53,11 +53,11 @@ export class DeltaConnection implements IDeltaConnection {
     }
 
     public updateMinSequenceNumber(value: number) {
-        const newMinSequenceNumber = this.map.get(value);
+        const newMinSequenceNumber = this.rangeTracker.get(value);
 
         // Notify clients when then number changed
         if (newMinSequenceNumber !== this.minimumSequenceNumber) {
-            this.map.updateBase(value);
+            this.rangeTracker.updateBase(value);
             this.minSequenceNumber = newMinSequenceNumber;
             this.events.emit("minSequenceNumber", this.minSequenceNumber);
         }
