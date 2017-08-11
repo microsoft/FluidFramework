@@ -69,6 +69,8 @@ export interface IDistributedObjectServices {
 export interface IDeltaConnection {
     minimumSequenceNumber: number;
 
+    referenceSequenceNumber: number;
+
     /**
      * Subscribe to events emitted by the object
      */

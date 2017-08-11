@@ -91,8 +91,14 @@ export class DeltaConnection implements IDeltaConnection {
 
     private minSequenceNumber;
 
+    private refSequenceNumber;
+
     public get minimumSequenceNumber(): number {
         return this.minSequenceNumber;
+    }
+
+    public get referenceSequenceNumber(): number {
+        return this.refSequenceNumber;
     }
 
     constructor(
@@ -117,13 +123,14 @@ export class DeltaConnection implements IDeltaConnection {
         documentSequenceNumber: number) {
 
         this.minSequenceNumber = this.map.getClosest(documentMinimumSequenceNumber);
+        this.refSequenceNumber = message.referenceSequenceNumber;
         const sequenceNumber = this.map.ticket(documentSequenceNumber);
         const sequencedObjectMessage: ISequencedObjectMessage = {
             clientId,
             clientSequenceNumber: message.clientSequenceNumber,
             contents: message.contents,
             minimumSequenceNumber: this.minSequenceNumber,
-            referenceSequenceNumber: message.referenceSequenceNumber,
+            referenceSequenceNumber: this.refSequenceNumber,
             sequenceNumber,
             type: message.type,
         };

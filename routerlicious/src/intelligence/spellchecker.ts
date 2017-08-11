@@ -11,15 +11,9 @@ class SpellcheckerService implements IIntelligentService {
     constructor(private url: string) {
     }
 
-    public async run(value: string): Promise<any> {
+    public async run(value: any): Promise<any> {
         const data: any = {
-            documents: [{
-                end: 20,
-                id: "1",
-                rsn: 100,
-                start: 0,
-                text: value,
-            }],
+            documents: [value],
         };
         const spellcheckerResult = await this.invokeRequest(this.url, data);
         return {

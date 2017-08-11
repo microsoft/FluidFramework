@@ -62,7 +62,8 @@ export class IntelligentServicesManager {
         private doc: api.Document,
         private documentInsights: api.IMapView,
         private config: any,
-        private dict: Collections.TST<number>) {
+        private dict: Collections.TST<number>,
+        private newClient: api.IDocument) {
     }
 
     /**
@@ -82,7 +83,8 @@ export class IntelligentServicesManager {
                 // TODO will want to configure this as a pluggable insight
                 const spellcheckerClient = intelligence.spellcheckerService.factory.create(
                     this.config.intelligence.spellchecker);
-                const spellchecker = new shared.Spellcheker(sharedString, this.dict, spellcheckerClient);
+                const spellchecker = new shared.Spellcheker(
+                    sharedString, this.dict, spellcheckerClient, this.newClient);
                 spellchecker.run();
 
                 // And then run plugin insights rate limited

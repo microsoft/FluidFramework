@@ -24,6 +24,10 @@ export abstract class CollaborativeObject implements api.ICollaborativeObject {
         return this.minSequenceNumber;
     }
 
+    public get referenceSequenceNumber(): number {
+        return this.services.deltaConnection.referenceSequenceNumber;
+    }
+
     constructor(
         protected document: api.Document,
         public id: string,

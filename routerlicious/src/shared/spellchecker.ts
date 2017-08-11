@@ -1,9 +1,24 @@
 // tslint:disable
 
+import { queue } from "async";
 import * as api from "../api";
 import * as mergeTree from "../merge-tree";
 import * as Collections from "../merge-tree/collections";
 import {IIntelligentService} from "../intelligence";
+
+interface ISpellQuery {
+    // Request text to spellcheck.
+    text: string;
+
+    // Reference sequence number.
+    rsn: number;
+
+    // Start position.
+    start: number;
+
+    // End position
+    end: number;
+};
 
 
 function compareProxStrings(a: Collections.ProxString<number>, b: Collections.ProxString<number>) {
@@ -15,6 +30,7 @@ function compareProxStrings(a: Collections.ProxString<number>, b: Collections.Pr
 class Speller {
     static altMax = 7;
     verbose = false;
+    serviceCounter: number = 0;
     constructor(public sharedString: mergeTree.SharedString, private dict: Collections.TST<number>) {
     }
 
@@ -27,23 +43,24 @@ class Speller {
         }
     }
 
-    setEvents(intelligence: IIntelligentService) {
+    setEvents(intelligence: IIntelligentService, hiddenClient: api.IDocument) {
         this.sharedString.on("op", (msg: api.ISequencedObjectMessage) => {
             if (msg && msg.contents) {
                 let delta = <mergeTree.IMergeTreeOp>msg.contents;
                 if (delta.type === mergeTree.MergeTreeDeltaType.INSERT) {
-                    this.currentWordSpellCheck(intelligence, delta.pos1);
+                    this.currentWordSpellCheck(intelligence, hiddenClient, delta.pos1);
                 } else if (delta.type === mergeTree.MergeTreeDeltaType.REMOVE) {
-                    this.currentWordSpellCheck(intelligence, delta.pos1, true);
+                    this.currentWordSpellCheck(intelligence, hiddenClient, delta.pos1, true);
                 }
             }
         });
     }
 
-    initialSpellCheck(intelligence: IIntelligentService) {
+    initialSpellCheck(intelligence: IIntelligentService, hiddenClient: api.IDocument) {
         let spellParagraph = (startPG: number, endPG: number, text: string) => {
             let re = /\b\w+\b/g;
             let result: RegExpExecArray;
+            this.invokeSpellerService(intelligence, text, startPG);
             do {
                 result = re.exec(text);
                 if (result) {
@@ -111,7 +128,7 @@ class Speller {
             spellParagraph(startPGPos, startPGPos + pgText.length, pgText);
         }
         
-        this.setEvents(intelligence);
+        this.setEvents(intelligence, hiddenClient);
     }
 
     makeTextErrorInfo(candidate: string) {
@@ -125,7 +142,7 @@ class Speller {
         };
     }
 
-    currentWordSpellCheck(intelligence: IIntelligentService, pos: number, rev = false) {
+    currentWordSpellCheck(intelligence: IIntelligentService, hiddenClient: api.IDocument, pos: number, rev = false) {
         let words = "";
         let fwdWords = "";
         let sentence = "";
@@ -217,7 +234,8 @@ class Speller {
             if (this.verbose) {
                 console.log(`found sentence ${sentence} (start ${sentenceStartPos}, end ${sentenceStartPos + sentence.length}) around change`);
             }
-            // TODO: send this sentence to service for analysis 
+            // TODO: send this sentence to service for analysis
+            this.invokeSpellerService(intelligence, sentence, sentenceStartPos);
             let re = /\b\w+\b/g;
             let result: RegExpExecArray;
             do {
@@ -242,12 +260,65 @@ class Speller {
                         if (this.verbose) {
                             console.log(`spell ok (${start}, ${end}): ${words.substring(result.index, re.lastIndex)}`);
                         }
-                        // this.sharedString.annotateRange({ textError: null }, start, end);
+                        this.sharedString.annotateRange({ textError: null }, start, end);
                     }
                 }
             }
             while (result);
         }
+    }
+
+    invokeSpellerService(intelligence: IIntelligentService, queryString: string, startPos: number) {
+        const q = queue((task: ISpellQuery, callback) => {
+            const resultP = intelligence.run(task);
+            resultP.then((result) => {
+                console.log(`Query result: ${JSON.stringify(this.checkSpelling(task.rsn, queryString, startPos, result))}`);
+                console.log(`...........................................`);
+                callback();
+            }, (error) => {
+                callback();
+            });
+        }, 1);
+        if (this.serviceCounter < 10) {
+            if (queryString.length > 0) {
+                q.push( {text: queryString, rsn: this.sharedString.referenceSequenceNumber, start: startPos, end: startPos + queryString.length} );
+                ++this.serviceCounter;
+            }
+        }
+        
+    }
+
+    checkSpelling(rsn: number, original: string, startPos: number, result: any) {
+        let annotationRanges = [];
+        if (result.spellcheckerResult.answer === null) {
+            return { rsn, annotations: annotationRanges};
+        }
+        const answer = result.spellcheckerResult.answer;
+        if (answer.Critiques.length === 0) {
+            return { rsn, annotations: annotationRanges};
+        }
+        const critiques = answer.Critiques;
+        
+        for (let critique of critiques) {
+            if (critique.Suggestions.length === 0) {
+                continue;
+            }
+            if (critique.Suggestions[0].Text === "No suggestions") {
+                continue;
+            }
+            let startOffset = critique.Start;
+            let endOffset = startOffset + critique.Length;
+            let origWord = original.substring(startOffset, endOffset);
+
+            let altSpellings = [];
+            for (let i = 0; i < Math.min(Speller.altMax, critique.Suggestions.length); ++i) {
+                altSpellings.push({ text: critique.Suggestions[i].Text, invDistance: i, val: i});
+            }
+            const wordStartPos = startPos + startOffset;
+            const wordEndPos = startPos + endOffset - 1;
+            annotationRanges.push( {textError: { text: origWord, alternates: altSpellings}, wordStartPos, wordEndPos });
+        }
+        return { rsn, annotations: annotationRanges};
     }
 }
 
@@ -255,13 +326,14 @@ export class Spellcheker {
     constructor(
         private root: mergeTree.SharedString,
         private dict: Collections.TST<number>,
-        private intelligence: IIntelligentService) {
+        private intelligence: IIntelligentService,
+        private hiddenClient: api.IDocument) {
     }
 
     public run() {
         this.root.loaded.then(() => {
             const theSpeller = new Speller(this.root, this.dict);
-            theSpeller.initialSpellCheck(this.intelligence);
+            theSpeller.initialSpellCheck(this.intelligence, this.hiddenClient);
         });
     }
 }
