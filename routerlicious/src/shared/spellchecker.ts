@@ -43,20 +43,20 @@ class Speller {
         }
     }
 
-    setEvents(intelligence: IIntelligentService, hiddenClient: api.IDocument) {
+    setEvents(intelligence: IIntelligentService) {
         this.sharedString.on("op", (msg: api.ISequencedObjectMessage) => {
             if (msg && msg.contents) {
                 let delta = <mergeTree.IMergeTreeOp>msg.contents;
                 if (delta.type === mergeTree.MergeTreeDeltaType.INSERT) {
-                    this.currentWordSpellCheck(intelligence, hiddenClient, delta.pos1);
+                    this.currentWordSpellCheck(intelligence, delta.pos1);
                 } else if (delta.type === mergeTree.MergeTreeDeltaType.REMOVE) {
-                    this.currentWordSpellCheck(intelligence, hiddenClient, delta.pos1, true);
+                    this.currentWordSpellCheck(intelligence, delta.pos1, true);
                 }
             }
         });
     }
 
-    initialSpellCheck(intelligence: IIntelligentService, hiddenClient: api.IDocument) {
+    initialSpellCheck(intelligence: IIntelligentService) {
         let spellParagraph = (startPG: number, endPG: number, text: string) => {
             let re = /\b\w+\b/g;
             let result: RegExpExecArray;
@@ -128,7 +128,7 @@ class Speller {
             spellParagraph(startPGPos, startPGPos + pgText.length, pgText);
         }
         
-        this.setEvents(intelligence, hiddenClient);
+        this.setEvents(intelligence);
     }
 
     makeTextErrorInfo(candidate: string) {
@@ -142,7 +142,7 @@ class Speller {
         };
     }
 
-    currentWordSpellCheck(intelligence: IIntelligentService, hiddenClient: api.IDocument, pos: number, rev = false) {
+    currentWordSpellCheck(intelligence: IIntelligentService, pos: number, rev = false) {
         let words = "";
         let fwdWords = "";
         let sentence = "";
@@ -300,23 +300,23 @@ class Speller {
         const critiques = answer.Critiques;
         
         for (let critique of critiques) {
-            if (critique.Suggestions.length === 0) {
-                continue;
-            }
-            if (critique.Suggestions[0].Text === "No suggestions") {
-                continue;
-            }
-            let startOffset = critique.Start;
-            let endOffset = startOffset + critique.Length;
-            let origWord = original.substring(startOffset, endOffset);
-
+            let localStartOffset = critique.Start;
+            let localEndOffset= localStartOffset + critique.Length;
+            let origWord = original.substring(localStartOffset, localEndOffset);
+            const globalStartOffset = startPos + localStartOffset;
+            const globalEndOffset = startPos + localEndOffset - 1;
             let altSpellings = [];
+
+            // Spelling error but no suggestions found.
+            if (critique.Suggestions.length === 0 || critique.Suggestions[0].Text === "No suggestions") {
+                annotationRanges.push( {textError: { text: origWord, alternates: altSpellings}, globalStartOffset, globalEndOffset });                
+                continue;
+            }
+            // Suggestions found.
             for (let i = 0; i < Math.min(Speller.altMax, critique.Suggestions.length); ++i) {
                 altSpellings.push({ text: critique.Suggestions[i].Text, invDistance: i, val: i});
             }
-            const wordStartPos = startPos + startOffset;
-            const wordEndPos = startPos + endOffset - 1;
-            annotationRanges.push( {textError: { text: origWord, alternates: altSpellings}, wordStartPos, wordEndPos });
+            annotationRanges.push( {textError: { text: origWord, alternates: altSpellings}, globalStartOffset, globalEndOffset });
         }
         return { rsn, annotations: annotationRanges};
     }
@@ -326,14 +326,13 @@ export class Spellcheker {
     constructor(
         private root: mergeTree.SharedString,
         private dict: Collections.TST<number>,
-        private intelligence: IIntelligentService,
-        private hiddenClient: api.IDocument) {
+        private intelligence: IIntelligentService) {
     }
 
     public run() {
         this.root.loaded.then(() => {
             const theSpeller = new Speller(this.root, this.dict);
-            theSpeller.initialSpellCheck(this.intelligence, this.hiddenClient);
+            theSpeller.initialSpellCheck(this.intelligence);
         });
     }
 }

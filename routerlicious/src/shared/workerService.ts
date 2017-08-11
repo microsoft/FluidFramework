@@ -138,11 +138,7 @@ export class WorkerService implements api.IWorkerService {
     private async processWork(doc: api.Document, insightsMap: api.IMapView) {
         const serializer = new shared.Serializer(doc);
 
-        const services = socketStorage.getDefaultService(this.serverUrl, this.storageUrl, this.repo);
-        const newClient = await services.connect(doc.id);
-        console.log(`Added hidden client: ${newClient.clientId}`);
-
-        const intelligenceManager = new shared.IntelligentServicesManager(doc, insightsMap, this.config, this.dict, newClient);
+        const intelligenceManager = new shared.IntelligentServicesManager(doc, insightsMap, this.config, this.dict);
         intelligenceManager.registerService(resumeAnalytics.factory.create(this.config.intelligence.resume));
         intelligenceManager.registerService(textAnalytics.factory.create(this.config.intelligence.textAnalytics));
 
