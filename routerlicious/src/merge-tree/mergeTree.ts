@@ -328,6 +328,7 @@ export class Marker extends BaseSegment {
     }
 
     removeRange(start: number, end: number): boolean {
+        console.log("remove range called on marker");
         return false;
     }
 
@@ -1339,11 +1340,21 @@ export class Client {
         }
     }
 
+    getLocalSequenceNumber() {
+        let segWindow = this.mergeTree.getCollabWindow();
+        if (segWindow.collaborating) {
+            return UnassignedSequenceNumber;
+        }        
+        else {
+            return UniversalSequenceNumber;
+        }
+    }
+
     annotateSegmentLocal(props: PropertySet, start: number, end: number) {
         let segWindow = this.mergeTree.getCollabWindow();
         let clientId = segWindow.clientId;
         let refSeq = segWindow.currentSeq;
-        let seq = UnassignedSequenceNumber;
+        let seq = this.getLocalSequenceNumber();
 
         let clockStart;
         if (this.measureOps) {
@@ -1384,7 +1395,7 @@ export class Client {
         let segWindow = this.mergeTree.getCollabWindow();
         let clientId = segWindow.clientId;
         let refSeq = segWindow.currentSeq;
-        let seq = UnassignedSequenceNumber;
+        let seq = this.getLocalSequenceNumber();
 
         let clockStart;
         if (this.measureOps) {
@@ -1425,7 +1436,7 @@ export class Client {
         let segWindow = this.mergeTree.getCollabWindow();
         let clientId = segWindow.clientId;
         let refSeq = segWindow.currentSeq;
-        let seq = UnassignedSequenceNumber;
+        let seq = this.getLocalSequenceNumber();
         let clockStart;
         if (this.measureOps) {
             clockStart = clock();
@@ -1446,7 +1457,7 @@ export class Client {
         let segWindow = this.mergeTree.getCollabWindow();
         let clientId = segWindow.clientId;
         let refSeq = segWindow.currentSeq;
-        let seq = UnassignedSequenceNumber;
+        let seq = this.getLocalSequenceNumber();
         let clockStart;
         if (this.measureOps) {
             clockStart = clock();

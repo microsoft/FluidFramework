@@ -664,6 +664,8 @@ export function TestPack() {
         let asyncExec = false;
         let addSnapClient = false;
         let extractSnap = false;
+        let includeMarkers = false;
+
         let testSyncload = false;
         let snapClient: MergeTree.Client;
 
@@ -781,8 +783,6 @@ export function TestPack() {
         }
 
         function randomSpateOfInserts(client: MergeTree.Client, charIndex: number) {
-            let includeMarkers = true;
-
             let textLen = randTextLength();
             let text = randomString(textLen, String.fromCharCode(zedCode + ((client.getCurrentSeq() + charIndex) % 50)));
             let preLen = client.getLength();
@@ -993,6 +993,11 @@ export function TestPack() {
                     }
                     else {
                         randomSpateOfRemoves(client);
+                        if (includeMarkers) {
+                            if (client.getLength() > 200) {
+                                randomSpateOfRemoves(client);
+                            }
+                        }
                     }
                 }
                 if (serverProcessSome(server)) {
@@ -1398,7 +1403,7 @@ function tst() {
                 count++;
                 let val = corpusTree.get(candidate);
                 if (val !== undefined) {
-                    corpusTree.put(candidate, val+1);
+                    corpusTree.put(candidate, val + 1);
                 }
                 else {
                     corpusTree.put(candidate, 1);
@@ -1428,7 +1433,7 @@ function tst() {
             console.log(`biff ${entry}`);
         }
     }
-    let p4= ntree.neighbors("het").sort(compareProxStrings);
+    let p4 = ntree.neighbors("het").sort(compareProxStrings);
     console.log(p4);
     p4 = ntree.neighbors("peech").sort(compareProxStrings);
     console.log(p4);
@@ -1451,6 +1456,6 @@ if (testTST) {
 let testPack = TestPack();
 // testPack.firstTest();
 //testPack.randolicious();
-//let filename = path.join(__dirname, "../../public/literature", "pp.txt");
-testPack.clientServer();
+let filename = path.join(__dirname, "../../public/literature", "pp.txt");
+testPack.clientServer(filename);
 new Server();
