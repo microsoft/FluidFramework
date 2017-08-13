@@ -2134,7 +2134,7 @@ export class MergeTree {
         return context.text;
     }
 
-    getText(refSeq: number, clientId: number, placeholders?: boolean, start?: number, end?: number) {
+    getText(refSeq: number, clientId: number, placeholders = false, start?: number, end?: number) {
         if (start === undefined) {
             start = 0;
         }
@@ -2435,7 +2435,7 @@ export class MergeTree {
         if (node.isLeaf()) {
             let segment = <Segment>node;
             // TODO: marker/marker tie break & collab markers
-            if ((pos == 0) && (segType !== SegmentType.Marker)) {
+            if (pos == 0) {
                 return segment.seq != UnassignedSequenceNumber;
             }
             else {

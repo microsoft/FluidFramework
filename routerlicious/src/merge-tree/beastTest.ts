@@ -747,15 +747,15 @@ export function TestPack() {
                         }
                         console.log(`text: ${diffPart.value} ` + annotes);
                     }
-                    //console.log(server.mergeTree.toString());
-                    //console.log(client.mergeTree.toString());
+                    console.log(server.mergeTree.toString());
+                    console.log(client.mergeTree.toString());
                     return true;
                 }
             }
             return false;
         }
 
-        let rounds = 8000;
+        let rounds = 80000;
         function clientProcessSome(client: MergeTree.Client, all = false) {
             let cliMsgCount = client.q.count();
             let countToApply: number;
@@ -1451,6 +1451,6 @@ if (testTST) {
 let testPack = TestPack();
 // testPack.firstTest();
 //testPack.randolicious();
-let filename = path.join(__dirname, "../../public/literature", "pp.txt");
-testPack.clientServer(filename);
+//let filename = path.join(__dirname, "../../public/literature", "pp.txt");
+testPack.clientServer();
 new Server();
