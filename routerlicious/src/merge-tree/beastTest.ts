@@ -1295,6 +1295,14 @@ export function TestPack() {
         console.log(cli.mergeTree.toString());
         cli.insertTextRemote("zzz", 2, undefined, 2, 0, 2);
         console.log(cli.mergeTree.toString());
+        
+        let fwdRanges = cli.mergeTree.tardisRange(0,5, 1, 2);
+        console.log(`fwd range 0 5 on 1 => 2`);
+        for (let r of fwdRanges) {
+            console.log(`fwd range (${r.start}, ${r.end})`);
+        }
+        let fwdPos = cli.mergeTree.tardisPosition(2, 1, 2);
+        console.log(`fwd pos 2 on 1 => 2 is ${fwdPos}`);
         for (let clientId = 0; clientId < 4; clientId++) {
             for (let refSeq = 0; refSeq < 3; refSeq++) {
                 console.log(cli.relText(clientId, refSeq));
@@ -1454,8 +1462,8 @@ if (testTST) {
 //mergeTreeLargeTest();
 //mergeTreeCheckedTest();
 let testPack = TestPack();
-// testPack.firstTest();
+ testPack.firstTest();
 //testPack.randolicious();
-let filename = path.join(__dirname, "../../public/literature", "pp.txt");
-testPack.clientServer(filename);
+// let filename = path.join(__dirname, "../../public/literature", "pp.txt");
+// testPack.clientServer();
 new Server();
