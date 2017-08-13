@@ -1,6 +1,7 @@
 import { EventEmitter } from "events";
 import * as kafkaNode from "kafka-node";
 import * as kafkaRest from "kafka-rest";
+import * as util from "util";
 import { debug } from "./debug";
 
 export interface IConsumer {
@@ -17,7 +18,7 @@ export interface IConsumer {
     /**
      * Closes the consumer.
      */
-    close();
+    close(): Promise<void>;
 }
 
 class KafkaRestConsumer implements IConsumer {
@@ -43,7 +44,7 @@ class KafkaRestConsumer implements IConsumer {
         });
     }
 
-    public close() {
+    public async close(): Promise<void> {
         this.instance.shutdown();
     }
 
@@ -128,12 +129,9 @@ class KafkaNodeConsumer implements IConsumer {
         });
     }
 
-    public close() {
-        this.client.close((closeError) => {
-            if (closeError) {
-                debug(closeError);
-            }
-        });
+    public async close(): Promise<void> {
+        await util.promisify((callback) => this.instance.close(false, callback))();
+        await util.promisify((callback) => this.client.close(callback))();
     }
 
     public on(event: string, listener: (...args: any[]) => void): this {

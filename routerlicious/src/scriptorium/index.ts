@@ -6,7 +6,9 @@ nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use
 
 import { queue } from "async";
 import { CollectionInsertManyOptions } from "mongodb";
+import * as redis from "redis";
 import * as socketIoEmitter from "socket.io-emitter";
+import * as util from "util";
 import * as core from "../core";
 import * as shared from "../shared";
 import * as utils from "../utils";
@@ -40,7 +42,8 @@ async function checkpoint(partitionManager: core.PartitionManager) {
 async function run() {
     const deferred = new shared.Deferred<void>();
 
-    let io = socketIoEmitter(({ host: redisConfig.host, port: redisConfig.port }));
+    const redisClient = redis.createClient(redisConfig.port, redisConfig.host);
+    let io = socketIoEmitter(redisClient);
     io.redis.on("error", (error) => {
         deferred.reject(error);
     });
@@ -133,6 +136,20 @@ async function run() {
         }
         callback();
     }, 1);
+
+    process.on("SIGTERM", () => {
+        const consumerClosedP = consumer.close();
+        const mongoClosedP = mongoManager.close();
+        const redisP = util.promisify((callback) => redisClient.quit(callback))();
+
+        Promise.all([consumerClosedP, mongoClosedP, redisP]).then(
+            () => {
+                deferred.resolve();
+            },
+            (error) => {
+                deferred.reject(error);
+            });
+    });
 
     return deferred.promise;
 }
