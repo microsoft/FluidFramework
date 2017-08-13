@@ -1,5 +1,6 @@
 import * as kafkaNode from "kafka-node";
 import * as kafkaRest from "kafka-rest";
+import * as util from "util";
 import * as shared from "../shared";
 import { debug } from "./debug";
 
@@ -19,12 +20,17 @@ export interface IProdcuer {
      * Sends the message to kafka
      */
     send(message: string, key: string): Promise<any>;
+
+    /**
+     * Closes the underlying connection
+     */
+    close(): Promise<void>;
 }
 
 /**
  * Base producer responsible for batching and sending.
  */
-class Producer {
+abstract class Producer {
     protected messages: {[key: string]: IPendingMessage[]} = {};
     protected client: any;
     protected producer: any;
@@ -32,6 +38,8 @@ class Producer {
     protected connected = false;
     protected batchProducer: (key: string, messages: IPendingMessage[]) => void;
     protected sendPending = false;
+
+    public abstract close(): Promise<void>;
 
     /**
      * Push messages locally and request send.
@@ -110,6 +118,11 @@ class KafkaRestProducer extends Producer implements IProdcuer {
         return this.sendMessage(message, key);
     }
 
+    public close(): Promise<void> {
+        // TODO support close for rest client
+        return Promise.resolve();
+    }
+
     /**
      * Implements batch producer through kafka-rest.
      */
@@ -163,6 +176,14 @@ class KafkaNodeProducer extends Producer implements IProdcuer {
      */
     public send(message: string, key: string): Promise<any> {
         return this.sendMessage(message, key);
+    }
+
+    public async close(): Promise<void> {
+        const producer = this.producer as kafkaNode.Producer;
+        const client = this.client as kafkaNode.Client;
+
+        await util.promisify((callback) => producer.close(callback))();
+        await util.promisify((callback) => client.close(callback))();
     }
 
     /**

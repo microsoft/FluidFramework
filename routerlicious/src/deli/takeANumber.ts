@@ -309,7 +309,6 @@ export class TakeANumber {
         this.window.add(timestamp, msn);
         this.window.updateBase(timestamp - MinSequenceNumberWindow);
         const windowStamp = this.window.get(timestamp - MinSequenceNumberWindow);
-        logger.info(this.documentId, `window: ${windowStamp} : true: ${msn}`);
 
         return windowStamp;
     }

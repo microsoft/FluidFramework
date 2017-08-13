@@ -9,6 +9,7 @@ import * as _ from "lodash";
 import * as redis from "redis";
 import * as socketIo from "socket.io";
 import * as socketIoRedis from "socket.io-redis";
+import * as util from "util";
 import * as core from "../core";
 import * as shared from "../shared";
 import * as socketStorage from "../socket-storage";
@@ -105,7 +106,7 @@ async function run() {
     io.listen(port);
 
     // Periodically check and update work assigment.
-    setInterval(async () => {
+    const checkerInterval = setInterval(async () => {
         await adjustWorkAssignment();
     }, checkerTimeout);
 
@@ -141,6 +142,22 @@ async function run() {
         await processWork([documentId]);
         callback();
     }, 1);
+
+    process.on("SIGTERM", () => {
+        clearInterval(checkerInterval);
+        const consumerClosedP = consumer.close();
+        const socketIoP = util.promisify((callback) => io.close(callback))();
+        const pubP = util.promisify((callback) => pub.quit(callback))();
+        const subP = util.promisify((callback) => sub.quit(callback))();
+
+        Promise.all([consumerClosedP, socketIoP, pubP, subP]).then(
+            () => {
+                deferred.resolve();
+            },
+            (error) => {
+                deferred.reject(error);
+            });
+    });
 
     return deferred.promise;
 }

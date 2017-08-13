@@ -15,23 +15,41 @@ const workerConfig = nconf.get("worker");
 const gitConfig = nconf.get("git");
 
 async function run() {
-    const deferred = new shared.Deferred<void>();
     const workerService = new shared.WorkerService(
         alfredUrl,
         tmzUrl,
         gitConfig.historian,
         gitConfig.repository,
         workerConfig);
-    const workerP = workerService.connect("Paparazzi");
-    workerP.catch((error) => {
-        deferred.reject(error);
+    const workerRunningP = workerService.connect("Paparazzi");
+    const deferred = new shared.Deferred<void>();
+    workerRunningP.then(
+        () => {
+            logger.info("Resolved");
+            deferred.resolve();
+        }, (error) => {
+            deferred.reject(error);
+        });
+
+    process.on("SIGTERM", () => {
+        workerService.close().then(
+            () => {
+                deferred.resolve();
+            }, (error) => {
+                deferred.reject(error);
+            });
     });
+
     return deferred.promise;
 }
 
 // Start up the paparazzi service
 const runP = run();
-runP.catch((error) => {
-    logger.error(error);
-    process.exit(1);
-});
+runP.then(
+    () => {
+        process.exit(0);
+    },
+    (error) => {
+        logger.error(error);
+        process.exit(1);
+    });

@@ -1,5 +1,3 @@
-// tslint:disable
-
 import * as fs from "fs";
 import * as path from "path";
 import * as io from "socket.io-client";
@@ -98,14 +96,20 @@ export class WorkerService implements api.IWorkerService {
         return deferred.promise;
     }
 
-    loadDict() {
+    public close(): Promise<void> {
+        // TODO need to be able to iterate over tracked documents and close them
+        this.socket.close();
+        return Promise.resolve();
+    }
+
+    private loadDict() {
         let clockStart = clock();
         let dictFilename = path.join(__dirname, "../../public/literature/dictfreq.txt");
         let dictContent = fs.readFileSync(dictFilename, "utf8");
         let splitContent = dictContent.split("\n");
         for (let entry of splitContent) {
             let splitEntry = entry.split(";");
-            this.dict.put(splitEntry[0], parseInt(splitEntry[1]));
+            this.dict.put(splitEntry[0], parseInt(splitEntry[1], 10));
         }
         console.log(`size: ${this.dict.size()}; load time ${elapsedMilliseconds(clockStart)}ms`);
     }

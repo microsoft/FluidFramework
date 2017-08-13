@@ -93,6 +93,7 @@ async function checkpoint(
 async function processMessages(
     producer: utils.kafkaProducer.IProdcuer,
     consumer: utils.kafkaConsumer.IConsumer,
+    mongoManager: utils.MongoManager,
     objectsCollection: Collection): Promise<void> {
 
     const deferred = new shared.Deferred<void>();
@@ -137,6 +138,21 @@ async function processMessages(
         callback();
     }, 1);
 
+    // Listen for shutdown signal in order to shutdown gracefully
+    process.on("SIGTERM", () => {
+        const consumerClosedP = consumer.close();
+        const producerClosedP = producer.close();
+        const mongoClosedP = mongoManager.close();
+
+        Promise.all([consumerClosedP, producerClosedP, mongoClosedP]).then(
+            () => {
+                deferred.resolve();
+            },
+            (error) => {
+                deferred.reject(error);
+            });
+    });
+
     return deferred.promise;
 }
 
@@ -145,7 +161,6 @@ async function run() {
     const mongoManager = new utils.MongoManager(mongoUrl, false);
     const client = await mongoManager.getDatabase();
     const documentsCollection = await client.collection(documentsCollectionName);
-    logger.info("Documents collection ready");
 
     // Prep Kafka producer and consumer
     let producer = utils.kafkaProducer.create(kafkaLibrary, kafkaEndpoint, kafkaClientId, sendTopic);
@@ -153,7 +168,7 @@ async function run() {
 
     // Return a promise that will never resolve (since we run forever) but will reject
     // should an error occur
-    return processMessages(producer, consumer, documentsCollection);
+    return processMessages(producer, consumer, mongoManager, documentsCollection);
 }
 
 // Start up the deli service

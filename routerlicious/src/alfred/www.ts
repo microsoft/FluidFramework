@@ -34,6 +34,11 @@ server.listen(port);
 server.on("error", onError);
 server.on("listening", onListening);
 
+process.on("SIGTERM", () => {
+  // TODO suppoort graceful exit of alfred
+  process.exit(0);
+});
+
 /**
  * Normalize a port into a number, string, or false.
  */
