@@ -280,6 +280,33 @@ io.on("connection", (socket) => {
                 throughput.acknolwedge();
             });
     });
+
+    // Message sent when a shadow client wants to collaborate on the document.
+    socket.on("connectShadowClient", (message: socketStorage.IConnect, response) => {
+        logger.info(`Shadow client has requested to collaborate on ${message.id}`);
+
+        const documentDetailsP = getOrCreateDocument(message.id);
+        documentDetailsP.then(
+            (documentDetails) => {
+                socket.join(message.id, (joinError) => {
+                    if (joinError) {
+                        return response(joinError, null);
+                    }
+
+                    const clientId = moniker.choose();
+                    connectionsMap[clientId] = message.id;
+
+                    const connectedMessage: socketStorage.IShadowConnected = {
+                        clientId,
+                    };
+                    response(null, connectedMessage);
+                });
+            }, (error) => {
+                logger.error("Error fetching", error);
+                response(error, null);
+            });
+    });
+
 });
 
 export default io;

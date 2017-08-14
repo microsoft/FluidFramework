@@ -62,8 +62,7 @@ export class IntelligentServicesManager {
         private doc: api.Document,
         private documentInsights: api.IMapView,
         private config: any,
-        private dict: Collections.TST<number>) {
-    }
+        private dict: Collections.TST<number>) {}
 
     /**
      * Registers a new intelligent service

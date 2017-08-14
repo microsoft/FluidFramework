@@ -10,8 +10,14 @@ export class DeltaConnection implements IDeltaConnection {
 
     private minSequenceNumber;
 
+    private refSequenceNumber;
+
     public get minimumSequenceNumber(): number {
         return this.minSequenceNumber;
+    }
+
+    public get referenceSequenceNumber(): number {
+        return this.refSequenceNumber;
     }
 
     constructor(
@@ -38,13 +44,14 @@ export class DeltaConnection implements IDeltaConnection {
         const sequenceNumber = ++this.sequenceNumber;
         this.rangeTracker.add(documentSequenceNumber, sequenceNumber);
         this.minSequenceNumber = this.rangeTracker.get(documentMinimumSequenceNumber);
+        this.refSequenceNumber = message.referenceSequenceNumber;
 
         const sequencedObjectMessage: ISequencedObjectMessage = {
             clientId,
             clientSequenceNumber: message.clientSequenceNumber,
             contents: message.contents,
             minimumSequenceNumber: this.minSequenceNumber,
-            referenceSequenceNumber: message.referenceSequenceNumber,
+            referenceSequenceNumber: this.refSequenceNumber,
             sequenceNumber,
             type: message.type,
         };
