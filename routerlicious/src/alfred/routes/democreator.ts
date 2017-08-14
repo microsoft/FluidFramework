@@ -25,8 +25,8 @@ router.get("/:id?", (request, response, next) => {
     const mapsMoniker = "/maps/" + currentDate + "-" + moniker.choose();
     const cellMoniker = "/cell/" + currentDate + "-" + moniker.choose();
     const canvasMoniker = "/canvas/" + currentDate + "-" + moniker.choose();
-    const sharedTextMoniker = "/sharedString/" + currentDate + "-" + moniker.choose();
-    const scribeMoniker = "/scribe/" + currentDate + "-" + moniker.choose();
+    const sharedTextMoniker = "/sharedText/" + currentDate + "-" + moniker.choose();
+    const scribeMoniker = "/scribe/";
 
     response.render(
         "democreator",

@@ -20,7 +20,7 @@ services:
             - kafka-rest
         command: node dist/deli/index.js
         environment:
-            - DEBUG=routerlicious:*
+            - worker__intelligence__resume__url=http://alfred:3000/intelligence/resume
         restart: always
     scriptorium:
         build: .
