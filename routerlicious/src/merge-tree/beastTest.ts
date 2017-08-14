@@ -1462,8 +1462,8 @@ if (testTST) {
 //mergeTreeLargeTest();
 //mergeTreeCheckedTest();
 let testPack = TestPack();
- testPack.firstTest();
+ //testPack.firstTest();
 //testPack.randolicious();
-// let filename = path.join(__dirname, "../../public/literature", "pp.txt");
-// testPack.clientServer();
+ let filename = path.join(__dirname, "../../public/literature", "pp.txt");
+ testPack.clientServer(filename);
 new Server();

@@ -541,6 +541,8 @@ export interface PartialSequenceLength {
 export class CollaborationWindow {
     clientId = LocalClientId;
     collaborating = false;
+    localMinSeq?: number;
+    globalMinSeq?: number;
     // lowest-numbered segment in window; no client can reference a state before this one
     minSeq = 0;
     // highest-numbered segment in window and current 
@@ -1543,7 +1545,7 @@ export class Client {
             clockStart = clock();
         }
 
-        this.mergeTree.updateMinSeq(minSeq);
+        this.mergeTree.updateGlobalMinSeq(minSeq);
 
         if (this.measureOps) {
             let elapsed = elapsedMicroseconds(clockStart);
@@ -1734,7 +1736,7 @@ export class MergeTree {
     packTime = 0;
 
     root: Block;
-    blockUpdateMarkers = false;    
+    blockUpdateMarkers = false;
     blockUpdateActions: BlockUpdateActions;
     collabWindow = new CollaborationWindow();
     pendingSegments: Collections.List<SegmentGroup>;
@@ -1745,8 +1747,13 @@ export class MergeTree {
     constructor(public text: string, public options?: PropertySet) {
         this.blockUpdateActions = MergeTree.initBlockUpdateActions;
         this.root = this.initialTextNode(this.text);
-        if (options && options.blockUpdateMarkers) {
-            this.blockUpdateMarkers = options.blockUpdateMarkers;
+        if (options) {
+            if (options.blockUpdateMarkers) {
+                this.blockUpdateMarkers = options.blockUpdateMarkers;
+            }
+            if (options.localMinSeq) {
+                this.collabWindow.localMinSeq = options.localMinSeq;
+            }
         }
     }
 
@@ -2070,7 +2077,7 @@ export class MergeTree {
         let recordRange = (segment: Segment, pos: number, refSeq: number, clientId: number, segStart: number,
             segEnd: number) => {
             let offset = this.getOffset(segment, toSeq, NonCollabClient);
-            if (segStart<0) {
+            if (segStart < 0) {
                 segStart = 0;
             }
             if (segEnd > segment.cachedLength) {
@@ -2259,10 +2266,27 @@ export class MergeTree {
         }
     }
 
-    updateMinSeq(minSeq: number) {
-        this.collabWindow.minSeq = minSeq;
-        if (MergeTree.options.zamboniSegments) {
-            this.zamboniSegments();
+    updateLocalMinSeq(localMinSeq: number) {
+        this.collabWindow.localMinSeq = localMinSeq;
+        this.setMinSeq(Math.min(this.collabWindow.globalMinSeq,localMinSeq));
+    }
+
+    setMinSeq(minSeq: number) {
+        if (minSeq > this.collabWindow.minSeq) {
+            this.collabWindow.minSeq = minSeq;
+            if (MergeTree.options.zamboniSegments) {
+                this.zamboniSegments();
+            }
+        }
+    }
+
+    updateGlobalMinSeq(globalMinSeq: number) {
+        if (this.collabWindow.localMinSeq === undefined) {
+            this.setMinSeq(globalMinSeq);
+        }
+        else {
+            this.collabWindow.globalMinSeq = globalMinSeq;
+            this.setMinSeq(Math.min(globalMinSeq, this.collabWindow.localMinSeq));
         }
     }
 
