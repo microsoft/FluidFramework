@@ -157,6 +157,12 @@ export class SharedString extends api.CollaborativeObject {
         return snap.emit();
     }
 
+    public transform(message: api.IObjectMessage, sequenceNumber: number): api.IObjectMessage {
+        // TODO add in the logic to perform this transformation
+        message.referenceSequenceNumber = sequenceNumber;
+        return message;
+    }
+
     protected processCore(message: api.ISequencedObjectMessage) {
         if (!this.isLoaded) {
             this.client.enqueueMsg(message);

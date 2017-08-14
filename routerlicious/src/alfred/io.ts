@@ -72,9 +72,13 @@ export interface IDocumentDetails {
 
     version: string;
 
+    minimumSequenceNumber: number;
+
     sequenceNumber: number;
 
     distributedObjects: api.IDistributedObject[];
+
+    transformedMessages: api.ISequencedDocumentMessage[];
 
     pendingDeltas: api.ISequencedDocumentMessage[];
 }
@@ -125,6 +129,8 @@ interface IDocumentSnapshot {
     documentAttributes: api.IDocumentAttributes;
 
     distributedObjects: api.IDistributedObject[];
+
+    messages: api.ISequencedDocumentMessage[];
 }
 
 async function getDocumentDetails(
@@ -148,6 +154,13 @@ async function getDocumentDetails(
         objectBlobs.push({ id: path, headerSha: entry.blobs.header, attributesSha: entry.blobs[".attributes"] });
     }
 
+    // Pull in transformed messages between the msn and the reference
+    const messagesSha = tree.blobs[".messages"];
+    const messagesP = gitManager.getBlob(messagesSha).then((messages) => {
+        const messagesJSON = Buffer.from(messages.content, "base64").toString();
+        return JSON.parse(messagesJSON);
+    });
+
     // Fetch the attributes and distirbuted object headers
     const docAttributesP = gitManager.getBlob(docAttributesSha).then((docAttributes) => {
         const attributes = Buffer.from(docAttributes.content, "base64").toString();
@@ -164,7 +177,7 @@ async function getDocumentDetails(
         blobsP.push(Promise.all([Promise.resolve(blob.id), headerP, attributesP]));
     }
 
-    const fetched = await Promise.all([docAttributesP, Promise.all(blobsP)]);
+    const fetched = await Promise.all([docAttributesP, Promise.all(blobsP), messagesP]);
     const result: IDocumentSnapshot = {
         distributedObjects: fetched[1].map((fetch) => ({
                 header: fetch[1],
@@ -173,6 +186,7 @@ async function getDocumentDetails(
                 type: fetch[2].type,
         })),
         documentAttributes: fetched[0],
+        messages: fetched[2],
     };
 
     return result;
@@ -188,15 +202,21 @@ async function getOrCreateDocument(id: string): Promise<IDocumentDetails> {
     // If there has been a snapshot made use it to retrieve object state as well as any pending deltas. Otherwise
     // we just load all deltas
     let sequenceNumber: number;
+    let minimumSequenceNumber: number;
     let distributedObjects: api.IDistributedObject[];
+    let transformedMessages: api.ISequencedDocumentMessage[];
 
     if (version) {
         const details = await getDocumentDetails(gitManager, id, version);
         sequenceNumber = details.documentAttributes.sequenceNumber;
+        minimumSequenceNumber = details.documentAttributes.minimumSequenceNumber;
         distributedObjects = details.distributedObjects;
+        transformedMessages = details.messages;
     } else {
+        minimumSequenceNumber = 0;
         sequenceNumber = 0;
         distributedObjects = [];
+        transformedMessages = [];
     }
 
     const pendingDeltas = await getDeltas(id, sequenceNumber);
@@ -205,8 +225,10 @@ async function getOrCreateDocument(id: string): Promise<IDocumentDetails> {
     return {
         distributedObjects,
         existing,
+        minimumSequenceNumber,
         pendingDeltas,
         sequenceNumber,
+        transformedMessages,
         version,
     };
 }
@@ -239,8 +261,10 @@ io.on("connection", (socket) => {
                         clientId,
                         distributedObjects: documentDetails.distributedObjects,
                         existing: documentDetails.existing,
+                        minimumSequenceNumber: documentDetails.minimumSequenceNumber,
                         pendingDeltas: documentDetails.pendingDeltas,
                         sequenceNumber: documentDetails.sequenceNumber,
+                        transformedMessages: documentDetails.transformedMessages,
                         version: documentDetails.version,
                     };
                     response(null, connectedMessage);

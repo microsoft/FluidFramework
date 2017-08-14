@@ -24,8 +24,15 @@ export interface IConnected {
     // The latest sequence number for the document
     sequenceNumber: number;
 
+    // The minimum sequence number for the document
+    minimumSequenceNumber: number;
+
     // Distributed objects contained within the document
     distributedObjects: api.IDistributedObject[];
+
+    // The transformed messages between the minimum sequence number and
+    // sequenceNumber
+    transformedMessages: api.ISequencedDocumentMessage[];
 
     // Pending deltas that have not yet been included in a snapshot
     pendingDeltas: api.ISequencedDocumentMessage[];

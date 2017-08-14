@@ -32,6 +32,7 @@
     "tmz": "node dist/tmz/index.js",
     "tmz:debug": "node --inspect=0.0.0.0:5858 dist/tmz/index.js",
     "tmz:watch": "nodemon --exitcrash dist/tmz/index.js -w dist",
+    "docker-restart": "docker-compose restart alfred && docker-compose restart deli && docker-compose restart scriptorium && docker-compose restart tmz && docker-compose restart paparazzi",
     "start": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml up",
     "start:debug": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.debug.yml up",
     "test": "nyc -x dist/test/**/* mocha dist/test",

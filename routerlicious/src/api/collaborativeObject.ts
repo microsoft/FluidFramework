@@ -93,6 +93,15 @@ export abstract class CollaborativeObject implements api.ICollaborativeObject {
     public abstract snapshot(): api.ITree;
 
     /**
+     * Creates a new message from the provided message that is relative to the given sequenceNumber. It is valid
+     * to modify the passed in object in place.
+     */
+    public transform(message: api.IObjectMessage, sequenceNumber: number): api.IObjectMessage {
+        message.referenceSequenceNumber = sequenceNumber;
+        return message;
+    }
+
+    /**
      * Allows the distributive data type the ability to perform custom processing prior to a delta
      * being submitted to the server
      */

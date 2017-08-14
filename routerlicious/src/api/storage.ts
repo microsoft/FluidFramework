@@ -2,6 +2,8 @@ import { IDocumentMessage, ISequencedDocumentMessage } from "./protocol";
 
 export interface IDocumentAttributes {
     sequenceNumber: number;
+
+    minimumSequenceNumber: number;
 }
 
 export interface IObjectAttributes {
@@ -158,9 +160,19 @@ export interface IDocument {
     distributedObjects: IDistributedObject[];
 
     /**
+     * Messages whose values are between the msn and sequenceNumber
+     */
+    transformedMessages: ISequencedDocumentMessage[];
+
+    /**
      * Pending deltas that have not yet been included in a snapshot
      */
     pendingDeltas: ISequencedDocumentMessage[];
+
+    /**
+     * The smallest sequence number that can be used as a reference sequence number
+     */
+    minimumSequenceNumber: number;
 
     /**
      * The sequence number represented by this version of the document

@@ -1,5 +1,6 @@
 import * as assert from "assert";
 import { EventEmitter } from "events";
+import * as _ from "lodash";
 import * as uuid from "node-uuid";
 import * as cell from "../cell";
 import * as ink from "../ink";
@@ -134,7 +135,10 @@ export class Document {
             returnValue.loadInternal(distributedObject, services);
         }
 
-        // Apply pending deltas
+        // Apply pending deltas - first the list of transformed messages between the msn and sequence number
+        // and then any pending deltas that have happened since that sequenceNumber
+        returnValue.processPendingMessages(document.transformedMessages);
+        assert.equal(returnValue.deltaManager.referenceSequenceNumber, document.sequenceNumber);
         returnValue.processPendingMessages(document.pendingDeltas);
 
         // If it's a new document we create the root map object - otherwise we wait for it to become available
@@ -158,6 +162,8 @@ export class Document {
 
     private lastMinSequenceNumber;
 
+    private messagesSinceMSNChange: ISequencedDocumentMessage[] = [];
+
     public get clientId(): string {
         return this.document.clientId;
     }
@@ -170,10 +176,10 @@ export class Document {
      * Constructs a new document from the provided details
      */
     private constructor(private document: storage.IDocument, private registry: extensions.Registry) {
-        this.lastMinSequenceNumber = this.document.sequenceNumber;
+        this.lastMinSequenceNumber = this.document.minimumSequenceNumber;
         this.deltaManager = new DeltaManager(
             this.document.documentId,
-            this.document.sequenceNumber,
+            this.document.minimumSequenceNumber,
             this.document.deltaStorageService,
             this.document.deltaConnection);
         this.deltaManager.onDelta((message) => this.processRemoteMessage(message));
@@ -295,6 +301,24 @@ export class Document {
     public async snapshot(): Promise<void> {
         const entries: storage.ITreeEntry[] = [];
 
+        // Transform ops in the window relative to the MSN - the window is all ops between the min sequence number
+        // and the current sequence number
+        assert.equal(
+            this.deltaManager.referenceSequenceNumber - this.deltaManager.minimumSequenceNumber,
+            this.messagesSinceMSNChange.length);
+        const transformedMessages: ISequencedDocumentMessage[] = [];
+        for (const message of this.messagesSinceMSNChange) {
+            transformedMessages.push(this.transform(message, this.deltaManager.minimumSequenceNumber));
+        }
+        entries.push({
+            path: ".messages",
+            type: storage.TreeEntry[storage.TreeEntry.Blob],
+            value: {
+                contents: JSON.stringify(transformedMessages),
+                encoding: "utf-8",
+            },
+        });
+
         // tslint:disable-next-line:forin
         for (const objectId in this.distributedObjects) {
             const object = this.distributedObjects[objectId];
@@ -326,7 +350,8 @@ export class Document {
 
         // Save attributes for the document
         const documentAttributes: storage.IDocumentAttributes = {
-            sequenceNumber: this.deltaManager.minimumSequenceNumber,
+            minimumSequenceNumber: this.deltaManager.minimumSequenceNumber,
+            sequenceNumber: this.deltaManager.referenceSequenceNumber,
         };
         entries.push({
             path: ".attributes",
@@ -348,13 +373,26 @@ export class Document {
         return Promise.resolve();
     }
 
+    /**
+     * Transforms the given message relative to the provided sequence number
+     */
+    private transform(input: ISequencedDocumentMessage, sequenceNumber: number): ISequencedDocumentMessage {
+        const message = _.clone(input);
+
+        // Allow the distributed data types to perform custom transformations
+        if (message.type === ObjectOperation) {
+            const envelope = message.contents as IEnvelope;
+            const objectDetails = this.distributedObjects[envelope.address];
+            envelope.contents = objectDetails.object.transform(envelope.contents as IObjectMessage, sequenceNumber);
+        }
+
+        message.referenceSequenceNumber = sequenceNumber;
+        message.minimumSequenceNumber = sequenceNumber;
+        return message;
+    }
+
     private processPendingMessages(messages: ISequencedDocumentMessage[]) {
         for (const message of messages) {
-            // When processing pending messages we make sure the min sequence number (msn) is greater than the set
-            // min sequence number. This is because the msn for the packet whose msn we would have snapshotted
-            // will likely be less than the msn. To avoid confusing invariants expecting this to only increase
-            // we guarantee all packets stay above this number.
-            message.minimumSequenceNumber = Math.max(message.minimumSequenceNumber, this.lastMinSequenceNumber);
             this.deltaManager.handleOp(message);
         }
     }
@@ -417,6 +455,9 @@ export class Document {
         const minSequenceNumberChanged = this.lastMinSequenceNumber !== message.minimumSequenceNumber;
         this.lastMinSequenceNumber = message.minimumSequenceNumber;
 
+        // Add the message to the list of pending messages so we can transform them during a snapshot
+        this.messagesSinceMSNChange.push(message);
+
         if (message.type === ObjectOperation) {
             const envelope = message.contents as IEnvelope;
             const objectDetails = this.distributedObjects[envelope.address];
@@ -457,7 +498,15 @@ export class Document {
         }
 
         if (minSequenceNumberChanged) {
-            // TODO go through all the messages and upate accordingly
+            // Reset the list of messages we have received since the min sequence number changed
+            let index = 0;
+            for (; index < this.messagesSinceMSNChange.length; index++) {
+                if (this.messagesSinceMSNChange[index].sequenceNumber > message.minimumSequenceNumber) {
+                    break;
+                }
+            }
+            this.messagesSinceMSNChange = this.messagesSinceMSNChange.slice(index);
+
             // tslint:disable-next-line:forin
             for (const objectId in this.distributedObjects) {
                 const object = this.distributedObjects[objectId];

@@ -1,3 +1,4 @@
+import * as protocol from "./protocol";
 import * as storage from "./storage";
 
 /**
@@ -56,6 +57,11 @@ export interface ICollaborativeObject {
      * access to the snapshot behind the storage objects.
      */
     snapshot(): storage.ITree;
+
+    /**
+     * Transforms the given message relative to the provided sequence number
+     */
+    transform(message: protocol.IObjectMessage, sequenceNumber: number): protocol.IObjectMessage;
 }
 
 export interface IMapView {

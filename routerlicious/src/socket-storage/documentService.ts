@@ -22,7 +22,9 @@ class Document implements api.IDocument {
         public deltaStorageService: api.IDeltaStorageService,
         public distributedObjects: api.IDistributedObject[],
         public pendingDeltas: api.ISequencedDocumentMessage[],
-        public sequenceNumber: number) {
+        public transformedMessages: api.ISequencedDocumentMessage[],
+        public sequenceNumber: number,
+        public minimumSequenceNumber: number) {
     }
 }
 
@@ -63,7 +65,9 @@ export class DocumentService implements api.IDocumentService {
                             deltaStorage,
                             response.distributedObjects,
                             response.pendingDeltas,
-                            response.sequenceNumber);
+                            response.transformedMessages,
+                            response.sequenceNumber,
+                            response.minimumSequenceNumber);
 
                         resolve(document);
                     }

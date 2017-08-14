@@ -62,7 +62,7 @@
         "timeoutMSec": {
             "checker": 10000,
             "worker": 10000,
-            "document": 15000
+            "document": 600000
         },
         "workerType": "random",
         "workerAckTimeMSec": 100,
@@ -115,7 +115,7 @@
         "blobStorageUrl": "http://localhost:3001",
         "repository": "prague",
         "storageBucket": "snapshots",
-        "intervalMSec": 10000,
+        "intervalMSec": 5000,
         "onlyServer": true,
         "permission": {
             "canvas": false,

@@ -110,7 +110,6 @@ export class Snapshot {
     extractSync() {
         let collabWindow = this.mergeTree.getCollabWindow();
         this.seq = collabWindow.minSeq;
-        console.log(`msn ${collabWindow.minSeq}`);
         this.header = {
             segmentsTotalLength: this.mergeTree.getLength(this.mergeTree.collabWindow.minSeq,
                 MergeTree.NonCollabClient),
