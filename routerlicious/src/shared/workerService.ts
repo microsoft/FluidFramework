@@ -24,8 +24,10 @@ function elapsedMilliseconds(start: [number, number]) {
 export class WorkerService implements api.IWorkerService {
 
     private socket;
-    private documentMap: { [docId: string]: api.Document} = {};
-    private opHandlerMap: { [docId: string]: (op: any) => void} = {};
+    private documentSnapshotMap: { [docId: string]: api.Document} = {};
+    private documentIntelMap: { [docId: string]: api.Document} = {};
+    private snapshotHandlerMap: { [docId: string]: (op: any) => void} = {};
+    private intelHandlerMap: { [docId: string]: (op: any) => void} = {};
     private dict = new Collections.TST<number>();
 
     constructor(
@@ -122,26 +124,45 @@ export class WorkerService implements api.IWorkerService {
         if (id.length === 0) {
             return;
         }
+        this.processSnapshot(id);
+        this.processIntelligenceServices(id);
+    }
 
-        api.load(id, undefined, { blockUpdateMarkers: true }).then(async (doc) => {
-            console.log(`Loaded the document ${id}`);
-            this.documentMap[id] = doc;
-            const root = await doc.getRoot().getView();
-            if (!root.has("insights")) {
-                root.set("insights", doc.createMap());
-            }
-            const insightsMap = root.get("insights") as api.IMap;
-            const insightsMapView = await insightsMap.getView();
-            this.processWork(doc, insightsMapView);
+    private async processSnapshot(id: string) {
+        api.load(id, undefined).then(async (doc) => {
+            console.log(`Loaded snapshot document ${id}`);
+            this.documentSnapshotMap[id] = doc;
+            const serializer = new shared.Serializer(doc);
+
+            const eventHandler = (op: api.ISequencedDocumentMessage) => {
+                serializer.run(op);
+            };
+            this.snapshotHandlerMap[doc.id] = eventHandler;
+            doc.on("op", eventHandler);
         }, (error) => {
             console.log(`Document ${id} not found!`);
             return;
         });
     }
 
-    private processWork(doc: api.Document, insightsMap: api.IMapView) {
-        const serializer = new shared.Serializer(doc);
+    private async processIntelligenceServices(id: string) {
+        api.load(id, undefined, { blockUpdateMarkers: true }).then(async (doc) => {
+            console.log(`Loaded intelligence document ${id}`);
+            this.documentIntelMap[id] = doc;
+            const root = await doc.getRoot().getView();
+            if (!root.has("insights")) {
+                root.set("insights", doc.createMap());
+            }
+            const insightsMap = root.get("insights") as api.IMap;
+            const insightsMapView = await insightsMap.getView();
+            this.processIntelligenceWork(doc, insightsMapView);
+        }, (error) => {
+            console.log(`Document ${id} not found!`);
+            return;
+        });
+    }
 
+    private processIntelligenceWork(doc: api.Document, insightsMap: api.IMapView) {
         const intelligenceManager = new shared.IntelligentServicesManager(doc, insightsMap, this.config, this.dict);
         intelligenceManager.registerService(resumeAnalytics.factory.create(this.config.intelligence.resume));
         intelligenceManager.registerService(textAnalytics.factory.create(this.config.intelligence.textAnalytics));
@@ -152,7 +173,6 @@ export class WorkerService implements api.IWorkerService {
         }
 
         const eventHandler = (op: api.ISequencedDocumentMessage) => {
-            serializer.run(op);
 
             if (op.type === api.ObjectOperation) {
                 const objectId = op.contents.address;
@@ -164,15 +184,20 @@ export class WorkerService implements api.IWorkerService {
             }
         };
 
-        this.opHandlerMap[doc.id] = eventHandler;
+        this.intelHandlerMap[doc.id] = eventHandler;
         doc.on("op", eventHandler);
     }
 
     private revokeWork(id: string) {
-        if (id in this.documentMap) {
-            this.documentMap[id].removeListener("op", this.opHandlerMap[id]);
-            delete this.documentMap[id];
-            delete this.opHandlerMap[id];
+        if (id in this.documentSnapshotMap) {
+            this.documentSnapshotMap[id].removeListener("op", this.snapshotHandlerMap[id]);
+            delete this.documentSnapshotMap[id];
+            delete this.snapshotHandlerMap[id];
+        }
+        if (id in this.documentIntelMap) {
+            this.documentIntelMap[id].removeListener("op", this.intelHandlerMap[id]);
+            delete this.documentIntelMap[id];
+            delete this.intelHandlerMap[id];
         }
     }
 }
