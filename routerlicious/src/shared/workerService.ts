@@ -139,7 +139,7 @@ export class WorkerService implements api.IWorkerService {
         });
     }
 
-    private async processWork(doc: api.Document, insightsMap: api.IMapView) {
+    private processWork(doc: api.Document, insightsMap: api.IMapView) {
         const serializer = new shared.Serializer(doc);
 
         const intelligenceManager = new shared.IntelligentServicesManager(doc, insightsMap, this.config, this.dict);

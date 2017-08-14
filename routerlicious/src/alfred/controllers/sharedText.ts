@@ -189,7 +189,7 @@ class FlowContainer implements FlowView.IComponentContainer {
     }
 }
 
-const prideAndPrejudice = "/public/literature/test.txt";
+const prideAndPrejudice = "/public/literature/pp.txt";
 
 function downloadRawText(textUrl: string): Promise<string> {
     return new Promise<string>((resolve, reject) => {
