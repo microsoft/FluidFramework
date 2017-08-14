@@ -72,7 +72,7 @@ export class SharedString extends api.CollaborativeObject {
         sequenceNumber: number,
         services?: api.IDistributedObjectServices) {
         super(document, id, CollaboritiveStringExtension.Type, sequenceNumber, services);
-        this.client = new MergeTree.Client("");
+        this.client = new MergeTree.Client("", document.options);
     }
 
     public async load(sequenceNumber: number, header: string, collaborative: boolean) {
