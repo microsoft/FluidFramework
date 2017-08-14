@@ -123,7 +123,7 @@ export class WorkerService implements api.IWorkerService {
             return;
         }
 
-        api.load(id, { blockUpdateMarkers: true }).then(async (doc) => {
+        api.load(id, undefined, { blockUpdateMarkers: true }).then(async (doc) => {
             console.log(`Loaded the document ${id}`);
             this.documentMap[id] = doc;
             const root = await doc.getRoot().getView();

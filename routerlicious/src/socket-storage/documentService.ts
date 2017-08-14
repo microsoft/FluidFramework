@@ -40,10 +40,23 @@ export class DocumentService implements api.IDocumentService {
         this.socket = io(url, { transports: ["websocket"] });
     }
 
-    public connect(id: string): Promise<api.IDocument> {
-        const connectMessage: messages.IConnect = { id };
+    public async connect(id: string, encrypted: boolean): Promise<api.IDocument> {
+        // Generate encryption keys for new connection.
+        let privateKey: string;
+        let publicKey: string;
 
-        return new Promise((resolve, reject) => {
+        if (encrypted) {
+            const asymmetricKeys = await api.generateAsymmetricKeys(2048, "", id);
+            privateKey = asymmetricKeys.privateKey;
+            publicKey = asymmetricKeys.publicKey;
+        } else {
+            privateKey = "";
+            publicKey = "";
+        }
+
+        const connectMessage: messages.IConnect = { id, privateKey, publicKey, encrypted };
+
+        return new Promise<api.IDocument>((resolve, reject) => {
             this.socket.emit(
                 "connectDocument",
                 connectMessage,
@@ -51,7 +64,8 @@ export class DocumentService implements api.IDocumentService {
                     if (error) {
                         return reject(error);
                     } else {
-                        const deltaConnection = new DocumentDeltaConnection(this, id, response.clientId);
+                        const deltaConnection = new DocumentDeltaConnection(this, id, response.clientId, encrypted,
+                                                                            response.privateKey, response.publicKey);
                         const deltaStorage = new DocumentDeltaStorageService(id, this.deltaStorage);
                         const documentStorage = new DocumentStorageService(id, response.version, this.blobStorge);
 

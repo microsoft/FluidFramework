@@ -10,6 +10,8 @@ const router: Router = Router();
 router.get("/:id?", (request, response, next) => {
     const id = request.params.id ? request.params.id : "test";
     const config = JSON.stringify(nconf.get("worker"));
+    const encrypted = request.query.encrypted ? true : false;
+
     response.render(
         "canvas",
         {
@@ -17,6 +19,7 @@ router.get("/:id?", (request, response, next) => {
             config,
             partials: defaultPartials,
             title: id,
+            encrypted,
         });
 });
 

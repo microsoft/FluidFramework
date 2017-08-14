@@ -6,6 +6,15 @@ import * as api from "../api";
 export interface IConnect {
     // The document that is being connected to
     id: string;
+
+    // The requested private key for decrypting deltas for the given object
+    privateKey: string;
+
+    // The requested public key for encrypting deltas to the given object
+    publicKey: string;
+
+    // Flag indicating whether encryption has been requested
+    encrypted: boolean;
 }
 
 /**
@@ -36,6 +45,15 @@ export interface IConnected {
 
     // Pending deltas that have not yet been included in a snapshot
     pendingDeltas: api.ISequencedDocumentMessage[];
+
+    // The true private key for use by the client to decrypt deltas from the server
+    privateKey: string;
+
+    // The true public key for use by the client to send encrypted deltas to the server
+    publicKey: string;
+
+    // Flag indicating whether encryption is active
+    encrypted: boolean;
 }
 
 /**

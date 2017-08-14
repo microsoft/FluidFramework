@@ -13,8 +13,9 @@
         <script src="/socket.io/socket.io.js"></script>
         <script src="{{#hfurl}}/public/scripts/dist/maps.js{{/hfurl}}"></script>
         <script>
+            var encrypted = {{ encrypted }};
             var config = {{{ config }}};
-            controller.load("{{ id }}", config);
+            controller.load("{{ id }}", config, encrypted);
         </script>
     {{/scripts}}
 {{/layout}}

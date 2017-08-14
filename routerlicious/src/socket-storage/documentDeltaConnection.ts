@@ -8,7 +8,13 @@ import { DocumentService } from "./documentService";
 export class DocumentDeltaConnection implements api.IDocumentDeltaConnection {
     private emitter = new EventEmitter();
 
-    constructor(private service: DocumentService, public documentId: string, public clientId: string) {
+    constructor(
+        private service: DocumentService,
+        public documentId: string,
+        public clientId: string,
+        public encrypted: boolean,
+        public privateKey: string,
+        public publicKey: string) {
     }
 
     /**
