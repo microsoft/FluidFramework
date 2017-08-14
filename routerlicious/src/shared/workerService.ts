@@ -158,6 +158,9 @@ export class WorkerService implements api.IWorkerService {
                 const objectId = op.contents.address;
                 const object = doc.get(objectId);
                 intelligenceManager.process(object);
+            } else if (op.type === api.AttachObject) {
+                const object = doc.get(op.contents.id);
+                intelligenceManager.process(object);
             }
         };
 
