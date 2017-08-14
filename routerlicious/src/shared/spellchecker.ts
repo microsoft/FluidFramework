@@ -31,7 +31,25 @@ class Speller {
     static altMax = 7;
     verbose = false;
     serviceCounter: number = 0;
-    constructor(public sharedString: mergeTree.SharedString, private dict: Collections.TST<number>) {
+    q: any;
+
+    constructor(public sharedString: mergeTree.SharedString, private dict: Collections.TST<number>,
+                private intelligence: IIntelligentService) {
+        this.initializeSpellerQueue();
+    }
+
+    initializeSpellerQueue() {
+        this.q = queue((task: ISpellQuery, callback) => {
+            const resultP = this.intelligence.run(task);
+            resultP.then((result) => {
+                console.log(`Invoked for: ${task.text}`);
+                console.log(`Query result: ${JSON.stringify(this.checkSpelling(task.rsn, task.text, task.start, result))}`);
+                console.log(`...........................................`);
+                callback();
+            }, (error) => {
+                callback();
+            });
+        }, 1);
     }
 
     spellingError(word: string) {
@@ -65,11 +83,11 @@ class Speller {
         });
     }
 
-    initialSpellCheck(intelligence: IIntelligentService) {
+    initialSpellCheck() {
         let spellParagraph = (startPG: number, endPG: number, text: string) => {
             let re = /\b\w+\b/g;
             let result: RegExpExecArray;
-            this.invokeSpellerService(intelligence, text, startPG);
+            this.invokeSpellerService(this.intelligence, text, startPG);
             do {
                 result = re.exec(text);
                 if (result) {
@@ -137,7 +155,7 @@ class Speller {
             spellParagraph(startPGPos, startPGPos + pgText.length, pgText);
         }
         
-        this.setEvents(intelligence);
+        this.setEvents(this.intelligence);
     }
 
     makeTextErrorInfo(candidate: string) {
@@ -277,20 +295,9 @@ class Speller {
     }
 
     invokeSpellerService(intelligence: IIntelligentService, queryString: string, startPos: number) {
-        const q = queue((task: ISpellQuery, callback) => {
-            const resultP = intelligence.run(task);
-            resultP.then((result) => {
-                console.log(`Invoked for: ${task.text}`);
-                console.log(`Query result: ${JSON.stringify(this.checkSpelling(task.rsn, queryString, startPos, result))}`);
-                console.log(`...........................................`);
-                callback();
-            }, (error) => {
-                callback();
-            });
-        }, 1);
         if (this.serviceCounter < 10) {
             if (queryString.length > 0) {
-                q.push( {text: queryString, rsn: this.sharedString.referenceSequenceNumber, start: startPos, end: startPos + queryString.length} );
+                this.q.push( {text: queryString, rsn: this.sharedString.referenceSequenceNumber, start: startPos, end: startPos + queryString.length} );
                 ++this.serviceCounter;
             }
         }
@@ -340,8 +347,8 @@ export class Spellcheker {
 
     public run() {
         this.root.loaded.then(() => {
-            const theSpeller = new Speller(this.root, this.dict);
-            theSpeller.initialSpellCheck(this.intelligence);
+            const theSpeller = new Speller(this.root, this.dict, this.intelligence);
+            theSpeller.initialSpellCheck();
         });
     }
 }
