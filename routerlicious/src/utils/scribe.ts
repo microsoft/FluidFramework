@@ -182,28 +182,28 @@ function combine(first: number[], second: number[], combine: (a, b) => number): 
  * Types the given file into the shared string - starting at the end of the string
  */
 async function typeFile(
+    document: api.Document,
     sharedString: SharedString.SharedString,
     fileText: string,
     intervalTime: number,
     callback: ScribeMetricsCallback): Promise<number> {
 
     // And also load a canvas document where we will place the metrics
-    const metricsDoc = await api.load(`${sharedString.id}-metrics`);
+    const metricsDoc = await api.load(`${document.id}-metrics`);
     const root = await metricsDoc.getRoot().getView();
 
     const components = metricsDoc.createMap();
-    const componentsView = await components.getView();
     root.set("components", components);
 
     // Create the two chart windows
     const performanceChart = metricsDoc.createMap();
-    componentsView.set("performance", performanceChart);
+    components.set("performance", performanceChart);
     performanceChart.set("type", "chart");
     performanceChart.set("size", { width: 760, height: 480 });
     performanceChart.set("position", { x: 10, y: 10 });
 
     const histogramChart = metricsDoc.createMap();
-    componentsView.set("histogram", histogramChart);
+    components.set("histogram", histogramChart);
     histogramChart.set("type", "chart");
     histogramChart.set("size", { width: 760, height: 480 });
     histogramChart.set("position", { x: 790, y: 10 });
@@ -262,8 +262,8 @@ async function typeFile(
             }
         }, 1000);
 
-        sharedString.on("op", (message) => {
-            if (message.clientSequenceNumber) {
+        sharedString.on("op", (message: api.ISequencedObjectMessage) => {
+            if (message.clientSequenceNumber && message.clientId === document.clientId) {
                 ackCounter.increment(1);
                 if (ackCounter.elapsed() > samplingRate) {
                     const rate = ackCounter.getRate() * 1000;
@@ -369,7 +369,7 @@ export async function type(
     await document.getRoot().set("text", sharedString);
 
     return new Promise<number>((resolve, reject) => {
-        typeFile(sharedString, text, intervalTime, callback).then(
+        typeFile(document, sharedString, text, intervalTime, callback).then(
             (totalTime) => {
                 resolve(totalTime);
             },
