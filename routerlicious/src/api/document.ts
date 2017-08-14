@@ -9,6 +9,7 @@ import { debug } from "./debug";
 import { DeltaConnection } from "./deltaConnection";
 import { DeltaManager } from "./deltaManager";
 import * as extensions from "./extension";
+import { LocalObjectStorageService } from "./localObjectStorageService";
 import { ObjectStorageService } from "./objectStorageService";
 import {
     AttachObject,
@@ -52,7 +53,7 @@ export function getDefaultDocumentService(): storage.IDocumentService {
 interface IDistributedObjectState {
     object: types.ICollaborativeObject;
 
-    storage: ObjectStorageService;
+    storage: IObjectStorageService;
 
     connection: DeltaConnection;
 }
@@ -109,7 +110,7 @@ function waitForRoot(document: Document): Promise<void> {
 
 interface IAttachedServices {
     deltaConnection: DeltaConnection;
-    objectStorage: ObjectStorageService;
+    objectStorage: IObjectStorageService;
 }
 
 /**
@@ -127,7 +128,8 @@ export class Document {
 
         // Load in distributed objects stored within the document
         for (const distributedObject of document.distributedObjects) {
-            returnValue.loadInternal(distributedObject);
+            const services = returnValue.getObjectServices(distributedObject.id, distributedObject.sequenceNumber);
+            returnValue.loadInternal(distributedObject, services);
         }
 
         // Apply pending deltas
@@ -208,8 +210,12 @@ export class Document {
      * @param object
      */
     public attach(object: types.ICollaborativeObject): IDistributedObjectServices {
+        // Get the object snapshot and include it in the initial attach
+        const snapshot = object.snapshot();
+
         const message: IAttachMessage = {
             id: object.id,
+            snapshot,
             type: object.type,
         };
         this.submitMessage(AttachObject, message);
@@ -293,8 +299,6 @@ export class Document {
             if (!object.object.isLocal()) {
                 const snapshot = object.object.snapshot();
 
-                debug(`${object.object.id} has msn of ${object.connection.minimumSequenceNumber}`);
-
                 // Add in the object attributes to the returned tree
                 const objectAttributes: storage.IObjectAttributes = {
                     sequenceNumber: object.connection.minimumSequenceNumber,
@@ -366,9 +370,7 @@ export class Document {
      * Loads in a distributed object and stores it in the internal Document object map
      * @param distributedObject The distributed object to load
      */
-    private loadInternal(distributedObject: storage.IDistributedObject) {
-        const services = this.getObjectServices(distributedObject.id, distributedObject.sequenceNumber);
-
+    private loadInternal(distributedObject: storage.IDistributedObject, services: IAttachedServices) {
         const extension = this.registry.getExtension(distributedObject.type);
         const value = extension.load(
             this,
@@ -425,10 +427,30 @@ export class Document {
             // Skip attach messages that are local
             if (message.clientId !== this.document.clientId) {
                 const attachMessage = message.contents as IAttachMessage;
-                // TODO formalize the first load scenario below
-                // The below is potentially GREAT - I can provide the header on first load to avoid sending
-                // all the deltas. Or the object can decide to send the deltas
-                this.loadInternal({ header: null, id: attachMessage.id, type: attachMessage.type, sequenceNumber: 0 });
+
+                // create storage service that wraps the attach data
+                const localStorage = new LocalObjectStorageService(attachMessage.snapshot);
+                const header = localStorage.readSync("header");
+
+                const connection = new DeltaConnection(
+                    attachMessage.id,
+                    this,
+                    0,
+                    this.deltaManager.minimumSequenceNumber);
+
+                const distributedObject: storage.IDistributedObject = {
+                    header,
+                    id: attachMessage.id,
+                    sequenceNumber: 0,
+                    type: attachMessage.type,
+                };
+
+                const services = {
+                    deltaConnection: connection,
+                    objectStorage: localStorage,
+                };
+
+                this.loadInternal(distributedObject, services);
             }
         }
 

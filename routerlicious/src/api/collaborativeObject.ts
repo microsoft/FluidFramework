@@ -68,9 +68,7 @@ export abstract class CollaborativeObject implements api.ICollaborativeObject {
         this.listenForUpdates();
 
         // And then submit all pending operations.
-        for (const localOp of this.localOps) {
-            this.submit(localOp);
-        }
+        assert(this.localOps.length === 0);
 
         // Allow derived classes to perform custom operations
         this.attachCore();
@@ -113,6 +111,11 @@ export abstract class CollaborativeObject implements api.ICollaborativeObject {
      * Processes a message by the local client
      */
     protected submitLocalOperation(contents: any): void {
+        // Local only operations we can discard as the attach will take care of them
+        if (this.isLocal()) {
+            return;
+        }
+
         // Prep the message
         const message: api.IObjectMessage = {
             clientSequenceNumber: ++this.clientSequenceNumber,
