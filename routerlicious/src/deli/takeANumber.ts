@@ -191,6 +191,8 @@ export class TakeANumber {
             clientId: message.clientId,
             clientSequenceNumber: message.operation.clientSequenceNumber,
             contents: message.operation.contents,
+            encrypted: message.operation.encrypted,
+            encryptedContents: message.operation.encryptedContents,
             minimumSequenceNumber: this.minimumSequenceNumber,
             referenceSequenceNumber: message.operation.referenceSequenceNumber,
             sequenceNumber,

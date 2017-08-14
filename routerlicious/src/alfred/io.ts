@@ -50,7 +50,15 @@ const documentsCollectionName = nconf.get("mongo:collectionNames:documents");
 
 const mongoManager = new utils.MongoManager(mongoUrl);
 
-async function getOrCreateObject(id: string): Promise<boolean> {
+interface IGetOrCreateDBResponse {
+    existing: boolean;
+    docPrivateKey: string;
+    docPublicKey: string;
+};
+
+async function getOrCreateObject(id: string, privateKey: string, publicKey: string):
+    Promise<IGetOrCreateDBResponse> {
+
     const db = await mongoManager.getDatabase();
     const collection = db.collection(documentsCollectionName);
 
@@ -59,10 +67,12 @@ async function getOrCreateObject(id: string): Promise<boolean> {
     return dbObjectP.then(
         (dbObject) => {
             if (dbObject) {
-                return true;
+                return {existing: true, docPrivateKey: dbObject._privateKey, docPublicKey: dbObject._publicKey};
             } else {
-                // TODO should I inject a "new document" message in the stream?
-                return collection.insertOne({ _id: id }).then(() => false);
+                return collection.insertOne({ _id: id, _privateKey: privateKey, _publicKey: publicKey})
+                .then(() => {
+                    return {existing: false, docPrivateKey: privateKey, docPublicKey: publicKey};
+                });
             }
         });
 }
@@ -81,6 +91,10 @@ export interface IDocumentDetails {
     transformedMessages: api.ISequencedDocumentMessage[];
 
     pendingDeltas: api.ISequencedDocumentMessage[];
+
+    docPrivateKey: string;
+
+    docPublicKey: string;
 }
 
 /**
@@ -192,8 +206,8 @@ async function getDocumentDetails(
     return result;
 }
 
-async function getOrCreateDocument(id: string): Promise<IDocumentDetails> {
-    const existingP = getOrCreateObject(id);
+async function getOrCreateDocument(id: string, privateKey: string, publicKey: string): Promise<IDocumentDetails> {
+    const getOrCreateP = getOrCreateObject(id, privateKey, publicKey);
 
     const gitManager = await git.getOrCreateRepository(historian, historianBranch);
     const revisions = await getRevisions(gitManager, id);
@@ -220,7 +234,7 @@ async function getOrCreateDocument(id: string): Promise<IDocumentDetails> {
     }
 
     const pendingDeltas = await getDeltas(id, sequenceNumber);
-    const existing = await existingP;
+    const {existing, docPrivateKey, docPublicKey} = await getOrCreateP;
 
     return {
         distributedObjects,
@@ -230,6 +244,8 @@ async function getOrCreateDocument(id: string): Promise<IDocumentDetails> {
         sequenceNumber,
         transformedMessages,
         version,
+        docPrivateKey,
+        docPublicKey,
     };
 }
 
@@ -246,7 +262,13 @@ io.on("connection", (socket) => {
         // Join the room first to ensure the client will start receiving delta updates
         logger.info(`Client has requested to load ${message.id}`);
 
-        const documentDetailsP = getOrCreateDocument(message.id);
+        /**
+         * NOTE: Should there be an extra check to verify that if 'encrypted' is false, the passed keys are empty?
+         * Food for thought: what should the correct behavior be if someone requests an encrypted connection to a
+         * document that mongoDB has marked as unencrypted (or vice-versa)?
+         */
+
+        const documentDetailsP = getOrCreateDocument(message.id, message.privateKey, message.publicKey);
         documentDetailsP.then(
             (documentDetails) => {
                 socket.join(message.id, (joinError) => {
@@ -257,12 +279,17 @@ io.on("connection", (socket) => {
                     const clientId = moniker.choose();
                     connectionsMap[clientId] = message.id;
 
+                    const encrypted = documentDetails.docPrivateKey ? true : false;
+
                     const connectedMessage: socketStorage.IConnected = {
                         clientId,
                         distributedObjects: documentDetails.distributedObjects,
+                        encrypted,
                         existing: documentDetails.existing,
                         minimumSequenceNumber: documentDetails.minimumSequenceNumber,
                         pendingDeltas: documentDetails.pendingDeltas,
+                        privateKey: documentDetails.docPrivateKey,
+                        publicKey: documentDetails.docPublicKey,
                         sequenceNumber: documentDetails.sequenceNumber,
                         transformedMessages: documentDetails.transformedMessages,
                         version: documentDetails.version,
@@ -309,7 +336,7 @@ io.on("connection", (socket) => {
     socket.on("connectShadowClient", (message: socketStorage.IConnect, response) => {
         logger.info(`Shadow client has requested to collaborate on ${message.id}`);
 
-        const documentDetailsP = getOrCreateDocument(message.id);
+        const documentDetailsP = getOrCreateDocument(message.id, message.privateKey, message.publicKey);
         documentDetailsP.then(
             (documentDetails) => {
                 socket.join(message.id, (joinError) => {

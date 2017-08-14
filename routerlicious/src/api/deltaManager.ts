@@ -1,11 +1,18 @@
 import * as assert from "assert";
 import * as async from "async";
 import { EventEmitter } from "events";
+import * as openpgp from "openpgp";
+import * as api from ".";
 import { constants } from "../shared";
 import { ThroughputCounter } from "../utils/counters";
 import { debug } from "./debug";
 import * as protocol from "./protocol";
 import * as storage from "./storage";
+
+// NOTE This class manages receiving deltas from the routerlicious service.
+// There are the push notification versions as well the ones we're storing in a Mongo database.
+// We might want to decrypt at the endpoint. But it might be easiest to start from here since it's all
+// consolidated together.
 
 /**
  * Helper class that manages incoming delta messages. This class ensures that collaborative objects receive delta
@@ -22,6 +29,14 @@ export class DeltaManager {
     // Flag indicating whether the client has only received messages
     private readonly = true;
 
+    // Private key for signing deltas related to this manager's document
+    private privateKey;
+
+    // Public key for decrypting deltas related to this manager's document
+    private publicKey;
+
+    // NOTE: perhaps unnecessary?
+    private secretPassphrase = "";
     // The minimum sequence number and last sequence number received from the server
     private minSequenceNumber = 0;
     private clientSequenceNumber = 0;
@@ -67,15 +82,26 @@ export class DeltaManager {
                 q.push(message);
             }
         });
+
+        // Assign symmetric keys. NOTE: Move encryption entirely to DeltaConnection?
+        this.privateKey = this.deltaConnection.privateKey;
+        this.publicKey = this.deltaConnection.publicKey;
+
+        console.log("DEBUG deltaManger encrypted flag: " + this.deltaConnection.encrypted);
+        debug(`final deltaManager keys: ${this.privateKey} \n ;;;; \n ${this.publicKey}`);
     }
 
     /**
      * Submits a new delta operation
      */
-    public submit(type: string, contents: any) {
+    public async submit(type: string, contents: any) {
+        const encryptedContents = this.deltaConnection.encrypted ? await this.encryptOp(contents) : "";
+
         const message: protocol.IDocumentMessage = {
             clientSequenceNumber: this.clientSequenceNumber++,
             contents,
+            encrypted: this.deltaConnection.encrypted,
+            encryptedContents,
             referenceSequenceNumber: this.baseSequenceNumber,
             type,
         };
@@ -158,25 +184,6 @@ export class DeltaManager {
     }
 
     /**
-     * Revs the base sequence number based on the message and notifices the listener of the new message
-     */
-    private emit(message: protocol.ISequencedDocumentMessage) {
-        // Watch the minimum sequence number and be ready to update as needed
-        this.minSequenceNumber = message.minimumSequenceNumber;
-        this.baseSequenceNumber = message.sequenceNumber;
-        this.emitter.emit("op", message);
-
-        // We will queue a message to update our reference sequence number upon receiving a server operation. This
-        // allows the server to know our true reference sequence number and be able to correctly update the minimum
-        // sequence number (MSN). We don't ackowledge other message types similarly (like a min sequence number update
-        // or a no-op) to avoid ackowledgement cycles (i.e. ack the MSN update, which updates the MSN,
-        // then ack the update, etc...).
-        if (message.type !== protocol.NoOp) {
-            this.updateSequenceNumber();
-        }
-    }
-
-    /**
      * Acks the server to update the reference sequence number
      */
     private updateSequenceNumber() {
@@ -223,5 +230,66 @@ export class DeltaManager {
 
         this.updateHasBeenRequested = false;
         this.updateSequenceNumberTimer = undefined;
+    }
+
+    /**
+     * Revs the base sequence number based on the message and notifices the listener of the new message
+     */
+    private async emit(message: protocol.ISequencedDocumentMessage) {
+        // Watch the minimum sequence number and be ready to update as needed
+        this.minSequenceNumber = message.minimumSequenceNumber;
+        this.baseSequenceNumber = message.sequenceNumber;
+
+        let emitMessage = message;
+        if (message.encrypted) {
+            // Decrypt the contents of the message.
+            let decryptedContents = await this.decryptOp(message.encryptedContents);
+
+            // Verify integrity of decryption.
+            assert(JSON.stringify(decryptedContents) === JSON.stringify(message.contents));
+
+            emitMessage.encryptedContents = decryptedContents;
+        }
+
+        this.emitter.emit("op", emitMessage);
+
+        // We will queue a message to update our reference sequence number upon receiving a server operation. This
+        // allows the server to know our true reference sequence number and be able to correctly update the minimum
+        // sequence number (MSN). We don't ackowledge other message types similarly (like a min sequence number update)
+        // to avoid ackowledgement cycles (i.e. ack the MSN update, which updates the MSN, then ack the update, etc...).
+        if (message.type === api.OperationType) {
+            this.updateSequenceNumber();
+        }
+    }
+
+    private async encryptOp(op: any): Promise<string> {
+        // Encode op as JSON string.
+        const opAsString = JSON.stringify(op);
+
+        const encryptionOptions = {
+            data: opAsString,
+            publicKeys: openpgp.key.readArmored(this.publicKey).keys,
+        };
+
+        return openpgp.encrypt(encryptionOptions).then((ciphertext) => {
+            return ciphertext.data;
+        });
+    }
+
+    private async decryptOp(encryptedOp: string): Promise<any> {
+        /**
+         * First, decrypt the private RSA key using the secret passphrase. Then, decrypt the message using the key.
+         */
+        let decryptedRSAPrivateKey = openpgp.key.readArmored(this.privateKey).keys[0];
+        decryptedRSAPrivateKey.decrypt(this.secretPassphrase);
+
+        const decryptionOptions = {
+            message: openpgp.message.readArmored(encryptedOp),
+            privateKey: decryptedRSAPrivateKey,
+        };
+
+        return openpgp.decrypt(decryptionOptions).then((plaintext) => {
+            return JSON.parse(plaintext.data);
+        });
     }
 }
