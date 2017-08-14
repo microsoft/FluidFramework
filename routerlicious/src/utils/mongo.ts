@@ -19,6 +19,15 @@ export class MongoManager {
     }
 
     /**
+     * Closes the connection to MongoDB
+     */
+    public async close(): Promise<void> {
+        this.shouldReconnect = false;
+        const database = await this.databaseP;
+        return database.close();
+    }
+
+    /**
      * Creates a connection to the MongoDB database
      */
     private connect() {

@@ -19,14 +19,14 @@ export class CollaboritiveStringExtension implements api.IExtension {
         header: string): api.ICollaborativeObject {
 
         let collaborativeString = new SharedString(document, id, sequenceNumber, services);
-        collaborativeString.load(sequenceNumber, header);
+        collaborativeString.load(sequenceNumber, header, true);
 
         return collaborativeString;
     }
 
     public create(document: api.Document, id: string): api.ICollaborativeObject {
         let collaborativeString = new SharedString(document, id, 0);
-        collaborativeString.load(0, null);
+        collaborativeString.load(0, null, false);
 
         return collaborativeString;
     }
@@ -75,7 +75,7 @@ export class SharedString extends api.CollaborativeObject {
         this.client = new MergeTree.Client("");
     }
 
-    public async load(sequenceNumber: number, header: string) {
+    public async load(sequenceNumber: number, header: string, collaborative: boolean) {
         let chunk: ops.MergeTreeChunk;
 
         if (header) {
@@ -91,7 +91,9 @@ export class SharedString extends api.CollaborativeObject {
 
         // This should happen if we have collab services
         assert.equal(sequenceNumber, chunk.chunkSequenceNumber);
-        this.client.startCollaboration(this.document.clientId, sequenceNumber);
+        if (collaborative) {
+            this.client.startCollaboration(this.document.clientId, sequenceNumber);
+        }
         this.applyPending();
         this.loadFinished(chunk);
     }
@@ -171,6 +173,10 @@ export class SharedString extends api.CollaborativeObject {
         } else {
             this.pendingMinSequenceNumber = value;
         }
+    }
+
+    protected attachCore() {
+        this.client.startCollaboration(this.document.clientId, 0);
     }
 
     private loadFinished(chunk: ops.MergeTreeChunk) {

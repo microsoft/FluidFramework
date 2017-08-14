@@ -1,3 +1,5 @@
+import * as storage from "./storage";
+
 // Delta operation application type
 export const OperationType = "op";
 
@@ -70,6 +72,9 @@ export interface IAttachMessage {
 
     // The type of object
     type: string;
+
+    // Initial snapshot of the document
+    snapshot: storage.ITree;
 }
 
 /**

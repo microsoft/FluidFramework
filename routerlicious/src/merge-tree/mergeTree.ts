@@ -11,6 +11,11 @@ export type MapLike<T> = Properties.MapLike<T>;
 export type PropertySet = Properties.PropertySet;
 export type RangeStackMap = Properties.MapLike<Collections.Stack<Marker>>;
 
+export interface IRange {
+    start: number;
+    end: number;
+}
+
 export interface Node {
     parent: Block;
     cachedLength: number;
@@ -328,6 +333,7 @@ export class Marker extends BaseSegment {
     }
 
     removeRange(start: number, end: number): boolean {
+        console.log("remove range called on marker");
         return false;
     }
 
@@ -1339,11 +1345,21 @@ export class Client {
         }
     }
 
+    getLocalSequenceNumber() {
+        let segWindow = this.mergeTree.getCollabWindow();
+        if (segWindow.collaborating) {
+            return UnassignedSequenceNumber;
+        }
+        else {
+            return UniversalSequenceNumber;
+        }
+    }
+
     annotateSegmentLocal(props: PropertySet, start: number, end: number) {
         let segWindow = this.mergeTree.getCollabWindow();
         let clientId = segWindow.clientId;
         let refSeq = segWindow.currentSeq;
-        let seq = UnassignedSequenceNumber;
+        let seq = this.getLocalSequenceNumber();
 
         let clockStart;
         if (this.measureOps) {
@@ -1384,7 +1400,7 @@ export class Client {
         let segWindow = this.mergeTree.getCollabWindow();
         let clientId = segWindow.clientId;
         let refSeq = segWindow.currentSeq;
-        let seq = UnassignedSequenceNumber;
+        let seq = this.getLocalSequenceNumber();
 
         let clockStart;
         if (this.measureOps) {
@@ -1425,7 +1441,7 @@ export class Client {
         let segWindow = this.mergeTree.getCollabWindow();
         let clientId = segWindow.clientId;
         let refSeq = segWindow.currentSeq;
-        let seq = UnassignedSequenceNumber;
+        let seq = this.getLocalSequenceNumber();
         let clockStart;
         if (this.measureOps) {
             clockStart = clock();
@@ -1446,7 +1462,7 @@ export class Client {
         let segWindow = this.mergeTree.getCollabWindow();
         let clientId = segWindow.clientId;
         let refSeq = segWindow.currentSeq;
-        let seq = UnassignedSequenceNumber;
+        let seq = this.getLocalSequenceNumber();
         let clockStart;
         if (this.measureOps) {
             clockStart = clock();
@@ -1521,7 +1537,7 @@ export class Client {
         }
     }
 
-    updateMinSeq(minSeq: number) { 
+    updateMinSeq(minSeq: number) {
         let clockStart;
         if (this.measureOps) {
             clockStart = clock();
@@ -2036,6 +2052,34 @@ export class MergeTree {
         return rootStats;
     }
 
+    tardisPosition(pos: number, fromSeq: number, toSeq: number) {
+        if (fromSeq < toSeq) {
+            if ((toSeq <= this.collabWindow.currentSeq) && (fromSeq >= this.collabWindow.minSeq)) {
+                let segoff = this.getContainingSegment(pos, fromSeq, NonCollabClient);
+                let toPos = this.getOffset(segoff.segment, toSeq, NonCollabClient);
+                return toPos + segoff.offset;
+            }
+        }
+    }
+
+    tardisRange(rangeStart: number, rangeEnd: number, fromSeq: number, toSeq: number) {
+        let ranges = <IRange[]>[];
+        let recordRange = (segment: Segment, pos: number, refSeq: number, clientId: number, segStart: number,
+            segEnd: number) => {
+            let offset = this.getOffset(segment, toSeq, NonCollabClient);
+            if (segStart<0) {
+                segStart = 0;
+            }
+            if (segEnd > segment.cachedLength) {
+                segEnd = segment.cachedLength;
+            }
+            ranges.push({ start: offset + segStart, end: offset + segEnd });
+            return true;
+        }
+        this.mapRange({ leaf: recordRange }, fromSeq, NonCollabClient, undefined, rangeStart, rangeEnd);
+        return ranges;
+    }
+
     getLength(refSeq: number, clientId: number) {
         return this.blockLength(this.root, refSeq, clientId);
     }
@@ -2093,6 +2137,9 @@ export class MergeTree {
                     accumText.textSegment.text += textSegment.text;
                 }
                 else {
+                    if (start < 0) {
+                        start = 0;
+                    }
                     if (end >= textSegment.text.length) {
                         accumText.textSegment.text += textSegment.text.substring(start);
                     }
@@ -2134,7 +2181,7 @@ export class MergeTree {
         return context.text;
     }
 
-    getText(refSeq: number, clientId: number, placeholders?: boolean, start?: number, end?: number) {
+    getText(refSeq: number, clientId: number, placeholders = false, start?: number, end?: number) {
         if (start === undefined) {
             start = 0;
         }
@@ -2435,7 +2482,7 @@ export class MergeTree {
         if (node.isLeaf()) {
             let segment = <Segment>node;
             // TODO: marker/marker tie break & collab markers
-            if ((pos == 0) && (segType !== SegmentType.Marker)) {
+            if (pos == 0) {
                 return segment.seq != UnassignedSequenceNumber;
             }
             else {
@@ -2463,7 +2510,7 @@ export class MergeTree {
                 if (matchedStart) {
                     if (!node.isLeaf()) {
                         let childBlock = <Block>node;
-                        go = this.nodeMapReverse(childBlock, actions, 0, UniversalSequenceNumber, 
+                        go = this.nodeMapReverse(childBlock, actions, 0, UniversalSequenceNumber,
                             this.collabWindow.clientId, undefined);
                     }
                     else {
@@ -2498,7 +2545,7 @@ export class MergeTree {
                 if (matchedStart) {
                     if (!node.isLeaf()) {
                         let childBlock = <Block>node;
-                        go = this.nodeMap(childBlock, actions, 0, UniversalSequenceNumber, this.collabWindow.clientId, 
+                        go = this.nodeMap(childBlock, actions, 0, UniversalSequenceNumber, this.collabWindow.clientId,
                             undefined);
                     }
                     else {
@@ -3051,7 +3098,7 @@ export class MergeTree {
         clientId: number, accum?: TAccum) {
         let go = true;
         let children = block.children;
-        for (let childIndex = block.childCount - 1; childIndex>= 0; childIndex--) {
+        for (let childIndex = block.childCount - 1; childIndex >= 0; childIndex--) {
             let child = children[childIndex];
             let isLeaf = child.isLeaf();
             if (go) {

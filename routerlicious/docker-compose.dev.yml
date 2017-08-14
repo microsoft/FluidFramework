@@ -6,12 +6,12 @@ services:
     deli:
         volumes:
             - .:/usr/src/server
-    paparazzi:
-        volumes:
-            - .:/usr/src/server
     scriptorium:
         volumes:
             - .:/usr/src/server
     tmz:
+        volumes:
+            - .:/usr/src/server
+    paparazzi:
         volumes:
             - .:/usr/src/server

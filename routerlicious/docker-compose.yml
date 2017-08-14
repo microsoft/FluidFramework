@@ -8,7 +8,7 @@ services:
             - redis
             - mongodb
             - kafka-rest
-        command: npm run alfred
+        command: node dist/alfred/www.js
         environment:
             - DEBUG=routerlicious:*
         restart: always
@@ -18,19 +18,9 @@ services:
             - redis
             - mongodb
             - kafka-rest
-        command: npm run deli
+        command: node dist/deli/index.js
         environment:
             - DEBUG=routerlicious:*
-        restart: always
-    paparazzi:
-        build: .
-        depends_on:
-            - alfred
-            - rabbitmq
-        command: npm run paparazzi
-        environment:
-            - DEBUG=routerlicious:*
-            - worker__intelligence__resume__url=http://alfred:3000/intelligence/resume
         restart: always
     scriptorium:
         build: .
@@ -38,7 +28,7 @@ services:
             - redis
             - mongodb
             - kafka-rest
-        command: npm run scriptorium
+        command: node dist/scriptorium/index.js
         environment:
             - DEBUG=routerlicious:*
         restart: always
@@ -51,9 +41,19 @@ services:
             - mongodb
             - rabbitmq
             - kafka-rest
-        command: npm run tmz
+        command: node dist/tmz/index.js
         environment:
             - DEBUG=routerlicious:*
+        restart: always
+    paparazzi:
+        build: .
+        depends_on:
+            - alfred
+            - rabbitmq
+        command: node dist/paparazzi/index.js
+        environment:
+            - DEBUG=routerlicious:*
+            - worker__intelligence__resume__url=http://alfred:3000/intelligence/resume
         restart: always
     historian:
         image: prague.azurecr.io/historian:591

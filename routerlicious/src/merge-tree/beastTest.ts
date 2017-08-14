@@ -664,6 +664,8 @@ export function TestPack() {
         let asyncExec = false;
         let addSnapClient = false;
         let extractSnap = false;
+        let includeMarkers = false;
+
         let testSyncload = false;
         let snapClient: MergeTree.Client;
 
@@ -747,15 +749,15 @@ export function TestPack() {
                         }
                         console.log(`text: ${diffPart.value} ` + annotes);
                     }
-                    //console.log(server.mergeTree.toString());
-                    //console.log(client.mergeTree.toString());
+                    console.log(server.mergeTree.toString());
+                    console.log(client.mergeTree.toString());
                     return true;
                 }
             }
             return false;
         }
 
-        let rounds = 8000;
+        let rounds = 80000;
         function clientProcessSome(client: MergeTree.Client, all = false) {
             let cliMsgCount = client.q.count();
             let countToApply: number;
@@ -781,8 +783,6 @@ export function TestPack() {
         }
 
         function randomSpateOfInserts(client: MergeTree.Client, charIndex: number) {
-            let includeMarkers = true;
-
             let textLen = randTextLength();
             let text = randomString(textLen, String.fromCharCode(zedCode + ((client.getCurrentSeq() + charIndex) % 50)));
             let preLen = client.getLength();
@@ -993,6 +993,11 @@ export function TestPack() {
                     }
                     else {
                         randomSpateOfRemoves(client);
+                        if (includeMarkers) {
+                            if (client.getLength() > 200) {
+                                randomSpateOfRemoves(client);
+                            }
+                        }
                     }
                 }
                 if (serverProcessSome(server)) {
@@ -1290,6 +1295,14 @@ export function TestPack() {
         console.log(cli.mergeTree.toString());
         cli.insertTextRemote("zzz", 2, undefined, 2, 0, 2);
         console.log(cli.mergeTree.toString());
+        
+        let fwdRanges = cli.mergeTree.tardisRange(0,5, 1, 2);
+        console.log(`fwd range 0 5 on 1 => 2`);
+        for (let r of fwdRanges) {
+            console.log(`fwd range (${r.start}, ${r.end})`);
+        }
+        let fwdPos = cli.mergeTree.tardisPosition(2, 1, 2);
+        console.log(`fwd pos 2 on 1 => 2 is ${fwdPos}`);
         for (let clientId = 0; clientId < 4; clientId++) {
             for (let refSeq = 0; refSeq < 3; refSeq++) {
                 console.log(cli.relText(clientId, refSeq));
@@ -1398,7 +1411,7 @@ function tst() {
                 count++;
                 let val = corpusTree.get(candidate);
                 if (val !== undefined) {
-                    corpusTree.put(candidate, val+1);
+                    corpusTree.put(candidate, val + 1);
                 }
                 else {
                     corpusTree.put(candidate, 1);
@@ -1428,7 +1441,7 @@ function tst() {
             console.log(`biff ${entry}`);
         }
     }
-    let p4= ntree.neighbors("het").sort(compareProxStrings);
+    let p4 = ntree.neighbors("het").sort(compareProxStrings);
     console.log(p4);
     p4 = ntree.neighbors("peech").sort(compareProxStrings);
     console.log(p4);
@@ -1449,8 +1462,8 @@ if (testTST) {
 //mergeTreeLargeTest();
 //mergeTreeCheckedTest();
 let testPack = TestPack();
-// testPack.firstTest();
+ testPack.firstTest();
 //testPack.randolicious();
-let filename = path.join(__dirname, "../../public/literature", "pp.txt");
-testPack.clientServer(filename);
+// let filename = path.join(__dirname, "../../public/literature", "pp.txt");
+// testPack.clientServer();
 new Server();
