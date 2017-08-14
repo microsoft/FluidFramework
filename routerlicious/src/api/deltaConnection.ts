@@ -28,6 +28,7 @@ export class DeltaConnection implements IDeltaConnection {
 
         this.minSequenceNumber = sequenceNumber;
         this.rangeTracker = new RangeTracker(documentSequenceNumber, sequenceNumber);
+        this.refSequenceNumber = documentSequenceNumber;
     }
 
     public on(event: string, listener: (...args: any[]) => void): this {
