@@ -235,7 +235,6 @@ class Speller {
                 console.log(`found sentence ${sentence} (start ${sentenceStartPos}, end ${sentenceStartPos + sentence.length}) around change`);
             }
             // TODO: send this sentence to service for analysis
-            this.invokeSpellerService(intelligence, sentence, sentenceStartPos);
             let re = /\b\w+\b/g;
             let result: RegExpExecArray;
             do {
@@ -272,6 +271,7 @@ class Speller {
         const q = queue((task: ISpellQuery, callback) => {
             const resultP = intelligence.run(task);
             resultP.then((result) => {
+                console.log(`Invoked for: ${task.text}`);
                 console.log(`Query result: ${JSON.stringify(this.checkSpelling(task.rsn, queryString, startPos, result))}`);
                 console.log(`...........................................`);
                 callback();
