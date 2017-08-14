@@ -137,7 +137,6 @@ export class WorkerService implements api.IWorkerService {
             const eventHandler = (op: api.ISequencedDocumentMessage) => {
                 serializer.run(op);
             };
-
             this.snapshotHandlerMap[doc.id] = eventHandler;
             doc.on("op", eventHandler);
         }, (error) => {
