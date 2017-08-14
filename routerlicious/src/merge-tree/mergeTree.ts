@@ -1172,8 +1172,8 @@ export class Client {
     shortClientIdMap = <string[]>[];
     public longClientId: string;
 
-    constructor(initText: string) {
-        this.mergeTree = new MergeTree(initText);
+    constructor(initText: string, options?: PropertySet) {
+        this.mergeTree = new MergeTree(initText, options);
         this.mergeTree.getLongClientId = id => this.getLongClientId(id);
         this.q = Collections.ListMakeHead<API.ISequencedObjectMessage>();
         this.checkQ = Collections.ListMakeHead<string>();
@@ -1728,13 +1728,13 @@ export class MergeTree {
     static traceTraversal = false;
     static traceIncrTraversal = false;
     static initBlockUpdateActions: BlockUpdateActions;
-    static blockUpdateMarkers = false;
     static theUnfinishedNode = <Block>{ childCount: -1 };
 
     windowTime = 0;
     packTime = 0;
 
     root: Block;
+    blockUpdateMarkers = false;    
     blockUpdateActions: BlockUpdateActions;
     collabWindow = new CollaborationWindow();
     pendingSegments: Collections.List<SegmentGroup>;
@@ -1742,13 +1742,16 @@ export class MergeTree {
     // for diagnostics
     getLongClientId: (id: number) => string;
 
-    constructor(public text: string) {
+    constructor(public text: string, public options?: PropertySet) {
         this.blockUpdateActions = MergeTree.initBlockUpdateActions;
         this.root = this.initialTextNode(this.text);
+        if (options && options.blockUpdateMarkers) {
+            this.blockUpdateMarkers = options.blockUpdateMarkers;
+        }
     }
 
     private makeBlock(childCount: number) {
-        if (MergeTree.blockUpdateMarkers) {
+        if (this.blockUpdateMarkers) {
             return new HierMergeBlock(childCount);
         }
         else {
@@ -1785,7 +1788,7 @@ export class MergeTree {
                     if (nodeIndex < nodes.length) {
                         let childIndex = this.addNode(blocks[i], nodes[nodeIndex]);
                         len += nodes[nodeIndex].cachedLength;
-                        if (MergeTree.blockUpdateMarkers) {
+                        if (this.blockUpdateMarkers) {
                             let hierBlock = blocks[i].hierBlock();
                             hierBlock.addNodeMarkers(nodes[nodeIndex]);
                         }
@@ -1815,7 +1818,7 @@ export class MergeTree {
             let block = buildMergeBlock(segments);
             block.parent = this.root;
             this.root.children[0] = block;
-            if (MergeTree.blockUpdateMarkers) {
+            if (this.blockUpdateMarkers) {
                 let hierRoot = this.root.hierBlock();
                 hierRoot.addNodeMarkers(block);
             }
@@ -2851,7 +2854,7 @@ export class MergeTree {
     blockUpdate(block: Block) {
         let len = 0;
         let hierBlock: HierBlock;
-        if (MergeTree.blockUpdateMarkers) {
+        if (this.blockUpdateMarkers) {
             hierBlock = block.hierBlock();
             hierBlock.rightmostTiles = Properties.createMap<Marker>();
             hierBlock.rangeStacks = {};
@@ -2859,7 +2862,7 @@ export class MergeTree {
         for (let i = 0; i < block.childCount; i++) {
             let child = block.children[i];
             len += nodeTotalLength(child);
-            if (MergeTree.blockUpdateMarkers) {
+            if (this.blockUpdateMarkers) {
                 hierBlock.addNodeMarkers(child);
             }
             if (this.blockUpdateActions) {

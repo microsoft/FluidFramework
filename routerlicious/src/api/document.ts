@@ -29,6 +29,7 @@ let defaultDocumentService: storage.IDocumentService;
 
 // The default registry for extensions
 export const defaultRegistry = new extensions.Registry();
+export const defaultDocumentOptions = Object.create(null);
 defaultRegistry.register(new mapExtension.MapExtension());
 defaultRegistry.register(new mergeTree.CollaboritiveStringExtension());
 defaultRegistry.register(new ink.InkExtension());
@@ -123,11 +124,12 @@ export class Document {
     public static async Create(
         id: string,
         registry: extensions.Registry,
-        service: storage.IDocumentService): Promise<Document> {
+        service: storage.IDocumentService,
+        options: Object): Promise<Document> {
 
         // Connect to the document
         const document = await service.connect(id);
-        const returnValue = new Document(document, registry);
+        const returnValue = new Document(document, registry, options);
 
         // Load in distributed objects stored within the document
         for (const distributedObject of document.distributedObjects) {
@@ -175,7 +177,8 @@ export class Document {
     /**
      * Constructs a new document from the provided details
      */
-    private constructor(private document: storage.IDocument, private registry: extensions.Registry) {
+    private constructor(private document: storage.IDocument, private registry: extensions.Registry,
+                        private opts: Object) {
         this.lastMinSequenceNumber = this.document.minimumSequenceNumber;
         this.deltaManager = new DeltaManager(
             this.document.documentId,
@@ -183,6 +186,10 @@ export class Document {
             this.document.deltaStorageService,
             this.document.deltaConnection);
         this.deltaManager.onDelta((message) => this.processRemoteMessage(message));
+    }
+
+    public get options(): Object {
+        return this.opts;
     }
 
     /**
@@ -527,6 +534,7 @@ export class Document {
  */
 export async function load(
     id: string,
+    options: Object = defaultDocumentOptions,
     registry: extensions.Registry = defaultRegistry,
     service: storage.IDocumentService = defaultDocumentService): Promise<Document> {
 
@@ -540,5 +548,5 @@ export async function load(
         throw new Error("Document service not provided to load call");
     }
 
-    return Document.Create(id, registry, service);
+    return Document.Create(id, registry, service, options);
 }

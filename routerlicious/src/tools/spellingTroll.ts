@@ -279,9 +279,8 @@ class Speller {
 
 let theSpeller: Speller;
 async function initSpell(id: string) {
-    SharedString.MergeTree.blockUpdateMarkers = true;
 
-    const document = await API.load(id);
+    const document = await API.load(id, { blockUpdateMarkers: true });
     const root = await document.getRoot().getView();
     if (!root.has("text")) {
         root.set("text", document.createString());
