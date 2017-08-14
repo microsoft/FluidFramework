@@ -1292,8 +1292,42 @@ export class Client {
         this.checkQ.enqueue(this.getText());
     }
 
-    coreApplyMsg(msg: API.ISequencedObjectMessage) {
+    transformOp(op: ops.IMergeTreeOp, msg: API.ISequencedObjectMessage, toSequenceNumber: number) {
+        if ((op.type == ops.MergeTreeDeltaType.ANNOTATE) ||
+            (op.type == ops.MergeTreeDeltaType.REMOVE)) {
+            let ranges = this.mergeTree.tardisRange(op.pos1, op.pos2, msg.referenceSequenceNumber, toSequenceNumber);
+            if (ranges.length == 1) {
+                op.pos1 = ranges[0].start;
+                op.pos2 = ranges[0].end;
+            }
+            else {
+                let groupOp = <ops.IMergeTreeGroupMsg>{ type: ops.MergeTreeDeltaType.GROUP };
+                groupOp.ops = ranges.map((range) => <ops.IMergeTreeOp>{
+                    type: op.type,
+                    pos1: range.start,
+                    pos2: range.end,
+                });
+                return groupOp;
+            }
+        }
+        else if (op.type == ops.MergeTreeDeltaType.INSERT) {
+            op.pos1 = this.mergeTree.tardisPosition(op.pos1, msg.referenceSequenceNumber,
+                toSequenceNumber);
+        }
+        else if (op.type === ops.MergeTreeDeltaType.GROUP) {
+            for (let i = 0, len = op.ops.length; i < len; i++) {
+                op.ops[i] = this.transformOp(op.ops[i], msg, toSequenceNumber);
+            }
+        }
+        return op;
+    }
+
+    transform(msg: API.ISequencedObjectMessage, toSequenceNumber: number) {
         let op = <ops.IMergeTreeOp>msg.contents;
+        msg.contents = this.transformOp(op, msg, toSequenceNumber);
+    }
+
+    applyOp(op: ops.IMergeTreeOp, msg: API.ISequencedObjectMessage) {
         let clid = this.getOrAddShortClientId(msg.clientId);
         switch (op.type) {
             case ops.MergeTreeDeltaType.INSERT:
@@ -1314,7 +1348,16 @@ export class Client {
                 this.annotateSegmentRemote(op.props, op.pos1, op.pos2, msg.sequenceNumber, msg.referenceSequenceNumber,
                     clid);
                 break;
+            case ops.MergeTreeDeltaType.GROUP:
+                for (let groupOp of op.ops) {
+                    this.applyOp(groupOp, msg);
+                }
+                break;
         }
+    }
+
+    coreApplyMsg(msg: API.ISequencedObjectMessage) {
+        this.applyOp(<ops.IMergeTreeOp>msg.contents, msg);
     }
 
     applyMsg(msg: API.ISequencedObjectMessage) {
@@ -2062,21 +2105,21 @@ export class MergeTree {
         return rootStats;
     }
 
-    tardisPosition(pos: number, fromSeq: number, toSeq: number) {
+    tardisPosition(pos: number, fromSeq: number, toSeq: number, toClientId = NonCollabClient) {
         if (fromSeq < toSeq) {
             if ((toSeq <= this.collabWindow.currentSeq) && (fromSeq >= this.collabWindow.minSeq)) {
                 let segoff = this.getContainingSegment(pos, fromSeq, NonCollabClient);
-                let toPos = this.getOffset(segoff.segment, toSeq, NonCollabClient);
+                let toPos = this.getOffset(segoff.segment, toSeq, toClientId);
                 return toPos + segoff.offset;
             }
         }
     }
 
-    tardisRange(rangeStart: number, rangeEnd: number, fromSeq: number, toSeq: number) {
+    tardisRange(rangeStart: number, rangeEnd: number, fromSeq: number, toSeq: number, toClientId = NonCollabClient) {
         let ranges = <IRange[]>[];
         let recordRange = (segment: Segment, pos: number, refSeq: number, clientId: number, segStart: number,
             segEnd: number) => {
-            let offset = this.getOffset(segment, toSeq, NonCollabClient);
+            let offset = this.getOffset(segment, toSeq, toClientId);
             if (segStart < 0) {
                 segStart = 0;
             }
@@ -2268,7 +2311,7 @@ export class MergeTree {
 
     updateLocalMinSeq(localMinSeq: number) {
         this.collabWindow.localMinSeq = localMinSeq;
-        this.setMinSeq(Math.min(this.collabWindow.globalMinSeq,localMinSeq));
+        this.setMinSeq(Math.min(this.collabWindow.globalMinSeq, localMinSeq));
     }
 
     setMinSeq(minSeq: number) {
@@ -2277,6 +2320,13 @@ export class MergeTree {
             if (MergeTree.options.zamboniSegments) {
                 this.zamboniSegments();
             }
+        }
+    }
+
+    commitGlobalMin() {
+        if (this.collabWindow.globalMinSeq!==undefined) {
+            this.collabWindow.localMinSeq = this.collabWindow.globalMinSeq;
+            this.setMinSeq(this.collabWindow.globalMinSeq);
         }
     }
 

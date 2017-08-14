@@ -1,3 +1,5 @@
+// tslint:disable:align
+
 import * as assert from "assert";
 import * as api from "../api";
 import * as shared from "../shared";
@@ -139,6 +141,15 @@ export class SharedString extends api.CollaborativeObject {
         this.submitLocalOperation(removeMessage);
     }
 
+    public annotateRangeFromPast(props: MergeTree.PropertySet, start: number, end: number,
+        fromSeq: number) {
+        let ranges = this.client.mergeTree.tardisRange(start, end, fromSeq, this.client.getCurrentSeq(),
+            this.client.getClientId());
+        ranges.map((range: MergeTree.IRange) => {
+            this.annotateRange(props, range.start, range.end);
+        });
+    }
+
     public annotateRange(props: MergeTree.PropertySet, start: number, end: number) {
         const annotateMessage: ops.IMergeTreeAnnotateMsg = {
             pos1: start,
@@ -151,15 +162,22 @@ export class SharedString extends api.CollaborativeObject {
         this.submitLocalOperation(annotateMessage);
     }
 
+    public setLocalMinSeq(lmseq: number) {
+        this.client.mergeTree.updateLocalMinSeq(lmseq);
+    }
+
     public snapshot(): api.ITree {
+        this.client.mergeTree.commitGlobalMin();
         let snap = new Paparazzo.Snapshot(this.client.mergeTree);
         snap.extractSync();
         return snap.emit();
     }
 
-    public transform(message: api.IObjectMessage, sequenceNumber: number): api.IObjectMessage {
-        // TODO add in the logic to perform this transformation
-        message.referenceSequenceNumber = sequenceNumber;
+    public transform(message: api.IObjectMessage, toSequenceNumber: number): api.IObjectMessage {
+        if (message.contents) {
+            this.client.transform(<api.ISequencedObjectMessage> message, toSequenceNumber);
+        }
+        message.referenceSequenceNumber = toSequenceNumber;
         return message;
     }
 

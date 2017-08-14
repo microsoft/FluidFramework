@@ -40,15 +40,23 @@ class Speller {
         }
     }
 
+    spellOp(delta: SharedString.IMergeTreeOp) {
+        if (delta.type === SharedString.MergeTreeDeltaType.INSERT) {
+            this.currentWordSpellCheck(delta.pos1);
+        } else if (delta.type === SharedString.MergeTreeDeltaType.REMOVE) {
+            this.currentWordSpellCheck(delta.pos1, true);
+        }
+        else if (delta.type === SharedString.MergeTreeDeltaType.GROUP) {
+            for (let groupOp of delta.ops) {
+                this.spellOp(groupOp);
+            }
+        }
+    }
+
     setEvents() {
         this.sharedString.on("op", (msg: API.ISequencedObjectMessage) => {
             if (msg && msg.contents) {
-                let delta = <SharedString.IMergeTreeOp>msg.contents;
-                if (delta.type === SharedString.MergeTreeDeltaType.INSERT) {
-                    this.currentWordSpellCheck(delta.pos1);
-                } else if (delta.type === SharedString.MergeTreeDeltaType.REMOVE) {
-                    this.currentWordSpellCheck(delta.pos1, true);
-                }
+                this.spellOp(<SharedString.IMergeTreeOp>msg.contents);
             }
         });
     }
@@ -136,7 +144,7 @@ class Speller {
             // TODO: send paragraph to service
             spellParagraph(startPGPos, startPGPos + pgText.length, pgText);
         }
-        
+
         this.setEvents();
     }
 

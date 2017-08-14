@@ -1516,6 +1516,24 @@ export class FlowView {
         });
     }
 
+    private applyOp(delta: SharedString.IMergeTreeOp) {
+        if (delta.type === SharedString.MergeTreeDeltaType.INSERT) {
+            if (delta.pos1 <= this.cursor.pos) {
+                this.cursor.pos += delta.text.length;
+            }
+        } else if (delta.type === SharedString.MergeTreeDeltaType.REMOVE) {
+            if (delta.pos2 <= this.cursor.pos) {
+                this.cursor.pos -= (delta.pos2 - delta.pos1);
+            } else if (this.cursor.pos >= delta.pos1) {
+                this.cursor.pos = delta.pos1;
+            }
+        } else if (delta.type === SharedString.MergeTreeDeltaType.GROUP) {
+            for (let groupOp of delta.ops) {
+                this.applyOp(groupOp);
+            }
+        }
+    }
+    
     private queueRender(msg: API.ISequencedObjectMessage) {
         if ((!this.pendingRender) && msg && msg.contents) {
             this.pendingRender = true;
@@ -1523,17 +1541,7 @@ export class FlowView {
                 this.pendingRender = false;
                 if (msg.clientId !== this.client.longClientId) {
                     let delta = <SharedString.IMergeTreeOp> msg.contents;
-                    if (delta.type === SharedString.MergeTreeDeltaType.INSERT) {
-                        if (delta.pos1 <= this.cursor.pos) {
-                            this.cursor.pos += delta.text.length;
-                        }
-                    } else if (delta.type === SharedString.MergeTreeDeltaType.REMOVE) {
-                        if (delta.pos2 <= this.cursor.pos) {
-                            this.cursor.pos -= (delta.pos2 - delta.pos1);
-                        } else if (this.cursor.pos >= delta.pos1) {
-                            this.cursor.pos = delta.pos1;
-                        }
-                    }
+                    this.applyOp(delta);
                 }
                 this.render(this.topChar, true);
             });

@@ -43,15 +43,24 @@ class Speller {
         }
     }
 
+    spellOp(delta: mergeTree.IMergeTreeOp, intelligence: IIntelligentService) {
+        if (delta.type === mergeTree.MergeTreeDeltaType.INSERT) {
+            this.currentWordSpellCheck(intelligence, delta.pos1);
+        } else if (delta.type === mergeTree.MergeTreeDeltaType.REMOVE) {
+            this.currentWordSpellCheck(intelligence, delta.pos1, true);
+        }
+        else if (delta.type === mergeTree.MergeTreeDeltaType.GROUP) {
+            for (let groupOp of delta.ops) {
+                this.spellOp(groupOp, intelligence);
+            }
+        }
+    }
+
     setEvents(intelligence: IIntelligentService) {
         this.sharedString.on("op", (msg: api.ISequencedObjectMessage) => {
             if (msg && msg.contents) {
                 let delta = <mergeTree.IMergeTreeOp>msg.contents;
-                if (delta.type === mergeTree.MergeTreeDeltaType.INSERT) {
-                    this.currentWordSpellCheck(intelligence, delta.pos1);
-                } else if (delta.type === mergeTree.MergeTreeDeltaType.REMOVE) {
-                    this.currentWordSpellCheck(intelligence, delta.pos1, true);
-                }
+                this.spellOp(delta, intelligence);
             }
         });
     }

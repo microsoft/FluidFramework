@@ -56,7 +56,7 @@ export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
 
 export interface IMergeTreeGroupMsg extends IMergeTreeDelta {
     type: MergeTreeDeltaType.GROUP;
-    ops: IMergeTreeDelta[];
+    ops: IMergeTreeOp[];
 }
 
 export type IMergeTreeOp = IMergeTreeInsertMsg | IMergeTreeRemoveMsg | IMergeTreeAnnotateMsg | IMergeTreeGroupMsg;
