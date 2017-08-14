@@ -92,6 +92,12 @@ export interface IDocumentMessage {
 
     // The contents of the message
     contents: any;
+
+    // Flag indicating whether encryption is active
+    encrypted: boolean;
+
+    // The encrypted version of the contents of the message
+    encryptedContents: string;
 }
 
 /**
@@ -121,4 +127,10 @@ export interface ISequencedDocumentMessage {
 
     // The contents of the message
     contents: any;
+
+    // Flag indicating whether encryption is active
+    encrypted: boolean;
+
+    // The encrypted version of the contents of the message
+    encryptedContents: string;
 }

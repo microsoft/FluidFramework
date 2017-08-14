@@ -51,7 +51,8 @@
 
         <script>
             var config = {{{ config }}};
-            controller.initialize("{{ id }}", config);
+            var encrypted = {{ encrypted }};
+            controller.initialize("{{ id }}", config, encrypted);
         </script>
     {{/scripts}}
 {{/layout}}

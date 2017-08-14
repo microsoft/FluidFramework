@@ -60,6 +60,8 @@ async function startProducer(batchSize: number) {
                     type: "set",
                     value: "winky",
                 },
+                encrypted: false,
+                encryptedContents: undefined,
                 referenceSequenceNumber: 0,
                 type: "test",
             },
