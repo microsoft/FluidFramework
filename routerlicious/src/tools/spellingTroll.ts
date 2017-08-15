@@ -288,7 +288,7 @@ class Speller {
 let theSpeller: Speller;
 async function initSpell(id: string) {
 
-    const document = await API.load(id, undefined, { blockUpdateMarkers: true });
+    const document = await API.load(id, { encrypted: undefined, blockUpdateMarkers: true });
     const root = await document.getRoot().getView();
     if (!root.has("text")) {
         root.set("text", document.createString());

@@ -308,6 +308,9 @@ export class TakeANumber {
         }
 
         // And retrieve the window relative MSN
+        // To account for clock skew we always insert later than the last packet
+        // TODO see if Kafka can compute the timestamp - or find some other way to go about this
+        timestamp = Math.max(timestamp, this.window.primaryHead);
         this.window.add(timestamp, msn);
         this.window.updateBase(timestamp - MinSequenceNumberWindow);
         const windowStamp = this.window.get(timestamp - MinSequenceNumberWindow);

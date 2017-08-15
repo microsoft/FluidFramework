@@ -60,6 +60,10 @@ export class DeltaConnection implements IDeltaConnection {
         this.events.emit("op", sequencedObjectMessage);
     }
 
+    public transformDocumentSequenceNumber(value: number) {
+        return this.rangeTracker.get(value);
+    }
+
     public updateMinSequenceNumber(value: number) {
         const newMinSequenceNumber = this.rangeTracker.get(value);
 

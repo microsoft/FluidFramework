@@ -1,3 +1,4 @@
+import * as _ from "lodash";
 import * as io from "socket.io-client";
 import * as api from "../api";
 import { BlobStorageService, DocumentStorageService } from "./blobStorageService";
@@ -138,7 +139,8 @@ export class DocumentService implements api.IDocumentService {
         // Route message to all registered clients
         for (const clientId in connectionMap) {
             if (connectionMap[clientId]) {
-                connectionMap[clientId].dispatchEvent(event, message);
+                const clone = _.cloneDeep(message);
+                connectionMap[clientId].dispatchEvent(event, clone);
             }
         }
     }

@@ -42,9 +42,16 @@ class Speller {
         this.q = queue((task: ISpellQuery, callback) => {
             const resultP = this.intelligence.run(task);
             resultP.then((result) => {
+                const spellErrors = this.checkSpelling(task.rsn, task.text, task.start, result);
                 console.log(`Invoked for: ${task.text}`);
-                console.log(`Query result: ${JSON.stringify(this.checkSpelling(task.rsn, task.text, task.start, result))}`);
+                console.log(`Query result: ${JSON.stringify(spellErrors)}`);
                 console.log(`...........................................`);
+                if (spellErrors.annotations.length > 0) {
+                    for (const annotation of spellErrors.annotations) {
+                        this.sharedString.annotateRangeFromPast({ textError: annotation.textError }, annotation.globalStartOffset, annotation.globalEndOffset, spellErrors.rsn);
+                        this.sharedString.setLocalMinSeq(spellErrors.rsn);
+                    }
+                }
                 callback();
             }, (error) => {
                 callback();
@@ -320,7 +327,7 @@ class Speller {
             let localEndOffset= localStartOffset + critique.Length;
             let origWord = original.substring(localStartOffset, localEndOffset);
             const globalStartOffset = startPos + localStartOffset;
-            const globalEndOffset = startPos + localEndOffset - 1;
+            const globalEndOffset = startPos + localEndOffset;
             let altSpellings = [];
 
             // Spelling error but no suggestions found.
@@ -332,7 +339,7 @@ class Speller {
             for (let i = 0; i < Math.min(Speller.altMax, critique.Suggestions.length); ++i) {
                 altSpellings.push({ text: critique.Suggestions[i].Text, invDistance: i, val: i});
             }
-            annotationRanges.push( {textError: { text: origWord, alternates: altSpellings}, globalStartOffset, globalEndOffset });
+            annotationRanges.push( {textError: { text: origWord, alternates: altSpellings, color: "paul"}, globalStartOffset, globalEndOffset });
         }
         return { rsn, annotations: annotationRanges};
     }

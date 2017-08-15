@@ -1,6 +1,5 @@
 import * as assert from "assert";
 import { EventEmitter } from "events";
-import * as _ from "lodash";
 import * as uuid from "node-uuid";
 import * as cell from "../cell";
 import * as ink from "../ink";
@@ -123,13 +122,13 @@ interface IAttachedServices {
 export class Document {
     public static async Create(
         id: string,
-        encrypted: boolean,
         registry: extensions.Registry,
         service: storage.IDocumentService,
         options: Object): Promise<Document> {
 
         // Connect to the document
-        const document = await service.connect(id, encrypted);
+        const encryptedProperty = "encrypted";
+        const document = await service.connect(id, options[encryptedProperty]);
         const returnValue = new Document(document, registry, options);
 
         // Load in distributed objects stored within the document
@@ -384,17 +383,20 @@ export class Document {
     /**
      * Transforms the given message relative to the provided sequence number
      */
-    private transform(input: ISequencedDocumentMessage, sequenceNumber: number): ISequencedDocumentMessage {
-        const message = _.clone(input);
+    private transform(message: ISequencedDocumentMessage, sequenceNumber: number): ISequencedDocumentMessage {
+        if (message.referenceSequenceNumber < this.deltaManager.minimumSequenceNumber) {
+            // Allow the distributed data types to perform custom transformations
+            if (message.type === ObjectOperation) {
+                const envelope = message.contents as IEnvelope;
+                const objectDetails = this.distributedObjects[envelope.address];
+                envelope.contents = objectDetails.object.transform(
+                    envelope.contents as IObjectMessage,
+                    objectDetails.connection.transformDocumentSequenceNumber(sequenceNumber));
+            }
 
-        // Allow the distributed data types to perform custom transformations
-        if (message.type === ObjectOperation) {
-            const envelope = message.contents as IEnvelope;
-            const objectDetails = this.distributedObjects[envelope.address];
-            envelope.contents = objectDetails.object.transform(envelope.contents as IObjectMessage, sequenceNumber);
+            message.referenceSequenceNumber = sequenceNumber;
         }
 
-        message.referenceSequenceNumber = sequenceNumber;
         message.minimumSequenceNumber = sequenceNumber;
         return message;
     }
@@ -535,7 +537,6 @@ export class Document {
  */
 export async function load(
     id: string,
-    encrypted: boolean = false,
     options: Object = defaultDocumentOptions,
     registry: extensions.Registry = defaultRegistry,
     service: storage.IDocumentService = defaultDocumentService): Promise<Document> {
@@ -550,5 +551,5 @@ export async function load(
         throw new Error("Document service not provided to load call");
     }
 
-    return Document.Create(id, encrypted, registry, service, options);
+    return Document.Create(id, registry, service, options);
 }
