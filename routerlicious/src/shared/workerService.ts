@@ -129,7 +129,7 @@ export class WorkerService implements api.IWorkerService {
     }
 
     private async processSnapshot(id: string) {
-        api.load(id, { encrypted: undefined }).then(async (doc) => {
+        api.load(id, { encrypted: undefined, localMinSeq: 0 }).then(async (doc) => {
             console.log(`Loaded snapshot document ${id}`);
             this.documentSnapshotMap[id] = doc;
             const serializer = new shared.Serializer(doc);
