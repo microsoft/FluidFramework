@@ -1,6 +1,5 @@
 import * as assert from "assert";
 import { EventEmitter } from "events";
-import * as _ from "lodash";
 import * as uuid from "node-uuid";
 import * as cell from "../cell";
 import * as ink from "../ink";
@@ -384,17 +383,20 @@ export class Document {
     /**
      * Transforms the given message relative to the provided sequence number
      */
-    private transform(input: ISequencedDocumentMessage, sequenceNumber: number): ISequencedDocumentMessage {
-        const message = _.clone(input);
+    private transform(message: ISequencedDocumentMessage, sequenceNumber: number): ISequencedDocumentMessage {
+        if (message.referenceSequenceNumber < this.deltaManager.minimumSequenceNumber) {
+            // Allow the distributed data types to perform custom transformations
+            if (message.type === ObjectOperation) {
+                const envelope = message.contents as IEnvelope;
+                const objectDetails = this.distributedObjects[envelope.address];
+                envelope.contents = objectDetails.object.transform(
+                    envelope.contents as IObjectMessage,
+                    objectDetails.connection.transformDocumentSequenceNumber(sequenceNumber));
+            }
 
-        // Allow the distributed data types to perform custom transformations
-        if (message.type === ObjectOperation) {
-            const envelope = message.contents as IEnvelope;
-            const objectDetails = this.distributedObjects[envelope.address];
-            envelope.contents = objectDetails.object.transform(envelope.contents as IObjectMessage, sequenceNumber);
+            message.referenceSequenceNumber = sequenceNumber;
         }
 
-        message.referenceSequenceNumber = sequenceNumber;
         message.minimumSequenceNumber = sequenceNumber;
         return message;
     }

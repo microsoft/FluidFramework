@@ -6,6 +6,7 @@ import * as ops from "./ops";
 import * as API from "../api";
 import { ISequencedObjectMessage } from "../api";
 import * as Properties from "./properties";
+import * as assert from "assert";
 
 export type MapLike<T> = Properties.MapLike<T>;
 export type PropertySet = Properties.PropertySet;
@@ -1323,6 +1324,9 @@ export class Client {
     }
 
     transform(msg: API.ISequencedObjectMessage, toSequenceNumber: number) {
+        if (msg.referenceSequenceNumber >= toSequenceNumber) {
+            return msg;
+        }
         let op = <ops.IMergeTreeOp>msg.contents;
         msg.contents = this.transformOp(op, msg, toSequenceNumber);
     }
@@ -2110,8 +2114,13 @@ export class MergeTree {
             if ((toSeq <= this.collabWindow.currentSeq) && (fromSeq >= this.collabWindow.minSeq)) {
                 let segoff = this.getContainingSegment(pos, fromSeq, NonCollabClient);
                 let toPos = this.getOffset(segoff.segment, toSeq, toClientId);
-                return toPos + segoff.offset;
+                let ret = toPos + segoff.offset;
+                assert(ret !== undefined);
+                return ret;
             }
+            assert(false);
+        } else {
+            return pos;
         }
     }
 

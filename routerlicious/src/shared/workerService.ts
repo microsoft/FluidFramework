@@ -146,7 +146,7 @@ export class WorkerService implements api.IWorkerService {
     }
 
     private async processIntelligenceServices(id: string) {
-        api.load(id, { blockUpdateMarkers: true, encrypted: true }).then(async (doc) => {
+        api.load(id, { blockUpdateMarkers: true, localMinSeq: 0, encrypted: undefined }).then(async (doc) => {
             console.log(`Loaded intelligence document ${id}`);
             this.documentIntelMap[id] = doc;
             const root = await doc.getRoot().getView();
