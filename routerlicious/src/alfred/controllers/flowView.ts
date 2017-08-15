@@ -110,6 +110,7 @@ type Alt = SharedString.Collections.ProxString<number>;
 interface ITextErrorInfo {
     text: string;
     alternates: Alt[];
+    color?: string;
 }
 
 export interface ISelectionListBox {
@@ -383,6 +384,8 @@ function elmOffToSegOff(elmOff: IRangeInfo, span: HTMLSpanElement) {
 
 let cachedCanvas: HTMLCanvasElement;
 let underlineStringURL = `url(${url.resolve(document.baseURI, "/public/images/underline.gif")}) bottom repeat-x`;
+// tslint:disable:max-line-length
+let underlinePaulStringURL = `url(${url.resolve(document.baseURI, "/public/images/underline-paul.gif")}) bottom repeat-x`;
 
 function getTextWidth(text: string, font: string) {
     // re-use canvas object for better performance
@@ -729,7 +732,11 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
                         let textErrorInfo = <ITextErrorInfo>textSegment.properties[key];
                         let slb: ISelectionListBox;
                         span.textErrorRun = textErrorRun;
-                        span.style.background = underlineStringURL;
+                        if (textErrorInfo.color) {
+                            span.style.background = underlinePaulStringURL;
+                        } else {
+                            span.style.background = underlineStringURL;
+                        }
                         if (textErrorInfo.alternates.length > 0) {
                             span.onmousedown = (e) => {
                                 function cancelIntellisense(ev: MouseEvent) {
@@ -754,7 +761,7 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
                                     // console.log(`highlight ${itemElm.innerText}`);
                                 }
                                 console.log(`button ${e.button}`);
-                                if ((e.button === 2)||((e.button === 0) && (e.ctrlKey))) {
+                                if ((e.button === 2) || ((e.button === 0) && (e.ctrlKey))) {
                                     let spanBounds = Geometry.Rectangle.fromClientRect(span.getBoundingClientRect());
                                     spanBounds.width = Math.floor(window.innerWidth / 4);
                                     slb = selectionListBoxCreate(spanBounds, document.body, 24, 0, 12);
@@ -1533,14 +1540,14 @@ export class FlowView {
             }
         }
     }
-    
+
     private queueRender(msg: API.ISequencedObjectMessage) {
         if ((!this.pendingRender) && msg && msg.contents) {
             this.pendingRender = true;
             window.requestAnimationFrame(() => {
                 this.pendingRender = false;
                 if (msg.clientId !== this.client.longClientId) {
-                    let delta = <SharedString.IMergeTreeOp> msg.contents;
+                    let delta = <SharedString.IMergeTreeOp>msg.contents;
                     this.applyOp(delta);
                 }
                 this.render(this.topChar, true);
