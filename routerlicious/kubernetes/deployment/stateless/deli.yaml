@@ -11,11 +11,10 @@ spec:
     spec:
       containers:
       - name: prague
-        image: prague.azurecr.io/prague:576
+        image: prague.azurecr.io/prague:614
         command:
-          - 'npm'
-          - 'run'
-          - 'deli'
+          - 'node'
+          - 'dist/deli/index.js'
         env:
         - name: DEBUG
           value: "routerlicious:*"

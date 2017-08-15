@@ -19,7 +19,7 @@ data:
             "endpoint": "mongodb://worn-stoat-mongodb:27017",
             "collectionNames": {
                 "deltas": "deltas",
-                "objects": "objects",
+                "documents": "documents",
                 "partitions": "partitions"
             }
         },
@@ -31,14 +31,14 @@ data:
         },
         "alfred": {
             "kafkaClientId": "alfred",
-            "topic": "rawdeltasrep",
+            "topic": "rawdeltas",
             "bucket": "snapshots",
             "restJsonSize": "50mb"
         },
         "deli": {
             "topics": {
-                "receive": "rawdeltasrep",
-                "send": "deltasrep"
+                "receive": "rawdeltas",
+                "send": "deltas"
             },
             "kafkaClientId": "deli",
             "groupId": "deli",
@@ -52,7 +52,7 @@ data:
             "tmz": "http://tmz"
         },
         "scriptorium": {
-            "topic": "deltasrep",
+            "topic": "deltas",
             "kafkaClientId": "scriptorium",
             "groupId": "scriptorium",
             "checkpointBatchSize": 1,
@@ -60,14 +60,14 @@ data:
         },
         "tmz": {
             "queue": "snapshot",
-            "topic": "deltasrep",
+            "topic": "deltas",
             "kafkaClientId": "tmz",
             "groupId": "tmz",
             "port": 4000,
             "timeoutMSec": {
                 "checker": 10000,
                 "worker": 10000,
-                "document": 15000
+                "document": 600000
             },
             "workerType": "random",
             "workerAckTimeMSec": 100,
@@ -96,13 +96,19 @@ data:
                     "key": "c8b60dc5e49849ce903d7d29a2dce550"
                 },
                 "nativeTextAnalytics": {
+                    "enable": false,
                     "url": "http://praguepy.westus2.cloudapp.azure.com/"
+                },
+                "spellchecker": {
+                    "url": "http://augmentation.westus2.cloudapp.azure.com/spellchecker"
                 }
             },
             "url": "http://praguetmz.westus2.cloudapp.azure.com",
+            "blobStorageUrl": "http://prague-historian.westus2.cloudapp.azure.com",
+            "repository": "prague",
             "storageBucket": "snapshots",
-            "intervalMSec": 10000,
-            "onlyServer": false,
+            "intervalMSec": 5000,
+            "onlyServer": true,
             "permission": {
                 "canvas": false,
                 "cell": true,
@@ -112,6 +118,6 @@ data:
         },
         "git": {
             "repository": "prague",
-            "historian": "http://historian:3000"
+            "historian": "http://prague-historian.westus2.cloudapp.azure.com"
         }
     }

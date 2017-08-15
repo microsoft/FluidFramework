@@ -6,24 +6,12 @@ metadata:
     app: historian
 spec:
   ports:
-    - name: http
-      port: 3000
-      targetPort: http
-  clusterIP: None
-  selector:
-    app: historian
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: git
-  labels:
-    app: git
-spec:
-  ports:
     - name: ssh
       port: 22
       targetPort: ssh
+    - name: http
+      port: 80
+      targetPort: http
   type: LoadBalancer
   selector:
     app: historian
@@ -50,7 +38,7 @@ spec:
         - name: data
           mountPath: /home/git
       - name: historian
-        image: prague.azurecr.io/historian:551
+        image: prague.azurecr.io/historian:597
         ports:
         - name: http
           containerPort: 3000

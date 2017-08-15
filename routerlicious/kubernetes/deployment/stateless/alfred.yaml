@@ -26,7 +26,10 @@ spec:
     spec:
       containers:
       - name: routerlicious
-        image: prague.azurecr.io/prague:576
+        image: prague.azurecr.io/prague:614
+        command:
+          - 'node'
+          - 'dist/alfred/www.js'
         ports:
         - name: ui
           containerPort: 3000

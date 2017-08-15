@@ -3,20 +3,20 @@ services:
     alfred:
         ports:
             - "5858:5858"
-        command: npm run alfred:debug
+        command: node --inspect=0.0.0.0:5858 dist/alfred/www.js
     deli:
         ports:
             - "5859:5858"
-        command: npm run deli:debug
+        command: node --inspect=0.0.0.0:5858 dist/deli/index.js
     paparazzi:
         ports:
             - "5860:5858"
-        command: npm run paparazzi:debug
+        command: node --inspect=0.0.0.0:5858 dist/paparazzi/index.js
     scriptorium:
         ports:
             - "5861:5858"
-        command: npm run scriptorium:debug
+        command: node --inspect=0.0.0.0:5858 dist/scriptorium/index.js
     tmz:
         ports:
             - "5862:5858"
-        command: npm run tmz:debug
+        command: node --inspect=0.0.0.0:5858 dist/tmz/index.js

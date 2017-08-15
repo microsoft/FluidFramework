@@ -21,6 +21,10 @@ export class RangeTracker {
         return this.ranges[0].primary;
     }
 
+    get primaryHead() {
+        return this.lastPrimary;
+    }
+
     constructor(primary: number, secondary: number) {
         this.ranges = [{ length: 0, primary, secondary }];
         this.lastPrimary = primary;

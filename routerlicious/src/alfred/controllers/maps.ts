@@ -6,7 +6,7 @@ import * as socketStorage from "../../socket-storage";
 
 async function loadDocument(id: string, encrypted: boolean): Promise<api.Document> {
     console.log("Loading in root document...");
-    const document = await api.load(id, encrypted);
+    const document = await api.load(id, { encrypted });
 
     console.log("Document loaded");
     return document;

@@ -122,13 +122,13 @@ interface IAttachedServices {
 export class Document {
     public static async Create(
         id: string,
-        encrypted: boolean,
         registry: extensions.Registry,
         service: storage.IDocumentService,
         options: Object): Promise<Document> {
 
         // Connect to the document
-        const document = await service.connect(id, encrypted);
+        const encryptedProperty = "encrypted";
+        const document = await service.connect(id, options[encryptedProperty]);
         const returnValue = new Document(document, registry, options);
 
         // Load in distributed objects stored within the document
@@ -537,7 +537,6 @@ export class Document {
  */
 export async function load(
     id: string,
-    encrypted: boolean = false,
     options: Object = defaultDocumentOptions,
     registry: extensions.Registry = defaultRegistry,
     service: storage.IDocumentService = defaultDocumentService): Promise<Document> {
@@ -552,5 +551,5 @@ export async function load(
         throw new Error("Document service not provided to load call");
     }
 
-    return Document.Create(id, encrypted, registry, service, options);
+    return Document.Create(id, registry, service, options);
 }
