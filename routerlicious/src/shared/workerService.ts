@@ -129,7 +129,7 @@ export class WorkerService implements api.IWorkerService {
     }
 
     private async processSnapshot(id: string) {
-        api.load(id, undefined).then(async (doc) => {
+        api.load(id, { encrypted: undefined }).then(async (doc) => {
             console.log(`Loaded snapshot document ${id}`);
             this.documentSnapshotMap[id] = doc;
             const serializer = new shared.Serializer(doc);
@@ -146,7 +146,7 @@ export class WorkerService implements api.IWorkerService {
     }
 
     private async processIntelligenceServices(id: string) {
-        api.load(id, undefined, { blockUpdateMarkers: true }).then(async (doc) => {
+        api.load(id, { blockUpdateMarkers: true, encrypted: true }).then(async (doc) => {
             console.log(`Loaded intelligence document ${id}`);
             this.documentIntelMap[id] = doc;
             const root = await doc.getRoot().getView();
