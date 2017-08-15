@@ -26,14 +26,13 @@ spec:
     spec:
       containers:
       - name: prague
-        image: prague.azurecr.io/prague:576
+        image: prague.azurecr.io/prague:614
         ports:
         - name: ui
           containerPort: 4000
         command:
-          - 'npm'
-          - 'run'
-          - 'tmz'
+          - 'node'
+          - 'dist/tmz/index.js'
         env:
         - name: DEBUG
           value: "routerlicious:*"
