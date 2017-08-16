@@ -2,7 +2,7 @@
   "name": "historian",
   "version": "0.1.0",
   "description": "Git REST API",
-  "main": "index.js",
+  "main": "dist/www.js",
   "scripts": {
     "build": "npm run tslint && npm run tsc",
     "start": "node dist/www.js",
@@ -18,7 +18,7 @@
     "express": "^4.15.3",
     "morgan": "^1.8.2",
     "nconf": "^0.8.4",
-    "nodegit": "https://praguenpm.blob.core.windows.net/packages/nodegit-0.19.0-prague.tgz",
+    "nodegit": "https://praguenpm.blob.core.windows.net/packages/nodegit-0.19.0-prague2.tgz",
     "split": "^1.0.0",
     "winston": "^2.3.1"
   },
