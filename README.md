@@ -30,3 +30,14 @@ We're currently in the middle of [Sprint 2](./doc/sprints/sprint2/readme.md). Hi
 
 We make use of https://hub.docker.com/r/microsoft/vsts-agent/ for building all of the source in this project.
 
+To add a new agent to our pool simply run the following command
+
+```
+docker run \
+    -d \
+    --restart unless-stopped \
+    -e VSTS_ACCOUNT=offnet \
+    -e VSTS_TOKEN=<token> \
+    -v /var/run/docker.sock:/var/run/docker.sock \
+    microsoft/vsts-agent:ubuntu-16.04-docker-17.03.0-ce-standard
+```
