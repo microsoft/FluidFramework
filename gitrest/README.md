@@ -1,9 +1,6 @@
-# Historian
+# GIT REST
 
-The historian service tracks the historical record for a document.
-
-It serves as a proxy to the underlying git repository that maintains the versioned snapshots. It's API is based off
-of GitHub's REST APIs.
+Provides a REST API to a GitHub repository. It's API is based off of GitHub's REST APIs.
 
 ## Building and running
 
@@ -15,15 +12,15 @@ specific container.
 
 You can build the container by running.
 
-`docker build -t historian .`
+`docker build -t gitrest .`
 
 And then mount it for development by running.
 
-`docker run -it -v "$(pwd):/home/node/server" -p 3000:3000 historian /bin/sh`
+`docker run -it -v "$(pwd):/home/node/server" -p 3000:3000 gitrest /bin/sh`
 
 ## Testing
 
-`docker run -t historian npm test`
+`docker run -t gitrest npm test`
 
 ## Nodegit Workarounds
 
