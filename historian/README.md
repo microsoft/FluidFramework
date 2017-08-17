@@ -16,7 +16,7 @@ And then mount it for development by running.
 `docker run -it -v "$(pwd):/home/node/server" -p 3000:3000 historian /bin/sh`
 
 When mounted for development you'll want to run the following commands. These also work if you would like to
-develop outside of the container
+develop outside of the container.
 
 `npm install`
 `npm run build`

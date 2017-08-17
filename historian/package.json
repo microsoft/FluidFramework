@@ -16,6 +16,7 @@
     "cors": "^2.8.4",
     "debug": "^2.6.8",
     "express": "^4.15.3",
+    "gitresources": "https://praguenpm.blob.core.windows.net/packages/gitresources-0.1.0.tgz",
     "morgan": "^1.8.2",
     "nconf": "^0.8.4",
     "split": "^1.0.0",
