@@ -1,0 +1,11 @@
+{
+    "logger": {
+        "colorize": true,
+        "morganFormat": "dev",
+        "json": false,
+        "level": "info",
+        "timestamp": true
+    },
+    "requestSizeLimit": "1gb",
+    "storageDir": "/home/node/documents"
+}

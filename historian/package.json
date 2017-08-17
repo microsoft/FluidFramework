@@ -1,5 +1,5 @@
 {
-  "name": "gitrest",
+  "name": "historian",
   "version": "0.1.0",
   "description": "Git REST API",
   "main": "dist/www.js",
@@ -18,7 +18,6 @@
     "express": "^4.15.3",
     "morgan": "^1.8.2",
     "nconf": "^0.8.4",
-    "nodegit": "https://praguenpm.blob.core.windows.net/packages/nodegit-0.19.0-prague2.tgz",
     "split": "^1.0.0",
     "winston": "^2.3.1"
   },
@@ -28,15 +27,12 @@
     "@types/mocha": "^2.2.41",
     "@types/morgan": "^1.7.32",
     "@types/nconf": "0.0.34",
-    "@types/nodegit": "^0.18.0",
-    "@types/rimraf": "0.0.28",
     "@types/supertest": "^2.0.1",
     "@types/winston": "^2.3.3",
     "async": "^2.5.0",
     "mocha": "^3.4.2",
     "moniker": "^0.1.2",
     "nyc": "^11.1.0",
-    "rimraf": "^2.6.1",
     "supertest": "^3.0.0",
     "tslint": "^5.5.0",
     "typescript": "^2.4.1"
