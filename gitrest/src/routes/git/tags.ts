@@ -67,8 +67,8 @@ export function create(store: nconf.Provider, repoManager: utils.RepositoryManag
             });
     });
 
-    router.get("/repos/:repo/git/tags/:sha", (request, response, next) => {
-        const blobP = getTag(repoManager, request.params.repo, request.params.sha);
+    router.get("/repos/:repo/git/tags/*", (request, response, next) => {
+        const blobP = getTag(repoManager, request.params.repo, request.params[0]);
         return blobP.then(
             (blob) => {
                 response.status(200).json(blob);

@@ -38,7 +38,7 @@ winston.configure({
  */
 // tslint:disable-next-line:no-string-literal
 const port = normalizePort(process.env["PORT"] || "3000");
-const historian = app.create(provider);
+const historian = app.create(provider, null, null);
 historian.set("port", port);
 
 /**

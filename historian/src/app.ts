@@ -7,6 +7,7 @@ import * as nconf from "nconf";
 import split = require("split");
 import * as winston from "winston";
 import * as routes from "./routes";
+import * as services from "./services";
 
 /**
  * Basic stream logging interface for libraries that require a stream to pipe output to
@@ -15,7 +16,7 @@ const stream = split().on("data", (message) => {
   winston.info(message);
 });
 
-export function create(store: nconf.Provider) {
+export function create(store: nconf.Provider, gitService: services.IGitService, cacheService: services.ICache) {
     // Express app configuration
     const app: Express = express();
 
@@ -27,7 +28,7 @@ export function create(store: nconf.Provider) {
     app.use(bodyParser.urlencoded({ limit: requestSize, extended: false }));
 
     app.use(cors());
-    const apiRoutes = routes.create(store);
+    const apiRoutes = routes.create(store, gitService, cacheService);
     app.use(apiRoutes.git.blobs);
     app.use(apiRoutes.git.refs);
     app.use(apiRoutes.git.repos);
