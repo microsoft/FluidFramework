@@ -13,6 +13,9 @@ RUN npm run build
 # Expose the port the app runs under
 EXPOSE 3000
 
+# Give node user access to .nyc in order to run unit tests
+RUN mkdir .nyc
+RUN chown node: .nyc
 USER node
 
 # Node wasn't designed to be run as PID 1. Tini is a tiny init wrapper. You can also set --init on docker later than
