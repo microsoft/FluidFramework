@@ -1,6 +1,7 @@
 import * as git from "gitresources";
 import * as querystring from "querystring";
 import * as request from "request";
+import * as winston from "winston";
 import { IGitService } from "./definitions";
 
 export class RestGitService implements IGitService {
@@ -8,7 +9,7 @@ export class RestGitService implements IGitService {
     }
 
     public getBlob(repo: string, sha: string): Promise<git.IBlob> {
-        return this.get(`/repos/${encodeURIComponent(repo)}/git/blobs/encodeURIComponent${sha}`);
+        return this.get(`/repos/${encodeURIComponent(repo)}/git/blobs/${encodeURIComponent(sha)}`);
     }
 
     public createBlob(repo: string, blob: git.ICreateBlobParams): Promise<git.ICreateBlobResponse> {
@@ -29,7 +30,7 @@ export class RestGitService implements IGitService {
     }
 
     public getCommit(repo: string, sha: string): Promise<git.ICommit> {
-        return this.get(`/repos/${encodeURIComponent(repo)}/git/commits/encodeURIComponent${sha}`);
+        return this.get(`/repos/${encodeURIComponent(repo)}/git/commits/${encodeURIComponent(sha)}`);
     }
 
     public createCommit(repo: string, commit: git.ICreateCommitParams): Promise<git.ICommit> {
@@ -57,6 +58,7 @@ export class RestGitService implements IGitService {
     }
 
     public createRepo(repo: git.ICreateRepoParams): Promise<any> {
+        winston.info(`Create ${repo.name}`);
         return this.post(`/repos`, repo);
     }
 
@@ -79,14 +81,14 @@ export class RestGitService implements IGitService {
     public getTree(repo: string, sha: string, recursive: boolean): Promise<git.ITree> {
         const query = querystring.stringify({ recursive: recursive ? 1 : 0 });
         return this.get(
-            `/repos/${encodeURIComponent(repo)}/git/trees/encodeURIComponent${sha}?${query}`);
+            `/repos/${encodeURIComponent(repo)}/git/trees/${encodeURIComponent(sha)}?${query}`);
     }
 
     private get<T>(url: string): Promise<T> {
         const options: request.OptionsWithUrl = {
             json: true,
             method: "GET",
-            url: `${this.gitServerUrl}/${url}`,
+            url: `${this.gitServerUrl}${url}`,
         };
         return this.request(options, 200);
     }
@@ -99,7 +101,7 @@ export class RestGitService implements IGitService {
             },
             json: true,
             method: "POST",
-            url: `${this.gitServerUrl}/${url}`,
+            url: `${this.gitServerUrl}${url}`,
         };
         return this.request(options, 201);
     }
@@ -107,7 +109,7 @@ export class RestGitService implements IGitService {
     private delete<T>(url: string): Promise<T> {
         const options: request.OptionsWithUrl = {
             method: "DELETE",
-            url: `${this.gitServerUrl}/${url}`,
+            url: `${this.gitServerUrl}${url}`,
         };
         return this.request(options, 204);
     }
@@ -120,14 +122,14 @@ export class RestGitService implements IGitService {
             },
             json: true,
             method: "PATCH",
-            url: `${this.gitServerUrl}/${url}`,
+            url: `${this.gitServerUrl}${url}`,
         };
         return this.request(options, 200);
     }
 
     private request<T>(options: request.OptionsWithUrl, statusCode: number): Promise<T> {
         return new Promise<T>((resolve, reject) => {
-            request.patch(
+            request(
                 options,
                 (error, response, body) => {
                     if (error) {
@@ -135,7 +137,7 @@ export class RestGitService implements IGitService {
                     } else if (response.statusCode !== statusCode) {
                         return reject(response.statusCode);
                     } else {
-                        return resolve(response.body.sha);
+                        return resolve(response.body);
                     }
                 });
         });
