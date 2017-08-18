@@ -1,6 +1,5 @@
-// tslint:disable:align
-
 import * as assert from "assert";
+import * as resources from "gitresources";
 import * as api from "../api";
 import * as shared from "../shared";
 import * as MergeTree from "./mergeTree";
@@ -17,7 +16,7 @@ export class CollaboritiveStringExtension implements api.IExtension {
         id: string,
         sequenceNumber: number,
         services: api.IDistributedObjectServices,
-        version: string,
+        version: resources.ICommit,
         header: string): api.ICollaborativeObject {
 
         let collaborativeString = new SharedString(document, id, sequenceNumber, services);
@@ -141,8 +140,12 @@ export class SharedString extends api.CollaborativeObject {
         this.submitLocalOperation(removeMessage);
     }
 
-    public annotateRangeFromPast(props: MergeTree.PropertySet, start: number, end: number,
+    public annotateRangeFromPast(
+        props: MergeTree.PropertySet,
+        start: number,
+        end: number,
         fromSeq: number) {
+
         let ranges = this.client.mergeTree.tardisRange(start, end, fromSeq, this.client.getCurrentSeq(),
             this.client.getClientId());
         ranges.map((range: MergeTree.IRange) => {

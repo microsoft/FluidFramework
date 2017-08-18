@@ -1,3 +1,4 @@
+import * as resources from "gitresources";
 import * as api from "../api";
 import { InkCollaborativeObject } from "./collabObject";
 
@@ -11,7 +12,7 @@ export class InkExtension implements api.IExtension {
         id: string,
         sequenceNumber: number,
         services: api.IDistributedObjectServices,
-        version: string,
+        version: resources.ICommit,
         header: string): api.ICollaborativeObject {
 
         return new InkCollaborativeObject(document, id, sequenceNumber, services, version, header);

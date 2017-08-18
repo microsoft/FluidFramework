@@ -1,4 +1,5 @@
 import { EventEmitter } from "events";
+import * as resources from "gitresources";
 import * as _ from "lodash";
 import * as api from "../api";
 
@@ -153,7 +154,7 @@ class Map extends api.CollaborativeObject implements api.IMap {
         id: string,
         sequenceNumber: number,
         services?: api.IDistributedObjectServices,
-        version?: string,
+        version?: resources.ICommit,
         header?: string) {
         super(document, id, MapExtension.Type, sequenceNumber, services);
 
@@ -266,7 +267,7 @@ export class MapExtension implements api.IExtension {
         id: string,
         sequenceNumber: number,
         services: api.IDistributedObjectServices,
-        version: string,
+        version: resources.ICommit,
         header: string): api.IMap {
 
         return new Map(document, id, sequenceNumber, services, version, header);

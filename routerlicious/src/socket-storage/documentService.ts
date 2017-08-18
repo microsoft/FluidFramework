@@ -1,3 +1,4 @@
+import * as resources from "gitresources";
 import * as _ from "lodash";
 import * as io from "socket.io-client";
 import * as api from "../api";
@@ -17,7 +18,7 @@ class Document implements api.IDocument {
         public documentId: string,
         public clientId: string,
         public existing: boolean,
-        public version: string,
+        public version: resources.ICommit,
         public deltaConnection: api.IDocumentDeltaConnection,
         public documentStorageService: api.IDocumentStorageService,
         public deltaStorageService: api.IDeltaStorageService,
@@ -65,8 +66,13 @@ export class DocumentService implements api.IDocumentService {
                     if (error) {
                         return reject(error);
                     } else {
-                        const deltaConnection = new DocumentDeltaConnection(this, id, response.clientId, encrypted,
-                                                                            response.privateKey, response.publicKey);
+                        const deltaConnection = new DocumentDeltaConnection(
+                            this,
+                            id,
+                            response.clientId,
+                            encrypted,
+                            response.privateKey,
+                            response.publicKey);
                         const deltaStorage = new DocumentDeltaStorageService(id, this.deltaStorage);
                         const documentStorage = new DocumentStorageService(id, response.version, this.blobStorge);
 

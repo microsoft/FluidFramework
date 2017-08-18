@@ -12,8 +12,6 @@ router.get("/:id?", (request, response, next) => {
     const id = request.params.id ? request.params.id : "test";
     const encrypted = request.query.encrypted ? true : false;
 
-    console.log("QUERY PARAMS: " + request.query);
-
     const config = JSON.stringify(nconf.get("worker"));
     response.render(
         "maps",
