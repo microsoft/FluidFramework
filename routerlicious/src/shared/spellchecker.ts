@@ -314,14 +314,17 @@ class Speller {
     checkSpelling(rsn: number, original: string, startPos: number, result: any) {
         let annotationRanges = [];
         if (result.spellcheckerResult.answer === null) {
+            annotationRanges.push( {textError: null, globalStartOffset: startPos, globalEndOffset: startPos + original.length });
             return { rsn, annotations: annotationRanges};
         }
         const answer = result.spellcheckerResult.answer;
         if (answer.Critiques.length === 0) {
+            annotationRanges.push( {textError: null, globalStartOffset: startPos, globalEndOffset: startPos + original.length });
             return { rsn, annotations: annotationRanges};
         }
         const critiques = answer.Critiques;
         
+        let ss = startPos;
         for (let critique of critiques) {
             let localStartOffset = critique.Start;
             let localEndOffset= localStartOffset + critique.Length;
@@ -329,6 +332,12 @@ class Speller {
             const globalStartOffset = startPos + localStartOffset;
             const globalEndOffset = startPos + localEndOffset;
             let altSpellings = [];
+
+            // Correctly spelled ranges.
+            if (ss < globalStartOffset) {
+                annotationRanges.push( {textError: null, globalStartOffset: ss, globalEndOffset: globalStartOffset });                
+            }
+            ss = globalEndOffset;
 
             // Spelling error but no suggestions found.
             if (critique.Suggestions.length === 0 || critique.Suggestions[0].Text === "No suggestions") {
@@ -340,6 +349,9 @@ class Speller {
                 altSpellings.push({ text: critique.Suggestions[i].Text, invDistance: i, val: i});
             }
             annotationRanges.push( {textError: { text: origWord, alternates: altSpellings, color: "paul"}, globalStartOffset, globalEndOffset });
+        }
+        if (ss < startPos + original.length) {
+            annotationRanges.push( {textError: null, globalStartOffset: ss, globalEndOffset: startPos + original.length });
         }
         return { rsn, annotations: annotationRanges};
     }
