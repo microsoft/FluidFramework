@@ -1,8 +1,8 @@
 import { Router } from "express";
+import { ICommit, ICreateCommitParams } from "gitresources";
 import * as nconf from "nconf";
 import * as git from "nodegit";
 import * as winston from "winston";
-import { commitToICommit, ICommit, ICreateCommitParams } from "../../resources";
 import * as utils from "../../utils";
 
 async function createCommit(
@@ -39,7 +39,7 @@ async function getCommit(repoManager: utils.RepositoryManager, repo: string, sha
     const author = commit.author();
     winston.info(JSON.stringify(author));
 
-    return commitToICommit(commit);
+    return utils.commitToICommit(commit);
 }
 
 export function create(store: nconf.Provider, repoManager: utils.RepositoryManager): Router {

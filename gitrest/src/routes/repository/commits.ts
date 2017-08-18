@@ -1,7 +1,7 @@
 import { Router } from "express";
+import * as resources from "gitresources";
 import * as nconf from "nconf";
 import * as git from "nodegit";
-import * as resources from "../../resources";
 import * as utils from "../../utils";
 
 async function getCommits(
@@ -20,7 +20,7 @@ async function getCommits(
     walker.push(revObj.id());
     const commits = await walker.getCommits(10);
 
-    return await Promise.all(commits.map((commit) => resources.commitToICommit(commit)));
+    return await Promise.all(commits.map((commit) => utils.commitToICommit(commit)));
 }
 
 export function create(store: nconf.Provider, repoManager: utils.RepositoryManager): Router {

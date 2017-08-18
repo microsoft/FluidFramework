@@ -26,7 +26,7 @@ export class CollaboritiveStringExtension implements api.IExtension {
         return collaborativeString;
     }
 
-    public create(document: api.Document, id: string): api.ICollaborativeObject {
+    public create(document: api.Document, id: string, options?: Object): api.ICollaborativeObject {
         let collaborativeString = new SharedString(document, id, 0);
         collaborativeString.load(0, null, false);
 

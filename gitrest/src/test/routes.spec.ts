@@ -1,8 +1,8 @@
 import * as assert from "assert";
+import { ICreateBlobParams, ICreateCommitParams, ICreateRefParams, ICreateTreeParams } from "gitresources";
 import * as request from "supertest";
 import * as winston from "winston";
 import * as app from "../app";
-import { ICreateBlobParams, ICreateCommitParams, ICreateRefParams, ICreateTreeParams } from "../resources";
 import * as testUtils from "./utils";
 
 function createRepo(supertest: request.SuperTest<request.Test>, name: string) {

@@ -1793,15 +1793,15 @@ export class MergeTree {
 
     constructor(public text: string, public options?: PropertySet) {
         this.blockUpdateActions = MergeTree.initBlockUpdateActions;
-        this.root = this.initialTextNode(this.text);
         if (options) {
             if (options.blockUpdateMarkers) {
                 this.blockUpdateMarkers = options.blockUpdateMarkers;
             }
-            if (options.localMinSeq) {
+            if (options.localMinSeq !== undefined) {
                 this.collabWindow.localMinSeq = options.localMinSeq;
             }
         }
+        this.root = this.initialTextNode(this.text);
     }
 
     private makeBlock(childCount: number) {
@@ -1969,6 +1969,8 @@ export class MergeTree {
             // debug assert not isLeaf()
             childBlock = <Block>children[childIndex];
             this.scourNode(childBlock, holdNodes);
+            // will replace this block with a packed block
+            childBlock.parent = undefined;
         }
         let totalNodeCount = holdNodes.length;
         let halfCount = MergeTree.MaxNodesInBlock / 2;
@@ -2333,7 +2335,7 @@ export class MergeTree {
     }
 
     commitGlobalMin() {
-        if (this.collabWindow.globalMinSeq!==undefined) {
+        if (this.collabWindow.globalMinSeq !== undefined) {
             this.collabWindow.localMinSeq = this.collabWindow.globalMinSeq;
             this.setMinSeq(this.collabWindow.globalMinSeq);
         }
@@ -2771,6 +2773,7 @@ export class MergeTree {
         node.childCount = halfCount;
         for (let i = 0; i < halfCount; i++) {
             newNode.children[i] = node.children[halfCount + i];
+            node.children[halfCount + i] = undefined;
             newNode.children[i].parent = newNode;
         }
         this.nodeUpdateLengthNewStructure(node);

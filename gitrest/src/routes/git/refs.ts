@@ -1,7 +1,7 @@
 import { Response, Router } from "express";
+import { ICreateRefParams, IPatchRefParams, IRef } from "gitresources";
 import * as nconf from "nconf";
 import * as git from "nodegit";
-import { ICreateRefParams, IPatchRefParams, IRef } from "../../resources";
 import * as utils from "../../utils";
 
 function refToIRef(ref: git.Reference): IRef {

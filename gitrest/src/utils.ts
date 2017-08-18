@@ -1,4 +1,5 @@
 import * as fs from "fs";
+import * as resources from "gitresources";
 import * as git from "nodegit";
 import * as path from "path";
 import * as util from "util";
@@ -23,6 +24,34 @@ export enum GitObjectType {
     ext2 = 5,       /** < Reserved for future use. */
     ofsdelta = 6,   /** < A delta, base is given by an offset. */
     refdelta = 7,   /** < A delta, base is given by object id. */
+}
+
+/**
+ * Helper function to convert from a nodegit commit to our resource representation
+ */
+export async function commitToICommit(commit: git.Commit): Promise<resources.ICommit> {
+    const tree = await commit.getTree();
+    return {
+        sha: commit.id().tostrS(),
+        tree: {
+            sha: tree.id().tostrS(),
+            url: "",
+        },
+        url: "",
+    };
+}
+
+export function blobToIBlob(blob: git.Blob, repo: string): resources.IBlob {
+    const buffer = blob.content();
+    const sha = blob.id().tostrS();
+
+    return {
+        content: buffer.toString("base64"),
+        encoding: "base64",
+        sha,
+        size: buffer.length,
+        url: `/repos/${repo}/git/blobs/${sha}`,
+    };
 }
 
 export class RepositoryManager {

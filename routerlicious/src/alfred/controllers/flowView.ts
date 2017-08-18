@@ -538,10 +538,11 @@ interface IPGItem {
 
 interface IPGBlock extends IPGItem {
     type: PGItemType.Block;
+    text: string;
 }
 
-function makeIPGBlock(width: number) {
-    return <IPGBlock>{ type: PGItemType.Block, width };
+function makeIPGBlock(width: number, text: string) {
+    return <IPGBlock>{ type: PGItemType.Block, width, text };
 }
 
 interface IPGGlue extends IPGItem {
@@ -556,6 +557,26 @@ interface IPGPenalty extends IPGItem {
 }
 
 type PGItem = IPGBlock | IPGGlue | IPGPenalty;
+
+// for now assume uniform line widths 
+function breakPGIntoLinesFF(pgPos: number, items: PGItem[], lineWidth: number) {
+    let breaks = [pgPos];
+    let posInPG = pgPos;
+    let bufferedItemWidth = 0;
+    for (let item of items) {
+        if (item.type === PGItemType.Block) {
+            if ((bufferedItemWidth + item.width)> lineWidth) {
+                breaks.push(posInPG);
+                bufferedItemWidth = 0;
+            }
+            posInPG += item.text.length;
+        } else if (item.type === PGItemType.Glue) {
+            posInPG++;
+        }
+        bufferedItemWidth += item.width;
+    }
+    return breaks;
+}
 
 function renderTreeByPG(div: HTMLDivElement, pos: number, client: SharedString.Client, context: FlowView) {
     let fontstr = "18px Times";
@@ -581,7 +602,7 @@ function renderTreeByPG(div: HTMLDivElement, pos: number, client: SharedString.C
                 div.appendChild(lineDiv);
             });
         */
-    let items = <PGItem[]>[];
+    let items: PGItem[];
     let pgMarker: SharedString.Marker;
     let markerPos: number;
 
@@ -633,7 +654,7 @@ function renderTreeByPG(div: HTMLDivElement, pos: number, client: SharedString.C
             let first = true;
             for (let word of words) {
                 let wordWidth = getTextWidth(word, lfontstr);
-                let wordBlock = makeIPGBlock(wordWidth);
+                let wordBlock = makeIPGBlock(wordWidth, word);
                 if (!first) {
                     items.push(standardGlue);
                     cumulativeWidth += standardGlue.width;
@@ -661,13 +682,21 @@ function renderTreeByPG(div: HTMLDivElement, pos: number, client: SharedString.C
         { leaf: recordPGStart, shift });
     markerPos = client.mergeTree.getOffset(pgMarker, SharedString.UniversalSequenceNumber, client.getClientId());
     do {
+        items = [];
         pgMarker = undefined;
         pgCount++;
+        let startPgPos = markerPos + 1;
         client.mergeTree.mapRange({ leaf: segmentToItems }, SharedString.UniversalSequenceNumber,
-            client.getClientId(), undefined, markerPos + 1);
+            client.getClientId(), undefined, startPgPos);
+        if (pgMarker !== undefined) {
+            // got a new paragraph
+            let pgBreaks = breakPGIntoLinesFF(startPgPos, items , bounds.width);
+            console.log(`pg breaks: ${pgBreaks}`);
+        }
     } while ((pgMarker !== undefined) && (cumulativeWidth < totalWidth));
     // tslint:disable:max-line-length
     console.log(`pg count ${pgCount} lw ${bounds.width} cw ${cumulativeWidth} tw ${totalWidth} items ${items.length} word spacing: ${wordSpacing}`);
+
 }
 
 function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Client, context: FlowView) {
