@@ -1,6 +1,6 @@
 import { Router } from "express";
+import { ICreateRepoParams } from "gitresources";
 import * as nconf from "nconf";
-import { ICreateRepoParams } from "../../resources";
 import * as utils from "../../utils";
 
 export function create(store: nconf.Provider, repoManager: utils.RepositoryManager): Router {

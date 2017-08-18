@@ -1,7 +1,7 @@
 import { Router } from "express";
+import { IBlob, ICreateBlobParams, ICreateBlobResponse } from "gitresources";
 import * as nconf from "nconf";
 import * as winston from "winston";
-import { blobToIBlob, IBlob, ICreateBlobParams, ICreateBlobResponse } from "../../resources";
 import * as utils from "../../utils";
 
 /**
@@ -15,7 +15,7 @@ async function getBlob(repoManager: utils.RepositoryManager, repo: string, sha: 
     const repository = await repoManager.open(repo);
     const blob = await repository.getBlob(sha);
 
-    return blobToIBlob(blob, repo);
+    return utils.blobToIBlob(blob, repo);
 }
 
 async function createBlob(

@@ -1,7 +1,6 @@
 import { Router } from "express";
 import * as nconf from "nconf";
 import * as git from "nodegit";
-import * as resources from "../../resources";
 import * as utils from "../../utils";
 
 async function getContent(
@@ -15,7 +14,7 @@ async function getContent(
 
     // TODO switch on the type of object
     const blob = await repository.getBlob(revObj.id());
-    return resources.blobToIBlob(blob, repo);
+    return utils.blobToIBlob(blob, repo);
 }
 
 export function create(store: nconf.Provider, repoManager: utils.RepositoryManager): Router {

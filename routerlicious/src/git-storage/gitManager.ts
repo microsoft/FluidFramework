@@ -1,4 +1,5 @@
 import * as assert from "assert";
+import * as resources from "gitresources";
 import * as request from "request";
 import * as api from "../api";
 
@@ -9,7 +10,7 @@ export class GitManager {
     /**
      * Reads the object with the given ID. We defer to the client implementation to do the actual read.
      */
-    public async getCommits(sha: string, count: number): Promise<any> {
+    public async getCommits(sha: string, count: number): Promise<resources.ICommit[]> {
         return new Promise<any>((resolve, reject) => {
             request.get(
                 {
@@ -31,7 +32,7 @@ export class GitManager {
     /**
      * Reads the object with the given ID. We defer to the client implementation to do the actual read.
      */
-    public async getTree(root: string, recursive = true): Promise<any> {
+    public async getTree(root: string, recursive = true): Promise<resources.ITree> {
         return new Promise<any>((resolve, reject) => {
             const recursiveParam = recursive ? "1" : "0";
             request.get(
@@ -51,7 +52,7 @@ export class GitManager {
         });
     }
 
-    public async getBlob(sha: string): Promise<any> {
+    public async getBlob(sha: string): Promise<resources.IBlob> {
         return new Promise<any>((resolve, reject) => {
             request.get(
                 {
@@ -94,14 +95,16 @@ export class GitManager {
         });
     }
 
-    public createBlob(content: string, encoding: string) {
-        return new Promise<string>((resolve, reject) => {
+    public createBlob(content: string, encoding: string): Promise<resources.ICreateBlobResponse> {
+        const requestBody: resources.ICreateBlobParams = {
+            content,
+            encoding,
+        };
+
+        return new Promise<resources.ICreateBlobResponse>((resolve, reject) => {
             request.post(
                 {
-                    body: {
-                        content,
-                        encoding,
-                    },
+                    body: requestBody,
                     headers: {
                         "Content-Type": "application/json",
                     },
@@ -114,27 +117,27 @@ export class GitManager {
                     } else if (response.statusCode !== 201) {
                         return reject(response.statusCode);
                     } else {
-                        return resolve(response.body.sha);
+                        return resolve(response.body);
                     }
                 });
         });
     }
 
-    public async createTree(files: api.ITree): Promise<string> {
+    public async createTree(files: api.ITree): Promise<resources.ITree> {
         // Kick off the work to create all the tree values
-        const shaValuesP: Array<Promise<string>> = [];
+        const entriesP: Array<Promise<resources.ICreateBlobResponse | resources.ITree>> = [];
         for (const entry of files.entries) {
             switch (api.TreeEntry[entry.type]) {
                 case api.TreeEntry.Blob:
                     const entryAsBlob = entry.value as api.IBlob;
-                    const shaBlobP = this.createBlob(entryAsBlob.contents, entryAsBlob.encoding);
-                    shaValuesP.push(shaBlobP);
+                    const blobP = this.createBlob(entryAsBlob.contents, entryAsBlob.encoding);
+                    entriesP.push(blobP);
                     break;
 
                 case api.TreeEntry.Tree:
                     const entryAsTree = entry.value as api.ITree;
                     const treeBlobP = this.createTree(entryAsTree);
-                    shaValuesP.push(treeBlobP);
+                    entriesP.push(treeBlobP);
                     break;
 
                 default:
@@ -143,9 +146,9 @@ export class GitManager {
         }
 
         // Wait for them all to resolve
-        const shaValues = await Promise.all(shaValuesP);
-        const tree: any[] = [];
-        assert(shaValues.length === files.entries.length);
+        const entries = await Promise.all(entriesP);
+        const tree: resources.ICreateTreeEntry[] = [];
+        assert(entries.length === files.entries.length);
 
         // Construct a new tree from the collection of hashes
         for (let i = 0; i < files.entries.length; i++) {
@@ -153,15 +156,18 @@ export class GitManager {
             tree.push({
                 mode: isTree ? "040000" : "100644",
                 path: files.entries[i].path,
-                sha: shaValues[i],
+                sha: entries[i].sha,
                 type: isTree ? "tree" : "blob",
             });
         }
 
-        const treeSha = await new Promise<string>((resolve, reject) => {
+        const treeP = new Promise<resources.ITree>((resolve, reject) => {
+            const requestBody: resources.ICreateTreeParams = {
+                tree,
+            };
             request.post(
                 {
-                    body: { tree },
+                    body: requestBody,
                     headers: {
                         "Content-Type": "application/json",
                     },
@@ -174,15 +180,15 @@ export class GitManager {
                     } else if (response.statusCode !== 201) {
                         return reject(response.statusCode);
                     } else {
-                        return resolve(response.body.sha);
+                        return resolve(response.body);
                     }
                 });
         });
-        return treeSha;
+        return treeP;
     }
 
-    public async createCommit(commit: any): Promise<string> {
-        const commitSha = await new Promise<string>((resolve, reject) => {
+    public async createCommit(commit: resources.ICreateCommitParams): Promise<resources.ICommit> {
+        const commitP = new Promise<resources.ICommit>((resolve, reject) => {
             request.post(
                 {
                     body: commit,
@@ -198,21 +204,21 @@ export class GitManager {
                     } else if (response.statusCode !== 201) {
                         return reject(response.statusCode);
                     } else {
-                        return resolve(response.body.sha);
+                        return resolve(response.body);
                     }
                 });
         });
 
-        return commitSha;
+        return commitP;
     }
 
-    public async upsertRef(branch: string, commitSha: string): Promise<void> {
+    public async upsertRef(branch: string, commitSha: string): Promise<resources.IRef> {
         // Update (force) the ref to the new commit
-        const ref = {
+        const ref: resources.IPatchRefParams = {
             force: true,
             sha: commitSha,
         };
-        await new Promise<string>((resolve, reject) => {
+        return new Promise<resources.IRef>((resolve, reject) => {
             request.patch(
                 {
                     body: ref,
@@ -228,7 +234,7 @@ export class GitManager {
                     } else if (response.statusCode !== 200) {
                         return reject(response.statusCode);
                     } else {
-                        return resolve(response.body.sha);
+                        return resolve(response.body);
                     }
                 });
         });
@@ -237,17 +243,17 @@ export class GitManager {
     /**
      * Writes to the object with the given ID
      */
-    public async write(branch: string, tree: api.ITree, message: string): Promise<string> {
-        const treeShaP = this.createTree(tree);
+    public async write(branch: string, inputTree: api.ITree, message: string): Promise<string> {
+        const treeShaP = this.createTree(inputTree);
         const lastCommitP = this.getCommits(branch, 1);
 
         // TODO maybe I should make people provide the parent commit rather than get the last one?
         const joined = await Promise.all([treeShaP, lastCommitP]);
-        const treeSha = joined[0];
+        const tree = joined[0];
         const lastCommit = joined[1];
 
         // Construct a commit for the tree
-        const commit = {
+        const commitParams: resources.ICreateCommitParams = {
             author: {
                 date: new Date().toISOString(),
                 email: "kurtb@microsoft.com",
@@ -255,12 +261,12 @@ export class GitManager {
             },
             message,
             parents: lastCommit.length > 0 ? [lastCommit[0].sha] : [],
-            tree: treeSha,
+            tree: tree.sha,
         };
-        const commitSha = await this.createCommit(commit);
-        await this.upsertRef(branch, commitSha);
+        const commit = await this.createCommit(commitParams);
+        await this.upsertRef(branch, commit.sha);
 
-        return commitSha;
+        return commit.sha;
     }
 }
 

@@ -1,7 +1,7 @@
 import { Router } from "express";
+import { ICreateTreeParams, ITree, ITreeEntry } from "gitresources";
 import * as nconf from "nconf";
 import * as git from "nodegit";
-import { ICreateTreeParams, ITree, ITreeEntry } from "../../resources";
 import * as utils from "../../utils";
 
 async function createTree(repoManager: utils.RepositoryManager, repo: string, tree: ICreateTreeParams): Promise<ITree> {

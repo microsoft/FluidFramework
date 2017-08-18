@@ -1,7 +1,7 @@
 import { Router } from "express";
+import { ICreateTagParams, ITag } from "gitresources";
 import * as nconf from "nconf";
 import * as git from "nodegit";
-import { ICreateTagParams, ITag } from "../../resources";
 import * as utils from "../../utils";
 
 function tagToITag(tag: git.Tag): ITag {

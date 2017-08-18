@@ -1,4 +1,5 @@
 import * as assert from "assert";
+import * as resources from "gitresources";
 import * as _ from "lodash";
 import * as moniker from "moniker";
 import * as nconf from "nconf";
@@ -106,7 +107,7 @@ interface ITree {
     trees: { [path: string]: ITree };
 }
 
-function buildHierarchy(flatTree: any): ITree {
+function buildHierarchy(flatTree: resources.ITree): ITree {
     const lookup: { [path: string]: ITree } = {};
     const root: ITree = { blobs: {}, trees: {} };
     lookup[""] = root;
@@ -133,7 +134,7 @@ function buildHierarchy(flatTree: any): ITree {
 /**
  * Retrieves revisions for the given document
  */
-async function getRevisions(gitManager: git.GitManager, id: string): Promise<any[]> {
+async function getRevisions(gitManager: git.GitManager, id: string): Promise<resources.ICommit[]> {
     const commits = await gitManager.getCommits(id, 1);
 
     return commits;
@@ -172,13 +173,13 @@ async function getDocumentDetails(
     const messagesSha = tree.blobs[".messages"];
     const messagesP = gitManager.getBlob(messagesSha).then((messages) => {
         const messagesJSON = Buffer.from(messages.content, "base64").toString();
-        return JSON.parse(messagesJSON);
+        return JSON.parse(messagesJSON) as api.ISequencedDocumentMessage[];
     });
 
     // Fetch the attributes and distirbuted object headers
     const docAttributesP = gitManager.getBlob(docAttributesSha).then((docAttributes) => {
         const attributes = Buffer.from(docAttributes.content, "base64").toString();
-        return JSON.parse(attributes);
+        return JSON.parse(attributes) as api.IDocumentAttributes;
     });
 
     const blobsP: Array<Promise<any>> = [];
@@ -186,7 +187,7 @@ async function getDocumentDetails(
         const headerP = gitManager.getBlob(blob.headerSha).then((header) => header.content);
         const attributesP = gitManager.getBlob(blob.attributesSha).then((objectType) => {
             const attributes = Buffer.from(objectType.content, "base64").toString();
-            return JSON.parse(attributes);
+            return JSON.parse(attributes) as api.IObjectAttributes;
         });
         blobsP.push(Promise.all([Promise.resolve(blob.id), headerP, attributesP]));
     }
@@ -211,7 +212,7 @@ async function getOrCreateDocument(id: string, privateKey: string, publicKey: st
 
     const gitManager = await git.getOrCreateRepository(historian, historianBranch);
     const revisions = await getRevisions(gitManager, id);
-    const version = revisions.length > 0 ? revisions[0] : null;
+    const version = revisions.length > 0 ? revisions[0].sha : null;
 
     // If there has been a snapshot made use it to retrieve object state as well as any pending deltas. Otherwise
     // we just load all deltas
