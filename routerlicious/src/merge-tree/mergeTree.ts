@@ -1793,7 +1793,6 @@ export class MergeTree {
 
     constructor(public text: string, public options?: PropertySet) {
         this.blockUpdateActions = MergeTree.initBlockUpdateActions;
-        this.root = this.initialTextNode(this.text);
         if (options) {
             if (options.blockUpdateMarkers) {
                 this.blockUpdateMarkers = options.blockUpdateMarkers;
@@ -1802,6 +1801,7 @@ export class MergeTree {
                 this.collabWindow.localMinSeq = options.localMinSeq;
             }
         }
+        this.root = this.initialTextNode(this.text);
     }
 
     private makeBlock(childCount: number) {
@@ -2335,7 +2335,7 @@ export class MergeTree {
     }
 
     commitGlobalMin() {
-        if (this.collabWindow.globalMinSeq!==undefined) {
+        if (this.collabWindow.globalMinSeq !== undefined) {
             this.collabWindow.localMinSeq = this.collabWindow.globalMinSeq;
             this.setMinSeq(this.collabWindow.globalMinSeq);
         }
