@@ -81,7 +81,7 @@ async function getOrCreateObject(id: string, privateKey: string, publicKey: stri
 export interface IDocumentDetails {
     existing: boolean;
 
-    version: string;
+    version: resources.ICommit;
 
     minimumSequenceNumber: number;
 
@@ -151,7 +151,7 @@ interface IDocumentSnapshot {
 async function getDocumentDetails(
     gitManager: git.GitManager,
     id: string,
-    version: any): Promise<IDocumentSnapshot> {
+    version: resources.ICommit): Promise<IDocumentSnapshot> {
 
     assert(version);
 
@@ -212,7 +212,7 @@ async function getOrCreateDocument(id: string, privateKey: string, publicKey: st
 
     const gitManager = await git.getOrCreateRepository(historian, historianBranch);
     const revisions = await getRevisions(gitManager, id);
-    const version = revisions.length > 0 ? revisions[0].sha : null;
+    const version = revisions.length > 0 ? revisions[0] : null;
 
     // If there has been a snapshot made use it to retrieve object state as well as any pending deltas. Otherwise
     // we just load all deltas

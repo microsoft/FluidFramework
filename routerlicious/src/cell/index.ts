@@ -1,3 +1,4 @@
+import * as resources from "gitresources";
 import * as _ from "lodash";
 import * as api from "../api";
 
@@ -61,7 +62,7 @@ class Cell extends api.CollaborativeObject implements api.ICell {
         id: string,
         sequenceNumber: number,
         services?: api.IDistributedObjectServices,
-        version?: string,
+        version?: resources.ICommit,
         header?: string) {
 
         super(document, id, CellExtension.Type, sequenceNumber, services);
@@ -212,7 +213,7 @@ export class CellExtension implements api.IExtension {
         id: string,
         sequenceNumber: number,
         services: api.IDistributedObjectServices,
-        version: string,
+        version: resources.ICommit,
         header: string): api.ICell {
 
         return new Cell(document, id, sequenceNumber, services, version, header);

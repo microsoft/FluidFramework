@@ -1,3 +1,4 @@
+import * as resources from "gitresources";
 import { IDocumentMessage, ISequencedDocumentMessage } from "./protocol";
 
 export interface IDocumentAttributes {
@@ -152,7 +153,7 @@ export interface IDocument {
     /**
      * The latest snapshot version of the document at the time of connect. Or null if no snapshots have been taken.
      */
-    version: string;
+    version: resources.ICommit;
 
     /**
      * Connection to receive delta notification

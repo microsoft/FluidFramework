@@ -1,3 +1,4 @@
+import * as resources from "gitresources";
 import * as api from "../api";
 
 /**
@@ -28,7 +29,7 @@ export interface IConnected {
     existing: boolean;
 
     // Available revisions for this document
-    version: string;
+    version: resources.ICommit;
 
     // The latest sequence number for the document
     sequenceNumber: number;
