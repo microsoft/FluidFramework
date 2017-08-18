@@ -5,14 +5,14 @@ import * as git from "gitresources";
  */
 export interface ICache {
     /**
-     * Retrieves the cached entry for the given key. Or undefined if it doesn't exist.
+     * Retrieves the cached entry for the given key. Or null if it doesn't exist.
      */
-    get<T>(key: string): T;
+    get<T>(key: string): Promise<T>;
 
     /**
      * Sets a cache value
      */
-    set<T>(key: string, value: T);
+    set<T>(key: string, value: T): Promise<void>;
 }
 
 /**
