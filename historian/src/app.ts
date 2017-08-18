@@ -16,7 +16,7 @@ const stream = split().on("data", (message) => {
   winston.info(message);
 });
 
-export function create(store: nconf.Provider, gitService: services.IGitService, cacheService: services.ICache) {
+export function create(store: nconf.Provider, gitService: services.IGitService) {
     // Express app configuration
     const app: Express = express();
 
@@ -28,7 +28,7 @@ export function create(store: nconf.Provider, gitService: services.IGitService, 
     app.use(bodyParser.urlencoded({ limit: requestSize, extended: false }));
 
     app.use(cors());
-    const apiRoutes = routes.create(store, gitService, cacheService);
+    const apiRoutes = routes.create(store, gitService);
     app.use(apiRoutes.git.blobs);
     app.use(apiRoutes.git.refs);
     app.use(apiRoutes.git.repos);

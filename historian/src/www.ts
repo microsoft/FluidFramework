@@ -36,13 +36,13 @@ winston.configure({
 };
 
 // Create services
-const restService = new services.RestGitService(provider.get("gitServerUrl"));
 const redisConfig = provider.get("redis");
 const redisClient = redis.createClient(redisConfig.port, redisConfig.host);
 const cache = new services.RedisCache(redisClient);
+const restService = new services.RestGitService(provider.get("gitServerUrl"), cache);
 
 // Create the historian app
-const historian = app.create(provider, restService, cache);
+const historian = app.create(provider, restService);
 
 /**
  * Get port from environment and store in Express.

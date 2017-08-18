@@ -3,7 +3,7 @@ import * as nconf from "nconf";
 import * as services from "../../services";
 import * as utils from "../utils";
 
-export function create(store: nconf.Provider, gitService: services.IGitService, cacheService: services.ICache): Router {
+export function create(store: nconf.Provider, gitService: services.IGitService): Router {
     const router: Router = Router();
 
     /**
