@@ -56,20 +56,26 @@ services:
             - worker__intelligence__resume__url=http://alfred:3000/intelligence/resume
         restart: always
     historian:
-        image: prague.azurecr.io/historian:591
+        image: prague.azurecr.io/historian:652
         ports:
             - "3001:3000"
+        environment:
+            - DEBUG=routerlicious:*
+        restart: always
+    gitrest:
+        image: prague.azurecr.io/gitrest:653
         environment:
             - DEBUG=routerlicious:*
         volumes:
             - git:/home/node/documents
         restart: always
     git:
-        image: prague.azurecr.io/gitssh:552
+        image: prague.azurecr.io/gitssh:654
         ports:
             - "3022:22"
         volumes:
             - git:/home/git
+        restart: always
     zookeeper:
         image: wurstmeister/zookeeper:latest
         ports:
