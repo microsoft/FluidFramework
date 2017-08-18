@@ -1798,7 +1798,7 @@ export class MergeTree {
             if (options.blockUpdateMarkers) {
                 this.blockUpdateMarkers = options.blockUpdateMarkers;
             }
-            if (options.localMinSeq) {
+            if (options.localMinSeq !== undefined) {
                 this.collabWindow.localMinSeq = options.localMinSeq;
             }
         }

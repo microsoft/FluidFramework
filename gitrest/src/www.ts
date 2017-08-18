@@ -4,7 +4,6 @@ import * as nconf from "nconf";
 import * as path from "path";
 import * as winston from "winston";
 import * as app from "./app";
-import * as services from "./services";
 
 const provider = nconf.argv().env("__" as any).file(path.join(__dirname, "../config.json")).use("memory");
 
@@ -37,9 +36,9 @@ winston.configure({
 /**
  * Get port from environment and store in Express.
  */
-const port = normalizePort(process.env.PORT || "3000");
-const restService = new services.RestGitService(provider.get("gitServerUrl"));
-const historian = app.create(provider, restService, null);
+// tslint:disable-next-line:no-string-literal
+const port = normalizePort(process.env["PORT"] || "3000");
+const historian = app.create(provider);
 historian.set("port", port);
 
 /**

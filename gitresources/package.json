@@ -1,0 +1,17 @@
+{
+  "name": "gitresources",
+  "version": "0.1.0",
+  "description": "Git resource definitions",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "npm run tslint && npm run tsc",
+    "tsc": "tsc",
+    "tslint": "tslint 'src/**/*.ts'"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "tslint": "^5.6.0",
+    "typescript": "^2.4.2"
+  }
+}

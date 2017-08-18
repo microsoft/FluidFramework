@@ -7,5 +7,5 @@
         "timestamp": true
     },
     "requestSizeLimit": "1gb",
-    "gitServerUrl": "http://gitrest:3000"
+    "storageDir": "/home/node/documents"
 }
