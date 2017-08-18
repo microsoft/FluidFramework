@@ -231,7 +231,7 @@ async function getInsights(map: API.IMap, id: string): Promise<API.IMap> {
 export async function onLoad(id: string, config: any) {
     socketStorage.registerAsDefault(document.location.origin, config.blobStorageUrl, config.repository);
 
-    const collabDoc = await API.load(id);
+    const collabDoc = await API.load(id, { blockUpdateMarkers: true });
     const root = await collabDoc.getRoot().getView();
 
     // If a text element already exists load it direclty - otherwise load in price + prejudice

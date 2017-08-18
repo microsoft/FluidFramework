@@ -1969,6 +1969,8 @@ export class MergeTree {
             // debug assert not isLeaf()
             childBlock = <Block>children[childIndex];
             this.scourNode(childBlock, holdNodes);
+            // will replace this block with a packed block
+            childBlock.parent = undefined;
         }
         let totalNodeCount = holdNodes.length;
         let halfCount = MergeTree.MaxNodesInBlock / 2;
@@ -2771,6 +2773,7 @@ export class MergeTree {
         node.childCount = halfCount;
         for (let i = 0; i < halfCount; i++) {
             newNode.children[i] = node.children[halfCount + i];
+            node.children[halfCount + i] = undefined;
             newNode.children[i].parent = newNode;
         }
         this.nodeUpdateLengthNewStructure(node);
