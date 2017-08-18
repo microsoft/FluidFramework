@@ -40,6 +40,19 @@ class Speller {
         }
     }
 
+    invokePaul() {
+        let altSpellings = [];
+        altSpellings.push({ text: "thats", invDistance: 0, val: 0});
+        altSpellings.push({ text: "this", invDistance: 1, val: 1});
+        setTimeout(() => {
+            console.log(`Paul is back`);
+            console.log(this.sharedString.client.mergeTree.collabWindow.minSeq);
+            this.sharedString.annotateRangeFromPast({ textError: { text: "that", alternates: altSpellings, color: "paul"} }, 492, 496, 0);
+            console.log(this.sharedString.client.mergeTree.nodeToString(<SharedString.Block>this.sharedString.client.mergeTree.root.children[0], "", 0));
+            this.sharedString.setLocalMinSeq(0);
+        }, 10000);
+    }
+
     spellOp(delta: SharedString.IMergeTreeOp) {
         if (delta.type === SharedString.MergeTreeDeltaType.INSERT) {
             this.currentWordSpellCheck(delta.pos1);
@@ -75,6 +88,7 @@ class Speller {
 
     initialSpellCheck() {
         this.loadDict();
+        this.invokePaul();
         let spellParagraph = (startPG: number, endPG: number, text: string) => {
             let re = /\b\w+\b/g;
             let result: RegExpExecArray;
@@ -288,7 +302,7 @@ class Speller {
 let theSpeller: Speller;
 async function initSpell(id: string) {
 
-    const document = await API.load(id, { encrypted: undefined, blockUpdateMarkers: true });
+    const document = await API.load(id, { blockUpdateMarkers: true, localMinSeq: 0, encrypted: undefined });
     const root = await document.getRoot().getView();
     if (!root.has("text")) {
         root.set("text", document.createString());
