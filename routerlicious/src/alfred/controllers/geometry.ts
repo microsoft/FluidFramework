@@ -208,6 +208,27 @@ export class Rectangle {
         return this.subDivideVert(n, peanutButter);
     }
 
+    public subDivideVertAbsEnclosed(height: number, peanutButter = true) {
+        let n = Math.ceil(this.height / height);
+        return this.subDivideVertEnclosed(n, peanutButter);
+    }
+
+    public subDivideVertEnclosed(n: number, peanutButter = true) {
+        let rects: Rectangle[] = [];
+        let tileHeight = Math.floor(this.height / n);
+        let rem = this.height % n;
+        let tileY = 0;
+        for (let i = 0; i < n; i++) {
+            rects[i] = new Rectangle(0, tileY, this.width, tileHeight);
+            if (peanutButter && (rem > 0)) {
+                rects[i].height++;
+                rem--;
+            }
+            tileY += rects[i].height;
+        }
+        return rects;
+    }
+
     public subDivideVert(n: number, peanutButter = true) {
         let rects: Rectangle[] = [];
         let tileHeight = Math.floor(this.height / n);

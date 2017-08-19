@@ -63,9 +63,9 @@ export interface Segment extends Node {
     removeRange(start: number, end: number): boolean;
 }
 
-export interface SegmentAction<TAccum> {
+export interface SegmentAction<TClientData> {
     (segment: Segment, pos: number, refSeq: number, clientId: number, start: number,
-        end: number, accum?: TAccum): boolean;
+        end: number, accum?: TClientData): boolean;
 }
 
 export interface SegmentChanges {
@@ -73,14 +73,14 @@ export interface SegmentChanges {
     replaceCurrent?: Segment;
 }
 
-export interface BlockAction<TAccum> {
+export interface BlockAction<TClientData> {
     (block: Block, pos: number, refSeq: number, clientId: number, start: number, end: number,
-        accum?: TAccum): boolean;
+        accum?: TClientData): boolean;
 }
 
-export interface NodeAction<TAccum> {
+export interface NodeAction<TClientData> {
     (node: Node, pos: number, refSeq: number, clientId: number, start: number, end: number,
-        accum?: TAccum): boolean;
+        accum?: TClientData): boolean;
 }
 
 export interface IncrementalSegmentAction<TContext> {
@@ -95,12 +95,18 @@ export interface BlockUpdateActions {
     child: (block: Block, index: number) => void;
 }
 
-export interface SegmentActions<TAccum> {
-    leaf?: SegmentAction<TAccum>;
-    shift?: NodeAction<TAccum>;
-    contains?: NodeAction<TAccum>;
-    pre?: BlockAction<TAccum>;
-    post?: BlockAction<TAccum>;
+export interface InsertContext {
+    prepareEvents?: boolean;
+    leaf: (segment: Segment, pos: number) => SegmentChanges;
+    continuePredicate?: (continueFromBlock: Block) => boolean;
+}
+
+export interface SegmentActions<TClientData> {
+    leaf?: SegmentAction<TClientData>;
+    shift?: NodeAction<TClientData>;
+    contains?: NodeAction<TClientData>;
+    pre?: BlockAction<TClientData>;
+    post?: BlockAction<TClientData>;
 }
 
 export interface IncrementalSegmentActions<TContext> {
@@ -2358,12 +2364,12 @@ export class MergeTree {
         return localPos;
     }
 
-    search<TAccum>(pos: number, refSeq: number, clientId: number,
-        actions?: SegmentActions<TAccum>, accum?: TAccum): Segment {
+    search<TClientData>(pos: number, refSeq: number, clientId: number,
+        actions?: SegmentActions<TClientData>, accum?: TClientData): Segment {
         return this.searchBlock(this.root, pos, 0, refSeq, clientId, actions);
     }
 
-    searchBlock<TAccum>(block: Block, pos: number, segpos: number, refSeq: number, clientId: number, actions?: SegmentActions<TAccum>, accum?: TAccum): Segment {
+    searchBlock<TClientData>(block: Block, pos: number, segpos: number, refSeq: number, clientId: number, actions?: SegmentActions<TClientData>, accum?: TClientData): Segment {
         let children = block.children;
         if (actions && actions.pre) {
             actions.pre(block, segpos, refSeq, clientId, undefined, undefined, accum);
@@ -2549,7 +2555,8 @@ export class MergeTree {
             saveIfLocal(newSegment);
             return segmentChanges;
         }
-        return this.insertingWalk(block, pos, refSeq, clientId, seq, newSegment.getType(), onLeaf, continueFrom);
+        return this.insertingWalk(block, pos, refSeq, clientId, seq, newSegment.getType(),
+            { leaf: onLeaf, continuePredicate: continueFrom });
     }
 
     splitLeafSegment = (segment: Segment, pos: number) => {
@@ -2561,7 +2568,8 @@ export class MergeTree {
     }
 
     ensureIntervalBoundary(pos: number, refSeq: number, clientId: number) {
-        let splitNode = this.insertingWalk(this.root, pos, refSeq, clientId, TreeMaintainanceSequenceNumber, SegmentType.Base, this.splitLeafSegment);
+        let splitNode = this.insertingWalk(this.root, pos, refSeq, clientId, TreeMaintainanceSequenceNumber,
+            SegmentType.Base, { leaf: this.splitLeafSegment });
         this.updateRoot(splitNode, refSeq, clientId, TreeMaintainanceSequenceNumber);
     }
 
@@ -2583,7 +2591,7 @@ export class MergeTree {
     }
 
     // visit segments starting from node's right siblings, then up to node's parent
-    leftExcursion<TAccum>(node: Node, leafAction: SegmentAction<TAccum>) {
+    leftExcursion<TClientData>(node: Node, leafAction: SegmentAction<TClientData>) {
         let actions = { leaf: leafAction };
         let go = true;
         let startNode = node;
@@ -2618,7 +2626,7 @@ export class MergeTree {
     }
 
     // visit segments starting from node's right siblings, then up to node's parent
-    rightExcursion<TAccum>(node: Node, leafAction: SegmentAction<TAccum>) {
+    rightExcursion<TClientData>(node: Node, leafAction: SegmentAction<TClientData>) {
         let actions = { leaf: leafAction };
         let go = true;
         let startNode = node;
@@ -2652,9 +2660,8 @@ export class MergeTree {
         }
     }
 
-    private insertingWalk(block: Block, pos: number, refSeq: number, clientId: number, seq: number, segType: SegmentType,
-        leafAction: (segment: Segment, pos: number) => SegmentChanges,
-        continuePredicate?: (continueFromBlock: Block) => boolean) {
+    private insertingWalk(block: Block, pos: number, refSeq: number, clientId: number, seq: number,
+        segType: SegmentType, context: InsertContext) {
         let children = block.children;
         let childIndex: number;
         let child: Node;
@@ -2684,8 +2691,8 @@ export class MergeTree {
                 if (!child.isLeaf()) {
                     let childBlock = <Block>child;
                     //internal node
-                    let splitNode = this.insertingWalk(childBlock, pos, refSeq, clientId, seq, segType, leafAction,
-                        continuePredicate);
+                    let splitNode = this.insertingWalk(childBlock, pos, refSeq, clientId,
+                        seq, segType, context);
                     if (splitNode === undefined) {
                         this.blockUpdateLength(block, seq, clientId);
                         return undefined;
@@ -2707,7 +2714,7 @@ export class MergeTree {
                         console.log(`@tcli: ${glc(this, this.collabWindow.clientId)}: leaf action`);
                     }
 
-                    let segmentChanges = leafAction(<Segment>child, pos);
+                    let segmentChanges = context.leaf(<Segment>child, pos);
                     if (segmentChanges.replaceCurrent) {
                         block.children[childIndex] = segmentChanges.replaceCurrent;
                         segmentChanges.replaceCurrent.parent = block;
@@ -2734,14 +2741,15 @@ export class MergeTree {
         }
         if (!newNode) {
             if (pos == 0) {
-                if ((seq != UnassignedSequenceNumber) && continuePredicate && continuePredicate(block)) {
+                if ((seq != UnassignedSequenceNumber) && context.continuePredicate &&
+                    context.continuePredicate(block)) {
                     return MergeTree.theUnfinishedNode;
                 }
                 else {
                     if (MergeTree.traceTraversal) {
                         console.log(`@tcli: ${glc(this, this.collabWindow.clientId)}: leaf action pos 0`);
                     }
-                    let segmentChanges = leafAction(undefined, pos);
+                    let segmentChanges = context.leaf(undefined, pos);
                     newNode = segmentChanges.next;
                     // assert segmentChanges.replaceCurrent === undefined
                 }
@@ -3008,13 +3016,13 @@ export class MergeTree {
         }
     }
 
-    map<TAccum>(actions: SegmentActions<TAccum>, refSeq: number, clientId: number, accum?: TAccum) {
+    map<TClientData>(actions: SegmentActions<TClientData>, refSeq: number, clientId: number, accum?: TClientData) {
         // TODO: optimize to avoid comparisons
         this.nodeMap(this.root, actions, 0, refSeq, clientId, accum);
     }
 
-    mapRangeWithMarkers<TAccum>(actions: SegmentActions<TAccum>, refSeq: number, clientId: number,
-        accum?: TAccum, start?: number, end?: number) {
+    mapRangeWithMarkers<TClientData>(actions: SegmentActions<TClientData>, refSeq: number, clientId: number,
+        accum?: TClientData, start?: number, end?: number) {
         let rightmostMarkers = Properties.createMap<Marker>();
         let stacks = Properties.createMap<Collections.Stack<Marker>>();
         let shift = actions.shift;
@@ -3028,7 +3036,7 @@ export class MergeTree {
         this.nodeMap(this.root, actions, 0, refSeq, clientId, accum, start, end);
     }
 
-    mapRange<TAccum>(actions: SegmentActions<TAccum>, refSeq: number, clientId: number, accum?: TAccum, start?: number, end?: number) {
+    mapRange<TClientData>(actions: SegmentActions<TClientData>, refSeq: number, clientId: number, accum?: TClientData, start?: number, end?: number) {
         this.nodeMap(this.root, actions, 0, refSeq, clientId, accum, start, end);
     }
 
@@ -3120,8 +3128,8 @@ export class MergeTree {
         }
     }
 
-    nodeMap<TAccum>(node: Block, actions: SegmentActions<TAccum>, pos: number, refSeq: number,
-        clientId: number, accum?: TAccum, start?: number, end?: number) {
+    nodeMap<TClientData>(node: Block, actions: SegmentActions<TClientData>, pos: number, refSeq: number,
+        clientId: number, accum?: TClientData, start?: number, end?: number) {
         if (start === undefined) {
             start = 0;
         }
@@ -3183,8 +3191,8 @@ export class MergeTree {
     }
 
     // straight call every segment; goes until leaf action returns false
-    nodeMapReverse<TAccum>(block: Block, actions: SegmentActions<TAccum>, pos: number, refSeq: number,
-        clientId: number, accum?: TAccum) {
+    nodeMapReverse<TClientData>(block: Block, actions: SegmentActions<TClientData>, pos: number, refSeq: number,
+        clientId: number, accum?: TClientData) {
         let go = true;
         let children = block.children;
         for (let childIndex = block.childCount - 1; childIndex >= 0; childIndex--) {
