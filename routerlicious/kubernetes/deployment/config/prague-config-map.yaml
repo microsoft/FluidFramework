@@ -7,7 +7,7 @@ data:
     {
         "logger": {
             "colorize": false,
-            "morganFormat": "combined",
+            "morganFormat": "short",
             "json": false,
             "level": "verbose",
             "timestamp": false
