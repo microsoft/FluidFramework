@@ -1,4 +1,5 @@
 import * as bodyParser from "body-parser";
+import * as cors from "cors";
 import * as express from "express";
 import { Express } from "express";
 import * as routes from "./routes";
@@ -11,6 +12,9 @@ app.set("trust proxy", 1);
 
 // View engine setup.
 app.set("view engine", "hjs");
+
+// Enable cors
+app.use(cors());
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
