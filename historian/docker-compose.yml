@@ -1,8 +1,12 @@
 version: '3'
 services:
     historian:
-        image: historian
+        build: .
         ports:
-            - "3000:3000"
+            - 3000:3000
+        volumes:
+            - .:/home/node/server
     gitrest:
-        image: gitrest
+        image: prague.azurecr.io/gitrest:629
+    redis:
+        image: redis:alpine

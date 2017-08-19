@@ -27,21 +27,20 @@ export interface IRoutes {
 
 export function create(
     store: nconf.Provider,
-    gitService: services.IGitService,
-    cacheService: services.ICache): IRoutes {
+    gitService: services.IGitService): IRoutes {
 
     return {
         git: {
-            blobs: blobs.create(store, gitService, cacheService),
-            commits: commits.create(store, gitService, cacheService),
-            refs: refs.create(store, gitService, cacheService),
-            repos: repos.create(store, gitService, cacheService),
-            tags: tags.create(store, gitService, cacheService),
-            trees: trees.create(store, gitService, cacheService),
+            blobs: blobs.create(store, gitService),
+            commits: commits.create(store, gitService),
+            refs: refs.create(store, gitService),
+            repos: repos.create(store, gitService),
+            tags: tags.create(store, gitService),
+            trees: trees.create(store, gitService),
         },
         repository: {
-            commits: repositoryCommits.create(store, gitService, cacheService),
-            contents: contents.create(store, gitService, cacheService),
+            commits: repositoryCommits.create(store, gitService),
+            contents: contents.create(store, gitService),
         },
     };
 }

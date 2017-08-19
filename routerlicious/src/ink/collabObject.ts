@@ -1,3 +1,4 @@
+import * as resources from "gitresources";
 import * as api from "../api";
 import { IDelta } from "./delta";
 import { InkExtension } from "./extension";
@@ -31,7 +32,7 @@ export class InkCollaborativeObject extends api.CollaborativeObject implements I
         id: string,
         sequenceNumber: number,
         services?: api.IDistributedObjectServices,
-        version?: string,
+        version?: resources.ICommit,
         header?: string) {
         super(document, id, InkExtension.Type, sequenceNumber, services);
         const data = header

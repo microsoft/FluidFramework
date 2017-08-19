@@ -2,6 +2,7 @@ import * as debug from "debug";
 import * as http from "http";
 import * as nconf from "nconf";
 import * as path from "path";
+import * as redis from "redis";
 import * as winston from "winston";
 import * as app from "./app";
 import * as services from "./services";
@@ -34,12 +35,19 @@ winston.configure({
     args[0] = name + " " + args[0];
 };
 
+// Create services
+const redisConfig = provider.get("redis");
+const redisClient = redis.createClient(redisConfig.port, redisConfig.host);
+const cache = new services.RedisCache(redisClient);
+const restService = new services.RestGitService(provider.get("gitServerUrl"), cache);
+
+// Create the historian app
+const historian = app.create(provider, restService);
+
 /**
  * Get port from environment and store in Express.
  */
 const port = normalizePort(process.env.PORT || "3000");
-const restService = new services.RestGitService(provider.get("gitServerUrl"));
-const historian = app.create(provider, restService, null);
 historian.set("port", port);
 
 /**
@@ -55,6 +63,13 @@ const server = http.createServer(historian);
 server.listen(port);
 server.on("error", onError);
 server.on("listening", onListening);
+
+// Listen for shutdown signal in order to shutdown gracefully
+process.on("SIGTERM", () => {
+  server.close(() => {
+    process.exit(0);
+  });
+});
 
 /**
  * Normalize a port into a number, string, or false.

@@ -1,3 +1,4 @@
+import * as resources from "gitresources";
 import { Document, IDistributedObjectServices } from "./document";
 import * as types from "./types";
 
@@ -28,7 +29,7 @@ export interface IExtension {
         id: string,
         sequenceNumber: number,
         services: IDistributedObjectServices,
-        version: string,
+        version: resources.ICommit,
         header: string): types.ICollaborativeObject;
 
     /**

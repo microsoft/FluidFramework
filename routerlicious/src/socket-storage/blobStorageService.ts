@@ -1,3 +1,4 @@
+import * as resources from "gitresources";
 import * as api from "../api";
 import * as gitStorage from "../git-storage";
 
@@ -5,7 +6,7 @@ import * as gitStorage from "../git-storage";
  * Document access to underlying storage
  */
 export class DocumentStorageService implements api.IDocumentStorageService  {
-    constructor(private id: string, private version: string, private storage: BlobStorageService) {
+    constructor(private id: string, private version: resources.ICommit, private storage: BlobStorageService) {
     }
 
     public read(path: string): Promise<string> {
@@ -27,7 +28,7 @@ export class BlobStorageService  {
         this.manager = new gitStorage.GitManager(baseUrl, repository);
     }
 
-    public async read(id: string, version: any, path: string): Promise<string> {
+    public async read(id: string, version: resources.ICommit, path: string): Promise<string> {
         const value = await this.manager.getObject(version.sha, path);
         return value.content;
     }

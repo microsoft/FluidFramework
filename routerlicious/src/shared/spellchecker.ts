@@ -43,9 +43,6 @@ class Speller {
             const resultP = this.intelligence.run(task);
             resultP.then((result) => {
                 const spellErrors = this.checkSpelling(task.rsn, task.text, task.start, result);
-                console.log(`Invoked for: ${task.text}`);
-                console.log(`Query result: ${JSON.stringify(spellErrors)}`);
-                console.log(`...........................................`);
                 if (spellErrors.annotations.length > 0) {
                     for (const annotation of spellErrors.annotations) {
                         this.sharedString.annotateRangeFromPast({ textError: annotation.textError }, annotation.globalStartOffset, annotation.globalEndOffset, spellErrors.rsn);
@@ -312,16 +309,23 @@ class Speller {
     }
 
     checkSpelling(rsn: number, original: string, startPos: number, result: any) {
+        let endPos = startPos + original.length;
         let annotationRanges = [];
+        
+        // No critiques from spellchecker service. Clear the whole paragraph.
         if (result.spellcheckerResult.answer === null) {
+            annotationRanges.push( {textError: null, globalStartOffset: startPos, globalEndOffset: endPos });
             return { rsn, annotations: annotationRanges};
         }
         const answer = result.spellcheckerResult.answer;
         if (answer.Critiques.length === 0) {
+            annotationRanges.push( {textError: null, globalStartOffset: startPos, globalEndOffset: endPos });
             return { rsn, annotations: annotationRanges};
         }
+
+        // Go through each critique and create annotation ranges.
+        let runningStart = startPos;
         const critiques = answer.Critiques;
-        
         for (let critique of critiques) {
             let localStartOffset = critique.Start;
             let localEndOffset= localStartOffset + critique.Length;
@@ -330,16 +334,26 @@ class Speller {
             const globalEndOffset = startPos + localEndOffset;
             let altSpellings = [];
 
-            // Spelling error but no suggestions found.
+            // Correctly spelled range. Send null and update runningStart.
+            if (runningStart < globalStartOffset) {
+                annotationRanges.push( {textError: null, globalStartOffset: runningStart, globalEndOffset: globalStartOffset });                
+            }
+            runningStart = globalEndOffset;
+
+            // Spelling error but no suggestions found. Continue to next critique.
             if (critique.Suggestions.length === 0 || critique.Suggestions[0].Text === "No suggestions") {
                 annotationRanges.push( {textError: { text: origWord, alternates: altSpellings}, globalStartOffset, globalEndOffset });                
                 continue;
             }
-            // Suggestions found.
+            // Suggestions found. Create annotation ranges.
             for (let i = 0; i < Math.min(Speller.altMax, critique.Suggestions.length); ++i) {
                 altSpellings.push({ text: critique.Suggestions[i].Text, invDistance: i, val: i});
             }
             annotationRanges.push( {textError: { text: origWord, alternates: altSpellings, color: "paul"}, globalStartOffset, globalEndOffset });
+        }
+        // No more critiques. Send null for rest of the text.
+        if (runningStart < endPos) {
+            annotationRanges.push( {textError: null, globalStartOffset: runningStart, globalEndOffset: endPos });
         }
         return { rsn, annotations: annotationRanges};
     }

@@ -2,18 +2,29 @@ import * as git from "gitresources";
 import * as querystring from "querystring";
 import * as request from "request";
 import * as winston from "winston";
-import { IGitService } from "./definitions";
+import { ICache, IGitService } from "./definitions";
 
 export class RestGitService implements IGitService {
-    constructor(private gitServerUrl: string) {
+    constructor(private gitServerUrl: string, private cache: ICache) {
     }
 
     public getBlob(repo: string, sha: string): Promise<git.IBlob> {
-        return this.get(`/repos/${encodeURIComponent(repo)}/git/blobs/${encodeURIComponent(sha)}`);
+        return this.resolveFromCache(
+            sha,
+            () => this.get<git.IBlob>(`/repos/${encodeURIComponent(repo)}/git/blobs/${encodeURIComponent(sha)}`));
     }
 
-    public createBlob(repo: string, blob: git.ICreateBlobParams): Promise<git.ICreateBlobResponse> {
-        return this.post(`/repos/${encodeURIComponent(repo)}/git/blobs`, blob);
+    public async createBlob(repo: string, blob: git.ICreateBlobParams): Promise<git.ICreateBlobResponse> {
+        const createResults = await this.post<git.ICreateBlobResponse>(
+            `/repos/${encodeURIComponent(repo)}/git/blobs`,
+            blob);
+
+        // Fetch the full blob so we can have it in cache
+        this.getBlob(repo, createResults.sha).catch((error) => {
+            winston.error(`Error fetching blob ${createResults.sha}`);
+        });
+
+        return createResults;
     }
 
     public getContent(repo: string, path: string, ref: string): Promise<any> {
@@ -29,12 +40,22 @@ export class RestGitService implements IGitService {
         return this.get(`/repos/${encodeURIComponent(repo)}/commits?${query}`);
     }
 
-    public getCommit(repo: string, sha: string): Promise<git.ICommit> {
-        return this.get(`/repos/${encodeURIComponent(repo)}/git/commits/${encodeURIComponent(sha)}`);
+    public async getCommit(repo: string, sha: string): Promise<git.ICommit> {
+        return this.resolveFromCache(
+            sha,
+            () => this.get<git.ICommit>(`/repos/${encodeURIComponent(repo)}/git/commits/${encodeURIComponent(sha)}`));
     }
 
-    public createCommit(repo: string, commit: git.ICreateCommitParams): Promise<git.ICommit> {
-        return this.post(`/repos/${encodeURIComponent(repo)}/git/commits`, commit);
+    public async createCommit(repo: string, commitParams: git.ICreateCommitParams): Promise<git.ICommit> {
+        const commit = await this.post<git.ICommit>(`/repos/${encodeURIComponent(repo)}/git/commits`, commitParams);
+
+        this.setCache(commit.sha, commit);
+        // Also fetch the tree for the commit to have it in cache
+        this.getTree(repo, commit.tree.sha, true).catch((error) => {
+            winston.error(`Error fetching commit tree ${commit.tree.sha}`);
+        });
+
+        return commit;
     }
 
     public getRefs(repo: string): Promise<git.IRef[]> {
@@ -74,14 +95,23 @@ export class RestGitService implements IGitService {
         return this.get(`/repos/${encodeURIComponent(repo)}/git/tags/${tag}`);
     }
 
-    public createTree(repo: string, tree: git.ICreateTreeParams): Promise<git.ITree> {
-        return this.post(`/repos/${encodeURIComponent(repo)}/git/trees`, tree);
+    public async createTree(repo: string, treeParams: git.ICreateTreeParams): Promise<git.ITree> {
+        const tree = await this.post<git.ITree>(`/repos/${encodeURIComponent(repo)}/git/trees`, treeParams);
+
+        this.setCache(tree.sha, tree);
+
+        return tree;
     }
 
     public getTree(repo: string, sha: string, recursive: boolean): Promise<git.ITree> {
-        const query = querystring.stringify({ recursive: recursive ? 1 : 0 });
-        return this.get(
-            `/repos/${encodeURIComponent(repo)}/git/trees/${encodeURIComponent(sha)}?${query}`);
+        const key = recursive ? `${sha}:recursive` : sha;
+        return this.resolveFromCache(
+            key,
+            () => {
+                const query = querystring.stringify({ recursive: recursive ? 1 : 0 });
+                return this.get<git.ITree>(
+                    `/repos/${encodeURIComponent(repo)}/git/trees/${encodeURIComponent(sha)}?${query}`);
+            });
     }
 
     private get<T>(url: string): Promise<T> {
@@ -141,5 +171,35 @@ export class RestGitService implements IGitService {
                     }
                 });
         });
+    }
+
+    /**
+     * Caches the given key/value pair. Will log any errors with the cache.
+     */
+    private setCache<T>(key: string, value: T) {
+        // Attempt to cache to Redis - log any errors but don't fail
+        this.cache.set(key, value).catch((error) => {
+            winston.error(`Error caching ${key} to redis`, error);
+        });
+    }
+
+    private async resolveFromCache<T>(key: string, fetch: () => Promise<T>): Promise<T> {
+        // Attempt to grab the value from the cache. Log any errors but don't fail the request
+        const cachedValue = await this.cache.get<T>(key).catch((error) => {
+            winston.error(`Error fetching ${key} from cache`, error);
+            return null;
+        });
+
+        if (cachedValue) {
+            winston.info(`Resolving ${key} from cache`);
+            return cachedValue;
+        }
+
+        // Value is not cached - fetch it with the provided function and then cache the value
+        winston.info(`Fetching ${key}`);
+        const value = await fetch();
+        this.setCache(key, value);
+
+        return value;
     }
 }
