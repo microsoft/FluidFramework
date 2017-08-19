@@ -1,22 +1,12 @@
-import * as fs from "fs";
-import * as path from "path";
+import * as request from "request";
 import * as io from "socket.io-client";
+import * as url from "url";
 import * as api from "../api";
 import { nativeTextAnalytics, resumeAnalytics, textAnalytics } from "../intelligence";
 import * as Collections from "../merge-tree/collections";
 import * as socketStorage from "../socket-storage";
 import * as messages from "../socket-storage/messages";
 import * as shared from "./";
-
-function clock() {
-    return process.hrtime();
-}
-
-function elapsedMilliseconds(start: [number, number]) {
-    let end: number[] = process.hrtime(start);
-    let duration = Math.round((end[0] * 1000) + (end[1] / 1000000));
-    return duration;
-}
 
 /**
  * The WorkerService manages the Socket.IO connection and work sent to it.
@@ -105,15 +95,19 @@ export class WorkerService implements api.IWorkerService {
     }
 
     private loadDict() {
-        let clockStart = clock();
-        let dictFilename = path.join(__dirname, "../../public/literature/dictfreq.txt");
-        let dictContent = fs.readFileSync(dictFilename, "utf8");
-        let splitContent = dictContent.split("\n");
-        for (let entry of splitContent) {
-            let splitEntry = entry.split(";");
-            this.dict.put(splitEntry[0], parseInt(splitEntry[1], 10));
-        }
-        console.log(`size: ${this.dict.size()}; load time ${elapsedMilliseconds(clockStart)}ms`);
+        this.downloadRawText("/public/literature/dictfreq.txt").then((text: string) => {
+            let splitContent = text.split("\n");
+            for (let entry of splitContent) {
+                let splitEntry = entry.split(";");
+                this.dict.put(splitEntry[0], parseInt(splitEntry[1], 10));
+            }
+            console.log(`Loaded dictionary`);
+        }, (err) => {
+            // On error, try to request alfred again after a timeout.
+            setTimeout(() => {
+                this.loadDict();
+            }, 100);
+        });
     }
 
     private initializeServices() {
@@ -199,5 +193,19 @@ export class WorkerService implements api.IWorkerService {
             delete this.documentIntelMap[id];
             delete this.intelHandlerMap[id];
         }
+    }
+
+    private downloadRawText(textUrl: string): Promise<string> {
+        return new Promise<string>((resolve, reject) => {
+            request.get(url.resolve(this.serverUrl, textUrl), (error, response, body: string) => {
+                if (error) {
+                    reject(error);
+                } else if (response.statusCode !== 200) {
+                    reject(response.statusCode);
+                } else {
+                    resolve(body);
+                }
+            });
+        });
     }
 }
