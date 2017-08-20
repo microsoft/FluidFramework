@@ -1,8 +1,10 @@
 import * as resources from "gitresources";
 import * as _ from "lodash";
+import performanceNow = require("performance-now");
 import * as io from "socket.io-client";
 import * as api from "../api";
 import { BlobStorageService, DocumentStorageService } from "./blobStorageService";
+import { debug } from "./debug";
 import { DeltaStorageService, DocumentDeltaStorageService } from "./deltaStorageService";
 import { DocumentDeltaConnection } from "./documentDeltaConnection";
 import * as messages from "./messages";
@@ -39,10 +41,13 @@ export class DocumentService implements api.IDocumentService {
     private socket;
 
     constructor(url: string, private deltaStorage: DeltaStorageService, private blobStorge: BlobStorageService) {
+        debug(`Creating document service ${performanceNow()}`);
         this.socket = io(url, { transports: ["websocket"] });
     }
 
     public async connect(id: string, encrypted: boolean): Promise<api.IDocument> {
+        debug(`Connecting to ${id} - ${performanceNow()}`);
+
         // Generate encryption keys for new connection.
         let privateKey: string;
         let publicKey: string;
@@ -64,8 +69,10 @@ export class DocumentService implements api.IDocumentService {
                 connectMessage,
                 (error, response: messages.IConnected) => {
                     if (error) {
+                        debug(`Failed to connect to ${id}`);
                         return reject(error);
                     } else {
+                        debug(`Connected to ${id} - ${performanceNow()}`);
                         const deltaConnection = new DocumentDeltaConnection(
                             this,
                             id,

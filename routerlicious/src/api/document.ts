@@ -1,6 +1,7 @@
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import * as uuid from "node-uuid";
+import performanceNow = require("performance-now");
 import * as cell from "../cell";
 import * as ink from "../ink";
 import * as mapExtension from "../map";
@@ -126,6 +127,8 @@ export class Document {
         service: storage.IDocumentService,
         options: Object): Promise<Document> {
 
+        debug(`Document Creating ${id} - ${performanceNow()}`);
+
         // Connect to the document
         const encryptedProperty = "encrypted";
         const document = await service.connect(id, options[encryptedProperty]);
@@ -149,6 +152,8 @@ export class Document {
         } else {
             await waitForRoot(returnValue);
         }
+
+        debug(`Document Created ${id} - ${performanceNow()}`);
 
         // And return the new object
         return returnValue;
