@@ -45,7 +45,12 @@ export class DocumentService implements api.IDocumentService {
         this.socket = io(url, { transports: ["websocket"] });
     }
 
-    public async connect(id: string, encrypted: boolean): Promise<api.IDocument> {
+    public async connect(
+        id: string,
+        version: resources.ICommit,
+        connect: boolean,
+        encrypted: boolean): Promise<api.IDocument> {
+
         debug(`Connecting to ${id} - ${performanceNow()}`);
 
         // Generate encryption keys for new connection.

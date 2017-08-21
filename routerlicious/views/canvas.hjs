@@ -52,6 +52,7 @@
         <script>
             var config = {{{ config }}};
             var encrypted = {{ encrypted }};
+            var version = {{ version }};
             controller.initialize("{{ id }}", config, encrypted);
         </script>
     {{/scripts}}

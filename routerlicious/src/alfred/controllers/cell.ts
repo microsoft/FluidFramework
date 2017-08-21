@@ -1,11 +1,12 @@
+import * as resources from "gitresources";
 import * as $ from "jquery";
 import * as api from "../../api";
 import * as shared from "../../shared";
 import * as socketStorage from "../../socket-storage";
 
-async function loadDocument(id: string): Promise<api.Document> {
+async function loadDocument(id: string, version: resources.ICommit): Promise<api.Document> {
     console.log("Loading in root document...");
-    const document = await api.load(id);
+    const document = await api.load(id, version);
 
     console.log("Document loaded");
     return document;
@@ -107,10 +108,10 @@ function randomizeCell(cell: api.ICell, element1: JQuery, element2: JQuery) {
     }, 3000);
 }
 
-export async function load(id: string, config: any) {
+export async function load(id: string, version: resources.ICommit, config: any) {
     socketStorage.registerAsDefault(document.location.origin, config.blobStorageUrl, config.repository);
 
-    const doc = await loadDocument(id);
+    const doc = await loadDocument(id, version);
     const root = doc.getRoot();
 
     let cell: api.ICell;

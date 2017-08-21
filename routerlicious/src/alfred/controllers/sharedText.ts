@@ -1,4 +1,5 @@
 // tslint:disable:align whitespace no-trailing-whitespace
+import * as resources from "gitresources";
 import performanceNow = require("performance-now");
 import * as request from "request";
 import * as url from "url";
@@ -229,10 +230,10 @@ async function getInsights(map: API.IMap, id: string): Promise<API.IMap> {
     return waitForKey<API.IMap>(insights, id);
 }
 
-export async function onLoad(id: string, config: any) {
+export async function onLoad(id: string, version: resources.ICommit, config: any) {
     socketStorage.registerAsDefault(document.location.origin, config.blobStorageUrl, config.repository);
     console.log(`collabDoc loading ${id} - ${performanceNow()}`);
-    const collabDoc = await API.load(id, { blockUpdateMarkers: true });
+    const collabDoc = await API.load(id, { blockUpdateMarkers: true }, version);
     console.log(`collabDoc loaded ${id} - ${performanceNow()}`);
     const root = await collabDoc.getRoot().getView();
     console.log(`Getting root ${id} - ${performanceNow()}`);

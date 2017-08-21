@@ -1,4 +1,3 @@
-import * as resources from "gitresources";
 import * as api from "../api";
 
 /**
@@ -18,6 +17,25 @@ export interface IConnect {
     encrypted: boolean;
 }
 
+// import * as resources from "gitresources";
+// Move these to their own class
+// // Available revisions for this document
+// version: resources.ICommit;
+// // The latest sequence number for the document
+// sequenceNumber: number;
+// // The minimum sequence number for the document
+// minimumSequenceNumber: number;
+// // Distributed objects contained within the document
+// distributedObjects: api.IDistributedObject[];
+// // The transformed messages between the minimum sequence number and
+// // sequenceNumber
+// transformedMessages: api.ISequencedDocumentMessage[];
+
+// Deltas not yet processed
+// // Pending deltas that have not yet been included in a snapshot
+// pendingDeltas: api.ISequencedDocumentMessage[];
+
+// Is the below a connection to the actual Kafka stream?
 /**
  * Message sent to indicate a client has connected to the server
  */
@@ -27,25 +45,6 @@ export interface IConnected {
 
     // Whether or not this is an existing object
     existing: boolean;
-
-    // Available revisions for this document
-    version: resources.ICommit;
-
-    // The latest sequence number for the document
-    sequenceNumber: number;
-
-    // The minimum sequence number for the document
-    minimumSequenceNumber: number;
-
-    // Distributed objects contained within the document
-    distributedObjects: api.IDistributedObject[];
-
-    // The transformed messages between the minimum sequence number and
-    // sequenceNumber
-    transformedMessages: api.ISequencedDocumentMessage[];
-
-    // Pending deltas that have not yet been included in a snapshot
-    pendingDeltas: api.ISequencedDocumentMessage[];
 
     // The true private key for use by the client to decrypt deltas from the server
     privateKey: string;

@@ -1,5 +1,6 @@
 import * as assert from "assert";
 import { EventEmitter } from "events";
+import * as resources from "gitresources";
 import * as uuid from "node-uuid";
 import performanceNow = require("performance-now");
 import * as cell from "../cell";
@@ -125,7 +126,9 @@ export class Document {
         id: string,
         registry: extensions.Registry,
         service: storage.IDocumentService,
-        options: Object): Promise<Document> {
+        options: Object,
+        version: resources.ICommit,
+        connect: boolean): Promise<Document> {
 
         debug(`Document Creating ${id} - ${performanceNow()}`);
 
@@ -543,8 +546,10 @@ export class Document {
 export async function load(
     id: string,
     options: Object = defaultDocumentOptions,
+    version: resources.ICommit = null,
     registry: extensions.Registry = defaultRegistry,
-    service: storage.IDocumentService = defaultDocumentService): Promise<Document> {
+    service: storage.IDocumentService = defaultDocumentService,
+    connect = true): Promise<Document> {
 
     // Verify an extensions registry was provided
     if (!registry) {
@@ -556,5 +561,5 @@ export async function load(
         throw new Error("Document service not provided to load call");
     }
 
-    return Document.Create(id, registry, service, options);
+    return Document.Create(id, registry, service, options, version, connect);
 }
