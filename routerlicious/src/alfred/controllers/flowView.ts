@@ -633,7 +633,7 @@ function renderTreeByPG(div: HTMLDivElement, pos: number, client: SharedString.C
     // TODO: for stable viewports cache the geometry and the divs 
     div.id = "renderedTree";
 
-    let bounds = Geometry.Rectangle.fromClientRect(div.getBoundingClientRect());
+    let viewportBounds = Geometry.Rectangle.fromClientRect(div.getBoundingClientRect());
     let pgCount = 0;
     div.style.font = fontstr;
     let computedStyle = window.getComputedStyle(div);
@@ -641,7 +641,7 @@ function renderTreeByPG(div: HTMLDivElement, pos: number, client: SharedString.C
     let viewportHeight = parseInt(div.style.height, 10);
     let viewportWidth = parseInt(div.style.width, 10);
     let h = parseInt(computedStyle.fontSize, 10);
-    let defaultDivHeight = Math.round(h * defaultLineHeight);
+    let defaultLineDivHeight = Math.round(h * defaultLineHeight);
     let pgVspace = Math.round(h * 0.5);
     let headerDivHeight = 32;
     let currentLineTop = 0;
@@ -654,6 +654,7 @@ function renderTreeByPG(div: HTMLDivElement, pos: number, client: SharedString.C
     let makeLineDiv = (r: Geometry.Rectangle, lineFontstr) => {
         let lineDiv = document.createElement("div");
         lineDiv.style.font = lineFontstr;
+        lineDiv.style.whiteSpace = "pre";
         lineDiv.onclick = (e) => {
             let targetDiv = <HTMLDivElement>e.target;
             if (targetDiv.lastElementChild) {
@@ -716,7 +717,8 @@ function renderTreeByPG(div: HTMLDivElement, pos: number, client: SharedString.C
         let pgBreaks = curPGMarker.cache.breaks;
         let lineDiv: HTMLDivElement;
         let prevSpan: HTMLSpanElement;
-
+        let lineDivHeight = defaultLineDivHeight;
+       
         function renderSegmentIntoLine(segment: SharedString.Segment, segpos: number, refSeq: number,
             clientId: number, start: number, end: number) {
             let segType = segment.getType();
@@ -730,12 +732,30 @@ function renderTreeByPG(div: HTMLDivElement, pos: number, client: SharedString.C
                 let span: HTMLSpanElement;
                 let textSegment = <SharedString.TextSegment>segment;
                 let text = textSegment.text.substring(start, end);
+                let textStartPos = segpos + start;
+                let textEndPos = segpos + end;
                 if (textSegment === prevTextSegment) {
                     span = prevSpan;
+                    if ((context.cursor.pos >= textStartPos) && (context.cursor.pos < textEndPos)) {
+                        let preCursorText = text.substring(start, (context.cursor.pos - textStartPos));
+                        let temp = span.innerText;
+                        span.innerText += preCursorText;
+                        let cursorBounds = span.getBoundingClientRect();
+                        span.innerText = temp;
+                        context.cursor.assignToLine(cursorBounds.right - viewportBounds.x, lineDivHeight , lineDiv);
+                    }
                     span.innerText += text;
                 } else {
                     span = makeSegSpan(context, textErrorRun, text, textSegment, start, segpos);
                     lineDiv.appendChild(span);
+                    if ((context.cursor.pos >= textStartPos) && (context.cursor.pos < textEndPos)) {
+                        let preCursorText = text.substring(start, (context.cursor.pos - textStartPos) + 1);
+                        let temp = span.innerText;
+                        span.innerText = preCursorText;
+                        let cursorBounds = span.getBoundingClientRect();
+                        span.innerText = temp;
+                        context.cursor.assignToLine(cursorBounds.right - viewportBounds.x, lineDivHeight , lineDiv);
+                    }
                     prevTextSegment = textSegment;
                     prevSpan = span;
                 }
@@ -759,8 +779,8 @@ function renderTreeByPG(div: HTMLDivElement, pos: number, client: SharedString.C
                 lineEnd = undefined;
             }
             let lineFontstr = fontstr;
+            lineDivHeight = defaultLineDivHeight;
             if ((lineEnd === undefined) || (lineEnd >= pos)) {
-                let lineDivHeight = defaultDivHeight;
                 if (curPGMarker.properties && (curPGMarker.properties.header !== undefined)) {
                     // TODO: header levels
                     lineDivHeight = headerDivHeight;
@@ -773,7 +793,7 @@ function renderTreeByPG(div: HTMLDivElement, pos: number, client: SharedString.C
                     client.getClientId(), undefined, lineStart, lineEnd);
                 currentLineTop += lineDivHeight;
             }
-            if ((viewportHeight - currentLineTop) < defaultDivHeight) {
+            if ((viewportHeight - currentLineTop) < defaultLineDivHeight) {
                 // no more room for lines
                 // TODO: record end viewport char
                 break;
@@ -792,20 +812,20 @@ function renderTreeByPG(div: HTMLDivElement, pos: number, client: SharedString.C
         startPGMarker = pgMarker;
         pgMarker = undefined;
         startPGPos = markerPos + 1;
-        if ((!startPGMarker.cache)||(startPGMarker.cache.singleLineWidth !== bounds.width)) {
+        if ((!startPGMarker.cache) || (startPGMarker.cache.singleLineWidth !== viewportBounds.width)) {
             client.mergeTree.mapRange({ leaf: segmentToItems }, SharedString.UniversalSequenceNumber,
                 client.getClientId(), undefined, startPGPos);
-            startPGMarker.cache = { breaks: breakPGIntoLinesFF(items, bounds.width), singleLineWidth: bounds.width };           
+            startPGMarker.cache = { breaks: breakPGIntoLinesFF(items, viewportBounds.width), singleLineWidth: viewportBounds.width };
         }
         pgCount++;
         renderPG(startPGMarker, startPGPos);
         currentLineTop += pgVspace;
-        if (pgMarker!==undefined) {
+        if (pgMarker !== undefined) {
             startPGMarker.cache.endOffset = markerPos - startPGPos;
         } else {
             startPGMarker.cache.endOffset = context.client.getLength() - startPGPos;
         }
-    } while ((pgMarker !== undefined) && ((viewportHeight - currentLineTop) >= defaultDivHeight));
+    } while ((pgMarker !== undefined) && ((viewportHeight - currentLineTop) >= defaultLineDivHeight));
     context.viewportEndChar = startPGMarker.cache.endOffset + startPGPos;
     // tslint:disable:max-line-length
     // console.log(`pg count ${pgCount} lw ${bounds.width} items ${items.length} word spacing: ${wordSpacing}`);
@@ -850,7 +870,7 @@ function makeSegSpan(context: FlowView, textErrorRun: IRange, segText: string, t
                             let text = itemElm.innerText.trim();
                             context.sharedString.removeText(span.textErrorRun.start, span.textErrorRun.end);
                             context.sharedString.insertText(text, span.textErrorRun.start);
-                            context.localQueueRender();
+                            context.localQueueRender(span.textErrorRun.start);
                         }
                         function selectItem(ev: MouseEvent) {
                             let itemElm = <HTMLElement>ev.target;
@@ -1171,7 +1191,7 @@ export class Cursor {
     private blinkTimer: any;
     private viewportDivBounds: ClientRect;
 
-    constructor(public viewportDiv: HTMLDivElement, public pos = 0) {
+    constructor(public viewportDiv: HTMLDivElement, public pos = 1) {
         this.makeSpan();
         this.onresize();
     }
@@ -1193,7 +1213,7 @@ export class Cursor {
         this.editSpan.style.position = "absolute";
         this.editSpan.style.left = "0px";
         this.editSpan.style.top = "0px";
-        this.editSpan.style.width = "1px";
+        this.editSpan.style.width = "2px";
         this.show();
     }
 
@@ -1203,6 +1223,19 @@ export class Cursor {
 
     public onresize() {
         this.viewportDivBounds = this.viewportDiv.getBoundingClientRect();
+    }
+
+    public assignToLine(x: number, h: number, lineDiv: HTMLDivElement) {
+        this.editSpan.style.left = `${x}px`;
+        this.editSpan.style.height = `${h}px`;
+        if (this.editSpan.parentElement) {
+            this.editSpan.parentElement.removeChild(this.editSpan);
+        }
+        lineDiv.appendChild(this.editSpan);
+        if (this.blinkTimer) {
+            clearTimeout(this.blinkTimer);
+        }
+        this.blinkCursor();
     }
 
     public assign(parentSpan: HTMLSpanElement) {
@@ -1456,7 +1489,7 @@ export class FlowView {
             if (e.keyCode === KeyCode.backspace) {
                 this.cursor.pos--;
                 this.sharedString.removeText(this.cursor.pos, this.cursor.pos + 1);
-                this.localQueueRender();
+                this.localQueueRender(this.cursor.pos);
             } else if (((e.keyCode === KeyCode.pageUp) || (e.keyCode === KeyCode.pageDown)) && (!this.ticking)) {
                 setTimeout(() => {
                     this.scroll(e.keyCode === KeyCode.pageUp);
@@ -1505,7 +1538,7 @@ export class FlowView {
                 code = CharacterCodes.linefeed;
             }
             this.sharedString.insertText(String.fromCharCode(code), pos);
-            this.localQueueRender();
+            this.localQueueRender(pos);
         };
         this.flowContainer.onkeydown = keydownHandler;
         this.flowContainer.onkeypress = keypressHandler;
@@ -1650,7 +1683,8 @@ export class FlowView {
         clearInterval(this.randWordTimer);
     }
 
-    public localQueueRender() {
+    public localQueueRender(updatePos: number) {
+        this.updatePGInfo(updatePos);
         this.pendingRender = true;
         window.requestAnimationFrame(() => {
             this.pendingRender = false;
@@ -1665,7 +1699,7 @@ export class FlowView {
         });
     }
 
-    private updatePGInfo(changePos: number) {
+    public updatePGInfo(changePos: number) {
         let tileMarker = <IParagraphMarker>findContainingTile(this.client, changePos, "pg");
         tileMarker.cache = undefined;
     }
