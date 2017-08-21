@@ -73,9 +73,11 @@ enum CharacterCodes {
 
 interface IParagraphInfo {
     breaks: number[];
+    singleLineWidth: number;
+    endOffset?: number;
 }
 
-interface IPGMarker extends SharedString.Marker {
+interface IParagraphMarker extends SharedString.Marker {
     cache?: IParagraphInfo;
 }
 
@@ -626,26 +628,32 @@ function findContainingTile(client: SharedString.Client, pos: number, tileType: 
 
 function renderTreeByPG(div: HTMLDivElement, pos: number, client: SharedString.Client, context: FlowView) {
     let fontstr = "18px Times";
+    let headerFontstr = "22px Times";
+
     // TODO: for stable viewports cache the geometry and the divs 
     div.id = "renderedTree";
 
     let bounds = Geometry.Rectangle.fromClientRect(div.getBoundingClientRect());
-    let h = Math.floor(context.hEst * 1.25);
     let pgCount = 0;
-    let lineRects = bounds.subDivideVertAbsEnclosed(h, false);
     div.style.font = fontstr;
+    let computedStyle = window.getComputedStyle(div);
+    let defaultLineHeight = 1.2;
+    let viewportHeight = parseInt(div.style.height, 10);
+    let viewportWidth = parseInt(div.style.width, 10);
+    let h = parseInt(computedStyle.fontSize, 10);
+    let defaultDivHeight = Math.round(h * defaultLineHeight);
+    let pgVspace = Math.round(h * 0.5);
+    let headerDivHeight = 32;
+    let currentLineTop = 0;
     let wordSpacing = getTextWidth(" ", fontstr);
-    let lineCount = lineRects.length;
-    let totalWidth = lineCount * bounds.width;
-    let cumulativeWidth = 0;
     let standardGlue = <IPGGlue>{
         type: PGItemType.Glue, width: wordSpacing,
         stretch: wordSpacing / 2, shrink: wordSpacing / 3,
     };
 
-    let divs = lineRects.map((r) => {
+    let makeLineDiv = (r: Geometry.Rectangle, lineFontstr) => {
         let lineDiv = document.createElement("div");
-        lineDiv.style.font = fontstr;
+        lineDiv.style.font = lineFontstr;
         lineDiv.onclick = (e) => {
             let targetDiv = <HTMLDivElement>e.target;
             if (targetDiv.lastElementChild) {
@@ -656,11 +664,11 @@ function renderTreeByPG(div: HTMLDivElement, pos: number, client: SharedString.C
         r.conformElement(lineDiv);
         div.appendChild(lineDiv);
         return lineDiv;
-    });
+    };
 
-    let divIndex = 0;
     let items: PGItem[];
-    let pgMarker: IPGMarker;
+    let pgMarker: IParagraphMarker;
+    let startPGMarker: IParagraphMarker;
     let markerPos: number;
     let textErrorRun = <IRange>{ start: -1, end: -1 };
 
@@ -669,6 +677,9 @@ function renderTreeByPG(div: HTMLDivElement, pos: number, client: SharedString.C
             let textSegment = <SharedString.TextSegment>segment;
             let words = textSegment.text.split(/\s+/g);
             let lfontstr = fontstr;
+            if (startPGMarker.properties && (startPGMarker.properties.header !== undefined)) {
+                lfontstr = headerFontstr;
+            }
             if (textSegment.properties) {
                 let fontSize = textSegment.properties.fontSize;
                 if (fontSize) {
@@ -685,15 +696,10 @@ function renderTreeByPG(div: HTMLDivElement, pos: number, client: SharedString.C
                 let wordBlock = makeIPGBlock(wordWidth, word, textSegment);
                 if (!first) {
                     items.push(standardGlue);
-                    cumulativeWidth += standardGlue.width;
                 } else {
                     first = false;
                 }
                 items.push(wordBlock);
-                cumulativeWidth += wordBlock.width;
-                if (cumulativeWidth >= totalWidth) {
-                    return false;
-                }
             }
         } else if (segment.getType() === SharedString.SegmentType.Marker) {
             let marker = <SharedString.Marker>segment;
@@ -706,9 +712,9 @@ function renderTreeByPG(div: HTMLDivElement, pos: number, client: SharedString.C
 
     let prevTextSegment: SharedString.TextSegment;
 
-    function renderPG(curPGMarker: IPGMarker, curPGPos: number) {
+    function renderPG(curPGMarker: IParagraphMarker, curPGPos: number) {
         let pgBreaks = curPGMarker.cache.breaks;
-        let lineDiv = divs[divIndex];
+        let lineDiv: HTMLDivElement;
         let prevSpan: HTMLSpanElement;
 
         function renderSegmentIntoLine(segment: SharedString.Segment, segpos: number, refSeq: number,
@@ -752,14 +758,22 @@ function renderTreeByPG(div: HTMLDivElement, pos: number, client: SharedString.C
             } else {
                 lineEnd = undefined;
             }
+            let lineFontstr = fontstr;
             if ((lineEnd === undefined) || (lineEnd >= pos)) {
-                lineDiv = divs[divIndex];
+                let lineDivHeight = defaultDivHeight;
+                if (curPGMarker.properties && (curPGMarker.properties.header !== undefined)) {
+                    // TODO: header levels
+                    lineDivHeight = headerDivHeight;
+                    lineFontstr = headerFontstr;
+                }
+                lineDiv = makeLineDiv(new Geometry.Rectangle(0, currentLineTop, viewportWidth, lineDivHeight),
+                    lineFontstr);
                 prevTextSegment = undefined;
                 client.mergeTree.mapRange({ leaf: renderSegmentIntoLine }, SharedString.UniversalSequenceNumber,
                     client.getClientId(), undefined, lineStart, lineEnd);
-                divIndex++;
+                currentLineTop += lineDivHeight;
             }
-            if (divIndex === divs.length) {
+            if ((viewportHeight - currentLineTop) < defaultDivHeight) {
                 // no more room for lines
                 // TODO: record end viewport char
                 break;
@@ -771,21 +785,30 @@ function renderTreeByPG(div: HTMLDivElement, pos: number, client: SharedString.C
     markerPos = client.mergeTree.getOffset(pgMarker, SharedString.UniversalSequenceNumber,
         client.getClientId());
 
+    let startPGPos: number;
+
     do {
         items = [];
-        let startPGMarker = pgMarker;
+        startPGMarker = pgMarker;
         pgMarker = undefined;
-        let startPgPos = markerPos + 1;
-        if (!startPGMarker.cache) {
+        startPGPos = markerPos + 1;
+        if ((!startPGMarker.cache)||(startPGMarker.cache.singleLineWidth !== bounds.width)) {
             client.mergeTree.mapRange({ leaf: segmentToItems }, SharedString.UniversalSequenceNumber,
-                client.getClientId(), undefined, startPgPos);
-            startPGMarker.cache = { breaks: breakPGIntoLinesFF(items, bounds.width) };
+                client.getClientId(), undefined, startPGPos);
+            startPGMarker.cache = { breaks: breakPGIntoLinesFF(items, bounds.width), singleLineWidth: bounds.width };           
         }
         pgCount++;
-        renderPG(startPGMarker, startPgPos);
-    } while ((pgMarker !== undefined) && (divIndex < divs.length));
+        renderPG(startPGMarker, startPGPos);
+        currentLineTop += pgVspace;
+        if (pgMarker!==undefined) {
+            startPGMarker.cache.endOffset = markerPos - startPGPos;
+        } else {
+            startPGMarker.cache.endOffset = context.client.getLength() - startPGPos;
+        }
+    } while ((pgMarker !== undefined) && ((viewportHeight - currentLineTop) >= defaultDivHeight));
+    context.viewportEndChar = startPGMarker.cache.endOffset + startPGPos;
     // tslint:disable:max-line-length
-    console.log(`pg count ${pgCount} lw ${bounds.width} cw ${cumulativeWidth} tw ${totalWidth} items ${items.length} word spacing: ${wordSpacing}`);
+    // console.log(`pg count ${pgCount} lw ${bounds.width} items ${items.length} word spacing: ${wordSpacing}`);
 }
 
 function makeSegSpan(context: FlowView, textErrorRun: IRange, segText: string, textSegment: SharedString.TextSegment, offsetFromSegpos: number,
@@ -1643,7 +1666,7 @@ export class FlowView {
     }
 
     private updatePGInfo(changePos: number) {
-        let tileMarker = <IPGMarker>findContainingTile(this.client, changePos, "pg");
+        let tileMarker = <IParagraphMarker>findContainingTile(this.client, changePos, "pg");
         tileMarker.cache = undefined;
     }
 

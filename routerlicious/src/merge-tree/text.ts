@@ -25,12 +25,20 @@ export function loadSegments(content: string, segLimit: number, markers = false)
     }
     let segments = <MergeTree.Segment[]>[];
     for (let paragraph of paragraphs) {
+        let pgMarker: MergeTree.Marker;
         if (markers) {
-            segments.push(MergeTree.Marker.make("pg", ops.MarkerBehaviors.Tile, undefined, seq, cli));
+            pgMarker = MergeTree.Marker.make("pg", ops.MarkerBehaviors.Tile, undefined, seq, cli);
+            segments.push(pgMarker);
         }
         if (withProps) {
             if (paragraph.indexOf("Chapter") >= 0) {
-                segments.push(MergeTree.TextSegment.make(paragraph, { fontSize: "140%", lineHeight: "150%" }, seq, cli));
+                if (markers) {
+                    pgMarker.addProperties({ header: 2});
+                    segments.push(new MergeTree.TextSegment(paragraph, seq, cli));                    
+                }
+                else {
+                    segments.push(MergeTree.TextSegment.make(paragraph, { fontSize: "140%", lineHeight: "150%" }, seq, cli));
+                }
             } else {
                 let emphStrings = paragraph.split("_");
                 for (let i = 0, len = emphStrings.length; i < len; i++) {

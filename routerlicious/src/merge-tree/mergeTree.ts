@@ -260,7 +260,7 @@ export abstract class BaseSegment extends MergeNode implements Segment {
 
     addProperties(newProps: PropertySet) {
         if (!this.properties) {
-            this.properties = Properties.createMap<string>();
+            this.properties = Properties.createMap<any>();
         }
         Properties.extend(this.properties, newProps);
     }
@@ -378,7 +378,7 @@ export class TextSegment extends BaseSegment {
             this.cachedLength = this.text.length;
             let leafSegment = new TextSegment(remainingText, this.seq, this.clientId);
             if (this.properties) {
-                leafSegment.addProperties(Properties.extend(Properties.createMap<string>(), this.properties));
+                leafSegment.addProperties(Properties.extend(Properties.createMap<any>(), this.properties));
             }
             segmentCopy(this, leafSegment, true);
             return leafSegment;
