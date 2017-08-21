@@ -99,7 +99,7 @@ async function getRevisions(gitManager: git.GitManager, id: string): Promise<res
     return commits;
 }
 
-interface IDocumentSnapshot {
+export interface IDocumentSnapshot {
     documentAttributes: api.IDocumentAttributes;
 
     distributedObjects: api.IDistributedObject[];
@@ -107,7 +107,7 @@ interface IDocumentSnapshot {
     messages: api.ISequencedDocumentMessage[];
 }
 
-async function getDocumentDetails(
+export async function getDocumentDetails(
     gitManager: git.GitManager,
     id: string,
     version: resources.ICommit): Promise<IDocumentSnapshot> {
