@@ -7,6 +7,25 @@ export class GitManager {
     constructor(private apiBaseUrl: string, private repository: string) {
     }
 
+    public async getCommit(sha: string): Promise<resources.ICommit> {
+        return new Promise<resources.ICommit>((resolve, reject) => {
+            request.get(
+                {
+                    json: true,
+                    url: `${this.apiBaseUrl}/repos/${this.repository}/git/commits/${encodeURIComponent(sha)}`,
+                },
+                (error, response, body) => {
+                    if (error) {
+                        return reject(error);
+                    } else if (response.statusCode !== 200) {
+                        return reject(response.statusCode);
+                    } else {
+                        return resolve(response.body);
+                    }
+                });
+        });
+    }
+
     /**
      * Reads the object with the given ID. We defer to the client implementation to do the actual read.
      */
