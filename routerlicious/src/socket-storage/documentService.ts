@@ -15,6 +15,15 @@ type ConnectionMap = { [connectionId: string]: DocumentDeltaConnection };
 type ObjectMap = { [objectId: string]: ConnectionMap };
 type EventMap = { [event: string]: ObjectMap };
 
+const emptyHeader: api.IDocumentHeader = {
+    attributes: {
+        minimumSequenceNumber: 0,
+        sequenceNumber: 0,
+    },
+    distributedObjects: [],
+    transformedMessages: [],
+};
+
 class Document implements api.IDocument {
     constructor(
         public documentId: string,
@@ -68,7 +77,9 @@ export class DocumentService implements api.IDocumentService {
 
         const connectMessage: messages.IConnect = { id, privateKey, publicKey, encrypted };
 
-        const headerP = this.blobStorge.getHeader(id, version);
+        const headerP = version
+            ? this.blobStorge.getHeader(id, version)
+            : Promise.resolve(emptyHeader);
         const connectionP = new Promise<messages.IConnected>((resolve, reject) => {
             this.socket.emit(
                 "connectDocument",
@@ -81,11 +92,14 @@ export class DocumentService implements api.IDocumentService {
                     }
                 });
         });
+        const pendingDeltasP = headerP.then((header) => {
+            return this.deltaStorage.get(id, header ? header.attributes.sequenceNumber : 0);
+        });
 
         // header *should* be enough to return the document. Pull it first as well as any pending delta
         // messages which should be taken into account before client logic.
 
-        const [header, connection] = await Promise.all([headerP, connectionP]);
+        const [header, connection, pendingDeltas] = await Promise.all([headerP, connectionP, pendingDeltasP]);
 
         debug(`Connected to ${id} - ${performanceNow()}`);
         const deltaConnection = new DocumentDeltaConnection(
@@ -107,7 +121,7 @@ export class DocumentService implements api.IDocumentService {
             documentStorage,
             deltaStorage,
             header.distributedObjects,
-            header.pendingDeltas,
+            pendingDeltas,
             header.transformedMessages,
             header.attributes.sequenceNumber,
             header.attributes.minimumSequenceNumber);

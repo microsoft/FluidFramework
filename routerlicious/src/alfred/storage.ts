@@ -1,4 +1,5 @@
 import * as assert from "assert";
+import { ICommit } from "gitresources";
 import * as resources from "gitresources";
 import * as path from "path";
 import * as api from "../api";
@@ -145,4 +146,9 @@ export async function getOrCreateDocument(
         publicKey);
 
     return getOrCreateP;
+}
+
+export async function getLatestVersion(gitManager: git.GitManager, id: string): Promise<ICommit> {
+    const commits = await gitManager.getCommits(id, 1);
+    return commits.length > 0 ? commits[0] : null;
 }

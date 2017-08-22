@@ -115,5 +115,8 @@ export class RangeTracker {
 
         // And remove unnecessary ranges
         this.ranges = index - 1 > 0 ? this.ranges.slice(index - 1) : this.ranges;
+
+        // assert that the lowest value is now the input to this method
+        assert.equal(primary, this.ranges[0].primary);
     }
 }

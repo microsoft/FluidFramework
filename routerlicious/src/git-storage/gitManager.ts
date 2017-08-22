@@ -26,7 +26,7 @@ export class GitManager {
                         return reject(error);
                     } else if (response.statusCode === 200) {
                         return resolve(response.body);
-                    } else if (response.statusCode === 404) {
+                    } else if (response.statusCode === 400) {
                         return resolve(null);
                     } else {
                         return reject(response.statusCode);

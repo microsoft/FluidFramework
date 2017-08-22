@@ -15,7 +15,7 @@
         <script>
             var encrypted = {{ encrypted }};
             var config = {{{ config }}};
-            var version = {{ version }};
+            var version = {{{ version }}};
             controller.load("{{ id }}", version, config, encrypted);
         </script>
     {{/scripts}}

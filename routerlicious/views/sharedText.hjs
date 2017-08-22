@@ -11,7 +11,7 @@
         <script src="/public/scripts/dist/sharedText.js"></script>
         <script>
             var config = {{{ config }}};
-            var veresion = {{ version }};
+            var version = {{{ version }}};
             console.log(`Starting load at - ${performance.now()}`);
             controller.onLoad("{{ id }}", version, config);
         </script>

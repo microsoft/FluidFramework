@@ -139,7 +139,8 @@ export class Document {
 
         // Load in distributed objects stored within the document
         for (const distributedObject of document.distributedObjects) {
-            const services = returnValue.getObjectServices(distributedObject.id, distributedObject.sequenceNumber);
+            const services = returnValue.getObjectServices(distributedObject.id);
+            services.deltaConnection.setBaseMapping(distributedObject.sequenceNumber, document.minimumSequenceNumber);
             returnValue.loadInternal(distributedObject, services);
         }
 
@@ -245,7 +246,7 @@ export class Document {
 
         // Store a reference to the object in our list of objects and then get the services
         // used to attach it to the stream
-        const services = this.getObjectServices(object.id, 0);
+        const services = this.getObjectServices(object.id);
         this.upsertDistributedObject(object, services);
 
         return services;
@@ -337,7 +338,9 @@ export class Document {
         // tslint:disable-next-line:forin
         for (const objectId in this.distributedObjects) {
             const object = this.distributedObjects[objectId];
-            if (!object.object.isLocal()) {
+
+            if (this.shouldSnapshot(object)) {
+                debug(`Snapshotting ${object.object.id}`);
                 const snapshot = object.object.snapshot();
 
                 // Add in the object attributes to the returned tree
@@ -386,6 +389,18 @@ export class Document {
         this.document.documentStorageService.write(root, message);
 
         return Promise.resolve();
+    }
+
+    /**
+     * Helper function to determine if we should snapshot the given object. We only will snapshot non-local
+     * objects whose time of attach is outside the collaboration window
+     */
+    private shouldSnapshot(object: IDistributedObjectState) {
+        // tslint:disable-next-line
+        debug(`${object.object.id} ${object.object.isLocal()} - ${object.connection.baseMappingIsSet()} - ${object.connection.baseSequenceNumber} >= ${this.deltaManager.minimumSequenceNumber}`);
+        return !object.object.isLocal() &&
+            object.connection.baseMappingIsSet() &&
+            object.connection.baseSequenceNumber >= this.deltaManager.minimumSequenceNumber;
     }
 
     /**
@@ -441,11 +456,8 @@ export class Document {
         this.upsertDistributedObject(value, services);
     }
 
-    private getObjectServices(id: string, sequenceNumber: number): IAttachedServices {
-        // TODO I think the below is probably correct - we can associate the given delta with the latest seq #?
-        // Although maybe I just want to store this value in any snapshot and be able to retrieve it later to be safe?
-        // Or is the MSN the base and I can just go off of that?
-        const connection = new DeltaConnection(id, this, sequenceNumber, this.deltaManager.minimumSequenceNumber);
+    private getObjectServices(id: string): IAttachedServices {
+        const connection = new DeltaConnection(id, this);
         const storage = new ObjectStorageService(id, this.document.documentStorageService);
 
         return {
@@ -485,19 +497,19 @@ export class Document {
                 message.sequenceNumber,
                 message.minimumSequenceNumber);
         } else if (message.type === AttachObject) {
-            // Skip attach messages that are local
-            if (message.clientId !== this.document.clientId) {
-                const attachMessage = message.contents as IAttachMessage;
+            const attachMessage = message.contents as IAttachMessage;
 
+            // If a non-local operation then go and create the object - otherwise mark it as officially
+            // attached.
+            if (message.clientId !== this.document.clientId) {
                 // create storage service that wraps the attach data
                 const localStorage = new LocalObjectStorageService(attachMessage.snapshot);
                 const header = localStorage.readSync("header");
 
                 const connection = new DeltaConnection(
                     attachMessage.id,
-                    this,
-                    0,
-                    this.deltaManager.minimumSequenceNumber);
+                    this);
+                connection.setBaseMapping(0, message.sequenceNumber);
 
                 const distributedObject: storage.IDistributedObject = {
                     header,
@@ -512,6 +524,8 @@ export class Document {
                 };
 
                 this.loadInternal(distributedObject, services);
+            } else {
+                this.distributedObjects[attachMessage.id].connection.setBaseMapping(0, message.sequenceNumber);
             }
         }
 
@@ -528,7 +542,7 @@ export class Document {
             // tslint:disable-next-line:forin
             for (const objectId in this.distributedObjects) {
                 const object = this.distributedObjects[objectId];
-                if (!object.object.isLocal()) {
+                if (!object.object.isLocal() && object.connection.baseMappingIsSet()) {
                     object.connection.updateMinSequenceNumber(message.minimumSequenceNumber);
                 }
             }
@@ -537,8 +551,6 @@ export class Document {
         this.events.emit("op", message);
     }
 }
-
-// TODO have some way to load a specific version of the document which won't do a fetch of pending deltas
 
 /**
  * Loads a collaborative object from the server
