@@ -33,6 +33,3 @@ export { intelligence };
 
 import democreator from "./democreator";
 export { democreator };
-
-import storage from "./storage";
-export { storage };

@@ -3,7 +3,7 @@ import { Response } from "express";
 export function handleResponse<T>(
     resultP: Promise<T>,
     response: Response,
-    handler: (value: T) => void,
+    handler: (value: T) => void = (value) => value,
     status: number = 200) {
 
     resultP.then(handler).then(

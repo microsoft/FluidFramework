@@ -1,8 +1,49 @@
+import * as assert from "assert";
 import * as git from "gitresources";
+import * as pathApi from "path";
 import * as querystring from "querystring";
 import * as request from "request";
 import * as winston from "winston";
 import { ICache, IGitService } from "./definitions";
+
+export interface IDocument {
+    existing: boolean;
+    docPrivateKey: string;
+    docPublicKey: string;
+}
+
+/**
+ * Interface used to go from the flat tree structure returned by the git manager to a hierarchy for easier
+ * processing
+ */
+interface ITree {
+    blobs: { [path: string]: string };
+    trees: { [path: string]: ITree };
+}
+
+function buildHierarchy(flatTree: git.ITree): ITree {
+    const lookup: { [path: string]: ITree } = {};
+    const root: ITree = { blobs: {}, trees: {} };
+    lookup[""] = root;
+
+    for (const entry of flatTree.tree) {
+        const entryPath = pathApi.parse(entry.path);
+
+        // The flat output is breadth-first so we can assume we see tree nodes prior to their contents
+        const node = lookup[entryPath.dir];
+
+        // Add in either the blob or tree
+        if (entry.type === "tree") {
+            const newTree = { blobs: {}, trees: {} };
+            node.trees[entryPath.base] = newTree;
+            lookup[entry.path] = newTree;
+        } else if (entry.type === "blob") {
+            node.blobs[entryPath.base] = entry.sha;
+        }
+    }
+
+    return root;
+}
 
 export class RestGitService implements IGitService {
     constructor(private gitServerUrl: string, private cache: ICache) {
@@ -50,9 +91,14 @@ export class RestGitService implements IGitService {
         const commit = await this.post<git.ICommit>(`/repos/${encodeURIComponent(repo)}/git/commits`, commitParams);
 
         this.setCache(commit.sha, commit);
+
         // Also fetch the tree for the commit to have it in cache
         this.getTree(repo, commit.tree.sha, true).catch((error) => {
             winston.error(`Error fetching commit tree ${commit.tree.sha}`);
+        });
+        // ... as well as pull in the header for it
+        this.getHeader(repo, commit).catch((error) => {
+            winston.error(`Error fetching header ${commit.sha}`);
         });
 
         return commit;
@@ -112,6 +158,69 @@ export class RestGitService implements IGitService {
                 return this.get<git.ITree>(
                     `/repos/${encodeURIComponent(repo)}/git/trees/${encodeURIComponent(sha)}?${query}`);
             });
+    }
+
+    // TODO fill in with proper values
+    public getHeader(repo: string, version: git.ICommit): Promise<any> {
+        assert(version);
+
+        const key = `${version.sha}:header`;
+        return this.resolveFromCache(
+            key,
+            () => this.getHeaderCore(repo, version));
+    }
+
+    private async getHeaderCore(repo: string, version: git.ICommit): Promise<any> {
+        // NOTE we currently grab the entire repository. Should this ever become a bottleneck we can move to manually
+        // walking and looking for entries. But this will requre more round trips.
+        const rawTree = await this.getTree(repo, version.tree.sha, true);
+        const tree = buildHierarchy(rawTree);
+
+        // Pull out the root attributes file
+        const docAttributesSha = tree.blobs[".attributes"];
+        const objectBlobs: Array<{ id: string, headerSha: string, attributesSha: string }> = [];
+        // tslint:disable-next-line:forin
+        for (const path in tree.trees) {
+            const entry = tree.trees[path];
+            objectBlobs.push({ id: path, headerSha: entry.blobs.header, attributesSha: entry.blobs[".attributes"] });
+        }
+
+        // Pull in transformed messages between the msn and the reference
+        const messagesSha = tree.blobs[".messages"];
+        const messagesP = this.getBlob(repo, messagesSha).then((messages) => {
+            const messagesJSON = Buffer.from(messages.content, "base64").toString();
+            return JSON.parse(messagesJSON); // as api.ISequencedDocumentMessage[];
+        });
+
+        // Fetch the attributes and distirbuted object headers
+        const docAttributesP = this.getBlob(repo, docAttributesSha).then((docAttributes) => {
+            const attributes = Buffer.from(docAttributes.content, "base64").toString();
+            return JSON.parse(attributes); // as api.IDocumentAttributes;
+        });
+
+        const blobsP: Array<Promise<any>> = [];
+        for (const blob of objectBlobs) {
+            const headerP = this.getBlob(repo, blob.headerSha).then((header) => header.content);
+            const attributesP = this.getBlob(repo, blob.attributesSha).then((objectType) => {
+                const attributes = Buffer.from(objectType.content, "base64").toString();
+                return JSON.parse(attributes); // as api.IObjectAttributes;
+            });
+            blobsP.push(Promise.all([Promise.resolve(blob.id), headerP, attributesP]));
+        }
+
+        const fetched = await Promise.all([docAttributesP, Promise.all(blobsP), messagesP]);
+        const result = {
+            attributes: fetched[0],
+            distributedObjects: fetched[1].map((fetch) => ({
+                    header: fetch[1],
+                    id: fetch[0],
+                    sequenceNumber: fetch[2].sequenceNumber,
+                    type: fetch[2].type,
+            })),
+            transformedMessages: fetched[2],
+        }; // as api.IDocumentHeader
+
+        return result;
     }
 
     private get<T>(url: string): Promise<T> {

@@ -400,7 +400,7 @@ export class Document {
         debug(`${object.object.id} ${object.object.isLocal()} - ${object.connection.baseMappingIsSet()} - ${object.connection.baseSequenceNumber} >= ${this.deltaManager.minimumSequenceNumber}`);
         return !object.object.isLocal() &&
             object.connection.baseMappingIsSet() &&
-            object.connection.baseSequenceNumber >= this.deltaManager.minimumSequenceNumber;
+            object.connection.baseSequenceNumber === this.deltaManager.minimumSequenceNumber;
     }
 
     /**

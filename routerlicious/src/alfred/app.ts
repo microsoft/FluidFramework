@@ -8,6 +8,7 @@ import * as passport from "passport";
 import * as path from "path";
 import * as favicon from "serve-favicon";
 import * as expiry from "static-expiry";
+import * as git from "../git-storage";
 import * as utils from "../utils";
 import * as routes from "./routes";
 
@@ -46,6 +47,11 @@ app.use(staticFilesEndpoint, express.static(path.join(__dirname, "../../public")
 app.use(passport.initialize());
 app.use(passport.session());
 
+const gitSettings = nconf.get("git");
+git.getOrCreateRepository(gitSettings.historian, gitSettings.repository).catch((error) => {
+    utils.logger.error(`Error creating ${gitSettings.repository} repository`, error);
+});
+
 // bind routes
 app.use("/deltas", routes.deltas);
 app.use("/maps", routes.maps);
@@ -58,7 +64,6 @@ app.use("/producer", routes.producer);
 app.use("/object", routes.object);
 app.use("/intelligence", routes.intelligence);
 app.use("/democreator", routes.democreator);
-app.use("/storage", routes.storage);
 app.use(routes.home);
 
 // catch 404 and forward to error handler

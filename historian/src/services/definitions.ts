@@ -50,3 +50,10 @@ export interface IGitService {
     createTree(repo: string, tree: git.ICreateTreeParams): Promise<git.ITree>;
     getTree(repo: string, sha: string, recursive: boolean): Promise<git.ITree>;
 }
+
+export interface IHistorian extends IGitService {
+    /**
+     * Retrieves the header for the given document
+     */
+    getHeader(repo: string, version: git.ICommit): Promise<any>;
+}
