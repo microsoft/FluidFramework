@@ -93,16 +93,10 @@ io.on("connection", (socket) => {
 
                     const connectedMessage: socketStorage.IConnected = {
                         clientId,
-                        distributedObjects: documentDetails.distributedObjects,
                         encrypted,
                         existing: documentDetails.existing,
-                        minimumSequenceNumber: documentDetails.minimumSequenceNumber,
-                        pendingDeltas: documentDetails.pendingDeltas,
                         privateKey: documentDetails.docPrivateKey,
                         publicKey: documentDetails.docPublicKey,
-                        sequenceNumber: documentDetails.sequenceNumber,
-                        transformedMessages: documentDetails.transformedMessages,
-                        version: documentDetails.version,
                     };
 
                     profiler.done(`Loaded ${message.id}`);

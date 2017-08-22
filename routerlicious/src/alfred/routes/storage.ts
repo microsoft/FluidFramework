@@ -1,5 +1,6 @@
 import { Router } from "express";
 import * as nconf from "nconf";
+import * as api from "../../api";
 import * as git from "../../git-storage";
 import * as utils from "../../utils";
 import * as storage from "../storage";
@@ -9,7 +10,7 @@ const router: Router = Router();
 const settings = nconf.get("git");
 const gitManager = new git.GitManager(settings.historian, settings.repository);
 
-async function getStorage(id: string, sha: string): Promise<storage.IDocumentSnapshot> {
+async function getStorage(id: string, sha: string): Promise<api.IDocumentHeader> {
     const commit = await gitManager.getCommit(sha);
     return storage.getDocumentDetails(gitManager, id, commit);
 }

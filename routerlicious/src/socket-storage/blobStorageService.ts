@@ -28,6 +28,10 @@ export class BlobStorageService  {
         this.manager = new gitStorage.GitManager(baseUrl, repository);
     }
 
+    public getHeader(id: string, version: resources.ICommit): Promise<api.IDocumentHeader> {
+        return this.manager.getHeader(id, version ? version.sha : null);
+    }
+
     public async read(id: string, version: resources.ICommit, path: string): Promise<string> {
         const value = await this.manager.getObject(version.sha, path);
         return value.content;

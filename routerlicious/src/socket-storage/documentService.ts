@@ -68,44 +68,50 @@ export class DocumentService implements api.IDocumentService {
 
         const connectMessage: messages.IConnect = { id, privateKey, publicKey, encrypted };
 
-        return new Promise<api.IDocument>((resolve, reject) => {
+        const headerP = this.blobStorge.getHeader(id, version);
+        const connectionP = new Promise<messages.IConnected>((resolve, reject) => {
             this.socket.emit(
                 "connectDocument",
                 connectMessage,
                 (error, response: messages.IConnected) => {
                     if (error) {
-                        debug(`Failed to connect to ${id}`);
                         return reject(error);
                     } else {
-                        debug(`Connected to ${id} - ${performanceNow()}`);
-                        const deltaConnection = new DocumentDeltaConnection(
-                            this,
-                            id,
-                            response.clientId,
-                            encrypted,
-                            response.privateKey,
-                            response.publicKey);
-                        const deltaStorage = new DocumentDeltaStorageService(id, this.deltaStorage);
-                        const documentStorage = new DocumentStorageService(id, response.version, this.blobStorge);
-
-                        const document = new Document(
-                            id,
-                            response.clientId,
-                            response.existing,
-                            response.version,
-                            deltaConnection,
-                            documentStorage,
-                            deltaStorage,
-                            response.distributedObjects,
-                            response.pendingDeltas,
-                            response.transformedMessages,
-                            response.sequenceNumber,
-                            response.minimumSequenceNumber);
-
-                        resolve(document);
+                        return resolve(response);
                     }
                 });
         });
+
+        // header *should* be enough to return the document. Pull it first as well as any pending delta
+        // messages which should be taken into account before client logic.
+
+        const [header, connection] = await Promise.all([headerP, connectionP]);
+
+        debug(`Connected to ${id} - ${performanceNow()}`);
+        const deltaConnection = new DocumentDeltaConnection(
+            this,
+            id,
+            connection.clientId,
+            encrypted,
+            connection.privateKey,
+            connection.publicKey);
+        const deltaStorage = new DocumentDeltaStorageService(id, this.deltaStorage);
+        const documentStorage = new DocumentStorageService(id, version, this.blobStorge);
+
+        const document = new Document(
+            id,
+            connection.clientId,
+            connection.existing,
+            version,
+            deltaConnection,
+            documentStorage,
+            deltaStorage,
+            header.distributedObjects,
+            header.pendingDeltas,
+            header.transformedMessages,
+            header.attributes.sequenceNumber,
+            header.attributes.minimumSequenceNumber);
+        return document;
     }
 
     /**

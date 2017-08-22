@@ -90,6 +90,20 @@ export interface IDeltaStorageService {
 }
 
 /**
+ * Document header returned from the server
+ */
+export interface IDocumentHeader {
+    // Attributes for the document
+    attributes: IDocumentAttributes;
+
+    // Distributed objects contained within the document
+    distributedObjects: IDistributedObject[];
+
+    // The transformed messages between the minimum sequence number and sequenceNumber
+    transformedMessages: ISequencedDocumentMessage[];
+}
+
+/**
  * A distributed object is enough information to fully load a distributed object. The object may then require
  * a server call to load in more state.
  */
@@ -197,5 +211,5 @@ export interface IDocument {
 }
 
 export interface IDocumentService {
-    connect(id: string, encrypted: boolean): Promise<IDocument>;
+    connect(id: string, version: resources.ICommit, connect: boolean, encrypted: boolean): Promise<IDocument>;
 }

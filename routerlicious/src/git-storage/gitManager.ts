@@ -7,6 +7,34 @@ export class GitManager {
     constructor(private apiBaseUrl: string, private repository: string) {
     }
 
+    public async getHeader(id: string, sha: string): Promise<api.IDocumentHeader> {
+        return new Promise<api.IDocumentHeader>((resolve, reject) => {
+            // TODO move all this stuff to the historian
+
+            let url = `http://localhost:3000/storage/${encodeURIComponent(id)}`;
+            if (sha) {
+                url = `${url}/${encodeURIComponent(sha)}`;
+            }
+
+            request.get(
+                {
+                    json: true,
+                    url,
+                },
+                (error, response, body) => {
+                    if (error) {
+                        return reject(error);
+                    } else if (response.statusCode === 200) {
+                        return resolve(response.body);
+                    } else if (response.statusCode === 404) {
+                        return resolve(null);
+                    } else {
+                        return reject(response.statusCode);
+                    }
+                });
+        });
+    }
+
     public async getCommit(sha: string): Promise<resources.ICommit> {
         return new Promise<resources.ICommit>((resolve, reject) => {
             request.get(

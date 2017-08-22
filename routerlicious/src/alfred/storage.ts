@@ -4,9 +4,8 @@ import * as path from "path";
 import * as api from "../api";
 import * as git from "../git-storage";
 import * as utils from "../utils";
-import { getDeltas } from "./routes/deltas";
 
-interface IGetOrCreateDBResponse {
+export interface IDocument {
     existing: boolean;
     docPrivateKey: string;
     docPublicKey: string;
@@ -17,7 +16,7 @@ async function getOrCreateObject(
     documentsCollectionName: string,
     id: string,
     privateKey: string,
-    publicKey: string): Promise<IGetOrCreateDBResponse> {
+    publicKey: string): Promise<IDocument> {
 
     const db = await mongoManager.getDatabase();
     const collection = db.collection(documentsCollectionName);
@@ -35,26 +34,6 @@ async function getOrCreateObject(
                 });
             }
         });
-}
-
-export interface IDocumentDetails {
-    existing: boolean;
-
-    version: resources.ICommit;
-
-    minimumSequenceNumber: number;
-
-    sequenceNumber: number;
-
-    distributedObjects: api.IDistributedObject[];
-
-    transformedMessages: api.ISequencedDocumentMessage[];
-
-    pendingDeltas: api.ISequencedDocumentMessage[];
-
-    docPrivateKey: string;
-
-    docPublicKey: string;
 }
 
 /**
@@ -90,27 +69,10 @@ function buildHierarchy(flatTree: resources.ITree): ITree {
     return root;
 }
 
-/**
- * Retrieves revisions for the given document
- */
-async function getRevisions(gitManager: git.GitManager, id: string): Promise<resources.ICommit[]> {
-    const commits = await gitManager.getCommits(id, 1);
-
-    return commits;
-}
-
-export interface IDocumentSnapshot {
-    documentAttributes: api.IDocumentAttributes;
-
-    distributedObjects: api.IDistributedObject[];
-
-    messages: api.ISequencedDocumentMessage[];
-}
-
 export async function getDocumentDetails(
     gitManager: git.GitManager,
     id: string,
-    version: resources.ICommit): Promise<IDocumentSnapshot> {
+    version: resources.ICommit): Promise<api.IDocumentHeader> {
 
     assert(version);
 
@@ -152,15 +114,15 @@ export async function getDocumentDetails(
     }
 
     const fetched = await Promise.all([docAttributesP, Promise.all(blobsP), messagesP]);
-    const result: IDocumentSnapshot = {
+    const result: api.IDocumentHeader = {
+        attributes: fetched[0],
         distributedObjects: fetched[1].map((fetch) => ({
                 header: fetch[1],
                 id: fetch[0],
                 sequenceNumber: fetch[2].sequenceNumber,
                 type: fetch[2].type,
         })),
-        documentAttributes: fetched[0],
-        messages: fetched[2],
+        transformedMessages: fetched[2],
     };
 
     return result;
@@ -173,7 +135,7 @@ export async function getOrCreateDocument(
     documentsCollectionName: string,
     id: string,
     privateKey: string,
-    publicKey: string): Promise<IDocumentDetails> {
+    publicKey: string): Promise<IDocument> {
 
     const getOrCreateP = getOrCreateObject(
         mongoManager,
@@ -182,42 +144,5 @@ export async function getOrCreateDocument(
         privateKey,
         publicKey);
 
-    const gitManager = await git.getOrCreateRepository(historian, historianBranch);
-    const revisions = await getRevisions(gitManager, id);
-    const version = revisions.length > 0 ? revisions[0] : null;
-
-    // If there has been a snapshot made use it to retrieve object state as well as any pending deltas. Otherwise
-    // we just load all deltas
-    let sequenceNumber: number;
-    let minimumSequenceNumber: number;
-    let distributedObjects: api.IDistributedObject[];
-    let transformedMessages: api.ISequencedDocumentMessage[];
-
-    if (version) {
-        const details = await getDocumentDetails(gitManager, id, version);
-        sequenceNumber = details.documentAttributes.sequenceNumber;
-        minimumSequenceNumber = details.documentAttributes.minimumSequenceNumber;
-        distributedObjects = details.distributedObjects;
-        transformedMessages = details.messages;
-    } else {
-        minimumSequenceNumber = 0;
-        sequenceNumber = 0;
-        distributedObjects = [];
-        transformedMessages = [];
-    }
-
-    const pendingDeltas = await getDeltas(id, sequenceNumber);
-    const {existing, docPrivateKey, docPublicKey} = await getOrCreateP;
-
-    return {
-        distributedObjects,
-        existing,
-        minimumSequenceNumber,
-        pendingDeltas,
-        sequenceNumber,
-        transformedMessages,
-        version,
-        docPrivateKey,
-        docPublicKey,
-    };
+    return getOrCreateP;
 }
