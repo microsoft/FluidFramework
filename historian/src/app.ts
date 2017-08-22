@@ -1,4 +1,5 @@
 import * as bodyParser from "body-parser";
+import * as compression from "compression";
 import * as cors from "cors";
 import * as express from "express";
 import { Express } from "express";
@@ -27,6 +28,7 @@ export function create(store: nconf.Provider, gitService: services.IHistorian) {
     app.use(bodyParser.json({ limit: requestSize }));
     app.use(bodyParser.urlencoded({ limit: requestSize, extended: false }));
 
+    app.use(compression());
     app.use(cors());
     const apiRoutes = routes.create(store, gitService);
     app.use(apiRoutes.git.blobs);
