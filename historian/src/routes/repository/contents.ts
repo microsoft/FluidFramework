@@ -11,9 +11,7 @@ export function create(store: nconf.Provider, gitService: services.IGitService):
         utils.handleResponse(
             contentP,
             response,
-            (commits) => {
-                return commits;
-            });
+            false);
     });
 
     return router;

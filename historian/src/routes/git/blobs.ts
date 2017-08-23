@@ -11,9 +11,7 @@ export function create(store: nconf.Provider, gitService: services.IGitService):
         utils.handleResponse(
             blobP,
             response,
-            (blob) => {
-                return blob;
-            },
+            false,
             201);
     });
 
@@ -24,10 +22,7 @@ export function create(store: nconf.Provider, gitService: services.IGitService):
         const blobP = gitService.getBlob(request.params.repo, request.params.sha);
         utils.handleResponse(
             blobP,
-            response,
-            (blob) => {
-                return blob;
-            });
+            response);
     });
 
     return router;

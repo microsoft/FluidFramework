@@ -14,7 +14,8 @@
         <script src="{{#hfurl}}/public/scripts/dist/cell.js{{/hfurl}}"></script>
         <script>
             var config = {{{ config }}};
-            controller.load("{{ id }}", config);
+            var version = {{{ version }}};
+            controller.load("{{ id }}", version, config);
         </script>
     {{/scripts}}
 {{/layout}}

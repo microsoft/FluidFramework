@@ -87,7 +87,7 @@ export class DeltaManager {
         this.privateKey = this.deltaConnection.privateKey;
         this.publicKey = this.deltaConnection.publicKey;
 
-        console.log("DEBUG deltaManger encrypted flag: " + this.deltaConnection.encrypted);
+        debug("DEBUG deltaManger encrypted flag: " + this.deltaConnection.encrypted);
         debug(`final deltaManager keys: ${this.privateKey} \n ;;;; \n ${this.publicKey}`);
     }
 

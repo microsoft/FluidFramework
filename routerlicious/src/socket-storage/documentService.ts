@@ -1,8 +1,10 @@
 import * as resources from "gitresources";
 import * as _ from "lodash";
+import performanceNow = require("performance-now");
 import * as io from "socket.io-client";
 import * as api from "../api";
 import { BlobStorageService, DocumentStorageService } from "./blobStorageService";
+import { debug } from "./debug";
 import { DeltaStorageService, DocumentDeltaStorageService } from "./deltaStorageService";
 import { DocumentDeltaConnection } from "./documentDeltaConnection";
 import * as messages from "./messages";
@@ -12,6 +14,16 @@ import * as messages from "./messages";
 type ConnectionMap = { [connectionId: string]: DocumentDeltaConnection };
 type ObjectMap = { [objectId: string]: ConnectionMap };
 type EventMap = { [event: string]: ObjectMap };
+
+const emptyHeader: api.IDocumentHeader = {
+    attributes: {
+        minimumSequenceNumber: 0,
+        sequenceNumber: 0,
+    },
+    distributedObjects: [],
+    transformedMessages: [],
+    tree: null,
+};
 
 class Document implements api.IDocument {
     constructor(
@@ -26,7 +38,8 @@ class Document implements api.IDocument {
         public pendingDeltas: api.ISequencedDocumentMessage[],
         public transformedMessages: api.ISequencedDocumentMessage[],
         public sequenceNumber: number,
-        public minimumSequenceNumber: number) {
+        public minimumSequenceNumber: number,
+        public tree: api.ISnapshotTree) {
     }
 }
 
@@ -39,10 +52,18 @@ export class DocumentService implements api.IDocumentService {
     private socket;
 
     constructor(url: string, private deltaStorage: DeltaStorageService, private blobStorge: BlobStorageService) {
+        debug(`Creating document service ${performanceNow()}`);
         this.socket = io(url, { transports: ["websocket"] });
     }
 
-    public async connect(id: string, encrypted: boolean): Promise<api.IDocument> {
+    public async connect(
+        id: string,
+        version: resources.ICommit,
+        connect: boolean,
+        encrypted: boolean): Promise<api.IDocument> {
+
+        debug(`Connecting to ${id} - ${performanceNow()}`);
+
         // Generate encryption keys for new connection.
         let privateKey: string;
         let publicKey: string;
@@ -58,7 +79,10 @@ export class DocumentService implements api.IDocumentService {
 
         const connectMessage: messages.IConnect = { id, privateKey, publicKey, encrypted };
 
-        return new Promise<api.IDocument>((resolve, reject) => {
+        const headerP = version
+            ? this.blobStorge.getHeader(id, version)
+            : Promise.resolve(emptyHeader);
+        const connectionP = new Promise<messages.IConnected>((resolve, reject) => {
             this.socket.emit(
                 "connectDocument",
                 connectMessage,
@@ -66,34 +90,45 @@ export class DocumentService implements api.IDocumentService {
                     if (error) {
                         return reject(error);
                     } else {
-                        const deltaConnection = new DocumentDeltaConnection(
-                            this,
-                            id,
-                            response.clientId,
-                            encrypted,
-                            response.privateKey,
-                            response.publicKey);
-                        const deltaStorage = new DocumentDeltaStorageService(id, this.deltaStorage);
-                        const documentStorage = new DocumentStorageService(id, response.version, this.blobStorge);
-
-                        const document = new Document(
-                            id,
-                            response.clientId,
-                            response.existing,
-                            response.version,
-                            deltaConnection,
-                            documentStorage,
-                            deltaStorage,
-                            response.distributedObjects,
-                            response.pendingDeltas,
-                            response.transformedMessages,
-                            response.sequenceNumber,
-                            response.minimumSequenceNumber);
-
-                        resolve(document);
+                        return resolve(response);
                     }
                 });
         });
+        const pendingDeltasP = headerP.then((header) => {
+            return this.deltaStorage.get(id, header ? header.attributes.sequenceNumber : 0);
+        });
+
+        // header *should* be enough to return the document. Pull it first as well as any pending delta
+        // messages which should be taken into account before client logic.
+
+        const [header, connection, pendingDeltas] = await Promise.all([headerP, connectionP, pendingDeltasP]);
+
+        debug(`Connected to ${id} - ${performanceNow()}`);
+        const deltaConnection = new DocumentDeltaConnection(
+            this,
+            id,
+            connection.clientId,
+            encrypted,
+            connection.privateKey,
+            connection.publicKey);
+        const deltaStorage = new DocumentDeltaStorageService(id, this.deltaStorage);
+        const documentStorage = new DocumentStorageService(id, version, this.blobStorge);
+
+        const document = new Document(
+            id,
+            connection.clientId,
+            connection.existing,
+            version,
+            deltaConnection,
+            documentStorage,
+            deltaStorage,
+            header.distributedObjects,
+            pendingDeltas,
+            header.transformedMessages,
+            header.attributes.sequenceNumber,
+            header.attributes.minimumSequenceNumber,
+            header.tree);
+        return document;
     }
 
     /**

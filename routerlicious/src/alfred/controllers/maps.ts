@@ -1,12 +1,13 @@
+import * as resources from "gitresources";
 import * as $ from "jquery";
 import * as _ from "lodash";
 import * as api from "../../api";
 import * as shared from "../../shared";
 import * as socketStorage from "../../socket-storage";
 
-async function loadDocument(id: string, encrypted: boolean): Promise<api.Document> {
+async function loadDocument(id: string, version: resources.ICommit, encrypted: boolean): Promise<api.Document> {
     console.log("Loading in root document...");
-    const document = await api.load(id, { encrypted });
+    const document = await api.load(id, { encrypted }, version);
 
     console.log("Document loaded");
     return document;
@@ -98,11 +99,11 @@ function randomizeMap(map: api.IMap) {
     }, 1000);
 }
 
-export function load(id: string, config: any, encrypted: boolean) {
+export function load(id: string, version: resources.ICommit, config: any, encrypted: boolean) {
     socketStorage.registerAsDefault(document.location.origin, config.blobStorageUrl, config.repository);
 
     $(document).ready(() => {
-        loadDocument(id, encrypted).then(async (doc) => {
+        loadDocument(id, version, encrypted).then(async (doc) => {
             // tslint:disable-next-line
             window["doc"] = doc;
 

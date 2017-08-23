@@ -1,4 +1,5 @@
 // tslint:disable:align whitespace no-trailing-whitespace no-string-literal object-literal-sort-keys
+import performanceNow = require("performance-now");
 import * as url from "url";
 import * as API from "../../api";
 import * as SharedString from "../../merge-tree";
@@ -1650,7 +1651,7 @@ export class FlowView {
         this.render(0, true);
         if (clockStart > 0) {
             // tslint:disable-next-line:max-line-length
-            console.log(`time to edit/impression: ${this.timeToEdit} time to load: ${Date.now() - clockStart}ms len: ${this.sharedString.client.getLength()}`);
+            console.log(`time to edit/impression: ${this.timeToEdit} time to load: ${Date.now() - clockStart}ms len: ${this.sharedString.client.getLength()} - ${performanceNow()}`);
         }
         // this.testWordInfo();
     }

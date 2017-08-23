@@ -1,3 +1,4 @@
+import * as resources from "gitresources";
 import * as $ from "jquery";
 import * as api from "../../api";
 import { Canvas, throttle } from "../../canvas";
@@ -5,9 +6,9 @@ import * as ink from "../../ink";
 import * as shared from "../../shared";
 import * as socketStorage from "../../socket-storage";
 
-async function loadDocument(id: string, encrypted: boolean): Promise<api.Document> {
+async function loadDocument(id: string, version: resources.ICommit, encrypted: boolean): Promise<api.Document> {
     console.log("Loading in root document...");
-    const document = await api.load(id, { encrypted });
+    const document = await api.load(id, { encrypted }, version);
 
     console.log("Document loaded");
     return document;
@@ -18,10 +19,10 @@ throttle("resize", "throttled-resize");
 
 let canvas: Canvas;
 
-export async function initialize(id: string, config: any, encrypted: boolean) {
+export async function initialize(id: string, version: resources.ICommit, config: any, encrypted: boolean) {
     socketStorage.registerAsDefault(document.location.origin, config.blobStorageUrl, config.repository);
 
-    const doc = await loadDocument(id, encrypted);
+    const doc = await loadDocument(id, version, encrypted);
     const root = await doc.getRoot().getView();
 
     // Bootstrap worker service.

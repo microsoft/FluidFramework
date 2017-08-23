@@ -1,4 +1,5 @@
 import * as bodyParser from "body-parser";
+import * as compression from "compression";
 import * as cors from "cors";
 import * as express from "express";
 import { Express } from "express";
@@ -16,7 +17,7 @@ const stream = split().on("data", (message) => {
   winston.info(message);
 });
 
-export function create(store: nconf.Provider, gitService: services.IGitService) {
+export function create(store: nconf.Provider, gitService: services.IHistorian) {
     // Express app configuration
     const app: Express = express();
 
@@ -27,6 +28,7 @@ export function create(store: nconf.Provider, gitService: services.IGitService) 
     app.use(bodyParser.json({ limit: requestSize }));
     app.use(bodyParser.urlencoded({ limit: requestSize, extended: false }));
 
+    app.use(compression());
     app.use(cors());
     const apiRoutes = routes.create(store, gitService);
     app.use(apiRoutes.git.blobs);
@@ -37,6 +39,7 @@ export function create(store: nconf.Provider, gitService: services.IGitService) 
     app.use(apiRoutes.git.commits);
     app.use(apiRoutes.repository.commits);
     app.use(apiRoutes.repository.contents);
+    app.use(apiRoutes.repository.headers);
 
     // catch 404 and forward to error handler
     app.use((req, res, next) => {

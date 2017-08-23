@@ -11,9 +11,7 @@ export function create(store: nconf.Provider, gitService: services.IGitService):
         utils.handleResponse(
             refsP,
             response,
-            (refs) => {
-                return refs;
-            });
+            false);
     });
 
     router.get("/repos/:repo/git/refs/*", (request, response, next) => {
@@ -21,9 +19,7 @@ export function create(store: nconf.Provider, gitService: services.IGitService):
         utils.handleResponse(
             refP,
             response,
-            (ref) => {
-                return ref;
-            });
+            false);
     });
 
     router.post("/repos/:repo/git/refs", (request, response, next) => {
@@ -31,9 +27,7 @@ export function create(store: nconf.Provider, gitService: services.IGitService):
         utils.handleResponse(
             refP,
             response,
-            (ref) => {
-                return ref;
-            },
+            false,
             201);
     });
 
@@ -42,9 +36,7 @@ export function create(store: nconf.Provider, gitService: services.IGitService):
         utils.handleResponse(
             refP,
             response,
-            (ref) => {
-                return ref;
-            });
+            false);
     });
 
     router.delete("/repos/:repo/git/refs/*", (request, response, next) => {
@@ -52,9 +44,7 @@ export function create(store: nconf.Provider, gitService: services.IGitService):
         utils.handleResponse(
             refP,
             response,
-            (ref) => {
-                return ref;
-            },
+            false,
             204);
     });
 

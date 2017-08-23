@@ -1,6 +1,3 @@
-import * as resources from "gitresources";
-import * as api from "../api";
-
 /**
  * Message sent to connect to the given object
  */
@@ -20,6 +17,8 @@ export interface IConnect {
 
 /**
  * Message sent to indicate a client has connected to the server
+ *
+ * TODO Is the below a connection to the actual Kafka stream?
  */
 export interface IConnected {
     // The client who is sending the message
@@ -27,25 +26,6 @@ export interface IConnected {
 
     // Whether or not this is an existing object
     existing: boolean;
-
-    // Available revisions for this document
-    version: resources.ICommit;
-
-    // The latest sequence number for the document
-    sequenceNumber: number;
-
-    // The minimum sequence number for the document
-    minimumSequenceNumber: number;
-
-    // Distributed objects contained within the document
-    distributedObjects: api.IDistributedObject[];
-
-    // The transformed messages between the minimum sequence number and
-    // sequenceNumber
-    transformedMessages: api.ISequencedDocumentMessage[];
-
-    // Pending deltas that have not yet been included in a snapshot
-    pendingDeltas: api.ISequencedDocumentMessage[];
 
     // The true private key for use by the client to decrypt deltas from the server
     privateKey: string;

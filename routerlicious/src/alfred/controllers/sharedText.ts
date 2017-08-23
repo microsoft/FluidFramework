@@ -1,4 +1,6 @@
 // tslint:disable:align whitespace no-trailing-whitespace
+import * as resources from "gitresources";
+import performanceNow = require("performance-now");
 import * as request from "request";
 import * as url from "url";
 import * as API from "../../api";
@@ -228,14 +230,18 @@ async function getInsights(map: API.IMap, id: string): Promise<API.IMap> {
     return waitForKey<API.IMap>(insights, id);
 }
 
-export async function onLoad(id: string, config: any) {
+export async function onLoad(id: string, version: resources.ICommit, config: any) {
     socketStorage.registerAsDefault(document.location.origin, config.blobStorageUrl, config.repository);
-    const collabDoc = await API.load(id, { blockUpdateMarkers: true });
+    console.log(`collabDoc loading ${id} - ${performanceNow()}`);
+    const collabDoc = await API.load(id, { blockUpdateMarkers: true }, version);
+    console.log(`collabDoc loaded ${id} - ${performanceNow()}`);
     const root = await collabDoc.getRoot().getView();
+    console.log(`Getting root ${id} - ${performanceNow()}`);
 
     // If a text element already exists load it direclty - otherwise load in price + prejudice
     const existing = root.has("text");
     if (!existing) {
+        console.log(`Not existing ${id} - ${performanceNow()}`);
         const newString = collabDoc.createString() as SharedString.SharedString;
         const starterText = await downloadRawText(prideAndPrejudice);
         const segments = SharedString.loadSegments(starterText, 0, true);
@@ -256,6 +262,7 @@ export async function onLoad(id: string, config: any) {
     }
 
     const sharedString = root.get("text") as SharedString.SharedString;
+    console.log(`Shared string ready - ${performanceNow()}`);
 
     getInsights(collabDoc.getRoot(), sharedString.id).then((insightsMap) => {
         theFlow.trackInsights(insightsMap);
@@ -263,7 +270,7 @@ export async function onLoad(id: string, config: any) {
 
     console.log(window.navigator.userAgent);
     console.log(`id is ${id}`);
-    console.log("Partial load fired");
+    console.log(`Partial load fired - ${performanceNow()}`);
 
     let container = new FlowContainer();
     theFlow = new FlowView.FlowView(sharedString, container);

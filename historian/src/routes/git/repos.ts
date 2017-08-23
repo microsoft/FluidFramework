@@ -14,9 +14,7 @@ export function create(store: nconf.Provider, gitService: services.IGitService):
         utils.handleResponse(
             repoP,
             response,
-            (repo) => {
-                return repo;
-            },
+            false,
             201);
     });
 
@@ -28,9 +26,7 @@ export function create(store: nconf.Provider, gitService: services.IGitService):
         utils.handleResponse(
             repoP,
             response,
-            (repo) => {
-                return repo;
-            });
+            false);
     });
 
     return router;

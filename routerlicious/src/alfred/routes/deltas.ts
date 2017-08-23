@@ -48,8 +48,8 @@ function stringToSequenceNumber(value: string): number {
  * Retrieves deltas for the given document. With an optional from and to range (both exclusive) specified
  */
 router.get("/:id", (request, response, next) => {
-    const from = stringToSequenceNumber(request.params.from);
-    const to = stringToSequenceNumber(request.params.to);
+    const from = stringToSequenceNumber(request.query.from);
+    const to = stringToSequenceNumber(request.query.to);
 
     // Query for the deltas and return a filtered version of just the operations field
     const deltasP = getDeltas(request.params.id, from, to);
