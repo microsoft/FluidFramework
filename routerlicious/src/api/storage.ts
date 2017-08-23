@@ -130,6 +130,11 @@ export interface IDistributedObject {
 
 export interface IDocumentDeltaConnection {
     /**
+     * ClientID for the connection
+     */
+    clientId: string;
+
+    /**
      * Flag indicating whether connection is encrypted
      */
     encrypted: boolean;
