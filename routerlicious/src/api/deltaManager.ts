@@ -2,7 +2,6 @@ import * as assert from "assert";
 import * as async from "async";
 import { EventEmitter } from "events";
 import * as openpgp from "openpgp";
-import * as api from ".";
 import { constants } from "../shared";
 import { ThroughputCounter } from "../utils/counters";
 import { debug } from "./debug";
@@ -236,10 +235,6 @@ export class DeltaManager {
      * Revs the base sequence number based on the message and notifices the listener of the new message
      */
     private async emit(message: protocol.ISequencedDocumentMessage) {
-        // Watch the minimum sequence number and be ready to update as needed
-        this.minSequenceNumber = message.minimumSequenceNumber;
-        this.baseSequenceNumber = message.sequenceNumber;
-
         let emitMessage = message;
         if (message.encrypted) {
             // Decrypt the contents of the message.
@@ -251,13 +246,17 @@ export class DeltaManager {
             emitMessage.encryptedContents = decryptedContents;
         }
 
+        // Watch the minimum sequence number and be ready to update as needed
+        this.minSequenceNumber = message.minimumSequenceNumber;
+        this.baseSequenceNumber = message.sequenceNumber;
+
         this.emitter.emit("op", emitMessage);
 
         // We will queue a message to update our reference sequence number upon receiving a server operation. This
         // allows the server to know our true reference sequence number and be able to correctly update the minimum
         // sequence number (MSN). We don't ackowledge other message types similarly (like a min sequence number update)
         // to avoid ackowledgement cycles (i.e. ack the MSN update, which updates the MSN, then ack the update, etc...).
-        if (message.type === api.OperationType) {
+        if (message.type !== protocol.NoOp) {
             this.updateSequenceNumber();
         }
     }

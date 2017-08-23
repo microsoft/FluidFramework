@@ -122,8 +122,9 @@ export class WorkerService implements api.IWorkerService {
         this.processIntelligenceServices(id);
     }
 
-    private async processSnapshot(id: string) {
-        api.load(id, { encrypted: undefined, localMinSeq: 0 }).then(async (doc) => {
+    private processSnapshot(id: string) {
+        const documentP = api.load(id, { encrypted: undefined, localMinSeq: 0 });
+        documentP.then(async (doc) => {
             console.log(`Loaded snapshot document ${id}`);
             this.documentSnapshotMap[id] = doc;
             const serializer = new shared.Serializer(doc);
@@ -131,6 +132,7 @@ export class WorkerService implements api.IWorkerService {
             const eventHandler = (op: api.ISequencedDocumentMessage) => {
                 serializer.run(op);
             };
+
             this.snapshotHandlerMap[doc.id] = eventHandler;
             doc.on("op", eventHandler);
         }, (error) => {
