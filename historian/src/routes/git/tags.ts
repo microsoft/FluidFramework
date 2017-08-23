@@ -11,9 +11,7 @@ export function create(store: nconf.Provider, gitService: services.IGitService):
         utils.handleResponse(
             tagP,
             response,
-            (tag) => {
-                return tag;
-            },
+            false,
             201);
     });
 
@@ -22,9 +20,7 @@ export function create(store: nconf.Provider, gitService: services.IGitService):
         utils.handleResponse(
             tagP,
             response,
-            (tag) => {
-                return tag;
-            });
+            false);
     });
 
     return router;
