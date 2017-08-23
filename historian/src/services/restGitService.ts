@@ -160,7 +160,6 @@ export class RestGitService implements IGitService {
             });
     }
 
-    // TODO fill in with proper values
     public getHeader(repo: string, version: git.ICommit): Promise<any> {
         assert(version);
 
@@ -218,6 +217,7 @@ export class RestGitService implements IGitService {
                     type: fetch[2].type,
             })),
             transformedMessages: fetched[2],
+            tree,
         }; // as api.IDocumentHeader
 
         return result;

@@ -457,8 +457,12 @@ export class Document {
     }
 
     private getObjectServices(id: string): IAttachedServices {
+        const tree = this.document.tree && id in this.document.tree.trees
+            ? this.document.tree.trees[id]
+            : null;
+
         const connection = new DeltaConnection(id, this);
-        const storage = new ObjectStorageService(id, this.document.documentStorageService);
+        const storage = new ObjectStorageService(tree, this.document.documentStorageService);
 
         return {
             deltaConnection: connection,

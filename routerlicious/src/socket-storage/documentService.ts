@@ -22,6 +22,7 @@ const emptyHeader: api.IDocumentHeader = {
     },
     distributedObjects: [],
     transformedMessages: [],
+    tree: null,
 };
 
 class Document implements api.IDocument {
@@ -37,7 +38,8 @@ class Document implements api.IDocument {
         public pendingDeltas: api.ISequencedDocumentMessage[],
         public transformedMessages: api.ISequencedDocumentMessage[],
         public sequenceNumber: number,
-        public minimumSequenceNumber: number) {
+        public minimumSequenceNumber: number,
+        public tree: api.ISnapshotTree) {
     }
 }
 
@@ -124,7 +126,8 @@ export class DocumentService implements api.IDocumentService {
             pendingDeltas,
             header.transformedMessages,
             header.attributes.sequenceNumber,
-            header.attributes.minimumSequenceNumber);
+            header.attributes.minimumSequenceNumber,
+            header.tree);
         return document;
     }
 

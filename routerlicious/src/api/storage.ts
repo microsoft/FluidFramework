@@ -70,7 +70,6 @@ export interface IDocumentStorageService {
     /**
      * Reads the object with the given ID
      */
-    // TODO should we just provide file system like semantics here or expose block level access
     read(path: string): Promise<string>;
 
     /**
@@ -89,6 +88,11 @@ export interface IDeltaStorageService {
     get(from?: number, to?: number): Promise<ISequencedDocumentMessage[]>;
 }
 
+export interface ISnapshotTree {
+    blobs: { [path: string]: string };
+    trees: { [path: string]: ISnapshotTree };
+}
+
 /**
  * Document header returned from the server
  */
@@ -101,6 +105,9 @@ export interface IDocumentHeader {
 
     // The transformed messages between the minimum sequence number and sequenceNumber
     transformedMessages: ISequencedDocumentMessage[];
+
+    // Tree representing all blobs in the snapshot
+    tree: ISnapshotTree;
 }
 
 /**
@@ -208,6 +215,11 @@ export interface IDocument {
      * The sequence number represented by this version of the document
      */
     sequenceNumber: number;
+
+    /**
+     * Directory information for objects contained in the snapshot
+     */
+    tree: ISnapshotTree;
 }
 
 export interface IDocumentService {
