@@ -296,7 +296,7 @@ export class TakeANumber {
         this.clientSeqNumbers.update(heapNode);
     }
 
-    private getMinimumSequenceNumber(timestamp: number) {
+    private getMinimumSequenceNumber(timestamp: number): number {
         const MinSequenceNumberWindow = shared.constants.MinSequenceNumberWindow;
 
         // Get the sequence number as tracked by the clients

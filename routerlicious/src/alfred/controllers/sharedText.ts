@@ -88,7 +88,7 @@ class Status implements FlowView.IStatus {
         this.overlayMsgBox.innerText = msg;
         if (!this.overlayImageElm) {
             this.overlayImageElm = document.createElement("img");
-            this.overlayImageElm.src = url.resolve(document.baseURI, "/public/images/clippy.gif");
+            this.overlayImageElm.src = url.resolve(document.baseURI, "/public/images/bindy.svg");
             this.overlayImageElm.alt = "Your Buddy!";
             this.overlayDiv.appendChild(this.overlayImageElm);
         }
