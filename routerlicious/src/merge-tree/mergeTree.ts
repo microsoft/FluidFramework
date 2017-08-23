@@ -186,7 +186,8 @@ function applyRangeMarker(stack: Collections.Stack<Marker>, delta: Marker) {
 
 function addNodeMarkers(node: Node, tiles: MapLike<Marker>, rangeStacks: RangeStackMap) {
     if (node.isLeaf()) {
-        if (((<Segment>node).getType() == SegmentType.Marker)) {
+        let segment = <Segment>node;
+        if ((segment.netLength() > 0) && (segment.getType() == SegmentType.Marker)) {
             let marker = <Marker>node;
             if (marker.behaviors & ops.MarkerBehaviors.Tile) {
                 addTile(marker, tiles);
@@ -1153,7 +1154,7 @@ function checkTextMatchRelative(refSeq: number, clientId: number, server: TestSe
 }
 
 let indentStrings = ["", " ", "  "];
-function indent(n: number) {
+export function internedSpaces(n: number) {
     if (indentStrings[n] === undefined) {
         indentStrings[n] = "";
         for (let i = 0; i < n; i++) {
@@ -3041,10 +3042,10 @@ export class MergeTree {
     }
 
     nodeToString(node: Block, strbuf: string, indentCount = 0) {
-        strbuf += indent(indentCount);
+        strbuf += internedSpaces(indentCount);
         strbuf += `Node (len ${node.cachedLength}) p len (${node.parent ? node.parent.cachedLength : 0}) with ${node.childCount} live segments:\n`;
         if (this.collabWindow.collaborating) {
-            strbuf += indent(indentCount);
+            strbuf += internedSpaces(indentCount);
             strbuf += node.partialLengths.toString((id) => glc(this, id)) + '\n';
         }
         let children = node.children;
@@ -3055,13 +3056,13 @@ export class MergeTree {
             }
             else {
                 let segment = <Segment>child;
-                strbuf += indent(indentCount + 4);
+                strbuf += internedSpaces(indentCount + 4);
                 strbuf += `cli: ${glc(this, segment.clientId)} seq: ${segment.seq}`;
                 if (segment.removedSeq !== undefined) {
                     strbuf += ` rcli: ${glc(this, segment.removedClientId)} rseq: ${segment.removedSeq}`;
                 }
                 strbuf += "\n";
-                strbuf += indent(indentCount + 4);
+                strbuf += internedSpaces(indentCount + 4);
                 strbuf += segment.toString();
                 strbuf += "\n";
             }

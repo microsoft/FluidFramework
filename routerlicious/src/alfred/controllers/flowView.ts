@@ -81,6 +81,11 @@ interface IParagraphMarker extends SharedString.Marker {
     cache?: IParagraphInfo;
 }
 
+export interface ILineDiv extends HTMLDivElement {
+    linePos?: number;
+    lineEnd?: number;
+}
+
 interface ISegSpan extends HTMLSpanElement {
     seg: SharedString.TextSegment;
     segPos?: number;
@@ -535,35 +540,41 @@ interface IRange {
     end: number;
 }
 
-enum PGItemType {
+enum ParagraphItemType {
     Block,
     Glue,
     Penalty,
 }
 
 interface IPGItem {
-    type: PGItemType;
+    type: ParagraphItemType;
     width: number;
     textSegment: SharedString.TextSegment;
 }
 
 interface IPGBlock extends IPGItem {
-    type: PGItemType.Block;
+    type: ParagraphItemType.Block;
     text: string;
 }
 
 function makeIPGBlock(width: number, text: string, textSegment: SharedString.TextSegment) {
-    return <IPGBlock>{ type: PGItemType.Block, width, text, textSegment };
+    return <IPGBlock>{ type: ParagraphItemType.Block, width, text, textSegment };
+}
+
+function makeGlue(width: number, text: string, textSegment: SharedString.TextSegment,
+    stretch: number, shrink: number) {
+    return <IPGGlue>{ type: ParagraphItemType.Glue, width, text, textSegment, stretch, shrink };
 }
 
 interface IPGGlue extends IPGItem {
-    type: PGItemType.Glue;
+    type: ParagraphItemType.Glue;
+    text: string;
     stretch: number;
     shrink: number;
 }
 
 interface IPGPenalty extends IPGItem {
-    type: PGItemType.Penalty;
+    type: ParagraphItemType.Penalty;
     cost: number;
 }
 
@@ -573,18 +584,28 @@ type PGItem = IPGBlock | IPGGlue | IPGPenalty;
 function breakPGIntoLinesFF(items: PGItem[], lineWidth: number) {
     let breaks = [0];
     let posInPG = 0;
-    let bufferedItemWidth = 0;
+    let committedItemsWidth = 0;
+    let blockRunWidth = 0;
+    let blockRunPos = -1;
+    let prevIsGlue = true;
     for (let item of items) {
-        if (item.type === PGItemType.Block) {
-            if ((bufferedItemWidth + item.width) > lineWidth) {
-                breaks.push(posInPG);
-                bufferedItemWidth = 0;
+        if (item.type === ParagraphItemType.Block) {
+            if (prevIsGlue) {
+                blockRunPos = posInPG;
+                blockRunWidth = 0;
+            }
+            if ((committedItemsWidth + item.width) > lineWidth) {
+                breaks.push(blockRunPos);
+                committedItemsWidth = blockRunWidth;
             }
             posInPG += item.text.length;
-        } else if (item.type === PGItemType.Glue) {
+            blockRunWidth += item.width;
+            prevIsGlue = false;
+        } else if (item.type === ParagraphItemType.Glue) {
             posInPG++;
+            prevIsGlue = true;
         }
-        bufferedItemWidth += item.width;
+        committedItemsWidth += item.width;
     }
     return breaks;
 }
@@ -604,7 +625,7 @@ function findContainingTile(client: SharedString.Client, pos: number, tileType: 
     function shift(node: SharedString.Node, segpos: number, refSeq: number, clientId: number, offset: number) {
         if (node.isLeaf()) {
             let seg = <SharedString.Segment>node;
-            if (seg.getType() === SharedString.SegmentType.Marker) {
+            if ((seg.netLength() > 0) && (seg.getType() === SharedString.SegmentType.Marker)) {
                 let marker = <SharedString.Marker>seg;
                 if (marker.type === tileType) {
                     tileMarker = marker;
@@ -626,10 +647,85 @@ function findContainingTile(client: SharedString.Client, pos: number, tileType: 
     return tileMarker;
 }
 
+const enum ParagraphLexerState {
+    AccumBlockChars,
+    AccumSpaces,
+}
+
+type ParagraphTokenAction = (text: string, type: ParagraphItemType, leadSegment: SharedString.TextSegment) => void;
+
+class ParagraphLexer {
+    public state = ParagraphLexerState.AccumBlockChars;
+    private spaceCount = 0;
+    private textBuf = "";
+    private leadSegment: SharedString.TextSegment;
+
+    constructor(public tokenAction: ParagraphTokenAction) {
+    }
+
+    public reset() {
+        this.state = ParagraphLexerState.AccumBlockChars;
+        this.spaceCount = 0;
+        this.textBuf = "";
+        this.leadSegment = undefined;
+    }
+
+    public lex(textSegment: SharedString.TextSegment) {
+        if (this.leadSegment && (!this.leadSegment.matchProperties(textSegment))) {
+            this.emit();
+            this.leadSegment = textSegment;
+        } else if (!this.leadSegment) {
+            this.leadSegment = textSegment;
+        }
+        let segText = textSegment.text;
+        for (let i = 0, len = segText.length; i < len; i++) {
+            let c = segText.charAt(i);
+            if (c === " ") {
+                if (this.state === ParagraphLexerState.AccumBlockChars) {
+                    this.emitBlock();
+                }
+                this.state = ParagraphLexerState.AccumSpaces;
+                this.spaceCount++;
+            } else {
+                if (this.state === ParagraphLexerState.AccumSpaces) {
+                    this.emitGlue();
+                }
+                this.state = ParagraphLexerState.AccumBlockChars;
+                this.textBuf += c;
+            }
+        }
+        this.emit();
+    }
+
+    private emit() {
+        if (this.state === ParagraphLexerState.AccumBlockChars) {
+            this.emitBlock();
+        } else {
+            this.emitGlue();
+        }
+    }
+
+    private emitGlue() {
+        if (this.spaceCount > 0) {
+            this.tokenAction(SharedString.internedSpaces(this.spaceCount), ParagraphItemType.Glue, this.leadSegment);
+            this.spaceCount = 0;
+        }
+    }
+
+    private emitBlock() {
+        if (this.textBuf.length > 0) {
+            this.tokenAction(this.textBuf, ParagraphItemType.Block, this.leadSegment);
+            this.textBuf = "";
+        }
+    }
+
+}
+// global until remove old render
+let textErrorRun: IRange;
+
 function renderTreeByPG(div: HTMLDivElement, pos: number, client: SharedString.Client, context: FlowView) {
     let fontstr = "18px Times";
     let headerFontstr = "22px Times";
-
     // TODO: for stable viewports cache the geometry and the divs 
     div.id = "renderedTree";
 
@@ -646,10 +742,6 @@ function renderTreeByPG(div: HTMLDivElement, pos: number, client: SharedString.C
     let headerDivHeight = 32;
     let currentLineTop = 0;
     let wordSpacing = getTextWidth(" ", fontstr);
-    let standardGlue = <IPGGlue>{
-        type: PGItemType.Glue, width: wordSpacing,
-        stretch: wordSpacing / 2, shrink: wordSpacing / 3,
-    };
 
     let makeLineDiv = (r: Geometry.Rectangle, lineFontstr) => {
         let lineDiv = document.createElement("div");
@@ -668,40 +760,41 @@ function renderTreeByPG(div: HTMLDivElement, pos: number, client: SharedString.C
     };
 
     let items: PGItem[];
+
+    function tokenToItems(text: string, type: ParagraphItemType, leadSegment: SharedString.TextSegment) {
+        let lfontstr = fontstr;
+        if (startPGMarker.properties && (startPGMarker.properties.header !== undefined)) {
+            lfontstr = headerFontstr;
+        }
+        if (leadSegment.properties) {
+            let fontSize = leadSegment.properties.fontSize;
+            if (fontSize) {
+                lfontstr = `${fontSize} Times`;
+            }
+            let fontStyle = leadSegment.properties.fontStyle;
+            if (fontStyle) {
+                lfontstr = fontStyle + " " + lfontstr;
+            }
+        }
+
+        let textWidth = getTextWidth(text, lfontstr);
+        if (type === ParagraphItemType.Block) {
+            items.push(makeIPGBlock(textWidth, text, leadSegment));
+        } else {
+            items.push(makeGlue(textWidth, text, leadSegment, wordSpacing / 2, wordSpacing / 3));
+        }
+    }
+
     let pgMarker: IParagraphMarker;
     let startPGMarker: IParagraphMarker;
     let markerPos: number;
-    let textErrorRun = <IRange>{ start: -1, end: -1 };
+    let paragraphLexer = new ParagraphLexer(tokenToItems);
+    textErrorRun = undefined;
 
     function segmentToItems(segment: SharedString.Segment, segpos: number) {
         if (segment.getType() === SharedString.SegmentType.Text) {
             let textSegment = <SharedString.TextSegment>segment;
-            let words = textSegment.text.split(/\s+/g);
-            let lfontstr = fontstr;
-            if (startPGMarker.properties && (startPGMarker.properties.header !== undefined)) {
-                lfontstr = headerFontstr;
-            }
-            if (textSegment.properties) {
-                let fontSize = textSegment.properties.fontSize;
-                if (fontSize) {
-                    lfontstr = `${fontSize} Times`;
-                }
-                let fontStyle = textSegment.properties.fontStyle;
-                if (fontStyle) {
-                    lfontstr = fontStyle + " " + lfontstr;
-                }
-            }
-            let first = true;
-            for (let word of words) {
-                let wordWidth = getTextWidth(word, lfontstr);
-                let wordBlock = makeIPGBlock(wordWidth, word, textSegment);
-                if (!first) {
-                    items.push(standardGlue);
-                } else {
-                    first = false;
-                }
-                items.push(wordBlock);
-            }
+            paragraphLexer.lex(textSegment);
         } else if (segment.getType() === SharedString.SegmentType.Marker) {
             let marker = <SharedString.Marker>segment;
             if (marker.type === "pg") {
@@ -711,16 +804,18 @@ function renderTreeByPG(div: HTMLDivElement, pos: number, client: SharedString.C
         return true;
     }
 
-    let prevTextSegment: SharedString.TextSegment;
-
     function renderPG(curPGMarker: IParagraphMarker, curPGPos: number) {
         let pgBreaks = curPGMarker.cache.breaks;
-        let lineDiv: HTMLDivElement;
-        let prevSpan: HTMLSpanElement;
+        let lineDiv: ILineDiv;
         let lineDivHeight = defaultLineDivHeight;
-       
+        let span: HTMLSpanElement;
+
         function renderSegmentIntoLine(segment: SharedString.Segment, segpos: number, refSeq: number,
             clientId: number, start: number, end: number) {
+            if (lineDiv.linePos === undefined) {
+                lineDiv.linePos = segpos + start;
+                lineDiv.lineEnd = lineDiv.linePos;
+            }
             let segType = segment.getType();
             if (segType === SharedString.SegmentType.Text) {
                 if (start < 0) {
@@ -729,41 +824,42 @@ function renderTreeByPG(div: HTMLDivElement, pos: number, client: SharedString.C
                 if (end > segment.cachedLength) {
                     end = segment.cachedLength;
                 }
-                let span: HTMLSpanElement;
                 let textSegment = <SharedString.TextSegment>segment;
                 let text = textSegment.text.substring(start, end);
                 let textStartPos = segpos + start;
                 let textEndPos = segpos + end;
-                if (textSegment === prevTextSegment) {
-                    span = prevSpan;
-                    if ((context.cursor.pos >= textStartPos) && (context.cursor.pos < textEndPos)) {
-                        let preCursorText = text.substring(start, (context.cursor.pos - textStartPos));
-                        let temp = span.innerText;
-                        span.innerText += preCursorText;
-                        let cursorBounds = span.getBoundingClientRect();
-                        span.innerText = temp;
-                        context.cursor.assignToLine(cursorBounds.right - viewportBounds.x, lineDivHeight , lineDiv);
-                    }
-                    span.innerText += text;
-                } else {
-                    span = makeSegSpan(context, textErrorRun, text, textSegment, start, segpos);
-                    lineDiv.appendChild(span);
-                    if ((context.cursor.pos >= textStartPos) && (context.cursor.pos < textEndPos)) {
-                        let preCursorText = text.substring(start, (context.cursor.pos - textStartPos) + 1);
+                span = makeSegSpan(context, text, textSegment, start, segpos);
+                lineDiv.appendChild(span);
+                lineDiv.lineEnd += text.length;
+                if ((context.cursor.pos >= textStartPos) && (context.cursor.pos < textEndPos)) {
+                    let cursorX: number;
+                    if (context.cursor.pos > textStartPos) {
+                        let preCursorText = text.substring(0, context.cursor.pos - textStartPos);
                         let temp = span.innerText;
                         span.innerText = preCursorText;
                         let cursorBounds = span.getBoundingClientRect();
+                        cursorX = cursorBounds.width + (cursorBounds.left - viewportBounds.x);
                         span.innerText = temp;
-                        context.cursor.assignToLine(cursorBounds.right - viewportBounds.x, lineDivHeight , lineDiv);
+                    } else {
+                        let cursorBounds = span.getBoundingClientRect();
+                        cursorX = cursorBounds.left - viewportBounds.x;
                     }
-                    prevTextSegment = textSegment;
-                    prevSpan = span;
+                    context.cursor.assignToLine(cursorX, lineDivHeight, lineDiv);
                 }
             } else if (segType === SharedString.SegmentType.Marker) {
                 let marker = <SharedString.Marker>segment;
                 if (marker.type === "pg") {
                     pgMarker = marker;
                     markerPos = segpos;
+                    if (context.cursor.pos === segpos) {
+                        if (span) {
+                            let cursorBounds = span.getBoundingClientRect();
+                            let cursorX = cursorBounds.width + (cursorBounds.left - viewportBounds.x);
+                            context.cursor.assignToLine(cursorX, lineDivHeight, lineDiv);
+                        } else {
+                            context.cursor.assignToLine(0, lineDivHeight, lineDiv);
+                        }
+                    }
                     return false;
                 }
             }
@@ -788,7 +884,6 @@ function renderTreeByPG(div: HTMLDivElement, pos: number, client: SharedString.C
                 }
                 lineDiv = makeLineDiv(new Geometry.Rectangle(0, currentLineTop, viewportWidth, lineDivHeight),
                     lineFontstr);
-                prevTextSegment = undefined;
                 client.mergeTree.mapRange({ leaf: renderSegmentIntoLine }, SharedString.UniversalSequenceNumber,
                     client.getClientId(), undefined, lineStart, lineEnd);
                 currentLineTop += lineDivHeight;
@@ -818,6 +913,7 @@ function renderTreeByPG(div: HTMLDivElement, pos: number, client: SharedString.C
             startPGMarker.cache = { breaks: breakPGIntoLinesFF(items, viewportBounds.width), singleLineWidth: viewportBounds.width };
         }
         pgCount++;
+        paragraphLexer.reset();
         renderPG(startPGMarker, startPGPos);
         currentLineTop += pgVspace;
         if (pgMarker !== undefined) {
@@ -831,7 +927,7 @@ function renderTreeByPG(div: HTMLDivElement, pos: number, client: SharedString.C
     // console.log(`pg count ${pgCount} lw ${bounds.width} items ${items.length} word spacing: ${wordSpacing}`);
 }
 
-function makeSegSpan(context: FlowView, textErrorRun: IRange, segText: string, textSegment: SharedString.TextSegment, offsetFromSegpos: number,
+function makeSegSpan(context: FlowView, segText: string, textSegment: SharedString.TextSegment, offsetFromSegpos: number,
     segpos: number) {
     let span = <ISegSpan>document.createElement("span");
     span.innerText = segText;
@@ -843,8 +939,8 @@ function makeSegSpan(context: FlowView, textErrorRun: IRange, segText: string, t
         for (let key in textSegment.properties) {
             if (key === "textError") {
                 textErr = true;
-                if (textErrorRun.start < 0) {
-                    textErrorRun = { start: segpos, end: segpos + segText.length };
+                if (textErrorRun === undefined) {
+                    textErrorRun = { start: segpos + offsetFromSegpos, end: segpos + offsetFromSegpos + segText.length };
                 } else {
                     textErrorRun.end += segText.length;
                 }
@@ -898,7 +994,7 @@ function makeSegSpan(context: FlowView, textErrorRun: IRange, segText: string, t
         }
     }
     if (!textErr) {
-        textErrorRun.start = -1;
+        textErrorRun = undefined;
     }
     if (offsetFromSegpos > 0) {
         span.offset = offsetFromSegpos;
@@ -922,7 +1018,7 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
     let firstDiv = innerDiv;
     let cursorRendered = false;
     context.viewportEndChar = -1;
-    let textErrorRun = <IRange>{ start: -1, end: -1 };
+    textErrorRun = undefined;
 
     function findLastChar() {
         if (div.children.length > 0) {
@@ -954,17 +1050,17 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
             let endPos = startPos + segText.length;
             if (renderCursor && (context.cursor.pos >= startPos) && (context.cursor.pos < endPos)) {
                 let cursorRelPos = context.cursor.pos - startPos;
-                let relSpan = makeSegSpan(context, textErrorRun, segText.substring(cursorRelPos), textSegment, cursorRelPos + offset,
+                let relSpan = makeSegSpan(context, segText.substring(cursorRelPos), textSegment, cursorRelPos + offset,
                     startChar);
                 if (cursorRelPos > 0) {
-                    let preSpan = makeSegSpan(context, textErrorRun, segText.substring(0, cursorRelPos), textSegment, offset, startChar);
+                    let preSpan = makeSegSpan(context, segText.substring(0, cursorRelPos), textSegment, offset, startChar);
                     innerDiv.appendChild(preSpan);
                 }
                 cursorRendered = true;
                 innerDiv.appendChild(relSpan);
                 context.cursor.assign(relSpan);
             } else {
-                let span = makeSegSpan(context, textErrorRun, segText, textSegment, offset, startChar);
+                let span = makeSegSpan(context, segText, textSegment, offset, startChar);
                 innerDiv.appendChild(span);
             }
             return segText;
@@ -1217,6 +1313,10 @@ export class Cursor {
         this.show();
     }
 
+    public lineDiv() {
+        return <ILineDiv>this.editSpan.parentElement;
+    }
+
     public rect() {
         return this.editSpan.getBoundingClientRect();
     }
@@ -1393,6 +1493,60 @@ export class FlowView {
                         this.cursor.pos = span.segPos + tseg.cachedLength - 1;
                     }
                     return true;
+                } else {
+                    // empty line
+                    let lineDiv = <ILineDiv>elm;
+                    if (lineDiv.linePos !== undefined) {
+                        this.cursor.pos = lineDiv.linePos;
+                        return true;
+                    }
+                }
+            } else if (elm.tagName === "SPAN") {
+                let span = <ISegSpan>elm;
+                let elmOff = pointerToElementOffsetWebkit(x, y);
+                if (elmOff) {
+                    let computed = elmOffToSegOff(elmOff, span);
+                    if (span.offset) {
+                        computed += span.offset;
+                    }
+                    this.cursor.pos = span.segPos + computed;
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public verticalMovePG(lineCount: number) {
+        let cursorRect = this.cursor.rect();
+        let x: number;
+        if (this.lastVerticalX >= 0) {
+            x = this.lastVerticalX;
+        } else {
+            x = Math.floor(cursorRect.left);
+            this.lastVerticalX = x;
+        }
+        let y: number;
+        let lineDiv = this.cursor.lineDiv();
+        let targetLineDiv: ILineDiv;
+        if (lineCount < 0) {
+            targetLineDiv = <ILineDiv>lineDiv.previousElementSibling;
+        } else {
+            targetLineDiv = <ILineDiv>lineDiv.nextElementSibling;
+        }
+        if (targetLineDiv && (targetLineDiv.linePos)) {
+            let targetLineBounds = targetLineDiv.getBoundingClientRect();
+            y = targetLineBounds.top + Math.floor(targetLineBounds.height / 2);
+            let elm = document.elementFromPoint(x, y);
+            if (elm.tagName === "DIV") {
+                let span = <ISegSpan>elm.lastElementChild;
+                if (span) {
+                    this.cursor.pos = targetLineDiv.lineEnd;
+                    return true;
+                } else {
+                    // empty line
+                    this.cursor.pos = targetLineDiv.linePos;
+                    return true;
                 }
             } else if (elm.tagName === "SPAN") {
                 let span = <ISegSpan>elm;
@@ -1497,8 +1651,8 @@ export class FlowView {
                 }, 20);
                 this.ticking = true;
             } else if (e.keyCode === KeyCode.home) {
-                this.cursor.pos = 0;
-                this.render(0);
+                this.cursor.pos = 1;
+                this.render(1);
             } else if (e.keyCode === KeyCode.end) {
                 let halfport = Math.floor(this.viewportCharCount / 2);
                 let topChar = this.client.getLength() - halfport;
@@ -1516,10 +1670,8 @@ export class FlowView {
                 if (e.keyCode === KeyCode.upArrow) {
                     lineCount = -1;
                 }
-                if (this.verticalMove(lineCount)) {
-                    if (this.cursor.pos >= this.viewportEndChar) {
-                        this.cursor.pos = this.adjustedTopChar;
-                    }
+                // TODO: try twice; if first returns false, then scroll up/down once first
+                if (this.verticalMovePG(lineCount)) {
                     this.render(this.topChar, true);
                 }
             } else {
@@ -1535,9 +1687,12 @@ export class FlowView {
             this.cursor.pos++;
             let code = e.charCode;
             if (code === 13) {
-                code = CharacterCodes.linefeed;
+                // TODO: pg properties on marker                
+                this.sharedString.insertMarker(pos, "pg", SharedString.MarkerBehaviors.Tile);
+                this.updatePGInfo(pos - 1);
+            } else {
+                this.sharedString.insertText(String.fromCharCode(code), pos);
             }
-            this.sharedString.insertText(String.fromCharCode(code), pos);
             this.localQueueRender(pos);
         };
         this.flowContainer.onkeydown = keydownHandler;
@@ -1606,7 +1761,7 @@ export class FlowView {
     }
 
     public render(topChar?: number, changed = false) {
-        let testPG = false;
+        let testPG = true;
         let len = this.client.getLength();
         if (topChar !== undefined) {
             if (((this.topChar === topChar) || ((this.topChar === 0) && (topChar <= 0)))
@@ -1617,8 +1772,8 @@ export class FlowView {
             if (this.topChar >= len) {
                 this.topChar = len - this.charsPerLine;
             }
-            if (this.topChar < 0) {
-                this.topChar = 0;
+            if (this.topChar < 1) {
+                this.topChar = 1;
             }
         }
         let clk = Date.now();
@@ -1709,6 +1864,9 @@ export class FlowView {
         if (delta.type === SharedString.MergeTreeDeltaType.INSERT) {
             if (delta.pos1 <= this.cursor.pos) {
                 this.cursor.pos += delta.text.length;
+            }
+            if (delta.marker) {
+                this.updatePGInfo(delta.pos1 - 1);
             }
             this.updatePGInfo(delta.pos1);
         } else if (delta.type === SharedString.MergeTreeDeltaType.REMOVE) {
