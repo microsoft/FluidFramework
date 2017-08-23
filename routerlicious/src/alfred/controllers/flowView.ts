@@ -724,7 +724,7 @@ class ParagraphLexer {
 // global until remove old render
 let textErrorRun: IRange;
 
-function renderTreeByPG(div: HTMLDivElement, pos: number, client: SharedString.Client, context: FlowView) {
+function renderTreeByPG(div: HTMLDivElement, pos: number, client: SharedString.Client, flowView: FlowView) {
     let fontstr = "18px Times";
     let headerFontstr = "22px Times";
     // TODO: for stable viewports cache the geometry and the divs 
@@ -829,13 +829,13 @@ function renderTreeByPG(div: HTMLDivElement, pos: number, client: SharedString.C
                 let text = textSegment.text.substring(start, end);
                 let textStartPos = segpos + start;
                 let textEndPos = segpos + end;
-                span = makeSegSpan(context, text, textSegment, start, segpos);
+                span = makeSegSpan(flowView, text, textSegment, start, segpos);
                 lineDiv.appendChild(span);
                 lineDiv.lineEnd += text.length;
-                if ((context.cursor.pos >= textStartPos) && (context.cursor.pos < textEndPos)) {
+                if ((flowView.cursor.pos >= textStartPos) && (flowView.cursor.pos < textEndPos)) {
                     let cursorX: number;
-                    if (context.cursor.pos > textStartPos) {
-                        let preCursorText = text.substring(0, context.cursor.pos - textStartPos);
+                    if (flowView.cursor.pos > textStartPos) {
+                        let preCursorText = text.substring(0, flowView.cursor.pos - textStartPos);
                         let temp = span.innerText;
                         span.innerText = preCursorText;
                         let cursorBounds = span.getBoundingClientRect();
@@ -845,20 +845,20 @@ function renderTreeByPG(div: HTMLDivElement, pos: number, client: SharedString.C
                         let cursorBounds = span.getBoundingClientRect();
                         cursorX = cursorBounds.left - viewportBounds.x;
                     }
-                    context.cursor.assignToLine(cursorX, lineDivHeight, lineDiv);
+                    flowView.cursor.assignToLine(cursorX, lineDivHeight, lineDiv);
                 }
             } else if (segType === SharedString.SegmentType.Marker) {
                 let marker = <SharedString.Marker>segment;
                 if (marker.type === "pg") {
                     pgMarker = marker;
                     markerPos = segpos;
-                    if (context.cursor.pos === segpos) {
+                    if (flowView.cursor.pos === segpos) {
                         if (span) {
                             let cursorBounds = span.getBoundingClientRect();
                             let cursorX = cursorBounds.width + (cursorBounds.left - viewportBounds.x);
-                            context.cursor.assignToLine(cursorX, lineDivHeight, lineDiv);
+                            flowView.cursor.assignToLine(cursorX, lineDivHeight, lineDiv);
                         } else {
-                            context.cursor.assignToLine(0, lineDivHeight, lineDiv);
+                            flowView.cursor.assignToLine(0, lineDivHeight, lineDiv);
                         }
                     }
                     return false;
@@ -920,10 +920,10 @@ function renderTreeByPG(div: HTMLDivElement, pos: number, client: SharedString.C
         if (pgMarker !== undefined) {
             startPGMarker.cache.endOffset = markerPos - startPGPos;
         } else {
-            startPGMarker.cache.endOffset = context.client.getLength() - startPGPos;
+            startPGMarker.cache.endOffset = flowView.client.getLength() - startPGPos;
         }
     } while ((pgMarker !== undefined) && ((viewportHeight - currentLineTop) >= defaultLineDivHeight));
-    context.viewportEndChar = startPGMarker.cache.endOffset + startPGPos;
+    flowView.viewportEndChar = startPGMarker.cache.endOffset + startPGPos;
     // tslint:disable:max-line-length
     // console.log(`pg count ${pgCount} lw ${bounds.width} items ${items.length} word spacing: ${wordSpacing}`);
 }
@@ -1660,11 +1660,15 @@ export class FlowView {
                 this.cursor.pos = topChar;
                 this.render(topChar);
             } else if (e.keyCode === KeyCode.rightArrow) {
-                this.cursor.pos++;
-                this.render(this.topChar, true); // TODO: scroll first if cursor travels off page
+                if (this.cursor.pos < this.viewportEndChar) {
+                    this.cursor.pos++;
+                    this.render(this.topChar, true); // TODO: scroll first if cursor travels off page
+                }
             } else if (e.keyCode === KeyCode.leftArrow) {
-                this.cursor.pos--;
-                this.render(this.topChar, true); // TODO: scroll first if cursor travels off page
+                if (this.cursor.pos > 1) {
+                    this.cursor.pos--;
+                    this.render(this.topChar, true); // TODO: scroll first if cursor travels off page
+                }
             } else if ((e.keyCode === KeyCode.upArrow) || (e.keyCode === KeyCode.downArrow)) {
                 this.lastVerticalX = saveLastVertX;
                 let lineCount = 1;
