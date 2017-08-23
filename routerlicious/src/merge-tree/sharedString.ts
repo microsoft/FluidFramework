@@ -1,5 +1,6 @@
 import * as assert from "assert";
 import * as resources from "gitresources";
+import performanceNow = require("performance-now");
 import * as api from "../api";
 import * as shared from "../shared";
 import * as MergeTree from "./mergeTree";
@@ -79,10 +80,14 @@ export class SharedString extends api.CollaborativeObject {
     public async load(sequenceNumber: number, header: string, collaborative: boolean) {
         let chunk: ops.MergeTreeChunk;
 
+        console.log(`Async load ${this.id} - ${performanceNow()}`);
+
         if (header) {
             chunk = Paparazzo.Snapshot.processChunk(header);
             this.client.mergeTree.reloadFromSegments(textsToSegments(chunk.segmentTexts));
+            console.log(`Loading ${this.id} body - ${performanceNow()}`);
             chunk = await Paparazzo.Snapshot.loadChunk(this.services, "body");
+            console.log(`Loaded ${this.id} body - ${performanceNow()}`);
             for (let segSpec of chunk.segmentTexts) {
                 this.client.mergeTree.appendSegment(segSpec);
             }
@@ -93,9 +98,12 @@ export class SharedString extends api.CollaborativeObject {
         // This should happen if we have collab services
         assert.equal(sequenceNumber, chunk.chunkSequenceNumber);
         if (collaborative) {
+            console.log(`Start ${this.id} collab - ${performanceNow()}`);
             this.client.startCollaboration(this.document.clientId, sequenceNumber);
         }
+        console.log(`Apply ${this.id} pending - ${performanceNow()}`);
         this.applyPending();
+        console.log(`Load ${this.id} finished - ${performanceNow()}`);
         this.loadFinished(chunk);
     }
 

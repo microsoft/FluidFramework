@@ -9,6 +9,7 @@ import * as tags from "./git/tags";
 import * as trees from "./git/trees";
 import * as repositoryCommits from "./repository/commits";
 import * as contents from "./repository/contents";
+import * as headers from "./repository/headers";
 
 export interface IRoutes {
     git: {
@@ -22,25 +23,27 @@ export interface IRoutes {
     repository: {
         commits: Router;
         contents: Router;
+        headers: Router;
     };
 }
 
 export function create(
     store: nconf.Provider,
-    gitService: services.IGitService): IRoutes {
+    historianService: services.IHistorian): IRoutes {
 
     return {
         git: {
-            blobs: blobs.create(store, gitService),
-            commits: commits.create(store, gitService),
-            refs: refs.create(store, gitService),
-            repos: repos.create(store, gitService),
-            tags: tags.create(store, gitService),
-            trees: trees.create(store, gitService),
+            blobs: blobs.create(store, historianService),
+            commits: commits.create(store, historianService),
+            refs: refs.create(store, historianService),
+            repos: repos.create(store, historianService),
+            tags: tags.create(store, historianService),
+            trees: trees.create(store, historianService),
         },
         repository: {
-            commits: repositoryCommits.create(store, gitService),
-            contents: contents.create(store, gitService),
+            commits: repositoryCommits.create(store, historianService),
+            contents: contents.create(store, historianService),
+            headers: headers.create(store, historianService),
         },
     };
 }

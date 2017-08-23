@@ -136,6 +136,7 @@
     "node-uuid": "^1.4.8",
     "openpgp": "^2.5.8",
     "passport": "^0.3.2",
+    "performance-now": "^2.1.0",
     "progress": "^2.0.0",
     "random-js": "^1.0.8",
     "redis": "^2.7.1",

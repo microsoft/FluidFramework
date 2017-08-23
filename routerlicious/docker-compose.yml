@@ -56,7 +56,7 @@ services:
             - worker__intelligence__resume__url=http://alfred:3000/intelligence/resume
         restart: always
     historian:
-        image: prague.azurecr.io/historian:652
+        image: prague.azurecr.io/historian:664
         ports:
             - "3001:3000"
         environment:

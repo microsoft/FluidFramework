@@ -11,17 +11,13 @@ export function create(store: nconf.Provider, gitService: services.IGitService):
         utils.handleResponse(
             commitP,
             response,
-            (commit) => {
-                return commit;
-            },
+            false,
             201);
     });
 
     router.get("/repos/:repo/git/commits/:sha", (request, response, next) => {
         const commitP = gitService.getCommit(request.params.repo, request.params.sha);
-        utils.handleResponse(commitP, response, (commit) => {
-            return commit;
-        });
+        utils.handleResponse(commitP, response);
     });
 
     return router;

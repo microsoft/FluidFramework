@@ -11,9 +11,7 @@ export function create(store: nconf.Provider, gitService: services.IGitService):
         utils.handleResponse(
             treeP,
             response,
-            (tree) => {
-                return tree;
-            },
+            false,
             201);
     });
 
@@ -21,10 +19,7 @@ export function create(store: nconf.Provider, gitService: services.IGitService):
         const treeP = gitService.getTree(request.params.repo, request.params.sha, request.query.recursive === "1");
         utils.handleResponse(
             treeP,
-            response,
-            (tree) => {
-                return tree;
-            });
+            response);
     });
 
     return router;
