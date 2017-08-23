@@ -324,7 +324,21 @@ async function typeFile(
             }
 
             // Start inserting text into the string
-            sharedString.insertText(fileText.charAt(readPosition++), insertPosition++);
+            if (readPosition === 0) {
+                sharedString.insertMarker(0, "pg", SharedString.MarkerBehaviors.Tile);
+                insertPosition++;
+            }
+            let code = fileText.charCodeAt(readPosition);
+            if (code === 13) {
+                readPosition++;
+                code = fileText.charCodeAt(readPosition);
+            }
+            if (code === 10) {
+                sharedString.insertMarker(insertPosition++, "pg", SharedString.MarkerBehaviors.Tile);
+                readPosition++;
+            } else {
+                sharedString.insertText(fileText.charAt(readPosition++), insertPosition++);
+            }
             messageStart[readPosition] = Date.now();
 
             metrics.typingProgress = readPosition / fileText.length;

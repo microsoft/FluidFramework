@@ -1861,9 +1861,11 @@ export class FlowView {
 
     public updatePGInfo(changePos: number) {
         let tileMarker = <IParagraphMarker>findContainingTile(this.client, changePos, "pg");
-        tileMarker.cache = undefined;
+        if (tileMarker) {
+            tileMarker.cache = undefined;
+        }
     }
-
+    
     // TODO: paragraph spanning changes and annotations
     private applyOp(delta: SharedString.IMergeTreeOp) {
         if (delta.type === SharedString.MergeTreeDeltaType.INSERT) {
