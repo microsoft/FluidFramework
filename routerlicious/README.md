@@ -118,5 +118,7 @@ cd prague
 git checkout <document id>
 ```
 
+Or `git clone ssh://git@gitrest.westus2.cloudapp.azure.com/home/git/prague` for our production site.
+
 From there you can use your git repository management tool of choice to inspect the various documents and revisions
 stored in the repository.

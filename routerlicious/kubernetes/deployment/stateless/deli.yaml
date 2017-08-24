@@ -11,7 +11,7 @@ spec:
     spec:
       containers:
       - name: prague
-        image: prague.azurecr.io/prague:666
+        image: prague.azurecr.io/prague:670
         command:
           - 'node'
           - 'dist/deli/index.js'
