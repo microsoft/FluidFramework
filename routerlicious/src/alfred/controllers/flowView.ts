@@ -50,28 +50,6 @@ enum CharacterCodes {
     space = 0x0020,   // " "
 }
 
-// enum TokenProperties {
-//     None = 0,
-//     HardHyphen = 1,
-//     SoftHyphen = 2,
-// }
-
-// enum TokenType {
-//     SingleSpace,
-//     Spaces,
-//     ExoticSpaces,
-//     Word,
-//     Syllable,
-// }
-
-// interface IToken {
-//     pos: number;
-//     start: number;
-//     type: TokenType;
-//     repeatCount?: number;
-//     properties: TokenProperties;
-// }
-
 interface IParagraphInfo {
     breaks: number[];
     singleLineWidth: number;
@@ -425,26 +403,6 @@ function getMultiTextWidth(texts: string[], font: string) {
     return sum;
 }
 
-function makeInnerDiv() {
-    let innerDiv = document.createElement("div");
-    innerDiv.style.font = "18px Times";
-    innerDiv.style.lineHeight = "125%";
-    // innerDiv.style.textAlign = "justify";
-    // innerDiv.style.textJustify = "newspaper";
-    // innerDiv.style.msHyphens = "auto";
-    // (<any>innerDiv.style).hyphens = "auto";
-    // innerDiv.style.fontFeatureSettings = '"liga" off, "kern" off';
-    // (<any>innerDiv.style).webkitFontFeatureSettings = '"liga" off, "kern" off';
-    innerDiv.onclick = (e) => {
-        let div = <HTMLDivElement>e.target;
-        if (div.lastElementChild) {
-            // tslint:disable-next-line:max-line-length
-            console.log(`div click at ${e.clientX},${e.clientY} rightmost span with text ${div.lastElementChild.innerHTML}`);
-        }
-    };
-    return innerDiv;
-}
-
 function makeScrollLosenge(height: number, left: number, top: number) {
     let div = document.createElement("div");
     div.style.width = "12px";
@@ -456,84 +414,6 @@ function makeScrollLosenge(height: number, left: number, top: number) {
     div.style.borderRadius = `${bordRad}px`;
     div.style.position = "absolute";
     return div;
-}
-
-function pixelsAtOffset(span: ISegSpan, offset: number, w: number) {
-    let rects = span.getClientRects();
-    if (offset === 0) {
-        return { left: rects[0].left, top: rects[0].top };
-    } else {
-        let halfwidth = Math.floor(w / 2);
-        let best = -1;
-        let bestOffset = -1;
-        let lo = 0;
-        let hi = rects.length - 1;
-        while (lo <= hi) {
-            let mid = lo + Math.floor((hi - lo) / 2);
-            let y = rects[mid].top + Math.floor(rects[mid].height / 2);
-            let x = rects[mid].left + halfwidth;
-            let elmOff = pointerToElementOffsetWebkit(x, y);
-            let xyOffset = elmOffToSegOff(elmOff, span);
-            if (xyOffset <= offset) {
-                if ((best < 0) || (bestOffset < xyOffset)) {
-                    best = mid;
-                    bestOffset = xyOffset;
-                }
-                lo = mid + 1;
-            } else if (xyOffset > offset) {
-                hi = mid - 1;
-            }
-        }
-        let rect = rects[best];
-        let diffOffset = offset - bestOffset;
-        if (diffOffset === 0) {
-            return { left: rect.left, top: rect.top };
-        } else {
-            let y = rects[best].top + Math.floor(rects[best].height / 2);
-            let x = rects[best].left + Math.floor(diffOffset * w);
-            let under = rects[best].left;
-            let over = rects[best].right;
-            while (diffOffset !== 0) {
-                let elmOff = pointerToElementOffsetWebkit(x, y);
-                let xyOffset = elmOffToSegOff(elmOff, span);
-                diffOffset = xyOffset - offset;
-                if (diffOffset > 0) {
-                    over = x;
-                } else if (diffOffset < 0) {
-                    under = x;
-                }
-                if ((over - under) < 10) {
-                    break;
-                }
-                x = x - (diffOffset * w);
-                if (x <= under) {
-                    x++;
-                } else if (x >= over) {
-                    x--;
-                }
-            }
-            if (diffOffset !== 0) {
-                let xlo = -1;
-                let xcount = 0;
-                for (x = under; x <= over; x++) {
-                    let elmOff = pointerToElementOffsetWebkit(x, y);
-                    let xyOffset = elmOffToSegOff(elmOff, span);
-                    diffOffset = xyOffset - offset;
-                    if (diffOffset === 0) {
-                        if (xlo < 0) {
-                            xlo = x;
-                        }
-                        xcount++;
-                    }
-                    if ((xlo >= 0) && (diffOffset === 1)) {
-                        x = xlo + Math.round(xcount / 2);
-                        break;
-                    }
-                }
-            }
-            return { left: x, top: rect.top };
-        }
-    }
 }
 
 interface IRange {
@@ -794,11 +674,11 @@ function findLineDiv(pos: number, flowView: FlowView) {
     let elm = <ILineDiv>flowView.viewportDiv.firstElementChild;
     while (elm) {
         if (elm.linePos !== undefined) {
-            if ((elm.linePos <= pos) && (elm.lineEnd >= pos)) {
+            if ((elm.linePos <= pos) && (elm.lineEnd > pos)) {
                 return elm;
             }
         }
-        elm = <ILineDiv> elm.nextElementSibling;
+        elm = <ILineDiv>elm.nextElementSibling;
     }
 }
 
@@ -819,7 +699,7 @@ function reRenderLine(lineDiv: ILineDiv, flowView: FlowView) {
     }
 }
 
-function renderTreeByPG(div: HTMLDivElement, pos: number, client: SharedString.Client, flowView: FlowView) {
+function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Client, flowView: FlowView) {
     let fontstr = "18px Times";
     let headerFontstr = "22px Times";
     // TODO: for stable viewports cache the geometry and the divs 
@@ -838,6 +718,9 @@ function renderTreeByPG(div: HTMLDivElement, pos: number, client: SharedString.C
     let headerDivHeight = 32;
     let currentLineTop = 0;
     let wordSpacing = getTextWidth(" ", fontstr);
+    let viewportStartPos = -1;
+    let lineCount = 0;
+    let lastLineDiv  = undefined;
 
     let makeLineDiv = (r: Geometry.Rectangle, lineFontstr) => {
         let lineDiv = document.createElement("div");
@@ -852,6 +735,8 @@ function renderTreeByPG(div: HTMLDivElement, pos: number, client: SharedString.C
         };
         r.conformElement(lineDiv);
         div.appendChild(lineDiv);
+        lineCount++;
+        lastLineDiv = lineDiv;
         return lineDiv;
     };
 
@@ -928,6 +813,9 @@ function renderTreeByPG(div: HTMLDivElement, pos: number, client: SharedString.C
                     span, lineDiv, lineDivHeight, flowView, pgMarker, markerPos,
                     viewportBounds,
                 };
+                if (viewportStartPos < 0) {
+                    viewportStartPos = lineStart;
+                }
                 client.mergeTree.mapRange({ leaf: renderSegmentIntoLine }, SharedString.UniversalSequenceNumber,
                     client.getClientId(), lineContext, lineStart, lineEnd);
                 span = lineContext.span;
@@ -967,12 +855,11 @@ function renderTreeByPG(div: HTMLDivElement, pos: number, client: SharedString.C
         if (pgMarker !== undefined) {
             startPGMarker.cache.endOffset = markerPos - startPGPos;
         } else {
-            startPGMarker.cache.endOffset = flowView.client.getLength() - startPGPos;
+            startPGMarker.cache.endOffset = lastLineDiv.lineEnd - startPGPos;
         }
     } while ((pgMarker !== undefined) && ((viewportHeight - currentLineTop) >= defaultLineDivHeight));
-    flowView.viewportEndChar = startPGMarker.cache.endOffset + startPGPos;
-    // tslint:disable:max-line-length
-    // console.log(`pg count ${pgCount} lw ${bounds.width} items ${items.length} word spacing: ${wordSpacing}`);
+    flowView.viewportStartPos = viewportStartPos;
+    flowView.viewportEndPos = startPGMarker.cache.endOffset + startPGPos;
 }
 
 function makeSegSpan(context: FlowView, segText: string, textSegment: SharedString.TextSegment, offsetFromSegpos: number,
@@ -1050,248 +937,6 @@ function makeSegSpan(context: FlowView, segText: string, textSegment: SharedStri
     return span;
 }
 
-function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Client, context: FlowView) {
-    div.id = "renderedTree";
-    div.style.whiteSpace = "pre-wrap";
-    let splitTopSeg = true;
-    let w = Math.floor(context.wEst);
-    let h = context.hEst;
-    let bounds = div.getBoundingClientRect();
-    let charsPerLine = bounds.width / w;
-    let charsPerViewport = Math.floor((bounds.height / h) * charsPerLine);
-    let innerDiv = makeInnerDiv();
-    div.appendChild(innerDiv);
-    let charLength = 0;
-    let firstSeg = true;
-    let firstDiv = innerDiv;
-    let cursorRendered = false;
-    context.viewportEndChar = -1;
-    textErrorRun = undefined;
-
-    function findLastChar() {
-        if (div.children.length > 0) {
-            let child = div.lastElementChild;
-            if (child.children.length === 0) {
-                child = child.previousElementSibling;
-            }
-            if (child) {
-                let lastSpan = <ISegSpan>child.lastElementChild;
-                if (lastSpan) {
-                    if (lastSpan.clipOffset) {
-                        return lastSpan.clipOffset;
-                    } else {
-                        return lastSpan.segPos + lastSpan.innerText.length - 1;
-                    }
-                }
-            }
-        }
-        return -1;
-    }
-
-    function renderSegment(segment: SharedString.Segment, segpos: number, refSeq: number,
-        clientId: number, start: number, end: number) {
-        let segOffset = 0;
-
-        function segmentToSpan(segText: string, textSegment: SharedString.TextSegment, offset: number,
-            startChar: number, renderCursor: boolean, clipChar?: number) {
-            let startPos = startChar + offset;
-            let endPos = startPos + segText.length;
-            if (renderCursor && (context.cursor.pos >= startPos) && (context.cursor.pos < endPos)) {
-                let cursorRelPos = context.cursor.pos - startPos;
-                let relSpan = makeSegSpan(context, segText.substring(cursorRelPos), textSegment, cursorRelPos + offset,
-                    startChar);
-                if (cursorRelPos > 0) {
-                    let preSpan = makeSegSpan(context, segText.substring(0, cursorRelPos), textSegment, offset, startChar);
-                    innerDiv.appendChild(preSpan);
-                }
-                cursorRendered = true;
-                innerDiv.appendChild(relSpan);
-                context.cursor.assign(relSpan);
-            } else {
-                let span = makeSegSpan(context, segText, textSegment, offset, startChar);
-                innerDiv.appendChild(span);
-            }
-            return segText;
-        }
-
-        function renderFirstSegment(text: string, textSegment: SharedString.TextSegment) {
-            segmentToSpan(text, textSegment, 0, segpos, false);
-            let innerBounds = innerDiv.getBoundingClientRect();
-            let x = innerBounds.left + Math.floor(context.wEst / 2);
-            let y = innerBounds.top + Math.floor(context.hEst / 2);
-            let offset = 0;
-            let prevOffset = 0;
-            let segspan = <ISegSpan>innerDiv.children[0];
-            do {
-                if (y > innerBounds.bottom) {
-                    prevOffset = offset;
-                    break;
-                }
-                let elmOff = pointerToElementOffsetWebkit(x, y);
-                if (elmOff) {
-                    prevOffset = offset;
-                    offset = elmOffToSegOff(elmOff, segspan);
-                    y += context.hEst;
-                } else {
-                    console.log(`no hit for ${x} ${y} start ${start}`);
-                    prevOffset = offset;
-                    break;
-                }
-            } while (offset < start);
-            innerDiv.removeChild(segspan);
-            offset = prevOffset;
-            while ((offset >= 1) && (text.charCodeAt(offset - 1) !== CharacterCodes.space)) {
-                offset--;
-            }
-            segOffset = offset;
-            return text.substring(offset);
-        }
-
-        function freshDiv() {
-            innerDiv = makeInnerDiv();
-            div.appendChild(innerDiv);
-        }
-
-        if (segment.getType() === SharedString.SegmentType.Marker) {
-            let marker = <SharedString.Marker>segment;
-            if (marker.type === "pg") {
-                if (segpos > 0) {
-                    freshDiv();
-                }
-            }
-        } else if (segment.getType() === SharedString.SegmentType.Text) {
-            let textSegment = <SharedString.TextSegment>segment;
-            let last = (textSegment.text.length === end);
-            if (firstSeg && (textSegment !== context.prevTopSegment)) {
-                splitTopSeg = false;
-                context.prevTopSegment = textSegment;
-            }
-            let segText = textSegment.text;
-            if (start > 0) {
-                if (splitTopSeg) {
-                    segText = renderFirstSegment(segText, textSegment);
-                    let actualStart = textSegment.text.length - segText.length;
-                    context.adjustedTopChar = context.topChar + (actualStart - start);
-                } else {
-                    context.adjustedTopChar = context.topChar - start;
-                }
-                if (context.cursor.pos < context.adjustedTopChar) {
-                    context.cursor.pos = context.adjustedTopChar;
-                }
-            } else {
-                if (firstSeg) {
-                    context.adjustedTopChar = context.topChar;
-                }
-            }
-            firstSeg = false;
-            charLength += segText.length;
-            segText = segmentToSpan(segText, textSegment, segOffset, segpos, true);
-            segOffset = 0;
-
-            if ((charLength > charsPerViewport) || last) {
-                // console.log(`client h, w ${div.clientHeight},${div.clientWidth}`);
-                let constraint = bounds.height + bounds.top;
-                let lastInnerBounds = innerDiv.getBoundingClientRect();
-                if ((lastInnerBounds.bottom > constraint) || last) {
-                    if (innerDiv.childNodes.length > 0) {
-                        freshDiv();
-                    }
-                    if (innerDiv.previousElementSibling) {
-                        let pruneDiv = <HTMLDivElement>innerDiv.previousElementSibling;
-                        let lastPruned: HTMLDivElement;
-                        while (pruneDiv) {
-                            if (pruneDiv.getBoundingClientRect().bottom > constraint) {
-                                let temp = <HTMLDivElement>pruneDiv.previousElementSibling;
-                                div.removeChild(pruneDiv);
-                                lastPruned = pruneDiv;
-                                pruneDiv = temp;
-                            } else {
-                                break;
-                            }
-                        }
-                        if (lastPruned) {
-                            div.appendChild(lastPruned);
-                            let lastSeg: SharedString.TextSegment;
-                            let lastSegOff = 0;
-                            for (let i = 0; i < lastPruned.childElementCount; i++) {
-                                let prunedSpan = <ISegSpan>lastPruned.children[i];
-                                let spanBounds = prunedSpan.getBoundingClientRect();
-                                if (spanBounds.bottom <= constraint) {
-                                    innerDiv.appendChild(prunedSpan);
-                                    lastSeg = prunedSpan.seg;
-                                    lastSegOff = lastSeg.text.length;
-                                } else {
-                                    if ((constraint - spanBounds.top) > context.hEst) {
-                                        let rects = prunedSpan.getClientRects();
-                                        let x = 0;
-                                        let y = 0;
-                                        let rect: ClientRect;
-                                        for (let j = rects.length - 1; j >= 0; j--) {
-                                            rect = rects.item(j);
-                                            if (rect.bottom <= constraint) {
-                                                x = rect.right - Math.floor(w / 2);
-                                                y = rect.bottom - Math.floor(h / 2);
-                                                break;
-                                            }
-                                        }
-                                        if (y > 0) {
-                                            let elmOff = pointerToElementOffsetWebkit(x, y);
-                                            let segClip = elmOffToSegOff(elmOff, prunedSpan) + 1;
-                                            let textSeg = <SharedString.TextSegment>prunedSpan.seg;
-                                            while ((segClip > 0) &&
-                                                (textSeg.text.charCodeAt(segClip) !== CharacterCodes.space) &&
-                                                (textSeg.text.charAt(segClip) !== "\n")) {
-                                                segClip--;
-                                            }
-                                            if (segClip > 0) {
-                                                segmentToSpan(textSeg.text.substring(0, segClip), textSeg, 0,
-                                                    prunedSpan.segPos, true, segClip + prunedSpan.segPos);
-                                            }
-                                            lastSegOff = segClip;
-                                            lastSeg = textSeg;
-                                        }
-                                    }
-                                    break;
-                                }
-                            }
-                            div.removeChild(lastPruned);
-                            if (lastSeg) {
-                                // tslint:disable:max-line-length
-                                let segStart = context.client.mergeTree.getOffset(lastSeg, context.client.getCurrentSeq(),
-                                    context.client.getClientId());
-                                context.viewportEndChar = segStart + lastSegOff;
-                            }
-                        }
-                        return false;
-                    }
-                }
-            }
-        }
-        return true;
-    }
-    client.mergeTree.mapRange({ leaf: renderSegment }, SharedString.UniversalSequenceNumber,
-        client.getClientId(), undefined, pos);
-    if (context.viewportEndChar < 0) {
-        let endChar = findLastChar();
-        if (endChar < 0) {
-            context.viewportEndChar = charLength + context.adjustedTopChar;
-        } else {
-            context.viewportEndChar = endChar;
-        }
-    }
-    if ((!cursorRendered) || (context.cursor.pos > context.viewportEndChar)) {
-        if (firstDiv && (firstDiv.children.length > 0)) {
-            let firstSpan = <ISegSpan>firstDiv.children[0];
-            let curpos = firstSpan.segPos;
-            if (firstSpan.offset) {
-                curpos += firstSpan.offset;
-            }
-            context.cursor.pos = curpos;
-            context.cursor.assign(firstSpan);
-        }
-    }
-}
-
 function pointerToElementOffsetWebkit(x: number, y: number): IRangeInfo {
     let range = document.caretRangeFromPoint(x, y);
     if (range) {
@@ -1367,7 +1012,7 @@ export class Cursor {
 
     public updateView(flowView: FlowView) {
         let lineDiv = this.lineDiv();
-        if (lineDiv && (lineDiv.linePos <= this.pos) && (lineDiv.lineEnd >= this.pos)) {
+        if (lineDiv && (lineDiv.linePos <= this.pos) && (lineDiv.lineEnd > this.pos)) {
             reRenderLine(lineDiv, flowView);
         } else {
             let foundLineDiv = findLineDiv(this.pos, flowView);
@@ -1459,17 +1104,13 @@ enum KeyCode {
 export class FlowView {
     public static scrollAreaWidth = 18;
 
-    public wEst = 0;
-    public hEst = 22;
     public timeToImpression: number;
     public timeToLoad: number;
     public timeToEdit: number;
     public timeToCollab: number;
-    public viewportCharCount: number;
-    public charsPerLine: number;
     public prevTopSegment: SharedString.TextSegment;
-    public adjustedTopChar: number;
-    public viewportEndChar: number;
+    public viewportStartPos: number;
+    public viewportEndPos: number;
     public cursorSpan: HTMLSpanElement;
     public containerDiv: HTMLDivElement;
     public viewportDiv: HTMLDivElement;
@@ -1498,7 +1139,6 @@ export class FlowView {
         this.containerDiv.appendChild(this.viewportDiv);
         this.scrollDiv = document.createElement("div");
         this.containerDiv.appendChild(this.scrollDiv);
-        this.widthEst("18px Times");
 
         this.updateGeometry();
         this.statusMessage("li", " ");
@@ -1510,11 +1150,6 @@ export class FlowView {
         this.cursor = new Cursor(this.viewportDiv);
     }
 
-    public widthEst(fontInfo: string) {
-        let innerDiv = makeInnerDiv();
-        this.wEst = getTextWidth("abcdefghi jklmnopqrstuvwxyz", innerDiv.style.font) / 27;
-    }
-
     public updateGeometry() {
         let bounds = Geometry.Rectangle.fromClientRect(this.containerDiv.getBoundingClientRect());
         Geometry.Rectangle.conformElementToRect(this.containerDiv, bounds);
@@ -1523,9 +1158,6 @@ export class FlowView {
         Geometry.Rectangle.conformElementToRect(this.scrollDiv, this.scrollRect);
         this.viewportRect = panelScroll[0].inner(0.92);
         Geometry.Rectangle.conformElementToRect(this.viewportDiv, this.viewportRect);
-        this.charsPerLine = this.viewportRect.width / Math.floor(this.wEst); // overestimate
-        let charsPerViewport = Math.floor((this.viewportRect.height / this.hEst) * this.charsPerLine);
-        this.viewportCharCount = charsPerViewport;
     }
 
     public statusMessage(key: string, msg: string) {
@@ -1533,53 +1165,6 @@ export class FlowView {
     }
 
     public verticalMove(lineCount: number) {
-        let cursorRect = this.cursor.rect();
-        let x: number;
-        if (this.lastVerticalX >= 0) {
-            x = this.lastVerticalX;
-        } else {
-            x = Math.floor(cursorRect.left);
-            this.lastVerticalX = x;
-        }
-        let y = Math.floor(cursorRect.top + (cursorRect.height / 2));
-        y += Math.floor(lineCount * this.hEst);
-        if ((y >= this.viewportRect.y) && (y <= (this.viewportRect.y + this.viewportRect.height - this.hEst))) {
-            let elm = document.elementFromPoint(x, y);
-            if (elm.tagName === "DIV") {
-                let span = <ISegSpan>elm.lastElementChild;
-                if (span) {
-                    let tseg = span.seg;
-                    if (span.clipOffset) {
-                        this.cursor.pos = span.segPos + span.clipOffset - 1;
-                    } else {
-                        this.cursor.pos = span.segPos + tseg.cachedLength - 1;
-                    }
-                    return true;
-                } else {
-                    // empty line
-                    let lineDiv = <ILineDiv>elm;
-                    if (lineDiv.linePos !== undefined) {
-                        this.cursor.pos = lineDiv.linePos;
-                        return true;
-                    }
-                }
-            } else if (elm.tagName === "SPAN") {
-                let span = <ISegSpan>elm;
-                let elmOff = pointerToElementOffsetWebkit(x, y);
-                if (elmOff) {
-                    let computed = elmOffToSegOff(elmOff, span);
-                    if (span.offset) {
-                        computed += span.offset;
-                    }
-                    this.cursor.pos = span.segPos + computed;
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    public verticalMovePG(lineCount: number) {
         let cursorRect = this.cursor.rect();
         let x: number;
         if (this.lastVerticalX >= 0) {
@@ -1626,6 +1211,10 @@ export class FlowView {
         return false;
     }
 
+    public viewportCharCount() {
+        return this.viewportEndPos - this.viewportStartPos;
+    }
+
     public setEdit() {
         let preventD = (e) => {
             e.returnValue = false;
@@ -1655,11 +1244,8 @@ export class FlowView {
                         this.client.getClientId());
                     let elmOff = pointerToElementOffsetWebkit(e.clientX, e.clientY);
                     let computed = elmOffToSegOff(elmOff, segspan);
-                    let c = Date.now();
-                    let xy = pixelsAtOffset(segspan, computed, Math.floor(this.wEst));
-                    c = Date.now() - c;
                     // tslint:disable:max-line-length
-                    let diag = `segPos: ${segOffset} cxy: (${e.clientX}, ${e.clientY}) xy: (${xy.left}, ${xy.top}) ${c}ms within: ${elmOff.offset} computed: (${computed}, ${computed + segOffset})`;
+                    let diag = `segPos: ${segOffset} cxy: (${e.clientX}, ${e.clientY}) within: ${elmOff.offset} computed: (${computed}, ${computed + segOffset})`;
                     if (this.diagCharPort) {
                         this.statusMessage("segclick", diag);
                     }
@@ -1674,7 +1260,7 @@ export class FlowView {
 
         this.containerDiv.onmousewheel = (e) => {
             if (!this.wheelTicking) {
-                let factor = Math.round(this.viewportCharCount / this.charsPerLine);
+                let factor = 20;
                 let inputDelta = e.wheelDelta;
                 if (Math.abs(e.wheelDelta) === 120) {
                     inputDelta = e.wheelDelta / 6;
@@ -1716,12 +1302,12 @@ export class FlowView {
                 this.cursor.pos = 1;
                 this.render(1);
             } else if (e.keyCode === KeyCode.end) {
-                let halfport = Math.floor(this.viewportCharCount / 2);
+                let halfport = Math.floor(this.viewportCharCount() / 2);
                 let topChar = this.client.getLength() - halfport;
                 this.cursor.pos = topChar;
                 this.render(topChar);
             } else if (e.keyCode === KeyCode.rightArrow) {
-                if (this.cursor.pos < this.viewportEndChar) {
+                if (this.cursor.pos < this.viewportEndPos) {
                     this.cursor.pos++;
                     this.cursor.updateView(this);
                 }
@@ -1737,7 +1323,7 @@ export class FlowView {
                     lineCount = -1;
                 }
                 // TODO: try twice; if first returns false, then scroll up/down once first
-                if (this.verticalMovePG(lineCount)) {
+                if (this.verticalMove(lineCount)) {
                     this.cursor.updateView(this);
                 }
             } else {
@@ -1752,7 +1338,7 @@ export class FlowView {
             let pos = this.cursor.pos;
             this.cursor.pos++;
             let code = e.charCode;
-            if (code === 13) {
+            if (code === CharacterCodes.cr) {
                 // TODO: pg properties on marker                
                 this.sharedString.insertMarker(pos, "pg", SharedString.MarkerBehaviors.Tile);
                 this.updatePGInfo(pos - 1);
@@ -1765,26 +1351,6 @@ export class FlowView {
         this.flowContainer.onkeypress = keypressHandler;
     }
 
-    // public parseText() {
-    //     let text = this.sharedString.client.getText();
-    //     let pos = 0;
-    //     let len = text.length;
-    //     let start = 0;
-    //     let tokens= <IToken[]>[];
-
-    //     function endToken() {
-    //         if (pos>start) {
-    //             tokens.push({ start, pos, type: })
-    //         }
-    //     }
-    //     while (pos<len) {
-    //         let code = text.charCodeAt(pos);
-    //         switch (code) {
-    //             case CharacterCodes.space:
-
-    //         }
-    //     }        
-    // }
     public testWordInfo() {
         let text = this.sharedString.client.getText();
         let nonWhitespace = text.split(/\s+/g);
@@ -1813,7 +1379,7 @@ export class FlowView {
 
     public scroll(up: boolean) {
         let len = this.client.getLength();
-        let halfport = Math.floor(this.viewportCharCount / 2);
+        let halfport = Math.floor(this.viewportCharCount() / 2);
         if ((up && (this.topChar === 0)) || ((!up) && (this.topChar > (len - halfport)))) {
             return;
         }
@@ -1824,10 +1390,18 @@ export class FlowView {
             scrollTo += halfport;
         }
         this.render(scrollTo);
+        if ((this.cursor.pos < this.viewportStartPos)||
+            (this.cursor.pos > this.viewportEndPos)) {
+                if (up) {
+                    this.cursor.pos = this.viewportStartPos;
+                } else {
+                    this.cursor.pos = this.viewportEndPos - 1;   
+                }
+                this.cursor.updateView(this);
+            }
     }
 
     public render(topChar?: number, changed = false) {
-        let testPG = true;
         let len = this.client.getLength();
         if (topChar !== undefined) {
             if (((this.topChar === topChar) || ((this.topChar === 0) && (topChar <= 0)))
@@ -1836,7 +1410,7 @@ export class FlowView {
             }
             this.topChar = topChar;
             if (this.topChar >= len) {
-                this.topChar = len - this.charsPerLine;
+                this.topChar = len - (this.viewportCharCount()/2);
             }
             if (this.topChar < 1) {
                 this.topChar = 1;
@@ -1847,13 +1421,9 @@ export class FlowView {
         let pos = Math.floor(frac * len);
         clearSubtree(this.viewportDiv);
         // this.viewportDiv.appendChild(this.cursor.editSpan);
-        if (testPG) {
-            renderTreeByPG(this.viewportDiv, pos, this.client, this);
-        } else {
-            renderTree(this.viewportDiv, pos, this.client, this);
-        }
+        renderTree(this.viewportDiv, pos, this.client, this);
         clearSubtree(this.scrollDiv);
-        let bubbleHeight = Math.max(3, Math.floor((this.viewportCharCount / len) * this.scrollRect.height));
+        let bubbleHeight = Math.max(3, Math.floor((this.viewportCharCount() / len) * this.scrollRect.height));
         let bubbleTop = Math.floor(frac * this.scrollRect.height);
         let bubbleLeft = 3;
         let bubbleDiv = makeScrollLosenge(bubbleHeight, bubbleLeft, bubbleTop);
@@ -1863,7 +1433,7 @@ export class FlowView {
         }
         if (this.diagCharPort) {
             this.statusMessage("diagCharPort",
-                `&nbsp sp: (${this.topChar}, ${this.adjustedTopChar}) ep: ${this.viewportEndChar} cp: ${this.cursor.pos}`);
+                `&nbsp sp: (${this.topChar}) ep: ${this.viewportEndPos} cp: ${this.cursor.pos}`);
         }
     }
 
@@ -1930,11 +1500,10 @@ export class FlowView {
     // TODO: paragraph spanning changes and annotations
     private applyOp(delta: SharedString.IMergeTreeOp) {
         if (delta.type === SharedString.MergeTreeDeltaType.INSERT) {
-            if (delta.pos1 <= this.cursor.pos) {
-                this.cursor.pos += delta.text.length;
-            }
             if (delta.marker) {
                 this.updatePGInfo(delta.pos1 - 1);
+            } else if (delta.pos1 <= this.cursor.pos) {
+                this.cursor.pos += delta.text.length;
             }
             this.updatePGInfo(delta.pos1);
         } else if (delta.type === SharedString.MergeTreeDeltaType.REMOVE) {
