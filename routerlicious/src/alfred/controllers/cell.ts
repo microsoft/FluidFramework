@@ -6,7 +6,7 @@ import * as socketStorage from "../../socket-storage";
 
 async function loadDocument(id: string, version: resources.ICommit): Promise<api.Document> {
     console.log("Loading in root document...");
-    const document = await api.load(id, version);
+    const document = await api.load(id, { encrypted: false }, version);
 
     console.log("Document loaded");
     return document;

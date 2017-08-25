@@ -4,9 +4,6 @@ import * as api from "../../api";
 import * as socketStorage from "../../socket-storage";
 import { RateCounter } from "../../utils/counters";
 
-const form = document.getElementById("text-form") as HTMLFormElement;
-const intervalElement = document.getElementById("interval") as HTMLInputElement;
-
 let root: api.IMap;
 
 const messageStart = {};
@@ -108,14 +105,6 @@ async function displayMap(parentElement: JQuery, map: api.IMap, parent: api.IMap
     $("#mapValues").append(container, childMaps);
 }
 
-form.addEventListener("submit", (event) => {
-    const intervalTime = Number.parseInt(intervalElement.value);
-    console.log(`Submit with ${intervalTime}`);
-    randomizeMap(root, intervalTime);
-    event.preventDefault();
-    event.stopPropagation();
-});
-
 /**
  * Randomly changes the values in the map
  */
@@ -130,6 +119,17 @@ function randomizeMap(map: api.IMap, interval: number) {
 }
 
 export function load(id: string, config: any) {
+    const form = document.getElementById("text-form") as HTMLFormElement;
+    const intervalElement = document.getElementById("interval") as HTMLInputElement;
+
+    form.addEventListener("submit", (event) => {
+        const intervalTime = Number.parseInt(intervalElement.value);
+        console.log(`Submit with ${intervalTime}`);
+        randomizeMap(root, intervalTime);
+        event.preventDefault();
+        event.stopPropagation();
+    });
+
     socketStorage.registerAsDefault(document.location.origin, config.blobStorageUrl, config.repository);
 
     $(document).ready(() => {

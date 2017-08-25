@@ -47,13 +47,13 @@
     {{$scripts}}
         <script src="/socket.io/socket.io.js"></script>
         <script src="//charts.azureedge.net/release/0.1.215074.1/microsoft-charts.min.js"></script>
-        <script src="{{#hfurl}}/public/scripts/dist/canvas.js{{/hfurl}}"></script>
+        <script src="{{#hfurl}}/public/scripts/dist/index.js{{/hfurl}}"></script>
 
         <script>
             var config = {{{ config }}};
             var encrypted = {{ encrypted }};
             var version = {{{ version }}};
-            controller.initialize("{{ id }}", version, config, encrypted);
+            controller.canvas.initialize("{{ id }}", version, config, encrypted);
         </script>
     {{/scripts}}
 {{/layout}}

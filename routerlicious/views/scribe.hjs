@@ -68,10 +68,10 @@
 
     {{$scripts}}
         <script src="/socket.io/socket.io.js"></script>
-        <script src="{{#hfurl}}/public/scripts/dist/scribe.js{{/hfurl}}"></script>
+        <script src="{{#hfurl}}/public/scripts/dist/index.js{{/hfurl}}"></script>
         <script>
             var config = {{{ config }}};
-            controller.initialize("{{ id }}", config);
+            controller.scribe.initialize("{{ id }}", config);
         </script>
     {{/scripts}}
 {{/layout}}

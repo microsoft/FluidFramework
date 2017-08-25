@@ -23,7 +23,6 @@ const colors: ink.IColor[] = [
 
 // tslint:disable-next-line:no-string-literal
 const Microsoft = window["Microsoft"];
-let chartsHost = new Microsoft.Charts.Host({ base: "https://charts.microsoft.com" });
 
 /**
  * Canvas app
@@ -33,10 +32,14 @@ export class Canvas {
     public handleKeys: boolean = true;
     public stickyCount: number = 0;
 
+    private chartsHost: any;
+
     // Map indicating whether or not we have processed a given object
     private canvasObjects: {[key: string]: Promise<void> } = {};
 
     constructor(model: ink.IInk, private components: api.IMap) {
+        this.chartsHost = new Microsoft.Charts.Host({ base: "https://charts.microsoft.com" });
+
         // register all of the different handlers
         let p = document.getElementById("hitPlane");
 
@@ -211,7 +214,7 @@ export class Canvas {
     }
 
     private loadChart(content: HTMLElement, component: api.IMap, componentView: api.IMapView) {
-        const chart = new Microsoft.Charts.Chart(chartsHost, content);
+        const chart = new Microsoft.Charts.Chart(this.chartsHost, content);
         chart.setRenderer(Microsoft.Charts.IvyRenderer.Svg);
 
         this.updateChart(chart, componentView);

@@ -19,9 +19,9 @@
 
     {{$scripts}}
         <script src="/socket.io/socket.io.js"></script>
-        <script src="{{#hfurl}}/public/scripts/dist/perf.js{{/hfurl}}"></script>
+        <script src="{{#hfurl}}/public/scripts/dist/index.js{{/hfurl}}"></script>
         <script>
-            controller.load("{{ id }}");
+            controller.perf.load("{{ id }}");
         </script>
     {{/scripts}}
 {{/layout}}

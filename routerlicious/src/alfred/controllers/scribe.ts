@@ -1,28 +1,8 @@
 import * as socketStorage from "../../socket-storage";
 import * as scribe from "../../utils/scribe";
 
-// Easy access to a couple of page elements
-const form = document.getElementById("text-form") as HTMLFormElement;
-const inputElement = document.getElementById("file") as HTMLInputElement;
-const createButton = document.getElementById("create") as HTMLButtonElement;
-const createDetails = document.getElementById("create-details") as HTMLElement;
-const sharedTextId = document.getElementById("shared-text-id") as HTMLInputElement;
-const intervalElement = document.getElementById("interval") as HTMLInputElement;
-const documentLink = document.getElementById("document-link") as HTMLAnchorElement;
-const typingProgress = document.getElementById("typing-progress") as HTMLElement;
-const typingProgressBar = typingProgress.getElementsByClassName("progress-bar")[0] as HTMLElement;
-const ackProgress = document.getElementById("ack-progress") as HTMLElement;
-const ackProgressBar = ackProgress.getElementsByClassName("progress-bar")[0] as HTMLElement;
-
 // Text represents the loaded file text
 let text: string;
-
-inputElement.addEventListener(
-    "change",
-    () => {
-        handleFiles(inputElement.files);
-    },
-    false);
 
 function updateProgressBar(progressBar: HTMLElement, progress: number) {
     if (progress !== undefined) {
@@ -38,7 +18,7 @@ function resetProgressBar(progressBar: HTMLElement) {
     progressBar.classList.add("active");
 }
 
-function updateMetrics(metrics: scribe.IScribeMetrics) {
+function updateMetrics(metrics: scribe.IScribeMetrics, ackProgressBar: HTMLElement, typingProgressBar: HTMLElement) {
     updateProgressBar(ackProgressBar, metrics.ackProgress);
     updateProgressBar(typingProgressBar, metrics.typingProgress);
 
@@ -63,41 +43,7 @@ function updateMetrics(metrics: scribe.IScribeMetrics) {
     }
 }
 
-form.addEventListener("submit", (event) => {
-    const id = sharedTextId.value;
-    const intervalTime = Number.parseInt(intervalElement.value);
-
-    // Initialize the scribe progress UI
-    documentLink.href = `/sharedText/${id}`;
-    documentLink.innerText = documentLink.href;
-
-    const metricsLink = document.getElementById("metrics-link") as HTMLAnchorElement;
-    metricsLink.href = `/canvas/${id}-metrics`;
-    metricsLink.innerText = metricsLink.href;
-
-    resetProgressBar(ackProgressBar);
-    resetProgressBar(typingProgressBar);
-    createDetails.classList.remove("hidden");
-
-    // Start typing and register to update the UI
-    const typeP = scribe.type(id, intervalTime, text, updateMetrics);
-
-    // Output the total time once typing is finished
-    typeP.then(
-        (time) => {
-            document.getElementById("total-time").innerText =
-                `Total time: ${(time / 1000).toFixed(2)} seconds`;
-            console.log("Done typing file");
-        },
-        (error) => {
-            console.error(error);
-        });
-
-    event.preventDefault();
-    event.stopPropagation();
-});
-
-function handleFiles(files: FileList) {
+function handleFiles(createButton: HTMLButtonElement, createDetails: HTMLElement, files: FileList) {
     if (files.length !== 1) {
         createButton.classList.add("hidden");
         createDetails.classList.add("hidden");
@@ -118,6 +64,64 @@ function handleFiles(files: FileList) {
 }
 
 export function initialize(config: any) {
+    // Easy access to a couple of page elements
+    const form = document.getElementById("text-form") as HTMLFormElement;
+    const inputElement = document.getElementById("file") as HTMLInputElement;
+    const createButton = document.getElementById("create") as HTMLButtonElement;
+    const createDetails = document.getElementById("create-details") as HTMLElement;
+    const sharedTextId = document.getElementById("shared-text-id") as HTMLInputElement;
+    const intervalElement = document.getElementById("interval") as HTMLInputElement;
+    const documentLink = document.getElementById("document-link") as HTMLAnchorElement;
+    const typingProgress = document.getElementById("typing-progress") as HTMLElement;
+    const typingProgressBar = typingProgress.getElementsByClassName("progress-bar")[0] as HTMLElement;
+    const ackProgress = document.getElementById("ack-progress") as HTMLElement;
+    const ackProgressBar = ackProgress.getElementsByClassName("progress-bar")[0] as HTMLElement;
+
+    inputElement.addEventListener(
+        "change",
+        () => {
+            handleFiles(createButton, createDetails, inputElement.files);
+        },
+        false);
+
+    form.addEventListener("submit", (event) => {
+        const id = sharedTextId.value;
+        const intervalTime = Number.parseInt(intervalElement.value);
+
+        // Initialize the scribe progress UI
+        documentLink.href = `/sharedText/${id}`;
+        documentLink.innerText = documentLink.href;
+
+        const metricsLink = document.getElementById("metrics-link") as HTMLAnchorElement;
+        metricsLink.href = `/canvas/${id}-metrics`;
+        metricsLink.innerText = metricsLink.href;
+
+        resetProgressBar(ackProgressBar);
+        resetProgressBar(typingProgressBar);
+        createDetails.classList.remove("hidden");
+
+        // Start typing and register to update the UI
+        const typeP = scribe.type(
+            id,
+            intervalTime,
+            text,
+            (metrics) => updateMetrics(metrics, ackProgressBar, typingProgressBar));
+
+        // Output the total time once typing is finished
+        typeP.then(
+            (time) => {
+                document.getElementById("total-time").innerText =
+                    `Total time: ${(time / 1000).toFixed(2)} seconds`;
+                console.log("Done typing file");
+            },
+            (error) => {
+                console.error(error);
+            });
+
+        event.preventDefault();
+        event.stopPropagation();
+    });
+
     // Mark socket storage as our default provider
     socketStorage.registerAsDefault(document.location.origin, config.blobStorageUrl, config.repository);
 }

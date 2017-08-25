@@ -237,7 +237,7 @@ async function typeFile(
         ackCounter.reset();
         const latencyCounter = new RateCounter();
         latencyCounter.reset();
-        const messageStart = {};
+        const messageStart: number[] = [];
 
         let mean = 0;
         let stdDev = 0;
@@ -264,6 +264,7 @@ async function typeFile(
 
         sharedString.on("op", (message: api.ISequencedObjectMessage) => {
             if (message.clientSequenceNumber && message.clientId === document.clientId) {
+
                 ackCounter.increment(1);
                 if (ackCounter.elapsed() > samplingRate) {
                     const rate = ackCounter.getRate() * 1000;
@@ -273,8 +274,7 @@ async function typeFile(
 
                 // Wait for a bit prior to starting the running calculation
                 if (Date.now() - startTime > RunningCalculationDelay) {
-                    const roundTrip = Date.now() - messageStart[message.clientSequenceNumber];
-                    delete messageStart[message.clientSequenceNumber];
+                    const roundTrip = Date.now() - messageStart.pop();
                     latencyCounter.increment(roundTrip);
                     histogram.add(roundTrip);
                     const samples = latencyCounter.getSamples();
@@ -310,36 +310,44 @@ async function typeFile(
         const typingCounter = new RateCounter();
         typingCounter.reset();
 
-        function type(): boolean {
-            // Stop typing once we reach the end
-            if (readPosition === fileText.length) {
-                return false;
-            }
-
+        // Helper method to wrap a string operation with metric tracking for it
+        function trackOperation(fn: () => void) {
             typingCounter.increment(1);
             if (typingCounter.elapsed() > samplingRate) {
                 const rate = typingCounter.getRate() * 1000;
                 metrics.typingRate = rate;
                 typingCounter.reset();
             }
+            fn();
+            messageStart.push(Date.now());
+        }
+
+        function type(): boolean {
+            // Stop typing once we reach the end
+            if (readPosition === fileText.length) {
+                return false;
+            }
 
             // Start inserting text into the string
             if (readPosition === 0) {
-                sharedString.insertMarker(0, "pg", SharedString.MarkerBehaviors.Tile);
-                insertPosition++;
+                trackOperation(() => {
+                    sharedString.insertMarker(0, "pg", SharedString.MarkerBehaviors.Tile);
+                    insertPosition++;
+                });
             }
             let code = fileText.charCodeAt(readPosition);
             if (code === 13) {
                 readPosition++;
                 code = fileText.charCodeAt(readPosition);
             }
-            if (code === 10) {
-                sharedString.insertMarker(insertPosition++, "pg", SharedString.MarkerBehaviors.Tile);
-                readPosition++;
-            } else {
-                sharedString.insertText(fileText.charAt(readPosition++), insertPosition++);
-            }
-            messageStart[readPosition] = Date.now();
+            trackOperation(() => {
+                if (code === 10) {
+                    sharedString.insertMarker(insertPosition++, "pg", SharedString.MarkerBehaviors.Tile);
+                    readPosition++;
+                } else {
+                    sharedString.insertText(fileText.charAt(readPosition++), insertPosition++);
+                }
+            });
 
             metrics.typingProgress = readPosition / fileText.length;
             callback(metrics);

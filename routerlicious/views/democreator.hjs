@@ -32,9 +32,4 @@
         </div>
 
     {{/content}}
-
-    {{$scripts}}
-        <script src="{{#hfurl}}/public/scripts/dist/democreator.js{{/hfurl}}"></script>
-
-    {{/scripts}}
 {{/layout}}
