@@ -1,0 +1,45 @@
+{{<layout}}
+    {{$styles}}
+        <link href="{{#hfurl}}/public/stylesheets/dist/style.css{{/hfurl}}" rel="stylesheet" />
+
+    {{/styles}}
+
+    {{$content}}
+
+        <div class="loginbody">
+
+            <div class="indicatortext" id="login-indicator">
+                <span style="float:right">Welcome back, _!</span><br/>
+            </div>
+
+            <div class="titleletters">
+                <span class="titleletter" data-letter="B">B</span>
+                <span class="titleletter" data-letter="O">O</span>
+                <span class="titleletter" data-letter="L">L</span>
+                <span class="titleletter" data-letter="T">T</span>
+            </div>
+
+            <div class="form">
+                <form class="login-form">
+                    <p id="assignKeypair" class="specialmessage">Don't have your own keypair? <a href="#">Generate one now.</a></p> <br />
+                    <input id="username" type="text" placeholder="Username"/> <br />
+                    <textarea id="publicKey" rows="14" cols="10" wrap="soft" placeholder="PGP Public Key"></textarea>
+                    <textarea id="privateKey" rows="14" cols="10" wrap="soft" placeholder="PGP Private Key"></textarea>
+                    <button id="login-button">login</button>
+                    <button style="display:none" id="logout-button">logout</button>
+                </form>
+            </div>
+        
+        </div>
+
+    {{/content}}
+
+    {{$scripts}}
+        <script src="/socket.io/socket.io.js"></script>
+        <script src="{{#hfurl}}/public/scripts/dist/login.js{{/hfurl}}"></script>
+        <script>
+            var config = {{{ config }}};
+            controller.load(config);
+        </script>
+    {{/scripts}}
+{{/layout}}
