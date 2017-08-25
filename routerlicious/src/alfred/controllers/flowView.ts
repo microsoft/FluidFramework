@@ -724,6 +724,101 @@ class ParagraphLexer {
 // global until remove old render
 let textErrorRun: IRange;
 
+interface ILineContext {
+    lineDiv: ILineDiv;
+    lineDivHeight: number;
+    flowView: FlowView;
+    span: ISegSpan;
+    pgMarker: IParagraphMarker;
+    markerPos: number;
+    viewportBounds: Geometry.Rectangle;
+}
+
+function renderSegmentIntoLine(segment: SharedString.Segment, segpos: number, refSeq: number,
+    clientId: number, start: number, end: number, lineContext: ILineContext) {
+    if (lineContext.lineDiv.linePos === undefined) {
+        lineContext.lineDiv.linePos = segpos + start;
+        lineContext.lineDiv.lineEnd = lineContext.lineDiv.linePos;
+    }
+    let segType = segment.getType();
+    if (segType === SharedString.SegmentType.Text) {
+        if (start < 0) {
+            start = 0;
+        }
+        if (end > segment.cachedLength) {
+            end = segment.cachedLength;
+        }
+        let textSegment = <SharedString.TextSegment>segment;
+        let text = textSegment.text.substring(start, end);
+        let textStartPos = segpos + start;
+        let textEndPos = segpos + end;
+        lineContext.span = makeSegSpan(lineContext.flowView, text, textSegment, start, segpos);
+        lineContext.lineDiv.appendChild(lineContext.span);
+        lineContext.lineDiv.lineEnd += text.length;
+        if ((lineContext.flowView.cursor.pos >= textStartPos) && (lineContext.flowView.cursor.pos < textEndPos)) {
+            let cursorX: number;
+            if (lineContext.flowView.cursor.pos > textStartPos) {
+                let preCursorText = text.substring(0, lineContext.flowView.cursor.pos - textStartPos);
+                let temp = lineContext.span.innerText;
+                lineContext.span.innerText = preCursorText;
+                let cursorBounds = lineContext.span.getBoundingClientRect();
+                cursorX = cursorBounds.width + (cursorBounds.left - lineContext.viewportBounds.x);
+                lineContext.span.innerText = temp;
+            } else {
+                let cursorBounds = lineContext.span.getBoundingClientRect();
+                cursorX = cursorBounds.left - lineContext.viewportBounds.x;
+            }
+            lineContext.flowView.cursor.assignToLine(cursorX, lineContext.lineDivHeight, lineContext.lineDiv);
+        }
+    } else if (segType === SharedString.SegmentType.Marker) {
+        let marker = <SharedString.Marker>segment;
+        if (marker.type === "pg") {
+            lineContext.pgMarker = marker;
+            lineContext.markerPos = segpos;
+            if (lineContext.flowView.cursor.pos === segpos) {
+                if (lineContext.span) {
+                    let cursorBounds = lineContext.span.getBoundingClientRect();
+                    let cursorX = cursorBounds.width + (cursorBounds.left - lineContext.viewportBounds.x);
+                    lineContext.flowView.cursor.assignToLine(cursorX, lineContext.lineDivHeight, lineContext.lineDiv);
+                } else {
+                    lineContext.flowView.cursor.assignToLine(0, lineContext.lineDivHeight, lineContext.lineDiv);
+                }
+            }
+            return false;
+        }
+    }
+    return true;
+}
+
+function findLineDiv(pos: number, flowView: FlowView) {
+    let elm = <ILineDiv>flowView.viewportDiv.firstElementChild;
+    while (elm) {
+        if (elm.linePos !== undefined) {
+            if ((elm.linePos <= pos) && (elm.lineEnd >= pos)) {
+                return elm;
+            }
+        }
+        elm = <ILineDiv> elm.nextElementSibling;
+    }
+}
+
+function reRenderLine(lineDiv: ILineDiv, flowView: FlowView) {
+    if (lineDiv) {
+        let viewportBounds = Geometry.Rectangle.fromClientRect(flowView.viewportDiv.getBoundingClientRect());
+        let lineDivBounds = lineDiv.getBoundingClientRect();
+        let lineDivHeight = lineDivBounds.height;
+        clearSubtree(lineDiv);
+        let lineContext = <ILineContext>{
+            flowView, lineDiv, span: undefined, pgMarker: undefined, markerPos: 0,
+            viewportBounds, lineDivHeight,
+        };
+        let lineEnd = lineDiv.lineEnd;
+        flowView.client.mergeTree.mapRange({ leaf: renderSegmentIntoLine }, SharedString.UniversalSequenceNumber,
+            flowView.client.getClientId(), lineContext, lineDiv.linePos, lineDiv.lineEnd);
+        lineDiv.lineEnd = lineEnd;
+    }
+}
+
 function renderTreeByPG(div: HTMLDivElement, pos: number, client: SharedString.Client, flowView: FlowView) {
     let fontstr = "18px Times";
     let headerFontstr = "22px Times";
@@ -811,62 +906,6 @@ function renderTreeByPG(div: HTMLDivElement, pos: number, client: SharedString.C
         let lineDivHeight = defaultLineDivHeight;
         let span: HTMLSpanElement;
 
-        function renderSegmentIntoLine(segment: SharedString.Segment, segpos: number, refSeq: number,
-            clientId: number, start: number, end: number) {
-            if (lineDiv.linePos === undefined) {
-                lineDiv.linePos = segpos + start;
-                lineDiv.lineEnd = lineDiv.linePos;
-            }
-            let segType = segment.getType();
-            if (segType === SharedString.SegmentType.Text) {
-                if (start < 0) {
-                    start = 0;
-                }
-                if (end > segment.cachedLength) {
-                    end = segment.cachedLength;
-                }
-                let textSegment = <SharedString.TextSegment>segment;
-                let text = textSegment.text.substring(start, end);
-                let textStartPos = segpos + start;
-                let textEndPos = segpos + end;
-                span = makeSegSpan(flowView, text, textSegment, start, segpos);
-                lineDiv.appendChild(span);
-                lineDiv.lineEnd += text.length;
-                if ((flowView.cursor.pos >= textStartPos) && (flowView.cursor.pos < textEndPos)) {
-                    let cursorX: number;
-                    if (flowView.cursor.pos > textStartPos) {
-                        let preCursorText = text.substring(0, flowView.cursor.pos - textStartPos);
-                        let temp = span.innerText;
-                        span.innerText = preCursorText;
-                        let cursorBounds = span.getBoundingClientRect();
-                        cursorX = cursorBounds.width + (cursorBounds.left - viewportBounds.x);
-                        span.innerText = temp;
-                    } else {
-                        let cursorBounds = span.getBoundingClientRect();
-                        cursorX = cursorBounds.left - viewportBounds.x;
-                    }
-                    flowView.cursor.assignToLine(cursorX, lineDivHeight, lineDiv);
-                }
-            } else if (segType === SharedString.SegmentType.Marker) {
-                let marker = <SharedString.Marker>segment;
-                if (marker.type === "pg") {
-                    pgMarker = marker;
-                    markerPos = segpos;
-                    if (flowView.cursor.pos === segpos) {
-                        if (span) {
-                            let cursorBounds = span.getBoundingClientRect();
-                            let cursorX = cursorBounds.width + (cursorBounds.left - viewportBounds.x);
-                            flowView.cursor.assignToLine(cursorX, lineDivHeight, lineDiv);
-                        } else {
-                            flowView.cursor.assignToLine(0, lineDivHeight, lineDiv);
-                        }
-                    }
-                    return false;
-                }
-            }
-            return true;
-        }
-
         for (let breakIndex = 0, len = pgBreaks.length; breakIndex < len; breakIndex++) {
             let lineStart = pgBreaks[breakIndex] + curPGPos;
             let lineEnd: number;
@@ -885,8 +924,16 @@ function renderTreeByPG(div: HTMLDivElement, pos: number, client: SharedString.C
                 }
                 lineDiv = makeLineDiv(new Geometry.Rectangle(0, currentLineTop, viewportWidth, lineDivHeight),
                     lineFontstr);
+                let lineContext = <ILineContext>{
+                    span, lineDiv, lineDivHeight, flowView, pgMarker, markerPos,
+                    viewportBounds,
+                };
                 client.mergeTree.mapRange({ leaf: renderSegmentIntoLine }, SharedString.UniversalSequenceNumber,
-                    client.getClientId(), undefined, lineStart, lineEnd);
+                    client.getClientId(), lineContext, lineStart, lineEnd);
+                span = lineContext.span;
+                markerPos = lineContext.markerPos;
+                pgMarker = lineContext.pgMarker;
+
                 currentLineTop += lineDivHeight;
             }
             if ((viewportHeight - currentLineTop) < defaultLineDivHeight) {
@@ -1318,6 +1365,20 @@ export class Cursor {
         return <ILineDiv>this.editSpan.parentElement;
     }
 
+    public updateView(flowView: FlowView) {
+        let lineDiv = this.lineDiv();
+        if (lineDiv && (lineDiv.linePos <= this.pos) && (lineDiv.lineEnd >= this.pos)) {
+            reRenderLine(lineDiv, flowView);
+        } else {
+            let foundLineDiv = findLineDiv(this.pos, flowView);
+            if (foundLineDiv) {
+                reRenderLine(foundLineDiv, flowView);
+            } else {
+                flowView.render(flowView.topChar, true);
+            }
+        }
+    }
+
     public rect() {
         return this.editSpan.getBoundingClientRect();
     }
@@ -1662,12 +1723,12 @@ export class FlowView {
             } else if (e.keyCode === KeyCode.rightArrow) {
                 if (this.cursor.pos < this.viewportEndChar) {
                     this.cursor.pos++;
-                    this.render(this.topChar, true); // TODO: scroll first if cursor travels off page
+                    this.cursor.updateView(this);
                 }
             } else if (e.keyCode === KeyCode.leftArrow) {
                 if (this.cursor.pos > 1) {
                     this.cursor.pos--;
-                    this.render(this.topChar, true); // TODO: scroll first if cursor travels off page
+                    this.cursor.updateView(this);
                 }
             } else if ((e.keyCode === KeyCode.upArrow) || (e.keyCode === KeyCode.downArrow)) {
                 this.lastVerticalX = saveLastVertX;
@@ -1677,7 +1738,7 @@ export class FlowView {
                 }
                 // TODO: try twice; if first returns false, then scroll up/down once first
                 if (this.verticalMovePG(lineCount)) {
-                    this.render(this.topChar, true);
+                    this.cursor.updateView(this);
                 }
             } else {
                 specialKey = false;
@@ -1865,7 +1926,7 @@ export class FlowView {
             tileMarker.cache = undefined;
         }
     }
-    
+
     // TODO: paragraph spanning changes and annotations
     private applyOp(delta: SharedString.IMergeTreeOp) {
         if (delta.type === SharedString.MergeTreeDeltaType.INSERT) {
