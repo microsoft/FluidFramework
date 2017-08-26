@@ -427,13 +427,15 @@ enum ParagraphItemType {
     Penalty,
 }
 
-interface IPGItem {
+interface IParagraphItem {
     type: ParagraphItemType;
     width: number;
     textSegment: SharedString.TextSegment;
+    // present if not default height
+    height?: number;
 }
 
-interface IPGBlock extends IPGItem {
+interface IPGBlock extends IParagraphItem {
     type: ParagraphItemType.Block;
     text: string;
 }
@@ -447,22 +449,22 @@ function makeGlue(width: number, text: string, textSegment: SharedString.TextSeg
     return <IPGGlue>{ type: ParagraphItemType.Glue, width, text, textSegment, stretch, shrink };
 }
 
-interface IPGGlue extends IPGItem {
+interface IPGGlue extends IParagraphItem {
     type: ParagraphItemType.Glue;
     text: string;
     stretch: number;
     shrink: number;
 }
 
-interface IPGPenalty extends IPGItem {
+interface IPGPenalty extends IParagraphItem {
     type: ParagraphItemType.Penalty;
     cost: number;
 }
 
-type PGItem = IPGBlock | IPGGlue | IPGPenalty;
+type ParagraphItem = IPGBlock | IPGGlue | IPGPenalty;
 
 // for now assume uniform line widths 
-function breakPGIntoLinesFF(items: PGItem[], lineWidth: number) {
+function breakPGIntoLinesFF(items: ParagraphItem[], lineWidth: number) {
     let breaks = [0];
     let posInPG = 0;
     let committedItemsWidth = 0;
@@ -635,7 +637,7 @@ function renderSegmentIntoLine(segment: SharedString.Segment, segpos: number, re
         lineContext.span = makeSegSpan(lineContext.flowView, text, textSegment, start, segpos);
         lineContext.lineDiv.appendChild(lineContext.span);
         lineContext.lineDiv.lineEnd += text.length;
-        if ((lineContext.flowView.cursor.pos >= textStartPos) && (lineContext.flowView.cursor.pos < textEndPos)) {
+        if ((lineContext.flowView.cursor.pos >= textStartPos) && (lineContext.flowView.cursor.pos <= textEndPos)) {
             let cursorX: number;
             if (lineContext.flowView.cursor.pos > textStartPos) {
                 let preCursorText = text.substring(0, lineContext.flowView.cursor.pos - textStartPos);
@@ -671,15 +673,11 @@ function renderSegmentIntoLine(segment: SharedString.Segment, segpos: number, re
 }
 
 function findLineDiv(pos: number, flowView: FlowView) {
-    let elm = <ILineDiv>flowView.viewportDiv.firstElementChild;
-    while (elm) {
-        if (elm.linePos !== undefined) {
-            if ((elm.linePos <= pos) && (elm.lineEnd > pos)) {
-                return elm;
-            }
+    return flowView.lineDivSelect((elm) => {
+        if ((elm.linePos <= pos) && (elm.lineEnd > pos)) {
+            return elm;
         }
-        elm = <ILineDiv>elm.nextElementSibling;
-    }
+    });
 }
 
 function reRenderLine(lineDiv: ILineDiv, flowView: FlowView) {
@@ -720,7 +718,7 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
     let wordSpacing = getTextWidth(" ", fontstr);
     let viewportStartPos = -1;
     let lineCount = 0;
-    let lastLineDiv  = undefined;
+    let lastLineDiv = undefined;
 
     let makeLineDiv = (r: Geometry.Rectangle, lineFontstr) => {
         let lineDiv = document.createElement("div");
@@ -740,17 +738,24 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
         return lineDiv;
     };
 
-    let items: PGItem[];
+    let items: ParagraphItem[];
 
     function tokenToItems(text: string, type: ParagraphItemType, leadSegment: SharedString.TextSegment) {
         let lfontstr = fontstr;
+        let divHeight = defaultLineDivHeight;
         if (startPGMarker.properties && (startPGMarker.properties.header !== undefined)) {
             lfontstr = headerFontstr;
+            divHeight = headerDivHeight;
         }
         if (leadSegment.properties) {
             let fontSize = leadSegment.properties.fontSize;
-            if (fontSize) {
+            if (fontSize !== undefined) {
                 lfontstr = `${fontSize} Times`;
+                divHeight = +fontSize;
+            }
+            let lineHeight = leadSegment.properties.lineHeight;
+            if (lineHeight !== undefined) {
+                divHeight = +lineHeight;
             }
             let fontStyle = leadSegment.properties.fontStyle;
             if (fontStyle) {
@@ -760,6 +765,10 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
 
         let textWidth = getTextWidth(text, lfontstr);
         if (type === ParagraphItemType.Block) {
+            let block = makeIPGBlock(textWidth, text, leadSegment);
+            if (divHeight !== defaultLineDivHeight) {
+                block.height = divHeight;
+            }
             items.push(makeIPGBlock(textWidth, text, leadSegment));
         } else {
             items.push(makeGlue(textWidth, text, leadSegment, wordSpacing / 2, wordSpacing / 3));
@@ -1164,25 +1173,53 @@ export class FlowView {
         this.flowContainer.status.add(key, msg);
     }
 
-    public verticalMove(lineCount: number) {
-        let cursorRect = this.cursor.rect();
-        let x: number;
-        if (this.lastVerticalX >= 0) {
-            x = this.lastVerticalX;
+    public firstLineDiv() {
+        return this.lineDivSelect((elm) => (elm));
+    }
+
+    public lastLineDiv() {
+        return this.lineDivSelect((elm) => (elm), true);
+    }
+
+    public lineDivSelect(fn: (lineDiv: ILineDiv) => ILineDiv, rev?: boolean) {
+        if (rev) {
+            let elm = <ILineDiv>this.viewportDiv.lastElementChild;
+            while (elm) {
+                if (elm.linePos !== undefined) {
+                    let lineDiv = fn(elm);
+                    if (lineDiv) {
+                        return lineDiv;
+                    }
+                }
+                elm = <ILineDiv>elm.previousElementSibling;
+            }
+
         } else {
-            x = Math.floor(cursorRect.left);
-            this.lastVerticalX = x;
+            let elm = <ILineDiv>this.viewportDiv.firstElementChild;
+            while (elm) {
+                if (elm.linePos !== undefined) {
+                    let lineDiv = fn(elm);
+                    if (lineDiv) {
+                        return lineDiv;
+                    }
+                }
+                elm = <ILineDiv>elm.nextElementSibling;
+            }
         }
-        let y: number;
-        let lineDiv = this.cursor.lineDiv();
-        let targetLineDiv: ILineDiv;
-        if (lineCount < 0) {
-            targetLineDiv = <ILineDiv>lineDiv.previousElementSibling;
-        } else {
-            targetLineDiv = <ILineDiv>lineDiv.nextElementSibling;
-        }
+    }
+
+    public setCursorPosFromPixels(targetLineDiv: ILineDiv) {
         if (targetLineDiv && (targetLineDiv.linePos)) {
-            let targetLineBounds = targetLineDiv.getBoundingClientRect();
+            let cursorRect = this.cursor.rect();
+            let x: number;
+            if (this.lastVerticalX >= 0) {
+                x = this.lastVerticalX;
+            } else {
+                x = Math.floor(cursorRect.left);
+                this.lastVerticalX = x;
+            }
+            let y: number;
+                let targetLineBounds = targetLineDiv.getBoundingClientRect();
             y = targetLineBounds.top + Math.floor(targetLineBounds.height / 2);
             let elm = document.elementFromPoint(x, y);
             if (elm.tagName === "DIV") {
@@ -1209,6 +1246,17 @@ export class FlowView {
             }
         }
         return false;
+    }
+
+    public verticalMove(lineCount: number) {
+        let lineDiv = this.cursor.lineDiv();
+        let targetLineDiv: ILineDiv;
+        if (lineCount < 0) {
+            targetLineDiv = <ILineDiv>lineDiv.previousElementSibling;
+        } else {
+            targetLineDiv = <ILineDiv>lineDiv.nextElementSibling;
+        }
+        return this.setCursorPosFromPixels(targetLineDiv);
     }
 
     public viewportCharCount() {
@@ -1271,6 +1319,7 @@ export class FlowView {
                 // console.log(`top char: ${this.topChar - delta} factor ${factor}; delta: ${delta} wheel: ${e.wheelDeltaY} ${e.wheelDelta} ${e.detail}`);
                 setTimeout(() => {
                     this.render(Math.floor(this.topChar - delta));
+                    this.apresScroll(delta < 0);
                     this.wheelTicking = false;
                 }, 20);
                 this.wheelTicking = true;
@@ -1377,6 +1426,18 @@ export class FlowView {
         console.log(`unique pp cost: ${Date.now() - clock}ms`);
     }
 
+    public apresScroll(up: boolean) {
+        if ((this.cursor.pos < this.viewportStartPos) ||
+            (this.cursor.pos >= this.viewportEndPos)) {
+            if (up) {
+                this.setCursorPosFromPixels(this.firstLineDiv());
+            } else {
+                this.setCursorPosFromPixels(this.lastLineDiv());
+            }
+            this.cursor.updateView(this);
+        }
+    }
+
     public scroll(up: boolean) {
         let len = this.client.getLength();
         let halfport = Math.floor(this.viewportCharCount() / 2);
@@ -1390,15 +1451,7 @@ export class FlowView {
             scrollTo += halfport;
         }
         this.render(scrollTo);
-        if ((this.cursor.pos < this.viewportStartPos)||
-            (this.cursor.pos > this.viewportEndPos)) {
-                if (up) {
-                    this.cursor.pos = this.viewportStartPos;
-                } else {
-                    this.cursor.pos = this.viewportEndPos - 1;   
-                }
-                this.cursor.updateView(this);
-            }
+        this.apresScroll(up);
     }
 
     public render(topChar?: number, changed = false) {
@@ -1410,7 +1463,7 @@ export class FlowView {
             }
             this.topChar = topChar;
             if (this.topChar >= len) {
-                this.topChar = len - (this.viewportCharCount()/2);
+                this.topChar = len - (this.viewportCharCount() / 2);
             }
             if (this.topChar < 1) {
                 this.topChar = 1;
