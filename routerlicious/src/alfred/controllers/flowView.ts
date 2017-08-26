@@ -810,7 +810,7 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
             }
             let lineFontstr = fontstr;
             lineDivHeight = defaultLineDivHeight;
-            if ((lineEnd === undefined) || (lineEnd >= pos)) {
+            if ((lineEnd === undefined) || (lineEnd > pos)) {
                 if (curPGMarker.properties && (curPGMarker.properties.header !== undefined)) {
                     // TODO: header levels
                     lineDivHeight = headerDivHeight;
@@ -846,7 +846,7 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
         client.getClientId());
 
     let startPGPos: number;
-
+    let totalLength = client.getLength();
     do {
         items = [];
         startPGMarker = pgMarker;
@@ -859,8 +859,13 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
         }
         pgCount++;
         paragraphLexer.reset();
-        renderPG(startPGMarker, startPGPos);
-        currentLineTop += pgVspace;
+        if (startPGPos < (totalLength - 1)) {
+            renderPG(startPGMarker, startPGPos);
+            currentLineTop += pgVspace;
+        } else {
+            lastLineDiv.lineEnd = startPGPos + 1;
+            pgMarker = undefined;
+        }
         if (pgMarker !== undefined) {
             startPGMarker.cache.endOffset = markerPos - startPGPos;
         } else {
@@ -1219,7 +1224,7 @@ export class FlowView {
                 this.lastVerticalX = x;
             }
             let y: number;
-                let targetLineBounds = targetLineDiv.getBoundingClientRect();
+            let targetLineBounds = targetLineDiv.getBoundingClientRect();
             y = targetLineBounds.top + Math.floor(targetLineBounds.height / 2);
             let elm = document.elementFromPoint(x, y);
             if (elm.tagName === "DIV") {
@@ -1356,12 +1361,18 @@ export class FlowView {
                 this.cursor.pos = topChar;
                 this.render(topChar);
             } else if (e.keyCode === KeyCode.rightArrow) {
-                if (this.cursor.pos < this.viewportEndPos) {
+                if (this.cursor.pos < (this.client.getLength() - 1)) {
+                    if (this.cursor.pos === this.viewportEndPos) {
+                        this.scroll(false, true);
+                    }
                     this.cursor.pos++;
                     this.cursor.updateView(this);
                 }
             } else if (e.keyCode === KeyCode.leftArrow) {
                 if (this.cursor.pos > 1) {
+                    if (this.cursor.pos === this.viewportStartPos) {
+                        this.scroll(true, true);
+                    }
                     this.cursor.pos--;
                     this.cursor.updateView(this);
                 }
@@ -1371,8 +1382,25 @@ export class FlowView {
                 if (e.keyCode === KeyCode.upArrow) {
                     lineCount = -1;
                 }
-                // TODO: try twice; if first returns false, then scroll up/down once first
-                if (this.verticalMove(lineCount)) {
+                let vpEnd = this.viewportEndPos;
+                let maxPos = this.client.getLength() - 1;
+                if (vpEnd < maxPos) {
+                    if (!this.verticalMove(lineCount)) {
+                        this.scroll(lineCount < 0, true);
+                        if (lineCount > 0) {
+                            while (vpEnd === this.viewportEndPos) {
+                                if (this.cursor.pos > maxPos) {
+                                    this.cursor.pos = maxPos;
+                                    break;
+                                }
+                                this.scroll(lineCount < 0, true);
+                            }
+                        }
+                        this.verticalMove(lineCount);
+                    }
+                    if (this.cursor.pos > maxPos) {
+                        this.cursor.pos = maxPos;
+                    }
                     this.cursor.updateView(this);
                 }
             } else {
@@ -1426,6 +1454,13 @@ export class FlowView {
         console.log(`unique pp cost: ${Date.now() - clock}ms`);
     }
 
+    public preScroll() {
+        if (this.lastVerticalX === -1) {
+            let rect = this.cursor.rect();
+            this.lastVerticalX = rect.left;
+        }
+    }
+
     public apresScroll(up: boolean) {
         if ((this.cursor.pos < this.viewportStartPos) ||
             (this.cursor.pos >= this.viewportEndPos)) {
@@ -1438,18 +1473,39 @@ export class FlowView {
         }
     }
 
-    public scroll(up: boolean) {
-        let len = this.client.getLength();
-        let halfport = Math.floor(this.viewportCharCount() / 2);
-        if ((up && (this.topChar === 0)) || ((!up) && (this.topChar > (len - halfport)))) {
-            return;
-        }
+    public scroll(up: boolean, one = false) {
         let scrollTo = this.topChar;
-        if (up) {
-            scrollTo -= halfport;
+        if (one) {
+            if (up) {
+                let firstLineDiv = this.firstLineDiv();
+                scrollTo = firstLineDiv.linePos - 2;
+                if (scrollTo < 1) {
+                    return;
+                }
+            } else {
+                let nextFirstLineDiv = <ILineDiv>this.firstLineDiv().nextElementSibling;
+                if (nextFirstLineDiv) {
+                    scrollTo = nextFirstLineDiv.linePos;
+                } else {
+                    return;
+                }
+            }
         } else {
-            scrollTo += halfport;
+            let len = this.client.getLength();
+            let halfport = Math.floor(this.viewportCharCount() / 2);
+            if ((up && (this.topChar === 0)) || ((!up) && (this.topChar > (len - halfport)))) {
+                return;
+            }
+            if (up) {
+                scrollTo -= halfport;
+            } else {
+                scrollTo += halfport;
+            }
+            if (scrollTo >= len) {
+                scrollTo = len - 1;
+            }
         }
+        this.preScroll();
         this.render(scrollTo);
         this.apresScroll(up);
     }
@@ -1471,10 +1527,9 @@ export class FlowView {
         }
         let clk = Date.now();
         let frac = this.topChar / len;
-        let pos = Math.floor(frac * len);
         clearSubtree(this.viewportDiv);
         // this.viewportDiv.appendChild(this.cursor.editSpan);
-        renderTree(this.viewportDiv, pos, this.client, this);
+        renderTree(this.viewportDiv, this.topChar, this.client, this);
         clearSubtree(this.scrollDiv);
         let bubbleHeight = Math.max(3, Math.floor((this.viewportCharCount() / len) * this.scrollRect.height));
         let bubbleTop = Math.floor(frac * this.scrollRect.height);
