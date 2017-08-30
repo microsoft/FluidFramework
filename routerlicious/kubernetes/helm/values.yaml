@@ -12,15 +12,19 @@ alfred:
 
 deli:
   name: deli
+  replicas: 1
 
 scriptorium:
   name: scriptorium
+  replicas: 1
 
 tmz:
   name: tmz
+  replicas: 1
 
 paparazzi:
   name: paparazzi
+  replicas: 1
 
 # Dependency overrides
 minio:
