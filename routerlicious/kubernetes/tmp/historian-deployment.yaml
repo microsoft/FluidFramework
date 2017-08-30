@@ -1,0 +1,32 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: historian
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: historian
+    spec:
+      containers:
+      - name: historian
+        image: prague.azurecr.io/historian:664
+        ports:
+        - name: http
+          containerPort: 3000
+        env:
+        - name: DEBUG
+          value: "routerlicious:*"
+        - name: NODE_ENV
+          value: production
+        volumeMounts:
+        - name: config
+          mountPath: /home/node/server/config.json
+          subPath: config.json
+      imagePullSecrets:
+      - name: regsecret
+      volumes:
+        - name: config
+          configMap:
+            name: historian

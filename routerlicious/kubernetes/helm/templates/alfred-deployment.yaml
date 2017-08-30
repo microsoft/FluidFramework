@@ -1,32 +1,26 @@
-apiVersion: v1
-kind: Service
-metadata:
-  name: alfred
-  labels:
-    app: alfred
-spec:
-  type: LoadBalancer
-  ports:
-  - port: 80
-    protocol: TCP
-    targetPort: ui
-  selector:
-    app: alfred
----
 apiVersion: apps/v1beta1
 kind: Deployment
 metadata:
-  name: alfred
+  name: {{ template "routerlicious.alfred.fullname" . }}
+  labels:
+    app: {{ template "routerlicious.name" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    component: "{{ .Values.alfred.name }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
 spec:
-  replicas: 4
+  replicas: {{ .Values.alfred.replicas }}
   template:
     metadata:
       labels:
-        app: alfred
+        app: {{ template "routerlicious.name" . }}
+        component: "{{ .Values.alfred.name }}"
+        release: {{ .Release.Name }}
     spec:
       containers:
-      - name: routerlicious
-        image: prague.azurecr.io/prague:670 
+      - name: {{ template "routerlicious.alfred.fullname" . }}
+        image: "{{ .Values.image }}"
+        imagePullPolicy: {{ default "" .Values.imagePullPolicy | quote }}
         command:
           - 'node'
           - 'dist/alfred/www.js'

@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gitrest
+data:
+  config.json: |
+    {
+        "logger": {
+            "colorize": false,
+            "morganFormat": "short",
+            "json": false,
+            "level": "verbose",
+            "timestamp": false
+        },
+        "requestSizeLimit": "1gb",
+        "storageDir": "/home/node/documents"
+    }

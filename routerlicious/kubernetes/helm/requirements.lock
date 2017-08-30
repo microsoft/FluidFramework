@@ -1,0 +1,35 @@
+dependencies:
+- alias: ""
+  condition: ""
+  enabled: false
+  import-values: null
+  name: minio
+  repository: https://kubernetes-charts.storage.googleapis.com
+  tags: null
+  version: 0.1.3
+- alias: ""
+  condition: ""
+  enabled: false
+  import-values: null
+  name: redis
+  repository: https://kubernetes-charts.storage.googleapis.com
+  tags: null
+  version: 0.9.0
+- alias: ""
+  condition: ""
+  enabled: false
+  import-values: null
+  name: rabbitmq
+  repository: https://kubernetes-charts.storage.googleapis.com
+  tags: null
+  version: 0.6.3
+- alias: ""
+  condition: ""
+  enabled: false
+  import-values: null
+  name: mongodb
+  repository: https://kubernetes-charts.storage.googleapis.com
+  tags: null
+  version: 0.4.15
+digest: sha256:3a16e13f9ee45c4e2e2033170b60568300bf31269ed8a74246abb37ca6d58637
+generated: 2017-08-29T19:47:53.201521-07:00

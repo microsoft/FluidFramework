@@ -1,0 +1,44 @@
+## Prague image version
+image: prague.azurecr.io/prague:latest
+
+## Specify a imagePullPolicy
+## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
+##
+imagePullPolicy: IfNotPresent
+
+alfred:
+  name: alfred
+  replicas: 4
+
+deli:
+  name: deli
+
+scriptorium:
+  name: scriptorium
+
+tmz:
+  name: tmz
+
+paparazzi:
+  name: paparazzi
+
+# Dependency overrides
+minio:
+  accessKey: prague
+  secretKey: mhioAkNXTwdX4dXWgKgXVtHo
+  serviceType: ClusterIP
+
+mongodb:
+  persistence:
+    storageClass: ssd
+
+rabbitmq:
+  rabbitmqUsername: prague
+  rabbitmqPassword: mhioAkNXTwdX4dXWgKgXVtHo
+  persistence:
+    storageClass: ssd
+
+redis:
+  usePassword: false
+  persistence:
+    enabled: false
