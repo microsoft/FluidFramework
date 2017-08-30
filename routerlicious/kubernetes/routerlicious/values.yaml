@@ -37,6 +37,7 @@ gitrest:
   name: gitrest
 
 zookeeper:
+  local: false
   url: praguekafka-broker-1:2181
 
 # Dependency overrides
