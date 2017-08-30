@@ -43,9 +43,14 @@ enum CharacterCodes {
     _0 = 48,
     _9 = 57,
     a = 97,
+    b = 98,
+    g = 103,
+    l = 108,
     z = 122,
 
     A = 65,
+    B = 66,
+    L = 76,
     Z = 90,
     space = 0x0020,   // " "
 }
@@ -56,13 +61,23 @@ interface IParagraphInfo {
     endOffset?: number;
 }
 
-interface IParagraphMarker extends SharedString.Marker {
-    cache?: IParagraphInfo;
+interface IListInfo {
+    itemCounts: number[];
 }
 
+interface IParagraphMarker extends SharedString.Marker {
+    cache?: IParagraphInfo;
+    listHeadCache?: IListHeadInfo;
+    listCache?: IListInfo;
+}
+
+// TODO: indent decoration
 export interface ILineDiv extends HTMLDivElement {
     linePos?: number;
     lineEnd?: number;
+    contentWidth?: number;
+    indentWidth?: number;
+    indentSymbol?: ISymbol;
 }
 
 interface ISegSpan extends HTMLSpanElement {
@@ -495,11 +510,14 @@ function breakPGIntoLinesFF(items: ParagraphItem[], lineWidth: number) {
 
 function findContainingTile(client: SharedString.Client, pos: number, tileType: string) {
     let tileMarker: SharedString.Marker;
-    function recordPGStart(segment: SharedString.Segment) {
+    let tilePos: number;
+
+    function recordPGStart(segment: SharedString.Segment, segpos: number) {
         if (segment.getType() === SharedString.SegmentType.Marker) {
             let marker = <SharedString.Marker>segment;
             if (marker.type === tileType) {
                 tileMarker = marker;
+                tilePos = segpos;
             }
         }
         return false;
@@ -512,6 +530,7 @@ function findContainingTile(client: SharedString.Client, pos: number, tileType: 
                 let marker = <SharedString.Marker>seg;
                 if (marker.type === tileType) {
                     tileMarker = marker;
+                    tilePos = segpos;
                 }
             }
         } else {
@@ -519,6 +538,7 @@ function findContainingTile(client: SharedString.Client, pos: number, tileType: 
             let marker = <SharedString.Marker>block.rightmostTiles[tileType];
             if (marker !== undefined) {
                 tileMarker = marker;
+                tilePos = segpos;
             }
 
         }
@@ -527,7 +547,7 @@ function findContainingTile(client: SharedString.Client, pos: number, tileType: 
 
     client.mergeTree.search(pos, SharedString.UniversalSequenceNumber, client.getClientId(),
         { leaf: recordPGStart, shift });
-    return tileMarker;
+    return { tile: tileMarker, pos: tilePos };
 }
 
 const enum ParagraphLexerState {
@@ -608,6 +628,7 @@ let textErrorRun: IRange;
 
 interface ILineContext {
     lineDiv: ILineDiv;
+    contentDiv: HTMLDivElement;
     lineDivHeight: number;
     flowView: FlowView;
     span: ISegSpan;
@@ -635,7 +656,7 @@ function renderSegmentIntoLine(segment: SharedString.Segment, segpos: number, re
         let textStartPos = segpos + start;
         let textEndPos = segpos + end;
         lineContext.span = makeSegSpan(lineContext.flowView, text, textSegment, start, segpos);
-        lineContext.lineDiv.appendChild(lineContext.span);
+        lineContext.contentDiv.appendChild(lineContext.span);
         lineContext.lineDiv.lineEnd += text.length;
         if ((lineContext.flowView.cursor.pos >= textStartPos) && (lineContext.flowView.cursor.pos <= textEndPos)) {
             let cursorX: number;
@@ -663,7 +684,11 @@ function renderSegmentIntoLine(segment: SharedString.Segment, segpos: number, re
                     let cursorX = cursorBounds.width + (cursorBounds.left - lineContext.viewportBounds.x);
                     lineContext.flowView.cursor.assignToLine(cursorX, lineContext.lineDivHeight, lineContext.lineDiv);
                 } else {
-                    lineContext.flowView.cursor.assignToLine(0, lineContext.lineDivHeight, lineContext.lineDiv);
+                    if (lineContext.lineDiv.indentWidth !== undefined) {
+                        lineContext.flowView.cursor.assignToLine(lineContext.lineDiv.indentWidth, lineContext.lineDivHeight, lineContext.lineDiv);
+                    } else {
+                        lineContext.flowView.cursor.assignToLine(0, lineContext.lineDivHeight, lineContext.lineDiv);
+                    }
                 }
             }
             return false;
@@ -680,21 +705,201 @@ function findLineDiv(pos: number, flowView: FlowView) {
     });
 }
 
+function decorateLineDiv(lineDiv: ILineDiv, lineFontstr: string, lineDivHeight: number) {
+    let indentSymbol = lineDiv.indentSymbol;
+    let indentFontstr = lineFontstr;
+    if (indentSymbol.font) {
+        indentFontstr = indentSymbol.font;
+    }
+    let symbolWidth = getTextWidth(indentSymbol.text, indentFontstr);
+    let symbolX = Math.round(lineDiv.indentWidth * 0.7);
+    let symbolDiv = makeContentDiv(new Geometry.Rectangle(symbolX, 0, symbolWidth,
+        lineDivHeight), indentFontstr);
+    symbolDiv.innerText = indentSymbol.text;
+    lineDiv.appendChild(symbolDiv);
+}
+
 function reRenderLine(lineDiv: ILineDiv, flowView: FlowView) {
     if (lineDiv) {
         let viewportBounds = Geometry.Rectangle.fromClientRect(flowView.viewportDiv.getBoundingClientRect());
         let lineDivBounds = lineDiv.getBoundingClientRect();
         let lineDivHeight = lineDivBounds.height;
         clearSubtree(lineDiv);
+        let contentDiv = lineDiv;
+        if (lineDiv.indentSymbol) {
+            decorateLineDiv(lineDiv, lineDiv.style.font, lineDivHeight);
+        }
+        if (lineDiv.indentWidth) {
+            contentDiv = makeContentDiv(new Geometry.Rectangle(lineDiv.indentWidth, 0, lineDiv.contentWidth,
+                lineDivHeight), lineDiv.style.font);
+            lineDiv.appendChild(contentDiv);
+        }
         let lineContext = <ILineContext>{
             flowView, lineDiv, span: undefined, pgMarker: undefined, markerPos: 0,
-            viewportBounds, lineDivHeight,
+            viewportBounds, lineDivHeight, contentDiv,
         };
         let lineEnd = lineDiv.lineEnd;
         flowView.client.mergeTree.mapRange({ leaf: renderSegmentIntoLine }, SharedString.UniversalSequenceNumber,
             flowView.client.getClientId(), lineContext, lineDiv.linePos, lineDiv.lineEnd);
         lineDiv.lineEnd = lineEnd;
     }
+}
+
+let randomIndent = false;
+function getIndentPct(pgMarker: IParagraphMarker) {
+    if (pgMarker.properties && (pgMarker.properties.indentLevel !== undefined)) {
+        return pgMarker.properties.indentLevel * 0.1;
+    } else if (pgMarker.properties && pgMarker.properties.blockquote) {
+        return 0.10;
+    } else {
+        if (randomIndent) {
+            return 0.2 * Math.random();
+        } else {
+            return 0.0;
+        }
+    }
+}
+
+function getIndentSymbol(pgMarker: IParagraphMarker) {
+    let indentLevel = pgMarker.properties.indentLevel;
+    let series = pgMarker.listHeadCache.series[indentLevel];
+    return listSeries[series](pgMarker.listCache.itemCounts[indentLevel]);
+}
+
+interface IListHeadInfo {
+    series?: number[];
+    tile: IParagraphMarker;
+}
+
+interface ITilePos {
+    tile: SharedString.Marker;
+    pos: number;
+}
+
+function getPrecedingTile(flowView: FlowView, tile: SharedString.Marker, tilePos: number,
+    filter: (candidate: SharedString.Marker) => boolean, precedingTileCache?: ITilePos[]) {
+    if (precedingTileCache) {
+        for (let i = precedingTileCache.length - 1; i >= 0; i--) {
+            let candidate = precedingTileCache[i];
+            if (filter(candidate.tile)) {
+                return candidate;
+            }
+        }
+    }
+    while (tilePos > 0) {
+        tilePos = tilePos - 1;
+        let prevTileInfo = findContainingTile(flowView.client, tilePos, tile.type);
+        if (filter(prevTileInfo.tile)) {
+            return prevTileInfo;
+        }
+    }
+}
+
+function isListTile(tile: IParagraphMarker) {
+    return tile && tile.properties && tile.properties.list;
+}
+
+export interface ISymbol {
+    font?: string;
+    text: string;
+}
+
+function numberSuffix(itemIndex: number, suffix: string): ISymbol {
+    return { text: itemIndex.toString() + suffix };
+}
+
+// TODO: more than 26
+function alphaSuffix(itemIndex: number, suffix: string, little = false) {
+    let code = (itemIndex - 1) + CharacterCodes.A;
+    if (little) {
+        code += 32;
+    }
+    let prefix = String.fromCharCode(code);
+    return { text: prefix + suffix };
+}
+
+// TODO: more than 10
+let romanNumbers = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"];
+
+function roman(itemIndex: number, little = false) {
+    let text = romanNumbers[itemIndex - 1] + ".";
+    if (little) {
+        text = text.toLowerCase();
+    }
+    return { text };
+}
+
+let listSeries = [
+    (itemIndex) => numberSuffix(itemIndex, "."),
+    (itemIndex) => numberSuffix(itemIndex, ")"),
+    (itemIndex) => alphaSuffix(itemIndex, ".", true),
+    (itemIndex) => alphaSuffix(itemIndex, ")", true),
+    (itemIndex) => alphaSuffix(itemIndex, "."),
+    (itemIndex) => alphaSuffix(itemIndex, ")"),
+    (itemIndex) => roman(itemIndex, true),
+    (itemIndex) => roman(itemIndex),
+];
+
+// TODO: handle head of list delisted
+function getListCacheInfo(flowView: FlowView, tile: IParagraphMarker, tilePos: number,
+    precedingTileCache?: ITilePos[]) {
+
+    if (isListTile(tile)) {
+        if (tile.listCache === undefined) {
+            if (tile.properties.series) {
+                tile.listHeadCache = {
+                    series: <number[]>tile.properties.series,
+                    tile,
+                };
+                tile.listCache = { itemCounts: [0, 1] };
+            } else {
+                let precedingTilePos = getPrecedingTile(flowView, tile, tilePos, isListTile, precedingTileCache);
+                if (precedingTilePos) {
+                    getListCacheInfo(flowView, precedingTilePos.tile, precedingTilePos.pos, precedingTileCache);
+                    let precedingTile = <IParagraphMarker>precedingTilePos.tile;
+                    tile.listHeadCache = precedingTile.listHeadCache;
+                    let indentLevel = tile.properties.indentLevel;
+                    let precedingItemCount = precedingTile.listCache.itemCounts[indentLevel];
+                    let itemCounts = precedingTile.listCache.itemCounts.slice();
+                    if (indentLevel < itemCounts.length) {
+                        itemCounts[indentLevel] = precedingItemCount + 1;
+                    } else {
+                        itemCounts[indentLevel] = 1;
+                    }
+                    tile.listCache = { itemCounts };
+                }
+            }
+        }
+    }
+}
+
+function getContentPct(pgMarker: IParagraphMarker) {
+    if (pgMarker.properties && pgMarker.properties.contentWidth) {
+        return pgMarker.properties.contentWidth;
+    } else if (pgMarker.properties && pgMarker.properties.blockquote) {
+        return 0.8;
+    } else {
+        if (randomIndent) {
+            return 0.5 + (0.5 * Math.random());
+        } else {
+            return 1.0;
+        }
+    }
+}
+
+function makeContentDiv(r: Geometry.Rectangle, lineFontstr) {
+    let contentDiv = document.createElement("div");
+    contentDiv.style.font = lineFontstr;
+    contentDiv.style.whiteSpace = "pre";
+    contentDiv.onclick = (e) => {
+        let targetDiv = <HTMLDivElement>e.target;
+        if (targetDiv.lastElementChild) {
+            // tslint:disable-next-line:max-line-length
+            console.log(`div click at ${e.clientX},${e.clientY} rightmost span with text ${targetDiv.lastElementChild.innerHTML}`);
+        }
+    };
+    r.conformElement(contentDiv);
+    return contentDiv;
 }
 
 function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Client, flowView: FlowView) {
@@ -720,18 +925,8 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
     let lineCount = 0;
     let lastLineDiv = undefined;
 
-    let makeLineDiv = (r: Geometry.Rectangle, lineFontstr) => {
-        let lineDiv = document.createElement("div");
-        lineDiv.style.font = lineFontstr;
-        lineDiv.style.whiteSpace = "pre";
-        lineDiv.onclick = (e) => {
-            let targetDiv = <HTMLDivElement>e.target;
-            if (targetDiv.lastElementChild) {
-                // tslint:disable-next-line:max-line-length
-                console.log(`div click at ${e.clientX},${e.clientY} rightmost span with text ${targetDiv.lastElementChild.innerHTML}`);
-            }
-        };
-        r.conformElement(lineDiv);
+    function makeLineDiv(r: Geometry.Rectangle, lineFontstr) {
+        let lineDiv = makeContentDiv(r, lineFontstr);
         div.appendChild(lineDiv);
         lineCount++;
         lastLineDiv = lineDiv;
@@ -794,7 +989,8 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
         return true;
     }
 
-    function renderPG(curPGMarker: IParagraphMarker, curPGPos: number) {
+    function renderPG(curPGMarker: IParagraphMarker, curPGPos: number, indentWidth: number, indentSymbol: ISymbol,
+        contentWidth: number) {
         let pgBreaks = curPGMarker.cache.breaks;
         let lineDiv: ILineDiv;
         let lineDivHeight = defaultLineDivHeight;
@@ -818,9 +1014,21 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
                 }
                 lineDiv = makeLineDiv(new Geometry.Rectangle(0, currentLineTop, viewportWidth, lineDivHeight),
                     lineFontstr);
+                let contentDiv = lineDiv;
+                if (indentWidth > 0) {
+                    contentDiv = makeContentDiv(new Geometry.Rectangle(indentWidth, 0, contentWidth, lineDivHeight),
+                        lineFontstr);
+                    lineDiv.indentWidth = indentWidth;
+                    lineDiv.contentWidth = indentWidth;
+                    if (indentSymbol && (breakIndex === 0)) {
+                        lineDiv.indentSymbol = indentSymbol;
+                        decorateLineDiv(lineDiv, lineFontstr, lineDivHeight);
+                    }
+                    lineDiv.appendChild(contentDiv);
+                }
                 let lineContext = <ILineContext>{
                     span, lineDiv, lineDivHeight, flowView, pgMarker, markerPos,
-                    viewportBounds,
+                    viewportBounds, contentDiv,
                 };
                 if (viewportStartPos < 0) {
                     viewportStartPos = lineStart;
@@ -841,9 +1049,9 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
         }
     }
 
-    pgMarker = findContainingTile(client, pos, "pg");
-    markerPos = client.mergeTree.getOffset(pgMarker, SharedString.UniversalSequenceNumber,
-        client.getClientId());
+    let tileInfo = findContainingTile(client, pos, "pg");
+    pgMarker = tileInfo.tile;
+    markerPos = tileInfo.pos;
 
     let startPGPos: number;
     let totalLength = client.getLength();
@@ -852,15 +1060,36 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
         startPGMarker = pgMarker;
         pgMarker = undefined;
         startPGPos = markerPos + 1;
-        if ((!startPGMarker.cache) || (startPGMarker.cache.singleLineWidth !== viewportBounds.width)) {
+        getListCacheInfo(flowView, startPGMarker, markerPos);
+        let indentPct = 0.0;
+        let contentPct = 1.0;
+        let indentWidth = 0;
+        let contentWidth = viewportBounds.width;
+        let indentSymbol: ISymbol = undefined;
+
+        if (startPGMarker.listCache) {
+            indentSymbol = getIndentSymbol(startPGMarker);
+        }
+        if (indentPct === 0.0) {
+            indentPct = getIndentPct(startPGMarker);
+        }
+        if (contentPct === 1.0) {
+            contentPct = getContentPct(startPGMarker);
+        }
+        if (indentPct !== 0.0) {
+            indentWidth = Math.floor(indentPct * viewportBounds.width);
+        }
+        contentWidth = Math.floor(contentPct * viewportBounds.width) - indentWidth;
+
+        if ((!startPGMarker.cache) || (startPGMarker.cache.singleLineWidth !== contentWidth)) {
             client.mergeTree.mapRange({ leaf: segmentToItems }, SharedString.UniversalSequenceNumber,
                 client.getClientId(), undefined, startPGPos);
-            startPGMarker.cache = { breaks: breakPGIntoLinesFF(items, viewportBounds.width), singleLineWidth: viewportBounds.width };
+            startPGMarker.cache = { breaks: breakPGIntoLinesFF(items, contentWidth), singleLineWidth: contentWidth };
         }
         pgCount++;
         paragraphLexer.reset();
         if (startPGPos < (totalLength - 1)) {
-            renderPG(startPGMarker, startPGPos);
+            renderPG(startPGMarker, startPGPos, indentWidth, indentSymbol, contentWidth);
             currentLineTop += pgVspace;
         } else {
             lastLineDiv.lineEnd = startPGPos + 1;
@@ -1213,6 +1442,7 @@ export class FlowView {
         }
     }
 
+    // TODO: handle symbol div
     public setCursorPosFromPixels(targetLineDiv: ILineDiv) {
         if (targetLineDiv && (targetLineDiv.linePos)) {
             let cursorRect = this.cursor.rect();
@@ -1228,15 +1458,25 @@ export class FlowView {
             y = targetLineBounds.top + Math.floor(targetLineBounds.height / 2);
             let elm = document.elementFromPoint(x, y);
             if (elm.tagName === "DIV") {
-                let span = <ISegSpan>elm.lastElementChild;
-                if (span) {
-                    this.cursor.pos = targetLineDiv.lineEnd;
-                    return true;
-                } else {
+                if ((targetLineDiv.lineEnd - targetLineDiv.linePos) === 1) {
                     // empty line
                     this.cursor.pos = targetLineDiv.linePos;
-                    return true;
+                } else if (targetLineDiv === elm) {
+                    if (targetLineDiv.indentWidth !== undefined) {
+                        let relX = x - targetLineBounds.left;
+                        if (relX <= targetLineDiv.indentWidth) {
+                            this.cursor.pos = targetLineDiv.linePos;
+                        } else {
+                            this.cursor.pos = targetLineDiv.lineEnd;
+                        }
+                    } else {
+                        this.cursor.pos = targetLineDiv.lineEnd;
+                    }
+                } else {
+                    // content div                        
+                    this.cursor.pos = targetLineDiv.lineEnd;
                 }
+                return true;
             } else if (elm.tagName === "SPAN") {
                 let span = <ISegSpan>elm;
                 let elmOff = pointerToElementOffsetWebkit(x, y);
@@ -1341,8 +1581,14 @@ export class FlowView {
             let saveLastVertX = this.lastVerticalX;
             let specialKey = true;
             this.lastVerticalX = -1;
-            // console.log(`key ${e.keyCode}`);
-            if (e.keyCode === KeyCode.backspace) {
+            if (e.keyCode !== 17) {
+                console.log(`key ${e.keyCode} ctrl ${e.ctrlKey} alt ${e.altKey}`);
+            }
+            if (e.ctrlKey && (e.keyCode !== 17)) {
+                this.keyCmd(e.keyCode);
+            } else if (e.keyCode === 9) {
+                this.increaseIndent();
+            } else if (e.keyCode === KeyCode.backspace) {
                 this.cursor.pos--;
                 this.sharedString.removeText(this.cursor.pos, this.cursor.pos + 1);
                 this.localQueueRender(this.cursor.pos);
@@ -1404,7 +1650,9 @@ export class FlowView {
                     this.cursor.updateView(this);
                 }
             } else {
-                specialKey = false;
+                if (!e.ctrlKey) {
+                    specialKey = false;
+                }
             }
             if (specialKey) {
                 e.preventDefault();
@@ -1418,14 +1666,71 @@ export class FlowView {
             if (code === CharacterCodes.cr) {
                 // TODO: pg properties on marker                
                 this.sharedString.insertMarker(pos, "pg", SharedString.MarkerBehaviors.Tile);
+                let prevTilePos = findContainingTile(this.client, pos - 1, "pg");
+                if (prevTilePos) {
+                    let prevTile = <IParagraphMarker>prevTilePos.tile;
+                    if (isListTile(prevTile)) {
+                        let curTilePos = findContainingTile(this.client, pos, "pg");
+                        curTilePos.tile.addProperties({ list: true, indentLevel: prevTile.properties.indentLevel });
+                    }
+                }
                 this.updatePGInfo(pos - 1);
             } else {
                 this.sharedString.insertText(String.fromCharCode(code), pos);
             }
             this.localQueueRender(pos);
+
         };
         this.flowContainer.onkeydown = keydownHandler;
         this.flowContainer.onkeypress = keypressHandler;
+    }
+
+    // for now, no toggle
+    public setList() {
+        let tileInfo = findContainingTile(this.client, this.cursor.pos, "pg");
+        if (tileInfo) {
+            let tile = tileInfo.tile;
+            tile.addProperties({ list: true, series: [0, 0, 2, 6, 3, 7], indentLevel: 1 });
+            this.localQueueRender(this.cursor.pos);
+        }
+    }
+
+    public increaseIndent() {
+        let tileInfo = findContainingTile(this.client, this.cursor.pos, "pg");
+        if (tileInfo) {
+            let tile = <IParagraphMarker>tileInfo.tile;
+            tile.listCache = undefined;
+            tile.properties.indentLevel++;
+            this.localQueueRender(this.cursor.pos);
+        }
+    }
+
+    public toggleBlockquote() {
+        let tileInfo = findContainingTile(this.client, this.cursor.pos, "pg");
+        if (tileInfo) {
+            let tile = tileInfo.tile;
+            let props = tile.properties;
+            if (props && props.blockquote) {
+                props.blockquote = !props.blockquote;
+            } else {
+                tile.addProperties({ blockquote: true });
+            }
+            this.localQueueRender(this.cursor.pos);
+        }
+    }
+
+    public keyCmd(charCode: number) {
+        switch (charCode) {
+            case CharacterCodes.B:
+                this.toggleBlockquote();
+                break;
+            case CharacterCodes.L:
+                this.setList();
+                break;
+            default:
+                console.log(`got command key ${String.fromCharCode(charCode)}`);
+                break;
+        }
     }
 
     public testWordInfo() {
@@ -1599,9 +1904,10 @@ export class FlowView {
     }
 
     public updatePGInfo(changePos: number) {
-        let tileMarker = <IParagraphMarker>findContainingTile(this.client, changePos, "pg");
-        if (tileMarker) {
-            tileMarker.cache = undefined;
+        let tileInfo = findContainingTile(this.client, changePos, "pg");
+        if (tileInfo) {
+            let tile = <IParagraphMarker>tileInfo.tile;
+            tile.cache = undefined;
         }
     }
 
