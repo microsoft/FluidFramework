@@ -1,4 +1,0 @@
-rabbitmqUsername: prague
-rabbitmqPassword: mhioAkNXTwdX4dXWgKgXVtHo
-persistence:
-  storageClass: ssd

@@ -1,0 +1,41 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: {{ template "historian.fullname" . }}
+  labels:
+    app: {{ template "routerlicious.name" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    component: "{{ .Values.historian.name }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+spec:
+  replicas: {{ .Values.historian.replicas }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "routerlicious.name" . }}
+        component: "{{ .Values.historian.name }}"
+        release: {{ .Release.Name }}
+    spec:
+      containers:
+      - name: {{ template "historian.fullname" . }}
+        image: "{{ .Values.historian.image }}"
+        imagePullPolicy: {{ default "" .Values.imagePullPolicy | quote }}
+        ports:
+        - name: http
+          containerPort: 3000
+        env:
+        - name: DEBUG
+          value: "routerlicious:*"
+        - name: NODE_ENV
+          value: production
+        volumeMounts:
+        - name: config
+          mountPath: /home/node/server/config.json
+          subPath: config.json
+      imagePullSecrets:
+      - name: regsecret
+      volumes:
+        - name: config
+          configMap:
+            name: {{ template "historian.fullname" . }}

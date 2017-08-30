@@ -1,3 +1,4 @@
+{{- if .Values.zookeeper.local }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -56,3 +57,4 @@ spec:
       resources:
         requests:
           storage: 128Gi
+{{- end }}

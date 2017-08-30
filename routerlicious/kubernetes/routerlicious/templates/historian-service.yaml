@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "historian.fullname" . }}
+  labels:
+    app: {{ template "routerlicious.name" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    component: "{{ .Values.historian.name }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+spec:
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+  type: LoadBalancer
+  selector:
+    app: {{ template "routerlicious.name" . }}
+    component: "{{ .Values.historian.name }}"
+    release: {{ .Release.Name }}
