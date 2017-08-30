@@ -1,7 +1,13 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: prague
+  name: {{ template "routerlicious.fullname" . }}
+  labels:
+    app: {{ template "routerlicious.name" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    component: "{{ .Values.name }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
 data:
   config.json: |
     {
@@ -13,10 +19,10 @@ data:
             "timestamp": false
         },
         "rabbitmq": {
-            "connectionString": "amqp://prague:mhioAkNXTwdX4dXWgKgXVtHo@kindred-waterbuffalo-rabbitmq"
+            "connectionString": "amqp://{{ .Values.rabbitmq.rabbitmqUsername }}:{{ .Values.rabbitmq.rabbitmqPassword }}@{{ template "rabbitmq.fullname" . }}"
         },
         "mongo": {
-            "endpoint": "mongodb://worn-stoat-mongodb:27017",
+            "endpoint": "mongodb://{{ template "mongodb.fullname" . }}:27017",
             "collectionNames": {
                 "deltas": "deltas",
                 "documents": "documents",
@@ -26,7 +32,7 @@ data:
         "kafka": {
             "lib": {
                 "name": "kafka-node",
-                "endpoint": "praguekafka-broker-1:2181"
+                "endpoint": "{{ .Values.zookeeper.url }}"
             }
         },
         "alfred": {
@@ -48,8 +54,8 @@ data:
         "paparazzi": {
             "queue": "snapshot",
             "bucket": "snapshots",
-            "alfred": "http://alfred",
-            "tmz": "http://tmz"
+            "alfred": "http://{{ template "routerlicious.alfred.fullname" . }}",
+            "tmz": "http://{{ template "routerlicious.tmz.fullname" . }}"
         },
         "scriptorium": {
             "topic": "deltas",
@@ -74,14 +80,14 @@ data:
             "onlyServer": false
         },
         "redis": {
-            "host": "steely-ant-redis",
+            "host": "{{ template "redis.fullname" . }}",
             "port": 6379
         },
         "minio": {
-            "endpoint": "eyewitness-bee-minio-svc",
+            "endpoint": "{{ template "fullname" . }}",
             "port": 9000,
-            "accessKey": "prague",
-            "secretKey": "mhioAkNXTwdX4dXWgKgXVtHo"
+            "accessKey": "{{ .Values.minio.accessKey }}",
+            "secretKey": "{{ .Values.minio.secretKey }}"
         },
         "worker": {
             "intelligence": {
@@ -103,8 +109,8 @@ data:
                     "url": "http://augmentation.westus2.cloudapp.azure.com/spellchecker"
                 }
             },
-            "url": "http://praguetmz.westus2.cloudapp.azure.com",
-            "blobStorageUrl": "http://prague-historian.westus2.cloudapp.azure.com",
+            "url": "{{ .Values.tmz.externalUrl }}",
+            "blobStorageUrl": "{{ .Values.historian.externalUrl }}",
             "repository": "prague",
             "storageBucket": "snapshots",
             "intervalMSec": 5000,
@@ -118,6 +124,6 @@ data:
         },
         "git": {
             "repository": "prague",
-            "historian": "http://prague-historian.westus2.cloudapp.azure.com"
+            "historian": "{{ .Values.historian.externalUrl }}"
         }
     }

@@ -1,0 +1,44 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: {{ template "routerlicious.alfred.fullname" . }}
+  labels:
+    app: {{ template "routerlicious.name" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    component: "{{ .Values.alfred.name }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+spec:
+  replicas: {{ .Values.alfred.replicas }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "routerlicious.name" . }}
+        component: "{{ .Values.alfred.name }}"
+        release: {{ .Release.Name }}
+    spec:
+      containers:
+      - name: {{ template "routerlicious.alfred.fullname" . }}
+        image: "{{ .Values.image }}"
+        imagePullPolicy: {{ default "" .Values.imagePullPolicy | quote }}
+        command:
+          - 'node'
+          - 'dist/alfred/www.js'
+        ports:
+        - name: ui
+          containerPort: 3000
+        env:
+        - name: DEBUG
+          value: "routerlicious:*"
+        - name: NODE_ENV
+          value: production
+        volumeMounts:
+        - name: config
+          mountPath: /usr/src/server/config.json
+          subPath: config.json
+      imagePullSecrets:
+      - name: regsecret
+      volumes:
+        - name: config
+          configMap:
+            name: {{ template "routerlicious.fullname" . }}

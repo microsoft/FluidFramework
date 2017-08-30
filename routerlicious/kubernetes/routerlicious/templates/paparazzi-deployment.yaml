@@ -1,29 +1,29 @@
 apiVersion: apps/v1beta1
 kind: Deployment
 metadata:
-  name: {{ template "routerlicious.deli.fullname" . }}
+  name: {{ template "routerlicious.paparazzi.fullname" . }}
   labels:
     app: {{ template "routerlicious.name" . }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
-    component: "{{ .Values.deli.name }}"
+    component: "{{ .Values.paparazzi.name }}"
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"
 spec:
-  replicas: {{ .Values.deli.replicas }}
+  replicas: {{ .Values.paparazzi.replicas }}
   template:
     metadata:
       labels:
         app: {{ template "routerlicious.name" . }}
-        component: "{{ .Values.deli.name }}"
+        component: "{{ .Values.paparazzi.name }}"
         release: {{ .Release.Name }}
     spec:
       containers:
-      - name: {{ template "routerlicious.deli.fullname" . }}
+      - name: {{ template "routerlicious.paparazzi.fullname" . }}
         image: "{{ .Values.image }}"
         imagePullPolicy: {{ default "" .Values.imagePullPolicy | quote }}
         command:
           - 'node'
-          - 'dist/deli/index.js'
+          - 'dist/paparazzi/index.js'
         env:
         - name: DEBUG
           value: "routerlicious:*"
@@ -38,4 +38,4 @@ spec:
       volumes:
         - name: config
           configMap:
-            name: prague
+            name: {{ template "routerlicious.fullname" . }}

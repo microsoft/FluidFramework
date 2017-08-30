@@ -38,7 +38,7 @@ spec:
       volumes:
         - name: config
           configMap:
-            name: gitrest
+            name: {{ template "gitrest.fullname" . }}
   volumeClaimTemplates:
   - metadata:
       name: data

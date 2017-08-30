@@ -3,8 +3,9 @@ image: prague.azurecr.io/prague:latest
 
 ## Specify a imagePullPolicy
 ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
-##
 imagePullPolicy: IfNotPresent
+
+name: routerlicious
 
 alfred:
   name: alfred
@@ -21,10 +22,22 @@ scriptorium:
 tmz:
   name: tmz
   replicas: 1
+  externalUrl: http://praguetmz.westus2.cloudapp.azure.com
 
 paparazzi:
   name: paparazzi
   replicas: 1
+
+historian:
+  name: historian
+  externalUrl: http://prague-historian.westus2.cloudapp.azure.com
+  image: prague.azurecr.io/historian:664
+
+gitrest:
+  name: gitrest
+
+zookeeper:
+  url: praguekafka-broker-1:2181
 
 # Dependency overrides
 minio:
