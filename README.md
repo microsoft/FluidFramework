@@ -28,16 +28,21 @@ We're currently in the middle of [Sprint 2](./doc/sprints/sprint2/readme.md). Hi
 
 ## Build Server
 
-We make use of https://hub.docker.com/r/microsoft/vsts-agent/ for building all of the source in this project.
+We make use of https://hub.docker.com/r/microsoft/vsts-agent/ for our build server agents.
 
-To add a new agent to our pool simply run the following command
+To create an agent first create a work directory for the agent that maps exactly to how it will be mounted in the container (i.e. /var/lib/vsts - more on that below). Get a VSTS token. And then run the following command.
 
 ```
 docker run \
-    -d \
-    --restart unless-stopped \
-    -e VSTS_ACCOUNT=offnet \
-    -e VSTS_TOKEN=<token> \
-    -v /var/run/docker.sock:/var/run/docker.sock \
-    microsoft/vsts-agent:ubuntu-16.04-docker-17.03.0-ce-standard
+  -d \
+  --restart unless-stopped \
+  -e VSTS_ACCOUNT=offnet \
+  -e VSTS_TOKEN=<token> \
+  -e VSTS_AGENT='$(hostname)-agent' \
+  -e VSTS_WORK='/var/lib/vsts/$VSTS_AGENT' \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v /var/lib/vsts:/var/lib/vsts \
+  microsoft/vsts-agent:ubuntu-16.04-docker-17.03.0-ce-standard 
 ```
+
+The work directory must match between the host and container due to how we run Docker. We provide the container access to the host's Docker daemon by mounting the Docker socket. This is not "Docker in Docker" but does allow Docker commands to be executed inside the container. This appraoch is recommended in the vsts-agent documentation. But our build processes rely on being able to volume mount a local volume inside a running container in order to output artificats. As an example we run Helm and Kubernetes commands via a container. When sharing the Docker socket any volume mounts apply to the host's file system. Not the container executing the command's file system. To work around this we mount our VSTS_WORK directory inside the container in the same structure as on the host.

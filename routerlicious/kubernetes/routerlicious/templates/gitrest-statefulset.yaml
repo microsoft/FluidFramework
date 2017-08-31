@@ -13,6 +13,8 @@ spec:
   replicas: {{ .Values.gitrest.replicas }}
   template:
     metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/gitrest-configmap.yaml") . | sha256sum }}
       labels:
         app: {{ template "routerlicious.name" . }}
         component: "{{ .Values.gitrest.name }}"

@@ -6,9 +6,9 @@ import * as ink from "../../ink";
 import * as shared from "../../shared";
 import * as socketStorage from "../../socket-storage";
 
-async function loadDocument(id: string, version: resources.ICommit, encrypted: boolean): Promise<api.Document> {
+async function loadDocument(id: string, version: resources.ICommit): Promise<api.Document> {
     console.log("Loading in root document...");
-    const document = await api.load(id, { encrypted }, version);
+    const document = await api.load(id, { encrypted: api.isUserLoggedIn() }, version);
 
     console.log("Document loaded");
     return document;
@@ -19,10 +19,10 @@ throttle("resize", "throttled-resize");
 
 let canvas: Canvas;
 
-export async function initialize(id: string, version: resources.ICommit, config: any, encrypted: boolean) {
+export async function initialize(id: string, version: resources.ICommit, config: any) {
     socketStorage.registerAsDefault(document.location.origin, config.blobStorageUrl, config.repository);
 
-    const doc = await loadDocument(id, version, encrypted);
+    const doc = await loadDocument(id, version);
     const root = await doc.getRoot().getView();
 
     // Bootstrap worker service.

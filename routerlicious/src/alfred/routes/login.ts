@@ -14,6 +14,7 @@ router.get("/", (request, response, next) => {
         "login",
         {
             config,
+            optionalBodyClass: "loginbody",
             partials: defaultPartials,
             title: request.params.id,
         });

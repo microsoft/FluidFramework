@@ -14,7 +14,6 @@ const gitManager = new git.GitManager(settings.historian, settings.repository);
  */
 router.get("/:id", (request, response, next) => {
     const config = JSON.stringify(nconf.get("worker"));
-    const encrypted = request.query.encrypted ? true : false;
     const versionP = storage.getLatestVersion(gitManager, request.params.id);
 
     versionP.then(
@@ -26,7 +25,6 @@ router.get("/:id", (request, response, next) => {
                     config,
                     partials: defaultPartials,
                     title: request.params.id,
-                    encrypted,
                     version: JSON.stringify(version),
                 });
         },

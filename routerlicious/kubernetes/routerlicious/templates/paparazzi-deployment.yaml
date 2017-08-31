@@ -12,6 +12,8 @@ spec:
   replicas: {{ .Values.paparazzi.replicas }}
   template:
     metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/prague-config-map.yaml") . | sha256sum }}
       labels:
         app: {{ template "routerlicious.name" . }}
         component: "{{ .Values.paparazzi.name }}"
