@@ -1693,11 +1693,19 @@ export class FlowView {
     }
 
     // for now, no toggle
-    public setList(unlist = false) {
-        let tileInfo = findContainingTile(this.client, this.cursor.pos, "pg");
+    public setList() {
+        let searchPos = this.cursor.pos;
+        if (this.cursor.pos === this.cursor.lineDiv().lineEnd) {
+            searchPos--;
+        }
+        let tileInfo = findContainingTile(this.client, searchPos, "pg");
         if (tileInfo) {
             let tile = tileInfo.tile;
-            if (unlist) {
+            let listStatus = false;
+            if (tile.properties && tile.properties.list) {
+                listStatus = true;
+            }
+            if (listStatus) {
                 tile.addProperties({ list: false });
             } else {
                 tile.addProperties({ list: true, series: [0, 0, 2, 6, 3, 7, 2, 6, 3, 7], indentLevel: 1 });
