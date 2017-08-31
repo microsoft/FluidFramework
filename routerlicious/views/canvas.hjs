@@ -51,9 +51,8 @@
 
         <script>
             var config = {{{ config }}};
-            var encrypted = {{ encrypted }};
             var version = {{{ version }}};
-            controller.canvas.initialize("{{ id }}", version, config, encrypted);
+            controller.initialize("{{ id }}", version, config);
         </script>
     {{/scripts}}
 {{/layout}}

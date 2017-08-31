@@ -6,7 +6,7 @@
 
     {{$content}}
 
-        <div class="loginbody">
+        <div>
 
             <div class="indicatortext" id="login-indicator">
                 <span style="float:right">Welcome back, _!</span><br/>

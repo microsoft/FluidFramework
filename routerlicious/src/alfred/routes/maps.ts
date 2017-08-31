@@ -14,7 +14,6 @@ const gitManager = new git.GitManager(settings.historian, settings.repository);
  * Loading of a specific collaborative map
  */
 router.get("/:id", (request, response, next) => {
-    const encrypted = request.query.encrypted ? true : false;
     const versionP = storage.getLatestVersion(gitManager, request.params.id);
 
     const config = JSON.stringify(nconf.get("worker"));
@@ -27,7 +26,6 @@ router.get("/:id", (request, response, next) => {
                     config,
                     partials: defaultPartials,
                     title: request.params.id,
-                    encrypted,
                     version: JSON.stringify(version),
                 });
         },

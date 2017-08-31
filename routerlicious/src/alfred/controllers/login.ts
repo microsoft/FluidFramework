@@ -12,20 +12,15 @@ async function assignKeypair(): Promise<boolean> {
 }
 
 function userLoggedIn(): boolean {
-    const getUserLoggedIn = localStorage.getItem("userLoggedIn");
-
-    if (!getUserLoggedIn) {
-        localStorage.setItem("userLoggedIn", "false"); /* first connection */
-        return false;
-    } else if (getUserLoggedIn === "false") {
-        return false;
-    } else {
-        const userKeys: api.IAsymmetricKeys = JSON.parse(localStorage.getItem(getUserLoggedIn));
-        (<HTMLInputElement> document.getElementById("username")).value = getUserLoggedIn;
-        (<HTMLTextAreaElement> document.getElementById("privateKey")).textContent = userKeys.privateKey;
-        (<HTMLTextAreaElement> document.getElementById("publicKey")).textContent = userKeys.publicKey;
+    if (api.isUserLoggedIn()) {
+        const {user, keyPackage} = api.getLoggedInUserPackage();
+        (<HTMLInputElement> document.getElementById("username")).value = user;
+        (<HTMLTextAreaElement> document.getElementById("privateKey")).textContent = keyPackage.privateKey;
+        (<HTMLTextAreaElement> document.getElementById("publicKey")).textContent = keyPackage.publicKey;
         return true;
     }
+
+    return false;
 }
 
 function loginUser(): boolean {
@@ -42,12 +37,7 @@ function loginUser(): boolean {
     }
 
     /* Store/overwrite credentials. */
-    if (localStorage.getItem(username)) {
-        alert("WARNING: User with name \"" + username + "\" already exists! Overwriting...");
-    }
-    const keyPackage: api.IAsymmetricKeys = {privateKey, publicKey};
-    localStorage.setItem("userLoggedIn", username);
-    localStorage.setItem(username, JSON.stringify(keyPackage));
+    api.setLoggedInUser(username, {privateKey, publicKey});
 
     /* Disable login button. */
     toggleShowLogin();
@@ -56,16 +46,13 @@ function loginUser(): boolean {
 }
 
 function logoutUser(): boolean {
-    const userLoggedIn = localStorage.getItem("userLoggedIn");
-
-    if (!userLoggedIn || userLoggedIn === "false") {
+    if (!api.isUserLoggedIn()) {
         alert("ERROR: No user logged in!");
         return false;
     }
 
     /* Remove user from localStorage. */
-    localStorage.removeItem(userLoggedIn);
-    localStorage.setItem("userLoggedIn", "false");
+    api.logoutUser();
 
     /* Enable login button. */
     toggleShowLogin();

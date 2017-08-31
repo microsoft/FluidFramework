@@ -11,7 +11,7 @@
     <link href="//ajax.aspnetcdn.com/ajax/bootstrap/3.3.7/css/bootstrap-theme.min.css" rel="stylesheet" />
     {{$styles}}{{/styles}}
 </head>
-<body>
+<body class="{{ optionalBodyClass }}">
     {{$content}}{{/content}}
 
     <!-- Scripts -->
