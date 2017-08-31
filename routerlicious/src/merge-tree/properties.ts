@@ -1,4 +1,5 @@
 // tslint:disable
+import * as ops from "./ops";
 
 export interface MapLike<T> {
     [index: string]: T;
@@ -11,7 +12,20 @@ export type PropertySet = MapLike<any>;
 
 // assume these are created with Object.create(null)
 
-export function extend<T>(base: MapLike<T>, extension: MapLike<T>) {
+export function combine(combiningInfo: ops.ICombiningOp, currentValue: any, newValue: any) {
+    if (currentValue === undefined) {
+        currentValue = combiningInfo.defaultValue;
+    }
+    // fixed set of operations for now 
+    switch (combiningInfo.name) {
+        case "incr":
+            currentValue += <number> newValue;
+            break;
+    }
+    return currentValue;
+}
+
+export function extend<T>(base: MapLike<T>, extension: MapLike<T>, combiningOp?: ops.ICombiningOp) {
     if (extension !== undefined) {
         if ((typeof extension !== "object")) {
             console.log(`oh my ${extension}`);
@@ -21,7 +35,12 @@ export function extend<T>(base: MapLike<T>, extension: MapLike<T>) {
             if (v === null) {
                 delete base[key];
             } else {
-                base[key] = extension[key];
+                // TODO: consider some type constraints on ops
+                if (combiningOp) {
+                    base[key] = combine(combiningOp, base[key], v);
+                } else {
+                    base[key] = v;
+                }
             }
         }
     }

@@ -46,12 +46,18 @@ export interface IMergeTreeRemoveMsg extends IMergeTreeDelta {
     marker?: IMarkerDef;
 }
 
+export interface ICombiningOp {
+    name: string;
+    defaultValue: any;
+}
+
 export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
     type: MergeTreeDeltaType.ANNOTATE;
     pos1: number;
     props: Object;
     pos2?: number;
     marker?: IMarkerDef;
+    combiningOp?: ICombiningOp;
 }
 
 export interface IMergeTreeGroupMsg extends IMergeTreeDelta {

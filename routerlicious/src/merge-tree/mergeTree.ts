@@ -259,11 +259,11 @@ export abstract class BaseSegment extends MergeNode implements Segment {
     segmentGroup: SegmentGroup;
     properties: PropertySet;
 
-    addProperties(newProps: PropertySet) {
+    addProperties(newProps: PropertySet, op?: ops.ICombiningOp) {
         if (!this.properties) {
             this.properties = Properties.createMap<any>();
         }
-        Properties.extend(this.properties, newProps);
+        Properties.extend(this.properties, newProps, op);
     }
 
     isLeaf() {
@@ -1357,7 +1357,7 @@ export class Client {
                 break;
             case ops.MergeTreeDeltaType.ANNOTATE:
                 this.annotateSegmentRemote(op.props, op.pos1, op.pos2, msg.sequenceNumber, msg.referenceSequenceNumber,
-                    clid);
+                    clid, op.combiningOp);
                 break;
             case ops.MergeTreeDeltaType.GROUP:
                 for (let groupOp of op.ops) {
@@ -1411,7 +1411,7 @@ export class Client {
         }
     }
 
-    annotateSegmentLocal(props: PropertySet, start: number, end: number) {
+    annotateSegmentLocal(props: PropertySet, start: number, end: number, op: ops.ICombiningOp) {
         let segWindow = this.mergeTree.getCollabWindow();
         let clientId = segWindow.clientId;
         let refSeq = segWindow.currentSeq;
@@ -1422,7 +1422,7 @@ export class Client {
             clockStart = clock();
         }
 
-        this.mergeTree.annotateRange(props, start, end, refSeq, clientId, seq);
+        this.mergeTree.annotateRange(props, start, end, refSeq, clientId, seq, op);
 
         if (this.measureOps) {
             this.localTime += elapsedMicroseconds(clockStart);
@@ -1433,13 +1433,14 @@ export class Client {
         }
     }
 
-    annotateSegmentRemote(props: PropertySet, start: number, end: number, seq: number, refSeq: number, clientId: number) {
+    annotateSegmentRemote(props: PropertySet, start: number, end: number, seq: number, refSeq: number, 
+        clientId: number, combiningOp: ops.ICombiningOp) {
         let clockStart;
         if (this.measureOps) {
             clockStart = clock();
         }
 
-        this.mergeTree.annotateRange(props, start, end, refSeq, clientId, seq);
+        this.mergeTree.annotateRange(props, start, end, refSeq, clientId, seq, combiningOp);
         this.mergeTree.getCollabWindow().currentSeq = seq;
 
         if (this.measureOps) {
@@ -2800,14 +2801,15 @@ export class MergeTree {
         textSegment.removedClientOverlap.push(clientId);
     }
 
-    annotateRange(props: PropertySet, start: number, end: number, refSeq: number, clientId: number, seq: number) {
+    annotateRange(props: PropertySet, start: number, end: number, refSeq: number, 
+        clientId: number, seq: number, combiningOp?: ops.ICombiningOp) {
         this.ensureIntervalBoundary(start, refSeq, clientId);
         this.ensureIntervalBoundary(end, refSeq, clientId);
         let annotateSegment = (segment: Segment) => {
             let segType = segment.getType();
             if ((segType == SegmentType.Marker) || (segType == SegmentType.Text)) {
                 let baseSeg = <BaseSegment>segment;
-                baseSeg.addProperties(props);
+                baseSeg.addProperties(props, combiningOp);
             }
             return true;
         }

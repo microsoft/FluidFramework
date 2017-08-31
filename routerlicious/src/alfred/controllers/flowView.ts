@@ -714,8 +714,7 @@ function decorateLineDiv(lineDiv: ILineDiv, lineFontstr: string, lineDivHeight: 
     }
     let em = Math.round(getTextWidth("M", lineFontstr));
     let symbolWidth = getTextWidth(indentSymbol.text, indentFontstr);
-    let symbolX = Math.round(lineDiv.indentWidth - (2 * em));
-    let symbolDiv = makeContentDiv(new Geometry.Rectangle(symbolX, 0, symbolWidth,
+    let symbolDiv = makeContentDiv(new Geometry.Rectangle(lineDiv.indentWidth-Math.floor(em+symbolWidth), 0, symbolWidth,
         lineDivHeight), indentFontstr);
     symbolDiv.innerText = indentSymbol.text;
     lineDiv.appendChild(symbolDiv);
@@ -1678,7 +1677,8 @@ export class FlowView {
                     let prevTile = <IParagraphMarker>prevTilePos.tile;
                     if (isListTile(prevTile)) {
                         let curTilePos = findContainingTile(this.client, pos, "pg");
-                        curTilePos.tile.addProperties({ list: true, indentLevel: prevTile.properties.indentLevel });
+                        this.sharedString.annotateRange({ list: true, indentLevel: prevTile.properties.indentLevel },
+                            curTilePos.pos, curTilePos.pos + 1);
                     }
                 }
                 this.updatePGInfo(pos - 1);
@@ -1706,9 +1706,11 @@ export class FlowView {
                 listStatus = true;
             }
             if (listStatus) {
-                tile.addProperties({ list: false });
+                this.sharedString.annotateRange({ list: false }, tileInfo.pos, tileInfo.pos + 1);
             } else {
-                tile.addProperties({ list: true, series: [0, 0, 2, 6, 3, 7, 2, 6, 3, 7], indentLevel: 1 });
+                this.sharedString.annotateRange(
+                    { list: true, series: [0, 0, 2, 6, 3, 7, 2, 6, 3, 7], indentLevel: 1 },
+                    tileInfo.pos, tileInfo.pos + 1);
             }
             this.localQueueRender(this.cursor.pos);
         }
@@ -1724,9 +1726,11 @@ export class FlowView {
             let tile = <IParagraphMarker>tileInfo.tile;
             tile.listCache = undefined;
             if (decrease && tile.properties.indentLevel > 1) {
-                tile.properties.indentLevel--;
+                this.sharedString.annotateRange({ indentLevel: -1 },
+                    tileInfo.pos, tileInfo.pos + 1, { name: "incr", defaultValue: 1 });
             } else {
-                tile.properties.indentLevel++;
+                this.sharedString.annotateRange({ indentLevel: 1 }, tileInfo.pos, tileInfo.pos + 1,
+                    { name: "incr", defaultValue: 0 });
             }
             this.localQueueRender(this.cursor.pos);
         }
@@ -1740,7 +1744,7 @@ export class FlowView {
             if (props && props.blockquote) {
                 props.blockquote = !props.blockquote;
             } else {
-                tile.addProperties({ blockquote: true });
+                this.sharedString.annotateRange({ blockquote: true }, tileInfo.pos, tileInfo.pos + 1);
             }
             this.localQueueRender(this.cursor.pos);
         }

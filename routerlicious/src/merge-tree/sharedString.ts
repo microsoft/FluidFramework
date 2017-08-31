@@ -161,15 +161,19 @@ export class SharedString extends api.CollaborativeObject {
         });
     }
 
-    public annotateRange(props: MergeTree.PropertySet, start: number, end: number) {
-        const annotateMessage: ops.IMergeTreeAnnotateMsg = {
+    public annotateRange(props: MergeTree.PropertySet, start: number, end: number, op?: ops.ICombiningOp) {
+        let annotateMessage: ops.IMergeTreeAnnotateMsg = {
             pos1: start,
             pos2: end,
             props,
             type: ops.MergeTreeDeltaType.ANNOTATE,
         };
 
-        this.client.annotateSegmentLocal(props, start, end);
+        if (op) {
+            annotateMessage.combiningOp = op;
+        }
+
+        this.client.annotateSegmentLocal(props, start, end, op);
         this.submitLocalOperation(annotateMessage);
     }
 
