@@ -1,13 +1,13 @@
 dependencies:
   - name: minio
-    version: 0.1.3
+    version: ^0.1.3
     repository: https://kubernetes-charts.storage.googleapis.com
   - name: redis
-    version: 0.9.0
+    version: ^0.9.0
     repository: https://kubernetes-charts.storage.googleapis.com
   - name: rabbitmq
-    version: 0.6.3
+    version: ^0.6.3
     repository: https://kubernetes-charts.storage.googleapis.com
   - name: mongodb
-    version: 0.4.15
+    version: ^0.4.15
     repository: https://kubernetes-charts.storage.googleapis.com

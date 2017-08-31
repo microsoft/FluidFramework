@@ -54,8 +54,8 @@ data:
         "paparazzi": {
             "queue": "snapshot",
             "bucket": "snapshots",
-            "alfred": "http://{{ template "routerlicious.alfred.fullname" . }}",
-            "tmz": "http://{{ template "routerlicious.tmz.fullname" . }}"
+            "alfred": "http://{{ template "alfred.fullname" . }}",
+            "tmz": "http://{{ template "tmz.fullname" . }}"
         },
         "scriptorium": {
             "topic": "deltas",
