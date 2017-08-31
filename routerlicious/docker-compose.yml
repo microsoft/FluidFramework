@@ -11,6 +11,7 @@ services:
         command: node dist/alfred/www.js
         environment:
             - DEBUG=routerlicious:*
+            - NODE_ENV=development
         restart: always
     deli:
         build: .
@@ -21,6 +22,7 @@ services:
         command: node dist/deli/index.js
         environment:
             - worker__intelligence__resume__url=http://alfred:3000/intelligence/resume
+            - NODE_ENV=development
         restart: always
     scriptorium:
         build: .
@@ -31,6 +33,7 @@ services:
         command: node dist/scriptorium/index.js
         environment:
             - DEBUG=routerlicious:*
+            - NODE_ENV=development
         restart: always
     tmz:
         build: .
@@ -44,6 +47,7 @@ services:
         command: node dist/tmz/index.js
         environment:
             - DEBUG=routerlicious:*
+            - NODE_ENV=development
         restart: always
     paparazzi:
         build: .
@@ -54,6 +58,7 @@ services:
         environment:
             - DEBUG=routerlicious:*
             - worker__intelligence__resume__url=http://alfred:3000/intelligence/resume
+            - NODE_ENV=development
         restart: always
     historian:
         image: prague.azurecr.io/historian:664
@@ -61,11 +66,13 @@ services:
             - "3001:3000"
         environment:
             - DEBUG=routerlicious:*
+            - NODE_ENV=development
         restart: always
     gitrest:
         image: prague.azurecr.io/gitrest:653
         environment:
             - DEBUG=routerlicious:*
+            - NODE_ENV=development
         volumes:
             - git:/home/node/documents
         restart: always
