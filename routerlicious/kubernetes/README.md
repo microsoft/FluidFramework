@@ -17,6 +17,12 @@ And add in SSD disk support (note you will need to create a a premium blob stora
 
 `kubectl apply -f system/azure-premium-storage.yaml`
 
+### Chart deployment
+
+The chart definition is defined within routerlicious. To make generating this simpler for the CI system we
+generate the Chart.yaml and values.yaml file via a script in the tools folder. This script outputs both of
+these files. But with the ability to provide runtime parameters.
+
 ### Dependent services
 
 `kubectl apply -f compose/zookeeper.yaml`

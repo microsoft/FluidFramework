@@ -1,26 +1,36 @@
 apiVersion: apps/v1beta1
 kind: StatefulSet
 metadata:
-  name: gitrest
+  name: {{ template "gitrest.fullname" . }}
+  labels:
+    app: {{ template "routerlicious.name" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    component: "{{ .Values.gitrest.name }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
 spec:
-  serviceName: gitrest
-  replicas: 1
+  serviceName: {{ template "gitrest.fullname" . }}
+  replicas: {{ .Values.gitrest.replicas }}
   template:
     metadata:
       labels:
-        app: gitrest
+        app: {{ template "routerlicious.name" . }}
+        component: "{{ .Values.gitrest.name }}"
+        release: {{ .Release.Name }}
     spec:
       containers:
-      - name: git
-        image: prague.azurecr.io/gitssh:654
+      - name: {{ template "gitssh.fullname" . }}
+        image: "{{ .Values.gitssh.image }}"
+        imagePullPolicy: {{ default "" .Values.imagePullPolicy | quote }}
         ports:
         - name: ssh
           containerPort: 22
         volumeMounts:
         - name: data
           mountPath: /home/git
-      - name: gitrest
-        image: prague.azurecr.io/gitrest:653
+      - name: {{ template "gitrest.fullname" . }}
+        image: "{{ .Values.gitrest.image }}"
+        imagePullPolicy: {{ default "" .Values.imagePullPolicy | quote }}
         ports:
         - name: http
           containerPort: 3000

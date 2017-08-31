@@ -22,45 +22,40 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
 Create a default fully qualified client name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 */}}
-{{- define "routerlicious.alfred.fullname" -}}
-{{- $name := default .Chart.Name .Values.nameOverride -}}
-{{- printf "%s-%s-%s" .Release.Name $name .Values.alfred.name | trunc 63 | trimSuffix "-" -}}
+{{- define "alfred.fullname" -}}
+{{- printf "%s-%s" .Release.Name .Values.alfred.name | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
 {{/*
 Create a default fully qualified data name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 */}}
-{{- define "routerlicious.deli.fullname" -}}
-{{- $name := default .Chart.Name .Values.nameOverride -}}
-{{- printf "%s-%s-%s" .Release.Name $name .Values.deli.name | trunc 63 | trimSuffix "-" -}}
+{{- define "deli.fullname" -}}
+{{- printf "%s-%s" .Release.Name .Values.deli.name | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
 {{/*
 Create a default fully qualified master name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 */}}
-{{- define "routerlicious.scriptorium.fullname" -}}
-{{- $name := default .Chart.Name .Values.nameOverride -}}
-{{- printf "%s-%s-%s" .Release.Name $name .Values.scriptorium.name | trunc 63 | trimSuffix "-" -}}
+{{- define "scriptorium.fullname" -}}
+{{- printf "%s-%s" .Release.Name .Values.scriptorium.name | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
 {{/*
 Create a default fully qualified master name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 */}}
-{{- define "routerlicious.tmz.fullname" -}}
-{{- $name := default .Chart.Name .Values.nameOverride -}}
-{{- printf "%s-%s-%s" .Release.Name $name .Values.tmz.name | trunc 63 | trimSuffix "-" -}}
+{{- define "tmz.fullname" -}}
+{{- printf "%s-%s" .Release.Name .Values.tmz.name | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
 {{/*
 Create a default fully qualified master name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 */}}
-{{- define "routerlicious.paparazzi.fullname" -}}
-{{- $name := default .Chart.Name .Values.nameOverride -}}
-{{- printf "%s-%s-%s" .Release.Name $name .Values.paparazzi.name | trunc 63 | trimSuffix "-" -}}
+{{- define "paparazzi.fullname" -}}
+{{- printf "%s-%s" .Release.Name .Values.paparazzi.name | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
 {{/*
@@ -77,6 +72,14 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
 */}}
 {{- define "gitrest.fullname" -}}
 {{- printf "%s-%s" .Release.Name "gitrest" | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{/*
+Create a default fully qualified master name.
+We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
+*/}}
+{{- define "gitssh.fullname" -}}
+{{- printf "%s-%s" .Release.Name "gitssh" | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
 {{/*

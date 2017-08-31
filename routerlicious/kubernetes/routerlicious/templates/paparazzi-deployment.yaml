@@ -1,7 +1,7 @@
 apiVersion: apps/v1beta1
 kind: Deployment
 metadata:
-  name: {{ template "routerlicious.paparazzi.fullname" . }}
+  name: {{ template "paparazzi.fullname" . }}
   labels:
     app: {{ template "routerlicious.name" . }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
@@ -18,7 +18,7 @@ spec:
         release: {{ .Release.Name }}
     spec:
       containers:
-      - name: {{ template "routerlicious.paparazzi.fullname" . }}
+      - name: {{ template "paparazzi.fullname" . }}
         image: "{{ .Values.image }}"
         imagePullPolicy: {{ default "" .Values.imagePullPolicy | quote }}
         command:
