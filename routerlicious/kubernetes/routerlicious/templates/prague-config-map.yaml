@@ -36,18 +36,18 @@ data:
             }
         },
         "alfred": {
-            "kafkaClientId": "alfred",
-            "topic": "rawdeltas",
+            "kafkaClientId": "{{ template "alfred.fullname" . }}",
+            "topic": "{{ .Values.kafka.topics.rawdeltas }}",
             "bucket": "snapshots",
             "restJsonSize": "50mb"
         },
         "deli": {
             "topics": {
-                "receive": "rawdeltas",
-                "send": "deltas"
+                "receive": "{{ .Values.kafka.topics.rawdeltas }}",
+                "send": "{{ .Values.kafka.topics.deltas }}"
             },
-            "kafkaClientId": "deli",
-            "groupId": "deli",
+            "kafkaClientId": "{{ template "deli.fullname" . }}",
+            "groupId": "{{ template "deli.fullname" . }}",
             "checkpointBatchSize": 10,
             "checkpointTimeIntervalMsec": 1000
         },
@@ -58,15 +58,15 @@ data:
             "tmz": "http://{{ template "tmz.fullname" . }}"
         },
         "scriptorium": {
-            "topic": "deltas",
-            "kafkaClientId": "scriptorium",
-            "groupId": "scriptorium",
+            "topic": "{{ .Values.kafka.topics.deltas }}",
+            "kafkaClientId": "{{ template "scriptorium.fullname" . }}",
+            "groupId": "{{ template "scriptorium.fullname" . }}",
             "checkpointBatchSize": 1,
             "checkpointTimeIntervalMsec": 1000
         },
         "tmz": {
             "queue": "snapshot",
-            "topic": "deltas",
+            "topic": "{{ .Values.kafka.topics.deltas }}",
             "kafkaClientId": "tmz",
             "groupId": "tmz",
             "port": 4000,

@@ -14,14 +14,16 @@ const imageVersion = process.argv[3];
 const patch = process.argv[4];
 
 const chart =
-`name: routerlicious
+` ## Generated from a tool - do not edit directly
+name: routerlicious
 version: 0.1.${patch}
 description: Distributive object router
 home: https://github.com/microsoft/prague
 `;
 
 const values =
-`## Prague image version
+`## Generated from a tool - do not edit directly
+## Prague image version
 image: prague.azurecr.io/prague:${imageVersion}
 
 ## Specify a imagePullPolicy
@@ -67,6 +69,11 @@ gitssh:
 zookeeper:
   local: false
   url: praguekafka-broker-1:2181
+
+kafka:
+  topics:
+    rawdeltas: rawdeltas
+    deltas: deltas
 
 # Dependency overrides
 minio:
