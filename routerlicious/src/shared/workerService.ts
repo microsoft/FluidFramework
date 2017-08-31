@@ -83,7 +83,16 @@ export class WorkerService implements api.IWorkerService {
                 } else {
                     deferred.resolve();
                 }
-            });
+        });
+        // Handle connection errors.
+        this.socket.on("connect_error", (err) => {
+            console.log(`Couldn't connect to TMZ`);
+            deferred.reject(err);
+        });
+        this.socket.on("connect_error", (err) => {
+            console.log(`Connection timeout!`);
+            deferred.reject(err);
+        });
 
         return deferred.promise;
     }
