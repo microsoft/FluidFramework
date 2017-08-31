@@ -547,6 +547,7 @@ function findContainingTile(client: SharedString.Client, pos: number, tileType: 
 
     client.mergeTree.search(pos, SharedString.UniversalSequenceNumber, client.getClientId(),
         { leaf: recordPGStart, shift });
+    tilePos = client.mergeTree.getOffset(tileMarker, SharedString.UniversalSequenceNumber, client.getClientId());
     return { tile: tileMarker, pos: tilePos };
 }
 
@@ -711,8 +712,9 @@ function decorateLineDiv(lineDiv: ILineDiv, lineFontstr: string, lineDivHeight: 
     if (indentSymbol.font) {
         indentFontstr = indentSymbol.font;
     }
+    let em = Math.round(getTextWidth("M", lineFontstr));
     let symbolWidth = getTextWidth(indentSymbol.text, indentFontstr);
-    let symbolX = Math.round(lineDiv.indentWidth * 0.7);
+    let symbolX = Math.round(lineDiv.indentWidth - (2 * em));
     let symbolDiv = makeContentDiv(new Geometry.Rectangle(symbolX, 0, symbolWidth,
         lineDivHeight), indentFontstr);
     symbolDiv.innerText = indentSymbol.text;
@@ -865,6 +867,9 @@ function getListCacheInfo(flowView: FlowView, tile: IParagraphMarker, tilePos: n
                         itemCounts[indentLevel] = precedingItemCount + 1;
                     } else {
                         itemCounts[indentLevel] = 1;
+                    }
+                    for (let i = indentLevel + 1; i < itemCounts.length; i++) {
+                        itemCounts[i] = 0;
                     }
                     tile.listCache = { itemCounts };
                 }
@@ -1060,6 +1065,8 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
         startPGMarker = pgMarker;
         pgMarker = undefined;
         startPGPos = markerPos + 1;
+        // TODO: only set this to undefined if text changed
+        startPGMarker.listCache = undefined;
         getListCacheInfo(flowView, startPGMarker, markerPos);
         let indentPct = 0.0;
         let contentPct = 1.0;
@@ -1080,7 +1087,9 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
             indentWidth = Math.floor(indentPct * viewportBounds.width);
         }
         contentWidth = Math.floor(contentPct * viewportBounds.width) - indentWidth;
-
+        if (contentWidth > viewportBounds.width) {
+            console.log(`egregious content width ${contentWidth} bound ${viewportBounds.width}`);
+        }
         if ((!startPGMarker.cache) || (startPGMarker.cache.singleLineWidth !== contentWidth)) {
             client.mergeTree.mapRange({ leaf: segmentToItems }, SharedString.UniversalSequenceNumber,
                 client.getClientId(), undefined, startPGPos);
@@ -1331,6 +1340,7 @@ export class Cursor {
 
 enum KeyCode {
     backspace = 8,
+    TAB = 9,
     esc = 27,
     pageUp = 33,
     pageDown = 34,
@@ -1581,13 +1591,10 @@ export class FlowView {
             let saveLastVertX = this.lastVerticalX;
             let specialKey = true;
             this.lastVerticalX = -1;
-            if (e.keyCode !== 17) {
-                console.log(`key ${e.keyCode} ctrl ${e.ctrlKey} alt ${e.altKey}`);
-            }
             if (e.ctrlKey && (e.keyCode !== 17)) {
                 this.keyCmd(e.keyCode);
-            } else if (e.keyCode === 9) {
-                this.increaseIndent();
+            } else if (e.keyCode === KeyCode.TAB) {
+                this.increaseIndent(e.shiftKey);
             } else if (e.keyCode === KeyCode.backspace) {
                 this.cursor.pos--;
                 this.sharedString.removeText(this.cursor.pos, this.cursor.pos + 1);
@@ -1686,21 +1693,33 @@ export class FlowView {
     }
 
     // for now, no toggle
-    public setList() {
+    public setList(unlist = false) {
         let tileInfo = findContainingTile(this.client, this.cursor.pos, "pg");
         if (tileInfo) {
             let tile = tileInfo.tile;
-            tile.addProperties({ list: true, series: [0, 0, 2, 6, 3, 7], indentLevel: 1 });
+            if (unlist) {
+                tile.addProperties({ list: false });
+            } else {
+                tile.addProperties({ list: true, series: [0, 0, 2, 6, 3, 7, 2, 6, 3, 7], indentLevel: 1 });
+            }
             this.localQueueRender(this.cursor.pos);
         }
     }
 
-    public increaseIndent() {
-        let tileInfo = findContainingTile(this.client, this.cursor.pos, "pg");
+    public increaseIndent(decrease = false) {
+        let searchPos = this.cursor.pos;
+        if (this.cursor.pos === this.cursor.lineDiv().lineEnd) {
+            searchPos--;
+        }
+        let tileInfo = findContainingTile(this.client, searchPos, "pg");
         if (tileInfo) {
             let tile = <IParagraphMarker>tileInfo.tile;
             tile.listCache = undefined;
-            tile.properties.indentLevel++;
+            if (decrease && tile.properties.indentLevel > 1) {
+                tile.properties.indentLevel--;
+            } else {
+                tile.properties.indentLevel++;
+            }
             this.localQueueRender(this.cursor.pos);
         }
     }

@@ -2392,11 +2392,11 @@ export class MergeTree {
                 }
             }
             else {
-                pos -= len;
-                segpos += len;
                 if (actions && actions.shift) {
                     actions.shift(child, segpos, refSeq, clientId, pos, undefined, accum);
                 }
+                pos -= len;
+                segpos += len;
             }
         }
         if (actions && actions.post) {
