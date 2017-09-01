@@ -15,7 +15,7 @@
         <script>
             var config = {{{ config }}};
             var version = {{{ version }}};
-            controller.load("{{ id }}", version, config);
+            controller.maps.load("{{ id }}", version, config);
         </script>
     {{/scripts}}
 {{/layout}}
