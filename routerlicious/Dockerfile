@@ -5,13 +5,14 @@ RUN apk add --no-cache tini
 # Copy over and build the server
 WORKDIR /usr/src/server
 
-# Copy over the package-lock and install prior to the other code to optimize Docker's file system cache on rebuilds
+# Copy over the package and package-lock and install prior to the other code to optimize Docker's file system cache on rebuilds
 COPY package-lock.json .
+COPY package.json .
 RUN npm install
 
 # And now copy over our actual code and build
 COPY . .
-RUN npm run build
+RUN npm run build:full
 
 # Expose the port the app runs under
 EXPOSE 3000
