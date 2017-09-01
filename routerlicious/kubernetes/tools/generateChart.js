@@ -61,6 +61,10 @@ historian:
 gitrest:
   name: gitrest
   image: prague.azurecr.io/gitrest:653
+  persistence:
+    storageClass: ssd
+    size: 128Gi
+    accessMode: ReadWriteOnce
 
 gitssh:
   name: gitssh
