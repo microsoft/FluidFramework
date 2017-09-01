@@ -41,6 +41,16 @@ kubectl apply -f system/helm.yaml
 helm init --service-account helm
 ```
 
+### Manual steps
+
+We will move these to Kubernetes jobs. But for now they need to be applied manually the first time you create a cluster
+
+```
+./kafka-topics --zookeeper praguekafka-broker-1:2181 --partitions 8 --replication-factor 3 --create --topic deltas
+./kafka-topics --zookeeper praguekafka-broker-1:2181 --partitions 8 --replication-factor 3 --create --topic rawdeltas
+curl -H "Content-Type: application/json" -X POST -d '{"name": "prague"}' --verbose prague-historian.westus2.cloudapp.azure.com/repos
+```
+
 ### Build the chart
 
 The chart definition is defined within routerlicious. To make generating this simpler for the CI system we

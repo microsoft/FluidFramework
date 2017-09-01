@@ -67,8 +67,8 @@ data:
         "tmz": {
             "queue": "snapshot",
             "topic": "{{ .Values.kafka.topics.deltas }}",
-            "kafkaClientId": "tmz",
-            "groupId": "tmz",
+            "kafkaClientId": "{{ template "tmz.fullname" . }}",
+            "groupId": "{{ template "tmz.fullname" . }}",
             "port": 4000,
             "timeoutMSec": {
                 "checker": 10000,
