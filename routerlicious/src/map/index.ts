@@ -142,9 +142,9 @@ export class MapView implements api.IMapView {
         this.events.emit("valueChanged", { key });
     }
 
-    public createCounter(key: string, value: number) {
+    public createCounter(key: string, value: number, min: number, max: number) {
         this.initCounter(key, value);
-        return new Counter(this, key);
+        return new Counter(this, key, min, max);
     }
 
     public initCounterCore(key: string, value: IMapValue) {
@@ -245,8 +245,20 @@ class Map extends api.CollaborativeObject implements api.IMap {
         return Promise.resolve(this.view.clear());
     }
 
-    public createCounter(key: string, value: number) {
-        return Promise.resolve(this.view.createCounter(key, value));
+    public createCounter(key: string, value?: number, min?: number, max?: number): Promise<api.ICounter> {
+        if (value === undefined) {
+            value = 0;
+        }
+        if (min === undefined) {
+            min = Number.MIN_SAFE_INTEGER;
+        }
+        if (max === undefined) {
+            max = Number.MAX_SAFE_INTEGER;
+        }
+        if (value < min || value > max) {
+            throw new Error("Initial value exceeds the counter range!");
+        }
+        return Promise.resolve(this.view.createCounter(key, value, min, max));
     }
 
     public snapshot(): api.ITree {

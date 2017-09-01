@@ -138,7 +138,7 @@ export interface IMap extends ICollaborativeObject {
     /**
      * Creates a counter inside the map.
      */
-    createCounter(key: string, value: number): Promise<ICounter>;
+    createCounter(key: string, value?: number, min?: number, max?: number): Promise<ICounter>;
 }
 
 /**
