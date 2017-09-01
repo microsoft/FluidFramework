@@ -13,7 +13,7 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config: {{ include (print $.Template.BasePath "/prague-config-map.yaml") . | sha256sum }}
+        checksum/config: {{ include (print $.Template.BasePath "/prague-configmap.yaml") . | sha256sum }}
       labels:
         app: {{ template "routerlicious.name" . }}
         component: "{{ .Values.scriptorium.name }}"

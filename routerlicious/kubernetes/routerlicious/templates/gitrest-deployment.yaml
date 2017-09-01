@@ -1,5 +1,5 @@
 apiVersion: apps/v1beta1
-kind: StatefulSet
+kind: Deployment
 metadata:
   name: {{ template "gitrest.fullname" . }}
   labels:
@@ -9,8 +9,6 @@ metadata:
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"
 spec:
-  serviceName: {{ template "gitrest.fullname" . }}
-  replicas: {{ .Values.gitrest.replicas }}
   template:
     metadata:
       annotations:
@@ -51,14 +49,7 @@ spec:
         - name: config
           configMap:
             name: {{ template "gitrest.fullname" . }}
-  volumeClaimTemplates:
-  - metadata:
-      name: data
-      annotations:
-        volume.beta.kubernetes.io/storage-class: ssd
-    spec:
-      accessModes: 
-        - ReadWriteOnce
-      resources:
-        requests:
-          storage: 128Gi
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ .Values.gitrest.persistence.existingClaim | default (include "gitrest.fullname" .) }}
+

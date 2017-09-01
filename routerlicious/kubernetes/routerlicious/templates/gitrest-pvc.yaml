@@ -1,0 +1,18 @@
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: {{ template "gitrest.fullname" . }}
+  labels:
+    app: {{ template "routerlicious.name" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    component: "{{ .Values.gitrest.name }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+  annotations:
+    volume.beta.kubernetes.io/storage-class: {{ .Values.gitrest.persistence.storageClass | quote }}
+spec:
+  accessModes:
+    - {{ .Values.gitrest.persistence.accessMode | quote }}
+  resources:
+    requests:
+      storage: {{ .Values.gitrest.persistence.size | quote }}
