@@ -130,8 +130,8 @@ class KafkaNodeConsumer implements IConsumer {
     }
 
     public async close(): Promise<void> {
-        await util.promisify((callback) => this.instance.close(false, callback))();
-        await util.promisify((callback) => this.client.close(callback))();
+        await util.promisify(((callback) => this.instance.close(false, callback)) as Function)();
+        await util.promisify(((callback) => this.client.close(callback)) as Function)();
     }
 
     public on(event: string, listener: (...args: any[]) => void): this {

@@ -2,6 +2,7 @@ import * as bodyParser from "body-parser";
 import * as compression from "compression";
 import * as express from "express";
 import { Express } from "express";
+import * as fs from "fs";
 import * as morgan from "morgan";
 import * as nconf from "nconf";
 import * as passport from "passport";
@@ -18,10 +19,35 @@ const staticFilesEndpoint = "/public";
 // Maximum REST request size
 const requestSize = nconf.get("alfred:restJsonSize");
 
+// Static cache to help map from full to minified files
+const staticMinCache: { [key: string]: string } = {};
+
 // Helper function to translate from a static files URL to the path to find the file
 // relative to the static assets directory
 function translateStaticUrl(url: string): string {
-    return staticFilesEndpoint + app.locals.furl(url.substring(staticFilesEndpoint.length));
+    const local = url.substring(staticFilesEndpoint.length);
+    if (!(local in staticMinCache)) {
+        const parsedPath = path.parse(local);
+        parsedPath.name = `${parsedPath.name}.min`;
+        // base and root are marked undefined to placate the TS definitions and because we want the format to
+        // resolve with dir/ext/name. Base and root if defined will override.
+        const minified = path.format({
+            base: undefined,
+            dir: parsedPath.dir,
+            ext: parsedPath.ext,
+            name: parsedPath.name,
+            root: undefined,
+        });
+
+        // Cache the result and then update local
+        utils.logger.info(path.join(__dirname, "../../public", minified));
+        staticMinCache[local] =
+            app.get("env") === "production" && fs.existsSync(path.join(__dirname, "../../public", minified))
+                ? minified
+                : local;
+    }
+
+    return staticFilesEndpoint + app.locals.furl(staticMinCache[local]);
 }
 
 // Express app configuration

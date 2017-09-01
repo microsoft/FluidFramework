@@ -27,7 +27,7 @@ if (!sharedStringId) {
 // Mark socket storage as our default provider
 socketStorage.registerAsDefault(commander.server, commander.storage, commander.repository);
 
-fs.readFile(commander.file, "utf8", (error, data) => {
+fs.readFile(commander.file, "utf8", (error, data: string) => {
     if (error) {
         console.error(error);
         process.exit(1);
