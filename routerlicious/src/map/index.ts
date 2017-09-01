@@ -19,6 +19,9 @@ export enum ValueType {
 
     // The value is a plain JavaScript object
     Plain,
+
+    // The value is a counter
+    Counter,
 }
 
 export interface ICollaborativeMapValue {
@@ -39,7 +42,7 @@ export interface IMapValue {
 
 const snapshotFileName = "header";
 
-class MapView implements api.IMapView {
+export class MapView implements api.IMapView {
     constructor(
         private document: api.Document,
         id: string,
@@ -140,8 +143,55 @@ class MapView implements api.IMapView {
     }
 
     public createCounter(key: string, value: number) {
-        this.set(key, value);
+        this.initCounter(key, value);
         return new Counter(this, key);
+    }
+
+    public initCounterCore(key: string, value: IMapValue) {
+        if (value.type !== ValueType[ValueType.Counter]) {
+            throw new Error("Invalid initial value type!");
+        }
+        if (typeof value.value !== "number") {
+            throw new Error("Initial value should be a number");
+        }
+        this.data[key] = value;
+        this.events.emit("valueChanged", { key });
+    }
+
+    public incrementCounter(key: string, value: number) {
+        const operationValue: IMapValue = {type: ValueType[ValueType.Counter], value};
+        const op: IMapOperation = {
+            key,
+            type: "incrementCounter",
+            value: operationValue,
+        };
+        this.incrementCounterCore(op.key, op.value);
+        this.submitLocalOperation(op);
+    }
+
+    public incrementCounterCore(key: string, value: IMapValue) {
+        if (value.type !== ValueType[ValueType.Counter]) {
+            throw new Error("Increment can only be performed on Counter type!");
+        }
+        if (typeof value.value !== "number") {
+            throw new Error("Incremental amount should be a number");
+        }
+        if (!(key in this.data) || (typeof this.data[key].value !== "number")) {
+            throw new Error("Invalid key!");
+        }
+        this.data[key].value += value.value;
+        this.events.emit("valueChanged", { key });
+    }
+
+    private initCounter(key: string, value: number) {
+        const operationValue: IMapValue = {type: ValueType[ValueType.Counter], value};
+        const op: IMapOperation = {
+            key,
+            type: "initCounter",
+            value: operationValue,
+        };
+        this.initCounterCore(op.key, op.value);
+        this.submitLocalOperation(op);
     }
 }
 
@@ -254,6 +304,12 @@ class Map extends api.CollaborativeObject implements api.IMap {
                     break;
                 case "set":
                     this.view.setCore(op.key, op.value);
+                    break;
+                case "initCounter":
+                    this.view.initCounterCore(op.key, op.value);
+                    break;
+                case "incrementCounter":
+                    this.view.incrementCounterCore(op.key, op.value);
                     break;
                 default:
                     throw new Error("Unknown operation");

@@ -1,11 +1,11 @@
 import * as api from "../api";
+import { MapView } from "./";
 
 export class Counter implements api.ICounter {
-    constructor(private parentMap: api.IMapView, private key: string) {
+    constructor(private parentMap: MapView, private key: string) {
 
     }
     public increment(value: number): Promise<void> {
-        const currentValue = this.parentMap.get(this.key);
-        return Promise.resolve(this.parentMap.set(this.key, currentValue + value));
+        return Promise.resolve(this.parentMap.incrementCounter(this.key, value));
     }
 }
