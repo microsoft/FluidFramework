@@ -149,7 +149,9 @@ export class MergeNode implements Node {
 }
 
 function addTile(tile: Marker, tiles: Object) {
-    tiles[tile.type] = tile;
+    for (let tileLabel of tile.getMarkerLabels()) {
+        tiles[tileLabel] = tile;
+    }
 }
 
 function applyStackDelta(stacks: RangeStackMap, delta: RangeStackMap) {
@@ -185,6 +187,14 @@ function applyRangeMarker(stack: Collections.Stack<Marker>, delta: Marker) {
 }
 
 function addNodeMarkers(node: Node, tiles: MapLike<Marker>, rangeStacks: RangeStackMap) {
+    function updateRangeInfo(label: string, marker: Marker) {
+        let stack = rangeStacks[label];
+        if (stack === undefined) {
+            stack = new Collections.Stack<Marker>();
+            rangeStacks[label] = stack;
+        }
+        applyRangeMarker(stack, marker);
+    }
     if (node.isLeaf()) {
         let segment = <Segment>node;
         if ((segment.netLength() > 0) && (segment.getType() == SegmentType.Marker)) {
@@ -193,17 +203,12 @@ function addNodeMarkers(node: Node, tiles: MapLike<Marker>, rangeStacks: RangeSt
                 addTile(marker, tiles);
             }
             else if (marker.behaviors & ops.MarkerBehaviors.Range) {
-                let type = marker.type;
-                let stack = rangeStacks[type];
-                if (stack === undefined) {
-                    stack = new Collections.Stack<Marker>();
-                    rangeStacks[type] = stack;
+                for (let label of marker.getMarkerLabels()) {
+                    updateRangeInfo(label, marker);
                 }
-                applyRangeMarker(stack, marker);
             }
         }
-    }
-    else {
+    } else {
         let block = <HierBlock>node;
         applyStackDelta(rangeStacks, block.rangeStacks);
         Properties.extend(tiles, block.rightmostTiles);
@@ -317,23 +322,56 @@ export class ExternalSegment extends BaseSegment {
     }
 }
 
+export let reservedMarkerLabelsKey = "markerLabels";
+
 export class Marker extends BaseSegment {
-    public static make(type: string, behavior: ops.MarkerBehaviors, props?: PropertySet,
+    public static make(behavior: ops.MarkerBehaviors, props?: PropertySet,
         seq?: number, clientId?: number) {
-        let marker = new Marker(type, behavior, seq, clientId);
+        let marker = new Marker(behavior, seq, clientId);
         if (props) {
             marker.addProperties(props);
         }
         return marker;
     }
 
-    constructor(public type: string, public behaviors: ops.MarkerBehaviors, seq?: number, clientId?: number) {
+    constructor(public behaviors: ops.MarkerBehaviors, seq?: number, clientId?: number) {
         super(seq, clientId);
         this.cachedLength = 1;
     }
 
+    hasMarkerLabels() {
+        return this.behaviors &&
+            (ops.MarkerBehaviors.Tile | ops.MarkerBehaviors.Range) &&
+            this.properties && this.properties[reservedMarkerLabelsKey];
+    }
+
+    hasLabel(label: string) {
+        if (this.hasMarkerLabels()) {
+            for (let markerLabel of this.properties[reservedMarkerLabelsKey]) {
+                if (label === markerLabel) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    getMarkerLabels() {
+        if (this.hasMarkerLabels()) {
+            return <string[]>this.properties[reservedMarkerLabelsKey];
+        } else {
+            return [];
+        }
+    }
+
     toString() {
-        return `M:${this.type}`;
+        let lbuf = "";
+        if (this.hasMarkerLabels()) {
+            for (let tileLabel of this.properties[reservedMarkerLabelsKey]) {
+                lbuf += "; " + tileLabel;
+            }
+        }
+        return `M:${lbuf}`;
     }
 
     getType() {
@@ -1433,7 +1471,7 @@ export class Client {
         }
     }
 
-    annotateSegmentRemote(props: PropertySet, start: number, end: number, seq: number, refSeq: number, 
+    annotateSegmentRemote(props: PropertySet, start: number, end: number, seq: number, refSeq: number,
         clientId: number, combiningOp: ops.ICombiningOp) {
         let clockStart;
         if (this.measureOps) {
@@ -1515,7 +1553,8 @@ export class Client {
         }
     }
 
-    insertMarkerLocal(pos: number, type: string, behaviors: ops.MarkerBehaviors, props?: PropertySet, end?: number) {
+    insertMarkerLocal(pos: number, behaviors: ops.MarkerBehaviors, props?: PropertySet,
+        end?: number) {
         let segWindow = this.mergeTree.getCollabWindow();
         let clientId = segWindow.clientId;
         let refSeq = segWindow.currentSeq;
@@ -1526,14 +1565,14 @@ export class Client {
         }
 
         // TODO: add end
-        this.mergeTree.insertMarker(pos, refSeq, clientId, seq, type, behaviors, props);
+        this.mergeTree.insertMarker(pos, refSeq, clientId, seq, behaviors, props);
 
         if (this.measureOps) {
             this.localTime += elapsedMicroseconds(clockStart);
             this.localOps++;
         }
         if (this.verboseOps) {
-            console.log(`insert local marker of type ${type} pos ${pos} cli ${this.getLongClientId(clientId)} ref seq ${refSeq}`);
+            console.log(`insert local marke pos ${pos} cli ${this.getLongClientId(clientId)} ref seq ${refSeq}`);
         }
     }
 
@@ -1543,7 +1582,7 @@ export class Client {
             clockStart = clock();
         }
 
-        this.mergeTree.insertMarker(pos, refSeq, clientId, seq, marker.type, marker.behaviors, props);
+        this.mergeTree.insertMarker(pos, refSeq, clientId, seq, marker.behaviors, props);
         this.mergeTree.getCollabWindow().currentSeq = seq;
 
         if (this.measureOps) {
@@ -1552,7 +1591,7 @@ export class Client {
             this.accumWindow += (this.getCurrentSeq() - this.mergeTree.getCollabWindow().minSeq);
         }
         if (this.verboseOps) {
-            console.log(`@cli ${this.getLongClientId(this.mergeTree.getCollabWindow().clientId)} type ${marker.type} seq ${seq} insert remote pos ${pos} refseq ${refSeq} cli ${clientId}`);
+            console.log(`@cli ${this.getLongClientId(this.mergeTree.getCollabWindow().clientId)} ${marker.toString()} seq ${seq} insert remote pos ${pos} refseq ${refSeq} cli ${clientId}`);
         }
     }
 
@@ -2477,8 +2516,8 @@ export class MergeTree {
         }
         else {
             // assume marker for now
-            this.insertMarker(pos, UniversalSequenceNumber, LocalClientId, UniversalSequenceNumber, segSpec.marker.type,
-                segSpec.marker.behaviors, segSpec.props as PropertySet);
+            this.insertMarker(pos, UniversalSequenceNumber, LocalClientId, 
+                UniversalSequenceNumber, segSpec.marker.behaviors, segSpec.props as PropertySet);
         }
     }
 
@@ -2491,9 +2530,9 @@ export class MergeTree {
         this.updateRoot(splitNode, refSeq, clientId, seq);
     }
 
-    insertMarker(pos: number, refSeq: number, clientId: number, seq: number, type: string,
+    insertMarker(pos: number, refSeq: number, clientId: number, seq: number, 
         behaviors: ops.MarkerBehaviors, props?: PropertySet) {
-        let marker = Marker.make(type, behaviors, props, seq, clientId);
+        let marker = Marker.make(behaviors, props, seq, clientId);
         this.insert(pos, refSeq, clientId, seq, marker, (block, pos, refSeq, clientId, seq, marker) =>
             this.blockInsert(block, pos, refSeq, clientId, seq, marker));
     }
@@ -2801,7 +2840,7 @@ export class MergeTree {
         textSegment.removedClientOverlap.push(clientId);
     }
 
-    annotateRange(props: PropertySet, start: number, end: number, refSeq: number, 
+    annotateRange(props: PropertySet, start: number, end: number, refSeq: number,
         clientId: number, seq: number, combiningOp?: ops.ICombiningOp) {
         this.ensureIntervalBoundary(start, refSeq, clientId);
         this.ensureIntervalBoundary(end, refSeq, clientId);

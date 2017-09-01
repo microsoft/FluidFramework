@@ -7,7 +7,6 @@ export enum MarkerBehaviors {
 }
 
 export interface IMarkerDef {
-    type: string;
     behaviors?: MarkerBehaviors;
     end?: number;
 }
@@ -49,6 +48,8 @@ export interface IMergeTreeRemoveMsg extends IMergeTreeDelta {
 export interface ICombiningOp {
     name: string;
     defaultValue: any;
+    minValue?: any;
+    maxValue?: any;
 }
 
 export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {

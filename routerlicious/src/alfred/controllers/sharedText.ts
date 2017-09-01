@@ -254,7 +254,8 @@ export async function onLoad(id: string, version: resources.ICommit, config: any
                 // assume marker
                 let marker = <SharedString.Marker>segment;
                 // tslint:disable:max-line-length
-                newString.insertMarker(newString.client.getLength(), marker.type, marker.behaviors, marker.properties);
+                newString.insertMarker(newString.client.getLength(), 
+                    marker.behaviors, marker.properties);
             }
         }
 

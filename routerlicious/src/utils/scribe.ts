@@ -331,7 +331,8 @@ async function typeFile(
             // Start inserting text into the string
             if (readPosition === 0) {
                 trackOperation(() => {
-                    sharedString.insertMarker(0, "pg", SharedString.MarkerBehaviors.Tile);
+                    sharedString.insertMarker(0, SharedString.MarkerBehaviors.Tile,
+                        {[SharedString.reservedMarkerLabelsKey]: ["pg"]});
                     insertPosition++;
                 });
             }
@@ -342,7 +343,8 @@ async function typeFile(
             }
             trackOperation(() => {
                 if (code === 10) {
-                    sharedString.insertMarker(insertPosition++, "pg", SharedString.MarkerBehaviors.Tile);
+                    sharedString.insertMarker(insertPosition++, SharedString.MarkerBehaviors.Tile,
+                    {[SharedString.reservedMarkerLabelsKey]: ["pg"]});
                     readPosition++;
                 } else {
                     sharedString.insertText(fileText.charAt(readPosition++), insertPosition++);

@@ -132,7 +132,7 @@ export class Snapshot {
                         texts.push({
                             props: markerSeg.properties,
                             // TODO: marker end position
-                            marker: { behaviors: markerSeg.behaviors, type: markerSeg.type },
+                            marker: { behaviors: markerSeg.behaviors },
                         })
                         break;
                 }

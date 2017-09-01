@@ -27,7 +27,8 @@ export function loadSegments(content: string, segLimit: number, markers = false)
     for (let paragraph of paragraphs) {
         let pgMarker: MergeTree.Marker;
         if (markers) {
-            pgMarker = MergeTree.Marker.make("pg", ops.MarkerBehaviors.Tile, undefined, seq, cli);
+            pgMarker = MergeTree.Marker.make(ops.MarkerBehaviors.Tile, 
+                { [MergeTree.reservedMarkerLabelsKey]: ["pg"]}, seq, cli);
             segments.push(pgMarker);
         }
         if (withProps) {
@@ -49,7 +50,6 @@ export function loadSegments(content: string, segLimit: number, markers = false)
                     }
                     else {
                         if (emphStrings[i].length > 0) {
-                            // segments.push(MergeTree.Marker.make("pg", api.MarkerBehaviors.PropagatesForward, undefined, seq, cli));
                             segments.push(new MergeTree.TextSegment(emphStrings[i], seq, cli));
                         }
                     }

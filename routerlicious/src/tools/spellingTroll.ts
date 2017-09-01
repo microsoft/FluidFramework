@@ -118,7 +118,7 @@ class Speller {
                 case SharedString.SegmentType.Marker:
                     let marker = <SharedString.Marker>segment;
                     if (marker.netLength()) {
-                        if (marker.type === "pg") {
+                        if (marker.hasLabel("pg")) {
                             if (prevPG) {
                                 // TODO: send paragraph to service
                                 spellParagraph(startPGPos, segpos, pgText);
@@ -188,7 +188,7 @@ class Speller {
                     }
                     sentence = " " + sentence;
                     let marker = <SharedString.Marker>segment;
-                    if (marker.type === "pg") {
+                    if (marker.hasLabel("pg")) {
                         return false;
                     }
                     break;
@@ -221,7 +221,7 @@ class Speller {
                     }
                     fwdSentence = fwdSentence + " ";
                     let marker = <SharedString.Marker>segment;
-                    if (marker.type === "pg") {
+                    if (marker.hasLabel("pg")) {
                         return false;
                     }
                     break;

@@ -45,7 +45,6 @@ function textsToSegments(texts: ops.IPropertyString[]) {
         } else {
             // for now assume marker
             segment = MergeTree.Marker.make(
-                ptext.marker.type,
                 ptext.marker.behaviors,
                 ptext.props as MergeTree.PropertySet,
                 MergeTree.UniversalSequenceNumber,
@@ -109,19 +108,18 @@ export class SharedString extends api.CollaborativeObject {
 
     public insertMarker(
         pos: number,
-        type: string,
         behaviors: ops.MarkerBehaviors,
         props?: MergeTree.PropertySet,
         end?: number) {
 
         const insertMessage: ops.IMergeTreeInsertMsg = {
-            marker: { type, behaviors, end },
+            marker: { behaviors, end },
             pos1: pos,
             props,
             type: ops.MergeTreeDeltaType.INSERT,
         };
 
-        this.client.insertMarkerLocal(pos, type, behaviors, props, end);
+        this.client.insertMarkerLocal(pos, behaviors, props, end);
         this.submitLocalOperation(insertMessage);
     }
 

@@ -790,7 +790,8 @@ export function TestPack() {
             if (includeMarkers) {
                 server.enqueueMsg(client.makeInsertMarkerMsg("test", ops.MarkerBehaviors.Tile,
                     pos, MergeTree.UnassignedSequenceNumber, client.getCurrentSeq(), ""));
-                client.insertMarkerLocal(pos, "test", ops.MarkerBehaviors.Tile);
+                client.insertMarkerLocal(pos, ops.MarkerBehaviors.Tile,
+                     { [MergeTree.reservedMarkerLabelsKey]: "test"});
             }
             server.enqueueMsg(client.makeInsertMsg(text, pos, MergeTree.UnassignedSequenceNumber,
                 client.getCurrentSeq(), server.longClientId));
@@ -1241,7 +1242,8 @@ export function TestPack() {
                 console.log(cli.relText(clientId, refSeq));
             }
         }
-        cli.insertMarkerRemote({ type: "peach", behaviors: ops.MarkerBehaviors.Tile }, 0, {},
+        cli.insertMarkerRemote({ behaviors: ops.MarkerBehaviors.Tile }, 0, 
+            { [MergeTree.reservedMarkerLabelsKey]: ["peach"]},
             5, 0, 2)
         cli.insertTextRemote("very ", 6, undefined, 4, 2, 2);
         console.log(cli.mergeTree.toString());
@@ -1257,7 +1259,7 @@ export function TestPack() {
                 console.log(seg.text);
             }
             else {
-                console.log(`M:${seg.marker.type}`);
+                console.log(seg.marker.toString());
             }
         }
         cli = new MergeTree.Client(" old sock!");

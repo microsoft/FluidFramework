@@ -50,6 +50,7 @@ enum CharacterCodes {
 
     A = 65,
     B = 66,
+    G = 71, 
     L = 76,
     Z = 90,
     space = 0x0020,   // " "
@@ -515,7 +516,7 @@ function findContainingTile(client: SharedString.Client, pos: number, tileType: 
     function recordPGStart(segment: SharedString.Segment, segpos: number) {
         if (segment.getType() === SharedString.SegmentType.Marker) {
             let marker = <SharedString.Marker>segment;
-            if (marker.type === tileType) {
+            if (marker.hasLabel(tileType)) {
                 tileMarker = marker;
                 tilePos = segpos;
             }
@@ -528,7 +529,7 @@ function findContainingTile(client: SharedString.Client, pos: number, tileType: 
             let seg = <SharedString.Segment>node;
             if ((seg.netLength() > 0) && (seg.getType() === SharedString.SegmentType.Marker)) {
                 let marker = <SharedString.Marker>seg;
-                if (marker.type === tileType) {
+                if (marker.hasLabel(tileType)) {
                     tileMarker = marker;
                     tilePos = segpos;
                 }
@@ -538,7 +539,6 @@ function findContainingTile(client: SharedString.Client, pos: number, tileType: 
             let marker = <SharedString.Marker>block.rightmostTiles[tileType];
             if (marker !== undefined) {
                 tileMarker = marker;
-                tilePos = segpos;
             }
 
         }
@@ -547,8 +547,11 @@ function findContainingTile(client: SharedString.Client, pos: number, tileType: 
 
     client.mergeTree.search(pos, SharedString.UniversalSequenceNumber, client.getClientId(),
         { leaf: recordPGStart, shift });
-    tilePos = client.mergeTree.getOffset(tileMarker, SharedString.UniversalSequenceNumber, client.getClientId());
-    return { tile: tileMarker, pos: tilePos };
+    // TODO: test using recorded tilePos when defined
+    if (tileMarker) {
+        tilePos = client.mergeTree.getOffset(tileMarker, SharedString.UniversalSequenceNumber, client.getClientId());
+        return { tile: tileMarker, pos: tilePos };
+    }
 }
 
 const enum ParagraphLexerState {
@@ -676,7 +679,7 @@ function renderSegmentIntoLine(segment: SharedString.Segment, segpos: number, re
         }
     } else if (segType === SharedString.SegmentType.Marker) {
         let marker = <SharedString.Marker>segment;
-        if (marker.type === "pg") {
+        if (marker.hasLabel("pg")) {
             lineContext.pgMarker = marker;
             lineContext.markerPos = segpos;
             if (lineContext.flowView.cursor.pos === segpos) {
@@ -714,7 +717,7 @@ function decorateLineDiv(lineDiv: ILineDiv, lineFontstr: string, lineDivHeight: 
     }
     let em = Math.round(getTextWidth("M", lineFontstr));
     let symbolWidth = getTextWidth(indentSymbol.text, indentFontstr);
-    let symbolDiv = makeContentDiv(new Geometry.Rectangle(lineDiv.indentWidth-Math.floor(em+symbolWidth), 0, symbolWidth,
+    let symbolDiv = makeContentDiv(new Geometry.Rectangle(lineDiv.indentWidth - Math.floor(em + symbolWidth), 0, symbolWidth,
         lineDivHeight), indentFontstr);
     symbolDiv.innerText = indentSymbol.text;
     lineDiv.appendChild(symbolDiv);
@@ -777,7 +780,7 @@ interface ITilePos {
     pos: number;
 }
 
-function getPrecedingTile(flowView: FlowView, tile: SharedString.Marker, tilePos: number,
+function getPrecedingTile(flowView: FlowView, tile: SharedString.Marker, tilePos: number, label: string,
     filter: (candidate: SharedString.Marker) => boolean, precedingTileCache?: ITilePos[]) {
     if (precedingTileCache) {
         for (let i = precedingTileCache.length - 1; i >= 0; i--) {
@@ -789,15 +792,15 @@ function getPrecedingTile(flowView: FlowView, tile: SharedString.Marker, tilePos
     }
     while (tilePos > 0) {
         tilePos = tilePos - 1;
-        let prevTileInfo = findContainingTile(flowView.client, tilePos, tile.type);
-        if (filter(prevTileInfo.tile)) {
+        let prevTileInfo = findContainingTile(flowView.client, tilePos, label);
+        if (prevTileInfo && filter(prevTileInfo.tile)) {
             return prevTileInfo;
         }
     }
 }
 
 function isListTile(tile: IParagraphMarker) {
-    return tile && tile.properties && tile.properties.list;
+    return tile.hasLabel("list");
 }
 
 export interface ISymbol {
@@ -841,21 +844,30 @@ let listSeries = [
     (itemIndex) => roman(itemIndex),
 ];
 
-// TODO: handle head of list delisted
+function convertToListHead(tile: IParagraphMarker) {
+    tile.listHeadCache = {
+        series: <number[]>tile.properties.series,
+        tile,
+    };
+    tile.listCache = { itemCounts: [0, 1] };
+}
+
+/**
+ * maximum number of characters before a preceding list paragraph deemed irrelevant
+ */
+let maxListDistance = 400;
+
 function getListCacheInfo(flowView: FlowView, tile: IParagraphMarker, tilePos: number,
     precedingTileCache?: ITilePos[]) {
 
     if (isListTile(tile)) {
         if (tile.listCache === undefined) {
             if (tile.properties.series) {
-                tile.listHeadCache = {
-                    series: <number[]>tile.properties.series,
-                    tile,
-                };
-                tile.listCache = { itemCounts: [0, 1] };
+                convertToListHead(tile);
             } else {
-                let precedingTilePos = getPrecedingTile(flowView, tile, tilePos, isListTile, precedingTileCache);
-                if (precedingTilePos) {
+                let precedingTilePos = getPrecedingTile(flowView, tile, tilePos, "list",
+                    isListTile, precedingTileCache);
+                if (precedingTilePos && ((tilePos - precedingTilePos.pos) < maxListDistance)) {
                     getListCacheInfo(flowView, precedingTilePos.tile, precedingTilePos.pos, precedingTileCache);
                     let precedingTile = <IParagraphMarker>precedingTilePos.tile;
                     tile.listHeadCache = precedingTile.listHeadCache;
@@ -871,6 +883,11 @@ function getListCacheInfo(flowView: FlowView, tile: IParagraphMarker, tilePos: n
                         itemCounts[i] = 0;
                     }
                     tile.listCache = { itemCounts };
+                } else {
+                    // doesn't race because re-render is deferred
+                    flowView.sharedString.annotateRange({ series: [0, 0, 2, 6, 3, 7, 2, 6, 3, 7] },
+                        tilePos, tilePos + 1);
+                    convertToListHead(tile);
                 }
             }
         }
@@ -986,7 +1003,7 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
             paragraphLexer.lex(textSegment);
         } else if (segment.getType() === SharedString.SegmentType.Marker) {
             let marker = <SharedString.Marker>segment;
-            if (marker.type === "pg") {
+            if (marker.hasLabel("pg")) {
                 return false;
             }
         }
@@ -1671,15 +1688,18 @@ export class FlowView {
             let code = e.charCode;
             if (code === CharacterCodes.cr) {
                 // TODO: pg properties on marker                
-                this.sharedString.insertMarker(pos, "pg", SharedString.MarkerBehaviors.Tile);
                 let prevTilePos = findContainingTile(this.client, pos - 1, "pg");
                 if (prevTilePos) {
                     let prevTile = <IParagraphMarker>prevTilePos.tile;
                     if (isListTile(prevTile)) {
-                        let curTilePos = findContainingTile(this.client, pos, "pg");
-                        this.sharedString.annotateRange({ list: true, indentLevel: prevTile.properties.indentLevel },
-                            curTilePos.pos, curTilePos.pos + 1);
+                        this.sharedString.insertMarker(pos, SharedString.MarkerBehaviors.Tile, {
+                            [SharedString.reservedMarkerLabelsKey]: ["pg", "list"],
+                            indentLevel: prevTile.properties.indentLevel,
+                        });
                     }
+                } else {
+                    this.sharedString.insertMarker(pos, SharedString.MarkerBehaviors.Tile,
+                        { [SharedString.reservedMarkerLabelsKey]: ["pg"] });
                 }
                 this.updatePGInfo(pos - 1);
             } else {
@@ -1692,7 +1712,25 @@ export class FlowView {
         this.flowContainer.onkeypress = keypressHandler;
     }
 
-    // for now, no toggle
+    public viewTileProps() {
+        let searchPos = this.cursor.pos;
+        if (this.cursor.pos === this.cursor.lineDiv().lineEnd) {
+            searchPos--;
+        }
+        let tileInfo = findContainingTile(this.client, searchPos, "pg");
+        if (tileInfo) {
+            let buf = "";
+            if (tileInfo.tile.properties) { 
+                // tslint:disable:forin
+                for (let key in tileInfo.tile.properties) {
+                    buf += ` { ${key}: ${tileInfo.tile.properties[key]} }`;
+                }
+            }
+            let lc = !!(<IParagraphMarker>tileInfo.tile).listCache;
+            console.log(`tile at pos ${tileInfo.pos} with props${buf} and list cache: ${lc}`);
+        }
+    }
+
     public setList() {
         let searchPos = this.cursor.pos;
         if (this.cursor.pos === this.cursor.lineDiv().lineEnd) {
@@ -1700,18 +1738,32 @@ export class FlowView {
         }
         let tileInfo = findContainingTile(this.client, searchPos, "pg");
         if (tileInfo) {
-            let tile = tileInfo.tile;
+            let tile = <IParagraphMarker> tileInfo.tile;
             let listStatus = false;
-            if (tile.properties && tile.properties.list) {
+            if (tile.hasLabel("list")) {
                 listStatus = true;
             }
+            let curLabels = <string[]>tile.properties[SharedString.reservedMarkerLabelsKey];
+
             if (listStatus) {
-                this.sharedString.annotateRange({ list: false }, tileInfo.pos, tileInfo.pos + 1);
+                let remainingLabels = curLabels.filter((l) => l !== "list");
+                this.sharedString.annotateRange({
+                    [SharedString.reservedMarkerLabelsKey]: remainingLabels,
+                    series: null, 
+                }, tileInfo.pos, tileInfo.pos + 1);
             } else {
-                this.sharedString.annotateRange(
-                    { list: true, series: [0, 0, 2, 6, 3, 7, 2, 6, 3, 7], indentLevel: 1 },
-                    tileInfo.pos, tileInfo.pos + 1);
+                let augLabels = curLabels.slice();
+                augLabels.push("list");
+                let indentLevel = 1;
+                if (tile.properties && tile.properties.indentLevel) {
+                    indentLevel = tile.properties.indentLevel;
+                }
+                this.sharedString.annotateRange({
+                    [SharedString.reservedMarkerLabelsKey]: augLabels,
+                    indentLevel, 
+                }, tileInfo.pos, tileInfo.pos + 1);
             }
+            tile.listCache = undefined;
             this.localQueueRender(this.cursor.pos);
         }
     }
@@ -1725,10 +1777,10 @@ export class FlowView {
         if (tileInfo) {
             let tile = <IParagraphMarker>tileInfo.tile;
             tile.listCache = undefined;
-            if (decrease && tile.properties.indentLevel > 1) {
+            if (decrease && tile.properties.indentLevel > 0) {
                 this.sharedString.annotateRange({ indentLevel: -1 },
-                    tileInfo.pos, tileInfo.pos + 1, { name: "incr", defaultValue: 1 });
-            } else {
+                    tileInfo.pos, tileInfo.pos + 1, { name: "incr", defaultValue: 1, minValue: 0 });
+            } else if (!decrease) {
                 this.sharedString.annotateRange({ indentLevel: 1 }, tileInfo.pos, tileInfo.pos + 1,
                     { name: "incr", defaultValue: 0 });
             }
@@ -1742,7 +1794,7 @@ export class FlowView {
             let tile = tileInfo.tile;
             let props = tile.properties;
             if (props && props.blockquote) {
-                props.blockquote = !props.blockquote;
+                this.sharedString.annotateRange({ blockquote: false }, tileInfo.pos, tileInfo.pos + 1);
             } else {
                 this.sharedString.annotateRange({ blockquote: true }, tileInfo.pos, tileInfo.pos + 1);
             }
@@ -1757,6 +1809,9 @@ export class FlowView {
                 break;
             case CharacterCodes.L:
                 this.setList();
+                break;
+                case CharacterCodes.G:
+                this.viewTileProps();
                 break;
             default:
                 console.log(`got command key ${String.fromCharCode(charCode)}`);

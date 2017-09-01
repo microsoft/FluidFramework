@@ -20,6 +20,11 @@ export function combine(combiningInfo: ops.ICombiningOp, currentValue: any, newV
     switch (combiningInfo.name) {
         case "incr":
             currentValue += <number> newValue;
+            if (combiningInfo.minValue) {
+                if (currentValue<combiningInfo.minValue) {
+                    currentValue = combiningInfo.minValue;
+                }
+            }
             break;
     }
     return currentValue;
