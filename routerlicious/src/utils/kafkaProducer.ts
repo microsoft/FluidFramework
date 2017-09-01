@@ -182,8 +182,8 @@ class KafkaNodeProducer extends Producer implements IProdcuer {
         const producer = this.producer as kafkaNode.Producer;
         const client = this.client as kafkaNode.Client;
 
-        await util.promisify((callback) => producer.close(callback))();
-        await util.promisify((callback) => client.close(callback))();
+        await util.promisify(((callback) => producer.close(callback)) as Function)();
+        await util.promisify(((callback) => client.close(callback)) as Function)();
     }
 
     /**

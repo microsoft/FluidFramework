@@ -140,7 +140,7 @@ async function run() {
     process.on("SIGTERM", () => {
         const consumerClosedP = consumer.close();
         const mongoClosedP = mongoManager.close();
-        const redisP = util.promisify((callback) => redisClient.quit(callback))();
+        const redisP = util.promisify(((callback) => redisClient.quit(callback)) as Function)();
 
         Promise.all([consumerClosedP, mongoClosedP, redisP]).then(
             () => {

@@ -146,9 +146,9 @@ async function run() {
     process.on("SIGTERM", () => {
         clearInterval(checkerInterval);
         const consumerClosedP = consumer.close();
-        const socketIoP = util.promisify((callback) => io.close(callback))();
-        const pubP = util.promisify((callback) => pub.quit(callback))();
-        const subP = util.promisify((callback) => sub.quit(callback))();
+        const socketIoP = util.promisify(((callback) => io.close(callback)) as Function)();
+        const pubP = util.promisify(((callback) => pub.quit(callback)) as Function)();
+        const subP = util.promisify(((callback) => sub.quit(callback)) as Function)();
 
         Promise.all([consumerClosedP, socketIoP, pubP, subP]).then(
             () => {
