@@ -9,6 +9,8 @@ metadata:
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"
 spec:
+  strategy:
+    type: Recreate
   template:
     metadata:
       annotations:
