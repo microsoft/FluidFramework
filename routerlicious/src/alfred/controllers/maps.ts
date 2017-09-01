@@ -90,12 +90,14 @@ async function displayMap(parentElement: JQuery, key: string, map: api.IMap, par
 /**
  * Randomly changes the values in the map
  */
-function randomizeMap(map: api.IMap) {
+async function randomizeMap(map: api.IMap) {
     // link up the randomize button
     const keys = ["foo", "bar", "baz", "binky", "winky", "twinkie"];
+    const counter = await map.createCounter("counter", 100) as api.ICounter;
     setInterval(() => {
         const key = keys[Math.floor(Math.random() * keys.length)];
         map.set(key, Math.floor(Math.random() * 100000).toString());
+        counter.increment(1);
     }, 1000);
 }
 

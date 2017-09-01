@@ -2,6 +2,7 @@ import { EventEmitter } from "events";
 import * as resources from "gitresources";
 import * as _ from "lodash";
 import * as api from "../api";
+import { Counter } from "./counter";
 
 /**
  * Description of a map delta operation
@@ -137,6 +138,11 @@ class MapView implements api.IMapView {
         delete this.data[key];
         this.events.emit("valueChanged", { key });
     }
+
+    public createCounter(key: string, value: number) {
+        this.set(key, value);
+        return new Counter(this, key);
+    }
 }
 
 /**
@@ -187,6 +193,10 @@ class Map extends api.CollaborativeObject implements api.IMap {
 
     public clear(): Promise<void> {
         return Promise.resolve(this.view.clear());
+    }
+
+    public createCounter(key: string, value: number) {
+        return Promise.resolve(this.view.createCounter(key, value));
     }
 
     public snapshot(): api.ITree {
