@@ -1,54 +1,69 @@
 # Kubernetes deployment
 
 ## Cluster preparation
-Azure Contaier Service is the simplest way to get a cluster up and running.
+Azure Contaier Service is the simplest way to get a cluster up and running. Optionally instructions on how to manually
+prepare a Kubernetes cluster on Azure can be found [here](azure.md).
 
-Optionally instructions on how to manually prepare a Kubernetes cluster on Azure can be found [here](azure.md).
+You can also make use of minikube to run a local cluster for testing. The [minikube](minikube.md) page provides setup
+instructions.
 
 ## Routerlicious deployment
 
-### System
+Routerlicious is packaged into a [Helm](https://helm.sh) chart. The chart defines the Kubernetes templates needed
+to deploy and run Routerlicoius as well as dependent services required by Routerlicious.
 
-Helm service principal for Helm chart creation
+Once a base Kubernetes cluster is configured deploying Routerlicious is as simple as building and installing a
+chart. Or in the future simpling installing a chart we have published to a chart repository.
 
-`kubectl apply -f system/helm.yaml`
+### Base components
 
-And add in SSD disk support (note you will need to create a a premium blob storage account with premium SSDs)
-
-`kubectl apply -f system/azure-premium-storage.yaml`
-
-### Chart deployment
-
-The chart definition is defined within routerlicious. To make generating this simpler for the CI system we
-generate the Chart.yaml and values.yaml file via a script in the tools folder. This script outputs both of
-these files. But with the ability to provide runtime parameters.
-
-### Dependent services
-
-`kubectl apply -f compose/zookeeper.yaml`
-`kubectl apply -f compose/kafka.yaml`
-
-### Helm Charts
-
-`helm init --service-account helm`
-
-`helm install -n eyewitness-bee -f services/minio-helm-conf.yaml stable/minio`
-`helm install -n steely-ant -f services/redis-helm-conf.yaml stable/redis`
-`helm install -n kindred-waterbuffalo -f services/rabbitmq-helm-conf.yaml stable/rabbitmq`
-`helm install -n worn-stoat -f services/mongodb-helm-conf.yaml stable/mongodb`
-
-### Routerlicious services
-
-You'll need to update the below with the services created by Helm above. A work item for us is to either package
-this into a chart. Or standardize on the name of the services.
-
-`kubectl apply -f deployment/config/prague-config-map.yaml`
+Prior to deploying the Routerlicious chart first a few base components need to be confgiured
 
 To actually deploy our services you'll need to provide the cluster with credentials to our private container as
 documented at https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/. This boils
 down to the below command to create a secret in Kubernetes
 
-`kubectl create secret docker-registry regsecret --docker-server=prague.azurecr.io --docker-username=prague --docker-password=<password> --docker-email=kurtb@microsoft.com`
+```
+kubectl create secret docker-registry regsecret --docker-server=prague.azurecr.io --docker-username=prague --docker-password=<password> --docker-email=kurtb@microsoft.com
+```
 
-And then how to deploy Routerlicious to that cluster [here](stack.md).
+For better performance we make use of SSDs to back our Kubernetes volumes. Run the following command to add in SSD
+disk support (note you will need to create a a premium blob storage account with premium SSDs).
 
+```
+kubectl apply -f system/azure-premium-storage.yaml
+```
+
+And finally install helm into the cluster.
+
+```
+kubectl apply -f system/helm.yaml
+helm init --service-account helm
+```
+
+### Build the chart
+
+The chart definition is defined within routerlicious. To make generating this simpler for the CI system we
+generate the Chart.yaml and values.yaml file via a script in the tools folder. This script outputs both of
+these files. But with the ability to provide runtime parameters.
+
+Once they are built we build dependencies (the helm version of npm install) followed by packaging the chart.
+
+```
+node tools/generateChart.js ./routerlicious/ $(Build.BuildId) $(Build.BuildId)
+cd routerlicious
+helm dependency build
+helm package .
+```
+
+### Chart deployment
+
+Simply take the tarball from the package step and deploy it to the cluster
+
+```
+helm upgrade -i pesky-platypus chart.tgz
+```
+
+### Optional Extras
+
+Information on some optional extras you can also deploy to your cluster can be found at [extras](extras.md).
