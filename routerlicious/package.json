@@ -32,7 +32,7 @@
     "docker-restart": "docker-compose restart alfred && docker-compose restart deli && docker-compose restart scriptorium && docker-compose restart tmz && docker-compose restart paparazzi",
     "start": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml up",
     "start:debug": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.debug.yml up",
-    "test": "nyc -x dist/test/**/* mocha dist/test",
+    "test": "nyc --all --include dist/**/* -x dist/test/**/* mocha dist/test",
     "tsc": "tsc",
     "tslint": "tslint 'src/**/*.ts'",
     "beast": "node dist/merge-tree/beastTest.js",
