@@ -134,6 +134,11 @@ export interface IMap extends ICollaborativeObject {
      * Retreives a synchronous view of the map
      */
     getView(): Promise<IMapView>;
+
+    /**
+     * Creates a counter inside the map.
+     */
+    createCounter(key: string, value?: number, min?: number, max?: number): Promise<ICounter>;
 }
 
 /**
@@ -160,3 +165,14 @@ export interface ICell extends ICollaborativeObject {
      */
     delete(): Promise<void>;
 }
+
+/**
+ * Counter interface
+ */
+
+ export interface ICounter {
+    /**
+     * Increment/decrement the underlying value.
+     */
+    increment(value: number): Promise<void>;
+ }

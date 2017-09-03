@@ -2,6 +2,8 @@ import { EventEmitter } from "events";
 import * as resources from "gitresources";
 import * as _ from "lodash";
 import * as api from "../api";
+import * as shared from "../shared";
+import { Counter } from "./counter";
 
 /**
  * Description of a map delta operation
@@ -18,6 +20,9 @@ export enum ValueType {
 
     // The value is a plain JavaScript object
     Plain,
+
+    // The value is a counter
+    Counter,
 }
 
 export interface ICollaborativeMapValue {
@@ -38,7 +43,7 @@ export interface IMapValue {
 
 const snapshotFileName = "header";
 
-class MapView implements api.IMapView {
+export class MapView implements api.IMapView {
     constructor(
         private document: api.Document,
         id: string,
@@ -137,6 +142,58 @@ class MapView implements api.IMapView {
         delete this.data[key];
         this.events.emit("valueChanged", { key });
     }
+
+    public createCounter(key: string, value: number, min: number, max: number) {
+        this.initCounter(key, value);
+        return new Counter(this, key, min, max);
+    }
+
+    public initCounterCore(key: string, value: IMapValue) {
+        this.data[key] = value;
+        this.events.emit("valueChanged", { key });
+    }
+
+    public incrementCounter(key: string, value: number, min: number, max: number): Promise<any> {
+        if (!(key in this.data)) {
+            return Promise.reject("Error: No key found to apply increment!`");
+        }
+        if (typeof value !== "number") {
+            return Promise.reject("Incremental amount should be a number.");
+        }
+        const currentData = this.data[key];
+        if (currentData.type !== ValueType[ValueType.Counter]) {
+            return Promise.reject("Increment can only be applied on Counter type.");
+        }
+        const currentValue = currentData.value as number;
+        const nextValue = currentValue + value;
+        if ((nextValue < min) || (nextValue > max)) {
+            return Promise.reject("Error: Counter range exceeded!");
+        }
+        const operationValue: IMapValue = {type: ValueType[ValueType.Counter], value};
+        const op: IMapOperation = {
+            key,
+            type: "incrementCounter",
+            value: operationValue,
+        };
+        this.incrementCounterCore(op.key, op.value);
+        this.submitLocalOperation(op);
+    }
+
+    public incrementCounterCore(key: string, value: IMapValue) {
+        this.data[key].value += value.value;
+        this.events.emit("valueChanged", { key });
+    }
+
+    private initCounter(key: string, value: number) {
+        const operationValue: IMapValue = {type: ValueType[ValueType.Counter], value};
+        const op: IMapOperation = {
+            key,
+            type: "initCounter",
+            value: operationValue,
+        };
+        this.initCounterCore(op.key, op.value);
+        this.submitLocalOperation(op);
+    }
 }
 
 /**
@@ -187,6 +244,19 @@ class Map extends api.CollaborativeObject implements api.IMap {
 
     public clear(): Promise<void> {
         return Promise.resolve(this.view.clear());
+    }
+
+    public createCounter(key: string, value?: number, min?: number, max?: number): Promise<api.ICounter> {
+        value = shared.getOrDefault(value, 0);
+        min = shared.getOrDefault(min, Number.MIN_SAFE_INTEGER);
+        max = shared.getOrDefault(max, Number.MAX_SAFE_INTEGER);
+        if (!(typeof value === "number" && typeof min === "number" && typeof max === "number")) {
+            throw new Error("parameters should be of number type!");
+        }
+        if (value < min || value > max) {
+            throw new Error("Initial value exceeds the counter range!");
+        }
+        return Promise.resolve(this.view.createCounter(key, value, min, max));
     }
 
     public snapshot(): api.ITree {
@@ -244,6 +314,12 @@ class Map extends api.CollaborativeObject implements api.IMap {
                     break;
                 case "set":
                     this.view.setCore(op.key, op.value);
+                    break;
+                case "initCounter":
+                    this.view.initCounterCore(op.key, op.value);
+                    break;
+                case "incrementCounter":
+                    this.view.incrementCounterCore(op.key, op.value);
                     break;
                 default:
                     throw new Error("Unknown operation");
