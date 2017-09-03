@@ -2,6 +2,7 @@ import { EventEmitter } from "events";
 import * as resources from "gitresources";
 import * as _ from "lodash";
 import * as api from "../api";
+import * as shared from "../shared";
 import { Counter } from "./counter";
 
 /**
@@ -148,17 +149,26 @@ export class MapView implements api.IMapView {
     }
 
     public initCounterCore(key: string, value: IMapValue) {
-        if (value.type !== ValueType[ValueType.Counter]) {
-            throw new Error("Invalid initial value type!");
-        }
-        if (typeof value.value !== "number") {
-            throw new Error("Initial value should be a number");
-        }
         this.data[key] = value;
         this.events.emit("valueChanged", { key });
     }
 
-    public incrementCounter(key: string, value: number) {
+    public incrementCounter(key: string, value: number, min: number, max: number): Promise<any> {
+        if (!(key in this.data)) {
+            return Promise.reject("Error: No key found to apply increment!`");
+        }
+        if (typeof value !== "number") {
+            return Promise.reject("Incremental amount should be a number.");
+        }
+        const currentData = this.data[key];
+        if (currentData.type !== ValueType[ValueType.Counter]) {
+            return Promise.reject("Increment can only be applied on Counter type.");
+        }
+        const currentValue = currentData.value as number;
+        const nextValue = currentValue + value;
+        if ((nextValue < min) || (nextValue > max)) {
+            return Promise.reject("Error: Counter range exceeded!");
+        }
         const operationValue: IMapValue = {type: ValueType[ValueType.Counter], value};
         const op: IMapOperation = {
             key,
@@ -170,15 +180,6 @@ export class MapView implements api.IMapView {
     }
 
     public incrementCounterCore(key: string, value: IMapValue) {
-        if (value.type !== ValueType[ValueType.Counter]) {
-            throw new Error("Increment can only be performed on Counter type!");
-        }
-        if (typeof value.value !== "number") {
-            throw new Error("Incremental amount should be a number");
-        }
-        if (!(key in this.data) || (typeof this.data[key].value !== "number")) {
-            throw new Error("Invalid key!");
-        }
         this.data[key].value += value.value;
         this.events.emit("valueChanged", { key });
     }
@@ -246,14 +247,11 @@ class Map extends api.CollaborativeObject implements api.IMap {
     }
 
     public createCounter(key: string, value?: number, min?: number, max?: number): Promise<api.ICounter> {
-        if (value === undefined) {
-            value = 0;
-        }
-        if (min === undefined) {
-            min = Number.MIN_SAFE_INTEGER;
-        }
-        if (max === undefined) {
-            max = Number.MAX_SAFE_INTEGER;
+        value = shared.getOrDefault(value, 0);
+        min = shared.getOrDefault(min, Number.MIN_SAFE_INTEGER);
+        max = shared.getOrDefault(max, Number.MAX_SAFE_INTEGER);
+        if (!(typeof value === "number" && typeof min === "number" && typeof max === "number")) {
+            throw new Error("parameters should be of number type!");
         }
         if (value < min || value > max) {
             throw new Error("Initial value exceeds the counter range!");
