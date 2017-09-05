@@ -1,55 +1,63 @@
 import { queue } from "async";
 import * as _ from "lodash";
 import { Collection } from "mongodb";
+import * as winston from "winston";
 import * as core from "../core";
 import * as shared from "../shared";
 import * as utils from "../utils";
-import { logger } from "../utils";
 import { TakeANumber } from "./takeANumber";
 
-export class DeliService {
+export class DeliRunner {
+    private deferred: shared.Deferred<void>;
     private checkpointTimer: any;
+    private q: AsyncQueue<string>;
 
     constructor(
+        private producer: utils.kafkaProducer.IProdcuer,
+        private consumer: utils.kafkaConsumer.IConsumer,
+        private objectsCollection: Collection,
         private groupId: string,
         private receiveTopic: string,
         private checkpointBatchSize: number,
         private checkpointTimeIntervalMsec: number) {
     }
 
-    public processMessages(
-        producer: utils.kafkaProducer.IProdcuer,
-        consumer: utils.kafkaConsumer.IConsumer,
-        mongoManager: utils.MongoManager,
-        objectsCollection: Collection): Promise<void> {
-
-        const deferred = new shared.Deferred<void>();
+    public start(): Promise<void> {
+        this.deferred = new shared.Deferred<void>();
         const dispensers: { [key: string]: TakeANumber } = {};
         const partitionManager = new core.PartitionManager(
             this.groupId,
             this.receiveTopic,
-            consumer,
+            this.consumer,
             this.checkpointBatchSize,
             this.checkpointTimeIntervalMsec,
         );
 
-        consumer.on("data", (message) => {
-            q.push(message);
+        this.consumer.on("data", (message) => {
+            winston.info("New data batch");
+            this.q.push(message);
         });
 
-        consumer.on("error", (err) => {
-            consumer.close();
-            deferred.reject(err);
+        this.consumer.on("error", (err) => {
+            this.consumer.close();
+            this.deferred.reject(err);
         });
 
         let ticketQueue: {[id: string]: Promise<void> } = {};
 
-        const throughput = new utils.ThroughputCounter(logger.info);
+        const throughput = new utils.ThroughputCounter(winston.info);
 
-        logger.info("Waiting for messages");
-        const q = queue((message: any, callback) => {
+        winston.info("Waiting for messages");
+        this.q = queue((message: any, callback) => {
+            winston.info("Processing");
             throughput.produce();
-            this.processMessage(message, dispensers, ticketQueue, partitionManager, producer, objectsCollection);
+            this.processMessage(
+                message,
+                dispensers,
+                ticketQueue,
+                partitionManager,
+                this.producer,
+                this.objectsCollection);
             throughput.acknolwedge();
 
             // Periodically checkpoint to mongo and checkpoints offset back to kafka.
@@ -59,28 +67,47 @@ export class DeliService {
                 const pendingTickets = _.values(ticketQueue);
                 ticketQueue = {};
                 this.checkpoint(partitionManager, pendingDispensers, pendingTickets).catch((error) => {
-                    deferred.reject(error);
+                    this.deferred.reject(error);
                 });
             }
             callback();
         }, 1);
 
-        // Listen for shutdown signal in order to shutdown gracefully
-        process.on("SIGTERM", () => {
-            const consumerClosedP = consumer.close();
-            const producerClosedP = producer.close();
-            const mongoClosedP = mongoManager.close();
+        return this.deferred.promise;
+    }
 
-            Promise.all([consumerClosedP, producerClosedP, mongoClosedP]).then(
-                () => {
-                    deferred.resolve();
-                },
-                (error) => {
-                    deferred.reject(error);
-                });
+    /**
+     * Signals to stop the service
+     */
+    public stop(): Promise<void> {
+        winston.info("Stop requested");
+
+        // stop listening for new updates
+        this.consumer.pause();
+
+        // Drain the queue of any pending operations
+        const drainedP = new Promise<void>((resolve, reject) => {
+            // If not entries in the queue we can exit immediatley
+            if (this.q.length() === 0) {
+                winston.info("No pending work exiting early");
+                return resolve();
+            }
+
+            // Wait until the queue is drained
+            winston.info("Waiting for queue to drain");
+            this.q.drain = () => {
+                winston.info("Drained");
+                resolve();
+            };
         });
 
-        return deferred.promise;
+        // Mark ourselves done once the queue is cleaned
+        drainedP.then(() => {
+            // TODO perform one last checkpoint here
+            this.deferred.resolve();
+        });
+
+        return this.deferred.promise;
     }
 
     private processMessage(
@@ -102,7 +129,7 @@ export class DeliService {
             // Store it in the partition map. We need to add an eviction strategy here.
             if (!(documentId in dispensers)) {
                 dispensers[documentId] = new TakeANumber(documentId, objectsCollection, producer);
-                logger.info(`New document ${documentId}`);
+                winston.info(`New document ${documentId}`);
             }
             const dispenser = dispensers[documentId];
 

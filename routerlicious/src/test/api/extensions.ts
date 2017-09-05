@@ -27,5 +27,5 @@ describe("Routerlicious", () => {
                 assert.equal(registry.getExtension(map.MapExtension.Type), extension);
             });
         });
-    })
+    });
 });

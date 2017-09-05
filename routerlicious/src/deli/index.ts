@@ -1,7 +1,8 @@
 import * as nconf from "nconf";
 import * as path from "path";
+import * as winston from "winston";
 import * as utils from "../utils";
-import { DeliService } from "./service";
+import { DeliRunner } from "./runner";
 
 const provider = nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
 
@@ -16,6 +17,23 @@ const checkpointTimeIntervalMsec = provider.get("deli:checkpointTimeIntervalMsec
 const documentsCollectionName = provider.get("mongo:collectionNames:documents");
 const groupId = provider.get("deli:groupId");
 
+/**
+ * Default logger setup
+ */
+const loggerConfig = provider.get("logger");
+winston.configure({
+    transports: [
+        new winston.transports.Console({
+            colorize: loggerConfig.colorize,
+            handleExceptions: true,
+            json: loggerConfig.json,
+            level: loggerConfig.level,
+            stringify: (obj) => JSON.stringify(obj),
+            timestamp: loggerConfig.timestamp,
+        }),
+    ],
+});
+
 async function run() {
     // Connection to stored document details
     const mongoManager = new utils.MongoManager(mongoUrl, false);
@@ -26,17 +44,46 @@ async function run() {
     let producer = utils.kafkaProducer.create(kafkaLibrary, kafkaEndpoint, kafkaClientId, sendTopic);
     let consumer = utils.kafkaConsumer.create(kafkaLibrary, kafkaEndpoint, groupId, receiveTopic, false);
 
-    const service = new DeliService(groupId, receiveTopic, checkpointBatchSize, checkpointTimeIntervalMsec);
+    const runner = new DeliRunner(
+        producer,
+        consumer,
+        documentsCollection,
+        groupId,
+        receiveTopic,
+        checkpointBatchSize,
+        checkpointTimeIntervalMsec);
+
+    // Listen for shutdown signal in order to shutdown gracefully
+    process.on("SIGTERM", () => {
+        runner.stop();
+    });
 
     // Return a promise that will never resolve (since we run forever) but will reject
     // should an error occur
-    return service.processMessages(producer, consumer, mongoManager, documentsCollection);
+    const runningP = runner.start();
+
+    // Clean up all resources when the runner finishes
+    const doneP = runningP.catch((error) => error);
+    const closedP = doneP.then(() => {
+        winston.info("Closing service connections");
+        const consumerClosedP = consumer.close();
+        const producerClosedP = producer.close();
+        const mongoClosedP = mongoManager.close();
+        return Promise.all([consumerClosedP, producerClosedP, mongoClosedP]);
+    });
+
+    // The result of the run is the success/failure of the runner and closing its dependent resources.
+    return Promise.all([runningP, closedP]);
 }
 
 // Start up the deli service
-utils.logger.info("Starting");
+winston.info("Starting");
 const runP = run();
-runP.catch((error) => {
-    utils.logger.error(error);
-    process.exit(1);
-});
+runP.then(
+    () => {
+        winston.info("Done done!");
+    },
+    (error) => {
+        winston.error(error);
+        process.exit(1);
+    });
