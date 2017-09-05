@@ -753,7 +753,7 @@ function reRenderLine(lineDiv: ILineDiv, flowView: FlowView) {
 let randomIndent = false;
 function getIndentPct(pgMarker: IParagraphMarker) {
     if (pgMarker.properties && (pgMarker.properties.indentLevel !== undefined)) {
-        return pgMarker.properties.indentLevel * 0.1;
+        return pgMarker.properties.indentLevel * 0.05;
     } else if (pgMarker.properties && pgMarker.properties.blockquote) {
         return 0.10;
     } else {
@@ -767,11 +767,13 @@ function getIndentPct(pgMarker: IParagraphMarker) {
 
 function getIndentSymbol(pgMarker: IParagraphMarker) {
     let indentLevel = pgMarker.properties.indentLevel;
+    indentLevel = indentLevel % pgMarker.listHeadCache.series.length;
     let series = pgMarker.listHeadCache.series[indentLevel];
     let seriesSource = listSeries;
     if (pgMarker.properties.listKind === 1) {
         seriesSource = symbolSeries;
     }
+    series = series % seriesSource.length;
     return seriesSource[series](pgMarker.listCache.itemCounts[indentLevel]);
 }
 
@@ -838,11 +840,17 @@ function roman(itemIndex: number, little = false) {
     return { text };
 }
 
-let wingdingLetters = ["l", "m", "n", "R", "S", "T", "s"];
+// let wingdingLetters = ["l", "m", "n", "R", "S", "T", "s","w"];
+let unicodeBullets = [
+    "\u2022", "\u25E6", "\u25A0", "\u2731", "\u272F", "\u2729", "\u273F",
+    "\u2745", "\u2739", "\u2720", "\u2722",
+];
 
 function itemSymbols(itemIndex: number, indentLevel: number) {
-    let wingdingLetter = wingdingLetters[indentLevel - 1];
-    return { text: wingdingLetter, font: "wingdings" };
+    //    let wingdingLetter = wingdingLetters[indentLevel - 1];
+    let wingdingLetter = unicodeBullets[indentLevel - 1];
+    //    return { text: wingdingLetter, font: "12px Wingdings" };
+    return { text: wingdingLetter };
 }
 
 let listSeries = [
@@ -864,6 +872,10 @@ let symbolSeries = [
     (itemIndex) => itemSymbols(itemIndex, 5),
     (itemIndex) => itemSymbols(itemIndex, 6),
     (itemIndex) => itemSymbols(itemIndex, 7),
+    (itemIndex) => itemSymbols(itemIndex, 8),
+    (itemIndex) => itemSymbols(itemIndex, 9),
+    (itemIndex) => itemSymbols(itemIndex, 10),
+    (itemIndex) => itemSymbols(itemIndex, 11),
 ];
 
 function convertToListHead(tile: IParagraphMarker) {
@@ -887,8 +899,9 @@ function getListCacheInfo(flowView: FlowView, tile: IParagraphMarker, tilePos: n
             if (tile.properties.series) {
                 convertToListHead(tile);
             } else {
+                let listKind = tile.properties.listKind;
                 let precedingTilePos = getPrecedingTile(flowView, tile, tilePos, "list",
-                    isListTile, precedingTileCache);
+                    (t) => isListTile(t) && (t.properties.listKind === listKind), precedingTileCache);
                 if (precedingTilePos && ((tilePos - precedingTilePos.pos) < maxListDistance)) {
                     getListCacheInfo(flowView, precedingTilePos.tile, precedingTilePos.pos, precedingTileCache);
                     let precedingTile = <IParagraphMarker>precedingTilePos.tile;
@@ -911,12 +924,12 @@ function getListCacheInfo(flowView: FlowView, tile: IParagraphMarker, tilePos: n
                     if (tile.properties.listKind === 0) {
                         series = [0, 0, 2, 6, 3, 7, 2, 6, 3, 7];
                     } else {
-                        series = [0, 0, 1, 2, 3, 4, 5, 6, 0, 1, 2, 3, 4, 5, 6];
+                        series = [0, 0, 1, 2, 0, 1, 2, 3, 4, 5, 6, 0, 1, 2, 3, 4, 5, 6];
                     }
                     flowView.sharedString.annotateRange({ series },
                         tilePos, tilePos + 1);
+                    convertToListHead(tile);
                 }
-                convertToListHead(tile);
             }
         }
     }
@@ -1145,13 +1158,19 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
             renderPG(startPGMarker, startPGPos, indentWidth, indentSymbol, contentWidth);
             currentLineTop += pgVspace;
         } else {
-            lastLineDiv.lineEnd = startPGPos + 1;
+            if (lastLineDiv) {
+                lastLineDiv.lineEnd = startPGPos + 1;
+            }
             pgMarker = undefined;
         }
         if (pgMarker !== undefined) {
             startPGMarker.cache.endOffset = markerPos - startPGPos;
         } else {
-            startPGMarker.cache.endOffset = lastLineDiv.lineEnd - startPGPos;
+            if (lastLineDiv) {
+                startPGMarker.cache.endOffset = lastLineDiv.lineEnd - startPGPos;
+            } else {
+                startPGMarker.cache.endOffset = 1;
+            }
         }
     } while ((pgMarker !== undefined) && ((viewportHeight - currentLineTop) >= defaultLineDivHeight));
     flowView.viewportStartPos = viewportStartPos;
@@ -1734,7 +1753,7 @@ export class FlowView {
             } else {
                 this.sharedString.insertText(String.fromCharCode(code), pos);
             }
-            this.localQueueRender(pos);
+            this.localQueueRender(this.cursor.pos);
 
         };
         this.flowContainer.onkeydown = keydownHandler;
@@ -1834,7 +1853,7 @@ export class FlowView {
 
     public keyCmd(charCode: number) {
         switch (charCode) {
-            case CharacterCodes.Q:
+            case CharacterCodes.K:
                 this.toggleBlockquote();
                 break;
             case CharacterCodes.L:
