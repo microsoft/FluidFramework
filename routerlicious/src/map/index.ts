@@ -4,6 +4,7 @@ import * as _ from "lodash";
 import * as api from "../api";
 import * as shared from "../shared";
 import { Counter } from "./counter";
+import { DistributedSet } from "./set";
 
 /**
  * Description of a map delta operation
@@ -23,6 +24,9 @@ export enum ValueType {
 
     // The value is a counter
     Counter,
+
+    // The value is a set
+    Set,
 }
 
 export interface ICollaborativeMapValue {
@@ -143,7 +147,7 @@ export class MapView implements api.IMapView {
         this.events.emit("valueChanged", { key });
     }
 
-    public createCounter(key: string, value: number, min: number, max: number) {
+    public createCounter(key: string, value: number, min: number, max: number): api.ICounter {
         this.initCounter(key, value);
         return new Counter(this, key, min, max);
     }
@@ -182,6 +186,97 @@ export class MapView implements api.IMapView {
     public incrementCounterCore(key: string, value: IMapValue) {
         this.data[key].value += value.value;
         this.events.emit("valueChanged", { key });
+    }
+
+    public insertSet<T>(key: string, value: T): Promise<T[]> {
+        if (!(key in this.data)) {
+            return Promise.reject("Error: No key found for set insertion`");
+        }
+        const currentData = this.data[key];
+        if (currentData.type !== ValueType[ValueType.Set]) {
+            return Promise.reject("Insertion can only be applied on Set type.");
+        }
+        const operationValue: IMapValue = {type: ValueType[ValueType.Set], value};
+        const op: IMapOperation = {
+            key,
+            type: "insertSet",
+            value: operationValue,
+        };
+        this.insertSetCore(op.key, op.value);
+        this.submitLocalOperation(op);
+        return Promise.resolve(this.data[key].value);
+    }
+
+    public deleteSet<T>(key: string, value: T): Promise<T[]> {
+        if (!(key in this.data)) {
+            return Promise.reject("Error: No key found for set deletion");
+        }
+        const currentData = this.data[key];
+        if (currentData.type !== ValueType[ValueType.Set]) {
+            return Promise.reject("Deletion can only be applied on Set type.");
+        }
+        const operationValue: IMapValue = {type: ValueType[ValueType.Set], value};
+        const op: IMapOperation = {
+            key,
+            type: "deleteSet",
+            value: operationValue,
+        };
+        this.deleteSetCore(op.key, op.value);
+        this.submitLocalOperation(op);
+        return Promise.resolve(this.data[key].value);
+    }
+
+    public enumerateSet<T>(key: string): Promise<T[]> {
+        if (!(key in this.data)) {
+            return Promise.reject("Error: No key found!");
+        }
+        const currentData = this.data[key];
+        if (currentData.type !== ValueType[ValueType.Set]) {
+            return Promise.reject("Illegal operation. Value type is not set!");
+        }
+        return Promise.resolve(currentData.value);
+    }
+
+    public insertSetCore(key: string, value: IMapValue) {
+        const newValue: IMapValue = {
+            type: ValueType[ValueType.Set],
+            value: DistributedSet.addElement(this.get(key), value.value),
+        };
+        this.data[key] = newValue;
+        this.events.emit("valueChanged", { key });
+        this.events.emit("setElementAdded", {key, value: value.value});
+    }
+
+    public deleteSetCore(key: string, value: IMapValue) {
+        const newValue: IMapValue = {
+            type: ValueType[ValueType.Set],
+            value: DistributedSet.removeElement(this.get(key), value.value),
+        };
+        this.data[key] = newValue;
+        this.events.emit("valueChanged", { key });
+        this.events.emit("setElementRemoved", {key, value: value.value});
+    }
+
+    public createSet<T>(key: string, value: T[]): api.ISet<T> {
+        this.initSet(key, value);
+        return new DistributedSet(this, key);
+    }
+
+    public initSetCore(key: string, value: IMapValue) {
+        const newValue: IMapValue = {type: ValueType[ValueType.Set], value: DistributedSet.initSet(value.value)};
+        this.data[key] = newValue;
+        this.events.emit("valueChanged", { key });
+    }
+
+    private initSet<T>(key: string, value: T[]) {
+        const operationValue: IMapValue = {type: ValueType[ValueType.Set], value};
+        const op: IMapOperation = {
+            key,
+            type: "initSet",
+            value: operationValue,
+        };
+        this.initSetCore(op.key, op.value);
+        this.submitLocalOperation(op);
     }
 
     private initCounter(key: string, value: number) {
@@ -259,6 +354,11 @@ class Map extends api.CollaborativeObject implements api.IMap {
         return Promise.resolve(this.view.createCounter(key, value, min, max));
     }
 
+    public createSet<T>(key: string, value?: T[]): Promise<api.ISet<T>> {
+        value = shared.getOrDefaultArray(value, []);
+        return Promise.resolve(this.view.createSet(key, value));
+    }
+
     public snapshot(): api.ITree {
         const tree: api.ITree = {
             entries: [
@@ -320,6 +420,15 @@ class Map extends api.CollaborativeObject implements api.IMap {
                     break;
                 case "incrementCounter":
                     this.view.incrementCounterCore(op.key, op.value);
+                    break;
+                case "initSet":
+                    this.view.initSetCore(op.key, op.value);
+                    break;
+                case "insertSet":
+                    this.view.insertSetCore(op.key, op.value);
+                    break;
+                case "deleteSet":
+                    this.view.deleteSetCore(op.key, op.value);
                     break;
                 default:
                     throw new Error("Unknown operation");

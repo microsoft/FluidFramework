@@ -48,6 +48,18 @@ async function displayValues(map: api.IMap, container: JQuery, doc: api.Document
         updateOrCreateKey(changed.key, map, values, doc);
     });
 
+    // Listen and process updates
+    map.on("setElementAdded", async (changed) => {
+        console.log(`Element added on key ${changed.key}`);
+        console.log(`Element added ${changed.value}`);
+    });
+
+    // Listen and process updates
+    map.on("setElementRemoved", async (changed) => {
+        console.log(`Element deleted on key ${changed.key}`);
+        console.log(`Element deleted ${changed.value}`);
+    });
+
     container.append(values);
 }
 
@@ -94,11 +106,23 @@ async function randomizeMap(map: api.IMap) {
     // link up the randomize button
     const keys = ["foo", "bar", "baz", "binky", "winky", "twinkie"];
     const counter = await map.createCounter("counter", 100) as api.ICounter;
-    setInterval(() => {
+    const set = await map.createSet("set", [1, 2, 3, 3, 2, 4]) as api.ISet<number>;
+    const setWithNoValue = await map.createSet("setWithNoValue") as api.ISet<string>;
+    setInterval(async () => {
         const key = keys[Math.floor(Math.random() * keys.length)];
         map.set(key, Math.floor(Math.random() * 100000).toString());
         counter.increment(1);
-    }, 1000);
+        console.log(await set.add(5));
+        console.log(await set.add(6));
+        console.log(await set.add(2));
+        console.log(await set.add(6));
+        console.log(await set.delete(1));
+        setWithNoValue.add("hello");
+        setWithNoValue.add("mello");
+        setWithNoValue.add("jello");
+        console.log(await set.entries());
+        console.log(await setWithNoValue.entries());
+    }, 10000);
 }
 
 export function load(id: string, version: resources.ICommit, config: any) {
