@@ -33,7 +33,7 @@
     "start": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml up",
     "start:debug": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.debug.yml up",
     "test": "mocha --recursive dist/test",
-    "test:coverage": "nyc --all --include 'dist/**/*' --exclude 'dist/test/**/*' npm test",
+    "test:coverage": "nyc --all --temp-directory nyc/.nyc_output --cache-dir nyc/.cache --report-dir nyc/report --include 'dist/**/*' --exclude 'dist/test/**/*' npm test",
     "tsc": "tsc",
     "tslint": "tslint 'src/**/*.ts'",
     "beast": "node dist/merge-tree/beastTest.js",

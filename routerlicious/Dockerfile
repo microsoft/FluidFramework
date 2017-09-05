@@ -17,6 +17,10 @@ RUN npm run build:full
 # Expose the port the app runs under
 EXPOSE 3000
 
+# Give node user access to nyc in order to run unit tests
+RUN mkdir nyc
+RUN chown node: nyc
+
 # Don't run as root user
 USER node
 
