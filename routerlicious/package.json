@@ -18,7 +18,7 @@
     "deli": "node dist/deli/index.js",
     "deli:debug": "node --inspect=0.0.0.0:5858 dist/deli/index.js",
     "deli:watch": "nodemon --exitcrash dist/deli/index.js -w dist",
-    "docker-build": "docker run -v $(pwd):/usr/src/server -w /usr/src/server -it node:8.1.4-alpine",
+    "docker-run": "docker run -v $(pwd):/usr/src/server -w /usr/src/server node:8.4.0-alpine",
     "paparazzi": "node dist/paparazzi/index.js",
     "paparazzi:debug": "node --inspect=0.0.0.0:5858 dist/paparazzi/index.js",
     "paparazzi:watch": "nodemon --exitcrash dist/paparazzi/index.js -w dist",
