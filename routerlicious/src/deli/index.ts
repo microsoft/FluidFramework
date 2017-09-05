@@ -81,7 +81,7 @@ winston.info("Starting");
 const runP = run();
 runP.then(
     () => {
-        winston.info("Done done!");
+        winston.info("Exiting");
     },
     (error) => {
         winston.error(error);

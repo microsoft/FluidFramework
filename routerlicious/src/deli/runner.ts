@@ -34,7 +34,6 @@ export class DeliRunner {
         );
 
         this.consumer.on("data", (message) => {
-            winston.info("New data batch");
             this.q.push(message);
         });
 
@@ -49,7 +48,6 @@ export class DeliRunner {
 
         winston.info("Waiting for messages");
         this.q = queue((message: any, callback) => {
-            winston.info("Processing");
             throughput.produce();
             this.processMessage(
                 message,
