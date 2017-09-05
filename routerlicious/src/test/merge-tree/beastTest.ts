@@ -1,14 +1,15 @@
 // tslint:disable
 
 import * as fs from "fs";
-import * as Collections from "./collections";
+import * as minimist from "minimist";
+import * as Collections from "../../merge-tree/collections";
 import * as random from "random-js";
-import * as MergeTree from "./mergeTree";
-import * as Base from "./base";
-import * as ops from "./ops";
-import * as Text from "./text";
+import * as MergeTree from "../../merge-tree";
+import * as Base from "../../merge-tree/base";
+import * as ops from "../../merge-tree/ops";
+import * as Text from "../../merge-tree/text";
 import * as JsDiff from "diff";
-import * as Paparazzo from "./snapshot";
+import * as Paparazzo from "../../merge-tree/snapshot";
 import * as express from "express";
 import * as path from "path";
 
@@ -220,7 +221,7 @@ export function integerTest1() {
 }
 
 export function fileTest1() {
-    let content = fs.readFileSync("pizzaingredients.txt", "utf8");
+    let content = fs.readFileSync(path.join(__dirname, "../../../public/literature/shakespeare.txt"), "utf8");
     let a = content.split('\n');
     let iterCount = a.length >> 2;
     const removeCount = 10;
@@ -1399,7 +1400,7 @@ function tst() {
     let filename = path.join(__dirname, "../../public/literature/dict.txt")
     let content = fs.readFileSync(filename, "utf8");
     let splitContent = content.split(/\r\n|\n/g);
-    let corpusFilename = path.join(__dirname, "../../public/literature/pp.txt")
+    let corpusFilename = path.join(__dirname, "../../../public/literature/pp.txt")
     let corpusContent = fs.readFileSync(corpusFilename, "utf8");
     let corpusTree = new Collections.TST<number>();
     function addCorpus(corpusContent: string, corpusTree: Collections.TST<number>) {
@@ -1456,16 +1457,58 @@ if (testTST) {
     tst();
 }
 
+describe("Routerlicious", () => {
+    const DefaultTimeout = 120000;
 
-//simpleTest();
-//fileTest1();
-//integerTest1();
-//mergeTreeTest1();
-//mergeTreeLargeTest();
-//mergeTreeCheckedTest();
-let testPack = TestPack();
- //testPack.firstTest();
-//testPack.randolicious();
- let filename = path.join(__dirname, "../../public/literature", "pp.txt");
- testPack.clientServer(filename);
-new Server();
+    describe("merge-tree", () => {
+        it("simpleTest", () => {
+            simpleTest();
+        });
+
+        it("integerTest1", () => {
+            integerTest1();
+        }).timeout(DefaultTimeout);
+
+        it("mergeTreeTest1", () => {
+            mergeTreeTest1();
+        });
+
+        it("mergeTreeLargeTest", () => {
+            mergeTreeLargeTest();
+        }).timeout(DefaultTimeout);
+
+        it("firstTest", () => {
+            const testPack = TestPack();
+            testPack.firstTest();
+        });
+    });
+
+    // As we port over to mocha the below tests can be conditionally enabled by setting the beast flag. But
+    // are skipped by default.
+    const parsedArgs = minimist(process.argv.slice(2));
+    const conditionalDescribe = parsedArgs.beast ? describe : describe.skip;
+
+    conditionalDescribe("merge-tree", () => {
+        // TODO need to adjust timings on the below
+
+        it("fileTest1", () => {
+            fileTest1();
+        }).timeout(Number.MAX_VALUE);
+
+        it("randolicious", () => {
+            const testPack = TestPack();
+            testPack.randolicious();
+        }).timeout(Number.MAX_VALUE);
+
+        it("mergeTreeCheckedTest", () => {
+            mergeTreeCheckedTest();
+        }).timeout(Number.MAX_VALUE);
+
+        it("beastTest", () => {
+            const testPack = TestPack();
+            const filename = path.join(__dirname, "../../../public/literature", "pp.txt");
+            testPack.clientServer(filename);
+            new Server();
+        }).timeout(Number.MAX_VALUE)
+    });
+});
