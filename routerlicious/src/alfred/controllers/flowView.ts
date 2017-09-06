@@ -1276,6 +1276,8 @@ function makeSegSpan(context: FlowView, segText: string, textSegment: SharedStri
                             document.body.onmouseup = cancelIntellisense;
                             slb.elm.onmouseup = acceptIntellisense;
                             slb.elm.onmousemove = selectItem;
+                        } else if (e.button === 0) {
+                            context.clickSpan(e.clientX, e.clientY, span);
                         }
                     };
                 }
@@ -1661,6 +1663,21 @@ export class FlowView {
         }
     }
 
+    public clickSpan(x: number, y: number, elm: HTMLSpanElement) {
+        let span = <ISegSpan>elm;
+        let elmOff = pointerToElementOffsetWebkit(x, y);
+        if (elmOff) {
+            let computed = elmOffToSegOff(elmOff, span);
+            if (span.offset) {
+                computed += span.offset;
+            }
+            this.cursor.pos = span.segPos + computed;
+            this.updatePresence();
+            this.cursor.updateView(this);
+            return true;
+        }
+    }
+
     // TODO: handle symbol div
     public setCursorPosFromPixels(targetLineDiv: ILineDiv) {
         if (targetLineDiv && (targetLineDiv.linePos)) {
@@ -1743,9 +1760,6 @@ export class FlowView {
 
         this.containerDiv.onmousedown = (e) => {
             if (e.button === 0) {
-                if (!this.diagCharPort) {
-                    return;
-                }
                 let span = <ISegSpan>e.target;
                 let segspan: ISegSpan;
                 if (span.seg) {
@@ -1754,17 +1768,11 @@ export class FlowView {
                     segspan = <ISegSpan>span.parentElement;
                 }
                 if (segspan && segspan.seg) {
-                    let segOffset = this.client.mergeTree.getOffset(segspan.seg, this.client.getCurrentSeq(),
-                        this.client.getClientId());
-                    let elmOff = pointerToElementOffsetWebkit(e.clientX, e.clientY);
-                    let computed = elmOffToSegOff(elmOff, segspan);
-                    // tslint:disable:max-line-length
-                    let diag = `segPos: ${segOffset} cxy: (${e.clientX}, ${e.clientY}) within: ${elmOff.offset} computed: (${computed}, ${computed + segOffset})`;
-                    if (this.diagCharPort) {
-                        this.statusMessage("segclick", diag);
-                    }
-                    console.log(diag);
+                    this.clickSpan(e.clientX, e.clientY, segspan);
                 }
+                e.preventDefault();
+                e.returnValue = false;
+                return false;
             } else if (e.button === 2) {
                 e.preventDefault();
                 e.returnValue = false;
