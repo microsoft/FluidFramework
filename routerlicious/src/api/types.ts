@@ -64,6 +64,13 @@ export interface ICollaborativeObject {
     transform(message: protocol.IObjectMessage, sequenceNumber: number): protocol.IObjectMessage;
 }
 
+/**
+ * Type of "valueChanged" event parameter
+ */
+export interface IValueChanged {
+    key: string;
+}
+
 export interface IMapView {
     /**
      * Retrieves the given key from the map

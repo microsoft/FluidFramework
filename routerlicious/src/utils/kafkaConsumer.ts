@@ -19,6 +19,16 @@ export interface IConsumer {
      * Closes the consumer.
      */
     close(): Promise<void>;
+
+    /**
+     * Pauses retrieval of new messages
+     */
+    pause();
+
+    /**
+     * Resumes retrival of messages
+     */
+    resume();
 }
 
 class KafkaRestConsumer implements IConsumer {
@@ -51,6 +61,14 @@ class KafkaRestConsumer implements IConsumer {
     public on(event: string, listener: (...args: any[]) => void): this {
         this.events.on(event, listener);
         return this;
+    }
+
+    public pause() {
+        // TODO implement
+    }
+
+    public resume() {
+        // TODO implement
     }
 
     private connect() {
@@ -137,6 +155,14 @@ class KafkaNodeConsumer implements IConsumer {
     public on(event: string, listener: (...args: any[]) => void): this {
         this.events.on(event, listener);
         return this;
+    }
+
+    public pause() {
+        this.instance.pause();
+    }
+
+    public resume() {
+        this.instance.resume();
     }
 
     private connect() {

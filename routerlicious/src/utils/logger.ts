@@ -9,18 +9,22 @@ const loggerConfig = nconf.get("logger");
 /**
  * Default logger setup
  */
-export const logger = new winston.Logger({
-    transports: [
-        new winston.transports.Console({
-            colorize: utils.parseBoolean(loggerConfig.colorize),
-            handleExceptions: true,
-            json: utils.parseBoolean(loggerConfig.json),
-            level: loggerConfig.level,
-            stringify: (obj) => JSON.stringify(obj),
-            timestamp: utils.parseBoolean(loggerConfig.timestamp),
-        }),
-    ],
-});
+// TODO don't take dependency on nconf
+export let logger: winston.LoggerInstance = winston.default;
+if (loggerConfig) {
+    logger = new winston.Logger({
+        transports: [
+            new winston.transports.Console({
+                colorize: utils.parseBoolean(loggerConfig.colorize),
+                handleExceptions: true,
+                json: utils.parseBoolean(loggerConfig.json),
+                level: loggerConfig.level,
+                stringify: (obj) => JSON.stringify(obj),
+                timestamp: utils.parseBoolean(loggerConfig.timestamp),
+            }),
+        ],
+    });
+}
 
 /**
  * Basic stream logging interface for libraries that require a stream to pipe output to (re: Morgan)

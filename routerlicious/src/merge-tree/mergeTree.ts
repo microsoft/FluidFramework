@@ -2159,9 +2159,14 @@ export class MergeTree {
     }
 
     tardisPosition(pos: number, fromSeq: number, toSeq: number, toClientId = NonCollabClient) {
+        return this.tardisPositionFromClient(pos, fromSeq, toSeq, NonCollabClient, toClientId);
+    }
+
+    tardisPositionFromClient(pos: number, fromSeq: number, toSeq: number, fromClientId: number, 
+        toClientId = NonCollabClient) {
         if (fromSeq < toSeq) {
             if ((toSeq <= this.collabWindow.currentSeq) && (fromSeq >= this.collabWindow.minSeq)) {
-                let segoff = this.getContainingSegment(pos, fromSeq, NonCollabClient);
+                let segoff = this.getContainingSegment(pos, fromSeq, fromClientId);
                 let toPos = this.getOffset(segoff.segment, toSeq, toClientId);
                 let ret = toPos + segoff.offset;
                 assert(ret !== undefined);
@@ -2516,7 +2521,7 @@ export class MergeTree {
         }
         else {
             // assume marker for now
-            this.insertMarker(pos, UniversalSequenceNumber, LocalClientId, 
+            this.insertMarker(pos, UniversalSequenceNumber, LocalClientId,
                 UniversalSequenceNumber, segSpec.marker.behaviors, segSpec.props as PropertySet);
         }
     }
@@ -2530,7 +2535,7 @@ export class MergeTree {
         this.updateRoot(splitNode, refSeq, clientId, seq);
     }
 
-    insertMarker(pos: number, refSeq: number, clientId: number, seq: number, 
+    insertMarker(pos: number, refSeq: number, clientId: number, seq: number,
         behaviors: ops.MarkerBehaviors, props?: PropertySet) {
         let marker = Marker.make(behaviors, props, seq, clientId);
         this.insert(pos, refSeq, clientId, seq, marker, (block, pos, refSeq, clientId, seq, marker) =>

@@ -1,9 +1,9 @@
 import { Collection } from "mongodb";
+import * as winston from "winston";
 import * as api from "../api";
 import * as core from "../core";
 import * as shared from "../shared";
 import * as utils from "../utils";
-import { logger } from "../utils";
 
 interface IPendingTicket<T> {
     message: any;
@@ -31,7 +31,7 @@ const SequenceNumberComparer: utils.IComparer<IClientSequenceNumber> = {
     },
 };
 
-const throughput = new utils.ThroughputCounter(logger.info, "Delta Topic ");
+const throughput = new utils.ThroughputCounter(winston.info, "Delta Topic ");
 
 /**
  * Class to handle distributing sequence numbers to a collaborative object
@@ -49,7 +49,7 @@ export class TakeANumber {
     constructor(
         private documentId: string,
         private collection: Collection,
-        private producer: utils.kafkaProducer.IProdcuer) {
+        private producer: utils.kafkaProducer.IProducer) {
         // Lookup the last sequence number stored
         const dbObjectP = this.collection.findOne({ _id: this.documentId });
         dbObjectP.then(
@@ -171,7 +171,7 @@ export class TakeANumber {
         if (message.operation.referenceSequenceNumber < this.minimumSequenceNumber) {
             // TODO support nacking of clients
             // Do not assign a ticket to a message outside the MSN. We will need to NACK clients in this case.
-            logger.error(`${message.clientId} sent packet less than MSN of ${this.minimumSequenceNumber}`);
+            winston.error(`${message.clientId} sent packet less than MSN of ${this.minimumSequenceNumber}`);
             return Promise.resolve();
         }
 
@@ -201,7 +201,7 @@ export class TakeANumber {
         };
 
         // tslint:disable-next-line:max-line-length
-        logger.verbose(`Assigning ticket ${objectMessage.documentId}@${sequenceNumber}:${this.minimumSequenceNumber} at topic@${this.logOffset}`);
+        winston.verbose(`Assigning ticket ${objectMessage.documentId}@${sequenceNumber}:${this.minimumSequenceNumber} at topic@${this.logOffset}`);
 
         const sequencedMessage: core.ISequencedOperationMessage = {
             documentId: objectMessage.documentId,
@@ -328,7 +328,7 @@ export class TakeANumber {
                 return client.value.referenceSequenceNumber;
             }
 
-            logger.verbose(`Expiring ${client.value.clientId}`);
+            winston.verbose(`Expiring ${client.value.clientId}`);
             this.clientSeqNumbers.get();
             delete this.clientNodeMap[client.value.clientId];
         }
