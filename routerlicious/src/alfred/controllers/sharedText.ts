@@ -254,11 +254,11 @@ export async function onLoad(id: string, version: resources.ICommit, config: any
                 // assume marker
                 let marker = <SharedString.Marker>segment;
                 // tslint:disable:max-line-length
-                newString.insertMarker(newString.client.getLength(), 
+                newString.insertMarker(newString.client.getLength(),
                     marker.behaviors, marker.properties);
             }
         }
-
+        root.set("presence", collabDoc.createMap());
         root.set("text", newString);
     }
 
@@ -279,7 +279,8 @@ export async function onLoad(id: string, version: resources.ICommit, config: any
         theFlow.render(0, true);
     }
     theFlow.timeToEdit = theFlow.timeToImpression = Date.now() - clockStart;
-    theFlow.setEdit();
+
+    theFlow.setEdit(root);
 
     sharedString.loaded.then(() => {
         // Bootstrap worker service.

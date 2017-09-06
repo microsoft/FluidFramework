@@ -642,6 +642,34 @@ interface ILineContext {
     viewportBounds: Geometry.Rectangle;
 }
 
+function showPresence(presenceX: number, lineContext: ILineContext, presenceInfo: IPresenceInfo) {
+    if (!presenceInfo.cursor) {
+        presenceInfo.cursor = new Cursor(lineContext.flowView.viewportDiv, presenceInfo.pos);
+        presenceInfo.cursor.addPresenceInfo(presenceInfo);
+    }
+    presenceInfo.cursor.assignToLine(presenceX, lineContext.lineDivHeight, lineContext.lineDiv);
+}
+
+function showPositionInLine(lineContext: ILineContext, textStartPos: number, text: string, cursorPos: number, presenceInfo?: IPresenceInfo) {
+    let posX: number;
+    if (cursorPos > textStartPos) {
+        let preCursorText = text.substring(0, cursorPos - textStartPos);
+        let temp = lineContext.span.innerText;
+        lineContext.span.innerText = preCursorText;
+        let cursorBounds = lineContext.span.getBoundingClientRect();
+        posX = cursorBounds.width + (cursorBounds.left - lineContext.viewportBounds.x);
+        lineContext.span.innerText = temp;
+    } else {
+        let cursorBounds = lineContext.span.getBoundingClientRect();
+        posX = cursorBounds.left - lineContext.viewportBounds.x;
+    }
+    if (!presenceInfo) {
+        lineContext.flowView.cursor.assignToLine(posX, lineContext.lineDivHeight, lineContext.lineDiv);
+    } else {
+        showPresence(posX, lineContext, presenceInfo);
+    }
+}
+
 function renderSegmentIntoLine(segment: SharedString.Segment, segpos: number, refSeq: number,
     clientId: number, start: number, end: number, lineContext: ILineContext) {
     if (lineContext.lineDiv.linePos === undefined) {
@@ -664,19 +692,11 @@ function renderSegmentIntoLine(segment: SharedString.Segment, segpos: number, re
         lineContext.contentDiv.appendChild(lineContext.span);
         lineContext.lineDiv.lineEnd += text.length;
         if ((lineContext.flowView.cursor.pos >= textStartPos) && (lineContext.flowView.cursor.pos <= textEndPos)) {
-            let cursorX: number;
-            if (lineContext.flowView.cursor.pos > textStartPos) {
-                let preCursorText = text.substring(0, lineContext.flowView.cursor.pos - textStartPos);
-                let temp = lineContext.span.innerText;
-                lineContext.span.innerText = preCursorText;
-                let cursorBounds = lineContext.span.getBoundingClientRect();
-                cursorX = cursorBounds.width + (cursorBounds.left - lineContext.viewportBounds.x);
-                lineContext.span.innerText = temp;
-            } else {
-                let cursorBounds = lineContext.span.getBoundingClientRect();
-                cursorX = cursorBounds.left - lineContext.viewportBounds.x;
-            }
-            lineContext.flowView.cursor.assignToLine(cursorX, lineContext.lineDivHeight, lineContext.lineDiv);
+            showPositionInLine(lineContext, textStartPos, text, lineContext.flowView.cursor.pos);
+        }
+        let presenceInfo = lineContext.flowView.presenceInfoInRange(textStartPos, textEndPos);
+        if (presenceInfo && (presenceInfo.pos !== lineContext.flowView.cursor.pos)) {
+            showPositionInLine(lineContext, textStartPos, text, presenceInfo.pos, presenceInfo);
         }
     } else if (segType === SharedString.SegmentType.Marker) {
         let marker = <SharedString.Marker>segment;
@@ -1287,17 +1307,30 @@ export interface IComponentContainer {
     status: IStatus;
 }
 
+let presenceColors = ["darkgreen", "sienna", "olive", "purple"];
+
 export class Cursor {
     public off = true;
     public parentSpan: HTMLSpanElement;
     public editSpan: HTMLSpanElement;
+    public presenceDiv: HTMLDivElement;
+
     private blinkCount = 0;
     private blinkTimer: any;
-    private viewportDivBounds: ClientRect;
+    private bgColor = "blue";
+    private presenceInfo: IPresenceInfo;
 
     constructor(public viewportDiv: HTMLDivElement, public pos = 1) {
         this.makeSpan();
-        this.onresize();
+    }
+
+    public addPresenceInfo(presenceInfo: IPresenceInfo) {
+        // for now, color
+        let presenceColorIndex = presenceInfo.clientId % presenceColors.length;
+        this.bgColor = presenceColors[presenceColorIndex];
+        this.presenceInfo = presenceInfo;
+        this.makePresenceDiv();
+        this.show();
     }
 
     public hide() {
@@ -1305,13 +1338,26 @@ export class Cursor {
     }
 
     public show() {
-        this.editSpan.style.backgroundColor = "blue";
+        this.editSpan.style.backgroundColor = this.bgColor;
         this.editSpan.style.visibility = "visible";
+        if (this.presenceInfo) {
+            this.presenceDiv.style.visibility = "visible";
+        }
+    }
+
+    public makePresenceDiv() {
+        this.presenceDiv = document.createElement("div");
+        this.presenceDiv.innerText = this.presenceInfo.key;
+        this.presenceDiv.style.zIndex = "1";
+        this.presenceDiv.style.position = "absolute";
+        this.presenceDiv.style.color = "white";
+        this.presenceDiv.style.backgroundColor = this.bgColor;
+        this.presenceDiv.style.font = "14px Arial";
+        this.presenceDiv.style.border = `2px solid ${this.bgColor}`;
     }
 
     public makeSpan() {
         this.editSpan = document.createElement("span");
-        this.editSpan.id = "cursor";
         this.editSpan.innerText = "\uFEFF";
         this.editSpan.style.zIndex = "1";
         this.editSpan.style.position = "absolute";
@@ -1343,10 +1389,6 @@ export class Cursor {
         return this.editSpan.getBoundingClientRect();
     }
 
-    public onresize() {
-        this.viewportDivBounds = this.viewportDiv.getBoundingClientRect();
-    }
-
     public assignToLine(x: number, h: number, lineDiv: HTMLDivElement) {
         this.editSpan.style.left = `${x}px`;
         this.editSpan.style.height = `${h}px`;
@@ -1354,25 +1396,20 @@ export class Cursor {
             this.editSpan.parentElement.removeChild(this.editSpan);
         }
         lineDiv.appendChild(this.editSpan);
-        if (this.blinkTimer) {
-            clearTimeout(this.blinkTimer);
+        if (this.presenceInfo) {
+            let bannerHeight = 20;
+            let halfBannerHeight = bannerHeight / 2;
+            this.presenceDiv.style.left = `${x + 2}px`;
+            this.presenceDiv.style.height = `${bannerHeight}px`;
+            this.presenceDiv.style.top = `-${halfBannerHeight}px`;
+            this.editSpan.style.top = `-${halfBannerHeight}px`;
+            this.editSpan.style.height = `${h + halfBannerHeight}px`;
+            if (this.presenceDiv.parentElement) {
+                this.presenceDiv.parentElement.removeChild(this.presenceDiv);
+            }
+            this.presenceDiv.style.opacity = "1.0";
+            lineDiv.appendChild(this.presenceDiv);
         }
-        this.blinkCursor();
-    }
-
-    public assign(parentSpan: HTMLSpanElement) {
-        if (this.editSpan.parentElement) {
-            this.editSpan.parentElement.removeChild(this.editSpan);
-        }
-        parentSpan.style.position = "relative";
-        parentSpan.appendChild(this.editSpan);
-        this.parentSpan = parentSpan;
-        // let bounds = parentSpan.getBoundingClientRect();
-        // let left = bounds.left - this.viewportDivBounds.left;
-        // let top = bounds.top - this.viewportDivBounds.top;
-
-        // this.editSpan.style.left = `${left}px`;
-        // this.editSpan.style.top = `${top}px`;
         if (this.blinkTimer) {
             clearTimeout(this.blinkTimer);
         }
@@ -1388,8 +1425,24 @@ export class Cursor {
         this.off = !this.off;
         if (this.blinkCount > 0) {
             this.blinkCount--;
+            if (this.presenceInfo) {
+                let opacity = 0.5 + (0.5 * Math.exp(-0.2 * (30 - this.blinkCount)));
+                if (this.blinkCount === 20) {
+                    this.editSpan.style.height = this.editSpan.parentElement.style.height;
+                    this.editSpan.style.top = "0px";
+                }
+                if (this.blinkCount <= 20) {
+                    opacity = 0.0;
+                } else if (this.blinkCount > 26) {
+                    opacity = 1.0;
+                }
+                this.presenceDiv.style.opacity = `${opacity}`;
+            }
             this.blinkTimer = setTimeout(this.blinker, 500);
         } else {
+            if (this.presenceInfo) {
+                this.presenceDiv.style.opacity = "0.0";
+            }
             this.show();
         }
     }
@@ -1417,6 +1470,18 @@ enum KeyCode {
     letter_z = 90,
 }
 
+export interface IValueChanged {
+    key: string;
+}
+
+export interface IPresenceInfo {
+    key?: string;
+    clientId?: number;
+    cursor?: Cursor;
+    pos: number;
+    refseq: number;
+}
+
 export class FlowView {
     public static scrollAreaWidth = 18;
 
@@ -1440,6 +1505,10 @@ export class FlowView {
     public wheelTicking = false;
     public topChar = 0;
     public cursor: Cursor;
+    public presenceMap: API.IMap;
+    public presenceMapView: API.IMapView;
+    public presenceVector: IPresenceInfo[] = [];
+    public docRoot: API.IMapView;
     private lastVerticalX = -1;
     private randWordTimer: any;
     private pendingRender = false;
@@ -1464,6 +1533,68 @@ export class FlowView {
         });
 
         this.cursor = new Cursor(this.viewportDiv);
+    }
+
+    public addPresenceMap(presenceMap: API.IMap) {
+        this.presenceMap = presenceMap;
+        presenceMap.on("valueChanged", (delta: IValueChanged) => {
+            this.remotePresenceUpdate(delta);
+        });
+        presenceMap.getView().then((v) => {
+            this.presenceMapView = v;
+            this.updatePresence();
+        });
+    }
+
+    public presenceInfoInRange(start: number, end: number) {
+        for (let i = 0, len = this.presenceVector.length; i < len; i++) {
+            let presenceInfo = this.presenceVector[i];
+            if (presenceInfo) {
+                if ((start <= presenceInfo.pos) && (presenceInfo.pos <= end)) {
+                    return presenceInfo;
+                }
+            }
+        }
+    }
+
+    public updatePresenceVector(remotePosInfo: IPresenceInfo) {
+        remotePosInfo.pos = this.client.mergeTree.tardisPositionFromClient(remotePosInfo.pos,
+            remotePosInfo.refseq, this.client.getCurrentSeq(), remotePosInfo.clientId,
+            this.client.getClientId());
+        let presentPresence = this.presenceVector[remotePosInfo.clientId];
+
+        if (presentPresence && presentPresence.cursor) {
+            remotePosInfo.cursor = presentPresence.cursor;
+        }
+        this.presenceVector[remotePosInfo.clientId] = remotePosInfo;
+        this.renderPresence(remotePosInfo);
+    }
+
+    public remotePresenceFromEdit(longClientId: string, refseq: number, pos: number) {
+        let remotePosInfo = <IPresenceInfo>{
+            pos,
+            key: longClientId,
+            clientId: this.client.getOrAddShortClientId(longClientId),
+            refseq,
+        };
+        this.updatePresenceVector(remotePosInfo);
+    }
+
+    public remotePresenceUpdate(delta: IValueChanged) {
+        if (delta.key !== this.client.longClientId) {
+            let remotePosInfo = <IPresenceInfo>this.presenceMapView.get(delta.key);
+            remotePosInfo.key = delta.key;
+            remotePosInfo.clientId = this.client.getOrAddShortClientId(delta.key);
+            this.updatePresenceVector(remotePosInfo);
+        }
+    }
+
+    public updatePresence() {
+        let presenceInfo = <IPresenceInfo>{
+            pos: this.cursor.pos,
+            refseq: this.client.getCurrentSeq(),
+        };
+        this.presenceMapView.set(this.client.longClientId, presenceInfo);
     }
 
     public updateGeometry() {
@@ -1581,7 +1712,9 @@ export class FlowView {
         return this.viewportEndPos - this.viewportStartPos;
     }
 
-    public setEdit() {
+    public setEdit(docRoot: API.IMapView) {
+        this.docRoot = docRoot;
+
         let preventD = (e) => {
             e.returnValue = false;
             e.preventDefault();
@@ -1647,7 +1780,6 @@ export class FlowView {
         };
         this.flowContainer.onresize = () => {
             this.updateGeometry();
-            // this.cursor.onresize();
             this.render(this.topChar, true);
         };
         let keydownHandler = (e: KeyboardEvent) => {
@@ -1675,6 +1807,7 @@ export class FlowView {
                 let halfport = Math.floor(this.viewportCharCount() / 2);
                 let topChar = this.client.getLength() - halfport;
                 this.cursor.pos = topChar;
+                this.updatePresence();
                 this.render(topChar);
             } else if (e.keyCode === KeyCode.rightArrow) {
                 if (this.cursor.pos < (this.client.getLength() - 1)) {
@@ -1682,6 +1815,7 @@ export class FlowView {
                         this.scroll(false, true);
                     }
                     this.cursor.pos++;
+                    this.updatePresence();
                     this.cursor.updateView(this);
                 }
             } else if (e.keyCode === KeyCode.leftArrow) {
@@ -1690,6 +1824,7 @@ export class FlowView {
                         this.scroll(true, true);
                     }
                     this.cursor.pos--;
+                    this.updatePresence();
                     this.cursor.updateView(this);
                 }
             } else if ((e.keyCode === KeyCode.upArrow) || (e.keyCode === KeyCode.downArrow)) {
@@ -1717,6 +1852,7 @@ export class FlowView {
                     if (this.cursor.pos > maxPos) {
                         this.cursor.pos = maxPos;
                     }
+                    this.updatePresence();
                     this.cursor.updateView(this);
                 }
             } else {
@@ -1912,6 +2048,7 @@ export class FlowView {
             } else {
                 this.setCursorPosFromPixels(this.lastLineDiv());
             }
+            this.updatePresence();
             this.cursor.updateView(this);
         }
     }
@@ -1994,6 +2131,8 @@ export class FlowView {
             // tslint:disable-next-line:max-line-length
             console.log(`time to edit/impression: ${this.timeToEdit} time to load: ${Date.now() - clockStart}ms len: ${this.sharedString.client.getLength()} - ${performanceNow()}`);
         }
+        const presenceMap = this.docRoot.get("presence") as API.IMap;
+        this.addPresenceMap(presenceMap);
         // this.testWordInfo();
     }
 
@@ -2050,13 +2189,15 @@ export class FlowView {
     }
 
     // TODO: paragraph spanning changes and annotations
-    private applyOp(delta: SharedString.IMergeTreeOp) {
+    // TODO: generalize this by using transform fwd
+    private applyOp(delta: SharedString.IMergeTreeOp, msg: API.ISequencedObjectMessage) {
         if (delta.type === SharedString.MergeTreeDeltaType.INSERT) {
             if (delta.marker) {
                 this.updatePGInfo(delta.pos1 - 1);
             } else if (delta.pos1 <= this.cursor.pos) {
                 this.cursor.pos += delta.text.length;
             }
+            this.remotePresenceFromEdit(msg.clientId, msg.referenceSequenceNumber, delta.pos1 + 1);
             this.updatePGInfo(delta.pos1);
         } else if (delta.type === SharedString.MergeTreeDeltaType.REMOVE) {
             if (delta.pos2 <= this.cursor.pos) {
@@ -2064,11 +2205,26 @@ export class FlowView {
             } else if (this.cursor.pos >= delta.pos1) {
                 this.cursor.pos = delta.pos1;
             }
+            this.remotePresenceFromEdit(msg.clientId, msg.referenceSequenceNumber, delta.pos1);
             this.updatePGInfo(delta.pos1);
         } else if (delta.type === SharedString.MergeTreeDeltaType.GROUP) {
             for (let groupOp of delta.ops) {
-                this.applyOp(groupOp);
+                this.applyOp(groupOp, msg);
             }
+        }
+    }
+
+    private posInViewport(pos: number) {
+        return ((this.viewportEndPos > pos) && (pos >= this.viewportStartPos));
+    }
+
+    private renderPresence(remotePosInfo: IPresenceInfo) {
+        if ((!this.pendingRender) && (this.posInViewport(remotePosInfo.pos))) {
+            this.pendingRender = true;
+            window.requestAnimationFrame(() => {
+                this.pendingRender = false;
+                this.render(this.topChar, true);
+            });
         }
     }
 
@@ -2079,7 +2235,7 @@ export class FlowView {
                 this.pendingRender = false;
                 if (msg.clientId !== this.client.longClientId) {
                     let delta = <SharedString.IMergeTreeOp>msg.contents;
-                    this.applyOp(delta);
+                    this.applyOp(delta, msg);
                 }
                 this.render(this.topChar, true);
             });
