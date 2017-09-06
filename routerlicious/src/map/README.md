@@ -1,12 +1,12 @@
 # Map Data Types
 
-## Counters
-You can create a counter on a map key. We support incrementing/decremnting counter up/down to an upper/lower limit.
+## Counter
+You can create a counter on a map key. We support incrementing/decremnting counter to an upper/lower limit.
 ### Create counter on a map kay
 **Required parameter:**<br/>
 *key*: map key name for the counter.<br/>
 **Optional parameter(s):**<br/>
-*value*: Initial value (default is 0)<br/>
+*value*: Initial counter value (default is 0)<br/>
 *min*: Minimum allowed value for the counter (default is Number.MIN_SAFE_INTEGER)<br/>
 *max*: Maximum allowed value for the counter (default is Number.MAX_SAFE_INTEGER)
 ```
@@ -26,7 +26,7 @@ You can create a set on a map key. We support addition, removal, and enumeration
 **Required parameter:**<br/>
 *key*: map key name for the set<br/>
 **Optional parameters:**<br/>
-*value*: Initial elements (default is [])<br/>
+*value*: Initial set elements (default is [])<br/>
 ```
 createSet<T>(key: string, value?: T[]): Promise<ISet<T>>;
 ```
