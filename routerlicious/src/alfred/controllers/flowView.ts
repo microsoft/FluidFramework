@@ -1470,10 +1470,6 @@ enum KeyCode {
     letter_z = 90,
 }
 
-export interface IValueChanged {
-    key: string;
-}
-
 export interface IPresenceInfo {
     key?: string;
     clientId?: number;
@@ -1537,7 +1533,7 @@ export class FlowView {
 
     public addPresenceMap(presenceMap: API.IMap) {
         this.presenceMap = presenceMap;
-        presenceMap.on("valueChanged", (delta: IValueChanged) => {
+        presenceMap.on("valueChanged", (delta: API.IValueChanged) => {
             this.remotePresenceUpdate(delta);
         });
         presenceMap.getView().then((v) => {
@@ -1580,7 +1576,7 @@ export class FlowView {
         this.updatePresenceVector(remotePosInfo);
     }
 
-    public remotePresenceUpdate(delta: IValueChanged) {
+    public remotePresenceUpdate(delta: API.IValueChanged) {
         if (delta.key !== this.client.longClientId) {
             let remotePosInfo = <IPresenceInfo>this.presenceMapView.get(delta.key);
             remotePosInfo.key = delta.key;
