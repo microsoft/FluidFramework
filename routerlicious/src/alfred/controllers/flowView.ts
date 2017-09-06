@@ -650,6 +650,32 @@ function showPresence(presenceX: number, lineContext: ILineContext, presenceInfo
     presenceInfo.cursor.assignToLine(presenceX, lineContext.lineDivHeight, lineContext.lineDiv);
 }
 
+function showPositionEndOfLine(lineContext: ILineContext, presenceInfo?: IPresenceInfo) {
+    if (lineContext.span) {
+        let cursorBounds = lineContext.span.getBoundingClientRect();
+        let cursorX = cursorBounds.width + (cursorBounds.left - lineContext.viewportBounds.x);
+        if (!presenceInfo) {
+            lineContext.flowView.cursor.assignToLine(cursorX, lineContext.lineDivHeight, lineContext.lineDiv);
+        } else {
+            showPresence(cursorX, lineContext, presenceInfo);
+        }
+    } else {
+        if (lineContext.lineDiv.indentWidth !== undefined) {
+            if (!presenceInfo) {
+                lineContext.flowView.cursor.assignToLine(lineContext.lineDiv.indentWidth, lineContext.lineDivHeight, lineContext.lineDiv);
+            } else {
+                showPresence(lineContext.lineDiv.indentWidth, lineContext, presenceInfo);
+            }
+        } else {
+            if (!presenceInfo) {
+                lineContext.flowView.cursor.assignToLine(0, lineContext.lineDivHeight, lineContext.lineDiv);
+            } else {
+                showPresence(0, lineContext, presenceInfo);
+            }
+        }
+    }
+}
+
 function showPositionInLine(lineContext: ILineContext, textStartPos: number, text: string, cursorPos: number, presenceInfo?: IPresenceInfo) {
     let posX: number;
     if (cursorPos > textStartPos) {
@@ -704,16 +730,11 @@ function renderSegmentIntoLine(segment: SharedString.Segment, segpos: number, re
             lineContext.pgMarker = marker;
             lineContext.markerPos = segpos;
             if (lineContext.flowView.cursor.pos === segpos) {
-                if (lineContext.span) {
-                    let cursorBounds = lineContext.span.getBoundingClientRect();
-                    let cursorX = cursorBounds.width + (cursorBounds.left - lineContext.viewportBounds.x);
-                    lineContext.flowView.cursor.assignToLine(cursorX, lineContext.lineDivHeight, lineContext.lineDiv);
-                } else {
-                    if (lineContext.lineDiv.indentWidth !== undefined) {
-                        lineContext.flowView.cursor.assignToLine(lineContext.lineDiv.indentWidth, lineContext.lineDivHeight, lineContext.lineDiv);
-                    } else {
-                        lineContext.flowView.cursor.assignToLine(0, lineContext.lineDivHeight, lineContext.lineDiv);
-                    }
+                showPositionEndOfLine(lineContext);
+            } else {
+                let presenceInfo = lineContext.flowView.presenceInfoInRange(segpos, segpos);
+                if (presenceInfo) {
+                    showPositionEndOfLine(lineContext, presenceInfo);
                 }
             }
             return false;
@@ -1553,10 +1574,13 @@ export class FlowView {
         }
     }
 
-    public updatePresenceVector(remotePosInfo: IPresenceInfo) {
+    public updatePresenceVector(remotePosInfo: IPresenceInfo, posAdjust = 0) {
         remotePosInfo.pos = this.client.mergeTree.tardisPositionFromClient(remotePosInfo.pos,
             remotePosInfo.refseq, this.client.getCurrentSeq(), remotePosInfo.clientId,
             this.client.getClientId());
+        if (posAdjust !== 0) {
+            remotePosInfo.pos += posAdjust;
+        }
         let presentPresence = this.presenceVector[remotePosInfo.clientId];
 
         if (presentPresence && presentPresence.cursor) {
@@ -1566,14 +1590,14 @@ export class FlowView {
         this.renderPresence(remotePosInfo);
     }
 
-    public remotePresenceFromEdit(longClientId: string, refseq: number, pos: number) {
+    public remotePresenceFromEdit(longClientId: string, refseq: number, oldpos: number, posAdjust = 0) {
         let remotePosInfo = <IPresenceInfo>{
-            pos,
+            pos: oldpos,
             key: longClientId,
             clientId: this.client.getOrAddShortClientId(longClientId),
             refseq,
         };
-        this.updatePresenceVector(remotePosInfo);
+        this.updatePresenceVector(remotePosInfo, posAdjust);
     }
 
     public remotePresenceUpdate(delta: API.IValueChanged) {
@@ -2193,7 +2217,7 @@ export class FlowView {
             } else if (delta.pos1 <= this.cursor.pos) {
                 this.cursor.pos += delta.text.length;
             }
-            this.remotePresenceFromEdit(msg.clientId, msg.referenceSequenceNumber, delta.pos1 + 1);
+            this.remotePresenceFromEdit(msg.clientId, msg.referenceSequenceNumber, delta.pos1, delta.pos1 + 1);
             this.updatePGInfo(delta.pos1);
         } else if (delta.type === SharedString.MergeTreeDeltaType.REMOVE) {
             if (delta.pos2 <= this.cursor.pos) {

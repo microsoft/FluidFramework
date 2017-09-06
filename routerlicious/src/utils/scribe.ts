@@ -391,6 +391,7 @@ export async function type(
     const document = await api.load(id);
     const sharedString = document.createString() as SharedString.SharedString;
     await document.getRoot().set("text", sharedString);
+    await document.getRoot().set("presence", document.createMap());
 
     return new Promise<number>((resolve, reject) => {
         typeFile(document, sharedString, text, intervalTime, callback).then(
