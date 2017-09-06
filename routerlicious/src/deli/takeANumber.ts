@@ -49,7 +49,7 @@ export class TakeANumber {
     constructor(
         private documentId: string,
         private collection: Collection,
-        private producer: utils.kafkaProducer.IProdcuer) {
+        private producer: utils.kafkaProducer.IProducer) {
         // Lookup the last sequence number stored
         const dbObjectP = this.collection.findOne({ _id: this.documentId });
         dbObjectP.then(

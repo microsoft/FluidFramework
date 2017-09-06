@@ -15,7 +15,7 @@ interface IPendingMessage {
     message: string;
 }
 
-export interface IProdcuer {
+export interface IProducer {
     /**
      * Sends the message to kafka
      */
@@ -103,7 +103,7 @@ abstract class Producer {
 /**
  * Kafka-Rest Producer.
  */
-class KafkaRestProducer extends Producer implements IProdcuer {
+class KafkaRestProducer extends Producer implements IProducer {
 
     constructor(private endpoint: string, private topic: string) {
         super();
@@ -163,7 +163,7 @@ class KafkaRestProducer extends Producer implements IProdcuer {
 /**
  * Kafka-Node Producer.
  */
-class KafkaNodeProducer extends Producer implements IProdcuer {
+class KafkaNodeProducer extends Producer implements IProducer {
 
     constructor(private endpoint: string, private clientId: string, private topic: string) {
         super();
@@ -275,7 +275,7 @@ class KafkaNodeProducer extends Producer implements IProdcuer {
     }
 }
 
-export function create(type: string, endPoint: string, clientId: string, topic: string): IProdcuer {
+export function create(type: string, endPoint: string, clientId: string, topic: string): IProducer {
     return type === "kafka-rest" ? new KafkaRestProducer(endPoint, topic)
                                  : new KafkaNodeProducer(endPoint, clientId, topic);
 }

@@ -33,10 +33,10 @@
     "start": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml up",
     "start:debug": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.debug.yml up",
     "test": "mocha --recursive dist/test",
-    "test:coverage": "nyc --all --temp-directory nyc/.nyc_output --cache-dir nyc/.cache --report-dir nyc/report --include 'dist/**/*' --exclude 'dist/test/**/*' npm test",
+    "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
     "tsc": "tsc",
     "tslint": "tslint 'src/**/*.ts'",
-    "beast": "node dist/merge-tree/beastTest.js",
+    "beast": "npm test -- --beast --grep beastTest",
     "perf:deli:debug": "nodemon --exitcrash --inspect=0.0.0.0:5858 dist/perf/deli.js -w dist",
     "pretest:perf:deli": "docker-compose -f docker-compose.test.deli.yml down --remove-orphans",
     "test:perf:deli": "npm run pretest:perf:deli; docker-compose -f docker-compose.test.deli.yml up",
@@ -70,6 +70,7 @@
     "@types/jquery": "^2.0.41",
     "@types/kafka-node": "^1.3.5",
     "@types/lodash": "^4.14.61",
+    "@types/minimist": "^1.2.0",
     "@types/mkdirp": "^0.3.29",
     "@types/mocha": "^2.2.40",
     "@types/mongodb": "^2.1.42",
@@ -94,7 +95,9 @@
     "exorcist": "^0.4.0",
     "kafka-rest": "0.0.5",
     "less": "^2.7.2",
+    "minimist": "^1.2.0",
     "mocha": "^3.2.0",
+    "mocha-junit-reporter": "^1.13.0",
     "nodemon": "^1.11.0",
     "nyc": "^11.2.0",
     "tsify": "^3.0.1",
@@ -157,5 +160,24 @@
   "browserify-shim": {
     "jquery": "global:$",
     "socket.io-client": "global:io"
+  },
+  "nyc": {
+    "all": true,
+    "exclude": [
+      "src/test/**/*.ts",
+      "dist/test/**/*.js"
+    ],
+    "include": [
+      "src/**/*.ts",
+      "dist/**/*.js"
+    ],
+    "reporter": [
+      "cobertura",
+      "html",
+      "text"
+    ],
+    "temp-directory": "nyc/.nyc_output",
+    "cache-dir": "nyc/.cache",
+    "report-dir": "nyc/report"
   }
 }
