@@ -13,7 +13,7 @@ export class DeliRunner {
     private q: AsyncQueue<string>;
 
     constructor(
-        private producer: utils.kafkaProducer.IProdcuer,
+        private producer: utils.kafkaProducer.IProducer,
         private consumer: utils.kafkaConsumer.IConsumer,
         private objectsCollection: Collection,
         private groupId: string,
@@ -113,7 +113,7 @@ export class DeliRunner {
         dispensers: { [key: string]: TakeANumber },
         ticketQueue: {[id: string]: Promise<void> },
         partitionManager: core.PartitionManager,
-        producer: utils.kafkaProducer.IProdcuer,
+        producer: utils.kafkaProducer.IProducer,
         objectsCollection: Collection) {
 
         const baseMessage = JSON.parse(message.value.toString("utf8")) as core.IMessage;

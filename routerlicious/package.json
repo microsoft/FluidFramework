@@ -33,7 +33,7 @@
     "start": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml up",
     "start:debug": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.debug.yml up",
     "test": "mocha --recursive dist/test",
-    "test:coverage": "nyc npm test",
+    "test:coverage": "nyc npm test -- --reporter xunit --reporter-options output=nyc/xunit.xml",
     "tsc": "tsc",
     "tslint": "tslint 'src/**/*.ts'",
     "beast": "npm test -- --beast --grep beastTest",
@@ -172,6 +172,7 @@
     ],
     "reporter": [
       "cobertura",
+      "html",
       "text"
     ],
     "temp-directory": "nyc/.nyc_output",
