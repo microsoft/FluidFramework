@@ -1374,7 +1374,8 @@ export class Cursor {
         this.presenceDiv.style.color = "white";
         this.presenceDiv.style.backgroundColor = this.bgColor;
         this.presenceDiv.style.font = "14px Arial";
-        this.presenceDiv.style.border = `2px solid ${this.bgColor}`;
+        this.presenceDiv.style.border = `3px solid ${this.bgColor}`;
+        this.presenceDiv.style.borderTopRightRadius = "1em";
     }
 
     public makeSpan() {
@@ -1420,11 +1421,9 @@ export class Cursor {
         if (this.presenceInfo) {
             let bannerHeight = 20;
             let halfBannerHeight = bannerHeight / 2;
-            this.presenceDiv.style.left = `${x + 2}px`;
+            this.presenceDiv.style.left = `${x}px`;
             this.presenceDiv.style.height = `${bannerHeight}px`;
             this.presenceDiv.style.top = `-${halfBannerHeight}px`;
-            this.editSpan.style.top = `-${halfBannerHeight}px`;
-            this.editSpan.style.height = `${h + halfBannerHeight}px`;
             if (this.presenceDiv.parentElement) {
                 this.presenceDiv.parentElement.removeChild(this.presenceDiv);
             }
@@ -1447,11 +1446,7 @@ export class Cursor {
         if (this.blinkCount > 0) {
             this.blinkCount--;
             if (this.presenceInfo) {
-                let opacity = 0.5 + (0.5 * Math.exp(-0.2 * (30 - this.blinkCount)));
-                if (this.blinkCount === 20) {
-                    this.editSpan.style.height = this.editSpan.parentElement.style.height;
-                    this.editSpan.style.top = "0px";
-                }
+                let opacity = 0.5 + (0.5 * Math.exp(-0.05 * (30 - this.blinkCount)));
                 if (this.blinkCount <= 20) {
                     opacity = 0.0;
                 } else if (this.blinkCount > 26) {
@@ -1587,7 +1582,7 @@ export class FlowView {
             remotePosInfo.cursor = presentPresence.cursor;
         }
         this.presenceVector[remotePosInfo.clientId] = remotePosInfo;
-        this.renderPresence(remotePosInfo);
+        this.presenceQueueRender(remotePosInfo);
     }
 
     public remotePresenceFromEdit(longClientId: string, refseq: number, oldpos: number, posAdjust = 0) {
@@ -2184,15 +2179,6 @@ export class FlowView {
         clearInterval(this.randWordTimer);
     }
 
-    public localQueueRender(updatePos: number) {
-        this.updatePGInfo(updatePos);
-        this.pendingRender = true;
-        window.requestAnimationFrame(() => {
-            this.pendingRender = false;
-            this.render(this.topChar, true);
-        });
-    }
-
     public trackInsights(insights: API.IMap) {
         this.updateInsights(insights);
         insights.on("valueChanged", () => {
@@ -2208,6 +2194,14 @@ export class FlowView {
         }
     }
 
+    public localQueueRender(updatePos: number) {
+        this.updatePGInfo(updatePos);
+        this.pendingRender = true;
+        window.requestAnimationFrame(() => {
+            this.pendingRender = false;
+            this.render(this.topChar, true);
+        });
+    }
     // TODO: paragraph spanning changes and annotations
     // TODO: generalize this by using transform fwd
     private applyOp(delta: SharedString.IMergeTreeOp, msg: API.ISequencedObjectMessage) {
@@ -2238,7 +2232,7 @@ export class FlowView {
         return ((this.viewportEndPos > pos) && (pos >= this.viewportStartPos));
     }
 
-    private renderPresence(remotePosInfo: IPresenceInfo) {
+    private presenceQueueRender(remotePosInfo: IPresenceInfo) {
         if ((!this.pendingRender) && (this.posInViewport(remotePosInfo.pos))) {
             this.pendingRender = true;
             window.requestAnimationFrame(() => {
