@@ -40,7 +40,7 @@ export interface ISet<T> {
 ```
 Adding/deleting elements from a set emits "setElementAdded"/"setElementRemoved" events on the map. The added/removed element is also returned along with the map key. Example:
 ```
-map.on("setElementAdded", (changed) => {
+map.on("setElementAdded", (changed: api.IKeyValueChanged) => {
     // changed.key is the key for the set.
     // changed.value is the added element.
 });

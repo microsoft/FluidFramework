@@ -71,6 +71,15 @@ export interface IValueChanged {
     key: string;
 }
 
+/**
+ * Type of "KeyValueChanged" event parameter
+ */
+export interface IKeyValueChanged {
+    key: string;
+
+    value: any;
+}
+
 export interface IMapView {
     /**
      * Retrieves the given key from the map
