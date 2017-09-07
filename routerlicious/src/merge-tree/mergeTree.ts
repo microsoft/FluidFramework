@@ -34,6 +34,7 @@ export interface Block extends Node {
 export interface HierBlock extends Block {
     addNodeMarkers(node: Node);
     rightmostTiles: MapLike<Marker>;
+    leftmostTiles: MapLike<Marker>;
     rangeStacks: RangeStackMap;
 }
 
@@ -80,7 +81,7 @@ export interface BlockAction<TClientData> {
 
 export interface NodeAction<TClientData> {
     (node: Node, pos: number, refSeq: number, clientId: number, start: number, end: number,
-        accum?: TClientData): boolean;
+        clientData?: TClientData): boolean;
 }
 
 export interface IncrementalSegmentAction<TContext> {
@@ -154,6 +155,14 @@ function addTile(tile: Marker, tiles: Object) {
     }
 }
 
+function addTileIfNotPresent(tile: Marker, tiles: Object) {
+    for (let tileLabel of tile.getMarkerLabels()) {
+        if (tiles[tileLabel] === undefined) {
+            tiles[tileLabel] = tile;
+        }
+    }
+}
+
 function applyStackDelta(stacks: RangeStackMap, delta: RangeStackMap) {
     for (let type in delta) {
         let deltaStack = delta[type];
@@ -186,7 +195,8 @@ function applyRangeMarker(stack: Collections.Stack<Marker>, delta: Marker) {
     }
 }
 
-function addNodeMarkers(node: Node, tiles: MapLike<Marker>, rangeStacks: RangeStackMap) {
+function addNodeMarkers(node: Node, rightmostTiles: MapLike<Marker>,
+    leftmostTiles: MapLike<Marker>, rangeStacks: RangeStackMap) {
     function updateRangeInfo(label: string, marker: Marker) {
         let stack = rangeStacks[label];
         if (stack === undefined) {
@@ -200,7 +210,8 @@ function addNodeMarkers(node: Node, tiles: MapLike<Marker>, rangeStacks: RangeSt
         if ((segment.netLength() > 0) && (segment.getType() == SegmentType.Marker)) {
             let marker = <Marker>node;
             if (marker.behaviors & ops.MarkerBehaviors.Tile) {
-                addTile(marker, tiles);
+                addTile(marker, rightmostTiles);
+                addTileIfNotPresent(marker, leftmostTiles);
             }
             else if (marker.behaviors & ops.MarkerBehaviors.Range) {
                 for (let label of marker.getMarkerLabels()) {
@@ -211,7 +222,8 @@ function addNodeMarkers(node: Node, tiles: MapLike<Marker>, rangeStacks: RangeSt
     } else {
         let block = <HierBlock>node;
         applyStackDelta(rangeStacks, block.rangeStacks);
-        Properties.extend(tiles, block.rightmostTiles);
+        Properties.extend(rightmostTiles, block.rightmostTiles);
+        Properties.contingentExtend(leftmostTiles, block.leftmostTiles);
     }
 }
 
@@ -230,11 +242,12 @@ class HierMergeBlock extends MergeBlock implements Block {
     constructor(childCount: number) {
         super(childCount);
         this.rightmostTiles = Properties.createMap<Marker>();
+        this.leftmostTiles = Properties.createMap<Marker>();
         this.rangeStacks = Properties.createMap<Collections.Stack<Marker>>();
     }
 
     addNodeMarkers(node: Node) {
-        addNodeMarkers(node, this.rightmostTiles, this.rangeStacks);
+        addNodeMarkers(node, this.rightmostTiles, this.leftmostTiles, this.rangeStacks);
     }
 
     hierBlock() {
@@ -242,6 +255,8 @@ class HierMergeBlock extends MergeBlock implements Block {
     }
 
     rightmostTiles: MapLike<Marker>;
+    leftmostTiles: MapLike<Marker>;
+
     rangeStacks: MapLike<Collections.Stack<Marker>>;
 }
 
@@ -1805,6 +1820,50 @@ export interface TextAccumulator {
     placeholders?: boolean;
 }
 
+interface IMarkerSearchInfo {
+    tileType: string;
+    preceding?: boolean;
+    tileMarker?: Marker;
+}
+
+function recordTileStart(segment: Segment, segpos: number,
+    refSeq: number, clientId: number, start: number, end: number,
+    searchInfo: IMarkerSearchInfo) {
+    if (segment.getType() === SegmentType.Marker) {
+        let marker = <Marker>segment;
+        if (marker.hasLabel(searchInfo.tileType)) {
+            searchInfo.tileMarker = marker;
+        }
+    }
+    return false;
+}
+
+function tileShift(node: Node, segpos: number, refSeq: number, clientId: number,
+    offset: number, end: number, searchInfo: IMarkerSearchInfo) {
+    if (node.isLeaf()) {
+        let seg = <Segment>node;
+        if ((seg.netLength() > 0) && (seg.getType() === SegmentType.Marker)) {
+            let marker = <Marker>seg;
+            if (marker.hasLabel(searchInfo.tileType)) {
+                searchInfo.tileMarker = marker;
+            }
+        }
+    } else {
+        let block = <HierBlock>node;
+        let marker: Marker;
+        if (searchInfo.preceding) {
+            marker = <Marker>block.rightmostTiles[searchInfo.tileType];
+        } else {
+            marker = <Marker>block.leftmostTiles[searchInfo.tileType];
+        }
+        if (marker !== undefined) {
+            searchInfo.tileMarker = marker;
+        }
+
+    }
+    return true;
+}
+
 // represents a sequence of text segments
 export class MergeTree {
     // must be an even number   
@@ -2162,7 +2221,7 @@ export class MergeTree {
         return this.tardisPositionFromClient(pos, fromSeq, toSeq, NonCollabClient, toClientId);
     }
 
-    tardisPositionFromClient(pos: number, fromSeq: number, toSeq: number, fromClientId: number, 
+    tardisPositionFromClient(pos: number, fromSeq: number, toSeq: number, fromClientId: number,
         toClientId = NonCollabClient) {
         if (fromSeq < toSeq) {
             if ((toSeq <= this.collabWindow.currentSeq) && (fromSeq >= this.collabWindow.minSeq)) {
@@ -2410,42 +2469,105 @@ export class MergeTree {
         return localPos;
     }
 
-    search<TClientData>(pos: number, refSeq: number, clientId: number,
-        actions?: SegmentActions<TClientData>, accum?: TClientData): Segment {
-        return this.searchBlock(this.root, pos, 0, refSeq, clientId, actions);
+    // TODO: filter function
+    findTile(startPos: number, clientId: number, tileType: string, preceding = true) {
+        let searchInfo = <IMarkerSearchInfo>{
+            preceding,
+            tileType,
+        };
+        
+        if (preceding) {
+            this.search(startPos, UniversalSequenceNumber, clientId,
+                { leaf: recordTileStart, shift: tileShift }, searchInfo);
+        } else {
+            this.backwardSearch(startPos + 1, UniversalSequenceNumber, clientId,
+                { leaf: recordTileStart, shift: tileShift }, searchInfo);
+        }
+
+        if (searchInfo.tileMarker) {
+            let pos = this.getOffset(searchInfo.tileMarker, UniversalSequenceNumber, clientId);
+            return { tile: searchInfo.tileMarker, pos };
+        }
     }
 
-    searchBlock<TClientData>(block: Block, pos: number, segpos: number, refSeq: number, clientId: number, actions?: SegmentActions<TClientData>, accum?: TClientData): Segment {
+    search<TClientData>(pos: number, refSeq: number, clientId: number,
+        actions?: SegmentActions<TClientData>, clientData?: TClientData): Segment {
+        return this.searchBlock(this.root, pos, 0, refSeq, clientId, actions, clientData);
+    }
+
+    searchBlock<TClientData>(block: Block, pos: number, segpos: number, refSeq: number, clientId: number,
+        actions?: SegmentActions<TClientData>, clientData?: TClientData): Segment {
         let children = block.children;
         if (actions && actions.pre) {
-            actions.pre(block, segpos, refSeq, clientId, undefined, undefined, accum);
+            actions.pre(block, segpos, refSeq, clientId, undefined, undefined, clientData);
         }
         let contains = actions && actions.contains;
         for (let childIndex = 0; childIndex < block.childCount; childIndex++) {
             let child = children[childIndex];
             let len = this.nodeLength(child, refSeq, clientId);
-            if (((!contains) && (pos < len)) || (contains && contains(child, pos, refSeq, clientId, undefined, undefined, accum))) {
+            if (((!contains) && (pos < len)) || (contains && contains(child, pos, refSeq, clientId, undefined, undefined, clientData))) {
                 // found entry containing pos
                 if (!child.isLeaf()) {
-                    return this.searchBlock(<Block>child, pos, segpos, refSeq, clientId, actions);
+                    return this.searchBlock(<Block>child, pos, segpos, refSeq, clientId, actions, clientData);
                 }
                 else {
                     if (actions && actions.leaf) {
-                        actions.leaf(<Segment>child, segpos, refSeq, clientId, pos, -1, accum);
+                        actions.leaf(<Segment>child, segpos, refSeq, clientId, pos, -1, clientData);
                     }
                     return <Segment>child;
                 }
             }
             else {
                 if (actions && actions.shift) {
-                    actions.shift(child, segpos, refSeq, clientId, pos, undefined, accum);
+                    actions.shift(child, segpos, refSeq, clientId, pos, undefined, clientData);
                 }
                 pos -= len;
                 segpos += len;
             }
         }
         if (actions && actions.post) {
-            actions.post(block, segpos, refSeq, clientId, undefined, undefined, accum);
+            actions.post(block, segpos, refSeq, clientId, undefined, undefined, clientData);
+        }
+    }
+
+    backwardSearch<TClientData>(pos: number, refSeq: number, clientId: number,
+        actions?: SegmentActions<TClientData>, clientData?: TClientData): Segment {
+        return this.backwardSearchBlock(this.root, pos, this.getLength(refSeq, clientId), refSeq, clientId, actions, clientData);
+    }
+
+    backwardSearchBlock<TClientData>(block: Block, pos: number, segEnd: number, refSeq: number, clientId: number,
+        actions?: SegmentActions<TClientData>, clientData?: TClientData): Segment {
+        let children = block.children;
+        if (actions && actions.pre) {
+            actions.pre(block, segEnd, refSeq, clientId, undefined, undefined, clientData);
+        }
+        let contains = actions && actions.contains;
+        for (let childIndex = block.childCount - 1; childIndex >= 0; childIndex--) {
+            let child = children[childIndex];
+            let len = this.nodeLength(child, refSeq, clientId);
+            let segpos = segEnd - len;
+            if (((!contains) && (pos >= segpos)) ||
+                (contains && contains(child, pos, refSeq, clientId, undefined, undefined, clientData))) {
+                // found entry containing pos
+                if (!child.isLeaf()) {
+                    return this.backwardSearchBlock(<Block>child, pos, segEnd, refSeq, clientId, actions, clientData);
+                }
+                else {
+                    if (actions && actions.leaf) {
+                        actions.leaf(<Segment>child, segpos, refSeq, clientId, pos, -1, clientData);
+                    }
+                    return <Segment>child;
+                }
+            }
+            else {
+                if (actions && actions.shift) {
+                    actions.shift(child, segpos, refSeq, clientId, pos, undefined, clientData);
+                }
+                segEnd = segpos;
+            }
+        }
+        if (actions && actions.post) {
+            actions.post(block, segEnd, refSeq, clientId, undefined, undefined, clientData);
         }
     }
 
@@ -2998,6 +3120,7 @@ export class MergeTree {
         if (this.blockUpdateMarkers) {
             hierBlock = block.hierBlock();
             hierBlock.rightmostTiles = Properties.createMap<Marker>();
+            hierBlock.leftmostTiles = Properties.createMap<Marker>();
             hierBlock.rangeStacks = {};
         }
         for (let i = 0; i < block.childCount; i++) {
@@ -3066,21 +3189,6 @@ export class MergeTree {
     map<TClientData>(actions: SegmentActions<TClientData>, refSeq: number, clientId: number, accum?: TClientData) {
         // TODO: optimize to avoid comparisons
         this.nodeMap(this.root, actions, 0, refSeq, clientId, accum);
-    }
-
-    mapRangeWithMarkers<TClientData>(actions: SegmentActions<TClientData>, refSeq: number, clientId: number,
-        accum?: TClientData, start?: number, end?: number) {
-        let rightmostMarkers = Properties.createMap<Marker>();
-        let stacks = Properties.createMap<Collections.Stack<Marker>>();
-        let shift = actions.shift;
-        actions.shift = (node, pos, refSeq, clientId, start, end) => {
-            addNodeMarkers(node, rightmostMarkers, stacks);
-            if (shift) {
-                shift(node, pos, refSeq, clientId, start, end);
-            }
-            return true;
-        };
-        this.nodeMap(this.root, actions, 0, refSeq, clientId, accum, start, end);
     }
 
     mapRange<TClientData>(actions: SegmentActions<TClientData>, refSeq: number, clientId: number, accum?: TClientData, start?: number, end?: number) {

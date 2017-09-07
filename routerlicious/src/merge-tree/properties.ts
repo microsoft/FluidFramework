@@ -52,6 +52,20 @@ export function extend<T>(base: MapLike<T>, extension: MapLike<T>, combiningOp?:
     return base;
 }
 
+export function contingentExtend<T>(base: MapLike<T>, extension: MapLike<T>) {
+    if (extension !== undefined) {
+        if ((typeof extension !== "object")) {
+            console.log(`oh my ${extension}`);
+        }
+        for (let key in extension) {
+            if (base[key]===undefined) {
+                base[key] = extension[key];
+            }
+        }
+    }
+    return base;
+}
+
 /** Create a MapLike with good performance. */
 export function createMap<T>(): MapLike<T> {
     const map = Object.create(null); // tslint:disable-line:no-null-keyword
