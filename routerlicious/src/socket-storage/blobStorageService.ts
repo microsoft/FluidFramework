@@ -6,7 +6,7 @@ import * as gitStorage from "../git-storage";
  * Document access to underlying storage
  */
 export class DocumentStorageService implements api.IDocumentStorageService  {
-    constructor(private id: string, version: resources.ICommit, private storage: BlobStorageService) {
+    constructor(private id: string, version: resources.ICommit, private storage: api.IBlobStorageService) {
     }
 
     public read(sha: string): Promise<string> {
@@ -21,7 +21,7 @@ export class DocumentStorageService implements api.IDocumentStorageService  {
 /**
  * Client side access to object storage.
  */
-export class BlobStorageService  {
+export class BlobStorageService implements api.IBlobStorageService  {
     private manager: gitStorage.GitManager;
 
     constructor(baseUrl: string, repository: string) {
@@ -40,5 +40,32 @@ export class BlobStorageService  {
     // TODO (mdaumi): Need to implement some kind of auth mechanism here.
     public write(id: string, tree: api.ITree, message: string): Promise<string> {
         return this.manager.write(id, tree, message);
+    }
+}
+
+/**
+ * Implementation for test.
+ */
+export class FakeBlobStorageService implements api.IBlobStorageService  {
+
+    public getHeader(id: string, version: resources.ICommit): Promise<api.IDocumentHeader> {
+        const emptyHeader: api.IDocumentHeader = {
+            attributes: {
+                minimumSequenceNumber: 0,
+                sequenceNumber: 0,
+            },
+            distributedObjects: [],
+            transformedMessages: [],
+            tree: null,
+        };
+        return Promise.resolve(emptyHeader);
+    }
+
+    public async read(sha: string): Promise<string> {
+        return Promise.resolve("");
+    }
+
+    public write(id: string, tree: api.ITree, message: string): Promise<string> {
+        return Promise.resolve("");
     }
 }

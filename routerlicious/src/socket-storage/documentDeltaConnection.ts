@@ -1,6 +1,6 @@
 import { EventEmitter } from "events";
 import * as api from "../api";
-import { DocumentService } from "./documentService";
+import { DocumentService, FakeDocumentService } from "./documentService";
 
 /**
  * Represents a connection to a stream of delta updates
@@ -62,5 +62,49 @@ export class DocumentDeltaConnection implements api.IDocumentDeltaConnection {
      */
     public dispatchEvent(name: string, ...args: any[]) {
         this.emitter.emit(name, ...args);
+    }
+}
+
+/**
+ * Implementation for test.
+ */
+export class FakeDocumentDeltaConnection implements api.IDocumentDeltaConnection {
+
+    constructor(
+        public service: FakeDocumentService,
+        public documentId: string,
+        public clientId: string,
+        public encrypted: boolean,
+        public privateKey: string,
+        public publicKey: string) {
+    }
+
+    /**
+     * Subscribe to events emitted by the document
+     */
+    public on(event: string, listener: (...args: any[]) => void): this {
+        return this;
+    }
+
+    /**
+     * Submits a new delta operation to the server
+     */
+    public submit(message: api.IDocumentMessage): Promise<void> {
+        return Promise.resolve();
+    }
+
+    /**
+     * Updates the reference sequence number on the given connection to the provided value
+     */
+    public updateReferenceSequenceNumber(objectId: string, sequenceNumber: number): Promise<void> {
+        return Promise.resolve();
+    }
+
+    /**
+     * Dispatches the given event to any registered listeners.
+     * This is an internal method.
+     */
+    public dispatchEvent(name: string, ...args: any[]) {
+        // Dispatch events here.
     }
 }

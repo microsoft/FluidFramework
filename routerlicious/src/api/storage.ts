@@ -81,11 +81,21 @@ export interface IDocumentStorageService {
 /**
  * Interface to provide access to stored deltas for a collaborative object
  */
-export interface IDeltaStorageService {
+export interface IDocumentDeltaStorageService {
     /**
      * Retrieves all the delta operations within the inclusive sequence number range
      */
     get(from?: number, to?: number): Promise<ISequencedDocumentMessage[]>;
+}
+
+/**
+ * Interface to provide access to stored deltas for a collaborative object
+ */
+export interface IDeltaStorageService {
+    /**
+     * Retrieves all the delta operations within the inclusive sequence number range
+     */
+    get(id: string, from?: number, to?: number): Promise<ISequencedDocumentMessage[]>;
 }
 
 export interface ISnapshotTree {
@@ -135,6 +145,11 @@ export interface IDocumentDeltaConnection {
     clientId: string;
 
     /**
+     * DocumentId for the connection
+     */
+    documentId: string;
+
+    /**
      * Flag indicating whether connection is encrypted
      */
     encrypted: boolean;
@@ -158,6 +173,11 @@ export interface IDocumentDeltaConnection {
      * Submit a new message to the server
      */
     submit(message: IDocumentMessage): Promise<void>;
+
+    /**
+     * Dispatches the given event to any registered listeners.
+     */
+    dispatchEvent(name: string, ...args: any[]);
 }
 
 export interface IDocument {
@@ -194,7 +214,7 @@ export interface IDocument {
     /**
      * Access to delta storage associated with the document
      */
-    deltaStorageService: IDeltaStorageService;
+    deltaStorageService: IDocumentDeltaStorageService;
 
     /**
      * Distributed objects contained within the document
@@ -229,4 +249,22 @@ export interface IDocument {
 
 export interface IDocumentService {
     connect(id: string, version: resources.ICommit, connect: boolean, encrypted: boolean): Promise<IDocument>;
+}
+
+export interface IBlobStorageService {
+    /**
+     * Returns the header.
+     */
+    getHeader(id: string, version: resources.ICommit): Promise<IDocumentHeader>;
+
+    /**
+     * Reads the blob content.
+     */
+    read(sha: string): Promise<string>;
+
+    /**
+     * Writes the content to blob storage.
+     */
+    write(id: string, tree: ITree, message: string): Promise<string>;
+
 }

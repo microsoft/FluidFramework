@@ -13,3 +13,17 @@ export function registerAsDefault(deltaUrl: string, blobUrl: string, repository:
     const service = getDefaultService(deltaUrl, blobUrl, repository);
     api.registerDocumentService(service);
 }
+
+// Implementation for test.
+export function registerAsTest(deltaUrl: string, blobUrl: string, repository: string) {
+    const service = getTestService(deltaUrl, blobUrl, repository);
+    api.registerDocumentService(service);
+}
+
+export function getTestService(deltaUrl: string, blobUrl: string, repository: string): api.IDocumentService {
+    const blobStorage = new socketStorage.FakeBlobStorageService();
+    const deltaStorage = new socketStorage.FakeDeltaStorageService();
+    const service = new socketStorage.FakeDocumentService(deltaUrl, deltaStorage, blobStorage);
+
+    return service;
+}

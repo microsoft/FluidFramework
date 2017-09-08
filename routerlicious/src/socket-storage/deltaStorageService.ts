@@ -5,8 +5,8 @@ import * as api from "../api";
 /**
  * Storage service limited to only being able to fetch documents for a specific document
  */
-export class DocumentDeltaStorageService implements api.IDeltaStorageService {
-    constructor(private id: string, private storageService: DeltaStorageService) {
+export class DocumentDeltaStorageService implements api.IDocumentDeltaStorageService {
+    constructor(private id: string, private storageService: api.IDeltaStorageService) {
     }
 
     public get(from?: number, to?: number): Promise<api.ISequencedDocumentMessage[]> {
@@ -17,7 +17,7 @@ export class DocumentDeltaStorageService implements api.IDeltaStorageService {
 /**
  * Provides access to the underlying delta storage on the server
  */
-export class DeltaStorageService {
+export class DeltaStorageService implements api.IDeltaStorageService {
     constructor(private url: string) {
     }
 
@@ -36,6 +36,17 @@ export class DeltaStorageService {
                         resolve(body);
                     }
                 });
+        });
+    }
+}
+
+/**
+ * Implementation for test.
+ */
+export class FakeDeltaStorageService implements api.IDeltaStorageService {
+    public get(id: string, from?: number, to?: number): Promise<api.ISequencedDocumentMessage[]> {
+        return new Promise<api.ISequencedDocumentMessage[]>((resolve, reject) => {
+            resolve([]);
         });
     }
 }
