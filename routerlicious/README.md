@@ -52,6 +52,15 @@ Docker Compose is used to run the service locally. To start up an instance of th
 * `docker-compose build`
 * `docker-compose up`
 
+### Testing
+
+To test simply run `npm test` - either inside of the container or after building locally.
+
+You can use the --grep parameter of mocha to limit to a particilar test or suite of tests. For example, to just run the deli tests, you can use `npm run test -- --grep Deli`.
+
+To debug simply add the mocha --inspect-brk parameter `npm run test -- --inspect-brk`. After which you can
+attach to the running tests with VS Code or any other node debugger.
+
 ## CI/CD
 
 We make use of continuous integration and deployment via VSTS at https://offnet.visualstudio.com/officenet/

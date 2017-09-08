@@ -1,9 +1,9 @@
-import { Collection } from "mongodb";
 import * as winston from "winston";
 import * as api from "../api";
 import * as core from "../core";
 import * as shared from "../shared";
 import * as utils from "../utils";
+import { ICollection } from "./collection";
 
 interface IPendingTicket<T> {
     message: any;
@@ -31,12 +31,11 @@ const SequenceNumberComparer: utils.IComparer<IClientSequenceNumber> = {
     },
 };
 
-const throughput = new utils.ThroughputCounter(winston.info, "Delta Topic ");
-
 /**
  * Class to handle distributing sequence numbers to a collaborative object
  */
 export class TakeANumber {
+    private throughput = new utils.ThroughputCounter(winston.info, "Delta Topic ");
     private queue: Array<IPendingTicket<void>> = [];
     private error: any;
     private sequenceNumber: number = undefined;
@@ -48,10 +47,10 @@ export class TakeANumber {
 
     constructor(
         private documentId: string,
-        private collection: Collection,
+        private collection: ICollection<any>,
         private producer: utils.kafkaProducer.IProducer) {
         // Lookup the last sequence number stored
-        const dbObjectP = this.collection.findOne({ _id: this.documentId });
+        const dbObjectP = this.collection.findOne(this.documentId);
         dbObjectP.then(
             (dbObject) => {
                 if (!dbObject) {
@@ -121,20 +120,12 @@ export class TakeANumber {
             clients.push(this.clientNodeMap[clientId].value);
         }
 
-        return this.collection.updateOne(
+        return this.collection.upsert(
+            this.documentId,
             {
-                _id: this.documentId,
-            },
-            {
-                $set: {
-                    _id : this.documentId,
-                    clients,
-                    logOffset: this.logOffset,
-                    sequenceNumber : this.sequenceNumber,
-                },
-            },
-            {
-                upsert: true,
+                clients,
+                logOffset: this.logOffset,
+                sequenceNumber : this.sequenceNumber,
             });
     }
 
@@ -210,10 +201,10 @@ export class TakeANumber {
         };
 
         // Otherwise send the message to the event hub
-        throughput.produce();
+        this.throughput.produce();
         return this.producer.send(JSON.stringify(sequencedMessage), sequencedMessage.documentId)
             .then((result) => {
-                throughput.acknolwedge();
+                this.throughput.acknolwedge();
                 return result;
             });
     }
