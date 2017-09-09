@@ -42,30 +42,3 @@ export class BlobStorageService implements api.IBlobStorageService  {
         return this.manager.write(id, tree, message);
     }
 }
-
-/**
- * Implementation for test.
- */
-export class FakeBlobStorageService implements api.IBlobStorageService  {
-
-    public getHeader(id: string, version: resources.ICommit): Promise<api.IDocumentHeader> {
-        const emptyHeader: api.IDocumentHeader = {
-            attributes: {
-                minimumSequenceNumber: 0,
-                sequenceNumber: 0,
-            },
-            distributedObjects: [],
-            transformedMessages: [],
-            tree: null,
-        };
-        return Promise.resolve(emptyHeader);
-    }
-
-    public async read(sha: string): Promise<string> {
-        return Promise.resolve("");
-    }
-
-    public write(id: string, tree: api.ITree, message: string): Promise<string> {
-        return Promise.resolve("");
-    }
-}

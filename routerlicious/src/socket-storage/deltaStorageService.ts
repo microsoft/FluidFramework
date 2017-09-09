@@ -39,14 +39,3 @@ export class DeltaStorageService implements api.IDeltaStorageService {
         });
     }
 }
-
-/**
- * Implementation for test.
- */
-export class FakeDeltaStorageService implements api.IDeltaStorageService {
-    public get(id: string, from?: number, to?: number): Promise<api.ISequencedDocumentMessage[]> {
-        return new Promise<api.ISequencedDocumentMessage[]>((resolve, reject) => {
-            resolve([]);
-        });
-    }
-}

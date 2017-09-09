@@ -1,0 +1,26 @@
+import * as resources from "gitresources";
+import * as api from "../../api";
+
+export class TestBlobStorageService implements api.IBlobStorageService  {
+
+    public getHeader(id: string, version: resources.ICommit): Promise<api.IDocumentHeader> {
+        const emptyHeader: api.IDocumentHeader = {
+            attributes: {
+                minimumSequenceNumber: 0,
+                sequenceNumber: 0,
+            },
+            distributedObjects: [],
+            transformedMessages: [],
+            tree: null,
+        };
+        return Promise.resolve(emptyHeader);
+    }
+
+    public async read(sha: string): Promise<string> {
+        return Promise.resolve("");
+    }
+
+    public write(id: string, tree: api.ITree, message: string): Promise<string> {
+        return Promise.resolve("");
+    }
+}

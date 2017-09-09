@@ -1,6 +1,6 @@
 import * as assert from "assert";
 import * as api from "../../api";
-import * as socketStorage from "../../socket-storage";
+import * as testUtils from "../utils";
 
 describe("Routerlicious", () => {
     describe("Api", () => {
@@ -11,7 +11,7 @@ describe("Routerlicious", () => {
             let testMap: api.IMap;
 
             beforeEach(async () => {
-                socketStorage.registerAsTest("", "", "");
+                testUtils.registerAsTest("", "", "");
                 registry = new api.Registry();
                 testDocument = await api.load("testDocument");
                 rootMap = testDocument.getRoot();

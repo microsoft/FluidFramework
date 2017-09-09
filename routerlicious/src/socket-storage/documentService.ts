@@ -6,7 +6,7 @@ import * as api from "../api";
 import { DocumentStorageService } from "./blobStorageService";
 import { debug } from "./debug";
 import { DocumentDeltaStorageService } from "./deltaStorageService";
-import { DocumentDeltaConnection, FakeDocumentDeltaConnection } from "./documentDeltaConnection";
+import { DocumentDeltaConnection } from "./documentDeltaConnection";
 import * as messages from "./messages";
 
 // Type aliases for mapping from events, to the objects interested in those events, to the connections for those
@@ -25,7 +25,7 @@ const emptyHeader: api.IDocumentHeader = {
     tree: null,
 };
 
-class Document implements api.IDocument {
+export class Document implements api.IDocument {
     constructor(
         public documentId: string,
         public clientId: string,
@@ -186,50 +186,4 @@ export class DocumentService implements api.IDocumentService {
             }
         }
     }
-}
-
-/**
- * Implementation for test.
- */
-export class FakeDocumentService implements api.IDocumentService {
-
-    constructor(url: string, private deltaStorage: api.IDeltaStorageService,
-                private blobStorge: api.IBlobStorageService) {
-            debug(`Creating document service ${performanceNow()}`);
-        }
-
-        public async connect(
-            id: string,
-            version: resources.ICommit,
-            connect: boolean,
-            encrypted: boolean): Promise<api.IDocument> {
-                const deltaConnection = new FakeDocumentDeltaConnection(
-                    this,
-                    id,
-                    "test-client",
-                    false,
-                    "",
-                    "");
-                const deltaStorage = new DocumentDeltaStorageService(id, this.deltaStorage);
-                const documentStorage = new DocumentStorageService(id, version, this.blobStorge);
-                const document = new Document(
-                    id,
-                    "test-client",
-                    false,
-                    version,
-                    deltaConnection,
-                    documentStorage,
-                    deltaStorage,
-                    [],
-                    [],
-                    [],
-                    0,
-                    0,
-                    null);
-                return document;
-            }
-
-        public emit(event: string, ...args: any[]) {
-            // Emit here.
-        }
 }
