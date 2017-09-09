@@ -1,10 +1,10 @@
 import { queue } from "async";
 import * as _ from "lodash";
-import { Collection } from "mongodb";
 import * as winston from "winston";
 import * as core from "../core";
 import * as shared from "../shared";
 import * as utils from "../utils";
+import { ICollection } from "./collection";
 import { TakeANumber } from "./takeANumber";
 
 export class DeliRunner {
@@ -15,7 +15,7 @@ export class DeliRunner {
     constructor(
         private producer: utils.kafkaProducer.IProducer,
         private consumer: utils.kafkaConsumer.IConsumer,
-        private objectsCollection: Collection,
+        private objectsCollection: ICollection<any>,
         private groupId: string,
         private receiveTopic: string,
         private checkpointBatchSize: number,
@@ -114,7 +114,7 @@ export class DeliRunner {
         ticketQueue: {[id: string]: Promise<void> },
         partitionManager: core.PartitionManager,
         producer: utils.kafkaProducer.IProducer,
-        objectsCollection: Collection) {
+        objectsCollection: ICollection<any>) {
 
         const baseMessage = JSON.parse(message.value.toString("utf8")) as core.IMessage;
         if (baseMessage.type === core.UpdateReferenceSequenceNumberType ||

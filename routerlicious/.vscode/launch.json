@@ -6,10 +6,16 @@
     "configurations": [
         {
             "type": "node",
+            "request": "attach",
+            "name": "Mocha attach",
+            "port": 9229
+        },
+        {
+            "type": "node",
             "request": "launch",
             "name": "Beast",
-            "sourceMaps": true,            
-            "outFiles": [ "${workspaceRoot}/dist/**/*.js" ],  
+            "sourceMaps": true,
+            "outFiles": [ "${workspaceRoot}/dist/**/*.js" ],
             "protocol": "inspector",
             "program": "${workspaceRoot}/dist/merge-tree/beastTest.js"
         },
@@ -17,8 +23,8 @@
             "type": "node",
             "request": "launch",
             "name": "STroll",
-            "sourceMaps": true,            
-            "outFiles": [ "${workspaceRoot}/dist/**/*.js" ],            
+            "sourceMaps": true,
+            "outFiles": [ "${workspaceRoot}/dist/**/*.js" ],
             "program": "${workspaceRoot}/dist/tools/spellingTroll.js",
             "args": ["aug8-5"]
         },

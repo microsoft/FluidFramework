@@ -4,6 +4,7 @@ import * as _ from "lodash";
 import * as api from "../api";
 import * as shared from "../shared";
 import { Counter } from "./counter";
+import { DistributedSet } from "./set";
 
 /**
  * Description of a map delta operation
@@ -23,6 +24,9 @@ export enum ValueType {
 
     // The value is a counter
     Counter,
+
+    // The value is a set
+    Set,
 }
 
 export interface ICollaborativeMapValue {
@@ -39,6 +43,13 @@ export interface IMapValue {
 
     // The actual value
     value: any;
+}
+
+interface IMapDataCompatibility {
+
+    data: IMapValue;
+
+    reject: Promise<any>;
 }
 
 const snapshotFileName = "header";
@@ -128,6 +139,13 @@ export class MapView implements api.IMapView {
         return _.clone(this.data);
     }
 
+    public getMapValue(key: string): IMapValue {
+        if (!(key in this.data)) {
+            return undefined;
+        }
+        return this.data[key];
+    }
+
     public setCore(key: string, value: IMapValue) {
         this.data[key] = value;
         this.events.emit("valueChanged", { key });
@@ -143,9 +161,15 @@ export class MapView implements api.IMapView {
         this.events.emit("valueChanged", { key });
     }
 
-    public createCounter(key: string, value: number, min: number, max: number) {
-        this.initCounter(key, value);
-        return new Counter(this, key, min, max);
+    public initCounter(key: string, value: number) {
+        const operationValue: IMapValue = {type: ValueType[ValueType.Counter], value};
+        const op: IMapOperation = {
+            key,
+            type: "initCounter",
+            value: operationValue,
+        };
+        this.initCounterCore(op.key, op.value);
+        this.submitLocalOperation(op);
     }
 
     public initCounterCore(key: string, value: IMapValue) {
@@ -153,22 +177,7 @@ export class MapView implements api.IMapView {
         this.events.emit("valueChanged", { key });
     }
 
-    public incrementCounter(key: string, value: number, min: number, max: number): Promise<any> {
-        if (!(key in this.data)) {
-            return Promise.reject("Error: No key found to apply increment!`");
-        }
-        if (typeof value !== "number") {
-            return Promise.reject("Incremental amount should be a number.");
-        }
-        const currentData = this.data[key];
-        if (currentData.type !== ValueType[ValueType.Counter]) {
-            return Promise.reject("Increment can only be applied on Counter type.");
-        }
-        const currentValue = currentData.value as number;
-        const nextValue = currentValue + value;
-        if ((nextValue < min) || (nextValue > max)) {
-            return Promise.reject("Error: Counter range exceeded!");
-        }
+    public incrementCounter(key: string, value: number, min: number, max: number) {
         const operationValue: IMapValue = {type: ValueType[ValueType.Counter], value};
         const op: IMapOperation = {
             key,
@@ -184,22 +193,72 @@ export class MapView implements api.IMapView {
         this.events.emit("valueChanged", { key });
     }
 
-    private initCounter(key: string, value: number) {
-        const operationValue: IMapValue = {type: ValueType[ValueType.Counter], value};
+    public initSet<T>(key: string, value: T[]) {
+        const operationValue: IMapValue = {type: ValueType[ValueType.Set], value};
         const op: IMapOperation = {
             key,
-            type: "initCounter",
+            type: "initSet",
             value: operationValue,
         };
-        this.initCounterCore(op.key, op.value);
+        this.initSetCore(op.key, op.value);
         this.submitLocalOperation(op);
+    }
+
+    public initSetCore(key: string, value: IMapValue) {
+        const newValue: IMapValue = {type: ValueType[ValueType.Set], value: DistributedSet.initSet(value.value)};
+        this.data[key] = newValue;
+        this.events.emit("valueChanged", { key });
+    }
+
+    public insertSet<T>(key: string, value: T): T[] {
+        const operationValue: IMapValue = {type: ValueType[ValueType.Set], value};
+        const op: IMapOperation = {
+            key,
+            type: "insertSet",
+            value: operationValue,
+        };
+        this.insertSetCore(op.key, op.value);
+        this.submitLocalOperation(op);
+        return this.data[key].value;
+    }
+
+    public insertSetCore(key: string, value: IMapValue) {
+        const newValue: IMapValue = {
+            type: ValueType[ValueType.Set],
+            value: DistributedSet.addElement(this.get(key), value.value),
+        };
+        this.data[key] = newValue;
+        this.events.emit("valueChanged", { key });
+        this.events.emit("setElementAdded", {key, value: value.value});
+    }
+
+    public deleteSet<T>(key: string, value: T): T[] {
+        const operationValue: IMapValue = {type: ValueType[ValueType.Set], value};
+        const op: IMapOperation = {
+            key,
+            type: "deleteSet",
+            value: operationValue,
+        };
+        this.deleteSetCore(op.key, op.value);
+        this.submitLocalOperation(op);
+        return this.data[key].value;
+    }
+
+    public deleteSetCore(key: string, value: IMapValue) {
+        const newValue: IMapValue = {
+            type: ValueType[ValueType.Set],
+            value: DistributedSet.removeElement(this.get(key), value.value),
+        };
+        this.data[key] = newValue;
+        this.events.emit("valueChanged", { key });
+        this.events.emit("setElementRemoved", {key, value: value.value});
     }
 }
 
 /**
  * Implementation of a map collaborative object
  */
-class Map extends api.CollaborativeObject implements api.IMap {
+export class Map extends api.CollaborativeObject implements api.IMap {
     private view: MapView;
 
     /**
@@ -256,7 +315,55 @@ class Map extends api.CollaborativeObject implements api.IMap {
         if (value < min || value > max) {
             throw new Error("Initial value exceeds the counter range!");
         }
-        return Promise.resolve(this.view.createCounter(key, value, min, max));
+        this.view.initCounter(key, value);
+        return Promise.resolve(new Counter(this, key, min, max));
+    }
+
+    public incrementCounter(key: string, value: number, min: number, max: number): Promise<any> {
+        if (typeof value !== "number") {
+            return Promise.reject("Incremental amount should be a number.");
+        }
+        const compatible = this.ensureCompatibility(key, ValueType[ValueType.Counter]);
+        if (compatible.reject !== null) {
+            return compatible.reject;
+        }
+        const currentData = compatible.data;
+        const currentValue = currentData.value as number;
+        const nextValue = currentValue + value;
+        if ((nextValue < min) || (nextValue > max)) {
+            return Promise.reject("Error: Counter range exceeded!");
+        }
+        return Promise.resolve(this.view.incrementCounter(key, value, min, max));
+    }
+
+    public createSet<T>(key: string, value?: T[]): Promise<api.ISet<T>> {
+        value = shared.getOrDefaultArray(value, []);
+        this.view.initSet(key, value);
+        return Promise.resolve(new DistributedSet(this, key));
+    }
+
+    public insertSet<T>(key: string, value: T): Promise<T[]> {
+        const compatible = this.ensureCompatibility(key, ValueType[ValueType.Set]);
+        if (compatible.reject !== null) {
+            return compatible.reject;
+        }
+        return Promise.resolve(this.view.insertSet(key, value));
+    }
+
+    public deleteSet<T>(key: string, value: T): Promise<T[]> {
+        const compatible = this.ensureCompatibility(key, ValueType[ValueType.Set]);
+        if (compatible.reject !== null) {
+            return compatible.reject;
+        }
+        return Promise.resolve(this.view.deleteSet(key, value));
+    }
+
+    public enumerateSet<T>(key: string): Promise<T[]> {
+        const compatible = this.ensureCompatibility(key, ValueType[ValueType.Set]);
+        if (compatible.reject !== null) {
+            return compatible.reject;
+        }
+        return Promise.resolve(compatible.data.value);
     }
 
     public snapshot(): api.ITree {
@@ -321,12 +428,42 @@ class Map extends api.CollaborativeObject implements api.IMap {
                 case "incrementCounter":
                     this.view.incrementCounterCore(op.key, op.value);
                     break;
+                case "initSet":
+                    this.view.initSetCore(op.key, op.value);
+                    break;
+                case "insertSet":
+                    this.view.insertSetCore(op.key, op.value);
+                    break;
+                case "deleteSet":
+                    this.view.deleteSetCore(op.key, op.value);
+                    break;
                 default:
                     throw new Error("Unknown operation");
             }
         }
 
         this.events.emit("op", message);
+    }
+
+    // Check if key exists in the map and if the value type is of the desired type (e.g., set, counter etc.)
+    private ensureCompatibility(key: string, targetType: string): IMapDataCompatibility {
+        const currentData = this.view.getMapValue(key);
+        if (currentData === undefined) {
+            return {
+                data: null,
+                reject: Promise.reject("Error: No key found!"),
+            };
+        }
+        if (currentData.type !== targetType) {
+            return {
+                data: null,
+                reject: Promise.reject("Error: Incompatible value type!"),
+            };
+        }
+        return {
+            data: currentData,
+            reject: null,
+        };
     }
 }
 

@@ -71,6 +71,15 @@ export interface IValueChanged {
     key: string;
 }
 
+/**
+ * Type of "KeyValueChanged" event parameter
+ */
+export interface IKeyValueChanged {
+    key: string;
+
+    value: any;
+}
+
 export interface IMapView {
     /**
      * Retrieves the given key from the map
@@ -146,6 +155,11 @@ export interface IMap extends ICollaborativeObject {
      * Creates a counter inside the map.
      */
     createCounter(key: string, value?: number, min?: number, max?: number): Promise<ICounter>;
+
+    /**
+     * Creates a set inside the map.
+     */
+    createSet<T>(key: string, value?: T[]): Promise<ISet<T>>;
 }
 
 /**
@@ -182,4 +196,25 @@ export interface ICell extends ICollaborativeObject {
      * Increment/decrement the underlying value.
      */
     increment(value: number): Promise<void>;
+ }
+
+/**
+ * Set interface
+ */
+export interface ISet<T> {
+    /**
+     * Inserts element to the set.
+     */
+    add(value: T): Promise<T[]>;
+
+    /**
+     * delete element from the set.
+     */
+    delete(value: T): Promise<T[]>;
+
+    /**
+     * Returns elements of the set.
+     */
+    entries(): Promise<T[]>;
+
  }
