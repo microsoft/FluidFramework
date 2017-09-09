@@ -33,7 +33,6 @@
     "start": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml up",
     "start:debug": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.debug.yml up",
     "test": "mocha --recursive dist/test",
-    "test:map": "mocha --recursive dist/test/map",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
     "tsc": "tsc",
     "tslint": "tslint 'src/**/*.ts'",
