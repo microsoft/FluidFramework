@@ -975,22 +975,32 @@ function renderTable(startPGMarker: IParagraphMarker, startPGPos: number,
     currentLineTop: number, heightLimit: number, flowView: FlowView) {
     // TODO 
 }
+/*
+// TODO: load this from document properties and override with pg and segment properties
+interface IRenderContext {
+    fontstr: string;
+    headerFontstr: string;
+    
+}
+function renderTreeFromPosition(viewportDiv: HTMLDivElement, client: SharedString.Client, flowView: FlowView) {
 
-function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Client, flowView: FlowView, heightLimit = 0) {
+}
+*/
+function renderTree(viewportDiv: HTMLDivElement, startingPosition: number, client: SharedString.Client, flowView: FlowView, heightLimit = 0) {
     let fontstr = "18px Times";
     let headerFontstr = "22px Times";
     // TODO: for stable viewports cache the geometry and the divs 
     // TODO: cache all this pre-amble in style blocks; override with pg properties 
-    let viewportBounds = Geometry.Rectangle.fromClientRect(div.getBoundingClientRect());
+    let viewportBounds = Geometry.Rectangle.fromClientRect(viewportDiv.getBoundingClientRect());
     let pgCount = 0;
-    div.style.font = fontstr;
-    let computedStyle = window.getComputedStyle(div);
+    viewportDiv.style.font = fontstr;
+    let computedStyle = window.getComputedStyle(viewportDiv);
     let defaultLineHeight = 1.2;
-    let viewportHeight = parseInt(div.style.height, 10);
+    let viewportHeight = parseInt(viewportDiv.style.height, 10);
     if (heightLimit === 0) {
         heightLimit = viewportHeight;
     }
-    let viewportWidth = parseInt(div.style.width, 10);
+    let viewportWidth = parseInt(viewportDiv.style.width, 10);
     let h = parseInt(computedStyle.fontSize, 10);
     let defaultLineDivHeight = Math.round(h * defaultLineHeight);
     let pgVspace = Math.round(h * 0.5);
@@ -1003,7 +1013,7 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
 
     function makeLineDiv(r: Geometry.Rectangle, lineFontstr) {
         let lineDiv = makeContentDiv(r, lineFontstr);
-        div.appendChild(lineDiv);
+        viewportDiv.appendChild(lineDiv);
         lineCount++;
         lastLineDiv = lineDiv;
         return lineDiv;
@@ -1082,7 +1092,7 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
             }
             let lineFontstr = fontstr;
             lineDivHeight = defaultLineDivHeight;
-            if ((lineEnd === undefined) || (lineEnd > pos)) {
+            if ((lineEnd === undefined) || (lineEnd > startingPosition)) {
                 if (curPGMarker.properties && (curPGMarker.properties.header !== undefined)) {
                     // TODO: header levels
                     lineDivHeight = headerDivHeight;
@@ -1125,7 +1135,7 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
         }
     }
 
-    let tileInfo = findTile(flowView, pos, "pg");
+    let tileInfo = findTile(flowView, startingPosition, "pg");
     pgMarker = tileInfo.tile;
     markerPos = tileInfo.pos;
 
@@ -1137,6 +1147,7 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
         pgMarker = undefined;
         startPGPos = markerPos + 1;
         if (startPGMarker.hasLabel("table")) {
+            // or if pg is in a table cell
             renderTable(startPGMarker, startPGPos, currentLineTop, heightLimit, flowView);
             // TODO: update end offset and height using table height
             // TODO: generalize to div (cell) and recognize when should break for end of
