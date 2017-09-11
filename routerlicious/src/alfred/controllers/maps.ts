@@ -94,10 +94,14 @@ async function randomizeMap(map: api.IMap) {
     // link up the randomize button
     const keys = ["foo", "bar", "baz", "binky", "winky", "twinkie"];
     const counter = await map.createCounter("counter", 100) as api.ICounter;
-    setInterval(() => {
+    const set = await map.createSet("set", [1, 2, 3, 3, 2, 4]) as api.ISet<number>;
+    setInterval(async () => {
         const key = keys[Math.floor(Math.random() * keys.length)];
         map.set(key, Math.floor(Math.random() * 100000).toString());
         counter.increment(1);
+        set.add(5);
+        set.add(5);
+        set.delete(1);
     }, 1000);
 }
 
