@@ -1543,8 +1543,9 @@ export class FlowView {
         sharedString.on("op", (msg: API.ISequencedObjectMessage) => {
             if (msg.clientId !== this.client.longClientId) {
                 let delta = <SharedString.IMergeTreeOp>msg.contents;
-                this.applyOp(delta, msg);
-                this.queueRender(msg);
+                if (this.applyOp(delta, msg)) {
+                    this.queueRender(msg);
+                }
                 if (this.presenceSeq <= this.client.mergeTree.getCollabWindow().minSeq) {
                     this.updatePresence();
                 }
@@ -1635,12 +1636,14 @@ export class FlowView {
     }
 
     public updatePresence() {
-        let presenceInfo = <IPresenceInfo>{
-            origPos: this.cursor.pos,
-            refseq: this.client.getCurrentSeq(),
-        };
-        this.presenceSeq = presenceInfo.refseq;
-        this.presenceMapView.set(this.client.longClientId, presenceInfo);
+        if (this.presenceMapView) {
+            let presenceInfo = <IPresenceInfo>{
+                origPos: this.cursor.pos,
+                refseq: this.client.getCurrentSeq(),
+            };
+            this.presenceSeq = presenceInfo.refseq;
+            this.presenceMapView.set(this.client.longClientId, presenceInfo);
+        }
     }
 
     public updateGeometry() {
@@ -2244,25 +2247,35 @@ export class FlowView {
     // TODO: paragraph spanning changes and annotations
     // TODO: generalize this by using transform fwd
     private applyOp(delta: SharedString.IMergeTreeOp, msg: API.ISequencedObjectMessage) {
-        if (delta.type === SharedString.MergeTreeDeltaType.INSERT) {
-            if (delta.marker) {
-                this.updatePGInfo(delta.pos1 - 1);
-            } else if (delta.pos1 <= this.cursor.pos) {
-                this.cursor.pos += delta.text.length;
+        // tslint:disable:switch-default
+        switch (delta.type) {
+            case SharedString.MergeTreeDeltaType.INSERT:
+                if (delta.marker) {
+                    this.updatePGInfo(delta.pos1 - 1);
+                } else if (delta.pos1 <= this.cursor.pos) {
+                    this.cursor.pos += delta.text.length;
+                }
+                this.remotePresenceFromEdit(msg.clientId, msg.referenceSequenceNumber, delta.pos1, 1);
+                this.updatePGInfo(delta.pos1);
+                return true;
+            case SharedString.MergeTreeDeltaType.REMOVE:
+                if (delta.pos2 <= this.cursor.pos) {
+                    this.cursor.pos -= (delta.pos2 - delta.pos1);
+                } else if (this.cursor.pos >= delta.pos1) {
+                    this.cursor.pos = delta.pos1;
+                }
+                this.remotePresenceFromEdit(msg.clientId, msg.referenceSequenceNumber, delta.pos1);
+                this.updatePGInfo(delta.pos1);
+                return true;
+            case SharedString.MergeTreeDeltaType.GROUP: {
+                let opAffectsViewport = false;
+                for (let groupOp of delta.ops) {
+                    opAffectsViewport = opAffectsViewport || this.applyOp(groupOp, msg);
+                }
+                return opAffectsViewport;
             }
-            this.remotePresenceFromEdit(msg.clientId, msg.referenceSequenceNumber, delta.pos1, 1);
-            this.updatePGInfo(delta.pos1);
-        } else if (delta.type === SharedString.MergeTreeDeltaType.REMOVE) {
-            if (delta.pos2 <= this.cursor.pos) {
-                this.cursor.pos -= (delta.pos2 - delta.pos1);
-            } else if (this.cursor.pos >= delta.pos1) {
-                this.cursor.pos = delta.pos1;
-            }
-            this.remotePresenceFromEdit(msg.clientId, msg.referenceSequenceNumber, delta.pos1);
-            this.updatePGInfo(delta.pos1);
-        } else if (delta.type === SharedString.MergeTreeDeltaType.GROUP) {
-            for (let groupOp of delta.ops) {
-                this.applyOp(groupOp, msg);
+            case SharedString.MergeTreeDeltaType.ANNOTATE: {
+                return this.posInViewport(delta.pos1) || this.posInViewport(delta.pos2 - 1);
             }
         }
     }
