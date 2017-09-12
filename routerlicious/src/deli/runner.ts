@@ -7,7 +7,7 @@ import * as utils from "../utils";
 import { ICollection } from "./collection";
 import { TakeANumber } from "./takeANumber";
 
-export class DeliRunner {
+export class DeliRunner implements utils.IRunner {
     private deferred: shared.Deferred<void>;
     private checkpointTimer: any;
     private q: AsyncQueue<string>;

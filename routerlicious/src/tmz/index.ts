@@ -2,6 +2,7 @@
 // may depend on the config already being initialized
 import * as nconf from "nconf";
 import * as path from "path";
+import * as winston from "winston";
 nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
 
 import { queue } from "async";
@@ -14,7 +15,6 @@ import * as core from "../core";
 import * as shared from "../shared";
 import * as socketStorage from "../socket-storage";
 import * as utils from "../utils";
-import { logger } from "../utils";
 import * as messages from "./messages";
 import * as workerFactory from "./workerFactory";
 
@@ -67,7 +67,7 @@ async function run() {
                     worker: message,
                     socket,
                 };
-                logger.info(`New worker joined. ${socket.id} : ${message.clientId}`);
+                winston.info(`New worker joined. ${socket.id} : ${message.clientId}`);
                 foreman.getManager().addWorker(newWorker);
                 // Process all pending tasks once the first worker joins.
                 if (!workerJoined) {
@@ -93,7 +93,7 @@ async function run() {
         });
         // On disconnect, reassign the work to other workers.
         socket.on("disconnect", async () => {
-            logger.info(`Worker id ${socket.id} got disconnected.`);
+            winston.info(`Worker id ${socket.id} got disconnected.`);
             const worker = foreman.getManager().getWorker(socket.id);
             if (worker) {
                 const tasks = foreman.getManager().getDocuments(worker);
@@ -138,7 +138,7 @@ async function run() {
             return;
         }
 
-        logger.info(`Requesting work for ${documentId}`);
+        winston.info(`Requesting work for ${documentId}`);
         await processWork([documentId]);
         callback();
     }, 1);
@@ -182,9 +182,9 @@ async function adjustWorkAssignment() {
 }
 
 // Start up the TMZ service
-logger.info("Starting");
+winston.info("Starting");
 const runP = run();
 runP.catch((error) => {
-    logger.error(error);
+    winston.error(error);
     process.exit(1);
 });

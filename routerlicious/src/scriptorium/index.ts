@@ -2,6 +2,7 @@
 // may depend on the config already being initialized
 import * as nconf from "nconf";
 import * as path from "path";
+import * as winston from "winston";
 nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
 
 import { queue } from "async";
@@ -12,7 +13,6 @@ import * as util from "util";
 import * as core from "../core";
 import * as shared from "../shared";
 import * as utils from "../utils";
-import { logger } from "../utils";
 
 // Initialize Socket.io and connect to the Redis adapter
 let redisConfig = nconf.get("redis");
@@ -75,7 +75,7 @@ async function run() {
         deferred.reject(err);
     });
 
-    const throughput = new utils.ThroughputCounter(logger.info);
+    const throughput = new utils.ThroughputCounter(winston.info);
     // Mongo inserts don't order promises with respect to each other. To work around this we track the last
     // Mongo insert we've made for each document. And then perform a then on this to maintain causal ordering
     // for any dependent operations (i.e. socket.io writes)
@@ -87,7 +87,7 @@ async function run() {
             lastMongoInsertP[documentId] = Promise.resolve();
         }
 
-        logger.verbose(`Inserting to mongodb ${documentId}@${work[0].operation.sequenceNumber}:${work.length}`);
+        winston.verbose(`Inserting to mongodb ${documentId}@${work[0].operation.sequenceNumber}:${work.length}`);
         const insertP = collection.insertMany(work, <CollectionInsertManyOptions> (<any> { ordered: false }))
             .catch((error) => {
                 // Ignore duplicate key errors since a replay may cause us to attempt to insert a second time
@@ -101,7 +101,7 @@ async function run() {
             () => {
                 // Route the message to clients
                 // tslint:disable-next-line:max-line-length
-                logger.verbose(`Routing message to clients ${documentId}@${work[0].operation.sequenceNumber}:${work.length}`);
+                winston.verbose(`Routing message to clients ${documentId}@${work[0].operation.sequenceNumber}:${work.length}`);
                 io.to(documentId).emit("op", documentId, work.map((value) => value.operation));
                 throughput.acknolwedge(work.length);
             },
@@ -131,7 +131,7 @@ async function run() {
         if (message.offset % checkpointBatchSize === 0) {
             // Finally call checkpointing.
             checkpoint(partitionManager).catch((error) => {
-                logger.error(error);
+                winston.error(error);
             });
         }
         callback();
@@ -157,6 +157,6 @@ async function run() {
 // Start up the scriptorium service
 const runP = run();
 runP.catch((error) => {
-    logger.error(error);
+    winston.error(error);
     process.exit(1);
 });

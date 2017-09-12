@@ -1,100 +1,81 @@
-// Setup the configuration system first since modules may depend on it being configured
+import * as debug from "debug";
 import * as nconf from "nconf";
 import * as path from "path";
-nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
+import * as winston from "winston";
+import * as git from "../git-storage";
+import * as utils from "../utils";
+import { AlfredRunner } from "./runner";
 
-import * as http from "http";
-import { logger } from "../utils";
-import app from "./app";
-
-/**
- * Get port from environment and store in Express.
- */
-// tslint:disable-next-line:no-string-literal
-let port = normalizePort(process.env["PORT"] || "3000");
-app.set("port", port);
+const provider = nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
 
 /**
- * Create HTTP server.
+ * Default logger setup
  */
-
-let server = http.createServer(app);
-
-/**
- * Attach to socket.io connections
- */
-import { default as io } from "./io";
-io.attach(server);
-
-/**
- * Listen on provided port, on all network interfaces.
- */
-
-server.listen(port);
-server.on("error", onError);
-server.on("listening", onListening);
-
-process.on("SIGTERM", () => {
-  // TODO suppoort graceful exit of alfred
-  process.exit(0);
+const loggerConfig = provider.get("logger");
+winston.configure({
+    transports: [
+        new winston.transports.Console({
+            colorize: loggerConfig.colorize,
+            handleExceptions: true,
+            json: loggerConfig.json,
+            level: loggerConfig.level,
+            stringify: (obj) => JSON.stringify(obj),
+            timestamp: loggerConfig.timestamp,
+        }),
+    ],
 });
+
+(<any> debug).log = (msg, ...args) => winston.info(msg, ...args);
+// override the default log format to not include the timestamp since winston will do this for us
+// tslint:disable-next-line:only-arrow-functions
+(<any> debug).formatArgs = function(args) {
+    const name = this.namespace;
+    args[0] = name + " " + args[0];
+};
 
 /**
  * Normalize a port into a number, string, or false.
  */
-
 function normalizePort(val) {
-  let normalizedPort = parseInt(val, 10);
+    let normalizedPort = parseInt(val, 10);
 
-  if (isNaN(normalizedPort)) {
-    // named pipe
-    return val;
-  }
+    if (isNaN(normalizedPort)) {
+        // named pipe
+        return val;
+    }
 
-  if (normalizedPort >= 0) {
-    // port number
-    return normalizedPort;
-  }
+    if (normalizedPort >= 0) {
+        // port number
+        return normalizedPort;
+    }
 
-  return false;
+    return false;
 }
 
-/**
- * Event listener for HTTP server "error" event.
- */
+async function run(): Promise<void> {
+  // Create dependent resources
+  const settings = provider.get("git");
+  const gitManager = new git.GitManager(settings.historian, settings.repository);
+  const mongoUrl = provider.get("mongo:endpoint");
+  const mongoManager = new utils.MongoManager(mongoUrl);
 
-function onError(error) {
-  if (error.syscall !== "listen") {
-    throw error;
-  }
+  let port = normalizePort(process.env.PORT || "3000");
+  const runner = new AlfredRunner(provider, port, gitManager, mongoManager);
 
-  let bind = typeof port === "string"
-    ? "Pipe " + port
-    : "Port " + port;
+  // Listen for shutdown signal in order to shutdown gracefully
+  process.on("SIGTERM", () => {
+      runner.stop();
+  });
 
-  // handle specific listen errors with friendly messages
-  switch (error.code) {
-    case "EACCES":
-      logger.error(bind + " requires elevated privileges");
-      process.exit(1);
-      break;
-    case "EADDRINUSE":
-      logger.error(bind + " is already in use");
-      process.exit(1);
-      break;
-    default:
-      throw error;
-  }
+  return runner.start();
 }
 
-/**
- * Event listener for HTTP server "listening" event.
- */
-
-function onListening() {
-  let addr = server.address();
-  let bind = typeof addr === "string"
-    ? "pipe " + addr
-    : "port " + addr.port;
-  logger.info("Listening on " + bind);
-}
+// Start the runner and listen for any errors
+run().then(
+    () => {
+        winston.info("Exiting");
+    },
+    (error) => {
+        winston.error(error);
+        process.exit(1);
+    });

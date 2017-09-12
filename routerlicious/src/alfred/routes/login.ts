@@ -1,23 +1,25 @@
 // Load environment varaibles and pass to the controller.
 import { Router } from "express";
-import * as nconf from "nconf";
+import { Provider } from "nconf";
 import { defaultPartials } from "./partials";
 
-const router: Router = Router();
+export function create(config: Provider): Router {
+    const router: Router = Router();
 
-/**
- * Loading of a specific collaborative map
- */
-router.get("/", (request, response, next) => {
-    const config = JSON.stringify(nconf.get("worker"));
-    response.render(
-        "login",
-        {
-            config,
-            optionalBodyClass: "loginbody",
-            partials: defaultPartials,
-            title: request.params.id,
-        });
-});
+    /**
+     * Loading of a specific collaborative map
+     */
+    router.get("/", (request, response, next) => {
+        const workerConfig = JSON.stringify(config.get("worker"));
+        response.render(
+            "login",
+            {
+                config: workerConfig,
+                optionalBodyClass: "loginbody",
+                partials: defaultPartials,
+                title: request.params.id,
+            });
+    });
 
-export default router;
+    return router;
+}

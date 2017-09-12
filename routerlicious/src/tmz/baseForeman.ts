@@ -1,6 +1,6 @@
 import * as nconf from "nconf";
+import * as winston from "winston";
 import * as socketStorage from "../socket-storage";
-import { logger } from "../utils";
 import { IWorkerDetail } from "./messages";
 import { StateManager} from "./stateManager";
 
@@ -34,7 +34,7 @@ export class BaseForeman {
                         this.manager.revokeWork(worker, id);
                         resolve();
                     } else {
-                        logger.error(error);
+                        winston.error(error);
                     }
             });
         });
