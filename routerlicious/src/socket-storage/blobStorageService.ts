@@ -6,7 +6,7 @@ import * as gitStorage from "../git-storage";
  * Document access to underlying storage
  */
 export class DocumentStorageService implements api.IDocumentStorageService  {
-    constructor(private id: string, version: resources.ICommit, private storage: BlobStorageService) {
+    constructor(private id: string, version: resources.ICommit, private storage: api.IBlobStorageService) {
     }
 
     public read(sha: string): Promise<string> {
@@ -21,7 +21,7 @@ export class DocumentStorageService implements api.IDocumentStorageService  {
 /**
  * Client side access to object storage.
  */
-export class BlobStorageService  {
+export class BlobStorageService implements api.IBlobStorageService  {
     private manager: gitStorage.GitManager;
 
     constructor(baseUrl: string, repository: string) {

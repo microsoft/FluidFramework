@@ -55,7 +55,7 @@ export class DeltaManager {
     constructor(
         private documentId: string,
         private baseSequenceNumber: number,
-        private deltaStorage: storage.IDeltaStorageService,
+        private deltaStorage: storage.IDocumentDeltaStorageService,
         private deltaConnection: storage.IDocumentDeltaConnection) {
 
         // The MSN starts at the base the manager is initialized to
