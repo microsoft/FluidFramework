@@ -1,4 +1,3 @@
-import * as assert from "assert";
 import * as nconf from "nconf";
 import * as path from "path";
 import * as supertest from "supertest";
@@ -16,8 +15,14 @@ describe("Routerlicious", () => {
                 testServer = supertest(alfred);
             });
 
-            it("constructor", () => {
-                assert.ok(true);
+            describe("Routes", () => {
+                describe("Home", () => {
+                    it("Root URL should return the home page", () => {
+                        return testServer
+                            .get("/")
+                            .expect(200);
+                    });
+                });
             });
         });
     });
