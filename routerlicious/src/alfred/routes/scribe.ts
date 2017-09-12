@@ -1,23 +1,25 @@
 import { Router } from "express";
-import * as nconf from "nconf";
+import { Provider } from "nconf";
 import { defaultPartials } from "./partials";
 
-const router: Router = Router();
+export function create(config: Provider) {
+    const router: Router = Router();
 
-const config = JSON.stringify(nconf.get("worker"));
+    const workerConfig = JSON.stringify(config.get("worker"));
 
-/**
- * Script entry point root
- */
-router.get("/", (request, response, next) => {
-    response.render(
-        "scribe",
-        {
-            config,
-            id: request.params.id,
-            partials: defaultPartials,
-            title: "Scribe",
-        });
-});
+    /**
+     * Script entry point root
+     */
+    router.get("/", (request, response, next) => {
+        response.render(
+            "scribe",
+            {
+                config: workerConfig,
+                id: request.params.id,
+                partials: defaultPartials,
+                title: "Scribe",
+            });
+    });
 
-export default router;
+    return router;
+}

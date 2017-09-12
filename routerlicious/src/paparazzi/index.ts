@@ -3,10 +3,10 @@
 // may depend on the config already being initialized
 import * as nconf from "nconf";
 import * as path from "path";
+import * as winston from "winston";
 nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
 
 import * as shared from "../shared";
-import { logger } from "../utils";
 
 // Connect to alfred and tmz and subscribes for work.
 const alfredUrl = nconf.get("paparazzi:alfred");
@@ -25,7 +25,7 @@ async function run() {
     const deferred = new shared.Deferred<void>();
     workerRunningP.then(
         () => {
-            logger.info("Resolved");
+            winston.info("Resolved");
             deferred.resolve();
         }, (error) => {
             deferred.reject(error);
@@ -50,6 +50,6 @@ runP.then(
         process.exit(0);
     },
     (error) => {
-        logger.error(error);
+        winston.error(error);
         process.exit(1);
     });

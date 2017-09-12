@@ -1,5 +1,5 @@
+import * as winston from "winston";
 import * as socketStorage from "../socket-storage";
-import { logger } from "../utils";
 import { BaseForeman } from "./baseForeman";
 import { IForeman, IWorkerDetail } from "./messages";
 
@@ -25,7 +25,7 @@ export class RandomForeman extends BaseForeman implements IForeman {
                 if (ack) {
                     candidates.push(worker);
                 } else {
-                    logger.error(error);
+                    winston.error(error);
                 }
             });
         }
@@ -33,14 +33,14 @@ export class RandomForeman extends BaseForeman implements IForeman {
             setTimeout(() => {
                 if (candidates.length > 0) {
                     const pickedWorker = candidates[Math.floor(Math.random() * candidates.length)];
-                    logger.info(`Picked worker ${pickedWorker.worker.clientId} for document ${id}`);
+                    winston.info(`Picked worker ${pickedWorker.worker.clientId} for document ${id}`);
                     pickedWorker.socket.emit("TaskObject", pickedWorker.worker.clientId, id,
                         (error, ack: socketStorage.IWorker) => {
                             if (ack) {
                                 this.manager.assignWork(pickedWorker, id);
                                 resolve();
                             } else {
-                                logger.error(error);
+                                winston.error(error);
                                 reject();
                             }
                     });

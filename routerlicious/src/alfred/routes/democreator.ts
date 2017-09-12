@@ -1,49 +1,49 @@
 import { Router } from "express";
+import * as moniker from "moniker";
+import { Provider } from "nconf";
 import { defaultPartials } from "./partials";
 
-import * as moniker from "moniker";
-
-const router: Router = Router();
-
-/**
- * Loading the demo creator page.
- */
-router.get("/:id?", (request, response, next) => {
-    const id = request.params.id ? request.params.id : "test";
-
-    const currentDate = new Date().toJSON().slice(0, 10).replace(/-/g, "-");
-
-    // Generate monikers for offnet original OT links.
-    const nocomposeMoniker = currentDate + "-" + moniker.choose() + "?nocompose";
-    const composeMoniker   = currentDate + "-" + moniker.choose();
+export function create(config: Provider): Router {
+    const router: Router = Router();
 
     /**
-     * Generate monikers for Prague demos. Note that beginning with a single
-     * slash will cause Hogan/HTML to automatically fill-in the root of the
-     * URL (and use these monikers as relative paths)!
+     * Loading the demo creator page.
      */
-    const mapsMoniker = "/maps/" + currentDate + "-" + moniker.choose();
-    const cellMoniker = "/cell/" + currentDate + "-" + moniker.choose();
-    const canvasMoniker = "/canvas/" + currentDate + "-" + moniker.choose();
-    const sharedTextMoniker = "/sharedText/" + currentDate + "-" + moniker.choose();
-    const scribeMoniker = "/scribe/";
+    router.get("/:id?", (request, response, next) => {
+        const id = request.params.id ? request.params.id : "test";
 
-    response.render(
-        "democreator",
-        {
-            id,
-            partials: defaultPartials,
-            title: id,
+        const currentDate = new Date().toJSON().slice(0, 10).replace(/-/g, "-");
 
-            nocomposeMoniker,
-            composeMoniker,
+        // Generate monikers for offnet original OT links.
+        const nocomposeMoniker = currentDate + "-" + moniker.choose() + "?nocompose";
+        const composeMoniker   = currentDate + "-" + moniker.choose();
 
-            mapsMoniker,
-            cellMoniker,
-            canvasMoniker,
-            sharedTextMoniker,
-            scribeMoniker,
-        });
-});
+        /**
+         * Generate monikers for Prague demos. Note that beginning with a single
+         * slash will cause Hogan/HTML to automatically fill-in the root of the
+         * URL (and use these monikers as relative paths)!
+         */
+        const mapsMoniker = "/maps/" + currentDate + "-" + moniker.choose();
+        const cellMoniker = "/cell/" + currentDate + "-" + moniker.choose();
+        const canvasMoniker = "/canvas/" + currentDate + "-" + moniker.choose();
+        const sharedTextMoniker = "/sharedText/" + currentDate + "-" + moniker.choose();
+        const scribeMoniker = "/scribe/";
 
-export default router;
+        response.render(
+            "democreator",
+            {
+                id,
+                partials: defaultPartials,
+                title: id,
+                nocomposeMoniker,
+                composeMoniker,
+                mapsMoniker,
+                cellMoniker,
+                canvasMoniker,
+                sharedTextMoniker,
+                scribeMoniker,
+            });
+    });
+
+    return router;
+}
