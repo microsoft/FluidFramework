@@ -4,7 +4,7 @@ import { queue } from "async";
 import * as api from "../api";
 import * as mergeTree from "../merge-tree";
 import * as Collections from "../merge-tree/collections";
-import {IIntelligentService} from "../intelligence";
+import { IIntelligentService } from "../intelligence";
 
 interface ISpellQuery {
     // Request text to spellcheck.
@@ -27,14 +27,21 @@ function compareProxStrings(a: Collections.ProxString<number>, b: Collections.Pr
     return bscore - ascore;
 }
 
+interface IWordCheck {
+    pos: number;
+    rev?: boolean;
+}
+
 class Speller {
     static altMax = 7;
     verbose = false;
     serviceCounter: number = 0;
     q: any;
+    pendingWordCheck: IWordCheck;
+    spellWordTimer: any;
 
     constructor(public sharedString: mergeTree.SharedString, private dict: Collections.TST<number>,
-                private intelligence: IIntelligentService) {
+        private intelligence: IIntelligentService) {
         this.initializeSpellerQueue();
     }
 
@@ -65,11 +72,25 @@ class Speller {
         }
     }
 
+    checkPending(intelligence: IIntelligentService) {
+        this.currentWordSpellCheck(intelligence, this.pendingWordCheck.pos, this.pendingWordCheck.rev);
+    }
+
     spellOp(delta: mergeTree.IMergeTreeOp, intelligence: IIntelligentService) {
+        function setPending() {
+            if (!this.spellWordTimer) {
+                this.spellWordTimer = setTimeout(() => {
+                    this.checkPending(intelligence);
+                    this.spellWordTimer = undefined;
+                }, 500);
+            }
+        }
         if (delta.type === mergeTree.MergeTreeDeltaType.INSERT) {
-            this.currentWordSpellCheck(intelligence, delta.pos1);
+            this.pendingWordCheck = { pos: delta.pos1 };
+            setPending();
         } else if (delta.type === mergeTree.MergeTreeDeltaType.REMOVE) {
-            this.currentWordSpellCheck(intelligence, delta.pos1, true);
+            this.pendingWordCheck = { pos: delta.pos1, rev: true };
+            setPending();
         }
         else if (delta.type === mergeTree.MergeTreeDeltaType.GROUP) {
             for (let groupOp of delta.ops) {
@@ -158,7 +179,7 @@ class Speller {
             // TODO: send paragraph to service
             spellParagraph(startPGPos, startPGPos + pgText.length, pgText);
         }
-        
+
         this.setEvents(this.intelligence);
     }
 
@@ -301,26 +322,26 @@ class Speller {
     invokeSpellerService(intelligence: IIntelligentService, queryString: string, startPos: number) {
         if (this.serviceCounter < 10) {
             if (queryString.length > 0) {
-                this.q.push( {text: queryString, rsn: this.sharedString.referenceSequenceNumber, start: startPos, end: startPos + queryString.length} );
+                this.q.push({ text: queryString, rsn: this.sharedString.referenceSequenceNumber, start: startPos, end: startPos + queryString.length });
                 ++this.serviceCounter;
             }
         }
-        
+
     }
 
     checkSpelling(rsn: number, original: string, startPos: number, result: any) {
         let endPos = startPos + original.length;
         let annotationRanges = [];
-        
+
         // No critiques from spellchecker service. Clear the whole paragraph.
         if (result.spellcheckerResult.answer === null) {
-            annotationRanges.push( {textError: null, globalStartOffset: startPos, globalEndOffset: endPos });
-            return { rsn, annotations: annotationRanges};
+            annotationRanges.push({ textError: null, globalStartOffset: startPos, globalEndOffset: endPos });
+            return { rsn, annotations: annotationRanges };
         }
         const answer = result.spellcheckerResult.answer;
         if (answer.Critiques.length === 0) {
-            annotationRanges.push( {textError: null, globalStartOffset: startPos, globalEndOffset: endPos });
-            return { rsn, annotations: annotationRanges};
+            annotationRanges.push({ textError: null, globalStartOffset: startPos, globalEndOffset: endPos });
+            return { rsn, annotations: annotationRanges };
         }
 
         // Go through each critique and create annotation ranges.
@@ -328,7 +349,7 @@ class Speller {
         const critiques = answer.Critiques;
         for (let critique of critiques) {
             let localStartOffset = critique.Start;
-            let localEndOffset= localStartOffset + critique.Length;
+            let localEndOffset = localStartOffset + critique.Length;
             let origWord = original.substring(localStartOffset, localEndOffset);
             const globalStartOffset = startPos + localStartOffset;
             const globalEndOffset = startPos + localEndOffset;
@@ -336,26 +357,26 @@ class Speller {
 
             // Correctly spelled range. Send null and update runningStart.
             if (runningStart < globalStartOffset) {
-                annotationRanges.push( {textError: null, globalStartOffset: runningStart, globalEndOffset: globalStartOffset });                
+                annotationRanges.push({ textError: null, globalStartOffset: runningStart, globalEndOffset: globalStartOffset });
             }
             runningStart = globalEndOffset;
 
             // Spelling error but no suggestions found. Continue to next critique.
             if (critique.Suggestions.length === 0 || critique.Suggestions[0].Text === "No suggestions") {
-                annotationRanges.push( {textError: { text: origWord, alternates: altSpellings}, globalStartOffset, globalEndOffset });                
+                annotationRanges.push({ textError: { text: origWord, alternates: altSpellings }, globalStartOffset, globalEndOffset });
                 continue;
             }
             // Suggestions found. Create annotation ranges.
             for (let i = 0; i < Math.min(Speller.altMax, critique.Suggestions.length); ++i) {
-                altSpellings.push({ text: critique.Suggestions[i].Text, invDistance: i, val: i});
+                altSpellings.push({ text: critique.Suggestions[i].Text, invDistance: i, val: i });
             }
-            annotationRanges.push( {textError: { text: origWord, alternates: altSpellings, color: "paul"}, globalStartOffset, globalEndOffset });
+            annotationRanges.push({ textError: { text: origWord, alternates: altSpellings, color: "paul" }, globalStartOffset, globalEndOffset });
         }
         // No more critiques. Send null for rest of the text.
         if (runningStart < endPos) {
-            annotationRanges.push( {textError: null, globalStartOffset: runningStart, globalEndOffset: endPos });
+            annotationRanges.push({ textError: null, globalStartOffset: runningStart, globalEndOffset: endPos });
         }
-        return { rsn, annotations: annotationRanges};
+        return { rsn, annotations: annotationRanges };
     }
 }
 
