@@ -3,15 +3,15 @@ import * as _ from "lodash";
 import performanceNow = require("performance-now");
 import * as io from "socket.io-client";
 import * as api from "../api";
-import { BlobStorageService, DocumentStorageService } from "./blobStorageService";
+import { DocumentStorageService } from "./blobStorageService";
 import { debug } from "./debug";
-import { DeltaStorageService, DocumentDeltaStorageService } from "./deltaStorageService";
+import { DocumentDeltaStorageService } from "./deltaStorageService";
 import { DocumentDeltaConnection } from "./documentDeltaConnection";
 import * as messages from "./messages";
 
 // Type aliases for mapping from events, to the objects interested in those events, to the connections for those
 // objects
-type ConnectionMap = { [connectionId: string]: DocumentDeltaConnection };
+type ConnectionMap = { [connectionId: string]: api.IDocumentDeltaConnection };
 type ObjectMap = { [objectId: string]: ConnectionMap };
 type EventMap = { [event: string]: ObjectMap };
 
@@ -25,7 +25,7 @@ const emptyHeader: api.IDocumentHeader = {
     tree: null,
 };
 
-class Document implements api.IDocument {
+export class Document implements api.IDocument {
     constructor(
         public documentId: string,
         public clientId: string,
@@ -33,7 +33,7 @@ class Document implements api.IDocument {
         public version: resources.ICommit,
         public deltaConnection: api.IDocumentDeltaConnection,
         public documentStorageService: api.IDocumentStorageService,
-        public deltaStorageService: api.IDeltaStorageService,
+        public deltaStorageService: api.IDocumentDeltaStorageService,
         public distributedObjects: api.IDistributedObject[],
         public pendingDeltas: api.ISequencedDocumentMessage[],
         public transformedMessages: api.ISequencedDocumentMessage[],
@@ -51,7 +51,8 @@ export class DocumentService implements api.IDocumentService {
     private eventMap: EventMap = {};
     private socket;
 
-    constructor(url: string, private deltaStorage: DeltaStorageService, private blobStorge: BlobStorageService) {
+    constructor(url: string, private deltaStorage: api.IDeltaStorageService,
+                private blobStorge: api.IBlobStorageService) {
         debug(`Creating document service ${performanceNow()}`);
         this.socket = io(url, { transports: ["websocket"] });
     }
@@ -141,7 +142,7 @@ export class DocumentService implements api.IDocumentService {
     /**
      * Registers the given connection to receive events of the given type
      */
-    public registerForEvent(event: string, connection: DocumentDeltaConnection) {
+    public registerForEvent(event: string, connection: api.IDocumentDeltaConnection) {
         // See if we're already listening for the given event - if not start
         if (!(event in this.eventMap)) {
             this.eventMap[event] = {};

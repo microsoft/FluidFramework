@@ -242,6 +242,7 @@ export async function onLoad(id: string, version: resources.ICommit, config: any
     const existing = root.has("text");
     if (!existing) {
         console.log(`Not existing ${id} - ${performanceNow()}`);
+        root.set("presence", collabDoc.createMap());
         const newString = collabDoc.createString() as SharedString.SharedString;
         const starterText = await downloadRawText(prideAndPrejudice);
         const segments = SharedString.loadSegments(starterText, 0, true);
@@ -258,7 +259,6 @@ export async function onLoad(id: string, version: resources.ICommit, config: any
                     marker.behaviors, marker.properties);
             }
         }
-        root.set("presence", collabDoc.createMap());
         root.set("text", newString);
     }
 

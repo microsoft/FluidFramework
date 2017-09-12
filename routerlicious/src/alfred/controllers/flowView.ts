@@ -975,22 +975,32 @@ function renderTable(startPGMarker: IParagraphMarker, startPGPos: number,
     currentLineTop: number, heightLimit: number, flowView: FlowView) {
     // TODO 
 }
+/*
+// TODO: load this from document properties and override with pg and segment properties
+interface IRenderContext {
+    fontstr: string;
+    headerFontstr: string;
+    
+}
+function renderTreeFromPosition(viewportDiv: HTMLDivElement, client: SharedString.Client, flowView: FlowView) {
 
-function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Client, flowView: FlowView, heightLimit = 0) {
+}
+*/
+function renderTree(viewportDiv: HTMLDivElement, startingPosition: number, client: SharedString.Client, flowView: FlowView, heightLimit = 0) {
     let fontstr = "18px Times";
     let headerFontstr = "22px Times";
     // TODO: for stable viewports cache the geometry and the divs 
     // TODO: cache all this pre-amble in style blocks; override with pg properties 
-    let viewportBounds = Geometry.Rectangle.fromClientRect(div.getBoundingClientRect());
+    let viewportBounds = Geometry.Rectangle.fromClientRect(viewportDiv.getBoundingClientRect());
     let pgCount = 0;
-    div.style.font = fontstr;
-    let computedStyle = window.getComputedStyle(div);
+    viewportDiv.style.font = fontstr;
+    let computedStyle = window.getComputedStyle(viewportDiv);
     let defaultLineHeight = 1.2;
-    let viewportHeight = parseInt(div.style.height, 10);
+    let viewportHeight = parseInt(viewportDiv.style.height, 10);
     if (heightLimit === 0) {
         heightLimit = viewportHeight;
     }
-    let viewportWidth = parseInt(div.style.width, 10);
+    let viewportWidth = parseInt(viewportDiv.style.width, 10);
     let h = parseInt(computedStyle.fontSize, 10);
     let defaultLineDivHeight = Math.round(h * defaultLineHeight);
     let pgVspace = Math.round(h * 0.5);
@@ -1003,7 +1013,7 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
 
     function makeLineDiv(r: Geometry.Rectangle, lineFontstr) {
         let lineDiv = makeContentDiv(r, lineFontstr);
-        div.appendChild(lineDiv);
+        viewportDiv.appendChild(lineDiv);
         lineCount++;
         lastLineDiv = lineDiv;
         return lineDiv;
@@ -1082,7 +1092,7 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
             }
             let lineFontstr = fontstr;
             lineDivHeight = defaultLineDivHeight;
-            if ((lineEnd === undefined) || (lineEnd > pos)) {
+            if ((lineEnd === undefined) || (lineEnd > startingPosition)) {
                 if (curPGMarker.properties && (curPGMarker.properties.header !== undefined)) {
                     // TODO: header levels
                     lineDivHeight = headerDivHeight;
@@ -1125,7 +1135,7 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
         }
     }
 
-    let tileInfo = findTile(flowView, pos, "pg");
+    let tileInfo = findTile(flowView, startingPosition, "pg");
     pgMarker = tileInfo.tile;
     markerPos = tileInfo.pos;
 
@@ -1137,6 +1147,7 @@ function renderTree(div: HTMLDivElement, pos: number, client: SharedString.Clien
         pgMarker = undefined;
         startPGPos = markerPos + 1;
         if (startPGMarker.hasLabel("table")) {
+            // or if pg is in a table cell
             renderTable(startPGMarker, startPGPos, currentLineTop, heightLimit, flowView);
             // TODO: update end offset and height using table height
             // TODO: generalize to div (cell) and recognize when should break for end of
@@ -1532,8 +1543,9 @@ export class FlowView {
         sharedString.on("op", (msg: API.ISequencedObjectMessage) => {
             if (msg.clientId !== this.client.longClientId) {
                 let delta = <SharedString.IMergeTreeOp>msg.contents;
-                this.applyOp(delta, msg);
-                this.queueRender(msg);
+                if (this.applyOp(delta, msg)) {
+                    this.queueRender(msg);
+                }
                 if (this.presenceSeq <= this.client.mergeTree.getCollabWindow().minSeq) {
                     this.updatePresence();
                 }
@@ -1624,12 +1636,14 @@ export class FlowView {
     }
 
     public updatePresence() {
-        let presenceInfo = <IPresenceInfo>{
-            origPos: this.cursor.pos,
-            refseq: this.client.getCurrentSeq(),
-        };
-        this.presenceSeq = presenceInfo.refseq;
-        this.presenceMapView.set(this.client.longClientId, presenceInfo);
+        if (this.presenceMapView) {
+            let presenceInfo = <IPresenceInfo>{
+                origPos: this.cursor.pos,
+                refseq: this.client.getCurrentSeq(),
+            };
+            this.presenceSeq = presenceInfo.refseq;
+            this.presenceMapView.set(this.client.longClientId, presenceInfo);
+        }
     }
 
     public updateGeometry() {
@@ -1929,6 +1943,7 @@ export class FlowView {
                 this.updatePGInfo(pos - 1);
             } else {
                 this.sharedString.insertText(String.fromCharCode(code), pos);
+                this.updatePGInfo(pos);
             }
             this.localQueueRender(this.cursor.pos);
 
@@ -2233,25 +2248,35 @@ export class FlowView {
     // TODO: paragraph spanning changes and annotations
     // TODO: generalize this by using transform fwd
     private applyOp(delta: SharedString.IMergeTreeOp, msg: API.ISequencedObjectMessage) {
-        if (delta.type === SharedString.MergeTreeDeltaType.INSERT) {
-            if (delta.marker) {
-                this.updatePGInfo(delta.pos1 - 1);
-            } else if (delta.pos1 <= this.cursor.pos) {
-                this.cursor.pos += delta.text.length;
+        // tslint:disable:switch-default
+        switch (delta.type) {
+            case SharedString.MergeTreeDeltaType.INSERT:
+                if (delta.marker) {
+                    this.updatePGInfo(delta.pos1 - 1);
+                } else if (delta.pos1 <= this.cursor.pos) {
+                    this.cursor.pos += delta.text.length;
+                }
+                this.remotePresenceFromEdit(msg.clientId, msg.referenceSequenceNumber, delta.pos1, 1);
+                this.updatePGInfo(delta.pos1);
+                return true;
+            case SharedString.MergeTreeDeltaType.REMOVE:
+                if (delta.pos2 <= this.cursor.pos) {
+                    this.cursor.pos -= (delta.pos2 - delta.pos1);
+                } else if (this.cursor.pos >= delta.pos1) {
+                    this.cursor.pos = delta.pos1;
+                }
+                this.remotePresenceFromEdit(msg.clientId, msg.referenceSequenceNumber, delta.pos1);
+                this.updatePGInfo(delta.pos1);
+                return true;
+            case SharedString.MergeTreeDeltaType.GROUP: {
+                let opAffectsViewport = false;
+                for (let groupOp of delta.ops) {
+                    opAffectsViewport = opAffectsViewport || this.applyOp(groupOp, msg);
+                }
+                return opAffectsViewport;
             }
-            this.remotePresenceFromEdit(msg.clientId, msg.referenceSequenceNumber, delta.pos1, 1);
-            this.updatePGInfo(delta.pos1);
-        } else if (delta.type === SharedString.MergeTreeDeltaType.REMOVE) {
-            if (delta.pos2 <= this.cursor.pos) {
-                this.cursor.pos -= (delta.pos2 - delta.pos1);
-            } else if (this.cursor.pos >= delta.pos1) {
-                this.cursor.pos = delta.pos1;
-            }
-            this.remotePresenceFromEdit(msg.clientId, msg.referenceSequenceNumber, delta.pos1);
-            this.updatePGInfo(delta.pos1);
-        } else if (delta.type === SharedString.MergeTreeDeltaType.GROUP) {
-            for (let groupOp of delta.ops) {
-                this.applyOp(groupOp, msg);
+            case SharedString.MergeTreeDeltaType.ANNOTATE: {
+                return this.posInViewport(delta.pos1) || this.posInViewport(delta.pos2 - 1);
             }
         }
     }

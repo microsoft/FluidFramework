@@ -2004,7 +2004,7 @@ export class MergeTree {
         this.collabWindow.currentSeq = minSeq;
         this.segmentsToScour = new Collections.Heap<LRUSegment>([], LRUSegmentComparer);
         this.pendingSegments = Collections.ListMakeHead<SegmentGroup>();
-        let measureFullCollab = true;
+        let measureFullCollab = false;
         let clockStart;
         if (measureFullCollab) {
             clockStart = clock();
@@ -2475,7 +2475,7 @@ export class MergeTree {
             preceding,
             tileType,
         };
-        
+
         if (preceding) {
             this.search(startPos, UniversalSequenceNumber, clientId,
                 { leaf: recordTileStart, shift: tileShift }, searchInfo);
