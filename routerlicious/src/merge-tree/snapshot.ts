@@ -131,7 +131,6 @@ export class Snapshot {
                         let markerSeg = <MergeTree.Marker>segment;
                         texts.push({
                             props: markerSeg.properties,
-                            // TODO: marker end position
                             marker: { behaviors: markerSeg.behaviors },
                         })
                         break;

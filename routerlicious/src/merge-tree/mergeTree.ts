@@ -163,30 +163,30 @@ function addTileIfNotPresent(tile: Marker, tiles: Object) {
     }
 }
 
-function applyStackDelta(stacks: RangeStackMap, delta: RangeStackMap) {
-    for (let type in delta) {
-        let deltaStack = delta[type];
+function applyStackDelta(currentStackMap: RangeStackMap, deltaStackMap: RangeStackMap) {
+    for (let label in deltaStackMap) {
+        let deltaStack = deltaStackMap[label];
         if (!deltaStack.empty()) {
-            let stack = stacks[type];
-            if (stack === undefined) {
-                stack = new Collections.Stack<Marker>();
-                stacks[type] = stack;
+            let currentStack = currentStackMap[label];
+            if (currentStack === undefined) {
+                currentStack = new Collections.Stack<Marker>();
+                currentStackMap[label] = currentStack;
             }
             for (let delta of deltaStack.items) {
-                applyRangeMarker(stack, delta);
+                applyRangeMarker(currentStack, delta);
             }
         }
     }
 }
 
 function applyRangeMarker(stack: Collections.Stack<Marker>, delta: Marker) {
-    if (delta.behaviors & ops.MarkerBehaviors.Begin) {
+    if (delta.behaviors & ops.MarkerBehaviors.RangeBegin) {
         stack.push(delta);
     }
     else {
         // assume delta is end marker
         let top = stack.top();
-        if (top && (top.behaviors & ops.MarkerBehaviors.Begin)) {
+        if (top && (top.behaviors & ops.MarkerBehaviors.RangeBegin)) {
             stack.pop();
         }
         else {
@@ -213,7 +213,7 @@ function addNodeMarkers(node: Node, rightmostTiles: MapLike<Marker>,
                 addTile(marker, rightmostTiles);
                 addTileIfNotPresent(marker, leftmostTiles);
             }
-            else if (marker.behaviors & ops.MarkerBehaviors.Range) {
+            else if (marker.behaviors & (ops.MarkerBehaviors.RangeBegin|ops.MarkerBehaviors.RangeEnd)) {
                 for (let label of marker.getMarkerLabels()) {
                     updateRangeInfo(label, marker);
                 }
@@ -338,6 +338,7 @@ export class ExternalSegment extends BaseSegment {
 }
 
 export let reservedMarkerLabelsKey = "markerLabels";
+export let reservedMarkerIdKey = "markerId";
 
 export class Marker extends BaseSegment {
     public static make(behavior: ops.MarkerBehaviors, props?: PropertySet,
@@ -356,7 +357,7 @@ export class Marker extends BaseSegment {
 
     hasMarkerLabels() {
         return this.behaviors &&
-            (ops.MarkerBehaviors.Tile | ops.MarkerBehaviors.Range) &&
+            (ops.MarkerBehaviors.Tile | ops.MarkerBehaviors.RangeBegin | ops.MarkerBehaviors.RangeEnd) &&
             this.properties && this.properties[reservedMarkerLabelsKey];
     }
 
@@ -1568,8 +1569,7 @@ export class Client {
         }
     }
 
-    insertMarkerLocal(pos: number, behaviors: ops.MarkerBehaviors, props?: PropertySet,
-        end?: number) {
+    insertMarkerLocal(pos: number, behaviors: ops.MarkerBehaviors, props?: PropertySet) {
         let segWindow = this.mergeTree.getCollabWindow();
         let clientId = segWindow.clientId;
         let refSeq = segWindow.currentSeq;
@@ -1579,7 +1579,6 @@ export class Client {
             clockStart = clock();
         }
 
-        // TODO: add end
         this.mergeTree.insertMarker(pos, refSeq, clientId, seq, behaviors, props);
 
         if (this.measureOps) {
@@ -1897,6 +1896,7 @@ export class MergeTree {
     // for diagnostics
     getLongClientId: (id: number) => string;
 
+    // TODO: make and use interface describing options
     constructor(public text: string, public options?: PropertySet) {
         this.blockUpdateActions = MergeTree.initBlockUpdateActions;
         if (options) {

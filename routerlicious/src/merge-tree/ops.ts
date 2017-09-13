@@ -1,14 +1,14 @@
+// tslint:disable:no-bitwise
 export enum MarkerBehaviors {
-    None =     0x0,
-    Tile =     0x1,
-    Range =    0x2,
-    Begin =    0x4,
-    End =      0x10,
+    None =          0x0,
+    Tile =          0x1,
+    RangeBegin =    0x2,
+    RangeEnd =      0x4,
+    SlideOnRemove = 0x10,
 }
 
 export interface IMarkerDef {
     behaviors?: MarkerBehaviors;
-    end?: number;
 }
 
 export interface IComponentDef {
