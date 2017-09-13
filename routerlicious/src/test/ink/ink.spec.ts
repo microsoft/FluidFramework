@@ -1,5 +1,5 @@
 import * as assert from "assert";
-import * as ink from "../";
+import * as ink from "../../ink";
 
 let testPen: ink.IPen = {
     color: { r: 0.1, g: 0, b: 0, a: 1 },
