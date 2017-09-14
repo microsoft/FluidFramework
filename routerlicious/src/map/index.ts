@@ -336,6 +336,11 @@ export class Map extends api.CollaborativeObject implements api.IMap {
         return Promise.resolve(this.view.incrementCounter(key, value, min, max));
     }
 
+    public getCounterValue(key: string): Promise<number> {
+        const compatible = this.ensureCompatibility(key, ValueType[ValueType.Counter]);
+        return compatible.reject !== null ? compatible.reject : Promise.resolve(compatible.data.value);
+    }
+
     public createSet<T>(key: string, value?: T[]): Promise<api.ISet<T>> {
         value = shared.getOrDefaultArray(value, []);
         this.view.initSet(key, value);
@@ -344,26 +349,17 @@ export class Map extends api.CollaborativeObject implements api.IMap {
 
     public insertSet<T>(key: string, value: T): Promise<T[]> {
         const compatible = this.ensureCompatibility(key, ValueType[ValueType.Set]);
-        if (compatible.reject !== null) {
-            return compatible.reject;
-        }
-        return Promise.resolve(this.view.insertSet(key, value));
+        return compatible.reject !== null ? compatible.reject : Promise.resolve(this.view.insertSet(key, value));
     }
 
     public deleteSet<T>(key: string, value: T): Promise<T[]> {
         const compatible = this.ensureCompatibility(key, ValueType[ValueType.Set]);
-        if (compatible.reject !== null) {
-            return compatible.reject;
-        }
-        return Promise.resolve(this.view.deleteSet(key, value));
+        return compatible.reject !== null ? compatible.reject : Promise.resolve(this.view.deleteSet(key, value));
     }
 
     public enumerateSet<T>(key: string): Promise<T[]> {
         const compatible = this.ensureCompatibility(key, ValueType[ValueType.Set]);
-        if (compatible.reject !== null) {
-            return compatible.reject;
-        }
-        return Promise.resolve(compatible.data.value);
+        return compatible.reject !== null ? compatible.reject : Promise.resolve(compatible.data.value);
     }
 
     public snapshot(): api.ITree {

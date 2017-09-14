@@ -196,6 +196,11 @@ export interface ICell extends ICollaborativeObject {
      * Increment/decrement the underlying value.
      */
     increment(value: number): Promise<void>;
+
+    /**
+     * Increment/decrement the underlying value.
+     */
+    get(): Promise<number>;
  }
 
 /**
