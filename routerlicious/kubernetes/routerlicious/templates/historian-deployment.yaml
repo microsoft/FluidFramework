@@ -33,7 +33,7 @@ spec:
           value: production
         volumeMounts:
         - name: config
-          mountPath: /home/node/server/config.json
+          mountPath: /home/node/server/config/config.json
           subPath: config.json
       imagePullSecrets:
       - name: regsecret

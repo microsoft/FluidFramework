@@ -1,7 +1,7 @@
 // Setup the configuration system first since modules may depend on it being configured
 import * as nconf from "nconf";
 import * as path from "path";
-nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
+nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config/config.json")).use("memory");
 
 import * as http from "http";
 import { logger } from "../utils";
