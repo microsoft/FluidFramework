@@ -73,8 +73,8 @@ export function loadText(content: string, mergeTree: MergeTree.MergeTree, segLim
     // for (let segment of segments) {
     //     segTree.insertInterval(segTree.getLength(0,SegTree.LocalClientId),0,SegTree.LocalClientId,0,segment);
     // }
-    console.log(`Number of Segments: ${segments.length}`);
-    console.log(`Height: ${mergeTree.getStats().maxHeight}`);
+    // console.log(`Number of Segments: ${segments.length}`);
+    // console.log(`Height: ${mergeTree.getStats().maxHeight}`);
     //console.log(segTree.toString());
     return mergeTree;
 }

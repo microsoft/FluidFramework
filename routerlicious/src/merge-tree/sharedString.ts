@@ -109,17 +109,16 @@ export class SharedString extends api.CollaborativeObject {
     public insertMarker(
         pos: number,
         behaviors: ops.MarkerBehaviors,
-        props?: MergeTree.PropertySet,
-        end?: number) {
+        props?: MergeTree.PropertySet) {
 
         const insertMessage: ops.IMergeTreeInsertMsg = {
-            marker: { behaviors, end },
+            marker: { behaviors },
             pos1: pos,
             props,
             type: ops.MergeTreeDeltaType.INSERT,
         };
 
-        this.client.insertMarkerLocal(pos, behaviors, props, end);
+        this.client.insertMarkerLocal(pos, behaviors, props);
         this.submitLocalOperation(insertMessage);
     }
 

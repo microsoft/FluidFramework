@@ -1,38 +1,42 @@
-import home from "./home";
-export { home };
+import { Router } from "express";
+import { Provider } from "nconf";
+import * as git from "../../git-storage";
+import * as utils from "../../utils";
+import * as canvas from "./canvas";
+import * as cell from "./cell";
+import * as deltas from "./deltas";
+import * as demoCreator from "./democreator";
+import * as home from "./home";
+import * as intelligence from "./intelligence";
+import * as login from "./login";
+import * as maps from "./maps";
+import * as scribe from "./scribe";
+import * as sharedText from "./sharedText";
 
-import deltas from "./deltas";
-export { deltas };
+export interface IRoutes {
+    canvas: Router;
+    cell: Router;
+    deltas: Router;
+    demoCreator: Router;
+    home: Router;
+    intelligence: Router;
+    login: Router;
+    maps: Router;
+    scribe: Router;
+    sharedText: Router;
+}
 
-import maps from "./maps";
-export { maps };
-
-import canvas from "./canvas";
-export { canvas };
-
-import sharedText from "./sharedText";
-export { sharedText };
-
-import cell from "./cell";
-export { cell };
-
-import scribe from "./scribe";
-export { scribe };
-
-import perf from "./perf";
-export { perf };
-
-import producer from "./producer";
-export { producer };
-
-import object from "./object";
-export { object };
-
-import intelligence from "./intelligence";
-export { intelligence };
-
-import democreator from "./democreator";
-export { democreator };
-
-import login from "./login";
-export { login };
+export function create(config: Provider, gitManager: git.GitManager, mongoManager: utils.MongoManager) {
+    return {
+        canvas: canvas.create(config, gitManager),
+        cell: cell.create(config, gitManager),
+        deltas: deltas.create(config, mongoManager),
+        demoCreator: demoCreator.create(config),
+        home: home.create(config),
+        intelligence: intelligence.create(config),
+        login: login.create(config),
+        maps: maps.create(config, gitManager),
+        scribe: scribe.create(config),
+        sharedText: sharedText.create(config, gitManager),
+    };
+}

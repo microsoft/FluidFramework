@@ -1943,6 +1943,7 @@ export class FlowView {
                 this.updatePGInfo(pos - 1);
             } else {
                 this.sharedString.insertText(String.fromCharCode(code), pos);
+                this.updatePGInfo(pos);
             }
             this.localQueueRender(this.cursor.pos);
 
