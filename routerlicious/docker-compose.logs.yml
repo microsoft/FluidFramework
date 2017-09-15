@@ -65,13 +65,13 @@ services:
             - "5601:5601"
         links:
             - elasticsearch
-    elasalert:
-        image: ivankrizsan/elastalert
+    elastalert:
+        image: ivankrizsan/elastalert:latest
         depends_on:
             - elasticsearch
             - kibana
         volumes:
-          - elasalertlogs:/opt/logs
+          - elastalertlogs:/opt/logs
           - ./config/elastalert/rules:/opt/rules
           - ./config/elastalert/config:/opt/config
         links:
@@ -81,5 +81,5 @@ services:
 volumes:
   esdata:
     driver: local
-  elasalertlogs:
+  elastalertlogs:
     driver: local

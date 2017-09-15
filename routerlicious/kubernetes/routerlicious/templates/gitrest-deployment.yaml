@@ -43,7 +43,7 @@ spec:
         - name: data
           mountPath: /home/node/documents
         - name: config
-          mountPath: /home/node/server/config/config.json
+          mountPath: /home/node/server/config.json
           subPath: config.json
       imagePullSecrets:
       - name: regsecret
