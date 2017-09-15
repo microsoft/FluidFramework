@@ -41,7 +41,7 @@ services:
                 gelf-address: "udp://127.0.0.1:12201"
                 tag: "log-tmz"
     elasticsearch:
-        image: elasticsearch:latest
+        image: elasticsearch:5.5.1
         ports:
             - "9200:9200"
             - "9300:9300"
