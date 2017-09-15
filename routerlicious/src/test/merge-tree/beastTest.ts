@@ -504,7 +504,9 @@ export class RandomPack {
 
     randString(wordCount: number) {
         let exampleWords = ["giraffe", "hut", "aardvark", "gold", "hover",
-            "yurt", "hot", "antelope", "gift", "banana"];
+            "yurt", "hot", "antelope", "gift", "banana", "book", "airplane",
+            "kitten", "moniker", "lemma", "doughnut", "orange", "tangerine"
+        ];
         let buf = "";
         for (let i = 0; i < wordCount; i++) {
             let exampleWord = exampleWords[this.randInteger(0, exampleWords.length - 1)];
@@ -528,7 +530,8 @@ export type DocumentNode = string | DocumentTree;
  */
 export class DocumentTree {
     pos = 0;
-    id = 0;
+    ids = { box: 0, row: 0 };
+    id: string;
     static randPack = new RandomPack();
 
     constructor(public name: string, public children: DocumentNode[]) {
@@ -540,34 +543,84 @@ export class DocumentTree {
             client.insertTextLocal(text, this.pos);
             this.pos += text.length;
         } else {
+            let id: number;
             if (docNode.name === "pg") {
                 client.insertMarkerLocal(this.pos, ops.MarkerBehaviors.Tile,
                     {
-                        [MergeTree.reservedMarkerLabelsKey]: docNode.name,
+                        [MergeTree.reservedMarkerLabelsKey]: [docNode.name],
                     },
                 );
-
+                this.pos++;
             } else {
-                let trid = docNode.name + this.id.toString();
+                let trid = docNode.name + this.ids[docNode.name].toString();
+                docNode.id = trid;
+                id = this.ids[docNode.name]++;
                 client.insertMarkerLocal(this.pos, ops.MarkerBehaviors.RangeBegin,
                     {
                         [MergeTree.reservedMarkerIdKey]: trid,
-                        [MergeTree.reservedMarkerLabelsKey]: docNode.name,
+                        [MergeTree.reservedMarkerLabelsKey]: [docNode.name],
                     },
                 );
+                this.pos++;
             }
             for (let child of docNode.children) {
                 this.addToMergeTree(client, child);
             }
             if (docNode.name !== "pg") {
-                let etrid = "e" + docNode.name + this.id.toString();
+                let etrid = "end-" + docNode.name + id.toString();
                 client.insertMarkerLocal(this.pos, ops.MarkerBehaviors.RangeEnd,
                     {
                         [MergeTree.reservedMarkerIdKey]: etrid,
-                        [MergeTree.reservedMarkerLabelsKey]: docNode.name,
+                        [MergeTree.reservedMarkerLabelsKey]: [docNode.name],
                     },
                 );
+                this.pos++;
             }
+        }
+    }
+
+    printStacksAllPositions() {
+        let pos = 0;
+        let stacks = {
+            box: new Collections.Stack<string>(),
+            row: new Collections.Stack<string>()
+        };
+
+        function printStack(stack: Collections.Stack<string>) {
+            for (let item in stack.items) {
+                console.log(item);
+            }
+        }
+
+        function printStacks() {
+            for (let name of ["box", "row"]) {
+                console.log(name + ":");
+                printStack(stacks[name]);
+            }
+        }
+
+        let printNodeStacks = (docNode: DocumentNode) => {
+            if (typeof docNode === "string") {
+                let text = <string>docNode;
+                let epos = pos + text.length;
+                console.log(`stacks for [${pos}, ${epos}): ${text}`);
+                printStacks();
+                pos = epos;
+            } else {
+                if (docNode.name === "pg") {
+                    printNodeStacks(docNode.children[0]);
+                } else {
+                    stacks[docNode.name].push(docNode.id);
+                    for (let child of docNode.children) {
+                        printNodeStacks(child);
+                    }
+                    stacks[docNode.name].pop();
+                }
+            }
+        }
+
+        for (let rootChild of this.children) {
+            printNodeStacks(rootChild);
         }
     }
 
@@ -583,24 +636,30 @@ export class DocumentTree {
     static test1() {
         let doc = DocumentTree.generateDocument();
         let client = doc.generateClient();
-        console.log(client.mergeTree.toString()); 
+        doc.printStacksAllPositions();
+        console.log(client.mergeTree.toString());
     }
 
     static generateDocument() {
-        let tree = new DocumentTree("Document", DocumentTree.generateContent());
+        let tree = new DocumentTree("Document", DocumentTree.generateContent(0.4));
         return tree;
     }
 
-    static generateContent() {
+    static generateContent(rowProbability: number) {
         let items = <DocumentNode[]>[];
-        let docLen = DocumentTree.randPack.randInteger(6, 40);
+        let docLen = DocumentTree.randPack.randInteger(5, 15);
         for (let i = 0; i < docLen; i++) {
-            let selector = DocumentTree.randPack.randInteger(0, 1);
-            if (selector === 0) {
+            let rowThreshold = rowProbability * 1000;
+            let selector = DocumentTree.randPack.randInteger(1, 1000);
+            if (selector >= rowThreshold) {
                 let pg = DocumentTree.generateParagraph();
                 items.push(pg);
             } else {
-                let row = DocumentTree.generateRow();
+                rowProbability /= 2;
+                if (rowProbability < 0.08) {
+                    rowProbability = 0;
+                }
+                let row = DocumentTree.generateRow(rowProbability);
                 items.push(row);
             }
 
@@ -610,24 +669,24 @@ export class DocumentTree {
 
     // model pg tile as tree with single child
     static generateParagraph() {
-        let wordCount = DocumentTree.randPack.randInteger(1, 10);
+        let wordCount = DocumentTree.randPack.randInteger(1, 6);
         let text = DocumentTree.randPack.randString(wordCount);
         let pgTree = new DocumentTree("pg", [text]);
         return pgTree;
     }
 
-    static generateRow() {
+    static generateRow(rowProbability: number) {
         let items = <DocumentNode[]>[];
         let rowLen = DocumentTree.randPack.randInteger(1, 5);
         for (let i = 0; i < rowLen; i++) {
-            let item = DocumentTree.generateBox();
+            let item = DocumentTree.generateBox(rowProbability);
             items.push(item);
         }
         return new DocumentTree("row", items);
     }
 
-    static generateBox() {
-        return new DocumentTree("box", DocumentTree.generateContent());
+    static generateBox(rowProbability: number) {
+        return new DocumentTree("box", DocumentTree.generateContent(rowProbability));
     }
 }
 
@@ -1557,9 +1616,9 @@ describe("Routerlicious", () => {
             testPack.firstTest();
         });
 
-        //it("hierarchyTest", function() {
-        //    DocumentTree.test1();
-        //});
+        xit("hierarchyTest", function () {
+            DocumentTree.test1();
+        });
 
         it("randolicious", () => {
             const testPack = TestPack(false);
