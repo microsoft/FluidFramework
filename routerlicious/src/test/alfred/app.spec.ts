@@ -3,7 +3,7 @@ import * as path from "path";
 import * as supertest from "supertest";
 import * as app from "../../alfred/app";
 
-const defaultConfig = nconf.file(path.join(__dirname, "../../../config.json")).use("memory");
+const defaultConfig = nconf.file(path.join(__dirname, "../../../config/config.test.json")).use("memory");
 
 describe("Routerlicious", () => {
     describe("Alfred", () => {
