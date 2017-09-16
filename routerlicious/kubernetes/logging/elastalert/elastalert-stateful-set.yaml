@@ -17,21 +17,34 @@ spec:
         env:
           - name: "ELASTICSEARCH_HOST"
             value: "elasticsearch"
+          - name: "ELASTICSEARCH_PORT"
+            value: "9200"
         volumeMounts:
         - name: logs
           mountPath: /opt/logs
-        - name: rules
-          mountPath: /opt/rules
         - name: config
-          mountPath: /opt/config
+          mountPath: /opt/config/elastalert_config.yaml
+          subPath: elastalert_config.yaml
+        - name: auth
+          mountPath: /opt/config/smtp_auth.yaml
+          subPath: smtp_auth.yaml
+        - name: rule-unhandledpromiserejection
+          mountPath: /opt/rules/unhandledPromiseRejection.yaml
+          subPath: unhandledPromiseRejection.yaml
 
       volumes:
       - name: rules
         hostPath:
           path: /config/elastalert/rules
       - name: config
-        hostPath:
-          path: /config/elastalert/config
+        configMap:
+          name: elastalert-config
+      - name: auth
+        configMap:
+          name: elastalert-auth
+      - name: rule-unhandledpromiserejection
+        configMap:
+          name: elastalert-unhandledpromiserejection
 
   volumeClaimTemplates:
   - metadata:

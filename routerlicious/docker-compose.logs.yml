@@ -47,8 +47,6 @@ services:
             - "9300:9300"
         volumes:
             - esdata:/usr/share/elasticsearch/data
-        environment:
-            - http.host=0.0.0.0
     logstash:
         image: logstash:latest
         command: logstash -e 'input { gelf { type => docker port => 12201 } } output { elasticsearch { hosts => "elasticsearch:9200" } stdout {  codec => rubydebug } }'
@@ -74,9 +72,9 @@ services:
           - elastalertlogs:/opt/logs
           - ./config/elastalert/rules:/opt/rules
           - ./config/elastalert/config:/opt/config
-        links:
-            - elasticsearch:elasticsearchhost    
-
+        environment:
+          - ELASTICSEARCH_HOST=elasticsearch
+          - ELASTICSEARCH_PORT=9200 
 
 volumes:
   esdata:
