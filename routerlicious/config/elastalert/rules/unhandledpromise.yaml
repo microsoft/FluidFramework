@@ -1,4 +1,4 @@
-name: UnhandledPromiseRejection Alert!
+name: Unhandled Promise Alert!
 type: frequency
 index: logstash-*
 num_events: 1

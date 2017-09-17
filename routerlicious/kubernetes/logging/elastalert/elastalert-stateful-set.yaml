@@ -28,9 +28,9 @@ spec:
         - name: auth
           mountPath: /opt/config/smtp_auth.yaml
           subPath: smtp_auth.yaml
-        - name: rule-unhandledpromiserejection
-          mountPath: /opt/rules/unhandledPromiseRejection.yaml
-          subPath: unhandledPromiseRejection.yaml
+        - name: rule-unhandledpromise
+          mountPath: /opt/rules/unhandledpromise.yaml
+          subPath: unhandledpromise.yaml
 
       volumes:
       - name: rules
@@ -42,9 +42,9 @@ spec:
       - name: auth
         configMap:
           name: elastalert-auth
-      - name: rule-unhandledpromiserejection
+      - name: rule-unhandledpromise
         configMap:
-          name: elastalert-unhandledpromiserejection
+          name: elastalert-unhandledpromise
 
   volumeClaimTemplates:
   - metadata:

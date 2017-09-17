@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: elastalert-unhandledpromiserejection
+  name: elastalert-unhandledpromise
 data:    
-  unhandledPromiseRejection.yaml: |
-    name: UnhandledPromiseRejection Alert!
+  unhandledpromise.yaml: |
+    name: Unhandled Promise Alert!
     type: frequency
     index: logstash-*
     num_events: 1
