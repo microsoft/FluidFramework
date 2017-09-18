@@ -5,6 +5,14 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "TestFarm",
+            "type": "node",
+            "request": "launch",
+            "sourceMaps": true,
+            "protocol": "inspector",
+            "program": "${workspaceRoot}/dist/merge-tree/testFarm.js"
+        },
+        {
             "type": "node",
             "request": "launch",
             "name": "Mocha Tests",

@@ -1850,7 +1850,12 @@ interface IMarkerSearchRangeInfo {
 function applyLeafRangeMarker(marker: Marker, searchInfo: IMarkerSearchRangeInfo) {
     for (let rangeLabel of searchInfo.rangeLabels) {
         if (marker.hasLabel(rangeLabel)) {
-            applyRangeMarker(searchInfo.stacks[rangeLabel], marker);
+            let currentStack = searchInfo.stacks[rangeLabel];
+            if (currentStack === undefined) {
+                currentStack = new Collections.Stack<Marker>();
+                searchInfo.stacks[rangeLabel] = currentStack;
+            }
+            applyRangeMarker(currentStack, marker);
         }
     }
 }
