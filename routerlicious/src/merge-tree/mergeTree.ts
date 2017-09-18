@@ -380,14 +380,31 @@ export class Marker extends BaseSegment {
         }
     }
 
+    getId() {
+        if (this.properties && this.properties[reservedMarkerIdKey]) {
+            return this.properties[reservedMarkerIdKey];
+        }
+    }
+
     toString() {
+        let mask = ops.MarkerBehaviors.Tile | ops.MarkerBehaviors.RangeBegin | ops.MarkerBehaviors.RangeEnd;
+        let bbuf = ops.MarkerBehaviors[this.behaviors&mask];
         let lbuf = "";
+        let id = this.getId();
+        if (id) {
+          bbuf += ` (${id}) `;  
+         }
         if (this.hasMarkerLabels()) {
-            for (let tileLabel of this.properties[reservedMarkerLabelsKey]) {
-                lbuf += "; " + tileLabel;
+            let labels = this.properties[reservedMarkerLabelsKey];
+            for (let i=0,len=labels.length;i<len;i++) {
+                let tileLabel = labels[i];
+                if (i>0) {
+                    lbuf += "; ";
+                }
+                lbuf += tileLabel;
             }
         }
-        return `M:${lbuf}`;
+        return `M ${bbuf}: ${lbuf}`;
     }
 
     getType() {

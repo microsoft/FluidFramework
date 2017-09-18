@@ -4,7 +4,7 @@
 import * as nconf from "nconf";
 import * as path from "path";
 import * as winston from "winston";
-nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
+nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config/config.json")).use("memory");
 
 import * as shared from "../shared";
 

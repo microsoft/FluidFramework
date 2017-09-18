@@ -5,8 +5,7 @@ import * as winston from "winston";
 import * as git from "../git-storage";
 import * as utils from "../utils";
 import { AlfredRunner } from "./runner";
-
-const provider = nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
+const provider = nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config/config.json")).use("memory");
 
 /**
  * Default logger setup

@@ -1,0 +1,131 @@
+{
+    "logger": {
+        "colorize": true,
+        "morganFormat": "dev",
+        "json": false,
+        "level": "info",
+        "timestamp": true
+    },
+    "rabbitmq": {
+        "connectionString": "amqp://rabbitmq"
+    },
+    "mongo": {
+        "endpoint": "mongodb://mongodb:27017",
+        "collectionNames": {
+            "deltas": "deltas",
+            "documents": "documents",
+            "partitions": "partitions"
+        }
+    },
+    "kafka": {
+        "lib": {
+            "name": "kafka-node",
+            "endpoint": "zookeeper:2181"
+        }
+    },
+    "alfred": {
+        "kafkaClientId": "alfred",
+        "topic": "rawdeltas",
+        "bucket": "snapshots",
+        "restJsonSize": "50mb"
+    },
+    "deli": {
+        "topics": {
+            "receive": "rawdeltas",
+            "send": "deltas"
+        },
+        "kafkaClientId": "deli",
+        "groupId": "deli",
+        "checkpointBatchSize": 10,
+        "checkpointTimeIntervalMsec": 1000
+
+    },
+    "paparazzi": {
+        "queue": "snapshot",
+        "bucket": "snapshots",
+        "alfred": "http://alfred:3000",
+        "tmz": "http://tmz:4000"
+    },
+    "scriptorium": {
+        "topic": "deltas",
+        "kafkaClientId": "scriptorium",
+        "groupId": "scriptorium",
+        "checkpointBatchSize": 1,
+        "checkpointTimeIntervalMsec": 1000
+    },
+    "tmz": {
+        "queue": "snapshot",
+        "topic": "deltas",
+        "kafkaClientId": "tmz",
+        "groupId": "tmz",
+        "port": 4000,
+        "timeoutMSec": {
+            "checker": 10000,
+            "worker": 10000,
+            "document": 600000
+        },
+        "workerType": "random",
+        "workerAckTimeMSec": 100,
+        "onlyServer": true
+    },
+    "redis": {
+        "host": "redis",
+        "port": 6379
+    },
+    "minio": {
+        "endpoint": "minio",
+        "port": 9000,
+        "accessKey": "prague",
+        "secretKey": "mhioAkNXTwdX4dXWgKgXVtHo"
+    },
+    "perf": {
+        "kafkaSendClientId": "perfsend",
+        "kafkaReceiveClientId": "perfreceive",
+        "sendTopic": "rawdeltas",
+        "receiveTopic": "deltas",
+        "bucket": "snapshots",
+        "chunkSize": 400000,
+        "groupId": "perf",
+        "lib": {
+            "name": "kafka-rest",
+            "endpoint": "http://kafka-rest:8082"
+        }
+    },
+    "worker": {
+        "intelligence": {
+            "resume": {
+                "deviceId": "routerlicious",
+                "host": "pkarimov-paidIOT.azure-devices.net",
+                "sharedAccessKeyName": "iothubowner",
+                "sharedAccessKey": "8mvOmNnUklwnuzY+U96V51w+qCq262ZUpSkdw8nTZ18=",
+                "url": "http://localhost:3000/intelligence/resume"
+            },
+            "textAnalytics": {
+                "key": "c8b60dc5e49849ce903d7d29a2dce550"
+            },
+            "nativeTextAnalytics": {
+                "enable": false,
+                "url": "http://praguepy.westus2.cloudapp.azure.com/"
+            },
+            "spellchecker": {
+                "url": "http://augmentation.westus2.cloudapp.azure.com/spellchecker"
+            }
+        },
+        "url": "http://localhost:4000",
+        "blobStorageUrl": "http://localhost:3001",
+        "repository": "prague",
+        "storageBucket": "snapshots",
+        "intervalMSec": 5000,
+        "onlyServer": true,
+        "permission": {
+            "canvas": false,
+            "cell": true,
+            "maps": true,
+            "sharedText": false
+        }
+    },
+    "git": {
+        "repository": "prague",
+        "historian": "http://historian:3000"
+    }
+}

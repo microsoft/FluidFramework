@@ -7,7 +7,7 @@ import * as api from "../api";
 import * as socketStorage from "../socket-storage";
 
 // Setup the configuration system - pull arguments, then environment variables
-nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
+nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config/config.json")).use("memory");
 
 // Connection to stored document details
 const mongoUrl = nconf.get("mongo:endpoint");
