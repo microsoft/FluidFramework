@@ -1,10 +1,7 @@
-import * as _ from "lodash";
-import { Collection } from "mongodb";
 import * as nconf from "nconf";
 import * as path from "path";
 import * as winston from "winston";
 import * as utils from "../utils";
-import { ICollection } from "./collection";
 import { DeliRunner } from "./runner";
 
 const provider = nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
@@ -19,29 +16,6 @@ const checkpointBatchSize = provider.get("deli:checkpointBatchSize");
 const checkpointTimeIntervalMsec = provider.get("deli:checkpointTimeIntervalMsec");
 const documentsCollectionName = provider.get("mongo:collectionNames:documents");
 const groupId = provider.get("deli:groupId");
-
-class MongoCollection<T> implements ICollection<T> {
-    constructor(private collection: Collection<any>) {
-    }
-
-    public findOne(id: string): Promise<T> {
-        return this.collection.findOne({ _id: id });
-    }
-
-    public async upsert(id: string, values: any): Promise<void> {
-        const $set = _.extend( { _id: id }, values);
-        await this.collection.updateOne(
-            {
-                _id: id,
-            },
-            {
-                $set,
-            },
-            {
-                upsert: true,
-            });
-    }
-}
 
 /**
  * Default logger setup
@@ -64,8 +38,7 @@ async function run() {
     // Connection to stored document details
     const mongoManager = new utils.MongoManager(mongoUrl, false);
     const client = await mongoManager.getDatabase();
-    const documentsCollection = await client.collection(documentsCollectionName);
-    const collection = new MongoCollection(documentsCollection);
+    const collection = await client.collection(documentsCollectionName);
 
     // Prep Kafka producer and consumer
     let producer = utils.kafkaProducer.create(kafkaLibrary, kafkaEndpoint, kafkaClientId, sendTopic);

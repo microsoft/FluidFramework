@@ -3,6 +3,7 @@ import * as compression from "compression";
 import * as express from "express";
 import { Express } from "express";
 import * as fs from "fs";
+import * as resources from "gitresources";
 import * as morgan from "morgan";
 import { Provider } from "nconf";
 import * as passport from "passport";
@@ -41,7 +42,6 @@ export function translateStaticUrl(
         });
 
         // Cache the result and then update local
-        winston.info(path.join(__dirname, "../../public", minified));
         cache[local] =
             production && fs.existsSync(path.join(__dirname, "../../public", minified))
                 ? minified
@@ -58,7 +58,7 @@ const stream = split().on("data", (message) => {
     winston.info(message);
 });
 
-export function create(config: Provider, gitManager: git.GitManager, mongoManager: utils.MongoManager) {
+export function create(config: Provider, historian: resources.IHistorian, mongoManager: utils.MongoManager) {
     // Maximum REST request size
     const requestSize = config.get("alfred:restJsonSize");
 
@@ -95,11 +95,12 @@ export function create(config: Provider, gitManager: git.GitManager, mongoManage
     app.use(passport.session());
 
     const gitSettings = config.get("git");
-    git.getOrCreateRepository(gitSettings.historian, gitSettings.repository).catch((error) => {
+    git.getOrCreateRepository(historian, gitSettings.repository).catch((error) => {
         winston.error(`Error creating ${gitSettings.repository} repository`, error);
     });
 
     // bind routes
+    const gitManager = new git.GitManager(historian, gitSettings.repository);
     const foo = routes.create(config, gitManager, mongoManager);
     app.use("/deltas", foo.deltas);
     app.use("/maps", foo.maps);

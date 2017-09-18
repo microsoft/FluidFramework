@@ -3,7 +3,6 @@ import * as api from "../api";
 import * as core from "../core";
 import * as shared from "../shared";
 import * as utils from "../utils";
-import { ICollection } from "./collection";
 
 interface IPendingTicket<T> {
     message: any;
@@ -47,7 +46,7 @@ export class TakeANumber {
 
     constructor(
         private documentId: string,
-        private collection: ICollection<any>,
+        private collection: core.ICollection<any>,
         private producer: utils.kafkaProducer.IProducer) {
         // Lookup the last sequence number stored
         const dbObjectP = this.collection.findOne(this.documentId);

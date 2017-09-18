@@ -2,7 +2,6 @@ import * as resources from "gitresources";
 import * as api from "../../api";
 
 export class TestBlobStorageService implements api.IBlobStorageService  {
-
     public getHeader(id: string, version: resources.ICommit): Promise<api.IDocumentHeader> {
         const emptyHeader: api.IDocumentHeader = {
             attributes: {
@@ -20,7 +19,15 @@ export class TestBlobStorageService implements api.IBlobStorageService  {
         return Promise.resolve("");
     }
 
-    public write(id: string, tree: api.ITree, message: string): Promise<string> {
-        return Promise.resolve("");
+    public write(id: string, tree: api.ITree, message: string): Promise<resources.ICommit> {
+        const commit: resources.ICommit = {
+            sha: "test",
+            tree: {
+                sha: "test",
+                url: "test",
+            },
+            url: "test",
+        };
+        return Promise.resolve(commit);
     }
 }

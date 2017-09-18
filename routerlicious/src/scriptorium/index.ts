@@ -6,7 +6,6 @@ import * as winston from "winston";
 nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
 
 import { queue } from "async";
-import { CollectionInsertManyOptions } from "mongodb";
 import * as redis from "redis";
 import * as socketIoEmitter from "socket.io-emitter";
 import * as util from "util";
@@ -55,7 +54,7 @@ async function run() {
             "documentId": 1,
             "operation.sequenceNumber": 1,
         },
-        { unique: true });
+        true);
 
     let consumer = utils.kafkaConsumer.create(kafkaLibrary, kafkaEndpoint, groupId, topic, false);
     const partitionManager = new core.PartitionManager(
@@ -88,7 +87,7 @@ async function run() {
         }
 
         winston.verbose(`Inserting to mongodb ${documentId}@${work[0].operation.sequenceNumber}:${work.length}`);
-        const insertP = collection.insertMany(work, <CollectionInsertManyOptions> (<any> { ordered: false }))
+        const insertP = collection.insertMany(work, false)
             .catch((error) => {
                 // Ignore duplicate key errors since a replay may cause us to attempt to insert a second time
                 if (error.name !== "MongoError" || error.code !== 11000) {

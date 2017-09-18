@@ -13,7 +13,7 @@ export class DocumentStorageService implements api.IDocumentStorageService  {
         return this.storage.read(sha);
     }
 
-    public write(tree: api.ITree, message: string): Promise<string> {
+    public write(tree: api.ITree, message: string): Promise<resources.ICommit> {
         return this.storage.write(this.id, tree, message);
     }
 }
@@ -21,11 +21,8 @@ export class DocumentStorageService implements api.IDocumentStorageService  {
 /**
  * Client side access to object storage.
  */
-export class BlobStorageService implements api.IBlobStorageService  {
-    private manager: gitStorage.GitManager;
-
-    constructor(baseUrl: string, repository: string) {
-        this.manager = new gitStorage.GitManager(baseUrl, repository);
+export class BlobStorageService implements api.IBlobStorageService {
+    constructor(private manager: gitStorage.GitManager) {
     }
 
     public getHeader(id: string, version: resources.ICommit): Promise<api.IDocumentHeader> {
@@ -38,7 +35,7 @@ export class BlobStorageService implements api.IBlobStorageService  {
     }
 
     // TODO (mdaumi): Need to implement some kind of auth mechanism here.
-    public write(id: string, tree: api.ITree, message: string): Promise<string> {
+    public write(id: string, tree: api.ITree, message: string): Promise<resources.ICommit> {
         return this.manager.write(id, tree, message);
     }
 }

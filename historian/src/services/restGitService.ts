@@ -1,10 +1,9 @@
-import * as assert from "assert";
 import * as git from "gitresources";
 import * as pathApi from "path";
 import * as querystring from "querystring";
 import * as request from "request";
 import * as winston from "winston";
-import { ICache, IGitService } from "./definitions";
+import { ICache } from "./definitions";
 
 export interface IDocument {
     existing: boolean;
@@ -45,7 +44,7 @@ function buildHierarchy(flatTree: git.ITree): ITree {
     return root;
 }
 
-export class RestGitService implements IGitService {
+export class RestGitService implements git.IGitService {
     constructor(private gitServerUrl: string, private cache: ICache) {
     }
 
@@ -97,7 +96,7 @@ export class RestGitService implements IGitService {
             winston.error(`Error fetching commit tree ${commit.tree.sha}`);
         });
         // ... as well as pull in the header for it
-        this.getHeader(repo, commit).catch((error) => {
+        this.getHeader(repo, commit.sha).catch((error) => {
             winston.error(`Error fetching header ${commit.sha}`);
         });
 
@@ -160,8 +159,8 @@ export class RestGitService implements IGitService {
             });
     }
 
-    public getHeader(repo: string, version: git.ICommit): Promise<any> {
-        assert(version);
+    public async getHeader(repo: string, sha: string): Promise<any> {
+        const version = await this.getCommit(repo, sha);
 
         const key = `${version.sha}:header`;
         return this.resolveFromCache(

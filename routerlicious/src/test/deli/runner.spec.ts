@@ -20,7 +20,7 @@ describe("Routerlicious", () => {
             let messageFactory: MessageFactory;
 
             beforeEach(() => {
-                const testData: {[key: string]: any} = {};
+                const testData = [];
                 testData[testId] = {};
                 testCollection = new TestCollection(testData);
                 receiveTopic = new TestKafka();

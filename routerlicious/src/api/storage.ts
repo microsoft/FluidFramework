@@ -75,7 +75,7 @@ export interface IDocumentStorageService {
     /**
      * Writes to the object with the given ID
      */
-    write(root: ITree, message: string): Promise<string>;
+    write(root: ITree, message: string): Promise<resources.ICommit>;
 }
 
 /**
@@ -265,6 +265,6 @@ export interface IBlobStorageService {
     /**
      * Writes the content to blob storage.
      */
-    write(id: string, tree: ITree, message: string): Promise<string>;
+    write(id: string, tree: ITree, message: string): Promise<resources.ICommit>;
 
 }

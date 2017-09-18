@@ -126,7 +126,7 @@
     "diff": "^3.2.0",
     "es6-promisify": "^5.0.0",
     "express": "^4.15.2",
-    "gitresources": "https://praguenpm.blob.core.windows.net/packages/gitresources-0.1.0.tgz",
+    "gitresources": "file:../gitresources",
     "hjs": "0.0.6",
     "jquery": "^3.2.1",
     "kafka-node": "^1.6.0",
