@@ -579,8 +579,9 @@ export class DocumentTree {
         }
     }
 
-    printStacksAllPositions() {
+    checkStacksAllPositions(client: MergeTree.Client) {
         let pos = 0;
+        let verbose = false;
         let stacks = {
             box: new Collections.Stack<string>(),
             row: new Collections.Stack<string>()
@@ -599,20 +600,38 @@ export class DocumentTree {
             }
         }
 
-        let printNodeStacks = (docNode: DocumentNode) => {
+        let checkNodeStacks = (docNode: DocumentNode) => {
             if (typeof docNode === "string") {
                 let text = <string>docNode;
                 let epos = pos + text.length;
-                console.log(`stacks for [${pos}, ${epos}): ${text}`);
-                printStacks();
+                if (verbose) {
+                    console.log(`stacks for [${pos}, ${epos}): ${text}`);
+                    printStacks();
+                }
+                let cliStacks = client.mergeTree.getStackContext(pos,
+                    client.getClientId(), ["box", "row"]);
+                for (let name of ["box", "row"]) {
+                    let cliStack = cliStacks[name];
+                    let treeStack = <Collections.Stack<string>> stacks[name];
+                    if (cliStack) {
+                        for (let i=0,len = cliStack.items.length;i<len; i++) {
+                            let cliMarkerId = cliStack.items[i].getId();
+                            let treeMarkerId = treeStack.items[i];
+                            if (cliMarkerId!==treeMarkerId) {
+                                console.log(`mismatch ${cliMarkerId} !== ${treeMarkerId}`);
+                                printStack(treeStack);
+                            }
+                        }
+                    }
+                }
                 pos = epos;
             } else {
                 if (docNode.name === "pg") {
-                    printNodeStacks(docNode.children[0]);
+                    checkNodeStacks(docNode.children[0]);
                 } else {
                     stacks[docNode.name].push(docNode.id);
                     for (let child of docNode.children) {
-                        printNodeStacks(child);
+                        checkNodeStacks(child);
                     }
                     stacks[docNode.name].pop();
                 }
@@ -620,7 +639,7 @@ export class DocumentTree {
         }
 
         for (let rootChild of this.children) {
-            printNodeStacks(rootChild);
+            checkNodeStacks(rootChild);
         }
     }
 
@@ -636,8 +655,8 @@ export class DocumentTree {
     static test1() {
         let doc = DocumentTree.generateDocument();
         let client = doc.generateClient();
-        doc.printStacksAllPositions();
-        console.log(client.mergeTree.toString());
+        doc.checkStacksAllPositions(client);
+        // console.log(client.mergeTree.toString());
     }
 
     static generateDocument() {
