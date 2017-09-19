@@ -2,16 +2,18 @@ import { IDocumentMessage, NoOp } from "../../api";
 import { IRawOperationMessage, RawOperationType } from "../../core";
 
 export class MessageFactory {
+    private clientSequenceNumber = 0;
+
     constructor(private documentId, private clientId) {
     }
 
-    public create(): IRawOperationMessage {
+    public create(referenceSequenceNumber = 0, timestamp = Date.now()): IRawOperationMessage {
         const operation: IDocumentMessage = {
-            clientSequenceNumber: 0,
+            clientSequenceNumber: this.clientSequenceNumber++,
             contents: null,
             encrypted: false,
             encryptedContents: null,
-            referenceSequenceNumber: 0,
+            referenceSequenceNumber,
             type: NoOp,
         };
 
@@ -19,7 +21,7 @@ export class MessageFactory {
             clientId: this.clientId,
             documentId: this.documentId,
             operation,
-            timestamp: Date.now(),
+            timestamp,
             type: RawOperationType,
             userId: null,
         };
