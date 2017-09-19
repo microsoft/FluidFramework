@@ -1,11 +1,10 @@
 import * as socketStorage from ".";
 import * as api from "../api";
 import { GitManager } from "../git-storage";
-
-// TODO TODO TODO need to fix this up yo!
-const historian = null;
+import { Historian } from "../services";
 
 export function getDefaultService(deltaUrl: string, blobUrl: string, repository: string): api.IDocumentService {
+    const historian = new Historian(blobUrl);
     const gitManager = new GitManager(historian, repository);
     const blobStorage = new socketStorage.BlobStorageService(gitManager);
     const deltaStorage = new socketStorage.DeltaStorageService(deltaUrl);

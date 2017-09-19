@@ -3,6 +3,7 @@ import * as git from "gitresources";
 import * as nconf from "nconf";
 import * as path from "path";
 import * as winston from "winston";
+import * as services from "../services";
 import * as utils from "../utils";
 import { AlfredRunner } from "./runner";
 
@@ -54,15 +55,14 @@ function normalizePort(val) {
 
 async function run(): Promise<void> {
     // Create dependent resources
-    // const settings = provider.get("git");
-    const mongoUrl = provider.get("mongo:endpoint");
-    const mongoManager = new utils.MongoManager(mongoUrl);
+    const mongoUrl = provider.get("mongo:endpoint") as string;
+    const mongoFactory = new services.MongoDbFactory(mongoUrl);
+    const mongoManager = new utils.MongoManager(mongoFactory);
+
+    const settings = provider.get("git");
+    const historian: git.IHistorian = new services.Historian(settings.historian);
 
     let port = normalizePort(process.env.PORT || "3000");
-
-    // TODO need to fill in with real historian
-    // const gitManager = new git.GitManager(settings.historian, settings.repository);
-    const historian: git.IHistorian = null;
     const runner = new AlfredRunner(provider, port, historian, mongoManager);
 
     // Listen for shutdown signal in order to shutdown gracefully

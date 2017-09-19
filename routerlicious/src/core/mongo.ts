@@ -19,7 +19,7 @@ export interface ICollection<T> {
 
     upsert(id: string, values: any): Promise<void>;
 
-    insertOne(id: string, values: any): Promise<T>;
+    insertOne(id: string, values: any): Promise<void>;
 
     insertMany(values: T[], ordered: boolean): Promise<void>;
 

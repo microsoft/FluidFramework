@@ -1,12 +1,13 @@
 import * as nconf from "nconf";
 import * as path from "path";
 import * as winston from "winston";
+import * as services from "../services";
 import * as utils from "../utils";
 import { DeliRunner } from "./runner";
 
 const provider = nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
 
-const mongoUrl = provider.get("mongo:endpoint");
+const mongoUrl = provider.get("mongo:endpoint") as string;
 const kafkaEndpoint = provider.get("kafka:lib:endpoint");
 const kafkaLibrary = provider.get("kafka:lib:name");
 const kafkaClientId = provider.get("deli:kafkaClientId");
@@ -36,7 +37,8 @@ winston.configure({
 
 async function run() {
     // Connection to stored document details
-    const mongoManager = new utils.MongoManager(mongoUrl, false);
+    const mongoFactory = new services.MongoDbFactory(mongoUrl);
+    const mongoManager = new utils.MongoManager(mongoFactory, false);
     const client = await mongoManager.getDatabase();
     const collection = await client.collection(documentsCollectionName);
 

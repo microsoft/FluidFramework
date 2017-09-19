@@ -27,7 +27,7 @@ export class AlfredRunner implements utils.IRunner {
         this.server = http.createServer(alfred);
 
         // Attach socket.io connections
-        const alfredIo = io.create(this.config);
+        const alfredIo = io.create(this.config, this.mongoManager);
         alfredIo.attach(this.server);
 
         // Listen on provided port, on all network interfaces.
