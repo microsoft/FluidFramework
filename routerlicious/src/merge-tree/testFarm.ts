@@ -33,6 +33,14 @@ export class RandomPack {
     }
 }
 
+function docNodeToString(docNode: DocumentNode) {
+    if (typeof docNode === "string") {
+        return docNode;
+    } else {
+        return docNode.name;
+    }
+}
+
 export type DocumentNode = string | DocumentTree;
 /**
  * Generate and model documents from the following tree grammar:
@@ -114,6 +122,12 @@ export class DocumentTree {
             }
         }
 
+        function checkTreeStackEmpty(treeStack: Collections.Stack<string>) {
+            if (!treeStack.empty()) {
+                console.log("mismatch: client stack empty; tree stack not");
+            }
+        }
+
         let checkNodeStacks = (docNode: DocumentNode) => {
             if (typeof docNode === "string") {
                 let text = <string>docNode;
@@ -126,20 +140,32 @@ export class DocumentTree {
                     client.getClientId(), ["box", "row"]);
                 for (let name of ["box", "row"]) {
                     let cliStack = cliStacks[name];
-                    let treeStack = <Collections.Stack<string>> stacks[name];
+                    let treeStack = <Collections.Stack<string>>stacks[name];
                     if (cliStack) {
-                        for (let i=0,len = cliStack.items.length;i<len; i++) {
-                            let cliMarkerId = cliStack.items[i].getId();
-                            let treeMarkerId = treeStack.items[i];
-                            if (cliMarkerId!==treeMarkerId) {
-                                console.log(`mismatch ${cliMarkerId} !== ${treeMarkerId}`);
-                                printStack(treeStack);
+                        let len = cliStack.items.length;
+                        if (len > 0) {
+                            if (len !== treeStack.items.length) {
+                                console.log(`stack length mismatch cli ${len} tree ${treeStack.items.length}`);
                             }
+                            for (let i = 0; i < len; i++) {
+                                let cliMarkerId = cliStack.items[i].getId();
+                                let treeMarkerId = treeStack.items[i];
+                                if (cliMarkerId !== treeMarkerId) {
+                                    console.log(`mismatch index ${i}: ${cliMarkerId} !== ${treeMarkerId} pos ${pos} text ${text}`);
+                                    printStack(treeStack);
+                                    console.log(client.mergeTree.toString());
+                                }
+                            }
+                        } else {
+                            checkTreeStackEmpty(treeStack);
                         }
+                    } else {
+                        checkTreeStackEmpty(treeStack);
                     }
                 }
                 pos = epos;
             } else {
+                pos++;
                 if (docNode.name === "pg") {
                     checkNodeStacks(docNode.children[0]);
                 } else {
@@ -148,11 +174,14 @@ export class DocumentTree {
                         checkNodeStacks(child);
                     }
                     stacks[docNode.name].pop();
+                    pos++;
                 }
             }
         }
 
         for (let rootChild of this.children) {
+            console.log(`next child ${pos} with name ${docNodeToString(rootChild)}`);
+            // printStacks();
             checkNodeStacks(rootChild);
         }
     }
@@ -174,13 +203,13 @@ export class DocumentTree {
     }
 
     static generateDocument() {
-        let tree = new DocumentTree("Document", DocumentTree.generateContent(0.4));
+        let tree = new DocumentTree("Document", DocumentTree.generateContent(0.6));
         return tree;
     }
 
     static generateContent(rowProbability: number) {
         let items = <DocumentNode[]>[];
-        let docLen = DocumentTree.randPack.randInteger(5, 15);
+        let docLen = DocumentTree.randPack.randInteger(7, 25);
         for (let i = 0; i < docLen; i++) {
             let rowThreshold = rowProbability * 1000;
             let selector = DocumentTree.randPack.randInteger(1, 1000);
