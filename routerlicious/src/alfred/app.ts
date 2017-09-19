@@ -13,7 +13,7 @@ import * as expiry from "static-expiry";
 import * as winston from "winston";
 import * as git from "../git-storage";
 import * as utils from "../utils";
-import * as routes from "./routes";
+import * as alfredRoutes from "./routes";
 
 // Base endpoint to expose static files at
 const staticFilesEndpoint = "/public";
@@ -100,17 +100,17 @@ export function create(config: Provider, gitManager: git.GitManager, mongoManage
     });
 
     // bind routes
-    const foo = routes.create(config, gitManager, mongoManager);
-    app.use("/deltas", foo.deltas);
-    app.use("/maps", foo.maps);
-    app.use("/canvas", foo.canvas);
-    app.use("/sharedText", foo.sharedText);
-    app.use("/cell", foo.cell);
-    app.use("/scribe", foo.scribe);
-    app.use("/intelligence", foo.intelligence);
-    app.use("/democreator", foo.demoCreator);
-    app.use("/login", foo.login);
-    app.use(foo.home);
+    const routes = alfredRoutes.create(config, gitManager, mongoManager);
+    app.use("/deltas", routes.deltas);
+    app.use("/maps", routes.maps);
+    app.use("/canvas", routes.canvas);
+    app.use("/sharedText", routes.sharedText);
+    app.use("/cell", routes.cell);
+    app.use("/scribe", routes.scribe);
+    app.use("/intelligence", routes.intelligence);
+    app.use("/democreator", routes.demoCreator);
+    app.use("/login", routes.login);
+    app.use(routes.home);
 
     // catch 404 and forward to error handler
     app.use((req, res, next) => {

@@ -47,7 +47,7 @@ export class RangeTracker {
         // Get quicker references to the head of the range
         const head = this.ranges[this.ranges.length - 1];
         const primaryHead = head.primary + head.length;
-        const secondaryHead = head.primary + head.length;
+        const secondaryHead = head.secondary + head.length;
 
         // Same secondary indicates this is not a true inflection point - we can ignore it
         if (secondary === secondaryHead) {
