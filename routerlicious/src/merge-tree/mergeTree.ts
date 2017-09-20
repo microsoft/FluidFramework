@@ -1958,6 +1958,7 @@ export class MergeTree {
     collabWindow = new CollaborationWindow();
     pendingSegments: Collections.List<SegmentGroup>;
     segmentsToScour: Collections.Heap<LRUSegment>;
+    idToSegment = Properties.createMap<Segment>();
     // for diagnostics
     getLongClientId: (id: number) => string;
 
@@ -2724,6 +2725,10 @@ export class MergeTree {
         }
     }
 
+    getSegmentFromId(id: string) {
+        return this.idToSegment[id];
+    }
+
     insert<T>(pos: number, refSeq: number, clientId: number, seq: number, segData: T,
         traverse: (block: Block, pos: number, refSeq: number, clientId: number, seq: number, segData: T) => Block) {
         this.ensureIntervalBoundary(pos, refSeq, clientId);
@@ -2736,6 +2741,10 @@ export class MergeTree {
     insertMarker(pos: number, refSeq: number, clientId: number, seq: number,
         behaviors: ops.MarkerBehaviors, props?: PropertySet) {
         let marker = Marker.make(behaviors, props, seq, clientId);
+        let markerId = marker.getId();
+        if (markerId) {
+            this.idToSegment[markerId] = marker;
+        }
         this.insert(pos, refSeq, clientId, seq, marker, (block, pos, refSeq, clientId, seq, marker) =>
             this.blockInsert(block, pos, refSeq, clientId, seq, marker));
     }

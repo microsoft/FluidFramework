@@ -73,10 +73,6 @@ interface IParagraphMarker extends SharedString.Marker {
     listCache?: IListInfo;
 }
 
-interface ITableMarker extends SharedString.Marker {
-
-}
-
 // TODO: indent decoration
 export interface ILineDiv extends HTMLDivElement {
     linePos?: number;
@@ -963,30 +959,59 @@ function makeContentDiv(r: Geometry.Rectangle, lineFontstr) {
     r.conformElement(contentDiv);
     return contentDiv;
 }
-/*
-interface IDiv {
-    marker: IParagraphMarker;
-    minWidth?: number;
-    widthPct?: number;
+
+interface ITableMarker extends SharedString.Marker {
+    cache?: TableView;
 }
 
-interface IHbox {
-    divs: IDiv[];
-    minWidth?: number;
+interface IBoxMarker extends SharedString.Marker {
+    cache?: BoxView;
+}
+
+interface IRowMarker extends SharedString.Marker {
+    cache?: RowView;
+}
+
+class TableView {
+    public indentWidth: number;
+    public contentWidth: number;
+    public rows: RowView[];
+    constructor(public tableMarker: ITableMarker, public endTableMarker: ITableMarker) {
+
+    }
+}
+
+class RowView {
+    constructor(public rowMarker: IRowMarker, public endRowMarker: IRowMarker) {
+
+    }
+}
+class BoxView {
+    constructor(public boxMarker: IBoxMarker, public endBoxMarker: IBoxMarker) {
+
+    }
+}
+/*
+function parseTable(tableMarker: ITableMarker, tableMarkerPos: number, flowView: FlowView) {
+    let mergeTree = flowView.client.mergeTree;
+    let id = tableMarker.getId();
+    let endId = "end-" + id;
+    let endTableMarker = <SharedString.Marker>mergeTree.getSegmentFromId(endId);
+    tableMarker.cache = new TableView(tableMarker, endTableMarker);
+    let rowMarkerPos = tableMarkerPos + tableMarker.cachedLength;
+    let rowMarkerSegOff = mergeTree.getContainingSegment(rowMarkerPos, SharedString.UniversalSequenceNumber, 
+        flowView.client.getClientId());
+    let rowMarker = <IRowMarker>rowMarkerSegOff.segment;
+    let rowMarkerId = rowMarker.getId();
+    let endId = "end-" + rowMarkerId;
+    let endRowMarker = <SharedString.Marker>mergeTree.getSegmentFromId(endId);
+
 }
 */
 function renderTable(startPGMarker: IParagraphMarker, startPGPos: number,
     currentLineTop: number, heightLimit: number, flowView: FlowView) {
     // TODO 
 }
-/*
-// TODO: load this from document properties and override with pg and segment properties
-interface IRenderContext {
-    fontstr: string;
-    headerFontstr: string;
-    
-}
-*/
 
 function renderOuterTable(table: ITableMarker, viewportDiv: HTMLDivElement, startingPosition: number,
     flowView: FlowView) {
