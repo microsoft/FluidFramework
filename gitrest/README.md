@@ -18,6 +18,10 @@ And then mount it for development by running.
 
 `docker run -it -v "$(pwd):/home/node/server" -p 3000:3000 gitrest /bin/sh`
 
+If you want to debug and test
+
+`docker run -p 3000:3000 -p 9229:9229 --rm -t gitrest node --inspect=0.0.0.0:9229 dist/www.js`
+
 ## Testing
 
 `docker run -t gitrest npm test`
