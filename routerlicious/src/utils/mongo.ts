@@ -1,20 +1,20 @@
-import { Db, MongoClient, MongoClientOptions } from "mongodb";
+import * as core from "../core";
 import { debug } from "./debug";
 
 /**
  * Helper class to manage access to a MongoDb database
  */
 export class MongoManager {
-    private databaseP: Promise<Db>;
+    private databaseP: Promise<core.IDb>;
 
-    constructor(private url: string, private shouldReconnect = true, private reconnectDelayMs = 1000) {
+    constructor(private factory: core.IDbFactory, private shouldReconnect = true, private reconnectDelayMs = 1000) {
         this.connect();
     }
 
     /**
      * Retrieves the MongoDB database
      */
-    public getDatabase(): Promise<Db> {
+    public getDatabase(): Promise<core.IDb> {
         return this.databaseP;
     }
 
@@ -31,21 +31,15 @@ export class MongoManager {
      * Creates a connection to the MongoDB database
      */
     private connect() {
-        this.databaseP = MongoClient
-            .connect(
-                this.url,
-                <MongoClientOptions> (<any> {
-                    autoReconnect: false,
-                    bufferMaxEntries: 0,
-                }))
+        this.databaseP = this.factory.connect()
             .then((db) => {
                 db.on("error", (error) => {
-                    debug("MongoDb Error", error);
+                    debug("DB Error", error);
                     this.reconnect();
                 });
 
                 db.on("close", (value) => {
-                    debug("MongoDb Close", value);
+                    debug("DB Close", value);
                     this.reconnect();
                 });
 
@@ -53,7 +47,7 @@ export class MongoManager {
             });
 
         this.databaseP.catch((error) => {
-            debug("MongoDb Connection Error", error);
+            debug("DB Connection Error", error);
             this.reconnect();
         });
     }

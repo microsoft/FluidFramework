@@ -1,169 +1,50 @@
 import * as assert from "assert";
 import * as resources from "gitresources";
-import * as request from "request";
 import * as api from "../api";
 
 export class GitManager {
-    constructor(private apiBaseUrl: string, private repository: string) {
+    constructor(private historian: resources.IHistorian, private repository: string) {
     }
 
-    public async getHeader(id: string, sha: string): Promise<api.IDocumentHeader> {
-        return new Promise<api.IDocumentHeader>((resolve, reject) => {
-            // Fetch the specific versin we are looking for
-            const url = `${this.apiBaseUrl}/repos/${this.repository}/headers/${encodeURIComponent(sha)}`;
-
-            request.get(
-                {
-                    json: true,
-                    url,
-                },
-                (error, response, body) => {
-                    if (error) {
-                        return reject(error);
-                    } else if (response.statusCode === 200) {
-                        return resolve(response.body);
-                    } else if (response.statusCode === 400) {
-                        return resolve(null);
-                    } else {
-                        return reject(response.statusCode);
-                    }
-                });
-        });
+    public getHeader(id: string, sha: string): Promise<api.IDocumentHeader> {
+        return this.historian.getHeader(this.repository, sha);
     }
 
     public async getCommit(sha: string): Promise<resources.ICommit> {
-        return new Promise<resources.ICommit>((resolve, reject) => {
-            request.get(
-                {
-                    json: true,
-                    url: `${this.apiBaseUrl}/repos/${this.repository}/git/commits/${encodeURIComponent(sha)}`,
-                },
-                (error, response, body) => {
-                    if (error) {
-                        return reject(error);
-                    } else if (response.statusCode !== 200) {
-                        return reject(response.statusCode);
-                    } else {
-                        return resolve(response.body);
-                    }
-                });
-        });
+        return this.historian.getCommit(this.repository, sha);
     }
 
     /**
      * Reads the object with the given ID. We defer to the client implementation to do the actual read.
      */
     public async getCommits(sha: string, count: number): Promise<resources.ICommit[]> {
-        return new Promise<any>((resolve, reject) => {
-            request.get(
-                {
-                    json: true,
-                    url: `${this.apiBaseUrl}/repos/${this.repository}/commits?sha=${encodeURIComponent(sha)}`,
-                },
-                (error, response, body) => {
-                    if (error) {
-                        return reject(error);
-                    } else if (response.statusCode !== 200) {
-                        return resolve([]);
-                    } else {
-                        return resolve(response.body);
-                    }
-                });
-        });
+        return this.historian.getCommits(this.repository, sha, count);
     }
 
     /**
      * Reads the object with the given ID. We defer to the client implementation to do the actual read.
      */
     public async getTree(root: string, recursive = true): Promise<resources.ITree> {
-        return new Promise<any>((resolve, reject) => {
-            const recursiveParam = recursive ? "1" : "0";
-            request.get(
-                {
-                    json: true,
-                    url: `${this.apiBaseUrl}/repos/${this.repository}/git/trees/${root}?recursive=${recursiveParam}`,
-                },
-                (error, response, body) => {
-                    if (error) {
-                        return reject(error);
-                    } else if (response.statusCode !== 200) {
-                        return reject(response.statusCode);
-                    } else {
-                        return resolve(response.body);
-                    }
-                });
-        });
+        return this.historian.getTree(this.repository, root, recursive);
     }
 
     public async getBlob(sha: string): Promise<resources.IBlob> {
-        return new Promise<any>((resolve, reject) => {
-            request.get(
-                {
-                    json: true,
-                    url: `${this.apiBaseUrl}/repos/${this.repository}/git/blobs/${sha}`,
-                },
-                (error, response, body) => {
-                    if (error) {
-                        return reject(error);
-                    } else if (response.statusCode !== 200) {
-                        return reject(response.statusCode);
-                    } else {
-                        return resolve(response.body);
-                    }
-                });
-        });
+        return this.historian.getBlob(this.repository, sha);
     }
 
     /**
      * Retrieves the object at the given revision number
      */
     public getObject(commit: string, path: string): Promise<any> {
-        const url =
-            `${this.apiBaseUrl}/repos/${this.repository}/contents/${path}?ref=${encodeURIComponent(commit)}`;
-        return new Promise<any>((resolve, reject) => {
-            request.get(
-                {
-                    json: true,
-                    url,
-                },
-                (error, response, body) => {
-                    if (error) {
-                        return reject(error);
-                    } else if (response.statusCode !== 200) {
-                        return reject(response.statusCode);
-                    } else {
-                        return resolve(response.body);
-                    }
-                });
-        });
+        return this.historian.getContent(this.repository, path, commit);
     }
 
     public createBlob(content: string, encoding: string): Promise<resources.ICreateBlobResponse> {
-        const requestBody: resources.ICreateBlobParams = {
+        const blob: resources.ICreateBlobParams = {
             content,
             encoding,
         };
-
-        return new Promise<resources.ICreateBlobResponse>((resolve, reject) => {
-            request.post(
-                {
-                    body: requestBody,
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    json: true,
-                    url: `${this.apiBaseUrl}/repos/${this.repository}/git/blobs`,
-                },
-                (error, response, body) => {
-                    if (error) {
-                        return reject(error);
-                    } else if (response.statusCode !== 201) {
-                        return reject(response.statusCode);
-                    } else {
-                        return resolve(response.body);
-                    }
-                });
-        });
+        return this.historian.createBlob(this.repository, blob);
     }
 
     public async createTree(files: api.ITree): Promise<resources.ITree> {
@@ -204,55 +85,15 @@ export class GitManager {
             });
         }
 
-        const treeP = new Promise<resources.ITree>((resolve, reject) => {
-            const requestBody: resources.ICreateTreeParams = {
-                tree,
-            };
-            request.post(
-                {
-                    body: requestBody,
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    json: true,
-                    url: `${this.apiBaseUrl}/repos/${this.repository}/git/trees`,
-                },
-                (error, response, body) => {
-                    if (error) {
-                        return reject(error);
-                    } else if (response.statusCode !== 201) {
-                        return reject(response.statusCode);
-                    } else {
-                        return resolve(response.body);
-                    }
-                });
-        });
+        const requestBody: resources.ICreateTreeParams = {
+            tree,
+        };
+        const treeP = this.historian.createTree(this.repository, requestBody);
         return treeP;
     }
 
     public async createCommit(commit: resources.ICreateCommitParams): Promise<resources.ICommit> {
-        const commitP = new Promise<resources.ICommit>((resolve, reject) => {
-            request.post(
-                {
-                    body: commit,
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    json: true,
-                    url: `${this.apiBaseUrl}/repos/${this.repository}/git/commits`,
-                },
-                (error, response, body) => {
-                    if (error) {
-                        return reject(error);
-                    } else if (response.statusCode !== 201) {
-                        return reject(response.statusCode);
-                    } else {
-                        return resolve(response.body);
-                    }
-                });
-        });
-
-        return commitP;
+        return this.historian.createCommit(this.repository, commit);
     }
 
     public async upsertRef(branch: string, commitSha: string): Promise<resources.IRef> {
@@ -261,32 +102,14 @@ export class GitManager {
             force: true,
             sha: commitSha,
         };
-        return new Promise<resources.IRef>((resolve, reject) => {
-            request.patch(
-                {
-                    body: ref,
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    json: true,
-                    url: `${this.apiBaseUrl}/repos/${this.repository}/git/refs/heads/${branch}`,
-                },
-                (error, response, body) => {
-                    if (error) {
-                        return reject(error);
-                    } else if (response.statusCode !== 200) {
-                        return reject(response.statusCode);
-                    } else {
-                        return resolve(response.body);
-                    }
-                });
-        });
+
+        return this.historian.updateRef(this.repository, `heads/${branch}`, ref);
     }
 
     /**
      * Writes to the object with the given ID
      */
-    public async write(branch: string, inputTree: api.ITree, message: string): Promise<string> {
+    public async write(branch: string, inputTree: api.ITree, message: string): Promise<resources.ICommit> {
         const treeShaP = this.createTree(inputTree);
         const lastCommitP = this.getCommits(branch, 1);
 
@@ -306,54 +129,31 @@ export class GitManager {
             parents: lastCommit.length > 0 ? [lastCommit[0].sha] : [],
             tree: tree.sha,
         };
-        const commit = await this.createCommit(commitParams);
+
+        const commit = await this.historian.createCommit(this.repository, commitParams);
         await this.upsertRef(branch, commit.sha);
 
-        return commit.sha;
+        return commit;
     }
 }
 
-function repositoryExists(apiBaseUrl: string, repository: string) {
-    return new Promise<boolean>((resolve, reject) => {
-        request.get(
-            { url: `${apiBaseUrl}/repos/${repository}`, json: true },
-            (error, response, body) => {
-                if (error) {
-                    return reject(error);
-                }
-
-                return resolve(response.statusCode === 200);
-            });
-    });
+async function repositoryExists(historian: resources.IHistorian, repository: string): Promise<boolean> {
+    const details = await historian.getRepo(repository);
+    return !!details;
 }
 
-function createRepository(apiBaseUrl: string, repository: string): Promise<void> {
-    return new Promise<void>((resolve, reject) => {
-        request.post({
-                body: { name: repository },
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                json: true,
-                url: `${apiBaseUrl}/repos`,
-            },
-            (error, response, body) => {
-                if (error) {
-                    return reject(error);
-                } else if (response.statusCode !== 201) {
-                    return reject(response.statusCode);
-                } else {
-                    return resolve();
-                }
-            });
-    });
+function createRepository(historian: resources.IHistorian, repository: string): Promise<void> {
+    const createParams: resources.ICreateRepoParams = {
+        name: repository,
+    };
+    return historian.createRepo(createParams);
 }
 
-export async function getOrCreateRepository(apiBaseUrl: string, repository: string): Promise<GitManager> {
-    const exists = await repositoryExists(apiBaseUrl, repository);
+export async function getOrCreateRepository(historian: resources.IHistorian, repository: string): Promise<GitManager> {
+    const exists = await repositoryExists(historian, repository);
     if (!exists) {
-        await createRepository(apiBaseUrl, repository);
+        await createRepository(historian, repository);
     }
 
-    return new GitManager(apiBaseUrl, repository);
+    return new GitManager(historian, repository);
 }

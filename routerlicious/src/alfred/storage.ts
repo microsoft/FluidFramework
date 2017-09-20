@@ -16,16 +16,16 @@ async function getOrCreateObject(
     publicKey: string): Promise<IDocument> {
 
     const db = await mongoManager.getDatabase();
-    const collection = db.collection(documentsCollectionName);
+    const collection = db.collection<any>(documentsCollectionName);
 
     // TODO there is probably a bit of a race condition with the below between the find and the insert
-    const dbObjectP = collection.findOne({ _id: id });
+    const dbObjectP = collection.findOne(id);
     return dbObjectP.then(
         (dbObject) => {
             if (dbObject) {
-                return {existing: true, docPrivateKey: dbObject._privateKey, docPublicKey: dbObject._publicKey};
+                return { existing: true, docPrivateKey: dbObject._privateKey, docPublicKey: dbObject._publicKey };
             } else {
-                return collection.insertOne({ _id: id, _privateKey: privateKey, _publicKey: publicKey})
+                return collection.insertOne(id, { _privateKey: privateKey, _publicKey: publicKey})
                 .then(() => {
                     return {existing: false, docPrivateKey: privateKey, docPublicKey: publicKey};
                 });

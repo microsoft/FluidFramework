@@ -386,9 +386,7 @@ export class Document {
         };
 
         const message = `Commit @${this.deltaManager.minimumSequenceNumber}`;
-        this.document.documentStorageService.write(root, message);
-
-        return Promise.resolve();
+        await this.document.documentStorageService.write(root, message);
     }
 
     /**

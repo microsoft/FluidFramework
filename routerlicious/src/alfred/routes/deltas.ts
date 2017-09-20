@@ -26,11 +26,8 @@ export function getDeltas(
 
     // Query for the deltas and return a filtered version of just the operations field
     const deltasP = mongoManager.getDatabase().then(async (db) => {
-        const collection = db.collection(collectionName);
-        const dbDeltas = await collection
-            .find(query)
-            .sort({ "operation.sequenceNumber": 1 })
-            .toArray();
+        const collection = await db.collection<any>(collectionName);
+        const dbDeltas = await collection.find(query, { "operation.sequenceNumber": 1 });
 
         return dbDeltas.map((delta) => delta.operation);
     });

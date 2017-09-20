@@ -3,12 +3,12 @@ import * as compression from "compression";
 import * as cors from "cors";
 import * as express from "express";
 import { Express } from "express";
+import * as git from "gitresources";
 import * as morgan from "morgan";
 import * as nconf from "nconf";
 import split = require("split");
 import * as winston from "winston";
 import * as routes from "./routes";
-import * as services from "./services";
 
 /**
  * Basic stream logging interface for libraries that require a stream to pipe output to
@@ -17,7 +17,7 @@ const stream = split().on("data", (message) => {
   winston.info(message);
 });
 
-export function create(store: nconf.Provider, gitService: services.IHistorian) {
+export function create(store: nconf.Provider, gitService: git.IHistorian) {
     // Express app configuration
     const app: Express = express();
 

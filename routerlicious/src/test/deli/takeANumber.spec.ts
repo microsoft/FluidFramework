@@ -9,7 +9,7 @@ describe("Routerlicious", () => {
         describe("TakeANumber", () => {
             const testId = "test";
             const testClientId = "quiet-rat";
-            const testData: {[key: string]: any} = {};
+            const testData = [{ _id: testId }];
 
             let testCollection: TestCollection;
             let testKafka: TestKafka;
@@ -35,7 +35,6 @@ describe("Routerlicious", () => {
                 testKafka =  new TestKafka();
                 testProducer = testKafka.createProducer();
                 kafkaOffset = 0;
-                testData[testId] = {};
                 ticketer = new TakeANumber(testId, testCollection, testProducer);
                 messageFactory = new MessageFactory(testId, testClientId);
             });

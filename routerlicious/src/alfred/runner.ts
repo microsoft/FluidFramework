@@ -1,7 +1,7 @@
+import * as git from "gitresources";
 import * as http from "http";
 import { Provider } from "nconf";
 import * as winston from "winston";
-import * as git from "../git-storage";
 import * as shared from "../shared";
 import * as utils from "../utils";
 import * as app from "./app";
@@ -14,7 +14,7 @@ export class AlfredRunner implements utils.IRunner {
     constructor(
         private config: Provider,
         private port: string | number,
-        private gitManager: git.GitManager,
+        private historian: git.IHistorian,
         private mongoManager: utils.MongoManager) {
     }
 
@@ -22,12 +22,12 @@ export class AlfredRunner implements utils.IRunner {
         this.runningDeferred = new shared.Deferred<void>();
 
         // Create the HTTP server and attach alfred to it
-        const alfred = app.create(this.config, this.gitManager, this.mongoManager);
+        const alfred = app.create(this.config, this.historian, this.mongoManager);
         alfred.set("port", this.port);
         this.server = http.createServer(alfred);
 
         // Attach socket.io connections
-        const alfredIo = io.create(this.config);
+        const alfredIo = io.create(this.config, this.mongoManager);
         alfredIo.attach(this.server);
 
         // Listen on provided port, on all network interfaces.

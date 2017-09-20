@@ -1,7 +1,6 @@
 // Setup the configuration system - pull arguments, then environment variables - prior to loading other modules that
 // may depend on the config already being initialized
 import { queue } from "async";
-import { CollectionInsertManyOptions } from "mongodb";
 import * as nconf from "nconf";
 import * as path from "path";
 import * as redis from "redis";
@@ -9,6 +8,7 @@ import * as socketIoEmitter from "socket.io-emitter";
 import * as util from "util";
 import * as winston from "winston";
 import * as core from "../core";
+import * as services from "../services";
 import * as shared from "../shared";
 import * as utils from "../utils";
 
@@ -22,7 +22,7 @@ const topic = nconf.get("scriptorium:topic");
 const groupId = nconf.get("scriptorium:groupId");
 const checkpointBatchSize = nconf.get("scriptorium:checkpointBatchSize");
 const checkpointTimeIntervalMsec = nconf.get("scriptorium:checkpointTimeIntervalMsec");
-const mongoUrl = nconf.get("mongo:endpoint");
+const mongoUrl = nconf.get("mongo:endpoint") as string;
 const deltasCollectionName = nconf.get("mongo:collectionNames:deltas");
 
 let checkpointTimer: any;
@@ -66,14 +66,15 @@ async function run() {
         deferred.reject(error);
     });
 
-    const mongoManager = new utils.MongoManager(mongoUrl, false);
+    const mongoFactory = new services.MongoDbFactory(mongoUrl);
+    const mongoManager = new utils.MongoManager(mongoFactory, false);
     const db = await mongoManager.getDatabase();
     const collection = db.collection(deltasCollectionName);
     await collection.createIndex({
             "documentId": 1,
             "operation.sequenceNumber": 1,
         },
-        { unique: true });
+        true);
 
     let consumer = utils.kafkaConsumer.create(kafkaLibrary, kafkaEndpoint, groupId, topic, false);
     const partitionManager = new core.PartitionManager(
@@ -106,7 +107,7 @@ async function run() {
         }
 
         winston.verbose(`Inserting to mongodb ${documentId}@${work[0].operation.sequenceNumber}:${work.length}`);
-        const insertP = collection.insertMany(work, <CollectionInsertManyOptions> (<any> { ordered: false }))
+        const insertP = collection.insertMany(work, false)
             .catch((error) => {
                 // Ignore duplicate key errors since a replay may cause us to attempt to insert a second time
                 if (error.name !== "MongoError" || error.code !== 11000) {
