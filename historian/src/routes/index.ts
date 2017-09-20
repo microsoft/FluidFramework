@@ -1,6 +1,6 @@
 import { Router } from "express";
+import * as git from "gitresources";
 import * as nconf from "nconf";
-import * as services from "../services";
 import * as blobs from "./git/blobs";
 import * as commits from "./git/commits";
 import * as refs from "./git/refs";
@@ -29,7 +29,7 @@ export interface IRoutes {
 
 export function create(
     store: nconf.Provider,
-    historianService: services.IHistorian): IRoutes {
+    historianService: git.IHistorian): IRoutes {
 
     return {
         git: {

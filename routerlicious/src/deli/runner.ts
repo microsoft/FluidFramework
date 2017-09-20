@@ -4,7 +4,6 @@ import * as winston from "winston";
 import * as core from "../core";
 import * as shared from "../shared";
 import * as utils from "../utils";
-import { ICollection } from "./collection";
 import { TakeANumber } from "./takeANumber";
 
 export class DeliRunner implements utils.IRunner {
@@ -15,7 +14,7 @@ export class DeliRunner implements utils.IRunner {
     constructor(
         private producer: utils.kafkaProducer.IProducer,
         private consumer: utils.kafkaConsumer.IConsumer,
-        private objectsCollection: ICollection<any>,
+        private objectsCollection: core.ICollection<any>,
         private groupId: string,
         private receiveTopic: string,
         private checkpointBatchSize: number,
@@ -114,7 +113,7 @@ export class DeliRunner implements utils.IRunner {
         ticketQueue: {[id: string]: Promise<void> },
         partitionManager: core.PartitionManager,
         producer: utils.kafkaProducer.IProducer,
-        objectsCollection: ICollection<any>) {
+        objectsCollection: core.ICollection<any>) {
 
         const baseMessage = JSON.parse(message.value.toString("utf8")) as core.IMessage;
         if (baseMessage.type === core.UpdateReferenceSequenceNumberType ||

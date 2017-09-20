@@ -11,7 +11,7 @@ import * as socketStorage from "../socket-storage";
 import * as utils from "../utils";
 import * as storage from "./storage";
 
-export function create(config: Provider) {
+export function create(config: Provider, mongoManager: utils.MongoManager) {
     let io = socketIo();
 
     // Group this into some kind of an interface
@@ -43,10 +43,7 @@ export function create(config: Provider) {
     io.adapter(socketIoRedis({ pubClient: pub, subClient: sub }));
 
     // Connection to stored document details
-    const mongoUrl = config.get("mongo:endpoint");
     const documentsCollectionName = config.get("mongo:collectionNames:documents");
-
-    const mongoManager = new utils.MongoManager(mongoUrl);
 
     // Producer used to publish messages
     const producer = utils.kafkaProducer.create(kafkaLibrary, kafkaEndpoint, kafkaClientId, topic);
