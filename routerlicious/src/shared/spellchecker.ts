@@ -27,7 +27,7 @@ function compareProxStrings(a: Collections.ProxString<number>, b: Collections.Pr
     return bscore - ascore;
 }
 
-interface IWordCheck {
+interface IWordCheckSpec {
     pos: number;
     rev?: boolean;
 }
@@ -37,8 +37,8 @@ class Speller {
     verbose = false;
     serviceCounter: number = 0;
     q: any;
-    pendingWordCheck: IWordCheck;
-    spellWordTimer: any;
+    pendingCheckInfo: IWordCheckSpec;
+    pendingWordCheckTimer: any;
 
     constructor(public sharedString: mergeTree.SharedString, private dict: Collections.TST<number>,
         private intelligence: IIntelligentService) {
@@ -73,24 +73,26 @@ class Speller {
     }
 
     checkPending(intelligence: IIntelligentService) {
-        this.currentWordSpellCheck(intelligence, this.pendingWordCheck.pos, this.pendingWordCheck.rev);
+        this.currentWordSpellCheck(intelligence, this.pendingCheckInfo.pos, this.pendingCheckInfo.rev);
     }
-
+    // TODO: use delayed spell check on each modified paragraph 
     spellOp(delta: mergeTree.IMergeTreeOp, intelligence: IIntelligentService) {
-        function setPending() {
-            if (!this.spellWordTimer) {
-                this.spellWordTimer = setTimeout(() => {
-                    this.checkPending(intelligence);
-                    this.spellWordTimer = undefined;
-                }, 500);
-            }
-        }
+        // let setPending = () => {
+        //     if (this.pendingWordCheckTimer) {
+        //         clearTimeout(this.pendingWordCheckTimer);
+        //     }
+        //     this.pendingWordCheckTimer = setTimeout(() => {
+        //         this.checkPending(intelligence);
+        //     }, 300);
+        // }
         if (delta.type === mergeTree.MergeTreeDeltaType.INSERT) {
-            this.pendingWordCheck = { pos: delta.pos1 };
-            setPending();
+//            this.pendingCheckInfo = { pos: delta.pos1 };
+//            setPending();
+            this.currentWordSpellCheck(intelligence, delta.pos1);
         } else if (delta.type === mergeTree.MergeTreeDeltaType.REMOVE) {
-            this.pendingWordCheck = { pos: delta.pos1, rev: true };
-            setPending();
+//            this.pendingCheckInfo = { pos: delta.pos1, rev: true };
+//            setPending();
+            this.currentWordSpellCheck(intelligence, delta.pos1, true);
         }
         else if (delta.type === mergeTree.MergeTreeDeltaType.GROUP) {
             for (let groupOp of delta.ops) {

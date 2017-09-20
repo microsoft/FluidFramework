@@ -10,7 +10,7 @@ import * as assert from "assert";
 
 export type MapLike<T> = Properties.MapLike<T>;
 export type PropertySet = Properties.PropertySet;
-export type RangeStackMap = Properties.MapLike<Collections.Stack<Marker>>;
+export type RangeStackMap = MapLike<Collections.Stack<Marker>>;
 
 export interface IRange {
     start: number;
@@ -213,7 +213,7 @@ function addNodeMarkers(node: Node, rightmostTiles: MapLike<Marker>,
                 addTile(marker, rightmostTiles);
                 addTileIfNotPresent(marker, leftmostTiles);
             }
-            else if (marker.behaviors & (ops.MarkerBehaviors.RangeBegin|ops.MarkerBehaviors.RangeEnd)) {
+            else if (marker.behaviors & (ops.MarkerBehaviors.RangeBegin | ops.MarkerBehaviors.RangeEnd)) {
                 for (let label of marker.getMarkerLabels()) {
                     updateRangeInfo(label, marker);
                 }
@@ -380,14 +380,31 @@ export class Marker extends BaseSegment {
         }
     }
 
+    getId() {
+        if (this.properties && this.properties[reservedMarkerIdKey]) {
+            return this.properties[reservedMarkerIdKey];
+        }
+    }
+
     toString() {
+        let mask = ops.MarkerBehaviors.Tile | ops.MarkerBehaviors.RangeBegin | ops.MarkerBehaviors.RangeEnd;
+        let bbuf = ops.MarkerBehaviors[this.behaviors & mask];
         let lbuf = "";
+        let id = this.getId();
+        if (id) {
+            bbuf += ` (${id}) `;
+        }
         if (this.hasMarkerLabels()) {
-            for (let tileLabel of this.properties[reservedMarkerLabelsKey]) {
-                lbuf += "; " + tileLabel;
+            let labels = this.properties[reservedMarkerLabelsKey];
+            for (let i = 0, len = labels.length; i < len; i++) {
+                let tileLabel = labels[i];
+                if (i > 0) {
+                    lbuf += "; ";
+                }
+                lbuf += tileLabel;
             }
         }
-        return `M:${lbuf}`;
+        return `M ${bbuf}: ${lbuf}`;
     }
 
     getType() {
@@ -1820,9 +1837,57 @@ export interface TextAccumulator {
 }
 
 interface IMarkerSearchInfo {
-    tileType: string;
+    tileLabel: string;
     preceding?: boolean;
     tileMarker?: Marker;
+}
+
+interface IMarkerSearchRangeInfo {
+    rangeLabels: string[];
+    stacks: RangeStackMap;
+}
+
+function applyLeafRangeMarker(marker: Marker, searchInfo: IMarkerSearchRangeInfo) {
+    for (let rangeLabel of searchInfo.rangeLabels) {
+        if (marker.hasLabel(rangeLabel)) {
+            let currentStack = searchInfo.stacks[rangeLabel];
+            if (currentStack === undefined) {
+                currentStack = new Collections.Stack<Marker>();
+                searchInfo.stacks[rangeLabel] = currentStack;
+            }
+            applyRangeMarker(currentStack, marker);
+        }
+    }
+}
+function recordRangeLeaf(segment: Segment, segpos: number,
+    refSeq: number, clientId: number, start: number, end: number,
+    searchInfo: IMarkerSearchRangeInfo) {
+    if (segment.getType() === SegmentType.Marker) {
+        let marker = <Marker>segment;
+        if (marker.behaviors &
+            (ops.MarkerBehaviors.RangeBegin | ops.MarkerBehaviors.RangeEnd)) {
+            applyLeafRangeMarker(marker, searchInfo);
+        }
+    }
+    return false;
+}
+
+function rangeShift(node: Node, segpos: number, refSeq: number, clientId: number,
+    offset: number, end: number, searchInfo: IMarkerSearchRangeInfo) {
+    if (node.isLeaf()) {
+        let seg = <Segment>node;
+        if ((seg.netLength() > 0) && (seg.getType() === SegmentType.Marker)) {
+            let marker = <Marker>seg;
+            if (marker.behaviors &
+                (ops.MarkerBehaviors.RangeBegin | ops.MarkerBehaviors.RangeEnd)) {
+                applyLeafRangeMarker(marker, searchInfo);
+            }
+        }
+    } else {
+        let block = <HierBlock>node;
+        applyStackDelta(searchInfo.stacks, block.rangeStacks)
+    }
+    return true;
 }
 
 function recordTileStart(segment: Segment, segpos: number,
@@ -1830,7 +1895,7 @@ function recordTileStart(segment: Segment, segpos: number,
     searchInfo: IMarkerSearchInfo) {
     if (segment.getType() === SegmentType.Marker) {
         let marker = <Marker>segment;
-        if (marker.hasLabel(searchInfo.tileType)) {
+        if (marker.hasLabel(searchInfo.tileLabel)) {
             searchInfo.tileMarker = marker;
         }
     }
@@ -1843,7 +1908,7 @@ function tileShift(node: Node, segpos: number, refSeq: number, clientId: number,
         let seg = <Segment>node;
         if ((seg.netLength() > 0) && (seg.getType() === SegmentType.Marker)) {
             let marker = <Marker>seg;
-            if (marker.hasLabel(searchInfo.tileType)) {
+            if (marker.hasLabel(searchInfo.tileLabel)) {
                 searchInfo.tileMarker = marker;
             }
         }
@@ -1851,9 +1916,9 @@ function tileShift(node: Node, segpos: number, refSeq: number, clientId: number,
         let block = <HierBlock>node;
         let marker: Marker;
         if (searchInfo.preceding) {
-            marker = <Marker>block.rightmostTiles[searchInfo.tileType];
+            marker = <Marker>block.rightmostTiles[searchInfo.tileLabel];
         } else {
-            marker = <Marker>block.leftmostTiles[searchInfo.tileType];
+            marker = <Marker>block.leftmostTiles[searchInfo.tileLabel];
         }
         if (marker !== undefined) {
             searchInfo.tileMarker = marker;
@@ -2469,11 +2534,22 @@ export class MergeTree {
         return localPos;
     }
 
+    getStackContext(startPos: number, clientId: number, rangeLabels: string[]) {
+        let searchInfo = <IMarkerSearchRangeInfo>{
+            stacks: Properties.createMap<Collections.Stack<Marker>>(),
+            rangeLabels
+        };
+
+        this.search(startPos, UniversalSequenceNumber, clientId,
+            { leaf: recordRangeLeaf, shift: rangeShift }, searchInfo);
+        return searchInfo.stacks;
+    }
+    
     // TODO: filter function
-    findTile(startPos: number, clientId: number, tileType: string, preceding = true) {
+    findTile(startPos: number, clientId: number, tileLabel: string, preceding = true) {
         let searchInfo = <IMarkerSearchInfo>{
             preceding,
-            tileType,
+            tileLabel,
         };
 
         if (preceding) {

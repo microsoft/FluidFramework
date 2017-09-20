@@ -2,7 +2,7 @@
 // may depend on the config already being initialized
 import * as nconf from "nconf";
 import * as path from "path";
-nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
+nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config/config.json")).use("memory");
 
 // We should probably move this test to somewhere else. perf folder is not the right place.
 import * as request from "request";

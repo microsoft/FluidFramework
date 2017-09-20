@@ -290,7 +290,7 @@ export class TakeANumber {
         const MinSequenceNumberWindow = shared.constants.MinSequenceNumberWindow;
 
         // Get the sequence number as tracked by the clients
-        const msn = this.getClientMinimumSequenceNumber(timestamp);
+        let msn = this.getClientMinimumSequenceNumber(timestamp);
 
         // Create the window if it doesn't yet exist
         if (!this.window) {
@@ -301,6 +301,17 @@ export class TakeANumber {
         // To account for clock skew we always insert later than the last packet
         // TODO see if Kafka can compute the timestamp - or find some other way to go about this
         timestamp = Math.max(timestamp, this.window.primaryHead);
+
+        // Below is a temporary workaround before we add nack support.
+        // The client tracked  MSN is not guaranteed to monotonically increase since a new client may connect that
+        // has a reference sequence number greater than the lagged min but less than existing clients.
+        // The range code assumes we only add monotonically increasing values. So we force this by making sure
+        // we add values greater than the last value. The ideal with the time lag is take a minimum value within
+        // the time range. But this is a bit more code than the below. And we plan on removing it anyway. The time
+        // lag should avoid any issues from setting the min too high as well.
+        if (msn < this.window.secondaryHead) {
+            msn = this.window.secondaryHead;
+        }
         this.window.add(timestamp, msn);
         this.window.updateBase(timestamp - MinSequenceNumberWindow);
         const windowStamp = this.window.get(timestamp - MinSequenceNumberWindow);

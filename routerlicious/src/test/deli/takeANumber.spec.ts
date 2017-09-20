@@ -25,6 +25,11 @@ describe("Routerlicious", () => {
                 };
             }
 
+            function getLastMessage(): core.ISequencedOperationMessage {
+                const sent = testKafka.getMessages();
+                return JSON.parse(sent[0].value.toString()) as core.ISequencedOperationMessage;
+            }
+
             beforeEach(() => {
                 testCollection = new TestCollection(testData);
                 testKafka =  new TestKafka();
@@ -49,6 +54,20 @@ describe("Routerlicious", () => {
                         sequencedMessage.operation.clientSequenceNumber,
                         message.operation.clientSequenceNumber);
                     assert.equal(sequencedMessage.operation.sequenceNumber, 1);
+                });
+
+                it("Should ticket new clients connecting above msn but less than existing clients", async () => {
+                    const secondMessageFactory = new MessageFactory(testId, "test2");
+
+                    // Have test client create some existing messages
+                    await ticketer.ticket(wrapMessage(messageFactory.create(10, 2000)));
+                    await ticketer.ticket(wrapMessage(messageFactory.create(20, 2100)));
+                    assert.equal(getLastMessage().operation.minimumSequenceNumber, 10);
+
+                    // And then have a new client go under the latest working set msn but above the published msn
+                    await ticketer.ticket(wrapMessage(secondMessageFactory.create(15, 2200)));
+                    await ticketer.ticket(wrapMessage(messageFactory.create(22, 2400)));
+                    assert.equal(getLastMessage().operation.minimumSequenceNumber, 10);
                 });
             });
 

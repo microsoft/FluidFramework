@@ -73,6 +73,10 @@ interface IParagraphMarker extends SharedString.Marker {
     listCache?: IListInfo;
 }
 
+interface ITableMarker extends SharedString.Marker {
+
+}
+
 // TODO: indent decoration
 export interface ILineDiv extends HTMLDivElement {
     linePos?: number;
@@ -982,10 +986,25 @@ interface IRenderContext {
     headerFontstr: string;
     
 }
-function renderTreeFromPosition(viewportDiv: HTMLDivElement, client: SharedString.Client, flowView: FlowView) {
+*/
+
+function renderOuterTable(table: ITableMarker, viewportDiv: HTMLDivElement, startingPosition: number,
+    flowView: FlowView) {
+        // 
+}
+
+function renderTreeFromPosition(viewportDiv: HTMLDivElement, startingPosition: number, flowView: FlowView) {
+    let client = flowView.client;
+    let rangeStacks = client.mergeTree.getStackContext(startingPosition, client.getClientId(), ["table"]);
+    if (rangeStacks.table && (!rangeStacks.table.empty())) {
+        let outerTable = rangeStacks.table.items[0];
+        renderOuterTable(<ITableMarker>outerTable, viewportDiv, startingPosition, flowView);
+    } else {
+        renderTree(viewportDiv, startingPosition, client, flowView);
+    }
 
 }
-*/
+
 function renderTree(viewportDiv: HTMLDivElement, startingPosition: number, client: SharedString.Client, flowView: FlowView, heightLimit = 0) {
     let fontstr = "18px Times";
     let headerFontstr = "22px Times";
@@ -2167,7 +2186,7 @@ export class FlowView {
         this.updatePresencePositions();
         clearSubtree(this.viewportDiv);
         // this.viewportDiv.appendChild(this.cursor.editSpan);
-        renderTree(this.viewportDiv, this.topChar, this.client, this);
+        renderTreeFromPosition(this.viewportDiv, this.topChar, this);
         clearSubtree(this.scrollDiv);
         let bubbleHeight = Math.max(3, Math.floor((this.viewportCharCount() / len) * this.scrollRect.height));
         let bubbleTop = Math.floor(frac * this.scrollRect.height);

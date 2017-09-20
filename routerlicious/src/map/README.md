@@ -16,6 +16,7 @@ createCounter(key: string, value?: number, min?: number, max?: number): Promise<
 ```
  export interface ICounter {
     increment(value: number): Promise<void>;
+    get(): Promise<number>;
  }
 ```
 Creating or incrementing/decremnting a counter emits "valueChanged" events on the map.

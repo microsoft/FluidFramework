@@ -5,7 +5,7 @@ import * as services from "../services";
 import * as utils from "../utils";
 import { DeliRunner } from "./runner";
 
-const provider = nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config.json")).use("memory");
+const provider = nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config/config.json")).use("memory");
 
 const mongoUrl = provider.get("mongo:endpoint") as string;
 const kafkaEndpoint = provider.get("kafka:lib:endpoint");

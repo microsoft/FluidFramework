@@ -8,4 +8,7 @@ export class Counter implements api.ICounter {
     public increment(value: number): Promise<void> {
         return this.parentMap.incrementCounter(this.key, value, this.min, this.max);
     }
+    public get(): Promise<number> {
+        return this.parentMap.getCounterValue(this.key);
+    }
 }

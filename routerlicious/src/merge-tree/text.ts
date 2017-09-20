@@ -70,9 +70,6 @@ export function loadSegments(content: string, segLimit: number, markers = false)
 export function loadText(content: string, mergeTree: MergeTree.MergeTree, segLimit: number, markers = false) {
     const segments = loadSegments(content, segLimit, markers);
     mergeTree.reloadFromSegments(segments);
-    // for (let segment of segments) {
-    //     segTree.insertInterval(segTree.getLength(0,SegTree.LocalClientId),0,SegTree.LocalClientId,0,segment);
-    // }
     // console.log(`Number of Segments: ${segments.length}`);
     // console.log(`Height: ${mergeTree.getStats().maxHeight}`);
     //console.log(segTree.toString());

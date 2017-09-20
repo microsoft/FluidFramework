@@ -131,3 +131,6 @@ Or `git clone ssh://git@gitrest.westus2.cloudapp.azure.com/home/git/prague` for 
 
 From there you can use your git repository management tool of choice to inspect the various documents and revisions
 stored in the repository.
+
+## Alerting
+We are using [elastalert](https://github.com/Yelp/elastalert) plugin to send email alerts on production failures and errors. The plugin scans data from elasticsearch and looks for anomalies/patterns/spikes. Checkout the [documentation](http://elastalert.readthedocs.io/en/latest/) for creating new alert rules. 
