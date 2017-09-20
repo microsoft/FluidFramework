@@ -1,22 +1,22 @@
 // Setup the configuration system - pull arguments, then environment variables - prior to loading other modules that
 // may depend on the config already being initialized
-import * as nconf from "nconf";
-import * as path from "path";
-import * as winston from "winston";
-nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config/config.json")).use("memory");
-
 import { queue } from "async";
 import * as _ from "lodash";
+import * as nconf from "nconf";
+import * as path from "path";
 import * as redis from "redis";
 import * as socketIo from "socket.io";
 import * as socketIoRedis from "socket.io-redis";
 import * as util from "util";
+import * as winston from "winston";
 import * as core from "../core";
 import * as shared from "../shared";
 import * as socketStorage from "../socket-storage";
 import * as utils from "../utils";
 import * as messages from "./messages";
 import * as workerFactory from "./workerFactory";
+
+const provider = nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config/config.json")).use("memory");
 
 // Setup Kafka connection
 const kafkaEndpoint = nconf.get("kafka:lib:endpoint");
@@ -54,6 +54,24 @@ const onlyServer = nconf.get("tmz:onlyServer");
 const foreman = workerFactory.create(schedulerType);
 const pendingWork: Set<string> = new Set();
 let workerJoined = false;
+
+/**
+ * Default logger setup
+ */
+const loggerConfig = provider.get("logger");
+winston.configure({
+    transports: [
+        new winston.transports.Console({
+            colorize: loggerConfig.colorize,
+            handleExceptions: true,
+            json: loggerConfig.json,
+            label: loggerConfig.label,
+            level: loggerConfig.level,
+            stringify: (obj) => JSON.stringify(obj),
+            timestamp: loggerConfig.timestamp,
+        }),
+    ],
+});
 
 async function run() {
     const deferred = new shared.Deferred<void>();

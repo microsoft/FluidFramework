@@ -6,6 +6,16 @@ data:
   fluent.conf: |
     @include kubernetes.conf
 
+    <filter **>
+      type parser
+      format json
+      key_name log
+      reserve_data true
+      suppress_parse_error_log true
+      ignore_key_not_exist true
+      hash_value_field log
+    </filter>
+
     <match **>
       type elasticsearch
       log_level info

@@ -1,18 +1,18 @@
 // Setup the configuration system - pull arguments, then environment variables - prior to loading other modules that
 // may depend on the config already being initialized
+import { queue } from "async";
 import * as nconf from "nconf";
 import * as path from "path";
-import * as winston from "winston";
-nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config/config.json")).use("memory");
-
-import { queue } from "async";
 import * as redis from "redis";
 import * as socketIoEmitter from "socket.io-emitter";
 import * as util from "util";
+import * as winston from "winston";
 import * as core from "../core";
 import * as services from "../services";
 import * as shared from "../shared";
 import * as utils from "../utils";
+
+const provider = nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config/config.json")).use("memory");
 
 // Initialize Socket.io and connect to the Redis adapter
 let redisConfig = nconf.get("redis");
@@ -38,6 +38,24 @@ async function checkpoint(partitionManager: core.PartitionManager) {
         checkpoint(partitionManager);
     }, checkpointTimeIntervalMsec);
 }
+
+/**
+ * Default logger setup
+ */
+const loggerConfig = provider.get("logger");
+winston.configure({
+    transports: [
+        new winston.transports.Console({
+            colorize: loggerConfig.colorize,
+            handleExceptions: true,
+            json: loggerConfig.json,
+            label: loggerConfig.label,
+            level: loggerConfig.level,
+            stringify: (obj) => JSON.stringify(obj),
+            timestamp: loggerConfig.timestamp,
+        }),
+    ],
+});
 
 async function run() {
     const deferred = new shared.Deferred<void>();
