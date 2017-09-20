@@ -14,9 +14,10 @@ data:
         "logger": {
             "colorize": false,
             "morganFormat": "short",
-            "json": false,
+            "json": true,
             "level": "verbose",
-            "timestamp": false
+            "timestamp": false,
+            "label": "winston"
         },
         "rabbitmq": {
             "connectionString": "amqp://{{ .Values.rabbitmq.rabbitmqUsername }}:{{ .Values.rabbitmq.rabbitmqPassword }}@{{ template "rabbitmq.fullname" . }}"

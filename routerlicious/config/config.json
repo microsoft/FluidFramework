@@ -2,7 +2,7 @@
     "logger": {
         "colorize": true,
         "morganFormat": "dev",
-        "json": true,
+        "json": false,
         "level": "info",
         "timestamp": true,
         "label": "winston"
