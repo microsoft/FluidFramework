@@ -31,7 +31,8 @@ export class Historian implements git.IHistorian {
             count,
             sha,
         });
-        return this.get(`/repos/${encodeURIComponent(repo)}/commits?${query}`);
+        return this.get(`/repos/${encodeURIComponent(repo)}/commits?${query}`)
+            .catch((error) => error === 400 ? [] as git.ICommit[] : Promise.reject<git.ICommit[]>(error));
     }
 
     public getCommit(repo: string, sha: string): Promise<git.ICommit> {
@@ -67,7 +68,8 @@ export class Historian implements git.IHistorian {
     }
 
     public getRepo(repo: string): Promise<any> {
-        return this.get(`/repos/${encodeURIComponent(repo)}`);
+        return this.get(`/repos/${encodeURIComponent(repo)}`)
+            .catch((error) => error === 400 ? null : Promise.resolve(error));
     }
 
     public createTag(repo: string, tag: git.ICreateTagParams): Promise<git.ITag> {

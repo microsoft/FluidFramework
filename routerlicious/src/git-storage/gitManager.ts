@@ -103,7 +103,7 @@ export class GitManager {
             sha: commitSha,
         };
 
-        return this.historian.updateRef(this.repository, branch, ref);
+        return this.historian.updateRef(this.repository, `heads/${branch}`, ref);
     }
 
     /**
@@ -130,7 +130,10 @@ export class GitManager {
             tree: tree.sha,
         };
 
-        return this.historian.createCommit(this.repository, commitParams);
+        const commit = await this.historian.createCommit(this.repository, commitParams);
+        await this.upsertRef(branch, commit.sha);
+
+        return commit;
     }
 }
 
