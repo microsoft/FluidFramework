@@ -17,6 +17,7 @@ winston.configure({
             colorize: loggerConfig.colorize,
             handleExceptions: true,
             json: loggerConfig.json,
+            label: loggerConfig.label,
             level: loggerConfig.level,
             stringify: (obj) => JSON.stringify(obj),
             timestamp: loggerConfig.timestamp,
