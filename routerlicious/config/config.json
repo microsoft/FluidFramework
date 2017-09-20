@@ -2,9 +2,10 @@
     "logger": {
         "colorize": true,
         "morganFormat": "dev",
-        "json": false,
+        "json": true,
         "level": "info",
-        "timestamp": true
+        "timestamp": true,
+        "label": "winston"
     },
     "rabbitmq": {
         "connectionString": "amqp://rabbitmq"

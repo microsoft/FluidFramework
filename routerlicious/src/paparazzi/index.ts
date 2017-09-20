@@ -4,15 +4,33 @@
 import * as nconf from "nconf";
 import * as path from "path";
 import * as winston from "winston";
-nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config/config.json")).use("memory");
-
 import * as shared from "../shared";
+
+const provider = nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config/config.json")).use("memory");
 
 // Connect to alfred and tmz and subscribes for work.
 const alfredUrl = nconf.get("paparazzi:alfred");
 const tmzUrl = nconf.get("paparazzi:tmz");
 const workerConfig = nconf.get("worker");
 const gitConfig = nconf.get("git");
+
+/**
+ * Default logger setup
+ */
+const loggerConfig = provider.get("logger");
+winston.configure({
+    transports: [
+        new winston.transports.Console({
+            colorize: loggerConfig.colorize,
+            handleExceptions: true,
+            json: loggerConfig.json,
+            label: loggerConfig.label,
+            level: loggerConfig.level,
+            stringify: (obj) => JSON.stringify(obj),
+            timestamp: loggerConfig.timestamp,
+        }),
+    ],
+});
 
 async function run() {
     const workerService = new shared.WorkerService(
