@@ -701,7 +701,7 @@ export function TestPack(verbose = true) {
                 server.enqueueMsg(client.makeInsertMarkerMsg("test", ops.MarkerBehaviors.Tile,
                     pos, MergeTree.UnassignedSequenceNumber, client.getCurrentSeq(), ""));
                 client.insertMarkerLocal(pos, ops.MarkerBehaviors.Tile,
-                    { [MergeTree.reservedMarkerLabelsKey]: "test" });
+                    { [MergeTree.reservedTileLabelsKey]: "test" });
             }
             server.enqueueMsg(client.makeInsertMsg(text, pos, MergeTree.UnassignedSequenceNumber,
                 client.getCurrentSeq(), server.longClientId));
@@ -1175,7 +1175,7 @@ export function TestPack(verbose = true) {
             }
         }
         cli.insertMarkerRemote({ behaviors: ops.MarkerBehaviors.Tile }, 0,
-            { [MergeTree.reservedMarkerLabelsKey]: ["peach"] },
+            { [MergeTree.reservedTileLabelsKey]: ["peach"] },
             5, 0, 2)
         cli.insertTextRemote("very ", 6, undefined, 4, 2, 2);
         if (verbose) {
@@ -1468,7 +1468,7 @@ export class DocumentTree {
             if (docNode.name === "pg") {
                 client.insertMarkerLocal(this.pos, ops.MarkerBehaviors.Tile,
                     {
-                        [MergeTree.reservedMarkerLabelsKey]: [docNode.name],
+                        [MergeTree.reservedTileLabelsKey]: [docNode.name],
                     },
                 );
                 this.pos++;
@@ -1476,12 +1476,15 @@ export class DocumentTree {
                 let trid = docNode.name + this.ids[docNode.name].toString();
                 docNode.id = trid;
                 id = this.ids[docNode.name]++;
-                client.insertMarkerLocal(this.pos, ops.MarkerBehaviors.RangeBegin,
-                    {
-                        [MergeTree.reservedMarkerIdKey]: trid,
-                        [MergeTree.reservedMarkerLabelsKey]: [docNode.name],
-                    },
-                );
+                let props = {
+                    [MergeTree.reservedMarkerIdKey]: trid,
+                    [MergeTree.reservedRangeLabelsKey]: [docNode.name],
+                };
+                if (docNode.name==="row") {
+                    props[MergeTree.reservedTileLabelsKey] = "pg";
+                }
+                client.insertMarkerLocal(this.pos, ops.MarkerBehaviors.RangeBegin, props);
+
                 this.pos++;
             }
             for (let child of docNode.children) {
@@ -1492,7 +1495,7 @@ export class DocumentTree {
                 client.insertMarkerLocal(this.pos, ops.MarkerBehaviors.RangeEnd,
                     {
                         [MergeTree.reservedMarkerIdKey]: etrid,
-                        [MergeTree.reservedMarkerLabelsKey]: [docNode.name],
+                        [MergeTree.reservedRangeLabelsKey]: [docNode.name],
                     },
                 );
                 this.pos++;

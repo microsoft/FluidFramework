@@ -150,13 +150,13 @@ export class MergeNode implements Node {
 }
 
 function addTile(tile: Marker, tiles: Object) {
-    for (let tileLabel of tile.getMarkerLabels()) {
+    for (let tileLabel of tile.getTileLabels()) {
         tiles[tileLabel] = tile;
     }
 }
 
 function addTileIfNotPresent(tile: Marker, tiles: Object) {
-    for (let tileLabel of tile.getMarkerLabels()) {
+    for (let tileLabel of tile.getTileLabels()) {
         if (tiles[tileLabel] === undefined) {
             tiles[tileLabel] = tile;
         }
@@ -213,8 +213,8 @@ function addNodeMarkers(node: Node, rightmostTiles: MapLike<Marker>,
                 addTile(marker, rightmostTiles);
                 addTileIfNotPresent(marker, leftmostTiles);
             }
-            else if (marker.behaviors & (ops.MarkerBehaviors.RangeBegin | ops.MarkerBehaviors.RangeEnd)) {
-                for (let label of marker.getMarkerLabels()) {
+            if (marker.behaviors & (ops.MarkerBehaviors.RangeBegin | ops.MarkerBehaviors.RangeEnd)) {
+                for (let label of marker.getRangeLabels()) {
                     updateRangeInfo(label, marker);
                 }
             }
@@ -337,7 +337,8 @@ export class ExternalSegment extends BaseSegment {
     }
 }
 
-export let reservedMarkerLabelsKey = "markerLabels";
+export let reservedTileLabelsKey = "markerTileLabels";
+export let reservedRangeLabelsKey = "markerRangeLabels";
 export let reservedMarkerIdKey = "markerId";
 
 export class Marker extends BaseSegment {
@@ -355,15 +356,20 @@ export class Marker extends BaseSegment {
         this.cachedLength = 1;
     }
 
-    hasMarkerLabels() {
-        return this.behaviors &&
-            (ops.MarkerBehaviors.Tile | ops.MarkerBehaviors.RangeBegin | ops.MarkerBehaviors.RangeEnd) &&
-            this.properties && this.properties[reservedMarkerLabelsKey];
+    hasTileLabels() {
+        return (this.behaviors & ops.MarkerBehaviors.Tile) &&
+            this.properties && this.properties[reservedTileLabelsKey];
     }
 
-    hasLabel(label: string) {
-        if (this.hasMarkerLabels()) {
-            for (let markerLabel of this.properties[reservedMarkerLabelsKey]) {
+    hasRangeLabels() {
+        return (this.behaviors & (ops.MarkerBehaviors.RangeBegin | ops.MarkerBehaviors.RangeEnd)) &&
+        this.properties && this.properties[reservedRangeLabelsKey];
+    
+    }
+
+    hasTileLabel(label: string) {
+        if (this.hasTileLabels()) {
+            for (let markerLabel of this.properties[reservedTileLabelsKey]) {
                 if (label === markerLabel) {
                     return true;
                 }
@@ -372,9 +378,28 @@ export class Marker extends BaseSegment {
         return false;
     }
 
-    getMarkerLabels() {
-        if (this.hasMarkerLabels()) {
-            return <string[]>this.properties[reservedMarkerLabelsKey];
+    hasRangeLabel(label: string) {
+        if (this.hasRangeLabels()) {
+            for (let markerLabel of this.properties[reservedRangeLabelsKey]) {
+                if (label === markerLabel) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    getTileLabels() {
+        if (this.hasTileLabels()) {
+            return <string[]>this.properties[reservedTileLabelsKey];
+        } else {
+            return [];
+        }
+    }
+
+    getRangeLabels() {
+        if (this.hasRangeLabels()) {
+            return <string[]>this.properties[reservedRangeLabelsKey];
         } else {
             return [];
         }
@@ -394,14 +419,30 @@ export class Marker extends BaseSegment {
         if (id) {
             bbuf += ` (${id}) `;
         }
-        if (this.hasMarkerLabels()) {
-            let labels = this.properties[reservedMarkerLabelsKey];
+        if (this.hasTileLabels()) {
+            lbuf += "tile -- ";
+            let labels = this.properties[reservedTileLabelsKey];
             for (let i = 0, len = labels.length; i < len; i++) {
                 let tileLabel = labels[i];
                 if (i > 0) {
                     lbuf += "; ";
                 }
                 lbuf += tileLabel;
+            }
+        }
+        if (this.hasRangeLabels()) {
+            let rangeKind = "begin";
+            if (this.behaviors&ops.MarkerBehaviors.RangeEnd) {
+                rangeKind = "end";
+            }
+            lbuf += `range ${rangeKind}-- `;
+            let labels = this.properties[reservedRangeLabelsKey];
+            for (let i = 0, len = labels.length; i < len; i++) {
+                let rangeLabel = labels[i];
+                if (i > 0) {
+                    lbuf += "; ";
+                }
+                lbuf += rangeLabel;
             }
         }
         return `M ${bbuf}: ${lbuf}`;
@@ -1849,7 +1890,7 @@ interface IMarkerSearchRangeInfo {
 
 function applyLeafRangeMarker(marker: Marker, searchInfo: IMarkerSearchRangeInfo) {
     for (let rangeLabel of searchInfo.rangeLabels) {
-        if (marker.hasLabel(rangeLabel)) {
+        if (marker.hasRangeLabel(rangeLabel)) {
             let currentStack = searchInfo.stacks[rangeLabel];
             if (currentStack === undefined) {
                 currentStack = new Collections.Stack<Marker>();
@@ -1895,7 +1936,7 @@ function recordTileStart(segment: Segment, segpos: number,
     searchInfo: IMarkerSearchInfo) {
     if (segment.getType() === SegmentType.Marker) {
         let marker = <Marker>segment;
-        if (marker.hasLabel(searchInfo.tileLabel)) {
+        if (marker.hasTileLabel(searchInfo.tileLabel)) {
             searchInfo.tileMarker = marker;
         }
     }
@@ -1908,7 +1949,7 @@ function tileShift(node: Node, segpos: number, refSeq: number, clientId: number,
         let seg = <Segment>node;
         if ((seg.netLength() > 0) && (seg.getType() === SegmentType.Marker)) {
             let marker = <Marker>seg;
-            if (marker.hasLabel(searchInfo.tileLabel)) {
+            if (marker.hasTileLabel(searchInfo.tileLabel)) {
                 searchInfo.tileMarker = marker;
             }
         }

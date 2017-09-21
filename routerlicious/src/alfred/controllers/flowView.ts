@@ -686,7 +686,7 @@ function renderSegmentIntoLine(segment: SharedString.Segment, segpos: number, re
         }
     } else if (segType === SharedString.SegmentType.Marker) {
         let marker = <SharedString.Marker>segment;
-        if (marker.hasLabel("pg")) {
+        if (marker.hasTileLabel("pg")) {
             lineContext.pgMarker = marker;
             lineContext.markerPos = segpos;
             if (lineContext.flowView.cursor.pos === segpos) {
@@ -808,7 +808,7 @@ function getPrecedingTile(flowView: FlowView, tile: SharedString.Marker, tilePos
 }
 
 function isListTile(tile: IParagraphMarker) {
-    return tile.hasLabel("list");
+    return tile.hasTileLabel("list");
 }
 
 export interface ISymbol {
@@ -1019,7 +1019,7 @@ function parseBox(boxStartPos: number, flowView: FlowView) {
             flowView.client.getClientId());
         // TODO: model error checking
         let marker = <SharedString.Marker>markerSegOff.segment;
-        if (marker.hasLabel("table")) {
+        if (marker.hasRangeLabel("table")) {
             let tableMarker = <ITableMarker>marker;
             parseTable(tableMarker, nextPos, flowView);
             if (tableMarker.cache.minContentWidth>boxMarker.cache.minContentWidth) {
@@ -1182,7 +1182,7 @@ function renderTree(viewportDiv: HTMLDivElement, startingPosition: number, clien
             paragraphLexer.lex(textSegment);
         } else if (segment.getType() === SharedString.SegmentType.Marker) {
             let marker = <SharedString.Marker>segment;
-            if (marker.hasLabel("pg")) {
+            if (marker.hasTileLabel("pg")) {
                 return false;
             }
         }
@@ -1260,7 +1260,7 @@ function renderTree(viewportDiv: HTMLDivElement, startingPosition: number, clien
         startPGMarker = pgMarker;
         pgMarker = undefined;
         startPGPos = markerPos + 1;
-        if (startPGMarker.hasLabel("table")) {
+        if (startPGMarker.hasRangeLabel("table")) {
             // or if pg is in a table cell
             renderTable(startPGMarker, startPGPos, currentLineTop, heightLimit, flowView);
             // TODO: update end offset and height using table height
@@ -2046,14 +2046,14 @@ export class FlowView {
                     let prevTile = <IParagraphMarker>prevTilePos.tile;
                     if (isListTile(prevTile)) {
                         this.sharedString.insertMarker(pos, SharedString.MarkerBehaviors.Tile, {
-                            [SharedString.reservedMarkerLabelsKey]: ["pg", "list"],
+                            [SharedString.reservedTileLabelsKey]: ["pg", "list"],
                             indentLevel: prevTile.properties.indentLevel,
                             listKind: prevTile.properties.listKind,
                         });
                     }
                 } else {
                     this.sharedString.insertMarker(pos, SharedString.MarkerBehaviors.Tile,
-                        { [SharedString.reservedMarkerLabelsKey]: ["pg"] });
+                        { [SharedString.reservedTileLabelsKey]: ["pg"] });
                 }
                 this.updatePGInfo(pos - 1);
             } else {
@@ -2095,15 +2095,15 @@ export class FlowView {
         if (tileInfo) {
             let tile = <IParagraphMarker>tileInfo.tile;
             let listStatus = false;
-            if (tile.hasLabel("list")) {
+            if (tile.hasTileLabel("list")) {
                 listStatus = true;
             }
-            let curLabels = <string[]>tile.properties[SharedString.reservedMarkerLabelsKey];
+            let curLabels = <string[]>tile.properties[SharedString.reservedTileLabelsKey];
 
             if (listStatus) {
                 let remainingLabels = curLabels.filter((l) => l !== "list");
                 this.sharedString.annotateRange({
-                    [SharedString.reservedMarkerLabelsKey]: remainingLabels,
+                    [SharedString.reservedTileLabelsKey]: remainingLabels,
                     series: null,
                 }, tileInfo.pos, tileInfo.pos + 1);
             } else {
@@ -2114,7 +2114,7 @@ export class FlowView {
                     indentLevel = tile.properties.indentLevel;
                 }
                 this.sharedString.annotateRange({
-                    [SharedString.reservedMarkerLabelsKey]: augLabels,
+                    [SharedString.reservedTileLabelsKey]: augLabels,
                     indentLevel,
                     listKind,
                 }, tileInfo.pos, tileInfo.pos + 1);
