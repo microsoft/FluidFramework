@@ -31,6 +31,9 @@ spec:
         - name: rule-unhandledpromise
           mountPath: /opt/rules/unhandledpromise.yaml
           subPath: unhandledpromise.yaml
+        - name: rule-error
+          mountPath: /opt/rules/error.yaml
+          subPath: error.yaml
 
       volumes:
       - name: rules
@@ -45,6 +48,9 @@ spec:
       - name: rule-unhandledpromise
         configMap:
           name: elastalert-unhandledpromise
+      - name: rule-error
+        configMap:
+          name: elastalert-error
 
   volumeClaimTemplates:
   - metadata:

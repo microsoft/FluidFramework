@@ -6,7 +6,7 @@ data:
   elastalert_config.yaml: |
     rules_folder: /opt/rules
     run_every:
-      minutes: 1
+      minutes: 10 
     buffer_time:
       minutes: 2
     es_host: elasticsearch

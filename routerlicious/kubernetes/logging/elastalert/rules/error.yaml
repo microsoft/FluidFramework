@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: elastalert-error
+data:    
+  error.yaml: |
+    name: Error Alert!
+    type: frequency
+    aggregation:
+      hours: 1
+    index: logstash-*
+    num_events: 1
+    timeframe:
+        minutes: 1
+    filter: 
+    - term:
+        level: "error"
+    alert:
+    - "email"
+    - "debug"
+    email:
+    - mdaumi@microsoft.com
+    - kurtb@microsoft.com
