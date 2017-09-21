@@ -57,8 +57,9 @@ enum CharacterCodes {
     space = 0x0020,   // " "
 }
 
-interface IParagraphInfo {
+interface IParagraphInfo { 
     breaks: number[];
+    minWidth: number;
     singleLineWidth: number;
     endOffset?: number;
 }
@@ -488,6 +489,7 @@ function breakPGIntoLinesFF(items: ParagraphItem[], lineWidth: number) {
     let blockRunWidth = 0;
     let blockRunPos = -1;
     let prevIsGlue = true;
+    let minWidth = 0;
     for (let item of items) {
         if (item.type === ParagraphItemType.Block) {
             if (prevIsGlue) {
@@ -506,8 +508,11 @@ function breakPGIntoLinesFF(items: ParagraphItem[], lineWidth: number) {
             prevIsGlue = true;
         }
         committedItemsWidth += item.width;
+        if (minWidth < item.width) {
+            minWidth = item.width;
+        }
     }
-    return breaks;
+    return { breaks, minWidth };
 }
 
 const enum ParagraphLexerState {
@@ -973,41 +978,104 @@ interface IRowMarker extends SharedString.Marker {
 }
 
 class TableView {
+    public minContentWidth = 0;
     public indentWidth: number;
     public contentWidth: number;
-    public rows: RowView[];
+    public rows = <RowView[]>[];
     constructor(public tableMarker: ITableMarker, public endTableMarker: ITableMarker) {
 
     }
 }
 
 class RowView {
+    public minContentWidth = 0;
+    public boxes = <BoxView[]>[];
     constructor(public rowMarker: IRowMarker, public endRowMarker: IRowMarker) {
 
     }
 }
+
 class BoxView {
+    public minContentWidth = 0;
     constructor(public boxMarker: IBoxMarker, public endBoxMarker: IBoxMarker) {
 
     }
 }
-/*
+
+function parseBox(boxStartPos: number, flowView: FlowView) {
+    let mergeTree = flowView.client.mergeTree;
+    let boxMarkerSegOff = mergeTree.getContainingSegment(boxStartPos, SharedString.UniversalSequenceNumber,
+        flowView.client.getClientId());
+    let boxMarker = <IBoxMarker>boxMarkerSegOff.segment;
+    let id = boxMarker.getId();
+    let endId = "end-" + id;
+    let endBoxMarker = <SharedString.Marker>mergeTree.getSegmentFromId(endId);
+    let endBoxPos = mergeTree.getOffset(endBoxMarker, SharedString.UniversalSequenceNumber,
+        flowView.client.getClientId());
+    boxMarker.cache = new BoxView(boxMarker, endBoxMarker);
+    let nextPos = boxStartPos + boxMarker.cachedLength;
+    while (nextPos < endBoxPos) {
+        let markerSegOff = mergeTree.getContainingSegment(nextPos, SharedString.UniversalSequenceNumber,
+            flowView.client.getClientId());
+        // TODO: model error checking
+        let marker = <SharedString.Marker>markerSegOff.segment;
+        if (marker.hasLabel("table")) {
+            let tableMarker = <ITableMarker>marker;
+            parseTable(tableMarker, nextPos, flowView);
+            if (tableMarker.cache.minContentWidth>boxMarker.cache.minContentWidth) {
+                boxMarker.cache.minContentWidth = tableMarker.cache.minContentWidth;
+            }
+            let endTableMarker = tableMarker.cache.endTableMarker;
+            nextPos = mergeTree.getOffset(endTableMarker, SharedString.UniversalSequenceNumber, flowView.client.getClientId());
+            nextPos += endTableMarker.cachedLength;
+        } else {
+            // assume marker is pg
+            // let pgMarker = <IParagraphMarker>marker;
+
+        }
+
+    }
+    return boxMarker;
+}
+
+function parseRow(rowStartPos: number, flowView: FlowView) {
+    let mergeTree = flowView.client.mergeTree;
+    let rowMarkerSegOff = mergeTree.getContainingSegment(rowStartPos, SharedString.UniversalSequenceNumber,
+        flowView.client.getClientId());
+    let rowMarker = <IRowMarker>rowMarkerSegOff.segment;
+    let id = rowMarker.getId();
+    let endId = "end-" + id;
+    let endRowMarker = <SharedString.Marker>mergeTree.getSegmentFromId(endId);
+    let endRowPos = mergeTree.getOffset(endRowMarker, SharedString.UniversalSequenceNumber,
+        flowView.client.getClientId());
+    rowMarker.cache = new RowView(rowMarker, endRowMarker);
+    let nextPos = rowStartPos + rowMarker.cachedLength;
+    while (nextPos < endRowPos) {
+        let boxMarker = parseBox(nextPos, flowView);
+        let endBoxPos = mergeTree.getOffset(boxMarker.cache.endBoxMarker, SharedString.UniversalSequenceNumber,
+            flowView.client.getClientId());
+        nextPos = endBoxPos + boxMarker.cache.endBoxMarker.cachedLength;
+    }
+    return rowMarker;
+}
+
 function parseTable(tableMarker: ITableMarker, tableMarkerPos: number, flowView: FlowView) {
     let mergeTree = flowView.client.mergeTree;
     let id = tableMarker.getId();
     let endId = "end-" + id;
     let endTableMarker = <SharedString.Marker>mergeTree.getSegmentFromId(endId);
-    tableMarker.cache = new TableView(tableMarker, endTableMarker);
-    let rowMarkerPos = tableMarkerPos + tableMarker.cachedLength;
-    let rowMarkerSegOff = mergeTree.getContainingSegment(rowMarkerPos, SharedString.UniversalSequenceNumber, 
+    let endTablePos = mergeTree.getOffset(endTableMarker, SharedString.UniversalSequenceNumber,
         flowView.client.getClientId());
-    let rowMarker = <IRowMarker>rowMarkerSegOff.segment;
-    let rowMarkerId = rowMarker.getId();
-    let endId = "end-" + rowMarkerId;
-    let endRowMarker = <SharedString.Marker>mergeTree.getSegmentFromId(endId);
-
+    tableMarker.cache = new TableView(tableMarker, endTableMarker);
+    let nextPos = tableMarkerPos + tableMarker.cachedLength;
+    while (nextPos < endTablePos) {
+        let rowMarker = parseRow(nextPos, flowView);
+        let endRowPos = mergeTree.getOffset(rowMarker.cache.endRowMarker, SharedString.UniversalSequenceNumber,
+            flowView.client.getClientId());
+        nextPos = endRowPos + rowMarker.cache.endRowMarker.cachedLength;
+    }
 }
-*/
+
 function renderTable(startPGMarker: IParagraphMarker, startPGPos: number,
     currentLineTop: number, heightLimit: number, flowView: FlowView) {
     // TODO 
@@ -1015,7 +1083,9 @@ function renderTable(startPGMarker: IParagraphMarker, startPGPos: number,
 
 function renderOuterTable(table: ITableMarker, viewportDiv: HTMLDivElement, startingPosition: number,
     flowView: FlowView) {
-        // 
+    let mergeTree = flowView.client.mergeTree;
+    let tablePos = mergeTree.getOffset(table, SharedString.UniversalSequenceNumber, flowView.client.getClientId());
+    parseTable(table, tablePos, flowView);
 }
 
 function renderTreeFromPosition(viewportDiv: HTMLDivElement, startingPosition: number, flowView: FlowView) {
@@ -1225,7 +1295,8 @@ function renderTree(viewportDiv: HTMLDivElement, startingPosition: number, clien
             if ((!startPGMarker.cache) || (startPGMarker.cache.singleLineWidth !== contentWidth)) {
                 client.mergeTree.mapRange({ leaf: segmentToItems }, SharedString.UniversalSequenceNumber,
                     client.getClientId(), undefined, startPGPos);
-                startPGMarker.cache = { breaks: breakPGIntoLinesFF(items, contentWidth), singleLineWidth: contentWidth };
+                let breakInfo = breakPGIntoLinesFF(items, contentWidth);
+                startPGMarker.cache = { breaks: breakInfo.breaks, minWidth: breakInfo.minWidth, singleLineWidth: contentWidth };
             }
             pgCount++;
             paragraphLexer.reset();
