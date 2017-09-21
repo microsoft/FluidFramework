@@ -14,12 +14,12 @@ const provider = nconf.argv().env(<any> "__").file(path.join(__dirname, "../../c
 // Configure logging
 utils.configureLogging(provider.get("logger"));
 
-async function run() {
+async function run(config: nconf.Provider) {
     // Setup Kafka connection
-    const kafkaEndpoint = provider.get("kafka:lib:endpoint");
-    const kafkaLibrary = provider.get("kafka:lib:name");
-    const topic = provider.get("tmz:topic");
-    const groupId = provider.get("tmz:groupId");
+    const kafkaEndpoint = config.get("kafka:lib:endpoint");
+    const kafkaLibrary = config.get("kafka:lib:name");
+    const topic = config.get("tmz:topic");
+    const groupId = config.get("tmz:groupId");
 
     // Setup redis for socketio
     let io = socketIo();
@@ -81,7 +81,7 @@ async function run() {
 
 // Start up the TMZ service
 winston.info("Starting");
-const runP = run();
+const runP = run(provider);
 runP.then(
     () => {
         winston.info("Exiting");
