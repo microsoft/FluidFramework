@@ -7,7 +7,7 @@ import { PaparazziRunner } from "./runner";
 const provider = nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config/config.json")).use("memory");
 
 // Configure logging
-utils.configureWinston(provider.get("logger"));
+utils.configureLogging(provider.get("logger"));
 
 async function run(config: nconf.Provider) {
     // Connect to alfred and tmz and subscribes for work.

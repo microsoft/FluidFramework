@@ -12,7 +12,7 @@ import { TmzRunner } from "./runner";
 const provider = nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config/config.json")).use("memory");
 
 // Configure logging
-utils.configureWinston(provider.get("logger"));
+utils.configureLogging(provider.get("logger"));
 
 async function run() {
     // Setup Kafka connection

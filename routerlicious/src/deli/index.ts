@@ -19,7 +19,7 @@ const documentsCollectionName = provider.get("mongo:collectionNames:documents");
 const groupId = provider.get("deli:groupId");
 
 // Configure logging
-utils.configureWinston(provider.get("logger"));
+utils.configureLogging(provider.get("logger"));
 
 async function run() {
     // Connection to stored document details

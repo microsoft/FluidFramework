@@ -1,4 +1,3 @@
-import * as debug from "debug";
 import * as git from "gitresources";
 import * as nconf from "nconf";
 import * as path from "path";
@@ -9,15 +8,7 @@ import { AlfredRunner } from "./runner";
 const provider = nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config/config.json")).use("memory");
 
 // Configure logging
-utils.configureWinston(provider.get("logger"));
-
-(<any> debug).log = (msg, ...args) => winston.info(msg, ...args);
-// override the default log format to not include the timestamp since winston will do this for us
-// tslint:disable-next-line:only-arrow-functions
-(<any> debug).formatArgs = function(args) {
-    const name = this.namespace;
-    args[0] = name + " " + args[0];
-};
+utils.configureLogging(provider.get("logger"));
 
 /**
  * Normalize a port into a number, string, or false.

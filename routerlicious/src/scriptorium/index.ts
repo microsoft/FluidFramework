@@ -22,7 +22,7 @@ const mongoUrl = provider.get("mongo:endpoint") as string;
 const deltasCollectionName = provider.get("mongo:collectionNames:deltas");
 
 // Configure logging
-utils.configureWinston(provider.get("logger"));
+utils.configureLogging(provider.get("logger"));
 
 async function run() {
     const redisClient = redis.createClient(redisConfig.port, redisConfig.host);
