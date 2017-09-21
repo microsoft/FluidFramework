@@ -1,5 +1,7 @@
-import { Provider } from "nconf";
+import * as nconf from "nconf";
+import * as path from "path";
 import * as winston from "winston";
+import { configureLogging } from "./logger";
 
 /**
  * A runner represents a task that starts once start is called. And ends when either start completes
@@ -34,7 +36,7 @@ export interface IResourcesFactory<T extends IResources> {
     /**
      * Creates a new set of resources
      */
-    create(config: Provider): Promise<T>;
+    create(config: nconf.Provider): Promise<T>;
 }
 
 /**
@@ -51,7 +53,7 @@ export interface IRunnerFactory<T> {
  * Uses the provided factories to create and execute a runner.
  */
 export async function run<T extends IResources>(
-    config: Provider,
+    config: nconf.Provider,
     resourceFactory: IResourcesFactory<T>,
     runnerFactory: IRunnerFactory<T>) {
 
@@ -72,12 +74,16 @@ export async function run<T extends IResources>(
 }
 
 /**
- * Variant of run that will exit the process once the runner completes
+ * Variant of run that is used to fully run a service. It configures base settings such as logging. And then will
+ * exit the service once the runner completes.
  */
-export function runThenExit<T extends IResources>(
-    config: Provider,
+export function runService<T extends IResources>(
     resourceFactory: IResourcesFactory<T>,
-    runnerFactory: IRunnerFactory<T>) {
+    runnerFactory: IRunnerFactory<T>,
+    configFile = path.join(__dirname, "../../config/config.json")) {
+
+    const config = nconf.argv().env(<any> "__").file(configFile).use("memory");
+    configureLogging(config.get("logger"));
 
     const runningP = run(config, resourceFactory, runnerFactory);
     runningP.then(
