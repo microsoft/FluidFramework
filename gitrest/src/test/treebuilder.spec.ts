@@ -30,7 +30,7 @@ describe("Treebuilder", () => {
             isBare);
 
         const buffer = new Buffer("Hello, World!", "utf-8");
-        repository.createBlobFromBuffer(buffer);
+        await repository.createBlobFromBuffer(buffer);
 
         // create a queue object with concurrency 2
         return new Promise<void>((resolve, reject) => {

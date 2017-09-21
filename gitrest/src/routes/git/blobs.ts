@@ -29,7 +29,7 @@ async function createBlob(
 
     const repository = await repoManager.open(repo);
     winston.info(`Opened ${repo}`);
-    const id = repository.createBlobFromBuffer(new Buffer(blob.content, blob.encoding));
+    const id = await repository.createBlobFromBuffer(new Buffer(blob.content, blob.encoding));
     const sha = id.tostrS();
 
     return {

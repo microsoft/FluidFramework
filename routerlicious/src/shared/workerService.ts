@@ -120,6 +120,7 @@ export class WorkerService implements api.IWorkerService {
     }
 
     private initializeServices() {
+        // TODO for testing want to be able to pass in the services to use
         socketStorage.registerAsDefault(this.serverUrl, this.storageUrl, this.repo);
     }
 

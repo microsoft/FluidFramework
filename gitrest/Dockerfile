@@ -1,20 +1,18 @@
-FROM node:8.4.0-alpine
+# Would prefer alpine for size - but prebuilt nodegit has dependency issues with Alpine
+# https://github.com/nodegit/nodegit/issues/1361. So trading the larger base image for simplicity.
+FROM node:8.4.0
 
-# Install build dependencies needed for native modules
-# TODO Further decrease the container size with --virtual .build-deps and remove later
-RUN apk add --no-cache \
-    make \
-    gcc \
-    g++ \
-    python \
-    openssl-dev \
-    curl-dev
-
-RUN apk add --no-cache tini
+# Node wasn't designed to be run as PID 1. Tini is a tiny init wrapper. You can also set --init on docker later than
+# 1.13 but Kubernetes is at 1.12 so we prefer tini for now.
+ENV TINI_VERSION v0.16.1
+ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
+RUN chmod +x /tini
+ENTRYPOINT ["/tini", "--"]
 
 # Copy over and build the server
 WORKDIR /home/node/server
 COPY package.json /home/node/server
+COPY package-lock.json /home/node/server
 RUN npm install
 COPY . .
 RUN npm run build
@@ -28,10 +26,6 @@ EXPOSE 3000
 # ideally the node user could gain write permissions to this volume.
 # Switch to the node user for security
 # USER node
-
-# Node wasn't designed to be run as PID 1. Tini is a tiny init wrapper. You can also set --init on docker later than
-# 1.13 but Kubernetes is at 1.12 so we prefer tini for now.
-ENTRYPOINT ["/sbin/tini", "--"]
 
 # And set the default command to start the server
 CMD ["node", "dist/www.js"]

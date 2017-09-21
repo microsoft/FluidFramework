@@ -1,18 +1,9 @@
-
-// Setup the configuration system - pull arguments, then environment variables - prior to loading other modules that
-// may depend on the config already being initialized
 import * as nconf from "nconf";
 import * as path from "path";
 import * as winston from "winston";
-import * as shared from "../shared";
+import { PaparazziRunner } from "./runner";
 
 const provider = nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config/config.json")).use("memory");
-
-// Connect to alfred and tmz and subscribes for work.
-const alfredUrl = nconf.get("paparazzi:alfred");
-const tmzUrl = nconf.get("paparazzi:tmz");
-const workerConfig = nconf.get("worker");
-const gitConfig = nconf.get("git");
 
 /**
  * Default logger setup
@@ -32,40 +23,29 @@ winston.configure({
     ],
 });
 
-async function run() {
-    const workerService = new shared.WorkerService(
-        alfredUrl,
-        tmzUrl,
-        gitConfig.historian,
-        gitConfig.repository,
-        workerConfig);
-    const workerRunningP = workerService.connect("Paparazzi");
-    const deferred = new shared.Deferred<void>();
-    workerRunningP.then(
-        () => {
-            winston.info("Resolved");
-            deferred.resolve();
-        }, (error) => {
-            deferred.reject(error);
-        });
+async function run(config: nconf.Provider) {
+    // Connect to alfred and tmz and subscribes for work.
+    const alfredUrl = provider.get("paparazzi:alfred");
+    const tmzUrl = provider.get("paparazzi:tmz");
+    const workerConfig = provider.get("worker");
+    const gitConfig = provider.get("git");
+
+    const runner = new PaparazziRunner(alfredUrl, tmzUrl, workerConfig, gitConfig.historian, gitConfig.repository);
+    const runningP = runner.start();
 
     process.on("SIGTERM", () => {
-        workerService.close().then(
-            () => {
-                deferred.resolve();
-            }, (error) => {
-                deferred.reject(error);
-            });
+        runner.stop();
     });
 
-    return deferred.promise;
+    return runningP;
 }
 
 // Start up the paparazzi service
-const runP = run();
+winston.info("Starting");
+const runP = run(provider);
 runP.then(
     () => {
-        process.exit(0);
+        winston.info("Exiting");
     },
     (error) => {
         winston.error(error);

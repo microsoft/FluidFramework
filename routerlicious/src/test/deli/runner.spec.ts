@@ -20,8 +20,7 @@ describe("Routerlicious", () => {
             let messageFactory: MessageFactory;
 
             beforeEach(() => {
-                const testData = [];
-                testData[testId] = {};
+                const testData = [{ _id: testId }];
                 testCollection = new TestCollection(testData);
                 receiveTopic = new TestKafka();
                 sendTopic = new TestKafka();
@@ -60,7 +59,7 @@ describe("Routerlicious", () => {
                     }
                     await runner.stop();
 
-                    assert.equal(receiveTopic.getMessages().length, TestMessages);
+                    assert.equal(sendTopic.getMessages().length, TestMessages);
 
                     return started;
                 });
