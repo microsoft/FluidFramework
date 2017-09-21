@@ -21,23 +21,8 @@ const checkpointTimeIntervalMsec = provider.get("scriptorium:checkpointTimeInter
 const mongoUrl = provider.get("mongo:endpoint") as string;
 const deltasCollectionName = provider.get("mongo:collectionNames:deltas");
 
-/**
- * Default logger setup
- */
-const loggerConfig = provider.get("logger");
-winston.configure({
-    transports: [
-        new winston.transports.Console({
-            colorize: loggerConfig.colorize,
-            handleExceptions: true,
-            json: loggerConfig.json,
-            label: loggerConfig.label,
-            level: loggerConfig.level,
-            stringify: (obj) => JSON.stringify(obj),
-            timestamp: loggerConfig.timestamp,
-        }),
-    ],
-});
+// Configure logging
+utils.configureWinston(provider.get("logger"));
 
 async function run() {
     const redisClient = redis.createClient(redisConfig.port, redisConfig.host);

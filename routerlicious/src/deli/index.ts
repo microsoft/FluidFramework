@@ -18,23 +18,8 @@ const checkpointTimeIntervalMsec = provider.get("deli:checkpointTimeIntervalMsec
 const documentsCollectionName = provider.get("mongo:collectionNames:documents");
 const groupId = provider.get("deli:groupId");
 
-/**
- * Default logger setup
- */
-const loggerConfig = provider.get("logger");
-winston.configure({
-    transports: [
-        new winston.transports.Console({
-            colorize: loggerConfig.colorize,
-            handleExceptions: true,
-            json: loggerConfig.json,
-            label: loggerConfig.label,
-            level: loggerConfig.level,
-            stringify: (obj) => JSON.stringify(obj),
-            timestamp: loggerConfig.timestamp,
-        }),
-    ],
-});
+// Configure logging
+utils.configureWinston(provider.get("logger"));
 
 async function run() {
     // Connection to stored document details

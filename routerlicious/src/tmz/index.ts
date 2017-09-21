@@ -11,23 +11,8 @@ import { TmzRunner } from "./runner";
 
 const provider = nconf.argv().env(<any> "__").file(path.join(__dirname, "../../config/config.json")).use("memory");
 
-/**
- * Default logger setup
- */
-const loggerConfig = provider.get("logger");
-winston.configure({
-    transports: [
-        new winston.transports.Console({
-            colorize: loggerConfig.colorize,
-            handleExceptions: true,
-            json: loggerConfig.json,
-            label: loggerConfig.label,
-            level: loggerConfig.level,
-            stringify: (obj) => JSON.stringify(obj),
-            timestamp: loggerConfig.timestamp,
-        }),
-    ],
-});
+// Configure logging
+utils.configureWinston(provider.get("logger"));
 
 async function run() {
     // Setup Kafka connection
