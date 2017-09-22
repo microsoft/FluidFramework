@@ -13,7 +13,7 @@ interface IPendingTicket<T> {
 const StartingSequenceNumber = 0;
 
 // We expire clients after 5 minutes of no activity
-const ClientSequenceTimeout = 5 * 60 * 1000;
+export const ClientSequenceTimeout = 5 * 60 * 1000;
 
 interface IClientSequenceNumber {
     clientId: string;
@@ -158,23 +158,31 @@ export class TakeANumber {
         // Update and retrieve the minimum sequence number
         const message = objectMessage as core.IRawOperationMessage;
 
-        if (message.operation.referenceSequenceNumber < this.minimumSequenceNumber) {
-            // TODO support nacking of clients
-            // Do not assign a ticket to a message outside the MSN. We will need to NACK clients in this case.
-            winston.error(`${message.clientId} sent packet less than MSN of ${this.minimumSequenceNumber}`);
-            return Promise.resolve();
+        // Process the reference sequence number for non-system messages
+        if (message.clientId) {
+            if (message.operation.referenceSequenceNumber < this.minimumSequenceNumber) {
+                // TODO support nacking of clients
+                // Do not assign a ticket to a message outside the MSN. We will need to NACK clients in this case.
+                winston.error(`${message.clientId} sent packet less than MSN of ${this.minimumSequenceNumber}`);
+                return Promise.resolve();
+            }
+
+            this.upsertClient(
+                message.clientId,
+                message.operation.referenceSequenceNumber,
+                message.timestamp);
+        } else {
+            // The system will notify of clients leaving - in this case we can remove them from the MSN map
+            if (message.operation.type === api.ClientLeave) {
+                this.removeClient(message.operation.contents);
+            }
         }
-
-        this.upsertClient(
-            message.clientId,
-            message.operation.referenceSequenceNumber,
-            message.timestamp);
-
-        // Store the previous minimum sequene number we returned and then update it
-        this.minimumSequenceNumber = this.getMinimumSequenceNumber(objectMessage.timestamp);
 
         // Increment and grab the next sequence number
         const sequenceNumber = this.revSequenceNumber();
+
+        // Store the previous minimum sequene number we returned and then update it
+        this.minimumSequenceNumber = this.getMinimumSequenceNumber(objectMessage.timestamp);
 
         // And now craft the output message
         let outputMessage: api.ISequencedDocumentMessage = {
@@ -268,6 +276,24 @@ export class TakeANumber {
 
         // And then update its values
         this.updateClient(clientId, timestamp, referenceSequenceNumber);
+    }
+
+    /**
+     * Remoes the provided client from the list of tracked clients
+     */
+    private removeClient(clientId: string) {
+        if (!(clientId in this.clientNodeMap)) {
+            // We remove idle clients which may cause us to have already removed this client
+            return;
+        }
+
+        winston.info("Before", JSON.stringify(this.clientSeqNumbers.L));
+        // Remove the client from the list of nodes
+        const details = this.clientNodeMap[clientId];
+        this.clientSeqNumbers.remove(details);
+        delete this.clientNodeMap[clientId];
+
+        winston.info("After", JSON.stringify(this.clientSeqNumbers.L));
     }
 
     /**
