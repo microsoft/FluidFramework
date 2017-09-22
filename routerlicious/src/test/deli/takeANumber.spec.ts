@@ -78,6 +78,7 @@ describe("Routerlicious", () => {
 
                     // Create some starter messages
                     await ticketer.ticket(wrapMessage(messageFactory.createJoin(timeOffset)));
+                    assert.equal(getLastMessage().operation.minimumSequenceNumber, 0);
                     timeOffset += 1;
                     await ticketer.ticket(wrapMessage(secondMessageFactory.createJoin(timeOffset)));
                     timeOffset += 1;

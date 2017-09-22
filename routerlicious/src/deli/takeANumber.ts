@@ -178,11 +178,11 @@ export class TakeANumber {
             }
         }
 
-        // Increment and grab the next sequence number
-        const sequenceNumber = this.revSequenceNumber();
-
         // Store the previous minimum sequene number we returned and then update it
         this.minimumSequenceNumber = this.getMinimumSequenceNumber(objectMessage.timestamp);
+
+        // Increment and grab the next sequence number
+        const sequenceNumber = this.revSequenceNumber();
 
         // And now craft the output message
         let outputMessage: api.ISequencedDocumentMessage = {
@@ -287,13 +287,10 @@ export class TakeANumber {
             return;
         }
 
-        winston.info("Before", JSON.stringify(this.clientSeqNumbers.L));
         // Remove the client from the list of nodes
         const details = this.clientNodeMap[clientId];
         this.clientSeqNumbers.remove(details);
         delete this.clientNodeMap[clientId];
-
-        winston.info("After", JSON.stringify(this.clientSeqNumbers.L));
     }
 
     /**
@@ -317,6 +314,9 @@ export class TakeANumber {
 
         // Get the sequence number as tracked by the clients
         let msn = this.getClientMinimumSequenceNumber(timestamp);
+
+        // If no client MSN fall back to existing values
+        msn = msn === -1 ? (this.window ? this.window.secondaryHead : 0) : msn;
 
         // Create the window if it doesn't yet exist
         if (!this.window) {
@@ -360,6 +360,7 @@ export class TakeANumber {
             delete this.clientNodeMap[client.value.clientId];
         }
 
-        return this.sequenceNumber;
+        // No client sequence number is available
+        return -1;
     }
 }
