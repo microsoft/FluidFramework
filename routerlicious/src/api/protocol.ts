@@ -12,6 +12,12 @@ export const ObjectOperation = "objOp";
 // Attaches a new object to the document
 export const AttachObject = "attach";
 
+// System message sent to indicate a new client has joined the collaboration
+export const ClientJoin = "join";
+
+// System message sent to indicate a client has left the collaboration
+export const ClientLeave = "leave";
+
 /**
  * An envelope wraps the contents with the intended target
  */

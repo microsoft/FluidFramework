@@ -1,6 +1,6 @@
 import * as assert from "assert";
 import { DeliRunner } from "../../deli/runner";
-import { MessageFactory, TestCollection, TestKafka } from "../utils";
+import { MessageFactory, TestCollection, TestKafka } from "../testUtils";
 
 describe("Routerlicious", () => {
     describe("Deli", () => {

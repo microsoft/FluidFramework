@@ -1,6 +1,6 @@
 import * as assert from "assert";
 import * as api from "../../api";
-import * as testUtils from "../utils";
+import * as testUtils from "../testUtils";
 
 describe("Routerlicious", () => {
     describe("Api", () => {
