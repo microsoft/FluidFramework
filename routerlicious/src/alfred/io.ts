@@ -23,6 +23,13 @@ export function register(
         // Map from client IDs on this connection to the object ID for them
         const connectionsMap: { [clientId: string]: string } = {};
 
+        function sendAndTrack(message: core.IRawOperationMessage) {
+            throughput.produce();
+            const sendP = producer.send(JSON.stringify(message), message.documentId);
+            sendP.catch((error) => { return; }).then(() => throughput.acknolwedge());
+            return sendP;
+        }
+
         // Note connect is a reserved socket.io word so we use connectDocument to represent the connect request
         socket.on("connectDocument", (message: socketStorage.IConnect, response) => {
             // Join the room first to ensure the client will start receiving delta updates
@@ -44,27 +51,45 @@ export function register(
 
             documentDetailsP.then(
                 (documentDetails) => {
-                    socket.join(message.id).then(
-                        () => {
-                            const clientId = moniker.choose();
-                            connectionsMap[clientId] = message.id;
+                    socket.join(message.id).then(() => {
+                        // Create and set a new client ID
+                        const clientId = moniker.choose();
+                        connectionsMap[clientId] = message.id;
 
-                            const encrypted = documentDetails.docPrivateKey ? true : false;
+                        // Broadcast the client connection message
+                        const rawMessage: core.IRawOperationMessage = {
+                            clientId: null,
+                            documentId: message.id,
+                            operation: {
+                                clientSequenceNumber: -1,
+                                contents: clientId,
+                                encrypted: false,
+                                encryptedContents: null,
+                                referenceSequenceNumber: -1,
+                                type: api.ClientJoin,
+                            },
+                            timestamp: Date.now(),
+                            type: core.RawOperationType,
+                            userId: null,
+                        };
+                        sendAndTrack(rawMessage);
 
-                            const connectedMessage: socketStorage.IConnected = {
-                                clientId,
-                                encrypted,
-                                existing: documentDetails.existing,
-                                privateKey: documentDetails.docPrivateKey,
-                                publicKey: documentDetails.docPublicKey,
-                            };
-
-                            profiler.done(`Loaded ${message.id}`);
-                            response(null, connectedMessage);
-                        },
-                        (error) => {
+                        // And return the connection information to the client
+                        const connectedMessage: socketStorage.IConnected = {
+                            clientId,
+                            encrypted: documentDetails.docPrivateKey ? true : false,
+                            existing: documentDetails.existing,
+                            privateKey: documentDetails.docPrivateKey,
+                            publicKey: documentDetails.docPublicKey,
+                        };
+                        profiler.done(`Loaded ${message.id}`);
+                        response(null, connectedMessage);
+                    },
+                    (error) => {
+                        if (error) {
                             return response(error, null);
-                        });
+                        }
+                    });
                 }, (error) => {
                     winston.error("Error fetching", error);
                     response(error, null);
@@ -89,16 +114,39 @@ export function register(
             };
 
             throughput.produce();
-            producer.send(JSON.stringify(rawMessage), documentId).then(
+            sendAndTrack(rawMessage).then(
                 (responseMessage) => {
                     response(null, responseMessage);
-                    throughput.acknolwedge();
                 },
                 (error) => {
                     winston.error(error);
                     response(error, null);
-                    throughput.acknolwedge();
                 });
+        });
+
+        socket.on("disconnect", () => {
+            // Send notification messages for all client IDs in the connection map
+            // tslint:disable-next-line:forin
+            for (const clientId in connectionsMap) {
+                const documentId = connectionsMap[clientId];
+                const rawMessage: core.IRawOperationMessage = {
+                    clientId: null,
+                    documentId,
+                    operation: {
+                        clientSequenceNumber: -1,
+                        contents: clientId,
+                        encrypted: false,
+                        encryptedContents: null,
+                        referenceSequenceNumber: -1,
+                        type: api.ClientLeave,
+                    },
+                    timestamp: Date.now(),
+                    type: core.RawOperationType,
+                    userId: null,
+                };
+
+                sendAndTrack(rawMessage);
+            }
         });
     });
 }

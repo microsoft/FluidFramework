@@ -1,5 +1,14 @@
 import * as api from "../api";
 
+// String identifying the update reference sequence number message
+export const UpdateReferenceSequenceNumberType = "UpdateReferenceSequenceNumber";
+
+// String identifying the raw operation message
+export const RawOperationType = "RawOperation";
+
+// String identifying the sequenced operation message
+export const SequencedOperationType = "SequencedOperation";
+
 /**
  * Base class for messages placed on the distributed log
  */
@@ -26,12 +35,6 @@ export interface IObjectMessage extends IMessage {
     timestamp: number;
 }
 
-// String identifying the update reference sequence number message
-export const UpdateReferenceSequenceNumberType = "UpdateReferenceSequenceNumber";
-
-// String identifying the raw operation message
-export const RawOperationType = "RawOperation";
-
 /**
  * Message sent when a client is updating their sequence number directly
  */
@@ -52,9 +55,6 @@ export interface ITicketedMessage extends IMessage {
     // The object the message is intended for
     documentId: string;
 }
-
-// String identifying the sequenced operation message
-export const SequencedOperationType = "SequencedOperation";
 
 /**
  * A sequenced operation

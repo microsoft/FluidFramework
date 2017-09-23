@@ -3,7 +3,7 @@ import * as nconf from "nconf";
 import * as path from "path";
 import * as io from "../../alfred/io";
 import { MongoManager } from "../../utils";
-import { TestDbFactory, TestKafka, TestWebSocketServer } from "../utils";
+import { TestDbFactory, TestKafka, TestWebSocketServer } from "../testUtils";
 
 const defaultConfig = nconf.file(path.join(__dirname, "../../../config.test.json")).use("memory");
 

@@ -55,6 +55,21 @@ export class Heap<T> {
         }
     }
 
+    /**
+     * Removes the given node from the heap
+     */
+    public remove(node: IHeapNode<T>) {
+        // Move the node we want to remove to the end of the array
+        const position = node.position;
+        this.swap(node.position, this.L.length - 1);
+        this.L.splice(this.L.length - 1);
+
+        // Update the swapped node assuming we didn't remove the end of the list
+        if (position !== this.L.length) {
+            this.update(this.L[position]);
+        }
+    }
+
     public count() {
         return this.L.length - 1;
     }

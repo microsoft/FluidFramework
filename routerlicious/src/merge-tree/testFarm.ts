@@ -69,7 +69,7 @@ export class DocumentTree {
             if (docNode.name === "pg") {
                 client.insertMarkerLocal(this.pos, ops.MarkerBehaviors.Tile,
                     {
-                        [MergeTree.reservedMarkerLabelsKey]: [docNode.name],
+                        [MergeTree.reservedTileLabelsKey]: [docNode.name],
                     },
                 );
                 this.pos++;
@@ -77,12 +77,17 @@ export class DocumentTree {
                 let trid = docNode.name + this.ids[docNode.name].toString();
                 docNode.id = trid;
                 id = this.ids[docNode.name]++;
-                client.insertMarkerLocal(this.pos, ops.MarkerBehaviors.RangeBegin,
-                    {
-                        [MergeTree.reservedMarkerIdKey]: trid,
-                        [MergeTree.reservedMarkerLabelsKey]: [docNode.name],
-                    },
-                );
+                let props = {
+                    [MergeTree.reservedMarkerIdKey]: trid,
+                    [MergeTree.reservedRangeLabelsKey]: [docNode.name],
+                };
+                let behaviors = ops.MarkerBehaviors.RangeBegin;
+                if (docNode.name === "row") {
+                    props[MergeTree.reservedTileLabelsKey] = ["pg"];
+                    behaviors |= ops.MarkerBehaviors.Tile;
+                }
+
+                client.insertMarkerLocal(this.pos, behaviors, props);
                 this.pos++;
             }
             for (let child of docNode.children) {
@@ -93,7 +98,7 @@ export class DocumentTree {
                 client.insertMarkerLocal(this.pos, ops.MarkerBehaviors.RangeEnd,
                     {
                         [MergeTree.reservedMarkerIdKey]: etrid,
-                        [MergeTree.reservedMarkerLabelsKey]: [docNode.name],
+                        [MergeTree.reservedRangeLabelsKey]: [docNode.name],
                     },
                 );
                 this.pos++;
@@ -102,6 +107,7 @@ export class DocumentTree {
     }
 
     checkStacksAllPositions(client: MergeTree.Client) {
+        let errorCount = 0;
         let pos = 0;
         let verbose = false;
         let stacks = {
@@ -124,6 +130,7 @@ export class DocumentTree {
 
         function checkTreeStackEmpty(treeStack: Collections.Stack<string>) {
             if (!treeStack.empty()) {
+                errorCount++;
                 console.log("mismatch: client stack empty; tree stack not");
             }
         }
@@ -146,11 +153,13 @@ export class DocumentTree {
                         if (len > 0) {
                             if (len !== treeStack.items.length) {
                                 console.log(`stack length mismatch cli ${len} tree ${treeStack.items.length}`);
+                                errorCount++;
                             }
                             for (let i = 0; i < len; i++) {
                                 let cliMarkerId = cliStack.items[i].getId();
                                 let treeMarkerId = treeStack.items[i];
                                 if (cliMarkerId !== treeMarkerId) {
+                                    errorCount++;
                                     console.log(`mismatch index ${i}: ${cliMarkerId} !== ${treeMarkerId} pos ${pos} text ${text}`);
                                     printStack(treeStack);
                                     console.log(client.mergeTree.toString());
@@ -179,11 +188,37 @@ export class DocumentTree {
             }
         }
 
+        let prevPos = -1;
+        let prevChild: DocumentNode;
+
+        // console.log(client.mergeTree.toString());
         for (let rootChild of this.children) {
-            console.log(`next child ${pos} with name ${docNodeToString(rootChild)}`);
+            if (prevPos >= 0) {
+                if ((typeof prevChild !== "string") && (prevChild.name === "row")) {
+                    let id = prevChild.id;
+                    let endId = "end-" + id;
+                    let endRowMarker = <MergeTree.Marker>client.mergeTree.getSegmentFromId(endId);
+                    let endRowPos = client.mergeTree.getOffset(endRowMarker, MergeTree.UniversalSequenceNumber,
+                        client.getClientId());
+                    prevPos = endRowPos;
+                }
+                let tilePos = client.mergeTree.findTile(prevPos, client.getClientId(), "pg", false);
+                if (tilePos) {
+                    if (tilePos.pos !== pos) {
+                        errorCount++;
+                        console.log(`next tile ${tilePos.tile} found from pos ${prevPos} at ${tilePos.pos} compare to ${pos}`);
+                    }
+                }
+            }
+            if (verbose) {
+                console.log(`next child ${pos} with name ${docNodeToString(rootChild)}`);
+            }
+            prevPos = pos;
+            prevChild = rootChild;
             // printStacks();
             checkNodeStacks(rootChild);
         }
+        return errorCount;
     }
 
     private generateClient() {
@@ -198,8 +233,7 @@ export class DocumentTree {
     static test1() {
         let doc = DocumentTree.generateDocument();
         let client = doc.generateClient();
-        doc.checkStacksAllPositions(client);
-        // console.log(client.mergeTree.toString());
+        return doc.checkStacksAllPositions(client);
     }
 
     static generateDocument() {

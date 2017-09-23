@@ -133,4 +133,7 @@ From there you can use your git repository management tool of choice to inspect 
 stored in the repository.
 
 ## Alerting
-We are using [elastalert](https://github.com/Yelp/elastalert) plugin to send email alerts on production failures and errors. The plugin scans data from elasticsearch and looks for anomalies/patterns/spikes. Checkout the [documentation](http://elastalert.readthedocs.io/en/latest/) for creating new alert rules. 
+We are using [elastalert](https://github.com/Yelp/elastalert) plugin to send email alerts on production failures and errors. The plugin scans data from elasticsearch and looks for anomalies/patterns/spikes. Checkout the [documentation](http://elastalert.readthedocs.io/en/latest/) for creating new alert rules.
+
+### Alerting on Error
+To receive service side error alerts, just print the error message in console using `winston.error('message')`. Elastalert aggregates all error messages for last hour and sends an email. Kibana dashboard can also be filtered down to just error messages (search for 'level:error').
