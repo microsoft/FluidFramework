@@ -57,7 +57,7 @@ enum CharacterCodes {
     space = 0x0020,   // " "
 }
 
-interface IParagraphInfo { 
+interface IParagraphInfo {
     breaks: number[];
     minWidth: number;
     singleLineWidth: number;
@@ -520,15 +520,16 @@ const enum ParagraphLexerState {
     AccumSpaces,
 }
 
-type ParagraphTokenAction = (text: string, type: ParagraphItemType, leadSegment: SharedString.TextSegment) => void;
+type ParagraphTokenAction<TContext> =
+    (text: string, type: ParagraphItemType, leadSegment: SharedString.TextSegment, context?: TContext) => void;
 
-class ParagraphLexer {
+class ParagraphLexer<TContext> {
     public state = ParagraphLexerState.AccumBlockChars;
     private spaceCount = 0;
     private textBuf = "";
     private leadSegment: SharedString.TextSegment;
 
-    constructor(public tokenAction: ParagraphTokenAction) {
+    constructor(public tokenAction: ParagraphTokenAction<TContext>, public actionContext?: TContext) {
     }
 
     public reset() {
@@ -575,14 +576,15 @@ class ParagraphLexer {
 
     private emitGlue() {
         if (this.spaceCount > 0) {
-            this.tokenAction(SharedString.internedSpaces(this.spaceCount), ParagraphItemType.Glue, this.leadSegment);
+            this.tokenAction(SharedString.internedSpaces(this.spaceCount), ParagraphItemType.Glue,
+                this.leadSegment, this.actionContext);
             this.spaceCount = 0;
         }
     }
 
     private emitBlock() {
         if (this.textBuf.length > 0) {
-            this.tokenAction(this.textBuf, ParagraphItemType.Block, this.leadSegment);
+            this.tokenAction(this.textBuf, ParagraphItemType.Block, this.leadSegment, this.actionContext);
             this.textBuf = "";
         }
     }
@@ -600,6 +602,38 @@ interface ILineContext {
     pgMarker: IParagraphMarker;
     markerPos: number;
     viewportBounds: Geometry.Rectangle;
+}
+
+interface IDocumentContext {
+    wordSpacing: number;
+    headerFontstr: string;
+    headerDivHeight: number;
+    fontstr: string;
+    defaultLineDivHeight: number;
+    pgVspace: number;
+}
+
+interface IItemsContext {
+    docContext?: IDocumentContext;
+    startPGMarker: IParagraphMarker;
+    items: ParagraphItem[];
+    paragraphLexer: ParagraphLexer<IItemsContext>;
+}
+
+function buildDocumentContext(viewportDiv: HTMLDivElement) {
+    let fontstr = "18px Times";
+    let headerFontstr = "22px Times";
+    let wordSpacing = getTextWidth(" ", fontstr);
+    let headerDivHeight = 32;
+    let computedStyle = window.getComputedStyle(viewportDiv);
+    let defaultLineHeight = 1.2;
+    let h = parseInt(computedStyle.fontSize, 10);
+    let defaultLineDivHeight = Math.round(h * defaultLineHeight);
+    let pgVspace = Math.round(h * 0.5);
+
+    return <IDocumentContext>{
+        fontstr, headerFontstr, wordSpacing, headerDivHeight, defaultLineDivHeight, pgVspace,
+    };
 }
 
 function showPresence(presenceX: number, lineContext: ILineContext, presenceInfo: IPresenceInfo) {
@@ -1022,15 +1056,26 @@ function parseBox(boxStartPos: number, flowView: FlowView) {
         if (marker.hasRangeLabel("table")) {
             let tableMarker = <ITableMarker>marker;
             parseTable(tableMarker, nextPos, flowView);
-            if (tableMarker.cache.minContentWidth>boxMarker.cache.minContentWidth) {
+            if (tableMarker.cache.minContentWidth > boxMarker.cache.minContentWidth) {
                 boxMarker.cache.minContentWidth = tableMarker.cache.minContentWidth;
             }
             let endTableMarker = tableMarker.cache.endTableMarker;
             nextPos = mergeTree.getOffset(endTableMarker, SharedString.UniversalSequenceNumber, flowView.client.getClientId());
             nextPos += endTableMarker.cachedLength;
         } else {
-            // assume marker is pg
-            // let pgMarker = <IParagraphMarker>marker;
+            let pgMarker = <IParagraphMarker>marker;
+            if (!pgMarker.cache) {
+                let itemsContext = <IItemsContext>{
+                    items: [],
+                    docContext: undefined,  
+                    startPGMarker: pgMarker,
+                };
+                let paragraphLexer = new ParagraphLexer(tokenToItems, itemsContext);
+                itemsContext.paragraphLexer = paragraphLexer;
+            
+                mergeTree.mapRange({ leaf: segmentToItems }, SharedString.UniversalSequenceNumber,
+                    flowView.client.getClientId(), itemsContext, nextPos);
+            }
 
         }
 
@@ -1100,27 +1145,71 @@ function renderTreeFromPosition(viewportDiv: HTMLDivElement, startingPosition: n
 
 }
 
+function tokenToItems(text: string, type: ParagraphItemType, leadSegment: SharedString.TextSegment,
+    itemsContext: IItemsContext) {
+    let docContext = itemsContext.docContext;
+    let lfontstr = docContext.fontstr;
+    let divHeight = docContext.defaultLineDivHeight;
+    if (itemsContext.startPGMarker.properties && (itemsContext.startPGMarker.properties.header !== undefined)) {
+        lfontstr = docContext.headerFontstr;
+        divHeight = docContext.headerDivHeight;
+    }
+    if (leadSegment.properties) {
+        let fontSize = leadSegment.properties.fontSize;
+        if (fontSize !== undefined) {
+            lfontstr = `${fontSize} Times`;
+            divHeight = +fontSize;
+        }
+        let lineHeight = leadSegment.properties.lineHeight;
+        if (lineHeight !== undefined) {
+            divHeight = +lineHeight;
+        }
+        let fontStyle = leadSegment.properties.fontStyle;
+        if (fontStyle) {
+            lfontstr = fontStyle + " " + lfontstr;
+        }
+    }
+
+    let textWidth = getTextWidth(text, lfontstr);
+    if (type === ParagraphItemType.Block) {
+        let block = makeIPGBlock(textWidth, text, leadSegment);
+        if (divHeight !== itemsContext.docContext.defaultLineDivHeight) {
+            block.height = divHeight;
+        }
+        itemsContext.items.push(makeIPGBlock(textWidth, text, leadSegment));
+    } else {
+        itemsContext.items.push(makeGlue(textWidth, text, leadSegment,
+            docContext.wordSpacing / 2, docContext.wordSpacing / 3));
+    }
+}
+
+function segmentToItems(segment: SharedString.Segment, segpos: number, refSeq: number, clientId: number,
+    start: number, end: number, context: IItemsContext) {
+    if (segment.getType() === SharedString.SegmentType.Text) {
+        let textSegment = <SharedString.TextSegment>segment;
+        context.paragraphLexer.lex(textSegment);
+    } else if (segment.getType() === SharedString.SegmentType.Marker) {
+        let marker = <SharedString.Marker>segment;
+        if (marker.hasTileLabel("pg")) {
+            return false;
+        }
+    }
+    return true;
+}
+
 function renderTree(viewportDiv: HTMLDivElement, startingPosition: number, client: SharedString.Client, flowView: FlowView, heightLimit = 0) {
-    let fontstr = "18px Times";
-    let headerFontstr = "22px Times";
+    let docContext = buildDocumentContext(viewportDiv);
     // TODO: for stable viewports cache the geometry and the divs 
     // TODO: cache all this pre-amble in style blocks; override with pg properties 
     let viewportBounds = Geometry.Rectangle.fromClientRect(viewportDiv.getBoundingClientRect());
     let pgCount = 0;
-    viewportDiv.style.font = fontstr;
-    let computedStyle = window.getComputedStyle(viewportDiv);
-    let defaultLineHeight = 1.2;
+    viewportDiv.style.font = docContext.fontstr;
     let viewportHeight = parseInt(viewportDiv.style.height, 10);
     if (heightLimit === 0) {
         heightLimit = viewportHeight;
     }
     let viewportWidth = parseInt(viewportDiv.style.width, 10);
-    let h = parseInt(computedStyle.fontSize, 10);
-    let defaultLineDivHeight = Math.round(h * defaultLineHeight);
-    let pgVspace = Math.round(h * 0.5);
-    let headerDivHeight = 32;
     let currentLineTop = 0;
-    let wordSpacing = getTextWidth(" ", fontstr);
     let viewportStartPos = -1;
     let lineCount = 0;
     let lastLineDiv = undefined;
@@ -1133,67 +1222,23 @@ function renderTree(viewportDiv: HTMLDivElement, startingPosition: number, clien
         return lineDiv;
     };
 
-    let items: ParagraphItem[];
-
-    function tokenToItems(text: string, type: ParagraphItemType, leadSegment: SharedString.TextSegment) {
-        let lfontstr = fontstr;
-        let divHeight = defaultLineDivHeight;
-        if (startPGMarker.properties && (startPGMarker.properties.header !== undefined)) {
-            lfontstr = headerFontstr;
-            divHeight = headerDivHeight;
-        }
-        if (leadSegment.properties) {
-            let fontSize = leadSegment.properties.fontSize;
-            if (fontSize !== undefined) {
-                lfontstr = `${fontSize} Times`;
-                divHeight = +fontSize;
-            }
-            let lineHeight = leadSegment.properties.lineHeight;
-            if (lineHeight !== undefined) {
-                divHeight = +lineHeight;
-            }
-            let fontStyle = leadSegment.properties.fontStyle;
-            if (fontStyle) {
-                lfontstr = fontStyle + " " + lfontstr;
-            }
-        }
-
-        let textWidth = getTextWidth(text, lfontstr);
-        if (type === ParagraphItemType.Block) {
-            let block = makeIPGBlock(textWidth, text, leadSegment);
-            if (divHeight !== defaultLineDivHeight) {
-                block.height = divHeight;
-            }
-            items.push(makeIPGBlock(textWidth, text, leadSegment));
-        } else {
-            items.push(makeGlue(textWidth, text, leadSegment, wordSpacing / 2, wordSpacing / 3));
-        }
-    }
-
     let pgMarker: IParagraphMarker;
     let startPGMarker: IParagraphMarker;
     let markerPos: number;
-    let paragraphLexer = new ParagraphLexer(tokenToItems);
+    let itemsContext = <IItemsContext>{
+        items: [],
+        docContext,
+        startPGMarker,
+    };
+    let paragraphLexer = new ParagraphLexer(tokenToItems, itemsContext);
+    itemsContext.paragraphLexer = paragraphLexer;
     textErrorRun = undefined;
-
-    function segmentToItems(segment: SharedString.Segment, segpos: number) {
-        if (segment.getType() === SharedString.SegmentType.Text) {
-            let textSegment = <SharedString.TextSegment>segment;
-            paragraphLexer.lex(textSegment);
-        } else if (segment.getType() === SharedString.SegmentType.Marker) {
-            let marker = <SharedString.Marker>segment;
-            if (marker.hasTileLabel("pg")) {
-                return false;
-            }
-        }
-        return true;
-    }
 
     function renderPG(curPGMarker: IParagraphMarker, curPGPos: number, indentWidth: number, indentSymbol: ISymbol,
         contentWidth: number) {
         let pgBreaks = curPGMarker.cache.breaks;
         let lineDiv: ILineDiv;
-        let lineDivHeight = defaultLineDivHeight;
+        let lineDivHeight = docContext.defaultLineDivHeight;
         let span: HTMLSpanElement;
 
         for (let breakIndex = 0, len = pgBreaks.length; breakIndex < len; breakIndex++) {
@@ -1204,13 +1249,13 @@ function renderTree(viewportDiv: HTMLDivElement, startingPosition: number, clien
             } else {
                 lineEnd = undefined;
             }
-            let lineFontstr = fontstr;
-            lineDivHeight = defaultLineDivHeight;
+            let lineFontstr = docContext.fontstr;
+            lineDivHeight = docContext.defaultLineDivHeight;
             if ((lineEnd === undefined) || (lineEnd > startingPosition)) {
                 if (curPGMarker.properties && (curPGMarker.properties.header !== undefined)) {
                     // TODO: header levels
-                    lineDivHeight = headerDivHeight;
-                    lineFontstr = headerFontstr;
+                    lineDivHeight = docContext.headerDivHeight;
+                    lineFontstr = docContext.headerFontstr;
                 }
                 lineDiv = makeLineDiv(new Geometry.Rectangle(0, currentLineTop, viewportWidth, lineDivHeight),
                     lineFontstr);
@@ -1241,7 +1286,7 @@ function renderTree(viewportDiv: HTMLDivElement, startingPosition: number, clien
 
                 currentLineTop += lineDivHeight;
             }
-            if ((heightLimit - currentLineTop) < defaultLineDivHeight) {
+            if ((heightLimit - currentLineTop) < docContext.defaultLineDivHeight) {
                 // no more room for lines
                 // TODO: record end viewport char
                 break;
@@ -1256,7 +1301,8 @@ function renderTree(viewportDiv: HTMLDivElement, startingPosition: number, clien
     let startPGPos: number;
     let totalLength = client.getLength();
     do {
-        items = [];
+        itemsContext.items = [];
+        itemsContext.startPGMarker = pgMarker;
         startPGMarker = pgMarker;
         pgMarker = undefined;
         startPGPos = markerPos + 1;
@@ -1294,15 +1340,15 @@ function renderTree(viewportDiv: HTMLDivElement, startingPosition: number, clien
             }
             if ((!startPGMarker.cache) || (startPGMarker.cache.singleLineWidth !== contentWidth)) {
                 client.mergeTree.mapRange({ leaf: segmentToItems }, SharedString.UniversalSequenceNumber,
-                    client.getClientId(), undefined, startPGPos);
-                let breakInfo = breakPGIntoLinesFF(items, contentWidth);
+                    client.getClientId(), itemsContext, startPGPos);
+                let breakInfo = breakPGIntoLinesFF(itemsContext.items, contentWidth);
                 startPGMarker.cache = { breaks: breakInfo.breaks, minWidth: breakInfo.minWidth, singleLineWidth: contentWidth };
             }
             pgCount++;
             paragraphLexer.reset();
             if (startPGPos < (totalLength - 1)) {
                 renderPG(startPGMarker, startPGPos, indentWidth, indentSymbol, contentWidth);
-                currentLineTop += pgVspace;
+                currentLineTop += docContext.pgVspace;
             } else {
                 if (lastLineDiv) {
                     lastLineDiv.lineEnd = startPGPos + 1;
@@ -1319,7 +1365,7 @@ function renderTree(viewportDiv: HTMLDivElement, startingPosition: number, clien
                 }
             }
         }
-    } while ((pgMarker !== undefined) && ((heightLimit - currentLineTop) >= defaultLineDivHeight));
+    } while ((pgMarker !== undefined) && ((heightLimit - currentLineTop) >= docContext.defaultLineDivHeight));
     flowView.viewportStartPos = viewportStartPos;
     flowView.viewportEndPos = startPGMarker.cache.endOffset + startPGPos;
 }

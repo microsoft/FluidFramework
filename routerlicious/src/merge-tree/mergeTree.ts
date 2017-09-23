@@ -412,8 +412,22 @@ export class Marker extends BaseSegment {
     }
 
     toString() {
-        let mask = ops.MarkerBehaviors.Tile | ops.MarkerBehaviors.RangeBegin | ops.MarkerBehaviors.RangeEnd;
-        let bbuf = ops.MarkerBehaviors[this.behaviors & mask];
+        let bbuf = "";
+        if (this.behaviors&ops.MarkerBehaviors.Tile) {
+            bbuf += "Tile";
+        }
+        if (this.behaviors&ops.MarkerBehaviors.RangeBegin) {
+            if (bbuf.length>0) {
+                bbuf+="; ";
+            }
+            bbuf += "RangeBegin";
+        }
+        if (this.behaviors&ops.MarkerBehaviors.RangeEnd) {
+            if (bbuf.length>0) {
+                bbuf+="; ";
+            }
+            bbuf += "RangeEnd";
+        }
         let lbuf = "";
         let id = this.getId();
         if (id) {
@@ -435,7 +449,10 @@ export class Marker extends BaseSegment {
             if (this.behaviors&ops.MarkerBehaviors.RangeEnd) {
                 rangeKind = "end";
             }
-            lbuf += `range ${rangeKind}-- `;
+            if (this.hasTileLabels()) {
+                lbuf+=" ";
+            }
+            lbuf += `range ${rangeKind} -- `;
             let labels = this.properties[reservedRangeLabelsKey];
             for (let i = 0, len = labels.length; i < len; i++) {
                 let rangeLabel = labels[i];
