@@ -3,7 +3,7 @@ import * as path from "path";
 import * as supertest from "supertest";
 import * as app from "../../alfred/app";
 import { MongoManager } from "../../utils";
-import { TestDbFactory, TestHistorian } from "../utils";
+import { TestDbFactory, TestHistorian } from "../testUtils";
 
 const defaultConfig = nconf.file(path.join(__dirname, "../../../config.test.json")).use("memory");
 
