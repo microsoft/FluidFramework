@@ -59,7 +59,7 @@ describe("Routerlicious", () => {
                     }
                     await runner.stop();
 
-                    assert.equal(sendTopic.getMessages().length, TestMessages);
+                    assert.equal(sendTopic.getRawMessages().length, TestMessages);
 
                     return started;
                 });

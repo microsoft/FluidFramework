@@ -1,23 +1,38 @@
 // import * as supertest from "supertest";
+import { EventEmitter } from "events";
 import * as core from "../../core";
 
 export class TestWebSocket implements core.IWebSocket {
+    private events = new EventEmitter();
+
     public on(event: string, listener: (...args: any[]) => void) {
-        // Fill me in
+        this.events.on(event, listener);
     }
 
     public async join(id: string): Promise<void> {
         return Promise.resolve();
     }
+
+    public send(event: string, ...args: any[]) {
+        this.events.emit(event, ...args);
+    }
 }
 
 export class TestWebSocketServer implements core.IWebSocketServer {
+    private events = new EventEmitter();
+
     public on(event: string, listener: (...args: any[]) => void) {
-        // Fill me in
+        this.events.on(event, listener);
     }
 
     public async close(): Promise<void> {
         return Promise.resolve();
+    }
+
+    public createConnection(): TestWebSocket {
+        const socket = new TestWebSocket();
+        this.events.emit("connection", socket);
+        return socket;
     }
 }
 
