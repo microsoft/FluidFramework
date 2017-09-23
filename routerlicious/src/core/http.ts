@@ -1,7 +1,9 @@
 import * as http from "http";
 
+export type RequestListener = (request: http.IncomingMessage, response: http.ServerResponse) => void;
+
 export interface IWebServerFactory {
-    create(requestListener: (request: http.IncomingMessage, response: http.ServerResponse) => void): IWebServer;
+    create(requestListener: RequestListener): IWebServer;
 }
 
 export interface IWebSocket {

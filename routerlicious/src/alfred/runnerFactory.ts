@@ -2,6 +2,7 @@ import * as git from "gitresources";
 import * as _ from "lodash";
 import { Provider } from "nconf";
 import * as redis from "redis";
+import * as util from "util";
 import * as services from "../services";
 import * as clientServices from "../services-client";
 import * as utils from "../utils";
@@ -42,8 +43,12 @@ export class AlfredResources implements utils.IResources {
         this.webServerFactory = new services.WebServerFactory(this.pub, this.sub);
     }
 
-    public dispose(): Promise<void> {
-        return this.mongoManager.close();
+    public async dispose(): Promise<void> {
+        const producerClosedP = this.producer.close();
+        const pubClosedP = util.promisify(((callback) => this.pub.quit(callback)) as Function)();
+        const subClosedP = util.promisify(((callback) => this.sub.quit(callback)) as Function)();
+        const mongoClosedP = this.mongoManager.close();
+        await Promise.all([producerClosedP, pubClosedP, subClosedP, mongoClosedP]);
     }
 }
 
