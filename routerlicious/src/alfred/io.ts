@@ -1,9 +1,5 @@
-import * as _ from "lodash";
 import * as moniker from "moniker";
 import { Provider } from "nconf";
-import * as redis from "redis";
-import * as socketIo from "socket.io";
-import * as socketIoRedis from "socket.io-redis";
 import * as winston from "winston";
 import * as api from "../api";
 import * as core from "../core";
@@ -11,45 +7,16 @@ import * as socketStorage from "../socket-storage";
 import * as utils from "../utils";
 import * as storage from "./storage";
 
-export function create(config: Provider, mongoManager: utils.MongoManager) {
-    let io = socketIo();
+export function register(
+    webSocketServer: core.IWebSocketServer,
+    config: Provider,
+    mongoManager: utils.MongoManager,
+    producer: utils.kafkaProducer.IProducer,
+    documentsCollectionName: string) {
 
-    // Group this into some kind of an interface
-    const kafkaEndpoint = config.get("kafka:lib:endpoint");
-    const kafkaLibrary = config.get("kafka:lib:name");
-    const kafkaClientId = config.get("alfred:kafkaClientId");
-    const topic = config.get("alfred:topic");
-
-    const historian = config.get("git:historian");
-    const historianBranch = config.get("git:repository");
-
-    // Setup redis
-    let host = config.get("redis:host");
-    let port = config.get("redis:port");
-    let pass = config.get("redis:pass");
-
-    let options: any = { auth_pass: pass };
-    if (config.get("redis:tls")) {
-        options.tls = {
-            servername: host,
-        };
-    }
-
-    let pubOptions = _.clone(options);
-    let subOptions = _.clone(options);
-
-    let pub = redis.createClient(port, host, pubOptions);
-    let sub = redis.createClient(port, host, subOptions);
-    io.adapter(socketIoRedis({ pubClient: pub, subClient: sub }));
-
-    // Connection to stored document details
-    const documentsCollectionName = config.get("mongo:collectionNames:documents");
-
-    // Producer used to publish messages
-    const producer = utils.kafkaProducer.create(kafkaLibrary, kafkaEndpoint, kafkaClientId, topic);
     const throughput = new utils.ThroughputCounter(winston.info);
 
-    io.on("connection", (socket) => {
+    webSocketServer.on("connection", (socket: core.IWebSocket) => {
         const connectionProfiler = winston.startTimer();
         connectionProfiler.logger.info(`New socket.io connection`);
 
@@ -76,8 +43,6 @@ export function create(config: Provider, mongoManager: utils.MongoManager) {
              */
 
             const documentDetailsP = storage.getOrCreateDocument(
-                historian,
-                historianBranch,
                 mongoManager,
                 documentsCollectionName,
                 message.id,
@@ -86,11 +51,7 @@ export function create(config: Provider, mongoManager: utils.MongoManager) {
 
             documentDetailsP.then(
                 (documentDetails) => {
-                    socket.join(message.id, (joinError) => {
-                        if (joinError) {
-                            return response(joinError, null);
-                        }
-
+                    socket.join(message.id).then(() => {
                         // Create and set a new client ID
                         const clientId = moniker.choose();
                         connectionsMap[clientId] = message.id;
@@ -100,11 +61,11 @@ export function create(config: Provider, mongoManager: utils.MongoManager) {
                             clientId: null,
                             documentId: message.id,
                             operation: {
-                                clientSequenceNumber: -1,
+                                clientSequenceNumber: 0,
                                 contents: clientId,
                                 encrypted: false,
                                 encryptedContents: null,
-                                referenceSequenceNumber: -1,
+                                referenceSequenceNumber: 0,
                                 type: api.ClientJoin,
                             },
                             timestamp: Date.now(),
@@ -123,6 +84,11 @@ export function create(config: Provider, mongoManager: utils.MongoManager) {
                         };
                         profiler.done(`Loaded ${message.id}`);
                         response(null, connectedMessage);
+                    },
+                    (error) => {
+                        if (error) {
+                            return response(error, null);
+                        }
                     });
                 }, (error) => {
                     winston.error("Error fetching", error);
@@ -183,6 +149,4 @@ export function create(config: Provider, mongoManager: utils.MongoManager) {
             }
         });
     });
-
-    return io;
 }

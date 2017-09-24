@@ -12,23 +12,31 @@ export class TestCollection implements ICollection<any> {
     }
 
     public findOne(id: string): Promise<any> {
-        const returnValue = this.collection.find((value) => value._id === id);
-        return Promise.resolve(returnValue === undefined ? null : returnValue);
+        return Promise.resolve(this.findOneInternal(id));
     }
 
     public async upsert(id: string, values: any): Promise<void> {
-        let value = await this.findOne(id);
+        let value = this.findOneInternal(id);
         if (!value) {
             value = {
                 _id: id,
             };
+            this.collection.push(value);
         }
 
-        this.collection[id] = _.extend(value, values);
+        _.extend(value, values);
     }
 
-    public insertOne(id: string, values: any): Promise<any> {
-        throw new Error("Method not implemented.");
+    public async insertOne(id: string, values: any): Promise<any> {
+        if (this.findOneInternal(id) !== null) {
+            return Promise.resolve("existing object");
+        }
+
+        let value = {
+            _id: id,
+        };
+        value = _.extend(value, values);
+        this.collection.push(value);
     }
 
     public insertMany(values: any[], ordered: boolean): Promise<void> {
@@ -37,6 +45,11 @@ export class TestCollection implements ICollection<any> {
 
     public createIndex(index: any, unique: boolean): Promise<void> {
         throw new Error("Method not implemented.");
+    }
+
+    private findOneInternal(id: string): any {
+        const returnValue = this.collection.find((value) => value._id === id);
+        return returnValue === undefined ? null : returnValue;
     }
 }
 
@@ -55,7 +68,11 @@ export class TestDb implements IDb {
     }
 
     public collection<T>(name: string): ICollection<T> {
-        const collection = name in this.collections ? this.collections[name] : [];
+        if (!(name in this.collections)) {
+            this.collections[name] = [];
+        }
+
+        const collection = this.collections[name];
         return new TestCollection(collection);
     }
 }

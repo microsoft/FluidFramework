@@ -1,7 +1,7 @@
 import * as socketStorage from ".";
 import * as api from "../api";
 import { GitManager } from "../git-storage";
-import { Historian } from "../services";
+import { Historian } from "../services-client";
 
 export function getDefaultService(deltaUrl: string, blobUrl: string, repository: string): api.IDocumentService {
     const historian = new Historian(blobUrl);

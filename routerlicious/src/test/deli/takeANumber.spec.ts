@@ -26,11 +26,6 @@ describe("Routerlicious", () => {
                 };
             }
 
-            function getLastMessage(): core.ISequencedOperationMessage {
-                const sent = testKafka.getMessages();
-                return JSON.parse(sent[sent.length - 1].value.toString()) as core.ISequencedOperationMessage;
-            }
-
             beforeEach(() => {
                 testCollection = new TestCollection(testData);
                 testKafka =  new TestKafka();
@@ -45,7 +40,7 @@ describe("Routerlicious", () => {
                     const message = messageFactory.create();
                     await ticketer.ticket(wrapMessage(message));
 
-                    const sent = testKafka.getMessages();
+                    const sent = testKafka.getRawMessages();
                     assert.equal(1, sent.length);
                     const sequencedMessage = JSON.parse(sent[0].value.toString()) as core.ISequencedOperationMessage;
                     assert.equal(sequencedMessage.documentId, testId);
@@ -63,12 +58,12 @@ describe("Routerlicious", () => {
                     // Have test client create some existing messages
                     await ticketer.ticket(wrapMessage(messageFactory.create(10, 2000)));
                     await ticketer.ticket(wrapMessage(messageFactory.create(20, 2100)));
-                    assert.equal(getLastMessage().operation.minimumSequenceNumber, 10);
+                    assert.equal(testKafka.getLastMessage().operation.minimumSequenceNumber, 10);
 
                     // And then have a new client go under the latest working set msn but above the published msn
                     await ticketer.ticket(wrapMessage(secondMessageFactory.create(15, 2200)));
                     await ticketer.ticket(wrapMessage(messageFactory.create(22, 2400)));
-                    assert.equal(getLastMessage().operation.minimumSequenceNumber, 10);
+                    assert.equal(testKafka.getLastMessage().operation.minimumSequenceNumber, 10);
                 });
 
                 it("Should remove clients after a disconnect", async () => {
@@ -78,14 +73,14 @@ describe("Routerlicious", () => {
 
                     // Create some starter messages
                     await ticketer.ticket(wrapMessage(messageFactory.createJoin(timeOffset)));
-                    assert.equal(getLastMessage().operation.minimumSequenceNumber, 0);
+                    assert.equal(testKafka.getLastMessage().operation.minimumSequenceNumber, 0);
                     timeOffset += 1;
                     await ticketer.ticket(wrapMessage(secondMessageFactory.createJoin(timeOffset)));
                     timeOffset += 1;
                     await ticketer.ticket(wrapMessage(messageFactory.create(10, timeOffset)));
                     timeOffset += shared.constants.MinSequenceNumberWindow;
                     await ticketer.ticket(wrapMessage(secondMessageFactory.create(15, timeOffset)));
-                    assert.equal(getLastMessage().operation.minimumSequenceNumber, 10);
+                    assert.equal(testKafka.getLastMessage().operation.minimumSequenceNumber, 10);
 
                     // Have the first client leave and the second message queue a message to
                     // force the MSN window to move
@@ -93,12 +88,12 @@ describe("Routerlicious", () => {
                     await ticketer.ticket(wrapMessage(messageFactory.createLeave(timeOffset)));
                     timeOffset += shared.constants.MinSequenceNumberWindow;
                     await ticketer.ticket(wrapMessage(secondMessageFactory.create(20, timeOffset)));
-                    assert.equal(getLastMessage().operation.minimumSequenceNumber, 15);
+                    assert.equal(testKafka.getLastMessage().operation.minimumSequenceNumber, 15);
 
                     // And then have the second client leave
                     timeOffset += shared.constants.MinSequenceNumberWindow;
                     await ticketer.ticket(wrapMessage(secondMessageFactory.createLeave(timeOffset)));
-                    assert.equal(getLastMessage().operation.minimumSequenceNumber, 20);
+                    assert.equal(testKafka.getLastMessage().operation.minimumSequenceNumber, 20);
 
                     // Add in a third client to check that both clients are gone
                     const thirdMessageFactory = new MessageFactory(testId, "test3");
@@ -106,20 +101,20 @@ describe("Routerlicious", () => {
                     await ticketer.ticket(wrapMessage(thirdMessageFactory.create(30, timeOffset)));
                     timeOffset += shared.constants.MinSequenceNumberWindow;
                     await ticketer.ticket(wrapMessage(thirdMessageFactory.create(31, timeOffset)));
-                    assert.equal(getLastMessage().operation.minimumSequenceNumber, 30);
+                    assert.equal(testKafka.getLastMessage().operation.minimumSequenceNumber, 30);
                 });
 
                 it("Should timeout idle clients", async () => {
                     const secondMessageFactory = new MessageFactory(testId, "test2");
                     await ticketer.ticket(wrapMessage(messageFactory.create(10, 0)));
                     await ticketer.ticket(wrapMessage(secondMessageFactory.create(20, 10)));
-                    assert.equal(getLastMessage().operation.minimumSequenceNumber, 10);
+                    assert.equal(testKafka.getLastMessage().operation.minimumSequenceNumber, 10);
                     await ticketer.ticket(wrapMessage(secondMessageFactory.create(20, ClientSequenceTimeout)));
                     await ticketer.ticket(wrapMessage(
                         secondMessageFactory.create(
                             20,
                             ClientSequenceTimeout + shared.constants.MinSequenceNumberWindow)));
-                    assert.equal(getLastMessage().operation.minimumSequenceNumber, 20);
+                    assert.equal(testKafka.getLastMessage().operation.minimumSequenceNumber, 20);
                 });
             });
 
@@ -146,7 +141,7 @@ describe("Routerlicious", () => {
                     const document = await testCollection.findOne(testId);
                     assert.equal(document.logOffset, kafkaOffset - 1);
 
-                    const sent = testKafka.getMessages();
+                    const sent = testKafka.getRawMessages();
                     const sequencedMessage =
                         JSON.parse(sent[sent.length - 1].value.toString()) as core.ISequencedOperationMessage;
                     assert.equal(document.sequenceNumber, sequencedMessage.operation.sequenceNumber);

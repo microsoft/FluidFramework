@@ -7,7 +7,7 @@ export class MessageFactory {
     constructor(private documentId, private clientId) {
     }
 
-    public create(referenceSequenceNumber = 0, timestamp = Date.now()): IRawOperationMessage {
+    public createDocumentMessage(referenceSequenceNumber = 0): api.IDocumentMessage {
         const operation: api.IDocumentMessage = {
             clientSequenceNumber: this.clientSequenceNumber++,
             contents: null,
@@ -16,7 +16,11 @@ export class MessageFactory {
             referenceSequenceNumber,
             type: api.NoOp,
         };
+        return operation;
+    }
 
+    public create(referenceSequenceNumber = 0, timestamp = Date.now()): IRawOperationMessage {
+        const operation = this.createDocumentMessage(referenceSequenceNumber);
         return this.createRawOperation(operation, timestamp, this.clientId);
     }
 

@@ -1,21 +1,24 @@
 import * as git from "gitresources";
-import * as http from "http";
 import { Provider } from "nconf";
 import * as winston from "winston";
+import * as core from "../core";
 import * as shared from "../shared";
 import * as utils from "../utils";
 import * as app from "./app";
 import * as io from "./io";
 
 export class AlfredRunner implements utils.IRunner {
-    private server: http.Server;
+    private server: core.IWebServer;
     private runningDeferred: shared.Deferred<void>;
 
     constructor(
+        private serverFactory: core.IWebServerFactory,
         private config: Provider,
         private port: string | number,
         private historian: git.IHistorian,
-        private mongoManager: utils.MongoManager) {
+        private mongoManager: utils.MongoManager,
+        private producer: utils.kafkaProducer.IProducer,
+        private documentsCollectionName: string) {
     }
 
     public start(): Promise<void> {
@@ -24,29 +27,35 @@ export class AlfredRunner implements utils.IRunner {
         // Create the HTTP server and attach alfred to it
         const alfred = app.create(this.config, this.historian, this.mongoManager);
         alfred.set("port", this.port);
-        this.server = http.createServer(alfred);
 
-        // Attach socket.io connections
-        const alfredIo = io.create(this.config, this.mongoManager);
-        alfredIo.attach(this.server);
+        this.server = this.serverFactory.create(alfred);
+        const httpServer = this.server.httpServer;
+
+        // Register all the socket.io stuff
+        io.register(
+            this.server.webSocketServer,
+            this.config,
+            this.mongoManager,
+            this.producer,
+            this.documentsCollectionName);
 
         // Listen on provided port, on all network interfaces.
-        this.server.listen(this.port);
-        this.server.on("error", (error) => this.onError(error));
-        this.server.on("listening", () => this.onListening());
+        httpServer.listen(this.port);
+        httpServer.on("error", (error) => this.onError(error));
+        httpServer.on("listening", () => this.onListening());
 
         return this.runningDeferred.promise;
     }
 
     public stop(): Promise<void> {
         // Close the underlying server and then resolve the runner once closed
-        this.server.close((error) => {
-            if (error) {
-                this.runningDeferred.reject(error);
-            } else {
+        this.server.close().then(
+            () => {
                 this.runningDeferred.resolve();
-            }
-        });
+            },
+            (error) => {
+                this.runningDeferred.reject(error);
+            });
 
         return this.runningDeferred.promise;
     }
@@ -80,7 +89,7 @@ export class AlfredRunner implements utils.IRunner {
      * Event listener for HTTP server "listening" event.
      */
     private onListening() {
-        let addr = this.server.address();
+        let addr = this.server.httpServer.address();
         let bind = typeof addr === "string"
             ? "pipe " + addr
             : "port " + addr.port;

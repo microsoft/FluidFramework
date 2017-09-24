@@ -34,8 +34,6 @@ async function getOrCreateObject(
 }
 
 export async function getOrCreateDocument(
-    historian: string,
-    historianBranch: string,
     mongoManager: utils.MongoManager,
     documentsCollectionName: string,
     id: string,

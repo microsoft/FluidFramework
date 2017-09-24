@@ -1,4 +1,5 @@
 import { EventEmitter } from "events";
+import * as core from "../../core";
 import * as utils from "../../utils";
 
 export interface IKafkaMessage {
@@ -69,8 +70,7 @@ class TestProducer implements utils.kafkaProducer.IProducer {
  * Test Kafka implementation. Allows for the creation of a joined producer/consumer pair.
  */
 export class TestKafka {
-    public messages: IKafkaMessage[] = [];
-
+    private messages: IKafkaMessage[] = [];
     private offset = 0;
     private consumers: TestConsumer[] = [];
 
@@ -85,7 +85,7 @@ export class TestKafka {
         return consumer;
     }
 
-    public getMessages(): IKafkaMessage[] {
+    public getRawMessages(): IKafkaMessage[] {
         return this.messages;
     }
 
@@ -99,5 +99,13 @@ export class TestKafka {
         for (const consumer of this.consumers) {
             consumer.emit(storedMessage);
         }
+    }
+
+    public getLastMessage(): core.ISequencedOperationMessage {
+        return this.getMessage(this.messages.length - 1);
+    }
+
+    public getMessage(index: number): core.ISequencedOperationMessage {
+        return JSON.parse(this.messages[index].value.toString()) as core.ISequencedOperationMessage;
     }
 }
