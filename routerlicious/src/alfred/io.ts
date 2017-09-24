@@ -61,11 +61,11 @@ export function register(
                             clientId: null,
                             documentId: message.id,
                             operation: {
-                                clientSequenceNumber: -1,
+                                clientSequenceNumber: 0,
                                 contents: clientId,
                                 encrypted: false,
                                 encryptedContents: null,
-                                referenceSequenceNumber: -1,
+                                referenceSequenceNumber: 0,
                                 type: api.ClientJoin,
                             },
                             timestamp: Date.now(),
