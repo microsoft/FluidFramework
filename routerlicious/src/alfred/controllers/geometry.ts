@@ -1,5 +1,3 @@
-// tslint:disable:align whitespace no-trailing-whitespace
-
 export interface IPoint {
     x: number;
     y: number;
@@ -15,8 +13,12 @@ export class Rectangle {
         return elm;
     }
 
-    constructor(public x: number, public y: number,
-        public width: number, public height: number) { }
+    constructor(
+        public x: number,
+        public y: number,
+        public width: number,
+        public height: number) {
+        }
 
     public square() {
         let len = this.width;
@@ -84,8 +86,7 @@ export class Rectangle {
         return elm;
     }
 
-    public inner4(xfactor: number, yfactor: number, widthFactor: number,
-        heightFactor: number) {
+    public inner4(xfactor: number, yfactor: number, widthFactor: number, heightFactor: number) {
         let ix = this.x + Math.round(xfactor * this.width);
         let iy = this.y + Math.round(yfactor * this.height);
         let iw = Math.floor(this.width * widthFactor);

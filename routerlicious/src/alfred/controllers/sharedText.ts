@@ -1,4 +1,3 @@
-// tslint:disable:align whitespace no-trailing-whitespace
 import * as resources from "gitresources";
 import performanceNow = require("performance-now");
 import * as request from "request";
@@ -230,15 +229,13 @@ export async function onLoad(id: string, version: resources.ICommit, config: any
         const segments = SharedString.loadSegments(starterText, 0, true);
         for (const segment of segments) {
             if (segment.getType() === SharedString.SegmentType.Text) {
-                let textSegment = <SharedString.TextSegment>segment;
+                let textSegment = <SharedString.TextSegment> segment;
                 newString.insertText(textSegment.text, newString.client.getLength(),
                     textSegment.properties);
             } else {
                 // assume marker
-                let marker = <SharedString.Marker>segment;
-                // tslint:disable:max-line-length
-                newString.insertMarker(newString.client.getLength(),
-                    marker.behaviors, marker.properties);
+                let marker = <SharedString.Marker> segment;
+                newString.insertMarker(newString.client.getLength(), marker.behaviors, marker.properties);
             }
         }
         root.set("text", newString);
