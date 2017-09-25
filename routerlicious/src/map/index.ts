@@ -77,6 +77,25 @@ export class MapView implements api.IMapView {
         }
     }
 
+    public async wait<T>(key: string): Promise<T> {
+        // Return immediately if the value already exists
+        if (this.has(key)) {
+            return this.get(key);
+        }
+
+        // Otherwise subscribe to changes
+        return new Promise<T>((resolve, reject) => {
+            const callback = (value: { key: string }) => {
+                if (key === value.key) {
+                    resolve(this.get(value.key));
+                    this.events.removeListener("valueChanged", callback);
+                }
+            };
+
+            this.events.on("valueChanged", callback);
+        });
+    }
+
     public has(key: string): boolean {
         return key in this.data;
     }
@@ -287,6 +306,10 @@ export class Map extends api.CollaborativeObject implements api.IMap {
      */
     public get(key: string) {
         return Promise.resolve(this.view.get(key));
+    }
+
+    public async wait<T>(key: string): Promise<T> {
+        return this.view.wait<T>(key);
     }
 
     public has(key: string): Promise<boolean> {
