@@ -75,6 +75,13 @@ export class Rectangle {
         elm.style.maxHeight = this.height + "px";
     }
 
+    public conformElementOpenHeight(elm: HTMLElement) {
+        elm.style.position = "absolute";
+        elm.style.left = this.x + "px";
+        elm.style.width = this.width + "px";
+        elm.style.top = this.y + "px";
+    }
+    
     public conformElement(elm: HTMLElement) {
         elm.style.position = "absolute";
         elm.style.left = `${this.x}px`;
