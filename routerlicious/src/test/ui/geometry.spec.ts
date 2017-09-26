@@ -1,5 +1,5 @@
 import * as assert from "assert";
-import { Rectangle } from "../../../api";
+import { Rectangle } from "../../ui";
 
 describe("Routerlicious", () => {
     describe("Alfred", () => {

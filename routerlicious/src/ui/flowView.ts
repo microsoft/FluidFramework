@@ -1,7 +1,7 @@
 import performanceNow = require("performance-now");
 import * as url from "url";
-import * as API from "../../api";
-import * as SharedString from "../../merge-tree";
+import * as API from "../api";
+import * as SharedString from "../merge-tree";
 import * as Geometry from "./geometry";
 
 enum CharacterCodes {
