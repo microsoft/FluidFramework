@@ -409,9 +409,9 @@ function elmOffToSegOff(elmOff: IRangeInfo, span: HTMLSpanElement) {
 }
 
 let cachedCanvas: HTMLCanvasElement;
-let underlineStringURL = `url(${url.resolve(document.baseURI, "/public/images/underline.gif")}) bottom repeat-x`;
-// tslint:disable:max-line-length
-let underlinePaulStringURL = `url(${url.resolve(document.baseURI, "/public/images/underline-paul.gif")}) bottom repeat-x`;
+const baseURI = typeof document !== "undefined" ? document.baseURI : "";
+let underlineStringURL = `url(${url.resolve(baseURI, "/public/images/underline.gif")}) bottom repeat-x`;
+let underlinePaulStringURL = `url(${url.resolve(baseURI, "/public/images/underline-paul.gif")}) bottom repeat-x`;
 
 function getTextWidth(text: string, font: string) {
     // re-use canvas object for better performance
@@ -671,7 +671,8 @@ function showPositionEndOfLine(lineContext: ILineContext, presenceInfo?: IPresen
     } else {
         if (lineContext.lineDiv.indentWidth !== undefined) {
             if (!presenceInfo) {
-                lineContext.flowView.cursor.assignToLine(lineContext.lineDiv.indentWidth, lineContext.lineDivHeight, lineContext.lineDiv);
+                lineContext.flowView.cursor.assignToLine(
+                    lineContext.lineDiv.indentWidth, lineContext.lineDivHeight, lineContext.lineDiv);
             } else {
                 showPresence(lineContext.lineDiv.indentWidth, lineContext, presenceInfo);
             }
@@ -685,7 +686,13 @@ function showPositionEndOfLine(lineContext: ILineContext, presenceInfo?: IPresen
     }
 }
 
-function showPositionInLine(lineContext: ILineContext, textStartPos: number, text: string, cursorPos: number, presenceInfo?: IPresenceInfo) {
+function showPositionInLine(
+    lineContext: ILineContext,
+    textStartPos: number,
+    text: string,
+    cursorPos: number,
+    presenceInfo?: IPresenceInfo) {
+
     let posX: number;
     if (cursorPos > textStartPos) {
         let preCursorText = text.substring(0, cursorPos - textStartPos);
@@ -769,8 +776,9 @@ function decorateLineDiv(lineDiv: ILineDiv, lineFontstr: string, lineDivHeight: 
     }
     let em = Math.round(getTextWidth("M", lineFontstr));
     let symbolWidth = getTextWidth(indentSymbol.text, indentFontstr);
-    let symbolDiv = makeContentDiv(new Geometry.Rectangle(lineDiv.indentWidth - Math.floor(em + symbolWidth), 0, symbolWidth,
-        lineDivHeight), indentFontstr);
+    let symbolDiv = makeContentDiv(
+        new Geometry.Rectangle(
+            lineDiv.indentWidth - Math.floor(em + symbolWidth), 0, symbolWidth, lineDivHeight), indentFontstr);
     symbolDiv.innerText = indentSymbol.text;
     lineDiv.appendChild(symbolDiv);
 }
@@ -1106,7 +1114,8 @@ function parseBox(boxStartPos: number, flowView: FlowView) {
                 boxMarker.view.minContentWidth = tableMarker.view.minContentWidth;
             }
             let endTableMarker = tableMarker.view.endTableMarker;
-            nextPos = mergeTree.getOffset(endTableMarker, SharedString.UniversalSequenceNumber, flowView.client.getClientId());
+            nextPos = mergeTree.getOffset(
+                endTableMarker, SharedString.UniversalSequenceNumber, flowView.client.getClientId());
             nextPos += endTableMarker.cachedLength;
         } else {
             let pgMarker = <IParagraphMarker> marker;
@@ -1214,7 +1223,8 @@ function renderTable(table: ITableMarker, renderContext: IRenderContext) {
         // left to right for now
         for (let boxIndex = 0, boxCount = rowView.boxes.length; boxIndex < boxCount; boxIndex++) {
             let boxView = rowView.boxes[boxIndex];
-            let boxRect = new Geometry.Rectangle(boxX, 0, tableView.columns[boxIndex].width, 0);            // render box
+            let boxRect = new Geometry.Rectangle(
+                boxX, 0, tableView.columns[boxIndex].width, 0);            // render box
             let boxDiv = document.createElement("div");
             boxRect.conformElementOpenHeight(boxDiv);
             rowDiv.appendChild(boxDiv);
@@ -1399,7 +1409,8 @@ function renderContent(renderContext: IRenderContext): IRenderOutput {
                     lineDivHeight = docContext.headerDivHeight;
                     lineFontstr = docContext.headerFontstr;
                 }
-                lineDiv = makeLineDiv(new Geometry.Rectangle(0, renderContext.currentLineTop, viewportWidth, lineDivHeight),
+                lineDiv = makeLineDiv(
+                    new Geometry.Rectangle(0, renderContext.currentLineTop, viewportWidth, lineDivHeight),
                     lineFontstr);
                 let contentDiv = lineDiv;
                 if (indentWidth > 0) {
@@ -1532,7 +1543,10 @@ function makeSegSpan(
             if (key === "textError") {
                 textErr = true;
                 if (textErrorRun === undefined) {
-                    textErrorRun = { start: segpos + offsetFromSegpos, end: segpos + offsetFromSegpos + segText.length };
+                    textErrorRun = {
+                        end: segpos + offsetFromSegpos + segText.length,
+                        start: segpos + offsetFromSegpos,
+                    };
                 } else {
                     textErrorRun.end += segText.length;
                 }
@@ -2132,6 +2146,7 @@ export class FlowView {
                     inputDelta = e.wheelDelta / 2;
                 }
                 let delta = factor * inputDelta;
+                // tslint:disable-next-line:max-line-length
                 // console.log(`top char: ${this.topChar - delta} factor ${factor}; delta: ${delta} wheel: ${e.wheelDeltaY} ${e.wheelDelta} ${e.detail}`);
                 setTimeout(() => {
                     this.render(Math.floor(this.topChar - delta));
