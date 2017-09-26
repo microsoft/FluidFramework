@@ -8,3 +8,4 @@ export * from "./types";
 export * from "./deltaManager";
 export * from "./encryption";
 export * from "./localCredentialStorage";
+export * from "./ui";

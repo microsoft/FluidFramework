@@ -6,13 +6,11 @@ import * as API from "../../api";
 import * as SharedString from "../../merge-tree";
 import * as shared from "../../shared";
 import * as socketStorage from "../../socket-storage";
-import * as FlowView from "./flowView";
-import * as Geometry from "./geometry";
 
 // first script loaded
 let clockStart = Date.now();
 
-export let theFlow: FlowView.FlowView;
+export let theFlow: API.FlowView;
 
 interface IKeyMsgPair {
     key: string;
@@ -20,12 +18,12 @@ interface IKeyMsgPair {
     showKey?: boolean;
 }
 
-class Status implements FlowView.IStatus {
+class Status implements API.IStatus {
     public overlayDiv: HTMLDivElement;
     public overlayImageElm: HTMLImageElement;
     public overlayMsgBox: HTMLSpanElement;
     public info: IKeyMsgPair[] = [];
-    public overlayInnerRects: Geometry.Rectangle[];
+    public overlayInnerRects: API.Rectangle[];
     public overlayMsg: string;
 
     constructor(public div: HTMLDivElement, public overlayContainer: HTMLElement) {
@@ -116,7 +114,7 @@ class Status implements FlowView.IStatus {
     }
 
     private updateGeometry() {
-        let bounds = Geometry.Rectangle.fromClientRect(this.overlayContainer.getBoundingClientRect());
+        let bounds = API.Rectangle.fromClientRect(this.overlayContainer.getBoundingClientRect());
         let overlayRect = bounds.inner4(0.7, 0.05, 0.2, 0.1);
         overlayRect.conformElement(this.overlayDiv);
         overlayRect.x = 0;
@@ -138,11 +136,11 @@ class Status implements FlowView.IStatus {
     }
 }
 
-class FlowContainer implements FlowView.IComponentContainer {
+class FlowContainer implements API.IComponentContainer {
     public onresize: () => void;
     public onkeydown: (e: KeyboardEvent) => void;
     public onkeypress: (e: KeyboardEvent) => void;
-    public status: FlowView.IStatus;
+    public status: API.IStatus;
     public div: HTMLDivElement;
     public statusDiv: HTMLDivElement;
 
@@ -182,7 +180,7 @@ class FlowContainer implements FlowView.IComponentContainer {
     }
 
     public updateGeometry() {
-        let bodBounds = Geometry.Rectangle.fromClientRect(document.body.getBoundingClientRect());
+        let bodBounds = API.Rectangle.fromClientRect(document.body.getBoundingClientRect());
         let vertSplit = bodBounds.nipVertBottom(22);
         vertSplit[0].conformElement(this.div);
         vertSplit[1].y++; vertSplit[1].height--; // room for 1px border
@@ -253,7 +251,7 @@ export async function onLoad(id: string, version: resources.ICommit, config: any
     console.log(`Partial load fired - ${performanceNow()}`);
 
     let container = new FlowContainer();
-    theFlow = new FlowView.FlowView(sharedString, container);
+    theFlow = new API.FlowView(sharedString, container);
     if (sharedString.client.getLength() > 0) {
         theFlow.render(0, true);
     }
