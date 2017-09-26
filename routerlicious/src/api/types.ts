@@ -87,6 +87,11 @@ export interface IMapView {
     get(key: string): any;
 
     /**
+     * A form of get except it will only resolve the promise once the key exists in the map.
+     */
+    wait<T>(key: string): Promise<T>;
+
+    /**
      * Returns a boolean indicating whether or not the key exists in the map
      */
     has(key: string): boolean;
@@ -120,6 +125,11 @@ export interface IMap extends ICollaborativeObject {
      * Retrieves the given key from the map
      */
     get(key: string): Promise<any>;
+
+    /**
+     * A form of get except it will only resolve the promise once the key exists in the map.
+     */
+    wait<T>(key: string): Promise<T>;
 
     /**
      * Returns a boolean indicating whether or not the key exists in the map

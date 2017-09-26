@@ -1,4 +1,3 @@
-// tslint:disable:align whitespace no-trailing-whitespace
 import * as resources from "gitresources";
 import performanceNow = require("performance-now");
 import * as request from "request";
@@ -207,27 +206,9 @@ function downloadRawText(textUrl: string): Promise<string> {
     });
 }
 
-async function waitForKey<T>(parent: API.IMap, key: string): Promise<T> {
-    const view = await parent.getView();
-    if (view.has(key)) {
-        return view.get(key);
-    } else {
-        return new Promise<T>((resolve, reject) => {
-            const callback = (value: { key: string }) => {
-                if (key === value.key) {
-                    resolve(view.get(value.key));
-                    parent.removeListener("valueChanged", callback);
-                }
-            };
-
-            parent.on("valueChanged", callback);
-        });
-    }
-}
-
 async function getInsights(map: API.IMap, id: string): Promise<API.IMap> {
-    const insights = await waitForKey<API.IMap>(map, "insights");
-    return waitForKey<API.IMap>(insights, id);
+    const insights = await map.wait<API.IMap>("insights");
+    return insights.wait<API.IMap>(id);
 }
 
 export async function onLoad(id: string, version: resources.ICommit, config: any) {
@@ -248,15 +229,13 @@ export async function onLoad(id: string, version: resources.ICommit, config: any
         const segments = SharedString.loadSegments(starterText, 0, true);
         for (const segment of segments) {
             if (segment.getType() === SharedString.SegmentType.Text) {
-                let textSegment = <SharedString.TextSegment>segment;
+                let textSegment = <SharedString.TextSegment> segment;
                 newString.insertText(textSegment.text, newString.client.getLength(),
                     textSegment.properties);
             } else {
                 // assume marker
-                let marker = <SharedString.Marker>segment;
-                // tslint:disable:max-line-length
-                newString.insertMarker(newString.client.getLength(),
-                    marker.behaviors, marker.properties);
+                let marker = <SharedString.Marker> segment;
+                newString.insertMarker(newString.client.getLength(), marker.behaviors, marker.properties);
             }
         }
         root.set("text", newString);
