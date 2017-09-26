@@ -1,9 +1,8 @@
 // This one is where a lot is going to happen
 
 import * as ink from "../ink";
-import * as geometry from "./geometry/index";
+import * as ui from "../ui";
 import { Circle, IShape, Polygon } from "./shapes/index";
-import * as utils from "./utils";
 
 // There's an issue with the d.ts files and the default export
 // tslint:disable-next-line:no-var-requires
@@ -92,7 +91,7 @@ export default class InkCanvas {
         // Throttle the canvas resizes at animation frame frequency
         // TODO the resize event fires slightly after the resize happens causing possible
         // rendering tearing. We probably want to oversize the canvas and clip it.
-        let throttler = new utils.AnimationFrameThrottler(() => {
+        let throttler = new ui.AnimationFrameThrottler(() => {
             this.resize(this.canvasWrapper.offsetWidth, this.canvasWrapper.offsetHeight);
         });
 
@@ -306,7 +305,7 @@ export default class InkCanvas {
         }
 
         if (shapes) {
-            this.context.fillStyle = utils.toColorStringNoAlpha(pen.color);
+            this.context.fillStyle = ui.toColorStringNoAlpha(pen.color);
             for (let shape of shapes) {
                 this.context.beginPath();
                 shape.render(this.context);
@@ -374,17 +373,17 @@ export default class InkCanvas {
         pen: ink.IPen,
         circleInclusive: SegmentCircleInclusive): IShape[] {
 
-        let dirVector = new geometry.Vector(
+        let dirVector = new ui.Vector(
             endPoint.point.x - startPoint.point.x,
             endPoint.point.y - startPoint.point.y);
         let len = dirVector.length();
 
         let shapes = new Array<IShape>();
-        let trapezoidP0: geometry.IPoint;
-        let trapezoidP1: geometry.IPoint;
-        let trapezoidP2: geometry.IPoint;
-        let trapezoidP3: geometry.IPoint;
-        let normalizedLateralVector: geometry.IVector;
+        let trapezoidP0: ui.IPoint;
+        let trapezoidP1: ui.IPoint;
+        let trapezoidP2: ui.IPoint;
+        let trapezoidP3: ui.IPoint;
+        let normalizedLateralVector: ui.IVector;
 
         // Scale by a power curve to trend towards thicker values
         let widthAtStart = pen.thickness * Math.pow(startPoint.pressure, 0.5) / 2;
@@ -408,35 +407,35 @@ export default class InkCanvas {
                 angle = Math.PI - angle;
             }
 
-            normalizedLateralVector = geometry.Vector.normalize(geometry.Vector.rotate(dirVector, -angle));
-            trapezoidP0 = new geometry.Point(
+            normalizedLateralVector = ui.Vector.normalize(ui.Vector.rotate(dirVector, -angle));
+            trapezoidP0 = new ui.Point(
                 startPoint.point.x + widthAtStart * normalizedLateralVector.x,
                 startPoint.point.y + widthAtStart * normalizedLateralVector.y);
-            trapezoidP3 = new geometry.Point(
+            trapezoidP3 = new ui.Point(
                 endPoint.point.x + widthAtEnd * normalizedLateralVector.x,
                 endPoint.point.y + widthAtEnd * normalizedLateralVector.y);
 
-            normalizedLateralVector = geometry.Vector.normalize(geometry.Vector.rotate(dirVector, angle));
-            trapezoidP2 = new geometry.Point(
+            normalizedLateralVector = ui.Vector.normalize(ui.Vector.rotate(dirVector, angle));
+            trapezoidP2 = new ui.Point(
                 endPoint.point.x + widthAtEnd * normalizedLateralVector.x,
                 endPoint.point.y + widthAtEnd * normalizedLateralVector.y);
-            trapezoidP1 = new geometry.Point(
+            trapezoidP1 = new ui.Point(
                 startPoint.point.x + widthAtStart * normalizedLateralVector.x,
                 startPoint.point.y + widthAtStart * normalizedLateralVector.y);
         } else {
-            normalizedLateralVector = new geometry.Vector(-dirVector.y / len, dirVector.x / len);
+            normalizedLateralVector = new ui.Vector(-dirVector.y / len, dirVector.x / len);
 
-            trapezoidP0 = new geometry.Point(
+            trapezoidP0 = new ui.Point(
                 startPoint.point.x + widthAtStart * normalizedLateralVector.x,
                 startPoint.point.y + widthAtStart * normalizedLateralVector.y);
-            trapezoidP1 = new geometry.Point(
+            trapezoidP1 = new ui.Point(
                 startPoint.point.x - widthAtStart * normalizedLateralVector.x,
                 startPoint.point.y - widthAtStart * normalizedLateralVector.y);
 
-            trapezoidP2 = new geometry.Point(
+            trapezoidP2 = new ui.Point(
                 endPoint.point.x - widthAtEnd * normalizedLateralVector.x,
                 endPoint.point.y - widthAtEnd * normalizedLateralVector.y);
-            trapezoidP3 = new geometry.Point(
+            trapezoidP3 = new ui.Point(
                 endPoint.point.x + widthAtEnd * normalizedLateralVector.x,
                 endPoint.point.y + widthAtEnd * normalizedLateralVector.y);
         }

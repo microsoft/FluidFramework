@@ -1,10 +1,10 @@
-import * as utils from "./utils";
+import * as ui from "../ui";
 
 export class ToolBarButton {
     public el: HTMLElement;
 
     constructor(icon: string) {
-        let urlParts = utils.parseURL(icon);
+        let urlParts = ui.parseURL(icon);
         this.el = <HTMLElement> document.createElement("button");
         this.el.id = urlParts.file;
         // tslint:disable-next-line:no-string-literal

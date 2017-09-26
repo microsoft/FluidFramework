@@ -2,10 +2,10 @@
 import * as $ from "jquery";
 import * as api from "../api";
 import * as ink from "../ink";
+import * as ui from "../ui";
 import { debug } from "./debug";
 import InkCanvas from "./inkCanvas";
 import StickyNote from "./stickyNote";
-import * as utils from "./utils";
 
 const colors: ink.IColor[] = [
     { r: 253 / 255, g:   0 / 255, b:  12 / 255, a: 1 },
@@ -57,7 +57,7 @@ export class Canvas {
 
         const root = $("#color-picker");
         for (const color of colors) {
-            const cssColor = utils.toColorString(color);
+            const cssColor = ui.toColorString(color);
             const elem = $(`<li><a class="color-choice" href="#" style="background-color: ${cssColor}" ></a></li>`);
             root.append(elem);
             elem.data("color", color);
@@ -111,7 +111,7 @@ export class Canvas {
     // this method will try up the entire board
     public clear() {
         this.ink.clear();
-        let board = utils.id("content");
+        let board = ui.id("content");
         let stickies = document.querySelectorAll(".stickyNote");
         // tslint:disable-next-line:prefer-for-of
         for (let i = 0; i < stickies.length; i++) {
@@ -153,7 +153,7 @@ export class Canvas {
         if (e.target.id === "testButton") {
             this.unselectAll();
             // tslint:disable-next-line:no-unused-new
-            new StickyNote(utils.id("content"));
+            new StickyNote(ui.id("content"));
         }
         if (e.target.id === "turnOnInk") {
             this.makeInkable();

@@ -2,7 +2,7 @@ import performanceNow = require("performance-now");
 import * as url from "url";
 import * as API from "../api";
 import * as SharedString from "../merge-tree";
-import * as Geometry from "./geometry";
+import * as ui from "../ui";
 
 enum CharacterCodes {
     _ = 95,
@@ -148,7 +148,7 @@ export interface ISelectionListBox {
 }
 
 export function selectionListBoxCreate(
-    textRect: Geometry.Rectangle,
+    textRect: ui.Rectangle,
     container: HTMLElement,
     itemHeight: number,
     offsetY: number,
@@ -241,11 +241,11 @@ export function selectionListBoxCreate(
         }
         itemCapacity = Math.floor(height / itemHeight);
         if (top !== undefined) {
-            let listContainerRect = new Geometry.Rectangle(textRect.x, top, width, height);
+            let listContainerRect = new ui.Rectangle(textRect.x, top, width, height);
             listContainerRect.height = itemCapacity * itemHeight;
             listContainerRect.conformElementMaxHeight(listContainer);
         } else {
-            let listContainerRect = new Geometry.Rectangle(textRect.x, 0, width, height);
+            let listContainerRect = new ui.Rectangle(textRect.x, 0, width, height);
             listContainerRect.height = itemCapacity * itemHeight;
             listContainerRect.conformElementMaxHeightFromBottom(listContainer, bottom);
         }
@@ -284,7 +284,7 @@ export function selectionListBoxCreate(
         let scrollbar = document.createElement("div");
         bubble = document.createElement("div");
 
-        let rect = Geometry.Rectangle.fromClientRect(listContainer.getBoundingClientRect());
+        let rect = ui.Rectangle.fromClientRect(listContainer.getBoundingClientRect());
         // adjust for 2px border
         rect.x = (rect.width - scrollbarWidth) - 4;
         rect.width = scrollbarWidth;
@@ -616,7 +616,7 @@ interface ILineContext {
     span: ISegSpan;
     pgMarker: IParagraphMarker;
     markerPos: number;
-    viewportBounds: Geometry.Rectangle;
+    viewportBounds: ui.Rectangle;
 }
 
 interface IDocumentContext {
@@ -777,7 +777,7 @@ function decorateLineDiv(lineDiv: ILineDiv, lineFontstr: string, lineDivHeight: 
     let em = Math.round(getTextWidth("M", lineFontstr));
     let symbolWidth = getTextWidth(indentSymbol.text, indentFontstr);
     let symbolDiv = makeContentDiv(
-        new Geometry.Rectangle(
+        new ui.Rectangle(
             lineDiv.indentWidth - Math.floor(em + symbolWidth), 0, symbolWidth, lineDivHeight), indentFontstr);
     symbolDiv.innerText = indentSymbol.text;
     lineDiv.appendChild(symbolDiv);
@@ -785,7 +785,7 @@ function decorateLineDiv(lineDiv: ILineDiv, lineFontstr: string, lineDivHeight: 
 
 function reRenderLine(lineDiv: ILineDiv, flowView: FlowView) {
     if (lineDiv) {
-        let viewportBounds = Geometry.Rectangle.fromClientRect(flowView.viewportDiv.getBoundingClientRect());
+        let viewportBounds = ui.Rectangle.fromClientRect(flowView.viewportDiv.getBoundingClientRect());
         let lineDivBounds = lineDiv.getBoundingClientRect();
         let lineDivHeight = lineDivBounds.height;
         clearSubtree(lineDiv);
@@ -794,7 +794,7 @@ function reRenderLine(lineDiv: ILineDiv, flowView: FlowView) {
             decorateLineDiv(lineDiv, lineDiv.style.font, lineDivHeight);
         }
         if (lineDiv.indentWidth) {
-            contentDiv = makeContentDiv(new Geometry.Rectangle(lineDiv.indentWidth, 0, lineDiv.contentWidth,
+            contentDiv = makeContentDiv(new ui.Rectangle(lineDiv.indentWidth, 0, lineDiv.contentWidth,
                 lineDivHeight), lineDiv.style.font);
             lineDiv.appendChild(contentDiv);
         }
@@ -1015,7 +1015,7 @@ function getContentPct(pgMarker: IParagraphMarker) {
     }
 }
 
-function makeContentDiv(r: Geometry.Rectangle, lineFontstr) {
+function makeContentDiv(r: ui.Rectangle, lineFontstr) {
     let contentDiv = document.createElement("div");
     contentDiv.style.font = lineFontstr;
     contentDiv.style.whiteSpace = "pre";
@@ -1216,14 +1216,14 @@ function renderTable(table: ITableMarker, renderContext: IRenderContext) {
     let tableIndent = Math.floor(tableView.indentPct * viewportWidth);
     for (let rowIndex = 0, rowCount = tableView.rows.length; rowIndex < rowCount; rowIndex++) {
         let rowView = tableView.rows[rowIndex];
-        let rowRect = new Geometry.Rectangle(tableIndent, renderContext.currentLineTop, tableWidth, 0);
+        let rowRect = new ui.Rectangle(tableIndent, renderContext.currentLineTop, tableWidth, 0);
         let rowDiv = document.createElement("div");
         rowRect.conformElementOpenHeight(rowDiv);
         let boxX = 0;
         // left to right for now
         for (let boxIndex = 0, boxCount = rowView.boxes.length; boxIndex < boxCount; boxIndex++) {
             let boxView = rowView.boxes[boxIndex];
-            let boxRect = new Geometry.Rectangle(
+            let boxRect = new ui.Rectangle(
                 boxX, 0, tableView.columns[boxIndex].width, 0);            // render box
             let boxDiv = document.createElement("div");
             boxRect.conformElementOpenHeight(boxDiv);
@@ -1353,7 +1353,7 @@ function renderContent(renderContext: IRenderContext): IRenderOutput {
     let docContext = buildDocumentContext(renderContext.viewportDiv);
     // TODO: for stable viewports cache the geometry and the divs
     // TODO: cache all this pre-amble in style blocks; override with pg properties
-    let viewportBounds = Geometry.Rectangle.fromClientRect(renderContext.viewportDiv.getBoundingClientRect());
+    let viewportBounds = ui.Rectangle.fromClientRect(renderContext.viewportDiv.getBoundingClientRect());
     let pgCount = 0;
     renderContext.viewportDiv.style.font = docContext.fontstr;
     let viewportHeight = parseInt(renderContext.viewportDiv.style.height, 10);
@@ -1366,7 +1366,7 @@ function renderContent(renderContext: IRenderContext): IRenderOutput {
     let lineCount = 0;
     let lastLineDiv = undefined;
 
-    function makeLineDiv(r: Geometry.Rectangle, lineFontstr) {
+    function makeLineDiv(r: ui.Rectangle, lineFontstr) {
         let lineDiv = makeContentDiv(r, lineFontstr);
         renderContext.viewportDiv.appendChild(lineDiv);
         lineCount++;
@@ -1410,11 +1410,11 @@ function renderContent(renderContext: IRenderContext): IRenderOutput {
                     lineFontstr = docContext.headerFontstr;
                 }
                 lineDiv = makeLineDiv(
-                    new Geometry.Rectangle(0, renderContext.currentLineTop, viewportWidth, lineDivHeight),
+                    new ui.Rectangle(0, renderContext.currentLineTop, viewportWidth, lineDivHeight),
                     lineFontstr);
                 let contentDiv = lineDiv;
                 if (indentWidth > 0) {
-                    contentDiv = makeContentDiv(new Geometry.Rectangle(indentWidth, 0, contentWidth, lineDivHeight),
+                    contentDiv = makeContentDiv(new ui.Rectangle(indentWidth, 0, contentWidth, lineDivHeight),
                         lineFontstr);
                     lineDiv.indentWidth = indentWidth;
                     lineDiv.contentWidth = indentWidth;
@@ -1583,7 +1583,7 @@ function makeSegSpan(
                         }
                         console.log(`button ${e.button}`);
                         if ((e.button === 2) || ((e.button === 0) && (e.ctrlKey))) {
-                            let spanBounds = Geometry.Rectangle.fromClientRect(span.getBoundingClientRect());
+                            let spanBounds = ui.Rectangle.fromClientRect(span.getBoundingClientRect());
                             spanBounds.width = Math.floor(window.innerWidth / 4);
                             slb = selectionListBoxCreate(spanBounds, document.body, 24, 0, 12);
                             slb.showSelectionList(altsToItems(textErrorInfo.alternates));
@@ -1627,22 +1627,6 @@ export function clearSubtree(elm: HTMLElement) {
     while (elm.lastChild) {
         elm.removeChild(elm.lastChild);
     }
-}
-
-export interface IStatus {
-    add(key: string, msg: string);
-    remove(key: string);
-    overlay(msg: string);
-    removeOverlay();
-    onresize();
-}
-
-export interface IComponentContainer {
-    div: HTMLDivElement;
-    onresize: () => void;
-    onkeydown: (e: KeyboardEvent) => void;
-    onkeypress: (e: KeyboardEvent) => void;
-    status: IStatus;
 }
 
 let presenceColors = ["darkgreen", "sienna", "olive", "purple"];
@@ -1830,11 +1814,11 @@ export class FlowView {
     public cursorSpan: HTMLSpanElement;
     public containerDiv: HTMLDivElement;
     public viewportDiv: HTMLDivElement;
-    public viewportRect: Geometry.Rectangle;
+    public viewportRect: ui.Rectangle;
     public scrollDiv: HTMLDivElement;
-    public scrollRect: Geometry.Rectangle;
+    public scrollRect: ui.Rectangle;
     public statusDiv: HTMLDivElement;
-    public statusRect: Geometry.Rectangle;
+    public statusRect: ui.Rectangle;
     public client: SharedString.Client;
     public ticking = false;
     public wheelTicking = false;
@@ -1852,7 +1836,7 @@ export class FlowView {
 
     constructor(
         public sharedString: SharedString.SharedString,
-        public flowContainer: IComponentContainer) {
+        public flowContainer: ui.IComponentContainer) {
 
         this.containerDiv = flowContainer.div;
         this.client = sharedString.client;
@@ -1971,13 +1955,13 @@ export class FlowView {
     }
 
     public updateGeometry() {
-        let bounds = Geometry.Rectangle.fromClientRect(this.containerDiv.getBoundingClientRect());
-        Geometry.Rectangle.conformElementToRect(this.containerDiv, bounds);
+        let bounds = ui.Rectangle.fromClientRect(this.containerDiv.getBoundingClientRect());
+        ui.Rectangle.conformElementToRect(this.containerDiv, bounds);
         let panelScroll = bounds.nipHorizRight(FlowView.scrollAreaWidth);
         this.scrollRect = panelScroll[1];
-        Geometry.Rectangle.conformElementToRect(this.scrollDiv, this.scrollRect);
+        ui.Rectangle.conformElementToRect(this.scrollDiv, this.scrollRect);
         this.viewportRect = panelScroll[0].inner(0.92);
-        Geometry.Rectangle.conformElementToRect(this.viewportDiv, this.viewportRect);
+        ui.Rectangle.conformElementToRect(this.viewportDiv, this.viewportRect);
     }
 
     public statusMessage(key: string, msg: string) {

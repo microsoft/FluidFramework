@@ -7,12 +7,11 @@ import * as controls from "../../controls";
 import * as SharedString from "../../merge-tree";
 import * as shared from "../../shared";
 import * as socketStorage from "../../socket-storage";
-import * as ui from "../../ui";
 
 // first script loaded
 let clockStart = Date.now();
 
-export let theFlow: ui.FlowView;
+export let theFlow: controls.FlowView;
 
 const prideAndPrejudice = "/public/literature/pp.txt";
 
@@ -77,7 +76,7 @@ export async function onLoad(id: string, version: resources.ICommit, config: any
     console.log(`Partial load fired - ${performanceNow()}`);
 
     let container = new controls.FlowContainer();
-    theFlow = new ui.FlowView(sharedString, container);
+    theFlow = new controls.FlowView(sharedString, container);
     if (sharedString.client.getLength() > 0) {
         theFlow.render(0, true);
     }

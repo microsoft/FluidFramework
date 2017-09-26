@@ -9,10 +9,15 @@ export class FlowContainer implements ui.IComponentContainer {
     public div: HTMLDivElement;
     public statusDiv: HTMLDivElement;
 
+    // TODO should a container just have a set of interfaces that its children can make use of?
+
     constructor() {
         this.createElements();
         this.updateGeometry();
         this.status = new Status(this.statusDiv, this.div);
+
+        // TODO should we send this message down to all children?
+
         window.addEventListener("resize", () => {
             this.updateGeometry();
             if (this.onresize) {
@@ -22,6 +27,9 @@ export class FlowContainer implements ui.IComponentContainer {
                 }
             }
         });
+
+        // TODO same with the below events?
+
         document.body.onkeydown = (e) => {
             // TODO: filter by target
             if (this.onkeydown) {
