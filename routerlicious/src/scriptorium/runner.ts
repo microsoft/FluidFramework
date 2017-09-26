@@ -9,11 +9,12 @@ export class ScriptoriumRunner implements utils.IRunner {
     private checkpointTimer: any;
     private partitionManager: core.PartitionManager;
     private q: AsyncQueue<string>;
+    private ioBatchManager: utils.BatchManager<core.ISequencedOperationMessage>;
 
     constructor(
         private consumer: utils.kafkaConsumer.IConsumer,
         private collection: core.ICollection<any>,
-        private io: any,
+        private io: core.IPublisher,
         groupId: string,
         topic: string,
         private checkpointBatchSize: number,
@@ -36,7 +37,7 @@ export class ScriptoriumRunner implements utils.IRunner {
             this.deferred.reject(err);
         });
 
-        this.io.redis.on("error", (error) => {
+        this.io.on("error", (error) => {
             this.deferred.reject(error);
         });
 
@@ -45,7 +46,7 @@ export class ScriptoriumRunner implements utils.IRunner {
         // Mongo insert we've made for each document. And then perform a then on this to maintain causal ordering
         // for any dependent operations (i.e. socket.io writes)
         const lastMongoInsertP: { [documentId: string]: Promise<any> } = {};
-        const ioBatchManager = new utils.BatchManager<core.ISequencedOperationMessage>((documentId, work) => {
+        this.ioBatchManager = new utils.BatchManager<core.ISequencedOperationMessage>((documentId, work) => {
             // Initialize the last promise if it doesn't exist
             if (!(documentId in lastMongoInsertP)) {
                 lastMongoInsertP[documentId] = Promise.resolve();
@@ -84,7 +85,7 @@ export class ScriptoriumRunner implements utils.IRunner {
                 const value = baseMessage as core.ISequencedOperationMessage;
 
                 // Batch up work to more efficiently send to socket.io and mongodb
-                ioBatchManager.add(value.documentId, value);
+                this.ioBatchManager.add(value.documentId, value);
             }
 
             // Update partition manager.
@@ -125,10 +126,8 @@ export class ScriptoriumRunner implements utils.IRunner {
         });
 
         // Mark ourselves done once the queue is cleaned
-        drainedP.then(() => {
-            // TODO perform one last checkpoint here
-            this.deferred.resolve();
-        });
+        const doneP = drainedP.then(() => this.ioBatchManager.drain());
+        doneP.then(() => this.deferred.resolve(), (error) => this.deferred.reject(error));
 
         return this.deferred.promise;
     }

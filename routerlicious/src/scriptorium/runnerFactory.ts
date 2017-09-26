@@ -1,7 +1,4 @@
 import { Provider } from "nconf";
-import * as redis from "redis";
-import * as socketIoEmitter from "socket.io-emitter";
-import * as util from "util";
 import * as core from "../core";
 import * as services from "../services";
 import * as utils from "../utils";
@@ -12,8 +9,7 @@ export class ScriptoriumResources implements utils.IResources {
         public consumer: utils.kafkaConsumer.IConsumer,
         public collection: core.ICollection<any>,
         public mongoManager: utils.MongoManager,
-        public redisClient: redis.RedisClient,
-        public io,
+        public io: services.SocketIoRedisPublisher,
         public groupId: string,
         public topic: string,
         public checkpointBatchSize: number,
@@ -23,8 +19,8 @@ export class ScriptoriumResources implements utils.IResources {
     public async dispose(): Promise<void> {
         const consumerClosedP = this.consumer.close();
         const mongoClosedP = this.mongoManager.close();
-        const redisP = util.promisify(((callback) => this.redisClient.quit(callback)) as Function)();
-        await Promise.all([consumerClosedP, mongoClosedP, redisP]);
+        const publisherP = this.io.close();
+        await Promise.all([consumerClosedP, mongoClosedP, publisherP]);
     }
 }
 
@@ -40,9 +36,6 @@ export class ScriptoriumResourcesFactory implements utils.IResourcesFactory<Scri
         const mongoUrl = config.get("mongo:endpoint") as string;
         const deltasCollectionName = config.get("mongo:collectionNames:deltas");
 
-        const redisClient = redis.createClient(redisConfig.port, redisConfig.host);
-        let io = socketIoEmitter(redisClient);
-
         const mongoFactory = new services.MongoDbFactory(mongoUrl);
         const mongoManager = new utils.MongoManager(mongoFactory, false);
         const db = await mongoManager.getDatabase();
@@ -53,14 +46,15 @@ export class ScriptoriumResourcesFactory implements utils.IResourcesFactory<Scri
             },
             true);
 
-        let consumer = utils.kafkaConsumer.create(kafkaLibrary, kafkaEndpoint, groupId, topic, false);
+        const publisher = new services.SocketIoRedisPublisher(redisConfig.port, redisConfig.host);
+
+        const consumer = utils.kafkaConsumer.create(kafkaLibrary, kafkaEndpoint, groupId, topic, false);
 
         return new ScriptoriumResources(
             consumer,
             collection,
             mongoManager,
-            redisClient,
-            io,
+            publisher,
             groupId,
             topic,
             checkpointBatchSize,

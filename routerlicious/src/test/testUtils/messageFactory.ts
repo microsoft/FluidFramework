@@ -1,8 +1,9 @@
 import * as api from "../../api";
-import { IRawOperationMessage, RawOperationType } from "../../core";
+import { IRawOperationMessage, ISequencedOperationMessage, RawOperationType, SequencedOperationType } from "../../core";
 
 export class MessageFactory {
     private clientSequenceNumber = 0;
+    private sequenceNumber = 0;
 
     constructor(private documentId, private clientId) {
     }
@@ -61,5 +62,29 @@ export class MessageFactory {
         };
 
         return objectMessage;
+    }
+
+    public createSequencedOperation(): ISequencedOperationMessage {
+        const operation = this.createDocumentMessage(0);
+        let sequencedOperation: api.ISequencedDocumentMessage = {
+            clientId: this.clientId,
+            clientSequenceNumber: operation.clientSequenceNumber,
+            contents: operation.contents,
+            encrypted: operation.encrypted,
+            encryptedContents: operation.encryptedContents,
+            minimumSequenceNumber: 0,
+            referenceSequenceNumber: operation.referenceSequenceNumber,
+            sequenceNumber: this.sequenceNumber++,
+            type: operation.type,
+            userId: null,
+        };
+
+        const message: ISequencedOperationMessage = {
+            documentId: this.documentId,
+            operation: sequencedOperation,
+            type: SequencedOperationType,
+        };
+
+        return message;
     }
 }

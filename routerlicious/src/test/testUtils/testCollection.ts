@@ -3,7 +3,7 @@ import * as _ from "lodash";
 import { ICollection, IDb, IDbFactory } from "../../core";
 
 export class TestCollection implements ICollection<any> {
-    constructor(private collection: any[]) {
+    constructor(public collection: any[]) {
     }
 
     public async find(query: any, sort: any): Promise<any[]> {
@@ -39,8 +39,8 @@ export class TestCollection implements ICollection<any> {
         this.collection.push(value);
     }
 
-    public insertMany(values: any[], ordered: boolean): Promise<void> {
-        throw new Error("Method not implemented.");
+    public async insertMany(values: any[], ordered: boolean): Promise<void> {
+        this.collection = this.collection.concat(values);
     }
 
     public createIndex(index: any, unique: boolean): Promise<void> {

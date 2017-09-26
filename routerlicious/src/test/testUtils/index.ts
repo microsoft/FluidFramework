@@ -6,5 +6,6 @@ export * from "./testDocumentDeltaConnection";
 export * from "./testDocumentService";
 export * from "./testHistorian";
 export * from "./testKafka";
+export * from "./testPublisher";
 export * from "./testRegistration";
 export * from "./testWebServer";
