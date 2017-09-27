@@ -1,4 +1,4 @@
-// tslint:disable:whitespace
+// tslint:disable:whitespace align
 import performanceNow = require("performance-now");
 import * as url from "url";
 import * as API from "../../api";
@@ -52,8 +52,8 @@ enum CharacterCodes {
     B = 66, C = 67, D = 68, E = 69, F = 70,
     G = 71, H = 72, I = 73, J = 74, K = 75,
     L = 76, M = 77, N = 78, O = 79, P = 80,
-    Q = 81,
-    Z = 90,
+    Q = 81, R = 82, S = 83, T = 84, U = 85,
+    V = 86, W = 87, X = 88, Y = 89, Z = 90,
     space = 0x0020,   // " "
 }
 
@@ -1034,9 +1034,21 @@ interface IBoxMarker extends SharedString.Marker {
 interface IRowMarker extends SharedString.Marker {
     view?: RowView;
 }
+/*
+let tableCount = 0;
+function createRangeMarkerOp(begin = true) {
+}
+function createTable(startPos: number, flowView: FlowView, nrows = 2, ncolums = 2) {
+    let idBase = flowView.client.longClientId;
+    idBase += `T${tableCount}`;
+
+}
+*/
 
 class TableView {
     public width: number;
+    public renderedHeight: number;
+    public deferredHeight: number;
     public minContentWidth = 0;
     public indentPct = 0.1;
     public contentPct: 0.8;
@@ -1055,7 +1067,7 @@ class TableView {
             // TODO: borders
             col.width = remainingWidthPerColumn + col.minContentWidth;
             for (let box of col.boxes) {
-                box.width = col.width;
+                box.specWidth = col.width;
             }
         }
     }
@@ -1080,10 +1092,10 @@ class RowView {
 class BoxView {
     public renderOutput: IRenderOutput;
     public minContentWidth = 0;
-    public width = 0;
+    public specWidth = 0;
+    public renderedHeight: number;
     public div: HTMLDivElement;
     constructor(public marker: IBoxMarker, public endMarker: IBoxMarker) {
-
     }
 }
 
@@ -1204,12 +1216,14 @@ function isInnerBox(boxView: BoxView, layoutInfo: ILayoutContext) {
 }
 
 function renderBox(boxView: BoxView, layoutInfo: ILayoutContext, defer = false) {
-    let boxRect = new Geometry.Rectangle(0, 0, boxView.width, 0);
+    let boxRect = new Geometry.Rectangle(0, 0, boxView.specWidth, 0);
     let boxDiv = document.createElement("div");
+    boxView.div = boxDiv;
     boxRect.conformElementOpenHeight(boxDiv);
     boxDiv.style.border = "1px solid black";
     let client = layoutInfo.flowView.client;
     let mergeTree = client.mergeTree;
+    let transferDeferredHeight = false;
     let boxLayoutContext = <ILayoutContext>{
         currentLineTop: 0,
         endMarker: boxView.endMarker,
@@ -1228,6 +1242,7 @@ function renderBox(boxView: BoxView, layoutInfo: ILayoutContext, defer = false) 
         boxLayoutContext.startMarker = pgMarker;
         boxLayoutContext.startMarkerPos = pgMarkerPos;
         if (layoutInfo.startingPosition >= 0) {
+            transferDeferredHeight = true;
             let containingTilePos = findTile(layoutInfo.flowView, layoutInfo.startingPosition, "pg");
             if (containingTilePos.tile !== pgMarker) {
                 layoutInfo.containingPGMarker = containingTilePos.tile;
@@ -1239,6 +1254,10 @@ function renderBox(boxView: BoxView, layoutInfo: ILayoutContext, defer = false) 
         boxLayoutContext.stackIndex = layoutInfo.stackIndex + 1;
     }
     boxView.renderOutput = renderFlow(boxLayoutContext, defer);
+    if (transferDeferredHeight && (boxView.renderOutput.deferredHeight > 0)) {
+        layoutInfo.deferUntilHeight = boxView.renderOutput.deferredHeight;
+    }
+    boxView.renderedHeight = boxLayoutContext.currentLineTop;
 }
 
 function renderTable(table: ITableMarker, layoutInfo: ILayoutContext, defer = false) {
@@ -1263,26 +1282,55 @@ function renderTable(table: ITableMarker, layoutInfo: ILayoutContext, defer = fa
     }
 
     let foundStartRow = (startRow === undefined);
+    let tableHeight = 0;
+    let deferredHeight = 0;
+    let topRow = (layoutInfo.startingPosStack !== undefined) && (layoutInfo.stackIndex === 0);
 
     for (let rowIndex = 0, rowCount = tableView.rows.length; rowIndex < rowCount; rowIndex++) {
         let rowView = tableView.rows[rowIndex];
+        let rowHeight = 0;
         if (startRow === rowView) {
             foundStartRow = true;
         }
-        if (foundStartRow) {
+        let renderRow = (!defer) && (deferredHeight >= layoutInfo.deferUntilHeight) && foundStartRow;
+        let rowDiv: HTMLDivElement;
+        if (renderRow) {
             let rowRect = new Geometry.Rectangle(tableIndent, layoutInfo.currentLineTop, tableWidth, 0);
-            let rowDiv = document.createElement("div");
+            rowDiv = document.createElement("div");
             rowRect.conformElementOpenHeight(rowDiv);
-            // left to right for now
-            if (startBox) {
+            if (topRow && startBox) {
                 renderBox(startBox, layoutInfo, defer);
+                deferredHeight += startBox.renderOutput.deferredHeight;
+                rowHeight = startBox.renderedHeight;
             }
-            for (let boxIndex = 0, boxCount = rowView.boxes.length; boxIndex < boxCount; boxIndex++) {
-                //
+        }
+        let boxX = 0;
+        for (let boxIndex = 0, boxCount = rowView.boxes.length; boxIndex < boxCount; boxIndex++) {
+            let box = rowView.boxes[boxIndex];
+            if (!topRow || (box !== startBox)) {
+                renderBox(box, layoutInfo);
+                if (rowHeight < box.renderedHeight) {
+                    rowHeight = box.renderedHeight;
+                }
+                deferredHeight += box.renderOutput.deferredHeight;
+                if (renderRow) {
+                    box.div.style.left = `${boxX}px`;
+                    rowDiv.appendChild(box.div);
+                }
+                boxX += box.specWidth;
             }
+        }
+        if (renderRow) {
+            tableHeight += rowHeight;
+            rowDiv.style.height = `${rowHeight}px`;
             layoutInfo.viewportDiv.appendChild(rowDiv);
         }
+        if (topRow) {
+            topRow = false;
+            layoutInfo.startingPosStack = undefined;
+        }
     }
+    tableView.renderedHeight = tableHeight;
 }
 
 function renderTreeFromPosition(viewportDiv: HTMLDivElement, startingPosition: number, flowView: FlowView) {
@@ -1426,7 +1474,7 @@ function renderFlow(renderContext: ILayoutContext, deferWhole = false): IRenderO
         docContext,
         startPGMarker,
     };
-    if (renderContext.deferUntilHeight===undefined) {
+    if (renderContext.deferUntilHeight === undefined) {
         renderContext.deferUntilHeight = 0;
     }
     let deferredHeight = 0;
@@ -1435,8 +1483,7 @@ function renderFlow(renderContext: ILayoutContext, deferWhole = false): IRenderO
     itemsContext.paragraphLexer = paragraphLexer;
     textErrorRun = undefined;
 
-    function renderPG(
-        curPGMarker: IParagraphMarker, curPGPos: number, indentWidth: number, indentSymbol: ISymbol,
+    function renderPG(curPGMarker: IParagraphMarker, curPGPos: number, indentWidth: number, indentSymbol: ISymbol,
         contentWidth: number) {
         let pgBreaks = curPGMarker.cache.breaks;
         let lineDiv: ILineDiv;
@@ -1458,7 +1505,7 @@ function renderFlow(renderContext: ILayoutContext, deferWhole = false): IRenderO
                 lineDivHeight = docContext.headerDivHeight;
                 lineFontstr = docContext.headerFontstr;
             }
-            let lineOK = (!(deferredPGs||deferWhole)) && (renderContext.deferUntilHeight<=deferredHeight);
+            let lineOK = (!(deferredPGs || deferWhole)) && (renderContext.deferUntilHeight <= deferredHeight);
             if (lineOK && ((lineEnd === undefined) || (lineEnd > renderContext.startingPosition))) {
                 lineDiv = makeLineDiv(new Geometry.Rectangle(0, renderContext.currentLineTop, viewportWidth, lineDivHeight),
                     lineFontstr);
@@ -1504,12 +1551,23 @@ function renderFlow(renderContext: ILayoutContext, deferWhole = false): IRenderO
 
     let startPGPos: number;
     let totalLength = client.getLength();
+    // TODO: use end of doc marker
     do {
         if (pgMarker.hasRangeLabel("table")) {
             renderTable(startPGMarker, renderContext, deferredPGs);
-            // only first table can contain starting position
-            renderContext.startingPosStack = undefined;
-            // TODO: update end offset and height using table height
+            let tableView = (<ITableMarker>startPGMarker).view;
+            deferredHeight += tableView.deferredHeight;
+            renderContext.currentLineTop += tableView.renderedHeight;
+            let endTablePos = renderContext.flowView.client.mergeTree.getOffset(tableView.endTableMarker,
+                SharedString.UniversalSequenceNumber, renderContext.flowView.client.getClientId());
+            let tilePos = findTile(renderContext.flowView, endTablePos, "pg", false);
+            if (tilePos) {
+                pgMarker = tilePos.tile;
+                markerPos = tilePos.pos;
+            } else {
+                pgMarker = undefined;
+            }
+            // TODO: if reached end of viewport, get pos ranges
         } else {
             itemsContext.startPGMarker = pgMarker;
             startPGMarker = pgMarker;
@@ -2406,7 +2464,11 @@ export class FlowView {
             this.localQueueRender(this.cursor.pos);
         }
     }
-
+/*
+    public insertTable() {
+        let opList = <SharedString.IMergeTreeOp[]>[];
+     }
+*/
     public toggleBlockquote() {
         let tileInfo = findTile(this, this.cursor.pos, "pg");
         if (tileInfo) {
@@ -2423,6 +2485,9 @@ export class FlowView {
 
     public keyCmd(charCode: number) {
         switch (charCode) {
+            case CharacterCodes.R:
+                // this.insertTable();
+                break;
             case CharacterCodes.K:
                 this.toggleBlockquote();
                 break;
