@@ -32,7 +32,7 @@ export interface Block extends Node {
 }
 
 export interface HierBlock extends Block {
-    addNodeMarkers(node: Node);
+    addNodeMarkers(mergeTree: MergeTree, node: Node);
     rightmostTiles: MapLike<Marker>;
     leftmostTiles: MapLike<Marker>;
     rangeStacks: RangeStackMap;
@@ -195,7 +195,7 @@ function applyRangeMarker(stack: Collections.Stack<Marker>, delta: Marker) {
     }
 }
 
-function addNodeMarkers(node: Node, rightmostTiles: MapLike<Marker>,
+function addNodeMarkers(mergeTree: MergeTree, node: Node, rightmostTiles: MapLike<Marker>,
     leftmostTiles: MapLike<Marker>, rangeStacks: RangeStackMap) {
     function updateRangeInfo(label: string, marker: Marker) {
         let stack = rangeStacks[label];
@@ -209,6 +209,10 @@ function addNodeMarkers(node: Node, rightmostTiles: MapLike<Marker>,
         let segment = <Segment>node;
         if ((segment.netLength() > 0) && (segment.getType() == SegmentType.Marker)) {
             let marker = <Marker>node;
+            let markerId = marker.getId();
+            if (markerId) {
+                mergeTree.mapIdToSegment(markerId, marker);
+            }
             if (marker.behaviors & ops.MarkerBehaviors.Tile) {
                 addTile(marker, rightmostTiles);
                 addTileIfNotPresent(marker, leftmostTiles);
@@ -246,8 +250,9 @@ class HierMergeBlock extends MergeBlock implements Block {
         this.rangeStacks = Properties.createMap<Collections.Stack<Marker>>();
     }
 
-    addNodeMarkers(node: Node) {
-        addNodeMarkers(node, this.rightmostTiles, this.leftmostTiles, this.rangeStacks);
+    addNodeMarkers(mergeTree: MergeTree, node: Node) {
+        addNodeMarkers(mergeTree, node, this.rightmostTiles, this.leftmostTiles, 
+            this.rangeStacks);
     }
 
     hierBlock() {
@@ -2075,6 +2080,11 @@ export class MergeTree {
         return block;
     }
 
+    // TODO: remove id when segment removed 
+    mapIdToSegment(id: string, segment: Segment) {
+        this.idToSegment[id] = segment;
+    }
+
     addNode(block: Block, node: Node) {
         let index = block.childCount;
         block.children[block.childCount++] = node;
@@ -2098,7 +2108,7 @@ export class MergeTree {
                         len += nodes[nodeIndex].cachedLength;
                         if (this.blockUpdateMarkers) {
                             let hierBlock = blocks[i].hierBlock();
-                            hierBlock.addNodeMarkers(nodes[nodeIndex]);
+                            hierBlock.addNodeMarkers(this, nodes[nodeIndex]);
                         }
                         if (this.blockUpdateActions) {
                             this.blockUpdateActions.child(blocks[i], childIndex);
@@ -2128,7 +2138,7 @@ export class MergeTree {
             this.root.children[0] = block;
             if (this.blockUpdateMarkers) {
                 let hierRoot = this.root.hierBlock();
-                hierRoot.addNodeMarkers(block);
+                hierRoot.addNodeMarkers(this, block);
             }
             if (this.blockUpdateActions) {
                 this.blockUpdateActions.child(this.root, 0);
@@ -2823,10 +2833,6 @@ export class MergeTree {
     insertMarker(pos: number, refSeq: number, clientId: number, seq: number,
         behaviors: ops.MarkerBehaviors, props?: PropertySet) {
         let marker = Marker.make(behaviors, props, seq, clientId);
-        let markerId = marker.getId();
-        if (markerId) {
-            this.idToSegment[markerId] = marker;
-        }
         this.insert(pos, refSeq, clientId, seq, marker, (block, pos, refSeq, clientId, seq, marker) =>
             this.blockInsert(block, pos, refSeq, clientId, seq, marker));
     }
@@ -3294,7 +3300,7 @@ export class MergeTree {
             let child = block.children[i];
             len += nodeTotalLength(child);
             if (this.blockUpdateMarkers) {
-                hierBlock.addNodeMarkers(child);
+                hierBlock.addNodeMarkers(this, child);
             }
             if (this.blockUpdateActions) {
                 this.blockUpdateActions.child(block, i);

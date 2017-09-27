@@ -617,7 +617,7 @@ interface ILineContext {
     span: ISegSpan;
     pgMarker: IParagraphMarker;
     markerPos: number;
-    viewportBounds: Geometry.Rectangle;
+    outerViewportBounds: Geometry.Rectangle;
 }
 
 interface IDocumentContext {
@@ -632,12 +632,14 @@ interface IDocumentContext {
 interface IItemsContext {
     docContext?: IDocumentContext;
     startPGMarker: IParagraphMarker;
+    nextPGPos: number;
     itemInfo: IParagraphItemInfo;
     paragraphLexer: ParagraphLexer<IItemsContext>;
 }
 
 function buildDocumentContext(viewportDiv: HTMLDivElement) {
     let fontstr = "18px Times";
+    viewportDiv.style.font = fontstr;
     let headerFontstr = "22px Times";
     let wordSpacing = getTextWidth(" ", fontstr);
     let headerDivHeight = 32;
@@ -663,7 +665,7 @@ function showPresence(presenceX: number, lineContext: ILineContext, presenceInfo
 function showPositionEndOfLine(lineContext: ILineContext, presenceInfo?: IPresenceInfo) {
     if (lineContext.span) {
         let cursorBounds = lineContext.span.getBoundingClientRect();
-        let cursorX = cursorBounds.width + (cursorBounds.left - lineContext.viewportBounds.x);
+        let cursorX = cursorBounds.width + (cursorBounds.left - lineContext.outerViewportBounds.x);
         if (!presenceInfo) {
             lineContext.flowView.cursor.assignToLine(cursorX, lineContext.lineDivHeight, lineContext.lineDiv);
         } else {
@@ -693,11 +695,11 @@ function showPositionInLine(lineContext: ILineContext, textStartPos: number, tex
         let temp = lineContext.span.innerText;
         lineContext.span.innerText = preCursorText;
         let cursorBounds = lineContext.span.getBoundingClientRect();
-        posX = cursorBounds.width + (cursorBounds.left - lineContext.viewportBounds.x);
+        posX = cursorBounds.width + (cursorBounds.left - lineContext.outerViewportBounds.x);
         lineContext.span.innerText = temp;
     } else {
         let cursorBounds = lineContext.span.getBoundingClientRect();
-        posX = cursorBounds.left - lineContext.viewportBounds.x;
+        posX = cursorBounds.left - lineContext.outerViewportBounds.x;
     }
     if (!presenceInfo) {
         lineContext.flowView.cursor.assignToLine(posX, lineContext.lineDivHeight, lineContext.lineDiv);
@@ -778,7 +780,7 @@ function decorateLineDiv(lineDiv: ILineDiv, lineFontstr: string, lineDivHeight: 
 
 function reRenderLine(lineDiv: ILineDiv, flowView: FlowView) {
     if (lineDiv) {
-        let viewportBounds = Geometry.Rectangle.fromClientRect(flowView.viewportDiv.getBoundingClientRect());
+        let outerViewportBounds = Geometry.Rectangle.fromClientRect(flowView.viewportDiv.getBoundingClientRect());
         let lineDivBounds = lineDiv.getBoundingClientRect();
         let lineDivHeight = lineDivBounds.height;
         clearSubtree(lineDiv);
@@ -799,7 +801,7 @@ function reRenderLine(lineDiv: ILineDiv, flowView: FlowView) {
             markerPos: 0,
             pgMarker: undefined,
             span: undefined,
-            viewportBounds,
+            outerViewportBounds,
         };
         let lineEnd = lineDiv.lineEnd;
         flowView.client.mergeTree.mapRange({ leaf: renderSegmentIntoLine }, SharedString.UniversalSequenceNumber,
@@ -1071,7 +1073,7 @@ function createTable(pos: number, flowView: FlowView, nrows = 2, nboxes = 2) {
             SharedString.MarkerBehaviors.RangeBegin, ["row"]));
         pos++;
         for (let box = 0; box < nboxes; box++) {
-            let boxId = `box${row}${box}`;
+            let boxId = idBase + `box${row}${box}`;
             opList.push(createMarkerOp(pos, boxId,
                 SharedString.MarkerBehaviors.RangeBegin, ["box"]));
             pos++;
@@ -1097,8 +1099,9 @@ function createTable(pos: number, flowView: FlowView, nrows = 2, nboxes = 2) {
     opList.push(createMarkerOp(pos, endPrefix + idBase,
         SharedString.MarkerBehaviors.RangeEnd, ["table"]));
     pos++;
-    let groupOp = <SharedString.IMergeTreeGroupMsg> {
+    let groupOp = <SharedString.IMergeTreeGroupMsg>{
         ops: opList,
+        type: SharedString.MergeTreeDeltaType.GROUP,
     };
     flowView.sharedString.transaction(groupOp);
 }
@@ -1109,7 +1112,7 @@ class TableView {
     public deferredHeight: number;
     public minContentWidth = 0;
     public indentPct = 0.1;
-    public contentPct: 0.8;
+    public contentPct = 0.8;
     public rows = <RowView[]>[];
     public columns = <ColumnView[]>[];
     constructor(public tableMarker: ITableMarker, public endTableMarker: ITableMarker) {
@@ -1123,7 +1126,7 @@ class TableView {
         let remainingWidthPerColumn = Math.floor(remainingWidth / this.columns.length);
         for (let col of this.columns) {
             // TODO: borders
-            col.width = remainingWidthPerColumn + col.minContentWidth;
+            col.width = Math.floor(remainingWidthPerColumn + col.minContentWidth);
             for (let box of col.boxes) {
                 box.specWidth = col.width;
             }
@@ -1157,7 +1160,7 @@ class BoxView {
     }
 }
 
-function parseBox(boxStartPos: number, flowView: FlowView) {
+function parseBox(boxStartPos: number, docContext: IDocumentContext, flowView: FlowView) {
     let mergeTree = flowView.client.mergeTree;
     let boxMarkerSegOff = mergeTree.getContainingSegment(boxStartPos, SharedString.UniversalSequenceNumber,
         flowView.client.getClientId());
@@ -1176,7 +1179,7 @@ function parseBox(boxStartPos: number, flowView: FlowView) {
         let marker = <SharedString.Marker>markerSegOff.segment;
         if (marker.hasRangeLabel("table")) {
             let tableMarker = <ITableMarker>marker;
-            parseTable(tableMarker, nextPos, flowView);
+            parseTable(tableMarker, nextPos, docContext, flowView);
             if (tableMarker.view.minContentWidth > boxMarker.view.minContentWidth) {
                 boxMarker.view.minContentWidth = tableMarker.view.minContentWidth;
             }
@@ -1187,7 +1190,7 @@ function parseBox(boxStartPos: number, flowView: FlowView) {
             let pgMarker = <IParagraphMarker>marker;
             if (!pgMarker.itemCache) {
                 let itemsContext = <IItemsContext>{
-                    docContext: undefined,
+                    docContext,
                     itemInfo: { items: [], minWidth: 0 },
                     startPGMarker: pgMarker,
                 };
@@ -1195,8 +1198,16 @@ function parseBox(boxStartPos: number, flowView: FlowView) {
                 itemsContext.paragraphLexer = paragraphLexer;
 
                 mergeTree.mapRange({ leaf: segmentToItems }, SharedString.UniversalSequenceNumber,
-                    flowView.client.getClientId(), itemsContext, nextPos);
+                    flowView.client.getClientId(), itemsContext, nextPos + 1);
                 pgMarker.itemCache = itemsContext.itemInfo;
+                nextPos = itemsContext.nextPGPos;
+            } else {
+                let nextPgTilePos = findTile(flowView, nextPos + 1, "pg", false);
+                if (nextPgTilePos) {
+                    nextPos = nextPgTilePos.pos;
+                } else {
+                    console.log("couldn't find next pg");
+                }
             }
             if (pgMarker.itemCache.minWidth > boxMarker.view.minContentWidth) {
                 boxMarker.view.minContentWidth = pgMarker.itemCache.minWidth;
@@ -1204,10 +1215,11 @@ function parseBox(boxStartPos: number, flowView: FlowView) {
         }
 
     }
+    console.log(`parsed box ${boxMarker.getId()}`);
     return boxMarker;
 }
 
-function parseRow(rowStartPos: number, flowView: FlowView) {
+function parseRow(rowStartPos: number, docContext: IDocumentContext, flowView: FlowView) {
     let mergeTree = flowView.client.mergeTree;
     let rowMarkerSegOff = mergeTree.getContainingSegment(rowStartPos, SharedString.UniversalSequenceNumber,
         flowView.client.getClientId());
@@ -1220,8 +1232,9 @@ function parseRow(rowStartPos: number, flowView: FlowView) {
     rowMarker.view = new RowView(rowMarker, endRowMarker);
     let nextPos = rowStartPos + rowMarker.cachedLength;
     while (nextPos < endRowPos) {
-        let boxMarker = parseBox(nextPos, flowView);
+        let boxMarker = parseBox(nextPos, docContext, flowView);
         rowMarker.view.minContentWidth += boxMarker.view.minContentWidth;
+        rowMarker.view.boxes.push(boxMarker.view);
         let endBoxPos = mergeTree.getOffset(boxMarker.view.endMarker, SharedString.UniversalSequenceNumber,
             flowView.client.getClientId());
         nextPos = endBoxPos + boxMarker.view.endMarker.cachedLength;
@@ -1229,7 +1242,8 @@ function parseRow(rowStartPos: number, flowView: FlowView) {
     return rowMarker;
 }
 
-function parseTable(tableMarker: ITableMarker, tableMarkerPos: number, flowView: FlowView) {
+function parseTable(tableMarker: ITableMarker, tableMarkerPos: number, docContext: IDocumentContext,
+    flowView: FlowView) {
     let mergeTree = flowView.client.mergeTree;
     let id = tableMarker.getId();
     let endId = "end-" + id;
@@ -1241,7 +1255,7 @@ function parseTable(tableMarker: ITableMarker, tableMarkerPos: number, flowView:
     let nextPos = tableMarkerPos + tableMarker.cachedLength;
     let rowIndex = 0;
     while (nextPos < endTablePos) {
-        let rowMarker = parseRow(nextPos, flowView);
+        let rowMarker = parseRow(nextPos, docContext, flowView);
         let rowView = rowMarker.view;
         for (let i = 0, len = rowView.boxes.length; i < len; i++) {
             let box = rowView.boxes[i];
@@ -1284,8 +1298,13 @@ function renderBox(boxView: BoxView, layoutInfo: ILayoutContext, defer = false) 
     let transferDeferredHeight = false;
     let boxLayoutContext = <ILayoutContext>{
         currentLineTop: 0,
+        currentViewportWidth: boxView.specWidth,
+        docContext: layoutInfo.docContext,
         endMarker: boxView.endMarker,
         flowView: layoutInfo.flowView,
+        outerViewportBounds: layoutInfo.outerViewportBounds,
+        outerViewportHeight: layoutInfo.outerViewportHeight,
+        outerViewportWidth: layoutInfo.outerViewportWidth,
         stackIndex: layoutInfo.stackIndex,
         startMarker: undefined,  // set below
         startingPosStack: layoutInfo.startingPosStack,
@@ -1299,7 +1318,7 @@ function renderBox(boxView: BoxView, layoutInfo: ILayoutContext, defer = false) 
         let pgMarker = <SharedString.Marker>segoff.segment;
         boxLayoutContext.startMarker = pgMarker;
         boxLayoutContext.startMarkerPos = pgMarkerPos;
-        if (layoutInfo.startingPosition >= 0) {
+        if (layoutInfo.startingPosStack && (layoutInfo.startingPosition >= 0)) {
             transferDeferredHeight = true;
             let containingTilePos = findTile(layoutInfo.flowView, layoutInfo.startingPosition, "pg");
             if (containingTilePos.tile !== pgMarker) {
@@ -1318,11 +1337,11 @@ function renderBox(boxView: BoxView, layoutInfo: ILayoutContext, defer = false) 
     boxView.renderedHeight = boxLayoutContext.currentLineTop;
 }
 
-function renderTable(table: ITableMarker, layoutInfo: ILayoutContext, defer = false) {
+function renderTable(table: ITableMarker, docContext: IDocumentContext, layoutInfo: ILayoutContext, defer = false) {
     let flowView = layoutInfo.flowView;
     let mergeTree = flowView.client.mergeTree;
     let tablePos = mergeTree.getOffset(table, SharedString.UniversalSequenceNumber, flowView.client.getClientId());
-    let tableView = parseTable(table, tablePos, flowView);
+    let tableView = parseTable(table, tablePos, docContext, flowView);
     // let docContext = buildDocumentContext(viewportDiv);
     let viewportWidth = parseInt(layoutInfo.viewportDiv.style.width, 10);
 
@@ -1393,36 +1412,36 @@ function renderTable(table: ITableMarker, layoutInfo: ILayoutContext, defer = fa
 
 function renderTreeFromPosition(viewportDiv: HTMLDivElement, startingPosition: number, flowView: FlowView) {
     let client = flowView.client;
+    let docContext = buildDocumentContext(viewportDiv);
+    let outerViewportHeight = parseInt(viewportDiv.style.height, 10);
+    let outerViewportWidth = parseInt(viewportDiv.style.width, 10);
+
+    let outerViewportBounds = Geometry.Rectangle.fromClientRect(viewportDiv.getBoundingClientRect());
     let startingPosStack = client.mergeTree.getStackContext(startingPosition, client.getClientId(), ["table"]);
+    let layoutContext = <ILayoutContext>{
+        currentLineTop: 0,
+        currentViewportWidth: outerViewportWidth,
+        docContext,
+        flowView,
+        outerViewportBounds,
+        outerViewportHeight,
+        outerViewportWidth,
+        startingPosition,
+        viewportDiv,
+    };
     if (startingPosStack.table && (!startingPosStack.table.empty())) {
         let outerTable = startingPosStack.table.items[0];
-        let layoutContext = <ILayoutContext>{
-            currentLineTop: 0,
-            flowView,
-            stackIndex: 0,
-            startingPosStack,
-            startingPosition,
-            startMarker: outerTable,
-            viewportDiv,
-            viewportTop: 0,
-        };
-        return renderFlow(layoutContext);
+        layoutContext.startMarker = outerTable;
+        layoutContext.stackIndex = 0;
+        layoutContext.startingPosStack = startingPosStack;
     } else {
         let tileInfo = findTile(flowView, startingPosition, "pg");
         let startMarker = tileInfo.tile;
         let startMarkerPos = tileInfo.pos;
-
-        let layoutContext = <ILayoutContext>{
-            currentLineTop: 0,
-            flowView,
-            viewportTop: 0,
-            startMarker,
-            startingPosition,
-            startMarkerPos,
-            viewportDiv,
-        };
-        return renderFlow(layoutContext);
+        layoutContext.startMarker = startMarker;
+        layoutContext.startMarkerPos = startMarkerPos;
     }
+    return renderFlow(layoutContext);
 }
 
 function tokenToItems(
@@ -1466,6 +1485,11 @@ function tokenToItems(
     }
 }
 
+function isEndBox(marker: SharedString.Marker) {
+    return (marker.behaviors & SharedString.MarkerBehaviors.RangeEnd) &&
+        marker.hasRangeLabel("box");
+}
+
 function segmentToItems(
     segment: SharedString.Segment, segpos: number, refSeq: number, clientId: number,
     start: number, end: number, context: IItemsContext) {
@@ -1474,7 +1498,8 @@ function segmentToItems(
         context.paragraphLexer.lex(textSegment);
     } else if (segment.getType() === SharedString.SegmentType.Marker) {
         let marker = <SharedString.Marker>segment;
-        if (marker.hasTileLabel("pg")) {
+        if (marker.hasTileLabel("pg") || isEndBox(marker)) {
+            context.nextPGPos = segpos;
             return false;
         }
     }
@@ -1484,8 +1509,13 @@ function segmentToItems(
 interface ILayoutContext {
     containingPGMarker?: IParagraphMarker;
     currentLineTop: number;
+    currentViewportWidth: number;
     deferUntilHeight?: number;
+    docContext: IDocumentContext;
     viewportDiv: HTMLDivElement;
+    outerViewportHeight: number;
+    outerViewportWidth: number;
+    outerViewportBounds: Geometry.Rectangle;
     startingPosition?: number;
     startMarker: SharedString.Marker;
     startMarkerPos?: number;
@@ -1504,15 +1534,10 @@ interface IRenderOutput {
 
 function renderFlow(renderContext: ILayoutContext, deferWhole = false): IRenderOutput {
     let client = renderContext.flowView.client;
-    let docContext = buildDocumentContext(renderContext.viewportDiv);
     // TODO: for stable viewports cache the geometry and the divs
     // TODO: cache all this pre-amble in style blocks; override with pg properties
-    let viewportBounds = Geometry.Rectangle.fromClientRect(renderContext.viewportDiv.getBoundingClientRect());
+    let docContext = renderContext.docContext;
     let pgCount = 0;
-    renderContext.viewportDiv.style.font = docContext.fontstr;
-    let viewportHeight = parseInt(renderContext.viewportDiv.style.height, 10);
-
-    let viewportWidth = parseInt(renderContext.viewportDiv.style.width, 10);
     let viewportStartPos = -1;
     let lineCount = 0;
     let lastLineDiv = undefined;
@@ -1546,7 +1571,7 @@ function renderFlow(renderContext: ILayoutContext, deferWhole = false): IRenderO
         let pgBreaks = curPGMarker.cache.breaks;
         let lineDiv: ILineDiv;
         let lineDivHeight = docContext.defaultLineDivHeight;
-        let span: HTMLSpanElement;
+        let span: ISegSpan;
 
         for (let breakIndex = 0, len = pgBreaks.length; breakIndex < len; breakIndex++) {
             let lineStart = pgBreaks[breakIndex] + curPGPos;
@@ -1565,7 +1590,8 @@ function renderFlow(renderContext: ILayoutContext, deferWhole = false): IRenderO
             }
             let lineOK = (!(deferredPGs || deferWhole)) && (renderContext.deferUntilHeight <= deferredHeight);
             if (lineOK && ((lineEnd === undefined) || (lineEnd > renderContext.startingPosition))) {
-                lineDiv = makeLineDiv(new Geometry.Rectangle(0, renderContext.currentLineTop, viewportWidth, lineDivHeight),
+                lineDiv = makeLineDiv(new Geometry.Rectangle(0, renderContext.currentLineTop,
+                    renderContext.currentViewportWidth, lineDivHeight),
                     lineFontstr);
                 let contentDiv = lineDiv;
                 if (indentWidth > 0) {
@@ -1581,7 +1607,7 @@ function renderFlow(renderContext: ILayoutContext, deferWhole = false): IRenderO
                 }
                 let lineContext = <ILineContext>{
                     span, lineDiv, lineDivHeight, flowView: renderContext.flowView, pgMarker, markerPos,
-                    viewportBounds, contentDiv,
+                    outerViewportBounds: renderContext.outerViewportBounds, contentDiv,
                 };
                 if (viewportStartPos < 0) {
                     viewportStartPos = lineStart;
@@ -1596,7 +1622,7 @@ function renderFlow(renderContext: ILayoutContext, deferWhole = false): IRenderO
             } else {
                 deferredHeight += lineDivHeight;
             }
-            if ((viewportHeight - renderContext.currentLineTop) < docContext.defaultLineDivHeight) {
+            if ((renderContext.outerViewportHeight - renderContext.currentLineTop) < docContext.defaultLineDivHeight) {
                 // no more room for lines
                 // TODO: record end viewport char
                 break;
@@ -1612,7 +1638,7 @@ function renderFlow(renderContext: ILayoutContext, deferWhole = false): IRenderO
     // TODO: use end of doc marker
     do {
         if (pgMarker.hasRangeLabel("table")) {
-            renderTable(pgMarker, renderContext, deferredPGs);
+            renderTable(pgMarker, docContext, renderContext, deferredPGs);
             let tableView = (<ITableMarker>pgMarker).view;
             deferredHeight += tableView.deferredHeight;
             renderContext.currentLineTop += tableView.renderedHeight;
@@ -1638,7 +1664,7 @@ function renderFlow(renderContext: ILayoutContext, deferWhole = false): IRenderO
             let indentPct = 0.0;
             let contentPct = 1.0;
             let indentWidth = 0;
-            let contentWidth = viewportBounds.width;
+            let contentWidth = renderContext.currentViewportWidth;
             let indentSymbol: ISymbol = undefined;
 
             if (startPGMarker.listCache) {
@@ -1651,11 +1677,11 @@ function renderFlow(renderContext: ILayoutContext, deferWhole = false): IRenderO
                 contentPct = getContentPct(startPGMarker);
             }
             if (indentPct !== 0.0) {
-                indentWidth = Math.floor(indentPct * viewportBounds.width);
+                indentWidth = Math.floor(indentPct * renderContext.currentViewportWidth);
             }
-            contentWidth = Math.floor(contentPct * viewportBounds.width) - indentWidth;
-            if (contentWidth > viewportBounds.width) {
-                console.log(`egregious content width ${contentWidth} bound ${viewportBounds.width}`);
+            contentWidth = Math.floor(contentPct * renderContext.currentViewportWidth) - indentWidth;
+            if (contentWidth > renderContext.currentViewportWidth) {
+                console.log(`egregious content width ${contentWidth} bound ${renderContext.currentViewportWidth}`);
             }
             if ((!startPGMarker.cache) || (startPGMarker.cache.singleLineWidth !== contentWidth)) {
                 if (!startPGMarker.itemCache) {
@@ -1694,7 +1720,7 @@ function renderFlow(renderContext: ILayoutContext, deferWhole = false): IRenderO
         }
     } while ((pgMarker !== undefined) &&
     ((renderContext.endMarker === undefined) || (pgMarker !== renderContext.endMarker)) &&
-        ((viewportHeight - renderContext.currentLineTop) >= docContext.defaultLineDivHeight));
+        ((renderContext.outerViewportHeight - renderContext.currentLineTop) >= docContext.defaultLineDivHeight));
     return {
         deferredHeight,
         viewportStartPos,
@@ -2545,6 +2571,7 @@ export class FlowView {
         switch (charCode) {
             case CharacterCodes.R:
                 createTable(this.cursor.pos, this);
+                this.localQueueRender(this.cursor.pos);
                 break;
             case CharacterCodes.K:
                 this.toggleBlockquote();
