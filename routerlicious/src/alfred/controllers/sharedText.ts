@@ -79,7 +79,7 @@ export async function onLoad(id: string, version: resources.ICommit, config: any
 
     const container = new controls.FlowContainer(containerDiv);
     host.attach(container);
-    theFlow = new controls.FlowView(flowViewDiv, sharedString);
+    theFlow = new controls.FlowView(flowViewDiv, sharedString, container.status);
     container.addContent(theFlow);
 
     getInsights(collabDoc.getRoot(), sharedString.id).then((insightsMap) => {

@@ -3,6 +3,7 @@ import * as url from "url";
 import * as API from "../api";
 import * as SharedString from "../merge-tree";
 import * as ui from "../ui";
+import { Status } from "./status";
 
 enum CharacterCodes {
     _ = 95,
@@ -1833,7 +1834,11 @@ export class FlowView extends ui.Component {
     private pendingRender = false;
     private diagCharPort = false;
 
-    constructor(element: HTMLDivElement, public sharedString: SharedString.SharedString) {
+    constructor(
+        element: HTMLDivElement,
+        public sharedString: SharedString.SharedString,
+        public status: Status) {
+
         super(element);
 
         // TODO This thing probably wants to create its own abs pos div?
@@ -1952,8 +1957,7 @@ export class FlowView extends ui.Component {
     }
 
     public statusMessage(key: string, msg: string) {
-        // TODO need a way to post messages
-        // this.flowContainer.status.add(key, msg);
+        this.status.add(key, msg);
     }
 
     public firstLineDiv() {

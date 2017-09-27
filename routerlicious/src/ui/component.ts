@@ -1,25 +1,12 @@
 import { EventEmitter } from "events";
 import { Rectangle } from "./geometry";
 
-export interface IComponent {
-    // DOM element this node is attached to
-    element: HTMLDivElement;
+// Composition or inheritence for the below?
 
-    /**
-     * Component event handlers - including strongly typed overrides
-     */
-    on(event: "keypress", handler: (e: KeyboardEvent) => void): this;
-    on(event: "keydown", handler: (e: KeyboardEvent) => void): this;
-    on(event: "resize", handler: (size: Rectangle) => void): this;
-    on(event: string, listener: (...args: any[]) => void): this;
-}
-
-// Can I make use of composition below rather than inheritence?
-
-export abstract class Component implements IComponent {
+export abstract class Component {
     protected size: Rectangle;
     private events = new EventEmitter();
-    private children: IComponent[] = [];
+    private children: Component[] = [];
 
     constructor(public element: HTMLDivElement) {
     }
@@ -32,7 +19,14 @@ export abstract class Component implements IComponent {
         return this;
     }
 
-    public getChildren(): IComponent[] {
+    public emit(event: string, ...args: any[]) {
+        this.events.emit(event, ...args);
+        for (const child of this.children) {
+            child.emit(event, ...args);
+        }
+    }
+
+    public getChildren(): Component[] {
         // Probably will want a way to avoid providing direct access to the underlying array
         return this.children;
     }
@@ -43,11 +37,11 @@ export abstract class Component implements IComponent {
         this.events.emit("resize", rectangle);
     }
 
-    protected addChild(component: IComponent) {
+    protected addChild(component: Component) {
         this.children.push(component);
     }
 
-    protected removeChild(component: IComponent) {
+    protected removeChild(component: Component) {
         const index = this.children.lastIndexOf(component);
         if (index !== -1) {
             this.children.splice(index, 1);
