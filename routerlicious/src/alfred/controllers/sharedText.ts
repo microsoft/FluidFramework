@@ -78,9 +78,9 @@ export async function onLoad(id: string, version: resources.ICommit, config: any
     const flowViewDiv = document.createElement("div");
 
     const container = new controls.FlowContainer(containerDiv);
-    theFlow = new controls.FlowView(flowViewDiv, sharedString);
-    container.addChild(theFlow);
     host.attach(container);
+    theFlow = new controls.FlowView(flowViewDiv, sharedString);
+    container.addContent(theFlow);
 
     getInsights(collabDoc.getRoot(), sharedString.id).then((insightsMap) => {
         container.trackInsights(insightsMap);

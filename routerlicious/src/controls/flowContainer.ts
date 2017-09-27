@@ -1,26 +1,17 @@
 import * as api from "../api";
 import * as ui from "../ui";
-import { IStatus, Status } from "./status";
+import { Status } from "./status";
 
 export class FlowContainer extends ui.Component {
-    public status: IStatus;
-    public div: HTMLDivElement;
-    public statusDiv: HTMLDivElement;
-
-    // TODO should a container just have a set of interfaces that its children can make use of?
+    public status: Status;
+    public content: ui.Component;
 
     constructor(element: HTMLDivElement) {
         super(element);
-        this.createElements();
-        this.status = new Status(this.statusDiv, this.div);
-    }
-
-    public createElements() {
-        this.div = document.createElement("div");
-        this.statusDiv = document.createElement("div");
-        this.statusDiv.style.borderTop = "1px solid gray";
-        document.body.appendChild(this.div);
-        document.body.appendChild(this.statusDiv);
+        const statusDiv = document.createElement("div");
+        statusDiv.style.borderTop = "1px solid gray";
+        this.status = new Status(statusDiv);
+        element.appendChild(statusDiv);
     }
 
     public trackInsights(insights: api.IMap) {
@@ -30,12 +21,24 @@ export class FlowContainer extends ui.Component {
         });
     }
 
-    protected resizeCore(rectangle: ui.Rectangle) {
-        let bodBounds = ui.Rectangle.fromClientRect(document.body.getBoundingClientRect());
-        let vertSplit = bodBounds.nipVertBottom(22);
-        vertSplit[0].conformElement(this.div);
+    public addContent(content: ui.Component) {
+        this.content = content;
+        this.addChild(content);
+        document.body.appendChild(content.element);
+        this.resizeCore(this.size);
+    }
+
+    protected resizeCore(bounds: ui.Rectangle) {
+        let vertSplit = bounds.nipVertBottom(22);
+
+        if (this.content) {
+            vertSplit[0].conformElement(this.content.element);
+            this.content.resize(vertSplit[0]);
+        }
+
         vertSplit[1].y++; vertSplit[1].height--; // room for 1px border
-        vertSplit[1].conformElement(this.statusDiv);
+        vertSplit[1].conformElement(this.status.element);
+        this.status.resize(vertSplit[1]);
     }
 
     private async updateInsights(insights: api.IMap) {

@@ -22,14 +22,21 @@ export class Status extends ui.Component implements IStatus {
     public overlayInnerRects: ui.Rectangle[];
     public overlayMsg: string;
 
-    constructor(element: HTMLDivElement, public overlayContainer: HTMLElement) {
+    constructor(element: HTMLDivElement) {
         super(element);
-        this.makeOverlay(overlayContainer);
         this.element.style.backgroundColor = "#F1F1F1";
     }
 
-    public resizeCore(rectangle: ui.Rectangle) {
-        this.updateGeometry();
+    public resizeCore(bounds: ui.Rectangle) {
+        // let overlayRect = bounds.inner4(0.7, 0.05, 0.2, 0.1);
+        // overlayRect.conformElement(this.overlayDiv);
+        // overlayRect.x = 0;
+        // overlayRect.y = 0;
+        // this.overlayInnerRects = overlayRect.nipHoriz(Math.floor(overlayRect.width * 0.6));
+        // this.overlayInnerRects[0].conformElement(this.overlayMsgBox);
+        // if (this.overlayMsg) {
+        //     this.overlay(this.overlayMsg);
+        // }
     }
 
     public add(key: string, msg: string, showKey = false) {
@@ -109,25 +116,12 @@ export class Status extends ui.Component implements IStatus {
         return -1;
     }
 
-    private updateGeometry() {
-        let bounds = ui.Rectangle.fromClientRect(this.overlayContainer.getBoundingClientRect());
-        let overlayRect = bounds.inner4(0.7, 0.05, 0.2, 0.1);
-        overlayRect.conformElement(this.overlayDiv);
-        overlayRect.x = 0;
-        overlayRect.y = 0;
-        this.overlayInnerRects = overlayRect.nipHoriz(Math.floor(overlayRect.width * 0.6));
-        this.overlayInnerRects[0].conformElement(this.overlayMsgBox);
-        if (this.overlayMsg) {
-            this.overlay(this.overlayMsg);
-        }
-    }
-
-    private makeOverlay(overlayContainer: HTMLElement) {
-        let overlayDiv = document.createElement("div");
-        overlayDiv.style.visibility = "hidden";
-        this.overlayMsgBox = document.createElement("span");
-        overlayDiv.appendChild(this.overlayMsgBox);
-        overlayContainer.appendChild(overlayDiv);
-        this.overlayDiv = overlayDiv;
-    }
+    // private makeOverlay(overlayContainer: HTMLElement) {
+    //     let overlayDiv = document.createElement("div");
+    //     overlayDiv.style.visibility = "hidden";
+    //     this.overlayMsgBox = document.createElement("span");
+    //     overlayDiv.appendChild(this.overlayMsgBox);
+    //     overlayContainer.appendChild(overlayDiv);
+    //     this.overlayDiv = overlayDiv;
+    // }
 }

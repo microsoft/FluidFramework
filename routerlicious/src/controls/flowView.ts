@@ -1834,7 +1834,6 @@ export class FlowView extends ui.Component {
     private diagCharPort = false;
 
     constructor(element: HTMLDivElement, public sharedString: SharedString.SharedString) {
-
         super(element);
 
         // TODO This thing probably wants to create its own abs pos div?
@@ -2539,17 +2538,13 @@ export class FlowView extends ui.Component {
         });
     }
 
-    protected resizeCore(rectangle: ui.Rectangle) {
-        this.updateGeometry(rectangle);
-        this.render(this.topChar, true);
-    }
-
-    private updateGeometry(bounds: ui.Rectangle) {
+    protected resizeCore(bounds: ui.Rectangle) {
         let panelScroll = bounds.nipHorizRight(FlowView.scrollAreaWidth);
         this.scrollRect = panelScroll[1];
         ui.Rectangle.conformElementToRect(this.scrollDiv, this.scrollRect);
         this.viewportRect = panelScroll[0].inner(0.92);
         ui.Rectangle.conformElementToRect(this.viewportDiv, this.viewportRect);
+        this.render(this.topChar, true);
     }
 
     // TODO: paragraph spanning changes and annotations
