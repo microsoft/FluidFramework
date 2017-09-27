@@ -1,47 +1,18 @@
+import * as api from "../api";
 import * as ui from "../ui";
-import { Status } from "./status";
+import { IStatus, Status } from "./status";
 
-export class FlowContainer implements ui.IComponentContainer {
-    public onresize: () => void;
-    public onkeydown: (e: KeyboardEvent) => void;
-    public onkeypress: (e: KeyboardEvent) => void;
-    public status: ui.IStatus;
+export class FlowContainer extends ui.Component {
+    public status: IStatus;
     public div: HTMLDivElement;
     public statusDiv: HTMLDivElement;
 
     // TODO should a container just have a set of interfaces that its children can make use of?
 
-    constructor() {
+    constructor(element: HTMLDivElement) {
+        super(element);
         this.createElements();
-        this.updateGeometry();
         this.status = new Status(this.statusDiv, this.div);
-
-        // TODO should we send this message down to all children?
-
-        window.addEventListener("resize", () => {
-            this.updateGeometry();
-            if (this.onresize) {
-                this.onresize();
-                if (this.status) {
-                    this.status.onresize();
-                }
-            }
-        });
-
-        // TODO same with the below events?
-
-        document.body.onkeydown = (e) => {
-            // TODO: filter by target
-            if (this.onkeydown) {
-                this.onkeydown(e);
-            }
-        };
-        document.body.onkeypress = (e) => {
-            // TODO: filter by target
-            if (this.onkeypress) {
-                this.onkeypress(e);
-            }
-        };
     }
 
     public createElements() {
@@ -52,11 +23,41 @@ export class FlowContainer implements ui.IComponentContainer {
         document.body.appendChild(this.statusDiv);
     }
 
-    public updateGeometry() {
+    public trackInsights(insights: api.IMap) {
+        this.updateInsights(insights);
+        insights.on("valueChanged", () => {
+            this.updateInsights(insights);
+        });
+    }
+
+    protected resizeCore(rectangle: ui.Rectangle) {
         let bodBounds = ui.Rectangle.fromClientRect(document.body.getBoundingClientRect());
         let vertSplit = bodBounds.nipVertBottom(22);
         vertSplit[0].conformElement(this.div);
         vertSplit[1].y++; vertSplit[1].height--; // room for 1px border
         vertSplit[1].conformElement(this.statusDiv);
+    }
+
+    private async updateInsights(insights: api.IMap) {
+        const view = await insights.getView();
+        if (view.has("ResumeAnalytics")) {
+            const resume = view.get("ResumeAnalytics");
+            const probability = parseFloat(resume.resumeAnalyticsResult);
+            if (probability !== 1 && probability > 0.7) {
+                this.status.overlay(`${Math.round(probability * 100)}% sure I found a resume!`);
+            }
+        }
+        if (view.has("TextAnalytics")) {
+            const analytics = view.get("TextAnalytics");
+            if (analytics.language) {
+                this.status.add("li", analytics.language);
+            }
+            if (analytics.sentiment) {
+                const sentimentEmoji = analytics.sentiment > 0.7
+                    ? "🙂"
+                    : analytics.sentiment < 0.3 ? "🙁" : "😐";
+                this.status.add("si", sentimentEmoji);
+            }
+        }
     }
 }

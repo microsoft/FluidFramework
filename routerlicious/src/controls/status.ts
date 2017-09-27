@@ -7,7 +7,14 @@ export interface IKeyMsgPair {
     showKey?: boolean;
 }
 
-export class Status implements ui.IStatus {
+export interface IStatus {
+    add(key: string, msg: string);
+    remove(key: string);
+    overlay(msg: string);
+    removeOverlay();
+}
+
+export class Status extends ui.Component implements IStatus {
     public overlayDiv: HTMLDivElement;
     public overlayImageElm: HTMLImageElement;
     public overlayMsgBox: HTMLSpanElement;
@@ -15,13 +22,13 @@ export class Status implements ui.IStatus {
     public overlayInnerRects: ui.Rectangle[];
     public overlayMsg: string;
 
-    constructor(public div: HTMLDivElement, public overlayContainer: HTMLElement) {
+    constructor(element: HTMLDivElement, public overlayContainer: HTMLElement) {
+        super(element);
         this.makeOverlay(overlayContainer);
-        this.updateGeometry();
-        this.div.style.backgroundColor = "#F1F1F1";
+        this.element.style.backgroundColor = "#F1F1F1";
     }
 
-    public onresize() {
+    public resizeCore(rectangle: ui.Rectangle) {
         this.updateGeometry();
     }
 
@@ -66,7 +73,7 @@ export class Status implements ui.IStatus {
             buf += "<\span>";
         }
 
-        this.div.innerHTML = buf;
+        this.element.innerHTML = buf;
     }
 
     public overlay(msg: string) {

@@ -1801,7 +1801,7 @@ function findTile(flowView: FlowView, startPos: number, tileType: string, preced
     return flowView.client.mergeTree.findTile(startPos, flowView.client.getClientId(), tileType, preceding);
 }
 
-export class FlowView {
+export class FlowView extends ui.Component {
     public static scrollAreaWidth = 18;
 
     public timeToImpression: number;
@@ -1812,7 +1812,6 @@ export class FlowView {
     public viewportStartPos: number;
     public viewportEndPos: number;
     public cursorSpan: HTMLSpanElement;
-    public containerDiv: HTMLDivElement;
     public viewportDiv: HTMLDivElement;
     public viewportRect: ui.Rectangle;
     public scrollDiv: HTMLDivElement;
@@ -1834,18 +1833,17 @@ export class FlowView {
     private pendingRender = false;
     private diagCharPort = false;
 
-    constructor(
-        public sharedString: SharedString.SharedString,
-        public flowContainer: ui.IComponentContainer) {
+    constructor(element: HTMLDivElement, public sharedString: SharedString.SharedString) {
 
-        this.containerDiv = flowContainer.div;
+        super(element);
+
+        // TODO This thing probably wants to create its own abs pos div?
         this.client = sharedString.client;
         this.viewportDiv = document.createElement("div");
-        this.containerDiv.appendChild(this.viewportDiv);
+        this.element.appendChild(this.viewportDiv);
         this.scrollDiv = document.createElement("div");
-        this.containerDiv.appendChild(this.scrollDiv);
+        this.element.appendChild(this.scrollDiv);
 
-        this.updateGeometry();
         this.statusMessage("li", " ");
         this.statusMessage("si", " ");
         sharedString.on("op", (msg: API.ISequencedObjectMessage) => {
@@ -1954,18 +1952,9 @@ export class FlowView {
         }
     }
 
-    public updateGeometry() {
-        let bounds = ui.Rectangle.fromClientRect(this.containerDiv.getBoundingClientRect());
-        ui.Rectangle.conformElementToRect(this.containerDiv, bounds);
-        let panelScroll = bounds.nipHorizRight(FlowView.scrollAreaWidth);
-        this.scrollRect = panelScroll[1];
-        ui.Rectangle.conformElementToRect(this.scrollDiv, this.scrollRect);
-        this.viewportRect = panelScroll[0].inner(0.92);
-        ui.Rectangle.conformElementToRect(this.viewportDiv, this.viewportRect);
-    }
-
     public statusMessage(key: string, msg: string) {
-        this.flowContainer.status.add(key, msg);
+        // TODO need a way to post messages
+        // this.flowContainer.status.add(key, msg);
     }
 
     public firstLineDiv() {
@@ -2094,11 +2083,11 @@ export class FlowView {
         };
 
         window.oncontextmenu = preventD;
-        this.containerDiv.onmousemove = preventD;
-        this.containerDiv.onmouseup = preventD;
-        this.containerDiv.onselectstart = preventD;
+        this.element.onmousemove = preventD;
+        this.element.onmouseup = preventD;
+        this.element.onselectstart = preventD;
 
-        this.containerDiv.onmousedown = (e) => {
+        this.element.onmousedown = (e) => {
             if (e.button === 0) {
                 let span = <ISegSpan> e.target;
                 let segspan: ISegSpan;
@@ -2120,7 +2109,7 @@ export class FlowView {
             }
         };
 
-        this.containerDiv.onmousewheel = (e) => {
+        this.element.onmousewheel = (e) => {
             if (!this.wheelTicking) {
                 let factor = 20;
                 let inputDelta = e.wheelDelta;
@@ -2142,10 +2131,7 @@ export class FlowView {
             e.preventDefault();
             e.returnValue = false;
         };
-        this.flowContainer.onresize = () => {
-            this.updateGeometry();
-            this.render(this.topChar, true);
-        };
+
         let keydownHandler = (e: KeyboardEvent) => {
             let saveLastVertX = this.lastVerticalX;
             let specialKey = true;
@@ -2229,6 +2215,7 @@ export class FlowView {
                 e.returnValue = false;
             }
         };
+
         let keypressHandler = (e: KeyboardEvent) => {
             let pos = this.cursor.pos;
             this.cursor.pos++;
@@ -2257,8 +2244,10 @@ export class FlowView {
             this.localQueueRender(this.cursor.pos);
 
         };
-        this.flowContainer.onkeydown = keydownHandler;
-        this.flowContainer.onkeypress = keypressHandler;
+
+        // Register for keyboard messages
+        this.on("keydown", keydownHandler);
+        this.on("keypress", keypressHandler);
     }
 
     public viewTileProps() {
@@ -2533,13 +2522,6 @@ export class FlowView {
         clearInterval(this.randWordTimer);
     }
 
-    public trackInsights(insights: API.IMap) {
-        this.updateInsights(insights);
-        insights.on("valueChanged", () => {
-            this.updateInsights(insights);
-        });
-    }
-
     public updatePGInfo(changePos: number) {
         let tileInfo = findTile(this, changePos, "pg");
         if (tileInfo) {
@@ -2556,6 +2538,20 @@ export class FlowView {
             this.render(this.topChar, true);
         });
     }
+
+    protected resizeCore(rectangle: ui.Rectangle) {
+        this.updateGeometry(rectangle);
+        this.render(this.topChar, true);
+    }
+
+    private updateGeometry(bounds: ui.Rectangle) {
+        let panelScroll = bounds.nipHorizRight(FlowView.scrollAreaWidth);
+        this.scrollRect = panelScroll[1];
+        ui.Rectangle.conformElementToRect(this.scrollDiv, this.scrollRect);
+        this.viewportRect = panelScroll[0].inner(0.92);
+        ui.Rectangle.conformElementToRect(this.viewportDiv, this.viewportRect);
+    }
+
     // TODO: paragraph spanning changes and annotations
     // TODO: generalize this by using transform fwd
     private applyOp(delta: SharedString.IMergeTreeOp, msg: API.ISequencedObjectMessage) {
@@ -2613,32 +2609,6 @@ export class FlowView {
                 this.pendingRender = false;
                 this.render(this.topChar, true);
             });
-        }
-    }
-
-    private async updateInsights(insights: API.IMap) {
-        const view = await insights.getView();
-
-        if (view.has("ResumeAnalytics")) {
-            const resume = view.get("ResumeAnalytics");
-            const probability = parseFloat(resume.resumeAnalyticsResult);
-            if (probability !== 1 && probability > 0.7) {
-                this.flowContainer.status.overlay(`${Math.round(probability * 100)}% sure I found a resume!`);
-            }
-        }
-
-        if (view.has("TextAnalytics")) {
-            const analytics = view.get("TextAnalytics");
-            if (analytics.language) {
-                this.statusMessage("li", analytics.language);
-            }
-
-            if (analytics.sentiment) {
-                const sentimentEmoji = analytics.sentiment > 0.7
-                    ? "🙂"
-                    : analytics.sentiment < 0.3 ? "🙁" : "😐";
-                this.statusMessage("si", sentimentEmoji);
-            }
         }
     }
 }

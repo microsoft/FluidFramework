@@ -7,6 +7,7 @@ import * as controls from "../../controls";
 import * as SharedString from "../../merge-tree";
 import * as shared from "../../shared";
 import * as socketStorage from "../../socket-storage";
+import * as ui from "../../ui";
 
 // first script loaded
 let clockStart = Date.now();
@@ -35,6 +36,8 @@ async function getInsights(map: API.IMap, id: string): Promise<API.IMap> {
 }
 
 export async function onLoad(id: string, version: resources.ICommit, config: any) {
+    const host = new ui.BrowserContainerHost();
+
     socketStorage.registerAsDefault(document.location.origin, config.blobStorageUrl, config.repository);
     console.log(`collabDoc loading ${id} - ${performanceNow()}`);
     const collabDoc = await API.load(id, { blockUpdateMarkers: true }, version);
@@ -67,16 +70,22 @@ export async function onLoad(id: string, version: resources.ICommit, config: any
     const sharedString = root.get("text") as SharedString.SharedString;
     console.log(`Shared string ready - ${performanceNow()}`);
 
-    getInsights(collabDoc.getRoot(), sharedString.id).then((insightsMap) => {
-        theFlow.trackInsights(insightsMap);
-    });
-
     console.log(window.navigator.userAgent);
     console.log(`id is ${id}`);
     console.log(`Partial load fired - ${performanceNow()}`);
 
-    let container = new controls.FlowContainer();
-    theFlow = new controls.FlowView(sharedString, container);
+    const containerDiv = document.createElement("div");
+    const flowViewDiv = document.createElement("div");
+
+    const container = new controls.FlowContainer(containerDiv);
+    theFlow = new controls.FlowView(flowViewDiv, sharedString);
+    container.addChild(theFlow);
+    host.attach(container);
+
+    getInsights(collabDoc.getRoot(), sharedString.id).then((insightsMap) => {
+        container.trackInsights(insightsMap);
+    });
+
     if (sharedString.client.getLength() > 0) {
         theFlow.render(0, true);
     }
