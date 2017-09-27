@@ -2051,7 +2051,6 @@ export class FlowView extends ui.Component {
 
         super(element);
 
-        // TODO This thing probably wants to create its own abs pos div?
         this.client = sharedString.client;
         this.viewportDiv = document.createElement("div");
         this.element.appendChild(this.viewportDiv);
