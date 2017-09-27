@@ -51,5 +51,7 @@ export abstract class Component {
     /**
      * Allows derived class to do custom processing based on the resize
      */
-    protected abstract resizeCore(rectangle: Rectangle);
+    protected resizeCore(rectangle: Rectangle) {
+        return;
+    }
 }
