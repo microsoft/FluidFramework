@@ -80,6 +80,10 @@ export async function onLoad(id: string, version: resources.ICommit, config: any
     const container = new controls.FlowContainer(containerDiv);
     host.attach(container);
     theFlow = new controls.FlowView(flowViewDiv, sharedString, container.status);
+    const image = new controls.Image(
+        document.createElement("div"),
+        url.resolve(document.baseURI, "/public/images/bindy.svg"));
+    container.addOverlay(image);
     container.addContent(theFlow);
 
     getInsights(collabDoc.getRoot(), sharedString.id).then((insightsMap) => {

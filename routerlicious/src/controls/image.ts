@@ -25,4 +25,12 @@ export class Image extends ui.Component {
     public setMessage(message: string) {
         this.message.innerText = message;
     }
+
+    public resizeCore(bounds: ui.Rectangle) {
+        bounds.x = 0;
+        bounds.y = 0;
+        const overlayInnerRects = bounds.nipHoriz(Math.floor(bounds.width * 0.6));
+        overlayInnerRects[0].conformElement(this.message);
+        overlayInnerRects[1].conformElement(this.image);
+    }
 }

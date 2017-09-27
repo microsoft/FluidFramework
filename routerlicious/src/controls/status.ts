@@ -1,4 +1,3 @@
-import * as url from "url";
 import * as ui from "../ui";
 
 export interface IKeyMsgPair {
@@ -10,33 +9,14 @@ export interface IKeyMsgPair {
 export interface IStatus {
     add(key: string, msg: string);
     remove(key: string);
-    overlay(msg: string);
-    removeOverlay();
 }
 
 export class Status extends ui.Component implements IStatus {
-    public overlayDiv: HTMLDivElement;
-    public overlayImageElm: HTMLImageElement;
-    public overlayMsgBox: HTMLSpanElement;
     public info: IKeyMsgPair[] = [];
-    public overlayInnerRects: ui.Rectangle[];
-    public overlayMsg: string;
 
     constructor(element: HTMLDivElement) {
         super(element);
         this.element.style.backgroundColor = "#F1F1F1";
-    }
-
-    public resizeCore(bounds: ui.Rectangle) {
-        // let overlayRect = bounds.inner4(0.7, 0.05, 0.2, 0.1);
-        // overlayRect.conformElement(this.overlayDiv);
-        // overlayRect.x = 0;
-        // overlayRect.y = 0;
-        // this.overlayInnerRects = overlayRect.nipHoriz(Math.floor(overlayRect.width * 0.6));
-        // this.overlayInnerRects[0].conformElement(this.overlayMsgBox);
-        // if (this.overlayMsg) {
-        //     this.overlay(this.overlayMsg);
-        // }
     }
 
     public add(key: string, msg: string, showKey = false) {
@@ -83,30 +63,6 @@ export class Status extends ui.Component implements IStatus {
         this.element.innerHTML = buf;
     }
 
-    public overlay(msg: string) {
-        this.overlayMsg = msg;
-        this.overlayMsgBox.innerText = msg;
-        if (!this.overlayImageElm) {
-            this.overlayImageElm = document.createElement("img");
-            this.overlayImageElm.src = url.resolve(document.baseURI, "/public/images/bindy.svg");
-            this.overlayImageElm.alt = "Your Buddy!";
-            this.overlayDiv.appendChild(this.overlayImageElm);
-        }
-        this.overlayImageElm.style.height = "auto";
-        this.overlayInnerRects[1].conformElement(this.overlayImageElm);
-        this.overlayDiv.style.visibility = "visible";
-        this.overlayMsgBox.style.height = "auto";
-        this.overlayMsgBox.style.padding = "5px";
-        this.overlayMsgBox.style.borderRadius = "8px";
-        this.overlayMsgBox.style.backgroundColor = "rgba(0, 240, 20, 0.5)";
-        this.overlayMsgBox.style.visibility = "visible";
-    }
-
-    public removeOverlay() {
-        this.overlayMsg = undefined;
-        this.overlayDiv.style.visibility = "hidden";
-    }
-
     private findKV(key: string) {
         for (let i = 0, len = this.info.length; i < len; i++) {
             if (this.info[i].key === key) {
@@ -115,13 +71,4 @@ export class Status extends ui.Component implements IStatus {
         }
         return -1;
     }
-
-    // private makeOverlay(overlayContainer: HTMLElement) {
-    //     let overlayDiv = document.createElement("div");
-    //     overlayDiv.style.visibility = "hidden";
-    //     this.overlayMsgBox = document.createElement("span");
-    //     overlayDiv.appendChild(this.overlayMsgBox);
-    //     overlayContainer.appendChild(overlayDiv);
-    //     this.overlayDiv = overlayDiv;
-    // }
 }

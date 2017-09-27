@@ -1,9 +1,11 @@
 import * as api from "../api";
 import * as ui from "../ui";
+import { Image } from "./image";
 import { Status } from "./status";
 
 export class FlowContainer extends ui.Component {
     public status: Status;
+    public image: Image;
     public content: ui.Component;
 
     constructor(element: HTMLDivElement) {
@@ -28,12 +30,26 @@ export class FlowContainer extends ui.Component {
         this.resizeCore(this.size);
     }
 
+    public addOverlay(image: Image) {
+        image.element.style.visibility = "hidden";
+        this.image = image;
+        this.addChild(image);
+        document.body.appendChild(image.element);
+        this.resizeCore(this.size);
+    }
+
     protected resizeCore(bounds: ui.Rectangle) {
         let vertSplit = bounds.nipVertBottom(22);
 
         if (this.content) {
             vertSplit[0].conformElement(this.content.element);
             this.content.resize(vertSplit[0]);
+        }
+
+        if (this.image) {
+            let overlayRect = bounds.inner4(0.7, 0.05, 0.2, 0.1);
+            overlayRect.conformElement(this.image.element);
+            this.image.resize(overlayRect);
         }
 
         vertSplit[1].y++; vertSplit[1].height--; // room for 1px border
@@ -43,11 +59,13 @@ export class FlowContainer extends ui.Component {
 
     private async updateInsights(insights: api.IMap) {
         const view = await insights.getView();
-        if (view.has("ResumeAnalytics")) {
+
+        if (view.has("ResumeAnalytics") && this.image) {
             const resume = view.get("ResumeAnalytics");
             const probability = parseFloat(resume.resumeAnalyticsResult);
             if (probability !== 1 && probability > 0.7) {
-                this.status.overlay(`${Math.round(probability * 100)}% sure I found a resume!`);
+                this.image.setMessage(`${Math.round(probability * 100)}% sure I found a resume!`);
+                this.image.element.style.visibility = "visible";
             }
         }
         if (view.has("TextAnalytics")) {
