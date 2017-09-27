@@ -1,13 +1,13 @@
-import * as geometry from "../geometry/index";
+import { IPoint } from "../../ui";
 import { IShape } from "./shape";
 
 export interface ICircle extends IShape {
-    center: geometry.IPoint;
+    center: IPoint;
     radius: number;
 }
 
 export class Circle implements ICircle {
-    constructor(public center: geometry.IPoint, public radius: number) {
+    constructor(public center: IPoint, public radius: number) {
     }
 
     public render(context2D: CanvasRenderingContext2D) {

@@ -1,5 +1,5 @@
+import * as ui from "../ui";
 import { Canvas } from "./canvas";
-import * as utils from "./utils";
 
 export default class BackBoard {
   public myNameIs: string = "BackBoard Instance";
@@ -9,7 +9,7 @@ export default class BackBoard {
   private gesture: MSGesture;
 
   constructor(private appObject: Canvas, htmlId: string) {
-    this.div = utils.id(htmlId);
+    this.div = ui.id(htmlId);
     // tslint:disable-next-line:no-string-literal
     this.div["sysObject"] = this;
 
@@ -49,7 +49,7 @@ export default class BackBoard {
       if (t !== undefined && t !== null) {
         // hide the sheet of glass everything is under
         // it is a div that is the canvas
-        utils.makeElementVisible(t, false);
+        ui.makeElementVisible(t, false);
         // try if to get an element from the point
         let elem = <HTMLElement> document.elementFromPoint(evt.clientX, evt.clientY);
         // should we check if this thing is selectable ???
@@ -61,7 +61,7 @@ export default class BackBoard {
         }
 
         // make the canvas visible again
-        utils.makeElementVisible(t, true);
+        ui.makeElementVisible(t, true);
         evt.stopPropagation();
       }
     }

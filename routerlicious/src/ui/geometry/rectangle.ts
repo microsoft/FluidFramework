@@ -1,8 +1,3 @@
-export interface IPoint {
-    x: number;
-    y: number;
-}
-
 export class Rectangle {
     public static fromClientRect(cr: ClientRect) {
         return new Rectangle(cr.left, cr.top, cr.width, cr.height);

@@ -1,9 +1,10 @@
 // tslint:disable:whitespace align no-bitwise
 import performanceNow = require("performance-now");
 import * as url from "url";
-import * as API from "../../api";
-import * as SharedString from "../../merge-tree";
-import * as Geometry from "./geometry";
+import * as API from "../api";
+import * as SharedString from "../merge-tree";
+import * as ui from "../ui";
+import { Status } from "./status";
 
 enum CharacterCodes {
     _ = 95,
@@ -149,7 +150,7 @@ export interface ISelectionListBox {
 }
 
 export function selectionListBoxCreate(
-    textRect: Geometry.Rectangle,
+    textRect: ui.Rectangle,
     container: HTMLElement,
     itemHeight: number,
     offsetY: number,
@@ -242,11 +243,11 @@ export function selectionListBoxCreate(
         }
         itemCapacity = Math.floor(height / itemHeight);
         if (top !== undefined) {
-            let listContainerRect = new Geometry.Rectangle(textRect.x, top, width, height);
+            let listContainerRect = new ui.Rectangle(textRect.x, top, width, height);
             listContainerRect.height = itemCapacity * itemHeight;
             listContainerRect.conformElementMaxHeight(listContainer);
         } else {
-            let listContainerRect = new Geometry.Rectangle(textRect.x, 0, width, height);
+            let listContainerRect = new ui.Rectangle(textRect.x, 0, width, height);
             listContainerRect.height = itemCapacity * itemHeight;
             listContainerRect.conformElementMaxHeightFromBottom(listContainer, bottom);
         }
@@ -285,7 +286,7 @@ export function selectionListBoxCreate(
         let scrollbar = document.createElement("div");
         bubble = document.createElement("div");
 
-        let rect = Geometry.Rectangle.fromClientRect(listContainer.getBoundingClientRect());
+        let rect = ui.Rectangle.fromClientRect(listContainer.getBoundingClientRect());
         // adjust for 2px border
         rect.x = (rect.width - scrollbarWidth) - 4;
         rect.width = scrollbarWidth;
@@ -410,9 +411,9 @@ function elmOffToSegOff(elmOff: IRangeInfo, span: HTMLSpanElement) {
 }
 
 let cachedCanvas: HTMLCanvasElement;
-let underlineStringURL = `url(${url.resolve(document.baseURI, "/public/images/underline.gif")}) bottom repeat-x`;
-// tslint:disable:max-line-length
-let underlinePaulStringURL = `url(${url.resolve(document.baseURI, "/public/images/underline-paul.gif")}) bottom repeat-x`;
+const baseURI = typeof document !== "undefined" ? document.baseURI : "";
+let underlineStringURL = `url(${url.resolve(baseURI, "/public/images/underline.gif")}) bottom repeat-x`;
+let underlinePaulStringURL = `url(${url.resolve(baseURI, "/public/images/underline-paul.gif")}) bottom repeat-x`;
 
 function getTextWidth(text: string, font: string) {
     // re-use canvas object for better performance
@@ -617,7 +618,7 @@ interface ILineContext {
     span: ISegSpan;
     pgMarker: IParagraphMarker;
     markerPos: number;
-    outerViewportBounds: Geometry.Rectangle;
+    outerViewportBounds: ui.Rectangle;
 }
 
 interface IDocumentContext {
@@ -674,7 +675,8 @@ function showPositionEndOfLine(lineContext: ILineContext, presenceInfo?: IPresen
     } else {
         if (lineContext.lineDiv.indentWidth !== undefined) {
             if (!presenceInfo) {
-                lineContext.flowView.cursor.assignToLine(lineContext.lineDiv.indentWidth, lineContext.lineDivHeight, lineContext.lineDiv);
+                lineContext.flowView.cursor.assignToLine(
+                    lineContext.lineDiv.indentWidth, lineContext.lineDivHeight, lineContext.lineDiv);
             } else {
                 showPresence(lineContext.lineDiv.indentWidth, lineContext, presenceInfo);
             }
@@ -688,7 +690,13 @@ function showPositionEndOfLine(lineContext: ILineContext, presenceInfo?: IPresen
     }
 }
 
-function showPositionInLine(lineContext: ILineContext, textStartPos: number, text: string, cursorPos: number, presenceInfo?: IPresenceInfo) {
+function showPositionInLine(
+    lineContext: ILineContext,
+    textStartPos: number,
+    text: string,
+    cursorPos: number,
+    presenceInfo?: IPresenceInfo) {
+
     let posX: number;
     if (cursorPos > textStartPos) {
         let preCursorText = text.substring(0, cursorPos - textStartPos);
@@ -772,15 +780,16 @@ function decorateLineDiv(lineDiv: ILineDiv, lineFontstr: string, lineDivHeight: 
     }
     let em = Math.round(getTextWidth("M", lineFontstr));
     let symbolWidth = getTextWidth(indentSymbol.text, indentFontstr);
-    let symbolDiv = makeContentDiv(new Geometry.Rectangle(lineDiv.indentWidth - Math.floor(em + symbolWidth), 0, symbolWidth,
-        lineDivHeight), indentFontstr);
+    let symbolDiv = makeContentDiv(
+        new ui.Rectangle(
+            lineDiv.indentWidth - Math.floor(em + symbolWidth), 0, symbolWidth, lineDivHeight), indentFontstr);
     symbolDiv.innerText = indentSymbol.text;
     lineDiv.appendChild(symbolDiv);
 }
 
 function reRenderLine(lineDiv: ILineDiv, flowView: FlowView) {
     if (lineDiv) {
-        let outerViewportBounds = Geometry.Rectangle.fromClientRect(flowView.viewportDiv.getBoundingClientRect());
+        let outerViewportBounds = ui.Rectangle.fromClientRect(flowView.viewportDiv.getBoundingClientRect());
         let lineDivBounds = lineDiv.getBoundingClientRect();
         let lineDivHeight = lineDivBounds.height;
         clearSubtree(lineDiv);
@@ -789,7 +798,7 @@ function reRenderLine(lineDiv: ILineDiv, flowView: FlowView) {
             decorateLineDiv(lineDiv, lineDiv.style.font, lineDivHeight);
         }
         if (lineDiv.indentWidth) {
-            contentDiv = makeContentDiv(new Geometry.Rectangle(lineDiv.indentWidth, 0, lineDiv.contentWidth,
+            contentDiv = makeContentDiv(new ui.Rectangle(lineDiv.indentWidth, 0, lineDiv.contentWidth,
                 lineDivHeight), lineDiv.style.font);
             lineDiv.appendChild(contentDiv);
         }
@@ -1010,7 +1019,7 @@ function getContentPct(pgMarker: IParagraphMarker) {
     }
 }
 
-function makeContentDiv(r: Geometry.Rectangle, lineFontstr) {
+function makeContentDiv(r: ui.Rectangle, lineFontstr) {
     let contentDiv = document.createElement("div");
     contentDiv.style.font = lineFontstr;
     contentDiv.style.whiteSpace = "pre";
@@ -1184,7 +1193,8 @@ function parseBox(boxStartPos: number, docContext: IDocumentContext, flowView: F
                 boxMarker.view.minContentWidth = tableMarker.view.minContentWidth;
             }
             let endTableMarker = tableMarker.view.endTableMarker;
-            nextPos = mergeTree.getOffset(endTableMarker, SharedString.UniversalSequenceNumber, flowView.client.getClientId());
+            nextPos = mergeTree.getOffset(
+                endTableMarker, SharedString.UniversalSequenceNumber, flowView.client.getClientId());
             nextPos += endTableMarker.cachedLength;
         } else {
             let pgMarker = <IParagraphMarker>marker;
@@ -1284,11 +1294,12 @@ function parseTable(tableMarker: ITableMarker, tableMarkerPos: number, docContex
 }
 
 function isInnerBox(boxView: BoxView, layoutInfo: ILayoutContext) {
-    return (!layoutInfo.startingPosStack) || (layoutInfo.startingPosStack.box.items.length === (layoutInfo.stackIndex + 1));
+    return (!layoutInfo.startingPosStack) ||
+        (layoutInfo.startingPosStack.box.items.length === (layoutInfo.stackIndex + 1));
 }
 
 function renderBox(boxView: BoxView, layoutInfo: ILayoutContext, defer = false) {
-    let boxRect = new Geometry.Rectangle(0, 0, boxView.specWidth, 0);
+    let boxRect = new ui.Rectangle(0, 0, boxView.specWidth, 0);
     let boxDiv = document.createElement("div");
     boxView.div = boxDiv;
     boxRect.conformElementOpenHeight(boxDiv);
@@ -1314,7 +1325,8 @@ function renderBox(boxView: BoxView, layoutInfo: ILayoutContext, defer = false) 
     if (isInnerBox(boxView, layoutInfo)) {
         let boxPos = mergeTree.getOffset(boxView.marker, SharedString.UniversalSequenceNumber, client.getClientId());
         let pgMarkerPos = boxPos + boxView.marker.cachedLength;
-        let segoff = mergeTree.getContainingSegment(pgMarkerPos, SharedString.UniversalSequenceNumber, client.getClientId());
+        let segoff = mergeTree.getContainingSegment(
+            pgMarkerPos, SharedString.UniversalSequenceNumber, client.getClientId());
         let pgMarker = <SharedString.Marker>segoff.segment;
         boxLayoutContext.startMarker = pgMarker;
         boxLayoutContext.startMarkerPos = pgMarkerPos;
@@ -1372,7 +1384,7 @@ function renderTable(table: ITableMarker, docContext: IDocumentContext, layoutIn
         let renderRow = (!defer) && (deferredHeight >= layoutInfo.deferUntilHeight) && foundStartRow;
         let rowDiv: HTMLDivElement;
         if (renderRow) {
-            let rowRect = new Geometry.Rectangle(tableIndent, layoutInfo.currentLineTop, tableWidth, 0);
+            let rowRect = new ui.Rectangle(tableIndent, layoutInfo.currentLineTop, tableWidth, 0);
             rowDiv = document.createElement("div");
             rowRect.conformElementOpenHeight(rowDiv);
             if (topRow && startBox) {
@@ -1416,7 +1428,7 @@ function renderTreeFromPosition(viewportDiv: HTMLDivElement, startingPosition: n
     let outerViewportHeight = parseInt(viewportDiv.style.height, 10);
     let outerViewportWidth = parseInt(viewportDiv.style.width, 10);
 
-    let outerViewportBounds = Geometry.Rectangle.fromClientRect(viewportDiv.getBoundingClientRect());
+    let outerViewportBounds = ui.Rectangle.fromClientRect(viewportDiv.getBoundingClientRect());
     let startingPosStack = client.mergeTree.getStackContext(startingPosition, client.getClientId(), ["table"]);
     let layoutContext = <ILayoutContext>{
         currentLineTop: 0,
@@ -1515,7 +1527,7 @@ interface ILayoutContext {
     viewportDiv: HTMLDivElement;
     outerViewportHeight: number;
     outerViewportWidth: number;
-    outerViewportBounds: Geometry.Rectangle;
+    outerViewportBounds: ui.Rectangle;
     startingPosition?: number;
     startMarker: SharedString.Marker;
     startMarkerPos?: number;
@@ -1542,7 +1554,7 @@ function renderFlow(renderContext: ILayoutContext, deferWhole = false): IRenderO
     let lineCount = 0;
     let lastLineDiv = undefined;
 
-    function makeLineDiv(r: Geometry.Rectangle, lineFontstr) {
+    function makeLineDiv(r: ui.Rectangle, lineFontstr) {
         let lineDiv = makeContentDiv(r, lineFontstr);
         renderContext.viewportDiv.appendChild(lineDiv);
         lineCount++;
@@ -1590,12 +1602,12 @@ function renderFlow(renderContext: ILayoutContext, deferWhole = false): IRenderO
             }
             let lineOK = (!(deferredPGs || deferWhole)) && (renderContext.deferUntilHeight <= deferredHeight);
             if (lineOK && ((lineEnd === undefined) || (lineEnd > renderContext.startingPosition))) {
-                lineDiv = makeLineDiv(new Geometry.Rectangle(0, renderContext.currentLineTop,
+                lineDiv = makeLineDiv(new ui.Rectangle(0, renderContext.currentLineTop,
                     renderContext.currentViewportWidth, lineDivHeight),
                     lineFontstr);
                 let contentDiv = lineDiv;
                 if (indentWidth > 0) {
-                    contentDiv = makeContentDiv(new Geometry.Rectangle(indentWidth, 0, contentWidth, lineDivHeight),
+                    contentDiv = makeContentDiv(new ui.Rectangle(indentWidth, 0, contentWidth, lineDivHeight),
                         lineFontstr);
                     lineDiv.indentWidth = indentWidth;
                     lineDiv.contentWidth = indentWidth;
@@ -1742,7 +1754,10 @@ function makeSegSpan(
             if (key === "textError") {
                 textErr = true;
                 if (textErrorRun === undefined) {
-                    textErrorRun = { start: segpos + offsetFromSegpos, end: segpos + offsetFromSegpos + segText.length };
+                    textErrorRun = {
+                        end: segpos + offsetFromSegpos + segText.length,
+                        start: segpos + offsetFromSegpos,
+                    };
                 } else {
                     textErrorRun.end += segText.length;
                 }
@@ -1779,7 +1794,7 @@ function makeSegSpan(
                         }
                         console.log(`button ${e.button}`);
                         if ((e.button === 2) || ((e.button === 0) && (e.ctrlKey))) {
-                            let spanBounds = Geometry.Rectangle.fromClientRect(span.getBoundingClientRect());
+                            let spanBounds = ui.Rectangle.fromClientRect(span.getBoundingClientRect());
                             spanBounds.width = Math.floor(window.innerWidth / 4);
                             slb = selectionListBoxCreate(spanBounds, document.body, 24, 0, 12);
                             slb.showSelectionList(altsToItems(textErrorInfo.alternates));
@@ -1823,22 +1838,6 @@ export function clearSubtree(elm: HTMLElement) {
     while (elm.lastChild) {
         elm.removeChild(elm.lastChild);
     }
-}
-
-export interface IStatus {
-    add(key: string, msg: string);
-    remove(key: string);
-    overlay(msg: string);
-    removeOverlay();
-    onresize();
-}
-
-export interface IComponentContainer {
-    div: HTMLDivElement;
-    onresize: () => void;
-    onkeydown: (e: KeyboardEvent) => void;
-    onkeypress: (e: KeyboardEvent) => void;
-    status: IStatus;
 }
 
 let presenceColors = ["darkgreen", "sienna", "olive", "purple"];
@@ -2013,7 +2012,7 @@ function findTile(flowView: FlowView, startPos: number, tileType: string, preced
     return flowView.client.mergeTree.findTile(startPos, flowView.client.getClientId(), tileType, preceding);
 }
 
-export class FlowView {
+export class FlowView extends ui.Component {
     public static scrollAreaWidth = 18;
 
     public timeToImpression: number;
@@ -2024,13 +2023,12 @@ export class FlowView {
     public viewportStartPos: number;
     public viewportEndPos: number;
     public cursorSpan: HTMLSpanElement;
-    public containerDiv: HTMLDivElement;
     public viewportDiv: HTMLDivElement;
-    public viewportRect: Geometry.Rectangle;
+    public viewportRect: ui.Rectangle;
     public scrollDiv: HTMLDivElement;
-    public scrollRect: Geometry.Rectangle;
+    public scrollRect: ui.Rectangle;
     public statusDiv: HTMLDivElement;
-    public statusRect: Geometry.Rectangle;
+    public statusRect: ui.Rectangle;
     public client: SharedString.Client;
     public ticking = false;
     public wheelTicking = false;
@@ -2047,17 +2045,18 @@ export class FlowView {
     private diagCharPort = false;
 
     constructor(
+        element: HTMLDivElement,
         public sharedString: SharedString.SharedString,
-        public flowContainer: IComponentContainer) {
+        public status: Status) {
 
-        this.containerDiv = flowContainer.div;
+        super(element);
+
         this.client = sharedString.client;
         this.viewportDiv = document.createElement("div");
-        this.containerDiv.appendChild(this.viewportDiv);
+        this.element.appendChild(this.viewportDiv);
         this.scrollDiv = document.createElement("div");
-        this.containerDiv.appendChild(this.scrollDiv);
+        this.element.appendChild(this.scrollDiv);
 
-        this.updateGeometry();
         this.statusMessage("li", " ");
         this.statusMessage("si", " ");
         sharedString.on("op", (msg: API.ISequencedObjectMessage) => {
@@ -2166,18 +2165,8 @@ export class FlowView {
         }
     }
 
-    public updateGeometry() {
-        let bounds = Geometry.Rectangle.fromClientRect(this.containerDiv.getBoundingClientRect());
-        Geometry.Rectangle.conformElementToRect(this.containerDiv, bounds);
-        let panelScroll = bounds.nipHorizRight(FlowView.scrollAreaWidth);
-        this.scrollRect = panelScroll[1];
-        Geometry.Rectangle.conformElementToRect(this.scrollDiv, this.scrollRect);
-        this.viewportRect = panelScroll[0].inner(0.92);
-        Geometry.Rectangle.conformElementToRect(this.viewportDiv, this.viewportRect);
-    }
-
     public statusMessage(key: string, msg: string) {
-        this.flowContainer.status.add(key, msg);
+        this.status.add(key, msg);
     }
 
     public firstLineDiv() {
@@ -2306,11 +2295,11 @@ export class FlowView {
         };
 
         window.oncontextmenu = preventD;
-        this.containerDiv.onmousemove = preventD;
-        this.containerDiv.onmouseup = preventD;
-        this.containerDiv.onselectstart = preventD;
+        this.element.onmousemove = preventD;
+        this.element.onmouseup = preventD;
+        this.element.onselectstart = preventD;
 
-        this.containerDiv.onmousedown = (e) => {
+        this.element.onmousedown = (e) => {
             if (e.button === 0) {
                 let span = <ISegSpan>e.target;
                 let segspan: ISegSpan;
@@ -2332,7 +2321,7 @@ export class FlowView {
             }
         };
 
-        this.containerDiv.onmousewheel = (e) => {
+        this.element.onmousewheel = (e) => {
             if (!this.wheelTicking) {
                 let factor = 20;
                 let inputDelta = e.wheelDelta;
@@ -2342,6 +2331,7 @@ export class FlowView {
                     inputDelta = e.wheelDelta / 2;
                 }
                 let delta = factor * inputDelta;
+                // tslint:disable-next-line:max-line-length
                 // console.log(`top char: ${this.topChar - delta} factor ${factor}; delta: ${delta} wheel: ${e.wheelDeltaY} ${e.wheelDelta} ${e.detail}`);
                 setTimeout(() => {
                     this.render(Math.floor(this.topChar - delta));
@@ -2353,10 +2343,7 @@ export class FlowView {
             e.preventDefault();
             e.returnValue = false;
         };
-        this.flowContainer.onresize = () => {
-            this.updateGeometry();
-            this.render(this.topChar, true);
-        };
+
         let keydownHandler = (e: KeyboardEvent) => {
             let saveLastVertX = this.lastVerticalX;
             let specialKey = true;
@@ -2440,6 +2427,7 @@ export class FlowView {
                 e.returnValue = false;
             }
         };
+
         let keypressHandler = (e: KeyboardEvent) => {
             let pos = this.cursor.pos;
             this.cursor.pos++;
@@ -2468,8 +2456,10 @@ export class FlowView {
             this.localQueueRender(this.cursor.pos);
 
         };
-        this.flowContainer.onkeydown = keydownHandler;
-        this.flowContainer.onkeypress = keypressHandler;
+
+        // Register for keyboard messages
+        this.on("keydown", keydownHandler);
+        this.on("keypress", keypressHandler);
     }
 
     public viewTileProps() {
@@ -2752,13 +2742,6 @@ export class FlowView {
         clearInterval(this.randWordTimer);
     }
 
-    public trackInsights(insights: API.IMap) {
-        this.updateInsights(insights);
-        insights.on("valueChanged", () => {
-            this.updateInsights(insights);
-        });
-    }
-
     public updatePGInfo(changePos: number) {
         let tileInfo = findTile(this, changePos, "pg");
         if (tileInfo) {
@@ -2775,6 +2758,16 @@ export class FlowView {
             this.render(this.topChar, true);
         });
     }
+
+    protected resizeCore(bounds: ui.Rectangle) {
+        let panelScroll = bounds.nipHorizRight(FlowView.scrollAreaWidth);
+        this.scrollRect = panelScroll[1];
+        ui.Rectangle.conformElementToRect(this.scrollDiv, this.scrollRect);
+        this.viewportRect = panelScroll[0].inner(0.92);
+        ui.Rectangle.conformElementToRect(this.viewportDiv, this.viewportRect);
+        this.render(this.topChar, true);
+    }
+
     // TODO: paragraph spanning changes and annotations
     // TODO: generalize this by using transform fwd
     private applyOp(delta: SharedString.IMergeTreeOp, msg: API.ISequencedObjectMessage) {
@@ -2832,32 +2825,6 @@ export class FlowView {
                 this.pendingRender = false;
                 this.render(this.topChar, true);
             });
-        }
-    }
-
-    private async updateInsights(insights: API.IMap) {
-        const view = await insights.getView();
-
-        if (view.has("ResumeAnalytics")) {
-            const resume = view.get("ResumeAnalytics");
-            const probability = parseFloat(resume.resumeAnalyticsResult);
-            if (probability !== 1 && probability > 0.7) {
-                this.flowContainer.status.overlay(`${Math.round(probability * 100)}% sure I found a resume!`);
-            }
-        }
-
-        if (view.has("TextAnalytics")) {
-            const analytics = view.get("TextAnalytics");
-            if (analytics.language) {
-                this.statusMessage("li", analytics.language);
-            }
-
-            if (analytics.sentiment) {
-                const sentimentEmoji = analytics.sentiment > 0.7
-                    ? "🙂"
-                    : analytics.sentiment < 0.3 ? "🙁" : "😐";
-                this.statusMessage("si", sentimentEmoji);
-            }
         }
     }
 }

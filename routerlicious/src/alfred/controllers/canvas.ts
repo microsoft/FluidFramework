@@ -1,10 +1,11 @@
 import * as resources from "gitresources";
 import * as $ from "jquery";
 import * as api from "../../api";
-import { Canvas, throttle } from "../../canvas";
+import { Canvas } from "../../controls";
 import * as ink from "../../ink";
 import * as shared from "../../shared";
 import * as socketStorage from "../../socket-storage";
+import { throttle } from "../../ui";
 
 async function loadDocument(id: string, version: resources.ICommit): Promise<api.Document> {
     console.log("Loading in root document...");

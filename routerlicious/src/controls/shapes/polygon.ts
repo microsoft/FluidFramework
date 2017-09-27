@@ -1,8 +1,8 @@
-import * as geometry from "../geometry/index";
+import { IPoint } from "../../ui";
 import { IShape } from "./shape";
 
 export interface IPolygon extends IShape {
-    points: geometry.IPoint[];
+    points: IPoint[];
 }
 
 export class Polygon implements IPolygon {
@@ -10,7 +10,7 @@ export class Polygon implements IPolygon {
      * Constructs a new polygon composed of the given points. The polygon
      * takes ownership of the passed in array of points.
      */
-    constructor(public points: geometry.IPoint[]) {
+    constructor(public points: IPoint[]) {
     }
 
     public render(context: CanvasRenderingContext2D) {
