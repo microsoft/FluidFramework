@@ -1,4 +1,4 @@
-// tslint:disable:whitespace align
+// tslint:disable:whitespace align no-bitwise
 import performanceNow = require("performance-now");
 import * as url from "url";
 import * as API from "../../api";
@@ -1034,16 +1034,74 @@ interface IBoxMarker extends SharedString.Marker {
 interface IRowMarker extends SharedString.Marker {
     view?: RowView;
 }
-/*
+
 let tableCount = 0;
-function createRangeMarkerOp(begin = true) {
+function createMarkerOp(pos1: number, id: string, behaviors: SharedString.MarkerBehaviors,
+    rangeLabels: string[], tileLabels?: string[]) {
+    let props = <SharedString.MapLike<any>>{
+        [SharedString.reservedMarkerIdKey]: id,
+    };
+    if (rangeLabels.length > 0) {
+        props[SharedString.reservedRangeLabelsKey] = rangeLabels;
+    }
+    if (tileLabels) {
+        props[SharedString.reservedTileLabelsKey] = tileLabels;
+    }
+    return <SharedString.IMergeTreeInsertMsg>{
+        marker: { behaviors },
+        pos1,
+        props,
+        type: SharedString.MergeTreeDeltaType.INSERT,
+    };
 }
-function createTable(startPos: number, flowView: FlowView, nrows = 2, ncolums = 2) {
+
+function createTable(pos: number, flowView: FlowView, nrows = 2, nboxes = 2) {
+    let content = ["aardvark", "squiggle", "jackelope", "springbok"];
     let idBase = flowView.client.longClientId;
     idBase += `T${tableCount}`;
-
+    let endPrefix = "end-";
+    let opList = <SharedString.IMergeTreeInsertMsg[]>[];
+    opList.push(createMarkerOp(pos, idBase,
+        SharedString.MarkerBehaviors.RangeBegin |
+        SharedString.MarkerBehaviors.Tile, ["table"], ["pg"]));
+    pos++;
+    for (let row = 0; row < nrows; row++) {
+        let rowId = idBase + `row${row}`;
+        opList.push(createMarkerOp(pos, rowId,
+            SharedString.MarkerBehaviors.RangeBegin, ["row"]));
+        pos++;
+        for (let box = 0; box < nboxes; box++) {
+            let boxId = `box${row}${box}`;
+            opList.push(createMarkerOp(pos, boxId,
+                SharedString.MarkerBehaviors.RangeBegin, ["box"]));
+            pos++;
+            opList.push(createMarkerOp(pos, boxId + "C",
+                SharedString.MarkerBehaviors.Tile, [], ["pg"]));
+            pos++;
+            let word = content[box + (2 * row)];
+            let insertStringOp = <SharedString.IMergeTreeInsertMsg>{
+                pos1: pos,
+                text: word,
+                type: SharedString.MergeTreeDeltaType.INSERT,
+            };
+            opList.push(insertStringOp);
+            pos += word.length;
+            opList.push(createMarkerOp(pos, endPrefix + boxId,
+                SharedString.MarkerBehaviors.RangeEnd, ["box"]));
+            pos++;
+        }
+        opList.push(createMarkerOp(pos, endPrefix + rowId,
+            SharedString.MarkerBehaviors.RangeEnd, ["row"]));
+        pos++;
+    }
+    opList.push(createMarkerOp(pos, endPrefix + idBase,
+        SharedString.MarkerBehaviors.RangeEnd, ["table"]));
+    pos++;
+    let groupOp = <SharedString.IMergeTreeGroupMsg> {
+        ops: opList,
+    };
+    flowView.sharedString.transaction(groupOp);
 }
-*/
 
 class TableView {
     public width: number;
@@ -1554,8 +1612,8 @@ function renderFlow(renderContext: ILayoutContext, deferWhole = false): IRenderO
     // TODO: use end of doc marker
     do {
         if (pgMarker.hasRangeLabel("table")) {
-            renderTable(startPGMarker, renderContext, deferredPGs);
-            let tableView = (<ITableMarker>startPGMarker).view;
+            renderTable(pgMarker, renderContext, deferredPGs);
+            let tableView = (<ITableMarker>pgMarker).view;
             deferredHeight += tableView.deferredHeight;
             renderContext.currentLineTop += tableView.renderedHeight;
             let endTablePos = renderContext.flowView.client.mergeTree.getOffset(tableView.endTableMarker,
@@ -2464,11 +2522,11 @@ export class FlowView {
             this.localQueueRender(this.cursor.pos);
         }
     }
-/*
-    public insertTable() {
-        let opList = <SharedString.IMergeTreeOp[]>[];
-     }
-*/
+    /*
+        public insertTable() {
+            let opList = <SharedString.IMergeTreeOp[]>[];
+         }
+    */
     public toggleBlockquote() {
         let tileInfo = findTile(this, this.cursor.pos, "pg");
         if (tileInfo) {
@@ -2486,7 +2544,7 @@ export class FlowView {
     public keyCmd(charCode: number) {
         switch (charCode) {
             case CharacterCodes.R:
-                // this.insertTable();
+                createTable(this.cursor.pos, this);
                 break;
             case CharacterCodes.K:
                 this.toggleBlockquote();

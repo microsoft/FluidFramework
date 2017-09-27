@@ -158,6 +158,11 @@ export class SharedString extends api.CollaborativeObject {
         });
     }
 
+    public transaction(groupOp: ops.IMergeTreeGroupMsg) {
+        this.client.localTransaction(groupOp);
+        this.submitLocalOperation(groupOp);
+    }
+
     public annotateRange(props: MergeTree.PropertySet, start: number, end: number, op?: ops.ICombiningOp) {
         let annotateMessage: ops.IMergeTreeAnnotateMsg = {
             pos1: start,

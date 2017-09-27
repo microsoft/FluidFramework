@@ -363,8 +363,8 @@ export class Marker extends BaseSegment {
 
     hasRangeLabels() {
         return (this.behaviors & (ops.MarkerBehaviors.RangeBegin | ops.MarkerBehaviors.RangeEnd)) &&
-        this.properties && this.properties[reservedRangeLabelsKey];
-    
+            this.properties && this.properties[reservedRangeLabelsKey];
+
     }
 
     hasTileLabel(label: string) {
@@ -413,18 +413,18 @@ export class Marker extends BaseSegment {
 
     toString() {
         let bbuf = "";
-        if (this.behaviors&ops.MarkerBehaviors.Tile) {
+        if (this.behaviors & ops.MarkerBehaviors.Tile) {
             bbuf += "Tile";
         }
-        if (this.behaviors&ops.MarkerBehaviors.RangeBegin) {
-            if (bbuf.length>0) {
-                bbuf+="; ";
+        if (this.behaviors & ops.MarkerBehaviors.RangeBegin) {
+            if (bbuf.length > 0) {
+                bbuf += "; ";
             }
             bbuf += "RangeBegin";
         }
-        if (this.behaviors&ops.MarkerBehaviors.RangeEnd) {
-            if (bbuf.length>0) {
-                bbuf+="; ";
+        if (this.behaviors & ops.MarkerBehaviors.RangeEnd) {
+            if (bbuf.length > 0) {
+                bbuf += "; ";
             }
             bbuf += "RangeEnd";
         }
@@ -446,11 +446,11 @@ export class Marker extends BaseSegment {
         }
         if (this.hasRangeLabels()) {
             let rangeKind = "begin";
-            if (this.behaviors&ops.MarkerBehaviors.RangeEnd) {
+            if (this.behaviors & ops.MarkerBehaviors.RangeEnd) {
                 rangeKind = "end";
             }
             if (this.hasTileLabels()) {
-                lbuf+=" ";
+                lbuf += " ";
             }
             lbuf += `range ${rangeKind} -- `;
             let labels = this.properties[reservedRangeLabelsKey];
@@ -1489,8 +1489,8 @@ export class Client {
                     clid, op.combiningOp);
                 break;
             case ops.MergeTreeDeltaType.GROUP:
-                for (let groupOp of op.ops) {
-                    this.applyOp(groupOp, msg);
+                for (let memberOp of op.ops) {
+                    this.applyOp(memberOp, msg);
                 }
                 break;
         }
@@ -1537,6 +1537,30 @@ export class Client {
         }
         else {
             return UniversalSequenceNumber;
+        }
+    }
+
+    localTransaction(groupOp: ops.IMergeTreeGroupMsg) {
+        for (let op of groupOp.ops) {
+            switch (op.type) {
+                case ops.MergeTreeDeltaType.INSERT:
+                    if (op.marker) {
+                        this.insertMarkerLocal(op.pos1, op.marker.behaviors,
+                            op.props);
+                    } else {
+                        this.insertTextLocal(op.text, op.pos1, op.props);
+                    }
+                    break;
+                case ops.MergeTreeDeltaType.ANNOTATE:
+                    this.annotateSegmentLocal(op.props, op.pos1, op.pos2, op.combiningOp);
+                    break;
+                case ops.MergeTreeDeltaType.REMOVE:
+                    this.removeSegmentLocal(op.pos1, op.pos2);
+                    break;
+                case ops.MergeTreeDeltaType.GROUP:
+                    console.log("unhandled nested group op");
+                    break;
+            }
         }
     }
 
@@ -2603,7 +2627,7 @@ export class MergeTree {
             { leaf: recordRangeLeaf, shift: rangeShift }, searchInfo);
         return searchInfo.stacks;
     }
-    
+
     // TODO: filter function
     findTile(startPos: number, clientId: number, tileLabel: string, preceding = true) {
         let searchInfo = <IMarkerSearchInfo>{
