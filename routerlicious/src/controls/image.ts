@@ -13,7 +13,6 @@ export class Image extends ui.Component {
         this.message.style.padding = "5px";
         this.message.style.borderRadius = "8px";
         this.message.style.backgroundColor = "rgba(0, 240, 20, 0.5)";
-        this.message.style.visibility = "visible";
         element.appendChild(this.message);
 
         this.image = document.createElement("img");
