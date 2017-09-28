@@ -759,6 +759,9 @@ function renderSegmentIntoLine(
                 }
             }
             return false;
+        } else if (marker.hasRangeLabel("box") &&
+            (marker.behaviors & SharedString.MarkerBehaviors.RangeEnd)) {
+            return false;
         }
     }
     return true;
