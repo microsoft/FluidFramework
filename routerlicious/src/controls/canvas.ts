@@ -2,8 +2,10 @@
 import * as api from "../api";
 import * as ink from "../ink";
 import * as ui from "../ui";
+import { Button } from "./button";
 import { Dock } from "./dock";
 import { InkCanvas } from "./inkCanvas";
+import { StackPanel } from "./stackPanel";
 
 // const colors: ink.IColor[] = [
 //     { r: 253 / 255, g:   0 / 255, b:  12 / 255, a: 1 },
@@ -39,7 +41,20 @@ export class Canvas extends ui.Component {
         this.ink = new InkCanvas(inkCanvasElement, model);
         this.dock.addContent(this.ink);
 
-        // TODO add a control pane to the dock
+        const stackPanelElement = document.createElement("div");
+        const buttonSize = { width: 50, height: 50 };
+        const stackPanel = new StackPanel(stackPanelElement, ["navbar-prague"]);
+        const colorButton = new Button(
+            document.createElement("div"),
+            buttonSize,
+            ["btn", "btn-palette", "prague-icon-pencil"]);
+        const replayButton = new Button(
+            document.createElement("div"),
+            buttonSize,
+            ["btn", "btn-palette", "prague-icon-replay"]);
+        stackPanel.addChild(colorButton);
+        stackPanel.addChild(replayButton);
+        this.dock.addBottom(stackPanel);
 
         // These should turn into components
         // document.querySelector("#replay").addEventListener("click", (e) => { this.ink.replay(); }, false);
