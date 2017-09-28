@@ -2,7 +2,8 @@
 import * as api from "../api";
 import * as ink from "../ink";
 import * as ui from "../ui";
-import InkCanvas from "./inkCanvas";
+import { Dock } from "./dock";
+import { InkCanvas } from "./inkCanvas";
 
 // const colors: ink.IColor[] = [
 //     { r: 253 / 255, g:   0 / 255, b:  12 / 255, a: 1 },
@@ -22,16 +23,23 @@ import InkCanvas from "./inkCanvas";
  * Canvas app
  */
 export class Canvas extends ui.Component {
+    private dock: Dock;
     private ink: InkCanvas;
 
     constructor(element: HTMLDivElement, model: ink.IInk, components: api.IMap) {
         super(element);
 
-        // register all of the different handlers
-        const hitPlane = document.createElement("div");
-        element.appendChild(hitPlane);
+        const dockElement = document.createElement("div");
+        element.appendChild(dockElement);
+        this.dock = new Dock(dockElement);
+        this.addChild(this.dock);
 
-        this.ink = new InkCanvas(hitPlane, model);
+        // Add the ink canvas to the dock
+        const inkCanvasElement = document.createElement("div");
+        this.ink = new InkCanvas(inkCanvasElement, model);
+        this.dock.addContent(this.ink);
+
+        // TODO add a control pane to the dock
 
         // These should turn into components
         // document.querySelector("#replay").addEventListener("click", (e) => { this.ink.replay(); }, false);
@@ -48,7 +56,7 @@ export class Canvas extends ui.Component {
     }
 
     protected resizeCore(bounds: ui.Rectangle) {
-        bounds.conformElement(this.ink.element);
-        this.ink.resize(bounds);
+        bounds.conformElement(this.dock.element);
+        this.dock.resize(bounds);
     }
 }

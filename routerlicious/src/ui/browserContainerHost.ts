@@ -39,10 +39,7 @@ export class BrowserContainerHost {
             this.root.emit("keypress", e);
         };
 
-        // Remove any existing children and attach ourselves
-        while (document.body.hasChildNodes()) {
-            document.body.removeChild(document.body.lastChild);
-        }
+        ui.removeAllChildren(document.body);
         document.body.appendChild(root.element);
 
         // Trigger initial resize due to attach

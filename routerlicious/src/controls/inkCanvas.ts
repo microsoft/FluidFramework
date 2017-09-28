@@ -32,7 +32,7 @@ class EventPoint {
     }
 }
 
-export default class InkCanvas extends ui.Component {
+export class InkCanvas extends ui.Component {
     private canvas: HTMLCanvasElement;
     private context: CanvasRenderingContext2D;
     private penID: number = -1;

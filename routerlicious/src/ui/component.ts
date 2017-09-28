@@ -1,10 +1,10 @@
 import { EventEmitter } from "events";
-import { Rectangle } from "./geometry";
+import { ISize, Rectangle } from "./geometry";
 
 // Composition or inheritence for the below?
 
 export abstract class Component {
-    protected size: Rectangle;
+    protected size = new Rectangle(0, 0, 0, 0);
     private events = new EventEmitter();
     private children: Component[] = [];
 
@@ -31,11 +31,22 @@ export abstract class Component {
         return this.children;
     }
 
+    /**
+     * Allows the element to provide a desired size relative to the rectangle provided. By default returns
+     * the provided size.
+     */
+    public measure(size: ISize): ISize {
+        return size;
+    }
+
     public resize(rectangle: Rectangle) {
         this.size = rectangle;
         this.resizeCore(rectangle);
         this.events.emit("resize", rectangle);
     }
+
+    // For the child management functions we may want to just make the dervied class do this. Could help them
+    // provide better context on their tracked nodes.
 
     protected addChild(component: Component) {
         this.children.push(component);
@@ -46,6 +57,10 @@ export abstract class Component {
         if (index !== -1) {
             this.children.splice(index, 1);
         }
+    }
+
+    protected removeAllChildren() {
+        this.children = [];
     }
 
     /**
