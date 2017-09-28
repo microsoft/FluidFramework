@@ -1,11 +1,10 @@
 import * as resources from "gitresources";
-import * as $ from "jquery";
 import * as api from "../../api";
 import { Canvas } from "../../controls";
 import * as ink from "../../ink";
 import * as shared from "../../shared";
 import * as socketStorage from "../../socket-storage";
-import { throttle } from "../../ui";
+import * as ui from "../../ui";
 
 async function loadDocument(id: string, version: resources.ICommit): Promise<api.Document> {
     console.log("Loading in root document...");
@@ -16,11 +15,11 @@ async function loadDocument(id: string, version: resources.ICommit): Promise<api
 }
 
 // throttle resize events and replace with an optimized version
-throttle("resize", "throttled-resize");
-
-let canvas: Canvas;
+ui.throttle("resize", "throttled-resize");
 
 export async function initialize(id: string, version: resources.ICommit, config: any) {
+    const host = new ui.BrowserContainerHost();
+
     socketStorage.registerAsDefault(document.location.origin, config.blobStorageUrl, config.repository);
 
     const doc = await loadDocument(id, version);
@@ -39,7 +38,7 @@ export async function initialize(id: string, version: resources.ICommit, config:
         root.set("components", doc.createMap());
     }
 
-    $("document").ready(() => {
-        canvas = new Canvas(root.get("ink") as ink.IInk, root.get("components") as api.IMap);
-    });
+    const canvasDiv = document.createElement("div");
+    const canvas = new Canvas(canvasDiv, root.get("ink") as ink.IInk, root.get("components") as api.IMap);
+    host.attach(canvas);
 }
