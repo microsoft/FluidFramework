@@ -56,6 +56,10 @@ export class Canvas extends ui.Component {
         stackPanel.addChild(replayButton);
         this.dock.addBottom(stackPanel);
 
+        replayButton.on("click", (event) => {
+            this.ink.replay();
+        });
+
         // These should turn into components
         // document.querySelector("#replay").addEventListener("click", (e) => { this.ink.replay(); }, false);
         // const root = $("#color-picker");

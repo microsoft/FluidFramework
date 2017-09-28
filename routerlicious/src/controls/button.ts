@@ -9,6 +9,10 @@ export class Button extends ui.Component {
         const button = document.createElement("button");
         button.classList.add(...classList);
         element.appendChild(button);
+
+        button.onclick = (mouseEvent: MouseEvent) => {
+            this.emit("click", mouseEvent);
+        };
     }
 
     /**
