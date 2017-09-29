@@ -3,7 +3,7 @@ import * as ui from "../ui";
 /**
  * Basic dock panel control
  */
-export class Dock extends ui.Component {
+export class DockPanel extends ui.Component {
     public bottom: ui.Component;
     public content: ui.Component;
 
