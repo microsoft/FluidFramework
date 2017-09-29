@@ -1302,6 +1302,7 @@ function parseTable(tableMarker: ITableMarker, tableMarkerPos: number, docContex
 
 function isInnerBox(boxView: BoxView, layoutInfo: ILayoutContext) {
     return (!layoutInfo.startingPosStack) || (!layoutInfo.startingPosStack.box) ||
+        (layoutInfo.startingPosStack.box.empty()) ||
         (layoutInfo.startingPosStack.box.items.length === (layoutInfo.stackIndex + 1));
 }
 
@@ -1310,7 +1311,7 @@ function renderBox(boxView: BoxView, layoutInfo: ILayoutContext, defer = false) 
     let boxDiv = document.createElement("div");
     boxView.div = boxDiv;
     boxRect.conformElementOpenHeight(boxDiv);
-    boxDiv.style.border = "1px solid black";
+    boxDiv.style.borderRight = "1px solid black";
     let client = layoutInfo.flowView.client;
     let mergeTree = client.mergeTree;
     let transferDeferredHeight = false;
@@ -1355,6 +1356,14 @@ function renderBox(boxView: BoxView, layoutInfo: ILayoutContext, defer = false) 
     boxView.renderedHeight = boxLayoutInfo.currentLineTop;
 }
 
+function setRowBorders(rowDiv: HTMLDivElement, top = false) {
+    rowDiv.style.borderLeft = "1px solid black";
+    if (top) {
+        rowDiv.style.borderTop = "1px solid black";
+    }
+    rowDiv.style.borderBottom = "1px solid black";
+}
+
 function renderTable(table: ITableMarker, docContext: IDocumentContext, layoutInfo: ILayoutContext, defer = false) {
     let flowView = layoutInfo.flowView;
     let mergeTree = flowView.client.mergeTree;
@@ -1370,13 +1379,13 @@ function renderTable(table: ITableMarker, docContext: IDocumentContext, layoutIn
     let startBox: BoxView;
 
     if (layoutInfo.startingPosStack) {
-        if (layoutInfo.startingPosStack.row  &&
-            (layoutInfo.startingPosStack.row.items.length>layoutInfo.stackIndex)) {
+        if (layoutInfo.startingPosStack.row &&
+            (layoutInfo.startingPosStack.row.items.length > layoutInfo.stackIndex)) {
             let startRowMarker = <IRowMarker>layoutInfo.startingPosStack.row.items[layoutInfo.stackIndex];
             startRow = startRowMarker.view;
         }
         if (layoutInfo.startingPosStack.box &&
-            (layoutInfo.startingPosStack.box.items.length>layoutInfo.stackIndex)) {
+            (layoutInfo.startingPosStack.box.items.length > layoutInfo.stackIndex)) {
             let startBoxMarker = <IBoxMarker>layoutInfo.startingPosStack.box.items[layoutInfo.stackIndex];
             startBox = startBoxMarker.view;
         }
@@ -1386,7 +1395,7 @@ function renderTable(table: ITableMarker, docContext: IDocumentContext, layoutIn
     let tableHeight = 0;
     let deferredHeight = 0;
     let topRow = (layoutInfo.startingPosStack !== undefined) && (layoutInfo.stackIndex === 0);
-
+    let firstRendered = true;
     for (let rowIndex = 0, rowCount = tableView.rows.length; rowIndex < rowCount; rowIndex++) {
         let rowView = tableView.rows[rowIndex];
         let rowHeight = 0;
@@ -1398,6 +1407,8 @@ function renderTable(table: ITableMarker, docContext: IDocumentContext, layoutIn
         if (renderRow) {
             let rowRect = new ui.Rectangle(tableIndent, layoutInfo.currentLineTop, tableWidth, 0);
             rowDiv = document.createElement("div");
+            setRowBorders(rowDiv, firstRendered);
+            firstRendered = false;
             rowRect.conformElementOpenHeight(rowDiv);
             if (topRow && startBox) {
                 renderBox(startBox, layoutInfo, defer);
