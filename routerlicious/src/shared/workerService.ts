@@ -2,7 +2,6 @@ import * as request from "request";
 import * as io from "socket.io-client";
 import * as url from "url";
 import * as api from "../api";
-import { nativeTextAnalytics, resumeAnalytics, textAnalytics } from "../intelligence";
 import * as Collections from "../merge-tree/collections";
 import * as socketStorage from "../socket-storage";
 import * as messages from "../socket-storage/messages";
@@ -14,10 +13,7 @@ import * as shared from "./";
 export class WorkerService implements api.IWorkerService {
 
     private socket;
-    private documentSnapshotMap: { [docId: string]: api.Document} = {};
-    private documentIntelMap: { [docId: string]: api.Document} = {};
-    private snapshotHandlerMap: { [docId: string]: (op: any) => void} = {};
-    private intelHandlerMap: { [docId: string]: (op: any) => void} = {};
+    private documentMap: { [docId: string]: { [work: string]: shared.IWork} } = {};
     private dict = new Collections.TST<number>();
 
     constructor(
@@ -55,17 +51,18 @@ export class WorkerService implements api.IWorkerService {
                     deferred.reject(error);
                 } else if (ack === "Acked") {
                     // Check whether worker is ready to work.
-                    this.socket.on("ReadyObject", (cId: string, id: string, response) => {
+                    this.socket.on("ReadyObject", (cId: string, id: string, workType: string, response) => {
                         response(null, clientDetail);
                     });
                     // Start working on an object.
-                    this.socket.on("TaskObject", (cId: string, id: string, response) => {
-                        this.processDocument(id);
+                    this.socket.on("TaskObject", (cId: string, id: string, workType: string, response) => {
+                        console.log(`Received ${workType} work for doc ${id}`);
+                        this.processDocumentWork(id, workType);
                         response(null, clientDetail);
                     });
                     // Stop working on an object.
-                    this.socket.on("RevokeObject", (cId: string, id: string, response) => {
-                        this.revokeWork(id);
+                    this.socket.on("RevokeObject", (cId: string, id: string, workType: string, response) => {
+                        this.revokeDocumentWork(id, workType);
                         response(null, clientDetail);
                     });
                     // Periodically sends heartbeat to manager.
@@ -124,86 +121,59 @@ export class WorkerService implements api.IWorkerService {
         socketStorage.registerAsDefault(this.serverUrl, this.storageUrl, this.repo);
     }
 
-    private async processDocument(id: string) {
-        if (id.length === 0) {
-            return;
+    private processDocumentWork(docId: string, workType: string) {
+        switch (workType) {
+            case "snapshot":
+                const snapshotWork: shared.IWork = new shared.SnapshotWork(docId, this.config);
+                this.startTask(docId, workType, snapshotWork);
+                break;
+            case "intel":
+                const intelWork: shared.IWork = new shared.IntelWork(docId, this.config);
+                this.startTask(docId, workType, intelWork);
+                break;
+            case "spell":
+                const spellcheckWork: shared.IWork = new shared.SpellcheckerWork(docId, this.config, this.dict);
+                this.startTask(docId, workType, spellcheckWork);
+                break;
+            default:
+                throw new Error("Unknown work type!");
         }
-        this.processSnapshot(id);
-        this.processIntelligenceServices(id);
     }
 
-    private processSnapshot(id: string) {
-        const documentP = api.load(id, { encrypted: undefined, localMinSeq: 0 });
-        documentP.then(async (doc) => {
-            console.log(`Loaded snapshot document ${id}`);
-            this.documentSnapshotMap[id] = doc;
-            const serializer = new shared.Serializer(doc);
-
-            const eventHandler = (op: api.ISequencedDocumentMessage) => {
-                serializer.run(op);
-            };
-
-            this.snapshotHandlerMap[doc.id] = eventHandler;
-            doc.on("op", eventHandler);
-        }, (error) => {
-            console.log(`Document ${id} not found!`);
-            return;
-        });
+    private revokeDocumentWork(docId: string, workType: string) {
+        switch (workType) {
+            case "snapshot":
+                this.stopTask(docId, workType);
+                break;
+            case "intel":
+                this.stopTask(docId, workType);
+                break;
+            case "spell":
+                this.stopTask(docId, workType);
+                break;
+            default:
+                throw new Error("Unknown work type!");
+        }
     }
 
-    private async processIntelligenceServices(id: string) {
-        api.load(id, { blockUpdateMarkers: true, localMinSeq: 0, encrypted: undefined }).then(async (doc) => {
-            console.log(`Loaded intelligence document ${id}`);
-            this.documentIntelMap[id] = doc;
-            const root = await doc.getRoot().getView();
-            if (!root.has("insights")) {
-                root.set("insights", doc.createMap());
+    private startTask(docId: string, workType: string, worker: shared.IWork) {
+        if (!(docId in this.documentMap)) {
+            let emptyMap: { [work: string]: shared.IWork } = {};
+            this.documentMap[docId] = emptyMap;
+        }
+        if (!(workType in this.documentMap[docId])) {
+            this.documentMap[docId][workType] = worker;
+            worker.start();
+        }
+    }
+
+    private stopTask(docId: string, workType: string) {
+        if (docId in this.documentMap) {
+            const taskMap = this.documentMap[docId];
+            const task = taskMap[workType];
+            if (task !== undefined) {
+                task.stop();
             }
-            const insightsMap = root.get("insights") as api.IMap;
-            const insightsMapView = await insightsMap.getView();
-            this.processIntelligenceWork(doc, insightsMapView);
-        }, (error) => {
-            console.log(`Document ${id} not found!`);
-            return;
-        });
-    }
-
-    private processIntelligenceWork(doc: api.Document, insightsMap: api.IMapView) {
-        const intelligenceManager = new shared.IntelligentServicesManager(doc, insightsMap, this.config, this.dict);
-        intelligenceManager.registerService(resumeAnalytics.factory.create(this.config.intelligence.resume));
-        intelligenceManager.registerService(textAnalytics.factory.create(this.config.intelligence.textAnalytics));
-
-        if (this.config.intelligence.nativeTextAnalytics.enable) {
-            intelligenceManager.registerService(
-                nativeTextAnalytics.factory.create(this.config.intelligence.nativeTextAnalytics));
-        }
-
-        const eventHandler = (op: api.ISequencedDocumentMessage) => {
-
-            if (op.type === api.ObjectOperation) {
-                const objectId = op.contents.address;
-                const object = doc.get(objectId);
-                intelligenceManager.process(object);
-            } else if (op.type === api.AttachObject) {
-                const object = doc.get(op.contents.id);
-                intelligenceManager.process(object);
-            }
-        };
-
-        this.intelHandlerMap[doc.id] = eventHandler;
-        doc.on("op", eventHandler);
-    }
-
-    private revokeWork(id: string) {
-        if (id in this.documentSnapshotMap) {
-            this.documentSnapshotMap[id].removeListener("op", this.snapshotHandlerMap[id]);
-            delete this.documentSnapshotMap[id];
-            delete this.snapshotHandlerMap[id];
-        }
-        if (id in this.documentIntelMap) {
-            this.documentIntelMap[id].removeListener("op", this.intelHandlerMap[id]);
-            delete this.documentIntelMap[id];
-            delete this.intelHandlerMap[id];
         }
     }
 

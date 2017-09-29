@@ -21,7 +21,8 @@ export class TmzRunner implements utils.IRunner {
         private consumer: utils.kafkaConsumer.IConsumer,
         schedulerType: string,
         private onlyServer: boolean,
-        private checkerTimeout: number) {
+        private checkerTimeout: number,
+        private tasks: any) {
 
         this.foreman = workerFactory.create(schedulerType);
     }
@@ -41,7 +42,7 @@ export class TmzRunner implements utils.IRunner {
                     // Process all pending tasks once the first worker joins.
                     if (!this.workerJoined) {
                         let workIds = Array.from(this.pendingWork);
-                        await this.processWork(workIds);
+                        await this.processDocuments(workIds);
                         this.pendingWork.clear();
                         this.workerJoined = true;
                     }
@@ -106,7 +107,7 @@ export class TmzRunner implements utils.IRunner {
             }
 
             winston.info(`Requesting work for ${documentId}`);
-            await this.processWork([documentId]);
+            await this.processDocuments([documentId]);
             callback();
         }, 1);
 
@@ -144,10 +145,30 @@ export class TmzRunner implements utils.IRunner {
         return this.deferred.promise;
     }
 
-    // Request subscribers to pick up the work.
-    private async processWork(ids: string[]) {
+    // Request subscribers to pick up the work for a new/expired document.
+    private async processDocuments(ids: string[]) {
+        let workToDo: messages.IDocumentWork[] = [];
+        for (let docId of ids) {
+            // tslint:disable-next-line:forin
+            for (let task in this.tasks) {
+                let work: messages.IWork = {
+                    workType: task,
+                    workerType: this.tasks[task],
+                };
+                workToDo.push({docId, work});
+            }
+        }
         try {
-            return await Promise.all(this.foreman.assignWork(ids));
+            return await Promise.all(this.foreman.assignWork(workToDo));
+        } catch (err) {
+            return err;
+        }
+    }
+
+    // Request subscribers to pick up the work.
+    private async processWork(workToDo: messages.IDocumentWork[]) {
+        try {
+            return await Promise.all(this.foreman.assignWork(workToDo));
         } catch (err) {
             return err;
         }

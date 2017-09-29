@@ -76,6 +76,11 @@ data:
                 "worker": 10000,
                 "document": 600000
             },
+            "tasks": {
+                "spell": "server",
+                "intel": "server",
+                "snapshot": "both"
+            },
             "workerType": "random",
             "workerAckTimeMSec": 100,
             "onlyServer": false
@@ -115,7 +120,7 @@ data:
             "repository": "prague",
             "storageBucket": "snapshots",
             "intervalMSec": 5000,
-            "onlyServer": true,
+            "onlyServer": false,
             "permission": {
                 "canvas": false,
                 "cell": true,

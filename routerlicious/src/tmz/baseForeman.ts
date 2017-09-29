@@ -13,7 +13,8 @@ export class BaseForeman {
     protected ackTimeout: number;
 
     constructor() {
-        this.manager = new StateManager(nconf.get("tmz:timeoutMSec:worker"), nconf.get("tmz:timeoutMSec:document"));
+        this.manager = new StateManager(nconf.get("tmz:timeoutMSec:worker"), nconf.get("tmz:timeoutMSec:document"),
+                                        nconf.get("tmz:tasks"));
         this.ackTimeout = nconf.get("tmz:workerAckTimeMSec");
     }
 
@@ -23,15 +24,21 @@ export class BaseForeman {
 
     public revokeExpiredWork(): Array<Promise<void>> {
         const docs = this.manager.getExpiredDocuments();
-        return docs.map((doc) => this.revokeOne(doc.id, doc.worker));
+        const revokedPromises = [];
+        for (let doc of docs) {
+            for (let worker of doc.workers) {
+                revokedPromises.push(this.revokeOne(doc.docId, worker[1], worker[0]));
+            }
+        }
+        return revokedPromises;
     }
 
-    private revokeOne(id: string, worker: IWorkerDetail): Promise<void> {
+    private revokeOne(id: string, workType: string, worker: IWorkerDetail): Promise<void> {
         return new Promise<any>((resolve, reject) => {
-            worker.socket.emit("RevokeObject", worker.worker.clientId, id,
+            worker.socket.emit("RevokeObject", worker.worker.clientId, id, workType,
                 (error, ack: socketStorage.IWorker) => {
                     if (ack) {
-                        this.manager.revokeWork(worker, id);
+                        this.manager.revokeWork(worker, id, workType);
                         resolve();
                     } else {
                         winston.error(error);
