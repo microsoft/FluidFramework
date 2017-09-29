@@ -63,9 +63,9 @@ export class TmzRunner implements utils.IRunner {
             });
             // On disconnect, reassign the work to other workers.
             socket.on("disconnect", async () => {
-                winston.info(`Worker id ${socket.id} got disconnected.`);
                 const worker = this.foreman.getManager().getWorker(socket.id);
                 if (worker) {
+                    winston.info(`Worker ${worker.worker.clientId} got disconnected.`);
                     const tasks = this.foreman.getManager().getDocuments(worker);
                     this.foreman.getManager().removeWorker(worker);
                     await this.processWork(tasks);

@@ -1,11 +1,13 @@
 // The main app code
-import * as $ from "jquery";
 import * as api from "../api";
 import * as ink from "../ink";
 import * as ui from "../ui";
+import { Button } from "./button";
 import { debug } from "./debug";
-import InkCanvas from "./inkCanvas";
-import StickyNote from "./stickyNote";
+import { DockPanel } from "./dockPanel";
+import { InkCanvas } from "./inkCanvas";
+import { Popup } from "./popup";
+import { Orientation, StackPanel } from "./stackPanel";
 
 const colors: ink.IColor[] = [
     { r: 253 / 255, g:   0 / 255, b:  12 / 255, a: 1 },
@@ -21,263 +23,87 @@ const colors: ink.IColor[] = [
     { r:   0 / 255, g:   0 / 255, b:   0 / 255, a: 1 },
 ];
 
-// tslint:disable-next-line:no-string-literal
-const Microsoft = window["Microsoft"];
-
 /**
  * Canvas app
  */
-export class Canvas {
-    public ink: InkCanvas;
-    public handleKeys: boolean = true;
-    public stickyCount: number = 0;
+export class Canvas extends ui.Component {
+    private colorButton: Button;
+    private dock: DockPanel;
+    private ink: InkCanvas;
+    private popup: Popup;
+    private colorStack: StackPanel;
 
-    private chartsHost: any;
+    constructor(element: HTMLDivElement, model: ink.IInk, components: api.IMap) {
+        super(element);
 
-    // Map indicating whether or not we have processed a given object
-    private canvasObjects: {[key: string]: Promise<void> } = {};
+        const dockElement = document.createElement("div");
+        element.appendChild(dockElement);
+        this.dock = new DockPanel(dockElement);
+        this.addChild(this.dock);
 
-    constructor(model: ink.IInk, private components: api.IMap) {
-        this.chartsHost = new Microsoft.Charts.Host({ base: "https://charts.microsoft.com" });
+        // Add the ink canvas to the dock
+        const inkCanvasElement = document.createElement("div");
+        this.ink = new InkCanvas(inkCanvasElement, model);
+        this.dock.addContent(this.ink);
 
-        // register all of the different handlers
-        let p = document.getElementById("hitPlane");
+        const stackPanelElement = document.createElement("div");
+        const buttonSize = { width: 50, height: 50 };
+        const stackPanel = new StackPanel(stackPanelElement, Orientation.Horizontal, ["navbar-prague"]);
+        this.colorButton = new Button(
+            document.createElement("div"),
+            buttonSize,
+            ["btn", "btn-palette", "prague-icon-pencil"]);
+        const replayButton = new Button(
+            document.createElement("div"),
+            buttonSize,
+            ["btn", "btn-palette", "prague-icon-replay"]);
+        stackPanel.addChild(this.colorButton);
+        stackPanel.addChild(replayButton);
+        this.dock.addBottom(stackPanel);
 
-        this.refreshComponents();
-        this.components.on("op", () => {
-            this.refreshComponents();
+        replayButton.on("click", (event) => {
+            debug("Replay button click");
+            this.ink.replay();
         });
 
-        this.ink = new InkCanvas(model, p);
+        this.colorButton.on("click", (event) => {
+            debug("Color button click");
+            this.popup.toggle();
+        });
 
-        window.addEventListener("keydown", (evt) => this.keyPress(evt), false);
-        window.addEventListener("keyup", (evt) => this.keyRelease(evt), false);
-
-        document.querySelector("#replay").addEventListener("click", (e) => { this.ink.replay(); }, false);
-
-        const root = $("#color-picker");
+        // These should turn into components
+        this.colorStack = new StackPanel(document.createElement("div"), Orientation.Vertical, []);
         for (const color of colors) {
-            const cssColor = ui.toColorString(color);
-            const elem = $(`<li><a class="color-choice" href="#" style="background-color: ${cssColor}" ></a></li>`);
-            root.append(elem);
-            elem.data("color", color);
-            elem.click(() => {
-                this.ink.setPenColor(elem.data("color"));
+            const buttonElement = document.createElement("div");
+            buttonElement.style.backgroundColor = ui.toColorString(color);
+            const button = new Button(buttonElement, { width: 200, height: 50 }, ["btn-flat"]);
+            this.colorStack.addChild(button);
+
+            button.on("click", (event) => {
+                this.ink.setPenColor(color);
+                this.popup.toggle();
             });
         }
+
+        // Popup to display the colors
+        this.popup = new Popup(document.createElement("div"));
+        this.popup.addContent(this.colorStack);
+        this.addChild(this.popup);
+        this.element.appendChild(this.popup.element);
     }
 
-    //  Key Handlers:
-    //   Escape
-    //   ^C  Copy
-    //   ^V  Paste
-    //   ^F  Find
-    //   ^O  Load
-    //   ^S  Save
-    //   ^R  Recognize
-    //   ^Q  Quit (shuts down the sample app)
-    // tslint:disable-next-line:no-empty
-    public keyRelease(evt) {
-    }
+    protected resizeCore(bounds: ui.Rectangle) {
+        bounds.conformElement(this.dock.element);
+        this.dock.resize(bounds);
 
-    public keyPress(evt) {
-        if (this.handleKeys === false) {
-            return false;
-        }
-
-        if (evt.keyCode === 27) { // Escape
-            evt.preventDefault();
-        } else if (evt.ctrlKey === true && evt.keyCode !== 17) {  // look for keys while control down
-            if (evt.keyCode === 67) {        // Control c
-                evt.preventDefault();
-            } else if (evt.keyCode === 86) { // Control v
-                evt.preventDefault();
-            } else if (evt.keyCode === 79) { // Control o
-                evt.preventDefault();
-            } else if (evt.keyCode === 83) { // Control s
-                evt.preventDefault();
-            } else if (evt.keyCode === 82) { // Control r
-                evt.preventDefault();
-            } else if (evt.keyCode === 81) { // Control q
-                evt.preventDefault();
-            } else if (evt.keyCode === 89) { // Control y
-                evt.preventDefault();
-            } else if (evt.keyCode === 90) { // Control z
-                evt.preventDefault();
-            }
-        }
-    }
-
-    // this method will try up the entire board
-    public clear() {
-        this.ink.clear();
-        let board = ui.id("content");
-        let stickies = document.querySelectorAll(".stickyNote");
-        // tslint:disable-next-line:prefer-for-of
-        for (let i = 0; i < stickies.length; i++) {
-            board.removeChild(stickies[i]);
-        }
-    }
-
-    // find all of the things that are selected and unselect them
-    public unselectAll() {
-        let sel = document.querySelectorAll(".stickySelected");
-        let elem;
-        if (sel.length > 0) {
-            for (let i = 0; i < sel.length; i++) {
-                elem = sel.item(i);
-                if (elem.classList.contains("stickySelected")) {
-                    elem.classList.remove("stickySelected");
-                    elem.style.zIndex = "1";
-                }
-            }
-        }
-    }
-
-    public makeInkable() {
-        let sel = document.querySelectorAll(".stickySelected");
-        let elem;
-        if (sel.length > 0) {
-            for (let i = 0; i < sel.length; i++) {
-                elem = sel.item(i);
-                elem.classList.add("stickyInkable");
-
-                // TODO enable inking for everything later
-                // let ic = new InkCanvas(elem);
-            }
-        }
-    }
-
-    // this is the handler for the test tube
-    public test(e) {
-        if (e.target.id === "testButton") {
-            this.unselectAll();
-            // tslint:disable-next-line:no-unused-new
-            new StickyNote(ui.id("content"));
-        }
-        if (e.target.id === "turnOnInk") {
-            this.makeInkable();
-        }
-    }
-
-    private handleChromeEvents(chrome: HTMLElement, object: api.IMapView) {
-        let pointerDown = false;
-        let lastPoint: { x: number, y: number };
-
-        chrome.addEventListener("pointerdown", (evt) => {
-            pointerDown = true;
-            lastPoint = { x: evt.clientX, y: evt.clientY };
-            evt.returnValue = false;
-            chrome.setPointerCapture(evt.pointerId);
-        }, false);
-
-        chrome.addEventListener("pointermove", (evt) => {
-            if (pointerDown) {
-                let deltaX = evt.clientX - lastPoint.x;
-                let deltaY = evt.clientY - lastPoint.y;
-
-                const position = object.get("position");
-                position.x += deltaX;
-                position.y += deltaY;
-                object.set("position", position);
-
-                chrome.style.top = `${position.y}px`;
-                chrome.style.left = `${position.x}px`;
-
-                lastPoint = { x: evt.clientX, y: evt.clientY };
-                evt.returnValue = false;
-            }
-        }, false);
-
-        chrome.addEventListener("pointerup", (evt) => {
-            pointerDown = false;
-            chrome.releasePointerCapture(evt.pointerId);
-        }, false);
-    }
-
-    private updateSizeAndPosition(chrome: HTMLDivElement, content: HTMLDivElement, position, size) {
-        chrome.style.top = `${position.y}px`;
-        chrome.style.left = `${position.x}px`;
-        chrome.style.width = `${size.width + 10}px`;
-        chrome.style.height = `${size.height + 10}px`;
-        content.style.width = `${size.width}px`;
-        content.style.height = `${size.height}px`;
-    }
-
-    private updateChart(chart, componentView: api.IMapView) {
-        const config = componentView.get("data");
-        const size = componentView.get("size");
-        if (config) {
-            config.size = size;
-            chart.setConfiguration(config);
-        }
-    }
-
-    private loadChart(content: HTMLElement, component: api.IMap, componentView: api.IMapView) {
-        const chart = new Microsoft.Charts.Chart(this.chartsHost, content);
-        chart.setRenderer(Microsoft.Charts.IvyRenderer.Svg);
-
-        this.updateChart(chart, componentView);
-        component.on("valueChanged", (event) => {
-            if (event.key === "data" || event.key === "size") {
-                this.updateChart(chart, componentView);
-            }
-        });
-    }
-
-    private async addDocument(id: string, component: api.IMap): Promise<void> {
-        const componentView = await component.getView();
-
-        const type = componentView.get("type");
-        debug(`Loading ${id} of type ${type}`);
-
-        // Generate the stub for where to place the document
-        let content = document.getElementById("content");
-        let chrome = document.createElement("div");
-        chrome.classList.add("canvas-chrome");
-
-        let newDocument = document.createElement("div");
-        newDocument.classList.add("collab-document");
-
-        chrome.appendChild(newDocument);
-        content.appendChild(chrome);
-
-        this.updateSizeAndPosition(chrome, newDocument, componentView.get("position"), componentView.get("size"));
-        this.handleChromeEvents(chrome, componentView);
-
-        // Listen for updates to the positio of the element
-        component.on("valueChanged", (event) => {
-            if (event.key === "position" || event.key === "size") {
-                this.updateSizeAndPosition(
-                    chrome, newDocument, componentView.get("position"), componentView.get("size"));
-            }
-        });
-
-        if (type === "chart") {
-            this.loadChart(newDocument, component, componentView);
-        }
-
-        // Don't let events inside the content bubble up to the chrome
-        newDocument.addEventListener("pointerdown", (evt) => {
-            evt.stopPropagation();
-            return false;
-        }, false);
-    }
-
-    private async refreshComponents() {
-        // TODO need to support deletion of components
-        const componentsView = await this.components.getView();
-
-        // Pull in all the objects on the canvas
-        // tslint:disable-next-line:forin
-        for (let componentName of componentsView.keys()) {
-            const component = componentsView.get(componentName) as api.IMap;
-            const canvasObject = this.canvasObjects[componentName];
-
-            if (canvasObject === undefined) {
-                // Load in the referenced document and render
-                this.canvasObjects[componentName] = this.addDocument(componentName, component);
-            }
-        }
+        const colorButtonRect = ui.Rectangle.fromClientRect(this.colorButton.element.getBoundingClientRect());
+        const popupSize = this.popup.measure(bounds);
+        const rect = new ui.Rectangle(
+            colorButtonRect.x,
+            colorButtonRect.y - popupSize.height,
+            popupSize.width,
+            popupSize.height);
+        rect.conformElement(this.popup.element);
+        this.popup.resize(rect);
     }
 }

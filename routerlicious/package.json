@@ -147,7 +147,6 @@
     "random-js": "^1.0.8",
     "redis": "^2.7.1",
     "request": "^2.81.0",
-    "resize-observer-polyfill": "^1.4.2",
     "serve-favicon": "^2.4.1",
     "socket.io": "^1.7.3",
     "socket.io-emitter": "^2.0.0",

@@ -189,3 +189,10 @@ export class AnimationFrameThrottler {
     });
   }
 }
+
+export function removeAllChildren(element: HTMLElement) {
+  // Remove any existing children and attach ourselves
+  while (element.hasChildNodes()) {
+    element.removeChild(element.lastChild);
+  }
+}
