@@ -1301,7 +1301,7 @@ function parseTable(tableMarker: ITableMarker, tableMarkerPos: number, docContex
 }
 
 function isInnerBox(boxView: BoxView, layoutInfo: ILayoutContext) {
-    return (!layoutInfo.startingPosStack) ||
+    return (!layoutInfo.startingPosStack) || (!layoutInfo.startingPosStack.box) ||
         (layoutInfo.startingPosStack.box.items.length === (layoutInfo.stackIndex + 1));
 }
 
@@ -1370,10 +1370,16 @@ function renderTable(table: ITableMarker, docContext: IDocumentContext, layoutIn
     let startBox: BoxView;
 
     if (layoutInfo.startingPosStack) {
-        let startRowMarker = layoutInfo.startingPosStack.row[layoutInfo.stackIndex];
-        startRow = startRowMarker.view;
-        let startBoxMarker = layoutInfo.startingPosStack.box[layoutInfo.stackIndex];
-        startBox = startBoxMarker.view;
+        if (layoutInfo.startingPosStack.row  &&
+            (layoutInfo.startingPosStack.row.items.length>layoutInfo.stackIndex)) {
+            let startRowMarker = <IRowMarker>layoutInfo.startingPosStack.row.items[layoutInfo.stackIndex];
+            startRow = startRowMarker.view;
+        }
+        if (layoutInfo.startingPosStack.box &&
+            (layoutInfo.startingPosStack.box.items.length>layoutInfo.stackIndex)) {
+            let startBoxMarker = <IBoxMarker>layoutInfo.startingPosStack.box.items[layoutInfo.stackIndex];
+            startBox = startBoxMarker.view;
+        }
     }
 
     let foundStartRow = (startRow === undefined);
@@ -1441,7 +1447,7 @@ function renderTree(viewportDiv: HTMLDivElement, startingPosition: number, flowV
 
     let outerViewportBounds = ui.Rectangle.fromClientRect(viewportDiv.getBoundingClientRect());
     let startingPosStack =
-        client.mergeTree.getStackContext(startingPosition, client.getClientId(), ["table","box","row"]);
+        client.mergeTree.getStackContext(startingPosition, client.getClientId(), ["table", "box", "row"]);
     let layoutContext = <ILayoutContext>{
         currentLineTop: 0,
         currentViewportMaxHeight: outerViewportHeight,
