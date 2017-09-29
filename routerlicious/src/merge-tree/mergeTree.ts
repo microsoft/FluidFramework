@@ -800,11 +800,13 @@ export class PartialSequenceLengths {
             buf += `(${partial.seq},${partial.len}) `;
         }
         for (let clientId in this.clientSeqNumbers) {
-            buf += `C${clientId}`;
+            buf += `Client `;
             if (glc) {
-                buf += `(${glc(+clientId)})`;
+                buf += `${glc(+clientId)}`;
+            } else {
+                buf += `${clientId}`;
             }
-            buf += ']';
+            buf += '[';
             for (let partial of this.clientSeqNumbers[clientId]) {
                 buf += `(${partial.seq},${partial.len})`
             }
@@ -1728,7 +1730,7 @@ export class Client {
             this.accumWindow += (this.getCurrentSeq() - this.mergeTree.getCollabWindow().minSeq);
         }
         if (this.verboseOps) {
-            console.log(`@cli ${this.getLongClientId(this.mergeTree.getCollabWindow().clientId)} text ${text} seq ${seq} insert remote pos ${pos} refseq ${refSeq} cli ${clientId}`);
+            console.log(`@cli ${this.getLongClientId(this.mergeTree.getCollabWindow().clientId)} text ${text} seq ${seq} insert remote pos ${pos} refseq ${refSeq} cli ${this.getLongClientId(clientId)}`);
         }
     }
 
