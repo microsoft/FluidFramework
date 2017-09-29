@@ -12,14 +12,10 @@ export class StateManager {
         this.workerToDocumentMap[worker.socket.id] = { worker, documents: [], activeTS: Date.now() };
     }
 
-    public addDocument(docId: string) {
-        this.documentToWorkerMap[docId] = {docId, workers: [], activeTS: Date.now() };
-    }
-
     public removeWorker(worker: IWorkerDetail) {
-        // Remove all documents associated with the worker first.
+        // Remove all documents worker associated with the worker first.
         this.workerToDocumentMap[worker.socket.id].documents.map((document) => {
-            delete this.documentToWorkerMap[document[0]];
+            this.removeWorkerFromDocument(document[0], document[1]);
         });
         // Delete the worker now.
         delete this.workerToDocumentMap[worker.socket.id];
@@ -38,7 +34,9 @@ export class StateManager {
         if (docIndex > -1) {
             this.workerToDocumentMap[worker.socket.id].documents.splice(docIndex, 1);
         }
-        delete this.documentToWorkerMap[docId];
+        if (docId in this.documentToWorkerMap) {
+            delete this.documentToWorkerMap[docId];
+        }
     }
 
     public refreshWorker(worker: IWorkerDetail) {
@@ -49,7 +47,7 @@ export class StateManager {
         }
     }
 
-    public getWorker(workerId: string): any {
+    public getWorker(workerId: string): IWorkerDetail {
         if (!(workerId in this.workerToDocumentMap)) {
             return;
         }
@@ -91,17 +89,6 @@ export class StateManager {
         return returnedWorks;
     }
 
-    public getExpiredWorkers(): IWorkerDetail[] {
-        const expiredWorkers: IWorkerDetail[] = [];
-        for (let worker of _.keys(this.workerToDocumentMap)) {
-            const workerState = this.workerToDocumentMap[worker];
-            if (Date.now() - workerState.activeTS > this.workerTimeout) {
-                expiredWorkers.push(workerState.worker);
-            }
-        }
-        return expiredWorkers;
-    }
-
     public getExpiredDocuments(): IDocumentState[] {
         return _.values(this.documentToWorkerMap)
                 .filter((document) => {
@@ -116,4 +103,36 @@ export class StateManager {
         }
         return false;
     }
+
+    private addDocument(docId: string) {
+        this.documentToWorkerMap[docId] = {docId, workers: [], activeTS: Date.now() };
+    }
+
+    private removeWorkerFromDocument(docId: string, workType: string) {
+        let documentState = this.documentToWorkerMap[docId];
+        let workerIndex: number = -1;
+        if (documentState !== undefined) {
+            for (let i = 0; i < documentState.workers.length; i++) {
+                if (workType === documentState.workers[i][1]) {
+                    workerIndex = i;
+                    break;
+                }
+            }
+        }
+        if (workerIndex !== -1) {
+            this.documentToWorkerMap[docId].workers.splice(workerIndex, 1);
+        }
+    }
+
+    private getExpiredWorkers(): IWorkerDetail[] {
+        const expiredWorkers: IWorkerDetail[] = [];
+        for (let worker of _.keys(this.workerToDocumentMap)) {
+            const workerState = this.workerToDocumentMap[worker];
+            if (Date.now() - workerState.activeTS > this.workerTimeout) {
+                expiredWorkers.push(workerState.worker);
+            }
+        }
+        return expiredWorkers;
+    }
+
 }
