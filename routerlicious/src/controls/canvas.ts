@@ -27,6 +27,7 @@ const colors: ink.IColor[] = [
  * Canvas app
  */
 export class Canvas extends ui.Component {
+    private colorButton: Button;
     private dock: DockPanel;
     private ink: InkCanvas;
     private popup: Popup;
@@ -48,7 +49,7 @@ export class Canvas extends ui.Component {
         const stackPanelElement = document.createElement("div");
         const buttonSize = { width: 50, height: 50 };
         const stackPanel = new StackPanel(stackPanelElement, Orientation.Horizontal, ["navbar-prague"]);
-        const colorButton = new Button(
+        this.colorButton = new Button(
             document.createElement("div"),
             buttonSize,
             ["btn", "btn-palette", "prague-icon-pencil"]);
@@ -56,7 +57,7 @@ export class Canvas extends ui.Component {
             document.createElement("div"),
             buttonSize,
             ["btn", "btn-palette", "prague-icon-replay"]);
-        stackPanel.addChild(colorButton);
+        stackPanel.addChild(this.colorButton);
         stackPanel.addChild(replayButton);
         this.dock.addBottom(stackPanel);
 
@@ -65,7 +66,7 @@ export class Canvas extends ui.Component {
             this.ink.replay();
         });
 
-        colorButton.on("click", (event) => {
+        this.colorButton.on("click", (event) => {
             debug("Color button click");
             this.popup.toggle();
         });
@@ -75,7 +76,7 @@ export class Canvas extends ui.Component {
         for (const color of colors) {
             const buttonElement = document.createElement("div");
             buttonElement.style.backgroundColor = ui.toColorString(color);
-            const button = new Button(buttonElement, { width: 100, height: 50 }, ["btn-flat"]);
+            const button = new Button(buttonElement, { width: 200, height: 50 }, ["btn-flat"]);
             this.colorStack.addChild(button);
 
             button.on("click", (event) => {
@@ -95,8 +96,13 @@ export class Canvas extends ui.Component {
         bounds.conformElement(this.dock.element);
         this.dock.resize(bounds);
 
-        const size = this.popup.measure(bounds);
-        const rect = new ui.Rectangle(bounds.x, bounds.y, size.width, size.height);
+        const colorButtonRect = ui.Rectangle.fromClientRect(this.colorButton.element.getBoundingClientRect());
+        const popupSize = this.popup.measure(bounds);
+        const rect = new ui.Rectangle(
+            colorButtonRect.x,
+            colorButtonRect.y - popupSize.height,
+            popupSize.width,
+            popupSize.height);
         rect.conformElement(this.popup.element);
         this.popup.resize(rect);
     }
