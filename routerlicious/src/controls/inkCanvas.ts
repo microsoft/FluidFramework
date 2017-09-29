@@ -1,15 +1,6 @@
-// This one is where a lot is going to happen
-
 import * as ink from "../ink";
 import * as ui from "../ui";
 import { Circle, IShape, Polygon } from "./shapes/index";
-
-// There's an issue with the d.ts files and the default export
-// tslint:disable-next-line:no-var-requires
-let ResizeObserver = require("resize-observer-polyfill");
-
-// TODO split classes into separate files
-// tslint:disable:max-classes-per-file
 
 export enum SegmentCircleInclusive {
     None,
@@ -41,7 +32,7 @@ class EventPoint {
     }
 }
 
-export default class InkCanvas {
+export class InkCanvas extends ui.Component {
     private canvas: HTMLCanvasElement;
     private context: CanvasRenderingContext2D;
     private penID: number = -1;
@@ -51,7 +42,9 @@ export default class InkCanvas {
     private lastLayerRenderOp: { [key: string]: number } = {};
 
     // constructor
-    constructor(private model: ink.IInk, parent: HTMLElement, private entryTarget: HTMLElement = null) {
+    constructor(element: HTMLDivElement, private model: ink.IInk) {
+        super(element);
+
         this.model.on("op", (op) => {
             // Update the canvas
             this.addAndDrawStroke(op.contents as ink.IDelta, false);
@@ -64,10 +57,9 @@ export default class InkCanvas {
         // setup canvas
         this.canvasWrapper = document.createElement("div");
         this.canvasWrapper.classList.add("drawSurface");
-        this.canvasWrapper.style.pointerEvents = entryTarget ? "none" : "auto";
         this.canvas = document.createElement("canvas");
         this.canvasWrapper.appendChild(this.canvas);
-        parent.appendChild(this.canvasWrapper);
+        element.appendChild(this.canvasWrapper);
 
         // get context
         this.context = this.canvas.getContext("2d");
@@ -77,80 +69,14 @@ export default class InkCanvas {
         this.canvas.addEventListener("pointermove", (evt) => this.handlePointerMove(evt), bb);
         this.canvas.addEventListener("pointerup", (evt) => this.handlePointerUp(evt), bb);
 
-        // Listen for enter/leave on the entry target if available
-        if (this.entryTarget) {
-            this.entryTarget.addEventListener("pointerenter", (evt) => this.handlePointerEnter(evt), bb);
-            this.entryTarget.addEventListener("pointerleave", (evt) => this.handlePointerLeave(evt), bb);
-        }
-
         this.currentPen = {
             color: { r: 0, g: 161 / 255, b: 241 / 255, a: 0 },
             thickness: 7,
         };
-
-        // Throttle the canvas resizes at animation frame frequency
-        // TODO the resize event fires slightly after the resize happens causing possible
-        // rendering tearing. We probably want to oversize the canvas and clip it.
-        let throttler = new ui.AnimationFrameThrottler(() => {
-            this.resize(this.canvasWrapper.offsetWidth, this.canvasWrapper.offsetHeight);
-        });
-
-        // Listen for resize events and update the canvas dimensions accordingly
-        new ResizeObserver((entries, obs) => {
-            throttler.trigger();
-        }).observe(this.canvasWrapper);
     }
 
     public setPenColor(color: ink.IColor) {
         this.currentPen.color = color;
-    }
-
-    // tslint:disable:no-empty
-    // Stubs for bunch of functions that are being called in the code below
-    // this will make it easier to fill some code in later or just delete them
-
-    public tempEraseMode() {
-    }
-
-    public restoreMode() {
-    }
-
-    public anchorSelection() {
-    }
-
-    public inkMode() {
-    }
-
-    public inkColor() {
-    }
-
-    public undo() {
-    }
-
-    public redo() {
-    }
-
-    // tslint:enable:no-empty
-
-    public anySelected(): boolean {
-        return false;
-    }
-
-    public handleTap(evt) {
-        // Anchor and clear any current selection.
-        if (this.anySelected()) {
-            this.anchorSelection();
-        }
-        return false;
-    }
-
-    public clear() {
-        if (!this.anySelected()) {
-            this.inkMode();
-        }
-
-        let delta = new ink.Delta().clear();
-        this.addAndDrawStroke(delta, true);
     }
 
     public replay() {
@@ -165,25 +91,26 @@ export default class InkCanvas {
         }
     }
 
+    /**
+     * Resizes the canvas
+     */
+    protected resizeCore(bounds: ui.Rectangle) {
+        // Updates the size of the canvas
+        this.canvas.width = bounds.width;
+        this.canvas.height = bounds.height;
+
+        // And then redraw the canvas
+        this.redraw();
+    }
+
     // We will accept pen down or mouse left down as the start of a stroke.
     // We will accept touch down or mouse right down as the start of a touch.
     private handlePointerDown(evt: PointerEvent) {
         this.penID = evt.pointerId;
 
-        if (evt.pointerType === "touch") {
-            // ic.gesture.addPointer(evt.pointerId);
-        }
-
         if ((evt.pointerType === "pen") || ((evt.pointerType === "mouse") && (evt.button === 0))) {
             // Anchor and clear any current selection.
-            this.anchorSelection();
             let pt = new EventPoint(this.canvas, evt);
-
-            if (pt.properties.isEraser) { // The back side of a pen, which we treat as an eraser
-                this.tempEraseMode();
-            } else {
-                this.restoreMode();
-            }
 
             let delta = new ink.Delta().stylusDown(pt.rawPosition, evt.pressure, this.currentPen);
             this.currentStylusActionId = delta.operations[0].stylusDown.id;
@@ -224,18 +151,6 @@ export default class InkCanvas {
         }
 
         return false;
-    }
-
-    private handlePointerEnter(evt: PointerEvent) {
-        if (evt.pointerType === "pen") {
-            this.canvasWrapper.style.pointerEvents = "auto";
-        }
-    }
-
-    private handlePointerLeave(evt: PointerEvent) {
-        if (evt.pointerType === "pen") {
-            this.canvasWrapper.style.pointerEvents = "none";
-        }
     }
 
     private animateLayer(layer: ink.IInkLayer, operationIndex: number, startTime: number) {
@@ -313,18 +228,6 @@ export default class InkCanvas {
                 this.context.fill();
             }
         }
-    }
-
-    /**
-     * Resizes the canvas
-     */
-    private resize(width: number, height: number) {
-        // Updates the size of the canvas
-        this.canvas.width = width;
-        this.canvas.height = height;
-
-        // And then redraw the canvas
-        this.redraw();
     }
 
     private addAndDrawStroke(delta: ink.IDelta, submit: boolean) {

@@ -1,3 +1,5 @@
+import { ISize } from "./size";
+
 export class Rectangle {
     public static fromClientRect(cr: ClientRect) {
         return new Rectangle(cr.left, cr.top, cr.width, cr.height);
@@ -6,6 +8,13 @@ export class Rectangle {
     public static conformElementToRect(elm: HTMLElement, rect: Rectangle) {
         rect.conformElement(elm);
         return elm;
+    }
+
+    /**
+     * Size of the rectangle
+     */
+    public get size(): ISize {
+        return { width: this.width, height: this.height };
     }
 
     constructor(
