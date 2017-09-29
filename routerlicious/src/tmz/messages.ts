@@ -21,7 +21,7 @@ export interface IWorkerState {
 
     worker: IWorkerDetail;
 
-    documents: string[];
+    documents: Array<[string, string]>;  // Array<<docId, workType>>
 
     activeTS: number;
 }
@@ -31,11 +31,31 @@ export interface IWorkerState {
  */
 export interface IDocumentState {
 
-    id: string;
+    docId: string;
 
-    worker: IWorkerDetail;
+    workers: Array<[IWorkerDetail, string]>; // Array<<IWorkerDetail, workType>>
 
     activeTS: number;
+}
+
+/**
+ * Type of work and desired worker type.
+ */
+export interface IWork {
+
+    workType: string;
+
+    workerType: string;
+}
+
+/**
+ * Type of Document and Work.
+ */
+export interface IDocumentWork {
+
+    docId: string;
+
+    work: IWork;
 }
 
 /**
@@ -46,7 +66,7 @@ export interface IForeman {
     /**
      * Assigns tasks to workers based on some heuristics.
      */
-    assignWork(id: string[]): Array<Promise<void>>;
+    assignWork(workToDo: IDocumentWork[]): Array<Promise<void>>;
 
     /**
      * Revokes expired work. Already implemented in base class.

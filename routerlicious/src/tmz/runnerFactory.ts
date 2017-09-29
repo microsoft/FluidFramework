@@ -16,7 +16,8 @@ export class TmzResources implements utils.IResources {
         public consumer: utils.kafkaConsumer.IConsumer,
         public schedulerType: string,
         public onlyServer: boolean,
-        public checkerTimeout: number) {
+        public checkerTimeout: number,
+        public tasks: any) {
     }
 
     public async dispose(): Promise<void> {
@@ -62,10 +63,11 @@ export class TmzResourcesFactory implements utils.IResourcesFactory<TmzResources
         const checkerTimeout = config.get("tmz:timeoutMSec:checker");
         const schedulerType = config.get("tmz:workerType");
         const onlyServer = config.get("tmz:onlyServer");
+        const tasks = config.get("tmz:tasks");
 
         let consumer = utils.kafkaConsumer.create(kafkaLibrary, kafkaEndpoint, groupId, topic, true);
 
-        return new TmzResources(io, pub, sub, port, consumer, schedulerType, onlyServer, checkerTimeout);
+        return new TmzResources(io, pub, sub, port, consumer, schedulerType, onlyServer, checkerTimeout, tasks);
     }
 }
 
@@ -77,6 +79,7 @@ export class TmzRunnerFactory implements utils.IRunnerFactory<TmzResources> {
             resources.consumer,
             resources.schedulerType,
             resources.onlyServer,
-            resources.checkerTimeout);
+            resources.checkerTimeout,
+            resources.tasks);
     }
 }
