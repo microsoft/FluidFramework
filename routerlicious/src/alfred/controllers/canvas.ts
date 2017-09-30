@@ -1,7 +1,6 @@
 import * as resources from "gitresources";
 import * as api from "../../api";
-import { Canvas } from "../../controls";
-import * as ink from "../../ink";
+import { FlexView } from "../../controls";
 import * as shared from "../../shared";
 import * as socketStorage from "../../socket-storage";
 import * as ui from "../../ui";
@@ -30,15 +29,7 @@ export async function initialize(id: string, version: resources.ICommit, config:
         shared.registerWorker(config);
     }
 
-    if (!root.has("ink")) {
-        root.set("ink", doc.createInk());
-    }
-
-    if (!root.has("components")) {
-        root.set("components", doc.createMap());
-    }
-
     const canvasDiv = document.createElement("div");
-    const canvas = new Canvas(canvasDiv, root.get("ink") as ink.IInk, root.get("components") as api.IMap);
+    const canvas = new FlexView(canvasDiv, doc, root);
     host.attach(canvas);
 }

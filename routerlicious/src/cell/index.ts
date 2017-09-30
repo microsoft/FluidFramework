@@ -67,20 +67,14 @@ class Cell extends api.CollaborativeObject implements api.ICell {
 
         super(document, id, CellExtension.Type, sequenceNumber, services);
 
-        this.data = header ? JSON.parse(Buffer.from(header, "base64").toString("utf-8")) : undefined;
+        this.data = header ? JSON.parse(Buffer.from(header, "base64").toString("utf-8")) : null;
     }
 
     /**
      * Retrieves the value of the cell.
      */
     public async get() {
-        const value = this.data;
-        if (value.type === CellValueType[CellValueType.Collaborative]) {
-            const collabCellValue = value.value as ICollaborativeCellValue;
-            this.document.get(collabCellValue.id);
-        } else {
-            return value.value;
-        }
+        return this.getCore();
     }
 
     /**
@@ -131,7 +125,7 @@ class Cell extends api.CollaborativeObject implements api.ICell {
      * Returns whether cell is empty or not.
      */
      public async empty() {
-         return this.data === undefined ? true : false;
+         return this.data === null ? true : false;
      }
 
     public snapshot(): api.ITree {
@@ -191,12 +185,24 @@ class Cell extends api.CollaborativeObject implements api.ICell {
 
     private setCore(value: ICellValue) {
         this.data = value;
-        this.events.emit("valueChanged", { value });
+        this.events.emit("valueChanged", this.getCore());
     }
 
     private deleteCore() {
-        delete this.data;
+        this.data = null;
         this.events.emit("delete");
+    }
+
+    private getCore(): any {
+        const value = this.data;
+        if (value === null) {
+            return undefined;
+        } else if (value.type === CellValueType[CellValueType.Collaborative]) {
+            const collabCellValue = value.value as ICollaborativeCellValue;
+            return this.document.get(collabCellValue.id);
+        } else {
+            return value.value;
+        }
     }
 }
 

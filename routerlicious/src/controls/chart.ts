@@ -1,0 +1,48 @@
+import * as api from "../api";
+import * as ui from "../ui";
+
+// tslint:disable-next-line:no-string-literal
+const Microsoft = typeof window !== "undefined" ? window["Microsoft"] : undefined;
+export const DefaultHost = Microsoft ? new Microsoft.Charts.Host({ base: "https://charts.microsoft.com" }) : null;
+
+export class Chart extends ui.Component {
+    private chart: any;
+    private lastSize: ui.ISize = { width: -1, height: -1 };
+
+    constructor(element: HTMLDivElement, private cell: api.ICell, host = DefaultHost) {
+        super(element);
+        this.chart = new Microsoft.Charts.Chart(host, element);
+        this.chart.setRenderer(Microsoft.Charts.IvyRenderer.Svg);
+
+        this.cell.on("valueChanged", () => {
+            this.invalidateChart();
+        });
+    }
+
+    protected resizeCore(rectangle: ui.Rectangle) {
+        if (rectangle.width !== this.lastSize.width || rectangle.height !== this.lastSize.height) {
+            this.lastSize.width = rectangle.width;
+            this.lastSize.height = rectangle.height;
+            this.invalidateChart();
+        }
+    }
+
+    private async getChartConfiguration() {
+        const config = await this.cell.get();
+        if (!config) {
+            return null;
+        } else {
+            const size = this.size.size;
+            config.size = size;
+            return config;
+        }
+    }
+
+    private invalidateChart() {
+        this.getChartConfiguration().then((config) => {
+            if (config) {
+                this.chart.setConfiguration(config);
+            }
+        });
+    }
+}
