@@ -3,6 +3,7 @@ import * as api from "../api";
 import * as ink from "../ink";
 import * as ui from "../ui";
 import { Button } from "./button";
+import { Chart } from "./chart";
 import { debug } from "./debug";
 import { DockPanel } from "./dockPanel";
 import { InkCanvas } from "./inkCanvas";
@@ -23,17 +24,24 @@ const colors: ink.IColor[] = [
     { r:   0 / 255, g:   0 / 255, b:   0 / 255, a: 1 },
 ];
 
+interface IFlexViewComponent {
+    component: ui.Component;
+    position: ui.IPoint;
+    size: ui.ISize;
+}
+
 /**
  * Canvas app
  */
-export class Canvas extends ui.Component {
+export class FlexView extends ui.Component {
     private colorButton: Button;
     private dock: DockPanel;
     private ink: InkCanvas;
     private popup: Popup;
     private colorStack: StackPanel;
+    private components: IFlexViewComponent[] = [];
 
-    constructor(element: HTMLDivElement, model: ink.IInk, components: api.IMap) {
+    constructor(element: HTMLDivElement, doc: api.Document, root: api.IMapView) {
         super(element);
 
         const dockElement = document.createElement("div");
@@ -43,7 +51,10 @@ export class Canvas extends ui.Component {
 
         // Add the ink canvas to the dock
         const inkCanvasElement = document.createElement("div");
-        this.ink = new InkCanvas(inkCanvasElement, model);
+        if (!root.has("ink")) {
+            root.set("ink", doc.createInk());
+        }
+        this.ink = new InkCanvas(inkCanvasElement, root.get("ink"));
         this.dock.addContent(this.ink);
 
         const stackPanelElement = document.createElement("div");
@@ -90,12 +101,31 @@ export class Canvas extends ui.Component {
         this.popup.addContent(this.colorStack);
         this.addChild(this.popup);
         this.element.appendChild(this.popup.element);
+
+        // UI components on the flex view
+        if (!root.has("components")) {
+            root.set("components", doc.createMap());
+        }
+        this.processComponents(root.get("components"));
     }
 
     protected resizeCore(bounds: ui.Rectangle) {
+        // Update the base ink dock
         bounds.conformElement(this.dock.element);
         this.dock.resize(bounds);
 
+        // Layout component windows
+        for (const component of this.components) {
+            const componentRect = new ui.Rectangle(
+                component.position.x,
+                component.position.y,
+                component.size.width,
+                component.size.height);
+            componentRect.conformElement(component.component.element);
+            component.component.resize(componentRect);
+        }
+
+        // Size the color swatch popup
         const colorButtonRect = ui.Rectangle.fromClientRect(this.colorButton.element.getBoundingClientRect());
         const popupSize = this.popup.measure(bounds);
         const rect = new ui.Rectangle(
@@ -105,5 +135,38 @@ export class Canvas extends ui.Component {
             popupSize.height);
         rect.conformElement(this.popup.element);
         this.popup.resize(rect);
+    }
+
+    private async processComponents(components: api.IMap) {
+        const view = await components.getView();
+
+        // Pull in all the objects on the canvas
+        // tslint:disable-next-line:forin
+        for (let componentName of view.keys()) {
+            const component = view.get(componentName) as api.IMap;
+            this.addComponent(component);
+        }
+
+        components.on("valueChanged", (event) => {
+            if (view.has(event.key)) {
+                this.addComponent(view.get(event.key));
+            }
+        });
+    }
+
+    private async addComponent(component: api.IMap) {
+        const details = await component.getView();
+        if (details.get("type") !== "chart") {
+            return;
+        }
+
+        const size = details.get("size");
+        const position = details.get("position");
+        const chart = new Chart(document.createElement("div"), details.get("data"));
+        this.components.push({ size, position, component: chart });
+
+        this.element.insertBefore(chart.element, this.element.lastChild);
+        this.addChild(chart);
+        this.resizeCore(this.size);
     }
 }

@@ -199,14 +199,18 @@ async function typeFile(
     const performanceChart = metricsDoc.createMap();
     components.set("performance", performanceChart);
     performanceChart.set("type", "chart");
+    const performanceData = metricsDoc.createCell();
     performanceChart.set("size", { width: 760, height: 480 });
     performanceChart.set("position", { x: 10, y: 10 });
+    performanceChart.set("data", performanceData);
 
     const histogramChart = metricsDoc.createMap();
     components.set("histogram", histogramChart);
+    const histogramData = metricsDoc.createCell();
     histogramChart.set("type", "chart");
     histogramChart.set("size", { width: 760, height: 480 });
     histogramChart.set("position", { x: 790, y: 10 });
+    histogramChart.set("data", histogramData);
 
     const startTime = Date.now();
 
@@ -255,8 +259,8 @@ async function typeFile(
                 chartData.minimum[index] = metrics.latencyMinimum;
                 chartData.stdDev[index] = metrics.latencyStdDev;
 
-                performanceChart.set("data", getChartConfiguration(chartData));
-                histogramChart.set("data", getHistogramConfiguration(histogram));
+                performanceData.set(getChartConfiguration(chartData));
+                histogramData.set(getHistogramConfiguration(histogram));
 
                 chartData.index = (chartData.index + 1) % chartData.maximum.length;
             }

@@ -7,6 +7,7 @@ export const DefaultHost = Microsoft ? new Microsoft.Charts.Host({ base: "https:
 
 export class Chart extends ui.Component {
     private chart: any;
+    private lastSize: ui.ISize = { width: -1, height: -1 };
 
     constructor(element: HTMLDivElement, private cell: api.ICell, host = DefaultHost) {
         super(element);
@@ -14,25 +15,34 @@ export class Chart extends ui.Component {
         this.chart.setRenderer(Microsoft.Charts.IvyRenderer.Svg);
 
         this.cell.on("valueChanged", () => {
-            this.updateChart();
+            this.invalidateChart();
         });
     }
 
     protected resizeCore(rectangle: ui.Rectangle) {
-        this.updateChart();
+        if (rectangle.width !== this.lastSize.width || rectangle.height !== this.lastSize.height) {
+            this.lastSize.width = rectangle.width;
+            this.lastSize.height = rectangle.height;
+            this.invalidateChart();
+        }
     }
 
     private async getChartConfiguration() {
         const config = await this.cell.get();
-        const size = this.size.size;
-        config.size = size;
-
-        return config;
+        if (!config) {
+            return null;
+        } else {
+            const size = this.size.size;
+            config.size = size;
+            return config;
+        }
     }
 
-    private updateChart() {
+    private invalidateChart() {
         this.getChartConfiguration().then((config) => {
-            this.chart.setConfiguration(config);
+            if (config) {
+                this.chart.setConfiguration(config);
+            }
         });
     }
 }
