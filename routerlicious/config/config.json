@@ -114,7 +114,7 @@
                 "url": "http://praguepy.westus2.cloudapp.azure.com/"
             },
             "spellchecker": {
-                "url": "http://augmentation.westus2.cloudapp.azure.com/spellchecker"
+                "url": "http://augmentation.westus2.cloudapp.azure.com/spellchecker/api"
             }
         },
         "url": "http://localhost:4000",

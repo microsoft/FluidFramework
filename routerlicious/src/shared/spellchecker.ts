@@ -1,6 +1,7 @@
 // tslint:disable
 
 import { queue } from "async";
+import * as _ from "lodash";
 import * as api from "../api";
 import * as mergeTree from "../merge-tree";
 import * as Collections from "../merge-tree/collections";
@@ -34,6 +35,10 @@ interface IWordCheckSpec {
 
 class Speller {
     static altMax = 7;
+    static spellerParagraphs = 100;
+    static idleTimeMS = 500;
+    currentIdleTime : number = 0;
+    pendingSpellChecks: mergeTree.IMergeTreeOp[] = [];
     verbose = false;
     serviceCounter: number = 0;
     q: any;
@@ -102,12 +107,30 @@ class Speller {
     }
 
     setEvents(intelligence: IIntelligentService) {
+        const idleCheckerMS = Speller.idleTimeMS / 5;
+        setInterval(() => {
+            this.currentIdleTime += idleCheckerMS;
+            if (this.currentIdleTime >= Speller.idleTimeMS) {
+                this.runSpellOp(intelligence);
+                this.currentIdleTime = 0;
+            }
+        }, idleCheckerMS);
         this.sharedString.on("op", (msg: api.ISequencedObjectMessage) => {
             if (msg && msg.contents) {
-                let delta = <mergeTree.IMergeTreeOp>msg.contents;
-                this.spellOp(delta, intelligence);
+                this.pendingSpellChecks.push(<mergeTree.IMergeTreeOp>msg.contents);
+                this.currentIdleTime = 0;
             }
         });
+    }
+
+    runSpellOp(intelligence: IIntelligentService) {
+        if (this.pendingSpellChecks.length > 0) {
+            const pendingChecks = _.clone(this.pendingSpellChecks);
+            this.pendingSpellChecks = [];
+            for (let delta of pendingChecks) {
+                this.spellOp(delta, intelligence);
+            }
+        }
     }
 
     initialSpellCheck() {
@@ -322,7 +345,7 @@ class Speller {
     }
 
     invokeSpellerService(intelligence: IIntelligentService, queryString: string, startPos: number) {
-        if (this.serviceCounter < 10) {
+        if (this.serviceCounter < Speller.spellerParagraphs) {
             if (queryString.length > 0) {
                 this.q.push({ text: queryString, rsn: this.sharedString.referenceSequenceNumber, start: startPos, end: startPos + queryString.length });
                 ++this.serviceCounter;
