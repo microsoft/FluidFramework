@@ -35,6 +35,7 @@ interface IWordCheckSpec {
 
 class Speller {
     static altMax = 7;
+    static spellerParagraphs = 100;
     static idleTimeMS = 500;
     currentIdleTime : number = 0;
     pendingSpellChecks: mergeTree.IMergeTreeOp[] = [];
@@ -346,7 +347,7 @@ class Speller {
     }
 
     invokeSpellerService(intelligence: IIntelligentService, queryString: string, startPos: number) {
-        if (this.serviceCounter < 10) {
+        if (this.serviceCounter < Speller.spellerParagraphs) {
             if (queryString.length > 0) {
                 this.q.push({ text: queryString, rsn: this.sharedString.referenceSequenceNumber, start: startPos, end: startPos + queryString.length });
                 ++this.serviceCounter;
