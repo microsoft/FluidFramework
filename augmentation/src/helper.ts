@@ -25,16 +25,6 @@ export function extractJSON(str: string) {
     } while (firstOpen !== -1);
 }
 
-export function constructSpellcheckerEncoder(text: string) {
-    return {
-        AppId: "TestApp",
-        RequestId: "{B025D6F9-1C19-4207-A830-264A8CBC8BB1}",
-        Text: text,
-        LanguageId: "en-us",
-        RunOnProfileId: "{24BCFF65-03B5-40E9-90C8-59B75ABD453C}"
-    };
-}
-
 /**
  * Given a string, constructs a JSON that spellchecker service understands.
  */
@@ -44,7 +34,7 @@ export function constructSpellcheckerInput(text: string) {
             {
                 Name: "AppId",
                 Present: "true",
-                Value: "TestApp",
+                Value: "NLServiceTestAutomation",
             },
             {
                 Name: "AppVersion",
