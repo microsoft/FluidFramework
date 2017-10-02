@@ -117,8 +117,6 @@ class Speller {
         }, idleCheckerMS);
         this.sharedString.on("op", (msg: api.ISequencedObjectMessage) => {
             if (msg && msg.contents) {
-                // let delta = <mergeTree.IMergeTreeOp>msg.contents;
-                // this.spellOp(delta, intelligence);
                 this.pendingSpellChecks.push(<mergeTree.IMergeTreeOp>msg.contents);
                 this.currentIdleTime = 0;
             }
