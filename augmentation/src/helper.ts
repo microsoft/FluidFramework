@@ -34,7 +34,7 @@ export function constructSpellcheckerInput(text: string) {
             {
                 Name: "AppId",
                 Present: "true",
-                Value: "TestApp",
+                Value: "NLServiceTestAutomation",
             },
             {
                 Name: "AppVersion",
