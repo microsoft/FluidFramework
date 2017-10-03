@@ -241,6 +241,7 @@ export class OverlayCanvas extends ui.Component {
     private layers: Layer[] = [];
     private inkLayer: InkLayer;
     private currentStylusActionId: string;
+    private inkEventsEnabled = false;
     private activePointerId: number;
     private activePen: ink.IPen = {
         color: { r: 0, g: 161 / 255, b: 241 / 255, a: 0 },
@@ -250,11 +251,27 @@ export class OverlayCanvas extends ui.Component {
     // TODO composite layers together
     // private canvas: HTMLCanvasElement;
 
-    constructor(container: HTMLDivElement) {
+    /**
+     * Constructs a new OverlayCanvas.
+     *
+     * We require the parent element so we can register for entry/exit events on it. To allow non-ink
+     * events to pass through the overlay we need to disable it when the pen is not being used. But once
+     * disabled we won't receive the event to enable it. We can't wrap the canvas with a div either because
+     * that element would then receive all events and events wouldn't pass through to the content under the
+     * overlay. For that reason we ask the parent element to provide a div we can use to track pen entry/exit.
+     */
+    constructor(container: HTMLDivElement, eventTarget: HTMLDivElement) {
         super(container);
         this.inkLayer = new InkLayer({ width: 0, height: 0 }, []);
         this.addLayer(this.inkLayer);
 
+        // No pointer events by default
+        container.style.pointerEvents = "none";
+
+        // Track ink events on the eventTarget in order to enable/disable pointer events
+        this.trackInkEvents(eventTarget);
+
+        // Ink handling messages
         container.addEventListener("pointerdown", (evt) => this.handlePointerDown(evt));
         container.addEventListener("pointermove", (evt) => this.handlePointerMove(evt));
         container.addEventListener("pointerup", (evt) => this.handlePointerUp(evt));
@@ -275,6 +292,43 @@ export class OverlayCanvas extends ui.Component {
     protected resizeCore(rectangle: ui.Rectangle) {
         this.inkLayer.setSize(rectangle.size);
         this.markDirty();
+    }
+
+    /**
+     * Tracks ink events on the provided element and enables/disables the ink layer based on them
+     */
+    private trackInkEvents(eventTarget: HTMLDivElement) {
+        // Pointer events used to enable/disable the overlay canvas ink handling
+        // A pen entering the element causes us to enable ink events. If the pointer already has entered
+        // via the mouse we won't get another event for the pen. In this case we also watch move events
+        // to be able to toggle the ink layer. A pen leaving disables ink.
+
+        eventTarget.addEventListener("pointerenter", (event) => {
+            if (event.pointerType === "pen") {
+                this.enableInkEvents(true);
+            }
+        });
+
+        eventTarget.addEventListener("pointerleave", (event) => {
+            if (event.pointerType === "pen") {
+                this.enableInkEvents(false);
+            }
+        });
+
+        // Tracking pointermove is used to work around not receiving a pen event if the mouse already
+        // entered the element without leaving
+        eventTarget.addEventListener("pointermove", (event) => {
+            if (event.pointerType === "pen") {
+                this.enableInkEvents(true);
+            }
+        });
+    }
+
+    private enableInkEvents(enable: boolean) {
+        if (this.inkEventsEnabled !== enable) {
+            this.inkEventsEnabled = enable;
+            this.element.style.pointerEvents = enable ? "auto" : "none";
+        }
     }
 
     /**
@@ -299,9 +353,12 @@ export class OverlayCanvas extends ui.Component {
     }
 
     private handlePointerDown(evt: PointerEvent) {
-        this.activePointerId = evt.pointerId;
+        // Only support pen events
+        if (evt.pointerType === "pen") {
+            // Capture ink events
+            this.activePointerId = evt.pointerId;
+            this.element.setPointerCapture(this.activePointerId);
 
-        if ((evt.pointerType === "pen") || ((evt.pointerType === "mouse") && (evt.button === 0))) {
             // Anchor and clear any current selection.
             let translatedPoint = this.translatePoint(this.element, evt);
 
@@ -333,7 +390,6 @@ export class OverlayCanvas extends ui.Component {
 
     private handlePointerUp(evt: PointerEvent) {
         if (evt.pointerId === this.activePointerId) {
-            this.activePointerId = undefined;
             let translatedPoint = this.translatePoint(this.element, evt);
             evt.returnValue = false;
 
@@ -344,6 +400,10 @@ export class OverlayCanvas extends ui.Component {
             this.currentStylusActionId = undefined;
 
             this.inkLayer.drawStroke(delta.operations[0]);
+
+            // Release the event
+            this.element.releasePointerCapture(this.activePointerId);
+            this.activePointerId = undefined;
         }
 
         return false;

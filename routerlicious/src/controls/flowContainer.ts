@@ -28,14 +28,16 @@ export class FlowContainer extends ui.Component {
         flowViewDiv.classList.add("flow-view");
         this.flowView = new FlowView(flowViewDiv, sharedString, this.status);
 
-        // Overlay canvas for ink
-        const overlayCanvasDiv = document.createElement("div");
-        overlayCanvasDiv.classList.add("overlay-canvas");
-        this.overlayCanvas = new OverlayCanvas(overlayCanvasDiv);
-
         // Layer panel lets us put the overlay canvas on top of the text
         const layerPanelDiv = document.createElement("div");
         this.layerPanel = new LayerPanel(layerPanelDiv);
+
+        // Overlay canvas for ink
+        const overlayCanvasDiv = document.createElement("div");
+        overlayCanvasDiv.classList.add("overlay-canvas");
+        this.overlayCanvas = new OverlayCanvas(overlayCanvasDiv, layerPanelDiv);
+
+        // Add children to the panel once we have both
         this.layerPanel.addChild(this.flowView);
         this.layerPanel.addChild(this.overlayCanvas);
 
