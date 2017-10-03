@@ -1,19 +1,24 @@
 import * as api from "../api";
 import * as ui from "../ui";
+import { DockPanel } from "./dockPanel";
 import { Image } from "./image";
 import { Status } from "./status";
 
 export class FlowContainer extends ui.Component {
     public status: Status;
     public image: Image;
-    public content: ui.Component;
+    private dockPanel: DockPanel;
 
     constructor(element: HTMLDivElement) {
         super(element);
+
+        this.dockPanel = new DockPanel(element);
+
         const statusDiv = document.createElement("div");
         statusDiv.style.borderTop = "1px solid gray";
         this.status = new Status(statusDiv);
-        element.appendChild(statusDiv);
+
+        this.dockPanel.addBottom(this.status);
     }
 
     public trackInsights(insights: api.IMap) {
@@ -24,10 +29,7 @@ export class FlowContainer extends ui.Component {
     }
 
     public addContent(content: ui.Component) {
-        this.content = content;
-        this.addChild(content);
-        document.body.appendChild(content.element);
-        this.resizeCore(this.size);
+        this.dockPanel.addContent(content);
     }
 
     public addOverlay(image: Image) {
@@ -39,22 +41,14 @@ export class FlowContainer extends ui.Component {
     }
 
     protected resizeCore(bounds: ui.Rectangle) {
-        let vertSplit = bounds.nipVertBottom(22);
-
-        if (this.content) {
-            vertSplit[0].conformElement(this.content.element);
-            this.content.resize(vertSplit[0]);
-        }
+        bounds.conformElement(this.dockPanel.element);
+        this.dockPanel.resize(bounds);
 
         if (this.image) {
             let overlayRect = bounds.inner4(0.7, 0.05, 0.2, 0.1);
             overlayRect.conformElement(this.image.element);
             this.image.resize(overlayRect);
         }
-
-        vertSplit[1].y++; vertSplit[1].height--; // room for 1px border
-        vertSplit[1].conformElement(this.status.element);
-        this.status.resize(vertSplit[1]);
     }
 
     private async updateInsights(insights: api.IMap) {
