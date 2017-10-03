@@ -63,6 +63,10 @@ export class Status extends ui.Component implements IStatus {
         this.element.innerHTML = buf;
     }
 
+    public measure(size: ui.ISize): ui.ISize {
+        return { width: size.width, height: 22 };
+    }
+
     private findKV(key: string) {
         for (let i = 0, len = this.info.length; i < len; i++) {
             if (this.info[i].key === key) {

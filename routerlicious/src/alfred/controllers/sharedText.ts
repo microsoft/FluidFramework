@@ -74,17 +74,15 @@ export async function onLoad(id: string, version: resources.ICommit, config: any
     console.log(`id is ${id}`);
     console.log(`Partial load fired - ${performanceNow()}`);
 
-    const containerDiv = document.createElement("div");
-    const flowViewDiv = document.createElement("div");
-
-    const container = new controls.FlowContainer(containerDiv);
-    host.attach(container);
-    theFlow = new controls.FlowView(flowViewDiv, sharedString, container.status);
+    // Bindy for insights
     const image = new controls.Image(
         document.createElement("div"),
         url.resolve(document.baseURI, "/public/images/bindy.svg"));
-    container.addOverlay(image);
-    container.addContent(theFlow);
+
+    const containerDiv = document.createElement("div");
+    const container = new controls.FlowContainer(containerDiv, sharedString, image);
+    theFlow = container.flowView;
+    host.attach(container);
 
     getInsights(collabDoc.getRoot(), sharedString.id).then((insightsMap) => {
         container.trackInsights(insightsMap);

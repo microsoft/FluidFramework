@@ -85,9 +85,6 @@ export class DeltaManager {
         // Assign symmetric keys. NOTE: Move encryption entirely to DeltaConnection?
         this.privateKey = this.deltaConnection.privateKey;
         this.publicKey = this.deltaConnection.publicKey;
-
-        debug("DEBUG deltaManger encrypted flag: " + this.deltaConnection.encrypted);
-        debug(`final deltaManager keys: ${this.privateKey} \n ;;;; \n ${this.publicKey}`);
     }
 
     /**

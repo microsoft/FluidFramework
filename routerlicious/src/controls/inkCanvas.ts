@@ -1,13 +1,7 @@
 import * as ink from "../ink";
 import * as ui from "../ui";
+import { SegmentCircleInclusive } from "./overlayCanvas";
 import { Circle, IShape, Polygon } from "./shapes/index";
-
-export enum SegmentCircleInclusive {
-    None,
-    Both,
-    Start,
-    End,
-}
 
 interface IPtrEvtPoint {
     x: number;
