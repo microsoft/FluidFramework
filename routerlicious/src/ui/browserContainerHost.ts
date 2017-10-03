@@ -30,12 +30,10 @@ export class BrowserContainerHost {
 
         // Input event handling
         document.body.onkeydown = (e) => {
-            debug("keydown");
             this.root.emit("keydown", e);
         };
 
         document.body.onkeypress = (e) => {
-            debug("keypress");
             this.root.emit("keypress", e);
         };
 

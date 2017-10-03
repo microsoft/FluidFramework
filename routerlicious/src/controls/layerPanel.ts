@@ -23,6 +23,7 @@ export class LayerPanel extends ui.Component {
     protected resizeCore(bounds: ui.Rectangle) {
         const children = this.getChildren();
         for (const child of children) {
+            bounds.conformElement(child.element);
             child.resize(bounds);
         }
     }
