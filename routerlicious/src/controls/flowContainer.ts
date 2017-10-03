@@ -13,6 +13,7 @@ export class FlowContainer extends ui.Component {
         super(element);
 
         this.dockPanel = new DockPanel(element);
+        this.addChild(this.dockPanel);
 
         const statusDiv = document.createElement("div");
         statusDiv.style.borderTop = "1px solid gray";
