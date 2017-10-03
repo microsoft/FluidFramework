@@ -73,18 +73,24 @@ export class InkLayer extends Layer {
         super(size);
     }
 
+    public drawStroke(current: ink.IOperation) {
+        this.operations.push(current);
+        this.drawStrokeCore(current);
+    }
+
     /**
      * Renders the entire ink layer
      */
     protected render() {
+        this.lastOperation = null;
         for (const operation of this.operations) {
-            this.drawStroke(operation);
+            this.drawStrokeCore(operation);
         }
     }
 
     // store instructions used to render itself? i.e. the total path? Or defer to someone else to actually
     // do the re-render with a context?
-    protected drawStroke(current: ink.IOperation) {
+    private drawStrokeCore(current: ink.IOperation) {
         let type = ink.getActionType(current);
         let shapes: IShape[];
 
@@ -228,9 +234,12 @@ export class InkLayer extends Layer {
 }
 
 /**
- * Ink layer that listens for input and allows for drawing on the ink canvas
+ * API access to a drawing context that can be used to render elements
  */
-export class InteractiveInkLayer extends InkLayer {
+export class OverlayCanvas extends ui.Component {
+    private throttler = new ui.AnimationFrameThrottler(() => this.render());
+    private layers: Layer[] = [];
+    private inkLayer: InkLayer;
     private currentStylusActionId: string;
     private activePointerId: number;
     private activePen: ink.IPen = {
@@ -238,12 +247,22 @@ export class InteractiveInkLayer extends InkLayer {
         thickness: 7,
     };
 
-    constructor(size: ui.ISize, operations: ink.IOperation[]) {
-        super(size, operations);
+    // TODO composite layers together
+    // private canvas: HTMLCanvasElement;
 
-        this.canvas.addEventListener("pointerdown", (evt) => this.handlePointerDown(evt));
-        this.canvas.addEventListener("pointermove", (evt) => this.handlePointerMove(evt));
-        this.canvas.addEventListener("pointerup", (evt) => this.handlePointerUp(evt));
+    constructor(container: HTMLDivElement) {
+        super(container);
+        this.inkLayer = new InkLayer({ width: 0, height: 0 }, []);
+        this.addLayer(this.inkLayer);
+
+        container.addEventListener("pointerdown", (evt) => this.handlePointerDown(evt));
+        container.addEventListener("pointermove", (evt) => this.handlePointerMove(evt));
+        container.addEventListener("pointerup", (evt) => this.handlePointerUp(evt));
+    }
+
+    public addLayer(layer: Layer) {
+        this.layers.push(layer);
+        this.markDirty();
     }
 
     /**
@@ -251,88 +270,6 @@ export class InteractiveInkLayer extends InkLayer {
      */
     public setPen(pen: ink.IPen) {
         this.activePen = _.clone(pen);
-    }
-
-    private handlePointerDown(evt: PointerEvent) {
-        this.activePointerId = evt.pointerId;
-
-        if ((evt.pointerType === "pen") || ((evt.pointerType === "mouse") && (evt.button === 0))) {
-            // Anchor and clear any current selection.
-            let translatedPoint = this.translatePoint(this.canvas, evt);
-
-            let delta = new ink.Delta().stylusDown(
-                translatedPoint,
-                evt.pressure,
-                this.activePen);
-            this.currentStylusActionId = delta.operations[0].stylusDown.id;
-            this.drawStroke(delta.operations[0]);
-
-            evt.returnValue = false;
-        }
-    }
-
-    private handlePointerMove(evt: PointerEvent) {
-        if (evt.pointerId === this.activePointerId) {
-            let translatedPoint = this.translatePoint(this.canvas, evt);
-            let delta = new ink.Delta().stylusMove(
-                translatedPoint,
-                evt.pressure,
-                this.currentStylusActionId);
-            this.drawStroke(delta.operations[0]);
-
-            evt.returnValue = false;
-        }
-
-        return false;
-    }
-
-    private handlePointerUp(evt: PointerEvent) {
-        if (evt.pointerId === this.activePointerId) {
-            this.activePointerId = undefined;
-            let translatedPoint = this.translatePoint(this.canvas, evt);
-            evt.returnValue = false;
-
-            let delta = new ink.Delta().stylusUp(
-                translatedPoint,
-                evt.pressure,
-                this.currentStylusActionId);
-            this.currentStylusActionId = undefined;
-
-            this.drawStroke(delta.operations[0]);
-        }
-
-        return false;
-    }
-
-    private translatePoint(relative: HTMLElement, event: PointerEvent): ui.IPoint {
-        let offset = $(relative).offset();
-        return {
-            x: event.pageX - offset.left,
-            y: event.pageY - offset.top,
-        };
-    }
-}
-
-/**
- * API access to a drawing context that can be used to render elements
- */
-export class OverlayCanvas extends ui.Component {
-    private throttler = new ui.AnimationFrameThrottler(() => this.render());
-    private layers: Layer[] = [];
-    private inkLayer: InteractiveInkLayer;
-
-    // TODO composite layers together
-    // private canvas: HTMLCanvasElement;
-
-    constructor(container: HTMLDivElement) {
-        super(container);
-        this.inkLayer = new InteractiveInkLayer({ width: 0, height: 0 }, []);
-        this.addLayer(this.inkLayer);
-    }
-
-    public addLayer(layer: Layer) {
-        this.layers.push(layer);
-        this.markDirty();
     }
 
     protected resizeCore(rectangle: ui.Rectangle) {
@@ -359,5 +296,64 @@ export class OverlayCanvas extends ui.Component {
             layer.canvas.style.top = `${layer.position.y}px`;
             this.element.appendChild(layer.canvas);
         }
+    }
+
+    private handlePointerDown(evt: PointerEvent) {
+        this.activePointerId = evt.pointerId;
+
+        if ((evt.pointerType === "pen") || ((evt.pointerType === "mouse") && (evt.button === 0))) {
+            // Anchor and clear any current selection.
+            let translatedPoint = this.translatePoint(this.element, evt);
+
+            let delta = new ink.Delta().stylusDown(
+                translatedPoint,
+                evt.pressure,
+                this.activePen);
+            this.currentStylusActionId = delta.operations[0].stylusDown.id;
+            this.inkLayer.drawStroke(delta.operations[0]);
+
+            evt.returnValue = false;
+        }
+    }
+
+    private handlePointerMove(evt: PointerEvent) {
+        if (evt.pointerId === this.activePointerId) {
+            let translatedPoint = this.translatePoint(this.element, evt);
+            let delta = new ink.Delta().stylusMove(
+                translatedPoint,
+                evt.pressure,
+                this.currentStylusActionId);
+            this.inkLayer.drawStroke(delta.operations[0]);
+
+            evt.returnValue = false;
+        }
+
+        return false;
+    }
+
+    private handlePointerUp(evt: PointerEvent) {
+        if (evt.pointerId === this.activePointerId) {
+            this.activePointerId = undefined;
+            let translatedPoint = this.translatePoint(this.element, evt);
+            evt.returnValue = false;
+
+            let delta = new ink.Delta().stylusUp(
+                translatedPoint,
+                evt.pressure,
+                this.currentStylusActionId);
+            this.currentStylusActionId = undefined;
+
+            this.inkLayer.drawStroke(delta.operations[0]);
+        }
+
+        return false;
+    }
+
+    private translatePoint(relative: HTMLElement, event: PointerEvent): ui.IPoint {
+        let offset = $(relative).offset();
+        return {
+            x: event.pageX - offset.left,
+            y: event.pageY - offset.top,
+        };
     }
 }
