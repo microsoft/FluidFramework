@@ -17,12 +17,13 @@ export class InkLayer extends Layer {
 /**
  * API access to a drawing context that can be used to render elements
  */
-export class OverlayCanvas {
+export class OverlayCanvas extends ui.Component {
     private throttler = new ui.AnimationFrameThrottler(() => this.render());
     private canvas: HTMLCanvasElement;
     private layers: Layer[] = [];
 
-    constructor(private container: HTMLElement) {
+    constructor(private container: HTMLDivElement) {
+        super(container);
         this.canvas = document.createElement("canvas");
         this.container.appendChild(this.canvas);
     }

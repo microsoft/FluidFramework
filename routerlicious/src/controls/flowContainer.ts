@@ -1,25 +1,55 @@
 import * as api from "../api";
+import { SharedString } from "../merge-tree";
 import * as ui from "../ui";
 import { DockPanel } from "./dockPanel";
+import { FlowView } from "./flowView";
 import { Image } from "./image";
+import { LayerPanel } from "./layerPanel";
+import { OverlayCanvas } from "./overlayCanvas";
 import { Status } from "./status";
 
 export class FlowContainer extends ui.Component {
     public status: Status;
-    public image: Image;
+    public flowView: FlowView;
     private dockPanel: DockPanel;
+    private layerPanel: LayerPanel;
+    private overlayCanvas: OverlayCanvas;
 
-    constructor(element: HTMLDivElement) {
+    constructor(element: HTMLDivElement, sharedString: SharedString, private image: Image) {
         super(element);
 
-        this.dockPanel = new DockPanel(element);
-        this.addChild(this.dockPanel);
-
+        // Status bar at the bottom
         const statusDiv = document.createElement("div");
         statusDiv.style.borderTop = "1px solid gray";
         this.status = new Status(statusDiv);
 
+        // FlowView holds the text
+        const flowViewDiv = document.createElement("div");
+        flowViewDiv.classList.add("flow-view");
+        this.flowView = new FlowView(flowViewDiv, sharedString, this.status);
+
+        // Overlay canvas for ink
+        const overlayCanvasDiv = document.createElement("div");
+        overlayCanvasDiv.classList.add("overlay-canvas");
+        this.overlayCanvas = new OverlayCanvas(overlayCanvasDiv);
+
+        // Layer panel lets us put the overlay canvas on top of the text
+        const layerPanelDiv = document.createElement("div");
+        this.layerPanel = new LayerPanel(layerPanelDiv);
+        this.layerPanel.addChild(this.flowView);
+        this.layerPanel.addChild(this.overlayCanvas);
+
+        this.dockPanel = new DockPanel(element);
+        this.addChild(this.dockPanel);
+
+        // Use the dock panel to layout the viewport - layer panel as the content and then status bar at the bottom
+        this.dockPanel.addContent(this.layerPanel);
         this.dockPanel.addBottom(this.status);
+
+        // Intelligence image
+        image.element.style.visibility = "hidden";
+        this.addChild(image);
+        element.appendChild(image.element);
     }
 
     public trackInsights(insights: api.IMap) {
@@ -27,18 +57,6 @@ export class FlowContainer extends ui.Component {
         insights.on("valueChanged", () => {
             this.updateInsights(insights);
         });
-    }
-
-    public addContent(content: ui.Component) {
-        this.dockPanel.addContent(content);
-    }
-
-    public addOverlay(image: Image) {
-        image.element.style.visibility = "hidden";
-        this.image = image;
-        this.addChild(image);
-        document.body.appendChild(image.element);
-        this.resizeCore(this.size);
     }
 
     protected resizeCore(bounds: ui.Rectangle) {
