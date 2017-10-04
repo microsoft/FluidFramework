@@ -1,19 +1,57 @@
 import * as api from "../api";
+import { SharedString } from "../merge-tree";
 import * as ui from "../ui";
+import { DockPanel } from "./dockPanel";
+import { FlowView } from "./flowView";
 import { Image } from "./image";
+import { LayerPanel } from "./layerPanel";
+import { OverlayCanvas } from "./overlayCanvas";
 import { Status } from "./status";
 
 export class FlowContainer extends ui.Component {
     public status: Status;
-    public image: Image;
-    public content: ui.Component;
+    public flowView: FlowView;
+    private dockPanel: DockPanel;
+    private layerPanel: LayerPanel;
+    private overlayCanvas: OverlayCanvas;
 
-    constructor(element: HTMLDivElement) {
+    constructor(element: HTMLDivElement, sharedString: SharedString, private image: Image) {
         super(element);
+
+        // Status bar at the bottom
         const statusDiv = document.createElement("div");
         statusDiv.style.borderTop = "1px solid gray";
         this.status = new Status(statusDiv);
-        element.appendChild(statusDiv);
+
+        // FlowView holds the text
+        const flowViewDiv = document.createElement("div");
+        flowViewDiv.classList.add("flow-view");
+        this.flowView = new FlowView(flowViewDiv, sharedString, this.status);
+
+        // Layer panel lets us put the overlay canvas on top of the text
+        const layerPanelDiv = document.createElement("div");
+        this.layerPanel = new LayerPanel(layerPanelDiv);
+
+        // Overlay canvas for ink
+        const overlayCanvasDiv = document.createElement("div");
+        overlayCanvasDiv.classList.add("overlay-canvas");
+        this.overlayCanvas = new OverlayCanvas(overlayCanvasDiv, layerPanelDiv);
+
+        // Add children to the panel once we have both
+        this.layerPanel.addChild(this.flowView);
+        this.layerPanel.addChild(this.overlayCanvas);
+
+        this.dockPanel = new DockPanel(element);
+        this.addChild(this.dockPanel);
+
+        // Use the dock panel to layout the viewport - layer panel as the content and then status bar at the bottom
+        this.dockPanel.addContent(this.layerPanel);
+        this.dockPanel.addBottom(this.status);
+
+        // Intelligence image
+        image.element.style.visibility = "hidden";
+        this.addChild(image);
+        element.appendChild(image.element);
     }
 
     public trackInsights(insights: api.IMap) {
@@ -23,38 +61,15 @@ export class FlowContainer extends ui.Component {
         });
     }
 
-    public addContent(content: ui.Component) {
-        this.content = content;
-        this.addChild(content);
-        document.body.appendChild(content.element);
-        this.resizeCore(this.size);
-    }
-
-    public addOverlay(image: Image) {
-        image.element.style.visibility = "hidden";
-        this.image = image;
-        this.addChild(image);
-        document.body.appendChild(image.element);
-        this.resizeCore(this.size);
-    }
-
     protected resizeCore(bounds: ui.Rectangle) {
-        let vertSplit = bounds.nipVertBottom(22);
-
-        if (this.content) {
-            vertSplit[0].conformElement(this.content.element);
-            this.content.resize(vertSplit[0]);
-        }
+        bounds.conformElement(this.dockPanel.element);
+        this.dockPanel.resize(bounds);
 
         if (this.image) {
             let overlayRect = bounds.inner4(0.7, 0.05, 0.2, 0.1);
             overlayRect.conformElement(this.image.element);
             this.image.resize(overlayRect);
         }
-
-        vertSplit[1].y++; vertSplit[1].height--; // room for 1px border
-        vertSplit[1].conformElement(this.status.element);
-        this.status.resize(vertSplit[1]);
     }
 
     private async updateInsights(insights: api.IMap) {

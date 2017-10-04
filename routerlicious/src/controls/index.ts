@@ -3,5 +3,7 @@ export * from "./flowContainer";
 export * from "./flexView";
 export * from "./flowView";
 export * from "./image";
+export * from "./layerPanel";
 export * from "./popup";
 export * from "./status";
+export * from "./overlayCanvas";
