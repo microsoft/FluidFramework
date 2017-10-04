@@ -163,8 +163,6 @@ export function selectionListBoxCreate(
     let listContainer = document.createElement("div");
     let items: Item[];
     let itemCapacity: number;
-    let bubble: HTMLDivElement;
-    let bubbleDelta: number;
     let selectionIndex = -1;
     let topSelection = 0;
 
@@ -285,34 +283,6 @@ export function selectionListBoxCreate(
         }
     }
 
-    function addScrollbar() {
-        let scrollbarWidth = 10;
-        let scrollbar = document.createElement("div");
-        bubble = document.createElement("div");
-
-        let rect = ui.Rectangle.fromClientRect(listContainer.getBoundingClientRect());
-        // adjust for 2px border
-        rect.x = (rect.width - scrollbarWidth) - 4;
-        rect.width = scrollbarWidth;
-        rect.y = 0;
-        rect.height -= 4;
-        rect.conformElement(scrollbar);
-        scrollbar.style.backgroundColor = "white";
-        rect.y = 0;
-        rect.x = 0;
-        bubbleDelta = rect.height * (1 / items.length);
-        rect.height = Math.round(itemCapacity * bubbleDelta);
-        rect.conformElement(bubble);
-        bubble.style.backgroundColor = "#cccccc";
-        listContainer.appendChild(scrollbar);
-        scrollbar.appendChild(bubble);
-        scrollbar.style.zIndex = "2";
-    }
-
-    function adjustScrollbar() {
-        bubble.style.top = Math.round(bubbleDelta * topSelection) + "px";
-    }
-
     function makeItemDiv(i: number, div: HTMLDivElement) {
         let item = items[i];
         let itemDiv = div;
@@ -344,10 +314,9 @@ export function selectionListBoxCreate(
         if (selectionItems.length === 0) {
             return;
         }
-        bubble = undefined;
-        if (items.length > itemCapacity) {
-            setTimeout(addScrollbar, 0);
-        }
+
+        // TODO code to enable scroll bar
+
         updateSelectionList();
 
         if (hintSelection) {
@@ -382,9 +351,8 @@ export function selectionListBoxCreate(
                 }
             }
         }
-        if (bubble) {
-            adjustScrollbar();
-        }
+
+        // TODO adjust the scroll bar
     }
 }
 
@@ -439,19 +407,6 @@ function getMultiTextWidth(texts: string[], font: string) {
         sum += metrics.width;
     }
     return sum;
-}
-
-function makeScrollLosenge(height: number, left: number, top: number) {
-    let div = document.createElement("div");
-    div.style.width = "12px";
-    div.style.height = `${height}px`;
-    div.style.left = `${left}px`;
-    div.style.top = `${top}px`;
-    div.style.backgroundColor = "pink";
-    let bordRad = height / 3;
-    div.style.borderRadius = `${bordRad}px`;
-    div.style.position = "absolute";
-    return div;
 }
 
 interface IRange {
@@ -2268,8 +2223,6 @@ function findTile(flowView: FlowView, startPos: number, tileType: string, preced
 }
 
 export class FlowView extends ui.Component {
-    public static scrollAreaWidth = 18;
-
     public timeToImpression: number;
     public timeToLoad: number;
     public timeToEdit: number;
@@ -2280,10 +2233,6 @@ export class FlowView extends ui.Component {
     public cursorSpan: HTMLSpanElement;
     public viewportDiv: HTMLDivElement;
     public viewportRect: ui.Rectangle;
-    public scrollDiv: HTMLDivElement;
-    public scrollRect: ui.Rectangle;
-    public statusDiv: HTMLDivElement;
-    public statusRect: ui.Rectangle;
     public client: SharedString.Client;
     public ticking = false;
     public wheelTicking = false;
@@ -2309,8 +2258,6 @@ export class FlowView extends ui.Component {
         this.client = sharedString.client;
         this.viewportDiv = document.createElement("div");
         this.element.appendChild(this.viewportDiv);
-        this.scrollDiv = document.createElement("div");
-        this.element.appendChild(this.scrollDiv);
 
         this.statusMessage("li", " ");
         this.statusMessage("si", " ");
@@ -2998,7 +2945,6 @@ export class FlowView extends ui.Component {
             }
         }
         let clk = Date.now();
-        let frac = this.topChar / len;
         // TODO: consider using markers for presence info once splice segments during pg render
         this.updatePresencePositions();
         clearSubtree(this.viewportDiv);
@@ -3006,12 +2952,6 @@ export class FlowView extends ui.Component {
         let renderOutput = renderTree(this.viewportDiv, this.topChar, this);
         this.viewportStartPos = renderOutput.viewportStartPos;
         this.viewportEndPos = renderOutput.viewportEndPos;
-        clearSubtree(this.scrollDiv);
-        let bubbleHeight = Math.max(3, Math.floor((this.viewportCharCount() / len) * this.scrollRect.height));
-        let bubbleTop = Math.floor(frac * this.scrollRect.height);
-        let bubbleLeft = 3;
-        let bubbleDiv = makeScrollLosenge(bubbleHeight, bubbleLeft, bubbleTop);
-        this.scrollDiv.appendChild(bubbleDiv);
         if (this.diagCharPort || true) {
             this.statusMessage("render", `&nbsp ${Date.now() - clk}ms`);
         }
@@ -3078,10 +3018,7 @@ export class FlowView extends ui.Component {
     }
 
     protected resizeCore(bounds: ui.Rectangle) {
-        let panelScroll = bounds.nipHorizRight(FlowView.scrollAreaWidth);
-        this.scrollRect = panelScroll[1];
-        ui.Rectangle.conformElementToRect(this.scrollDiv, this.scrollRect);
-        this.viewportRect = panelScroll[0].inner(0.92);
+        this.viewportRect = bounds.inner(0.92);
         ui.Rectangle.conformElementToRect(this.viewportDiv, this.viewportRect);
         this.render(this.topChar, true);
     }
