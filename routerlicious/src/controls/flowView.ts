@@ -644,6 +644,7 @@ interface IDocumentContext {
     boxHMargin: number;
     boxTopMargin: number;
     tableVspace: number;
+    indentWidthThreshold: number;
 }
 
 interface IItemsContext {
@@ -669,9 +670,10 @@ function buildDocumentContext(viewportDiv: HTMLDivElement) {
     let tableVspace = pgVspace;
     let boxTopMargin = 3;
     let boxHMargin = 3;
+    let indentWidthThreshold = 600;
     return <IDocumentContext>{
         fontstr, headerFontstr, wordSpacing, headerDivHeight, defaultLineDivHeight,
-        pgVspace, boxVspace, boxHMargin, boxTopMargin, tableVspace,
+        pgVspace, boxVspace, boxHMargin, boxTopMargin, tableVspace, indentWidthThreshold,
     };
 }
 
@@ -756,6 +758,12 @@ function showPositionInLine(
     }
 }
 
+function cursorVisibleMarker(marker: SharedString.Marker) {
+    return (marker.hasTileLabel("pg") ||
+        ((marker.hasRangeLabel("box") &&
+            (marker.behaviors & SharedString.MarkerBehaviors.RangeEnd))));
+}
+
 function renderSegmentIntoLine(
     segment: SharedString.Segment, segpos: number, refSeq: number,
     clientId: number, start: number, end: number, lineContext: ILineContext) {
@@ -787,9 +795,7 @@ function renderSegmentIntoLine(
         }
     } else if (segType === SharedString.SegmentType.Marker) {
         let marker = <SharedString.Marker>segment;
-        if (marker.hasTileLabel("pg") ||
-            ((marker.hasRangeLabel("box") &&
-                (marker.behaviors & SharedString.MarkerBehaviors.RangeEnd)))) {
+        if (cursorVisibleMarker(marker)) {
             lineContext.pgMarker = marker;
             lineContext.markerPos = segpos;
             if (lineContext.flowView.cursor.pos === segpos) {
@@ -855,8 +861,12 @@ function reRenderLine(lineDiv: ILineDiv, flowView: FlowView) {
             outerViewportBounds,
         };
         let lineEnd = lineDiv.lineEnd;
+        let end = lineEnd;
+        if (end === lineDiv.linePos) {
+            end++;
+        }
         flowView.client.mergeTree.mapRange({ leaf: renderSegmentIntoLine }, SharedString.UniversalSequenceNumber,
-            flowView.client.getClientId(), lineContext, lineDiv.linePos, lineDiv.lineEnd);
+            flowView.client.getClientId(), lineContext, lineDiv.linePos, end);
         lineDiv.lineEnd = lineEnd;
     }
 }
@@ -1426,7 +1436,7 @@ function renderBox(boxView: BoxView, layoutInfo: ILayoutContext, defer = false, 
     boxView.renderedHeight = boxLayoutInfo.viewport.getLineTop();
     if (boxLayoutInfo.reRenderList) {
         if (!layoutInfo.reRenderList) {
-            layoutInfo.reRenderList=[];
+            layoutInfo.reRenderList = [];
         }
         for (let lineDiv of boxLayoutInfo.reRenderList) {
             layoutInfo.reRenderList.push(lineDiv);
@@ -1840,9 +1850,9 @@ function renderFlow(renderContext: ILayoutContext, deferWhole = false): IRenderO
                     lineDiv.appendChild(contentDiv);
                 }
                 let lineContext = <ILineContext>{
-                    contentDiv, deferredAttach: renderContext.deferredAttach,  flowView: renderContext.flowView,
-                    lineDiv, lineDivHeight,  markerPos,
-                     pgMarker, span,
+                    contentDiv, deferredAttach: renderContext.deferredAttach, flowView: renderContext.flowView,
+                    lineDiv, lineDivHeight, markerPos,
+                    pgMarker, span,
                 };
                 if (viewportStartPos < 0) {
                     viewportStartPos = lineStart;
@@ -1923,7 +1933,12 @@ function renderFlow(renderContext: ILayoutContext, deferWhole = false): IRenderO
             }
             if (indentPct !== 0.0) {
                 indentWidth = Math.floor(indentPct * renderContext.viewport.currentLineWidth());
+                if (docContext.indentWidthThreshold >= renderContext.viewport.currentLineWidth()) {
+                    let em2 = Math.round(2 * getTextWidth("M", docContext.fontstr));
+                    indentWidth = em2 + indentWidth;
+                }
             }
+
             contentWidth = Math.floor(contentPct * renderContext.viewport.currentLineWidth()) - indentWidth;
             if (contentWidth > renderContext.viewport.currentLineWidth()) {
                 // tslint:disable:max-line-length
@@ -2538,6 +2553,22 @@ export class FlowView extends ui.Component {
         return x;
     }
 
+    public cursorFwd() {
+        this.cursor.pos++;
+        let segoff = this.client.mergeTree.getContainingSegment(this.cursor.pos, SharedString.UniversalSequenceNumber,
+            this.client.getClientId());
+        if (segoff.segment.getType() !== SharedString.SegmentType.Text) {
+            // REVIEW: assume marker for now
+            let marker = <SharedString.Marker>segoff.segment;
+            if (!cursorVisibleMarker(marker)) {
+                // TODO: end of document marker
+                if (this.cursor.pos < (this.client.getLength() - 1)) {
+                    this.cursorFwd();
+                }
+            }
+        }
+    }
+
     public verticalMove(lineCount: number) {
         let up = lineCount < 0;
         let lineDiv = this.cursor.lineDiv();
@@ -2662,7 +2693,7 @@ export class FlowView extends ui.Component {
                     if (this.cursor.pos === this.viewportEndPos) {
                         this.scroll(false, true);
                     }
-                    this.cursor.pos++;
+                    this.cursorFwd();
                     this.updatePresence();
                     this.cursor.updateView(this);
                 }
