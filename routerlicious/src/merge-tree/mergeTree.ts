@@ -251,7 +251,7 @@ class HierMergeBlock extends MergeBlock implements Block {
     }
 
     addNodeMarkers(mergeTree: MergeTree, node: Node) {
-        addNodeMarkers(mergeTree, node, this.rightmostTiles, this.leftmostTiles, 
+        addNodeMarkers(mergeTree, node, this.rightmostTiles, this.leftmostTiles,
             this.rangeStacks);
     }
 
@@ -718,7 +718,7 @@ function latestLEQ(a: PartialSequenceLength[], key: number) {
     return best;
 }
 
-function compareNumbers(a: number, b: number) {
+export function compareNumbers(a: number, b: number) {
     return a - b;
 }
 
@@ -1548,6 +1548,7 @@ export class Client {
     }
 
     localTransaction(groupOp: ops.IMergeTreeGroupMsg) {
+        this.mergeTree.startGroupOperation();
         for (let op of groupOp.ops) {
             switch (op.type) {
                 case ops.MergeTreeDeltaType.INSERT:
@@ -1569,6 +1570,7 @@ export class Client {
                     break;
             }
         }
+        this.mergeTree.endGroupOperation();
     }
 
     annotateSegmentLocal(props: PropertySet, start: number, end: number, op: ops.ICombiningOp) {
@@ -2048,6 +2050,8 @@ export class MergeTree {
     pendingSegments: Collections.List<SegmentGroup>;
     segmentsToScour: Collections.Heap<LRUSegment>;
     idToSegment = Properties.createMap<Segment>();
+    transactionSegmentGroup: SegmentGroup;
+    transactionSegmentEnqueued = false;
     // for diagnostics
     getLongClientId: (id: number) => string;
 
@@ -2080,6 +2084,16 @@ export class MergeTree {
         block.children[0].parent = block;
         block.cachedLength = text.length;
         return block;
+    }
+
+    startGroupOperation() {
+        // TODO: assert undefined
+        this.transactionSegmentGroup = <SegmentGroup>{ segments: [] };
+        this.transactionSegmentEnqueued = false;
+    }
+
+    endGroupOperation() {
+        this.transactionSegmentGroup = undefined;
     }
 
     // TODO: remove id when segment removed 
@@ -2796,8 +2810,16 @@ export class MergeTree {
 
     addToPendingList(segment: Segment, segmentGroup?: SegmentGroup) {
         if (segmentGroup === undefined) {
-            segmentGroup = <SegmentGroup>{ segments: [] };
-            this.pendingSegments.enqueue(segmentGroup);
+            if (this.transactionSegmentGroup) {
+                segmentGroup = this.transactionSegmentGroup;
+                if (!this.transactionSegmentEnqueued) {
+                    this.pendingSegments.enqueue(segmentGroup);
+                    this.transactionSegmentEnqueued = true;
+                }
+            } else {
+                segmentGroup = <SegmentGroup>{ segments: [] };
+                this.pendingSegments.enqueue(segmentGroup);
+            }
         }
         // TODO: share this group with UNDO
         segment.segmentGroup = segmentGroup;

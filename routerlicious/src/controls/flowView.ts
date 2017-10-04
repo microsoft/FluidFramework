@@ -94,6 +94,10 @@ export interface ILineDiv extends HTMLDivElement {
     indentSymbol?: ISymbol;
 }
 
+interface IRowDiv extends ILineDiv {
+    rowView: RowView;
+}
+
 interface ISegSpan extends HTMLSpanElement {
     seg: SharedString.TextSegment;
     segPos?: number;
@@ -521,7 +525,14 @@ function breakPGIntoLinesFF(items: ParagraphItem[], lineWidth: number) {
                 committedItemsWidth = blockRunWidth;
             }
             posInPG += item.text.length;
-            blockRunWidth += item.width;
+            if (committedItemsWidth > lineWidth) {
+                breaks.push(posInPG);
+                committedItemsWidth = 0;
+                blockRunWidth = 0;
+                blockRunPos = posInPG;
+            } else {
+                blockRunWidth += item.width;
+            }
             prevIsGlue = false;
         } else if (item.type === ParagraphItemType.Glue) {
             posInPG++;
@@ -618,7 +629,8 @@ interface ILineContext {
     span: ISegSpan;
     pgMarker: IParagraphMarker;
     markerPos: number;
-    outerViewportBounds: ui.Rectangle;
+    deferredAttach?: boolean;
+    reRenderList?: ILineDiv[];
 }
 
 interface IDocumentContext {
@@ -659,7 +671,7 @@ function buildDocumentContext(viewportDiv: HTMLDivElement) {
     let boxHMargin = 3;
     return <IDocumentContext>{
         fontstr, headerFontstr, wordSpacing, headerDivHeight, defaultLineDivHeight,
-                pgVspace, boxVspace, boxHMargin, boxTopMargin, tableVspace,
+        pgVspace, boxVspace, boxHMargin, boxTopMargin, tableVspace,
     };
 }
 
@@ -672,29 +684,42 @@ function showPresence(presenceX: number, lineContext: ILineContext, presenceInfo
 }
 
 function showPositionEndOfLine(lineContext: ILineContext, presenceInfo?: IPresenceInfo) {
-    if (lineContext.span) {
-        let cursorBounds = lineContext.span.getBoundingClientRect();
-        let cursorX = cursorBounds.width + (cursorBounds.left - lineContext.outerViewportBounds.x);
-        if (!presenceInfo) {
-            lineContext.flowView.cursor.assignToLine(cursorX, lineContext.lineDivHeight, lineContext.lineDiv);
-        } else {
-            showPresence(cursorX, lineContext, presenceInfo);
-        }
+    if (lineContext.deferredAttach) {
+        addToRerenderList(lineContext);
     } else {
-        if (lineContext.lineDiv.indentWidth !== undefined) {
+        if (lineContext.span) {
+            let cursorBounds = lineContext.span.getBoundingClientRect();
+            let lineDivBounds = lineContext.lineDiv.getBoundingClientRect();
+            let cursorX = cursorBounds.width + (cursorBounds.left - lineDivBounds.left);
             if (!presenceInfo) {
-                lineContext.flowView.cursor.assignToLine(
-                    lineContext.lineDiv.indentWidth, lineContext.lineDivHeight, lineContext.lineDiv);
+                lineContext.flowView.cursor.assignToLine(cursorX, lineContext.lineDivHeight, lineContext.lineDiv);
             } else {
-                showPresence(lineContext.lineDiv.indentWidth, lineContext, presenceInfo);
+                showPresence(cursorX, lineContext, presenceInfo);
             }
         } else {
-            if (!presenceInfo) {
-                lineContext.flowView.cursor.assignToLine(0, lineContext.lineDivHeight, lineContext.lineDiv);
+            if (lineContext.lineDiv.indentWidth !== undefined) {
+                if (!presenceInfo) {
+                    lineContext.flowView.cursor.assignToLine(
+                        lineContext.lineDiv.indentWidth, lineContext.lineDivHeight, lineContext.lineDiv);
+                } else {
+                    showPresence(lineContext.lineDiv.indentWidth, lineContext, presenceInfo);
+                }
             } else {
-                showPresence(0, lineContext, presenceInfo);
+                if (!presenceInfo) {
+                    lineContext.flowView.cursor.assignToLine(0, lineContext.lineDivHeight, lineContext.lineDiv);
+                } else {
+                    showPresence(0, lineContext, presenceInfo);
+                }
             }
         }
+    }
+}
+
+function addToRerenderList(lineContext: ILineContext) {
+    if (!lineContext.reRenderList) {
+        lineContext.reRenderList = [lineContext.lineDiv];
+    } else {
+        lineContext.reRenderList.push(lineContext.lineDiv);
     }
 }
 
@@ -705,22 +730,29 @@ function showPositionInLine(
     cursorPos: number,
     presenceInfo?: IPresenceInfo) {
 
-    let posX: number;
-    if (cursorPos > textStartPos) {
-        let preCursorText = text.substring(0, cursorPos - textStartPos);
-        let temp = lineContext.span.innerText;
-        lineContext.span.innerText = preCursorText;
-        let cursorBounds = lineContext.span.getBoundingClientRect();
-        posX = cursorBounds.width + (cursorBounds.left - lineContext.outerViewportBounds.x);
-        lineContext.span.innerText = temp;
+    if (lineContext.deferredAttach) {
+        addToRerenderList(lineContext);
     } else {
-        let cursorBounds = lineContext.span.getBoundingClientRect();
-        posX = cursorBounds.left - lineContext.outerViewportBounds.x;
-    }
-    if (!presenceInfo) {
-        lineContext.flowView.cursor.assignToLine(posX, lineContext.lineDivHeight, lineContext.lineDiv);
-    } else {
-        showPresence(posX, lineContext, presenceInfo);
+        let posX: number;
+        let lineDivBounds = lineContext.lineDiv.getBoundingClientRect();
+        if (cursorPos > textStartPos) {
+            let preCursorText = text.substring(0, cursorPos - textStartPos);
+            let temp = lineContext.span.innerText;
+            lineContext.span.innerText = preCursorText;
+            let cursorBounds = lineContext.span.getBoundingClientRect();
+            posX = cursorBounds.width + (cursorBounds.left - lineDivBounds.left);
+            // console.log(`cbounds w ${cursorBounds.width} posX ${posX} ldb ${lineDivBounds.left}`);
+            lineContext.span.innerText = temp;
+        } else {
+            let cursorBounds = lineContext.span.getBoundingClientRect();
+            posX = cursorBounds.left - lineDivBounds.left;
+            // console.log(`cbounds whole l ${cursorBounds.left} posX ${posX} ldb ${lineDivBounds.left}`);
+        }
+        if (!presenceInfo) {
+            lineContext.flowView.cursor.assignToLine(posX, lineContext.lineDivHeight, lineContext.lineDiv);
+        } else {
+            showPresence(posX, lineContext, presenceInfo);
+        }
     }
 }
 
@@ -755,7 +787,9 @@ function renderSegmentIntoLine(
         }
     } else if (segType === SharedString.SegmentType.Marker) {
         let marker = <SharedString.Marker>segment;
-        if (marker.hasTileLabel("pg")) {
+        if (marker.hasTileLabel("pg") ||
+            ((marker.hasRangeLabel("box") &&
+                (marker.behaviors & SharedString.MarkerBehaviors.RangeEnd)))) {
             lineContext.pgMarker = marker;
             lineContext.markerPos = segpos;
             if (lineContext.flowView.cursor.pos === segpos) {
@@ -767,22 +801,17 @@ function renderSegmentIntoLine(
                 }
             }
             return false;
-        } else if (marker.hasRangeLabel("box") &&
-            (marker.behaviors & SharedString.MarkerBehaviors.RangeEnd)) {
-            lineContext.pgMarker = marker;
-            lineContext.markerPos = segpos;
-            return false;
         }
     }
     return true;
 }
 
-function findLineDiv(pos: number, flowView: FlowView) {
+function findLineDiv(pos: number, flowView: FlowView, dive = false) {
     return flowView.lineDivSelect((elm) => {
         if ((elm.linePos <= pos) && (elm.lineEnd > pos)) {
             return elm;
         }
-    });
+    }, flowView.viewportDiv, dive);
 }
 
 function decorateLineDiv(lineDiv: ILineDiv, lineFontstr: string, lineDivHeight: number) {
@@ -1186,6 +1215,16 @@ class RowView {
     constructor(public rowMarker: IRowMarker, public endRowMarker: IRowMarker) {
 
     }
+
+    public findEnclosingBox(x: number) {
+        for (let box of this.boxes) {
+            let bounds = box.div.getBoundingClientRect();
+            let right = bounds.left + bounds.width;
+            if ((bounds.left <= x) && (right >= x)) {
+                return box;
+            }
+        }
+    }
 }
 
 class BoxView {
@@ -1194,7 +1233,7 @@ class BoxView {
     public specWidth = 0;
     public renderedHeight: number;
     public div: HTMLDivElement;
-    public viewportDiv: HTMLDivElement;
+    public viewport: Viewport;
     constructor(public marker: IBoxMarker, public endMarker: IBoxMarker) {
     }
 }
@@ -1330,14 +1369,11 @@ function isInnerBox(boxView: BoxView, layoutInfo: ILayoutContext) {
 
 function renderBox(boxView: BoxView, layoutInfo: ILayoutContext, defer = false, rightmost = false) {
     let boxRect = new ui.Rectangle(0, 0, boxView.specWidth, 0);
-    let boxViewportWidth =boxView.specWidth-(2*layoutInfo.docContext.boxHMargin);
-    let boxViewportRect = new ui.Rectangle(layoutInfo.docContext.boxHMargin,0,
+    let boxViewportWidth = boxView.specWidth - (2 * layoutInfo.docContext.boxHMargin);
+    let boxViewportRect = new ui.Rectangle(layoutInfo.docContext.boxHMargin, 0,
         boxViewportWidth, 0);
     let boxDiv = document.createElement("div");
     boxView.div = boxDiv;
-    boxView.viewportDiv=document.createElement("div");
-    boxViewportRect.conformElementOpenHeight(boxView.viewportDiv);
-    boxDiv.appendChild(boxView.viewportDiv);
     boxRect.conformElementOpenHeight(boxDiv);
     if (!rightmost) {
         boxDiv.style.borderRight = "1px solid black";
@@ -1345,19 +1381,23 @@ function renderBox(boxView: BoxView, layoutInfo: ILayoutContext, defer = false, 
     let client = layoutInfo.flowView.client;
     let mergeTree = client.mergeTree;
     let transferDeferredHeight = false;
+
+    boxView.viewport = new Viewport(layoutInfo.viewport.remainingHeight(),
+        document.createElement("div"), boxViewportWidth);
+    boxViewportRect.conformElementOpenHeight(boxView.viewport.div);
+    boxDiv.appendChild(boxView.viewport.div);
+    boxView.viewport.vskip(layoutInfo.docContext.boxTopMargin);
+
     let boxLayoutInfo = <ILayoutContext>{
-        currentLineTop: layoutInfo.docContext.boxTopMargin,
-        currentViewportMaxHeight: layoutInfo.currentViewportMaxHeight - layoutInfo.currentLineTop,
-        currentViewportWidth: boxViewportWidth,
+        deferredAttach: true,
         docContext: layoutInfo.docContext,
         endMarker: boxView.endMarker,
         flowView: layoutInfo.flowView,
-        outerViewportBounds: layoutInfo.outerViewportBounds,
         stackIndex: layoutInfo.stackIndex,
         startMarker: undefined,  // set below
         startingPosStack: layoutInfo.startingPosStack,
         startingPosition: layoutInfo.startingPosition,
-        viewportDiv: boxView.viewportDiv,
+        viewport: boxView.viewport,
     };
     if (isInnerBox(boxView, layoutInfo)) {
         let boxPos = mergeTree.getOffset(boxView.marker, SharedString.UniversalSequenceNumber, client.getClientId());
@@ -1383,7 +1423,15 @@ function renderBox(boxView: BoxView, layoutInfo: ILayoutContext, defer = false, 
     if (transferDeferredHeight && (boxView.renderOutput.deferredHeight > 0)) {
         layoutInfo.deferUntilHeight = boxView.renderOutput.deferredHeight;
     }
-    boxView.renderedHeight = boxLayoutInfo.currentLineTop;
+    boxView.renderedHeight = boxLayoutInfo.viewport.getLineTop();
+    if (boxLayoutInfo.reRenderList) {
+        if (!layoutInfo.reRenderList) {
+            layoutInfo.reRenderList=[];
+        }
+        for (let lineDiv of boxLayoutInfo.reRenderList) {
+            layoutInfo.reRenderList.push(lineDiv);
+        }
+    }
 }
 
 function setRowBorders(rowDiv: HTMLDivElement, top = false) {
@@ -1401,7 +1449,7 @@ function renderTable(table: ITableMarker, docContext: IDocumentContext, layoutIn
     let tablePos = mergeTree.getOffset(table, SharedString.UniversalSequenceNumber, flowView.client.getClientId());
     let tableView = parseTable(table, tablePos, docContext, flowView);
     // let docContext = buildDocumentContext(viewportDiv);
-    let viewportWidth = parseInt(layoutInfo.viewportDiv.style.width, 10);
+    let viewportWidth = parseInt(layoutInfo.viewport.div.style.width, 10);
 
     let tableWidth = Math.floor(tableView.contentPct * viewportWidth);
     tableView.updateWidth(tableWidth);
@@ -1434,10 +1482,11 @@ function renderTable(table: ITableMarker, docContext: IDocumentContext, layoutIn
             foundStartRow = true;
         }
         let renderRow = (!defer) && (deferredHeight >= layoutInfo.deferUntilHeight) && foundStartRow;
-        let rowDiv: ILineDiv;
+        let rowDiv: IRowDiv;
         if (renderRow) {
-            let rowRect = new ui.Rectangle(tableIndent, layoutInfo.currentLineTop, tableWidth, 0);
-            rowDiv = document.createElement("div");
+            let rowRect = new ui.Rectangle(tableIndent, layoutInfo.viewport.getLineTop(), tableWidth, 0);
+            rowDiv = <IRowDiv>document.createElement("div");
+            rowDiv.rowView = rowView;
             setRowBorders(rowDiv, firstRendered);
             firstRendered = false;
             rowRect.conformElementOpenHeight(rowDiv);
@@ -1457,7 +1506,7 @@ function renderTable(table: ITableMarker, docContext: IDocumentContext, layoutIn
                 }
                 deferredHeight += box.renderOutput.deferredHeight;
                 if (renderRow) {
-                    box.viewportDiv.style.height = `${box.renderedHeight}px`;
+                    box.viewport.div.style.height = `${box.renderedHeight}px`;
                     box.div.style.height = `${box.renderedHeight}px`;
                     box.div.style.left = `${boxX}px`;
                     rowDiv.appendChild(box.div);
@@ -1467,16 +1516,22 @@ function renderTable(table: ITableMarker, docContext: IDocumentContext, layoutIn
         }
         if (renderRow) {
             tableHeight += rowHeight;
-            layoutInfo.currentLineTop += rowHeight;
+            layoutInfo.viewport.commitLineDiv(rowDiv, rowHeight);
             rowDiv.style.height = `${rowHeight}px`;
             rowDiv.linePos = rowView.pos;
             rowDiv.lineEnd = rowView.endPos;
-            layoutInfo.viewportDiv.appendChild(rowDiv);
+            layoutInfo.viewport.div.appendChild(rowDiv);
         }
         if (topRow) {
             topRow = false;
             layoutInfo.startingPosStack = undefined;
         }
+    }
+    if (layoutInfo.reRenderList) {
+        for (let lineDiv of layoutInfo.reRenderList) {
+            reRenderLine(lineDiv, flowView);
+        }
+        layoutInfo.reRenderList = undefined;
     }
     tableView.deferredHeight = deferredHeight;
     tableView.renderedHeight = tableHeight;
@@ -1487,19 +1542,14 @@ function renderTree(viewportDiv: HTMLDivElement, startingPosition: number, flowV
     let docContext = buildDocumentContext(viewportDiv);
     let outerViewportHeight = parseInt(viewportDiv.style.height, 10);
     let outerViewportWidth = parseInt(viewportDiv.style.width, 10);
-
-    let outerViewportBounds = ui.Rectangle.fromClientRect(viewportDiv.getBoundingClientRect());
+    let outerViewport = new Viewport(outerViewportHeight, viewportDiv, outerViewportWidth);
     let startingPosStack =
         client.mergeTree.getStackContext(startingPosition, client.getClientId(), ["table", "box", "row"]);
     let layoutContext = <ILayoutContext>{
-        currentLineTop: 0,
-        currentViewportMaxHeight: outerViewportHeight,
-        currentViewportWidth: outerViewportWidth,
         docContext,
         flowView,
-        outerViewportBounds,
         startingPosition,
-        viewportDiv,
+        viewport: outerViewport,
     };
     if (startingPosStack.table && (!startingPosStack.table.empty())) {
         let outerTable = startingPosStack.table.items[0];
@@ -1578,15 +1628,128 @@ function segmentToItems(
     return true;
 }
 
+export interface IViewportDiv extends HTMLDivElement {
+}
+
+function closestNorth(lineDivs: ILineDiv[], y: number) {
+    let best = -1;
+    let lo = 0;
+    let hi = lineDivs.length - 1;
+    while (lo <= hi) {
+        let bestBounds: ClientRect;
+        let mid = lo + Math.floor((hi - lo) / 2);
+        let lineDiv = lineDivs[mid];
+        let bounds = lineDiv.getBoundingClientRect();
+        if (bounds.bottom <= y) {
+            if ((best < 0) || (bestBounds.bottom < bounds.bottom)) {
+                best = mid;
+                bestBounds = bounds;
+            }
+            lo = mid + 1;
+        } else {
+            hi = mid - 1;
+        }
+    }
+    return best;
+}
+
+function closestSouth(lineDivs: ILineDiv[], y: number) {
+    let best = -1;
+    let lo = 0;
+    let hi = lineDivs.length - 1;
+    while (lo <= hi) {
+        let bestBounds: ClientRect;
+        let mid = lo + Math.floor((hi - lo) / 2);
+        let lineDiv = lineDivs[mid];
+        let bounds = lineDiv.getBoundingClientRect();
+        if (bounds.bottom >= y) {
+            if ((best < 0) || (bestBounds.bottom > bounds.bottom)) {
+                best = mid;
+                bestBounds = bounds;
+            }
+            lo = mid + 1;
+        } else {
+            hi = mid - 1;
+        }
+    }
+    return best;
+}
+
+class Viewport {
+    // keep these in order
+    public lineDivs: ILineDiv[] = [];
+    public visibleRanges: IRange[] = [];
+    public currentLineStart = -1;
+    private lineTop = 0;
+
+    constructor(public maxHeight: number, public div: IViewportDiv, private width: number) {
+    }
+
+    public startLine(heightEstimate?: number) {
+        // TODO: update width relative to started line
+    }
+
+    public firstLineDiv() {
+        if (this.lineDivs.length > 0) {
+            return this.lineDivs[0];
+        }
+    }
+
+    public lastLineDiv() {
+        if (this.lineDivs.length > 0) {
+            return this.lineDivs[this.lineDivs.length - 1];
+        }
+    }
+
+    public currentLineWidth() {
+        return this.width;
+    }
+
+    public vskip(h: number) {
+        this.lineTop += h;
+    }
+
+    public getLineTop() {
+        return this.lineTop;
+    }
+
+    public setLineTop(v: number) {
+        this.lineTop = v;
+    }
+
+    public commitLineDiv(lineDiv: ILineDiv, h: number) {
+        this.lineTop += h;
+        this.lineDivs.push(lineDiv);
+    }
+
+    public findClosestLineDiv(up = true, y: number) {
+        let bestIndex = -1;
+        if (up) {
+            bestIndex = closestNorth(this.lineDivs, y);
+        } else {
+            bestIndex = closestSouth(this.lineDivs, y);
+        }
+        if (bestIndex >= 0) {
+            return this.lineDivs[bestIndex];
+        }
+    }
+
+    public remainingHeight() {
+        return this.maxHeight - this.lineTop;
+    }
+
+    public setWidth(w: number) {
+        this.width = w;
+    }
+}
+
 interface ILayoutContext {
     containingPGMarker?: IParagraphMarker;
-    currentLineTop: number;
-    currentViewportWidth: number;
-    currentViewportMaxHeight: number;
+    viewport: Viewport;
+    deferredAttach?: boolean;
+    reRenderList?: ILineDiv[];
     deferUntilHeight?: number;
     docContext: IDocumentContext;
-    viewportDiv: HTMLDivElement;
-    outerViewportBounds: ui.Rectangle;
     startingPosition?: number;
     startMarker: SharedString.Marker;
     startMarkerPos?: number;
@@ -1615,7 +1778,7 @@ function renderFlow(renderContext: ILayoutContext, deferWhole = false): IRenderO
 
     function makeLineDiv(r: ui.Rectangle, lineFontstr) {
         let lineDiv = makeContentDiv(r, lineFontstr);
-        renderContext.viewportDiv.appendChild(lineDiv);
+        renderContext.viewport.div.appendChild(lineDiv);
         lineCount++;
         lastLineDiv = lineDiv;
         return lineDiv;
@@ -1661,8 +1824,8 @@ function renderFlow(renderContext: ILayoutContext, deferWhole = false): IRenderO
             }
             let lineOK = (!(deferredPGs || deferWhole)) && (renderContext.deferUntilHeight <= deferredHeight);
             if (lineOK && ((lineEnd === undefined) || (lineEnd > renderContext.startingPosition))) {
-                lineDiv = makeLineDiv(new ui.Rectangle(0, renderContext.currentLineTop,
-                    renderContext.currentViewportWidth, lineDivHeight),
+                lineDiv = makeLineDiv(new ui.Rectangle(0, renderContext.viewport.getLineTop(),
+                    renderContext.viewport.currentLineWidth(), lineDivHeight),
                     lineFontstr);
                 let contentDiv = lineDiv;
                 if (indentWidth > 0) {
@@ -1677,8 +1840,9 @@ function renderFlow(renderContext: ILayoutContext, deferWhole = false): IRenderO
                     lineDiv.appendChild(contentDiv);
                 }
                 let lineContext = <ILineContext>{
-                    span, lineDiv, lineDivHeight, flowView: renderContext.flowView, pgMarker, markerPos,
-                    outerViewportBounds: renderContext.outerViewportBounds, contentDiv,
+                    contentDiv, deferredAttach: renderContext.deferredAttach,  flowView: renderContext.flowView,
+                    lineDiv, lineDivHeight,  markerPos,
+                     pgMarker, span,
                 };
                 if (viewportStartPos < 0) {
                     viewportStartPos = lineStart;
@@ -1688,13 +1852,21 @@ function renderFlow(renderContext: ILayoutContext, deferWhole = false): IRenderO
                 span = lineContext.span;
                 markerPos = lineContext.markerPos;
                 pgMarker = lineContext.pgMarker;
+                if (lineContext.reRenderList) {
+                    if (!renderContext.reRenderList) {
+                        renderContext.reRenderList = [];
+                    }
+                    for (let ldiv of lineContext.reRenderList) {
+                        renderContext.reRenderList.push(ldiv);
+                    }
+                }
 
-                renderContext.currentLineTop += lineDivHeight;
+                renderContext.viewport.commitLineDiv(lineDiv, lineDivHeight);
             } else {
                 deferredHeight += lineDivHeight;
             }
-            if ((renderContext.currentViewportMaxHeight - renderContext.currentLineTop) <
-                docContext.defaultLineDivHeight) {
+
+            if (renderContext.viewport.remainingHeight() < docContext.defaultLineDivHeight) {
                 // no more room for lines
                 // TODO: record end viewport char
                 break;
@@ -1713,7 +1885,7 @@ function renderFlow(renderContext: ILayoutContext, deferWhole = false): IRenderO
             renderTable(pgMarker, docContext, renderContext, deferredPGs);
             let tableView = (<ITableMarker>pgMarker).view;
             deferredHeight += tableView.deferredHeight;
-            renderContext.currentLineTop += renderContext.docContext.tableVspace;
+            renderContext.viewport.vskip(renderContext.docContext.tableVspace);
 
             let endTablePos = renderContext.flowView.client.mergeTree.getOffset(tableView.endTableMarker,
                 SharedString.UniversalSequenceNumber, renderContext.flowView.client.getClientId());
@@ -1737,7 +1909,7 @@ function renderFlow(renderContext: ILayoutContext, deferWhole = false): IRenderO
             let indentPct = 0.0;
             let contentPct = 1.0;
             let indentWidth = 0;
-            let contentWidth = renderContext.currentViewportWidth;
+            let contentWidth = renderContext.viewport.currentLineWidth();
             let indentSymbol: ISymbol = undefined;
 
             if (startPGMarker.listCache) {
@@ -1750,11 +1922,12 @@ function renderFlow(renderContext: ILayoutContext, deferWhole = false): IRenderO
                 contentPct = getContentPct(startPGMarker);
             }
             if (indentPct !== 0.0) {
-                indentWidth = Math.floor(indentPct * renderContext.currentViewportWidth);
+                indentWidth = Math.floor(indentPct * renderContext.viewport.currentLineWidth());
             }
-            contentWidth = Math.floor(contentPct * renderContext.currentViewportWidth) - indentWidth;
-            if (contentWidth > renderContext.currentViewportWidth) {
-                console.log(`egregious content width ${contentWidth} bound ${renderContext.currentViewportWidth}`);
+            contentWidth = Math.floor(contentPct * renderContext.viewport.currentLineWidth()) - indentWidth;
+            if (contentWidth > renderContext.viewport.currentLineWidth()) {
+                // tslint:disable:max-line-length
+                console.log(`egregious content width ${contentWidth} bound ${renderContext.viewport.currentLineWidth()}`);
             }
             if ((!startPGMarker.cache) || (startPGMarker.cache.singleLineWidth !== contentWidth)) {
                 if (!startPGMarker.itemCache) {
@@ -1775,10 +1948,10 @@ function renderFlow(renderContext: ILayoutContext, deferWhole = false): IRenderO
                 if (pgMarker && pgMarker.hasRangeLabel("box") &&
                     (pgMarker.behaviors & SharedString.MarkerBehaviors.RangeEnd)) {
                     pgMarker = undefined;
-                    renderContext.currentLineTop += renderContext.docContext.boxVspace;
+                    renderContext.viewport.vskip(renderContext.docContext.boxVspace);
                 } else {
                     if (!deferredPGs) {
-                        renderContext.currentLineTop += docContext.pgVspace;
+                        renderContext.viewport.vskip(docContext.pgVspace);
                     }
                 }
             } else {
@@ -1799,8 +1972,7 @@ function renderFlow(renderContext: ILayoutContext, deferWhole = false): IRenderO
         }
     } while ((pgMarker !== undefined) &&
     ((renderContext.endMarker === undefined) || (pgMarker !== renderContext.endMarker)) &&
-        ((renderContext.currentViewportMaxHeight - renderContext.currentLineTop)
-            >= docContext.defaultLineDivHeight));
+        (renderContext.viewport.remainingHeight() >= docContext.defaultLineDivHeight));
     return {
         deferredHeight,
         viewportStartPos,
@@ -1978,7 +2150,7 @@ export class Cursor {
         if (lineDiv && (lineDiv.linePos <= this.pos) && (lineDiv.lineEnd > this.pos)) {
             reRenderLine(lineDiv, flowView);
         } else {
-            let foundLineDiv = findLineDiv(this.pos, flowView);
+            let foundLineDiv = findLineDiv(this.pos, flowView, true);
             if (foundLineDiv) {
                 reRenderLine(foundLineDiv, flowView);
             } else {
@@ -2238,20 +2410,41 @@ export class FlowView extends ui.Component {
     }
 
     public firstLineDiv() {
-        return this.lineDivSelect((elm) => (elm));
+        return this.lineDivSelect((elm) => (elm), this.viewportDiv, false);
     }
 
     public lastLineDiv() {
-        return this.lineDivSelect((elm) => (elm), true);
+        return this.lineDivSelect((elm) => (elm), this.viewportDiv, false, true);
     }
 
-    public lineDivSelect(fn: (lineDiv: ILineDiv) => ILineDiv, rev?: boolean) {
+    public checkRow(lineDiv: ILineDiv, fn: (lineDiv: ILineDiv) => ILineDiv, rev?: boolean) {
+        let rowDiv = <IRowDiv>lineDiv;
+        let oldRowDiv: IRowDiv;
+        while (rowDiv && (rowDiv !== oldRowDiv) && rowDiv.rowView) {
+            oldRowDiv = rowDiv;
+            lineDiv = undefined;
+            for (let box of rowDiv.rowView.boxes) {
+                let innerDiv = this.lineDivSelect(fn, box.viewport.div, true, rev);
+                if (innerDiv) {
+                    lineDiv = innerDiv;
+                    rowDiv = <IRowDiv>innerDiv;
+                    break;
+                }
+            }
+        }
+        return lineDiv;
+    }
+
+    public lineDivSelect(fn: (lineDiv: ILineDiv) => ILineDiv, viewportDiv: IViewportDiv, dive = false, rev?: boolean) {
         if (rev) {
-            let elm = <ILineDiv>this.viewportDiv.lastElementChild;
+            let elm = <ILineDiv>viewportDiv.lastElementChild;
             while (elm) {
                 if (elm.linePos !== undefined) {
                     let lineDiv = fn(elm);
                     if (lineDiv) {
+                        if (dive) {
+                            lineDiv = this.checkRow(lineDiv, fn, rev);
+                        }
                         return lineDiv;
                     }
                 }
@@ -2259,11 +2452,14 @@ export class FlowView extends ui.Component {
             }
 
         } else {
-            let elm = <ILineDiv>this.viewportDiv.firstElementChild;
+            let elm = <ILineDiv>viewportDiv.firstElementChild;
             while (elm) {
                 if (elm.linePos !== undefined) {
                     let lineDiv = fn(elm);
                     if (lineDiv) {
+                        if (dive) {
+                            lineDiv = this.checkRow(lineDiv, fn, rev);
+                        }
                         return lineDiv;
                     }
                 }
@@ -2288,16 +2484,8 @@ export class FlowView extends ui.Component {
     }
 
     // TODO: handle symbol div
-    public setCursorPosFromPixels(targetLineDiv: ILineDiv) {
+    public setCursorPosFromPixels(targetLineDiv: ILineDiv, x: number) {
         if (targetLineDiv && (targetLineDiv.linePos)) {
-            let cursorRect = this.cursor.rect();
-            let x: number;
-            if (this.lastVerticalX >= 0) {
-                x = this.lastVerticalX;
-            } else {
-                x = Math.floor(cursorRect.left);
-                this.lastVerticalX = x;
-            }
             let y: number;
             let targetLineBounds = targetLineDiv.getBoundingClientRect();
             y = targetLineBounds.top + Math.floor(targetLineBounds.height / 2);
@@ -2338,7 +2526,20 @@ export class FlowView extends ui.Component {
         return false;
     }
 
+    public getCanonicalX() {
+        let cursorRect = this.cursor.rect();
+        let x: number;
+        if (this.lastVerticalX >= 0) {
+            x = this.lastVerticalX;
+        } else {
+            x = Math.floor(cursorRect.left);
+            this.lastVerticalX = x;
+        }
+        return x;
+    }
+
     public verticalMove(lineCount: number) {
+        let up = lineCount < 0;
         let lineDiv = this.cursor.lineDiv();
         let targetLineDiv: ILineDiv;
         if (lineCount < 0) {
@@ -2346,7 +2547,24 @@ export class FlowView extends ui.Component {
         } else {
             targetLineDiv = <ILineDiv>lineDiv.nextElementSibling;
         }
-        return this.setCursorPosFromPixels(targetLineDiv);
+        if (targetLineDiv) {
+            let x = this.getCanonicalX();
+            let rowDiv = <IRowDiv>targetLineDiv;
+            while (rowDiv && rowDiv.rowView) {
+                if (rowDiv.rowView) {
+                    let box = rowDiv.rowView.findEnclosingBox(x);
+                    if (box) {
+                        if (up) {
+                            targetLineDiv = box.viewport.lastLineDiv();
+                        } else {
+                            targetLineDiv = box.viewport.firstLineDiv();
+                        }
+                        rowDiv = <IRowDiv>targetLineDiv;
+                    }
+                }
+            }
+            return this.setCursorPosFromPixels(targetLineDiv, x);
+        }
     }
 
     public viewportCharCount() {
@@ -2685,10 +2903,11 @@ export class FlowView extends ui.Component {
     public apresScroll(up: boolean) {
         if ((this.cursor.pos < this.viewportStartPos) ||
             (this.cursor.pos >= this.viewportEndPos)) {
+            let x = this.getCanonicalX();
             if (up) {
-                this.setCursorPosFromPixels(this.firstLineDiv());
+                this.setCursorPosFromPixels(this.firstLineDiv(), x);
             } else {
-                this.setCursorPosFromPixels(this.lastLineDiv());
+                this.setCursorPosFromPixels(this.lastLineDiv(), x);
             }
             this.updatePresence();
             this.cursor.updateView(this);
