@@ -37,6 +37,11 @@ export class FlowContainer extends ui.Component {
         overlayCanvasDiv.classList.add("overlay-canvas");
         this.overlayCanvas = new OverlayCanvas(overlayCanvasDiv, layerPanelDiv);
 
+        this.status.addOption("ink", "ink");
+        this.status.on("ink", (value) => {
+            this.overlayCanvas.enableInk(value);
+        });
+
         // Add children to the panel once we have both
         this.layerPanel.addChild(this.flowView);
         this.layerPanel.addChild(this.overlayCanvas);

@@ -15,6 +15,7 @@ export abstract class Component {
     public on(event: "keypress", handler: (e: KeyboardEvent) => void): this;
     public on(event: "keydown", handler: (e: KeyboardEvent) => void): this;
     public on(event: "resize", handler: (size: Rectangle) => void): this;
+    public on(event: string, listener: (...args: any[]) => void): this;
     public on(event: string, listener: (...args: any[]) => void): this {
         this.events.on(event, listener);
         return this;

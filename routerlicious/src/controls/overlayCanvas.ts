@@ -241,8 +241,10 @@ export class OverlayCanvas extends ui.Component {
     private layers: Layer[] = [];
     private inkLayer: InkLayer;
     private currentStylusActionId: string;
-    private inkEventsEnabled = false;
     private activePointerId: number;
+    private inkEventsEnabled = false;
+    private penHovering = false;
+    private forceInk = false;
     private activePen: ink.IPen = {
         color: { r: 0, g: 161 / 255, b: 241 / 255, a: 0 },
         thickness: 7,
@@ -289,6 +291,10 @@ export class OverlayCanvas extends ui.Component {
         this.activePen = _.clone(pen);
     }
 
+    public enableInk(enable: boolean) {
+        this.enableInkCore(this.penHovering, enable);
+    }
+
     protected resizeCore(rectangle: ui.Rectangle) {
         this.inkLayer.setSize(rectangle.size);
         this.markDirty();
@@ -305,13 +311,13 @@ export class OverlayCanvas extends ui.Component {
 
         eventTarget.addEventListener("pointerenter", (event) => {
             if (event.pointerType === "pen") {
-                this.enableInkEvents(true);
+                this.enableInkCore(true, this.forceInk);
             }
         });
 
         eventTarget.addEventListener("pointerleave", (event) => {
             if (event.pointerType === "pen") {
-                this.enableInkEvents(false);
+                this.enableInkCore(false, this.forceInk);
             }
         });
 
@@ -319,12 +325,19 @@ export class OverlayCanvas extends ui.Component {
         // entered the element without leaving
         eventTarget.addEventListener("pointermove", (event) => {
             if (event.pointerType === "pen") {
-                this.enableInkEvents(true);
+                this.enableInkCore(true, this.forceInk);
             }
         });
     }
 
-    private enableInkEvents(enable: boolean) {
+    /**
+     * Updates the hovering and force fields and then enables or disables ink based on their values.
+     */
+    private enableInkCore(hovering: boolean, force: boolean) {
+        this.penHovering = hovering;
+        this.forceInk = force;
+
+        const enable = this.forceInk || this.penHovering;
         if (this.inkEventsEnabled !== enable) {
             this.inkEventsEnabled = enable;
             this.element.style.pointerEvents = enable ? "auto" : "none";
@@ -354,7 +367,7 @@ export class OverlayCanvas extends ui.Component {
 
     private handlePointerDown(evt: PointerEvent) {
         // Only support pen events
-        if (evt.pointerType === "pen") {
+        if (evt.pointerType === "pen" || (evt.pointerType === "mouse" && evt.button === 0)) {
             // Capture ink events
             this.activePointerId = evt.pointerId;
             this.element.setPointerCapture(this.activePointerId);

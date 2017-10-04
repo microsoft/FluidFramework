@@ -11,12 +11,24 @@ export interface IStatus {
     remove(key: string);
 }
 
+interface IOption {
+    event: string;
+    text: string;
+    element: HTMLLIElement;
+}
+
 export class Status extends ui.Component implements IStatus {
     public info: IKeyMsgPair[] = [];
+    private commands: IOption[] = [];
+    private listElement: HTMLUListElement;
 
     constructor(element: HTMLDivElement) {
         super(element);
+        this.element.classList.add("status-bar");
         this.element.style.backgroundColor = "#F1F1F1";
+
+        // Insert options into toolbar
+        this.listElement = document.createElement("ul");
     }
 
     public add(key: string, msg: string, showKey = false) {
@@ -37,6 +49,32 @@ export class Status extends ui.Component implements IStatus {
             this.info.splice(i, 1);
         }
         this.renderBar();
+    }
+
+    public addOption(event: string, text: string) {
+        const element = document.createElement("li");
+        this.listElement.appendChild(element);
+
+        const input = document.createElement("input");
+        input.type = "checkbox";
+        input.onchange = (changeEvent) => {
+            this.emit(event, input.checked);
+        };
+
+        const title = document.createTextNode(text);
+
+        this.listElement.appendChild(input);
+        this.listElement.appendChild(title);
+
+        this.commands.push({ element, event, text });
+    }
+
+    public removeOption(event: string) {
+        const index = this.commands.findIndex((value) => value.event === event);
+        if (index !== -1) {
+            const removed = this.commands.splice(index, 1);
+            removed[0].element.remove();
+        }
     }
 
     public renderBar() {
@@ -61,6 +99,9 @@ export class Status extends ui.Component implements IStatus {
         }
 
         this.element.innerHTML = buf;
+
+        // Add options
+        this.element.appendChild(this.listElement);
     }
 
     public measure(size: ui.ISize): ui.ISize {
