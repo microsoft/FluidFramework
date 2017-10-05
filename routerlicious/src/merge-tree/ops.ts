@@ -29,9 +29,14 @@ export interface IMergeTreeDelta {
     type: MergeTreeDeltaType;
 }
 
+export interface IMarkerPosition {
+    id: string;
+}
+
 export interface IMergeTreeInsertMsg extends IMergeTreeDelta {
     type: MergeTreeDeltaType.INSERT;
-    pos1: number;
+    pos1?: number;
+    markerPos1?: IMarkerPosition;
     props?: Object;
     text?: string;
     marker?: IMarkerDef;
@@ -40,9 +45,10 @@ export interface IMergeTreeInsertMsg extends IMergeTreeDelta {
 
 export interface IMergeTreeRemoveMsg extends IMergeTreeDelta {
     type: MergeTreeDeltaType.REMOVE;
-    pos1: number;
+    pos1?: number;
+    markerPos1?: IMarkerPosition;
     pos2?: number;
-    marker?: IMarkerDef;
+    markerPos2?: IMarkerPosition;
 }
 
 export interface ICombiningOp {
@@ -52,13 +58,19 @@ export interface ICombiningOp {
     maxValue?: any;
 }
 
+export interface IContingencyCheck {
+    props: Object;
+}
+
 export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
     type: MergeTreeDeltaType.ANNOTATE;
-    pos1: number;
-    props: Object;
+    pos1?: number;
+    markerPos1?: IMarkerPosition;
     pos2?: number;
-    marker?: IMarkerDef;
+    markerPos2?: IMarkerPosition;
+    props: Object;
     combiningOp?: ICombiningOp;
+    when?: IContingencyCheck;
 }
 
 export interface IMergeTreeGroupMsg extends IMergeTreeDelta {

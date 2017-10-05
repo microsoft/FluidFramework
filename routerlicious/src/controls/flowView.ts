@@ -1098,7 +1098,10 @@ interface IRowMarker extends SharedString.Marker {
     view?: RowView;
 }
 
-let tableCount = 0;
+let tableIdSuffix = 0;
+let boxIdSuffix = 0;
+let rowIdSuffix = 0;
+
 function createMarkerOp(pos1: number, id: string, behaviors: SharedString.MarkerBehaviors,
     rangeLabels: string[], tileLabels?: string[]) {
     let props = <SharedString.MapLike<any>>{
@@ -1118,42 +1121,62 @@ function createMarkerOp(pos1: number, id: string, behaviors: SharedString.Marker
     };
 }
 
+// linear search for now (can stash column index on box but then need to invalidate)
+/*function insertColumn(table: TableView, box: BoxView) {
+    for (let columnIndex = 0, colCount = table.columns.length; columnIndex < colCount; columnIndex++) {
+        let column = table.columns[columnIndex];
+        for (let colBox of column.boxes) {
+            if (colBox === box) {
+                table.insertColumnRight(box, columnIndex);
+            }
+        }
+    }
+}
+*/
+let endPrefix = "end-";
+
+function createBox(opList: SharedString.IMergeTreeOp[], idBase: string,
+    pos: number, word?: string) {
+    let boxId = idBase + `box${boxIdSuffix++}`;
+    opList.push(createMarkerOp(pos, boxId,
+        SharedString.MarkerBehaviors.RangeBegin, ["box"]));
+    pos++;
+    let pgOp = createMarkerOp(pos, boxId + "C",
+        SharedString.MarkerBehaviors.Tile, [], ["pg"]);
+    pgOp.props["boxStart"] = true;
+    opList.push(pgOp);
+    pos++;
+    if (word) {
+        let insertStringOp = <SharedString.IMergeTreeInsertMsg>{
+            pos1: pos,
+            text: word,
+            type: SharedString.MergeTreeDeltaType.INSERT,
+        };
+        opList.push(insertStringOp);
+        pos += word.length;
+    }
+    opList.push(createMarkerOp(pos, endPrefix + boxId,
+        SharedString.MarkerBehaviors.RangeEnd, ["box"]));
+    pos++;
+    return pos;
+}
+
 function createTable(pos: number, flowView: FlowView, nrows = 2, nboxes = 2) {
     let content = ["aardvark", "squiggle", "jackelope", "springbok"];
     let idBase = flowView.client.longClientId;
-    idBase += `T${tableCount}`;
-    let endPrefix = "end-";
+    idBase += `T${tableIdSuffix}`;
     let opList = <SharedString.IMergeTreeInsertMsg[]>[];
     opList.push(createMarkerOp(pos, idBase,
         SharedString.MarkerBehaviors.RangeBegin |
         SharedString.MarkerBehaviors.Tile, ["table"], ["pg"]));
     pos++;
     for (let row = 0; row < nrows; row++) {
-        let rowId = idBase + `row${row}`;
+        let rowId = idBase + `row${rowIdSuffix++}`;
         opList.push(createMarkerOp(pos, rowId,
             SharedString.MarkerBehaviors.RangeBegin, ["row"]));
         pos++;
         for (let box = 0; box < nboxes; box++) {
-            let boxId = idBase + `box${row}${box}`;
-            opList.push(createMarkerOp(pos, boxId,
-                SharedString.MarkerBehaviors.RangeBegin, ["box"]));
-            pos++;
-            let pgOp = createMarkerOp(pos, boxId + "C",
-                SharedString.MarkerBehaviors.Tile, [], ["pg"]);
-            pgOp.props["boxStart"] = true;
-            opList.push(pgOp);
-            pos++;
-            let word = content[box + (2 * row)];
-            let insertStringOp = <SharedString.IMergeTreeInsertMsg>{
-                pos1: pos,
-                text: word,
-                type: SharedString.MergeTreeDeltaType.INSERT,
-            };
-            opList.push(insertStringOp);
-            pos += word.length;
-            opList.push(createMarkerOp(pos, endPrefix + boxId,
-                SharedString.MarkerBehaviors.RangeEnd, ["box"]));
-            pos++;
+            pos = createBox(opList, idBase, pos, content[(box + (nboxes * row)) % content.length]);
         }
         opList.push(createMarkerOp(pos, endPrefix + rowId,
             SharedString.MarkerBehaviors.RangeEnd, ["row"]));
@@ -1212,7 +1235,31 @@ class TableView {
             }
         }
     }
-
+/*
+    public insertColumnRight(requestingBox: BoxView, columnIndex: number, flowView: FlowView) {
+        let column = this.columns[columnIndex];
+        let opList = <SharedString.IMergeTreeOp[]>[];
+        let client = flowView.client;
+        let mergeTree = client.mergeTree;
+        let tablePos = mergeTree.getOffset(this.tableMarker, SharedString.UniversalSequenceNumber,
+            client.getClientId());
+        let horizVersion = this.tableMarker.properties["horizVersion"];
+        let versionIncr = <SharedString.IMergeTreeAnnotateMsg>{
+            combiningOp: { name: "incr", defaultValue: 0 },
+            pos1: tablePos,
+            pos2: tablePos + 1,
+            props: { horizVersion: 1 },
+            type: SharedString.MergeTreeDeltaType.ANNOTATE,
+            when: { props: { horizVersion } },
+        };
+        opList.push(versionIncr);
+        let idBase = this.tableMarker.getId();
+        for (let rowIndex = 0, len = column.boxes.length; rowIndex < len; rowIndex++) {
+            let box = column.boxes[rowIndex];
+            opList.push(<SharedString.Inser)
+        }
+    }
+*/
     public updateWidth(w: number) {
         this.width = w;
         let proportionalWidthPerColumn = Math.floor(this.width / this.columns.length);
