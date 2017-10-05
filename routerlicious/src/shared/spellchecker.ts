@@ -41,7 +41,7 @@ interface IWordCheckSpec {
 
 class Speller {
     static altMax = 7;
-    static spellerParagraphs = 100;
+    static spellerParagraphs = 10000;
     static idleTimeMS = 500;
     currentIdleTime : number = 0;
     pendingSpellChecks: mergeTree.IMergeTreeOp[] = [];
@@ -49,7 +49,8 @@ class Speller {
     offsetMap: { [start: number]: number} = {};
     verbose = false;
     serviceCounter: number = 0;
-    q: any;
+    initialQueue: any;
+    typingQueue: any;
     pendingCheckInfo: IWordCheckSpec;
     pendingWordCheckTimer: any;
 
@@ -59,7 +60,7 @@ class Speller {
     }
 
     initializeSpellerQueue() {
-        this.q = queue((task: ISpellQuery, callback) => {
+        this.initialQueue = queue((task: ISpellQuery, callback) => {
             const resultP = this.intelligence.run(task);
             resultP.then((result) => {
                 const spellErrors = this.checkSpelling(task.rsn, task.text, task.start, result);
@@ -74,8 +75,10 @@ class Speller {
                 callback();
             });
         }, 1);
+        this.typingQueue = queue((task: ISpellQuery, callback) => {
+            callback();
+        }, 1);
     }
-
     spellingError(word: string) {
         if (/\b\d+\b/.test(word)) {
             return false;
@@ -171,9 +174,9 @@ class Speller {
             }
             console.log(`Paragraph markers...`);
             for (let start of Object.keys(this.offsetMap)) {
-                console.log(`Start: ${start} -> End: ${this.offsetMap[start]}`);
-                console.log(this.sharedString.client.mergeTree.getText(mergeTree.UniversalSequenceNumber,
-                    this.sharedString.client.getClientId(), false, Number(start), this.offsetMap[start]));
+                const queryString = this.sharedString.client.mergeTree.getText(mergeTree.UniversalSequenceNumber,
+                    this.sharedString.client.getClientId(), false, Number(start), this.offsetMap[start]);
+                this.enqueNewQuery(intelligence, queryString, Number(start));
             }
             this.offsetMap = {};
             this.pendingParagraphs = [];
@@ -184,7 +187,7 @@ class Speller {
         let spellParagraph = (startPG: number, endPG: number, text: string) => {
             let re = /\b\w+\b/g;
             let result: RegExpExecArray;
-            this.invokeSpellerService(this.intelligence, text, startPG);
+            this.initSpellerService(this.intelligence, text, startPG);
             do {
                 result = re.exec(text);
                 if (result) {
@@ -391,14 +394,19 @@ class Speller {
         }
     }
 
-    invokeSpellerService(intelligence: IIntelligentService, queryString: string, startPos: number) {
+    initSpellerService(intelligence: IIntelligentService, queryString: string, startPos: number) {
         if (this.serviceCounter < Speller.spellerParagraphs) {
             if (queryString.length > 0) {
-                this.q.push({ text: queryString, rsn: this.sharedString.referenceSequenceNumber, start: startPos, end: startPos + queryString.length });
+                this.initialQueue.push({ text: queryString, rsn: this.sharedString.referenceSequenceNumber, start: startPos, end: startPos + queryString.length });
                 ++this.serviceCounter;
             }
         }
+    }
 
+    enqueNewQuery(intelligence: IIntelligentService, queryString: string, startPos: number) {
+        if (queryString.length > 0) {
+            this.typingQueue.push({ text: queryString, rsn: this.sharedString.referenceSequenceNumber, start: startPos, end: startPos + queryString.length });
+        }
     }
 
     checkSpelling(rsn: number, original: string, startPos: number, result: any) {
@@ -435,14 +443,22 @@ class Speller {
 
             // Spelling error but no suggestions found. Continue to next critique.
             if (critique.Suggestions.length === 0 || critique.Suggestions[0].Text === "No suggestions") {
-                annotationRanges.push({ textError: { text: origWord, alternates: altSpellings }, globalStartOffset, globalEndOffset });
+                if (critique.CategoryTitle === "Grammar") {
+                    annotationRanges.push({ textError: { text: origWord, alternates: altSpellings, color: "paul" }, globalStartOffset, globalEndOffset });                    
+                } else {
+                    annotationRanges.push({ textError: { text: origWord, alternates: altSpellings, color: "paul" }, globalStartOffset, globalEndOffset });                    
+                }
                 continue;
             }
             // Suggestions found. Create annotation ranges.
             for (let i = 0; i < Math.min(Speller.altMax, critique.Suggestions.length); ++i) {
                 altSpellings.push({ text: critique.Suggestions[i].Text, invDistance: i, val: i });
             }
-            annotationRanges.push({ textError: { text: origWord, alternates: altSpellings, color: "paul" }, globalStartOffset, globalEndOffset });
+            if (critique.CategoryTitle === "Grammar") {
+                annotationRanges.push({ textError: { text: origWord, alternates: altSpellings, color: "paul" }, globalStartOffset, globalEndOffset });
+            } else {
+                annotationRanges.push({ textError: { text: origWord, alternates: altSpellings, color: "paul" }, globalStartOffset, globalEndOffset });                    
+            }
         }
         // No more critiques. Send null for rest of the text.
         if (runningStart < endPos) {
