@@ -444,9 +444,9 @@ class Speller {
             // Spelling error but no suggestions found. Continue to next critique.
             if (critique.Suggestions.length === 0 || critique.Suggestions[0].Text === "No suggestions") {
                 if (critique.CategoryTitle === "Grammar") {
-                    annotationRanges.push({ textError: { text: origWord, alternates: altSpellings, color: "paul" }, globalStartOffset, globalEndOffset });                    
+                    annotationRanges.push({ textError: { text: origWord, alternates: altSpellings, color: "paulgreen", explanation: null }, globalStartOffset, globalEndOffset });                    
                 } else {
-                    annotationRanges.push({ textError: { text: origWord, alternates: altSpellings, color: "paul" }, globalStartOffset, globalEndOffset });                    
+                    annotationRanges.push({ textError: { text: origWord, alternates: altSpellings, color: "paul", explanation: null }, globalStartOffset, globalEndOffset });                    
                 }
                 continue;
             }
@@ -455,9 +455,9 @@ class Speller {
                 altSpellings.push({ text: critique.Suggestions[i].Text, invDistance: i, val: i });
             }
             if (critique.CategoryTitle === "Grammar") {
-                annotationRanges.push({ textError: { text: origWord, alternates: altSpellings, color: "paul" }, globalStartOffset, globalEndOffset });
+                annotationRanges.push({ textError: { text: origWord, alternates: altSpellings, color: "paulgreen", explanation: critique.Explanation }, globalStartOffset, globalEndOffset });
             } else {
-                annotationRanges.push({ textError: { text: origWord, alternates: altSpellings, color: "paul" }, globalStartOffset, globalEndOffset });                    
+                annotationRanges.push({ textError: { text: origWord, alternates: altSpellings, color: "paul", explanation: null }, globalStartOffset, globalEndOffset });                    
             }
         }
         // No more critiques. Send null for rest of the text.
