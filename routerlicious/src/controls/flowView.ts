@@ -1107,8 +1107,10 @@ let rowIdSuffix = 0;
 function createMarkerOp(pos1: number, id: string, behaviors: SharedString.MarkerBehaviors,
     rangeLabels: string[], tileLabels?: string[]) {
     let props = <SharedString.MapLike<any>>{
-        [SharedString.reservedMarkerIdKey]: id,
     };
+    if (id.length > 0) {
+        props[SharedString.reservedMarkerIdKey] = id;
+    }
     if (rangeLabels.length > 0) {
         props[SharedString.reservedRangeLabelsKey] = rangeLabels;
     }
@@ -1164,9 +1166,18 @@ function createBox(opList: SharedString.IMergeTreeOp[], idBase: string,
 }
 
 function createTable(pos: number, flowView: FlowView, nrows = 2, nboxes = 2) {
+    let segoff = flowView.client.mergeTree.getContainingSegment(pos, SharedString.UniversalSequenceNumber,
+        flowView.client.getClientId());
+    let pgAtEnd = true;
+    if (segoff.segment.getType() === SharedString.SegmentType.Marker) {
+        let marker = <SharedString.Marker>segoff.segment;
+        if (marker.hasTileLabel("pg")) {
+            pgAtEnd = false;
+        }
+    }
     let content = ["aardvark", "squiggle", "jackelope", "springbok"];
     let idBase = flowView.client.longClientId;
-    idBase += `T${tableIdSuffix}`;
+    idBase += `T${tableIdSuffix++}`;
     let opList = <SharedString.IMergeTreeInsertMsg[]>[];
     opList.push(createMarkerOp(pos, idBase,
         SharedString.MarkerBehaviors.RangeBegin |
@@ -1187,6 +1198,12 @@ function createTable(pos: number, flowView: FlowView, nrows = 2, nboxes = 2) {
     opList.push(createMarkerOp(pos, endPrefix + idBase,
         SharedString.MarkerBehaviors.RangeEnd, ["table"]));
     pos++;
+    if (pgAtEnd) {
+        let pgOp = createMarkerOp(pos, "",
+            SharedString.MarkerBehaviors.Tile, [], ["pg"]);
+        opList.push(pgOp);
+        pos++;
+    }
     let groupOp = <SharedString.IMergeTreeGroupMsg>{
         ops: opList,
         type: SharedString.MergeTreeDeltaType.GROUP,
