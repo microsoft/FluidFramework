@@ -90,7 +90,7 @@ export class DeltaManager {
     /**
      * Submits a new delta operation
      */
-    public async submit(type: string, contents: any) {
+    public async submit(type: string, contents: any): Promise<void> {
         const encryptedContents = this.deltaConnection.encrypted ? await this.encryptOp(contents) : "";
 
         const message: protocol.IDocumentMessage = {
@@ -104,7 +104,7 @@ export class DeltaManager {
 
         this.readonly = false;
         this.stopSequenceNumberUpdate();
-        this.deltaConnection.submit(message);
+        return this.deltaConnection.submit(message);
     }
 
     public onDelta(listener: (message: protocol.ISequencedDocumentMessage) => void) {
