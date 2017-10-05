@@ -21,6 +21,12 @@ interface ISpellQuery {
     end: number;
 };
 
+interface IPgMarker {
+
+    tile: mergeTree.Marker;
+
+    pos: number;
+}
 
 function compareProxStrings(a: Collections.ProxString<number>, b: Collections.ProxString<number>) {
     let ascore = ((a.invDistance * 200) * a.val) + a.val;
@@ -39,6 +45,8 @@ class Speller {
     static idleTimeMS = 500;
     currentIdleTime : number = 0;
     pendingSpellChecks: mergeTree.IMergeTreeOp[] = [];
+    pendingParagraphs: Array<IPgMarker> =  new Array<IPgMarker>();
+    offsetMap: { [start: number]: number} = {};
     verbose = false;
     serviceCounter: number = 0;
     q: any;
@@ -106,6 +114,19 @@ class Speller {
         }
     }
 
+    enqueueParagraph(delta: mergeTree.IMergeTreeOp) {
+        if (delta.type === mergeTree.MergeTreeDeltaType.INSERT ||
+            delta.type === mergeTree.MergeTreeDeltaType.REMOVE) {
+            let pgMarker = this.sharedString.client.mergeTree.findTile(delta.pos1,
+                this.sharedString.client.getClientId(), "pg");
+            this.pendingParagraphs.push(pgMarker);
+        } else if (delta.type === mergeTree.MergeTreeDeltaType.GROUP) {
+            for (let groupOp of delta.ops) {
+                this.enqueueParagraph(groupOp);
+            }
+        }
+    }
+
     setEvents(intelligence: IIntelligentService) {
         const idleCheckerMS = Speller.idleTimeMS / 5;
         setInterval(() => {
@@ -117,7 +138,9 @@ class Speller {
         }, idleCheckerMS);
         this.sharedString.on("op", (msg: api.ISequencedObjectMessage) => {
             if (msg && msg.contents) {
-                this.pendingSpellChecks.push(<mergeTree.IMergeTreeOp>msg.contents);
+                let delta =  <mergeTree.IMergeTreeOp>msg.contents;
+                this.pendingSpellChecks.push(delta);
+                this.enqueueParagraph(delta);
                 this.currentIdleTime = 0;
             }
         });
@@ -130,6 +153,30 @@ class Speller {
             for (let delta of pendingChecks) {
                 this.spellOp(delta, intelligence);
             }
+        }
+        if (this.pendingParagraphs.length > 0) {
+            for (let pg of this.pendingParagraphs) {
+                const offset = this.sharedString.client.mergeTree.getOffset(pg.tile, mergeTree.UniversalSequenceNumber,
+                    this.sharedString.client.getClientId());
+                const endMarkerPos = this.sharedString.client.mergeTree.findTile(offset,
+                    this.sharedString.client.getClientId(), "pg", false);
+                let endPos: number;
+                if (endMarkerPos) {
+                    endPos = endMarkerPos.pos;
+                } else {
+                    endPos = this.sharedString.client.mergeTree.getLength(mergeTree.UniversalSequenceNumber,
+                        this.sharedString.client.getClientId())
+                }
+                this.offsetMap[offset] = endPos;
+            }
+            console.log(`Paragraph markers...`);
+            for (let start of Object.keys(this.offsetMap)) {
+                console.log(`Start: ${start} -> End: ${this.offsetMap[start]}`);
+                console.log(this.sharedString.client.mergeTree.getText(mergeTree.UniversalSequenceNumber,
+                    this.sharedString.client.getClientId(), false, Number(start), this.offsetMap[start]));
+            }
+            this.offsetMap = {};
+            this.pendingParagraphs = [];
         }
     }
 

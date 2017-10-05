@@ -14,7 +14,7 @@ let clockStart = Date.now();
 
 export let theFlow: controls.FlowView;
 
-const prideAndPrejudice = "/public/literature/pp.txt";
+const prideAndPrejudice = "/public/literature/knuth-grimm.txt";
 
 function downloadRawText(textUrl: string): Promise<string> {
     return new Promise<string>((resolve, reject) => {
