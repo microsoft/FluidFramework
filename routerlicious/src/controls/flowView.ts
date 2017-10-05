@@ -1,4 +1,4 @@
-// tslint:disable:whitespace align no-bitwise
+// tslint:disable:whitespace align no-bitwise no-string-literal member-ordering
 import performanceNow = require("performance-now");
 import * as url from "url";
 import * as API from "../api";
@@ -758,7 +758,7 @@ function showPositionInLine(
     }
 }
 
-function cursorVisibleMarker(marker: SharedString.Marker) {
+function endRenderSegments(marker: SharedString.Marker) {
     return (marker.hasTileLabel("pg") ||
         ((marker.hasRangeLabel("box") &&
             (marker.behaviors & SharedString.MarkerBehaviors.RangeEnd))));
@@ -795,7 +795,7 @@ function renderSegmentIntoLine(
         }
     } else if (segType === SharedString.SegmentType.Marker) {
         let marker = <SharedString.Marker>segment;
-        if (cursorVisibleMarker(marker)) {
+        if (endRenderSegments(marker)) {
             lineContext.pgMarker = marker;
             lineContext.markerPos = segpos;
             if (lineContext.flowView.cursor.pos === segpos) {
@@ -1138,8 +1138,10 @@ function createTable(pos: number, flowView: FlowView, nrows = 2, nboxes = 2) {
             opList.push(createMarkerOp(pos, boxId,
                 SharedString.MarkerBehaviors.RangeBegin, ["box"]));
             pos++;
-            opList.push(createMarkerOp(pos, boxId + "C",
-                SharedString.MarkerBehaviors.Tile, [], ["pg"]));
+            let pgOp = createMarkerOp(pos, boxId + "C",
+                SharedString.MarkerBehaviors.Tile, [], ["pg"]);
+            pgOp.props["boxStart"] = true;
+            opList.push(pgOp);
             pos++;
             let word = content[box + (2 * row)];
             let insertStringOp = <SharedString.IMergeTreeInsertMsg>{
@@ -1177,6 +1179,38 @@ class TableView {
     public rows = <RowView[]>[];
     public columns = <ColumnView[]>[];
     constructor(public tableMarker: ITableMarker, public endTableMarker: ITableMarker) {
+    }
+
+    public nextBox(box: BoxView) {
+        let retNext = false;
+        for (let rowIndex = 0, rowCount = this.rows.length; rowIndex < rowCount; rowIndex++) {
+            let row = this.rows[rowIndex];
+            for (let boxIndex = 0, boxCount = row.boxes.length; boxIndex < boxCount; boxIndex++) {
+                let rowBox = row.boxes[boxIndex];
+                if (retNext) {
+                    return rowBox;
+                }
+                if (rowBox === box) {
+                    retNext = true;
+                }
+            }
+        }
+    }
+
+    public prevBox(box: BoxView) {
+        let retPrev = false;
+        for (let rowIndex = this.rows.length - 1; rowIndex >= 0; rowIndex--) {
+            let row = this.rows[rowIndex];
+            for (let boxIndex = row.boxes.length - 1; boxIndex >= 0; boxIndex--) {
+                let rowBox = row.boxes[boxIndex];
+                if (retPrev) {
+                    return rowBox;
+                }
+                if (rowBox === box) {
+                    retPrev = true;
+                }
+            }
+        }
     }
 
     public updateWidth(w: number) {
@@ -2267,6 +2301,17 @@ function findTile(flowView: FlowView, startPos: number, tileType: string, preced
     return flowView.client.mergeTree.findTile(startPos, flowView.client.getClientId(), tileType, preceding);
 }
 
+function lookBehind(pos: number, flowView: FlowView) {
+    if (pos >= 0) {
+        let segoff = flowView.client.mergeTree.getContainingSegment(pos,
+            SharedString.UniversalSequenceNumber,
+            flowView.client.getClientId());
+        if (segoff.segment.getType() !== SharedString.SegmentType.Text) {
+            return <SharedString.Marker>segoff.segment;
+        }
+    }
+}
+
 export class FlowView extends ui.Component {
     public static scrollAreaWidth = 18;
 
@@ -2553,16 +2598,75 @@ export class FlowView extends ui.Component {
         return x;
     }
 
+    public cursorRev() {
+        if (this.cursor.pos > 1) {
+            this.cursor.pos--;
+            let segoff = this.client.mergeTree.getContainingSegment(this.cursor.pos, SharedString.UniversalSequenceNumber,
+                this.client.getClientId());
+            if (segoff.segment.getType() !== SharedString.SegmentType.Text) {
+                // REVIEW: assume marker for now
+                let marker = <SharedString.Marker>segoff.segment;
+                if ((marker.behaviors & SharedString.MarkerBehaviors.Tile) &&
+                    (marker.hasTileLabel("pg"))) {
+                    if (marker.properties["boxStart"]) {
+                        this.cursorRev();
+                    } else {
+                        let prevMarker = lookBehind(this.cursor.pos - 1, this);
+                        if (prevMarker && (prevMarker.behaviors & SharedString.MarkerBehaviors.RangeEnd) &&
+                            prevMarker.hasRangeLabel("table")) {
+                            this.cursorRev();
+                        }
+                    }
+                } else if (marker.behaviors & SharedString.MarkerBehaviors.RangeBegin) {
+                    this.cursorRev();
+                } else if (marker.behaviors & SharedString.MarkerBehaviors.RangeEnd) {
+                    if (marker.hasRangeLabel("box")) {
+                        return;
+                    } else {
+                        this.cursorRev();
+                    }
+                } else {
+                    this.cursorRev();
+                }
+            }
+        }
+    }
+
     public cursorFwd() {
-        this.cursor.pos++;
-        let segoff = this.client.mergeTree.getContainingSegment(this.cursor.pos, SharedString.UniversalSequenceNumber,
-            this.client.getClientId());
-        if (segoff.segment.getType() !== SharedString.SegmentType.Text) {
-            // REVIEW: assume marker for now
-            let marker = <SharedString.Marker>segoff.segment;
-            if (!cursorVisibleMarker(marker)) {
-                // TODO: end of document marker
-                if (this.cursor.pos < (this.client.getLength() - 1)) {
+        if (this.cursor.pos < (this.client.getLength() - 1)) {
+            this.cursor.pos++;
+
+            let segoff = this.client.mergeTree.getContainingSegment(this.cursor.pos, SharedString.UniversalSequenceNumber,
+                this.client.getClientId());
+            if (segoff.segment.getType() !== SharedString.SegmentType.Text) {
+                // REVIEW: assume marker for now
+                let marker = <SharedString.Marker>segoff.segment;
+                if ((marker.behaviors & SharedString.MarkerBehaviors.Tile) &&
+                    (marker.hasTileLabel("pg"))) {
+                    if (!marker.properties["boxStart"]) {
+                        return;
+                    }
+                } else if (marker.behaviors & SharedString.MarkerBehaviors.RangeBegin) {
+                    if (marker.hasRangeLabel("table")) {
+                        this.cursor.pos += 4;
+                    } else if (marker.hasRangeLabel("row")) {
+                        this.cursor.pos += 3;
+                    } else if (marker.hasRangeLabel("box")) {
+                        this.cursor.pos += 2;
+                    } else {
+                        this.cursorFwd();
+                    }
+                } else if (marker.behaviors & SharedString.MarkerBehaviors.RangeEnd) {
+                    if (marker.hasRangeLabel("row")) {
+                        this.cursorFwd();
+                    } else if (marker.hasRangeLabel("table")) {
+                        this.cursor.pos += 2;
+                    } else if (marker.hasRangeLabel("box")) {
+                        return;
+                    } else {
+                        this.cursorFwd();
+                    }
+                } else {
                     this.cursorFwd();
                 }
             }
@@ -2668,7 +2772,7 @@ export class FlowView extends ui.Component {
             if (e.ctrlKey && (e.keyCode !== 17)) {
                 this.keyCmd(e.keyCode);
             } else if (e.keyCode === KeyCode.TAB) {
-                this.increaseIndent(e.shiftKey);
+                this.handleTAB(e.shiftKey);
             } else if (e.keyCode === KeyCode.backspace) {
                 this.cursor.pos--;
                 this.sharedString.removeText(this.cursor.pos, this.cursor.pos + 1);
@@ -2702,7 +2806,7 @@ export class FlowView extends ui.Component {
                     if (this.cursor.pos === this.viewportStartPos) {
                         this.scroll(true, true);
                     }
-                    this.cursor.pos--;
+                    this.cursorRev();
                     this.updatePresence();
                     this.cursor.updateView(this);
                 }
@@ -2836,30 +2940,64 @@ export class FlowView extends ui.Component {
         }
     }
 
-    public increaseIndent(decrease = false) {
+    private increaseIndent(tile: IParagraphMarker, pos: number, decrease = false) {
+        tile.listCache = undefined;
+        if (decrease && tile.properties.indentLevel > 0) {
+            this.sharedString.annotateRange({ indentLevel: -1 },
+                pos, pos + 1, { name: "incr", defaultValue: 1, minValue: 0 });
+        } else if (!decrease) {
+            this.sharedString.annotateRange({ indentLevel: 1 }, pos, pos + 1,
+                { name: "incr", defaultValue: 0 });
+        }
+        this.localQueueRender(this.cursor.pos);
+    }
+
+    // TODO: tab stops in non-list, non-table paragraphs
+    public handleTAB(shift = false) {
         let searchPos = this.cursor.pos;
         if (this.cursor.pos === this.cursor.lineDiv().lineEnd) {
             searchPos--;
         }
         let tileInfo = findTile(this, searchPos, "pg");
         if (tileInfo) {
-            let tile = <IParagraphMarker>tileInfo.tile;
-            tile.listCache = undefined;
-            if (decrease && tile.properties.indentLevel > 0) {
-                this.sharedString.annotateRange({ indentLevel: -1 },
-                    tileInfo.pos, tileInfo.pos + 1, { name: "incr", defaultValue: 1, minValue: 0 });
-            } else if (!decrease) {
-                this.sharedString.annotateRange({ indentLevel: 1 }, tileInfo.pos, tileInfo.pos + 1,
-                    { name: "incr", defaultValue: 0 });
+            let cursorContext =
+                this.client.mergeTree.getStackContext(tileInfo.pos, this.client.getClientId(), ["table", "box", "row"]);
+            if (cursorContext.table && (!cursorContext.table.empty())) {
+                let tableMarker = <ITableMarker>cursorContext.table.top();
+                let tableView = tableMarker.view;
+                if (cursorContext.box && (!cursorContext.box.empty())) {
+                    let box = <IBoxMarker>cursorContext.box.top();
+                    let toBox: BoxView;
+                    if (shift) {
+                        toBox = tableView.prevBox(box.view);
+                    } else {
+                        toBox = tableView.nextBox(box.view);
+                    }
+                    if (toBox) {
+                        let offset = this.client.mergeTree.getOffset(toBox.marker,
+                            SharedString.UniversalSequenceNumber, this.client.getClientId());
+                        this.cursor.pos = offset + 2;
+                    } else {
+                        if (shift) {
+                            let offset = this.client.mergeTree.getOffset(tableView.tableMarker,
+                                SharedString.UniversalSequenceNumber, this.client.getClientId());
+                            this.cursor.pos = offset;
+                        } else {
+                            let endOffset = this.client.mergeTree.getOffset(tableView.endTableMarker,
+                                SharedString.UniversalSequenceNumber, this.client.getClientId());
+                            this.cursor.pos = endOffset + 2;
+                        }
+                    }
+                    this.updatePresence();
+                    this.cursor.updateView(this);
+                }
+            } else {
+                let tile = <IParagraphMarker>tileInfo.tile;
+                this.increaseIndent(tile, tileInfo.pos, shift);
             }
-            this.localQueueRender(this.cursor.pos);
         }
     }
-    /*
-        public insertTable() {
-            let opList = <SharedString.IMergeTreeOp[]>[];
-         }
-    */
+
     public toggleBlockquote() {
         let tileInfo = findTile(this, this.cursor.pos, "pg");
         if (tileInfo) {
