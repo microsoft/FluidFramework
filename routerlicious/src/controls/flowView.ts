@@ -418,6 +418,8 @@ let cachedCanvas: HTMLCanvasElement;
 const baseURI = typeof document !== "undefined" ? document.baseURI : "";
 let underlineStringURL = `url(${url.resolve(baseURI, "/public/images/underline.gif")}) bottom repeat-x`;
 let underlinePaulStringURL = `url(${url.resolve(baseURI, "/public/images/underline-paul.gif")}) bottom repeat-x`;
+let underlinePaulGreenStringURL =
+    `url(${url.resolve(baseURI, "/public/images/underline-paulgreen.gif")}) bottom repeat-x`;
 
 function getTextWidth(text: string, font: string) {
     // re-use canvas object for better performance
@@ -1235,31 +1237,31 @@ class TableView {
             }
         }
     }
-/*
-    public insertColumnRight(requestingBox: BoxView, columnIndex: number, flowView: FlowView) {
-        let column = this.columns[columnIndex];
-        let opList = <SharedString.IMergeTreeOp[]>[];
-        let client = flowView.client;
-        let mergeTree = client.mergeTree;
-        let tablePos = mergeTree.getOffset(this.tableMarker, SharedString.UniversalSequenceNumber,
-            client.getClientId());
-        let horizVersion = this.tableMarker.properties["horizVersion"];
-        let versionIncr = <SharedString.IMergeTreeAnnotateMsg>{
-            combiningOp: { name: "incr", defaultValue: 0 },
-            pos1: tablePos,
-            pos2: tablePos + 1,
-            props: { horizVersion: 1 },
-            type: SharedString.MergeTreeDeltaType.ANNOTATE,
-            when: { props: { horizVersion } },
-        };
-        opList.push(versionIncr);
-        let idBase = this.tableMarker.getId();
-        for (let rowIndex = 0, len = column.boxes.length; rowIndex < len; rowIndex++) {
-            let box = column.boxes[rowIndex];
-            opList.push(<SharedString.Inser)
+    /*
+        public insertColumnRight(requestingBox: BoxView, columnIndex: number, flowView: FlowView) {
+            let column = this.columns[columnIndex];
+            let opList = <SharedString.IMergeTreeOp[]>[];
+            let client = flowView.client;
+            let mergeTree = client.mergeTree;
+            let tablePos = mergeTree.getOffset(this.tableMarker, SharedString.UniversalSequenceNumber,
+                client.getClientId());
+            let horizVersion = this.tableMarker.properties["horizVersion"];
+            let versionIncr = <SharedString.IMergeTreeAnnotateMsg>{
+                combiningOp: { name: "incr", defaultValue: 0 },
+                pos1: tablePos,
+                pos2: tablePos + 1,
+                props: { horizVersion: 1 },
+                type: SharedString.MergeTreeDeltaType.ANNOTATE,
+                when: { props: { horizVersion } },
+            };
+            opList.push(versionIncr);
+            let idBase = this.tableMarker.getId();
+            for (let rowIndex = 0, len = column.boxes.length; rowIndex < len; rowIndex++) {
+                let box = column.boxes[rowIndex];
+                opList.push(<SharedString.Inser)
+            }
         }
-    }
-*/
+    */
     public updateWidth(w: number) {
         this.width = w;
         let proportionalWidthPerColumn = Math.floor(this.width / this.columns.length);
@@ -2100,8 +2102,10 @@ function makeSegSpan(
                 let textErrorInfo = <ITextErrorInfo>textSegment.properties[key];
                 let slb: ISelectionListBox;
                 span.textErrorRun = textErrorRun;
-                if (textErrorInfo.color) {
+                if (textErrorInfo.color === "paul") {
                     span.style.background = underlinePaulStringURL;
+                } else if (textErrorInfo.color === "paulgreen") {
+                    span.style.background = underlinePaulGreenStringURL;
                 } else {
                     span.style.background = underlineStringURL;
                 }
