@@ -1516,7 +1516,10 @@ export class Client {
         if (msg.type === API.OperationType) {
             const operationMessage = msg as API.ISequencedObjectMessage;
             if (msg.clientId == this.longClientId) {
-                this.ackPendingSegment(operationMessage.sequenceNumber);
+                let op = <ops.IMergeTreeOp>msg.contents;
+                if (op.type !== ops.MergeTreeDeltaType.ANNOTATE) {
+                    this.ackPendingSegment(operationMessage.sequenceNumber);
+                }
             }
             else {
                 this.coreApplyMsg(operationMessage);
@@ -2051,7 +2054,6 @@ export class MergeTree {
     segmentsToScour: Collections.Heap<LRUSegment>;
     idToSegment = Properties.createMap<Segment>();
     transactionSegmentGroup: SegmentGroup;
-    transactionSegmentEnqueued = false;
     // for diagnostics
     getLongClientId: (id: number) => string;
 
@@ -2089,7 +2091,7 @@ export class MergeTree {
     startGroupOperation() {
         // TODO: assert undefined
         this.transactionSegmentGroup = <SegmentGroup>{ segments: [] };
-        this.transactionSegmentEnqueued = false;
+        this.pendingSegments.enqueue(this.transactionSegmentGroup);
     }
 
     endGroupOperation() {
@@ -2812,10 +2814,6 @@ export class MergeTree {
         if (segmentGroup === undefined) {
             if (this.transactionSegmentGroup) {
                 segmentGroup = this.transactionSegmentGroup;
-                if (!this.transactionSegmentEnqueued) {
-                    this.pendingSegments.enqueue(segmentGroup);
-                    this.transactionSegmentEnqueued = true;
-                }
             } else {
                 segmentGroup = <SegmentGroup>{ segments: [] };
                 this.pendingSegments.enqueue(segmentGroup);
