@@ -1254,6 +1254,29 @@ class TableView {
             }
         }
     }
+
+    public findPrecedingRow(rowView: RowView) {
+        let prevRow: RowView;
+        for (let rowIndex = 0, rowCount = this.rows.length; rowIndex < rowCount; rowIndex++) {
+            let row = this.rows[rowIndex];
+            if (row === rowView) {
+                return prevRow;
+            }
+            prevRow = row;
+        }
+    }
+
+    public findNextRow(rowView: RowView) {
+        let nextRow: RowView;
+        for (let rowIndex = this.rows.length - 1; rowIndex >= 0; rowIndex--) {
+            let row = this.rows[rowIndex];
+            if (row === rowView) {
+                return nextRow;
+            }
+            nextRow = row;
+        }
+    }
+
     /*
         public insertColumnRight(requestingBox: BoxView, columnIndex: number, flowView: FlowView) {
             let column = this.columns[columnIndex];
@@ -1317,7 +1340,18 @@ class ColumnView {
     }
 }
 
+function findRowParent(lineDiv: ILineDiv) {
+    let parent = <IRowDiv>lineDiv.parentElement;
+    while (parent) {
+        if (parent.rowView) {
+            return parent;
+        }
+        parent = <IRowDiv>parent.parentElement;
+    }
+}
+
 class RowView {
+    public table: TableView;
     public pos: number;
     public endPos: number;
     public minContentWidth = 0;
@@ -1326,14 +1360,19 @@ class RowView {
 
     }
 
-    public findEnclosingBox(x: number) {
+    public findClosestBox(x: number) {
+        let bestBox: BoxView;
+        let bestDistance = -1;
         for (let box of this.boxes) {
             let bounds = box.div.getBoundingClientRect();
-            let right = bounds.left + bounds.width;
-            if ((bounds.left <= x) && (right >= x)) {
-                return box;
+            let center = bounds.left + (bounds.width / 2);
+            let distance = Math.abs(center - x);
+            if ((distance < bestDistance) || (bestDistance < 0)) {
+                bestBox = box;
+                bestDistance = distance;
             }
         }
+        return bestBox;
     }
 }
 
@@ -1446,6 +1485,7 @@ function parseTable(tableMarker: ITableMarker, tableMarkerPos: number, docContex
     while (nextPos < endTablePos) {
         let rowMarker = parseRow(nextPos, docContext, flowView);
         let rowView = rowMarker.view;
+        rowView.table = tableView;
         rowView.pos = nextPos;
         for (let i = 0, len = rowView.boxes.length; i < len; i++) {
             let box = rowView.boxes[i];
@@ -2635,7 +2675,11 @@ export class FlowView extends ui.Component {
                     }
                 } else {
                     // content div
-                    this.cursor.pos = targetLineDiv.lineEnd;
+                    if (x <= targetLineBounds.left) {
+                        this.cursor.pos = targetLineDiv.linePos;
+                    } else {
+                        this.cursor.pos = targetLineDiv.lineEnd;
+                    }
                 }
                 return true;
             } else if (elm.tagName === "SPAN") {
@@ -2750,12 +2794,14 @@ export class FlowView extends ui.Component {
         } else {
             targetLineDiv = <ILineDiv>lineDiv.nextElementSibling;
         }
-        if (targetLineDiv) {
-            let x = this.getCanonicalX();
+        let x = this.getCanonicalX();
+
+        // if line div is row, then find line in box closest to x
+        function checkInTable() {
             let rowDiv = <IRowDiv>targetLineDiv;
             while (rowDiv && rowDiv.rowView) {
                 if (rowDiv.rowView) {
-                    let box = rowDiv.rowView.findEnclosingBox(x);
+                    let box = rowDiv.rowView.findClosestBox(x);
                     if (box) {
                         if (up) {
                             targetLineDiv = box.viewport.lastLineDiv();
@@ -2763,10 +2809,52 @@ export class FlowView extends ui.Component {
                             targetLineDiv = box.viewport.firstLineDiv();
                         }
                         rowDiv = <IRowDiv>targetLineDiv;
+                    } else {
+                        break;
                     }
                 }
             }
+        }
+
+        if (targetLineDiv) {
+            checkInTable();
             return this.setCursorPosFromPixels(targetLineDiv, x);
+        } else {
+            // TODO: handle nested tables
+            // go out to row containing this line (line may be at top or bottom of box)
+            let rowDiv = findRowParent(lineDiv);
+            if (rowDiv && rowDiv.rowView) {
+                let rowView = rowDiv.rowView;
+                let tableView = rowView.table;
+                let targetRow: RowView;
+                if (up) {
+                    targetRow = tableView.findPrecedingRow(rowView);
+                } else {
+                    targetRow = tableView.findNextRow(rowView);
+                }
+                if (targetRow) {
+                    let box = targetRow.findClosestBox(x);
+                    if (box) {
+                        if (up) {
+                            targetLineDiv = box.viewport.lastLineDiv();
+                        } else {
+                            targetLineDiv = box.viewport.firstLineDiv();
+                        }
+                    }
+                    return this.setCursorPosFromPixels(targetLineDiv, x);
+                } else {
+                    // top or bottom row of table
+                    if (up) {
+                        targetLineDiv = <ILineDiv>rowDiv.previousElementSibling;
+                    } else {
+                        targetLineDiv = <ILineDiv>rowDiv.nextElementSibling;
+                    }
+                    if (targetLineDiv) {
+                        checkInTable();
+                        return this.setCursorPosFromPixels(targetLineDiv, x);
+                    }
+                }
+            }
         }
     }
 
