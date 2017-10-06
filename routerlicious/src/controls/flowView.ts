@@ -1165,7 +1165,7 @@ function createBox(opList: SharedString.IMergeTreeOp[], idBase: string,
     return pos;
 }
 
-function createTable(pos: number, flowView: FlowView, nrows = 2, nboxes = 2) {
+function createTable(pos: number, flowView: FlowView, nrows = 3, nboxes = 3) {
     let segoff = flowView.client.mergeTree.getContainingSegment(pos, SharedString.UniversalSequenceNumber,
         flowView.client.getClientId());
     let pgAtEnd = true;
@@ -1175,7 +1175,7 @@ function createTable(pos: number, flowView: FlowView, nrows = 2, nboxes = 2) {
             pgAtEnd = false;
         }
     }
-    let content = ["aardvark", "squiggle", "jackelope", "springbok"];
+    let content = ["aardvark", "racoon", "jackelope", "springbok","tiger","lion","eland","anaconda","fox"];
     let idBase = flowView.client.longClientId;
     idBase += `T${tableIdSuffix++}`;
     let opList = <SharedString.IMergeTreeInsertMsg[]>[];
