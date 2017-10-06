@@ -1175,7 +1175,7 @@ function createTable(pos: number, flowView: FlowView, nrows = 3, nboxes = 3) {
             pgAtEnd = false;
         }
     }
-    let content = ["aardvark", "racoon", "jackelope", "springbok","tiger","lion","eland","anaconda","fox"];
+    let content = ["aardvark", "racoon", "jackelope", "springbok", "tiger", "lion", "eland", "anaconda", "fox"];
     let idBase = flowView.client.longClientId;
     idBase += `T${tableIdSuffix++}`;
     let opList = <SharedString.IMergeTreeInsertMsg[]>[];
@@ -1665,9 +1665,14 @@ function renderTable(table: ITableMarker, docContext: IDocumentContext, layoutIn
             }
         }
         if (renderRow) {
+            let heightVal = `${rowHeight}px`;
+            for (let boxIndex = 0, boxCount = rowView.boxes.length; boxIndex < boxCount; boxIndex++) {
+                let box = rowView.boxes[boxIndex];
+                box.div.style.height = heightVal;
+            }
             tableHeight += rowHeight;
             layoutInfo.viewport.commitLineDiv(rowDiv, rowHeight);
-            rowDiv.style.height = `${rowHeight}px`;
+            rowDiv.style.height = heightVal;
             rowDiv.linePos = rowView.pos;
             rowDiv.lineEnd = rowView.endPos;
             layoutInfo.viewport.div.appendChild(rowDiv);
