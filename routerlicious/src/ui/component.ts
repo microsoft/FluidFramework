@@ -50,8 +50,12 @@ export abstract class Component {
     // For the child management functions we may want to just make the dervied class do this. Could help them
     // provide better context on their tracked nodes.
 
-    protected addChild(component: Component) {
-        this.children.push(component);
+    protected addChild(component: Component, index = -1) {
+        if (index === -1) {
+            this.children.push(component);
+        } else {
+            this.children.splice(index, 0, component);
+        }
     }
 
     protected removeChild(component: Component) {

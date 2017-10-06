@@ -1,81 +1,71 @@
 import * as ui from "../ui";
 
-// const scrollAreaWidth = 18;
+// Scroll bar just renders the thing - does *not* know/care about semantics - up to someone else to figure out meaning
+// of button presses, etc... and tell it what's going on
 
-export class Scrollbar extends ui.Component {
+interface IRange {
+    value: number;
+    min: number;
+    max: number;
+}
+
+// TODO will want to emit events for clicking the thing, etc...
+
+export class ScrollBar extends ui.Component {
     public scrollDiv: HTMLDivElement;
     public scrollRect: ui.Rectangle;
     // private bubble: HTMLDivElement;
     // private bubbleDelta: number;
+    private track: HTMLDivElement;
 
-    // protected resizeCore(bounds: ui.Rectangle) {
-    //     let panelScroll = bounds.nipHorizRight(FlowView.scrollAreaWidth);
-    //     this.scrollRect = panelScroll[1];
-    //     ui.Rectangle.conformElementToRect(this.scrollDiv, this.scrollRect);
-    //     this.viewportRect = panelScroll[0].inner(0.92);
-    //     ui.Rectangle.conformElementToRect(this.viewportDiv, this.viewportRect);
-    //     this.render(this.topChar, true);
-    // }
+    private range: IRange = { value: 0, min: 0, max: 0 };
 
-    // private addScrollbar() {
-    //     let scrollbarWidth = 10;
-    //     let scrollbar = document.createElement("div");
-    //     bubble = document.createElement("div");
+    /**
+     * Sets the value of the track
+     */
+    public set value(value: number) {
+        this.range.value = value;
+        this.updateTrack();
+    }
 
-    //     let rect = ui.Rectangle.fromClientRect(listContainer.getBoundingClientRect());
-    //     // adjust for 2px border
-    //     rect.x = (rect.width - scrollbarWidth) - 4;
-    //     rect.width = scrollbarWidth;
-    //     rect.y = 0;
-    //     rect.height -= 4;
-    //     rect.conformElement(scrollbar);
-    //     scrollbar.style.backgroundColor = "white";
-    //     rect.y = 0;
-    //     rect.x = 0;
-    //     bubbleDelta = rect.height * (1 / items.length);
-    //     rect.height = Math.round(itemCapacity * bubbleDelta);
-    //     rect.conformElement(bubble);
-    //     bubble.style.backgroundColor = "#cccccc";
-    //     listContainer.appendChild(scrollbar);
-    //     scrollbar.appendChild(bubble);
-    //     scrollbar.style.zIndex = "2";
-    // }
+    public set min(value: number) {
+        this.range.min = value;
+        this.updateTrack();
+    }
 
-    // private adjustScrollbar() {
-    //     bubble.style.top = Math.round(bubbleDelta * topSelection) + "px";
-    // }
+    public set max(value: number) {
+        this.range.max = value;
+        this.updateTrack();
+    }
 
-    // private makeScrollLosenge(height: number, left: number, top: number) {
-    //     let div = document.createElement("div");
-    //     div.style.width = "12px";
-    //     div.style.height = `${height}px`;
-    //     div.style.left = `${left}px`;
-    //     div.style.top = `${top}px`;
-    //     div.style.backgroundColor = "pink";
-    //     let bordRad = height / 3;
-    //     div.style.borderRadius = `${bordRad}px`;
-    //     div.style.position = "absolute";
-    //     return div;
-    // }
+    constructor(element: HTMLDivElement) {
+        super(element);
 
-    // let frac = this.topChar / len
+        this.track = document.createElement("div");
+        this.track.style.backgroundColor = "pink";
+        this.track.style.borderRadius = "5px";
+        this.track.style.position = "absolute";
+        this.element.appendChild(this.track);
+    }
 
-    // clearSubtree(this.scrollDiv);
-    // let bubbleHeight = Math.max(3, Math.floor((this.viewportCharCount() / len) * this.scrollRect.height));
-    // let bubbleTop = Math.floor(frac * this.scrollRect.height);
-    // let bubbleLeft = 3;
-    // let bubbleDiv = makeScrollLosenge(bubbleHeight, bubbleLeft, bubbleTop);
-    // this.scrollDiv.appendChild(bubbleDiv);
+    protected resizeCore(bounds: ui.Rectangle) {
+        this.updateTrack();
+    }
 
-    // this.scrollDiv = document.createElement("div");
-    // this.element.appendChild(this.scrollDiv);
+    /**
+     * Updates the scroll bar's track element
+     */
+    private updateTrack() {
+        const rangeLength = this.range.max - this.range.min;
+        const frac = rangeLength !== 0 ? (this.range.value - this.range.min) / rangeLength : 0;
+        const height = Math.max(3, rangeLength !== 0 ? this.size.height / rangeLength : 0, 0);
+        const top = frac * this.size.height;
+        const left = 3;
 
-    // if (bubble) {
-    //     adjustScrollbar();
-    // }
-
-    // bubble = undefined;
-    // if (items.length > itemCapacity) {
-    //     setTimeout(addScrollbar, 0);
-    // }
+        // The below will get put in some kind of updateTrack call
+        this.track.style.width = `${Math.max(12, this.size.width - 6)}px`;
+        this.track.style.height = `${height}px`;
+        this.track.style.left = `${left}px`;
+        this.track.style.top = `${top}px`;
+    }
 }
