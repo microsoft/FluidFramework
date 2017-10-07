@@ -3,6 +3,7 @@ import * as $ from "jquery";
 import * as _ from "lodash";
 import * as ink from "../ink";
 import * as ui from "../ui";
+import { debug } from "./debug";
 import { Circle, IShape, Polygon } from "./shapes/index";
 
 export enum SegmentCircleInclusive {
@@ -11,6 +12,8 @@ export enum SegmentCircleInclusive {
     Start,
     End,
 }
+
+const DryTimer = 5000;
 
 /**
  * Helper method to resize a HTML5 canvas
@@ -241,6 +244,7 @@ export class OverlayCanvas extends ui.Component {
     private layers: Layer[] = [];
     private inkLayer: InkLayer;
     private currentStylusActionId: string;
+    private dryTimer: NodeJS.Timer;
     private activePointerId: number;
     private inkEventsEnabled = false;
     private penHovering = false;
@@ -368,6 +372,8 @@ export class OverlayCanvas extends ui.Component {
     private handlePointerDown(evt: PointerEvent) {
         // Only support pen events
         if (evt.pointerType === "pen" || (evt.pointerType === "mouse" && evt.button === 0)) {
+            this.stopDryTimer();
+
             // Capture ink events
             this.activePointerId = evt.pointerId;
             this.element.setPointerCapture(this.activePointerId);
@@ -417,9 +423,31 @@ export class OverlayCanvas extends ui.Component {
             // Release the event
             this.element.releasePointerCapture(this.activePointerId);
             this.activePointerId = undefined;
+
+            this.startDryTimer();
         }
 
         return false;
+    }
+
+    private startDryTimer() {
+        this.dryTimer = setTimeout(
+            () => {
+                this.dryInk();
+            },
+            DryTimer);
+    }
+
+    private stopDryTimer() {
+        if (this.dryTimer) {
+            clearTimeout(this.dryTimer);
+            this.dryTimer = undefined;
+        }
+    }
+
+    private dryInk() {
+        debug("Drying the ink");
+        this.dryTimer = undefined;
     }
 
     private translatePoint(relative: HTMLElement, event: PointerEvent): ui.IPoint {

@@ -6,6 +6,7 @@ import { FlowView } from "./flowView";
 import { Image } from "./image";
 import { LayerPanel } from "./layerPanel";
 import { OverlayCanvas } from "./overlayCanvas";
+import { IRange } from "./scrollBar";
 import { Status } from "./status";
 
 export class FlowContainer extends ui.Component {
@@ -17,6 +18,9 @@ export class FlowContainer extends ui.Component {
 
     constructor(element: HTMLDivElement, sharedString: SharedString, private image: Image) {
         super(element);
+
+        // TODO the below code is becoming controller like and probably doesn't belong in a constructor. Likely
+        // a better API model.
 
         // Status bar at the bottom
         const statusDiv = document.createElement("div");
@@ -36,6 +40,19 @@ export class FlowContainer extends ui.Component {
         const overlayCanvasDiv = document.createElement("div");
         overlayCanvasDiv.classList.add("overlay-canvas");
         this.overlayCanvas = new OverlayCanvas(overlayCanvasDiv, layerPanelDiv);
+
+        // TODO: Listen for ink updates on the overlay and create distributed data types from them
+
+        // Update the scroll bar
+        this.flowView.on(
+            "render",
+            (renderInfo: { range: IRange, viewportEndPos: number, viewportStartPos: number }) => {
+                const showScrollBar = renderInfo.range.min !== renderInfo.viewportStartPos ||
+                    renderInfo.range.max !== renderInfo.viewportEndPos;
+                this.layerPanel.showScrollBar(showScrollBar);
+
+                this.layerPanel.scrollBar.setRange(renderInfo.range);
+            });
 
         this.status.addOption("ink", "ink");
         this.status.on("ink", (value) => {
