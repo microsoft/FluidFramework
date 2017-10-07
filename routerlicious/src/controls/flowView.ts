@@ -2944,6 +2944,7 @@ export class FlowView extends ui.Component {
                 this.topChar = 1;
             }
         }
+
         let clk = Date.now();
         // TODO: consider using markers for presence info once splice segments during pg render
         this.updatePresencePositions();
@@ -2959,6 +2960,12 @@ export class FlowView extends ui.Component {
             this.statusMessage("diagCharPort",
                 `&nbsp sp: (${this.topChar}) ep: ${this.viewportEndPos} cp: ${this.cursor.pos}`);
         }
+
+        this.emit("render", {
+            range: { min: 1, max: this.client.getLength(), value: this.viewportStartPos },
+            viewportEndPos: this.viewportEndPos,
+            viewportStartPos: this.viewportStartPos,
+        });
     }
 
     public loadFinished(clockStart = 0) {

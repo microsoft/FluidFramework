@@ -1,9 +1,7 @@
+import * as _ from "lodash";
 import * as ui from "../ui";
 
-// Scroll bar just renders the thing - does *not* know/care about semantics - up to someone else to figure out meaning
-// of button presses, etc... and tell it what's going on
-
-interface IRange {
+export interface IRange {
     value: number;
     min: number;
     max: number;
@@ -14,8 +12,6 @@ interface IRange {
 export class ScrollBar extends ui.Component {
     public scrollDiv: HTMLDivElement;
     public scrollRect: ui.Rectangle;
-    // private bubble: HTMLDivElement;
-    // private bubbleDelta: number;
     private track: HTMLDivElement;
 
     private range: IRange = { value: 0, min: 0, max: 0 };
@@ -46,6 +42,11 @@ export class ScrollBar extends ui.Component {
         this.track.style.borderRadius = "5px";
         this.track.style.position = "absolute";
         this.element.appendChild(this.track);
+    }
+
+    public setRange(range: IRange) {
+        this.range = _.clone(range);
+        this.updateTrack();
     }
 
     protected resizeCore(bounds: ui.Rectangle) {
