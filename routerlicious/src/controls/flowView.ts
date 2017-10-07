@@ -315,8 +315,6 @@ export function selectionListBoxCreate(
             return;
         }
 
-        // TODO code to enable scroll bar
-
         updateSelectionList();
 
         if (hintSelection) {
@@ -351,8 +349,6 @@ export function selectionListBoxCreate(
                 }
             }
         }
-
-        // TODO adjust the scroll bar
     }
 }
 

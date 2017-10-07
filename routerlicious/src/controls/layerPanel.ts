@@ -21,10 +21,6 @@ export class LayerPanel extends ui.Component {
         this.scrollBar = new ScrollBar(scrollBarElement);
         this.addChild(this.scrollBar);
         this.element.appendChild(this.scrollBar.element);
-
-        this.scrollBar.min = 0;
-        this.scrollBar.max = 100;
-        this.scrollBar.value = 25;
     }
 
     /**
