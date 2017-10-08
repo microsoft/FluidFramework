@@ -6,7 +6,7 @@ import { FlowView } from "./flowView";
 import { Image } from "./image";
 import { LayerPanel } from "./layerPanel";
 import { OverlayCanvas } from "./overlayCanvas";
-import { IRange } from "./scrollBar";
+import { IRange } from "./scrollbar";
 import { Status } from "./status";
 
 export class FlowContainer extends ui.Component {
