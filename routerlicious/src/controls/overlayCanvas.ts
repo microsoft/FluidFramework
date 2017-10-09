@@ -1,6 +1,7 @@
 import * as assert from "assert";
 import * as $ from "jquery";
 import * as _ from "lodash";
+import * as api from "../api";
 import * as ink from "../ink";
 import * as ui from "../ui";
 import { debug } from "./debug";
@@ -253,6 +254,7 @@ export class OverlayCanvas extends ui.Component {
         color: { r: 0, g: 161 / 255, b: 241 / 255, a: 0 },
         thickness: 7,
     };
+    private activeLayer: ink.IInk;
 
     // TODO composite layers together
     // private canvas: HTMLCanvasElement;
@@ -266,7 +268,7 @@ export class OverlayCanvas extends ui.Component {
      * that element would then receive all events and events wouldn't pass through to the content under the
      * overlay. For that reason we ask the parent element to provide a div we can use to track pen entry/exit.
      */
-    constructor(container: HTMLDivElement, eventTarget: HTMLDivElement) {
+    constructor(private document: api.Document, container: HTMLDivElement, eventTarget: HTMLDivElement) {
         super(container);
         this.inkLayer = new InkLayer({ width: 0, height: 0 }, []);
         this.addLayer(this.inkLayer);
@@ -372,6 +374,13 @@ export class OverlayCanvas extends ui.Component {
     private handlePointerDown(evt: PointerEvent) {
         // Only support pen events
         if (evt.pointerType === "pen" || (evt.pointerType === "mouse" && evt.button === 0)) {
+            // Create a new layer if doesn't already exist
+            if (!this.activeLayer) {
+                // Create a new layer and then emit it existing
+                this.activeLayer = this.document.createInk();
+                this.emit("ink", this.activeLayer, evt);
+            }
+
             this.stopDryTimer();
 
             // Capture ink events
@@ -386,7 +395,7 @@ export class OverlayCanvas extends ui.Component {
                 evt.pressure,
                 this.activePen);
             this.currentStylusActionId = delta.operations[0].stylusDown.id;
-            this.inkLayer.drawStroke(delta.operations[0]);
+            this.addAndDrawStroke(delta);
 
             evt.returnValue = false;
         }
@@ -399,7 +408,7 @@ export class OverlayCanvas extends ui.Component {
                 translatedPoint,
                 evt.pressure,
                 this.currentStylusActionId);
-            this.inkLayer.drawStroke(delta.operations[0]);
+            this.addAndDrawStroke(delta);
 
             evt.returnValue = false;
         }
@@ -418,7 +427,7 @@ export class OverlayCanvas extends ui.Component {
                 this.currentStylusActionId);
             this.currentStylusActionId = undefined;
 
-            this.inkLayer.drawStroke(delta.operations[0]);
+            this.addAndDrawStroke(delta);
 
             // Release the event
             this.element.releasePointerCapture(this.activePointerId);
@@ -428,6 +437,12 @@ export class OverlayCanvas extends ui.Component {
         }
 
         return false;
+    }
+
+    private addAndDrawStroke(delta: ink.Delta) {
+        assert(this.activeLayer);
+        this.activeLayer.submitOp(delta);
+        this.inkLayer.drawStroke(delta.operations[0]);
     }
 
     private startDryTimer() {
@@ -448,6 +463,9 @@ export class OverlayCanvas extends ui.Component {
     private dryInk() {
         debug("Drying the ink");
         this.dryTimer = undefined;
+        // TODO allow ability to close a collab stream
+        this.emit("dry", this.activeLayer);
+        this.activeLayer = undefined;
     }
 
     private translatePoint(relative: HTMLElement, event: PointerEvent): ui.IPoint {

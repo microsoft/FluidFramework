@@ -1,6 +1,8 @@
 import * as api from "../api";
+import * as ink from "../ink";
 import { SharedString } from "../merge-tree";
 import * as ui from "../ui";
+import { debug } from "./debug";
 import { DockPanel } from "./dockPanel";
 import { FlowView } from "./flowView";
 import { Image } from "./image";
@@ -16,7 +18,13 @@ export class FlowContainer extends ui.Component {
     private layerPanel: LayerPanel;
     private overlayCanvas: OverlayCanvas;
 
-    constructor(element: HTMLDivElement, sharedString: SharedString, private image: Image) {
+    constructor(
+        element: HTMLDivElement,
+        collabDocument: api.Document,
+        sharedString: SharedString,
+        private overlayMap: api.IMap,
+        private image: Image) {
+
         super(element);
 
         // TODO the below code is becoming controller like and probably doesn't belong in a constructor. Likely
@@ -39,9 +47,16 @@ export class FlowContainer extends ui.Component {
         // Overlay canvas for ink
         const overlayCanvasDiv = document.createElement("div");
         overlayCanvasDiv.classList.add("overlay-canvas");
-        this.overlayCanvas = new OverlayCanvas(overlayCanvasDiv, layerPanelDiv);
+        this.overlayCanvas = new OverlayCanvas(collabDocument, overlayCanvasDiv, layerPanelDiv);
 
-        // TODO: Listen for ink updates on the overlay and create distributed data types from them
+        this.overlayCanvas.on("ink", (model: ink.IInk, event: PointerEvent) =>  {
+            debug("Just saw a new ink layer!");
+            overlayMap.set(model.id, model);
+        });
+
+        this.status.on("dry", (value) => {
+            debug("Drying a layer");
+        });
 
         // Update the scroll bar
         this.flowView.on(
@@ -74,6 +89,8 @@ export class FlowContainer extends ui.Component {
         image.element.style.visibility = "hidden";
         this.addChild(image);
         element.appendChild(image.element);
+
+        this.renderInk();
     }
 
     public trackInsights(insights: api.IMap) {
@@ -92,6 +109,16 @@ export class FlowContainer extends ui.Component {
             overlayRect.conformElement(this.image.element);
             this.image.resize(overlayRect);
         }
+    }
+
+    private renderInk() {
+        this.overlayMap.keys().then(
+            (initialKeys) => {
+                debug(JSON.stringify(initialKeys));
+            },
+            (error) => {
+                debug(error);
+            });
     }
 
     private async updateInsights(insights: api.IMap) {
