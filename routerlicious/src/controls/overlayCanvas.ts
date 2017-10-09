@@ -73,13 +73,23 @@ export class InkLayer extends Layer {
     // TODO I may actually want 'layers' in the ink layer to support multiple pens interacting with the canvas
     // at the same time
 
-    constructor(size: ui.ISize, private operations: ink.IOperation[]) {
+    constructor(size: ui.ISize, private model: ink.IInk) {
         super(size);
+
+        // Listen for updates and re-render
+        this.model.on("op", (op) => {
+            const delta = op.contents as ink.IDelta;
+            for (const operation of delta.operations) {
+                this.drawStrokeCore(operation);
+            }
+        });
     }
 
-    public drawStroke(current: ink.IOperation) {
-        this.operations.push(current);
-        this.drawStrokeCore(current);
+    public drawDelta(delta: ink.IDelta) {
+        this.model.submitOp(delta);
+        for (const operation of delta.operations) {
+            this.drawStrokeCore(operation);
+        }
     }
 
     /**
@@ -87,8 +97,11 @@ export class InkLayer extends Layer {
      */
     protected render() {
         this.lastOperation = null;
-        for (const operation of this.operations) {
-            this.drawStrokeCore(operation);
+        const layers = this.model.getLayers();
+        for (const layer of layers) {
+            for (const operation of layer.operations) {
+                this.drawStrokeCore(operation);
+            }
         }
     }
 
@@ -243,7 +256,6 @@ export class InkLayer extends Layer {
 export class OverlayCanvas extends ui.Component {
     private throttler = new ui.AnimationFrameThrottler(() => this.render());
     private layers: Layer[] = [];
-    private inkLayer: InkLayer;
     private currentStylusActionId: string;
     private dryTimer: NodeJS.Timer;
     private activePointerId: number;
@@ -254,7 +266,7 @@ export class OverlayCanvas extends ui.Component {
         color: { r: 0, g: 161 / 255, b: 241 / 255, a: 0 },
         thickness: 7,
     };
-    private activeLayer: ink.IInk;
+    private activeLayer: InkLayer;
 
     // TODO composite layers together
     // private canvas: HTMLCanvasElement;
@@ -270,8 +282,6 @@ export class OverlayCanvas extends ui.Component {
      */
     constructor(private document: api.Document, container: HTMLDivElement, eventTarget: HTMLDivElement) {
         super(container);
-        this.inkLayer = new InkLayer({ width: 0, height: 0 }, []);
-        this.addLayer(this.inkLayer);
 
         // No pointer events by default
         container.style.pointerEvents = "none";
@@ -301,8 +311,13 @@ export class OverlayCanvas extends ui.Component {
         this.enableInkCore(this.penHovering, enable);
     }
 
+    public updateLayer(model: ink.IInk, offset: ui.IPoint) {
+        // layer should operate off the entire model
+        const inkLayer = new InkLayer(this.size, model);
+        this.addLayer(inkLayer);
+    }
+
     protected resizeCore(rectangle: ui.Rectangle) {
-        this.inkLayer.setSize(rectangle.size);
         this.markDirty();
     }
 
@@ -364,6 +379,7 @@ export class OverlayCanvas extends ui.Component {
         // things into multiple canvas divs or just use a single one
         ui.removeAllChildren(this.element);
         for (const layer of this.layers) {
+            layer.setSize(this.size);
             layer.canvas.style.position = "absolute";
             layer.canvas.style.left = `${layer.position.x}px`;
             layer.canvas.style.top = `${layer.position.y}px`;
@@ -377,8 +393,10 @@ export class OverlayCanvas extends ui.Component {
             // Create a new layer if doesn't already exist
             if (!this.activeLayer) {
                 // Create a new layer and then emit it existing
-                this.activeLayer = this.document.createInk();
-                this.emit("ink", this.activeLayer, evt);
+                const model = this.document.createInk();
+                this.activeLayer = new InkLayer({ width: 0, height: 0 }, model);
+                this.addLayer(this.activeLayer);
+                this.emit("ink", model, evt);
             }
 
             this.stopDryTimer();
@@ -395,7 +413,7 @@ export class OverlayCanvas extends ui.Component {
                 evt.pressure,
                 this.activePen);
             this.currentStylusActionId = delta.operations[0].stylusDown.id;
-            this.addAndDrawStroke(delta);
+            this.activeLayer.drawDelta(delta);
 
             evt.returnValue = false;
         }
@@ -408,7 +426,7 @@ export class OverlayCanvas extends ui.Component {
                 translatedPoint,
                 evt.pressure,
                 this.currentStylusActionId);
-            this.addAndDrawStroke(delta);
+            this.activeLayer.drawDelta(delta);
 
             evt.returnValue = false;
         }
@@ -427,7 +445,7 @@ export class OverlayCanvas extends ui.Component {
                 this.currentStylusActionId);
             this.currentStylusActionId = undefined;
 
-            this.addAndDrawStroke(delta);
+            this.activeLayer.drawDelta(delta);
 
             // Release the event
             this.element.releasePointerCapture(this.activePointerId);
@@ -437,12 +455,6 @@ export class OverlayCanvas extends ui.Component {
         }
 
         return false;
-    }
-
-    private addAndDrawStroke(delta: ink.Delta) {
-        assert(this.activeLayer);
-        this.activeLayer.submitOp(delta);
-        this.inkLayer.drawStroke(delta.operations[0]);
     }
 
     private startDryTimer() {

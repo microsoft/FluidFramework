@@ -112,13 +112,27 @@ export class FlowContainer extends ui.Component {
     }
 
     private renderInk() {
+        // Append all existing layers
         this.overlayMap.keys().then(
             (initialKeys) => {
-                debug(JSON.stringify(initialKeys));
+                for (const key of initialKeys) {
+                    this.addLayer(key);
+                }
             },
             (error) => {
                 debug(error);
             });
+
+        // and then list for new layers
+        this.overlayMap.on("valueChanged", (key) => {
+            debug("Value changed", key);
+            this.addLayer(key.key);
+        });
+    }
+
+    private async addLayer(id: string) {
+        const ink = await this.overlayMap.get(id) as ink.IInk;
+        this.overlayCanvas.updateLayer(ink, { x: 0, y: 0 });
     }
 
     private async updateInsights(insights: api.IMap) {
