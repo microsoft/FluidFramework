@@ -10,6 +10,7 @@ import * as assert from "assert";
 
 export type MapLike<T> = Properties.MapLike<T>;
 export type PropertySet = Properties.PropertySet;
+export type ContingentPropertySet = Properties.ContingentPropertySet;
 export type RangeStackMap = MapLike<Collections.Stack<Marker>>;
 
 export interface IRange {
@@ -227,7 +228,7 @@ function addNodeMarkers(mergeTree: MergeTree, node: Node, rightmostTiles: MapLik
         let block = <HierBlock>node;
         applyStackDelta(rangeStacks, block.rangeStacks);
         Properties.extend(rightmostTiles, block.rightmostTiles);
-        Properties.contingentExtend(leftmostTiles, block.leftmostTiles);
+        Properties.extendIfUndefined(leftmostTiles, block.leftmostTiles);
     }
 }
 
@@ -283,6 +284,23 @@ export abstract class BaseSegment extends MergeNode implements Segment {
     removedClientOverlap: number[];
     segmentGroup: SegmentGroup;
     properties: PropertySet;
+    contingentProperties: ContingentPropertySet;
+
+    removeContingentProperty(name: string) {
+        if (this.contingentProperties) {
+            let contingentValueList = this.contingentProperties[name];
+            if (contingentValueList) {
+                contingentValueList.dequeue();
+            }
+        }
+    }
+
+    addContingentProperties(newProps: PropertySet, op?: ops.ICombiningOp) {
+        if (!this.contingentProperties) {
+            this.contingentProperties = Properties.createMap<Collections.List<any>>();
+        }
+        Properties.contingentExtend(this.contingentProperties, newProps, op);
+    }
 
     addProperties(newProps: PropertySet, op?: ops.ICombiningOp) {
         if (!this.properties) {
@@ -524,6 +542,7 @@ export class TextSegment extends BaseSegment {
         return SegmentType.Text;
     }
 
+    // TODO: use function in properties.ts
     matchProperties(b: TextSegment) {
         if (this.properties) {
             if (!b.properties) {
@@ -1474,6 +1493,27 @@ export class Client {
         msg.contents = this.transformOp(op, msg, toSequenceNumber);
     }
 
+    checkContingentOps(groupOp: ops.IMergeTreeGroupMsg, msg: API.ISequencedObjectMessage) {
+        for (let memberOp of groupOp.ops) {
+            // TODO: handle cancelling due to out of range or id not found
+            if (memberOp.type === ops.MergeTreeDeltaType.ANNOTATE) {
+                if (memberOp.when) {
+                    let whenClause = memberOp.when;
+                    // for now assume single segment
+                    let segoff = this.mergeTree.getContainingSegment(memberOp.pos1,
+                        msg.referenceSequenceNumber, this.getOrAddShortClientId(msg.clientId));
+                    if (segoff) {
+                        let baseSegment = <BaseSegment>segoff.segment;
+                        if (!Properties.matchProperties(baseSegment.properties, whenClause.props)) {
+                            return false;
+                        }
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
     applyOp(op: ops.IMergeTreeOp, msg: API.ISequencedObjectMessage) {
         let clid = this.getOrAddShortClientId(msg.clientId);
         switch (op.type) {
@@ -1495,11 +1535,18 @@ export class Client {
                 this.annotateSegmentRemote(op.props, op.pos1, op.pos2, msg.sequenceNumber, msg.referenceSequenceNumber,
                     clid, op.combiningOp);
                 break;
-            case ops.MergeTreeDeltaType.GROUP:
-                for (let memberOp of op.ops) {
-                    this.applyOp(memberOp, msg);
+            case ops.MergeTreeDeltaType.GROUP: {
+                let go = true;
+                if (op.hasContingentOps) {
+                    go = this.checkContingentOps(op, msg);
+                }
+                if (go) {
+                    for (let memberOp of op.ops) {
+                        this.applyOp(memberOp, msg);
+                    }
                 }
                 break;
+            }
         }
     }
 
@@ -1518,7 +1565,19 @@ export class Client {
             if (msg.clientId == this.longClientId) {
                 let op = <ops.IMergeTreeOp>msg.contents;
                 if (op.type !== ops.MergeTreeDeltaType.ANNOTATE) {
-                    this.ackPendingSegment(operationMessage.sequenceNumber);
+                    let ack = true;
+                    if (op.type === ops.MergeTreeDeltaType.GROUP) {
+                        if (op.hasContingentOps) {
+                            let cancelled = this.checkContingentOps(op, msg);
+                            if (cancelled) {
+                                ack= false;
+                                // TODO: undo segment group and re-do group op
+                            } 
+                        } 
+                    }
+                    if (ack) {
+                        this.ackPendingSegment(operationMessage.sequenceNumber);
+                    }
                 }
             }
             else {
@@ -1550,6 +1609,7 @@ export class Client {
         }
     }
 
+    // TODO: hold group for ack if contingent
     localTransaction(groupOp: ops.IMergeTreeGroupMsg) {
         this.mergeTree.startGroupOperation();
         for (let op of groupOp.ops) {
@@ -2654,6 +2714,20 @@ export class MergeTree {
         this.search(startPos, UniversalSequenceNumber, clientId,
             { leaf: recordRangeLeaf, shift: rangeShift }, searchInfo);
         return searchInfo.stacks;
+    }
+
+    localUndo(segment: Segment) {
+        if (segment.removedSeq === UnassignedSequenceNumber) {
+            // TODO: handle case of overlapping delete (restore seq from
+            // overlapping delete)
+            segment.removedSeq = undefined;
+            segment.removedClientId = undefined;
+        } else if (segment.seq === UnassignedSequenceNumber) {
+            // physical delete
+            let segpos = this.getOffset(segment, UniversalSequenceNumber, this.collabWindow.clientId);
+            let segend = segpos + segment.cachedLength;
+            this.removeRange(segpos, segend, UniversalSequenceNumber, this.collabWindow.clientId);
+        }
     }
 
     // TODO: filter function

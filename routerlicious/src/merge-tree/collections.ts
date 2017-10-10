@@ -110,9 +110,15 @@ export class List<T> {
     }
 
     first(): T {
-        if (!this.empty())
+        if (!this.empty()) {
             return (this.next.data);
-        else return undefined;
+        }
+    }
+
+    last() {
+        if (!this.empty()) {
+            return (this.prev.data);
+        }
     }
 
     empty(): boolean {
