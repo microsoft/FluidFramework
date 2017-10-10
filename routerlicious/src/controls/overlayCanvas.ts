@@ -300,6 +300,12 @@ export class OverlayCanvas extends ui.Component {
         this.markDirty();
     }
 
+    public removeLayer(layer: Layer) {
+        const index = this.layers.indexOf(layer);
+        this.layers.splice(index, 1);
+        this.markDirty();
+    }
+
     /**
      * Sets the current pen
      */
@@ -309,12 +315,6 @@ export class OverlayCanvas extends ui.Component {
 
     public enableInk(enable: boolean) {
         this.enableInkCore(this.penHovering, enable);
-    }
-
-    public updateLayer(model: ink.IInk, offset: ui.IPoint) {
-        // layer should operate off the entire model
-        const inkLayer = new InkLayer(this.size, model);
-        this.addLayer(inkLayer);
     }
 
     protected resizeCore(rectangle: ui.Rectangle) {
@@ -396,7 +396,7 @@ export class OverlayCanvas extends ui.Component {
                 const model = this.document.createInk();
                 this.activeLayer = new InkLayer({ width: 0, height: 0 }, model);
                 this.addLayer(this.activeLayer);
-                this.emit("ink", model, evt);
+                this.emit("ink", this.activeLayer, model, evt);
             }
 
             this.stopDryTimer();

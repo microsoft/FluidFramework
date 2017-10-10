@@ -7,9 +7,14 @@ import { DockPanel } from "./dockPanel";
 import { FlowView, IOverlayMarker } from "./flowView";
 import { Image } from "./image";
 import { LayerPanel } from "./layerPanel";
-import { OverlayCanvas } from "./overlayCanvas";
+import { InkLayer, Layer, OverlayCanvas } from "./overlayCanvas";
 import { IRange } from "./scrollBar";
 import { Status } from "./status";
+
+interface IOverlayLayerStatus {
+    layer: Layer;
+    active: boolean;
+}
 
 export class FlowContainer extends ui.Component {
     public status: Status;
@@ -18,11 +23,14 @@ export class FlowContainer extends ui.Component {
     private layerPanel: LayerPanel;
     private overlayCanvas: OverlayCanvas;
 
+    private layerCache: { [key: string]: Layer } = {};
+    private activeLayers: {[key: string]: IOverlayLayerStatus } = {};
+
     constructor(
         element: HTMLDivElement,
         collabDocument: api.Document,
         sharedString: SharedString,
-        overlayMap: api.IMap,
+        private overlayMap: api.IMap,
         private image: Image) {
 
         super(element);
@@ -49,8 +57,10 @@ export class FlowContainer extends ui.Component {
         overlayCanvasDiv.classList.add("overlay-canvas");
         this.overlayCanvas = new OverlayCanvas(collabDocument, overlayCanvasDiv, layerPanelDiv);
 
-        this.overlayCanvas.on("ink", (model: ink.IInk, event: PointerEvent) =>  {
+        this.overlayCanvas.on("ink", (layer: InkLayer, model: ink.IInk, event: PointerEvent) =>  {
             debug("Just saw a new ink layer!");
+            this.layerCache[model.id] = layer;
+            this.activeLayers[model.id] = { layer, active: true };
             overlayMap.set(model.id, model);
             // Inserts the marker at the flow view's cursor position
             sharedString.insertMarker(
@@ -77,7 +87,11 @@ export class FlowContainer extends ui.Component {
 
                 this.layerPanel.scrollBar.setRange(renderInfo.range);
 
-                // debug("Markers", renderInfo.overlayMarkers);
+                this.markLayersInactive();
+                for (const marker of renderInfo.overlayMarkers) {
+                    this.addLayer(marker.id);
+                }
+                this.pruneInactiveLayers();
             });
 
         this.status.addOption("ink", "ink");
@@ -120,10 +134,24 @@ export class FlowContainer extends ui.Component {
         }
     }
 
-    // private async addLayer(id: string) {
-    //     const ink = await this.overlayMap.get(id) as ink.IInk;
-    //     this.overlayCanvas.updateLayer(ink, { x: 0, y: 0 });
-    // }
+    private async addLayer(id: string) {
+        const ink = await this.overlayMap.get(id) as ink.IInk;
+        if (!(id in this.layerCache)) {
+            const layer = new InkLayer(this.size, ink);
+            this.layerCache[id] = layer;
+        }
+
+        if (!(id in this.activeLayers)) {
+            const layer = this.layerCache[id];
+            this.overlayCanvas.addLayer(layer);
+            this.activeLayers[id] = {
+                active: true,
+                layer,
+            };
+        }
+
+        this.activeLayers[id].active = true;
+    }
 
     private async updateInsights(insights: api.IMap) {
         const view = await insights.getView();
@@ -146,6 +174,24 @@ export class FlowContainer extends ui.Component {
                     ? "🙂"
                     : analytics.sentiment < 0.3 ? "🙁" : "😐";
                 this.status.add("si", sentimentEmoji);
+            }
+        }
+    }
+
+    private markLayersInactive() {
+        // tslint:disable-next-line:forin
+        for (const layer in this.activeLayers) {
+            this.activeLayers[layer].active = false;
+        }
+    }
+
+    private pruneInactiveLayers() {
+        // tslint:disable-next-line:forin
+        for (const layerId in this.activeLayers) {
+            if (!this.activeLayers[layerId].active) {
+                const layer = this.activeLayers[layerId];
+                delete this.activeLayers[layerId];
+                this.overlayCanvas.removeLayer(layer.layer);
             }
         }
     }
