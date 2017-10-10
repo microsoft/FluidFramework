@@ -1,10 +1,10 @@
 import * as api from "../api";
 import * as ink from "../ink";
-import { SharedString } from "../merge-tree";
+import { MarkerBehaviors, reservedMarkerIdKey, SharedString } from "../merge-tree";
 import * as ui from "../ui";
 import { debug } from "./debug";
 import { DockPanel } from "./dockPanel";
-import { FlowView } from "./flowView";
+import { FlowView, IOverlayMarker } from "./flowView";
 import { Image } from "./image";
 import { LayerPanel } from "./layerPanel";
 import { OverlayCanvas } from "./overlayCanvas";
@@ -22,7 +22,7 @@ export class FlowContainer extends ui.Component {
         element: HTMLDivElement,
         collabDocument: api.Document,
         sharedString: SharedString,
-        private overlayMap: api.IMap,
+        overlayMap: api.IMap,
         private image: Image) {
 
         super(element);
@@ -52,6 +52,10 @@ export class FlowContainer extends ui.Component {
         this.overlayCanvas.on("ink", (model: ink.IInk, event: PointerEvent) =>  {
             debug("Just saw a new ink layer!");
             overlayMap.set(model.id, model);
+            // Inserts the marker at the flow view's cursor position
+            sharedString.insertMarker(
+                this.flowView.cursor.pos, MarkerBehaviors.None,
+                { [reservedMarkerIdKey]: model.id });
         });
 
         this.status.on("dry", (value) => {
@@ -61,12 +65,19 @@ export class FlowContainer extends ui.Component {
         // Update the scroll bar
         this.flowView.on(
             "render",
-            (renderInfo: { range: IRange, viewportEndPos: number, viewportStartPos: number }) => {
+            (renderInfo: {
+                overlayMarkers: IOverlayMarker[],
+                range: IRange,
+                viewportEndPos: number,
+                viewportStartPos: number,
+            }) => {
                 const showScrollBar = renderInfo.range.min !== renderInfo.viewportStartPos ||
                     renderInfo.range.max !== renderInfo.viewportEndPos;
                 this.layerPanel.showScrollBar(showScrollBar);
 
                 this.layerPanel.scrollBar.setRange(renderInfo.range);
+
+                // debug("Markers", renderInfo.overlayMarkers);
             });
 
         this.status.addOption("ink", "ink");
@@ -89,8 +100,6 @@ export class FlowContainer extends ui.Component {
         image.element.style.visibility = "hidden";
         this.addChild(image);
         element.appendChild(image.element);
-
-        this.renderInk();
     }
 
     public trackInsights(insights: api.IMap) {
@@ -111,29 +120,10 @@ export class FlowContainer extends ui.Component {
         }
     }
 
-    private renderInk() {
-        // Append all existing layers
-        this.overlayMap.keys().then(
-            (initialKeys) => {
-                for (const key of initialKeys) {
-                    this.addLayer(key);
-                }
-            },
-            (error) => {
-                debug(error);
-            });
-
-        // and then list for new layers
-        this.overlayMap.on("valueChanged", (key) => {
-            debug("Value changed", key);
-            this.addLayer(key.key);
-        });
-    }
-
-    private async addLayer(id: string) {
-        const ink = await this.overlayMap.get(id) as ink.IInk;
-        this.overlayCanvas.updateLayer(ink, { x: 0, y: 0 });
-    }
+    // private async addLayer(id: string) {
+    //     const ink = await this.overlayMap.get(id) as ink.IInk;
+    //     this.overlayCanvas.updateLayer(ink, { x: 0, y: 0 });
+    // }
 
     private async updateInsights(insights: api.IMap) {
         const view = await insights.getView();

@@ -58,6 +58,11 @@ enum CharacterCodes {
     space = 0x0020,   // " "
 }
 
+export interface IOverlayMarker {
+    id: string;
+    position: number;
+}
+
 interface IParagraphInfo {
     breaks: number[];
     singleLineWidth: number;
@@ -760,6 +765,8 @@ function renderSegmentIntoLine(
                 }
             }
             return false;
+        } else {
+            lineContext.lineDiv.lineEnd++;
         }
     }
     return true;
@@ -1734,6 +1741,25 @@ function segmentToItems(
     return true;
 }
 
+function gatherOverlayLayer(
+    segment: SharedString.Segment,
+    segpos: number,
+    refSeq: number,
+    clientId: number,
+    start: number,
+    end: number,
+    context: IOverlayMarker[]) {
+
+    if (segment.getType() === SharedString.SegmentType.Marker) {
+        let marker = <SharedString.Marker> segment;
+        if (marker.behaviors === SharedString.MarkerBehaviors.None) {
+            context.push({ id: marker.getId(), position: segpos });
+        }
+    }
+
+    return true;
+}
+
 export interface IViewportDiv extends HTMLDivElement {
 }
 
@@ -1867,6 +1893,7 @@ interface ILayoutContext {
 
 interface IRenderOutput {
     deferredHeight: number;
+    overlayMarkers: IOverlayMarker[];
     // TODO: make this an array for tables that extend past bottom of viewport
     viewportStartPos: number;
     viewportEndPos: number;
@@ -2084,10 +2111,24 @@ function renderFlow(renderContext: ILayoutContext, deferWhole = false): IRenderO
     } while ((pgMarker !== undefined) &&
     ((renderContext.endMarker === undefined) || (pgMarker !== renderContext.endMarker)) &&
         (renderContext.viewport.remainingHeight() >= docContext.defaultLineDivHeight));
+
+    // Find overlay annotations
+    const viewportEndPos = startPGMarker.cache.endOffset + startPGPos;
+
+    const overlayMarkers: IOverlayMarker[] = [];
+    client.mergeTree.mapRange(
+        { leaf: gatherOverlayLayer },
+        SharedString.UniversalSequenceNumber,
+        client.getClientId(),
+        overlayMarkers,
+        viewportStartPos,
+        viewportEndPos);
+
     return {
         deferredHeight,
+        overlayMarkers,
         viewportStartPos,
-        viewportEndPos: startPGMarker.cache.endOffset + startPGPos,
+        viewportEndPos,
     };
 }
 
@@ -3257,6 +3298,7 @@ export class FlowView extends ui.Component {
         }
 
         this.emit("render", {
+            overlayMarkers: renderOutput.overlayMarkers,
             range: { min: 1, max: this.client.getLength(), value: this.viewportStartPos },
             viewportEndPos: this.viewportEndPos,
             viewportStartPos: this.viewportStartPos,
