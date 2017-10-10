@@ -1783,9 +1783,9 @@ export class Client {
         return this.mergeTree.getCollabWindow().clientId;
     }
 
-    getText() {
+    getText(start?: number, end?: number) {
         let segmentWindow = this.mergeTree.getCollabWindow();
-        return this.mergeTree.getText(segmentWindow.currentSeq, segmentWindow.clientId);
+        return this.mergeTree.getText(segmentWindow.currentSeq, segmentWindow.clientId, false, start, end);
     }
 
     /**

@@ -2574,6 +2574,26 @@ export class FlowView extends ui.Component {
         return this.lineDivSelect((elm) => (elm), this.viewportDiv, false, true);
     }
 
+    /**
+     * Returns the (x, y) coordinate of the given position relative to the FlowView's coordinate system or null
+     * if the position is not visible.
+     */
+    public getPositionLocation(position: number): ui.IPoint {
+        const lineDiv = findLineDiv(position, this, true);
+        if (!lineDiv) {
+            return null;
+        }
+
+        // Estimate placement location
+        const text = this.client.getText(lineDiv.linePos, position);
+        const textWidth = getTextWidth(text, lineDiv.style.font);
+        const lineDivRect = lineDiv.getBoundingClientRect();
+
+        const location = { x: lineDivRect.left + textWidth, y: lineDivRect.bottom };
+
+        return location;
+    }
+
     public checkRow(lineDiv: ILineDiv, fn: (lineDiv: ILineDiv) => ILineDiv, rev?: boolean) {
         let rowDiv = <IRowDiv>lineDiv;
         let oldRowDiv: IRowDiv;

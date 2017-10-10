@@ -89,7 +89,7 @@ export class FlowContainer extends ui.Component {
 
                 this.markLayersInactive();
                 for (const marker of renderInfo.overlayMarkers) {
-                    this.addLayer(marker.id);
+                    this.addLayer(marker);
                 }
                 this.pruneInactiveLayers();
             });
@@ -134,8 +134,15 @@ export class FlowContainer extends ui.Component {
         }
     }
 
-    private async addLayer(id: string) {
+    private async addLayer(marker: IOverlayMarker) {
+        const id = marker.id;
+        const position = marker.position;
+        const location = this.flowView.getPositionLocation(position);
+
+        // TODO the async nature of this may cause rendering pauses - and in general the layer should already
+        // exist
         const ink = await this.overlayMap.get(id) as ink.IInk;
+
         if (!(id in this.layerCache)) {
             const layer = new InkLayer(this.size, ink);
             this.layerCache[id] = layer;
@@ -151,6 +158,7 @@ export class FlowContainer extends ui.Component {
         }
 
         this.activeLayers[id].active = true;
+        this.activeLayers[id].layer.setPosition(location);
     }
 
     private async updateInsights(insights: api.IMap) {
