@@ -16,6 +16,9 @@ export enum SegmentCircleInclusive {
 
 const DryTimer = 5000;
 
+// Padding around a drawing context - used to avoid extra copies
+const CanvasPadding = 100;
+
 /**
  * Helper method to resize a HTML5 canvas
  */
@@ -27,87 +30,53 @@ function sizeCanvas(canvas: HTMLCanvasElement, size: ui.ISize) {
 }
 
 /**
- * Graphics drawing layer
+ * Adds padding to next if is different from the current value
  */
-export abstract class Layer {
-    public position: ui.IPoint = { x: 0, y: 0 };
-    public canvas = document.createElement("canvas");
-    protected context: CanvasRenderingContext2D;
-    private size: ui.ISize;
-
-    constructor(size: ui.ISize) {
-        this.size = _.clone(size);
-        this.context = this.canvas.getContext("2d");
-        sizeCanvas(this.canvas, size);
-    }
-
-    public setSize(size: ui.ISize) {
-        this.size = { width: size.width, height: size.height };
-        sizeCanvas(this.canvas, size);
-        this.clearCanvas();
-        this.render();
-    }
-
-    public setPosition(position: ui.IPoint) {
-        this.position = position;
-    }
-
-    // Do I want a pluggable render function here?
-    protected abstract render();
-
-    /**
-     * Clears the given HTML canvas
-     */
-    private clearCanvas() {
-        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    }
+function padLeft(current: number, next: number, padding: number) {
+    return current !== next ? Math.floor(next - padding) : current;
 }
 
 /**
- * Used to render ink
+ * Adds padding to next if is different from the current value
  */
-export class InkLayer extends Layer {
+function padRight(current: number, next: number, padding: number) {
+    return current !== next ? Math.ceil(next + padding) : current;
+}
+
+/**
+ * The drawing context provides access to a logical canvas that is infinite in size. In reality it's backed by a
+ * fixed size canvas that fits all instructions sent to it.
+ *
+ * TODO: Not quite a DrawingContext in the traditional sense but close. Probably should rename or move into the
+ * layer and expose more traditional getContext like calls.
+ */
+export class DrawingContext {
+    public canvas = document.createElement("canvas");
+    private context: CanvasRenderingContext2D;
     private lastOperation: ink.IOperation = null;
     private pen: ink.IPen;
+    private canvasOffset: ui.IPoint = { x: 0, y: 0 };
 
-    // TODO I may actually want 'layers' in the ink layer to support multiple pens interacting with the canvas
-    // at the same time
-
-    constructor(size: ui.ISize, private model: ink.IInk) {
-        super(size);
-
-        // Listen for updates and re-render
-        this.model.on("op", (op) => {
-            const delta = op.contents as ink.IDelta;
-            for (const operation of delta.operations) {
-                this.drawStrokeCore(operation);
-            }
-        });
+    public get offset(): ui.IPoint {
+        return this.canvasOffset;
     }
 
-    public drawDelta(delta: ink.IDelta) {
-        this.model.submitOp(delta);
-        for (const operation of delta.operations) {
-            this.drawStrokeCore(operation);
+    constructor(size?: ui.ISize) {
+        this.context = this.canvas.getContext("2d");
+        if (size) {
+            sizeCanvas(this.canvas, size);
         }
+        this.updatePosition();
     }
 
-    /**
-     * Renders the entire ink layer
-     */
-    protected render() {
+    public clear() {
         this.lastOperation = null;
-        const layers = this.model.getLayers();
-        for (const layer of layers) {
-            for (const operation of layer.operations) {
-                this.drawStrokeCore(operation);
-            }
-        }
+        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
     }
 
     // store instructions used to render itself? i.e. the total path? Or defer to someone else to actually
     // do the re-render with a context?
-    private drawStrokeCore(current: ink.IOperation) {
+    public drawStroke(current: ink.IOperation) {
         let type = ink.getActionType(current);
         let shapes: IShape[];
 
@@ -135,10 +104,23 @@ export class InkLayer extends Layer {
         }
 
         if (shapes) {
+            // Update canvas bounds
+            let unionedBounds: ui.Rectangle;
+            for (let shape of shapes) {
+                const bounds = shape.getBounds();
+                if (!unionedBounds) {
+                    unionedBounds = bounds;
+                } else {
+                    unionedBounds = unionedBounds.union(bounds);
+                }
+            }
+
+            this.ensureCanvas(unionedBounds);
+
             this.context.fillStyle = ui.toColorStringNoAlpha(this.pen.color);
             for (let shape of shapes) {
                 this.context.beginPath();
-                shape.render(this.context);
+                shape.render(this.context, this.offset);
                 this.context.closePath();
                 this.context.fill();
             }
@@ -147,7 +129,60 @@ export class InkLayer extends Layer {
         this.lastOperation = current;
     }
 
-    /***
+    /**
+     * Updates the positioning of the canvas so that the logical (0, 0) is at pixel (0, 0)
+     */
+    private updatePosition() {
+        this.canvas.style.position = "relative";
+        this.canvas.style.left = `${this.offset.x}px`;
+        this.canvas.style.top = `${this.offset.y}px`;
+    }
+
+    /**
+     * Ensures that the canvas is large enough to render the given bounds
+     */
+    private ensureCanvas(bounds: ui.Rectangle) {
+        const canvasBounds = new ui.Rectangle(this.offset.x, this.offset.y, this.canvas.width, this.canvas.height);
+        if (canvasBounds.contains(bounds)) {
+            return;
+        }
+
+        const newBounds = canvasBounds.union(bounds);
+
+        // Capture the max values of both prior to adjusting the min
+        const canvasMax = { x: newBounds.x + newBounds.width, y: newBounds.y + newBounds.height };
+        const newMax = { x: newBounds.x + newBounds.width, y: newBounds.y + newBounds.height };
+
+        // Update the min values
+        newBounds.x = padLeft(canvasBounds.x, newBounds.x, CanvasPadding);
+        newBounds.y = padLeft(canvasBounds.y, newBounds.y, CanvasPadding);
+
+        // Update the max values - and then width/height
+        newMax.x = padRight(canvasMax.x, newMax.x, CanvasPadding);
+        newMax.y = padRight(canvasMax.y, newMax.y, CanvasPadding);
+        newBounds.width = newMax.x - newBounds.x;
+        newBounds.height = newMax.y - newBounds.y;
+
+        // Need to resize the canvas
+        const newCanvas = document.createElement("canvas");
+        sizeCanvas(newCanvas, newBounds.size);
+        const newContext = newCanvas.getContext("2d");
+        newContext.drawImage(this.canvas, this.offset.x - newBounds.x, this.offset.y - newBounds.y);
+
+        // Swap the canvas elements
+        if (this.canvas.parentNode) {
+            this.canvas.parentNode.insertBefore(newCanvas, this.canvas);
+            this.canvas.remove();
+        }
+
+        this.canvas = newCanvas;
+        this.context = newContext;
+        this.canvasOffset = { x: newBounds.x, y: newBounds.y };
+
+        this.updatePosition();
+    }
+
+    /**
      * given start point and end point, get MixInk shapes to render. The returned MixInk
      * shapes may contain one or two circles whose center is either start point or end point.
      * Enum SegmentCircleInclusive determins whether circle is in the return list.
@@ -251,10 +286,71 @@ export class InkLayer extends Layer {
 }
 
 /**
+ * Graphics drawing layer
+ */
+export abstract class Layer {
+    public position: ui.IPoint = { x: 0, y: 0 };
+    public node = document.createElement("div");
+    public drawingContext = new DrawingContext();
+    private size: ui.ISize;
+
+    constructor(size: ui.ISize) {
+        this.size = _.clone(size);
+        this.node.appendChild(this.drawingContext.canvas);
+        this.updatePosition();
+    }
+
+    public setSize(size: ui.ISize) {
+        this.size = { width: size.width, height: size.height };
+    }
+
+    public setPosition(position: ui.IPoint) {
+        this.position = position;
+        this.updatePosition();
+    }
+
+    private updatePosition() {
+        this.node.style.position = "absolute";
+        this.node.style.left = `${this.position.x}px`;
+        this.node.style.top = `${this.position.y}px`;
+    }
+}
+
+/**
+ * Used to render ink
+ */
+export class InkLayer extends Layer {
+    constructor(size: ui.ISize, private model: ink.IInk) {
+        super(size);
+
+        // Listen for updates and re-render
+        this.model.on("op", (op) => {
+            const delta = op.contents as ink.IDelta;
+            for (const operation of delta.operations) {
+                this.drawingContext.drawStroke(operation);
+            }
+        });
+
+        const layers = this.model.getLayers();
+        for (const layer of layers) {
+            for (const operation of layer.operations) {
+                this.drawingContext.drawStroke(operation);
+            }
+        }
+    }
+
+    public drawDelta(delta: ink.IDelta) {
+        this.model.submitOp(delta);
+        for (const operation of delta.operations) {
+            this.drawingContext.drawStroke(operation);
+        }
+    }
+}
+
+/**
  * API access to a drawing context that can be used to render elements
  */
 export class OverlayCanvas extends ui.Component {
-    private throttler = new ui.AnimationFrameThrottler(() => this.render());
     private layers: Layer[] = [];
     private currentStylusActionId: string;
     private dryTimer: NodeJS.Timer;
@@ -297,13 +393,13 @@ export class OverlayCanvas extends ui.Component {
 
     public addLayer(layer: Layer) {
         this.layers.push(layer);
-        this.markDirty();
+        this.element.appendChild(layer.node);
     }
 
     public removeLayer(layer: Layer) {
         const index = this.layers.indexOf(layer);
         this.layers.splice(index, 1);
-        this.markDirty();
+        layer.node.remove();
     }
 
     /**
@@ -319,10 +415,6 @@ export class OverlayCanvas extends ui.Component {
 
     public isDrawLayer(layer: Layer) {
         return this.activeLayer === layer;
-    }
-
-    protected resizeCore(rectangle: ui.Rectangle) {
-        this.markDirty();
     }
 
     /**
@@ -369,36 +461,17 @@ export class OverlayCanvas extends ui.Component {
         }
     }
 
-    /**
-     * Marks the canvas dirty and triggers a render
-     */
-    private markDirty() {
-        this.throttler.trigger();
-    }
-
-    private render() {
-        // TODO
-        // composite the layers together off of the animation clock
-        // based on the type of layer optimize how exactly we render the overall canvas - i.e. do I split
-        // things into multiple canvas divs or just use a single one
-        ui.removeAllChildren(this.element);
-        for (const layer of this.layers) {
-            layer.setSize(this.size);
-            layer.canvas.style.position = "absolute";
-            layer.canvas.style.left = `${layer.position.x}px`;
-            layer.canvas.style.top = `${layer.position.y}px`;
-            this.element.appendChild(layer.canvas);
-        }
-    }
-
     private handlePointerDown(evt: PointerEvent) {
         // Only support pen events
         if (evt.pointerType === "pen" || (evt.pointerType === "mouse" && evt.button === 0)) {
+            let translatedPoint = this.translatePoint(this.element, evt);
+
             // Create a new layer if doesn't already exist
             if (!this.activeLayer) {
-                // Create a new layer and then emit it existing
+                // Create a new layer at the position of the pointer down
                 const model = this.document.createInk();
                 this.activeLayer = new InkLayer({ width: 0, height: 0 }, model);
+                this.activeLayer.setPosition(translatedPoint);
                 this.addLayer(this.activeLayer);
                 this.emit("ink", this.activeLayer, model, evt);
             }
@@ -409,11 +482,8 @@ export class OverlayCanvas extends ui.Component {
             this.activePointerId = evt.pointerId;
             this.element.setPointerCapture(this.activePointerId);
 
-            // Anchor and clear any current selection.
-            let translatedPoint = this.translatePoint(this.element, evt);
-
             let delta = new ink.Delta().stylusDown(
-                translatedPoint,
+                this.translateToLayer(translatedPoint, this.activeLayer),
                 evt.pressure,
                 this.activePen);
             this.currentStylusActionId = delta.operations[0].stylusDown.id;
@@ -427,7 +497,7 @@ export class OverlayCanvas extends ui.Component {
         if (evt.pointerId === this.activePointerId) {
             let translatedPoint = this.translatePoint(this.element, evt);
             let delta = new ink.Delta().stylusMove(
-                translatedPoint,
+                this.translateToLayer(translatedPoint, this.activeLayer),
                 evt.pressure,
                 this.currentStylusActionId);
             this.activeLayer.drawDelta(delta);
@@ -444,7 +514,7 @@ export class OverlayCanvas extends ui.Component {
             evt.returnValue = false;
 
             let delta = new ink.Delta().stylusUp(
-                translatedPoint,
+                this.translateToLayer(translatedPoint, this.activeLayer),
                 evt.pressure,
                 this.currentStylusActionId);
             this.currentStylusActionId = undefined;
@@ -489,6 +559,13 @@ export class OverlayCanvas extends ui.Component {
         return {
             x: event.pageX - offset.left,
             y: event.pageY - offset.top,
+        };
+    }
+
+    private translateToLayer(position: ui.IPoint, layer: Layer): ui.IPoint {
+        return {
+            x: position.x - layer.position.x,
+            y: position.y - layer.position.y,
         };
     }
 }
