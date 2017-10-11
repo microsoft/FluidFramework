@@ -158,7 +158,11 @@ export class FlowContainer extends ui.Component {
         }
 
         this.activeLayers[id].active = true;
-        this.activeLayers[id].layer.setPosition(location);
+
+        // Update the position unless we're in the process of drawing the layer
+        if (!this.overlayCanvas.isDrawLayer(this.activeLayers[id].layer)) {
+            this.activeLayers[id].layer.setPosition(location);
+        }
     }
 
     private async updateInsights(insights: api.IMap) {

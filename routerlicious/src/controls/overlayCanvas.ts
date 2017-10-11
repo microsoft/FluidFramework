@@ -317,6 +317,10 @@ export class OverlayCanvas extends ui.Component {
         this.enableInkCore(this.penHovering, enable);
     }
 
+    public isDrawLayer(layer: Layer) {
+        return this.activeLayer === layer;
+    }
+
     protected resizeCore(rectangle: ui.Rectangle) {
         this.markDirty();
     }
