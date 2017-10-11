@@ -1751,7 +1751,7 @@ function gatherOverlayLayer(
     context: IOverlayMarker[]) {
 
     if (segment.getType() === SharedString.SegmentType.Marker) {
-        let marker = <SharedString.Marker> segment;
+        let marker = <SharedString.Marker>segment;
         if (marker.behaviors === SharedString.MarkerBehaviors.None) {
             context.push({ id: marker.getId(), position: segpos });
         }
@@ -2529,7 +2529,9 @@ export class FlowView extends ui.Component {
             remotePosInfo.cursor = presentPresence.cursor;
         }
         this.presenceVector[remotePosInfo.clientId] = remotePosInfo;
-        this.presenceQueueRender(remotePosInfo);
+        if (remotePosInfo.xformPos !== presentPresence.xformPos) {
+            this.presenceQueueRender(remotePosInfo);
+        }
     }
 
     public remotePresenceFromEdit(longClientId: string, refseq: number, oldpos: number, posAdjust = 0) {
