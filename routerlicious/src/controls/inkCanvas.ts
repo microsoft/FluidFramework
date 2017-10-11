@@ -217,7 +217,7 @@ export class InkCanvas extends ui.Component {
             this.context.fillStyle = ui.toColorStringNoAlpha(pen.color);
             for (let shape of shapes) {
                 this.context.beginPath();
-                shape.render(this.context);
+                shape.render(this.context, { x: 0, y: 0 });
                 this.context.closePath();
                 this.context.fill();
             }

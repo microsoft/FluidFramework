@@ -64,15 +64,19 @@ export async function onLoad(id: string, version: resources.ICommit, config: any
                 newString.insertMarker(newString.client.getLength(), marker.behaviors, marker.properties);
             }
         }
+
         root.set("text", newString);
+        root.set("ink", collabDoc.createMap());
     }
 
     const sharedString = root.get("text") as SharedString.SharedString;
     console.log(`Shared string ready - ${performanceNow()}`);
-
     console.log(window.navigator.userAgent);
     console.log(`id is ${id}`);
     console.log(`Partial load fired - ${performanceNow()}`);
+
+    // Higher plane ink
+    const inkPlane = root.get("ink");
 
     // Bindy for insights
     const image = new controls.Image(
@@ -80,7 +84,7 @@ export async function onLoad(id: string, version: resources.ICommit, config: any
         url.resolve(document.baseURI, "/public/images/bindy.svg"));
 
     const containerDiv = document.createElement("div");
-    const container = new controls.FlowContainer(containerDiv, sharedString, image);
+    const container = new controls.FlowContainer(containerDiv, collabDoc, sharedString, inkPlane, image);
     theFlow = container.flowView;
     host.attach(container);
 
