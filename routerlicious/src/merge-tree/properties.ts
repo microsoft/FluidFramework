@@ -1,6 +1,6 @@
 // tslint:disable
 import * as ops from "./ops";
-import * as Collections from "./Collections";
+import * as Collections from "./collections";
 /**
  * For each contingent property, a list of contingent local changes,
  * in change order.  

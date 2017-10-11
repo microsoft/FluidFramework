@@ -1,5 +1,5 @@
 import * as ui from "../ui";
-import { ScrollBar } from "./scrollbar";
+import { ScrollBar } from "./scrollBar";
 
 const scrollAreaWidth = 18;
 
