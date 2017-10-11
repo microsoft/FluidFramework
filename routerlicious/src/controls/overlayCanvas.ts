@@ -413,10 +413,6 @@ export class OverlayCanvas extends ui.Component {
         this.enableInkCore(this.penHovering, enable);
     }
 
-    public isDrawLayer(layer: Layer) {
-        return this.activeLayer === layer;
-    }
-
     /**
      * Tracks ink events on the provided element and enables/disables the ink layer based on them
      */
@@ -473,7 +469,7 @@ export class OverlayCanvas extends ui.Component {
                 this.activeLayer = new InkLayer({ width: 0, height: 0 }, model);
                 this.activeLayer.setPosition(translatedPoint);
                 this.addLayer(this.activeLayer);
-                this.emit("ink", this.activeLayer, model, evt);
+                this.emit("ink", this.activeLayer, model, translatedPoint);
             }
 
             this.stopDryTimer();

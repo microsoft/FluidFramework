@@ -14,6 +14,7 @@ import { Status } from "./status";
 interface IOverlayLayerStatus {
     layer: Layer;
     active: boolean;
+    cursorOffset: ui.IPoint;
 }
 
 export class FlowContainer extends ui.Component {
@@ -57,10 +58,15 @@ export class FlowContainer extends ui.Component {
         overlayCanvasDiv.classList.add("overlay-canvas");
         this.overlayCanvas = new OverlayCanvas(collabDocument, overlayCanvasDiv, layerPanelDiv);
 
-        this.overlayCanvas.on("ink", (layer: InkLayer, model: ink.IInk, event: PointerEvent) =>  {
-            debug("Just saw a new ink layer!");
+        this.overlayCanvas.on("ink", (layer: InkLayer, model: ink.IInk, start: ui.IPoint) =>  {
+            const cursorLocation = this.flowView.getPositionLocation(this.flowView.cursor.pos);
+            const cursorOffset = {
+                x: start.x - cursorLocation.x,
+                y: start.y - cursorLocation.y,
+            };
+
             this.layerCache[model.id] = layer;
-            this.activeLayers[model.id] = { layer, active: true };
+            this.activeLayers[model.id] = { layer, active: true, cursorOffset };
             overlayMap.set(model.id, model);
             // Inserts the marker at the flow view's cursor position
             sharedString.insertMarker(
@@ -140,7 +146,11 @@ export class FlowContainer extends ui.Component {
         const location = this.flowView.getPositionLocation(position);
 
         // TODO the async nature of this may cause rendering pauses - and in general the layer should already
-        // exist
+        // exist. Should just make this a sync call.
+        // Mark true prior to the async work
+        if (this.activeLayers[id]) {
+            this.activeLayers[id].active = true;
+        }
         const ink = await this.overlayMap.get(id) as ink.IInk;
 
         if (!(id in this.layerCache)) {
@@ -154,15 +164,18 @@ export class FlowContainer extends ui.Component {
             this.activeLayers[id] = {
                 active: true,
                 layer,
+                cursorOffset: { x: 0, y: 0 },
             };
         }
 
-        this.activeLayers[id].active = true;
+        const activeLayer = this.activeLayers[id];
+
+        // Add in any cursor offset
+        location.x += activeLayer.cursorOffset.x;
+        location.y += activeLayer.cursorOffset.y;
 
         // Update the position unless we're in the process of drawing the layer
-        if (!this.overlayCanvas.isDrawLayer(this.activeLayers[id].layer)) {
-            this.activeLayers[id].layer.setPosition(location);
-        }
+        this.activeLayers[id].layer.setPosition(location);
     }
 
     private async updateInsights(insights: api.IMap) {
