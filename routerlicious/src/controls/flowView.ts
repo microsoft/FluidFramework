@@ -3180,6 +3180,7 @@ export class FlowView extends ui.Component {
     public keyCmd(charCode: number) {
         switch (charCode) {
             case CharacterCodes.R:
+                this.updatePGInfo(this.cursor.pos - 1);
                 createTable(this.cursor.pos, this);
                 this.localQueueRender(this.cursor.pos);
                 break;
