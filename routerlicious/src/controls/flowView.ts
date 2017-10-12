@@ -66,7 +66,6 @@ export interface IOverlayMarker {
 interface IParagraphInfo {
     breaks: number[];
     singleLineWidth: number;
-    endOffset?: number;
 }
 
 interface IParagraphItemInfo {
@@ -585,8 +584,6 @@ interface ILineContext {
     lineDivHeight: number;
     flowView: FlowView;
     span: ISegSpan;
-    pgMarker: IParagraphMarker;
-    markerPos: number;
     deferredAttach?: boolean;
     reRenderList?: ILineDiv[];
 }
@@ -607,7 +604,7 @@ interface IDocumentContext {
 
 interface IItemsContext {
     docContext?: IDocumentContext;
-    startPGMarker: IParagraphMarker;
+    curPGMarker: IParagraphMarker;
     nextPGPos: number;
     itemInfo: IParagraphItemInfo;
     paragraphLexer: ParagraphLexer<IItemsContext>;
@@ -754,8 +751,6 @@ function renderSegmentIntoLine(
     } else if (segType === SharedString.SegmentType.Marker) {
         let marker = <SharedString.Marker>segment;
         if (endRenderSegments(marker)) {
-            lineContext.pgMarker = marker;
-            lineContext.markerPos = segpos;
             if (lineContext.flowView.cursor.pos === segpos) {
                 showPositionEndOfLine(lineContext);
             } else {
@@ -1103,11 +1098,6 @@ function createBox(opList: SharedString.IMergeTreeOp[], idBase: string,
     opList.push(createMarkerOp(pos, boxId,
         SharedString.MarkerBehaviors.RangeBegin, ["box"]));
     pos++;
-    let pgOp = createMarkerOp(pos, boxId + "C",
-        SharedString.MarkerBehaviors.Tile, [], ["pg"]);
-    pgOp.props["boxStart"] = true;
-    opList.push(pgOp);
-    pos++;
     if (word) {
         let insertStringOp = <SharedString.IMergeTreeInsertMsg>{
             pos1: pos,
@@ -1117,6 +1107,10 @@ function createBox(opList: SharedString.IMergeTreeOp[], idBase: string,
         opList.push(insertStringOp);
         pos += word.length;
     }
+    let pgOp = createMarkerOp(pos, boxId + "C",
+        SharedString.MarkerBehaviors.Tile, [], ["pg"]);
+    opList.push(pgOp);
+    pos++;
     opList.push(createMarkerOp(pos, endPrefix + boxId,
         SharedString.MarkerBehaviors.RangeEnd, ["box"]));
     pos++;
@@ -1126,20 +1120,26 @@ function createBox(opList: SharedString.IMergeTreeOp[], idBase: string,
 function createTable(pos: number, flowView: FlowView, nrows = 3, nboxes = 3) {
     let segoff = flowView.client.mergeTree.getContainingSegment(pos, SharedString.UniversalSequenceNumber,
         flowView.client.getClientId());
-    let pgAtEnd = true;
+    let pgAtStart = true;
     if (segoff.segment.getType() === SharedString.SegmentType.Marker) {
         let marker = <SharedString.Marker>segoff.segment;
         if (marker.hasTileLabel("pg")) {
-            pgAtEnd = false;
+            pgAtStart = false;
         }
     }
     let content = ["aardvark", "racoon", "jackelope", "springbok", "tiger", "lion", "eland", "anaconda", "fox"];
     let idBase = flowView.client.longClientId;
     idBase += `T${tableIdSuffix++}`;
     let opList = <SharedString.IMergeTreeInsertMsg[]>[];
+    if (pgAtStart) {
+        // TODO: copy pg properties from pg marker after pos
+        let pgOp = createMarkerOp(pos, "",
+            SharedString.MarkerBehaviors.Tile, [], ["pg"]);
+        opList.push(pgOp);
+        pos++;
+    }
     opList.push(createMarkerOp(pos, idBase,
-        SharedString.MarkerBehaviors.RangeBegin |
-        SharedString.MarkerBehaviors.Tile, ["table"], ["pg"]));
+        SharedString.MarkerBehaviors.RangeBegin, ["table"]));
     pos++;
     for (let row = 0; row < nrows; row++) {
         let rowId = idBase + `row${rowIdSuffix++}`;
@@ -1156,12 +1156,6 @@ function createTable(pos: number, flowView: FlowView, nrows = 3, nboxes = 3) {
     opList.push(createMarkerOp(pos, endPrefix + idBase,
         SharedString.MarkerBehaviors.RangeEnd, ["table"]));
     pos++;
-    if (pgAtEnd) {
-        let pgOp = createMarkerOp(pos, "",
-            SharedString.MarkerBehaviors.Tile, [], ["pg"]);
-        opList.push(pgOp);
-        pos++;
-    }
     let groupOp = <SharedString.IMergeTreeGroupMsg>{
         ops: opList,
         type: SharedString.MergeTreeDeltaType.GROUP,
@@ -1358,49 +1352,50 @@ function parseBox(boxStartPos: number, docContext: IDocumentContext, flowView: F
     boxMarker.view = new BoxView(boxMarker, endBoxMarker);
     let nextPos = boxStartPos + boxMarker.cachedLength;
     while (nextPos < endBoxPos) {
-        let markerSegOff = mergeTree.getContainingSegment(nextPos, SharedString.UniversalSequenceNumber,
+        let segoff = mergeTree.getContainingSegment(nextPos, SharedString.UniversalSequenceNumber,
             flowView.client.getClientId());
         // TODO: model error checking
-        let marker = <SharedString.Marker>markerSegOff.segment;
-        if (marker.hasRangeLabel("table")) {
-            let tableMarker = <ITableMarker>marker;
-            parseTable(tableMarker, nextPos, docContext, flowView);
-            if (tableMarker.view.minContentWidth > boxMarker.view.minContentWidth) {
-                boxMarker.view.minContentWidth = tableMarker.view.minContentWidth;
+        let segment = segoff.segment;
+        if (segment.getType() === SharedString.SegmentType.Marker) {
+            let marker = <SharedString.Marker>segoff.segment;
+            if (marker.hasRangeLabel("table")) {
+                let tableMarker = <ITableMarker>marker;
+                parseTable(tableMarker, nextPos, docContext, flowView);
+                if (tableMarker.view.minContentWidth > boxMarker.view.minContentWidth) {
+                    boxMarker.view.minContentWidth = tableMarker.view.minContentWidth;
+                }
+                let endTableMarker = tableMarker.view.endTableMarker;
+                nextPos = mergeTree.getOffset(
+                    endTableMarker, SharedString.UniversalSequenceNumber, flowView.client.getClientId());
+                nextPos += endTableMarker.cachedLength;
+            } else {
+                // empty paragraph
+                nextPos++;
             }
-            let endTableMarker = tableMarker.view.endTableMarker;
-            nextPos = mergeTree.getOffset(
-                endTableMarker, SharedString.UniversalSequenceNumber, flowView.client.getClientId());
-            nextPos += endTableMarker.cachedLength;
         } else {
-            let pgMarker = <IParagraphMarker>marker;
+            // text segment
+            let tilePos = findTile(flowView, nextPos, "pg", false);
+            let pgMarker = <IParagraphMarker>tilePos.tile;
             if (!pgMarker.itemCache) {
                 let itemsContext = <IItemsContext>{
+                    curPGMarker: pgMarker,
                     docContext,
                     itemInfo: { items: [], minWidth: 0 },
-                    startPGMarker: pgMarker,
                 };
                 let paragraphLexer = new ParagraphLexer(tokenToItems, itemsContext);
                 itemsContext.paragraphLexer = paragraphLexer;
 
                 mergeTree.mapRange({ leaf: segmentToItems }, SharedString.UniversalSequenceNumber,
-                    flowView.client.getClientId(), itemsContext, nextPos + 1);
+                    flowView.client.getClientId(), itemsContext, nextPos, tilePos.pos);
                 pgMarker.itemCache = itemsContext.itemInfo;
-                nextPos = itemsContext.nextPGPos;
-            } else {
-                let nextPgTilePos = findTile(flowView, nextPos + 1, "pg", false);
-                if (nextPgTilePos) {
-                    nextPos = nextPgTilePos.pos;
-                } else {
-                    console.log("couldn't find next pg");
-                }
             }
+            nextPos = tilePos.pos + 1;
             if (pgMarker.itemCache.minWidth > boxMarker.view.minContentWidth) {
                 boxMarker.view.minContentWidth = pgMarker.itemCache.minWidth;
             }
         }
-
     }
+
     console.log(`parsed box ${boxMarker.getId()}`);
     return boxMarker;
 }
@@ -1501,30 +1496,18 @@ function renderBox(boxView: BoxView, layoutInfo: ILayoutContext, defer = false, 
         docContext: layoutInfo.docContext,
         endMarker: boxView.endMarker,
         flowView: layoutInfo.flowView,
+        requestedPosition: layoutInfo.requestedPosition,
         stackIndex: layoutInfo.stackIndex,
-        startMarker: undefined,  // set below
         startingPosStack: layoutInfo.startingPosStack,
-        startingPosition: layoutInfo.startingPosition,
         viewport: boxView.viewport,
     };
+    // TODO: deferred height calculation for starting in middle of box
     if (isInnerBox(boxView, layoutInfo)) {
         let boxPos = mergeTree.getOffset(boxView.marker, SharedString.UniversalSequenceNumber, client.getClientId());
-        let pgMarkerPos = boxPos + boxView.marker.cachedLength;
-        let segoff = mergeTree.getContainingSegment(
-            pgMarkerPos, SharedString.UniversalSequenceNumber, client.getClientId());
-        let pgMarker = <SharedString.Marker>segoff.segment;
-        boxLayoutInfo.startMarker = pgMarker;
-        boxLayoutInfo.startMarkerPos = pgMarkerPos;
-        if (layoutInfo.startingPosStack && (layoutInfo.startingPosition >= 0)) {
-            transferDeferredHeight = true;
-            let containingTilePos = findTile(layoutInfo.flowView, layoutInfo.startingPosition, "pg");
-            if (containingTilePos.tile !== pgMarker) {
-                layoutInfo.containingPGMarker = containingTilePos.tile;
-            }
-        }
+        boxLayoutInfo.startPos = boxPos + boxView.marker.cachedLength;
     } else {
         let nextTable = layoutInfo.startingPosStack.table.items[layoutInfo.stackIndex + 1];
-        boxLayoutInfo.startMarker = nextTable;
+        boxLayoutInfo.startPos = getOffset(layoutInfo.flowView, nextTable);
         boxLayoutInfo.stackIndex = layoutInfo.stackIndex + 1;
     }
     boxView.renderOutput = renderFlow(boxLayoutInfo, defer);
@@ -1650,31 +1633,34 @@ function renderTable(table: ITableMarker, docContext: IDocumentContext, layoutIn
     tableView.renderedHeight = tableHeight;
 }
 
-function renderTree(viewportDiv: HTMLDivElement, startingPosition: number, flowView: FlowView) {
+function renderTree(viewportDiv: HTMLDivElement, requestedPosition: number, flowView: FlowView) {
     let client = flowView.client;
     let docContext = buildDocumentContext(viewportDiv);
     let outerViewportHeight = parseInt(viewportDiv.style.height, 10);
     let outerViewportWidth = parseInt(viewportDiv.style.width, 10);
     let outerViewport = new Viewport(outerViewportHeight, viewportDiv, outerViewportWidth);
     let startingPosStack =
-        client.mergeTree.getStackContext(startingPosition, client.getClientId(), ["table", "box", "row"]);
+        client.mergeTree.getStackContext(requestedPosition, client.getClientId(), ["table", "box", "row"]);
     let layoutContext = <ILayoutContext>{
         docContext,
         flowView,
-        startingPosition,
+        requestedPosition,
         viewport: outerViewport,
     };
     if (startingPosStack.table && (!startingPosStack.table.empty())) {
         let outerTable = startingPosStack.table.items[0];
-        layoutContext.startMarker = outerTable;
+        let outerTablePos = flowView.client.mergeTree.getOffset(outerTable,
+            SharedString.UniversalSequenceNumber, flowView.client.getClientId());
+        layoutContext.startPos = outerTablePos;
         layoutContext.stackIndex = 0;
         layoutContext.startingPosStack = startingPosStack;
     } else {
-        let tileInfo = findTile(flowView, startingPosition, "pg");
-        let startMarker = tileInfo.tile;
-        let startMarkerPos = tileInfo.pos;
-        layoutContext.startMarker = startMarker;
-        layoutContext.startMarkerPos = startMarkerPos;
+        let previousTileInfo = findTile(flowView, requestedPosition, "pg");
+        if (previousTileInfo) {
+            layoutContext.startPos = previousTileInfo.pos + 1;
+        } else {
+            layoutContext.startPos = 0;
+        }
     }
     return renderFlow(layoutContext);
 }
@@ -1684,7 +1670,7 @@ function tokenToItems(
     let docContext = itemsContext.docContext;
     let lfontstr = docContext.fontstr;
     let divHeight = docContext.defaultLineDivHeight;
-    if (itemsContext.startPGMarker.properties && (itemsContext.startPGMarker.properties.header !== undefined)) {
+    if (itemsContext.curPGMarker.properties && (itemsContext.curPGMarker.properties.header !== undefined)) {
         lfontstr = docContext.headerFontstr;
         divHeight = docContext.headerDivHeight;
     }
@@ -1882,9 +1868,8 @@ interface ILayoutContext {
     reRenderList?: ILineDiv[];
     deferUntilHeight?: number;
     docContext: IDocumentContext;
-    startingPosition?: number;
-    startMarker: SharedString.Marker;
-    startMarkerPos?: number;
+    requestedPosition?: number;
+    startPos: number;
     endMarker?: SharedString.Marker;
     flowView: FlowView;
     stackIndex?: number;
@@ -1899,11 +1884,12 @@ interface IRenderOutput {
     viewportEndPos: number;
 }
 
-function renderFlow(renderContext: ILayoutContext, deferWhole = false): IRenderOutput {
-    let client = renderContext.flowView.client;
+function renderFlow(layoutContext: ILayoutContext, deferWhole = false): IRenderOutput {
+    let flowView = layoutContext.flowView;
+    let client = flowView.client;
     // TODO: for stable viewports cache the geometry and the divs
     // TODO: cache all this pre-amble in style blocks; override with pg properties
-    let docContext = renderContext.docContext;
+    let docContext = layoutContext.docContext;
     let pgCount = 0;
     let viewportStartPos = -1;
     let lineCount = 0;
@@ -1911,54 +1897,54 @@ function renderFlow(renderContext: ILayoutContext, deferWhole = false): IRenderO
 
     function makeLineDiv(r: ui.Rectangle, lineFontstr) {
         let lineDiv = makeContentDiv(r, lineFontstr);
-        renderContext.viewport.div.appendChild(lineDiv);
+        layoutContext.viewport.div.appendChild(lineDiv);
         lineCount++;
         lastLineDiv = lineDiv;
         return lineDiv;
     }
 
-    let pgMarker: IParagraphMarker;
-    let startPGMarker: IParagraphMarker;
-    let markerPos: number;
+    let currentPos = layoutContext.startPos;
+    let curPGMarker: IParagraphMarker;
+    let curPGMarkerPos: number;
+
     let itemsContext = <IItemsContext>{
         docContext,
-        startPGMarker,
     };
-    if (renderContext.deferUntilHeight === undefined) {
-        renderContext.deferUntilHeight = 0;
+    if (layoutContext.deferUntilHeight === undefined) {
+        layoutContext.deferUntilHeight = 0;
     }
     let deferredHeight = 0;
-    let deferredPGs = (renderContext.containingPGMarker !== undefined);
+    let deferredPGs = (layoutContext.containingPGMarker !== undefined);
     let paragraphLexer = new ParagraphLexer(tokenToItems, itemsContext);
     itemsContext.paragraphLexer = paragraphLexer;
     textErrorRun = undefined;
 
-    function renderPG(curPGMarker: IParagraphMarker, curPGPos: number, indentWidth: number, indentSymbol: ISymbol,
+    function renderPG(endPGMarker: IParagraphMarker, pgStartPos: number, indentWidth: number, indentSymbol: ISymbol,
         contentWidth: number) {
-        let pgBreaks = curPGMarker.cache.breaks;
+        let pgBreaks = endPGMarker.cache.breaks;
         let lineDiv: ILineDiv;
         let lineDivHeight = docContext.defaultLineDivHeight;
         let span: ISegSpan;
 
         for (let breakIndex = 0, len = pgBreaks.length; breakIndex < len; breakIndex++) {
-            let lineStart = pgBreaks[breakIndex] + curPGPos;
+            let lineStart = pgBreaks[breakIndex] + pgStartPos;
             let lineEnd: number;
             if (breakIndex < (len - 1)) {
-                lineEnd = pgBreaks[breakIndex + 1] + curPGPos;
+                lineEnd = pgBreaks[breakIndex + 1] + pgStartPos;
             } else {
                 lineEnd = undefined;
             }
             let lineFontstr = docContext.fontstr;
             lineDivHeight = docContext.defaultLineDivHeight;
-            if (curPGMarker.properties && (curPGMarker.properties.header !== undefined)) {
+            if (endPGMarker.properties && (endPGMarker.properties.header !== undefined)) {
                 // TODO: header levels etc.
                 lineDivHeight = docContext.headerDivHeight;
                 lineFontstr = docContext.headerFontstr;
             }
-            let lineOK = (!(deferredPGs || deferWhole)) && (renderContext.deferUntilHeight <= deferredHeight);
-            if (lineOK && ((lineEnd === undefined) || (lineEnd > renderContext.startingPosition))) {
-                lineDiv = makeLineDiv(new ui.Rectangle(0, renderContext.viewport.getLineTop(),
-                    renderContext.viewport.currentLineWidth(), lineDivHeight),
+            let lineOK = (!(deferredPGs || deferWhole)) && (layoutContext.deferUntilHeight <= deferredHeight);
+            if (lineOK && ((lineEnd === undefined) || (lineEnd > layoutContext.requestedPosition))) {
+                lineDiv = makeLineDiv(new ui.Rectangle(0, layoutContext.viewport.getLineTop(),
+                    layoutContext.viewport.currentLineWidth(), lineDivHeight),
                     lineFontstr);
                 let contentDiv = lineDiv;
                 if (indentWidth > 0) {
@@ -1973,33 +1959,30 @@ function renderFlow(renderContext: ILayoutContext, deferWhole = false): IRenderO
                     lineDiv.appendChild(contentDiv);
                 }
                 let lineContext = <ILineContext>{
-                    contentDiv, deferredAttach: renderContext.deferredAttach, flowView: renderContext.flowView,
-                    lineDiv, lineDivHeight, markerPos,
-                    pgMarker, span,
+                    contentDiv, deferredAttach: layoutContext.deferredAttach, flowView: layoutContext.flowView,
+                    lineDiv, lineDivHeight, span,
                 };
                 if (viewportStartPos < 0) {
                     viewportStartPos = lineStart;
                 }
                 client.mergeTree.mapRange({ leaf: renderSegmentIntoLine }, SharedString.UniversalSequenceNumber,
-                    client.getClientId(), lineContext, lineStart, lineEnd);
+                    client.getClientId(), lineContext, lineStart);
                 span = lineContext.span;
-                markerPos = lineContext.markerPos;
-                pgMarker = lineContext.pgMarker;
                 if (lineContext.reRenderList) {
-                    if (!renderContext.reRenderList) {
-                        renderContext.reRenderList = [];
+                    if (!layoutContext.reRenderList) {
+                        layoutContext.reRenderList = [];
                     }
                     for (let ldiv of lineContext.reRenderList) {
-                        renderContext.reRenderList.push(ldiv);
+                        layoutContext.reRenderList.push(ldiv);
                     }
                 }
 
-                renderContext.viewport.commitLineDiv(lineDiv, lineDivHeight);
+                layoutContext.viewport.commitLineDiv(lineDiv, lineDivHeight);
             } else {
                 deferredHeight += lineDivHeight;
             }
 
-            if (renderContext.viewport.remainingHeight() < docContext.defaultLineDivHeight) {
+            if (layoutContext.viewport.remainingHeight() < docContext.defaultLineDivHeight) {
                 // no more room for lines
                 // TODO: record end viewport char
                 break;
@@ -2007,113 +1990,100 @@ function renderFlow(renderContext: ILayoutContext, deferWhole = false): IRenderO
         }
     }
 
-    pgMarker = renderContext.startMarker;
-    markerPos = renderContext.startMarkerPos;
-
-    let startPGPos: number;
     let totalLength = client.getLength();
     // TODO: use end of doc marker
     do {
-        if (pgMarker.hasRangeLabel("table")) {
-            renderTable(pgMarker, docContext, renderContext, deferredPGs);
-            let tableView = (<ITableMarker>pgMarker).view;
-            deferredHeight += tableView.deferredHeight;
-            renderContext.viewport.vskip(renderContext.docContext.tableVspace);
+        let segoff = getContainingSegment(flowView, currentPos);
 
-            let endTablePos = renderContext.flowView.client.mergeTree.getOffset(tableView.endTableMarker,
-                SharedString.UniversalSequenceNumber, renderContext.flowView.client.getClientId());
-            let tilePos = findTile(renderContext.flowView, endTablePos, "pg", false);
-            if (tilePos) {
-                pgMarker = tilePos.tile;
-                markerPos = tilePos.pos;
-            } else {
-                pgMarker = undefined;
-            }
+        if ((segoff.segment.getType() === SharedString.SegmentType.Marker) &&
+            ((<SharedString.Marker>segoff.segment).hasRangeLabel("table"))) {
+            let marker = <SharedString.Marker>segoff.segment;
+            renderTable(marker, docContext, layoutContext, deferredPGs);
+            let tableView = (<ITableMarker>marker).view;
+            deferredHeight += tableView.deferredHeight;
+            layoutContext.viewport.vskip(layoutContext.docContext.tableVspace);
+            let endTablePos = getOffset(layoutContext.flowView, tableView.endTableMarker);
+            currentPos = endTablePos + 1;
             // TODO: if reached end of viewport, get pos ranges
         } else {
-            itemsContext.startPGMarker = pgMarker;
-            startPGMarker = pgMarker;
-            pgMarker = undefined;
-
-            startPGPos = markerPos + 1;
+            if (segoff.segment.getType() === SharedString.SegmentType.Marker) {
+                // empty paragraph
+                curPGMarker = <IParagraphMarker>segoff.segment;
+                curPGMarkerPos = currentPos;
+            } else {
+                let curTilePos = findTile(flowView, currentPos, "pg", false);
+                curPGMarker = <IParagraphMarker>curTilePos.tile;
+                curPGMarkerPos = curTilePos.pos;
+            }
+            itemsContext.curPGMarker = curPGMarker;
             // TODO: only set this to undefined if text changed
-            startPGMarker.listCache = undefined;
-            getListCacheInfo(renderContext.flowView, startPGMarker, markerPos);
+            curPGMarker.listCache = undefined;
+            getListCacheInfo(layoutContext.flowView, curPGMarker, curPGMarkerPos);
             let indentPct = 0.0;
             let contentPct = 1.0;
             let indentWidth = 0;
-            let contentWidth = renderContext.viewport.currentLineWidth();
+            let contentWidth = layoutContext.viewport.currentLineWidth();
             let indentSymbol: ISymbol = undefined;
 
-            if (startPGMarker.listCache) {
-                indentSymbol = getIndentSymbol(startPGMarker);
+            if (curPGMarker.listCache) {
+                indentSymbol = getIndentSymbol(curPGMarker);
             }
             if (indentPct === 0.0) {
-                indentPct = getIndentPct(startPGMarker);
+                indentPct = getIndentPct(curPGMarker);
             }
             if (contentPct === 1.0) {
-                contentPct = getContentPct(startPGMarker);
+                contentPct = getContentPct(curPGMarker);
             }
             if (indentPct !== 0.0) {
-                indentWidth = Math.floor(indentPct * renderContext.viewport.currentLineWidth());
-                if (docContext.indentWidthThreshold >= renderContext.viewport.currentLineWidth()) {
+                indentWidth = Math.floor(indentPct * layoutContext.viewport.currentLineWidth());
+                if (docContext.indentWidthThreshold >= layoutContext.viewport.currentLineWidth()) {
                     let em2 = Math.round(2 * getTextWidth("M", docContext.fontstr));
                     indentWidth = em2 + indentWidth;
                 }
             }
-
-            contentWidth = Math.floor(contentPct * renderContext.viewport.currentLineWidth()) - indentWidth;
-            if (contentWidth > renderContext.viewport.currentLineWidth()) {
+            contentWidth = Math.floor(contentPct * layoutContext.viewport.currentLineWidth()) - indentWidth;
+            if (contentWidth > layoutContext.viewport.currentLineWidth()) {
                 // tslint:disable:max-line-length
-                console.log(`egregious content width ${contentWidth} bound ${renderContext.viewport.currentLineWidth()}`);
+                console.log(`egregious content width ${contentWidth} bound ${layoutContext.viewport.currentLineWidth()}`);
             }
-            if ((!startPGMarker.cache) || (startPGMarker.cache.singleLineWidth !== contentWidth)) {
-                if (!startPGMarker.itemCache) {
+            if ((!curPGMarker.cache) || (curPGMarker.cache.singleLineWidth !== contentWidth)) {
+                if (!curPGMarker.itemCache) {
                     itemsContext.itemInfo = { items: [], minWidth: 0 };
                     client.mergeTree.mapRange({ leaf: segmentToItems }, SharedString.UniversalSequenceNumber,
-                        client.getClientId(), itemsContext, startPGPos);
-                    startPGMarker.itemCache = itemsContext.itemInfo;
+                        client.getClientId(), itemsContext, currentPos, curPGMarkerPos + 1);
+                    curPGMarker.itemCache = itemsContext.itemInfo;
                 } else {
-                    itemsContext.itemInfo = startPGMarker.itemCache;
+                    itemsContext.itemInfo = curPGMarker.itemCache;
                 }
                 let breaks = breakPGIntoLinesFF(itemsContext.itemInfo.items, contentWidth);
-                startPGMarker.cache = { breaks, singleLineWidth: contentWidth };
+                curPGMarker.cache = { breaks, singleLineWidth: contentWidth };
             }
             pgCount++;
             paragraphLexer.reset();
-            if (startPGPos < (totalLength - 1)) {
-                renderPG(startPGMarker, startPGPos, indentWidth, indentSymbol, contentWidth);
-                if (pgMarker && pgMarker.hasRangeLabel("box") &&
-                    (pgMarker.behaviors & SharedString.MarkerBehaviors.RangeEnd)) {
-                    pgMarker = undefined;
-                    renderContext.viewport.vskip(renderContext.docContext.boxVspace);
-                } else {
-                    if (!deferredPGs) {
-                        renderContext.viewport.vskip(docContext.pgVspace);
+            // TODO: more accurate end of document reasoning
+            if (currentPos < (totalLength - 1)) {
+                renderPG(curPGMarker, currentPos, indentWidth, indentSymbol, contentWidth);
+                currentPos = curPGMarkerPos + curPGMarker.cachedLength;
+                let nextSegoff = getContainingSegment(flowView, currentPos);
+                if (nextSegoff.segment.getType() === SharedString.SegmentType.Marker) {
+                    let marker = <SharedString.Marker>segoff.segment;
+                    if (marker.hasRangeLabel("box") && (marker.behaviors & SharedString.MarkerBehaviors.RangeEnd)) {
+                        layoutContext.viewport.vskip(layoutContext.docContext.boxVspace);
+                        break;
                     }
                 }
-            } else {
-                if (lastLineDiv) {
-                    lastLineDiv.lineEnd = startPGPos + 1;
+                if (!deferredPGs) {
+                    layoutContext.viewport.vskip(docContext.pgVspace);
                 }
-                pgMarker = undefined;
-            }
-            if (pgMarker !== undefined) {
-                startPGMarker.cache.endOffset = markerPos - startPGPos;
-            } else {
                 if (lastLineDiv) {
-                    startPGMarker.cache.endOffset = lastLineDiv.lineEnd - startPGPos;
-                } else {
-                    startPGMarker.cache.endOffset = 1;
+                    lastLineDiv.lineEnd = curPGMarkerPos;
                 }
             }
         }
-    } while ((pgMarker !== undefined) &&
-    ((renderContext.endMarker === undefined) || (pgMarker !== renderContext.endMarker)) &&
-        (renderContext.viewport.remainingHeight() >= docContext.defaultLineDivHeight));
+    } while (layoutContext.viewport.remainingHeight() >= docContext.defaultLineDivHeight);
 
     // Find overlay annotations
-    const viewportEndPos = startPGMarker.cache.endOffset + startPGPos;
+    const viewportEndPos = currentPos;
 
     const overlayMarkers: IOverlayMarker[] = [];
     client.mergeTree.mapRange(
@@ -2402,15 +2372,23 @@ export interface IPresenceInfo {
     posAdjust?: number;
 }
 
+function getContainingSegment(flowView: FlowView, pos: number) {
+    return flowView.client.mergeTree.getContainingSegment(pos, SharedString.UniversalSequenceNumber,
+        flowView.client.getClientId());
+}
+
 function findTile(flowView: FlowView, startPos: number, tileType: string, preceding = true) {
     return flowView.client.mergeTree.findTile(startPos, flowView.client.getClientId(), tileType, preceding);
 }
 
+function getOffset(flowView: FlowView, segment: SharedString.Segment) {
+    return flowView.client.mergeTree.getOffset(segment, SharedString.UniversalSequenceNumber,
+        flowView.client.getClientId());
+}
+
 function lookBehind(pos: number, flowView: FlowView) {
     if (pos >= 0) {
-        let segoff = flowView.client.mergeTree.getContainingSegment(pos,
-            SharedString.UniversalSequenceNumber,
-            flowView.client.getClientId());
+        let segoff = getContainingSegment(flowView, pos);
         if (segoff.segment.getType() !== SharedString.SegmentType.Text) {
             return <SharedString.Marker>segoff.segment;
         }
@@ -2418,6 +2396,7 @@ function lookBehind(pos: number, flowView: FlowView) {
 }
 
 export class FlowView extends ui.Component {
+    public static docStartPosition = 0;
     public timeToImpression: number;
     public timeToLoad: number;
     public timeToEdit: number;
@@ -2431,7 +2410,7 @@ export class FlowView extends ui.Component {
     public client: SharedString.Client;
     public ticking = false;
     public wheelTicking = false;
-    public topChar = 0;
+    public topChar = -1;
     public cursor: Cursor;
     public presenceMap: API.IMap;
     public presenceMapView: API.IMapView;
@@ -2722,10 +2701,9 @@ export class FlowView extends ui.Component {
     }
 
     public cursorRev() {
-        if (this.cursor.pos > 1) {
+        if (this.cursor.pos > FlowView.docStartPosition) {
             this.cursor.pos--;
-            let segoff = this.client.mergeTree.getContainingSegment(this.cursor.pos, SharedString.UniversalSequenceNumber,
-                this.client.getClientId());
+            let segoff = getContainingSegment(this, this.cursor.pos);
             if (segoff.segment.getType() !== SharedString.SegmentType.Text) {
                 // REVIEW: assume marker for now
                 let marker = <SharedString.Marker>segoff.segment;
@@ -3257,7 +3235,7 @@ export class FlowView extends ui.Component {
             if (up) {
                 let firstLineDiv = this.firstLineDiv();
                 scrollTo = firstLineDiv.linePos - 2;
-                if (scrollTo < 1) {
+                if (scrollTo < 0) {
                     return;
                 }
             } else {
@@ -3291,7 +3269,7 @@ export class FlowView extends ui.Component {
     public render(topChar?: number, changed = false) {
         let len = this.client.getLength();
         if (topChar !== undefined) {
-            if (((this.topChar === topChar) || ((this.topChar === 0) && (topChar <= 0)))
+            if (((this.topChar === topChar) || ((this.topChar === -1) && (topChar < 0)))
                 && (!changed)) {
                 return;
             }
@@ -3299,8 +3277,8 @@ export class FlowView extends ui.Component {
             if (this.topChar >= len) {
                 this.topChar = len - (this.viewportCharCount() / 2);
             }
-            if (this.topChar < 1) {
-                this.topChar = 1;
+            if (this.topChar < 0) {
+                this.topChar = 0;
             }
         }
 
@@ -3368,7 +3346,7 @@ export class FlowView extends ui.Component {
     }
 
     public updatePGInfo(changePos: number) {
-        let tileInfo = findTile(this, changePos, "pg");
+        let tileInfo = findTile(this, changePos, "pg", false);
         if (tileInfo) {
             let tile = <IParagraphMarker>tileInfo.tile;
             clearContentCaches(tile);
