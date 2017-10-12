@@ -1773,7 +1773,7 @@ function closestNorth(lineDivs: ILineDiv[], y: number) {
         let lineDiv = lineDivs[mid];
         let bounds = lineDiv.getBoundingClientRect();
         if (bounds.bottom <= y) {
-            if ((best < 0) || (bestBounds.bottom < bounds.bottom)) {
+            if (!bestBounds || (best < 0) || (bestBounds.bottom < bounds.bottom)) {
                 best = mid;
                 bestBounds = bounds;
             }
@@ -1795,7 +1795,7 @@ function closestSouth(lineDivs: ILineDiv[], y: number) {
         let lineDiv = lineDivs[mid];
         let bounds = lineDiv.getBoundingClientRect();
         if (bounds.bottom >= y) {
-            if ((best < 0) || (bestBounds.bottom > bounds.bottom)) {
+            if (!bestBounds || (best < 0) || (bestBounds.bottom > bounds.bottom)) {
                 best = mid;
                 bestBounds = bounds;
             }
@@ -2598,6 +2598,48 @@ export class FlowView extends ui.Component {
         return location;
     }
 
+    /**
+     * Retrieves the nearest sequence position relative to the given viewport location
+     */
+    public getNearestPosition(location: ui.IPoint): number {
+        const lineDivs: ILineDiv[] = [];
+        this.lineDivSelect(
+            (lineDiv) => {
+                lineDivs.push(lineDiv);
+                return null;
+            },
+            this.viewportDiv,
+            false);
+
+        // Search for the nearest line divs to the element
+        const closestUp = closestNorth(lineDivs, location.y);
+        const closestDown = closestSouth(lineDivs, location.y);
+
+        // And then the nearest location within them
+        let distance = Number.MAX_VALUE;
+        let position: number;
+
+        if (closestUp !== -1) {
+            const upPosition = this.getPosFromPixels(lineDivs[closestUp], location.x);
+            const upLocation = this.getPositionLocation(upPosition);
+            distance = ui.distanceSquared(location, upLocation);
+            position = upPosition;
+        }
+
+        if (closestDown !== -1) {
+            const downPosition = this.getPosFromPixels(lineDivs[closestDown], location.x);
+            const downLocation = this.getPositionLocation(downPosition);
+            const downDistance = ui.distanceSquared(location, downLocation);
+
+            if (downDistance < distance) {
+                distance = downDistance;
+                position = downPosition;
+            }
+        }
+
+        return position;
+    }
+
     public checkRow(lineDiv: ILineDiv, fn: (lineDiv: ILineDiv) => ILineDiv, rev?: boolean) {
         let rowDiv = <IRowDiv>lineDiv;
         let oldRowDiv: IRowDiv;
@@ -2664,8 +2706,9 @@ export class FlowView extends ui.Component {
         }
     }
 
-    // TODO: handle symbol div
-    public setCursorPosFromPixels(targetLineDiv: ILineDiv, x: number) {
+    public getPosFromPixels(targetLineDiv: ILineDiv, x: number) {
+        let position: number = undefined;
+
         if (targetLineDiv && (targetLineDiv.linePos)) {
             let y: number;
             let targetLineBounds = targetLineDiv.getBoundingClientRect();
@@ -2674,27 +2717,27 @@ export class FlowView extends ui.Component {
             if (elm.tagName === "DIV") {
                 if ((targetLineDiv.lineEnd - targetLineDiv.linePos) === 1) {
                     // empty line
-                    this.cursor.pos = targetLineDiv.linePos;
+                    position = targetLineDiv.linePos;
                 } else if (targetLineDiv === elm) {
                     if (targetLineDiv.indentWidth !== undefined) {
                         let relX = x - targetLineBounds.left;
                         if (relX <= targetLineDiv.indentWidth) {
-                            this.cursor.pos = targetLineDiv.linePos;
+                            position = targetLineDiv.linePos;
                         } else {
-                            this.cursor.pos = targetLineDiv.lineEnd;
+                            position = targetLineDiv.lineEnd;
                         }
                     } else {
-                        this.cursor.pos = targetLineDiv.lineEnd;
+                        position = targetLineDiv.lineEnd;
                     }
                 } else {
                     // content div
                     if (x <= targetLineBounds.left) {
-                        this.cursor.pos = targetLineDiv.linePos;
+                        position = targetLineDiv.linePos;
                     } else {
-                        this.cursor.pos = targetLineDiv.lineEnd;
+                        position = targetLineDiv.lineEnd;
                     }
                 }
-                return true;
+
             } else if (elm.tagName === "SPAN") {
                 let span = <ISegSpan>elm;
                 let elmOff = pointerToElementOffsetWebkit(x, y);
@@ -2703,12 +2746,23 @@ export class FlowView extends ui.Component {
                     if (span.offset) {
                         computed += span.offset;
                     }
-                    this.cursor.pos = span.segPos + computed;
-                    return true;
+                    position = span.segPos + computed;
                 }
             }
         }
-        return false;
+
+        return position;
+    }
+
+    // TODO: handle symbol div
+    public setCursorPosFromPixels(targetLineDiv: ILineDiv, x: number) {
+        const position = this.getPosFromPixels(targetLineDiv, x);
+        if (position) {
+            this.cursor.pos = position;
+            return true;
+        } else {
+            return false;
+        }
     }
 
     public getCanonicalX() {

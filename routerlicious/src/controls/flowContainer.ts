@@ -59,10 +59,14 @@ export class FlowContainer extends ui.Component {
         this.overlayCanvas = new OverlayCanvas(collabDocument, overlayCanvasDiv, layerPanelDiv);
 
         this.overlayCanvas.on("ink", (layer: InkLayer, model: ink.IInk, start: ui.IPoint) =>  {
-            const cursorLocation = this.flowView.getPositionLocation(this.flowView.cursor.pos);
+            this.overlayCanvas.enableInkHitTest(false);
+            const position = this.flowView.getNearestPosition(start);
+            this.overlayCanvas.enableInkHitTest(true);
+
+            const location = this.flowView.getPositionLocation(position);
             const cursorOffset = {
-                x: start.x - cursorLocation.x,
-                y: start.y - cursorLocation.y,
+                x: start.x - location.x,
+                y: start.y - location.y,
             };
 
             this.layerCache[model.id] = layer;
@@ -70,7 +74,8 @@ export class FlowContainer extends ui.Component {
             overlayMap.set(model.id, model);
             // Inserts the marker at the flow view's cursor position
             sharedString.insertMarker(
-                this.flowView.cursor.pos, MarkerBehaviors.None,
+                position,
+                MarkerBehaviors.None,
                 { [reservedMarkerIdKey]: model.id });
         });
 
