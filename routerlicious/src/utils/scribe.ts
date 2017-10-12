@@ -333,13 +333,6 @@ async function typeFile(
             }
 
             // Start inserting text into the string
-            if (readPosition === 0) {
-                trackOperation(() => {
-                    sharedString.insertMarker(0, SharedString.MarkerBehaviors.Tile,
-                        {[SharedString.reservedTileLabelsKey]: ["pg"]});
-                    insertPosition++;
-                });
-            }
             let code = fileText.charCodeAt(readPosition);
             if (code === 13) {
                 readPosition++;
