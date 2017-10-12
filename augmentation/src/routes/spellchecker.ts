@@ -54,6 +54,12 @@ async function invokeRestAPI(text: string): Promise<any> {
                 LanguageId: 'en-us',
                 RunOnProfileId: '{24BCFF65-03B5-40E9-90C8-59B75ABD453C}',
                 TextUnit: 'Paragraph',
+                Descriptors: [
+                    {
+                        Name: 'LicenseType',
+                        Value: 'Subscription',
+                    },
+                ],
             },
             json: true,
         },
