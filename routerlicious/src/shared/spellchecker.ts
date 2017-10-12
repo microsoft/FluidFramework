@@ -444,9 +444,11 @@ class Speller {
             // Spelling error but no suggestions found. Continue to next critique.
             if (critique.Suggestions.length === 0 || critique.Suggestions[0].Text === "No suggestions") {
                 if (critique.CategoryTitle === "Grammar") {
-                    annotationRanges.push({ textError: { text: origWord, alternates: altSpellings, color: "paulgreen", explanation: null }, globalStartOffset, globalEndOffset });                    
+                    annotationRanges.push({ textError: { text: origWord, alternates: altSpellings, color: "paulgreen", explanation: null }, globalStartOffset, globalEndOffset });
+                } else if (critique.CategoryTitle === "Spelling") {
+                    annotationRanges.push({ textError: { text: origWord, alternates: altSpellings, color: "paul", explanation: null }, globalStartOffset, globalEndOffset });
                 } else {
-                    annotationRanges.push({ textError: { text: origWord, alternates: altSpellings, color: "paul", explanation: null }, globalStartOffset, globalEndOffset });                    
+                    annotationRanges.push({ textError: { text: origWord, alternates: altSpellings, color: "paulgolden", explanation: null }, globalStartOffset, globalEndOffset });
                 }
                 continue;
             }
@@ -456,8 +458,10 @@ class Speller {
             }
             if (critique.CategoryTitle === "Grammar") {
                 annotationRanges.push({ textError: { text: origWord, alternates: altSpellings, color: "paulgreen", explanation: critique.Explanation }, globalStartOffset, globalEndOffset });
+            } else if (critique.CategoryTitle === "Spelling") {
+                annotationRanges.push({ textError: { text: origWord, alternates: altSpellings, color: "paul", explanation: null }, globalStartOffset, globalEndOffset });
             } else {
-                annotationRanges.push({ textError: { text: origWord, alternates: altSpellings, color: "paul", explanation: null }, globalStartOffset, globalEndOffset });                    
+                annotationRanges.push({ textError: { text: origWord, alternates: altSpellings, color: "paulgolden", explanation: critique.Explanation }, globalStartOffset, globalEndOffset });
             }
         }
         // No more critiques. Send null for rest of the text.
