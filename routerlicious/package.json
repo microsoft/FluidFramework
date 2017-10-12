@@ -8,6 +8,8 @@
     "browserify": "mkdirp public/scripts/dist && npm run browserify:controllers",
     "browserify:controllers": "browserify src/alfred/controllers/index.ts --debug -s controller -p [ tsify -t es5 ] | exorcist public/scripts/dist/index.js.map > public/scripts/dist/index.js",
     "browserify:controllers:min": "browserify src/alfred/controllers/index.ts --debug -s controller -p [ tsify -t es5 ] | uglifyjs --source-map content=inline,url=index.min.js.map -o public/scripts/dist/index.min.js",
+    "browserify:api": "browserify src/index.ts --debug -s controller -p [ tsify -t es5 ] | exorcist public/scripts/dist/api.js.map > public/scripts/dist/api.js",
+    "browserify:api:min": "browserify src/index.ts --debug -s controller -p [ tsify -t es5 ] | uglifyjs --source-map content=inline,url=api.min.js.map -o public/scripts/dist/api.min.js",
     "build": "concurrently \"npm run tslint\" \"npm run tsc\" \"npm run browserify\" \"npm run less\"",
     "build:full": "npm run build && npm run browserify:controllers:min",
     "build:watch": "watch 'npm run tsc && npm run browserify' src",
