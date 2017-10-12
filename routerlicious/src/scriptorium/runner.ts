@@ -4,12 +4,19 @@ import * as core from "../core";
 import * as shared from "../shared";
 import * as utils from "../utils";
 
+interface IWorkTracer {
+
+    message: core.ISequencedOperationMessage;
+
+    traceId: string;
+}
+
 export class ScriptoriumRunner implements utils.IRunner {
     private deferred = new shared.Deferred<void>();
     private checkpointTimer: any;
     private partitionManager: core.PartitionManager;
     private q: AsyncQueue<string>;
-    private ioBatchManager: utils.BatchManager<core.ISequencedOperationMessage>;
+    private ioBatchManager: utils.BatchManager<IWorkTracer>;
 
     constructor(
         private consumer: utils.kafkaConsumer.IConsumer,
@@ -18,7 +25,8 @@ export class ScriptoriumRunner implements utils.IRunner {
         groupId: string,
         topic: string,
         private checkpointBatchSize: number,
-        private checkpointTimeIntervalMsec: number) {
+        private checkpointTimeIntervalMsec: number,
+        private metricClientConfig: any) {
 
         this.partitionManager = new core.PartitionManager(
             groupId,
@@ -42,18 +50,21 @@ export class ScriptoriumRunner implements utils.IRunner {
         });
 
         const throughput = new utils.ThroughputCounter(winston.info);
+        const metricLogger = new shared.MetricClient(this.metricClientConfig);
         // Mongo inserts don't order promises with respect to each other. To work around this we track the last
         // Mongo insert we've made for each document. And then perform a then on this to maintain causal ordering
         // for any dependent operations (i.e. socket.io writes)
         const lastMongoInsertP: { [documentId: string]: Promise<any> } = {};
-        this.ioBatchManager = new utils.BatchManager<core.ISequencedOperationMessage>((documentId, work) => {
+        this.ioBatchManager = new utils.BatchManager<IWorkTracer>((documentId, work) => {
             // Initialize the last promise if it doesn't exist
             if (!(documentId in lastMongoInsertP)) {
                 lastMongoInsertP[documentId] = Promise.resolve();
             }
 
-            winston.verbose(`Inserting to mongodb ${documentId}@${work[0].operation.sequenceNumber}:${work.length}`);
-            const insertP = this.collection.insertMany(work, false)
+            // tslint:disable-next-line:max-line-length
+            winston.verbose(`Inserting to mongodb ${documentId}@${work[0].message.operation.sequenceNumber}:${work.length}`);
+
+            const insertP = this.collection.insertMany(work.map((value) => value.message), false)
                 .catch((error) => {
                     // Ignore duplicate key errors since a replay may cause us to attempt to insert a second time
                     if (error.name !== "MongoError" || error.code !== 11000) {
@@ -66,8 +77,12 @@ export class ScriptoriumRunner implements utils.IRunner {
                 () => {
                     // Route the message to clients
                     // tslint:disable-next-line:max-line-length
-                    winston.verbose(`Routing message to clients ${documentId}@${work[0].operation.sequenceNumber}:${work.length}`);
-                    this.io.to(documentId).emit("op", documentId, work.map((value) => value.operation));
+                    winston.verbose(`Routing message to clients ${documentId}@${work[0].message.operation.sequenceNumber}:${work.length}`);
+                    this.io.to(documentId).emit("op", documentId, work.map((value) => value.message.operation));
+                    // tslint:disable-next-line:max-line-length
+                    work.map((value) => metricLogger.writeLatencyMetric(value.traceId, "Scriptorium", "ScriptoriumToAlfred", "", Date.now()).catch((err) => {
+                        winston.error(err.stack);
+                    }));
                     throughput.acknolwedge(work.length);
                 },
                 (error) => {
@@ -84,8 +99,15 @@ export class ScriptoriumRunner implements utils.IRunner {
             if (baseMessage.type === core.SequencedOperationType) {
                 const value = baseMessage as core.ISequencedOperationMessage;
 
+                // Trace scriptorium beginning.
+                const traceId = value.operation.traceId;
+                // tslint:disable-next-line:max-line-length
+                metricLogger.writeLatencyMetric(traceId, "Scriptorium", "DeliToScriptorium", "", Date.now()).catch((error) => {
+                    winston.error(error.stack);
+                });
+
                 // Batch up work to more efficiently send to socket.io and mongodb
-                this.ioBatchManager.add(value.documentId, value);
+                this.ioBatchManager.add(value.documentId, {message: value, traceId});
             }
 
             // Update partition manager.

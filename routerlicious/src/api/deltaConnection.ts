@@ -63,7 +63,9 @@ export class DeltaConnection implements IDeltaConnection {
         message: IObjectMessage,
         clientId: string,
         documentSequenceNumber: number,
-        documentMinimumSequenceNumber: number) {
+        documentMinimumSequenceNumber: number,
+        traceId: string,
+        timestamp: number) {
 
         assert(this.baseMappingIsSet());
 
@@ -80,6 +82,8 @@ export class DeltaConnection implements IDeltaConnection {
             minimumSequenceNumber: this.minSequenceNumber,
             referenceSequenceNumber: this.refSequenceNumber,
             sequenceNumber,
+            timestamp,
+            traceId,
             type: message.type,
         };
 

@@ -171,6 +171,7 @@ export abstract class CollaborativeObject implements api.ICollaborativeObject {
             if (this.localOps.length > 0 &&
                 this.localOps[0].clientSequenceNumber === message.clientSequenceNumber) {
                 this.localOps.shift();
+                this.submitLatencyMessage(message);
             } else {
                 debug(`Duplicate ack received ${message.clientSequenceNumber}`);
             }
@@ -182,5 +183,14 @@ export abstract class CollaborativeObject implements api.ICollaborativeObject {
     private submit(message: api.IObjectMessage): void {
         this.submitCore(message);
         this.services.deltaConnection.submit(message);
+    }
+
+    private submitLatencyMessage(message: api.ISequencedObjectMessage) {
+        const latencyMessage: api.ILatencyMessage = {
+            timestamp: Date.now(),
+            traceId: message.traceId,
+        };
+
+        this.document.submitLatencyMessage(latencyMessage);
     }
 }

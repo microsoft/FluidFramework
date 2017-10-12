@@ -17,9 +17,11 @@ import {
     AttachObject,
     IAttachMessage,
     IEnvelope,
+    ILatencyMessage,
     IObjectMessage,
     ISequencedDocumentMessage,
-    ObjectOperation } from "./protocol";
+    ObjectOperation,
+    RoundTrip } from "./protocol";
 import * as storage from "./storage";
 import * as types from "./types";
 
@@ -301,6 +303,10 @@ export class Document {
         this.submitMessage(ObjectOperation, envelope);
     }
 
+    public submitLatencyMessage(message: ILatencyMessage) {
+        this.deltaManager.submitRoundtrip(RoundTrip, message);
+    }
+
     public on(event: string, listener: (...args: any[]) => void): this {
         this.events.on(event, listener);
         return this;
@@ -497,7 +503,9 @@ export class Document {
                 envelope.contents,
                 message.clientId,
                 message.sequenceNumber,
-                message.minimumSequenceNumber);
+                message.minimumSequenceNumber,
+                message.traceId,
+                message.timestamp);
         } else if (message.type === AttachObject) {
             const attachMessage = message.contents as IAttachMessage;
 

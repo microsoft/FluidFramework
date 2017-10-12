@@ -2,7 +2,7 @@ version: '3'
 services:
 
     influxdb:
-        image: influxdb:1.2.3
+        image: influxdb:latest
         container_name: influxdb
         ports:
             - "8083:8083"
@@ -18,6 +18,8 @@ services:
     telegraf:
         image: telegraf:latest
         container_name: telegraf
+        ports:
+            - "8094: 8094"
         links:
             - influxdb
         volumes:

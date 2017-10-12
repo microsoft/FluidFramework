@@ -13,7 +13,8 @@ export class DeliResources implements utils.IResources {
         public groupId: string,
         public receiveTopic: string,
         public checkpointBatchSize: number,
-        public checkpointTimeIntervalMsec: number) {
+        public checkpointTimeIntervalMsec: number,
+        public metricClientConfig: any) {
     }
 
     public async dispose(): Promise<void> {
@@ -36,6 +37,7 @@ export class DeliResourcesFactory implements utils.IResourcesFactory<DeliResourc
         const checkpointTimeIntervalMsec = config.get("deli:checkpointTimeIntervalMsec");
         const documentsCollectionName = config.get("mongo:collectionNames:documents");
         const groupId = config.get("deli:groupId");
+        const metricClientConfig = config.get("telegraf");
 
         // Connection to stored document details
         const mongoFactory = new services.MongoDbFactory(mongoUrl);
@@ -55,7 +57,8 @@ export class DeliResourcesFactory implements utils.IResourcesFactory<DeliResourc
             groupId,
             receiveTopic,
             checkpointBatchSize,
-            checkpointTimeIntervalMsec);
+            checkpointTimeIntervalMsec,
+            metricClientConfig);
     }
 }
 
@@ -68,6 +71,7 @@ export class DeliRunnerFactory implements utils.IRunnerFactory<DeliResources> {
             resources.groupId,
             resources.receiveTopic,
             resources.checkpointBatchSize,
-            resources.checkpointTimeIntervalMsec);
+            resources.checkpointTimeIntervalMsec,
+            resources.metricClientConfig);
     }
 }
