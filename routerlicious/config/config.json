@@ -134,8 +134,11 @@
         "repository": "prague",
         "historian": "http://historian:3000"
     },
-    "telegraf": {
-        "host": "telegraf",
-        "port": 8094
+    "metric": {
+        "client": "telegraf",
+        "telegraf": {
+            "host": "telegraf",
+            "port": 8094
+        }
     }
 }

@@ -47,7 +47,7 @@ export class DeliRunner implements utils.IRunner {
         const throughput = new utils.ThroughputCounter(winston.info);
 
         winston.info("Waiting for messages");
-        const metricLogger = new shared.MetricClient(this.metricClientConfig);
+        const metricLogger = shared.createMetricClient(this.metricClientConfig);
         this.q = queue((message: any, callback) => {
             throughput.produce();
             this.processMessage(
@@ -117,7 +117,7 @@ export class DeliRunner implements utils.IRunner {
         partitionManager: core.PartitionManager,
         producer: utils.kafkaProducer.IProducer,
         objectsCollection: core.ICollection<any>,
-        metricLogger: shared.MetricClient) {
+        metricLogger: shared.IMetricClient) {
 
         const baseMessage = JSON.parse(message.value.toString("utf8")) as core.IMessage;
         if (baseMessage.type === core.UpdateReferenceSequenceNumberType ||

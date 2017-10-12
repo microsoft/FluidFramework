@@ -1,6 +1,12 @@
 import * as telegraf from "telegrafjs";
 
-export class MetricClient {
+export interface IMetricClient {
+
+    // tslint:disable-next-line:max-line-length
+    writeLatencyMetric(traceId: string, local: string, intermediate: string, global: string, timestamp: number): Promise<void>;
+}
+
+class TelegrafClient implements IMetricClient {
     private telegrafClient: any;
     private connected: boolean = false;
 
@@ -39,4 +45,17 @@ export class MetricClient {
             },
         ));
     }
+}
+
+class DefaultClient implements IMetricClient {
+
+    // tslint:disable-next-line:max-line-length
+    public writeLatencyMetric(traceId: string, local: string, intermediate: string, global: string, timestamp: number): Promise<void> {
+        return Promise.resolve();
+    }
+}
+
+export function createMetricClient(config: any): IMetricClient {
+    // tslint:disable-next-line:max-line-length
+    return (config !== undefined && config.client === "telegraf") ? new TelegrafClient(config.telegraf) : new DefaultClient();
 }

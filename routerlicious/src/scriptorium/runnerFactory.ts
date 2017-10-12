@@ -36,7 +36,7 @@ export class ScriptoriumResourcesFactory implements utils.IResourcesFactory<Scri
         const checkpointTimeIntervalMsec = config.get("scriptorium:checkpointTimeIntervalMsec");
         const mongoUrl = config.get("mongo:endpoint") as string;
         const deltasCollectionName = config.get("mongo:collectionNames:deltas");
-        const metricClientConfig = config.get("telegraf");
+        const metricClientConfig = config.get("metric");
 
         const mongoFactory = new services.MongoDbFactory(mongoUrl);
         const mongoManager = new utils.MongoManager(mongoFactory, false);

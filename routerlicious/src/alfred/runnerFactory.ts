@@ -60,7 +60,7 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
         const kafkaLibrary = config.get("kafka:lib:name");
         const kafkaClientId = config.get("alfred:kafkaClientId");
         const topic = config.get("alfred:topic");
-        const metricClientConfig = config.get("telegraf");
+        const metricClientConfig = config.get("metric");
         const producer = utils.kafkaProducer.create(kafkaLibrary, kafkaEndpoint, kafkaClientId, topic);
 
         // Setup Redis endpoints

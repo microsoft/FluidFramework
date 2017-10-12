@@ -130,7 +130,6 @@
     "express": "^4.15.2",
     "gitresources": "https://praguenpm.blob.core.windows.net/packages/gitresources-0.2.0.tgz",
     "hjs": "0.0.6",
-    "influx": "^5.0.7",
     "jquery": "^3.2.1",
     "kafka-node": "^1.6.0",
     "lodash": "^4.17.4",

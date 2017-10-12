@@ -17,7 +17,7 @@ export function register(
     metricClientConfig: any) {
 
     const throughput = new utils.ThroughputCounter(winston.info);
-    const metricLogger = new shared.MetricClient(metricClientConfig);
+    const metricLogger = shared.createMetricClient(metricClientConfig);
 
     webSocketServer.on("connection", (socket: core.IWebSocket) => {
         const connectionProfiler = winston.startTimer();

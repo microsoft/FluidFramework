@@ -37,7 +37,7 @@ export class DeliResourcesFactory implements utils.IResourcesFactory<DeliResourc
         const checkpointTimeIntervalMsec = config.get("deli:checkpointTimeIntervalMsec");
         const documentsCollectionName = config.get("mongo:collectionNames:documents");
         const groupId = config.get("deli:groupId");
-        const metricClientConfig = config.get("telegraf");
+        const metricClientConfig = config.get("metric");
 
         // Connection to stored document details
         const mongoFactory = new services.MongoDbFactory(mongoUrl);
