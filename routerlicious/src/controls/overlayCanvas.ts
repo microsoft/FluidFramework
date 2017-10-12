@@ -414,6 +414,14 @@ export class OverlayCanvas extends ui.Component {
     }
 
     /**
+     * Used to just enable/disable the ink events. Should only be used when needing to temporarily
+     * disable ink (for DOM hit testing events, for example). The enableInk event is probably what you really want.
+     */
+    public enableInkHitTest(enable: boolean) {
+        this.element.style.pointerEvents = enable ? "auto" : "none";
+    }
+
+    /**
      * Tracks ink events on the provided element and enables/disables the ink layer based on them
      */
     private trackInkEvents(eventTarget: HTMLDivElement) {
@@ -453,7 +461,7 @@ export class OverlayCanvas extends ui.Component {
         const enable = this.forceInk || this.penHovering;
         if (this.inkEventsEnabled !== enable) {
             this.inkEventsEnabled = enable;
-            this.element.style.pointerEvents = enable ? "auto" : "none";
+            this.enableInkHitTest(enable);
         }
     }
 
