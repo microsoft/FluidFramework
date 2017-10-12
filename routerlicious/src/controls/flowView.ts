@@ -769,7 +769,7 @@ function renderSegmentIntoLine(
 
 function findLineDiv(pos: number, flowView: FlowView, dive = false) {
     return flowView.lineDivSelect((elm) => {
-        if ((elm.linePos <= pos) && (elm.lineEnd > pos)) {
+        if ((elm.linePos <= pos) && (elm.lineEnd >= pos)) {
             return elm;
         }
     }, flowView.viewportDiv, dive);
@@ -2507,6 +2507,8 @@ export class FlowView extends ui.Component {
         if (presentPresence && presentPresence.cursor) {
             remotePosInfo.cursor = presentPresence.cursor;
         }
+
+        presentPresence = remotePosInfo;
         this.presenceVector[remotePosInfo.clientId] = remotePosInfo;
         if (remotePosInfo.xformPos !== presentPresence.xformPos) {
             this.presenceQueueRender(remotePosInfo);
