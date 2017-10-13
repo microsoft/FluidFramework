@@ -53,7 +53,7 @@ export interface IMergeTreeRemoveMsg extends IMergeTreeDelta {
 
 export interface ICombiningOp {
     name: string;
-    defaultValue: any;
+    defaultValue?: any;
     minValue?: any;
     maxValue?: any;
 }

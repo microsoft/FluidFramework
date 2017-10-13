@@ -5,6 +5,7 @@ import * as api from "../api";
 import * as shared from "../shared";
 import * as MergeTree from "./mergeTree";
 import * as ops from "./ops";
+import * as Properties from "./properties";
 import * as Paparazzo from "./snapshot";
 
 export class CollaboritiveStringExtension implements api.IExtension {
@@ -39,14 +40,14 @@ function textsToSegments(texts: ops.IPropertyString[]) {
     for (let ptext of texts) {
         let segment: MergeTree.Segment;
         if (ptext.text !== undefined) {
-            segment = MergeTree.TextSegment.make(ptext.text, ptext.props as MergeTree.PropertySet,
+            segment = MergeTree.TextSegment.make(ptext.text, ptext.props as Properties.PropertySet,
                 MergeTree.UniversalSequenceNumber,
                 MergeTree.LocalClientId);
         } else {
             // for now assume marker
             segment = MergeTree.Marker.make(
                 ptext.marker.behaviors,
-                ptext.props as MergeTree.PropertySet,
+                ptext.props as Properties.PropertySet,
                 MergeTree.UniversalSequenceNumber,
                 MergeTree.LocalClientId);
         }
@@ -109,7 +110,7 @@ export class SharedString extends api.CollaborativeObject {
     public insertMarker(
         pos: number,
         behaviors: ops.MarkerBehaviors,
-        props?: MergeTree.PropertySet) {
+        props?: Properties.PropertySet) {
 
         const insertMessage: ops.IMergeTreeInsertMsg = {
             marker: { behaviors },
@@ -122,7 +123,7 @@ export class SharedString extends api.CollaborativeObject {
         this.submitLocalOperation(insertMessage);
     }
 
-    public insertText(text: string, pos: number, props?: MergeTree.PropertySet) {
+    public insertText(text: string, pos: number, props?: Properties.PropertySet) {
         const insertMessage: ops.IMergeTreeInsertMsg = {
             pos1: pos,
             props,
@@ -146,7 +147,7 @@ export class SharedString extends api.CollaborativeObject {
     }
 
     public annotateRangeFromPast(
-        props: MergeTree.PropertySet,
+        props: Properties.PropertySet,
         start: number,
         end: number,
         fromSeq: number) {
@@ -163,7 +164,7 @@ export class SharedString extends api.CollaborativeObject {
         this.submitLocalOperation(groupOp);
     }
 
-    public annotateRange(props: MergeTree.PropertySet, start: number, end: number, op?: ops.ICombiningOp) {
+    public annotateRange(props: Properties.PropertySet, start: number, end: number, op?: ops.ICombiningOp) {
         let annotateMessage: ops.IMergeTreeAnnotateMsg = {
             pos1: start,
             pos2: end,

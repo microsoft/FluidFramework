@@ -109,7 +109,7 @@ export function extend<T>(base: MapLike<T>, extension: MapLike<T>, combiningOp?:
                 delete base[key];
             } else {
                 // TODO: consider some type constraints on ops
-                if (combiningOp) {
+                if (combiningOp && (combiningOp.name!=="rewrite")) {
                     base[key] = combine(combiningOp, base[key], v);
                 } else {
                     base[key] = v;

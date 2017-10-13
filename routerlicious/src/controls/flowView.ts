@@ -2708,7 +2708,7 @@ export class FlowView extends ui.Component {
     public getPosFromPixels(targetLineDiv: ILineDiv, x: number) {
         let position: number = undefined;
 
-        if (targetLineDiv && (targetLineDiv.linePos)) {
+        if (targetLineDiv && (targetLineDiv.linePos !== undefined)) {
             let y: number;
             let targetLineBounds = targetLineDiv.getBoundingClientRect();
             y = targetLineBounds.top + Math.floor(targetLineBounds.height / 2);
@@ -3061,22 +3061,26 @@ export class FlowView extends ui.Component {
             this.cursor.pos++;
             let code = e.charCode;
             if (code === CharacterCodes.cr) {
-                // TODO: pg properties on marker
+                // TODO: other labels; for now assume only list/pg tile labels
                 let curTilePos = findTile(this, pos, "pg", false);
-                clearContentCaches(curTilePos.tile);
-                if (curTilePos && isListTile(curTilePos.tile)) {
-                    let curTile = <IParagraphMarker>curTilePos.tile;
-                    if (isListTile(curTile)) {
-                        this.sharedString.insertMarker(pos, SharedString.MarkerBehaviors.Tile, {
-                            [SharedString.reservedTileLabelsKey]: ["pg", "list"],
-                            indentLevel: curTile.properties.indentLevel,
-                            listKind: curTile.properties.listKind,
-                        });
-                    }
-                } else {
-                    this.sharedString.insertMarker(pos, SharedString.MarkerBehaviors.Tile,
-                        { [SharedString.reservedTileLabelsKey]: ["pg"] });
+                let pgMarker = <IParagraphMarker>curTilePos.tile;
+                let pgPos = curTilePos.pos;
+                clearContentCaches(pgMarker);
+                let curProps = pgMarker.properties;
+                let newProps = SharedString.createMap<any>();
+                let newLabels = ["pg"];
+                if (isListTile(pgMarker)) {
+                    newLabels.push("list");
+                    newProps.indentLevel = curProps.indentLevel;
+                    newProps.listKind = curProps.listKind;
                 }
+                newProps[SharedString.reservedTileLabelsKey] = newLabels;
+                // TODO: place in group op
+                // old marker gets new props
+                this.sharedString.annotateRange(newProps, pgPos, pgPos + 1,
+                    { name: "rewrite" });
+                // new marker gets existing props
+                this.sharedString.insertMarker(pos, SharedString.MarkerBehaviors.Tile, curProps);
             } else {
                 this.sharedString.insertText(String.fromCharCode(code), pos);
                 this.updatePGInfo(pos);
