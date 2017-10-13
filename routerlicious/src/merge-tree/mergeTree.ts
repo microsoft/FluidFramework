@@ -30,6 +30,7 @@ export interface Block extends Node {
 }
 
 export interface HierBlock extends Block {
+    hierToString(indentCount: number);
     addNodeMarkers(mergeTree: MergeTree, node: Node);
     rightmostTiles: Properties.MapLike<Marker>;
     leftmostTiles: Properties.MapLike<Marker>;
@@ -241,6 +242,11 @@ export class MergeBlock extends MergeNode implements Block {
 }
 
 class HierMergeBlock extends MergeBlock implements Block {
+    rightmostTiles: Properties.MapLike<Marker>;
+    leftmostTiles: Properties.MapLike<Marker>;
+
+    rangeStacks: Properties.MapLike<Collections.Stack<Marker>>;
+
     constructor(childCount: number) {
         super(childCount);
         this.rightmostTiles = Properties.createMap<Marker>();
@@ -257,10 +263,19 @@ class HierMergeBlock extends MergeBlock implements Block {
         return this;
     }
 
-    rightmostTiles: Properties.MapLike<Marker>;
-    leftmostTiles: Properties.MapLike<Marker>;
-
-    rangeStacks: Properties.MapLike<Collections.Stack<Marker>>;
+    hierToString(indentCount: number) {
+        let strbuf = "";
+        for (let key in this.rangeStacks) {
+            let stack = this.rangeStacks[key];
+            strbuf += internedSpaces(indentCount);
+            strbuf += `${key}: `;
+            for (let item of stack.items) {
+                strbuf += `${item.toString()} `;
+            }
+            strbuf += "\n";
+        }
+        return strbuf;
+    }
 }
 
 function nodeTotalLength(node: Node) {
@@ -300,7 +315,7 @@ export abstract class BaseSegment extends MergeNode implements Segment {
     }
 
     addProperties(newProps: Properties.PropertySet, op?: ops.ICombiningOp) {
-        if ((!this.properties)||(op && (op.name==="rewrite"))) {
+        if ((!this.properties) || (op && (op.name === "rewrite"))) {
             this.properties = Properties.createMap<any>();
         }
         Properties.extend(this.properties, newProps, op);
@@ -1567,10 +1582,10 @@ export class Client {
                         if (op.hasContingentOps) {
                             let cancelled = this.checkContingentOps(op, msg);
                             if (cancelled) {
-                                ack= false;
+                                ack = false;
                                 // TODO: undo segment group and re-do group op
-                            } 
-                        } 
+                            }
+                        }
                     }
                     if (ack) {
                         this.ackPendingSegment(operationMessage.sequenceNumber);
@@ -3461,15 +3476,37 @@ export class MergeTree {
         this.nodeMap(this.root, actions, 0, refSeq, clientId, accum, start, end);
     }
 
-    nodeToString(node: Block, strbuf: string, indentCount = 0) {
+    rangeToString(start: number, end: number) {
+        let strbuf = "";
+        for (let childIndex = 0; childIndex < this.root.childCount; childIndex++) {
+            let child = this.root.children[childIndex];
+            if (!child.isLeaf()) {
+                let block = <Block>child;
+                let len = this.blockLength(block, UniversalSequenceNumber,
+                    this.collabWindow.clientId);
+                if ((start<=len)&&(end>0)) {
+                    strbuf += this.nodeToString(block, strbuf, 0);
+                }
+                start -= len;
+                end -= len;
+            }
+        }
+        return strbuf;
+    }
+
+    nodeToString(block: Block, strbuf: string, indentCount = 0) {
         strbuf += internedSpaces(indentCount);
-        strbuf += `Node (len ${node.cachedLength}) p len (${node.parent ? node.parent.cachedLength : 0}) with ${node.childCount} live segments:\n`;
+        strbuf += `Node (len ${block.cachedLength}) p len (${block.parent ? block.parent.cachedLength : 0}) with ${block.childCount} live segments:\n`;
+        if (this.blockUpdateMarkers) {
+            strbuf += internedSpaces(indentCount);
+            strbuf += (<HierBlock>block).hierToString(indentCount);
+        }
         if (this.collabWindow.collaborating) {
             strbuf += internedSpaces(indentCount);
-            strbuf += node.partialLengths.toString((id) => glc(this, id)) + '\n';
+            strbuf += block.partialLengths.toString((id) => glc(this, id)) + '\n';
         }
-        let children = node.children;
-        for (let childIndex = 0; childIndex < node.childCount; childIndex++) {
+        let children = block.children;
+        for (let childIndex = 0; childIndex < block.childCount; childIndex++) {
             let child = children[childIndex];
             if (!child.isLeaf()) {
                 strbuf = this.nodeToString(<Block>child, strbuf, indentCount + 4);

@@ -2433,6 +2433,7 @@ export class FlowView extends ui.Component {
     public presenceVector: IPresenceInfo[] = [];
     public presenceSeq = 0;
     public docRoot: API.IMapView;
+    public curPG: SharedString.Marker;
     private lastVerticalX = -1;
     private randWordTimer: any;
     private pendingRender = false;
@@ -2699,6 +2700,10 @@ export class FlowView extends ui.Component {
                 computed += span.offset;
             }
             this.cursor.pos = span.segPos + computed;
+            let tilePos = findTile(this, this.cursor.pos, "pg", false);
+            if (tilePos) {
+                this.curPG = tilePos.tile;
+            }
             this.updatePresence();
             this.cursor.updateView(this);
             return true;
