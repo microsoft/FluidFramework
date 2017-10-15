@@ -3,6 +3,7 @@
 import * as Collections from "./collections";
 import * as random from "random-js";
 import * as MergeTree from "./mergeTree";
+import * as Properties from "./properties";
 import * as ops from "./ops";
 import * as JsDiff from "diff";
 import * as path from "path";
@@ -31,6 +32,42 @@ interface AsyncRoundInfo {
     removeSegmentCount?: number;
     iterIndex: number;
 }
+
+export function propertyCopy() {
+    const propCount = 2000;
+    const iterCount = 10000;
+    let a = <string[]>[];
+    let v = <number[]>[];
+    for (let i = 0; i < propCount; i++) {
+        a[i] = `prop${i}`;
+        v[i] = i;
+    }
+    let clockStart = clock();
+    let obj: Properties.MapLike<number>;
+    for (let j = 0; j < iterCount; j++) {
+        obj = Properties.createMap<number>();
+        for (let i = 0; i < propCount; i++) {
+            obj[a[i]] = v[i];
+        }
+    }
+    let et = elapsedMicroseconds(clockStart);
+    let perIter = (et/iterCount).toFixed(3);
+    let perProp = (et/(iterCount*propCount)).toFixed(3);
+    console.log(`arr prop init time ${perIter} per init; ${perProp} per property`);
+    clockStart = clock();
+    for (let j = 0; j < iterCount; j++) {
+        let bObj = Properties.createMap<number>();
+        for (let key in obj) {
+            bObj[key] = obj[key];
+        }
+    }        
+    et = elapsedMicroseconds(clockStart);
+    perIter = (et/iterCount).toFixed(3);
+    perProp = (et/(iterCount*propCount)).toFixed(3);
+    console.log(`obj prop init time ${perIter} per init; ${perProp} per property`);
+}
+
+propertyCopy();
 
 export function TestPack(verbose = true) {
     let mt = random.engines.mt19937();

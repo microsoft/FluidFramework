@@ -643,31 +643,33 @@ function showPresence(presenceX: number, lineContext: ILineContext, presenceInfo
 }
 
 function showPositionEndOfLine(lineContext: ILineContext, presenceInfo?: IPresenceInfo) {
-    if (lineContext.deferredAttach) {
-        addToRerenderList(lineContext);
-    } else {
-        if (lineContext.span) {
-            let cursorBounds = lineContext.span.getBoundingClientRect();
-            let lineDivBounds = lineContext.lineDiv.getBoundingClientRect();
-            let cursorX = cursorBounds.width + (cursorBounds.left - lineDivBounds.left);
-            if (!presenceInfo) {
-                lineContext.flowView.cursor.assignToLine(cursorX, lineContext.lineDivHeight, lineContext.lineDiv);
-            } else {
-                showPresence(cursorX, lineContext, presenceInfo);
-            }
+    if ((!presenceInfo) || (presenceInfo.xformPos !== presenceInfo.lastShownPos)) {
+        if (lineContext.deferredAttach) {
+            addToRerenderList(lineContext);
         } else {
-            if (lineContext.lineDiv.indentWidth !== undefined) {
+            if (lineContext.span) {
+                let cursorBounds = lineContext.span.getBoundingClientRect();
+                let lineDivBounds = lineContext.lineDiv.getBoundingClientRect();
+                let cursorX = cursorBounds.width + (cursorBounds.left - lineDivBounds.left);
                 if (!presenceInfo) {
-                    lineContext.flowView.cursor.assignToLine(
-                        lineContext.lineDiv.indentWidth, lineContext.lineDivHeight, lineContext.lineDiv);
+                    lineContext.flowView.cursor.assignToLine(cursorX, lineContext.lineDivHeight, lineContext.lineDiv);
                 } else {
-                    showPresence(lineContext.lineDiv.indentWidth, lineContext, presenceInfo);
+                    showPresence(cursorX, lineContext, presenceInfo);
                 }
             } else {
-                if (!presenceInfo) {
-                    lineContext.flowView.cursor.assignToLine(0, lineContext.lineDivHeight, lineContext.lineDiv);
+                if (lineContext.lineDiv.indentWidth !== undefined) {
+                    if (!presenceInfo) {
+                        lineContext.flowView.cursor.assignToLine(
+                            lineContext.lineDiv.indentWidth, lineContext.lineDivHeight, lineContext.lineDiv);
+                    } else {
+                        showPresence(lineContext.lineDiv.indentWidth, lineContext, presenceInfo);
+                    }
                 } else {
-                    showPresence(0, lineContext, presenceInfo);
+                    if (!presenceInfo) {
+                        lineContext.flowView.cursor.assignToLine(0, lineContext.lineDivHeight, lineContext.lineDiv);
+                    } else {
+                        showPresence(0, lineContext, presenceInfo);
+                    }
                 }
             }
         }
@@ -689,28 +691,30 @@ function showPositionInLine(
     cursorPos: number,
     presenceInfo?: IPresenceInfo) {
 
-    if (lineContext.deferredAttach) {
-        addToRerenderList(lineContext);
-    } else {
-        let posX: number;
-        let lineDivBounds = lineContext.lineDiv.getBoundingClientRect();
-        if (cursorPos > textStartPos) {
-            let preCursorText = text.substring(0, cursorPos - textStartPos);
-            let temp = lineContext.span.innerText;
-            lineContext.span.innerText = preCursorText;
-            let cursorBounds = lineContext.span.getBoundingClientRect();
-            posX = cursorBounds.width + (cursorBounds.left - lineDivBounds.left);
-            // console.log(`cbounds w ${cursorBounds.width} posX ${posX} ldb ${lineDivBounds.left}`);
-            lineContext.span.innerText = temp;
+    if ((!presenceInfo) || (presenceInfo.xformPos !== presenceInfo.lastShownPos)) {
+        if (lineContext.deferredAttach) {
+            addToRerenderList(lineContext);
         } else {
-            let cursorBounds = lineContext.span.getBoundingClientRect();
-            posX = cursorBounds.left - lineDivBounds.left;
-            // console.log(`cbounds whole l ${cursorBounds.left} posX ${posX} ldb ${lineDivBounds.left}`);
-        }
-        if (!presenceInfo) {
-            lineContext.flowView.cursor.assignToLine(posX, lineContext.lineDivHeight, lineContext.lineDiv);
-        } else {
-            showPresence(posX, lineContext, presenceInfo);
+            let posX: number;
+            let lineDivBounds = lineContext.lineDiv.getBoundingClientRect();
+            if (cursorPos > textStartPos) {
+                let preCursorText = text.substring(0, cursorPos - textStartPos);
+                let temp = lineContext.span.innerText;
+                lineContext.span.innerText = preCursorText;
+                let cursorBounds = lineContext.span.getBoundingClientRect();
+                posX = cursorBounds.width + (cursorBounds.left - lineDivBounds.left);
+                // console.log(`cbounds w ${cursorBounds.width} posX ${posX} ldb ${lineDivBounds.left}`);
+                lineContext.span.innerText = temp;
+            } else {
+                let cursorBounds = lineContext.span.getBoundingClientRect();
+                posX = cursorBounds.left - lineDivBounds.left;
+                // console.log(`cbounds whole l ${cursorBounds.left} posX ${posX} ldb ${lineDivBounds.left}`);
+            }
+            if (!presenceInfo) {
+                lineContext.flowView.cursor.assignToLine(posX, lineContext.lineDivHeight, lineContext.lineDiv);
+            } else {
+                showPresence(posX, lineContext, presenceInfo);
+            }
         }
     }
 }
@@ -2324,6 +2328,7 @@ export class Cursor {
                 this.presenceDiv.parentElement.removeChild(this.presenceDiv);
             }
             this.presenceDiv.style.opacity = "1.0";
+            this.presenceInfo.lastShownPos = this.presenceInfo.xformPos;
             lineDiv.appendChild(this.presenceDiv);
         }
         if (this.blinkTimer) {
@@ -2386,6 +2391,7 @@ export interface IPresenceInfo {
     origPos: number;
     refseq: number;
     xformPos?: number;
+    lastShownPos?: number;
     key?: string;
     clientId?: number;
     cursor?: Cursor;
