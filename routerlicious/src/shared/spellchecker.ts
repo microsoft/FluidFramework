@@ -122,6 +122,9 @@ class Speller {
             delta.type === mergeTree.MergeTreeDeltaType.REMOVE) {
             let pgMarker = this.sharedString.client.mergeTree.findTile(delta.pos1,
                 this.sharedString.client.getClientId(), "pg");
+            if (!pgMarker) {
+                pgMarker = { tile: undefined, pos: 0};
+            }
             this.pendingParagraphs.push(pgMarker);
         } else if (delta.type === mergeTree.MergeTreeDeltaType.GROUP) {
             for (let groupOp of delta.ops) {
@@ -159,8 +162,11 @@ class Speller {
         }
         if (this.pendingParagraphs.length > 0) {
             for (let pg of this.pendingParagraphs) {
-                const offset = this.sharedString.client.mergeTree.getOffset(pg.tile, mergeTree.UniversalSequenceNumber,
+                let offset = 0;
+                if (pg.tile) {
+                    offset = this.sharedString.client.mergeTree.getOffset(pg.tile, mergeTree.UniversalSequenceNumber,
                     this.sharedString.client.getClientId());
+                }
                 const endMarkerPos = this.sharedString.client.mergeTree.findTile(offset,
                     this.sharedString.client.getClientId(), "pg", false);
                 let endPos: number;
