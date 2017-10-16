@@ -15,6 +15,7 @@ export abstract class Component {
     public on(event: "keypress", handler: (e: KeyboardEvent) => void): this;
     public on(event: "keydown", handler: (e: KeyboardEvent) => void): this;
     public on(event: "resize", handler: (size: Rectangle) => void): this;
+    public on(event: string, listener: (...args: any[]) => void): this;
     public on(event: string, listener: (...args: any[]) => void): this {
         this.events.on(event, listener);
         return this;
@@ -49,8 +50,12 @@ export abstract class Component {
     // For the child management functions we may want to just make the dervied class do this. Could help them
     // provide better context on their tracked nodes.
 
-    protected addChild(component: Component) {
-        this.children.push(component);
+    protected addChild(component: Component, index = -1) {
+        if (index === -1) {
+            this.children.push(component);
+        } else {
+            this.children.splice(index, 0, component);
+        }
     }
 
     protected removeChild(component: Component) {

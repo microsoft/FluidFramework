@@ -1,12 +1,21 @@
 import * as api from "../api";
-import { SharedString } from "../merge-tree";
+import * as ink from "../ink";
+import { MarkerBehaviors, reservedMarkerIdKey, SharedString } from "../merge-tree";
 import * as ui from "../ui";
+import { debug } from "./debug";
 import { DockPanel } from "./dockPanel";
-import { FlowView } from "./flowView";
+import { FlowView, IOverlayMarker } from "./flowView";
 import { Image } from "./image";
 import { LayerPanel } from "./layerPanel";
-import { OverlayCanvas } from "./overlayCanvas";
+import { InkLayer, Layer, OverlayCanvas } from "./overlayCanvas";
+import { IRange } from "./scrollBar";
 import { Status } from "./status";
+
+interface IOverlayLayerStatus {
+    layer: Layer;
+    active: boolean;
+    cursorOffset: ui.IPoint;
+}
 
 export class FlowContainer extends ui.Component {
     public status: Status;
@@ -15,8 +24,20 @@ export class FlowContainer extends ui.Component {
     private layerPanel: LayerPanel;
     private overlayCanvas: OverlayCanvas;
 
-    constructor(element: HTMLDivElement, sharedString: SharedString, private image: Image) {
+    private layerCache: { [key: string]: Layer } = {};
+    private activeLayers: {[key: string]: IOverlayLayerStatus } = {};
+
+    constructor(
+        element: HTMLDivElement,
+        collabDocument: api.Document,
+        sharedString: SharedString,
+        private overlayMap: api.IMap,
+        private image: Image) {
+
         super(element);
+
+        // TODO the below code is becoming controller like and probably doesn't belong in a constructor. Likely
+        // a better API model.
 
         // Status bar at the bottom
         const statusDiv = document.createElement("div");
@@ -35,7 +56,59 @@ export class FlowContainer extends ui.Component {
         // Overlay canvas for ink
         const overlayCanvasDiv = document.createElement("div");
         overlayCanvasDiv.classList.add("overlay-canvas");
-        this.overlayCanvas = new OverlayCanvas(overlayCanvasDiv, layerPanelDiv);
+        this.overlayCanvas = new OverlayCanvas(collabDocument, overlayCanvasDiv, layerPanelDiv);
+
+        this.overlayCanvas.on("ink", (layer: InkLayer, model: ink.IInk, start: ui.IPoint) =>  {
+            this.overlayCanvas.enableInkHitTest(false);
+            const position = this.flowView.getNearestPosition(start);
+            this.overlayCanvas.enableInkHitTest(true);
+
+            const location = this.flowView.getPositionLocation(position);
+            const cursorOffset = {
+                x: start.x - location.x,
+                y: start.y - location.y,
+            };
+
+            this.layerCache[model.id] = layer;
+            this.activeLayers[model.id] = { layer, active: true, cursorOffset };
+            overlayMap.set(model.id, model);
+            // Inserts the marker at the flow view's cursor position
+            sharedString.insertMarker(
+                position,
+                MarkerBehaviors.None,
+                { [reservedMarkerIdKey]: model.id });
+        });
+
+        this.status.on("dry", (value) => {
+            debug("Drying a layer");
+        });
+
+        // Update the scroll bar
+        this.flowView.on(
+            "render",
+            (renderInfo: {
+                overlayMarkers: IOverlayMarker[],
+                range: IRange,
+                viewportEndPos: number,
+                viewportStartPos: number,
+            }) => {
+                const showScrollBar = renderInfo.range.min !== renderInfo.viewportStartPos ||
+                    renderInfo.range.max !== renderInfo.viewportEndPos;
+                this.layerPanel.showScrollBar(showScrollBar);
+
+                this.layerPanel.scrollBar.setRange(renderInfo.range);
+
+                this.markLayersInactive();
+                for (const marker of renderInfo.overlayMarkers) {
+                    this.addLayer(marker);
+                }
+                this.pruneInactiveLayers();
+            });
+
+        this.status.addOption("ink", "ink");
+        this.status.on("ink", (value) => {
+            this.overlayCanvas.enableInk(value);
+        });
 
         // Add children to the panel once we have both
         this.layerPanel.addChild(this.flowView);
@@ -72,6 +145,44 @@ export class FlowContainer extends ui.Component {
         }
     }
 
+    private async addLayer(marker: IOverlayMarker) {
+        const id = marker.id;
+        const position = marker.position;
+        const location = this.flowView.getPositionLocation(position);
+
+        // TODO the async nature of this may cause rendering pauses - and in general the layer should already
+        // exist. Should just make this a sync call.
+        // Mark true prior to the async work
+        if (this.activeLayers[id]) {
+            this.activeLayers[id].active = true;
+        }
+        const ink = await this.overlayMap.get(id) as ink.IInk;
+
+        if (!(id in this.layerCache)) {
+            const layer = new InkLayer(this.size, ink);
+            this.layerCache[id] = layer;
+        }
+
+        if (!(id in this.activeLayers)) {
+            const layer = this.layerCache[id];
+            this.overlayCanvas.addLayer(layer);
+            this.activeLayers[id] = {
+                active: true,
+                layer,
+                cursorOffset: { x: 0, y: 0 },
+            };
+        }
+
+        const activeLayer = this.activeLayers[id];
+
+        // Add in any cursor offset
+        location.x += activeLayer.cursorOffset.x;
+        location.y += activeLayer.cursorOffset.y;
+
+        // Update the position unless we're in the process of drawing the layer
+        this.activeLayers[id].layer.setPosition(location);
+    }
+
     private async updateInsights(insights: api.IMap) {
         const view = await insights.getView();
 
@@ -93,6 +204,24 @@ export class FlowContainer extends ui.Component {
                     ? "🙂"
                     : analytics.sentiment < 0.3 ? "🙁" : "😐";
                 this.status.add("si", sentimentEmoji);
+            }
+        }
+    }
+
+    private markLayersInactive() {
+        // tslint:disable-next-line:forin
+        for (const layer in this.activeLayers) {
+            this.activeLayers[layer].active = false;
+        }
+    }
+
+    private pruneInactiveLayers() {
+        // tslint:disable-next-line:forin
+        for (const layerId in this.activeLayers) {
+            if (!this.activeLayers[layerId].active) {
+                const layer = this.activeLayers[layerId];
+                delete this.activeLayers[layerId];
+                this.overlayCanvas.removeLayer(layer.layer);
             }
         }
     }

@@ -435,7 +435,11 @@ export class Document {
     }
 
     private submitMessage(type: string, contents: any) {
-        this.deltaManager.submit(type, contents);
+        const submitP = this.deltaManager.submit(type, contents);
+        submitP.catch((error) => {
+            // TODO need reconnection logic upon loss of connection
+            debug("Lost connection to server");
+        });
     }
 
     private createAttached(id: string, type: string) {

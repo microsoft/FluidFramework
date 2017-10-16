@@ -37,6 +37,21 @@ export class Rectangle {
         }
     }
 
+    public union(other: Rectangle): Rectangle {
+        let minX = Math.min(this.x, other.x);
+        let minY = Math.min(this.y, other.y);
+        let maxX = Math.max(this.x + this.width, other.x + other.width);
+        let maxY = Math.max(this.y + this.height, other.y + other.height);
+        return new Rectangle(minX, minY, maxX - minX, maxY - minY);
+    }
+
+    public contains(other: Rectangle): boolean {
+        return other.x >= this.x &&
+            (other.x + other.width <= this.x + this.width) &&
+            other.y >= this.y &&
+            (other.y + other.height <= this.y + this.height);
+    }
+
     public nipVert(pixels: number) {
         return [
             new Rectangle(this.x, this.y, this.width, pixels),
