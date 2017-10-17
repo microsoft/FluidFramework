@@ -54,27 +54,45 @@ interface IMapDataCompatibility {
 
 const snapshotFileName = "header";
 
+/**
+ * Copies all values from the provided MapView to the given Map
+ */
+export function copyMap(from: MapView, to: Map<string, any>) {
+    from.forEach((value, key) => {
+        to.set(key, value);
+    });
+}
+
 export class MapView implements api.IMapView {
+    private data = new Map<string, IMapValue>();
+
     constructor(
         private document: api.Document,
         id: string,
-        private data: {[key: string]: IMapValue },
+        data: {[key: string]: IMapValue },
         private events: EventEmitter,
         private submitLocalOperation: (op) => void) {
+
+        // Initialize the map of values
+        // tslint:disable-next-line:forin
+        for (const key in data) {
+            this.data.set(key, data[key]);
+        }
+    }
+
+    public forEach(callbackFn: (value, key) => void) {
+        this.data.forEach((value, key) => {
+            callbackFn(this.translateValue(value), key);
+        });
     }
 
     public get(key: string) {
-        if (!(key in this.data)) {
+        if (!this.data.has(key)) {
             return undefined;
         }
 
-        const value = this.data[key];
-        if (value.type === ValueType[ValueType.Collaborative]) {
-            const collabMapValue = value.value as ICollaborativeMapValue;
-            return this.document.get(collabMapValue.id);
-        } else {
-            return this.data[key].value;
-        }
+        const value = this.data.get(key);
+        return this.translateValue(value);
     }
 
     public async wait<T>(key: string): Promise<T> {
@@ -97,7 +115,7 @@ export class MapView implements api.IMapView {
     }
 
     public has(key: string): boolean {
-        return key in this.data;
+        return this.data.has(key);
     }
 
     public set(key: string, value: any): void {
@@ -141,8 +159,8 @@ export class MapView implements api.IMapView {
         this.submitLocalOperation(op);
     }
 
-    public keys(): string[] {
-        return _.keys(this.data);
+    public keys(): IterableIterator<string> {
+        return this.data.keys();
     }
 
     public clear(): void {
@@ -154,29 +172,37 @@ export class MapView implements api.IMapView {
         this.submitLocalOperation(op);
     }
 
-    public getData(): {[key: string]: IMapValue } {
-        return _.clone(this.data);
+    /**
+     * Serializes the collaborative map to a JSON string
+     */
+    public serialize(): string {
+        const serialized: any = {};
+        this.data.forEach((value, key) => {
+            serialized[key] = value;
+        });
+        return JSON.stringify(serialized);
     }
 
     public getMapValue(key: string): IMapValue {
-        if (!(key in this.data)) {
+        if (!this.data.has(key)) {
             return undefined;
         }
-        return this.data[key];
+
+        return this.data.get(key);
     }
 
     public setCore(key: string, value: IMapValue) {
-        this.data[key] = value;
+        this.data.set(key, value);
         this.events.emit("valueChanged", { key });
     }
 
     public clearCore() {
-        this.data = {};
+        this.data.clear();
         this.events.emit("clear");
     }
 
     public deleteCore(key: string) {
-        delete this.data[key];
+        this.data.delete(key);
         this.events.emit("valueChanged", { key });
     }
 
@@ -192,7 +218,7 @@ export class MapView implements api.IMapView {
     }
 
     public initCounterCore(key: string, value: IMapValue) {
-        this.data[key] = value;
+        this.data.set(key, value);
         this.events.emit("valueChanged", { key });
     }
 
@@ -208,7 +234,7 @@ export class MapView implements api.IMapView {
     }
 
     public incrementCounterCore(key: string, value: IMapValue) {
-        this.data[key].value += value.value;
+        this.data.get(key).value += value.value;
         this.events.emit("valueChanged", { key });
     }
 
@@ -225,7 +251,7 @@ export class MapView implements api.IMapView {
 
     public initSetCore(key: string, value: IMapValue) {
         const newValue: IMapValue = {type: ValueType[ValueType.Set], value: DistributedSet.initSet(value.value)};
-        this.data[key] = newValue;
+        this.data.set(key, newValue);
         this.events.emit("valueChanged", { key });
     }
 
@@ -238,7 +264,7 @@ export class MapView implements api.IMapView {
         };
         this.insertSetCore(op.key, op.value);
         this.submitLocalOperation(op);
-        return this.data[key].value;
+        return this.data.get(key).value;
     }
 
     public insertSetCore(key: string, value: IMapValue) {
@@ -246,7 +272,7 @@ export class MapView implements api.IMapView {
             type: ValueType[ValueType.Set],
             value: DistributedSet.addElement(this.get(key), value.value),
         };
-        this.data[key] = newValue;
+        this.data.set(key, newValue);
         this.events.emit("valueChanged", { key });
         this.events.emit("setElementAdded", {key, value: value.value});
     }
@@ -260,7 +286,7 @@ export class MapView implements api.IMapView {
         };
         this.deleteSetCore(op.key, op.value);
         this.submitLocalOperation(op);
-        return this.data[key].value;
+        return this.data.get(key).value;
     }
 
     public deleteSetCore(key: string, value: IMapValue) {
@@ -268,16 +294,25 @@ export class MapView implements api.IMapView {
             type: ValueType[ValueType.Set],
             value: DistributedSet.removeElement(this.get(key), value.value),
         };
-        this.data[key] = newValue;
+        this.data.set(key, newValue);
         this.events.emit("valueChanged", { key });
         this.events.emit("setElementRemoved", {key, value: value.value});
+    }
+
+    private translateValue(value: IMapValue): any {
+        if (value.type === ValueType[ValueType.Collaborative]) {
+            const collabMapValue = value.value as ICollaborativeMapValue;
+            return this.document.get(collabMapValue.id);
+        } else {
+            return value.value;
+        }
     }
 }
 
 /**
  * Implementation of a map collaborative object
  */
-export class Map extends api.CollaborativeObject implements api.IMap {
+export class CollaborativeMap extends api.CollaborativeObject implements api.IMap {
     private view: MapView;
 
     /**
@@ -298,7 +333,7 @@ export class Map extends api.CollaborativeObject implements api.IMap {
     }
 
     public async keys(): Promise<string[]> {
-        return Promise.resolve(this.view.keys());
+        return Promise.resolve(Array.from(this.view.keys()));
     }
 
     /**
@@ -392,7 +427,7 @@ export class Map extends api.CollaborativeObject implements api.IMap {
                     path: snapshotFileName,
                     type: api.TreeEntry[api.TreeEntry.Blob],
                     value: {
-                        contents: JSON.stringify(this.view.getData()),
+                        contents: this.view.serialize(),
                         encoding: "utf-8",
                     },
                 },
@@ -502,10 +537,10 @@ export class MapExtension implements api.IExtension {
         version: resources.ICommit,
         header: string): api.IMap {
 
-        return new Map(document, id, sequenceNumber, services, version, header);
+        return new CollaborativeMap(document, id, sequenceNumber, services, version, header);
     }
 
     public create(document: api.Document, id: string): api.IMap {
-        return new Map(document, id, 0);
+        return new CollaborativeMap(document, id, 0);
     }
 }
