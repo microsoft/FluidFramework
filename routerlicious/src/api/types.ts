@@ -109,12 +109,17 @@ export interface IMapView {
     /**
      * Retreives all the keys contained within the map
      */
-    keys(): string[];
+    keys(): IterableIterator<string>;
 
     /**
      * Removes all entries from the map
      */
     clear(): void;
+
+    /**
+     * Executes the provided callback function once per each key/value pair
+     */
+    forEach(callbackFn: (value, key) => void);
 }
 
 /**

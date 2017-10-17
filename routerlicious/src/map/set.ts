@@ -1,5 +1,5 @@
 import * as api from "../api";
-import { Map } from "./";
+import { CollaborativeMap } from "./";
 
 export class DistributedSet<T> implements api.ISet<T> {
 
@@ -20,7 +20,7 @@ export class DistributedSet<T> implements api.ISet<T> {
         return Array.from(newSet);
     }
 
-    constructor(private parentMap: Map, private key: string) {
+    constructor(private parentMap: CollaborativeMap, private key: string) {
 
     }
 

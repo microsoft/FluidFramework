@@ -1,8 +1,8 @@
 import * as api from "../api";
-import { Map } from "./";
+import { CollaborativeMap } from "./";
 
 export class Counter implements api.ICounter {
-    constructor(private parentMap: Map, private key: string, private min: number, private max: number) {
+    constructor(private parentMap: CollaborativeMap, private key: string, private min: number, private max: number) {
 
     }
     public increment(value: number): Promise<void> {
