@@ -10,6 +10,11 @@ export function loadTextFromFile(filename: string, mergeTree: MergeTree.MergeTre
     return loadText(content, mergeTree, segLimit);
 }
 
+export function loadTextFromFileWithMarkers(filename: string, mergeTree: MergeTree.MergeTree, segLimit = 0) {
+    let content = fs.readFileSync(filename, "utf8");
+    return loadText(content, mergeTree, segLimit, true);
+}
+
 export function loadSegments(content: string, segLimit: number, markers = false) {
     content = content.replace(/^\uFEFF/, "");
     const seq = MergeTree.UniversalSequenceNumber;

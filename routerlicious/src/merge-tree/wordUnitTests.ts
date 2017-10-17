@@ -1,0 +1,114 @@
+// tslint:disable
+
+import * as MergeTree from "./mergeTree";
+import * as Properties from "./properties";
+import * as path from "path";
+import * as Text from "./text";
+
+function clock() {
+    return process.hrtime();
+}
+
+function elapsedMicroseconds(start: [number, number]) {
+    let end: number[] = process.hrtime(start);
+    let duration = Math.round((end[0] * 1000000) + (end[1] / 1000));
+    return duration;
+}
+
+export function propertyCopy() {
+    const propCount = 2000;
+    const iterCount = 1000;
+    let map = new Map<string, number>();
+    let a = <string[]>[];
+    let v = <number[]>[];
+    for (let i = 0; i < propCount; i++) {
+        a[i] = `prop${i}`;
+        v[i] = i;
+        map.set(a[i],v[i]);
+    }
+    let clockStart = clock();
+    let obj: Properties.MapLike<number>;
+    for (let j = 0; j < iterCount; j++) {
+        obj = Properties.createMap<number>();
+        for (let i = 0; i < propCount; i++) {
+            obj[a[i]] = v[i];
+        }
+    }
+    let et = elapsedMicroseconds(clockStart);
+    let perIter = (et/iterCount).toFixed(3);
+    let perProp = (et/(iterCount*propCount)).toFixed(3);
+    console.log(`arr prop init time ${perIter} per init; ${perProp} per property`);
+    clockStart = clock();
+    for (let j = 0; j < iterCount; j++) {
+        let bObj = Properties.createMap<number>();
+        for (let key in obj) {
+            bObj[key] = obj[key];
+        }
+    }        
+    et = elapsedMicroseconds(clockStart);
+    perIter = (et/iterCount).toFixed(3);
+    perProp = (et/(iterCount*propCount)).toFixed(3);
+    console.log(`obj prop init time ${perIter} per init; ${perProp} per property`);
+    clockStart = clock();
+    for (let j = 0; j < iterCount; j++) {
+        let bObj = Properties.createMap<number>();
+        for (let [key,value] of map) {
+            bObj[key] = value;
+        }
+    }        
+    et = elapsedMicroseconds(clockStart);
+    perIter = (et/iterCount).toFixed(3);
+    perProp = (et/(iterCount*propCount)).toFixed(3);
+    console.log(`map prop init time ${perIter} per init; ${perProp} per property`);
+    clockStart = clock();
+    for (let j = 0; j < iterCount; j++) {
+        let bObj = Properties.createMap<number>();
+        map.forEach((v,k)=> { bObj[k] = v; });
+    }        
+    et = elapsedMicroseconds(clockStart);
+    perIter = (et/iterCount).toFixed(3);
+    perProp = (et/(iterCount*propCount)).toFixed(3);
+    console.log(`map foreach prop init time ${perIter} per init; ${perProp} per property`);
+    clockStart = clock();
+    for (let j = 0; j < iterCount; j++) {
+        let bmap = new Map<string,number>();
+        map.forEach((v,k)=> { bmap.set(k,v); });
+    }        
+    et = elapsedMicroseconds(clockStart);
+    perIter = (et/iterCount).toFixed(3);
+    perProp = (et/(iterCount*propCount)).toFixed(3);
+    console.log(`map to map foreach prop init time ${perIter} per init; ${perProp} per property`);
+
+}
+
+propertyCopy();
+
+function measureFetch(startFile: string) {
+    let client = new MergeTree.Client("", { blockUpdateMarkers: true });
+    Text.loadTextFromFileWithMarkers(startFile, client.mergeTree);
+    let clockStart = clock();
+    let count = 0;
+    for (let pos = 0;pos<client.getLength();) {
+        let prevPG = client.mergeTree.findTile(pos, client.getClientId(), "pg");
+        let caBegin: number;
+        if (prevPG) {
+            caBegin = prevPG.pos;
+        } else {
+            caBegin = 0;
+        }
+        // curPG.pos is ca end
+        let curPG = client.mergeTree.findTile(pos, client.getClientId(), "pg", false);
+        let properties = curPG.tile.properties;
+        let curSegOff = client.mergeTree.getContainingSegment(pos, MergeTree.UniversalSequenceNumber, client.getClientId());
+        let curSeg = <MergeTree.BaseSegment>curSegOff.segment;
+        // combine paragraph and direct properties
+        Properties.extend(properties, curSeg.properties);
+        pos += (curSeg.cachedLength-curSegOff.offset);
+        count++;
+    }
+    let et = elapsedMicroseconds(clockStart);
+    console.log(`fetch of ${count} runs took ${(et/count).toFixed(2)} microseconds per run`);
+}
+const filename = path.join(__dirname, "../../public/literature", "pp.txt");
+
+measureFetch(filename);
