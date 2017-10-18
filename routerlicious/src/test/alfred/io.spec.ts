@@ -21,6 +21,7 @@ describe("Routerlicious", () => {
 
                 beforeEach(() => {
                     const documentsCollectionName = "test";
+                    const metricClientConfig = {};
                     const testData: { [key: string]: any[] } = {};
 
                     const testDbFactory = new TestDbFactory(testData);
@@ -30,7 +31,8 @@ describe("Routerlicious", () => {
 
                     webSocketServer = new TestWebSocketServer();
 
-                    io.register(webSocketServer, defaultConfig, mongoManager, producer, documentsCollectionName);
+                    io.register(webSocketServer, defaultConfig, mongoManager, producer,
+                                documentsCollectionName, metricClientConfig);
                 });
 
                 function connectToServer(id: string, socket: TestWebSocket): Promise<socketStorage.IConnected> {

@@ -14,6 +14,7 @@ describe("Routerlicious", () => {
             const topic = "test";
             const testDocumentId = "test";
             const testClientId = "test";
+            const testMetric = {};
 
             beforeEach(() => {
                 deltasTopic = new TestKafka();
@@ -31,7 +32,8 @@ describe("Routerlicious", () => {
                     groupId,
                     topic,
                     checkpointTimeIntervalMsec,
-                    checkpointBatchSize);
+                    checkpointBatchSize,
+                    testMetric);
             });
 
             describe(".start()", () => {

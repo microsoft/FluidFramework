@@ -18,7 +18,8 @@ export class DeliRunner implements utils.IRunner {
         private groupId: string,
         private receiveTopic: string,
         private checkpointBatchSize: number,
-        private checkpointTimeIntervalMsec: number) {
+        private checkpointTimeIntervalMsec: number,
+        private metricClientConfig: any) {
     }
 
     public start(): Promise<void> {
@@ -46,6 +47,7 @@ export class DeliRunner implements utils.IRunner {
         const throughput = new utils.ThroughputCounter(winston.info);
 
         winston.info("Waiting for messages");
+        const metricLogger = shared.createMetricClient(this.metricClientConfig);
         this.q = queue((message: any, callback) => {
             throughput.produce();
             this.processMessage(
@@ -54,7 +56,8 @@ export class DeliRunner implements utils.IRunner {
                 ticketQueue,
                 partitionManager,
                 this.producer,
-                this.objectsCollection);
+                this.objectsCollection,
+                metricLogger);
             throughput.acknolwedge();
 
             // Periodically checkpoint to mongo and checkpoints offset back to kafka.
@@ -113,7 +116,8 @@ export class DeliRunner implements utils.IRunner {
         ticketQueue: {[id: string]: Promise<void> },
         partitionManager: core.PartitionManager,
         producer: utils.kafkaProducer.IProducer,
-        objectsCollection: core.ICollection<any>) {
+        objectsCollection: core.ICollection<any>,
+        metricLogger: shared.IMetricClient) {
 
         const baseMessage = JSON.parse(message.value.toString("utf8")) as core.IMessage;
         if (baseMessage.type === core.UpdateReferenceSequenceNumberType ||
@@ -121,6 +125,15 @@ export class DeliRunner implements utils.IRunner {
 
             const objectMessage = JSON.parse(message.value.toString("utf8")) as core.IObjectMessage;
             const documentId = objectMessage.documentId;
+
+            // Trace Deli beginning.
+            let traceId = null;
+            if (objectMessage.type === core.RawOperationType) {
+                traceId = (objectMessage as core.IRawOperationMessage).operation.traceId;
+                metricLogger.writeLatencyMetric(traceId, "Deli", "AlfredToDeli", "", Date.now()).catch((error) => {
+                    winston.error(error.stack);
+                });
+            }
 
             // Go grab the takeANumber machine for the objectId and mark it as dirty.
             // Store it in the partition map. We need to add an eviction strategy here.
@@ -133,6 +146,13 @@ export class DeliRunner implements utils.IRunner {
             // Either ticket the message or update the sequence number depending on the message type
             const ticketP = dispenser.ticket(message);
             ticketQueue[documentId] = ticketP;
+
+            // Trace deli end.
+            if (traceId !== null) {
+                metricLogger.writeLatencyMetric(traceId, "Deli", "DeliToScriptorium", "", Date.now()).catch((error) => {
+                    winston.error(error.stack);
+                });
+            }
         }
 
         // Update partition manager entry.

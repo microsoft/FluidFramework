@@ -38,7 +38,8 @@ export class AlfredResources implements utils.IResources {
         public historian: git.IHistorian,
         public mongoManager: utils.MongoManager,
         public port: any,
-        public documentsCollectionName: string) {
+        public documentsCollectionName: string,
+        public metricClientConfig: any) {
 
         this.webServerFactory = new services.WebServerFactory(this.pub, this.sub);
     }
@@ -59,6 +60,7 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
         const kafkaLibrary = config.get("kafka:lib:name");
         const kafkaClientId = config.get("alfred:kafkaClientId");
         const topic = config.get("alfred:topic");
+        const metricClientConfig = config.get("metric");
         const producer = utils.kafkaProducer.create(kafkaLibrary, kafkaEndpoint, kafkaClientId, topic);
 
         // Setup Redis endpoints
@@ -88,7 +90,8 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
 
         let port = normalizePort(process.env.PORT || "3000");
 
-        return new AlfredResources(config, producer, pub, sub, historian, mongoManager, port, documentsCollectionName);
+        return new AlfredResources(config, producer, pub, sub, historian, mongoManager,
+                                   port, documentsCollectionName, metricClientConfig);
     }
 }
 
@@ -101,6 +104,7 @@ export class AlfredRunnerFactory implements utils.IRunnerFactory<AlfredResources
             resources.historian,
             resources.mongoManager,
             resources.producer,
-            resources.documentsCollectionName);
+            resources.documentsCollectionName,
+            resources.metricClientConfig);
     }
 }

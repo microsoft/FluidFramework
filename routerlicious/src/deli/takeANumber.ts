@@ -194,6 +194,8 @@ export class TakeANumber {
             minimumSequenceNumber: this.minimumSequenceNumber,
             referenceSequenceNumber: message.operation.referenceSequenceNumber,
             sequenceNumber,
+            timestamp: message.operation.timestamp,
+            traceId: message.operation.traceId,
             type: message.operation.type,
             userId: message.userId,
         };

@@ -3,6 +3,7 @@ import { Provider } from "nconf";
 import * as winston from "winston";
 import * as api from "../api";
 import * as core from "../core";
+import * as shared from "../shared";
 import * as socketStorage from "../socket-storage";
 import * as utils from "../utils";
 import * as storage from "./storage";
@@ -12,9 +13,11 @@ export function register(
     config: Provider,
     mongoManager: utils.MongoManager,
     producer: utils.kafkaProducer.IProducer,
-    documentsCollectionName: string) {
+    documentsCollectionName: string,
+    metricClientConfig: any) {
 
     const throughput = new utils.ThroughputCounter(winston.info);
+    const metricLogger = shared.createMetricClient(metricClientConfig);
 
     webSocketServer.on("connection", (socket: core.IWebSocket) => {
         const connectionProfiler = winston.startTimer();
@@ -66,6 +69,8 @@ export function register(
                                 encrypted: false,
                                 encryptedContents: null,
                                 referenceSequenceNumber: 0,
+                                timestamp: Date.now(),
+                                traceId: null,
                                 type: api.ClientJoin,
                             },
                             timestamp: Date.now(),
@@ -102,6 +107,14 @@ export function register(
             if (!connectionsMap[clientId]) {
                 return response("Invalid client ID", null);
             }
+            if (message.type === api.RoundTrip) {
+                // End of tracking
+                metricLogger.writeLatencyMetric(message.traceId, "", "ScriptoriumToAlfred", "E2E", message.timestamp)
+                            .catch((error) => {
+                    winston.error(error.stack);
+                });
+                return response(null, "Roundtrip message received");
+            }
 
             const documentId = connectionsMap[clientId];
             const rawMessage: core.IRawOperationMessage = {
@@ -114,8 +127,22 @@ export function register(
             };
 
             throughput.produce();
+            // Starting tracking message from client.
+            metricLogger.writeLatencyMetric(message.traceId, "", "ClientToAlfred", "E2E", message.timestamp)
+                        .catch((error) => {
+                winston.error(error.stack);
+            });
+            metricLogger.writeLatencyMetric(message.traceId, "Alfred", "ClientToAlfred", "", Date.now())
+                        .catch((error) => {
+                winston.error(error.stack);
+            });
             sendAndTrack(rawMessage).then(
                 (responseMessage) => {
+                    // Track Alfred end.
+                    metricLogger.writeLatencyMetric(message.traceId, "Alfred", "AlfredToDeli", "", Date.now())
+                                .catch((error) => {
+                        winston.error(error.stack);
+                    });
                     response(null, responseMessage);
                 },
                 (error) => {
@@ -138,6 +165,8 @@ export function register(
                         encrypted: false,
                         encryptedContents: null,
                         referenceSequenceNumber: -1,
+                        timestamp: Date.now(),
+                        traceId: null,
                         type: api.ClientLeave,
                     },
                     timestamp: Date.now(),

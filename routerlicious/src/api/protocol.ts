@@ -18,6 +18,9 @@ export const ClientJoin = "join";
 // System message sent to indicate a client has left the collaboration
 export const ClientLeave = "leave";
 
+// Message to indicate successful round trip.
+export const RoundTrip = "tripComplete";
+
 /**
  * An envelope wraps the contents with the intended target
  */
@@ -70,6 +73,12 @@ export interface ISequencedObjectMessage {
 
     // The contents of the message
     contents: any;
+
+    // TraceId for tracking purpose
+    traceId: string;
+
+    // Tracking timestamp
+    timestamp: number;
 }
 
 export interface IAttachMessage {
@@ -81,6 +90,15 @@ export interface IAttachMessage {
 
     // Initial snapshot of the document
     snapshot: storage.ITree;
+}
+
+export interface ILatencyMessage {
+
+    // TraceId for the message
+    traceId: string;
+
+    // Timestamp
+    timestamp: number;
 }
 
 /**
@@ -104,6 +122,12 @@ export interface IDocumentMessage {
 
     // The encrypted version of the contents of the message
     encryptedContents: string;
+
+    // TraceId for tracking purpose
+    traceId: string;
+
+    // Tracking timestamp
+    timestamp: number;
 }
 
 /**
@@ -139,4 +163,10 @@ export interface ISequencedDocumentMessage {
 
     // The encrypted version of the contents of the message
     encryptedContents: string;
+
+    // TraceId for tracking purpose
+    traceId: string;
+
+    // Tracking timestamp
+    timestamp: number;
 }

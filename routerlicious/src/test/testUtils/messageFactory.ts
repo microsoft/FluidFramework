@@ -15,6 +15,8 @@ export class MessageFactory {
             encrypted: false,
             encryptedContents: null,
             referenceSequenceNumber,
+            timestamp: Date.now(),
+            traceId: null,
             type: api.NoOp,
         };
         return operation;
@@ -32,6 +34,8 @@ export class MessageFactory {
             encrypted: false,
             encryptedContents: null,
             referenceSequenceNumber: -1,
+            timestamp: Date.now(),
+            traceId: null,
             type: api.ClientJoin,
         };
 
@@ -45,6 +49,8 @@ export class MessageFactory {
             encrypted: false,
             encryptedContents: null,
             referenceSequenceNumber: -1,
+            timestamp: Date.now(),
+            traceId: null,
             type: api.ClientLeave,
         };
 
@@ -75,6 +81,8 @@ export class MessageFactory {
             minimumSequenceNumber: 0,
             referenceSequenceNumber: operation.referenceSequenceNumber,
             sequenceNumber: this.sequenceNumber++,
+            timestamp: Date.now(),
+            traceId: null,
             type: operation.type,
             userId: null,
         };
