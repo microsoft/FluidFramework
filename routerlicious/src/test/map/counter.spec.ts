@@ -3,7 +3,7 @@ import * as api from "../../api";
 import * as testUtils from "../testUtils";
 
 describe("Routerlicious", () => {
-    describe("Api", () => {
+    describe("Map", () => {
         describe("counter", () => {
             let registry: api.Registry;
             let testDocument: api.Document;

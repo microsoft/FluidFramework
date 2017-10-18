@@ -57,7 +57,7 @@ const snapshotFileName = "header";
 /**
  * Copies all values from the provided MapView to the given Map
  */
-export function copyMap(from: MapView, to: Map<string, any>) {
+export function copyMap(from: api.IMapView, to: Map<string, any>) {
     from.forEach((value, key) => {
         to.set(key, value);
     });
