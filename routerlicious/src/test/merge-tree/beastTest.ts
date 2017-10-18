@@ -174,7 +174,7 @@ function printTextSegment(textSegment: MergeTree.TextSegment, pos: number) {
     return true;
 }
 
-export function makeTextSegment(text: string): MergeTree.Node {
+export function makeTextSegment(text: string): MergeTree.MergeNode {
     return new MergeTree.TextSegment(text);
 }
 

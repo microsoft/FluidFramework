@@ -24,7 +24,7 @@ export function propertyCopy() {
     for (let i = 0; i < propCount; i++) {
         a[i] = `prop${i}`;
         v[i] = i;
-        map.set(a[i],v[i]);
+        map.set(a[i], v[i]);
     }
     let clockStart = clock();
     let obj: Properties.MapLike<number>;
@@ -35,60 +35,77 @@ export function propertyCopy() {
         }
     }
     let et = elapsedMicroseconds(clockStart);
-    let perIter = (et/iterCount).toFixed(3);
-    let perProp = (et/(iterCount*propCount)).toFixed(3);
-    console.log(`arr prop init time ${perIter} per init; ${perProp} per property`);
+    let perIter = (et / iterCount).toFixed(3);
+    let perProp = (et / (iterCount * propCount)).toFixed(3);
+    console.log(`arr prop init time ${perIter} us per ${propCount} properties; ${perProp} us per property`);
     clockStart = clock();
     for (let j = 0; j < iterCount; j++) {
         let bObj = Properties.createMap<number>();
         for (let key in obj) {
             bObj[key] = obj[key];
         }
-    }        
+    }
     et = elapsedMicroseconds(clockStart);
-    perIter = (et/iterCount).toFixed(3);
-    perProp = (et/(iterCount*propCount)).toFixed(3);
-    console.log(`obj prop init time ${perIter} per init; ${perProp} per property`);
+    perIter = (et / iterCount).toFixed(3);
+    perProp = (et / (iterCount * propCount)).toFixed(3);
+    console.log(`obj prop init time ${perIter} us per ${propCount} properties; ${perProp} us per property`);
     clockStart = clock();
     for (let j = 0; j < iterCount; j++) {
         let bObj = Properties.createMap<number>();
-        for (let [key,value] of map) {
+        for (let [key, value] of map) {
             bObj[key] = value;
         }
-    }        
+    }
     et = elapsedMicroseconds(clockStart);
-    perIter = (et/iterCount).toFixed(3);
-    perProp = (et/(iterCount*propCount)).toFixed(3);
-    console.log(`map prop init time ${perIter} per init; ${perProp} per property`);
+    perIter = (et / iterCount).toFixed(3);
+    perProp = (et / (iterCount * propCount)).toFixed(2);
+    console.log(`map prop init time ${perIter} us per ${propCount} properties; ${perProp} us per property`);
     clockStart = clock();
     for (let j = 0; j < iterCount; j++) {
         let bObj = Properties.createMap<number>();
-        map.forEach((v,k)=> { bObj[k] = v; });
-    }        
+        map.forEach((v, k) => { bObj[k] = v; });
+    }
     et = elapsedMicroseconds(clockStart);
-    perIter = (et/iterCount).toFixed(3);
-    perProp = (et/(iterCount*propCount)).toFixed(3);
-    console.log(`map foreach prop init time ${perIter} per init; ${perProp} per property`);
+    perIter = (et / iterCount).toFixed(3);
+    perProp = (et / (iterCount * propCount)).toFixed(2);
+    console.log(`map foreach prop init time ${perIter} us per ${propCount} properties; ${perProp} us per property`);
     clockStart = clock();
     for (let j = 0; j < iterCount; j++) {
-        let bmap = new Map<string,number>();
-        map.forEach((v,k)=> { bmap.set(k,v); });
-    }        
+        let bmap = new Map<string, number>();
+        map.forEach((v, k) => { bmap.set(k, v); });
+    }
     et = elapsedMicroseconds(clockStart);
-    perIter = (et/iterCount).toFixed(3);
-    perProp = (et/(iterCount*propCount)).toFixed(3);
-    console.log(`map to map foreach prop init time ${perIter} per init; ${perProp} per property`);
-
+    perIter = (et / iterCount).toFixed(3);
+    perProp = (et / (iterCount * propCount)).toFixed(2);
+    console.log(`map to map foreach prop init time ${perIter} us per ${propCount} properties; ${perProp} us per property`);
+    let diffMap = new Map<string, number>();
+    map.forEach((v, k) => {
+        if (Math.random() < 0.5) {
+            diffMap.set(k, v);
+        } else {
+            diffMap.set(k, v * 3);
+        }
+    });
+    clockStart = clock();
+    let grayMap = new Map<string, number>();
+    for (let j = 0; j < iterCount; j++) {
+        map.forEach((v, k) => {
+            if (diffMap.get(k) != v) {
+                grayMap.set(k, 1);
+            }
+        });
+    }
+    perIter = (et / iterCount).toFixed(3);
+    perProp = (et / (iterCount * propCount)).toFixed(2);
+    console.log(`diff time ${perIter} us per ${propCount} properties; ${perProp} us per property`);
 }
-
-propertyCopy();
 
 function measureFetch(startFile: string) {
     let client = new MergeTree.Client("", { blockUpdateMarkers: true });
     Text.loadTextFromFileWithMarkers(startFile, client.mergeTree);
     let clockStart = clock();
     let count = 0;
-    for (let pos = 0;pos<client.getLength();) {
+    for (let pos = 0; pos < client.getLength();) {
         let prevPG = client.mergeTree.findTile(pos, client.getClientId(), "pg");
         let caBegin: number;
         if (prevPG) {
@@ -103,12 +120,19 @@ function measureFetch(startFile: string) {
         let curSeg = <MergeTree.BaseSegment>curSegOff.segment;
         // combine paragraph and direct properties
         Properties.extend(properties, curSeg.properties);
-        pos += (curSeg.cachedLength-curSegOff.offset);
+        pos += (curSeg.cachedLength - curSegOff.offset);
         count++;
     }
     let et = elapsedMicroseconds(clockStart);
-    console.log(`fetch of ${count} runs took ${(et/count).toFixed(2)} microseconds per run`);
+    console.log(`fetch of ${count} runs over ${client.getLength()} total chars took ${(et / count).toFixed(1)} microseconds per run`);
+    // bonus: measure clone
+    clockStart = clock();
+    client.mergeTree.clone();
+    et = elapsedMicroseconds(clockStart);
+    console.log(`naive clone took ${(et / 1000).toFixed(1)} milliseconds`);
 }
 const filename = path.join(__dirname, "../../public/literature", "pp.txt");
 
+propertyCopy();
 measureFetch(filename);
+
