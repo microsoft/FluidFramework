@@ -135,7 +135,7 @@ data:
         "metric": {
             "client": "telegraf",
             "telegraf": {
-                "host": "telegraf",
+                "host": "polling-telegraf-service.metric",
                 "port": 8094
             }
         }
