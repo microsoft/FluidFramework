@@ -1,6 +1,7 @@
 import * as assert from "assert";
 import * as async from "async";
 import { EventEmitter } from "events";
+import * as uuid from "node-uuid";
 import * as openpgp from "openpgp";
 import { constants } from "../shared";
 import { ThroughputCounter } from "../utils/counters";
@@ -99,12 +100,33 @@ export class DeltaManager {
             encrypted: this.deltaConnection.encrypted,
             encryptedContents,
             referenceSequenceNumber: this.baseSequenceNumber,
+            timestamp: Date.now(),
+            traceId: uuid.v4(),
             type,
         };
 
         this.readonly = false;
         this.stopSequenceNumberUpdate();
         return this.deltaConnection.submit(message);
+    }
+
+    /**
+     * Submits an acked roundtrip operation.
+     */
+    public async submitRoundtrip(type: string, contents: protocol.ILatencyMessage) {
+        const message: protocol.IDocumentMessage = {
+            clientSequenceNumber: -1,
+            contents: null,
+            encrypted: this.deltaConnection.encrypted,
+            encryptedContents: null,
+            referenceSequenceNumber: -1,
+            timestamp: contents.timestamp,
+            traceId: contents.traceId,
+            type,
+        };
+
+        this.readonly = false;
+        this.deltaConnection.submit(message);
     }
 
     public onDelta(listener: (message: protocol.ISequencedDocumentMessage) => void) {

@@ -131,5 +131,12 @@ data:
         "git": {
             "repository": "prague",
             "historian": "{{ .Values.historian.externalUrl }}"
+        },
+        "metric": {
+            "client": "telegraf",
+            "telegraf": {
+                "host": "polling-telegraf-service.metric",
+                "port": 8094
+            }
         }
     }

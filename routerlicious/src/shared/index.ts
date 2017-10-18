@@ -11,6 +11,7 @@ export * from "./snapshotWork"
 export * from "./spellcheckerWork"
 export * from "./rateLimiter"
 export * from "./intelWork"
+export * from "./metricClient"
 
 import * as constants from "./constants";
 export { constants };

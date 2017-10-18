@@ -18,7 +18,8 @@ export class AlfredRunner implements utils.IRunner {
         private historian: git.IHistorian,
         private mongoManager: utils.MongoManager,
         private producer: utils.kafkaProducer.IProducer,
-        private documentsCollectionName: string) {
+        private documentsCollectionName: string,
+        private metricClientConfig: any) {
     }
 
     public start(): Promise<void> {
@@ -37,7 +38,8 @@ export class AlfredRunner implements utils.IRunner {
             this.config,
             this.mongoManager,
             this.producer,
-            this.documentsCollectionName);
+            this.documentsCollectionName,
+            this.metricClientConfig);
 
         // Listen on provided port, on all network interfaces.
         httpServer.listen(this.port);

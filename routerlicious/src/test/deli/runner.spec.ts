@@ -11,6 +11,7 @@ describe("Routerlicious", () => {
             const testReceiveTopic = "testReceiveTopic";
             const testCheckpointBatchSize = 10;
             const testCheckpointTimeIntervalMsec = 10000;
+            const testMetricConfig = {};
 
             let testCollection: TestCollection;
             let receiveTopic: TestKafka;
@@ -35,7 +36,8 @@ describe("Routerlicious", () => {
                     testGroupId,
                     testReceiveTopic,
                     testCheckpointBatchSize,
-                    testCheckpointTimeIntervalMsec);
+                    testCheckpointTimeIntervalMsec,
+                    testMetricConfig);
 
                 messageFactory = new MessageFactory(testId, testClientId);
             });
