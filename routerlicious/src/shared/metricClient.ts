@@ -1,9 +1,9 @@
 import * as telegraf from "telegrafjs";
+import { ITrace} from "../api";
 
 export interface IMetricClient {
 
-    // tslint:disable-next-line:max-line-length
-    writeLatencyMetric(traceId: string, local: string, intermediate: string, global: string, timestamp: number): Promise<void>;
+    writeLatencyMetric(traces: ITrace[]): Promise<void>;
 }
 
 class TelegrafClient implements IMetricClient {
@@ -20,37 +20,37 @@ class TelegrafClient implements IMetricClient {
         });
     }
 
-    // tslint:disable-next-line:max-line-length
-    public writeLatencyMetric(traceId: string, local: string, intermediate: string, global: string, timestamp: number): Promise<void> {
-        if (!this.connected || traceId === null) {
+    public writeLatencyMetric(traces: ITrace[]): Promise<void> {
+        if (!this.connected || !traces || traces.length === 0) {
             return Promise.resolve();
         } else {
-            return this.writeToTelegraf(traceId, local, intermediate, global, timestamp);
+            return this.writeToTelegraf(this.createTelegrafRow(traces));
         }
     }
 
-    // tslint:disable-next-line:max-line-length
-    private writeToTelegraf(traceId: string, local: string, intermediate: string, global: string, timestamp: number): Promise<void> {
-        const Measurement = telegraf.Measurement;
+    private createTelegrafRow(traces: ITrace[]): Object {
+        let row = new Object();
         const Int = telegraf.Int;
+        for (let trace of traces) {
+            row[trace.service + "-" + trace.action] = new Int(trace.timestamp);
+        }
+        return row;
+    }
+
+    private writeToTelegraf(row: Object): Promise<void> {
+        const Measurement = telegraf.Measurement;
 
         return this.telegrafClient.sendMeasurement(new Measurement(
             "latency",
-            { traceId },
-            {
-                timestamp: new Int(timestamp),
-                local,
-                intermediate,
-                global,
-            },
+            {},
+            row,
         ));
     }
 }
 
 class DefaultClient implements IMetricClient {
 
-    // tslint:disable-next-line:max-line-length
-    public writeLatencyMetric(traceId: string, local: string, intermediate: string, global: string, timestamp: number): Promise<void> {
+    public writeLatencyMetric(traces: ITrace[]): Promise<void> {
         return Promise.resolve();
     }
 }

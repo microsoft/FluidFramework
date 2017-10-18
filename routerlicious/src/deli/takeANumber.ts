@@ -6,6 +6,7 @@ import * as utils from "../utils";
 
 interface IPendingTicket<T> {
     message: any;
+    trace: api.ITrace;
     resolve: (value?: T | PromiseLike<T>) => void;
     reject: (value?: T | PromiseLike<T>) => void;
 }
@@ -81,7 +82,7 @@ export class TakeANumber {
     /**
      * Assigns a number number to the given message at the provided offset
      */
-    public ticket(message: any): Promise<void> {
+    public ticket(message: any, trace: api.ITrace): Promise<void> {
         // If we don't have a base sequence number then we queue the message for ticketing otherwise we can immediately
         // ticket the message
         if (this.sequenceNumber === undefined) {
@@ -91,13 +92,14 @@ export class TakeANumber {
                 return new Promise<void>((resolve, reject) => {
                     this.queue.push({
                         message,
+                        trace,
                         reject,
                         resolve,
                     });
                 });
             }
         } else {
-            return this.ticketCore(message);
+            return this.ticketCore(message, trace);
         }
     }
 
@@ -135,7 +137,7 @@ export class TakeANumber {
         return this.logOffset;
     }
 
-    private ticketCore(rawMessage: any): Promise<void> {
+    private ticketCore(rawMessage: any, trace: api.ITrace): Promise<void> {
         // In cases where we are reprocessing messages we have already checkpointed exit early
         if (rawMessage.offset < this.logOffset) {
             return Promise.resolve();
@@ -184,6 +186,11 @@ export class TakeANumber {
         // Increment and grab the next sequence number
         const sequenceNumber = this.revSequenceNumber();
 
+        // Add traces
+        let traces = message.operation.traces;
+        traces.push(trace);
+        traces.push( {service: "deli", action: "end", timestamp: Date.now()});
+
         // And now craft the output message
         let outputMessage: api.ISequencedDocumentMessage = {
             clientId: message.clientId,
@@ -194,8 +201,7 @@ export class TakeANumber {
             minimumSequenceNumber: this.minimumSequenceNumber,
             referenceSequenceNumber: message.operation.referenceSequenceNumber,
             sequenceNumber,
-            timestamp: message.operation.timestamp,
-            traceId: message.operation.traceId,
+            traces,
             type: message.operation.type,
             userId: message.userId,
         };
@@ -240,7 +246,7 @@ export class TakeANumber {
      * Tickets and then resolves the stored promise for the given pending ticket
      */
     private resolveTicket(ticket: IPendingTicket<void>) {
-        const ticketP = this.ticketCore(ticket.message);
+        const ticketP = this.ticketCore(ticket.message, ticket.trace);
         ticketP.then(
             () => {
                 ticket.resolve();

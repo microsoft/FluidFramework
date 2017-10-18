@@ -508,8 +508,7 @@ export class Document {
                 message.clientId,
                 message.sequenceNumber,
                 message.minimumSequenceNumber,
-                message.traceId,
-                message.timestamp);
+                message.traces);
         } else if (message.type === AttachObject) {
             const attachMessage = message.contents as IAttachMessage;
 

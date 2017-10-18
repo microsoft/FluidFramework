@@ -13,8 +13,7 @@ export class ScriptoriumResources implements utils.IResources {
         public groupId: string,
         public topic: string,
         public checkpointBatchSize: number,
-        public checkpointTimeIntervalMsec: number,
-        public metricClientConfig: any) {
+        public checkpointTimeIntervalMsec: number) {
     }
 
     public async dispose(): Promise<void> {
@@ -36,7 +35,6 @@ export class ScriptoriumResourcesFactory implements utils.IResourcesFactory<Scri
         const checkpointTimeIntervalMsec = config.get("scriptorium:checkpointTimeIntervalMsec");
         const mongoUrl = config.get("mongo:endpoint") as string;
         const deltasCollectionName = config.get("mongo:collectionNames:deltas");
-        const metricClientConfig = config.get("metric");
 
         const mongoFactory = new services.MongoDbFactory(mongoUrl);
         const mongoManager = new utils.MongoManager(mongoFactory, false);
@@ -60,8 +58,7 @@ export class ScriptoriumResourcesFactory implements utils.IResourcesFactory<Scri
             groupId,
             topic,
             checkpointBatchSize,
-            checkpointTimeIntervalMsec,
-            metricClientConfig);
+            checkpointTimeIntervalMsec);
     }
 }
 
@@ -74,7 +71,6 @@ export class ScriptoriumRunnerFactory implements utils.IRunnerFactory<Scriptoriu
             resources.groupId,
             resources.topic,
             resources.checkpointBatchSize,
-            resources.checkpointTimeIntervalMsec,
-            resources.metricClientConfig);
+            resources.checkpointTimeIntervalMsec);
     }
 }
