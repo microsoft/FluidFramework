@@ -25,6 +25,17 @@
             "internalConsoleOptions": "openOnSessionStart"
         },
         {
+            "name": "Chrome",
+            "type": "chrome",
+            "request": "attach",
+            "port": 9222,
+            "sourceMaps": true,
+            "url": "localhost:3000/sharedText/oct18-3",
+            "pathMapping": {
+                "/public/scripts/dist/src/" : "${workspaceRoot}/dist"
+            }
+        },
+        {
             "type": "node",
             "request": "attach",
             "sourceMaps": true,
