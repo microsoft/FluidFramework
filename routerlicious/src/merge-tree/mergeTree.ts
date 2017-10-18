@@ -1435,8 +1435,7 @@ export class Client {
             contents: {
                 type: ops.MergeTreeDeltaType.INSERT, marker: { type: markerType, behaviors }, pos1: pos
             },
-            traceId: null,
-            timestamp: Date.now(),
+            traces: [],
             type: API.OperationType,
         };
     }
@@ -1454,8 +1453,7 @@ export class Client {
             contents: {
                 type: ops.MergeTreeDeltaType.INSERT, text: text, pos1: pos
             },
-            traceId: null,
-            timestamp: Date.now(),
+            traces: [],
             type: API.OperationType,
         };
     }
@@ -1473,8 +1471,7 @@ export class Client {
             contents: {
                 type: ops.MergeTreeDeltaType.REMOVE, pos1: start, pos2: end,
             },
-            traceId: null,
-            timestamp: Date.now(),
+            traces: [],
             type: API.OperationType,
         };
     }
@@ -1492,8 +1489,7 @@ export class Client {
             contents: {
                 type: ops.MergeTreeDeltaType.ANNOTATE, pos1: start, pos2: end, props
             },
-            traceId: null,
-            timestamp: Date.now(),
+            traces: [],
             type: API.OperationType,
         };
     }

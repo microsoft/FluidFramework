@@ -133,5 +133,12 @@
     "git": {
         "repository": "prague",
         "historian": "http://historian:3000"
+    },
+    "metric": {
+        "client": "telegraf",
+        "telegraf": {
+            "host": "telegraf",
+            "port": 8094
+        }
     }
 }

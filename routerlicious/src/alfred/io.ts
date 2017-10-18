@@ -69,8 +69,7 @@ export function register(
                                 encrypted: false,
                                 encryptedContents: null,
                                 referenceSequenceNumber: 0,
-                                timestamp: Date.now(),
-                                traceId: null,
+                                traces: [],
                                 type: api.ClientJoin,
                             },
                             timestamp: Date.now(),
@@ -108,8 +107,8 @@ export function register(
                 return response("Invalid client ID", null);
             }
             if (message.type === api.RoundTrip) {
-                // End of tracking
-                metricLogger.writeLatencyMetric(message.traceId, "", "ScriptoriumToAlfred", "E2E", message.timestamp)
+                // End of tracking. Write traces.
+                metricLogger.writeLatencyMetric(message.traces)
                             .catch((error) => {
                     winston.error(error.stack);
                 });
@@ -127,22 +126,12 @@ export function register(
             };
 
             throughput.produce();
-            // Starting tracking message from client.
-            metricLogger.writeLatencyMetric(message.traceId, "", "ClientToAlfred", "E2E", message.timestamp)
-                        .catch((error) => {
-                winston.error(error.stack);
-            });
-            metricLogger.writeLatencyMetric(message.traceId, "Alfred", "ClientToAlfred", "", Date.now())
-                        .catch((error) => {
-                winston.error(error.stack);
-            });
+
+            // Add trace
+            rawMessage.operation.traces.push( {service: "alfred", action: "start", timestamp: Date.now()} );
+
             sendAndTrack(rawMessage).then(
                 (responseMessage) => {
-                    // Track Alfred end.
-                    metricLogger.writeLatencyMetric(message.traceId, "Alfred", "AlfredToDeli", "", Date.now())
-                                .catch((error) => {
-                        winston.error(error.stack);
-                    });
                     response(null, responseMessage);
                 },
                 (error) => {
@@ -165,8 +154,7 @@ export function register(
                         encrypted: false,
                         encryptedContents: null,
                         referenceSequenceNumber: -1,
-                        timestamp: Date.now(),
-                        traceId: null,
+                        traces: [],
                         type: api.ClientLeave,
                     },
                     timestamp: Date.now(),

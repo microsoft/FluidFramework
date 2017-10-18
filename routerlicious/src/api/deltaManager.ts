@@ -1,7 +1,6 @@
 import * as assert from "assert";
 import * as async from "async";
 import { EventEmitter } from "events";
-import * as uuid from "node-uuid";
 import * as openpgp from "openpgp";
 import { constants } from "../shared";
 import { ThroughputCounter } from "../utils/counters";
@@ -94,14 +93,15 @@ export class DeltaManager {
     public async submit(type: string, contents: any): Promise<void> {
         const encryptedContents = this.deltaConnection.encrypted ? await this.encryptOp(contents) : "";
 
+        // Start adding trace for the op.
+        const traces: protocol.ITrace[] = [ { service: "client", action: "start", timestamp: Date.now()}];
         const message: protocol.IDocumentMessage = {
             clientSequenceNumber: this.clientSequenceNumber++,
             contents,
             encrypted: this.deltaConnection.encrypted,
             encryptedContents,
             referenceSequenceNumber: this.baseSequenceNumber,
-            timestamp: Date.now(),
-            traceId: uuid.v4(),
+            traces,
             type,
         };
 
@@ -120,8 +120,7 @@ export class DeltaManager {
             encrypted: this.deltaConnection.encrypted,
             encryptedContents: null,
             referenceSequenceNumber: -1,
-            timestamp: contents.timestamp,
-            traceId: contents.traceId,
+            traces: contents.traces,
             type,
         };
 

@@ -33,6 +33,20 @@ export interface IEnvelope {
 }
 
 /**
+ * Messages to track latency trace
+ */
+export interface ITrace {
+    // Service generating the trace.
+    service: string;
+
+    // Denotes receiving/sending.
+    action: string;
+
+    // Timestamp.
+    timestamp: number;
+}
+
+/**
  * Message related to a distributed data type
  */
 export interface IObjectMessage {
@@ -74,11 +88,8 @@ export interface ISequencedObjectMessage {
     // The contents of the message
     contents: any;
 
-    // TraceId for tracking purpose
-    traceId: string;
-
-    // Tracking timestamp
-    timestamp: number;
+    // Traces related to the packet.
+    traces: ITrace[];
 }
 
 export interface IAttachMessage {
@@ -93,12 +104,8 @@ export interface IAttachMessage {
 }
 
 export interface ILatencyMessage {
-
-    // TraceId for the message
-    traceId: string;
-
-    // Timestamp
-    timestamp: number;
+    // Latency traces.
+    traces: ITrace[];
 }
 
 /**
@@ -123,11 +130,8 @@ export interface IDocumentMessage {
     // The encrypted version of the contents of the message
     encryptedContents: string;
 
-    // TraceId for tracking purpose
-    traceId: string;
-
-    // Tracking timestamp
-    timestamp: number;
+    // Traces related to the packet.
+    traces: ITrace[];
 }
 
 /**
@@ -164,9 +168,6 @@ export interface ISequencedDocumentMessage {
     // The encrypted version of the contents of the message
     encryptedContents: string;
 
-    // TraceId for tracking purpose
-    traceId: string;
-
-    // Tracking timestamp
-    timestamp: number;
+    // Traces related to the packet.
+    traces: ITrace[];
 }

@@ -171,10 +171,12 @@ export abstract class CollaborativeObject implements api.ICollaborativeObject {
             if (this.localOps.length > 0 &&
                 this.localOps[0].clientSequenceNumber === message.clientSequenceNumber) {
                 this.localOps.shift();
-                this.submitLatencyMessage(message);
             } else {
                 debug(`Duplicate ack received ${message.clientSequenceNumber}`);
             }
+            // Add final trace and submit back the trace information.
+            message.traces.push( { service: "client", action: "end", timestamp: Date.now()});
+            this.submitLatencyMessage(message);
         }
 
         this.processCore(message);
@@ -187,10 +189,8 @@ export abstract class CollaborativeObject implements api.ICollaborativeObject {
 
     private submitLatencyMessage(message: api.ISequencedObjectMessage) {
         const latencyMessage: api.ILatencyMessage = {
-            timestamp: Date.now(),
-            traceId: message.traceId,
+            traces: message.traces,
         };
-
         this.document.submitLatencyMessage(latencyMessage);
     }
 }
