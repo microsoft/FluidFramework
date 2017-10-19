@@ -108,10 +108,12 @@ export function register(
             }
             if (message.type === api.RoundTrip) {
                 // End of tracking. Write traces.
-                metricLogger.writeLatencyMetric(message.traces)
-                            .catch((error) => {
-                    winston.error(error.stack);
-                });
+                if (message.traces !== undefined) {
+                    metricLogger.writeLatencyMetric(message.traces)
+                    .catch((error) => {
+                        winston.error(error.stack);
+                    });
+                }
                 return response(null, "Roundtrip message received");
             }
 

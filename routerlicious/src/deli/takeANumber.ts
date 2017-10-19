@@ -188,8 +188,10 @@ export class TakeANumber {
 
         // Add traces
         let traces = message.operation.traces;
-        traces.push(trace);
-        traces.push( {service: "deli", action: "end", timestamp: Date.now()});
+        if (traces !== undefined) {
+            traces.push(trace);
+            traces.push( {service: "deli", action: "end", timestamp: Date.now()});
+        }
 
         // And now craft the output message
         let outputMessage: api.ISequencedDocumentMessage = {

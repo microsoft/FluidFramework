@@ -71,8 +71,12 @@ export class ScriptoriumRunner implements utils.IRunner {
                     winston.verbose(`Routing message to clients ${documentId}@${work[0].operation.sequenceNumber}:${work.length}`);
 
                     // Add traces to each written message.
-                    // tslint:disable-next-line:max-line-length
-                    work.map((value) => value.operation.traces.push( {service: "scriptorium", action: "end", timestamp: Date.now()}));
+                    work.map((value) => {
+                        if (value.operation.traces !== undefined) {
+                            // tslint:disable-next-line:max-line-length
+                            value.operation.traces.push( {service: "scriptorium", action: "end", timestamp: Date.now()});
+                        }
+                    });
 
                     this.io.to(documentId).emit("op", documentId, work.map((value) => value.operation));
                     throughput.acknolwedge(work.length);
@@ -92,7 +96,9 @@ export class ScriptoriumRunner implements utils.IRunner {
                 const value = baseMessage as core.ISequencedOperationMessage;
 
                 // Add trace.
-                value.operation.traces.push( {service: "scriptorium", action: "start", timestamp: Date.now()});
+                if (value.operation.traces !== undefined) {
+                    value.operation.traces.push( {service: "scriptorium", action: "start", timestamp: Date.now()});
+                }
 
                 // Batch up work to more efficiently send to socket.io and mongodb
                 this.ioBatchManager.add(value.documentId, value);
