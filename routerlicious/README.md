@@ -137,3 +137,19 @@ We are using [elastalert](https://github.com/Yelp/elastalert) plugin to send ema
 
 ### Alerting on Error
 To receive service side error alerts, just print the error message in console using `winston.error('message')`. Elastalert aggregates all error messages for last hour and sends an email. Kibana dashboard can also be filtered down to just error messages (search for 'level:error').
+
+## Latency tracking
+We are using telegraf, influxdb, and grafana to monitor the latency of our microservices. Each service annotates the messages with service name, tag, and timestamp (inspired by [Dapper paper](https://static.googleusercontent.com/media/research.google.com/en//pubs/archive/36356.pdf)). Once the message is acknowledged back, the latency information is written to telegraf. Telegraf daemon picks up the messages every 10 seconds and writes to influxdb as time series data. Finally Grafana is used to visualize the time series graphs.
+
+By default, the service does not run locally. To run locally, first add the following field to the config file.
+```
+"metric":
+    {
+      "client": "telegraf",
+      "telegraf": {
+          "host": "telegraf",
+          "port": 8094
+        }
+    }
+```
+This will enable the metric writer to write to telegraf client. Then run `docker-compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.metric.yml up` to bring up telegraf, influxdb, and grafana containers. Navigate "http://localhost:5000" to see grafana up and running.
