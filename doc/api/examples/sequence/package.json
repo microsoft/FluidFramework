@@ -1,0 +1,16 @@
+{
+  "name": "sequence",
+  "version": "0.1.0",
+  "description": "Prague API sequence sample",
+  "main": "index.js",
+  "dependencies": {},
+  "devDependencies": {
+    "typescript": "^2.5.3"
+  },
+  "scripts": {
+    "build": "tsc"
+  },
+  "author": "Microsoft",
+  "license": "Apache-2.0",
+  "repository": "microsoft/prague"
+}
