@@ -1,0 +1,17 @@
+{    
+    "exclude": [
+        "dist",
+        "node_modules"
+    ],
+    "compilerOptions": {
+        "target": "es6",
+        "noImplicitAny": false,
+        "noUnusedLocals": true,
+        "outDir": "dist",
+        "sourceMap": true,
+        "inlineSources": true
+    },
+    "include": [
+        "src/index.ts"
+    ]
+}
