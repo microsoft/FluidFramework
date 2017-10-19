@@ -48,6 +48,7 @@ class TelegrafClient implements IMetricClient {
     }
 }
 
+// Default client for loca run.
 class DefaultClient implements IMetricClient {
 
     public writeLatencyMetric(traces: ITrace[]): Promise<void> {
