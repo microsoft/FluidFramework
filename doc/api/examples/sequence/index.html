@@ -11,6 +11,31 @@
     <link href="https://ajax.aspnetcdn.com/ajax/bootstrap/3.3.7/css/bootstrap-theme.min.css" rel="stylesheet" />
 </head>
 <body>
+    <div class="container">
+        <h1>Sequence Example</h1>
+        <p>
+            Type in some text in the form below, choose an insertion location, and then click the insert button
+            to insert that text into a collaborative string.
+        </p>
+        <p>
+            <form id="insertForm" class="form-inline">
+                <div class="form-group">
+                    <label for="insertText">Text</label>
+                    <input id="insertText" type="text" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="insertLocation">Location</label>
+                    <input id="insertLocation" type="text" class="form-control" value="0">
+                </div>
+                <button type="submit" class="btn btn-default">Insert</button>
+            </form>
+        </p>
+
+        <p>
+            <div id="text"></div>
+        </p>
+    </div>
+
     <!-- Scripts -->
     <script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.2.1.min.js"></script>
     <script src="https://ajax.aspnetcdn.com/ajax/bootstrap/3.3.7/bootstrap.min.js"></script>
