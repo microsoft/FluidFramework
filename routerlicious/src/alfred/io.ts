@@ -109,7 +109,7 @@ export function register(
             if (message.type === api.RoundTrip) {
                 // End of tracking. Write traces.
                 if (message.traces !== undefined) {
-                    metricLogger.writeLatencyMetric(message.traces)
+                    metricLogger.writeLatencyMetric("latency", message.traces)
                     .catch((error) => {
                         winston.error(error.stack);
                     });
@@ -140,6 +140,23 @@ export function register(
                     winston.error(error);
                     response(error, null);
                 });
+        });
+
+        // Message sent when a ping operation is submitted to the router
+        socket.on("pingObject", (message: api.IPingMessage, response) => {
+            // Ack the unacked message.
+            if (!message.acked) {
+                message.acked = true;
+                return response(null, message);
+            } else {
+                // Only write if the traces are correctly timestamped twice.
+                if (message.traces !== undefined && message.traces.length === 2) {
+                    metricLogger.writeLatencyMetric("pinglatency", message.traces)
+                    .catch((error) => {
+                        winston.error(error.stack);
+                    });
+                }
+            }
         });
 
         socket.on("disconnect", () => {

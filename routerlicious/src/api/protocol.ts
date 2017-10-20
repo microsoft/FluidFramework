@@ -108,6 +108,14 @@ export interface ILatencyMessage {
     traces: ITrace[];
 }
 
+export interface IPingMessage {
+    // Whether ping is acked or not.
+    acked: boolean;
+
+    // Traces for the ping.
+    traces: ITrace[];
+}
+
 /**
  * Document specific message
  */
