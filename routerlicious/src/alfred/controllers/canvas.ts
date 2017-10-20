@@ -21,13 +21,11 @@ export async function initialize(id: string, version: resources.ICommit, config:
 
     socketStorage.registerAsDefault(document.location.origin, config.blobStorageUrl, config.repository);
 
+    // Bootstrap worker service.
+    shared.registerWorker(config, "canvas");
+
     const doc = await loadDocument(id, version);
     const root = await doc.getRoot().getView();
-
-    // Bootstrap worker service.
-    if (config.permission.canvas) {
-        shared.registerWorker(config);
-    }
 
     const canvasDiv = document.createElement("div");
     const canvas = new FlexView(canvasDiv, doc, root);

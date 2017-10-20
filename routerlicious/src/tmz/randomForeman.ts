@@ -16,6 +16,7 @@ export class RandomForeman extends BaseForeman implements IForeman {
         const workPromises = [];
         let workers: any;
         for (let work of workToDo) {
+            winston.info(`Requesting worker type ${work.work.workerType} for document id ${work.docId}`);
             switch (work.work.workerType) {
                 case "server":
                     workers = this.manager.getActiveServerWorkers();
@@ -25,6 +26,7 @@ export class RandomForeman extends BaseForeman implements IForeman {
                     workers = this.manager.getActiveClientWorkers();
                     // Additional check since there might not be any browser client available.
                     if (workers !== undefined && workers.length > 0) {
+                        winston.info(`${workers.length} client workers found!`);
                         workPromises.push(this.assignOne(work.docId, work.work.workType, workers));
                     }
                     break;
@@ -44,11 +46,12 @@ export class RandomForeman extends BaseForeman implements IForeman {
         // Check how many workers are on board and make a candiate array.
         for (let worker of workers) {
             worker.socket.emit("ReadyObject", worker.worker.clientId, id, workType,
-                (error, ack: socketStorage.IWorker) => {
+                (nack, ack: socketStorage.IWorker) => {
                     if (ack) {
+                        winston.info(`${workType} is acked from ${worker.worker.clientId}`);
                         candidates.push(worker);
                     } else {
-                        winston.error(error);
+                        winston.info(nack);
                     }
             });
         }

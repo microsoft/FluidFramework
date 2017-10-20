@@ -19,7 +19,8 @@ export class PaparazziRunner implements utils.IRunner {
             tmzUrl,
             historianUrl,
             repo,
-            workerConfig);
+            workerConfig,
+            "paparazzi");
     }
 
     public start(): Promise<void> {

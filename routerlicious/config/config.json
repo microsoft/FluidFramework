@@ -72,7 +72,7 @@
             "ping": "client"
         },
         "workerType": "random",
-        "workerAckTimeMSec": 100,
+        "workerAckTimeMSec": 250,
         "onlyServer": false
     },
     "redis": {
@@ -125,10 +125,11 @@
         "intervalMSec": 5000,
         "onlyServer": false,
         "permission": {
-            "canvas": false,
-            "cell": true,
-            "maps": true,
-            "sharedText": false
+            "paparazzi": ["snapshot", "spell", "intel"],
+            "canvas": ["ping"],
+            "cell": ["ping", "snapshot"],
+            "maps": ["ping", "snapshot"],
+            "sharedText": ["ping"]
         }
     },
     "git": {

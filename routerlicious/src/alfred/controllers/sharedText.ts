@@ -99,11 +99,10 @@ export async function onLoad(id: string, version: resources.ICommit, config: any
 
     theFlow.setEdit(root);
 
+    // Bootstrap worker service.
+    shared.registerWorker(config, "sharedText");
+
     sharedString.loaded.then(() => {
-        // Bootstrap worker service.
-        if (config.permission.sharedText) {
-            shared.registerWorker(config);
-        }
 
         theFlow.loadFinished(clockStart);
     });
