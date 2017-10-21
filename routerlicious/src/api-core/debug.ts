@@ -1,3 +1,3 @@
 import * as registerDebug from "debug";
 
-export const debug = registerDebug("routerlicious:api:core");
+export const debug = registerDebug("routerlicious:api-core");

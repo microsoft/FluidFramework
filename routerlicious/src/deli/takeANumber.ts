@@ -1,6 +1,7 @@
 import * as winston from "winston";
 import * as api from "../api-core";
 import * as core from "../core";
+import { RangeTracker, ThroughputCounter } from "../core-utils";
 import * as shared from "../shared";
 import * as utils from "../utils";
 
@@ -35,7 +36,7 @@ const SequenceNumberComparer: utils.IComparer<IClientSequenceNumber> = {
  * Class to handle distributing sequence numbers to a collaborative object
  */
 export class TakeANumber {
-    private throughput = new utils.ThroughputCounter(winston.info, "Delta Topic ");
+    private throughput = new ThroughputCounter(winston.info, "Delta Topic ");
     private queue: Array<IPendingTicket<void>> = [];
     private error: any;
     private sequenceNumber: number = undefined;
@@ -43,7 +44,7 @@ export class TakeANumber {
     private clientNodeMap: { [key: string]: utils.IHeapNode<IClientSequenceNumber> } = {};
     private clientSeqNumbers = new utils.Heap<IClientSequenceNumber>(SequenceNumberComparer);
     private minimumSequenceNumber;
-    private window: shared.RangeTracker;
+    private window: RangeTracker;
 
     constructor(
         private documentId: string,
@@ -330,7 +331,7 @@ export class TakeANumber {
 
         // Create the window if it doesn't yet exist
         if (!this.window) {
-            this.window = new shared.RangeTracker(timestamp - MinSequenceNumberWindow, msn);
+            this.window = new RangeTracker(timestamp - MinSequenceNumberWindow, msn);
         }
 
         // And retrieve the window relative MSN

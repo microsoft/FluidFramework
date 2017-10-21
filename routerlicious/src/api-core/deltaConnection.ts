@@ -1,6 +1,6 @@
 import * as assert from "assert";
 import { EventEmitter } from "events";
-import { RangeTracker } from "../shared";
+import { RangeTracker } from "../core-utils";
 import { IDeltaConnection, IDocument } from "./document";
 import { IObjectMessage, ISequencedObjectMessage, ITrace } from "./protocol";
 

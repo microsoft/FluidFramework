@@ -1,8 +1,8 @@
 import * as _ from "lodash";
 import * as api from "../api";
 import * as apiCore from "../api-core";
+import { Histogram, RateCounter } from "../core-utils";
 import * as SharedString from "../merge-tree";
-import { Histogram, RateCounter } from "./counters";
 
 export interface IScribeMetrics {
     histogram: Histogram;

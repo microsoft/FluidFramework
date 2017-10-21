@@ -1,6 +1,7 @@
 import { queue } from "async";
 import * as winston from "winston";
 import * as core from "../core";
+import { ThroughputCounter } from "../core-utils";
 import * as shared from "../shared";
 import * as utils from "../utils";
 
@@ -41,7 +42,7 @@ export class ScriptoriumRunner implements utils.IRunner {
             this.deferred.reject(error);
         });
 
-        const throughput = new utils.ThroughputCounter(winston.info);
+        const throughput = new ThroughputCounter(winston.info);
         // Mongo inserts don't order promises with respect to each other. To work around this we track the last
         // Mongo insert we've made for each document. And then perform a then on this to maintain causal ordering
         // for any dependent operations (i.e. socket.io writes)

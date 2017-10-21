@@ -1,8 +1,7 @@
 import * as assert from "assert";
 import * as async from "async";
 import { EventEmitter } from "events";
-import { constants } from "../shared";
-import { ThroughputCounter } from "../utils/counters";
+import { ThroughputCounter } from "../core-utils";
 import { debug } from "./debug";
 import * as protocol from "./protocol";
 import * as storage from "./storage";
@@ -201,7 +200,7 @@ export class DeltaManager {
         }
         this.heartbeatTimer = setTimeout(() => {
             this.submit(protocol.NoOp, null);
-        }, constants.MinSequenceNumberWindow + 1000);
+        }, 2000 + 1000);
 
         // If an update has already been requeested then mark this fact. We will wait until no updates have
         // been requested before sending the updated sequence number.

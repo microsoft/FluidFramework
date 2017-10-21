@@ -3,6 +3,7 @@ import * as _ from "lodash";
 import * as winston from "winston";
 import * as api from "../api-core";
 import * as core from "../core";
+import { ThroughputCounter } from "../core-utils";
 import * as shared from "../shared";
 import * as utils from "../utils";
 import { TakeANumber } from "./takeANumber";
@@ -44,7 +45,7 @@ export class DeliRunner implements utils.IRunner {
 
         let ticketQueue: {[id: string]: Promise<void> } = {};
 
-        const throughput = new utils.ThroughputCounter(winston.info);
+        const throughput = new ThroughputCounter(winston.info);
 
         winston.info("Waiting for messages");
         this.q = queue((message: any, callback) => {

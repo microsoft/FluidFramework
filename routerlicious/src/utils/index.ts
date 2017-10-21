@@ -1,6 +1,5 @@
 export * from "./batchManager";
 export * from "./conversion";
-export * from "./counters";
 export * from "./file";
 export * from "./heap";
 export * from "./logger";

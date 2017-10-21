@@ -1,16 +1,19 @@
 import * as assert from "assert";
 import { EventEmitter } from "events";
-import * as api from ".";
 import { debug } from "./debug";
+import { IDistributedObjectServices, IDocument } from "./document";
+import { ILatencyMessage, IObjectMessage, ISequencedObjectMessage, OperationType } from "./protocol";
+import { ITree } from "./storage";
+import { ICollaborativeObject } from "./types";
 
-export abstract class CollaborativeObject implements api.ICollaborativeObject {
+export abstract class CollaborativeObject implements ICollaborativeObject {
     // tslint:disable-next-line:variable-name
     public __collaborativeObject__ = true;
 
     protected events = new EventEmitter();
 
     // Locally applied operations not yet sent to the server
-    private localOps: api.IObjectMessage[] = [];
+    private localOps: IObjectMessage[] = [];
 
     // Sequence number for operations local to this client
     private clientSequenceNumber = 0;
@@ -29,11 +32,11 @@ export abstract class CollaborativeObject implements api.ICollaborativeObject {
     }
 
     constructor(
-        protected document: api.IDocument,
+        protected document: IDocument,
         public id: string,
         public type: string,
         private sequenceNum: number,
-        protected services?: api.IDistributedObjectServices) {
+        protected services?: IDistributedObjectServices) {
 
         // Min sequence number starts off at the initialized sequence number
         this.minSequenceNumber = sequenceNum;
@@ -90,13 +93,13 @@ export abstract class CollaborativeObject implements api.ICollaborativeObject {
     /**
      * Gets a form of the object that can be serialized.
      */
-    public abstract snapshot(): api.ITree;
+    public abstract snapshot(): ITree;
 
     /**
      * Creates a new message from the provided message that is relative to the given sequenceNumber. It is valid
      * to modify the passed in object in place.
      */
-    public transform(message: api.IObjectMessage, sequenceNumber: number): api.IObjectMessage {
+    public transform(message: IObjectMessage, sequenceNumber: number): IObjectMessage {
         message.referenceSequenceNumber = sequenceNumber;
         return message;
     }
@@ -106,7 +109,7 @@ export abstract class CollaborativeObject implements api.ICollaborativeObject {
      * being submitted to the server
      */
     // tslint:disable-next-line:no-empty
-    protected submitCore(message: api.IObjectMessage) {
+    protected submitCore(message: IObjectMessage) {
     }
 
     /**
@@ -116,7 +119,7 @@ export abstract class CollaborativeObject implements api.ICollaborativeObject {
     protected attachCore() {
     }
 
-    protected abstract processCore(message: api.ISequencedObjectMessage);
+    protected abstract processCore(message: ISequencedObjectMessage);
 
     protected abstract processMinSequenceNumberChanged(value: number);
 
@@ -130,11 +133,11 @@ export abstract class CollaborativeObject implements api.ICollaborativeObject {
         }
 
         // Prep the message
-        const message: api.IObjectMessage = {
+        const message: IObjectMessage = {
             clientSequenceNumber: ++this.clientSequenceNumber,
             contents,
             referenceSequenceNumber: this.sequenceNumber,
-            type: api.OperationType,
+            type: OperationType,
         };
 
         // Store the message for when it is ACKed and then submit to the server if connected
@@ -159,13 +162,13 @@ export abstract class CollaborativeObject implements api.ICollaborativeObject {
     /**
      * Handles a message coming from the remote service
      */
-    private processRemoteMessage(message: api.ISequencedObjectMessage) {
+    private processRemoteMessage(message: ISequencedObjectMessage) {
         // server messages should only be delivered to this method in sequence number order
         assert.equal(this.sequenceNumber + 1, message.sequenceNumber);
         this.sequenceNum = message.sequenceNumber;
         this.minSequenceNumber = message.minimumSequenceNumber;
 
-        if (message.type === api.OperationType && message.clientId === this.document.clientId) {
+        if (message.type === OperationType && message.clientId === this.document.clientId) {
             // One of our messages was sequenced. We can remove it from the local message list. Given these arrive
             // in order we only need to check the beginning of the local list.
             if (this.localOps.length > 0 &&
@@ -182,13 +185,13 @@ export abstract class CollaborativeObject implements api.ICollaborativeObject {
         this.processCore(message);
     }
 
-    private submit(message: api.IObjectMessage): void {
+    private submit(message: IObjectMessage): void {
         this.submitCore(message);
         this.services.deltaConnection.submit(message);
     }
 
-    private submitLatencyMessage(message: api.ISequencedObjectMessage) {
-        const latencyMessage: api.ILatencyMessage = {
+    private submitLatencyMessage(message: ISequencedObjectMessage) {
+        const latencyMessage: ILatencyMessage = {
             traces: message.traces,
         };
         this.document.submitLatencyMessage(latencyMessage);

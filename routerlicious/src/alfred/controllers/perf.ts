@@ -1,9 +1,9 @@
 import * as $ from "jquery";
 import * as _ from "lodash";
 import * as api from "../../api";
+import { RateCounter } from "../../core-utils";
 import { IMap } from "../../map";
 import * as socketStorage from "../../socket-storage";
-import { RateCounter } from "../../utils/counters";
 
 let root: IMap;
 
