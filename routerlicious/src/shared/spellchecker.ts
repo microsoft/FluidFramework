@@ -2,7 +2,7 @@
 
 import { queue } from "async";
 import * as _ from "lodash";
-import * as api from "../api";
+import * as api from "../api-core";
 import * as mergeTree from "../merge-tree";
 import * as Collections from "../merge-tree/collections";
 import { IIntelligentService } from "../intelligence";

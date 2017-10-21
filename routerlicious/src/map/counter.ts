@@ -1,7 +1,7 @@
-import * as api from "../api";
-import { CollaborativeMap } from "./";
+import { ICounter } from "./interfaces";
+import { CollaborativeMap } from "./map";
 
-export class Counter implements api.ICounter {
+export class Counter implements ICounter {
     constructor(private parentMap: CollaborativeMap, private key: string, private min: number, private max: number) {
 
     }

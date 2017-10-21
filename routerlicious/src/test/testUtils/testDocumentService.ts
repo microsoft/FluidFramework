@@ -1,6 +1,6 @@
 import * as resources from "gitresources";
-import * as api from "../../api";
-import { Document, DocumentDeltaStorageService, DocumentStorageService } from "../../socket-storage";
+import * as api from "../../api-core";
+import { DocumentDeltaStorageService, DocumentResource, DocumentStorageService } from "../../socket-storage";
 import { TestDocumentDeltaConnection } from "./";
 
 export class TestDocumentService implements api.IDocumentService {
@@ -13,7 +13,7 @@ export class TestDocumentService implements api.IDocumentService {
                 id: string,
                 version: resources.ICommit,
                 connect: boolean,
-                encrypted: boolean): Promise<api.IDocument> {
+                encrypted: boolean): Promise<api.IDocumentResource> {
                     const deltaConnection = new TestDocumentDeltaConnection(
                         this,
                         id,
@@ -23,7 +23,7 @@ export class TestDocumentService implements api.IDocumentService {
                         "");
                     const deltaStorage = new DocumentDeltaStorageService(id, this.deltaStorage);
                     const documentStorage = new DocumentStorageService(id, version, this.blobStorge);
-                    const document = new Document(
+                    const document = new DocumentResource(
                         id,
                         "test-client",
                         false,

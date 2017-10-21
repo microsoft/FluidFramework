@@ -1,7 +1,7 @@
 import * as assert from "assert";
 import * as resources from "gitresources";
 import performanceNow = require("performance-now");
-import * as api from "../api";
+import * as api from "../api-core";
 import * as shared from "../shared";
 import * as MergeTree from "./mergeTree";
 import * as ops from "./ops";
@@ -14,7 +14,7 @@ export class CollaboritiveStringExtension implements api.IExtension {
     public type: string = CollaboritiveStringExtension.Type;
 
     public load(
-        document: api.Document,
+        document: api.IDocument,
         id: string,
         sequenceNumber: number,
         services: api.IDistributedObjectServices,
@@ -27,7 +27,7 @@ export class CollaboritiveStringExtension implements api.IExtension {
         return collaborativeString;
     }
 
-    public create(document: api.Document, id: string, options?: Object): api.ICollaborativeObject {
+    public create(document: api.IDocument, id: string, options?: Object): api.ICollaborativeObject {
         let collaborativeString = new SharedString(document, id, 0);
         collaborativeString.load(0, null, false);
 
@@ -69,7 +69,7 @@ export class SharedString extends api.CollaborativeObject {
     }
 
     constructor(
-        document: api.Document,
+        document: api.IDocument,
         public id: string,
         sequenceNumber: number,
         services?: api.IDistributedObjectServices) {

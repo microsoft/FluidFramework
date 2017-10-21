@@ -1,6 +1,6 @@
 import * as resources from "gitresources";
 import * as _ from "lodash";
-import * as api from "../api";
+import * as api from "../api-core";
 
 /**
  * Description of a cell delta operation
@@ -47,9 +47,34 @@ export interface ICellValue {
 const snapshotFileName = "header";
 
 /**
+ * Collaborative cell interface
+ */
+export interface ICell extends api.ICollaborativeObject {
+    /**
+     * Retrieves the cell value.
+     */
+    get(): Promise<any>;
+
+    /**
+     * Sets the cell value.
+     */
+    set(value: any): Promise<void>;
+
+    /**
+     * Checks whether cell is empty or not.
+     */
+    empty(): Promise<boolean>;
+
+    /**
+     * Delete the value from the cell.
+     */
+    delete(): Promise<void>;
+}
+
+/**
  * Implementation of a cell collaborative object
  */
-class Cell extends api.CollaborativeObject implements api.ICell {
+class Cell extends api.CollaborativeObject implements ICell {
     // Cell data
     private data: ICellValue;
 
@@ -58,7 +83,7 @@ class Cell extends api.CollaborativeObject implements api.ICell {
      * be provided
      */
     constructor(
-        document: api.Document,
+        document: api.IDocument,
         id: string,
         sequenceNumber: number,
         services?: api.IDistributedObjectServices,
@@ -215,17 +240,17 @@ export class CellExtension implements api.IExtension {
     public type: string = CellExtension.Type;
 
     public load(
-        document: api.Document,
+        document: api.IDocument,
         id: string,
         sequenceNumber: number,
         services: api.IDistributedObjectServices,
         version: resources.ICommit,
-        header: string): api.ICell {
+        header: string): ICell {
 
         return new Cell(document, id, sequenceNumber, services, version, header);
     }
 
-    public create(document: api.Document, id: string): api.ICell {
+    public create(document: api.IDocument, id: string): ICell {
         return new Cell(document, id, 0);
     }
 }

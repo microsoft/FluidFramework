@@ -1,5 +1,7 @@
 import * as api from "../api";
+import * as apiCore from "../api-core";
 import * as intelligence from "../intelligence";
+import { IMap, IMapView } from "../map";
 import * as mergeTree from "../merge-tree";
 import * as shared from "./";
 
@@ -13,7 +15,7 @@ export class IntelligentServicesManager {
 
     constructor(
         private doc: api.Document,
-        private documentInsights: api.IMapView) {}
+        private documentInsights: IMapView) {}
 
     /**
      * Registers a new intelligent service
@@ -22,7 +24,7 @@ export class IntelligentServicesManager {
         this.services.push(service);
     }
 
-    public process(object: api.ICollaborativeObject) {
+    public process(object: apiCore.ICollaborativeObject) {
         // TODO expose way for intelligent services to express their supported document types
         if (object.type === mergeTree.CollaboritiveStringExtension.Type) {
             if (!this.intelInvoked) {
@@ -36,7 +38,7 @@ export class IntelligentServicesManager {
                             this.documentInsights.set(object.id, this.doc.createMap());
                         }
 
-                        const output = this.documentInsights.get(object.id) as api.IMap;
+                        const output = this.documentInsights.get(object.id) as IMap;
 
                         // Run the collaborative services
                         const text = sharedString.client.getText();

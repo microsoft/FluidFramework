@@ -1,5 +1,5 @@
 import * as resources from "gitresources";
-import * as api from "../api";
+import * as api from "../api-core";
 import { IDelta } from "./delta";
 import { InkExtension } from "./extension";
 import { IInkLayer, ISnapshot, Snapshot } from "./snapshot";
@@ -28,7 +28,7 @@ export class InkCollaborativeObject extends api.CollaborativeObject implements I
     private inkSnapshot: Snapshot;
 
     constructor(
-        document: api.Document,
+        document: api.IDocument,
         id: string,
         sequenceNumber: number,
         services?: api.IDistributedObjectServices,

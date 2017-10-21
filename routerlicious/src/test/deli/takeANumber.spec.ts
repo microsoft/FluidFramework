@@ -1,5 +1,5 @@
 import * as assert from "assert";
-import { ITrace } from "../../api";
+import { ITrace } from "../../api-core";
 import * as core from "../../core";
 import { ClientSequenceTimeout, TakeANumber } from "../../deli/takeANumber";
 import * as shared from "../../shared";

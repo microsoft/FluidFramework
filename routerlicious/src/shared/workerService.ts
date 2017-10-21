@@ -1,7 +1,7 @@
 import * as request from "request";
 import * as io from "socket.io-client";
 import * as url from "url";
-import * as api from "../api";
+import * as api from "../api-core";
 import * as Collections from "../merge-tree/collections";
 import * as socketStorage from "../socket-storage";
 import * as messages from "../socket-storage/messages";

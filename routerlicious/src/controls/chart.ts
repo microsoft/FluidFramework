@@ -1,4 +1,4 @@
-import * as api from "../api";
+import { ICell } from "../cell";
 import * as ui from "../ui";
 
 // tslint:disable-next-line:no-string-literal
@@ -9,7 +9,7 @@ export class Chart extends ui.Component {
     private chart: any;
     private lastSize: ui.ISize = { width: -1, height: -1 };
 
-    constructor(element: HTMLDivElement, private cell: api.ICell, host = DefaultHost) {
+    constructor(element: HTMLDivElement, private cell: ICell, host = DefaultHost) {
         super(element);
         this.chart = new Microsoft.Charts.Chart(host, element);
         this.chart.setRenderer(Microsoft.Charts.IvyRenderer.Svg);

@@ -1,5 +1,5 @@
 import * as telegraf from "telegrafjs";
-import { ITrace} from "../api";
+import { ITrace} from "../api-core";
 
 export interface IMetricClient {
 

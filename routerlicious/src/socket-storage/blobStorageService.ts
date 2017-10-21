@@ -1,5 +1,5 @@
 import * as resources from "gitresources";
-import * as api from "../api";
+import * as api from "../api-core";
 import * as gitStorage from "../git-storage";
 
 /**

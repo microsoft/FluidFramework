@@ -1,4 +1,5 @@
 import * as api from "../api";
+import * as apiCore from "../api-core";
 
 // Loads a document from DB.
 export class Serializer {
@@ -10,7 +11,7 @@ export class Serializer {
     constructor(private document: api.Document) {
     }
 
-    public run(op: api.ISequencedDocumentMessage) {
+    public run(op: apiCore.ISequencedDocumentMessage) {
         // Exit early in the case that the minimum sequence number hasn't changed
         if (this.currentMsn === op.minimumSequenceNumber) {
             return;

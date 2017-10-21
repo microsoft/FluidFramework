@@ -1,5 +1,6 @@
 import * as _ from "lodash";
 import * as api from "../api";
+import * as apiCore from "../api-core";
 import * as SharedString from "../merge-tree";
 import { Histogram, RateCounter } from "./counters";
 
@@ -266,7 +267,7 @@ async function typeFile(
             }
         }, 1000);
 
-        sharedString.on("op", (message: api.ISequencedObjectMessage) => {
+        sharedString.on("op", (message: apiCore.ISequencedObjectMessage) => {
             if (message.clientSequenceNumber && message.clientId === document.clientId) {
 
                 ackCounter.increment(1);

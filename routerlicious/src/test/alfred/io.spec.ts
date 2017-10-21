@@ -2,7 +2,7 @@ import * as assert from "assert";
 import * as nconf from "nconf";
 import * as path from "path";
 import * as io from "../../alfred/io";
-import * as api from "../../api";
+import * as api from "../../api-core";
 import * as core from "../../core";
 import { Deferred } from "../../shared";
 import * as socketStorage from "../../socket-storage";

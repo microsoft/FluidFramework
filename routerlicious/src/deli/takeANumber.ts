@@ -1,5 +1,5 @@
 import * as winston from "winston";
-import * as api from "../api";
+import * as api from "../api-core";
 import * as core from "../core";
 import * as shared from "../shared";
 import * as utils from "../utils";

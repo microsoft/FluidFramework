@@ -3,8 +3,8 @@
 import * as Base from "./base";
 import * as Collections from "./collections";
 import * as ops from "./ops";
-import * as API from "../api";
-import { ISequencedObjectMessage } from "../api";
+import * as API from "../api-core";
+import { ISequencedObjectMessage } from "../api-core";
 import * as Properties from "./properties";
 import * as assert from "assert";
 

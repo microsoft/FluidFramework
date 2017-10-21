@@ -1,23 +1,23 @@
 import * as $ from "jquery";
-import * as api from "../../api";
+// import * as api from "../../api";
 import * as socketStorage from "../../socket-storage";
 
 async function assignKeypair(): Promise<boolean> {
-    const {privateKey, publicKey} = await api.generateAsymmetricKeys(2048, "", "");
-    (<HTMLTextAreaElement> document.getElementById("privateKey")).textContent = privateKey;
-    (<HTMLTextAreaElement> document.getElementById("publicKey")).textContent = publicKey;
-    document.getElementById("assignKeypair").style.display = "none";
+    // const {privateKey, publicKey} = await api.generateAsymmetricKeys(2048, "", "");
+    // (<HTMLTextAreaElement> document.getElementById("privateKey")).textContent = privateKey;
+    // (<HTMLTextAreaElement> document.getElementById("publicKey")).textContent = publicKey;
+    // document.getElementById("assignKeypair").style.display = "none";
     return true;
 }
 
 function userLoggedIn(): boolean {
-    if (api.isUserLoggedIn()) {
-        const {user, keyPackage} = api.getLoggedInUserPackage();
-        (<HTMLInputElement> document.getElementById("username")).value = user;
-        (<HTMLTextAreaElement> document.getElementById("privateKey")).textContent = keyPackage.privateKey;
-        (<HTMLTextAreaElement> document.getElementById("publicKey")).textContent = keyPackage.publicKey;
-        return true;
-    }
+    // if (api.isUserLoggedIn()) {
+    //     const {user, keyPackage} = api.getLoggedInUserPackage();
+    //     (<HTMLInputElement> document.getElementById("username")).value = user;
+    //     (<HTMLTextAreaElement> document.getElementById("privateKey")).textContent = keyPackage.privateKey;
+    //     (<HTMLTextAreaElement> document.getElementById("publicKey")).textContent = keyPackage.publicKey;
+    //     return true;
+    // }
 
     return false;
 }
@@ -36,7 +36,7 @@ function loginUser(): boolean {
     }
 
     /* Store/overwrite credentials. */
-    api.setLoggedInUser(username, {privateKey, publicKey});
+    // api.setLoggedInUser(username, {privateKey, publicKey});
 
     /* Disable login button. */
     toggleShowLogin();
@@ -45,13 +45,13 @@ function loginUser(): boolean {
 }
 
 function logoutUser(): boolean {
-    if (!api.isUserLoggedIn()) {
-        alert("ERROR: No user logged in!");
-        return false;
-    }
+    // if (!api.isUserLoggedIn()) {
+    //     alert("ERROR: No user logged in!");
+    //     return false;
+    // }
 
     /* Remove user from localStorage. */
-    api.logoutUser();
+    // api.logoutUser();
 
     /* Enable login button. */
     toggleShowLogin();

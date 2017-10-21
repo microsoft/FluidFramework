@@ -1,4 +1,5 @@
 import * as api from "../../api";
+import * as apiCore from "../../api-core";
 import * as testUtils from "./";
 
 export function registerAsTest(deltaUrl: string, blobUrl: string, repository: string) {
@@ -6,7 +7,7 @@ export function registerAsTest(deltaUrl: string, blobUrl: string, repository: st
     api.registerDocumentService(service);
 }
 
-export function getTestService(deltaUrl: string, blobUrl: string, repository: string): api.IDocumentService {
+export function getTestService(deltaUrl: string, blobUrl: string, repository: string): apiCore.IDocumentService {
     const blobStorage = new testUtils.TestBlobStorageService();
     const deltaStorage = new testUtils.TestDeltaStorageService();
     const service = new testUtils.TestDocumentService(deltaUrl, deltaStorage, blobStorage);

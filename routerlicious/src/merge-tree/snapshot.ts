@@ -4,7 +4,7 @@ import * as Collections from "./collections";
 import * as fs from "fs";
 import * as MergeTree from "./mergeTree";
 import * as ops from "./ops";
-import * as API from "../api";
+import * as API from "../api-core";
 
 export interface SnapshotHeader {
     chunkCount?: number;

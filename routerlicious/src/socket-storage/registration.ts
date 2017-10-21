@@ -1,9 +1,10 @@
 import * as socketStorage from ".";
 import * as api from "../api";
+import * as apiCore from "../api-core";
 import { GitManager } from "../git-storage";
 import { Historian } from "../services-client";
 
-export function getDefaultService(deltaUrl: string, blobUrl: string, repository: string): api.IDocumentService {
+export function getDefaultService(deltaUrl: string, blobUrl: string, repository: string): apiCore.IDocumentService {
     const historian = new Historian(blobUrl);
     const gitManager = new GitManager(historian, repository);
     const blobStorage = new socketStorage.BlobStorageService(gitManager);

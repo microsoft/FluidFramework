@@ -1,5 +1,5 @@
 import * as resources from "gitresources";
-import { Document, IDistributedObjectServices } from "./document";
+import { IDistributedObjectServices, IDocument } from "./document";
 import * as types from "./types";
 
 /**
@@ -25,7 +25,7 @@ export interface IExtension {
      * need a way to allow the document to provide later storage for the object.
      */
     load(
-        document: Document,
+        document: IDocument,
         id: string,
         sequenceNumber: number,
         services: IDistributedObjectServices,
@@ -39,7 +39,7 @@ export interface IExtension {
      * NOTE here - When we attach we need to submit all the pending ops prior to actually doing the attach
      * for consistency.
      */
-    create(document: Document, id: string): types.ICollaborativeObject;
+    create(document: IDocument, id: string): types.ICollaborativeObject;
 }
 
 /**

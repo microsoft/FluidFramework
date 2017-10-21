@@ -4,6 +4,7 @@ import * as path from "path";
 import * as Collections from "../merge-tree/collections";
 import * as commander from "commander";
 import * as API from "../api";
+import * as apiCore from "../api-core";
 import * as SharedString from "../merge-tree";
 import * as socketStorage from "../socket-storage";
 
@@ -67,7 +68,7 @@ class Speller {
     }
 
     setEvents() {
-        this.sharedString.on("op", (msg: API.ISequencedObjectMessage) => {
+        this.sharedString.on("op", (msg: apiCore.ISequencedObjectMessage) => {
             if (msg && msg.contents) {
                 this.spellOp(<SharedString.IMergeTreeOp>msg.contents);
             }

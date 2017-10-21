@@ -3,42 +3,52 @@ import { EventEmitter } from "events";
 import * as resources from "gitresources";
 import * as uuid from "node-uuid";
 import performanceNow = require("performance-now");
+import {
+    AttachObject,
+    DeltaConnection,
+    DeltaManager,
+    IAttachMessage,
+    ICollaborativeObject,
+    IDistributedObject,
+    IDistributedObjectServices,
+    IDocumentAttributes,
+    IDocumentResource,
+    IDocumentService,
+    IEnvelope,
+    IExtension,
+    ILatencyMessage,
+    IObjectAttributes,
+    IObjectMessage,
+    IObjectStorageService,
+    ISequencedDocumentMessage,
+    ITree,
+    ITreeEntry,
+    LocalObjectStorageService,
+    ObjectOperation,
+    ObjectStorageService,
+    Registry,
+    RoundTrip,
+    TreeEntry } from "../api-core";
 import * as cell from "../cell";
 import * as ink from "../ink";
 import * as mapExtension from "../map";
 import * as mergeTree from "../merge-tree";
 import { debug } from "./debug";
-import { DeltaConnection } from "./deltaConnection";
-import { DeltaManager } from "./deltaManager";
-import * as extensions from "./extension";
-import { LocalObjectStorageService } from "./localObjectStorageService";
-import { ObjectStorageService } from "./objectStorageService";
-import {
-    AttachObject,
-    IAttachMessage,
-    IEnvelope,
-    ILatencyMessage,
-    IObjectMessage,
-    ISequencedDocumentMessage,
-    ObjectOperation,
-    RoundTrip } from "./protocol";
-import * as storage from "./storage";
-import * as types from "./types";
 
 const rootMapId = "root";
 
 // Registered services to use when loading a document
-let defaultDocumentService: storage.IDocumentService;
+let defaultDocumentService: IDocumentService;
 
 // The default registry for extensions
-export const defaultRegistry = new extensions.Registry();
+export const defaultRegistry = new Registry();
 export const defaultDocumentOptions = Object.create(null);
 defaultRegistry.register(new mapExtension.MapExtension());
 defaultRegistry.register(new mergeTree.CollaboritiveStringExtension());
 defaultRegistry.register(new ink.InkExtension());
 defaultRegistry.register(new cell.CellExtension());
 
-export function registerExtension(extension: extensions.IExtension) {
+export function registerExtension(extension: IExtension) {
     defaultRegistry.register(extension);
 }
 
@@ -47,52 +57,20 @@ export function registerExtension(extension: extensions.IExtension) {
  * expected that the implementation provider of these will register themselves during startup prior to the user
  * requesting to load a collaborative object.
  */
-export function registerDocumentService(service: storage.IDocumentService) {
+export function registerDocumentService(service: IDocumentService) {
     defaultDocumentService = service;
 }
 
-export function getDefaultDocumentService(): storage.IDocumentService {
+export function getDefaultDocumentService(): IDocumentService {
     return defaultDocumentService;
 }
 
 interface IDistributedObjectState {
-    object: types.ICollaborativeObject;
+    object: ICollaborativeObject;
 
     storage: IObjectStorageService;
 
     connection: DeltaConnection;
-}
-
-export interface IDistributedObjectServices {
-    deltaConnection: IDeltaConnection;
-
-    objectStorage: IObjectStorageService;
-}
-
-/**
- * Interface to represent a connection to a delta notification stream
- */
-export interface IDeltaConnection {
-    minimumSequenceNumber: number;
-
-    referenceSequenceNumber: number;
-
-    /**
-     * Subscribe to events emitted by the object
-     */
-    on(event: string, listener: Function): this;
-
-    /**
-     * Send new messages to the server
-     */
-    submit(message: IObjectMessage): this;
-}
-
-export interface IObjectStorageService {
-    /**
-     * Reads the object contained at the given path. Returns a base64 string representation for the object.
-     */
-    read(path: string): Promise<string>;
 }
 
 /**
@@ -126,8 +104,8 @@ interface IAttachedServices {
 export class Document {
     public static async Create(
         id: string,
-        registry: extensions.Registry,
-        service: storage.IDocumentService,
+        registry: Registry,
+        service: IDocumentService,
         options: Object,
         version: resources.ICommit,
         connect: boolean): Promise<Document> {
@@ -188,8 +166,11 @@ export class Document {
     /**
      * Constructs a new document from the provided details
      */
-    private constructor(private document: storage.IDocument, private registry: extensions.Registry,
-                        private opts: Object) {
+    private constructor(
+        private document: IDocumentResource,
+        private registry: Registry,
+        private opts: Object) {
+
         this.lastMinSequenceNumber = this.document.minimumSequenceNumber;
         this.deltaManager = new DeltaManager(
             this.document.documentId,
@@ -207,7 +188,7 @@ export class Document {
      * Constructs a new collaborative object that can be attached to the document
      * @param type the identifier for the collaborative object type
      */
-    public create(type: string, id = uuid.v4()): types.ICollaborativeObject {
+    public create(type: string, id = uuid.v4()): ICollaborativeObject {
         const extension = this.registry.getExtension(type);
         const object = extension.create(this, id);
 
@@ -225,7 +206,7 @@ export class Document {
      *
      * @param id Identifier of the object to load
      */
-    public get(id: string): types.ICollaborativeObject {
+    public get(id: string): ICollaborativeObject {
         return id in this.distributedObjects ? this.distributedObjects[id].object : null;
     }
 
@@ -235,7 +216,7 @@ export class Document {
      *
      * @param object
      */
-    public attach(object: types.ICollaborativeObject): IDistributedObjectServices {
+    public attach(object: ICollaborativeObject): IDistributedObjectServices {
         // Get the object snapshot and include it in the initial attach
         const snapshot = object.snapshot();
 
@@ -259,23 +240,23 @@ export class Document {
     /**
      * Creates a new collaborative map
      */
-    public createMap(): types.IMap {
-        return this.create(mapExtension.MapExtension.Type) as types.IMap;
+    public createMap(): mapExtension.IMap {
+        return this.create(mapExtension.MapExtension.Type) as mapExtension.IMap;
     }
 
     /**
      * Creates a new collaborative cell.
      * TODO (tanvir): replace this with type class.
      */
-    public createCell(): types.ICell {
-        return this.create(cell.CellExtension.Type) as types.ICell;
+    public createCell(): cell.ICell {
+        return this.create(cell.CellExtension.Type) as cell.ICell;
     }
 
     /**
      * Creates a new collaborative string
      */
-    public createString(): types.ICollaborativeObject {
-        return this.create(mergeTree.CollaboritiveStringExtension.Type) as types.ICollaborativeObject;
+    public createString(): mergeTree.SharedString {
+        return this.create(mergeTree.CollaboritiveStringExtension.Type) as mergeTree.SharedString;
     }
 
     /**
@@ -288,8 +269,8 @@ export class Document {
     /**
      * Retrieves the root collaborative object that the document is based on
      */
-    public getRoot(): types.IMap {
-        return this.distributedObjects[rootMapId].object as types.IMap;
+    public getRoot(): mapExtension.IMap {
+        return this.distributedObjects[rootMapId].object as mapExtension.IMap;
     }
 
     /**
@@ -321,7 +302,7 @@ export class Document {
      * Called to snapshot the given document
      */
     public async snapshot(): Promise<void> {
-        const entries: storage.ITreeEntry[] = [];
+        const entries: ITreeEntry[] = [];
 
         // Transform ops in the window relative to the MSN - the window is all ops between the min sequence number
         // and the current sequence number
@@ -334,7 +315,7 @@ export class Document {
         }
         entries.push({
             path: ".messages",
-            type: storage.TreeEntry[storage.TreeEntry.Blob],
+            type: TreeEntry[TreeEntry.Blob],
             value: {
                 contents: JSON.stringify(transformedMessages),
                 encoding: "utf-8",
@@ -350,13 +331,13 @@ export class Document {
                 const snapshot = object.object.snapshot();
 
                 // Add in the object attributes to the returned tree
-                const objectAttributes: storage.IObjectAttributes = {
+                const objectAttributes: IObjectAttributes = {
                     sequenceNumber: object.connection.minimumSequenceNumber,
                     type: object.object.type,
                 };
                 snapshot.entries.push({
                     path: ".attributes",
-                    type: storage.TreeEntry[storage.TreeEntry.Blob],
+                    type: TreeEntry[TreeEntry.Blob],
                     value: {
                         contents: JSON.stringify(objectAttributes),
                         encoding: "utf-8",
@@ -366,20 +347,20 @@ export class Document {
                 // And then store the tree
                 entries.push({
                     path: objectId,
-                    type: storage.TreeEntry[storage.TreeEntry.Tree],
+                    type: TreeEntry[TreeEntry.Tree],
                     value: snapshot,
                 });
             }
         }
 
         // Save attributes for the document
-        const documentAttributes: storage.IDocumentAttributes = {
+        const documentAttributes: IDocumentAttributes = {
             minimumSequenceNumber: this.deltaManager.minimumSequenceNumber,
             sequenceNumber: this.deltaManager.referenceSequenceNumber,
         };
         entries.push({
             path: ".attributes",
-            type: storage.TreeEntry[storage.TreeEntry.Blob],
+            type: TreeEntry[TreeEntry.Blob],
             value: {
                 contents: JSON.stringify(documentAttributes),
                 encoding: "utf-8",
@@ -387,7 +368,7 @@ export class Document {
         });
 
         // Output the tree
-        const root: storage.ITree = {
+        const root: ITree = {
             entries,
         };
 
@@ -451,7 +432,7 @@ export class Document {
      * Loads in a distributed object and stores it in the internal Document object map
      * @param distributedObject The distributed object to load
      */
-    private loadInternal(distributedObject: storage.IDistributedObject, services: IAttachedServices) {
+    private loadInternal(distributedObject: IDistributedObject, services: IAttachedServices) {
         const extension = this.registry.getExtension(distributedObject.type);
         const value = extension.load(
             this,
@@ -478,7 +459,7 @@ export class Document {
         };
     }
 
-    private upsertDistributedObject(object: types.ICollaborativeObject, services: IAttachedServices) {
+    private upsertDistributedObject(object: ICollaborativeObject, services: IAttachedServices) {
         if (!(object.id in this.distributedObjects)) {
             this.distributedObjects[object.id] = {
                 connection: services ? services.deltaConnection : null,
@@ -524,7 +505,7 @@ export class Document {
                     this);
                 connection.setBaseMapping(0, message.sequenceNumber);
 
-                const distributedObject: storage.IDistributedObject = {
+                const distributedObject: IDistributedObject = {
                     header,
                     id: attachMessage.id,
                     sequenceNumber: 0,
@@ -572,8 +553,8 @@ export async function load(
     id: string,
     options: Object = defaultDocumentOptions,
     version: resources.ICommit = null,
-    registry: extensions.Registry = defaultRegistry,
-    service: storage.IDocumentService = defaultDocumentService,
+    registry: Registry = defaultRegistry,
+    service: IDocumentService = defaultDocumentService,
     connect = true): Promise<Document> {
 
     // Verify an extensions registry was provided

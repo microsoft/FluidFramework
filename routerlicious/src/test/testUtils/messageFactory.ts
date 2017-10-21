@@ -1,4 +1,4 @@
-import * as api from "../../api";
+import * as api from "../../api-core";
 import { IRawOperationMessage, ISequencedOperationMessage, RawOperationType, SequencedOperationType } from "../../core";
 
 export class MessageFactory {

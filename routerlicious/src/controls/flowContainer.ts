@@ -1,5 +1,6 @@
 import * as api from "../api";
 import * as ink from "../ink";
+import { IMap } from "../map";
 import { MarkerBehaviors, reservedMarkerIdKey, SharedString } from "../merge-tree";
 import * as ui from "../ui";
 import { debug } from "./debug";
@@ -31,7 +32,7 @@ export class FlowContainer extends ui.Component {
         element: HTMLDivElement,
         collabDocument: api.Document,
         sharedString: SharedString,
-        private overlayMap: api.IMap,
+        private overlayMap: IMap,
         private image: Image) {
 
         super(element);
@@ -127,7 +128,7 @@ export class FlowContainer extends ui.Component {
         element.appendChild(image.element);
     }
 
-    public trackInsights(insights: api.IMap) {
+    public trackInsights(insights: IMap) {
         this.updateInsights(insights);
         insights.on("valueChanged", () => {
             this.updateInsights(insights);
@@ -183,7 +184,7 @@ export class FlowContainer extends ui.Component {
         this.activeLayers[id].layer.setPosition(location);
     }
 
-    private async updateInsights(insights: api.IMap) {
+    private async updateInsights(insights: IMap) {
         const view = await insights.getView();
 
         if (view.has("ResumeAnalytics") && this.image) {

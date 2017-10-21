@@ -4,6 +4,7 @@ import * as request from "request";
 import * as url from "url";
 import * as API from "../../api";
 import * as controls from "../../controls";
+import { IMap } from "../../map";
 import * as SharedString from "../../merge-tree";
 import * as shared from "../../shared";
 import * as socketStorage from "../../socket-storage";
@@ -30,9 +31,9 @@ function downloadRawText(textUrl: string): Promise<string> {
     });
 }
 
-async function getInsights(map: API.IMap, id: string): Promise<API.IMap> {
-    const insights = await map.wait<API.IMap>("insights");
-    return insights.wait<API.IMap>(id);
+async function getInsights(map: IMap, id: string): Promise<IMap> {
+    const insights = await map.wait<IMap>("insights");
+    return insights.wait<IMap>(id);
 }
 
 export async function onLoad(id: string, version: resources.ICommit, config: any) {

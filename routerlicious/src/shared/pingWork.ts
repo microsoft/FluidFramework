@@ -1,5 +1,5 @@
 import * as io from "socket.io-client";
-import { IPingMessage } from "../api";
+import { IPingMessage } from "../api-core";
 import { IWork} from "./work";
 
 /**

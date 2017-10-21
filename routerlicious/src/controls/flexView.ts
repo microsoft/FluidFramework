@@ -1,6 +1,7 @@
 // The main app code
 import * as api from "../api";
 import * as ink from "../ink";
+import { IMap, IMapView } from "../map";
 import * as ui from "../ui";
 import { Button } from "./button";
 import { Chart } from "./chart";
@@ -41,7 +42,7 @@ export class FlexView extends ui.Component {
     private colorStack: StackPanel;
     private components: IFlexViewComponent[] = [];
 
-    constructor(element: HTMLDivElement, doc: api.Document, root: api.IMapView) {
+    constructor(element: HTMLDivElement, doc: api.Document, root: IMapView) {
         super(element);
 
         const dockElement = document.createElement("div");
@@ -137,13 +138,13 @@ export class FlexView extends ui.Component {
         this.popup.resize(rect);
     }
 
-    private async processComponents(components: api.IMap) {
+    private async processComponents(components: IMap) {
         const view = await components.getView();
 
         // Pull in all the objects on the canvas
         // tslint:disable-next-line:forin
         for (let componentName of view.keys()) {
-            const component = view.get(componentName) as api.IMap;
+            const component = view.get(componentName) as IMap;
             this.addComponent(component);
         }
 
@@ -154,7 +155,7 @@ export class FlexView extends ui.Component {
         });
     }
 
-    private async addComponent(component: api.IMap) {
+    private async addComponent(component: IMap) {
         const details = await component.getView();
         if (details.get("type") !== "chart") {
             return;

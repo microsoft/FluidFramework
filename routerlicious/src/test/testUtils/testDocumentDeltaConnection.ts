@@ -1,4 +1,4 @@
-import * as api from "../../api";
+import * as api from "../../api-core";
 import { TestDocumentService} from "./";
 
 export class TestDocumentDeltaConnection implements api.IDocumentDeltaConnection {

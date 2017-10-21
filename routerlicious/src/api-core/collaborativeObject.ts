@@ -29,7 +29,7 @@ export abstract class CollaborativeObject implements api.ICollaborativeObject {
     }
 
     constructor(
-        protected document: api.Document,
+        protected document: api.IDocument,
         public id: string,
         public type: string,
         private sequenceNum: number,
