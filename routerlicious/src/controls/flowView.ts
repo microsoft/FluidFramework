@@ -635,16 +635,17 @@ function buildDocumentContext(viewportDiv: HTMLDivElement) {
     };
 }
 
-function showPresence(presenceX: number, lineContext: ILineContext, presenceInfo: IPresenceInfo) {
+function showPresence(presenceX: number, lineContext: ILineContext, presenceInfo: ILocalPresenceInfo) {
     if (!presenceInfo.cursor) {
         presenceInfo.cursor = new Cursor(lineContext.flowView.viewportDiv, presenceInfo.xformPos);
         presenceInfo.cursor.addPresenceInfo(presenceInfo);
     }
     presenceInfo.cursor.assignToLine(presenceX, lineContext.lineDivHeight, lineContext.lineDiv);
+    presenceInfo.fresh = false;
 }
 
-function showPositionEndOfLine(lineContext: ILineContext, presenceInfo?: IPresenceInfo) {
-    if ((!presenceInfo) || (presenceInfo.xformPos !== presenceInfo.lastShownPos)) {
+function showPositionEndOfLine(lineContext: ILineContext, presenceInfo?: ILocalPresenceInfo) {
+    if ((!presenceInfo) || presenceInfo.fresh) {
         if (lineContext.deferredAttach) {
             addToRerenderList(lineContext);
         } else {
@@ -690,9 +691,9 @@ function showPositionInLine(
     textStartPos: number,
     text: string,
     cursorPos: number,
-    presenceInfo?: IPresenceInfo) {
+    presenceInfo?: ILocalPresenceInfo) {
 
-    if ((!presenceInfo) || (presenceInfo.xformPos !== presenceInfo.lastShownPos)) {
+    if ((!presenceInfo) || presenceInfo.fresh) {
         if (lineContext.deferredAttach) {
             addToRerenderList(lineContext);
         } else {
@@ -2236,17 +2237,18 @@ export class Cursor {
     public parentSpan: HTMLSpanElement;
     public editSpan: HTMLSpanElement;
     public presenceDiv: HTMLDivElement;
+    public presenceInfo: ILocalPresenceInfo;
+    public presenceInfoUpdated = true;
 
     private blinkCount = 0;
     private blinkTimer: any;
     private bgColor = "blue";
-    private presenceInfo: IPresenceInfo;
 
     constructor(public viewportDiv: HTMLDivElement, public pos = 0) {
         this.makeSpan();
     }
 
-    public addPresenceInfo(presenceInfo: IPresenceInfo) {
+    public addPresenceInfo(presenceInfo: ILocalPresenceInfo) {
         // for now, color
         let presenceColorIndex = presenceInfo.clientId % presenceColors.length;
         this.bgColor = presenceColors[presenceColorIndex];
@@ -2329,7 +2331,6 @@ export class Cursor {
                 this.presenceDiv.parentElement.removeChild(this.presenceDiv);
             }
             this.presenceDiv.style.opacity = "1.0";
-            this.presenceInfo.lastShownPos = this.presenceInfo.xformPos;
             lineDiv.appendChild(this.presenceDiv);
         }
         if (this.blinkTimer) {
@@ -2388,20 +2389,30 @@ enum KeyCode {
     letter_z = 90,
 }
 
-export interface IPresenceInfo {
+export interface IRemotePresenceInfo {
     origPos: number;
     refseq: number;
-    xformPos?: number;
-    lastShownPos?: number;
     key?: string;
     clientId?: number;
+}
+
+export interface ILocalPresenceInfo {
+    localRef?: SharedString.LocalReference;
+    xformPos?: number;
+    clientId: number;
+    key?: string;
     cursor?: Cursor;
-    posAdjust?: number;
+    fresh: boolean;
 }
 
 interface ISegmentOffset {
     segment: SharedString.Segment;
     offset: number;
+}
+
+function getLocalRefPos(flowView: FlowView, localRef: SharedString.LocalReference) {
+    return flowView.client.mergeTree.getOffset(localRef.segment, SharedString.UniversalSequenceNumber,
+        flowView.client.getClientId()) + localRef.offset;
 }
 
 function getContainingSegment(flowView: FlowView, pos: number): ISegmentOffset {
@@ -2437,7 +2448,7 @@ export class FlowView extends ui.Component {
     public cursor: Cursor;
     public presenceMap: IMap;
     public presenceMapView: IMapView;
-    public presenceVector: IPresenceInfo[] = [];
+    public presenceVector: ILocalPresenceInfo[] = [];
     public presenceSeq = 0;
     public docRoot: IMapView;
     public curPG: SharedString.Marker;
@@ -2496,75 +2507,74 @@ export class FlowView extends ui.Component {
         }
     }
 
-    // TODO: change presence to use markers when can coalesce segments into spans
     public updatePresencePositions() {
         for (let i = 0, len = this.presenceVector.length; i < len; i++) {
-            let remotePosInfo = this.presenceVector[i];
-            let seq = this.client.getCurrentSeq();
-            if (remotePosInfo && (remotePosInfo.refseq < seq)) {
-                let minSeq = this.client.mergeTree.getCollabWindow().minSeq;
-                if (remotePosInfo.refseq <= minSeq) {
-                    // can't show this if it is not transformable (eventually, use markers)
-                    this.presenceVector[i] = undefined;
-                } else {
-                    remotePosInfo.xformPos = this.client.mergeTree.tardisPositionFromClient(remotePosInfo.origPos,
-                        remotePosInfo.refseq, this.client.getCurrentSeq(), remotePosInfo.clientId,
-                        this.client.getClientId());
-                    if (remotePosInfo.posAdjust !== undefined) {
-                        remotePosInfo.xformPos += remotePosInfo.posAdjust;
-                    }
-                }
+            let remotePresenceInfo = this.presenceVector[i];
+            if (remotePresenceInfo) {
+                remotePresenceInfo.xformPos = getLocalRefPos(this, remotePresenceInfo.localRef);
             }
         }
     }
 
-    public updatePresenceVector(remotePosInfo: IPresenceInfo, posAdjust = 0) {
-        remotePosInfo.xformPos = this.client.mergeTree.tardisPositionFromClient(remotePosInfo.origPos,
-            remotePosInfo.refseq, this.client.getCurrentSeq(), remotePosInfo.clientId,
-            this.client.getClientId());
-        if (posAdjust !== 0) {
-            remotePosInfo.xformPos += posAdjust;
-            remotePosInfo.posAdjust = posAdjust;
-        }
-        let presentPresence = this.presenceVector[remotePosInfo.clientId];
-
-        if (presentPresence && presentPresence.cursor) {
-            remotePosInfo.cursor = presentPresence.cursor;
-        }
-
+    public updatePresenceVector(localPresenceInfo: ILocalPresenceInfo) {
+        localPresenceInfo.xformPos = getLocalRefPos(this, localPresenceInfo.localRef);
+        let presentPresence = this.presenceVector[localPresenceInfo.clientId];
         let tempXformPos = -1;
+
         if (presentPresence) {
+            if (presentPresence.cursor) {
+                localPresenceInfo.cursor = presentPresence.cursor;
+                localPresenceInfo.cursor.presenceInfo = localPresenceInfo;
+                localPresenceInfo.cursor.presenceInfoUpdated = true;
+            }
+            let baseSegment = <SharedString.BaseSegment>presentPresence.localRef.segment;
+            baseSegment.removeLocalRef(presentPresence.localRef);
             tempXformPos = presentPresence.xformPos;
         }
-        presentPresence = remotePosInfo;
-        this.presenceVector[remotePosInfo.clientId] = remotePosInfo;
-        if (remotePosInfo.xformPos !== tempXformPos) {
-            this.presenceQueueRender(remotePosInfo);
+        this.presenceVector[localPresenceInfo.clientId] = localPresenceInfo;
+        if (localPresenceInfo.xformPos !== tempXformPos) {
+            this.presenceQueueRender(localPresenceInfo);
         }
     }
 
     public remotePresenceFromEdit(longClientId: string, refseq: number, oldpos: number, posAdjust = 0) {
-        let remotePosInfo = <IPresenceInfo>{
+        let remotePosInfo = <IRemotePresenceInfo>{
             clientId: this.client.getOrAddShortClientId(longClientId),
             key: longClientId,
-            origPos: oldpos,
+            origPos: oldpos + posAdjust,
             refseq,
         };
-        this.updatePresenceVector(remotePosInfo, posAdjust);
+        this.remotePresenceToLocal(remotePosInfo, posAdjust);
+    }
+
+    public remotePresenceToLocal(remotePresenceInfo: IRemotePresenceInfo, posAdjust = 0) {
+        let segoff = this.client.mergeTree.getContainingSegment(remotePresenceInfo.origPos,
+            remotePresenceInfo.refseq, remotePresenceInfo.clientId);
+        let localPresenceInfo = <ILocalPresenceInfo>{
+            clientId: remotePresenceInfo.clientId,
+            fresh: true,
+            key: remotePresenceInfo.key,
+            localRef: <SharedString.LocalReference>{
+                offset: segoff.offset,
+                segment: segoff.segment,
+                slideOnRemove: true,
+            },
+        };
+        this.updatePresenceVector(localPresenceInfo);
     }
 
     public remotePresenceUpdate(delta: IValueChanged) {
         if (delta.key !== this.client.longClientId) {
-            let remotePosInfo = <IPresenceInfo>this.presenceMapView.get(delta.key);
-            remotePosInfo.key = delta.key;
-            remotePosInfo.clientId = this.client.getOrAddShortClientId(delta.key);
-            this.updatePresenceVector(remotePosInfo);
+            let remotePresenceInfo = <IRemotePresenceInfo>this.presenceMapView.get(delta.key);
+            remotePresenceInfo.key = delta.key;
+            remotePresenceInfo.clientId = this.client.getOrAddShortClientId(delta.key);
+            this.remotePresenceToLocal(remotePresenceInfo);
         }
     }
 
     public updatePresence() {
         if (this.presenceMapView) {
-            let presenceInfo = <IPresenceInfo>{
+            let presenceInfo = <IRemotePresenceInfo>{
                 origPos: this.cursor.pos,
                 refseq: this.client.getCurrentSeq(),
             };
@@ -3448,12 +3458,14 @@ export class FlowView extends ui.Component {
         // tslint:disable:switch-default
         switch (delta.type) {
             case SharedString.MergeTreeDeltaType.INSERT:
+                let adjLength = 1;
                 if (delta.marker) {
                     this.updatePGInfo(delta.pos1 - 1);
                 } else if (delta.pos1 <= this.cursor.pos) {
+                    adjLength = delta.text.length;
                     this.cursor.pos += delta.text.length;
                 }
-                this.remotePresenceFromEdit(msg.clientId, msg.referenceSequenceNumber, delta.pos1, 1);
+                this.remotePresenceFromEdit(msg.clientId, msg.referenceSequenceNumber, delta.pos1, adjLength);
                 this.updatePGInfo(delta.pos1);
                 return true;
             case SharedString.MergeTreeDeltaType.REMOVE:
@@ -3482,7 +3494,7 @@ export class FlowView extends ui.Component {
         return ((this.viewportEndPos > pos) && (pos >= this.viewportStartPos));
     }
 
-    private presenceQueueRender(remotePosInfo: IPresenceInfo) {
+    private presenceQueueRender(remotePosInfo: ILocalPresenceInfo) {
         if ((!this.pendingRender) && (this.posInViewport(remotePosInfo.xformPos))) {
             this.pendingRender = true;
             window.requestAnimationFrame(() => {

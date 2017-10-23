@@ -280,8 +280,8 @@ export class Document {
         throw new Error("Not yet implemented");
     }
 
-    public submitObjectMessage(envelope: IEnvelope): void {
-        this.submitMessage(ObjectOperation, envelope);
+    public submitObjectMessage(envelope: IEnvelope): Promise<void> {
+        return this.submitMessage(ObjectOperation, envelope);
     }
 
     public submitLatencyMessage(message: ILatencyMessage) {
@@ -415,12 +415,8 @@ export class Document {
         }
     }
 
-    private submitMessage(type: string, contents: any) {
-        const submitP = this.deltaManager.submit(type, contents);
-        submitP.catch((error) => {
-            // TODO need reconnection logic upon loss of connection
-            debug("Lost connection to server");
-        });
+    private submitMessage(type: string, contents: any): Promise<void> {
+        return this.deltaManager.submit(type, contents);
     }
 
     private createAttached(id: string, type: string) {

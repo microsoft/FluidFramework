@@ -30,7 +30,7 @@ export interface IDeltaConnection {
     /**
      * Send new messages to the server
      */
-    submit(message: IObjectMessage): this;
+    submit(message: IObjectMessage): Promise<void>;
 }
 
 export interface IDocument {

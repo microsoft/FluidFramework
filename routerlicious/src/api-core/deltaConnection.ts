@@ -114,9 +114,7 @@ export class DeltaConnection implements IDeltaConnection {
     /**
      * Send new messages to the server
      */
-    public submit(message: IObjectMessage): this {
-        this.document.submitObjectMessage({ address: this.objectId, contents: message });
-
-        return this;
+    public submit(message: IObjectMessage): Promise<void> {
+        return this.document.submitObjectMessage({ address: this.objectId, contents: message });
     }
 }
