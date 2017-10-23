@@ -51,8 +51,8 @@ export function propertyCopy() {
         }
     }
     let et = elapsedMicroseconds(clockStart);
-    let perIter = (et/iterCount).toFixed(3);
-    let perProp = (et/(iterCount*propCount)).toFixed(3);
+    let perIter = (et / iterCount).toFixed(3);
+    let perProp = (et / (iterCount * propCount)).toFixed(3);
     console.log(`arr prop init time ${perIter} per init; ${perProp} per property`);
     clockStart = clock();
     for (let j = 0; j < iterCount; j++) {
@@ -60,14 +60,41 @@ export function propertyCopy() {
         for (let key in obj) {
             bObj[key] = obj[key];
         }
-    }        
+    }
     et = elapsedMicroseconds(clockStart);
-    perIter = (et/iterCount).toFixed(3);
-    perProp = (et/(iterCount*propCount)).toFixed(3);
+    perIter = (et / iterCount).toFixed(3);
+    perProp = (et / (iterCount * propCount)).toFixed(3);
     console.log(`obj prop init time ${perIter} per init; ${perProp} per property`);
 }
 
 propertyCopy();
+
+interface Bookmark {
+    pos: number;
+    refseq: number;
+}
+
+function makeBookmarks(client: MergeTree.Client, bookmarkCount: number) {
+    let mt = random.engines.mt19937();
+    mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
+    let bookmarks = <Bookmark[]>[];
+    let refseq = client.getCurrentSeq();
+    let len = client.mergeTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.NonCollabClient);
+    for (let i = 0; i < bookmarkCount; i++) {
+        let pos = random.integer(0, len)(mt);
+        bookmarks.push({ pos, refseq });
+    }
+    return bookmarks;
+}
+
+function updateBookmarks(client: MergeTree.Client, bookmarks: Bookmark[]) {
+    let nrefseq = client.getCurrentSeq();
+    for (let bookmark of bookmarks) {
+        bookmark.pos = client.mergeTree.tardisPosition(bookmark.pos, bookmark.refseq,
+            nrefseq);
+        bookmark.refseq = nrefseq;
+    }
+}
 
 export function TestPack(verbose = true) {
     let mt = random.engines.mt19937();
@@ -147,6 +174,13 @@ export function TestPack(verbose = true) {
         let addSnapClient = false;
         let extractSnap = false;
         let includeMarkers = false;
+        let measureBookmarks = true;
+        let bookmarkCount = 1000;
+        let bookmarks: Bookmark[];
+        let bookmarkUpdateTime = 0;
+        let bookmarkUpdates = 0;
+        let bookmarkReads = 0;
+        let bookmarkReadTime = 0;
 
         let testSyncload = false;
         let snapClient: MergeTree.Client;
@@ -171,6 +205,9 @@ export function TestPack(verbose = true) {
         }
         server.startCollaboration("theServer");
         server.addClients(clients);
+        if (measureBookmarks) {
+            bookmarks = makeBookmarks(server, bookmarkCount);
+        }
         if (testSyncload) {
             let clockStart = clock();
             // let segs = Paparazzo.Snapshot.loadSync("snap-initial");
@@ -402,6 +439,21 @@ export function TestPack(verbose = true) {
                 clientProcessSome(client, true);
             }
 
+            if (measureBookmarks) {
+                let clockStart = clock();
+                updateBookmarks(server, bookmarks);
+                bookmarkUpdates++;
+                bookmarkUpdateTime += elapsedMicroseconds(clockStart);
+                clockStart = clock();
+                let bookmarkReadsPerRound = 200;
+                for (let i = 0; i < bookmarkReadsPerRound; i++) {
+                    server.mergeTree.getContainingSegment(bookmarks[i].pos, bookmarks[i].refseq,
+                        server.getClientId());
+                    bookmarkReads++;
+                }
+                bookmarkReadTime += elapsedMicroseconds(clockStart);
+            }
+
             if (extractSnap) {
                 let clockStart = clock();
                 // let snapshot = new Paparazzo.Snapshot(snapClient.mergeTree);
@@ -442,6 +494,11 @@ export function TestPack(verbose = true) {
                     console.log(`ave extract snap time ${aveExtractSnapTime}`);
                 }
                 reportTiming(server);
+                if (measureBookmarks) {
+                    let amortizedUpdateTime = (bookmarkUpdateTime/server.accumOps).toFixed(2);
+                    let timePerRead = (bookmarkReadTime/bookmarkReads).toFixed(2);
+                    console.log(`bookmarks ${bookmarkUpdates} updates time/op ${amortizedUpdateTime}; time/read ${timePerRead}`);
+                }
                 reportTiming(clients[2]);
                 let totalTime = server.accumTime + server.accumWindowTime;
                 for (let client of clients) {
