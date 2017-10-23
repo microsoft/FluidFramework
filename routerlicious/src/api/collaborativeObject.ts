@@ -12,6 +12,9 @@ export abstract class CollaborativeObject implements api.ICollaborativeObject {
     // Locally applied operations not yet sent to the server
     private localOps: api.IObjectMessage[] = [];
 
+    // Socketio acked messages timestamp.
+    private pingMap: { [clientSequenceNumber: number]: number} = {};
+
     // Sequence number for operations local to this client
     private clientSequenceNumber = 0;
     private minSequenceNumber;
@@ -174,8 +177,15 @@ export abstract class CollaborativeObject implements api.ICollaborativeObject {
             } else {
                 debug(`Duplicate ack received ${message.clientSequenceNumber}`);
             }
-            // Add final trace and submit back the trace information.
+            // Add final trace.
             message.traces.push( { service: "client", action: "end", timestamp: Date.now()});
+            // Add ping trace and remove from local map.
+            if (message.clientSequenceNumber in this.pingMap) {
+                // tslint:disable-next-line:max-line-length
+                message.traces.push( { service: "ping", action: "end", timestamp: this.pingMap[message.clientSequenceNumber]});
+                delete this.pingMap[message.clientSequenceNumber];
+            }
+            // Submit the latency message back to server.
             this.submitLatencyMessage(message);
         }
 
@@ -184,7 +194,14 @@ export abstract class CollaborativeObject implements api.ICollaborativeObject {
 
     private submit(message: api.IObjectMessage): void {
         this.submitCore(message);
-        this.services.deltaConnection.submit(message);
+        this.services.deltaConnection.submit(message).then(() => {
+            // Message acked by socketio. Store timestamp locally.
+            this.pingMap[message.clientSequenceNumber] = Date.now();
+        }, (error) => {
+            // TODO need reconnection logic upon loss of connection
+            debug("Lost connection to server");
+        });
+
     }
 
     private submitLatencyMessage(message: api.ISequencedObjectMessage) {
