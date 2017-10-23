@@ -111,6 +111,9 @@ function randomizeCell(cell: api.ICell, element1: JQuery, element2: JQuery) {
 export async function load(id: string, version: resources.ICommit, config: any) {
     socketStorage.registerAsDefault(document.location.origin, config.blobStorageUrl, config.repository);
 
+    // Bootstrap worker service.
+    shared.registerWorker(config, "cell");
+
     const doc = await loadDocument(id, version);
     const root = doc.getRoot();
 
@@ -120,11 +123,6 @@ export async function load(id: string, version: resources.ICommit, config: any) 
     } else {
         cell = doc.createCell() as api.ICell;
         root.set("cell", cell);
-    }
-
-    // Bootstrap worker service.
-    if (config.permission.cell) {
-        shared.registerWorker(config);
     }
 
     $("document").ready(() => {

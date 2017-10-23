@@ -14,6 +14,7 @@ export class TmzRunner implements utils.IRunner {
     private pendingWork: Set<string> = new Set();
     private checkerInterval: NodeJS.Timer;
     private workerJoined = false;
+    private pendingAssignedMap: { [docId: string]: boolean} = {};
 
     constructor(
         private io: any,
@@ -149,6 +150,10 @@ export class TmzRunner implements utils.IRunner {
     private async processDocuments(ids: string[]) {
         let workToDo: messages.IDocumentWork[] = [];
         for (let docId of ids) {
+            if (docId in this.pendingAssignedMap) {
+                continue;
+            }
+            this.pendingAssignedMap[docId] = true;
             // tslint:disable-next-line:forin
             for (let task in this.tasks) {
                 let work: messages.IWork = {
@@ -159,7 +164,17 @@ export class TmzRunner implements utils.IRunner {
             }
         }
         try {
-            return await Promise.all(this.foreman.assignWork(workToDo));
+            if (workToDo.length === 0) {
+                return Promise.resolve();
+            } else {
+                await Promise.all(this.foreman.assignWork(workToDo));
+                workToDo.map((work) => {
+                    if (work.docId in this.pendingAssignedMap) {
+                        delete this.pendingAssignedMap[work.docId];
+                    }
+                });
+                return Promise.resolve();
+            }
         } catch (err) {
             return err;
         }

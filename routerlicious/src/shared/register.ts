@@ -1,6 +1,6 @@
 import { WorkerService } from "./workerService";
 
-export function registerWorker(config: any) {
+export function registerWorker(config: any, clientType: string) {
     if (!config.onlyServer) {
         const workerUrl =  config.url;
         const storageUrl = config.blobStorageUrl;
@@ -13,7 +13,8 @@ export function registerWorker(config: any) {
             workerUrl,
             storageUrl,
             repository,
-            config);
+            config,
+            clientType);
         let workerP = workerService.connect("Client");
         workerP.catch((error) => {
             console.log(`Error connecting to worker`);

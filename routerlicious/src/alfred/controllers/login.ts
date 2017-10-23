@@ -1,6 +1,5 @@
 import * as $ from "jquery";
 import * as api from "../../api";
-import * as shared from "../../shared";
 import * as socketStorage from "../../socket-storage";
 
 async function assignKeypair(): Promise<boolean> {
@@ -91,10 +90,6 @@ export function load(config: any) {
     socketStorage.registerAsDefault(document.location.origin, config.blobStorageUrl, config.repository);
 
     $(document).ready(() => {
-        // Bootstrap worker service.
-        if (config.permission.maps) {
-            shared.registerWorker(config);
-        }
 
         // Add event listeners.
         document.getElementById("login-button").addEventListener("click", loginUser);

@@ -14,6 +14,7 @@ export class WorkerService implements api.IWorkerService {
 
     private socket;
     private documentMap: { [docId: string]: { [work: string]: shared.IWork} } = {};
+    private workTypeMap: { [workType: string]: boolean} = {};
     private dict = new Collections.TST<number>();
 
     constructor(
@@ -21,10 +22,17 @@ export class WorkerService implements api.IWorkerService {
         private workerUrl: string,
         private storageUrl: string,
         private repo: string,
-        private config: any) {
+        private config: any,
+        private clientType: string) {
 
         this.socket = io(this.workerUrl, { transports: ["websocket"] });
-        this.loadDict();
+        for (let workType of config.permission[this.clientType]) {
+            this.workTypeMap[workType] = true;
+        }
+        // Load dictionary only if you are allowed to spellcheck.
+        if ("spell" in this.workTypeMap) {
+            this.loadDict();
+        }
         this.initializeServices();
     }
 
@@ -52,7 +60,11 @@ export class WorkerService implements api.IWorkerService {
                 } else if (ack === "Acked") {
                     // Check whether worker is ready to work.
                     this.socket.on("ReadyObject", (cId: string, id: string, workType: string, response) => {
-                        response(null, clientDetail);
+                        if (workType in this.workTypeMap) {
+                            response(null, clientDetail);
+                        } else {
+                            response(`${clientId} not allowed to run ${workType}`, null);
+                        }
                     });
                     // Start working on an object.
                     this.socket.on("TaskObject", (cId: string, id: string, workType: string, response) => {
