@@ -135,6 +135,10 @@ export class WorkerService implements api.IWorkerService {
                 const spellcheckWork: shared.IWork = new shared.SpellcheckerWork(docId, this.config, this.dict);
                 this.startTask(docId, workType, spellcheckWork);
                 break;
+            case "ping":
+                const pingWork: shared.IWork = new shared.PingWork(this.serverUrl);
+                this.startTask(docId, workType, pingWork);
+                break;
             default:
                 throw new Error("Unknown work type!");
         }
@@ -149,6 +153,9 @@ export class WorkerService implements api.IWorkerService {
                 this.stopTask(docId, workType);
                 break;
             case "spell":
+                this.stopTask(docId, workType);
+                break;
+            case "ping":
                 this.stopTask(docId, workType);
                 break;
             default:
@@ -173,6 +180,7 @@ export class WorkerService implements api.IWorkerService {
             const task = taskMap[workType];
             if (task !== undefined) {
                 task.stop();
+                delete taskMap[workType];
             }
         }
     }

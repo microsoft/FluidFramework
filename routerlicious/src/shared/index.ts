@@ -12,6 +12,7 @@ export * from "./spellcheckerWork"
 export * from "./rateLimiter"
 export * from "./intelWork"
 export * from "./metricClient"
+export * from "./pingWork"
 
 import * as constants from "./constants";
 export { constants };

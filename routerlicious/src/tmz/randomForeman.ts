@@ -23,7 +23,10 @@ export class RandomForeman extends BaseForeman implements IForeman {
                     break;
                 case "client":
                     workers = this.manager.getActiveClientWorkers();
-                    workPromises.push(this.assignOne(work.docId, work.work.workType, workers));
+                    // Additional check since there might not be any browser client available.
+                    if (workers !== undefined && workers.length > 0) {
+                        workPromises.push(this.assignOne(work.docId, work.work.workType, workers));
+                    }
                     break;
                 case "both":
                     workers = this.manager.getActiveWorkers();
