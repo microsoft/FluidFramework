@@ -180,7 +180,7 @@ export interface IDocumentDeltaConnection {
     dispatchEvent(name: string, ...args: any[]);
 }
 
-export interface IDocument {
+export interface IDocumentResource {
     /**
      * Client identifier for this session
      */
@@ -248,7 +248,7 @@ export interface IDocument {
 }
 
 export interface IDocumentService {
-    connect(id: string, version: resources.ICommit, connect: boolean, encrypted: boolean): Promise<IDocument>;
+    connect(id: string, version: resources.ICommit, connect: boolean, encrypted: boolean): Promise<IDocumentResource>;
 }
 
 export interface IBlobStorageService {
@@ -266,5 +266,4 @@ export interface IBlobStorageService {
      * Writes the content to blob storage.
      */
     write(id: string, tree: ITree, message: string): Promise<resources.ICommit>;
-
 }

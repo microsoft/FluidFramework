@@ -1,7 +1,8 @@
 // tslint:disable:whitespace align no-bitwise no-string-literal member-ordering
 import performanceNow = require("performance-now");
 import * as url from "url";
-import * as API from "../api";
+import * as api from "../api-core";
+import { IMap, IMapView, IValueChanged } from "../map";
 import * as SharedString from "../merge-tree";
 import * as ui from "../ui";
 import { Status } from "./status";
@@ -2445,11 +2446,11 @@ export class FlowView extends ui.Component {
     public wheelTicking = false;
     public topChar = -1;
     public cursor: Cursor;
-    public presenceMap: API.IMap;
-    public presenceMapView: API.IMapView;
+    public presenceMap: IMap;
+    public presenceMapView: IMapView;
     public presenceVector: ILocalPresenceInfo[] = [];
     public presenceSeq = 0;
-    public docRoot: API.IMapView;
+    public docRoot: IMapView;
     public curPG: SharedString.Marker;
     private lastVerticalX = -1;
     private randWordTimer: any;
@@ -2469,7 +2470,7 @@ export class FlowView extends ui.Component {
 
         this.statusMessage("li", " ");
         this.statusMessage("si", " ");
-        sharedString.on("op", (msg: API.ISequencedObjectMessage) => {
+        sharedString.on("op", (msg: api.ISequencedObjectMessage) => {
             if (msg.clientId !== this.client.longClientId) {
                 let delta = <SharedString.IMergeTreeOp>msg.contents;
                 if (this.applyOp(delta, msg)) {
@@ -2484,9 +2485,9 @@ export class FlowView extends ui.Component {
         this.cursor = new Cursor(this.viewportDiv);
     }
 
-    public addPresenceMap(presenceMap: API.IMap) {
+    public addPresenceMap(presenceMap: IMap) {
         this.presenceMap = presenceMap;
-        presenceMap.on("valueChanged", (delta: API.IValueChanged) => {
+        presenceMap.on("valueChanged", (delta: IValueChanged) => {
             this.remotePresenceUpdate(delta);
         });
         presenceMap.getView().then((v) => {
@@ -2562,7 +2563,7 @@ export class FlowView extends ui.Component {
         this.updatePresenceVector(localPresenceInfo);
     }
 
-    public remotePresenceUpdate(delta: API.IValueChanged) {
+    public remotePresenceUpdate(delta: IValueChanged) {
         if (delta.key !== this.client.longClientId) {
             let remotePresenceInfo = <IRemotePresenceInfo>this.presenceMapView.get(delta.key);
             remotePresenceInfo.key = delta.key;
@@ -2934,7 +2935,7 @@ export class FlowView extends ui.Component {
         return this.viewportEndPos - this.viewportStartPos;
     }
 
-    public setEdit(docRoot: API.IMapView) {
+    public setEdit(docRoot: IMapView) {
         this.docRoot = docRoot;
 
         let preventD = (e) => {
@@ -3393,7 +3394,7 @@ export class FlowView extends ui.Component {
             // tslint:disable-next-line:max-line-length
             console.log(`time to edit/impression: ${this.timeToEdit} time to load: ${Date.now() - clockStart}ms len: ${this.sharedString.client.getLength()} - ${performanceNow()}`);
         }
-        const presenceMap = this.docRoot.get("presence") as API.IMap;
+        const presenceMap = this.docRoot.get("presence") as IMap;
         this.addPresenceMap(presenceMap);
         // this.testWordInfo();
     }
@@ -3453,7 +3454,7 @@ export class FlowView extends ui.Component {
 
     // TODO: paragraph spanning changes and annotations
     // TODO: generalize this by using transform fwd
-    private applyOp(delta: SharedString.IMergeTreeOp, msg: API.ISequencedObjectMessage) {
+    private applyOp(delta: SharedString.IMergeTreeOp, msg: api.ISequencedObjectMessage) {
         // tslint:disable:switch-default
         switch (delta.type) {
             case SharedString.MergeTreeDeltaType.INSERT:
@@ -3503,7 +3504,7 @@ export class FlowView extends ui.Component {
         }
     }
 
-    private queueRender(msg: API.ISequencedObjectMessage) {
+    private queueRender(msg: api.ISequencedObjectMessage) {
         if ((!this.pendingRender) && msg && msg.contents) {
             this.pendingRender = true;
             window.requestAnimationFrame(() => {

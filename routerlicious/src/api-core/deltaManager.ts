@@ -1,9 +1,7 @@
 import * as assert from "assert";
 import * as async from "async";
 import { EventEmitter } from "events";
-import * as openpgp from "openpgp";
-import { constants } from "../shared";
-import { ThroughputCounter } from "../utils/counters";
+import { ThroughputCounter } from "../core-utils";
 import { debug } from "./debug";
 import * as protocol from "./protocol";
 import * as storage from "./storage";
@@ -28,14 +26,6 @@ export class DeltaManager {
     // Flag indicating whether the client has only received messages
     private readonly = true;
 
-    // Private key for signing deltas related to this manager's document
-    private privateKey;
-
-    // Public key for decrypting deltas related to this manager's document
-    private publicKey;
-
-    // NOTE: perhaps unnecessary?
-    private secretPassphrase = "";
     // The minimum sequence number and last sequence number received from the server
     private minSequenceNumber = 0;
     private clientSequenceNumber = 0;
@@ -81,25 +71,19 @@ export class DeltaManager {
                 q.push(message);
             }
         });
-
-        // Assign symmetric keys. NOTE: Move encryption entirely to DeltaConnection?
-        this.privateKey = this.deltaConnection.privateKey;
-        this.publicKey = this.deltaConnection.publicKey;
     }
 
     /**
      * Submits a new delta operation
      */
-    public async submit(type: string, contents: any): Promise<void> {
-        const encryptedContents = this.deltaConnection.encrypted ? await this.encryptOp(contents) : "";
-
+    public submit(type: string, contents: any): Promise<void> {
         // Start adding trace for the op.
         const traces: protocol.ITrace[] = [ { service: "client", action: "start", timestamp: Date.now()}];
         const message: protocol.IDocumentMessage = {
             clientSequenceNumber: this.clientSequenceNumber++,
             contents,
             encrypted: this.deltaConnection.encrypted,
-            encryptedContents,
+            encryptedContents: null,
             referenceSequenceNumber: this.baseSequenceNumber,
             traces,
             type,
@@ -216,7 +200,7 @@ export class DeltaManager {
         }
         this.heartbeatTimer = setTimeout(() => {
             this.submit(protocol.NoOp, null);
-        }, constants.MinSequenceNumberWindow + 1000);
+        }, 2000 + 1000);
 
         // If an update has already been requeested then mark this fact. We will wait until no updates have
         // been requested before sending the updated sequence number.
@@ -254,15 +238,6 @@ export class DeltaManager {
      */
     private async emit(message: protocol.ISequencedDocumentMessage) {
         let emitMessage = message;
-        if (message.encrypted) {
-            // Decrypt the contents of the message.
-            let decryptedContents = await this.decryptOp(message.encryptedContents);
-
-            // Verify integrity of decryption.
-            assert(JSON.stringify(decryptedContents) === JSON.stringify(message.contents));
-
-            emitMessage.encryptedContents = decryptedContents;
-        }
 
         // Watch the minimum sequence number and be ready to update as needed
         this.minSequenceNumber = message.minimumSequenceNumber;
@@ -278,35 +253,67 @@ export class DeltaManager {
             this.updateSequenceNumber();
         }
     }
-
-    private async encryptOp(op: any): Promise<string> {
-        // Encode op as JSON string.
-        const opAsString = JSON.stringify(op);
-
-        const encryptionOptions = {
-            data: opAsString,
-            publicKeys: openpgp.key.readArmored(this.publicKey).keys,
-        };
-
-        return openpgp.encrypt(encryptionOptions).then((ciphertext) => {
-            return ciphertext.data;
-        });
-    }
-
-    private async decryptOp(encryptedOp: string): Promise<any> {
-        /**
-         * First, decrypt the private RSA key using the secret passphrase. Then, decrypt the message using the key.
-         */
-        let decryptedRSAPrivateKey = openpgp.key.readArmored(this.privateKey).keys[0];
-        decryptedRSAPrivateKey.decrypt(this.secretPassphrase);
-
-        const decryptionOptions = {
-            message: openpgp.message.readArmored(encryptedOp),
-            privateKey: decryptedRSAPrivateKey,
-        };
-
-        return openpgp.decrypt(decryptionOptions).then((plaintext) => {
-            return JSON.parse(plaintext.data);
-        });
-    }
 }
+
+// TODO I should put in some kind of plugin system for the below. We can use it to enable/disable encryption as well
+// as control the message flow for debugging purposes, etc...
+
+// import * as openpgp from "openpgp";
+// submit() {
+    // const encryptedContents = this.deltaConnection.encrypted ? await this.encryptOp(contents) : "";
+
+// emit() {
+// if (message.encrypted) {
+//     // Decrypt the contents of the message.
+//     let decryptedContents = await this.decryptOp(message.encryptedContents);
+
+//     // Verify integrity of decryption.
+//     assert(JSON.stringify(decryptedContents) === JSON.stringify(message.contents));
+
+//     emitMessage.encryptedContents = decryptedContents;
+// }
+
+// Expose the below as a plugin
+// // Assign symmetric keys. NOTE: Move encryption entirely to DeltaConnection?
+// this.privateKey = this.deltaConnection.privateKey;
+// this.publicKey = this.deltaConnection.publicKey;
+
+// // Private key for signing deltas related to this manager's document
+// private privateKey;
+
+// // Public key for decrypting deltas related to this manager's document
+// private publicKey;
+
+// // NOTE: perhaps unnecessary?
+// private secretPassphrase = "";
+
+// private async encryptOp(op: any): Promise<string> {
+//     // Encode op as JSON string.
+//     const opAsString = JSON.stringify(op);
+
+//     const encryptionOptions = {
+//         data: opAsString,
+//         publicKeys: openpgp.key.readArmored(this.publicKey).keys,
+//     };
+
+//     return openpgp.encrypt(encryptionOptions).then((ciphertext) => {
+//         return ciphertext.data;
+//     });
+// }
+
+// private async decryptOp(encryptedOp: string): Promise<any> {
+//     /**
+//      * First, decrypt the private RSA key using the secret passphrase. Then, decrypt the message using the key.
+//      */
+//     let decryptedRSAPrivateKey = openpgp.key.readArmored(this.privateKey).keys[0];
+//     decryptedRSAPrivateKey.decrypt(this.secretPassphrase);
+
+//     const decryptionOptions = {
+//         message: openpgp.message.readArmored(encryptedOp),
+//         privateKey: decryptedRSAPrivateKey,
+//     };
+
+//     return openpgp.decrypt(decryptionOptions).then((plaintext) => {
+//         return JSON.parse(plaintext.data);
+//     });
+// }

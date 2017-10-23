@@ -1,18 +1,19 @@
 import * as assert from "assert";
 import * as api from "../../api";
-import { copyMap, MapExtension, MapView } from "../../map";
+import * as apiCore from "../../api-core";
+import { copyMap, IMap, IMapView, MapExtension, MapView } from "../../map";
 import * as testUtils from "../testUtils";
 
 describe("Routerlicious", () => {
     describe("Map", () => {
-        let registry: api.Registry;
+        let registry: apiCore.Registry;
         let testDocument: api.Document;
-        let rootMap: api.IMap;
-        let testMap: api.IMap;
+        let rootMap: IMap;
+        let testMap: IMap;
 
         beforeEach(async () => {
             testUtils.registerAsTest("", "", "");
-            registry = new api.Registry();
+            registry = new apiCore.Registry();
             testDocument = await api.load("testDocument");
             rootMap = testDocument.getRoot();
             testMap = testDocument.createMap();
@@ -58,7 +59,7 @@ describe("Routerlicious", () => {
         });
 
         describe("MapView", () => {
-            let view: api.IMapView;
+            let view: IMapView;
 
             beforeEach(async () => {
                 view = await testMap.getView();

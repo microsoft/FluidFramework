@@ -1,3 +1,4 @@
+import { Deferred } from "../core-utils";
 import * as shared from "../shared";
 import * as utils from "../utils";
 
@@ -5,7 +6,7 @@ import * as utils from "../utils";
 
 export class PaparazziRunner implements utils.IRunner {
     private workerService: shared.WorkerService;
-    private running = new shared.Deferred<void>();
+    private running = new Deferred<void>();
 
     constructor(
         alfredUrl: string,

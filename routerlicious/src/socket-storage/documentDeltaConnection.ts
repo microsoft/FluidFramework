@@ -1,5 +1,5 @@
 import { EventEmitter } from "events";
-import * as api from "../api";
+import * as api from "../api-core";
 import { DocumentService } from "./documentService";
 
 /**

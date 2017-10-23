@@ -1,4 +1,4 @@
-import * as api from "../api";
+import * as api from "../api-core";
 
 // String identifying the update reference sequence number message
 export const UpdateReferenceSequenceNumberType = "UpdateReferenceSequenceNumber";

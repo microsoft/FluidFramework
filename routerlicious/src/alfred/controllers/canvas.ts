@@ -7,7 +7,7 @@ import * as ui from "../../ui";
 
 async function loadDocument(id: string, version: resources.ICommit): Promise<api.Document> {
     console.log("Loading in root document...");
-    const document = await api.load(id, { encrypted: api.isUserLoggedIn() }, version);
+    const document = await api.load(id, { encrypted: false /* api.isUserLoggedIn() */ }, version);
 
     console.log("Document loaded");
     return document;

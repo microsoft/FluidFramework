@@ -1,7 +1,7 @@
 import * as assert from "assert";
 import { EventEmitter } from "events";
-import { RangeTracker } from "../shared";
-import { Document, IDeltaConnection } from "./document";
+import { RangeTracker } from "../core-utils";
+import { IDeltaConnection, IDocument } from "./document";
 import { IObjectMessage, ISequencedObjectMessage, ITrace } from "./protocol";
 
 export class DeltaConnection implements IDeltaConnection {
@@ -31,7 +31,7 @@ export class DeltaConnection implements IDeltaConnection {
         return this.rangeTracker.base;
     }
 
-    constructor(public objectId: string, private document: Document) {
+    constructor(public objectId: string, private document: IDocument) {
     }
 
     /**

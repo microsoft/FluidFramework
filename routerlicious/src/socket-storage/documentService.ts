@@ -2,7 +2,7 @@ import * as resources from "gitresources";
 import * as _ from "lodash";
 import performanceNow = require("performance-now");
 import * as io from "socket.io-client";
-import * as api from "../api";
+import * as api from "../api-core";
 import { DocumentStorageService } from "./blobStorageService";
 import { debug } from "./debug";
 import { DocumentDeltaStorageService } from "./deltaStorageService";
@@ -25,7 +25,7 @@ const emptyHeader: api.IDocumentHeader = {
     tree: null,
 };
 
-export class Document implements api.IDocument {
+export class DocumentResource implements api.IDocumentResource {
     constructor(
         public documentId: string,
         public clientId: string,
@@ -61,22 +61,19 @@ export class DocumentService implements api.IDocumentService {
         id: string,
         version: resources.ICommit,
         connect: boolean,
-        encrypted: boolean): Promise<api.IDocument> {
+        encrypted: boolean): Promise<api.IDocumentResource> {
 
         debug(`Connecting to ${id} - ${performanceNow()}`);
 
         // Generate encryption keys for new connection.
-        let privateKey: string;
-        let publicKey: string;
+        let privateKey: string = null;
+        let publicKey: string = null;
 
-        if (encrypted) {
-            const asymmetricKeys = await api.generateAsymmetricKeys(2048, "", id);
-            privateKey = asymmetricKeys.privateKey;
-            publicKey = asymmetricKeys.publicKey;
-        } else {
-            privateKey = "";
-            publicKey = "";
-        }
+        // if (encrypted) {
+        //     const asymmetricKeys = await api.generateAsymmetricKeys(2048, "", id);
+        //     privateKey = asymmetricKeys.privateKey;
+        //     publicKey = asymmetricKeys.publicKey;
+        // }
 
         const connectMessage: messages.IConnect = { id, privateKey, publicKey, encrypted };
 
@@ -115,7 +112,7 @@ export class DocumentService implements api.IDocumentService {
         const deltaStorage = new DocumentDeltaStorageService(id, this.deltaStorage);
         const documentStorage = new DocumentStorageService(id, version, this.blobStorge);
 
-        const document = new Document(
+        const document = new DocumentResource(
             id,
             connection.clientId,
             connection.existing,

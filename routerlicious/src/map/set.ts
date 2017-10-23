@@ -1,7 +1,7 @@
-import * as api from "../api";
-import { CollaborativeMap } from "./";
+import { ISet } from "./interfaces";
+import { CollaborativeMap } from "./map";
 
-export class DistributedSet<T> implements api.ISet<T> {
+export class DistributedSet<T> implements ISet<T> {
 
     public static initSet<T>(values: T[]): T[] {
         const newSet = new Set<T>(values);

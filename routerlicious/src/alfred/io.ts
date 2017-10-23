@@ -1,8 +1,9 @@
 import * as moniker from "moniker";
 import { Provider } from "nconf";
 import * as winston from "winston";
-import * as api from "../api";
+import * as api from "../api-core";
 import * as core from "../core";
+import { ThroughputCounter } from "../core-utils";
 import * as shared from "../shared";
 import * as socketStorage from "../socket-storage";
 import * as utils from "../utils";
@@ -16,7 +17,7 @@ export function register(
     documentsCollectionName: string,
     metricClientConfig: any) {
 
-    const throughput = new utils.ThroughputCounter(winston.info);
+    const throughput = new ThroughputCounter(winston.info);
     const metricLogger = shared.createMetricClient(metricClientConfig);
 
     webSocketServer.on("connection", (socket: core.IWebSocket) => {

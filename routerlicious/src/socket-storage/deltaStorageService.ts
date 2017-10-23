@@ -1,6 +1,6 @@
 import * as querystring from "querystring";
 import * as request from "request";
-import * as api from "../api";
+import * as api from "../api-core";
 
 /**
  * Storage service limited to only being able to fetch documents for a specific document

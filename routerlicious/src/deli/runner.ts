@@ -1,14 +1,14 @@
 import { queue } from "async";
 import * as _ from "lodash";
 import * as winston from "winston";
-import * as api from "../api";
+import * as api from "../api-core";
 import * as core from "../core";
-import * as shared from "../shared";
+import { Deferred, ThroughputCounter } from "../core-utils";
 import * as utils from "../utils";
 import { TakeANumber } from "./takeANumber";
 
 export class DeliRunner implements utils.IRunner {
-    private deferred: shared.Deferred<void>;
+    private deferred: Deferred<void>;
     private checkpointTimer: any;
     private q: AsyncQueue<string>;
 
@@ -23,7 +23,7 @@ export class DeliRunner implements utils.IRunner {
     }
 
     public start(): Promise<void> {
-        this.deferred = new shared.Deferred<void>();
+        this.deferred = new Deferred<void>();
         const dispensers: { [key: string]: TakeANumber } = {};
         const partitionManager = new core.PartitionManager(
             this.groupId,
@@ -44,7 +44,7 @@ export class DeliRunner implements utils.IRunner {
 
         let ticketQueue: {[id: string]: Promise<void> } = {};
 
-        const throughput = new utils.ThroughputCounter(winston.info);
+        const throughput = new ThroughputCounter(winston.info);
 
         winston.info("Waiting for messages");
         this.q = queue((message: any, callback) => {

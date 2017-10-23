@@ -1,5 +1,5 @@
 import * as git from "gitresources";
-import * as api from "../../api";
+import * as api from "../../api-core";
 
 export class TestDocumentDeltaConnection implements api.IDocumentDeltaConnection {
     public clientId: string;
@@ -38,7 +38,12 @@ export class TestDocumentDeltaStorageService implements api.IDocumentDeltaStorag
 }
 
 export class TestDocumentService implements api.IDocumentService {
-    public connect(id: string, version: git.ICommit, connect: boolean, encrypted: boolean): Promise<api.IDocument> {
+    public connect(
+        id: string,
+        version: git.ICommit,
+        connect: boolean,
+        encrypted: boolean): Promise<api.IDocumentResource> {
+
         const clientId = "Fill me in!";
         const existing = false;
         const distributedObjects: api.IDistributedObject[] = [];
@@ -48,7 +53,7 @@ export class TestDocumentService implements api.IDocumentService {
         const sequenceNumber = 0;
         const tree: api.ISnapshotTree = null;
 
-        const document: api.IDocument = {
+        const document: api.IDocumentResource = {
             clientId,
             deltaConnection: new TestDocumentDeltaConnection(),
             deltaStorageService: new TestDocumentDeltaStorageService(),

@@ -1,6 +1,6 @@
 import * as assert from "assert";
 import * as resources from "gitresources";
-import * as api from "../api";
+import * as api from "../api-core";
 
 export class GitManager {
     constructor(private historian: resources.IHistorian, private repository: string) {

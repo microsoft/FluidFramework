@@ -1,4 +1,4 @@
-import * as api from "../api";
+import * as api from "../api-core";
 import { BaseWork} from "./baseWork";
 import { Serializer } from "./serializer";
 import { IWork} from "./work";

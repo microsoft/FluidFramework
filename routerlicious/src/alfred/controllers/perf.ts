@@ -1,10 +1,11 @@
 import * as $ from "jquery";
 import * as _ from "lodash";
 import * as api from "../../api";
+import { RateCounter } from "../../core-utils";
+import { IMap } from "../../map";
 import * as socketStorage from "../../socket-storage";
-import { RateCounter } from "../../utils/counters";
 
-let root: api.IMap;
+let root: IMap;
 
 const messageStart = {};
 let avgLatency: number = 0;
@@ -18,7 +19,7 @@ async function loadDocument(id: string): Promise<api.Document> {
     return document;
 }
 
-async function updateOrCreateKey(key: string, map: api.IMap, container: JQuery, doc: api.Document) {
+async function updateOrCreateKey(key: string, map: IMap, container: JQuery, doc: api.Document) {
     const value = await map.get(key);
 
     let keyElement = container.find(`>.${key}`);
@@ -39,7 +40,7 @@ async function updateOrCreateKey(key: string, map: api.IMap, container: JQuery, 
     }
 }
 
-async function displayValues(map: api.IMap, container: JQuery, doc: api.Document) {
+async function displayValues(map: IMap, container: JQuery, doc: api.Document) {
     const keys = await map.keys();
     keys.sort();
 
@@ -79,7 +80,7 @@ async function displayValues(map: api.IMap, container: JQuery, doc: api.Document
 /**
  * Displays the keys in the map
  */
-async function displayMap(parentElement: JQuery, map: api.IMap, parent: api.IMap, doc: api.Document) {
+async function displayMap(parentElement: JQuery, map: IMap, parent: IMap, doc: api.Document) {
     const header = $(`<h2>${map.id}</h2>`);
     parentElement.append(header);
 
@@ -108,7 +109,7 @@ async function displayMap(parentElement: JQuery, map: api.IMap, parent: api.IMap
 /**
  * Randomly changes the values in the map
  */
-function randomizeMap(map: api.IMap, interval: number) {
+function randomizeMap(map: IMap, interval: number) {
     // link up the randomize button
     const keys = ["foo", "bar", "baz", "binky", "winky", "twinkie"];
     setInterval(() => {

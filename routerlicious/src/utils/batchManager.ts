@@ -1,4 +1,4 @@
-import { Deferred } from "../shared";
+import { Deferred } from "../core-utils";
 
 export class BatchManager<T> {
     private pendingWork: { [id: string]: T[] } = {};
