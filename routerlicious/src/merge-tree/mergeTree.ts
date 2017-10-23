@@ -37,6 +37,12 @@ export interface IHierBlock extends IMergeBlock {
     rangeStacks: RangeStackMap;
 }
 
+export interface LocalReference {
+    segment: Segment;
+    offset: number;
+    slideOnRemove?: boolean;
+}
+
 export enum SegmentType {
     Base,
     Text,
@@ -51,6 +57,7 @@ export interface Segment extends IMergeNode {
     removedSeq?: number;
     removedClientId?: number;
     removedClientOverlap?: number[];
+    localRefs?: LocalReference[];
     splitAt(pos: number): Segment;
     netLength(): number; // length of content or 0 if removed
     canAppend(segment: Segment): boolean;
@@ -294,22 +301,28 @@ export abstract class BaseSegment extends IMergeNode implements Segment {
     removedClientOverlap: number[];
     segmentGroup: SegmentGroup;
     properties: Properties.PropertySet;
-    contingentProperties: Properties.ContingentPropertySet;
+    localRefs: LocalReference[];
 
-    removeContingentProperty(name: string) {
-        if (this.contingentProperties) {
-            let contingentValueList = this.contingentProperties[name];
-            if (contingentValueList) {
-                contingentValueList.dequeue();
-            }
+    addLocalRef(lref: LocalReference) {
+        if (!this.localRefs) {
+            this.localRefs = [lref];
+        } else {
+            this.localRefs.push(lref);
         }
     }
 
-    addContingentProperties(newProps: Properties.PropertySet, op?: ops.ICombiningOp) {
-        if (!this.contingentProperties) {
-            this.contingentProperties = Properties.createMap<Collections.List<any>>();
+    removeLocalRef(lref: LocalReference) {
+        if (this.localRefs) {
+            for (let i = 0, len = this.localRefs.length; i < len; i++) {
+                if (lref === this.localRefs[i]) {
+                    for (let j=i;j<(len-1);j++) {
+                        this.localRefs[j] = this.localRefs[j+1];
+                    }
+                    this.localRefs.length--;
+                    return lref;
+                }
+            }
         }
-        Properties.contingentExtend(this.contingentProperties, newProps, op);
     }
 
     addProperties(newProps: Properties.PropertySet, op?: ops.ICombiningOp) {
@@ -555,7 +568,6 @@ export class TextSegment extends BaseSegment {
         super(seq, clientId);
         this.cachedLength = text.length;
     }
-
     splitAt(pos: number) {
         if (pos > 0) {
             let remainingText = this.text.substring(pos);
@@ -566,7 +578,8 @@ export class TextSegment extends BaseSegment {
                 leafSegment.addProperties(Properties.extend(Properties.createMap<any>(), this.properties));
             }
             segmentCopy(this, leafSegment, true);
-            return leafSegment;
+            if (this.localRefs)
+                return leafSegment;
         }
     }
 
