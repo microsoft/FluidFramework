@@ -1,7 +1,7 @@
 import * as kafkaNode from "kafka-node";
 import * as kafkaRest from "kafka-rest";
 import * as util from "util";
-import * as shared from "../shared";
+import { Deferred } from "../core-utils";
 import { debug } from "./debug";
 
 /**
@@ -9,7 +9,7 @@ import { debug } from "./debug";
  */
 interface IPendingMessage {
     // The deferred is used to resolve a promise once the message is sent
-    deferred: shared.Deferred<any>;
+    deferred: Deferred<any>;
 
     // The message to send
     message: string;
@@ -52,7 +52,7 @@ abstract class Producer {
         const pending = this.messages[key];
 
         // Insert a new pending message
-        const deferred = new shared.Deferred<any>();
+        const deferred = new Deferred<any>();
         pending.push({ deferred, message });
 
         // Mark the need to send a message

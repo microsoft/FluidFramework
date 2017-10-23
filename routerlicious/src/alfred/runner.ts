@@ -2,14 +2,14 @@ import * as git from "gitresources";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import * as core from "../core";
-import * as shared from "../shared";
+import { Deferred } from "../core-utils";
 import * as utils from "../utils";
 import * as app from "./app";
 import * as io from "./io";
 
 export class AlfredRunner implements utils.IRunner {
     private server: core.IWebServer;
-    private runningDeferred: shared.Deferred<void>;
+    private runningDeferred: Deferred<void>;
 
     constructor(
         private serverFactory: core.IWebServerFactory,
@@ -23,7 +23,7 @@ export class AlfredRunner implements utils.IRunner {
     }
 
     public start(): Promise<void> {
-        this.runningDeferred = new shared.Deferred<void>();
+        this.runningDeferred = new Deferred<void>();
 
         // Create the HTTP server and attach alfred to it
         const alfred = app.create(this.config, this.historian, this.mongoManager);

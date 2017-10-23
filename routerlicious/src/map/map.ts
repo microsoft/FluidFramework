@@ -2,7 +2,7 @@ import { EventEmitter } from "events";
 import * as resources from "gitresources";
 import * as _ from "lodash";
 import * as api from "../api-core";
-import * as shared from "../shared";
+import { getOrDefault } from "../core-utils";
 import { Counter } from "./counter";
 import { ICounter, IMap, IMapView, ISet } from "./interfaces";
 import { DistributedSet } from "./set";
@@ -365,9 +365,9 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
     }
 
     public createCounter(key: string, value?: number, min?: number, max?: number): Promise<ICounter> {
-        value = shared.getOrDefault(value, 0);
-        min = shared.getOrDefault(min, Number.MIN_SAFE_INTEGER);
-        max = shared.getOrDefault(max, Number.MAX_SAFE_INTEGER);
+        value = getOrDefault(value, 0);
+        min = getOrDefault(min, Number.MIN_SAFE_INTEGER);
+        max = getOrDefault(max, Number.MAX_SAFE_INTEGER);
         if (!(typeof value === "number" && typeof min === "number" && typeof max === "number")) {
             throw new Error("parameters should be of number type!");
         }
@@ -401,7 +401,7 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
     }
 
     public createSet<T>(key: string, value?: T[]): Promise<ISet<T>> {
-        value = shared.getOrDefaultArray(value, []);
+        value = getOrDefault(value, []);
         this.view.initSet(key, value);
         return Promise.resolve(new DistributedSet(this, key));
     }

@@ -1,12 +1,12 @@
 import { queue } from "async";
 import * as winston from "winston";
 import * as core from "../core";
+import { Deferred } from "../core-utils";
 import { ThroughputCounter } from "../core-utils";
-import * as shared from "../shared";
 import * as utils from "../utils";
 
 export class ScriptoriumRunner implements utils.IRunner {
-    private deferred = new shared.Deferred<void>();
+    private deferred = new Deferred<void>();
     private checkpointTimer: any;
     private partitionManager: core.PartitionManager;
     private q: AsyncQueue<string>;

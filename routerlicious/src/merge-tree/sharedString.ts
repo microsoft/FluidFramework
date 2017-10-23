@@ -2,7 +2,7 @@ import * as assert from "assert";
 import * as resources from "gitresources";
 import performanceNow = require("performance-now");
 import * as api from "../api-core";
-import * as shared from "../shared";
+import { Deferred } from "../core-utils";
 import * as MergeTree from "./mergeTree";
 import * as ops from "./ops";
 import * as Properties from "./properties";
@@ -62,7 +62,7 @@ export class SharedString extends api.CollaborativeObject {
     private pendingMinSequenceNumber: number = 0;
 
     // Deferred that triggers once the object is loaded
-    private loadedDeferred = new shared.Deferred<void>();
+    private loadedDeferred = new Deferred<void>();
 
     get loaded(): Promise<void> {
         return this.loadedDeferred.promise;

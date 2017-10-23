@@ -1,14 +1,14 @@
 import { queue } from "async";
 import * as winston from "winston";
 import * as core from "../core";
-import * as shared from "../shared";
+import { Deferred } from "../core-utils";
 import * as socketStorage from "../socket-storage";
 import * as utils from "../utils";
 import * as messages from "./messages";
 import * as workerFactory from "./workerFactory";
 
 export class TmzRunner implements utils.IRunner {
-    private deferred = new shared.Deferred<void>();
+    private deferred = new Deferred<void>();
     private foreman: messages.IForeman;
     private q: AsyncQueue<string>;
     private pendingWork: Set<string> = new Set();

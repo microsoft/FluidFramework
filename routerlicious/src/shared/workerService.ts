@@ -2,6 +2,7 @@ import * as request from "request";
 import * as io from "socket.io-client";
 import * as url from "url";
 import * as api from "../api-core";
+import { Deferred } from "../core-utils";
 import * as Collections from "../merge-tree/collections";
 import * as socketStorage from "../socket-storage";
 import * as messages from "../socket-storage/messages";
@@ -48,7 +49,7 @@ export class WorkerService implements api.IWorkerService {
             type,
         };
 
-        const deferred = new shared.Deferred<void>();
+        const deferred = new Deferred<void>();
         // Subscribes to TMZ. Starts listening to messages if TMZ acked the subscribtion.
         // Otherwise just resolve. On any error, reject and caller will be responsible reconnecting.
         this.socket.emit(

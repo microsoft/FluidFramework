@@ -4,7 +4,7 @@ import * as path from "path";
 import * as io from "../../alfred/io";
 import * as api from "../../api-core";
 import * as core from "../../core";
-import { Deferred } from "../../shared";
+import { Deferred } from "../../core-utils";
 import * as socketStorage from "../../socket-storage";
 import { MongoManager } from "../../utils";
 import { MessageFactory, TestDbFactory, TestKafka, TestWebSocket, TestWebSocketServer } from "../testUtils";
