@@ -3,7 +3,8 @@ import * as ui from "../ui";
 
 // tslint:disable-next-line:no-string-literal
 const Microsoft = typeof window !== "undefined" ? window["Microsoft"] : undefined;
-export const DefaultHost = Microsoft ? new Microsoft.Charts.Host({ base: "https://charts.microsoft.com" }) : null;
+export const DefaultHost = (Microsoft && Microsoft.Charts) ?
+    new Microsoft.Charts.Host({ base: "https://charts.microsoft.com" }) : null;
 
 export class Chart extends ui.Component {
     private chart: any;
