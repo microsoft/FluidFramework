@@ -315,8 +315,8 @@ export abstract class BaseSegment extends IMergeNode implements Segment {
         if (this.localRefs) {
             for (let i = 0, len = this.localRefs.length; i < len; i++) {
                 if (lref === this.localRefs[i]) {
-                    for (let j=i;j<(len-1);j++) {
-                        this.localRefs[j] = this.localRefs[j+1];
+                    for (let j = i; j < (len - 1); j++) {
+                        this.localRefs[j] = this.localRefs[j + 1];
                     }
                     this.localRefs.length--;
                     return lref;
@@ -568,6 +568,22 @@ export class TextSegment extends BaseSegment {
         super(seq, clientId);
         this.cachedLength = text.length;
     }
+
+    splitLocalRefs(pos: number, leafSegment: TextSegment) {
+        let aRefs = <LocalReference[]>[];
+        let bRefs = <LocalReference[]>[];
+        for (let localRef of this.localRefs) {
+            if (localRef.offset < pos) {
+                aRefs.push(localRef);
+            } else {
+                localRef.offset -= pos;
+                bRefs.push(localRef);
+            }
+        }
+        this.localRefs = aRefs;
+        leafSegment.localRefs = bRefs;
+    }
+
     splitAt(pos: number) {
         if (pos > 0) {
             let remainingText = this.text.substring(pos);
@@ -578,8 +594,10 @@ export class TextSegment extends BaseSegment {
                 leafSegment.addProperties(Properties.extend(Properties.createMap<any>(), this.properties));
             }
             segmentCopy(this, leafSegment, true);
-            if (this.localRefs)
-                return leafSegment;
+            if (this.localRefs) {
+                this.splitLocalRefs(pos, leafSegment);
+            }
+            return leafSegment;
         }
     }
 
@@ -3348,6 +3366,7 @@ export class MergeTree {
         this.ensureIntervalBoundary(end, refSeq, clientId);
         let segmentGroup: SegmentGroup;
         let overwrite = false;
+        let savedLocalRefs = <LocalReference[][]>[];
         let markRemoved = (segment: Segment, pos: number, start: number, end: number) => {
             if (segment.removedSeq != undefined) {
                 if (MergeTree.diagOverlappingRemove) {
@@ -3373,6 +3392,10 @@ export class MergeTree {
             else {
                 segment.removedClientId = clientId;
                 segment.removedSeq = seq;
+                if (segment.localRefs) {
+                    savedLocalRefs.push(segment.localRefs);
+                    segment.localRefs = undefined;
+                }
             }
             // save segment so can assign removed sequence number when acked by server
             if (this.collabWindow.collaborating) {
@@ -3399,6 +3422,22 @@ export class MergeTree {
         }
         //traceTraversal = true;
         this.mapRange({ leaf: markRemoved, post: afterMarkRemoved }, refSeq, clientId, undefined, start, end);
+        if (savedLocalRefs.length>0) {
+            let afterSeg: BaseSegment;
+            for (let segSavedRefs of savedLocalRefs) {
+                for (let localRef of segSavedRefs) {
+                    if (localRef.slideOnRemove) {
+                        if (!afterSeg) {
+                            let afterSegOff = this.getContainingSegment(start, refSeq, clientId);
+                            afterSeg = <BaseSegment>afterSegOff.segment;
+                        }
+                        localRef.segment = afterSeg;
+                        localRef.offset = 0; 
+                        afterSeg.addLocalRef(localRef);
+                    }
+                }
+            }
+        }
         if (this.collabWindow.collaborating && (seq != UnassignedSequenceNumber)) {
             if (MergeTree.options.zamboniSegments) {
                 this.zamboniSegments();
