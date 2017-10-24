@@ -1,4 +1,4 @@
-import { ICell } from "../cell";
+import { ICell } from "../data-types";
 import * as ui from "../ui";
 
 // tslint:disable-next-line:no-string-literal

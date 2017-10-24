@@ -1,4 +1,4 @@
-import { ICounter } from "./interfaces";
+import { ICounter } from "../data-types";
 import { CollaborativeMap } from "./map";
 
 export class Counter implements ICounter {

@@ -1,10 +1,10 @@
-// tslint:disable
-
-import * as Collections from "./collections";
 import * as fs from "fs";
+import * as API from "../api-core";
+import * as Collections from "./collections";
 import * as MergeTree from "./mergeTree";
 import * as ops from "./ops";
-import * as API from "../api-core";
+
+// tslint:disable
 
 export interface SnapshotHeader {
     chunkCount?: number;

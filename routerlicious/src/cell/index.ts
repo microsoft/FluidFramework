@@ -1,6 +1,7 @@
 import * as resources from "gitresources";
-import * as _ from "lodash";
+import hasIn = require("lodash/hasIn");
 import * as api from "../api-core";
+import { ICell } from "../data-types";
 
 /**
  * Description of a cell delta operation
@@ -47,31 +48,6 @@ export interface ICellValue {
 const snapshotFileName = "header";
 
 /**
- * Collaborative cell interface
- */
-export interface ICell extends api.ICollaborativeObject {
-    /**
-     * Retrieves the cell value.
-     */
-    get(): Promise<any>;
-
-    /**
-     * Sets the cell value.
-     */
-    set(value: any): Promise<void>;
-
-    /**
-     * Checks whether cell is empty or not.
-     */
-    empty(): Promise<boolean>;
-
-    /**
-     * Delete the value from the cell.
-     */
-    delete(): Promise<void>;
-}
-
-/**
  * Implementation of a cell collaborative object
  */
 class Cell extends api.CollaborativeObject implements ICell {
@@ -107,7 +83,7 @@ class Cell extends api.CollaborativeObject implements ICell {
      */
     public async set(value: any): Promise<void> {
         let operationValue: ICellValue;
-        if (_.hasIn(value, "__collaborativeObject__")) {
+        if (hasIn(value, "__collaborativeObject__")) {
             // Convert any local collaborative objects to our internal storage format
             const collaborativeObject = value as api.ICollaborativeObject;
 

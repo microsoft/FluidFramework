@@ -1,14 +1,4 @@
-import * as actions from "./actions";
-import { IDelta } from "./delta";
-import * as operations from "./operations";
-
-export interface IInkLayer {
-    // unique identifier for the ink layer
-    id: string;
-
-    // The operations to perform in the given layer
-    operations: operations.IOperation[];
-}
+import { ActionType, getActionType, IDelta, IInkLayer, IOperation } from "../data-types";
 
 export interface ISnapshot {
     layers: IInkLayer[];
@@ -32,20 +22,20 @@ export class Snapshot implements ISnapshot {
         }
     }
 
-    public applyOperation(operation: operations.IOperation) {
-        let actionType = operations.getActionType(operation);
+    public applyOperation(operation: IOperation) {
+        let actionType = getActionType(operation);
 
         switch (actionType) {
-            case actions.ActionType.Clear:
+            case ActionType.Clear:
                 this.processClearAction(operation);
                 break;
-            case actions.ActionType.StylusUp:
+            case ActionType.StylusUp:
                 this.processStylusUpAction(operation);
                 break;
-            case actions.ActionType.StylusDown:
+            case ActionType.StylusDown:
                 this.processStylusDownAction(operation);
                 break;
-            case actions.ActionType.StylusMove:
+            case ActionType.StylusMove:
                 this.processStylusMoveAction(operation);
                 break;
             default:
@@ -53,17 +43,17 @@ export class Snapshot implements ISnapshot {
         }
     }
 
-    private processClearAction(operation: operations.IOperation) {
+    private processClearAction(operation: IOperation) {
         this.layers = [];
         this.layerIndex = {};
     }
 
-    private processStylusUpAction(operation: operations.IOperation) {
+    private processStylusUpAction(operation: IOperation) {
         // TODO - longer term on ink up - or possibly earlier - we can attempt to smooth the provided ink
         this.addOperationToLayer(operation.stylusUp.id, operation);
     }
 
-    private processStylusDownAction(operation: operations.IOperation) {
+    private processStylusDownAction(operation: IOperation) {
         let layer = {
             id: operation.stylusDown.id,
             operations: [],
@@ -90,11 +80,11 @@ export class Snapshot implements ISnapshot {
         this.addOperationToLayer(operation.stylusDown.id, operation);
     }
 
-    private processStylusMoveAction(operation: operations.IOperation) {
+    private processStylusMoveAction(operation: IOperation) {
         this.addOperationToLayer(operation.stylusMove.id, operation);
     }
 
-    private addOperationToLayer(id: string, operation: operations.IOperation) {
+    private addOperationToLayer(id: string, operation: IOperation) {
         let layerIndex = this.layerIndex[id];
         this.layers[layerIndex].operations.push(operation);
     }

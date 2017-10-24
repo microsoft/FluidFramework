@@ -8,8 +8,8 @@
     "browserify": "mkdirp public/scripts/dist && npm run browserify:controllers",
     "browserify:controllers": "browserify src/alfred/controllers/index.ts --debug -s controller -p [ tsify ] | exorcist public/scripts/dist/index.js.map > public/scripts/dist/index.js",
     "browserify:controllers:min": "browserify src/alfred/controllers/index.ts --debug -s controller -p [ tsify ] | uglifyjs --source-map content=inline,url=index.min.js.map -o public/scripts/dist/index.min.js",
-    "browserify:api": "browserify src/index.ts --debug -s prague -p [ tsify ] | exorcist public/scripts/dist/api.js.map > public/scripts/dist/api.js",
-    "browserify:api:min": "browserify src/index.ts --debug -s prague -p [ tsify ] | uglifyjs --source-map content=inline,url=api.min.js.map -o public/scripts/dist/api.min.js",
+    "browserify:api": "browserify src/client-api/index.ts --debug -s prague -p [ tsify ] | exorcist public/scripts/dist/api.js.map > public/scripts/dist/api.js",
+    "browserify:api:min": "browserify src/client-api/index.ts --debug -s prague -p [ tsify ] | uglifyjs --source-map content=inline,url=api.min.js.map -o public/scripts/dist/api.min.js",
     "build": "concurrently \"npm run tslint\" \"npm run tsc\" \"npm run browserify\" \"npm run less\"",
     "build:full": "npm run build && npm run browserify:controllers:min",
     "build:watch": "watch 'npm run tsc && npm run browserify' src",
@@ -80,7 +80,6 @@
     "@types/morgan": "^1.7.32",
     "@types/mqtt": "0.0.34",
     "@types/nconf": "0.0.34",
-    "@types/node-uuid": "0.0.28",
     "@types/passport": "^0.3.3",
     "@types/progress": "^2.0.0",
     "@types/random-js": "^1.0.28",
@@ -92,6 +91,7 @@
     "@types/socket.io-redis": "^1.0.21",
     "@types/split": "^0.3.28",
     "@types/supertest": "^2.0.3",
+    "@types/uuid": "^3.4.3",
     "@types/winston": "^2.3.3",
     "browserify": "^14.1.0",
     "browserify-shim": "^3.8.13",
@@ -142,7 +142,6 @@
     "moniker": "^0.1.2",
     "morgan": "^1.8.1",
     "nconf": "^0.8.4",
-    "node-uuid": "^1.4.8",
     "openpgp": "^2.5.8",
     "passport": "^0.3.2",
     "performance-now": "^2.1.0",
@@ -157,6 +156,7 @@
     "split": "^1.0.0",
     "static-expiry": "0.0.11",
     "telegrafjs": "^0.1.3",
+    "uuid": "^3.1.0",
     "winston": "^2.3.1"
   },
   "browserify": {
@@ -165,8 +165,7 @@
     ]
   },
   "browserify-shim": {
-    "jquery": "global:$",
-    "socket.io-client": "global:io"
+    "jquery": "global:$"
   },
   "nyc": {
     "all": true,

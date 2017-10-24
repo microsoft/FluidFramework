@@ -1,13 +1,14 @@
-// tslint:disable
-
-import * as Collections from "./collections";
-import * as random from "random-js";
-import * as MergeTree from "./mergeTree";
-import * as Properties from "./properties";
-import * as ops from "./ops";
 import * as JsDiff from "diff";
 import * as path from "path";
+import * as random from "random-js";
+import * as Collections from "./collections";
+import * as MergeTree from "./mergeTree";
+import * as ops from "./ops";
+import * as Properties from "./properties";
+import { findRandomWord } from "./random";
 import * as Text from "./text";
+
+// tslint:disable
 
 function clock() {
     return process.hrtime();
@@ -324,7 +325,7 @@ export function TestPack(verbose = true) {
         }
 
         function randomWordMove(client: MergeTree.Client) {
-            let word1 = Text.findRandomWord(client.mergeTree, client.getClientId());
+            let word1 = findRandomWord(client.mergeTree, client.getClientId());
             if (word1) {
                 let removeStart = word1.pos;
                 let removeEnd = removeStart + word1.text.length;
@@ -334,9 +335,9 @@ export function TestPack(verbose = true) {
                 if (MergeTree.useCheckQ) {
                     client.enqueueTestString();
                 }
-                let word2 = Text.findRandomWord(client.mergeTree, client.getClientId());
+                let word2 = findRandomWord(client.mergeTree, client.getClientId());
                 while (!word2) {
-                    word2 = Text.findRandomWord(client.mergeTree, client.getClientId());
+                    word2 = findRandomWord(client.mergeTree, client.getClientId());
                 }
                 let pos = word2.pos + word2.text.length;
                 server.enqueueMsg(client.makeInsertMsg(word1.text, pos, MergeTree.UnassignedSequenceNumber,

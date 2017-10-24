@@ -2,8 +2,9 @@
 import performanceNow = require("performance-now");
 import * as url from "url";
 import * as api from "../api-core";
-import { IMap, IMapView, IValueChanged } from "../map";
+import { IMap, IMapView, IValueChanged } from "../data-types";
 import * as SharedString from "../merge-tree";
+import { findRandomWord } from "../merge-tree/random";
 import * as ui from "../ui";
 import { Status } from "./status";
 
@@ -3401,14 +3402,14 @@ export class FlowView extends ui.Component {
 
     public randomWordMove() {
         let client = this.sharedString.client;
-        let word1 = SharedString.findRandomWord(client.mergeTree, client.getClientId());
+        let word1 = findRandomWord(client.mergeTree, client.getClientId());
         if (word1) {
             let removeStart = word1.pos;
             let removeEnd = removeStart + word1.text.length;
             this.sharedString.removeText(removeStart, removeEnd);
-            let word2 = SharedString.findRandomWord(client.mergeTree, client.getClientId());
+            let word2 = findRandomWord(client.mergeTree, client.getClientId());
             while (!word2) {
-                word2 = SharedString.findRandomWord(client.mergeTree, client.getClientId());
+                word2 = findRandomWord(client.mergeTree, client.getClientId());
             }
             let pos = word2.pos + word2.text.length;
             this.sharedString.insertText(word1.text, pos);

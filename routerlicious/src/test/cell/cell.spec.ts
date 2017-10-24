@@ -1,6 +1,6 @@
 import * as assert from "assert";
 import * as api from "../../api";
-import { ICell } from "../../cell";
+import { ICell } from "../../data-types";
 import * as testUtils from "../testUtils";
 
 describe("Routerlicious", () => {

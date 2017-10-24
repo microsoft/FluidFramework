@@ -1,4 +1,4 @@
-import { ISet } from "./interfaces";
+import { ISet } from "../data-types";
 import { CollaborativeMap } from "./map";
 
 export class DistributedSet<T> implements ISet<T> {

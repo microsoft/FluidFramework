@@ -2,7 +2,7 @@ import * as resources from "gitresources";
 import * as $ from "jquery";
 import * as _ from "lodash";
 import * as api from "../../api";
-import * as map from "../../map";
+import { ICounter, IMap, ISet } from "../../data-types";
 import * as shared from "../../shared";
 import * as socketStorage from "../../socket-storage";
 
@@ -14,7 +14,7 @@ async function loadDocument(id: string, version: resources.ICommit): Promise<api
     return document;
 }
 
-async function updateOrCreateKey(key: string, map: map.IMap, container: JQuery, doc: api.Document) {
+async function updateOrCreateKey(key: string, map: IMap, container: JQuery, doc: api.Document) {
     const value = await map.get(key);
 
     let keyElement = container.find(`>.${key}`);
@@ -35,7 +35,7 @@ async function updateOrCreateKey(key: string, map: map.IMap, container: JQuery, 
     }
 }
 
-async function displayValues(map: map.IMap, container: JQuery, doc: api.Document) {
+async function displayValues(map: IMap, container: JQuery, doc: api.Document) {
     const keys = await map.keys();
     keys.sort();
 
@@ -55,7 +55,7 @@ async function displayValues(map: map.IMap, container: JQuery, doc: api.Document
 /**
  * Displays the keys in the map
  */
-async function displayMap(parentElement: JQuery, key: string, map: map.IMap, parent: map.IMap, doc: api.Document) {
+async function displayMap(parentElement: JQuery, key: string, map: IMap, parent: IMap, doc: api.Document) {
     const header = key !== null ? $(`<h2>${key}: ${map.id}</h2>`) : $(`<h2>${map.id}</h2>`);
     parentElement.append(header);
 
@@ -91,11 +91,11 @@ async function displayMap(parentElement: JQuery, key: string, map: map.IMap, par
 /**
  * Randomly changes the values in the map
  */
-async function randomizeMap(map: map.IMap) {
+async function randomizeMap(map: IMap) {
     // link up the randomize button
     const keys = ["foo", "bar", "baz", "binky", "winky", "twinkie"];
-    const counter = await map.createCounter("counter", 100) as map.ICounter;
-    const set = await map.createSet("set", [1, 2, 3, 3, 2, 4]) as map.ISet<number>;
+    const counter = await map.createCounter("counter", 100) as ICounter;
+    const set = await map.createSet("set", [1, 2, 3, 3, 2, 4]) as ISet<number>;
     setInterval(async () => {
         const key = keys[Math.floor(Math.random() * keys.length)];
         map.set(key, Math.floor(Math.random() * 100000).toString());

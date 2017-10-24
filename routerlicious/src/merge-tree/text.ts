@@ -1,9 +1,8 @@
-// tslint:disable
-
-import * as random from "random-js";
+import * as fs from "fs";
 import * as MergeTree from "./mergeTree";
 import * as ops from "./ops";
-import * as fs from "fs";
+
+// tslint:disable
 
 export function loadTextFromFile(filename: string, mergeTree: MergeTree.MergeTree, segLimit = 0) {
     let content = fs.readFileSync(filename, "utf8");
@@ -83,19 +82,4 @@ export function loadText(content: string, mergeTree: MergeTree.MergeTree, segLim
     return mergeTree;
 }
 
-let mt = random.engines.mt19937();
-mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
-
-export function findRandomWord(mergeTree: MergeTree.MergeTree, clientId: number) {
-    let len = mergeTree.getLength(MergeTree.UniversalSequenceNumber, clientId);
-    let pos = random.integer(0, len)(mt);
-    // let textAtPos = mergeTree.getText(MergeTree.UniversalSequenceNumber, clientId, pos, pos + 10);
-    // console.log(textAtPos);
-    let nextWord = mergeTree.searchFromPos(pos, /\s\w+\b/);
-    if (nextWord) {
-        nextWord.pos += pos;
-        // console.log(`next word is '${nextWord.text}' len ${nextWord.text.length} at pos ${nextWord.pos}`);
-    }
-    return nextWord;
-}
 

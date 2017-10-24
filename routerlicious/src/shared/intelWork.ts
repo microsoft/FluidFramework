@@ -1,7 +1,7 @@
 import * as api from "../api";
 import * as apiCore from "../api-core";
+import { IMap, IMapView } from "../data-types";
 import { nativeTextAnalytics, resumeAnalytics, textAnalytics } from "../intelligence";
-import { IMap, IMapView } from "../map";
 import { IntelligentServicesManager } from "./";
 import { BaseWork} from "./baseWork";
 import { IWork} from "./work";

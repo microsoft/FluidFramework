@@ -1,6 +1,5 @@
 import * as api from "../api";
-import * as ink from "../ink";
-import { IMap } from "../map";
+import { IInk, IMap } from "../data-types";
 import { MarkerBehaviors, reservedMarkerIdKey, SharedString } from "../merge-tree";
 import * as ui from "../ui";
 import { debug } from "./debug";
@@ -59,7 +58,7 @@ export class FlowContainer extends ui.Component {
         overlayCanvasDiv.classList.add("overlay-canvas");
         this.overlayCanvas = new OverlayCanvas(collabDocument, overlayCanvasDiv, layerPanelDiv);
 
-        this.overlayCanvas.on("ink", (layer: InkLayer, model: ink.IInk, start: ui.IPoint) =>  {
+        this.overlayCanvas.on("ink", (layer: InkLayer, model: IInk, start: ui.IPoint) =>  {
             this.overlayCanvas.enableInkHitTest(false);
             const position = this.flowView.getNearestPosition(start);
             this.overlayCanvas.enableInkHitTest(true);
@@ -157,7 +156,7 @@ export class FlowContainer extends ui.Component {
         if (this.activeLayers[id]) {
             this.activeLayers[id].active = true;
         }
-        const ink = await this.overlayMap.get(id) as ink.IInk;
+        const ink = await this.overlayMap.get(id) as IInk;
 
         if (!(id in this.layerCache)) {
             const layer = new InkLayer(this.size, ink);

@@ -1,8 +1,17 @@
 import * as assert from "assert";
 import * as $ from "jquery";
-import * as _ from "lodash";
+import clone = require("lodash/clone");
 import * as api from "../api";
-import * as ink from "../ink";
+import {
+    ActionType,
+    Delta,
+    getActionType,
+    getStylusAction,
+    IDelta,
+    IInk,
+    IOperation,
+    IPen,
+    IStylusAction } from "../data-types";
 import * as ui from "../ui";
 import { debug } from "./debug";
 import { Circle, IShape, Polygon } from "./shapes/index";
@@ -53,8 +62,8 @@ function padRight(current: number, next: number, padding: number) {
 export class DrawingContext {
     public canvas = document.createElement("canvas");
     private context: CanvasRenderingContext2D;
-    private lastOperation: ink.IOperation = null;
-    private pen: ink.IPen;
+    private lastOperation: IOperation = null;
+    private pen: IPen;
     private canvasOffset: ui.IPoint = { x: 0, y: 0 };
 
     public get offset(): ui.IPoint {
@@ -76,25 +85,25 @@ export class DrawingContext {
 
     // store instructions used to render itself? i.e. the total path? Or defer to someone else to actually
     // do the re-render with a context?
-    public drawStroke(current: ink.IOperation) {
-        let type = ink.getActionType(current);
+    public drawStroke(current: IOperation) {
+        let type = getActionType(current);
         let shapes: IShape[];
 
-        let currentAction = ink.getStylusAction(current);
-        let previousAction = ink.getStylusAction(this.lastOperation || current);
+        let currentAction = getStylusAction(current);
+        let previousAction = getStylusAction(this.lastOperation || current);
 
         switch (type) {
-            case ink.ActionType.StylusDown:
+            case ActionType.StylusDown:
                 this.pen = current.stylusDown.pen;
                 shapes = this.getShapes(currentAction, currentAction, this.pen, SegmentCircleInclusive.End);
                 break;
 
-            case ink.ActionType.StylusMove:
+            case ActionType.StylusMove:
                 assert(this.pen);
                 shapes = this.getShapes(previousAction, currentAction, this.pen, SegmentCircleInclusive.End);
                 break;
 
-            case ink.ActionType.StylusUp:
+            case ActionType.StylusUp:
                 assert(this.pen);
                 shapes = this.getShapes(previousAction, currentAction, this.pen, SegmentCircleInclusive.End);
                 break;
@@ -189,9 +198,9 @@ export class DrawingContext {
      * Besides circles, a trapezoid that serves as a bounding box of two stroke point is also returned.
      */
     private getShapes(
-        startPoint: ink.IStylusAction,
-        endPoint: ink.IStylusAction,
-        pen: ink.IPen,
+        startPoint: IStylusAction,
+        endPoint: IStylusAction,
+        pen: IPen,
         circleInclusive: SegmentCircleInclusive): IShape[] {
 
         let dirVector = new ui.Vector(
@@ -295,7 +304,7 @@ export abstract class Layer {
     private size: ui.ISize;
 
     constructor(size: ui.ISize) {
-        this.size = _.clone(size);
+        this.size = clone(size);
         this.node.appendChild(this.drawingContext.canvas);
         this.updatePosition();
     }
@@ -320,12 +329,12 @@ export abstract class Layer {
  * Used to render ink
  */
 export class InkLayer extends Layer {
-    constructor(size: ui.ISize, private model: ink.IInk) {
+    constructor(size: ui.ISize, private model: IInk) {
         super(size);
 
         // Listen for updates and re-render
         this.model.on("op", (op) => {
-            const delta = op.contents as ink.IDelta;
+            const delta = op.contents as IDelta;
             for (const operation of delta.operations) {
                 this.drawingContext.drawStroke(operation);
             }
@@ -339,7 +348,7 @@ export class InkLayer extends Layer {
         }
     }
 
-    public drawDelta(delta: ink.IDelta) {
+    public drawDelta(delta: IDelta) {
         this.model.submitOp(delta);
         for (const operation of delta.operations) {
             this.drawingContext.drawStroke(operation);
@@ -358,7 +367,7 @@ export class OverlayCanvas extends ui.Component {
     private inkEventsEnabled = false;
     private penHovering = false;
     private forceInk = false;
-    private activePen: ink.IPen = {
+    private activePen: IPen = {
         color: { r: 0, g: 161 / 255, b: 241 / 255, a: 0 },
         thickness: 7,
     };
@@ -405,8 +414,8 @@ export class OverlayCanvas extends ui.Component {
     /**
      * Sets the current pen
      */
-    public setPen(pen: ink.IPen) {
-        this.activePen = _.clone(pen);
+    public setPen(pen: IPen) {
+        this.activePen = clone(pen);
     }
 
     public enableInk(enable: boolean) {
@@ -486,7 +495,7 @@ export class OverlayCanvas extends ui.Component {
             this.activePointerId = evt.pointerId;
             this.element.setPointerCapture(this.activePointerId);
 
-            let delta = new ink.Delta().stylusDown(
+            let delta = new Delta().stylusDown(
                 this.translateToLayer(translatedPoint, this.activeLayer),
                 evt.pressure,
                 this.activePen);
@@ -500,7 +509,7 @@ export class OverlayCanvas extends ui.Component {
     private handlePointerMove(evt: PointerEvent) {
         if (evt.pointerId === this.activePointerId) {
             let translatedPoint = this.translatePoint(this.element, evt);
-            let delta = new ink.Delta().stylusMove(
+            let delta = new Delta().stylusMove(
                 this.translateToLayer(translatedPoint, this.activeLayer),
                 evt.pressure,
                 this.currentStylusActionId);
@@ -517,7 +526,7 @@ export class OverlayCanvas extends ui.Component {
             let translatedPoint = this.translatePoint(this.element, evt);
             evt.returnValue = false;
 
-            let delta = new ink.Delta().stylusUp(
+            let delta = new Delta().stylusUp(
                 this.translateToLayer(translatedPoint, this.activeLayer),
                 evt.pressure,
                 this.currentStylusActionId);
