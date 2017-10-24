@@ -3,6 +3,7 @@
 import * as MergeTree from "./mergeTree";
 import * as Properties from "./properties";
 import * as path from "path";
+import * as random from "random-js";
 import * as Text from "./text";
 
 function clock() {
@@ -100,39 +101,68 @@ export function propertyCopy() {
     console.log(`diff time ${perIter} us per ${propCount} properties; ${perProp} us per property`);
 }
 
-function measureFetch(startFile: string) {
+function makeBookmarks(client: MergeTree.Client, bookmarkCount: number) {
+    let mt = random.engines.mt19937();
+    mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
+    let bookmarks = <MergeTree.LocalReference[]>[];
+    let refseq = client.getCurrentSeq();
+    let clientId = client.getClientId();
+    let len = client.mergeTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.NonCollabClient);
+    for (let i = 0; i < bookmarkCount; i++) {
+        let pos = random.integer(0, len)(mt);
+        let segoff = client.mergeTree.getContainingSegment(pos, refseq, clientId);
+        bookmarks.push({ segment: segoff.segment, offset: segoff.offset, slideOnRemove: (i & 1) !== 1 });
+    }
+    return bookmarks;
+}
+
+function measureFetch(startFile: string, withBookmarks = false) {
+    let bookmarkCount = 20000;
     let client = new MergeTree.Client("", { blockUpdateMarkers: true });
     Text.loadTextFromFileWithMarkers(startFile, client.mergeTree);
+    let bookmarks: MergeTree.LocalReference[];
+    if (withBookmarks) {
+        bookmarks = makeBookmarks(client, bookmarkCount);
+        console.log(`inserting ${bookmarkCount} refs into text`);
+    }
+    let reps = 20;
     let clockStart = clock();
     let count = 0;
-    for (let pos = 0; pos < client.getLength();) {
-        let prevPG = client.mergeTree.findTile(pos, client.getClientId(), "pg");
-        let caBegin: number;
-        if (prevPG) {
-            caBegin = prevPG.pos;
-        } else {
-            caBegin = 0;
+    for (let i = 0; i < reps; i++) {
+        for (let pos = 0; pos < client.getLength();) {
+            let prevPG = client.mergeTree.findTile(pos, client.getClientId(), "pg");
+            let caBegin: number;
+            if (prevPG) {
+                caBegin = prevPG.pos;
+            } else {
+                caBegin = 0;
+            }
+            // curPG.pos is ca end
+            let curPG = client.mergeTree.findTile(pos, client.getClientId(), "pg", false);
+            let properties = curPG.tile.properties;
+            let curSegOff = client.mergeTree.getContainingSegment(pos, MergeTree.UniversalSequenceNumber, client.getClientId());
+            let curSeg = <MergeTree.BaseSegment>curSegOff.segment;
+            // combine paragraph and direct properties
+            Properties.extend(properties, curSeg.properties);
+            pos += (curSeg.cachedLength - curSegOff.offset);
+            count++;
         }
-        // curPG.pos is ca end
-        let curPG = client.mergeTree.findTile(pos, client.getClientId(), "pg", false);
-        let properties = curPG.tile.properties;
-        let curSegOff = client.mergeTree.getContainingSegment(pos, MergeTree.UniversalSequenceNumber, client.getClientId());
-        let curSeg = <MergeTree.BaseSegment>curSegOff.segment;
-        // combine paragraph and direct properties
-        Properties.extend(properties, curSeg.properties);
-        pos += (curSeg.cachedLength - curSegOff.offset);
-        count++;
     }
     let et = elapsedMicroseconds(clockStart);
-    console.log(`fetch of ${count} runs over ${client.getLength()} total chars took ${(et / count).toFixed(1)} microseconds per run`);
+    console.log(`fetch of ${count / reps} runs over ${client.getLength()} total chars took ${(et / count).toFixed(1)} microseconds per run`);
     // bonus: measure clone
     clockStart = clock();
-    client.mergeTree.clone();
+    for (let i = 0; i < reps; i++) {
+        client.mergeTree.clone();
+    }
     et = elapsedMicroseconds(clockStart);
-    console.log(`naive clone took ${(et / 1000).toFixed(1)} milliseconds`);
+    console.log(`naive clone took ${(et / (1000*reps)).toFixed(1)} milliseconds`);
 }
 const filename = path.join(__dirname, "../../public/literature", "pp.txt");
 
 propertyCopy();
 measureFetch(filename);
+measureFetch(filename, true);
+measureFetch(filename);
+measureFetch(filename, true);
 

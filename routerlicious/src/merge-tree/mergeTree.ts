@@ -655,6 +655,13 @@ export class TextSegment extends BaseSegment {
 
     append(segment: Segment) {
         if (segment.getType() === SegmentType.Text) {
+            if (segment.localRefs) {
+                let adj = this.text.length;
+                for (let localRef of segment.localRefs) {
+                    localRef.offset += adj;
+                    localRef.segment = this;
+                }
+            }
             this.text += (<TextSegment>segment).text;
             this.cachedLength = this.text.length;
             return this;
