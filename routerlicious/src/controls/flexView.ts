@@ -1,7 +1,6 @@
 // The main app code
 import * as api from "../api";
-import * as ink from "../ink";
-import { IMap, IMapView } from "../map";
+import { IColor, IMap, IMapView } from "../data-types";
 import * as ui from "../ui";
 import { Button } from "./button";
 import { Chart } from "./chart";
@@ -11,7 +10,7 @@ import { InkCanvas } from "./inkCanvas";
 import { Popup } from "./popup";
 import { Orientation, StackPanel } from "./stackPanel";
 
-const colors: ink.IColor[] = [
+const colors: IColor[] = [
     { r: 253 / 255, g:   0 / 255, b:  12 / 255, a: 1 },
     { r: 134 / 255, g:   0 / 255, b:  56 / 255, a: 1 },
     { r: 253 / 255, g: 187 / 255, b:  48 / 255, a: 1 },

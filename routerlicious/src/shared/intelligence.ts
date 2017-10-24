@@ -1,7 +1,7 @@
 import * as api from "../api";
 import * as apiCore from "../api-core";
+import { IMap, IMapView } from "../data-types";
 import * as intelligence from "../intelligence";
-import { IMap, IMapView } from "../map";
 import * as mergeTree from "../merge-tree";
 import * as shared from "./";
 

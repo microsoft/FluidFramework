@@ -4,7 +4,7 @@ import * as request from "request";
 import * as url from "url";
 import * as API from "../../api";
 import * as controls from "../../controls";
-import { IMap } from "../../map";
+import { IMap } from "../../data-types";
 import * as SharedString from "../../merge-tree";
 import * as shared from "../../shared";
 import * as socketStorage from "../../socket-storage";

@@ -1,4 +1,16 @@
-import * as ink from "../ink";
+import {
+    ActionType,
+    Delta,
+    getActionType,
+    getStylusAction,
+    getStylusId,
+    IColor,
+    IDelta,
+    IInk,
+    IInkLayer,
+    IOperation,
+    IPen,
+    IStylusAction } from "../data-types";
 import * as ui from "../ui";
 import { SegmentCircleInclusive } from "./overlayCanvas";
 import { Circle, IShape, Polygon } from "./shapes/index";
@@ -32,16 +44,16 @@ export class InkCanvas extends ui.Component {
     private penID: number = -1;
     private canvasWrapper: HTMLElement;
     private currentStylusActionId: string;
-    private currentPen: ink.IPen;
+    private currentPen: IPen;
     private lastLayerRenderOp: { [key: string]: number } = {};
 
     // constructor
-    constructor(element: HTMLDivElement, private model: ink.IInk) {
+    constructor(element: HTMLDivElement, private model: IInk) {
         super(element);
 
         this.model.on("op", (op) => {
             // Update the canvas
-            this.addAndDrawStroke(op.contents as ink.IDelta, false);
+            this.addAndDrawStroke(op.contents as IDelta, false);
         });
 
         this.model.on("load", () => {
@@ -69,7 +81,7 @@ export class InkCanvas extends ui.Component {
         };
     }
 
-    public setPenColor(color: ink.IColor) {
+    public setPenColor(color: IColor) {
         this.currentPen.color = color;
     }
 
@@ -106,7 +118,7 @@ export class InkCanvas extends ui.Component {
             // Anchor and clear any current selection.
             let pt = new EventPoint(this.canvas, evt);
 
-            let delta = new ink.Delta().stylusDown(pt.rawPosition, evt.pressure, this.currentPen);
+            let delta = new Delta().stylusDown(pt.rawPosition, evt.pressure, this.currentPen);
             this.currentStylusActionId = delta.operations[0].stylusDown.id;
             this.addAndDrawStroke(delta, true);
 
@@ -117,7 +129,7 @@ export class InkCanvas extends ui.Component {
     private handlePointerMove(evt: PointerEvent) {
         if (evt.pointerId === this.penID) {
             let pt = new EventPoint(this.canvas, evt);
-            let delta = new ink.Delta().stylusMove(
+            let delta = new Delta().stylusMove(
                 pt.rawPosition,
                 evt.pressure,
                 this.currentStylusActionId);
@@ -135,7 +147,7 @@ export class InkCanvas extends ui.Component {
             let pt = new EventPoint(this.canvas, evt);
             evt.returnValue = false;
 
-            let delta = new ink.Delta().stylusUp(
+            let delta = new Delta().stylusUp(
                 pt.rawPosition,
                 evt.pressure,
                 this.currentStylusActionId);
@@ -147,7 +159,7 @@ export class InkCanvas extends ui.Component {
         return false;
     }
 
-    private animateLayer(layer: ink.IInkLayer, operationIndex: number, startTime: number) {
+    private animateLayer(layer: IInkLayer, operationIndex: number, startTime: number) {
         if (operationIndex >= layer.operations.length) {
             return;
         }
@@ -177,7 +189,7 @@ export class InkCanvas extends ui.Component {
 
         const layers = this.model.getLayers();
         for (let layer of layers) {
-            let previous: ink.IOperation = layer.operations[0];
+            let previous: IOperation = layer.operations[0];
             for (let operation of layer.operations) {
                 this.drawStroke(layer, operation, previous);
                 previous = operation;
@@ -186,26 +198,26 @@ export class InkCanvas extends ui.Component {
     }
 
     private drawStroke(
-        layer: ink.IInkLayer,
-        current: ink.IOperation,
-        previous: ink.IOperation) {
-        let type = ink.getActionType(current);
+        layer: IInkLayer,
+        current: IOperation,
+        previous: IOperation) {
+        let type = getActionType(current);
         let shapes: IShape[];
 
-        let currentAction = ink.getStylusAction(current);
-        let previousAction = ink.getStylusAction(previous);
+        let currentAction = getStylusAction(current);
+        let previousAction = getStylusAction(previous);
         let pen = layer.operations[0].stylusDown.pen;
 
         switch (type) {
-            case ink.ActionType.StylusDown:
+            case ActionType.StylusDown:
                 shapes = this.getShapes(currentAction, currentAction, pen, SegmentCircleInclusive.End);
                 break;
 
-            case ink.ActionType.StylusMove:
+            case ActionType.StylusMove:
                 shapes = this.getShapes(previousAction, currentAction, pen, SegmentCircleInclusive.End);
                 break;
 
-            case ink.ActionType.StylusUp:
+            case ActionType.StylusUp:
                 shapes = this.getShapes(previousAction, currentAction, pen, SegmentCircleInclusive.End);
                 break;
 
@@ -224,21 +236,21 @@ export class InkCanvas extends ui.Component {
         }
     }
 
-    private addAndDrawStroke(delta: ink.IDelta, submit: boolean) {
+    private addAndDrawStroke(delta: IDelta, submit: boolean) {
         if (submit) {
             this.model.submitOp(delta);
         }
 
         let dirtyLayers: { [key: string]: any } = {};
         for (let operation of delta.operations) {
-            let type = ink.getActionType(operation);
-            if (type === ink.ActionType.Clear) {
+            let type = getActionType(operation);
+            if (type === ActionType.Clear) {
                 this.clearCanvas();
                 this.lastLayerRenderOp = {};
                 dirtyLayers = {};
             } else {
                 // Get the layer the delta applies to
-                let stylusId = ink.getStylusId(operation);
+                let stylusId = getStylusId(operation);
                 dirtyLayers[stylusId] = true;
             }
         }
@@ -265,9 +277,9 @@ export class InkCanvas extends ui.Component {
      * Besides circles, a trapezoid that serves as a bounding box of two stroke point is also returned.
      */
     private getShapes(
-        startPoint: ink.IStylusAction,
-        endPoint: ink.IStylusAction,
-        pen: ink.IPen,
+        startPoint: IStylusAction,
+        endPoint: IStylusAction,
+        pen: IPen,
         circleInclusive: SegmentCircleInclusive): IShape[] {
 
         let dirVector = new ui.Vector(

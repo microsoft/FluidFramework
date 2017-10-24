@@ -1,7 +1,7 @@
 import * as assert from "assert";
 import * as api from "../../api";
 import * as apiCore from "../../api-core";
-import { ICounter, IMap } from "../../map";
+import { ICounter, IMap } from "../../data-types";
 import * as testUtils from "../testUtils";
 
 describe("Routerlicious", () => {
