@@ -14,6 +14,7 @@ import {
     IStylusAction } from "../data-types";
 import * as ui from "../ui";
 import { debug } from "./debug";
+import * as recognizer from "./shapeRecognizer";
 import { Circle, IShape, Polygon } from "./shapes/index";
 
 export enum SegmentCircleInclusive {
@@ -24,6 +25,8 @@ export enum SegmentCircleInclusive {
 }
 
 const DryTimer = 5000;
+
+const RecoTimer = 200;
 
 // Padding around a drawing context - used to avoid extra copies
 const CanvasPadding = 100;
@@ -363,6 +366,7 @@ export class OverlayCanvas extends ui.Component {
     private layers: Layer[] = [];
     private currentStylusActionId: string;
     private dryTimer: NodeJS.Timer;
+    private recoTimer: NodeJS.Timer;
     private activePointerId: number;
     private inkEventsEnabled = false;
     private penHovering = false;
@@ -372,6 +376,7 @@ export class OverlayCanvas extends ui.Component {
         thickness: 7,
     };
     private activeLayer: InkLayer;
+    private pointsToRecognize: ui.IPoint[] = [];
 
     // TODO composite layers together
     // private canvas: HTMLCanvasElement;
@@ -478,6 +483,7 @@ export class OverlayCanvas extends ui.Component {
         // Only support pen events
         if (evt.pointerType === "pen" || (evt.pointerType === "mouse" && evt.button === 0)) {
             let translatedPoint = this.translatePoint(this.element, evt);
+            this.pointsToRecognize.push(translatedPoint);
 
             // Create a new layer if doesn't already exist
             if (!this.activeLayer) {
@@ -490,6 +496,7 @@ export class OverlayCanvas extends ui.Component {
             }
 
             this.stopDryTimer();
+            this.stopRecoTimer();
 
             // Capture ink events
             this.activePointerId = evt.pointerId;
@@ -509,6 +516,7 @@ export class OverlayCanvas extends ui.Component {
     private handlePointerMove(evt: PointerEvent) {
         if (evt.pointerId === this.activePointerId) {
             let translatedPoint = this.translatePoint(this.element, evt);
+            this.pointsToRecognize.push(translatedPoint);
             let delta = new Delta().stylusMove(
                 this.translateToLayer(translatedPoint, this.activeLayer),
                 evt.pressure,
@@ -524,6 +532,7 @@ export class OverlayCanvas extends ui.Component {
     private handlePointerUp(evt: PointerEvent) {
         if (evt.pointerId === this.activePointerId) {
             let translatedPoint = this.translatePoint(this.element, evt);
+            this.pointsToRecognize.push(translatedPoint);
             evt.returnValue = false;
 
             let delta = new Delta().stylusUp(
@@ -539,6 +548,7 @@ export class OverlayCanvas extends ui.Component {
             this.activePointerId = undefined;
 
             this.startDryTimer();
+            this.startRecoTimer();
         }
 
         return false;
@@ -557,6 +567,36 @@ export class OverlayCanvas extends ui.Component {
             clearTimeout(this.dryTimer);
             this.dryTimer = undefined;
         }
+    }
+
+    private startRecoTimer() {
+        this.recoTimer = setTimeout(
+            () => {
+                this.recognizeShape();
+            },
+            RecoTimer);
+    }
+
+    private stopRecoTimer() {
+        if (this.recoTimer) {
+            clearTimeout(this.recoTimer);
+            this.recoTimer = undefined;
+        }
+    }
+
+    private recognizeShape() {
+        // The console output can be used to train more shapes.
+        // console.log(this.printStroke());
+
+        const shapeType = recognizer.recognizeShape(this.pointsToRecognize);
+        if (shapeType !== undefined) {
+            console.log(`Shape type: ${shapeType.pattern}`);
+            console.log(`Score: ${shapeType.score}`);
+        } else {
+            console.log(`Unrecognized shape!`);
+        }
+        // Clear the strokes.
+        this.pointsToRecognize = [];
     }
 
     private dryInk() {
@@ -581,4 +621,15 @@ export class OverlayCanvas extends ui.Component {
             y: position.y - layer.position.y,
         };
     }
+
+    /*// Returns a stroke in training format.
+    private printStroke(): string {
+        let stroke = "points: [";
+        for (let point of this.pointsToRecognize) {
+            stroke += `{ x: ${point.x}, y: ${point.y} }, `;
+        }
+        stroke = stroke.slice(0, -2);
+        stroke += "]";
+        return stroke;
+    }*/
 }
