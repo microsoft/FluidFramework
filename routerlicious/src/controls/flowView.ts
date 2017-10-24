@@ -382,7 +382,7 @@ function elmOffToSegOff(elmOff: IRangeInfo, span: HTMLSpanElement) {
 }
 
 let cachedCanvas: HTMLCanvasElement;
-const baseURI = typeof document !== "undefined" ? document.baseURI : "";
+const baseURI = typeof document !== "undefined" ? document.location.origin : "";
 let underlineStringURL = `url("${baseURI}/public/images/underline.gif") bottom repeat-x`;
 let underlinePaulStringURL = `url("${baseURI}/public/images/underline-paul.gif") bottom repeat-x`;
 let underlinePaulGrammarStringURL = `url("${baseURI}/public/images/underline-paulgrammar.gif") bottom repeat-x`;
