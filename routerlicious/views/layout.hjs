@@ -19,6 +19,7 @@
     <script src="//ajax.aspnetcdn.com/ajax/bootstrap/3.3.7/bootstrap.min.js"></script>
     <script src="{{#hfurl}}/public/scripts/dist/api.js{{/hfurl}}"></script>
     <script src="{{#hfurl}}/public/scripts/dist/ui.js{{/hfurl}}"></script>
+    <script src="{{#hfurl}}/public/scripts/dist/agent.js{{/hfurl}}"></script>
     {{$scripts}}{{/scripts}}
 </body>
 </html>
