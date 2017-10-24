@@ -165,8 +165,7 @@
     ]
   },
   "browserify-shim": {
-    "jquery": "global:$",
-    "socket.io-client": "global:io"
+    "jquery": "global:$"
   },
   "nyc": {
     "all": true,
