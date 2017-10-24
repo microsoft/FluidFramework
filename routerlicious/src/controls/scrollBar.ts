@@ -1,4 +1,3 @@
-import clone = require("lodash/clone");
 import * as ui from "../ui";
 
 export interface IRange {
@@ -45,7 +44,7 @@ export class ScrollBar extends ui.Component {
     }
 
     public setRange(range: IRange) {
-        this.range = clone(range);
+        this.range = { value: range.value, min: range.min, max: range.max };
         this.updateTrack();
     }
 

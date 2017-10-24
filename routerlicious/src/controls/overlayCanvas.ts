@@ -1,17 +1,4 @@
-import * as assert from "assert";
-import * as $ from "jquery";
-import clone = require("lodash/clone");
-import * as api from "../api";
-import {
-    ActionType,
-    Delta,
-    getActionType,
-    getStylusAction,
-    IDelta,
-    IInk,
-    IOperation,
-    IPen,
-    IStylusAction } from "../data-types";
+import { api, assert, types } from "../client-api";
 import * as ui from "../ui";
 import { debug } from "./debug";
 import { Circle, IShape, Polygon } from "./shapes/index";
@@ -62,8 +49,8 @@ function padRight(current: number, next: number, padding: number) {
 export class DrawingContext {
     public canvas = document.createElement("canvas");
     private context: CanvasRenderingContext2D;
-    private lastOperation: IOperation = null;
-    private pen: IPen;
+    private lastOperation: types.IOperation = null;
+    private pen: types.IPen;
     private canvasOffset: ui.IPoint = { x: 0, y: 0 };
 
     public get offset(): ui.IPoint {
@@ -85,25 +72,25 @@ export class DrawingContext {
 
     // store instructions used to render itself? i.e. the total path? Or defer to someone else to actually
     // do the re-render with a context?
-    public drawStroke(current: IOperation) {
-        let type = getActionType(current);
+    public drawStroke(current: types.IOperation) {
+        let type = types.getActionType(current);
         let shapes: IShape[];
 
-        let currentAction = getStylusAction(current);
-        let previousAction = getStylusAction(this.lastOperation || current);
+        let currentAction = types.getStylusAction(current);
+        let previousAction = types.getStylusAction(this.lastOperation || current);
 
         switch (type) {
-            case ActionType.StylusDown:
+            case types.ActionType.StylusDown:
                 this.pen = current.stylusDown.pen;
                 shapes = this.getShapes(currentAction, currentAction, this.pen, SegmentCircleInclusive.End);
                 break;
 
-            case ActionType.StylusMove:
+            case types.ActionType.StylusMove:
                 assert(this.pen);
                 shapes = this.getShapes(previousAction, currentAction, this.pen, SegmentCircleInclusive.End);
                 break;
 
-            case ActionType.StylusUp:
+            case types.ActionType.StylusUp:
                 assert(this.pen);
                 shapes = this.getShapes(previousAction, currentAction, this.pen, SegmentCircleInclusive.End);
                 break;
@@ -198,9 +185,9 @@ export class DrawingContext {
      * Besides circles, a trapezoid that serves as a bounding box of two stroke point is also returned.
      */
     private getShapes(
-        startPoint: IStylusAction,
-        endPoint: IStylusAction,
-        pen: IPen,
+        startPoint: types.IStylusAction,
+        endPoint: types.IStylusAction,
+        pen: types.IPen,
         circleInclusive: SegmentCircleInclusive): IShape[] {
 
         let dirVector = new ui.Vector(
@@ -304,7 +291,7 @@ export abstract class Layer {
     private size: ui.ISize;
 
     constructor(size: ui.ISize) {
-        this.size = clone(size);
+        this.size = { width: size.width, height: size.height };
         this.node.appendChild(this.drawingContext.canvas);
         this.updatePosition();
     }
@@ -329,12 +316,12 @@ export abstract class Layer {
  * Used to render ink
  */
 export class InkLayer extends Layer {
-    constructor(size: ui.ISize, private model: IInk) {
+    constructor(size: ui.ISize, private model: types.IInk) {
         super(size);
 
         // Listen for updates and re-render
         this.model.on("op", (op) => {
-            const delta = op.contents as IDelta;
+            const delta = op.contents as types.IDelta;
             for (const operation of delta.operations) {
                 this.drawingContext.drawStroke(operation);
             }
@@ -348,7 +335,7 @@ export class InkLayer extends Layer {
         }
     }
 
-    public drawDelta(delta: IDelta) {
+    public drawDelta(delta: types.IDelta) {
         this.model.submitOp(delta);
         for (const operation of delta.operations) {
             this.drawingContext.drawStroke(operation);
@@ -367,7 +354,7 @@ export class OverlayCanvas extends ui.Component {
     private inkEventsEnabled = false;
     private penHovering = false;
     private forceInk = false;
-    private activePen: IPen = {
+    private activePen: types.IPen = {
         color: { r: 0, g: 161 / 255, b: 241 / 255, a: 0 },
         thickness: 7,
     };
@@ -414,8 +401,8 @@ export class OverlayCanvas extends ui.Component {
     /**
      * Sets the current pen
      */
-    public setPen(pen: IPen) {
-        this.activePen = clone(pen);
+    public setPen(pen: types.IPen) {
+        this.activePen = { color: pen.color, thickness: pen.thickness };
     }
 
     public enableInk(enable: boolean) {
@@ -495,7 +482,7 @@ export class OverlayCanvas extends ui.Component {
             this.activePointerId = evt.pointerId;
             this.element.setPointerCapture(this.activePointerId);
 
-            let delta = new Delta().stylusDown(
+            let delta = new types.Delta().stylusDown(
                 this.translateToLayer(translatedPoint, this.activeLayer),
                 evt.pressure,
                 this.activePen);
@@ -509,7 +496,7 @@ export class OverlayCanvas extends ui.Component {
     private handlePointerMove(evt: PointerEvent) {
         if (evt.pointerId === this.activePointerId) {
             let translatedPoint = this.translatePoint(this.element, evt);
-            let delta = new Delta().stylusMove(
+            let delta = new types.Delta().stylusMove(
                 this.translateToLayer(translatedPoint, this.activeLayer),
                 evt.pressure,
                 this.currentStylusActionId);
@@ -526,7 +513,7 @@ export class OverlayCanvas extends ui.Component {
             let translatedPoint = this.translatePoint(this.element, evt);
             evt.returnValue = false;
 
-            let delta = new Delta().stylusUp(
+            let delta = new types.Delta().stylusUp(
                 this.translateToLayer(translatedPoint, this.activeLayer),
                 evt.pressure,
                 this.currentStylusActionId);
@@ -568,10 +555,15 @@ export class OverlayCanvas extends ui.Component {
     }
 
     private translatePoint(relative: HTMLElement, event: PointerEvent): ui.IPoint {
-        let offset = $(relative).offset();
+        const boundingRect = relative.getBoundingClientRect();
+        const offset = {
+            x: boundingRect.top + document.body.scrollTop,
+            y: boundingRect.left + document.body.scrollLeft,
+        };
+
         return {
-            x: event.pageX - offset.left,
-            y: event.pageY - offset.top,
+            x: event.pageX - offset.x,
+            y: event.pageY - offset.y,
         };
     }
 

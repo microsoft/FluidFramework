@@ -10,6 +10,8 @@
     "browserify:controllers:min": "browserify src/alfred/controllers/index.ts --debug -s controller -p [ tsify ] | uglifyjs --source-map content=inline,url=index.min.js.map -o public/scripts/dist/index.min.js",
     "browserify:api": "browserify src/client-api/index.ts --debug -s prague -p [ tsify ] | exorcist public/scripts/dist/api.js.map > public/scripts/dist/api.js",
     "browserify:api:min": "browserify src/client-api/index.ts --debug -s prague -p [ tsify ] | uglifyjs --source-map content=inline,url=api.min.js.map -o public/scripts/dist/api.min.js",
+    "browserify:ui": "browserify src/client-ui/index.ts --debug -s pragueUi -p [ tsify ] | exorcist public/scripts/dist/ui.js.map > public/scripts/dist/ui.js",
+    "browserify:ui:min": "browserify src/client-ui/index.ts --debug -s pragueUi -p [ tsify ] | uglifyjs --source-map content=inline,url=ui.min.js.map -o public/scripts/dist/ui.min.js",
     "build": "concurrently \"npm run tslint\" \"npm run tsc\" \"npm run browserify\" \"npm run less\"",
     "build:full": "npm run build && npm run browserify:controllers:min",
     "build:watch": "watch 'npm run tsc && npm run browserify' src",
@@ -169,7 +171,7 @@
     ]
   },
   "browserify-shim": {
-    "jquery": "global:$"
+    "../client-api": "global:prague"
   },
   "nyc": {
     "all": true,

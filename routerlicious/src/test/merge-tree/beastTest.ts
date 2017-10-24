@@ -4,10 +4,10 @@ import * as fs from "fs";
 import * as path from "path";
 import * as random from "random-js";
 import * as MergeTree from "../../merge-tree";
+import { findRandomWord } from "../../merge-tree-utils";
 import * as Base from "../../merge-tree/base";
 import * as Collections from "../../merge-tree/collections";
 import * as ops from "../../merge-tree/ops";
-import { findRandomWord } from "../../merge-tree/random";
 import * as Paparazzo from "../../merge-tree/snapshot";
 import * as Text from "../../merge-tree/text";
 

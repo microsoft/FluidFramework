@@ -1,6 +1,4 @@
-import * as api from "../api";
-import { IInk, IMap } from "../data-types";
-import { MarkerBehaviors, reservedMarkerIdKey, SharedString } from "../merge-tree";
+import { api, mergeTree, types } from "../client-api";
 import * as ui from "../ui";
 import { debug } from "./debug";
 import { DockPanel } from "./dockPanel";
@@ -30,8 +28,8 @@ export class FlowContainer extends ui.Component {
     constructor(
         element: HTMLDivElement,
         collabDocument: api.Document,
-        sharedString: SharedString,
-        private overlayMap: IMap,
+        sharedString: mergeTree.SharedString,
+        private overlayMap: types.IMap,
         private image: Image) {
 
         super(element);
@@ -58,7 +56,7 @@ export class FlowContainer extends ui.Component {
         overlayCanvasDiv.classList.add("overlay-canvas");
         this.overlayCanvas = new OverlayCanvas(collabDocument, overlayCanvasDiv, layerPanelDiv);
 
-        this.overlayCanvas.on("ink", (layer: InkLayer, model: IInk, start: ui.IPoint) =>  {
+        this.overlayCanvas.on("ink", (layer: InkLayer, model: types.IInk, start: ui.IPoint) =>  {
             this.overlayCanvas.enableInkHitTest(false);
             const position = this.flowView.getNearestPosition(start);
             this.overlayCanvas.enableInkHitTest(true);
@@ -75,8 +73,8 @@ export class FlowContainer extends ui.Component {
             // Inserts the marker at the flow view's cursor position
             sharedString.insertMarker(
                 position,
-                MarkerBehaviors.None,
-                { [reservedMarkerIdKey]: model.id });
+                mergeTree.MarkerBehaviors.None,
+                { [mergeTree.reservedMarkerIdKey]: model.id });
         });
 
         this.status.on("dry", (value) => {
@@ -127,7 +125,7 @@ export class FlowContainer extends ui.Component {
         element.appendChild(image.element);
     }
 
-    public trackInsights(insights: IMap) {
+    public trackInsights(insights: types.IMap) {
         this.updateInsights(insights);
         insights.on("valueChanged", () => {
             this.updateInsights(insights);
@@ -156,7 +154,7 @@ export class FlowContainer extends ui.Component {
         if (this.activeLayers[id]) {
             this.activeLayers[id].active = true;
         }
-        const ink = await this.overlayMap.get(id) as IInk;
+        const ink = await this.overlayMap.get(id) as types.IInk;
 
         if (!(id in this.layerCache)) {
             const layer = new InkLayer(this.size, ink);
@@ -183,7 +181,7 @@ export class FlowContainer extends ui.Component {
         this.activeLayers[id].layer.setPosition(location);
     }
 
-    private async updateInsights(insights: IMap) {
+    private async updateInsights(insights: types.IMap) {
         const view = await insights.getView();
 
         if (view.has("ResumeAnalytics") && this.image) {
