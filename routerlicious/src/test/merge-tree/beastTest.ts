@@ -1,16 +1,17 @@
-// tslint:disable
-
+import * as assert from "assert";
+import * as JsDiff from "diff";
 import * as fs from "fs";
-import * as Collections from "../../merge-tree/collections";
+import * as path from "path";
 import * as random from "random-js";
 import * as MergeTree from "../../merge-tree";
 import * as Base from "../../merge-tree/base";
+import * as Collections from "../../merge-tree/collections";
 import * as ops from "../../merge-tree/ops";
-import * as Text from "../../merge-tree/text";
-import * as JsDiff from "diff";
+import { findRandomWord } from "../../merge-tree/random";
 import * as Paparazzo from "../../merge-tree/snapshot";
-import * as path from "path";
-import * as assert from "assert";
+import * as Text from "../../merge-tree/text";
+
+// tslint:disable
 
 function compareStrings(a: string, b: string) {
     return a.localeCompare(b);
@@ -724,7 +725,7 @@ export function TestPack(verbose = true) {
         }
 
         function randomWordMove(client: MergeTree.Client) {
-            let word1 = Text.findRandomWord(client.mergeTree, client.getClientId());
+            let word1 = findRandomWord(client.mergeTree, client.getClientId());
             if (word1) {
                 let removeStart = word1.pos;
                 let removeEnd = removeStart + word1.text.length;
@@ -734,9 +735,9 @@ export function TestPack(verbose = true) {
                 if (MergeTree.useCheckQ) {
                     client.enqueueTestString();
                 }
-                let word2 = Text.findRandomWord(client.mergeTree, client.getClientId());
+                let word2 = findRandomWord(client.mergeTree, client.getClientId());
                 while (!word2) {
-                    word2 = Text.findRandomWord(client.mergeTree, client.getClientId());
+                    word2 = findRandomWord(client.mergeTree, client.getClientId());
                 }
                 let pos = word2.pos + word2.text.length;
                 server.enqueueMsg(client.makeInsertMsg(word1.text, pos, MergeTree.UnassignedSequenceNumber,
