@@ -1,8 +1,8 @@
 import * as assert from "assert";
+import * as agent from "../../agent";
 import { ITrace } from "../../api-core";
 import * as core from "../../core";
 import { ClientSequenceTimeout, TakeANumber } from "../../deli/takeANumber";
-import * as shared from "../../shared";
 import * as utils from "../../utils";
 import { MessageFactory, TestCollection, TestKafka } from "../testUtils";
 
@@ -80,7 +80,7 @@ describe("Routerlicious", () => {
                     await ticketer.ticket(wrapMessage(secondMessageFactory.createJoin(timeOffset)), testTrace);
                     timeOffset += 1;
                     await ticketer.ticket(wrapMessage(messageFactory.create(10, timeOffset)), testTrace);
-                    timeOffset += shared.constants.MinSequenceNumberWindow;
+                    timeOffset += agent.constants.MinSequenceNumberWindow;
                     await ticketer.ticket(wrapMessage(secondMessageFactory.create(15, timeOffset)), testTrace);
                     assert.equal(testKafka.getLastMessage().operation.minimumSequenceNumber, 10);
 
@@ -88,12 +88,12 @@ describe("Routerlicious", () => {
                     // force the MSN window to move
                     timeOffset += 1;
                     await ticketer.ticket(wrapMessage(messageFactory.createLeave(timeOffset)), testTrace);
-                    timeOffset += shared.constants.MinSequenceNumberWindow;
+                    timeOffset += agent.constants.MinSequenceNumberWindow;
                     await ticketer.ticket(wrapMessage(secondMessageFactory.create(20, timeOffset)), testTrace);
                     assert.equal(testKafka.getLastMessage().operation.minimumSequenceNumber, 15);
 
                     // And then have the second client leave
-                    timeOffset += shared.constants.MinSequenceNumberWindow;
+                    timeOffset += agent.constants.MinSequenceNumberWindow;
                     await ticketer.ticket(wrapMessage(secondMessageFactory.createLeave(timeOffset)), testTrace);
                     assert.equal(testKafka.getLastMessage().operation.minimumSequenceNumber, 20);
 
@@ -101,7 +101,7 @@ describe("Routerlicious", () => {
                     const thirdMessageFactory = new MessageFactory(testId, "test3");
                     timeOffset += 1;
                     await ticketer.ticket(wrapMessage(thirdMessageFactory.create(30, timeOffset)), testTrace);
-                    timeOffset += shared.constants.MinSequenceNumberWindow;
+                    timeOffset += agent.constants.MinSequenceNumberWindow;
                     await ticketer.ticket(wrapMessage(thirdMessageFactory.create(31, timeOffset)), testTrace);
                     assert.equal(testKafka.getLastMessage().operation.minimumSequenceNumber, 30);
                 });
@@ -116,7 +116,7 @@ describe("Routerlicious", () => {
                     await ticketer.ticket(wrapMessage(
                         secondMessageFactory.create(
                             20,
-                            ClientSequenceTimeout + shared.constants.MinSequenceNumberWindow)), testTrace);
+                            ClientSequenceTimeout + agent.constants.MinSequenceNumberWindow)), testTrace);
                     assert.equal(testKafka.getLastMessage().operation.minimumSequenceNumber, 20);
                 });
             });

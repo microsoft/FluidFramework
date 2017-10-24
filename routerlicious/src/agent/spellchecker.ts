@@ -1,10 +1,8 @@
 // tslint:disable
 
-import { queue } from "async";
-import * as _ from "lodash";
-import * as api from "../api-core";
-import * as mergeTree from "../merge-tree";
-import * as Collections from "../merge-tree/collections";
+import * as queue from "async/queue";
+import clone = require("lodash/clone");
+import { core, mergeTree } from "../client-api";
 import { IIntelligentService } from "../intelligence";
 
 interface ISpellQuery {
@@ -28,7 +26,7 @@ interface IPgMarker {
     pos: number;
 }
 
-function compareProxStrings(a: Collections.ProxString<number>, b: Collections.ProxString<number>) {
+function compareProxStrings(a: mergeTree.Collections.ProxString<number>, b: mergeTree.Collections.ProxString<number>) {
     let ascore = ((a.invDistance * 200) * a.val) + a.val;
     let bscore = ((b.invDistance * 200) * b.val) + b.val;
     return bscore - ascore;
@@ -54,7 +52,7 @@ class Speller {
     pendingCheckInfo: IWordCheckSpec;
     pendingWordCheckTimer: any;
 
-    constructor(public sharedString: mergeTree.SharedString, private dict: Collections.TST<number>,
+    constructor(public sharedString: mergeTree.SharedString, private dict: mergeTree.Collections.TST<number>,
         private intelligence: IIntelligentService) {
         this.initializeSpellerQueue();
     }
@@ -142,7 +140,7 @@ class Speller {
                 this.currentIdleTime = 0;
             }
         }, idleCheckerMS);
-        this.sharedString.on("op", (msg: api.ISequencedObjectMessage) => {
+        this.sharedString.on("op", (msg: core.ISequencedObjectMessage) => {
             if (msg && msg.contents) {
                 let delta =  <mergeTree.IMergeTreeOp>msg.contents;
                 this.pendingSpellChecks.push(delta);
@@ -154,7 +152,7 @@ class Speller {
 
     runSpellOp(intelligence: IIntelligentService) {
         if (this.pendingSpellChecks.length > 0) {
-            const pendingChecks = _.clone(this.pendingSpellChecks);
+            const pendingChecks = clone(this.pendingSpellChecks);
             this.pendingSpellChecks = [];
             for (let delta of pendingChecks) {
                 this.spellOp(delta, intelligence);
@@ -481,7 +479,7 @@ class Speller {
 export class Spellcheker {
     constructor(
         private root: mergeTree.SharedString,
-        private dict: Collections.TST<number>,
+        private dict: mergeTree.Collections.TST<number>,
         private intelligence: IIntelligentService) {
     }
 

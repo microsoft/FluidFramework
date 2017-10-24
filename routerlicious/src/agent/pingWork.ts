@@ -1,5 +1,4 @@
-import * as io from "socket.io-client";
-import { IPingMessage } from "../api-core";
+import { core, socketIoClient as io } from "../client-api";
 import { IWork} from "./work";
 
 /**
@@ -17,7 +16,7 @@ export class PingWork implements IWork {
 
     public start(): Promise<void> {
         this.pingTimer = setInterval(() => {
-            const pingMessage: IPingMessage = {
+            const pingMessage: core.IPingMessage = {
                 acked: false,
                 traces: [{
                     action: "start",
@@ -28,7 +27,7 @@ export class PingWork implements IWork {
             this.socket.emit(
                 "pingObject",
                 pingMessage,
-                (error, response: IPingMessage) => {
+                (error, response: core.IPingMessage) => {
                     if (!error && response.traces.length > 0) {
                         response.acked = true;
                         response.traces.push({

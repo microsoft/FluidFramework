@@ -1,10 +1,10 @@
 import * as moniker from "moniker";
 import { Provider } from "nconf";
 import * as winston from "winston";
+import * as agent from "../agent";
 import * as api from "../api-core";
 import * as core from "../core";
 import { ThroughputCounter } from "../core-utils";
-import * as shared from "../shared";
 import * as socketStorage from "../socket-storage";
 import * as utils from "../utils";
 import * as storage from "./storage";
@@ -18,7 +18,7 @@ export function register(
     metricClientConfig: any) {
 
     const throughput = new ThroughputCounter(winston.info);
-    const metricLogger = shared.createMetricClient(metricClientConfig);
+    const metricLogger = agent.createMetricClient(metricClientConfig);
 
     webSocketServer.on("connection", (socket: core.IWebSocket) => {
         const connectionProfiler = winston.startTimer();

@@ -5,15 +5,19 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "browserify": "mkdirp public/scripts/dist && npm run browserify:controllers",
+    "browserify": "mkdirp public/scripts/dist && npm run browserify:all",
+    "browserify:all": "concurrently \"npm run browserify:api\" \"npm run browserify:ui\" \"npm run browserify:controllers\" \"npm run browserify:agent\"",
+    "browserify:all:min": "concurrently \"npm run browserify:api:min\" \"npm run browserify:ui:min\" \"npm run browserify:controllers:min\" \"npm run browserify:agent:min\"",
     "browserify:controllers": "browserify src/alfred/controllers/index.ts --debug -s controller -p [ tsify ] | exorcist public/scripts/dist/index.js.map > public/scripts/dist/index.js",
     "browserify:controllers:min": "browserify src/alfred/controllers/index.ts --debug -s controller -p [ tsify ] | uglifyjs --source-map content=inline,url=index.min.js.map -o public/scripts/dist/index.min.js",
     "browserify:api": "browserify src/client-api/index.ts --debug -s prague -p [ tsify ] | exorcist public/scripts/dist/api.js.map > public/scripts/dist/api.js",
     "browserify:api:min": "browserify src/client-api/index.ts --debug -s prague -p [ tsify ] | uglifyjs --source-map content=inline,url=api.min.js.map -o public/scripts/dist/api.min.js",
     "browserify:ui": "browserify src/client-ui/index.ts --debug -s pragueUi -p [ tsify ] | exorcist public/scripts/dist/ui.js.map > public/scripts/dist/ui.js",
     "browserify:ui:min": "browserify src/client-ui/index.ts --debug -s pragueUi -p [ tsify ] | uglifyjs --source-map content=inline,url=ui.min.js.map -o public/scripts/dist/ui.min.js",
+    "browserify:agent": "browserify src/agent/index.ts --debug -s pragueAgent -p [ tsify ] | exorcist public/scripts/dist/agent.js.map > public/scripts/dist/agent.js",
+    "browserify:agent:min": "browserify src/agent/index.ts --debug -s pragueAgent -p [ tsify ] | uglifyjs --source-map content=inline,url=agent.min.js.map -o public/scripts/dist/agent.min.js",
     "build": "concurrently \"npm run tslint\" \"npm run tsc\" \"npm run browserify\" \"npm run less\"",
-    "build:full": "npm run build && npm run browserify:controllers:min",
+    "build:full": "npm run build && npm run browserify:all:min",
     "build:watch": "watch 'npm run tsc && npm run browserify' src",
     "less": "lessc src/stylesheets/style.less public/stylesheets/dist/style.css",
     "alfred": "node dist/alfred/www.js",
@@ -171,7 +175,13 @@
     ]
   },
   "browserify-shim": {
-    "../client-api": "global:prague"
+    "../client-api": "global:prague",
+    "../../client-api": "global:prague",
+    "../client-ui": "global:pragueUi",
+    "../../client-ui": "global:pragueUi",
+    "../agent": "global:pragueAgent",
+    "../../agent": "global:pragueAgent",
+    "jquery": "global:$"
   },
   "nyc": {
     "all": true,

@@ -7,6 +7,9 @@ export { core };
 import * as cell from "../cell";
 export { cell };
 
+import * as utils from "../core-utils";
+export { utils };
+
 import * as types from "../data-types";
 export { types };
 
@@ -30,3 +33,6 @@ export { assert };
 
 import * as debug from "debug";
 export { debug };
+
+import * as socketIoClient from "socket.io-client";
+export { socketIoClient };
