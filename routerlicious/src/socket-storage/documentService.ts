@@ -1,5 +1,5 @@
 import * as resources from "gitresources";
-import * as _ from "lodash";
+import cloneDeep = require("lodash/cloneDeep");
 import performanceNow = require("performance-now");
 import * as io from "socket.io-client";
 import * as api from "../api-core";
@@ -178,7 +178,7 @@ export class DocumentService implements api.IDocumentService {
         // Route message to all registered clients
         for (const clientId in connectionMap) {
             if (connectionMap[clientId]) {
-                const clone = _.cloneDeep(message);
+                const clone = cloneDeep(message);
                 connectionMap[clientId].dispatchEvent(event, clone);
             }
         }

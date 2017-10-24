@@ -2,7 +2,7 @@
 import performanceNow = require("performance-now");
 import * as url from "url";
 import * as api from "../api-core";
-import { IMap, IMapView, IValueChanged } from "../map";
+import { IMap, IMapView, IValueChanged } from "../data-types";
 import * as SharedString from "../merge-tree";
 import * as ui from "../ui";
 import { Status } from "./status";

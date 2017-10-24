@@ -1,10 +1,10 @@
 import { EventEmitter } from "events";
 import * as resources from "gitresources";
-import * as _ from "lodash";
+import hasIn = require("lodash/hasIn");
 import * as api from "../api-core";
 import { getOrDefault } from "../core-utils";
+import { ICounter, IMap, IMapView, ISet } from "../data-types";
 import { Counter } from "./counter";
-import { ICounter, IMap, IMapView, ISet } from "./interfaces";
 import { DistributedSet } from "./set";
 
 /**
@@ -121,7 +121,7 @@ export class MapView implements IMapView {
 
     public set(key: string, value: any): void {
         let operationValue: IMapValue;
-        if (_.hasIn(value, "__collaborativeObject__")) {
+        if (hasIn(value, "__collaborativeObject__")) {
             // Convert any local collaborative objects to our internal storage format
             const collaborativeObject = value as api.ICollaborativeObject;
             const collabMapValue: ICollaborativeMapValue = {

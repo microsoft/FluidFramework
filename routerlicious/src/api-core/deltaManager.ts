@@ -1,5 +1,5 @@
 import * as assert from "assert";
-import * as async from "async";
+import * as queue from "async/queue";
 import { EventEmitter } from "events";
 import { ThroughputCounter } from "../core-utils";
 import { debug } from "./debug";
@@ -52,7 +52,7 @@ export class DeltaManager {
         this.minSequenceNumber = this.baseSequenceNumber;
 
         const throughputCounter = new ThroughputCounter(debug, `${this.documentId} `);
-        const q = async.queue<protocol.ISequencedDocumentMessage, void>((op, callback) => {
+        const q = queue<protocol.ISequencedDocumentMessage, void>((op, callback) => {
             // Handle the op
             this.handleOp(op);
             callback();
