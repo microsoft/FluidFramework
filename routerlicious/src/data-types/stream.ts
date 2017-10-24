@@ -1,4 +1,4 @@
-import * as uuid from "node-uuid";
+import * as uuid from "uuid/v4";
 import * as api from "../api-core";
 
 export interface IPoint {
@@ -45,7 +45,7 @@ export class Delta implements IDelta {
     public stylusUp(
         point: IPoint,
         pressure: number,
-        id: string = uuid.v4(),
+        id: string = uuid(),
         time: number = new Date().getTime()): Delta {
 
         let stylusUp: IStylusUpAction = {
@@ -64,7 +64,7 @@ export class Delta implements IDelta {
         pressure: number,
         pen: IPen,
         layer: number = 0,
-        id: string = uuid.v4(),
+        id: string = uuid(),
         time: number = new Date().getTime()): Delta {
 
         let stylusDown: IStylusDownAction = {
@@ -83,7 +83,7 @@ export class Delta implements IDelta {
     public stylusMove(
         point: IPoint,
         pressure: number,
-        id: string = uuid.v4(),
+        id: string = uuid(),
         time: number = new Date().getTime()): Delta {
 
         let stylusMove: IStylusMoveAction = {

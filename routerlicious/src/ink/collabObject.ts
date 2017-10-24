@@ -1,16 +1,8 @@
 import * as resources from "gitresources";
 import * as api from "../api-core";
-import { IDelta } from "./delta";
+import { IDelta, IInk, IInkLayer } from "../data-types";
 import { InkExtension } from "./extension";
-import { IInkLayer, ISnapshot, Snapshot } from "./snapshot";
-
-export interface IInk extends api.ICollaborativeObject {
-    getLayers(): IInkLayer[];
-
-    getLayer(key: string): IInkLayer;
-
-    submitOp(op: IDelta);
-}
+import { ISnapshot, Snapshot } from "./snapshot";
 
 /**
  * Map snapshot definition
