@@ -1,7 +1,7 @@
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import * as resources from "gitresources";
-import * as uuid from "node-uuid";
+import * as uuid from "uuid/v4";
 import performanceNow = require("performance-now");
 import {
     AttachObject,
@@ -30,6 +30,7 @@ import {
     RoundTrip,
     TreeEntry } from "../api-core";
 import * as cell from "../cell";
+import { ICell, IInk, IMap } from "../data-types";
 import * as ink from "../ink";
 import * as mapExtension from "../map";
 import * as mergeTree from "../merge-tree";
@@ -188,7 +189,7 @@ export class Document {
      * Constructs a new collaborative object that can be attached to the document
      * @param type the identifier for the collaborative object type
      */
-    public create(type: string, id = uuid.v4()): ICollaborativeObject {
+    public create(type: string, id = uuid()): ICollaborativeObject {
         const extension = this.registry.getExtension(type);
         const object = extension.create(this, id);
 
@@ -240,16 +241,16 @@ export class Document {
     /**
      * Creates a new collaborative map
      */
-    public createMap(): mapExtension.IMap {
-        return this.create(mapExtension.MapExtension.Type) as mapExtension.IMap;
+    public createMap(): IMap {
+        return this.create(mapExtension.MapExtension.Type) as IMap;
     }
 
     /**
      * Creates a new collaborative cell.
      * TODO (tanvir): replace this with type class.
      */
-    public createCell(): cell.ICell {
-        return this.create(cell.CellExtension.Type) as cell.ICell;
+    public createCell(): ICell {
+        return this.create(cell.CellExtension.Type) as ICell;
     }
 
     /**
@@ -262,15 +263,15 @@ export class Document {
     /**
      * Creates a new ink collaborative object
      */
-    public createInk(): ink.IInk {
-        return this.create(ink.InkExtension.Type) as ink.IInk;
+    public createInk(): IInk {
+        return this.create(ink.InkExtension.Type) as IInk;
     }
 
     /**
      * Retrieves the root collaborative object that the document is based on
      */
-    public getRoot(): mapExtension.IMap {
-        return this.distributedObjects[rootMapId].object as mapExtension.IMap;
+    public getRoot(): IMap {
+        return this.distributedObjects[rootMapId].object as IMap;
     }
 
     /**
