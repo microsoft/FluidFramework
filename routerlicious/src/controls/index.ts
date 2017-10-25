@@ -7,3 +7,4 @@ export * from "./layerPanel";
 export * from "./popup";
 export * from "./status";
 export * from "./overlayCanvas";
+export * from "./shapeRecognizer";

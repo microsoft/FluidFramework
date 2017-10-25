@@ -156,6 +156,7 @@
     "redis": "^2.7.1",
     "request": "^2.81.0",
     "serve-favicon": "^2.4.1",
+    "shape-detector": "^0.2.1",
     "socket.io": "^1.7.3",
     "socket.io-emitter": "^2.0.0",
     "socket.io-redis": "^4.0.0",
