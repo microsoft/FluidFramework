@@ -79,8 +79,7 @@ data:
             "tasks": {
                 "spell": "server",
                 "intel": "server",
-                "snapshot": "both",
-                "ping": "client"
+                "snapshot": "both"
             },
             "workerType": "random",
             "workerAckTimeMSec": 250,
