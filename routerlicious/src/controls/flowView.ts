@@ -2451,7 +2451,6 @@ export class FlowView extends ui.Component {
     public presenceMap: types.IMap;
     public presenceMapView: types.IMapView;
     public presenceVector: ILocalPresenceInfo[] = [];
-    public presenceSeq = 0;
     public docRoot: types.IMapView;
     public curPG: SharedString.Marker;
     private lastVerticalX = -1;
@@ -2477,9 +2476,6 @@ export class FlowView extends ui.Component {
                 let delta = <SharedString.IMergeTreeOp> msg.contents;
                 if (this.applyOp(delta, msg)) {
                     this.queueRender(msg);
-                }
-                if (this.presenceSeq <= this.client.mergeTree.getCollabWindow().minSeq) {
-                    this.updatePresence();
                 }
             }
         });
@@ -2580,7 +2576,6 @@ export class FlowView extends ui.Component {
                 origPos: this.cursor.pos,
                 refseq: this.client.getCurrentSeq(),
             };
-            this.presenceSeq = presenceInfo.refseq;
             this.presenceMapView.set(this.client.longClientId, presenceInfo);
         }
     }
