@@ -1,9 +1,7 @@
-import * as api from "../api";
-import * as apiCore from "../api-core";
-import { IMap, IMapView } from "../data-types";
+import { api, core, types } from "../client-api";
 import { nativeTextAnalytics, resumeAnalytics, textAnalytics } from "../intelligence";
-import { IntelligentServicesManager } from "./";
 import { BaseWork} from "./baseWork";
+import { IntelligentServicesManager } from "./intelligence";
 import { IWork} from "./work";
 
 export class IntelWork extends BaseWork implements IWork {
@@ -18,12 +16,12 @@ export class IntelWork extends BaseWork implements IWork {
         if (!root.has("insights")) {
             root.set("insights", this.document.createMap());
         }
-        const insightsMap = root.get("insights") as IMap;
+        const insightsMap = root.get("insights") as types.IMap;
         const insightsMapView = await insightsMap.getView();
         return this.processIntelligenceWork(this.document, insightsMapView);
     }
 
-    private processIntelligenceWork(doc: api.Document, insightsMap: IMapView): Promise<void> {
+    private processIntelligenceWork(doc: api.Document, insightsMap: types.IMapView): Promise<void> {
         const intelligenceManager = new IntelligentServicesManager(doc, insightsMap);
         intelligenceManager.registerService(resumeAnalytics.factory.create(this.config.intelligence.resume));
         intelligenceManager.registerService(textAnalytics.factory.create(this.config.intelligence.textAnalytics));
@@ -31,12 +29,12 @@ export class IntelWork extends BaseWork implements IWork {
             intelligenceManager.registerService(
                 nativeTextAnalytics.factory.create(this.config.intelligence.nativeTextAnalytics));
         }
-        const eventHandler = (op: apiCore.ISequencedDocumentMessage) => {
-            if (op.type === apiCore.ObjectOperation) {
+        const eventHandler = (op: core.ISequencedDocumentMessage) => {
+            if (op.type === core.ObjectOperation) {
                 const objectId = op.contents.address;
                 const object = doc.get(objectId);
                 intelligenceManager.process(object);
-            } else if (op.type === apiCore.AttachObject) {
+            } else if (op.type === core.AttachObject) {
                 const object = doc.get(op.contents.id);
                 intelligenceManager.process(object);
             }

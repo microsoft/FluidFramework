@@ -1,9 +1,7 @@
 import * as resources from "gitresources";
 import * as $ from "jquery";
-import * as api from "../../api";
-import { ICell } from "../../data-types";
-import * as shared from "../../shared";
-import * as socketStorage from "../../socket-storage";
+import * as agent from "../../agent";
+import { api, socketStorage, types } from "../../client-api";
 
 async function loadDocument(id: string, version: resources.ICommit): Promise<api.Document> {
     console.log("Loading in root document...");
@@ -13,7 +11,7 @@ async function loadDocument(id: string, version: resources.ICommit): Promise<api
     return document;
 }
 
-async function updateOrCreateValue(cell: ICell, container: JQuery, doc: api.Document) {
+async function updateOrCreateValue(cell: types.ICell, container: JQuery, doc: api.Document) {
 
     // Initially cell is empty.
     const emptyCell = await cell.empty();
@@ -43,7 +41,7 @@ async function updateOrCreateValue(cell: ICell, container: JQuery, doc: api.Docu
 /**
  * Displays the actual value and listen for updates.
  */
-async function displayCellValue(cell: ICell, container: JQuery, doc: api.Document) {
+async function displayCellValue(cell: types.ICell, container: JQuery, doc: api.Document) {
 
     const value = $("<div></div>");
 
@@ -60,7 +58,7 @@ async function displayCellValue(cell: ICell, container: JQuery, doc: api.Documen
 /**
  * Displays the cell
  */
-async function displayCell(parentElement: JQuery, cell: ICell, doc: api.Document) {
+async function displayCell(parentElement: JQuery, cell: types.ICell, doc: api.Document) {
     const header = $(`<h2>${cell.id}</h2>`);
     parentElement.append(header);
 
@@ -84,12 +82,12 @@ async function displayCell(parentElement: JQuery, cell: ICell, doc: api.Document
 /**
  * Add another cell to the cell.
  */
-function addAnotherCell(parent: JQuery, cell: ICell, element1: JQuery, element2: JQuery, doc: api.Document) {
+function addAnotherCell(parent: JQuery, cell: types.ICell, element1: JQuery, element2: JQuery, doc: api.Document) {
     element1.remove();
     element2.remove();
 
     const childCell = $(`<div></div>`);
-    const newCell = doc.createCell() as ICell;
+    const newCell = doc.createCell() as types.ICell;
     parent.append(childCell);
     cell.set(newCell);
 
@@ -99,7 +97,7 @@ function addAnotherCell(parent: JQuery, cell: ICell, element1: JQuery, element2:
 /**
  * Randomly changes the values in the cell
  */
-function randomizeCell(cell: ICell, element1: JQuery, element2: JQuery) {
+function randomizeCell(cell: types.ICell, element1: JQuery, element2: JQuery) {
     element1.remove();
     element2.remove();
     const keys = ["foo", "bar", "baz", "binky", "winky", "twinkie"];
@@ -113,16 +111,16 @@ export async function load(id: string, version: resources.ICommit, config: any) 
     socketStorage.registerAsDefault(document.location.origin, config.blobStorageUrl, config.repository);
 
     // Bootstrap worker service.
-    shared.registerWorker(config, "cell");
+    agent.registerWorker(config, "cell");
 
     const doc = await loadDocument(id, version);
     const root = doc.getRoot();
 
-    let cell: ICell;
+    let cell: types.ICell;
     if (await root.has("cell")) {
-        cell = await root.get("cell") as ICell;
+        cell = await root.get("cell");
     } else {
-        cell = doc.createCell() as ICell;
+        cell = doc.createCell();
         root.set("cell", cell);
     }
 

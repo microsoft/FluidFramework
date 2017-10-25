@@ -1,10 +1,8 @@
 import * as resources from "gitresources";
 import * as $ from "jquery";
-import * as _ from "lodash";
-import * as api from "../../api";
-import { ICounter, IMap, ISet } from "../../data-types";
-import * as shared from "../../shared";
-import * as socketStorage from "../../socket-storage";
+import hasIn = require("lodash/hasIn");
+import * as agent from "../../agent";
+import { api, socketStorage, types } from "../../client-api";
 
 async function loadDocument(id: string, version: resources.ICommit): Promise<api.Document> {
     console.log("Loading in root document...");
@@ -14,12 +12,12 @@ async function loadDocument(id: string, version: resources.ICommit): Promise<api
     return document;
 }
 
-async function updateOrCreateKey(key: string, map: IMap, container: JQuery, doc: api.Document) {
+async function updateOrCreateKey(key: string, map: types.IMap, container: JQuery, doc: api.Document) {
     const value = await map.get(key);
 
     let keyElement = container.find(`>.${key}`);
     const newElement = keyElement.length === 0;
-    const isCollab = _.hasIn(value, "__collaborativeObject__");
+    const isCollab = hasIn(value, "__collaborativeObject__");
 
     if (newElement) {
         keyElement = $(`<div class="${key} ${isCollab ? "collab-object" : ""}"></div>`);
@@ -35,7 +33,7 @@ async function updateOrCreateKey(key: string, map: IMap, container: JQuery, doc:
     }
 }
 
-async function displayValues(map: IMap, container: JQuery, doc: api.Document) {
+async function displayValues(map: types.IMap, container: JQuery, doc: api.Document) {
     const keys = await map.keys();
     keys.sort();
 
@@ -55,7 +53,7 @@ async function displayValues(map: IMap, container: JQuery, doc: api.Document) {
 /**
  * Displays the keys in the map
  */
-async function displayMap(parentElement: JQuery, key: string, map: IMap, parent: IMap, doc: api.Document) {
+async function displayMap(parentElement: JQuery, key: string, map: types.IMap, parent: types.IMap, doc: api.Document) {
     const header = key !== null ? $(`<h2>${key}: ${map.id}</h2>`) : $(`<h2>${map.id}</h2>`);
     parentElement.append(header);
 
@@ -91,11 +89,11 @@ async function displayMap(parentElement: JQuery, key: string, map: IMap, parent:
 /**
  * Randomly changes the values in the map
  */
-async function randomizeMap(map: IMap) {
+async function randomizeMap(map: types.IMap) {
     // link up the randomize button
     const keys = ["foo", "bar", "baz", "binky", "winky", "twinkie"];
-    const counter = await map.createCounter("counter", 100) as ICounter;
-    const set = await map.createSet("set", [1, 2, 3, 3, 2, 4]) as ISet<number>;
+    const counter = await map.createCounter("counter", 100) as types.ICounter;
+    const set = await map.createSet("set", [1, 2, 3, 3, 2, 4]) as types.ISet<number>;
     setInterval(async () => {
         const key = keys[Math.floor(Math.random() * keys.length)];
         map.set(key, Math.floor(Math.random() * 100000).toString());
@@ -111,7 +109,7 @@ export function load(id: string, version: resources.ICommit, config: any) {
 
     $(document).ready(() => {
         // Bootstrap worker service.
-        shared.registerWorker(config, "maps");
+        agent.registerWorker(config, "maps");
         loadDocument(id, version).then(async (doc) => {
             // tslint:disable-next-line
             window["doc"] = doc;

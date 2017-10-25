@@ -5,6 +5,11 @@
   "main": "index.js",
   "dependencies": {},
   "devDependencies": {
+    "@types/debug": "0.0.30",
+    "@types/jquery": "^3.2.15",
+    "@types/node": "^8.0.47",
+    "@types/socket.io-client": "^1.4.31",
+    "gitresources": "https://praguenpm.blob.core.windows.net/packages/gitresources-0.2.0.tgz",
     "typescript": "^2.5.3"
   },
   "scripts": {

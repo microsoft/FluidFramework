@@ -2,13 +2,9 @@ import * as resources from "gitresources";
 import performanceNow = require("performance-now");
 import * as request from "request";
 import * as url from "url";
-import * as API from "../../api";
-import * as controls from "../../controls";
-import { IMap } from "../../data-types";
-import * as SharedString from "../../merge-tree";
-import * as shared from "../../shared";
-import * as socketStorage from "../../socket-storage";
-import * as ui from "../../ui";
+import * as agent from "../../agent";
+import { api as API, mergeTree as SharedString, socketStorage, types } from "../../client-api";
+import { controls, ui } from "../../client-ui";
 
 // first script loaded
 let clockStart = Date.now();
@@ -31,9 +27,9 @@ function downloadRawText(textUrl: string): Promise<string> {
     });
 }
 
-async function getInsights(map: IMap, id: string): Promise<IMap> {
-    const insights = await map.wait<IMap>("insights");
-    return insights.wait<IMap>(id);
+async function getInsights(map: types.IMap, id: string): Promise<types.IMap> {
+    const insights = await map.wait<types.IMap>("insights");
+    return insights.wait<types.IMap>(id);
 }
 
 export async function onLoad(id: string, version: resources.ICommit, config: any) {
@@ -101,7 +97,7 @@ export async function onLoad(id: string, version: resources.ICommit, config: any
     theFlow.setEdit(root);
 
     // Bootstrap worker service.
-    shared.registerWorker(config, "sharedText");
+    agent.registerWorker(config, "sharedText");
 
     sharedString.loaded.then(() => {
 

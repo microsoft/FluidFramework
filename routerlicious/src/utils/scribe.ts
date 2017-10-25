@@ -1,11 +1,8 @@
-import * as _ from "lodash";
-import * as api from "../api";
-import * as apiCore from "../api-core";
-import { Histogram, RateCounter } from "../core-utils";
-import * as SharedString from "../merge-tree";
+import clone = require("lodash/clone");
+import { api, core, mergeTree, utils } from "../client-api";
 
 export interface IScribeMetrics {
-    histogram: Histogram;
+    histogram: utils.Histogram;
 
     // Average latency between when a message is sent and when it is ack'd by the server
     latencyAverage: number;
@@ -46,9 +43,9 @@ function padTime(value: number) {
  */
 function normalizeText(input: string): string {
     let result = "";
-    const segments = SharedString.loadSegments(input, 0);
+    const segments = mergeTree.loadSegments(input, 0);
     for (const segment of segments) {
-        result += (<SharedString.TextSegment> segment).text;
+        result += (<mergeTree.TextSegment> segment).text;
     }
 
     return result;
@@ -68,10 +65,10 @@ function createChartData(length: number): IChartData {
     return {
         index: 0,
         label: emptyLabel,
-        maximum: _.clone(empty),
-        mean: _.clone(empty),
-        minimum: _.clone(empty),
-        stdDev: _.clone(empty),
+        maximum: clone(empty),
+        mean: clone(empty),
+        minimum: clone(empty),
+        stdDev: clone(empty),
     };
 }
 
@@ -141,7 +138,7 @@ function getChartConfiguration(data: IChartData) {
     };
 }
 
-function getHistogramConfiguration(histogram: Histogram) {
+function getHistogramConfiguration(histogram: utils.Histogram) {
     return {
         series: [
             {
@@ -165,9 +162,9 @@ function getHistogramConfiguration(histogram: Histogram) {
 }
 
 function rearrange(array: any[], index: number): any[] {
-    const clone = _.clone(array);
-    const spliced = clone.splice(0, index + 1);
-    return clone.concat(spliced);
+    const arrayClone = clone(array);
+    const spliced = arrayClone.splice(0, index + 1);
+    return arrayClone.concat(spliced);
 }
 
 function combine(first: number[], second: number[], combine: (a, b) => number): number[] {
@@ -184,7 +181,7 @@ function combine(first: number[], second: number[], combine: (a, b) => number): 
  */
 async function typeFile(
     document: api.Document,
-    sharedString: SharedString.SharedString,
+    sharedString: mergeTree.SharedString,
     fileText: string,
     intervalTime: number,
     callback: ScribeMetricsCallback): Promise<number> {
@@ -220,7 +217,7 @@ async function typeFile(
         let readPosition = 0;
 
         const historgramRange = 5;
-        const histogram = new Histogram(historgramRange);
+        const histogram = new utils.Histogram(historgramRange);
 
         fileText = normalizeText(fileText);
         const metrics: IScribeMetrics = {
@@ -238,9 +235,9 @@ async function typeFile(
         // Trigger a new sample after a second has elapsed
         const samplingRate = 1000;
 
-        const ackCounter = new RateCounter();
+        const ackCounter = new utils.RateCounter();
         ackCounter.reset();
-        const latencyCounter = new RateCounter();
+        const latencyCounter = new utils.RateCounter();
         latencyCounter.reset();
         const messageStart: number[] = [];
 
@@ -267,7 +264,7 @@ async function typeFile(
             }
         }, 1000);
 
-        sharedString.on("op", (message: apiCore.ISequencedObjectMessage) => {
+        sharedString.on("op", (message: core.ISequencedObjectMessage) => {
             if (message.clientSequenceNumber && message.clientId === document.clientId) {
 
                 ackCounter.increment(1);
@@ -308,11 +305,11 @@ async function typeFile(
                 // Notify of change in metrics
                 metrics.ackProgress = message.clientSequenceNumber / fileText.length;
 
-                callback(_.clone(metrics));
+                callback(clone(metrics));
             }
         });
 
-        const typingCounter = new RateCounter();
+        const typingCounter = new utils.RateCounter();
         typingCounter.reset();
 
         // Helper method to wrap a string operation with metric tracking for it
@@ -341,8 +338,8 @@ async function typeFile(
             }
             trackOperation(() => {
                 if (code === 10) {
-                    sharedString.insertMarker(insertPosition++, SharedString.MarkerBehaviors.Tile,
-                    {[SharedString.reservedTileLabelsKey]: ["pg"]});
+                    sharedString.insertMarker(insertPosition++, mergeTree.MarkerBehaviors.Tile,
+                    {[mergeTree.reservedTileLabelsKey]: ["pg"]});
                     readPosition++;
                 } else {
                     sharedString.insertText(fileText.charAt(readPosition++), insertPosition++);
@@ -387,7 +384,7 @@ export async function type(
 
     // Load the shared string extension we will type into
     const document = await api.load(id);
-    const sharedString = document.createString() as SharedString.SharedString;
+    const sharedString = document.createString() as mergeTree.SharedString;
     await document.getRoot().set("text", sharedString);
     await document.getRoot().set("presence", document.createMap());
 

@@ -1,11 +1,11 @@
+import * as agent from "../agent";
 import { Deferred } from "../core-utils";
-import * as shared from "../shared";
 import * as utils from "../utils";
 
 // TODO can likely consolidate the runner and the worker service
 
 export class PaparazziRunner implements utils.IRunner {
-    private workerService: shared.WorkerService;
+    private workerService: agent.WorkerService;
     private running = new Deferred<void>();
 
     constructor(
@@ -15,7 +15,7 @@ export class PaparazziRunner implements utils.IRunner {
         historianUrl: string,
         repo: string) {
 
-        this.workerService = new shared.WorkerService(
+        this.workerService = new agent.WorkerService(
             alfredUrl,
             tmzUrl,
             historianUrl,
