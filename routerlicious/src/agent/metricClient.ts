@@ -1,9 +1,8 @@
 import * as telegraf from "telegrafjs";
-import { ITrace} from "../api-core";
+import { core } from "../client-api";
 
 export interface IMetricClient {
-
-    writeLatencyMetric(series: string, traces: ITrace[]): Promise<void>;
+    writeLatencyMetric(series: string, traces: core.ITrace[]): Promise<void>;
 }
 
 class TelegrafClient implements IMetricClient {
@@ -20,7 +19,7 @@ class TelegrafClient implements IMetricClient {
         });
     }
 
-    public writeLatencyMetric(series: string, traces: ITrace[]): Promise<void> {
+    public writeLatencyMetric(series: string, traces: core.ITrace[]): Promise<void> {
         if (!this.connected || !traces || traces.length === 0) {
             return Promise.resolve();
         } else {
@@ -28,7 +27,7 @@ class TelegrafClient implements IMetricClient {
         }
     }
 
-    private createTelegrafRow(traces: ITrace[]): Object {
+    private createTelegrafRow(traces: core.ITrace[]): Object {
         let row = new Object();
         const Int = telegraf.Int;
         for (let trace of traces) {
@@ -51,7 +50,7 @@ class TelegrafClient implements IMetricClient {
 // Default client for loca run.
 class DefaultClient implements IMetricClient {
 
-    public writeLatencyMetric(series: string, traces: ITrace[]): Promise<void> {
+    public writeLatencyMetric(series: string, traces: core.ITrace[]): Promise<void> {
         return Promise.resolve();
     }
 }

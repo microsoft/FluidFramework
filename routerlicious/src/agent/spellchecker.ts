@@ -1,10 +1,6 @@
-// tslint:disable
-
-import { queue } from "async";
-import * as _ from "lodash";
-import * as api from "../api-core";
-import * as mergeTree from "../merge-tree";
-import * as Collections from "../merge-tree/collections";
+import * as queue from "async/queue";
+import clone = require("lodash/clone");
+import { core, mergeTree } from "../client-api";
 import { IIntelligentService } from "../intelligence";
 
 interface ISpellQuery {
@@ -28,168 +24,33 @@ interface IPgMarker {
     pos: number;
 }
 
-function compareProxStrings(a: Collections.ProxString<number>, b: Collections.ProxString<number>) {
+function compareProxStrings(a: mergeTree.Collections.ProxString<number>, b: mergeTree.Collections.ProxString<number>) {
     let ascore = ((a.invDistance * 200) * a.val) + a.val;
     let bscore = ((b.invDistance * 200) * b.val) + b.val;
     return bscore - ascore;
 }
 
-interface IWordCheckSpec {
-    pos: number;
-    rev?: boolean;
-}
-
 class Speller {
-    static altMax = 7;
-    static spellerParagraphs = 10000;
-    static idleTimeMS = 500;
-    currentIdleTime : number = 0;
-    pendingSpellChecks: mergeTree.IMergeTreeOp[] = [];
-    pendingParagraphs: Array<IPgMarker> =  new Array<IPgMarker>();
-    offsetMap: { [start: number]: number} = {};
-    verbose = false;
-    serviceCounter: number = 0;
-    initialQueue: any;
-    typingQueue: any;
-    pendingCheckInfo: IWordCheckSpec;
-    pendingWordCheckTimer: any;
+    private static altMax = 7;
+    private static spellerParagraphs = 10000;
+    private static idleTimeMS = 500;
+    private currentIdleTime: number = 0;
+    private pendingSpellChecks: mergeTree.IMergeTreeOp[] = [];
+    private pendingParagraphs: IPgMarker[] =  new Array<IPgMarker>();
+    private offsetMap: { [start: number]: number} = {};
+    private verbose = false;
+    private serviceCounter: number = 0;
+    private initialQueue: any;
+    private typingQueue: any;
 
-    constructor(public sharedString: mergeTree.SharedString, private dict: Collections.TST<number>,
+    constructor(
+        public sharedString: mergeTree.SharedString,
+        private dict: mergeTree.Collections.TST<number>,
         private intelligence: IIntelligentService) {
         this.initializeSpellerQueue();
     }
 
-    initializeSpellerQueue() {
-        this.initialQueue = queue((task: ISpellQuery, callback) => {
-            const resultP = this.intelligence.run(task);
-            resultP.then((result) => {
-                const spellErrors = this.checkSpelling(task.rsn, task.text, task.start, result);
-                if (spellErrors.annotations.length > 0) {
-                    for (const annotation of spellErrors.annotations) {
-                        this.sharedString.annotateRangeFromPast({ textError: annotation.textError }, annotation.globalStartOffset, annotation.globalEndOffset, spellErrors.rsn);
-                        this.sharedString.setLocalMinSeq(spellErrors.rsn);
-                    }
-                }
-                callback();
-            }, (error) => {
-                callback();
-            });
-        }, 1);
-        this.typingQueue = queue((task: ISpellQuery, callback) => {
-            callback();
-        }, 1);
-    }
-    spellingError(word: string) {
-        if (/\b\d+\b/.test(word)) {
-            return false;
-        }
-        else {
-            return !this.dict.contains(word);
-        }
-    }
-
-    checkPending(intelligence: IIntelligentService) {
-        this.currentWordSpellCheck(intelligence, this.pendingCheckInfo.pos, this.pendingCheckInfo.rev);
-    }
-    // TODO: use delayed spell check on each modified paragraph 
-    spellOp(delta: mergeTree.IMergeTreeOp, intelligence: IIntelligentService) {
-        // let setPending = () => {
-        //     if (this.pendingWordCheckTimer) {
-        //         clearTimeout(this.pendingWordCheckTimer);
-        //     }
-        //     this.pendingWordCheckTimer = setTimeout(() => {
-        //         this.checkPending(intelligence);
-        //     }, 300);
-        // }
-        if (delta.type === mergeTree.MergeTreeDeltaType.INSERT) {
-//            this.pendingCheckInfo = { pos: delta.pos1 };
-//            setPending();
-            this.currentWordSpellCheck(intelligence, delta.pos1);
-        } else if (delta.type === mergeTree.MergeTreeDeltaType.REMOVE) {
-//            this.pendingCheckInfo = { pos: delta.pos1, rev: true };
-//            setPending();
-            this.currentWordSpellCheck(intelligence, delta.pos1, true);
-        }
-        else if (delta.type === mergeTree.MergeTreeDeltaType.GROUP) {
-            for (let groupOp of delta.ops) {
-                this.spellOp(groupOp, intelligence);
-            }
-        }
-    }
-
-    enqueueParagraph(delta: mergeTree.IMergeTreeOp) {
-        if (delta.type === mergeTree.MergeTreeDeltaType.INSERT ||
-            delta.type === mergeTree.MergeTreeDeltaType.REMOVE) {
-            let pgMarker = this.sharedString.client.mergeTree.findTile(delta.pos1,
-                this.sharedString.client.getClientId(), "pg");
-            if (!pgMarker) {
-                pgMarker = { tile: undefined, pos: 0};
-            }
-            this.pendingParagraphs.push(pgMarker);
-        } else if (delta.type === mergeTree.MergeTreeDeltaType.GROUP) {
-            for (let groupOp of delta.ops) {
-                this.enqueueParagraph(groupOp);
-            }
-        }
-    }
-
-    setEvents(intelligence: IIntelligentService) {
-        const idleCheckerMS = Speller.idleTimeMS / 5;
-        setInterval(() => {
-            this.currentIdleTime += idleCheckerMS;
-            if (this.currentIdleTime >= Speller.idleTimeMS) {
-                this.runSpellOp(intelligence);
-                this.currentIdleTime = 0;
-            }
-        }, idleCheckerMS);
-        this.sharedString.on("op", (msg: api.ISequencedObjectMessage) => {
-            if (msg && msg.contents) {
-                let delta =  <mergeTree.IMergeTreeOp>msg.contents;
-                this.pendingSpellChecks.push(delta);
-                this.enqueueParagraph(delta);
-                this.currentIdleTime = 0;
-            }
-        });
-    }
-
-    runSpellOp(intelligence: IIntelligentService) {
-        if (this.pendingSpellChecks.length > 0) {
-            const pendingChecks = _.clone(this.pendingSpellChecks);
-            this.pendingSpellChecks = [];
-            for (let delta of pendingChecks) {
-                this.spellOp(delta, intelligence);
-            }
-        }
-        if (this.pendingParagraphs.length > 0) {
-            for (let pg of this.pendingParagraphs) {
-                let offset = 0;
-                if (pg.tile) {
-                    offset = this.sharedString.client.mergeTree.getOffset(pg.tile, mergeTree.UniversalSequenceNumber,
-                    this.sharedString.client.getClientId());
-                }
-                const endMarkerPos = this.sharedString.client.mergeTree.findTile(offset,
-                    this.sharedString.client.getClientId(), "pg", false);
-                let endPos: number;
-                if (endMarkerPos) {
-                    endPos = endMarkerPos.pos;
-                } else {
-                    endPos = this.sharedString.client.mergeTree.getLength(mergeTree.UniversalSequenceNumber,
-                        this.sharedString.client.getClientId())
-                }
-                this.offsetMap[offset] = endPos;
-            }
-            console.log(`Paragraph markers...`);
-            for (let start of Object.keys(this.offsetMap)) {
-                const queryString = this.sharedString.client.mergeTree.getText(mergeTree.UniversalSequenceNumber,
-                    this.sharedString.client.getClientId(), false, Number(start), this.offsetMap[start]);
-                this.enqueNewQuery(intelligence, queryString, Number(start));
-            }
-            this.offsetMap = {};
-            this.pendingParagraphs = [];
-        }
-    }
-
-    initialSpellCheck() {
+    public initialSpellCheck() {
         let spellParagraph = (startPG: number, endPG: number, text: string) => {
             let re = /\b\w+\b/g;
             let result: RegExpExecArray;
@@ -209,7 +70,7 @@ class Speller {
                     }
                 }
             } while (result);
-        }
+        };
         let prevPG: mergeTree.Marker;
         let startPGPos = 0;
         let pgText = "";
@@ -218,7 +79,7 @@ class Speller {
         function gatherPG(segment: mergeTree.Segment, segpos: number) {
             switch (segment.getType()) {
                 case mergeTree.SegmentType.Marker:
-                    let marker = <mergeTree.Marker>segment;
+                    let marker = <mergeTree.Marker> segment;
                     if (marker.netLength()) {
                         if (marker.hasTileLabel("pg")) {
                             if (prevPG) {
@@ -232,8 +93,7 @@ class Speller {
                             if (endMarkerFound) {
                                 return false;
                             }
-                        }
-                        else {
+                        } else {
                             for (let i = 0; i < marker.netLength(); i++) {
                                 pgText += " ";
                             }
@@ -241,11 +101,13 @@ class Speller {
                     }
                     break;
                 case mergeTree.SegmentType.Text:
-                    let textSegment = <mergeTree.TextSegment>segment;
+                    let textSegment = <mergeTree.TextSegment> segment;
                     if (textSegment.netLength()) {
                         pgText += textSegment.text;
                     }
                     break;
+                default:
+                    throw new Error("Unknown SegmentType");
             }
             return true;
         }
@@ -264,18 +126,146 @@ class Speller {
         this.setEvents(this.intelligence);
     }
 
-    makeTextErrorInfo(candidate: string) {
+    private initializeSpellerQueue() {
+        this.initialQueue = queue((task: ISpellQuery, callback) => {
+            const resultP = this.intelligence.run(task);
+            resultP.then((result) => {
+                const spellErrors = this.checkSpelling(task.rsn, task.text, task.start, result);
+                if (spellErrors.annotations.length > 0) {
+                    for (const annotation of spellErrors.annotations) {
+                        this.sharedString.annotateRangeFromPast(
+                            { textError: annotation.textError },
+                            annotation.globalStartOffset,
+                            annotation.globalEndOffset,
+                            spellErrors.rsn);
+                        this.sharedString.setLocalMinSeq(spellErrors.rsn);
+                    }
+                }
+                callback();
+            }, (error) => {
+                callback();
+            });
+        }, 1);
+        this.typingQueue = queue((task: ISpellQuery, callback) => {
+            callback();
+        }, 1);
+    }
+    private spellingError(word: string) {
+        if (/\b\d+\b/.test(word)) {
+            return false;
+        } else {
+            return !this.dict.contains(word);
+        }
+    }
+    // TODO: use delayed spell check on each modified paragraph
+    private spellOp(delta: mergeTree.IMergeTreeOp, intelligence: IIntelligentService) {
+        // let setPending = () => {
+        //     if (this.pendingWordCheckTimer) {
+        //         clearTimeout(this.pendingWordCheckTimer);
+        //     }
+        //     this.pendingWordCheckTimer = setTimeout(() => {
+        //         this.checkPending(intelligence);
+        //     }, 300);
+        // }
+        if (delta.type === mergeTree.MergeTreeDeltaType.INSERT) {
+//            this.pendingCheckInfo = { pos: delta.pos1 };
+//            setPending();
+            this.currentWordSpellCheck(intelligence, delta.pos1);
+        } else if (delta.type === mergeTree.MergeTreeDeltaType.REMOVE) {
+//            this.pendingCheckInfo = { pos: delta.pos1, rev: true };
+//            setPending();
+            this.currentWordSpellCheck(intelligence, delta.pos1, true);
+        } else if (delta.type === mergeTree.MergeTreeDeltaType.GROUP) {
+            for (let groupOp of delta.ops) {
+                this.spellOp(groupOp, intelligence);
+            }
+        }
+    }
+
+    private enqueueParagraph(delta: mergeTree.IMergeTreeOp) {
+        if (delta.type === mergeTree.MergeTreeDeltaType.INSERT ||
+            delta.type === mergeTree.MergeTreeDeltaType.REMOVE) {
+            let pgMarker = this.sharedString.client.mergeTree.findTile(delta.pos1,
+                this.sharedString.client.getClientId(), "pg");
+            if (!pgMarker) {
+                pgMarker = { tile: undefined, pos: 0};
+            }
+            this.pendingParagraphs.push(pgMarker);
+        } else if (delta.type === mergeTree.MergeTreeDeltaType.GROUP) {
+            for (let groupOp of delta.ops) {
+                this.enqueueParagraph(groupOp);
+            }
+        }
+    }
+
+    private setEvents(intelligence: IIntelligentService) {
+        const idleCheckerMS = Speller.idleTimeMS / 5;
+        setInterval(() => {
+            this.currentIdleTime += idleCheckerMS;
+            if (this.currentIdleTime >= Speller.idleTimeMS) {
+                this.runSpellOp(intelligence);
+                this.currentIdleTime = 0;
+            }
+        }, idleCheckerMS);
+        this.sharedString.on("op", (msg: core.ISequencedObjectMessage) => {
+            if (msg && msg.contents) {
+                let delta =  <mergeTree.IMergeTreeOp> msg.contents;
+                this.pendingSpellChecks.push(delta);
+                this.enqueueParagraph(delta);
+                this.currentIdleTime = 0;
+            }
+        });
+    }
+
+    private runSpellOp(intelligence: IIntelligentService) {
+        if (this.pendingSpellChecks.length > 0) {
+            const pendingChecks = clone(this.pendingSpellChecks);
+            this.pendingSpellChecks = [];
+            for (let delta of pendingChecks) {
+                this.spellOp(delta, intelligence);
+            }
+        }
+        if (this.pendingParagraphs.length > 0) {
+            for (let pg of this.pendingParagraphs) {
+                let offset = 0;
+                if (pg.tile) {
+                    offset = this.sharedString.client.mergeTree.getOffset(pg.tile, mergeTree.UniversalSequenceNumber,
+                    this.sharedString.client.getClientId());
+                }
+                const endMarkerPos = this.sharedString.client.mergeTree.findTile(offset,
+                    this.sharedString.client.getClientId(), "pg", false);
+                let endPos: number;
+                if (endMarkerPos) {
+                    endPos = endMarkerPos.pos;
+                } else {
+                    endPos = this.sharedString.client.mergeTree.getLength(mergeTree.UniversalSequenceNumber,
+                        this.sharedString.client.getClientId());
+                }
+                this.offsetMap[offset] = endPos;
+            }
+            console.log(`Paragraph markers...`);
+            for (let start of Object.keys(this.offsetMap)) {
+                const queryString = this.sharedString.client.mergeTree.getText(mergeTree.UniversalSequenceNumber,
+                    this.sharedString.client.getClientId(), false, Number(start), this.offsetMap[start]);
+                this.enqueNewQuery(intelligence, queryString, Number(start));
+            }
+            this.offsetMap = {};
+            this.pendingParagraphs = [];
+        }
+    }
+
+    private makeTextErrorInfo(candidate: string) {
         let alternates = this.dict.neighbors(candidate, 2).sort(compareProxStrings);
         if (alternates.length > Speller.altMax) {
             alternates.length = Speller.altMax;
         }
         return {
+            alternates,
             text: candidate,
-            alternates: alternates
         };
     }
 
-    currentWordSpellCheck(intelligence: IIntelligentService, pos: number, rev = false) {
+    private currentWordSpellCheck(intelligence: IIntelligentService, pos: number, rev = false) {
         let words = "";
         let fwdWords = "";
         let sentence = "";
@@ -289,13 +279,13 @@ class Speller {
                         words = " " + words;
                     }
                     sentence = " " + sentence;
-                    let marker = <mergeTree.Marker>segment;
+                    let marker = <mergeTree.Marker> segment;
                     if (marker.hasTileLabel("pg")) {
                         return false;
                     }
                     break;
                 case mergeTree.SegmentType.Text:
-                    let textSegment = <mergeTree.TextSegment>segment;
+                    let textSegment = <mergeTree.TextSegment> segment;
                     if (textSegment.netLength()) {
                         if (!wordsFound) {
                             words = textSegment.text + words;
@@ -304,6 +294,8 @@ class Speller {
                     }
                     break;
                 // TODO: component
+                default:
+                    throw new Error("Unknown SegmentType");
             }
             // console.log(`rev: -${text}-`);
             if (/\s+\w+/.test(words)) {
@@ -322,13 +314,13 @@ class Speller {
                         fwdWords = fwdWords + " ";
                     }
                     fwdSentence = fwdSentence + " ";
-                    let marker = <mergeTree.Marker>segment;
+                    let marker = <mergeTree.Marker> segment;
                     if (marker.hasTileLabel("pg")) {
                         return false;
                     }
                     break;
                 case mergeTree.SegmentType.Text:
-                    let textSegment = <mergeTree.TextSegment>segment;
+                    let textSegment = <mergeTree.TextSegment> segment;
                     if (textSegment.netLength()) {
                         if (!wordsFound) {
                             fwdWords = fwdWords + textSegment.text;
@@ -337,6 +329,8 @@ class Speller {
                     }
                     break;
                 // TODO: component
+                default:
+                    throw new Error("Unknown SegmentType");
             }
             if (/\w+\s+/.test(fwdWords)) {
                 wordsFound = true;
@@ -365,6 +359,7 @@ class Speller {
             words = words + fwdWords;
             sentence = sentence + fwdSentence;
             if (this.verbose) {
+                // tslint:disable-next-line:max-line-length
                 console.log(`found sentence ${sentence} (start ${sentenceStartPos}, end ${sentenceStartPos + sentence.length}) around change`);
             }
             // TODO: send this sentence to service for analysis
@@ -387,8 +382,7 @@ class Speller {
                             console.log(buf);
                         }
                         this.sharedString.annotateRange({ textError: textErrorInfo }, start, end);
-                    }
-                    else {
+                    } else {
                         if (this.verbose) {
                             console.log(`spell ok (${start}, ${end}): ${words.substring(result.index, re.lastIndex)}`);
                         }
@@ -400,22 +394,32 @@ class Speller {
         }
     }
 
-    initSpellerService(intelligence: IIntelligentService, queryString: string, startPos: number) {
+    private initSpellerService(intelligence: IIntelligentService, queryString: string, startPos: number) {
         if (this.serviceCounter < Speller.spellerParagraphs) {
             if (queryString.length > 0) {
-                this.initialQueue.push({ text: queryString, rsn: this.sharedString.referenceSequenceNumber, start: startPos, end: startPos + queryString.length });
+                this.initialQueue.push({
+                    end: startPos + queryString.length,
+                    rsn: this.sharedString.referenceSequenceNumber,
+                    start: startPos,
+                    text: queryString,
+                });
                 ++this.serviceCounter;
             }
         }
     }
 
-    enqueNewQuery(intelligence: IIntelligentService, queryString: string, startPos: number) {
+    private enqueNewQuery(intelligence: IIntelligentService, queryString: string, startPos: number) {
         if (queryString.length > 0) {
-            this.typingQueue.push({ text: queryString, rsn: this.sharedString.referenceSequenceNumber, start: startPos, end: startPos + queryString.length });
+            this.typingQueue.push({
+                end: startPos + queryString.length,
+                rsn: this.sharedString.referenceSequenceNumber,
+                start: startPos,
+                text: queryString,
+            });
         }
     }
 
-    checkSpelling(rsn: number, original: string, startPos: number, result: any) {
+    private checkSpelling(rsn: number, original: string, startPos: number, result: any) {
         let endPos = startPos + original.length;
         let annotationRanges = [];
 
@@ -443,18 +447,34 @@ class Speller {
 
             // Correctly spelled range. Send null and update runningStart.
             if (runningStart < globalStartOffset) {
-                annotationRanges.push({ textError: null, globalStartOffset: runningStart, globalEndOffset: globalStartOffset });
+                annotationRanges.push({
+                    globalEndOffset: globalStartOffset,
+                    globalStartOffset: runningStart,
+                    textError: null,
+                });
             }
             runningStart = globalEndOffset;
 
             // Spelling error but no suggestions found. Continue to next critique.
             if (critique.Suggestions.length === 0 || critique.Suggestions[0].Text === "No suggestions") {
                 if (critique.CategoryTitle === "Grammar") {
-                    annotationRanges.push({ textError: { text: origWord, alternates: altSpellings, color: "paulgreen", explanation: null }, globalStartOffset, globalEndOffset });
+                    annotationRanges.push({
+                        globalStartOffset,
+                        globalEndOffset,
+                        textError: { text: origWord, alternates: altSpellings, color: "paulgreen", explanation: null },
+                    });
                 } else if (critique.CategoryTitle === "Spelling") {
-                    annotationRanges.push({ textError: { text: origWord, alternates: altSpellings, color: "paul", explanation: null }, globalStartOffset, globalEndOffset });
+                    annotationRanges.push({
+                        textError: { text: origWord, alternates: altSpellings, color: "paul", explanation: null },
+                        globalStartOffset,
+                        globalEndOffset,
+                    });
                 } else {
-                    annotationRanges.push({ textError: { text: origWord, alternates: altSpellings, color: "paulgolden", explanation: null }, globalStartOffset, globalEndOffset });
+                    annotationRanges.push({
+                        textError: { text: origWord, alternates: altSpellings, color: "paulgolden", explanation: null },
+                        globalStartOffset,
+                        globalEndOffset,
+                    });
                 }
                 continue;
             }
@@ -463,11 +483,33 @@ class Speller {
                 altSpellings.push({ text: critique.Suggestions[i].Text, invDistance: i, val: i });
             }
             if (critique.CategoryTitle === "Grammar") {
-                annotationRanges.push({ textError: { text: origWord, alternates: altSpellings, color: "paulgreen", explanation: critique.Explanation }, globalStartOffset, globalEndOffset });
+                annotationRanges.push({
+                    globalEndOffset,
+                    globalStartOffset,
+                    textError: {
+                        alternates: altSpellings,
+                        color: "paulgreen",
+                        explanation: critique.Explanation,
+                        text: origWord,
+                    },
+                });
             } else if (critique.CategoryTitle === "Spelling") {
-                annotationRanges.push({ textError: { text: origWord, alternates: altSpellings, color: "paul", explanation: null }, globalStartOffset, globalEndOffset });
+                annotationRanges.push({
+                    globalEndOffset,
+                    globalStartOffset,
+                    textError: { text: origWord, alternates: altSpellings, color: "paul", explanation: null },
+                });
             } else {
-                annotationRanges.push({ textError: { text: origWord, alternates: altSpellings, color: "paulgolden", explanation: critique.Explanation }, globalStartOffset, globalEndOffset });
+                annotationRanges.push({
+                    globalEndOffset,
+                    globalStartOffset,
+                    textError: {
+                        alternates: altSpellings,
+                        color: "paulgolden",
+                        explanation: critique.Explanation,
+                        text: origWord,
+                    },
+                });
             }
         }
         // No more critiques. Send null for rest of the text.
@@ -481,7 +523,7 @@ class Speller {
 export class Spellcheker {
     constructor(
         private root: mergeTree.SharedString,
-        private dict: Collections.TST<number>,
+        private dict: mergeTree.Collections.TST<number>,
         private intelligence: IIntelligentService) {
     }
 

@@ -1,10 +1,7 @@
-// tslint:disable:whitespace align no-bitwise no-string-literal member-ordering
+// tslint:disable:no-bitwise
 import performanceNow = require("performance-now");
-import * as url from "url";
-import * as api from "../api-core";
-import { IMap, IMapView, IValueChanged } from "../data-types";
-import * as SharedString from "../merge-tree";
-import { findRandomWord } from "../merge-tree/random";
+import { core, mergeTree as SharedString, types } from "../client-api";
+import { findRandomWord } from "../merge-tree-utils";
 import * as ui from "../ui";
 import { Status } from "./status";
 
@@ -370,7 +367,7 @@ function elmOffToSegOff(elmOff: IRangeInfo, span: HTMLSpanElement) {
     while (prevSib) {
         switch (prevSib.nodeType) {
             case Node.ELEMENT_NODE:
-                let innerSpan = <HTMLSpanElement>prevSib;
+                let innerSpan = <HTMLSpanElement> prevSib;
                 offset += innerSpan.innerText.length;
                 break;
             case Node.TEXT_NODE:
@@ -385,13 +382,11 @@ function elmOffToSegOff(elmOff: IRangeInfo, span: HTMLSpanElement) {
 }
 
 let cachedCanvas: HTMLCanvasElement;
-const baseURI = typeof document !== "undefined" ? document.baseURI : "";
-let underlineStringURL = `url(${url.resolve(baseURI, "/public/images/underline.gif")}) bottom repeat-x`;
-let underlinePaulStringURL = `url(${url.resolve(baseURI, "/public/images/underline-paul.gif")}) bottom repeat-x`;
-let underlinePaulGrammarStringURL =
-    `url(${url.resolve(baseURI, "/public/images/underline-paulgrammar.gif")}) bottom repeat-x`;
-let underlinePaulGoldStringURL =
-    `url(${url.resolve(baseURI, "/public/images/underline-gold.gif")}) bottom repeat-x`;
+const baseURI = typeof document !== "undefined" ? document.location.origin : "";
+let underlineStringURL = `url("${baseURI}/public/images/underline.gif") bottom repeat-x`;
+let underlinePaulStringURL = `url("${baseURI}/public/images/underline-paul.gif") bottom repeat-x`;
+let underlinePaulGrammarStringURL = `url("${baseURI}/public/images/underline-paulgrammar.gif") bottom repeat-x`;
+let underlinePaulGoldStringURL = `url("${baseURI}/public/images/underline-gold.gif") bottom repeat-x`;
 
 function getTextWidth(text: string, font: string) {
     // re-use canvas object for better performance
@@ -440,7 +435,7 @@ interface IPGBlock extends IParagraphItem {
 }
 
 function makeIPGBlock(width: number, text: string, textSegment: SharedString.TextSegment) {
-    return <IPGBlock>{ type: ParagraphItemType.Block, width, text, textSegment };
+    return <IPGBlock> { type: ParagraphItemType.Block, width, text, textSegment };
 }
 
 function makeGlue(
@@ -450,7 +445,7 @@ function makeGlue(
     stretch: number,
     shrink: number) {
 
-    return <IPGGlue>{ type: ParagraphItemType.Glue, width, text, textSegment, stretch, shrink };
+    return <IPGGlue> { type: ParagraphItemType.Glue, width, text, textSegment, stretch, shrink };
 }
 
 interface IPGGlue extends IParagraphItem {
@@ -630,7 +625,7 @@ function buildDocumentContext(viewportDiv: HTMLDivElement) {
     let boxTopMargin = 3;
     let boxHMargin = 3;
     let indentWidthThreshold = 600;
-    return <IDocumentContext>{
+    return <IDocumentContext> {
         fontstr, headerFontstr, wordSpacing, headerDivHeight, defaultLineDivHeight,
         pgVspace, boxVspace, boxHMargin, boxTopMargin, tableVspace, indentWidthThreshold,
     };
@@ -743,7 +738,7 @@ function renderSegmentIntoLine(
         if (end > segment.cachedLength) {
             end = segment.cachedLength;
         }
-        let textSegment = <SharedString.TextSegment>segment;
+        let textSegment = <SharedString.TextSegment> segment;
         let text = textSegment.text.substring(start, end);
         let textStartPos = segpos + start;
         let textEndPos = segpos + end;
@@ -758,7 +753,7 @@ function renderSegmentIntoLine(
             showPositionInLine(lineContext, textStartPos, text, presenceInfo.xformPos, presenceInfo);
         }
     } else if (segType === SharedString.SegmentType.Marker) {
-        let marker = <SharedString.Marker>segment;
+        let marker = <SharedString.Marker> segment;
         if (endRenderSegments(marker)) {
             if (lineContext.flowView.cursor.pos === segpos) {
                 showPositionEndOfLine(lineContext);
@@ -814,7 +809,7 @@ function reRenderLine(lineDiv: ILineDiv, flowView: FlowView) {
                 lineDivHeight), lineDiv.style.font);
             lineDiv.appendChild(contentDiv);
         }
-        let lineContext = <ILineContext>{
+        let lineContext = <ILineContext> {
             contentDiv,
             flowView,
             lineDiv,
@@ -966,7 +961,7 @@ let symbolSeries = [
 
 function convertToListHead(tile: IParagraphMarker) {
     tile.listHeadCache = {
-        series: <number[]>tile.properties.series,
+        series: <number[]> tile.properties.series,
         tile,
     };
     tile.listCache = { itemCounts: [0, 1] };
@@ -990,7 +985,7 @@ function getListCacheInfo(
                     (t) => isListTile(t) && (t.properties.listKind === listKind), precedingTileCache);
                 if (precedingTilePos && ((tilePos - precedingTilePos.pos) < maxListDistance)) {
                     getListCacheInfo(flowView, precedingTilePos.tile, precedingTilePos.pos, precedingTileCache);
-                    let precedingTile = <IParagraphMarker>precedingTilePos.tile;
+                    let precedingTile = <IParagraphMarker> precedingTilePos.tile;
                     tile.listHeadCache = precedingTile.listHeadCache;
                     let indentLevel = tile.properties.indentLevel;
                     let precedingItemCount = precedingTile.listCache.itemCounts[indentLevel];
@@ -1040,7 +1035,7 @@ function makeContentDiv(r: ui.Rectangle, lineFontstr) {
     contentDiv.style.font = lineFontstr;
     contentDiv.style.whiteSpace = "pre";
     contentDiv.onclick = (e) => {
-        let targetDiv = <HTMLDivElement>e.target;
+        let targetDiv = <HTMLDivElement> e.target;
         if (targetDiv.lastElementChild) {
             // tslint:disable-next-line:max-line-length
             console.log(`div click at ${e.clientX},${e.clientY} rightmost span with text ${targetDiv.lastElementChild.innerHTML}`);
@@ -1066,9 +1061,10 @@ let tableIdSuffix = 0;
 let boxIdSuffix = 0;
 let rowIdSuffix = 0;
 
-function createMarkerOp(pos1: number, id: string, behaviors: SharedString.MarkerBehaviors,
-    rangeLabels: string[], tileLabels?: string[]) {
-    let props = <SharedString.MapLike<any>>{
+function createMarkerOp(
+    pos1: number, id: string, behaviors: SharedString.MarkerBehaviors, rangeLabels: string[], tileLabels?: string[]) {
+
+    let props = <SharedString.MapLike<any>> {
     };
     if (id.length > 0) {
         props[SharedString.reservedMarkerIdKey] = id;
@@ -1079,7 +1075,7 @@ function createMarkerOp(pos1: number, id: string, behaviors: SharedString.Marker
     if (tileLabels) {
         props[SharedString.reservedTileLabelsKey] = tileLabels;
     }
-    return <SharedString.IMergeTreeInsertMsg>{
+    return <SharedString.IMergeTreeInsertMsg> {
         marker: { behaviors },
         pos1,
         props,
@@ -1101,14 +1097,13 @@ function createMarkerOp(pos1: number, id: string, behaviors: SharedString.Marker
 */
 let endPrefix = "end-";
 
-function createBox(opList: SharedString.IMergeTreeOp[], idBase: string,
-    pos: number, word?: string) {
+function createBox(opList: SharedString.IMergeTreeOp[], idBase: string, pos: number, word?: string) {
     let boxId = idBase + `box${boxIdSuffix++}`;
     opList.push(createMarkerOp(pos, boxId,
         SharedString.MarkerBehaviors.RangeBegin, ["box"]));
     pos++;
     if (word) {
-        let insertStringOp = <SharedString.IMergeTreeInsertMsg>{
+        let insertStringOp = <SharedString.IMergeTreeInsertMsg> {
             pos1: pos,
             text: word,
             type: SharedString.MergeTreeDeltaType.INSERT,
@@ -1132,7 +1127,7 @@ function createTable(pos: number, flowView: FlowView, nrows = 3, nboxes = 3) {
         let segoff = flowView.client.mergeTree.getContainingSegment(pos - 1, SharedString.UniversalSequenceNumber,
             flowView.client.getClientId());
         if (segoff.segment.getType() === SharedString.SegmentType.Marker) {
-            let marker = <SharedString.Marker>segoff.segment;
+            let marker = <SharedString.Marker> segoff.segment;
             if (marker.hasTileLabel("pg")) {
                 pgAtStart = false;
             }
@@ -1141,7 +1136,7 @@ function createTable(pos: number, flowView: FlowView, nrows = 3, nboxes = 3) {
     let content = ["aardvark", "racoon", "jackelope", "springbok", "tiger", "lion", "eland", "anaconda", "fox"];
     let idBase = flowView.client.longClientId;
     idBase += `T${tableIdSuffix++}`;
-    let opList = <SharedString.IMergeTreeInsertMsg[]>[];
+    let opList = <SharedString.IMergeTreeInsertMsg[]> [];
     if (pgAtStart) {
         // TODO: copy pg properties from pg marker after pos
         let pgOp = createMarkerOp(pos, "",
@@ -1168,7 +1163,7 @@ function createTable(pos: number, flowView: FlowView, nrows = 3, nboxes = 3) {
         SharedString.MarkerBehaviors.RangeEnd |
         SharedString.MarkerBehaviors.Tile, ["table"], ["pg"]));
     pos++;
-    let groupOp = <SharedString.IMergeTreeGroupMsg>{
+    let groupOp = <SharedString.IMergeTreeGroupMsg> {
         ops: opList,
         type: SharedString.MergeTreeDeltaType.GROUP,
     };
@@ -1182,8 +1177,8 @@ class TableView {
     public minContentWidth = 0;
     public indentPct = 0.0;
     public contentPct = 1.0;
-    public rows = <RowView[]>[];
-    public columns = <ColumnView[]>[];
+    public rows = <RowView[]> [];
+    public columns = <ColumnView[]> [];
     constructor(public tableMarker: ITableMarker, public endTableMarker: ITableMarker) {
     }
 
@@ -1299,18 +1294,18 @@ class TableView {
 class ColumnView {
     public minContentWidth = 0;
     public width = 0;
-    public boxes = <BoxView[]>[];
+    public boxes = <BoxView[]> [];
     constructor(public columnIndex: number) {
     }
 }
 
 function findRowParent(lineDiv: ILineDiv) {
-    let parent = <IRowDiv>lineDiv.parentElement;
+    let parent = <IRowDiv> lineDiv.parentElement;
     while (parent) {
         if (parent.rowView) {
             return parent;
         }
-        parent = <IRowDiv>parent.parentElement;
+        parent = <IRowDiv> parent.parentElement;
     }
 }
 
@@ -1319,7 +1314,7 @@ class RowView {
     public pos: number;
     public endPos: number;
     public minContentWidth = 0;
-    public boxes = <BoxView[]>[];
+    public boxes = <BoxView[]> [];
     constructor(public rowMarker: IRowMarker, public endRowMarker: IRowMarker) {
 
     }
@@ -1355,10 +1350,10 @@ function parseBox(boxStartPos: number, docContext: IDocumentContext, flowView: F
     let mergeTree = flowView.client.mergeTree;
     let boxMarkerSegOff = mergeTree.getContainingSegment(boxStartPos, SharedString.UniversalSequenceNumber,
         flowView.client.getClientId());
-    let boxMarker = <IBoxMarker>boxMarkerSegOff.segment;
+    let boxMarker = <IBoxMarker> boxMarkerSegOff.segment;
     let id = boxMarker.getId();
     let endId = "end-" + id;
-    let endBoxMarker = <SharedString.Marker>mergeTree.getSegmentFromId(endId);
+    let endBoxMarker = <SharedString.Marker> mergeTree.getSegmentFromId(endId);
     let endBoxPos = mergeTree.getOffset(endBoxMarker, SharedString.UniversalSequenceNumber,
         flowView.client.getClientId());
     boxMarker.view = new BoxView(boxMarker, endBoxMarker);
@@ -1369,9 +1364,9 @@ function parseBox(boxStartPos: number, docContext: IDocumentContext, flowView: F
         // TODO: model error checking
         let segment = segoff.segment;
         if (segment.getType() === SharedString.SegmentType.Marker) {
-            let marker = <SharedString.Marker>segoff.segment;
+            let marker = <SharedString.Marker> segoff.segment;
             if (marker.hasRangeLabel("table")) {
-                let tableMarker = <ITableMarker>marker;
+                let tableMarker = <ITableMarker> marker;
                 parseTable(tableMarker, nextPos, docContext, flowView);
                 if (tableMarker.view.minContentWidth > boxMarker.view.minContentWidth) {
                     boxMarker.view.minContentWidth = tableMarker.view.minContentWidth;
@@ -1387,9 +1382,9 @@ function parseBox(boxStartPos: number, docContext: IDocumentContext, flowView: F
         } else {
             // text segment
             let tilePos = findTile(flowView, nextPos, "pg", false);
-            let pgMarker = <IParagraphMarker>tilePos.tile;
+            let pgMarker = <IParagraphMarker> tilePos.tile;
             if (!pgMarker.itemCache) {
-                let itemsContext = <IItemsContext>{
+                let itemsContext = <IItemsContext> {
                     curPGMarker: pgMarker,
                     docContext,
                     itemInfo: { items: [], minWidth: 0 },
@@ -1416,10 +1411,10 @@ function parseRow(rowStartPos: number, docContext: IDocumentContext, flowView: F
     let mergeTree = flowView.client.mergeTree;
     let rowMarkerSegOff = mergeTree.getContainingSegment(rowStartPos, SharedString.UniversalSequenceNumber,
         flowView.client.getClientId());
-    let rowMarker = <IRowMarker>rowMarkerSegOff.segment;
+    let rowMarker = <IRowMarker> rowMarkerSegOff.segment;
     let id = rowMarker.getId();
     let endId = "end-" + id;
-    let endRowMarker = <SharedString.Marker>mergeTree.getSegmentFromId(endId);
+    let endRowMarker = <SharedString.Marker> mergeTree.getSegmentFromId(endId);
     let endRowPos = mergeTree.getOffset(endRowMarker, SharedString.UniversalSequenceNumber,
         flowView.client.getClientId());
     rowMarker.view = new RowView(rowMarker, endRowMarker);
@@ -1435,12 +1430,13 @@ function parseRow(rowStartPos: number, docContext: IDocumentContext, flowView: F
     return rowMarker;
 }
 
-function parseTable(tableMarker: ITableMarker, tableMarkerPos: number, docContext: IDocumentContext,
-    flowView: FlowView) {
+function parseTable(
+    tableMarker: ITableMarker, tableMarkerPos: number, docContext: IDocumentContext, flowView: FlowView) {
+
     let mergeTree = flowView.client.mergeTree;
     let id = tableMarker.getId();
     let endId = "end-" + id;
-    let endTableMarker = <SharedString.Marker>mergeTree.getSegmentFromId(endId);
+    let endTableMarker = <SharedString.Marker> mergeTree.getSegmentFromId(endId);
     let endTablePos = mergeTree.getOffset(endTableMarker, SharedString.UniversalSequenceNumber,
         flowView.client.getClientId());
     let tableView = new TableView(tableMarker, endTableMarker);
@@ -1503,7 +1499,7 @@ function renderBox(boxView: BoxView, layoutInfo: ILayoutContext, defer = false, 
     boxDiv.appendChild(boxView.viewport.div);
     boxView.viewport.vskip(layoutInfo.docContext.boxTopMargin);
 
-    let boxLayoutInfo = <ILayoutContext>{
+    let boxLayoutInfo = <ILayoutContext> {
         deferredAttach: true,
         docContext: layoutInfo.docContext,
         endMarker: boxView.endMarker,
@@ -1563,12 +1559,12 @@ function renderTable(table: ITableMarker, docContext: IDocumentContext, layoutIn
     if (layoutInfo.startingPosStack) {
         if (layoutInfo.startingPosStack.row &&
             (layoutInfo.startingPosStack.row.items.length > layoutInfo.stackIndex)) {
-            let startRowMarker = <IRowMarker>layoutInfo.startingPosStack.row.items[layoutInfo.stackIndex];
+            let startRowMarker = <IRowMarker> layoutInfo.startingPosStack.row.items[layoutInfo.stackIndex];
             startRow = startRowMarker.view;
         }
         if (layoutInfo.startingPosStack.box &&
             (layoutInfo.startingPosStack.box.items.length > layoutInfo.stackIndex)) {
-            let startBoxMarker = <IBoxMarker>layoutInfo.startingPosStack.box.items[layoutInfo.stackIndex];
+            let startBoxMarker = <IBoxMarker> layoutInfo.startingPosStack.box.items[layoutInfo.stackIndex];
             startBox = startBoxMarker.view;
         }
     }
@@ -1588,7 +1584,7 @@ function renderTable(table: ITableMarker, docContext: IDocumentContext, layoutIn
         let rowDiv: IRowDiv;
         if (renderRow) {
             let rowRect = new ui.Rectangle(tableIndent, layoutInfo.viewport.getLineTop(), tableWidth, 0);
-            rowDiv = <IRowDiv>document.createElement("div");
+            rowDiv = <IRowDiv> document.createElement("div");
             rowDiv.rowView = rowView;
             setRowBorders(rowDiv, firstRendered);
             firstRendered = false;
@@ -1653,7 +1649,7 @@ function renderTree(viewportDiv: HTMLDivElement, requestedPosition: number, flow
     let outerViewport = new Viewport(outerViewportHeight, viewportDiv, outerViewportWidth);
     let startingPosStack =
         client.mergeTree.getStackContext(requestedPosition, client.getClientId(), ["table", "box", "row"]);
-    let layoutContext = <ILayoutContext>{
+    let layoutContext = <ILayoutContext> {
         docContext,
         flowView,
         requestedPosition,
@@ -1727,10 +1723,10 @@ function segmentToItems(
     segment: SharedString.Segment, segpos: number, refSeq: number, clientId: number,
     start: number, end: number, context: IItemsContext) {
     if (segment.getType() === SharedString.SegmentType.Text) {
-        let textSegment = <SharedString.TextSegment>segment;
+        let textSegment = <SharedString.TextSegment> segment;
         context.paragraphLexer.lex(textSegment);
     } else if (segment.getType() === SharedString.SegmentType.Marker) {
-        let marker = <SharedString.Marker>segment;
+        let marker = <SharedString.Marker> segment;
         if (marker.hasTileLabel("pg") || isEndBox(marker)) {
             context.nextPGPos = segpos;
             return false;
@@ -1749,7 +1745,7 @@ function gatherOverlayLayer(
     context: IOverlayMarker[]) {
 
     if (segment.getType() === SharedString.SegmentType.Marker) {
-        let marker = <SharedString.Marker>segment;
+        let marker = <SharedString.Marker> segment;
         if (marker.behaviors === SharedString.MarkerBehaviors.None) {
             context.push({ id: marker.getId(), position: segpos });
         }
@@ -1919,7 +1915,7 @@ function renderFlow(layoutContext: ILayoutContext, deferWhole = false): IRenderO
     let curPGMarker: IParagraphMarker;
     let curPGMarkerPos: number;
 
-    let itemsContext = <IItemsContext>{
+    let itemsContext = <IItemsContext> {
         docContext,
     };
     if (layoutContext.deferUntilHeight === undefined) {
@@ -1931,8 +1927,13 @@ function renderFlow(layoutContext: ILayoutContext, deferWhole = false): IRenderO
     itemsContext.paragraphLexer = paragraphLexer;
     textErrorRun = undefined;
 
-    function renderPG(endPGMarker: IParagraphMarker, pgStartPos: number, indentWidth: number, indentSymbol: ISymbol,
+    function renderPG(
+        endPGMarker: IParagraphMarker,
+        pgStartPos: number,
+        indentWidth: number,
+        indentSymbol: ISymbol,
         contentWidth: number) {
+
         let pgBreaks = endPGMarker.cache.breaks;
         let lineDiv: ILineDiv;
         let lineDivHeight = docContext.defaultLineDivHeight;
@@ -1970,7 +1971,7 @@ function renderFlow(layoutContext: ILayoutContext, deferWhole = false): IRenderO
                     }
                     lineDiv.appendChild(contentDiv);
                 }
-                let lineContext = <ILineContext>{
+                let lineContext = <ILineContext> {
                     contentDiv, deferredAttach: layoutContext.deferredAttach, flowView: layoutContext.flowView,
                     lineDiv, lineDivHeight, span,
                 };
@@ -2014,10 +2015,10 @@ function renderFlow(layoutContext: ILayoutContext, deferWhole = false): IRenderO
             console.log(`got segment ${segoff.segment.toString()}`);
         }
         if ((segoff.segment.getType() === SharedString.SegmentType.Marker) &&
-            ((<SharedString.Marker>segoff.segment).hasRangeLabel("table"))) {
-            let marker = <SharedString.Marker>segoff.segment;
+            ((<SharedString.Marker> segoff.segment).hasRangeLabel("table"))) {
+            let marker = <SharedString.Marker> segoff.segment;
             renderTable(marker, docContext, layoutContext, deferredPGs);
-            let tableView = (<ITableMarker>marker).view;
+            let tableView = (<ITableMarker> marker).view;
             deferredHeight += tableView.deferredHeight;
             layoutContext.viewport.vskip(layoutContext.docContext.tableVspace);
             let endTablePos = getOffset(layoutContext.flowView, tableView.endTableMarker);
@@ -2027,7 +2028,7 @@ function renderFlow(layoutContext: ILayoutContext, deferWhole = false): IRenderO
         } else {
             if (segoff.segment.getType() === SharedString.SegmentType.Marker) {
                 // empty paragraph
-                curPGMarker = <IParagraphMarker>segoff.segment;
+                curPGMarker = <IParagraphMarker> segoff.segment;
                 if (fetchLog) {
                     console.log("empty pg");
                     if (curPGMarker.itemCache) {
@@ -2037,7 +2038,7 @@ function renderFlow(layoutContext: ILayoutContext, deferWhole = false): IRenderO
                 curPGMarkerPos = currentPos;
             } else {
                 let curTilePos = findTile(flowView, currentPos, "pg", false);
-                curPGMarker = <IParagraphMarker>curTilePos.tile;
+                curPGMarker = <IParagraphMarker> curTilePos.tile;
                 curPGMarkerPos = curTilePos.pos;
             }
             itemsContext.curPGMarker = curPGMarker;
@@ -2091,7 +2092,7 @@ function renderFlow(layoutContext: ILayoutContext, deferWhole = false): IRenderO
                 currentPos = curPGMarkerPos + curPGMarker.cachedLength;
                 segoff = getContainingSegment(flowView, currentPos);
                 if (segoff.segment.getType() === SharedString.SegmentType.Marker) {
-                    let marker = <SharedString.Marker>segoff.segment;
+                    let marker = <SharedString.Marker> segoff.segment;
                     if (marker.hasRangeLabel("box") && (marker.behaviors & SharedString.MarkerBehaviors.RangeEnd)) {
                         layoutContext.viewport.vskip(layoutContext.docContext.boxVspace);
                         break;
@@ -2130,7 +2131,7 @@ function renderFlow(layoutContext: ILayoutContext, deferWhole = false): IRenderO
 function makeSegSpan(
     context: FlowView, segText: string, textSegment: SharedString.TextSegment, offsetFromSegpos: number,
     segpos: number) {
-    let span = <ISegSpan>document.createElement("span");
+    let span = <ISegSpan> document.createElement("span");
     span.innerText = segText;
     span.seg = textSegment;
     span.segPos = segpos;
@@ -2148,7 +2149,7 @@ function makeSegSpan(
                 } else {
                     textErrorRun.end += segText.length;
                 }
-                let textErrorInfo = <ITextErrorInfo>textSegment.properties[key];
+                let textErrorInfo = <ITextErrorInfo> textSegment.properties[key];
                 let slb: ISelectionListBox;
                 span.textErrorRun = textErrorRun;
                 if (textErrorInfo.color === "paul") {
@@ -2170,14 +2171,14 @@ function makeSegSpan(
                         }
                         function acceptIntellisense(ev: MouseEvent) {
                             cancelIntellisense(ev);
-                            let itemElm = <HTMLElement>ev.target;
+                            let itemElm = <HTMLElement> ev.target;
                             let text = itemElm.innerText.trim();
                             context.sharedString.removeText(span.textErrorRun.start, span.textErrorRun.end);
                             context.sharedString.insertText(text, span.textErrorRun.start);
                             context.localQueueRender(span.textErrorRun.start);
                         }
                         function selectItem(ev: MouseEvent) {
-                            let itemElm = <HTMLElement>ev.target;
+                            let itemElm = <HTMLElement> ev.target;
                             if (slb) {
                                 slb.selectItem(itemElm.innerText);
                             }
@@ -2216,7 +2217,7 @@ function pointerToElementOffsetWebkit(x: number, y: number): IRangeInfo {
     let range = document.caretRangeFromPoint(x, y);
     if (range) {
         let result = {
-            elm: <HTMLElement>range.startContainer.parentElement,
+            elm: <HTMLElement> range.startContainer.parentElement,
             node: range.startContainer,
             offset: range.startOffset,
         };
@@ -2294,7 +2295,7 @@ export class Cursor {
     }
 
     public lineDiv() {
-        return <ILineDiv>this.editSpan.parentElement;
+        return <ILineDiv> this.editSpan.parentElement;
     }
 
     public updateView(flowView: FlowView) {
@@ -2447,11 +2448,10 @@ export class FlowView extends ui.Component {
     public wheelTicking = false;
     public topChar = -1;
     public cursor: Cursor;
-    public presenceMap: IMap;
-    public presenceMapView: IMapView;
+    public presenceMap: types.IMap;
+    public presenceMapView: types.IMapView;
     public presenceVector: ILocalPresenceInfo[] = [];
-    public presenceSeq = 0;
-    public docRoot: IMapView;
+    public docRoot: types.IMapView;
     public curPG: SharedString.Marker;
     private lastVerticalX = -1;
     private randWordTimer: any;
@@ -2471,14 +2471,11 @@ export class FlowView extends ui.Component {
 
         this.statusMessage("li", " ");
         this.statusMessage("si", " ");
-        sharedString.on("op", (msg: api.ISequencedObjectMessage) => {
+        sharedString.on("op", (msg: core.ISequencedObjectMessage) => {
             if (msg.clientId !== this.client.longClientId) {
-                let delta = <SharedString.IMergeTreeOp>msg.contents;
+                let delta = <SharedString.IMergeTreeOp> msg.contents;
                 if (this.applyOp(delta, msg)) {
                     this.queueRender(msg);
-                }
-                if (this.presenceSeq <= this.client.mergeTree.getCollabWindow().minSeq) {
-                    this.updatePresence();
                 }
             }
         });
@@ -2486,9 +2483,9 @@ export class FlowView extends ui.Component {
         this.cursor = new Cursor(this.viewportDiv);
     }
 
-    public addPresenceMap(presenceMap: IMap) {
+    public addPresenceMap(presenceMap: types.IMap) {
         this.presenceMap = presenceMap;
-        presenceMap.on("valueChanged", (delta: IValueChanged) => {
+        presenceMap.on("valueChanged", (delta: types.IValueChanged) => {
             this.remotePresenceUpdate(delta);
         });
         presenceMap.getView().then((v) => {
@@ -2528,7 +2525,7 @@ export class FlowView extends ui.Component {
                 localPresenceInfo.cursor.presenceInfo = localPresenceInfo;
                 localPresenceInfo.cursor.presenceInfoUpdated = true;
             }
-            let baseSegment = <SharedString.BaseSegment>presentPresence.localRef.segment;
+            let baseSegment = <SharedString.BaseSegment> presentPresence.localRef.segment;
             baseSegment.removeLocalRef(presentPresence.localRef);
             tempXformPos = presentPresence.xformPos;
         }
@@ -2539,7 +2536,7 @@ export class FlowView extends ui.Component {
     }
 
     public remotePresenceFromEdit(longClientId: string, refseq: number, oldpos: number, posAdjust = 0) {
-        let remotePosInfo = <IRemotePresenceInfo>{
+        let remotePosInfo = <IRemotePresenceInfo> {
             clientId: this.client.getOrAddShortClientId(longClientId),
             key: longClientId,
             origPos: oldpos + posAdjust,
@@ -2551,11 +2548,11 @@ export class FlowView extends ui.Component {
     public remotePresenceToLocal(remotePresenceInfo: IRemotePresenceInfo, posAdjust = 0) {
         let segoff = this.client.mergeTree.getContainingSegment(remotePresenceInfo.origPos,
             remotePresenceInfo.refseq, remotePresenceInfo.clientId);
-        let localPresenceInfo = <ILocalPresenceInfo>{
+        let localPresenceInfo = <ILocalPresenceInfo> {
             clientId: remotePresenceInfo.clientId,
             fresh: true,
             key: remotePresenceInfo.key,
-            localRef: <SharedString.LocalReference>{
+            localRef: <SharedString.LocalReference> {
                 offset: segoff.offset,
                 segment: segoff.segment,
                 slideOnRemove: true,
@@ -2564,9 +2561,9 @@ export class FlowView extends ui.Component {
         this.updatePresenceVector(localPresenceInfo);
     }
 
-    public remotePresenceUpdate(delta: IValueChanged) {
+    public remotePresenceUpdate(delta: types.IValueChanged) {
         if (delta.key !== this.client.longClientId) {
-            let remotePresenceInfo = <IRemotePresenceInfo>this.presenceMapView.get(delta.key);
+            let remotePresenceInfo = <IRemotePresenceInfo> this.presenceMapView.get(delta.key);
             remotePresenceInfo.key = delta.key;
             remotePresenceInfo.clientId = this.client.getOrAddShortClientId(delta.key);
             this.remotePresenceToLocal(remotePresenceInfo);
@@ -2575,11 +2572,10 @@ export class FlowView extends ui.Component {
 
     public updatePresence() {
         if (this.presenceMapView) {
-            let presenceInfo = <IRemotePresenceInfo>{
+            let presenceInfo = <IRemotePresenceInfo> {
                 origPos: this.cursor.pos,
                 refseq: this.client.getCurrentSeq(),
             };
-            this.presenceSeq = presenceInfo.refseq;
             this.presenceMapView.set(this.client.longClientId, presenceInfo);
         }
     }
@@ -2659,7 +2655,7 @@ export class FlowView extends ui.Component {
     }
 
     public checkRow(lineDiv: ILineDiv, fn: (lineDiv: ILineDiv) => ILineDiv, rev?: boolean) {
-        let rowDiv = <IRowDiv>lineDiv;
+        let rowDiv = <IRowDiv> lineDiv;
         let oldRowDiv: IRowDiv;
         while (rowDiv && (rowDiv !== oldRowDiv) && rowDiv.rowView) {
             oldRowDiv = rowDiv;
@@ -2668,7 +2664,7 @@ export class FlowView extends ui.Component {
                 let innerDiv = this.lineDivSelect(fn, box.viewport.div, true, rev);
                 if (innerDiv) {
                     lineDiv = innerDiv;
-                    rowDiv = <IRowDiv>innerDiv;
+                    rowDiv = <IRowDiv> innerDiv;
                     break;
                 }
             }
@@ -2678,7 +2674,7 @@ export class FlowView extends ui.Component {
 
     public lineDivSelect(fn: (lineDiv: ILineDiv) => ILineDiv, viewportDiv: IViewportDiv, dive = false, rev?: boolean) {
         if (rev) {
-            let elm = <ILineDiv>viewportDiv.lastElementChild;
+            let elm = <ILineDiv> viewportDiv.lastElementChild;
             while (elm) {
                 if (elm.linePos !== undefined) {
                     let lineDiv = fn(elm);
@@ -2689,11 +2685,11 @@ export class FlowView extends ui.Component {
                         return lineDiv;
                     }
                 }
-                elm = <ILineDiv>elm.previousElementSibling;
+                elm = <ILineDiv> elm.previousElementSibling;
             }
 
         } else {
-            let elm = <ILineDiv>viewportDiv.firstElementChild;
+            let elm = <ILineDiv> viewportDiv.firstElementChild;
             while (elm) {
                 if (elm.linePos !== undefined) {
                     let lineDiv = fn(elm);
@@ -2704,13 +2700,13 @@ export class FlowView extends ui.Component {
                         return lineDiv;
                     }
                 }
-                elm = <ILineDiv>elm.nextElementSibling;
+                elm = <ILineDiv> elm.nextElementSibling;
             }
         }
     }
 
     public clickSpan(x: number, y: number, elm: HTMLSpanElement) {
-        let span = <ISegSpan>elm;
+        let span = <ISegSpan> elm;
         let elmOff = pointerToElementOffsetWebkit(x, y);
         if (elmOff) {
             let computed = elmOffToSegOff(elmOff, span);
@@ -2761,7 +2757,7 @@ export class FlowView extends ui.Component {
                 }
 
             } else if (elm.tagName === "SPAN") {
-                let span = <ISegSpan>elm;
+                let span = <ISegSpan> elm;
                 let elmOff = pointerToElementOffsetWebkit(x, y);
                 if (elmOff) {
                     let computed = elmOffToSegOff(elmOff, span);
@@ -2805,7 +2801,7 @@ export class FlowView extends ui.Component {
             let segoff = getContainingSegment(this, this.cursor.pos);
             if (segoff.segment.getType() !== SharedString.SegmentType.Text) {
                 // REVIEW: assume marker for now (could be external later)
-                let marker = <SharedString.Marker>segoff.segment;
+                let marker = <SharedString.Marker> segoff.segment;
                 if ((marker.behaviors & SharedString.MarkerBehaviors.Tile) &&
                     (marker.hasTileLabel("pg"))) {
                     if (marker.hasRangeLabel("table") && (marker.behaviors & SharedString.MarkerBehaviors.RangeEnd)) {
@@ -2826,7 +2822,7 @@ export class FlowView extends ui.Component {
                 this.client.getClientId());
             if (segoff.segment.getType() !== SharedString.SegmentType.Text) {
                 // REVIEW: assume marker for now
-                let marker = <SharedString.Marker>segoff.segment;
+                let marker = <SharedString.Marker> segoff.segment;
                 if ((marker.behaviors & SharedString.MarkerBehaviors.Tile) &&
                     (marker.hasTileLabel("pg"))) {
                     if (marker.hasRangeLabel("table") && (marker.behaviors & SharedString.MarkerBehaviors.RangeEnd)) {
@@ -2864,15 +2860,15 @@ export class FlowView extends ui.Component {
         let lineDiv = this.cursor.lineDiv();
         let targetLineDiv: ILineDiv;
         if (lineCount < 0) {
-            targetLineDiv = <ILineDiv>lineDiv.previousElementSibling;
+            targetLineDiv = <ILineDiv> lineDiv.previousElementSibling;
         } else {
-            targetLineDiv = <ILineDiv>lineDiv.nextElementSibling;
+            targetLineDiv = <ILineDiv> lineDiv.nextElementSibling;
         }
         let x = this.getCanonicalX();
 
         // if line div is row, then find line in box closest to x
         function checkInTable() {
-            let rowDiv = <IRowDiv>targetLineDiv;
+            let rowDiv = <IRowDiv> targetLineDiv;
             while (rowDiv && rowDiv.rowView) {
                 if (rowDiv.rowView) {
                     let box = rowDiv.rowView.findClosestBox(x);
@@ -2882,7 +2878,7 @@ export class FlowView extends ui.Component {
                         } else {
                             targetLineDiv = box.viewport.firstLineDiv();
                         }
-                        rowDiv = <IRowDiv>targetLineDiv;
+                        rowDiv = <IRowDiv> targetLineDiv;
                     } else {
                         break;
                     }
@@ -2919,9 +2915,9 @@ export class FlowView extends ui.Component {
                 } else {
                     // top or bottom row of table
                     if (up) {
-                        targetLineDiv = <ILineDiv>rowDiv.previousElementSibling;
+                        targetLineDiv = <ILineDiv> rowDiv.previousElementSibling;
                     } else {
-                        targetLineDiv = <ILineDiv>rowDiv.nextElementSibling;
+                        targetLineDiv = <ILineDiv> rowDiv.nextElementSibling;
                     }
                     if (targetLineDiv) {
                         checkInTable();
@@ -2936,7 +2932,7 @@ export class FlowView extends ui.Component {
         return this.viewportEndPos - this.viewportStartPos;
     }
 
-    public setEdit(docRoot: IMapView) {
+    public setEdit(docRoot: types.IMapView) {
         this.docRoot = docRoot;
 
         let preventD = (e) => {
@@ -2952,12 +2948,12 @@ export class FlowView extends ui.Component {
 
         this.element.onmousedown = (e) => {
             if (e.button === 0) {
-                let span = <ISegSpan>e.target;
+                let span = <ISegSpan> e.target;
                 let segspan: ISegSpan;
                 if (span.seg) {
                     segspan = span;
                 } else {
-                    segspan = <ISegSpan>span.parentElement;
+                    segspan = <ISegSpan> span.parentElement;
                 }
                 if (segspan && segspan.seg) {
                     this.clickSpan(e.clientX, e.clientY, segspan);
@@ -3086,7 +3082,7 @@ export class FlowView extends ui.Component {
             if (code === CharacterCodes.cr) {
                 // TODO: other labels; for now assume only list/pg tile labels
                 let curTilePos = findTile(this, pos, "pg", false);
-                let pgMarker = <IParagraphMarker>curTilePos.tile;
+                let pgMarker = <IParagraphMarker> curTilePos.tile;
                 let pgPos = curTilePos.pos;
                 clearContentCaches(pgMarker);
                 let curProps = pgMarker.properties;
@@ -3131,7 +3127,7 @@ export class FlowView extends ui.Component {
                     buf += ` { ${key}: ${tileInfo.tile.properties[key]} }`;
                 }
             }
-            let lc = !!(<IParagraphMarker>tileInfo.tile).listCache;
+            let lc = !!(<IParagraphMarker> tileInfo.tile).listCache;
             console.log(`tile at pos ${tileInfo.pos} with props${buf} and list cache: ${lc}`);
         }
     }
@@ -3140,12 +3136,12 @@ export class FlowView extends ui.Component {
         let searchPos = this.cursor.pos;
         let tileInfo = findTile(this, searchPos, "pg", false);
         if (tileInfo) {
-            let tile = <IParagraphMarker>tileInfo.tile;
+            let tile = <IParagraphMarker> tileInfo.tile;
             let listStatus = false;
             if (tile.hasTileLabel("list")) {
                 listStatus = true;
             }
-            let curLabels = <string[]>tile.properties[SharedString.reservedTileLabelsKey];
+            let curLabels = <string[]> tile.properties[SharedString.reservedTileLabelsKey];
 
             if (listStatus) {
                 let remainingLabels = curLabels.filter((l) => l !== "list");
@@ -3171,18 +3167,6 @@ export class FlowView extends ui.Component {
         }
     }
 
-    private increaseIndent(tile: IParagraphMarker, pos: number, decrease = false) {
-        tile.listCache = undefined;
-        if (decrease && tile.properties.indentLevel > 0) {
-            this.sharedString.annotateRange({ indentLevel: -1 },
-                pos, pos + 1, { name: "incr", defaultValue: 1, minValue: 0 });
-        } else if (!decrease) {
-            this.sharedString.annotateRange({ indentLevel: 1 }, pos, pos + 1,
-                { name: "incr", defaultValue: 0 });
-        }
-        this.localQueueRender(this.cursor.pos);
-    }
-
     // TODO: tab stops in non-list, non-table paragraphs
     public handleTAB(shift = false) {
         let searchPos = this.cursor.pos;
@@ -3191,10 +3175,10 @@ export class FlowView extends ui.Component {
             let cursorContext =
                 this.client.mergeTree.getStackContext(tileInfo.pos, this.client.getClientId(), ["table", "box", "row"]);
             if (cursorContext.table && (!cursorContext.table.empty())) {
-                let tableMarker = <ITableMarker>cursorContext.table.top();
+                let tableMarker = <ITableMarker> cursorContext.table.top();
                 let tableView = tableMarker.view;
                 if (cursorContext.box && (!cursorContext.box.empty())) {
-                    let box = <IBoxMarker>cursorContext.box.top();
+                    let box = <IBoxMarker> cursorContext.box.top();
                     let toBox: BoxView;
                     if (shift) {
                         toBox = tableView.prevBox(box.view);
@@ -3220,7 +3204,7 @@ export class FlowView extends ui.Component {
                     this.cursor.updateView(this);
                 }
             } else {
-                let tile = <IParagraphMarker>tileInfo.tile;
+                let tile = <IParagraphMarker> tileInfo.tile;
                 this.increaseIndent(tile, tileInfo.pos, shift);
             }
         }
@@ -3278,7 +3262,7 @@ export class FlowView extends ui.Component {
             }
         }
         let count = 0;
-        let uniques = <string[]>[];
+        let uniques = <string[]> [];
         for (let key in obj) {
             if (obj.hasOwnProperty(key)) {
                 count++;
@@ -3322,7 +3306,7 @@ export class FlowView extends ui.Component {
                     return;
                 }
             } else {
-                let nextFirstLineDiv = <ILineDiv>this.firstLineDiv().nextElementSibling;
+                let nextFirstLineDiv = <ILineDiv> this.firstLineDiv().nextElementSibling;
                 if (nextFirstLineDiv) {
                     scrollTo = nextFirstLineDiv.linePos;
                 } else {
@@ -3395,7 +3379,7 @@ export class FlowView extends ui.Component {
             // tslint:disable-next-line:max-line-length
             console.log(`time to edit/impression: ${this.timeToEdit} time to load: ${Date.now() - clockStart}ms len: ${this.sharedString.client.getLength()} - ${performanceNow()}`);
         }
-        const presenceMap = this.docRoot.get("presence") as IMap;
+        const presenceMap = this.docRoot.get("presence") as types.IMap;
         this.addPresenceMap(presenceMap);
         // this.testWordInfo();
     }
@@ -3431,7 +3415,7 @@ export class FlowView extends ui.Component {
     public updatePGInfo(changePos: number) {
         let tileInfo = findTile(this, changePos, "pg", false);
         if (tileInfo) {
-            let tile = <IParagraphMarker>tileInfo.tile;
+            let tile = <IParagraphMarker> tileInfo.tile;
             clearContentCaches(tile);
         } else {
             console.log("did not find pg to clear");
@@ -3453,9 +3437,21 @@ export class FlowView extends ui.Component {
         this.render(this.topChar, true);
     }
 
+    private increaseIndent(tile: IParagraphMarker, pos: number, decrease = false) {
+        tile.listCache = undefined;
+        if (decrease && tile.properties.indentLevel > 0) {
+            this.sharedString.annotateRange({ indentLevel: -1 },
+                pos, pos + 1, { name: "incr", defaultValue: 1, minValue: 0 });
+        } else if (!decrease) {
+            this.sharedString.annotateRange({ indentLevel: 1 }, pos, pos + 1,
+                { name: "incr", defaultValue: 0 });
+        }
+        this.localQueueRender(this.cursor.pos);
+    }
+
     // TODO: paragraph spanning changes and annotations
     // TODO: generalize this by using transform fwd
-    private applyOp(delta: SharedString.IMergeTreeOp, msg: api.ISequencedObjectMessage) {
+    private applyOp(delta: SharedString.IMergeTreeOp, msg: core.ISequencedObjectMessage) {
         // tslint:disable:switch-default
         switch (delta.type) {
             case SharedString.MergeTreeDeltaType.INSERT:
@@ -3505,7 +3501,7 @@ export class FlowView extends ui.Component {
         }
     }
 
-    private queueRender(msg: api.ISequencedObjectMessage) {
+    private queueRender(msg: core.ISequencedObjectMessage) {
         if ((!this.pendingRender) && msg && msg.contents) {
             this.pendingRender = true;
             window.requestAnimationFrame(() => {

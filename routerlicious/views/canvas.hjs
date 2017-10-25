@@ -7,7 +7,6 @@
     {{/content}}
 
     {{$scripts}}
-        <script src="/socket.io/socket.io.js"></script>
         <script src="//charts.azureedge.net/release/0.1.215074.1/microsoft-charts.min.js"></script>
         <script src="{{#hfurl}}/public/scripts/dist/index.js{{/hfurl}}"></script>
 

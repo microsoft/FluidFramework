@@ -1,22 +1,21 @@
 import * as request from "request";
-import * as io from "socket.io-client";
 import * as url from "url";
-import * as api from "../api-core";
-import { Deferred } from "../core-utils";
-import * as Collections from "../merge-tree/collections";
-import * as socketStorage from "../socket-storage";
-import * as messages from "../socket-storage/messages";
-import * as shared from "./";
+import { core, mergeTree, socketIoClient as io, socketStorage, utils } from "../client-api";
+import { IntelWork } from "./intelWork";
+import { PingWork } from "./pingWork";
+import { SnapshotWork } from "./snapshotWork";
+import { SpellcheckerWork } from "./spellcheckerWork";
+import { IWork } from "./work";
 
 /**
  * The WorkerService manages the Socket.IO connection and work sent to it.
  */
-export class WorkerService implements api.IWorkerService {
+export class WorkerService implements core.IWorkerService {
 
     private socket;
-    private documentMap: { [docId: string]: { [work: string]: shared.IWork} } = {};
+    private documentMap: { [docId: string]: { [work: string]: IWork} } = {};
     private workTypeMap: { [workType: string]: boolean} = {};
-    private dict = new Collections.TST<number>();
+    private dict = new mergeTree.Collections.TST<number>();
 
     constructor(
         private serverUrl: string,
@@ -44,12 +43,12 @@ export class WorkerService implements api.IWorkerService {
     public connect(type: string): Promise<void> {
         // Generate random id since moniker does not work in client side.
         const clientId = type + Math.floor(Math.random() * 100000);
-        const clientDetail: messages.IWorker = {
+        const clientDetail: socketStorage.IWorker = {
             clientId,
             type,
         };
 
-        const deferred = new Deferred<void>();
+        const deferred = new utils.Deferred<void>();
         // Subscribes to TMZ. Starts listening to messages if TMZ acked the subscribtion.
         // Otherwise just resolve. On any error, reject and caller will be responsible reconnecting.
         this.socket.emit(
@@ -137,19 +136,19 @@ export class WorkerService implements api.IWorkerService {
     private processDocumentWork(docId: string, workType: string) {
         switch (workType) {
             case "snapshot":
-                const snapshotWork: shared.IWork = new shared.SnapshotWork(docId, this.config);
+                const snapshotWork = new SnapshotWork(docId, this.config);
                 this.startTask(docId, workType, snapshotWork);
                 break;
             case "intel":
-                const intelWork: shared.IWork = new shared.IntelWork(docId, this.config);
+                const intelWork = new IntelWork(docId, this.config);
                 this.startTask(docId, workType, intelWork);
                 break;
             case "spell":
-                const spellcheckWork: shared.IWork = new shared.SpellcheckerWork(docId, this.config, this.dict);
+                const spellcheckWork = new SpellcheckerWork(docId, this.config, this.dict);
                 this.startTask(docId, workType, spellcheckWork);
                 break;
             case "ping":
-                const pingWork: shared.IWork = new shared.PingWork(this.serverUrl);
+                const pingWork = new PingWork(this.serverUrl);
                 this.startTask(docId, workType, pingWork);
                 break;
             default:
@@ -176,9 +175,9 @@ export class WorkerService implements api.IWorkerService {
         }
     }
 
-    private startTask(docId: string, workType: string, worker: shared.IWork) {
+    private startTask(docId: string, workType: string, worker: IWork) {
         if (!(docId in this.documentMap)) {
-            let emptyMap: { [work: string]: shared.IWork } = {};
+            let emptyMap: { [work: string]: IWork } = {};
             this.documentMap[docId] = emptyMap;
         }
         if (!(workType in this.documentMap[docId])) {

@@ -1,4 +1,4 @@
-import * as socketStorage from "../../socket-storage";
+import { socketStorage } from "../../client-api";
 import * as scribe from "../../utils/scribe";
 
 // Text represents the loaded file text
