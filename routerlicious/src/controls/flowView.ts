@@ -2089,6 +2089,9 @@ function renderFlow(layoutContext: ILayoutContext, deferWhole = false): IRenderO
             if (currentPos < (totalLength - 1)) {
                 renderPG(curPGMarker, currentPos, indentWidth, indentSymbol, contentWidth);
                 currentPos = curPGMarkerPos + curPGMarker.cachedLength;
+                if (currentPos>=(totalLength-1)) {
+                    break;
+                }
                 segoff = getContainingSegment(flowView, currentPos);
                 if (segoff.segment.getType() === SharedString.SegmentType.Marker) {
                     let marker = <SharedString.Marker>segoff.segment;
@@ -2103,6 +2106,8 @@ function renderFlow(layoutContext: ILayoutContext, deferWhole = false): IRenderO
                 if (lastLineDiv) {
                     lastLineDiv.lineEnd = curPGMarkerPos;
                 }
+            } else {
+                break;
             }
         }
     } while (layoutContext.viewport.remainingHeight() >= docContext.defaultLineDivHeight);
