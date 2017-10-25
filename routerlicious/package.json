@@ -102,6 +102,7 @@
     "browserify": "^14.1.0",
     "browserify-shim": "^3.8.13",
     "concurrently": "^3.4.0",
+    "dts-bundle": "^0.7.3",
     "exorcist": "^0.4.0",
     "jsdom": "^11.2.0",
     "kafka-rest": "0.0.5",

@@ -1,6 +1,3 @@
-const prague = window["prague"];
-const $ = window["$"];
-
 // For local development
 // const routerlicious = "http://localhost:3000";
 // const historian = "http://localhost:3001";
