@@ -1,4 +1,4 @@
-import * as api from "../api";
+import { api } from "../client-api";
 
 export class BaseWork {
 

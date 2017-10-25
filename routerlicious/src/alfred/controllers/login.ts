@@ -1,6 +1,5 @@
 import * as $ from "jquery";
-// import * as api from "../../api";
-import * as socketStorage from "../../socket-storage";
+import { socketStorage } from "../../client-api";
 
 async function assignKeypair(): Promise<boolean> {
     // const {privateKey, publicKey} = await api.generateAsymmetricKeys(2048, "", "");

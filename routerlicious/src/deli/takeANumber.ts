@@ -1,8 +1,8 @@
 import * as winston from "winston";
+import * as agent from "../agent";
 import * as api from "../api-core";
 import * as core from "../core";
 import { RangeTracker, ThroughputCounter } from "../core-utils";
-import * as shared from "../shared";
 import * as utils from "../utils";
 
 interface IPendingTicket<T> {
@@ -321,7 +321,7 @@ export class TakeANumber {
     }
 
     private getMinimumSequenceNumber(timestamp: number): number {
-        const MinSequenceNumberWindow = shared.constants.MinSequenceNumberWindow;
+        const MinSequenceNumberWindow = agent.constants.MinSequenceNumberWindow;
 
         // Get the sequence number as tracked by the clients
         let msn = this.getClientMinimumSequenceNumber(timestamp);

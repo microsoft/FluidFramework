@@ -1,11 +1,11 @@
 import * as JsDiff from "diff";
 import * as path from "path";
 import * as random from "random-js";
+import { findRandomWord } from "../merge-tree-utils";
 import * as Collections from "./collections";
 import * as MergeTree from "./mergeTree";
 import * as ops from "./ops";
 import * as Properties from "./properties";
-import { findRandomWord } from "./random";
 import * as Text from "./text";
 
 // tslint:disable

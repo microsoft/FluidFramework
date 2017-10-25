@@ -1,7 +1,7 @@
 import { Client, Message } from "azure-iot-device";
 import { Mqtt } from "azure-iot-device-mqtt";
 import * as iothub from "azure-iothub";
-import { Deferred } from "../core-utils";
+import { utils } from "../client-api";
 import { IIntelligentService, IIntelligentServiceFactory } from "./api";
 
 interface IResumeResponse {
@@ -32,7 +32,7 @@ export class ResumeIntelligentSerivce implements IIntelligentService {
     private clientP: Promise<Client>;
     private registry: iothub.Registry;
     private deviceId: string;
-    private messagePromises: {[key: string]: Deferred<any> } = {};
+    private messagePromises: {[key: string]: utils.Deferred<any> } = {};
 
     constructor(private config: IConfig) {
         this.deviceId = config.deviceId;
@@ -70,7 +70,7 @@ export class ResumeIntelligentSerivce implements IIntelligentService {
         });
         const message = new Message(data);
 
-        const deferred = new Deferred<void>();
+        const deferred = new utils.Deferred<void>();
         this.messagePromises[messageId] = deferred;
 
         await new Promise<any>((resolve, reject) => {
