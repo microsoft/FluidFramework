@@ -48,14 +48,25 @@ export class ScriptoriumRunner implements utils.IRunner {
         // for any dependent operations (i.e. socket.io writes)
         const lastMongoInsertP: { [documentId: string]: Promise<any> } = {};
         this.ioBatchManager = new utils.BatchManager<core.ISequencedOperationMessage>((documentId, work) => {
+            // Route the message to clients
+            // tslint:disable-next-line:max-line-length
+            winston.verbose(`Routing message to clients ${documentId}@${work[0].operation.sequenceNumber}:${work.length}`);
+            this.io.to(documentId).emit("op", documentId, work.map((value) => value.operation));
+
+            // Add traces to each written message.
+            work.map((value) => {
+                if (value.operation.traces !== undefined) {
+                    // tslint:disable-next-line:max-line-length
+                    value.operation.traces.push( {service: "scriptorium", action: "end", timestamp: Date.now()});
+                }
+            });
+
             // Initialize the last promise if it doesn't exist
             if (!(documentId in lastMongoInsertP)) {
                 lastMongoInsertP[documentId] = Promise.resolve();
             }
 
-            // tslint:disable-next-line:max-line-length
             winston.verbose(`Inserting to mongodb ${documentId}@${work[0].operation.sequenceNumber}:${work.length}`);
-
             const insertP = this.collection.insertMany(work, false)
                 .catch((error) => {
                     // Ignore duplicate key errors since a replay may cause us to attempt to insert a second time
@@ -67,19 +78,6 @@ export class ScriptoriumRunner implements utils.IRunner {
 
             lastMongoInsertP[documentId].then(
                 () => {
-                    // Route the message to clients
-                    // tslint:disable-next-line:max-line-length
-                    winston.verbose(`Routing message to clients ${documentId}@${work[0].operation.sequenceNumber}:${work.length}`);
-
-                    // Add traces to each written message.
-                    work.map((value) => {
-                        if (value.operation.traces !== undefined) {
-                            // tslint:disable-next-line:max-line-length
-                            value.operation.traces.push( {service: "scriptorium", action: "end", timestamp: Date.now()});
-                        }
-                    });
-
-                    this.io.to(documentId).emit("op", documentId, work.map((value) => value.operation));
                     throughput.acknolwedge(work.length);
                 },
                 (error) => {
