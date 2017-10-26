@@ -48,19 +48,19 @@ export class ScriptoriumRunner implements utils.IRunner {
         // for any dependent operations (i.e. socket.io writes)
         const lastMongoInsertP: { [documentId: string]: Promise<any> } = {};
         this.ioBatchManager = new utils.BatchManager<core.ISequencedOperationMessage>((documentId, work) => {
+            // Add trace to each message before routing.
+            work.map((value) => {
+                if (value.operation.traces !== undefined) {
+                    value.operation.traces.push( {service: "scriptorium", action: "end", timestamp: Date.now()});
+                }
+            });
+
             // Route the message to clients
             // tslint:disable-next-line:max-line-length
             winston.verbose(`Routing message to clients ${documentId}@${work[0].operation.sequenceNumber}:${work.length}`);
             this.io.to(documentId).emit("op", documentId, work.map((value) => value.operation));
 
-            // Add traces to each written message.
-            work.map((value) => {
-                if (value.operation.traces !== undefined) {
-                    // tslint:disable-next-line:max-line-length
-                    value.operation.traces.push( {service: "scriptorium", action: "end", timestamp: Date.now()});
-                }
-            });
-
+            // Write to mongo now.
             // Initialize the last promise if it doesn't exist
             if (!(documentId in lastMongoInsertP)) {
                 lastMongoInsertP[documentId] = Promise.resolve();
