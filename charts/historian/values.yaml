@@ -1,0 +1,21 @@
+## Specify a imagePullPolicy
+## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
+imagePullPolicy: IfNotPresent
+
+historian:
+  name: historian
+  externalUrl: http://prague-historian.westus2.cloudapp.azure.com
+  image: prague.azurecr.io/historian:770
+
+gitrest:
+  name: gitrest
+  image: prague.azurecr.io/gitrest:775
+  redis: bold-buffoon-redis
+  persistence:
+    storageClass: managed-premium
+    size: 128Gi
+    accessMode: ReadWriteOnce
+
+gitssh:
+  name: gitssh
+  image: prague.azurecr.io/gitssh:654

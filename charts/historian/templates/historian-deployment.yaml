@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: {{ template "historian.fullname" . }}
   labels:
-    app: {{ template "routerlicious.name" . }}
+    app: {{ template "historian.fullname" . }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     component: "{{ .Values.historian.name }}"
     release: "{{ .Release.Name }}"
@@ -15,7 +15,7 @@ spec:
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/historian-configmap.yaml") . | sha256sum }}
       labels:
-        app: {{ template "routerlicious.name" . }}
+        app: {{ template "historian.fullname" . }}
         component: "{{ .Values.historian.name }}"
         release: {{ .Release.Name }}
     spec:

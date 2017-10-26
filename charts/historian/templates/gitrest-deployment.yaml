@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: {{ template "gitrest.fullname" . }}
   labels:
-    app: {{ template "routerlicious.name" . }}
+    app: {{ template "historian.fullname" . }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     component: "{{ .Values.gitrest.name }}"
     release: "{{ .Release.Name }}"
@@ -16,7 +16,7 @@ spec:
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/gitrest-configmap.yaml") . | sha256sum }}
       labels:
-        app: {{ template "routerlicious.name" . }}
+        app: {{ template "historian.fullname" . }}
         component: "{{ .Values.gitrest.name }}"
         release: {{ .Release.Name }}
     spec:
