@@ -54,17 +54,17 @@ paparazzi:
   replicas: 1
 
 historian:
-  url: http://prague-historian.westus2.cloudapp.azure.com
+  externalUrl: http://prague-historian.westus2.cloudapp.azure.com
 
 zookeeper:
   local: false
   url: praguekafka-broker-1:2181
 
 mongodb:
-  url: mongodb://mortal-butterfly-mongodb:27017
+  url: mongodb://innocent-otter-mongodb:27017
 
 redis:
-  url: coiled-toucan
+  url: coiled-toucan-redis
 
 kafka:
   topics:
