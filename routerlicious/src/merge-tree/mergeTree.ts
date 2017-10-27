@@ -50,14 +50,18 @@ export enum SegmentType {
     External
 }
 
-export interface Segment extends IMergeNode {
-    segmentGroup?: SegmentGroup;
-    seq?: number;  // if not present assumed to be previous to window min
-    clientId?: number;
+export interface IRemovalInfo {
     removedSeq?: number;
     removedClientId?: number;
     removedClientOverlap?: number[];
+}
+
+export interface Segment extends IMergeNode, IRemovalInfo {
+    segmentGroup?: SegmentGroup;
+    seq?: number;  // if not present assumed to be previous to window min
+    clientId?: number;
     localRefs?: LocalReference[];
+    removalsByBranch?: IRemovalInfo[];
     splitAt(pos: number): Segment;
     netLength(): number; // length of content or 0 if removed
     canAppend(segment: Segment, mergeTree: MergeTree): boolean;
@@ -82,7 +86,7 @@ export interface BlockAction<TClientData> {
 }
 
 export interface NodeAction<TClientData> {
-    (node: IMergeNode, pos: number, refSeq: number, clientId: number, start: number, end: number,
+    (node: MergeNode, pos: number, refSeq: number, clientId: number, start: number, end: number,
         clientData?: TClientData): boolean;
 }
 
@@ -143,7 +147,7 @@ export interface OverlapClient {
     seglen: number;
 }
 
-export class IMergeNode implements IMergeNode {
+export class MergeNode implements IMergeNode {
     parent: IMergeBlock;
     cachedLength: number;
     isLeaf() {
@@ -197,7 +201,7 @@ function applyRangeMarker(stack: Collections.Stack<Marker>, delta: Marker) {
     }
 }
 
-function addNodeMarkers(mergeTree: MergeTree, node: IMergeNode, rightmostTiles: Properties.MapLike<Marker>,
+function addNodeMarkers(mergeTree: MergeTree, node: MergeNode, rightmostTiles: Properties.MapLike<Marker>,
     leftmostTiles: Properties.MapLike<Marker>, rangeStacks: RangeStackMap) {
     function updateRangeInfo(label: string, marker: Marker) {
         let stack = rangeStacks[label];
@@ -235,11 +239,11 @@ function addNodeMarkers(mergeTree: MergeTree, node: IMergeNode, rightmostTiles: 
 
 export let MaxNodesInBlock = 8;
 
-export class MergeBlock extends IMergeNode implements IMergeBlock {
-    children: IMergeNode[];
+export class MergeBlock extends MergeNode implements IMergeBlock {
+    children: MergeNode[];
     constructor(public childCount: number) {
         super();
-        this.children = new Array<IMergeNode>(MaxNodesInBlock);
+        this.children = new Array<MergeNode>(MaxNodesInBlock);
     }
     hierBlock() {
         return undefined;
@@ -259,7 +263,7 @@ class HierMergeBlock extends MergeBlock implements IMergeBlock {
         this.rangeStacks = Properties.createMap<Collections.Stack<Marker>>();
     }
 
-    addNodeMarkers(mergeTree: MergeTree, node: IMergeNode) {
+    addNodeMarkers(mergeTree: MergeTree, node: MergeNode) {
         addNodeMarkers(mergeTree, node, this.rightmostTiles, this.leftmostTiles,
             this.rangeStacks);
     }
@@ -283,7 +287,7 @@ class HierMergeBlock extends MergeBlock implements IMergeBlock {
     }
 }
 
-function nodeTotalLength(node: IMergeNode) {
+function nodeTotalLength(node: MergeNode) {
     if (!node.isLeaf()) {
         return node.cachedLength;
     }
@@ -292,7 +296,7 @@ function nodeTotalLength(node: IMergeNode) {
     }
 }
 
-export abstract class BaseSegment extends IMergeNode implements Segment {
+export abstract class BaseSegment extends MergeNode implements Segment {
     constructor(public seq?: number, public clientId?: number) {
         super();
     }
@@ -1408,8 +1412,8 @@ export function internedSpaces(n: number) {
 }
 
 export interface ClientIds {
-    clid: number;
-    brid: number;
+    clientId: number;
+    branchId: number;
 }
 
 export class Client {
@@ -1428,26 +1432,26 @@ export class Client {
     clientSequenceNumber = 1;
     clientNameToIds = new Collections.RedBlackTree<string, ClientIds>(compareStrings);
     shortClientIdMap = <string[]>[];
-    shortClientIdBridMap = <number[]>[];
+    shortClientBranchIdMap = <number[]>[];
     public longClientId: string;
 
     constructor(initText: string, options?: Properties.PropertySet) {
         this.mergeTree = new MergeTree(initText, options);
         this.mergeTree.getLongClientId = id => this.getLongClientId(id);
-        this.mergeTree.clientIdToBranchId = this.shortClientIdBridMap;
+        this.mergeTree.clientIdToBranchId = this.shortClientBranchIdMap;
         this.q = Collections.ListMakeHead<API.ISequencedObjectMessage>();
         this.checkQ = Collections.ListMakeHead<string>();
     }
 
-    getOrAddShortClientId(longClientId: string, brid = 0) {
+    getOrAddShortClientId(longClientId: string, branchId = 0) {
         if (!this.clientNameToIds.get(longClientId)) {
-            this.addLongClientId(longClientId, brid);
+            this.addLongClientId(longClientId, branchId);
         }
         return this.getShortClientId(longClientId);
     }
 
     getShortClientId(longClientId: string) {
-        return this.clientNameToIds.get(longClientId).data.clid;
+        return this.clientNameToIds.get(longClientId).data.clientId;
     }
 
     getLongClientId(clientId: number) {
@@ -1459,17 +1463,17 @@ export class Client {
         }
     }
 
-    addLongClientId(longClientId: string, brid = 0) {
+    addLongClientId(longClientId: string, branchId = 0) {
         this.clientNameToIds.put(longClientId, {
-            brid,
-            clid: this.shortClientIdMap.length
+            branchId,
+            clientId: this.shortClientIdMap.length
         });
         this.shortClientIdMap.push(longClientId);
-        this.shortClientIdBridMap.push(brid);
+        this.shortClientBranchIdMap.push(branchId);
     }
 
     getBranchId(clientId: number) {
-        return this.shortClientIdBridMap[clientId];
+        return this.shortClientBranchIdMap[clientId];
     }
 
     // TODO: props, end
@@ -2133,7 +2137,7 @@ function recordRangeLeaf(segment: Segment, segpos: number,
     return false;
 }
 
-function rangeShift(node: IMergeNode, segpos: number, refSeq: number, clientId: number,
+function rangeShift(node: MergeNode, segpos: number, refSeq: number, clientId: number,
     offset: number, end: number, searchInfo: IMarkerSearchRangeInfo) {
     if (node.isLeaf()) {
         let seg = <Segment>node;
@@ -2163,7 +2167,7 @@ function recordTileStart(segment: Segment, segpos: number,
     return false;
 }
 
-function tileShift(node: IMergeNode, segpos: number, refSeq: number, clientId: number,
+function tileShift(node: MergeNode, segpos: number, refSeq: number, clientId: number,
     offset: number, end: number, searchInfo: IMarkerSearchInfo) {
     if (node.isLeaf()) {
         let seg = <Segment>node;
@@ -2218,8 +2222,10 @@ export class MergeTree {
     collabWindow = new CollaborationWindow();
     pendingSegments: Collections.List<SegmentGroup>;
     segmentsToScour: Collections.Heap<LRUSegment>;
+    // TODO: change this to ES6 map; add remove on segment remove
     idToSegment = Properties.createMap<Segment>();
     clientIdToBranchId: number[] = [];
+    localBranchId = 0;
     transactionSegmentGroup: SegmentGroup;
     // for diagnostics
     getLongClientId: (id: number) => string;
@@ -2307,7 +2313,7 @@ export class MergeTree {
         this.idToSegment[id] = segment;
     }
 
-    addNode(block: IMergeBlock, node: IMergeNode) {
+    addNode(block: IMergeBlock, node: MergeNode) {
         let index = block.childCount;
         block.children[block.childCount++] = node;
         node.parent = block;
@@ -2317,7 +2323,7 @@ export class MergeTree {
     reloadFromSegments(segments: Segment[]) {
         let segCap = MaxNodesInBlock - 1;
         const measureReloadTime = false;
-        let buildMergeBlock: (nodes: IMergeNode[]) => IMergeBlock = (nodes: Segment[]) => {
+        let buildMergeBlock: (nodes: MergeNode[]) => IMergeBlock = (nodes: Segment[]) => {
             const nodeCount = Math.ceil(nodes.length / segCap);
             const blocks: IMergeBlock[] = [];
             let nodeIndex = 0;
@@ -2403,7 +2409,7 @@ export class MergeTree {
         return node.childCount < (MaxNodesInBlock / 2);
     }
 
-    scourNode(node: IMergeBlock, holdNodes: IMergeNode[]) {
+    scourNode(node: IMergeBlock, holdNodes: MergeNode[]) {
         let prevSegment: Segment;
         for (let k = 0; k < node.childCount; k++) {
             let childNode = node.children[k];
@@ -2412,7 +2418,7 @@ export class MergeTree {
                 if ((segment.removedSeq != undefined) && (segment.removedSeq != UnassignedSequenceNumber)) {
                     let createBrid = this.getBranchId(segment.clientId);
                     let removeBrid = this.getBranchId(segment.removedClientId);
-                    if ((removeBrid!=createBrid)||(segment.removedSeq > this.collabWindow.minSeq)) {
+                    if ((removeBrid != createBrid) || (segment.removedSeq > this.collabWindow.minSeq)) {
                         holdNodes.push(segment);
                     }
                     else {
@@ -2452,7 +2458,7 @@ export class MergeTree {
         let children = parent.children;
         let childIndex: number;
         let childBlock: IMergeBlock;
-        let holdNodes = <IMergeNode[]>[];
+        let holdNodes = <MergeNode[]>[];
         for (childIndex = 0; childIndex < parent.childCount; childIndex++) {
             // debug assert not isLeaf()
             childBlock = <IMergeBlock>children[childIndex];
@@ -2513,7 +2519,7 @@ export class MergeTree {
                 if (segmentToScour && segmentToScour.segment.parent &&
                     (segmentToScour.maxSeq <= this.collabWindow.minSeq)) {
                     let block = segmentToScour.segment.parent;
-                    let childrenCopy = <IMergeNode[]>[];
+                    let childrenCopy = <MergeNode[]>[];
                     //                console.log(`scouring from ${segmentToScour.segment.seq}`);
                     this.scourNode(block, childrenCopy);
                     let newChildCount = childrenCopy.length;
@@ -2641,7 +2647,7 @@ export class MergeTree {
         return this.blockLength(this.root, refSeq, clientId);
     }
 
-    getOffset(node: IMergeNode, refSeq: number, clientId: number) {
+    getOffset(node: MergeNode, refSeq: number, clientId: number) {
         let totalOffset = 0;
         let parent = node.parent;
         let prevParent: IMergeBlock;
@@ -2806,7 +2812,18 @@ export class MergeTree {
         }
     }
 
-    nodeLength(node: IMergeNode, refSeq: number, clientId: number) {
+    getRemovalInfo(branchId: number, segBranchId: number, segment: Segment) {
+        let index = branchId - segBranchId;
+        if (!segment.removalsByBranch) {
+            segment.removalsByBranch = <IRemovalInfo[]>[];
+        }
+        if (!segment.removalsByBranch[index]) {
+            segment.removalsByBranch[index] = <IRemovalInfo>{};
+        }        
+        return segment.removalsByBranch[index];
+    }
+    
+    nodeLength(node: MergeNode, refSeq: number, clientId: number) {
         if ((!this.collabWindow.collaborating) || (this.collabWindow.clientId == clientId)) {
             // local client sees all segments, even when collaborating
             if (!node.isLeaf()) {
@@ -2819,22 +2836,24 @@ export class MergeTree {
         else {
             // sequence number within window 
             // TODO: add branch info to partial lengths
-            let brid = this.getBranchId(clientId);
+            let branchId = this.getBranchId(clientId);
             if (!node.isLeaf()) {
                 return (<IMergeBlock>node).partialLengths.getPartialLength(refSeq, clientId);
             }
             else {
                 let segment = <Segment>node;
-                let segBrid = this.getBranchId(segment.clientId);
-                if ((segBrid <= brid) && ((segment.clientId == clientId) ||
+                let segBranchId = this.getBranchId(segment.clientId);
+                if ((segBranchId <= branchId) && ((segment.clientId == clientId) ||
                     ((segment.seq != UnassignedSequenceNumber) && (segment.seq <= refSeq)))) {
+                    let removalInfo = <IRemovalInfo>segment;
+                    if (branchId > segBranchId) {
+                        removalInfo = this.getRemovalInfo(branchId, segBranchId, segment);
+                    }
                     // segment happened by reference sequence number or segment from requesting client
-                    if (segment.removedSeq !== undefined) {
-                        let segRemovedBrid = this.getBranchId(segment.removedClientId);
-                        if ((segRemovedBrid <= brid) &&
-                            ((segment.removedClientId == clientId) ||
-                                (segment.removedClientOverlap && (segment.removedClientOverlap.indexOf(clientId) >= 0)) ||
-                                ((segment.removedSeq != UnassignedSequenceNumber) && (segment.removedSeq <= refSeq)))) {
+                    if (removalInfo.removedSeq !== undefined) {
+                        if ((removalInfo.removedClientId == clientId) ||
+                            (removalInfo.removedClientOverlap && (removalInfo.removedClientOverlap.indexOf(clientId) >= 0)) ||
+                            ((removalInfo.removedSeq != UnassignedSequenceNumber) && (removalInfo.removedSeq <= refSeq))) {
                             return 0;
                         }
                         else {
@@ -3196,7 +3215,7 @@ export class MergeTree {
     }
 
     // assume called only when pos == len
-    breakTie(pos: number, len: number, seq: number, node: IMergeNode, refSeq: number, clientId: number, segType: SegmentType) {
+    breakTie(pos: number, len: number, seq: number, node: MergeNode, refSeq: number, clientId: number, segType: SegmentType) {
         if (node.isLeaf()) {
             let segment = <Segment>node;
             // TODO: marker/marker tie break & collab markers
@@ -3213,7 +3232,7 @@ export class MergeTree {
     }
 
     // visit segments starting from node's right siblings, then up to node's parent
-    leftExcursion<TClientData>(node: IMergeNode, leafAction: SegmentAction<TClientData>) {
+    leftExcursion<TClientData>(node: MergeNode, leafAction: SegmentAction<TClientData>) {
         let actions = { leaf: leafAction };
         let go = true;
         let startNode = node;
@@ -3221,7 +3240,7 @@ export class MergeTree {
         while (parent) {
             let children = parent.children;
             let childIndex: number;
-            let node: IMergeNode;
+            let node: MergeNode;
             let matchedStart = false;
             for (childIndex = parent.childCount - 1; childIndex >= 0; childIndex--) {
                 node = children[childIndex];
@@ -3248,7 +3267,7 @@ export class MergeTree {
     }
 
     // visit segments starting from node's right siblings, then up to node's parent
-    rightExcursion<TClientData>(node: IMergeNode, leafAction: SegmentAction<TClientData>) {
+    rightExcursion<TClientData>(node: MergeNode, leafAction: SegmentAction<TClientData>) {
         let actions = { leaf: leafAction };
         let go = true;
         let startNode = node;
@@ -3256,7 +3275,7 @@ export class MergeTree {
         while (parent) {
             let children = parent.children;
             let childIndex: number;
-            let node: IMergeNode;
+            let node: MergeNode;
             let matchedStart = false;
             for (childIndex = 0; childIndex < parent.childCount; childIndex++) {
                 node = children[childIndex];
@@ -3286,8 +3305,8 @@ export class MergeTree {
         segType: SegmentType, context: InsertContext) {
         let children = block.children;
         let childIndex: number;
-        let child: IMergeNode;
-        let newNode: IMergeNode;
+        let child: MergeNode;
+        let newNode: MergeNode;
         let found = false;
         for (childIndex = 0; childIndex < block.childCount; childIndex++) {
             child = children[childIndex];
@@ -3448,7 +3467,7 @@ export class MergeTree {
                     console.log(`yump @seq ${seq} cli ${glc(this, this.collabWindow.clientId)}: overlaps deleted segment ${segment.removedSeq} text ${segment.toString()}`);
                 }
                 overwrite = true;
-                if (segment.removedSeq == UnassignedSequenceNumber) {
+                if (segment.removedSeq === UnassignedSequenceNumber) {
                     // replace because comes later
                     segment.removedClientId = clientId;
                     segment.removedSeq = seq;
