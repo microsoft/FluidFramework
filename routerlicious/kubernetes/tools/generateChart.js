@@ -54,51 +54,22 @@ paparazzi:
   replicas: 1
 
 historian:
-  name: historian
-  externalUrl: http://prague-historian.westus2.cloudapp.azure.com
-  image: prague.azurecr.io/historian:664
-
-gitrest:
-  name: gitrest
-  image: prague.azurecr.io/gitrest:653
-  persistence:
-    storageClass: ssd
-    size: 128Gi
-    accessMode: ReadWriteOnce
-
-gitssh:
-  name: gitssh
-  image: prague.azurecr.io/gitssh:654
+  url: http://prague-historian.westus2.cloudapp.azure.com
 
 zookeeper:
   local: false
   url: praguekafka-broker-1:2181
 
+mongodb:
+  url: mongodb://mortal-butterfly-mongodb:27017
+
+redis:
+  url: coiled-toucan
+
 kafka:
   topics:
     rawdeltas: rawdeltas
     deltas: deltas
-
-# Dependency overrides
-minio:
-  accessKey: prague
-  secretKey: mhioAkNXTwdX4dXWgKgXVtHo
-  serviceType: ClusterIP
-
-mongodb:
-  persistence:
-    storageClass: ssd
-
-rabbitmq:
-  rabbitmqUsername: prague
-  rabbitmqPassword: mhioAkNXTwdX4dXWgKgXVtHo
-  persistence:
-    storageClass: ssd
-
-redis:
-  usePassword: false
-  persistence:
-    enabled: false
 `;
 
 const writeFileAsync = util.promisify(fs.writeFile);

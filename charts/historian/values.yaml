@@ -4,15 +4,14 @@ imagePullPolicy: IfNotPresent
 
 historian:
   name: historian
-  externalUrl: http://prague-historian.westus2.cloudapp.azure.com
   image: prague.azurecr.io/historian:770
+  redis: coiled-toucan
 
 gitrest:
   name: gitrest
   image: prague.azurecr.io/gitrest:775
-  redis: bold-buffoon-redis
   persistence:
-    storageClass: managed-premium
+    storageClass: ssd
     size: 128Gi
     accessMode: ReadWriteOnce
 
