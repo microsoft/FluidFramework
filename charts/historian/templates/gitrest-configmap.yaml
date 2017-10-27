@@ -3,7 +3,7 @@ kind: ConfigMap
 metadata:
   name: {{ template "gitrest.fullname" . }}
   labels:
-    app: {{ template "routerlicious.name" . }}
+    app: {{ template "historian.fullname" . }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     component: "{{ .Values.gitrest.name }}"
     release: "{{ .Release.Name }}"

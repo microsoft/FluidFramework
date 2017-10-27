@@ -3,7 +3,7 @@ kind: ConfigMap
 metadata:
   name: {{ template "historian.fullname" . }}
   labels:
-    app: {{ template "routerlicious.name" . }}
+    app: {{ template "historian.fullname" . }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     component: "{{ .Values.historian.name }}"
     release: "{{ .Release.Name }}"
@@ -21,7 +21,7 @@ data:
         "requestSizeLimit": "1gb",
         "gitServerUrl": "http://{{ template "gitrest.fullname" . }}",
         "redis": {
-            "host": "{{ template "redis.fullname" . }}",
+            "host": "{{ .Values.historian.redis }}",
             "port": 6379
         }
     }

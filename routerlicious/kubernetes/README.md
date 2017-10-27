@@ -27,19 +27,12 @@ down to the below command to create a secret in Kubernetes
 kubectl create secret docker-registry regsecret --docker-server=prague.azurecr.io --docker-username=prague --docker-password=<password> --docker-email=kurtb@microsoft.com
 ```
 
-For better performance we make use of SSDs to back our Kubernetes volumes. Run the following command to add in SSD
-disk support (note you will need to create a a premium blob storage account with premium SSDs).
+You'll also need to have a Redis, MongoDB, and Historian instances running.
+`helm install -f system/mongodb.yaml stable/mongodb`
+`helm install -f system/redis.yaml stable/redis`
+Historian can be installed from the /charts/historian directory
 
-```
-kubectl apply -f system/azure-premium-storage.yaml
-```
-
-And finally install helm into the cluster.
-
-```
-kubectl apply -f system/helm.yaml
-helm init --service-account helm
-```
+Make note of the URLs to each of these and provide a values override for Routerlicious with them.
 
 ### Manual steps
 
@@ -50,6 +43,9 @@ We will move these to Kubernetes jobs. But for now they need to be applied manua
 ./kafka-topics --zookeeper praguekafka-broker-1:2181 --partitions 8 --replication-factor 3 --create --topic rawdeltas
 curl -H "Content-Type: application/json" -X POST -d '{"name": "prague"}' --verbose prague-historian.westus2.cloudapp.azure.com/repos
 ```
+
+
+http://praguekafka-w4viw5xf-worker-1.westus2.cloudapp.azure.com:9021/
 
 ### Build the chart
 
@@ -77,3 +73,8 @@ helm upgrade -i pesky-platypus chart.tgz
 ### Optional Extras
 
 Information on some optional extras you can also deploy to your cluster can be found at [extras](extras.md).
+
+### Legacy
+
+Legacy steps to configure our cluster can be found at [legacy](legacy.md). Most of these steps are now taken
+care of by Azure Container Service.

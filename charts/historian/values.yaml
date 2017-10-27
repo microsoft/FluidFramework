@@ -1,0 +1,20 @@
+## Specify a imagePullPolicy
+## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
+imagePullPolicy: IfNotPresent
+
+historian:
+  name: historian
+  image: prague.azurecr.io/historian:770
+  redis: coiled-toucan-redis
+
+gitrest:
+  name: gitrest
+  image: prague.azurecr.io/gitrest:775
+  persistence:
+    storageClass: ssd
+    size: 128Gi
+    accessMode: ReadWriteOnce
+
+gitssh:
+  name: gitssh
+  image: prague.azurecr.io/gitssh:654

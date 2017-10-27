@@ -3,7 +3,7 @@ kind: Service
 metadata:
   name: {{ template "historian.fullname" . }}
   labels:
-    app: {{ template "routerlicious.name" . }}
+    app: {{ template "historian.fullname" . }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     component: "{{ .Values.historian.name }}"
     release: "{{ .Release.Name }}"
@@ -15,6 +15,6 @@ spec:
       targetPort: http
   type: LoadBalancer
   selector:
-    app: {{ template "routerlicious.name" . }}
+    app: {{ template "historian.fullname" . }}
     component: "{{ .Values.historian.name }}"
     release: {{ .Release.Name }}

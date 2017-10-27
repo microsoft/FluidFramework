@@ -3,7 +3,7 @@ kind: Service
 metadata:
   name: {{ template "gitrest.fullname" . }}
   labels:
-    app: {{ template "routerlicious.name" . }}
+    app: {{ template "historian.fullname" . }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     component: "{{ .Values.gitrest.name }}"
     release: "{{ .Release.Name }}"
@@ -18,6 +18,6 @@ spec:
       targetPort: http
   type: LoadBalancer
   selector:
-    app: {{ template "routerlicious.name" . }}
+    app: {{ template "historian.fullname" . }}
     component: "{{ .Values.gitrest.name }}"
     release: {{ .Release.Name }}

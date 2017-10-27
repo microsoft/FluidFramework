@@ -19,11 +19,8 @@ data:
             "timestamp": false,
             "label": "winston"
         },
-        "rabbitmq": {
-            "connectionString": "amqp://{{ .Values.rabbitmq.rabbitmqUsername }}:{{ .Values.rabbitmq.rabbitmqPassword }}@{{ template "rabbitmq.fullname" . }}"
-        },
         "mongo": {
-            "endpoint": "mongodb://{{ template "mongodb.fullname" . }}:27017",
+            "endpoint": "{{ .Values.mongodb.url }}",
             "collectionNames": {
                 "deltas": "deltas",
                 "documents": "documents",
@@ -86,14 +83,8 @@ data:
             "onlyServer": false
         },
         "redis": {
-            "host": "{{ template "redis.fullname" . }}",
+            "host": "{{ .Values.redis.url }}",
             "port": 6379
-        },
-        "minio": {
-            "endpoint": "{{ template "fullname" . }}",
-            "port": 9000,
-            "accessKey": "{{ .Values.minio.accessKey }}",
-            "secretKey": "{{ .Values.minio.secretKey }}"
         },
         "worker": {
             "intelligence": {
