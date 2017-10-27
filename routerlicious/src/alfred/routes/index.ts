@@ -10,6 +10,7 @@ import * as home from "./home";
 import * as intelligence from "./intelligence";
 import * as login from "./login";
 import * as maps from "./maps";
+import * as ping from "./ping";
 import * as scribe from "./scribe";
 import * as sharedText from "./sharedText";
 
@@ -36,6 +37,7 @@ export function create(config: Provider, gitManager: git.GitManager, mongoManage
         intelligence: intelligence.create(config),
         login: login.create(config),
         maps: maps.create(config, gitManager),
+        ping: ping.create(),
         scribe: scribe.create(config),
         sharedText: sharedText.create(config, gitManager),
     };

@@ -18,3 +18,6 @@ export { sharedText };
 
 import * as login from "./login";
 export { login };
+
+import * as ping from "./ping";
+export { ping };

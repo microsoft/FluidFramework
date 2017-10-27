@@ -112,6 +112,7 @@ export function create(config: Provider, historian: resources.IHistorian, mongoM
     app.use("/intelligence", routes.intelligence);
     app.use("/democreator", routes.demoCreator);
     app.use("/login", routes.login);
+    app.use("/ping", routes.ping);
     app.use(routes.home);
 
     // catch 404 and forward to error handler
