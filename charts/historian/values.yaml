@@ -5,7 +5,7 @@ imagePullPolicy: IfNotPresent
 historian:
   name: historian
   image: prague.azurecr.io/historian:770
-  redis: coiled-toucan
+  redis: coiled-toucan-redis
 
 gitrest:
   name: gitrest
