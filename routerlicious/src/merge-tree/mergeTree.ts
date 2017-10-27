@@ -60,7 +60,7 @@ export interface Segment extends IMergeNode {
     localRefs?: LocalReference[];
     splitAt(pos: number): Segment;
     netLength(): number; // length of content or 0 if removed
-    canAppend(segment: Segment): boolean;
+    canAppend(segment: Segment, mergeTree: MergeTree): boolean;
     append(segment: Segment);
     getType(): SegmentType;
     removeRange(start: number, end: number): boolean;
@@ -354,9 +354,11 @@ export abstract class BaseSegment extends IMergeNode implements Segment {
             return this.cachedLength;
         }
     }
-    canAppend(segment: Segment) {
+
+    canAppend(segment: Segment, mergeTree: MergeTree) {
         return false;
     }
+
     abstract clone(): BaseSegment;
     abstract append(segment: Segment): Segment;
     abstract getType(): SegmentType;
@@ -640,15 +642,22 @@ export class TextSegment extends BaseSegment {
         return true;
     }
 
-    canAppend(segment: Segment) {
+    canAppend(segment: Segment, mergeTree: MergeTree) {
         if ((!this.removedSeq) && (this.text.charAt(this.text.length - 1) != '\n')) {
-            if ((segment.getType() == SegmentType.Text) && (this.matchProperties(<TextSegment>segment))) {
-                return ((this.cachedLength <= MergeTree.TextSegmentGranularity) ||
-                    (segment.cachedLength <= MergeTree.TextSegmentGranularity));
+            if (segment.getType() === SegmentType.Text) {
+                if (this.matchProperties(<TextSegment>segment)) {
+                    let branchId = mergeTree.getBranchId(this.clientId);
+                    let segBranchId = mergeTree.getBranchId(segment.clientId);
+                    if (segBranchId <= branchId) {
+                        return ((this.cachedLength <= MergeTree.TextSegmentGranularity) ||
+                            (segment.cachedLength <= MergeTree.TextSegmentGranularity));
+                    }
+                }
             }
         }
         return false;
     }
+
     toString() {
         return this.text;
     }
@@ -710,25 +719,19 @@ function segmentCopy(from: Segment, to: Segment, propSegGroup = false) {
 function incrementalGatherText(segment: Segment, state: IncrementalMapState<TextSegment>) {
     if (segment.getType() == SegmentType.Text) {
         let textSegment = <TextSegment>segment;
-        if ((textSegment.removedSeq === undefined) || (textSegment.removedSeq == UnassignedSequenceNumber) || (textSegment.removedSeq > state.refSeq)) {
-            if (MergeTree.traceGatherText) {
-                console.log(`@cli ${this.collabWindow ? this.collabwindow.clientId : -1} gather seg seq ${textSegment.seq} rseq ${textSegment.removedSeq} text ${textSegment.text}`);
-            }
-            if ((state.start <= 0) && (state.end >= textSegment.text.length)) {
-                state.context.text += textSegment.text;
-            }
-            else {
-                if (state.end >= textSegment.text.length) {
-                    state.context.text += textSegment.text.substring(state.start);
-                }
-                else {
-                    state.context.text += textSegment.text.substring(state.start, state.end);
-                }
-            }
+
+        if (MergeTree.traceGatherText) {
+            console.log(`@cli ${this.collabWindow ? this.collabwindow.clientId : -1} gather seg seq ${textSegment.seq} rseq ${textSegment.removedSeq} text ${textSegment.text}`);
+        }
+        if ((state.start <= 0) && (state.end >= textSegment.text.length)) {
+            state.context.text += textSegment.text;
         }
         else {
-            if (MergeTree.traceGatherText) {
-                console.log(`ignore seg seq ${textSegment.seq} rseq ${textSegment.removedSeq} text ${textSegment.text}`);
+            if (state.end >= textSegment.text.length) {
+                state.context.text += textSegment.text.substring(state.start);
+            }
+            else {
+                state.context.text += textSegment.text.substring(state.start, state.end);
             }
         }
     }
@@ -1404,6 +1407,11 @@ export function internedSpaces(n: number) {
     return indentStrings[n];
 }
 
+export interface ClientIds {
+    clid: number;
+    brid: number;
+}
+
 export class Client {
     mergeTree: MergeTree;
     accumTime = 0;
@@ -1418,26 +1426,28 @@ export class Client {
     q: Collections.List<API.ISequencedObjectMessage>;
     checkQ: Collections.List<string>;
     clientSequenceNumber = 1;
-    clientNameToId = new Collections.RedBlackTree<string, number>(compareStrings);
+    clientNameToIds = new Collections.RedBlackTree<string, ClientIds>(compareStrings);
     shortClientIdMap = <string[]>[];
+    shortClientIdBridMap = <number[]>[];
     public longClientId: string;
 
     constructor(initText: string, options?: Properties.PropertySet) {
         this.mergeTree = new MergeTree(initText, options);
         this.mergeTree.getLongClientId = id => this.getLongClientId(id);
+        this.mergeTree.clientIdToBranchId = this.shortClientIdBridMap;
         this.q = Collections.ListMakeHead<API.ISequencedObjectMessage>();
         this.checkQ = Collections.ListMakeHead<string>();
     }
 
-    getOrAddShortClientId(longClientId: string) {
-        if (!this.clientNameToId.get(longClientId)) {
-            this.addLongClientId(longClientId);
+    getOrAddShortClientId(longClientId: string, brid = 0) {
+        if (!this.clientNameToIds.get(longClientId)) {
+            this.addLongClientId(longClientId, brid);
         }
         return this.getShortClientId(longClientId);
     }
 
     getShortClientId(longClientId: string) {
-        return this.clientNameToId.get(longClientId).data;
+        return this.clientNameToIds.get(longClientId).data.clid;
     }
 
     getLongClientId(clientId: number) {
@@ -1449,9 +1459,17 @@ export class Client {
         }
     }
 
-    addLongClientId(longClientId: string) {
-        this.clientNameToId.put(longClientId, this.shortClientIdMap.length);
+    addLongClientId(longClientId: string, brid = 0) {
+        this.clientNameToIds.put(longClientId, {
+            brid,
+            clid: this.shortClientIdMap.length
+        });
         this.shortClientIdMap.push(longClientId);
+        this.shortClientIdBridMap.push(brid);
+    }
+
+    getBranchId(clientId: number) {
+        return this.shortClientIdBridMap[clientId];
     }
 
     // TODO: props, end
@@ -2201,6 +2219,7 @@ export class MergeTree {
     pendingSegments: Collections.List<SegmentGroup>;
     segmentsToScour: Collections.Heap<LRUSegment>;
     idToSegment = Properties.createMap<Segment>();
+    clientIdToBranchId: number[] = [];
     transactionSegmentGroup: SegmentGroup;
     // for diagnostics
     getLongClientId: (id: number) => string;
@@ -2273,6 +2292,14 @@ export class MergeTree {
 
     endGroupOperation() {
         this.transactionSegmentGroup = undefined;
+    }
+
+    getBranchId(clientId: number) {
+        if ((this.clientIdToBranchId.length > clientId) && (clientId >= 0)) {
+            return this.clientIdToBranchId[clientId];
+        } else {
+            return 0;
+        }
     }
 
     // TODO: remove id when segment removed 
@@ -2383,7 +2410,9 @@ export class MergeTree {
             if (childNode.isLeaf()) {
                 let segment = <Segment>childNode;
                 if ((segment.removedSeq != undefined) && (segment.removedSeq != UnassignedSequenceNumber)) {
-                    if (segment.removedSeq > this.collabWindow.minSeq) {
+                    let createBrid = this.getBranchId(segment.clientId);
+                    let removeBrid = this.getBranchId(segment.removedClientId);
+                    if ((removeBrid!=createBrid)||(segment.removedSeq > this.collabWindow.minSeq)) {
                         holdNodes.push(segment);
                     }
                     else {
@@ -2395,7 +2424,7 @@ export class MergeTree {
                 else {
                     if ((segment.seq <= this.collabWindow.minSeq) &&
                         (!segment.segmentGroup) && (segment.seq != UnassignedSequenceNumber)) {
-                        if (prevSegment && prevSegment.canAppend(segment)) {
+                        if (prevSegment && prevSegment.canAppend(segment, this)) {
                             prevSegment.append(segment);
                             segment.parent = undefined;
                         }
@@ -2653,7 +2682,7 @@ export class MergeTree {
         }
     }
 
-    gatherText = (segment: Segment, pos: number, refSeq: number, clientId: number, start: number,
+    ogatherText = (segment: Segment, pos: number, refSeq: number, clientId: number, start: number,
         end: number, accumText: TextAccumulator) => {
         if (segment.getType() == SegmentType.Text) {
             let textSegment = <TextSegment>segment;
@@ -2679,6 +2708,36 @@ export class MergeTree {
             else {
                 if (MergeTree.traceGatherText) {
                     console.log(`ignore seg seq ${textSegment.seq} rseq ${textSegment.removedSeq} text ${textSegment.text}`);
+                }
+            }
+        }
+        else if (accumText.placeholders) {
+            for (let i = 0; i < segment.cachedLength; i++) {
+                accumText.textSegment.text += " ";
+            }
+        }
+        return true;
+    }
+
+    gatherText = (segment: Segment, pos: number, refSeq: number, clientId: number, start: number,
+        end: number, accumText: TextAccumulator) => {
+        if (segment.getType() == SegmentType.Text) {
+            let textSegment = <TextSegment>segment;
+            if (MergeTree.traceGatherText) {
+                console.log(`@cli ${this.getLongClientId(this.collabWindow.clientId)} gather seg seq ${textSegment.seq} rseq ${textSegment.removedSeq} text ${textSegment.text}`);
+            }
+            if ((start <= 0) && (end >= textSegment.text.length)) {
+                accumText.textSegment.text += textSegment.text;
+            }
+            else {
+                if (start < 0) {
+                    start = 0;
+                }
+                if (end >= textSegment.text.length) {
+                    accumText.textSegment.text += textSegment.text.substring(start);
+                }
+                else {
+                    accumText.textSegment.text += textSegment.text.substring(start, end);
                 }
             }
         }
@@ -2759,25 +2818,34 @@ export class MergeTree {
         }
         else {
             // sequence number within window 
+            // TODO: add branch info to partial lengths
+            let brid = this.getBranchId(clientId);
             if (!node.isLeaf()) {
                 return (<IMergeBlock>node).partialLengths.getPartialLength(refSeq, clientId);
             }
             else {
                 let segment = <Segment>node;
-                if ((segment.clientId == clientId) || ((segment.seq != UnassignedSequenceNumber) && (segment.seq <= refSeq))) {
+                let segBrid = this.getBranchId(segment.clientId);
+                if ((segBrid <= brid) && ((segment.clientId == clientId) ||
+                    ((segment.seq != UnassignedSequenceNumber) && (segment.seq <= refSeq)))) {
                     // segment happened by reference sequence number or segment from requesting client
-                    if ((segment.removedSeq !== undefined) &&
-                        ((segment.removedClientId == clientId) ||
-                            (segment.removedClientOverlap && (segment.removedClientOverlap.indexOf(clientId) >= 0)) ||
-                            ((segment.removedSeq != UnassignedSequenceNumber) && (segment.removedSeq <= refSeq)))) {
-                        return 0;
-                    }
-                    else {
+                    if (segment.removedSeq !== undefined) {
+                        let segRemovedBrid = this.getBranchId(segment.removedClientId);
+                        if ((segRemovedBrid <= brid) &&
+                            ((segment.removedClientId == clientId) ||
+                                (segment.removedClientOverlap && (segment.removedClientOverlap.indexOf(clientId) >= 0)) ||
+                                ((segment.removedSeq != UnassignedSequenceNumber) && (segment.removedSeq <= refSeq)))) {
+                            return 0;
+                        }
+                        else {
+                            return segment.cachedLength;
+                        }
+                    } else {
                         return segment.cachedLength;
                     }
                 }
                 else {
-                    // segment invisible to client at reference sequence number
+                    // segment invisible to client at reference sequence number/branch id/client id of op
                     return 0;
                 }
             }
@@ -3429,7 +3497,7 @@ export class MergeTree {
         }
         //traceTraversal = true;
         this.mapRange({ leaf: markRemoved, post: afterMarkRemoved }, refSeq, clientId, undefined, start, end);
-        if (savedLocalRefs.length>0) {
+        if (savedLocalRefs.length > 0) {
             let afterSeg: BaseSegment;
             for (let segSavedRefs of savedLocalRefs) {
                 for (let localRef of segSavedRefs) {
@@ -3439,7 +3507,7 @@ export class MergeTree {
                             afterSeg = <BaseSegment>afterSegOff.segment;
                         }
                         localRef.segment = afterSeg;
-                        localRef.offset = 0; 
+                        localRef.offset = 0;
                         afterSeg.addLocalRef(localRef);
                     }
                 }
