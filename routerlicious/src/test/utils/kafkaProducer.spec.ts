@@ -28,7 +28,7 @@ describe("Routerlicious", () => {
 
         describe("Producer", () => {
             describe(".send()", async () => {
-                it("", async () => {
+                it("Should batch incoming messages", async () => {
                     const sendCount = 100;
                     for (let i = 0; i < sendCount; i++) {
                         producer.send("Hello", key);
