@@ -3,7 +3,7 @@ import performanceNow = require("performance-now");
 import * as request from "request";
 import * as url from "url";
 import * as agent from "../../agent";
-import { api as API, mergeTree as SharedString, socketStorage, types } from "../../client-api";
+import { api as API, MergeTree as SharedString, socketStorage, types } from "../../client-api";
 import { controls, ui } from "../../client-ui";
 
 // first script loaded

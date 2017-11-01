@@ -63,7 +63,6 @@ export interface Segment extends IMergeNode, IRemovalInfo {
     localRefs?: LocalReference[];
     removalsByBranch?: IRemovalInfo[];
     splitAt(pos: number): Segment;
-    netLength(): number; // length of content or 0 if removed
     canAppend(segment: Segment, mergeTree: MergeTree): boolean;
     append(segment: Segment);
     getType(): SegmentType;
@@ -213,7 +212,7 @@ function addNodeMarkers(mergeTree: MergeTree, node: MergeNode, rightmostTiles: P
     }
     if (node.isLeaf()) {
         let segment = <Segment>node;
-        if ((segment.netLength() > 0) && (segment.getType() == SegmentType.Marker)) {
+        if ((mergeTree.localNetLength(segment) > 0) && (segment.getType() == SegmentType.Marker)) {
             let marker = <Marker>node;
             let markerId = marker.getId();
             if (markerId) {
@@ -287,12 +286,12 @@ class HierMergeBlock extends MergeBlock implements IMergeBlock {
     }
 }
 
-function nodeTotalLength(node: MergeNode) {
+function nodeTotalLength(mergeTree: MergeTree, node: MergeNode) {
     if (!node.isLeaf()) {
         return node.cachedLength;
     }
     else {
-        return (<Segment>node).netLength();
+        return mergeTree.localNetLength(<Segment>node);
     }
 }
 
@@ -345,18 +344,9 @@ export abstract class BaseSegment extends MergeNode implements Segment {
         // TODO: deep clone properties
         b.properties = Properties.extend(Properties.createMap<any>(), this.properties);
         b.removedClientId = this.removedClientId;
-        // TODO: copy removed client overlap
+        // TODO: copy removed client overlap and branch removal info
         b.removedSeq = this.removedSeq;
         b.seq = this.seq;
-    }
-
-    netLength() {
-        if (this.removedSeq !== undefined) {
-            return 0;
-        }
-        else {
-            return this.cachedLength;
-        }
     }
 
     canAppend(segment: Segment, mergeTree: MergeTree) {
@@ -702,10 +692,22 @@ export class TextSegment extends BaseSegment {
 }
 
 function segmentCopy(from: Segment, to: Segment, propSegGroup = false) {
-    // TODO: markers
     to.parent = from.parent;
     to.removedClientId = from.removedClientId;
     to.removedSeq = from.removedSeq;
+    if (from.removalsByBranch) {
+        to.removalsByBranch = <IRemovalInfo[]>[];
+        for (let i = 0, len = from.removalsByBranch.length; i < len; i++) {
+            let fromRemovalInfo = from.removalsByBranch[i];
+            if (fromRemovalInfo) {
+                to.removalsByBranch[i] = {
+                    removedClientId: fromRemovalInfo.removedClientId,
+                    removedSeq: fromRemovalInfo.removedSeq,
+                    removedClientOverlap: fromRemovalInfo.removedClientOverlap,
+                }
+            }
+        }
+    }
     to.seq = from.seq;
     to.clientId = from.clientId;
     to.removedClientOverlap = from.removedClientOverlap;
@@ -847,6 +849,7 @@ export class PartialSequenceLengths {
     segmentCount = 0;
     partialLengths: PartialSequenceLength[] = [];
     clientSeqNumbers: PartialSequenceLength[][] = [];
+    downstreamPartialLengths: PartialSequenceLengths[];
     static options = {
         zamboni: true
     };
@@ -905,28 +908,52 @@ export class PartialSequenceLengths {
         return true;
     }
 
-    toString(glc?: (id: number) => string) {
+    branchToString(glc?: (id: number) => string, branchId = 0) {
         let buf = "";
         for (let partial of this.partialLengths) {
             buf += `(${partial.seq},${partial.len}) `;
         }
         for (let clientId in this.clientSeqNumbers) {
-            buf += `Client `;
-            if (glc) {
-                buf += `${glc(+clientId)}`;
-            } else {
-                buf += `${clientId}`;
+            if (this.clientSeqNumbers[clientId].length > 0) {
+                buf += `Client `;
+                if (glc) {
+                    buf += `${glc(+clientId)}`;
+                } else {
+                    buf += `${clientId}`;
+                }
+                buf += '[';
+                for (let partial of this.clientSeqNumbers[clientId]) {
+                    buf += `(${partial.seq},${partial.len})`
+                }
+                buf += ']';
             }
-            buf += '[';
-            for (let partial of this.clientSeqNumbers[clientId]) {
-                buf += `(${partial.seq},${partial.len})`
-            }
-            buf += ']';
         }
-        return `min: ${this.minLength}; sc: ${this.segmentCount};` + buf;
+        buf = `Br ${branchId}, min(seq ${this.minSeq}): ${this.minLength}; sc: ${this.segmentCount};` + buf;
+        return buf;
     }
 
-    getPartialLength(refSeq: number, clientId: number) {
+    toString(glc?: (id: number) => string, indentCount = 0) {
+        let buf = this.branchToString(glc);
+        if (this.downstreamPartialLengths) {
+            for (let i = 0, len = this.downstreamPartialLengths.length; i < len; i++) {
+                buf += "\n";
+                buf += internedSpaces(indentCount);
+                buf += this.downstreamPartialLengths[i].branchToString(glc, i + 1);
+            }
+        }
+        return buf;
+    }
+
+    getPartialLength(mergeTree: MergeTree, refSeq: number, clientId: number) {
+        let branchId = mergeTree.getBranchId(clientId);
+        if (branchId > 0) {
+            return this.downstreamPartialLengths[branchId - 1].getBranchPartialLength(refSeq, clientId);
+        } else {
+            return this.getBranchPartialLength(refSeq, clientId);
+        }
+    }
+
+    getBranchPartialLength(refSeq: number, clientId: number) {
         let pLen = this.minLength;
         let seqIndex = latestLEQ(this.partialLengths, refSeq);
         let cliLatestindex = this.cliLatest(clientId);
@@ -1008,10 +1035,20 @@ export class PartialSequenceLengths {
         }
     }
 
+    update(mergeTree: MergeTree, block: IMergeBlock, seq: number, clientId: number, collabWindow: CollaborationWindow) {
+        this.updateBranch(mergeTree, 0, block, seq, clientId, collabWindow);
+        if (mergeTree.localBranchId > 0) {
+            for (let i = 0; i < mergeTree.localBranchId; i++) {
+                this.downstreamPartialLengths[i].updateBranch(mergeTree, i, block, seq, clientId, collabWindow);
+            }
+        }
+
+    }
+
     // assume: seq is latest sequence number; no structural change to sub-tree, but a segment
     // with sequence number seq has been added within the sub-tree
     // TODO: assert client id matches
-    update(node: IMergeBlock, seq: number, clientId: number, collabWindow: CollaborationWindow) {
+    updateBranch(mergeTree: MergeTree, branchId: number, node: IMergeBlock, seq: number, clientId: number, collabWindow: CollaborationWindow) {
         let seqSeglen = 0;
         let segCount = 0;
         // compute length for seq across children
@@ -1034,8 +1071,12 @@ export class PartialSequenceLengths {
                 if (segment.seq == seq) {
                     seqSeglen += segment.cachedLength;
                 }
-                else if (segment.removedSeq == seq) {
-                    seqSeglen -= segment.cachedLength;
+                else {
+                    let segBranchId = mergeTree.getBranchId(segment.clientId);
+                    let removalInfo = mergeTree.getRemovalInfo(branchId, segBranchId, segment);
+                    if (removalInfo.removedSeq === seq) {
+                        seqSeglen -= segment.cachedLength;
+                    }
                 }
                 segCount++;
             }
@@ -1092,7 +1133,8 @@ export class PartialSequenceLengths {
         //   console.log(this.toString());
     }
 
-    static fromLeaves(combinedPartialLengths: PartialSequenceLengths, block: IMergeBlock, collabWindow: CollaborationWindow) {
+    static fromLeaves(mergeTree: MergeTree, branchId: number, combinedPartialLengths: PartialSequenceLengths,
+        block: IMergeBlock, collabWindow: CollaborationWindow) {
         combinedPartialLengths.minLength = 0;
         combinedPartialLengths.segmentCount = block.childCount;
 
@@ -1121,18 +1163,18 @@ export class PartialSequenceLengths {
             }
         }
 
-        function insertSegment(segment: Segment, removedSeq = false) {
+        function insertSegment(segment: Segment, removedSeq = false, removalInfo = undefined) {
             let seq = segment.seq;
             let segmentLen = segment.cachedLength;
             let clientId = segment.clientId;
             let removedClientOverlap: number[];
 
             if (removedSeq) {
-                seq = segment.removedSeq;
+                seq = removalInfo.removedSeq;
                 segmentLen = -segmentLen;
-                clientId = segment.removedClientId;
-                if (segment.removedClientOverlap) {
-                    removedClientOverlap = segment.removedClientOverlap;
+                clientId = removalInfo.removedClientId;
+                if (removalInfo.removedClientOverlap) {
+                    removedClientOverlap = removalInfo.removedClientOverlap;
                 }
             }
 
@@ -1184,21 +1226,26 @@ export class PartialSequenceLengths {
             if (child.isLeaf()) {
                 // leaf segment
                 let segment = <Segment>child;
-                if (seqLTE(segment.seq, collabWindow.minSeq)) {
-                    combinedPartialLengths.minLength += segment.cachedLength;
-                }
-                else {
-                    if (segment.seq != UnassignedSequenceNumber) {
-                        insertSegment(segment);
+                let segBranchId = mergeTree.getBranchId(segment.clientId);
+                // console.log(`seg br ${segBranchId} cli ${glc(mergeTree, segment.clientId)} me ${glc(mergeTree, mergeTree.collabWindow.clientId)}`);
+                if (segBranchId <= branchId) {
+                    if (seqLTE(segment.seq, collabWindow.minSeq)) {
+                        combinedPartialLengths.minLength += segment.cachedLength;
                     }
-                }
-                if (seqLTE(segment.removedSeq, collabWindow.minSeq)) {
-                    combinedPartialLengths.minLength -= segment.cachedLength;
-                }
-                else {
-                    if ((segment.removedSeq !== undefined) &&
-                        (segment.removedSeq != UnassignedSequenceNumber)) {
-                        insertSegment(segment, true);
+                    else {
+                        if (segment.seq != UnassignedSequenceNumber) {
+                            insertSegment(segment);
+                        }
+                    }
+                    let removalInfo = mergeTree.getRemovalInfo(branchId, segBranchId, segment);
+                    if (seqLTE(removalInfo.removedSeq, collabWindow.minSeq)) {
+                        combinedPartialLengths.minLength -= segment.cachedLength;
+                    }
+                    else {
+                        if ((removalInfo.removedSeq !== undefined) &&
+                            (removalInfo.removedSeq != UnassignedSequenceNumber)) {
+                            insertSegment(segment, true, removalInfo);
+                        }
                     }
                 }
             }
@@ -1216,15 +1263,27 @@ export class PartialSequenceLengths {
         }
     }
 
+    static combine(mergeTree: MergeTree, block: IMergeBlock, collabWindow: CollaborationWindow, recur = false) {
+        let partialLengthsTopBranch = PartialSequenceLengths.combineBranch(mergeTree, block, collabWindow, 0, recur);
+        if (mergeTree.localBranchId > 0) {
+            partialLengthsTopBranch.downstreamPartialLengths = <PartialSequenceLengths[]>[];
+            for (let i = 0; i < mergeTree.localBranchId; i++) {
+                partialLengthsTopBranch.downstreamPartialLengths[i] =
+                    PartialSequenceLengths.combineBranch(mergeTree, block, collabWindow, i + 1, recur)
+            }
+        }
+        return partialLengthsTopBranch;
+    }
+
     /**
-     * Combine the partial lengths of textSegmentBlock's children
-     * @param {TextSegmentBlock} textSegmentBlock an interior node; it is assumed that each interior node child of this block
+     * Combine the partial lengths of block's children
+     * @param {IMergeBlock} block an interior node; it is assumed that each interior node child of this block
      * has its partials up to date 
-     * @param {SegmentWindow} segmentWindow segment window fo the segment tree containing textSegmentBlock
+     * @param {CollaborationWindow} collabWindow segment window fo the segment tree containing textSegmentBlock
      */
-    static combine(block: IMergeBlock, collabWindow: CollaborationWindow, recur = false) {
+    static combineBranch(mergeTree: MergeTree, block: IMergeBlock, collabWindow: CollaborationWindow, branchId: number, recur = false) {
         let combinedPartialLengths = new PartialSequenceLengths(collabWindow.minSeq);
-        PartialSequenceLengths.fromLeaves(combinedPartialLengths, block, collabWindow);
+        PartialSequenceLengths.fromLeaves(mergeTree, branchId, combinedPartialLengths, block, collabWindow);
         let prevPartial: PartialSequenceLength;
 
         function combineOverlapClients(a: PartialSequenceLength, b: PartialSequenceLength) {
@@ -1280,7 +1339,7 @@ export class PartialSequenceLengths {
             if (!child.isLeaf()) {
                 let childBlock = <IMergeBlock>child;
                 if (recur) {
-                    childBlock.partialLengths = PartialSequenceLengths.combine(childBlock, collabWindow, true);
+                    childBlock.partialLengths = PartialSequenceLengths.combine(mergeTree, childBlock, collabWindow, true);
                 }
                 childPartials.push(childBlock.partialLengths);
             }
@@ -1807,7 +1866,7 @@ export class Client {
             this.localOps++;
         }
         if (this.verboseOps) {
-            console.log(`remove local cli ${this.getLongClientId(clientId)} ref seq ${refSeq}`);
+            console.log(`remove local cli ${this.getLongClientId(clientId)} ref seq ${refSeq} [${start},${end})`);
         }
     }
 
@@ -1981,10 +2040,10 @@ export class Client {
         return `cli: ${this.getLongClientId(clientId)} refSeq: ${refSeq}: ` + this.mergeTree.getText(refSeq, clientId);
     }
 
-    startCollaboration(longClientId: string, minSeq = 0) {
+    startCollaboration(longClientId: string, minSeq = 0, branchId = 0) {
         this.longClientId = longClientId;
-        this.addLongClientId(longClientId);
-        this.mergeTree.startCollaboration(this.getShortClientId(this.longClientId), minSeq);
+        this.addLongClientId(longClientId, branchId);
+        this.mergeTree.startCollaboration(this.getShortClientId(this.longClientId), minSeq, branchId);
     }
 }
 
@@ -2102,12 +2161,14 @@ export interface TextAccumulator {
 }
 
 interface IMarkerSearchInfo {
+    mergeTree: MergeTree;
     tileLabel: string;
     preceding?: boolean;
     tileMarker?: Marker;
 }
 
 interface IMarkerSearchRangeInfo {
+    mergeTree: MergeTree;
     rangeLabels: string[];
     stacks: RangeStackMap;
 }
@@ -2141,7 +2202,7 @@ function rangeShift(node: MergeNode, segpos: number, refSeq: number, clientId: n
     offset: number, end: number, searchInfo: IMarkerSearchRangeInfo) {
     if (node.isLeaf()) {
         let seg = <Segment>node;
-        if ((seg.netLength() > 0) && (seg.getType() === SegmentType.Marker)) {
+        if ((searchInfo.mergeTree.localNetLength(seg) > 0) && (seg.getType() === SegmentType.Marker)) {
             let marker = <Marker>seg;
             if (marker.behaviors &
                 (ops.MarkerBehaviors.RangeBegin | ops.MarkerBehaviors.RangeEnd)) {
@@ -2171,7 +2232,7 @@ function tileShift(node: MergeNode, segpos: number, refSeq: number, clientId: nu
     offset: number, end: number, searchInfo: IMarkerSearchInfo) {
     if (node.isLeaf()) {
         let seg = <Segment>node;
-        if ((seg.netLength() > 0) && (seg.getType() === SegmentType.Marker)) {
+        if ((searchInfo.mergeTree.localNetLength(seg) > 0) && (seg.getType() === SegmentType.Marker)) {
             let marker = <Marker>seg;
             if (marker.hasTileLabel(searchInfo.tileLabel)) {
                 searchInfo.tileMarker = marker;
@@ -2300,6 +2361,19 @@ export class MergeTree {
         this.transactionSegmentGroup = undefined;
     }
 
+    localNetLength(segment: Segment) {
+        let segBranchId = this.getBranchId(segment.clientId);
+        let removalInfo = <IRemovalInfo>segment;
+        if (this.localBranchId > segBranchId) {
+            removalInfo = this.getRemovalInfo(this.localBranchId, segBranchId, segment);
+        }
+        if (removalInfo.removedSeq!==undefined) {
+            return 0;
+        } else {
+            return segment.cachedLength;
+        }
+    }
+
     getBranchId(clientId: number) {
         if ((this.clientIdToBranchId.length > clientId) && (clientId >= 0)) {
             return this.clientIdToBranchId[clientId];
@@ -2383,11 +2457,12 @@ export class MergeTree {
     }
 
     // for now assume min starts at zero
-    startCollaboration(localClientId: number, minSeq: number) {
+    startCollaboration(localClientId: number, minSeq: number, branchId: number) {
         this.collabWindow.clientId = localClientId;
         this.collabWindow.minSeq = minSeq;
         this.collabWindow.collaborating = true;
         this.collabWindow.currentSeq = minSeq;
+        this.localBranchId = branchId;
         this.segmentsToScour = new Collections.Heap<LRUSegment>([], LRUSegmentComparer);
         this.pendingSegments = Collections.ListMakeHead<SegmentGroup>();
         let measureFullCollab = false;
@@ -2805,7 +2880,7 @@ export class MergeTree {
 
     blockLength(node: IMergeBlock, refSeq: number, clientId: number) {
         if ((this.collabWindow.collaborating) && (clientId != this.collabWindow.clientId)) {
-            return node.partialLengths.getPartialLength(refSeq, clientId);
+            return node.partialLengths.getPartialLength(this, refSeq, clientId);
         }
         else {
             return node.cachedLength;
@@ -2813,16 +2888,20 @@ export class MergeTree {
     }
 
     getRemovalInfo(branchId: number, segBranchId: number, segment: Segment) {
-        let index = branchId - segBranchId;
-        if (!segment.removalsByBranch) {
-            segment.removalsByBranch = <IRemovalInfo[]>[];
+        if (branchId > segBranchId) {
+            let index = (branchId - segBranchId) - 1;
+            if (!segment.removalsByBranch) {
+                segment.removalsByBranch = <IRemovalInfo[]>[];
+            }
+            if (!segment.removalsByBranch[index]) {
+                segment.removalsByBranch[index] = <IRemovalInfo>{};
+            }
+            return segment.removalsByBranch[index];
+        } else {
+            return <IRemovalInfo>segment;
         }
-        if (!segment.removalsByBranch[index]) {
-            segment.removalsByBranch[index] = <IRemovalInfo>{};
-        }        
-        return segment.removalsByBranch[index];
     }
-    
+
     nodeLength(node: MergeNode, refSeq: number, clientId: number) {
         if ((!this.collabWindow.collaborating) || (this.collabWindow.clientId == clientId)) {
             // local client sees all segments, even when collaborating
@@ -2830,20 +2909,19 @@ export class MergeTree {
                 return node.cachedLength;
             }
             else {
-                return (<Segment>node).netLength();
+                return this.localNetLength(<Segment>node);
             }
         }
         else {
             // sequence number within window 
-            // TODO: add branch info to partial lengths
             let branchId = this.getBranchId(clientId);
             if (!node.isLeaf()) {
-                return (<IMergeBlock>node).partialLengths.getPartialLength(refSeq, clientId);
+                return (<IMergeBlock>node).partialLengths.getPartialLength(this, refSeq, clientId);
             }
             else {
                 let segment = <Segment>node;
                 let segBranchId = this.getBranchId(segment.clientId);
-                if ((segBranchId <= branchId) && ((segment.clientId == clientId) ||
+                if ((segBranchId <= branchId) && ((segment.clientId === clientId) ||
                     ((segment.seq != UnassignedSequenceNumber) && (segment.seq <= refSeq)))) {
                     let removalInfo = <IRemovalInfo>segment;
                     if (branchId > segBranchId) {
@@ -2851,7 +2929,7 @@ export class MergeTree {
                     }
                     // segment happened by reference sequence number or segment from requesting client
                     if (removalInfo.removedSeq !== undefined) {
-                        if ((removalInfo.removedClientId == clientId) ||
+                        if ((removalInfo.removedClientId === clientId) ||
                             (removalInfo.removedClientOverlap && (removalInfo.removedClientOverlap.indexOf(clientId) >= 0)) ||
                             ((removalInfo.removedSeq != UnassignedSequenceNumber) && (removalInfo.removedSeq <= refSeq))) {
                             return 0;
@@ -2911,6 +2989,7 @@ export class MergeTree {
 
     getStackContext(startPos: number, clientId: number, rangeLabels: string[]) {
         let searchInfo = <IMarkerSearchRangeInfo>{
+            mergeTree: this,
             stacks: Properties.createMap<Collections.Stack<Marker>>(),
             rangeLabels
         };
@@ -2937,6 +3016,7 @@ export class MergeTree {
     // TODO: filter function
     findTile(startPos: number, clientId: number, tileLabel: string, preceding = true) {
         let searchInfo = <IMarkerSearchInfo>{
+            mergeTree: this,
             preceding,
             tileLabel,
         };
@@ -3430,14 +3510,14 @@ export class MergeTree {
         return newNode;
     }
 
-    addOverlappingClient(textSegment: Segment, clientId: number) {
-        if (!textSegment.removedClientOverlap) {
-            textSegment.removedClientOverlap = <number[]>[];
+    addOverlappingClient(removalInfo: IRemovalInfo, clientId: number) {
+        if (!removalInfo.removedClientOverlap) {
+            removalInfo.removedClientOverlap = <number[]>[];
         }
         if (MergeTree.diagOverlappingRemove) {
-            console.log(`added cli ${glc(this, clientId)} to rseq: ${textSegment.removedSeq} text ${textSegment.toString()}`);
+            console.log(`added cli ${glc(this, clientId)} to rseq: ${removalInfo.removedSeq}`);
         }
-        textSegment.removedClientOverlap.push(clientId);
+        removalInfo.removedClientOverlap.push(clientId);
     }
 
     annotateRange(props: Properties.PropertySet, start: number, end: number, refSeq: number,
@@ -3462,38 +3542,46 @@ export class MergeTree {
         let overwrite = false;
         let savedLocalRefs = <LocalReference[][]>[];
         let markRemoved = (segment: Segment, pos: number, start: number, end: number) => {
-            if (segment.removedSeq != undefined) {
-                if (MergeTree.diagOverlappingRemove) {
-                    console.log(`yump @seq ${seq} cli ${glc(this, this.collabWindow.clientId)}: overlaps deleted segment ${segment.removedSeq} text ${segment.toString()}`);
-                }
-                overwrite = true;
-                if (segment.removedSeq === UnassignedSequenceNumber) {
-                    // replace because comes later
-                    segment.removedClientId = clientId;
-                    segment.removedSeq = seq;
-                    if (segment.segmentGroup) {
-                        removeFromSegmentGroup(segment.segmentGroup, segment);
+            let branchId = this.getBranchId(clientId);
+            let segBranchId = this.getBranchId(segment.clientId);
+            for (let brid = branchId; brid <= this.localBranchId; brid++) {
+                let removalInfo = this.getRemovalInfo(brid, segBranchId, segment);
+                if (removalInfo.removedSeq != undefined) {
+                    if (MergeTree.diagOverlappingRemove) {
+                        console.log(`yump @seq ${seq} cli ${glc(this, this.collabWindow.clientId)}: overlaps deleted segment ${removalInfo.removedSeq} text '${segment.toString()}'`);
+                    }
+                    overwrite = true;
+                    if (removalInfo.removedSeq === UnassignedSequenceNumber) {
+                        // will only happen on local branch (brid === this.localBranchId)
+                        // replace because comes later
+                        removalInfo.removedClientId = clientId;
+                        removalInfo.removedSeq = seq;
+                        if (segment.segmentGroup) {
+                            removeFromSegmentGroup(segment.segmentGroup, segment);
+                        }
+                        else {
+                            console.log(`missing segment group for seq ${seq} ref seq ${refSeq}`);
+                        }
                     }
                     else {
-                        console.log(`missing segment group for seq ${seq} ref seq ${refSeq}`);
+                        // do not replace earlier sequence number for remove
+                        this.addOverlappingClient(removalInfo, clientId);
                     }
                 }
                 else {
-                    // do not replace earlier sequence number for remove
-                    this.addOverlappingClient(segment, clientId);
-                }
-            }
-            else {
-                segment.removedClientId = clientId;
-                segment.removedSeq = seq;
-                if (segment.localRefs) {
-                    savedLocalRefs.push(segment.localRefs);
-                    segment.localRefs = undefined;
+                    removalInfo.removedClientId = clientId;
+                    removalInfo.removedSeq = seq;
+                    if (segment.localRefs && (brid === this.localBranchId)) {
+                        savedLocalRefs.push(segment.localRefs);
+                        segment.localRefs = undefined;
+                    }
                 }
             }
             // save segment so can assign removed sequence number when acked by server
             if (this.collabWindow.collaborating) {
-                if ((segment.removedSeq == UnassignedSequenceNumber) && (clientId == this.collabWindow.clientId)) {
+                // use removal information 
+                let removalInfo = this.getRemovalInfo(this.localBranchId, segBranchId, segment);
+                if ((removalInfo.removedSeq === UnassignedSequenceNumber) && (clientId === this.collabWindow.clientId)) {
                     segmentGroup = this.addToPendingList(segment, segmentGroup);
                 }
                 else {
@@ -3514,7 +3602,7 @@ export class MergeTree {
             }
             return true;
         }
-        //traceTraversal = true;
+        // MergeTree.traceTraversal = true;
         this.mapRange({ leaf: markRemoved, post: afterMarkRemoved }, refSeq, clientId, undefined, start, end);
         if (savedLocalRefs.length > 0) {
             let afterSeg: BaseSegment;
@@ -3604,7 +3692,7 @@ export class MergeTree {
     nodeUpdateLengthNewStructure(node: IMergeBlock, recur = false) {
         this.blockUpdate(node);
         if (this.collabWindow.collaborating) {
-            node.partialLengths = PartialSequenceLengths.combine(node, this.collabWindow, recur);
+            node.partialLengths = PartialSequenceLengths.combine(this, node, this.collabWindow, recur);
         }
     }
 
@@ -3619,7 +3707,7 @@ export class MergeTree {
         }
         for (let i = 0; i < block.childCount; i++) {
             let child = block.children[i];
-            len += nodeTotalLength(child);
+            len += nodeTotalLength(this, child);
             if (this.blockUpdateMarkers) {
                 hierBlock.addNodeMarkers(this, child);
             }
@@ -3647,8 +3735,8 @@ export class MergeTree {
         if (this.collabWindow.collaborating && (seq != UnassignedSequenceNumber) && (seq != TreeMaintainanceSequenceNumber)) {
             if (node.partialLengths !== undefined) {
                 let bplStr = node.partialLengths.toString();
-                node.partialLengths.update(node, seq, clientId, this.collabWindow);
-                let tempPartialLengths = PartialSequenceLengths.combine(node, this.collabWindow);
+                node.partialLengths.update(this, node, seq, clientId, this.collabWindow);
+                let tempPartialLengths = PartialSequenceLengths.combine(this, node, this.collabWindow);
                 if (!tempPartialLengths.compare(node.partialLengths)) {
                     console.log(`partial sum update mismatch @cli ${glc(this, this.collabWindow.clientId)} seq ${seq} clientId ${glc(this, clientId)}`);
                     console.log(tempPartialLengths.toString());
@@ -3657,7 +3745,7 @@ export class MergeTree {
                 }
             }
             else {
-                node.partialLengths = PartialSequenceLengths.combine(node, this.collabWindow);
+                node.partialLengths = PartialSequenceLengths.combine(this, node, this.collabWindow);
             }
         }
     }
@@ -3668,14 +3756,14 @@ export class MergeTree {
             if (node.partialLengths !== undefined) {
                 //nodeCompareUpdateLength(node, seq, clientId);
                 if (MergeTree.options.incrementalUpdate) {
-                    node.partialLengths.update(node, seq, clientId, this.collabWindow);
+                    node.partialLengths.update(this, node, seq, clientId, this.collabWindow);
                 }
                 else {
-                    node.partialLengths = PartialSequenceLengths.combine(node, this.collabWindow);
+                    node.partialLengths = PartialSequenceLengths.combine(this, node, this.collabWindow);
                 }
             }
             else {
-                node.partialLengths = PartialSequenceLengths.combine(node, this.collabWindow);
+                node.partialLengths = PartialSequenceLengths.combine(this, node, this.collabWindow);
             }
         }
     }
@@ -3716,7 +3804,7 @@ export class MergeTree {
         }
         if (this.collabWindow.collaborating) {
             strbuf += internedSpaces(indentCount);
-            strbuf += block.partialLengths.toString((id) => glc(this, id)) + '\n';
+            strbuf += block.partialLengths.toString((id) => glc(this, id), indentCount) + '\n';
         }
         let children = block.children;
         for (let childIndex = 0; childIndex < block.childCount; childIndex++) {
@@ -3728,8 +3816,11 @@ export class MergeTree {
                 let segment = <Segment>child;
                 strbuf += internedSpaces(indentCount + 4);
                 strbuf += `cli: ${glc(this, segment.clientId)} seq: ${segment.seq}`;
-                if (segment.removedSeq !== undefined) {
-                    strbuf += ` rcli: ${glc(this, segment.removedClientId)} rseq: ${segment.removedSeq}`;
+                let segBranchId = this.getBranchId(segment.clientId);
+                let branchId = this.localBranchId;
+                let removalInfo = this.getRemovalInfo(branchId, segBranchId, segment);
+                if (removalInfo.removedSeq !== undefined) {
+                    strbuf += ` rcli: ${glc(this, removalInfo.removedClientId)} rseq: ${removalInfo.removedSeq}`;
                 }
                 strbuf += "\n";
                 strbuf += internedSpaces(indentCount + 4);

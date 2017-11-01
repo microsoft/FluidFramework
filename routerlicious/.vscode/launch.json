@@ -20,7 +20,7 @@
             "args": [
                 "--recursive",
                 "dist/test",
-                "--grep hier"
+                "--grep Checked"
             ],
             "internalConsoleOptions": "openOnSessionStart"
         },

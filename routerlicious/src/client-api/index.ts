@@ -19,8 +19,8 @@ export { ink };
 import * as map from "../map";
 export { map };
 
-import * as mergeTree from "../merge-tree";
-export { mergeTree };
+import * as MergeTree from "../merge-tree";
+export { MergeTree };
 
 import * as socketStorage from "../socket-storage";
 export { socketStorage };

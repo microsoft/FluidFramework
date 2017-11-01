@@ -1,5 +1,5 @@
 import clone = require("lodash/clone");
-import { api, core, mergeTree, utils } from "../client-api";
+import { api, core, MergeTree, utils } from "../client-api";
 
 export interface IScribeMetrics {
     histogram: utils.Histogram;
@@ -43,9 +43,9 @@ function padTime(value: number) {
  */
 function normalizeText(input: string): string {
     let result = "";
-    const segments = mergeTree.loadSegments(input, 0);
+    const segments = MergeTree.loadSegments(input, 0);
     for (const segment of segments) {
-        result += (<mergeTree.TextSegment> segment).text;
+        result += (<MergeTree.TextSegment> segment).text;
     }
 
     return result;
@@ -181,7 +181,7 @@ function combine(first: number[], second: number[], combine: (a, b) => number): 
  */
 async function typeFile(
     document: api.Document,
-    sharedString: mergeTree.SharedString,
+    sharedString: MergeTree.SharedString,
     fileText: string,
     intervalTime: number,
     callback: ScribeMetricsCallback): Promise<number> {
@@ -338,8 +338,8 @@ async function typeFile(
             }
             trackOperation(() => {
                 if (code === 10) {
-                    sharedString.insertMarker(insertPosition++, mergeTree.MarkerBehaviors.Tile,
-                    {[mergeTree.reservedTileLabelsKey]: ["pg"]});
+                    sharedString.insertMarker(insertPosition++, MergeTree.MarkerBehaviors.Tile,
+                    {[MergeTree.reservedTileLabelsKey]: ["pg"]});
                     readPosition++;
                 } else {
                     sharedString.insertText(fileText.charAt(readPosition++), insertPosition++);
@@ -384,7 +384,7 @@ export async function type(
 
     // Load the shared string extension we will type into
     const document = await api.load(id);
-    const sharedString = document.createString() as mergeTree.SharedString;
+    const sharedString = document.createString() as MergeTree.SharedString;
     await document.getRoot().set("text", sharedString);
     await document.getRoot().set("presence", document.createMap());
 
