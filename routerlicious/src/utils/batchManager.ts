@@ -5,6 +5,7 @@ export class BatchManager<T> {
     private workPending: Deferred<void>;
 
     constructor(private process: (id: string, work: T[]) => void) {
+        // TODO should add in a max batch size to this to limit sent sizes
     }
 
     public add(id: string, work: T) {
@@ -40,6 +41,7 @@ export class BatchManager<T> {
     }
 
     private processPendingWork(pendingWork: { [id: string]: T[] }) {
+        // TODO log to influx how much pending work there is. We want to limit the size of a batch
         // tslint:disable-next-line:forin
         for (const id in pendingWork) {
             this.process(id, pendingWork[id]);
