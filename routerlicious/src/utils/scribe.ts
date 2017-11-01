@@ -329,7 +329,11 @@ async function typeFile(
             if (readPosition === fileText.length) {
                 return false;
             }
-
+            if (sharedString.client.getLength() === 0) {
+                // pg marker that will remain at end of text
+                sharedString.insertMarker(insertPosition, mergeTree.MarkerBehaviors.Tile,
+                    {[mergeTree.reservedTileLabelsKey]: ["pg"]});
+            }
             // Start inserting text into the string
             let code = fileText.charCodeAt(readPosition);
             if (code === 13) {

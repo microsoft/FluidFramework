@@ -2553,19 +2553,30 @@ export class FlowView extends ui.Component {
     public remotePresenceToLocal(remotePresenceInfo: IRemotePresenceInfo, posAdjust = 0) {
         let segoff = this.client.mergeTree.getContainingSegment(remotePresenceInfo.origPos,
             remotePresenceInfo.refseq, remotePresenceInfo.clientId);
-        let localPresenceInfo = <ILocalPresenceInfo>{
-            clientId: remotePresenceInfo.clientId,
-            fresh: true,
-            key: remotePresenceInfo.key,
-            localRef: <SharedString.LocalReference>{
-                offset: segoff.offset,
-                segment: segoff.segment,
-                slideOnRemove: true,
-            },
-        };
-        this.updatePresenceVector(localPresenceInfo);
-    }
+        if (segoff.segment === undefined) {
+            if (remotePresenceInfo.origPos === this.client.getLength()) {
+                segoff = this.client.mergeTree.getContainingSegment(remotePresenceInfo.origPos,
+                    remotePresenceInfo.refseq, remotePresenceInfo.clientId);
+                if (segoff.segment) {
+                    segoff.offset++;
+                }
+            }
+        }
+        if (segoff.segment) {
+            let localPresenceInfo = <ILocalPresenceInfo>{
+                clientId: remotePresenceInfo.clientId,
+                fresh: true,
+                key: remotePresenceInfo.key,
+                localRef: <SharedString.LocalReference>{
+                    offset: segoff.offset,
+                    segment: segoff.segment,
+                    slideOnRemove: true,
+                },
+            };
 
+            this.updatePresenceVector(localPresenceInfo);
+        }
+    }
     public remotePresenceUpdate(delta: types.IValueChanged) {
         if (delta.key !== this.client.longClientId) {
             let remotePresenceInfo = <IRemotePresenceInfo>this.presenceMapView.get(delta.key);
