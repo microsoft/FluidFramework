@@ -828,8 +828,8 @@ export function TestPack(verbose = true) {
             for (let client of clientsB) {
                 clientProcessSome(client, true);
             }
-
-            if (0 == (roundCount % 100)) {
+            let allRounds = true;
+            if (allRounds || (0 === (roundCount % 100))) {
                 let clockStart = clock();
                 if (checkTextMatch(clientsA, serverA)) {
                     console.log(`round: ${roundCount} BREAK`);

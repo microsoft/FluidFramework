@@ -1885,7 +1885,7 @@ export class Client {
             this.accumWindow += (this.getCurrentSeq() - this.mergeTree.getCollabWindow().minSeq);
         }
         if (this.verboseOps) {
-            console.log(`@cli ${this.getLongClientId(this.mergeTree.getCollabWindow().clientId)} seq ${seq} remove remote start ${start} end ${end} refseq ${refSeq} cli ${clientId}`);
+            console.log(`@cli ${this.getLongClientId(this.mergeTree.getCollabWindow().clientId)} seq ${seq} remove remote start ${start} end ${end} refseq ${refSeq} cli ${this.getLongClientId(clientId)}`);
         }
     }
 
@@ -2367,7 +2367,7 @@ export class MergeTree {
         if (this.localBranchId > segBranchId) {
             removalInfo = this.getRemovalInfo(this.localBranchId, segBranchId, segment);
         }
-        if (removalInfo.removedSeq!==undefined) {
+        if (removalInfo.removedSeq !== undefined) {
             return 0;
         } else {
             return segment.cachedLength;
@@ -3139,19 +3139,21 @@ export class MergeTree {
         let overwrite = false;
         if (pendingSegmentGroup !== undefined) {
             pendingSegmentGroup.segments.map((pendingSegment) => {
-                if (pendingSegment.seq == UnassignedSequenceNumber) {
+                if (pendingSegment.seq === UnassignedSequenceNumber) {
                     pendingSegment.seq = seq;
                 }
                 else {
-                    if (pendingSegment.removedSeq !== undefined) {
-                        if (pendingSegment.removedSeq != UnassignedSequenceNumber) {
+                    let segBranchId = this.getBranchId(pendingSegment.clientId);
+                    let removalInfo = this.getRemovalInfo(this.localBranchId, segBranchId, pendingSegment);
+                    if (removalInfo.removedSeq !== undefined) {
+                        if (removalInfo.removedSeq != UnassignedSequenceNumber) {
                             overwrite = true;
                             if (MergeTree.diagOverlappingRemove) {
                                 console.log(`grump @seq ${seq} cli ${glc(this, this.collabWindow.clientId)} from ${pendingSegment.removedSeq} text ${pendingSegment.toString()}`);
                             }
                         }
                         else {
-                            pendingSegment.removedSeq = seq;
+                            removalInfo.removedSeq = seq;
                         }
                     }
                 }
@@ -3219,8 +3221,10 @@ export class MergeTree {
 
     insertText(pos: number, refSeq: number, clientId: number, seq: number, text: string, props?: Properties.PropertySet) {
         let newSegment = TextSegment.make(text, props, seq, clientId);
+        // MergeTree.traceTraversal = true;
         this.insert(pos, refSeq, clientId, seq, text, (block, pos, refSeq, clientId, seq, text) =>
             this.blockInsert(this.root, pos, refSeq, clientId, seq, newSegment));
+        // MergeTree.traceTraversal = false;
         if (this.collabWindow.collaborating && MergeTree.options.zamboniSegments &&
             (seq != UnassignedSequenceNumber)) {
             this.zamboniSegments();
@@ -3300,7 +3304,7 @@ export class MergeTree {
             let segment = <Segment>node;
             // TODO: marker/marker tie break & collab markers
             if (pos == 0) {
-                return segment.seq != UnassignedSequenceNumber;
+                return segment.seq !== UnassignedSequenceNumber;
             }
             else {
                 return false;
@@ -3625,7 +3629,7 @@ export class MergeTree {
                 this.zamboniSegments();
             }
         }
-        MergeTree.traceTraversal = false;
+        // MergeTree.traceTraversal = false;
     }
 
     removeRange(start: number, end: number, refSeq: number, clientId: number) {
