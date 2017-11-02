@@ -1,0 +1,19 @@
+{{<layout}}
+    {{$styles}}
+        <link href="{{#hfurl}}/public/stylesheets/dist/style.css{{/hfurl}}" rel="stylesheet" />
+    {{/styles}}
+
+    {{$content}}
+    {{/content}}
+
+    {{$scripts}}
+        <script src="//charts.azureedge.net/release/0.1.215074.1/microsoft-charts.min.js"></script>
+        <script src="{{#hfurl}}/public/scripts/dist/index.js{{/hfurl}}"></script>
+
+        <script>
+            var config = {{{ config }}};
+            var version = {{{ version }}};
+            controller.demo.initialize("{{ id }}", version, config);
+        </script>
+    {{/scripts}}
+{{/layout}}

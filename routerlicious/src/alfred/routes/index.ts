@@ -5,6 +5,7 @@ import * as utils from "../../utils";
 import * as canvas from "./canvas";
 import * as cell from "./cell";
 import * as deltas from "./deltas";
+import * as demo from "./demo";
 import * as demoCreator from "./democreator";
 import * as home from "./home";
 import * as intelligence from "./intelligence";
@@ -18,6 +19,7 @@ export interface IRoutes {
     canvas: Router;
     cell: Router;
     deltas: Router;
+    demo: Router;
     demoCreator: Router;
     home: Router;
     intelligence: Router;
@@ -32,6 +34,7 @@ export function create(config: Provider, gitManager: git.GitManager, mongoManage
         canvas: canvas.create(config, gitManager),
         cell: cell.create(config, gitManager),
         deltas: deltas.create(config, mongoManager),
+        demo: demo.create(config, gitManager),
         demoCreator: demoCreator.create(config),
         home: home.create(config),
         intelligence: intelligence.create(config),

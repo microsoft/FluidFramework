@@ -5,6 +5,7 @@ import { Button } from "./button";
 import { Chart } from "./chart";
 import { debug } from "./debug";
 import { DockPanel } from "./dockPanel";
+import { FlexVideo } from "./flexVideo";
 import { InkCanvas } from "./inkCanvas";
 import { Popup } from "./popup";
 import { Orientation, StackPanel } from "./stackPanel";
@@ -35,6 +36,7 @@ interface IFlexViewComponent {
 export class FlexView extends ui.Component {
     private colorButton: Button;
     private dock: DockPanel;
+    private video: FlexVideo;
     private ink: InkCanvas;
     private popup: Popup;
     private colorStack: StackPanel;
@@ -42,6 +44,13 @@ export class FlexView extends ui.Component {
 
     constructor(element: HTMLDivElement, doc: api.Document, root: types.IMapView) {
         super(element);
+
+        const iFrame = document.createElement("div");
+        element.appendChild(iFrame);
+        this.video = new FlexVideo(iFrame,
+            "http://video.webmfiles.org/big-buck-bunny_trailer.webm",
+            "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/Balloons-aj.svg/1200px-Balloons-aj.svg.png");
+        this.addChild(this.video);
 
         const dockElement = document.createElement("div");
         element.appendChild(dockElement);

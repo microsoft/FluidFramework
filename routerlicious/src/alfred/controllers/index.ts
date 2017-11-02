@@ -4,6 +4,9 @@ export { canvas };
 import * as cell from "./cell";
 export { cell };
 
+import * as demo from "./demo";
+export { demo };
+
 import * as maps from "./maps";
 export { maps };
 
