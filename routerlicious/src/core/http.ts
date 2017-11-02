@@ -30,7 +30,11 @@ export interface IWebServer {
 }
 
 export interface IWebSocketServer {
+
     on(event: string, listener: (...args: any[]) => void);
+
+    close(): Promise<void>;
+
 }
 
 export interface IHttpServer {
