@@ -63,7 +63,7 @@ export class WsWebServerFactory implements core.IWebServerFactory {
         // Create the base HTTP server and register the provided request listener
         const server = http.createServer(requestListener);
         const httpServer = new HttpServer(server);
-        // httpServer.listen(3000);
+        httpServer.listen(3000);
 
         const wsServer = ws.create(server);
 

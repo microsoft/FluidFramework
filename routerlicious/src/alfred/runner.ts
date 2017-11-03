@@ -6,11 +6,11 @@ import { Deferred } from "../core-utils";
 import * as utils from "../utils";
 import * as app from "./app";
 import * as io from "./io";
-// import * as io2 from "./io2";
+import * as io2 from "./io2";
 
 export class AlfredRunner implements utils.IRunner {
     private server: core.IWebServer;
-   // private server2: core.IWebServer;
+    private server2: core.IWebServer;
     private runningDeferred: Deferred<void>;
 
     constructor(
@@ -33,11 +33,11 @@ export class AlfredRunner implements utils.IRunner {
         alfred.set("port", this.port);
 
         this.server = this.serverFactory.create(alfred);
-        this.serverFactory2 = null;
-        // this.server2 = this.serverFactory2.create(alfred);
+        // this.serverFactory2 = null;
+        this.server2 = this.serverFactory2.create(alfred);
 
-        const httpServer = this.server.httpServer;
-        // const httpServer2 = this.server2.httpServer;
+        // const httpServer = this.server.httpServer;
+        const httpServer2 = this.server2.httpServer;
 
         // Register all the socket.io stuff
         io.register(
@@ -49,29 +49,28 @@ export class AlfredRunner implements utils.IRunner {
             this.metricClientConfig);
 
         // Remove (mdaumi): We need to register one.
-        /*
         io2.register(
             this.server2.webSocketServer,
             this.config,
             this.mongoManager,
             this.producer,
             this.documentsCollectionName,
-            this.metricClientConfig);*/
+            this.metricClientConfig);
 
         // Listen on provided port, on all network interfaces.
-        httpServer.listen(this.port);
-        httpServer.on("error", (error) => this.onError(error));
-        httpServer.on("listening", () => this.onListening());
+        // httpServer.listen(this.port);
+        // httpServer.on("error", (error) => this.onError(error));
+        // httpServer.on("listening", () => this.onListening());
 
-        // httpServer2.on("error", (error) => this.onError(error));
-        // httpServer2.on("listening", () => this.onListening());
+        httpServer2.on("error", (error) => this.onError(error));
+        httpServer2.on("listening", () => this.onListening());
 
         return this.runningDeferred.promise;
     }
 
     public stop(): Promise<void> {
         // Close the underlying server and then resolve the runner once closed
-        this.server.close().then(
+        this.server2.close().then(
             () => {
                 this.runningDeferred.resolve();
             },
@@ -111,7 +110,7 @@ export class AlfredRunner implements utils.IRunner {
      * Event listener for HTTP server "listening" event.
      */
     private onListening() {
-        let addr = this.server.httpServer.address();
+        let addr = this.server2.httpServer.address();
         let bind = typeof addr === "string"
             ? "pipe " + addr
             : "port " + addr.port;
