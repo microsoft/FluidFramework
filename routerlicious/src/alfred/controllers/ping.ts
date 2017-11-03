@@ -1,5 +1,5 @@
-// import { core, socketIoClient as io } from "../../client-api";
-import { core } from "../../client-api";
+import { core, socketIoClient as io } from "../../client-api";
+// import { core } from "../../client-api";
 
 // new average = old average + (next data - old average) / next count
 let messageCount = 0;
@@ -7,7 +7,6 @@ let averageLatency = 0.0;
 
 const pingInterval = 20;
 
-/*
 const socket = io(document.location.origin, { transports: ["websocket"] });
 
 export function load() {
@@ -42,8 +41,9 @@ export function load() {
         });
 
     }, pingInterval);
-}*/
+}
 
+/*
 const ws = new WebSocket(`ws://${location.host}`);
 
 export function load() {
@@ -81,4 +81,4 @@ export function load() {
             };
         }, pingInterval);
     };
-}
+}*/
