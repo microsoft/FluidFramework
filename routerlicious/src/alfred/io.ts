@@ -148,7 +148,8 @@ export function register(
             // Ack the unacked message.
             if (!message.acked) {
                 message.acked = true;
-                return response(null, message);
+                // return response(null, message);
+                socket.send(message, "pingObject");
             } else {
                 // Only write if the traces are correctly timestamped twice.
                 if (message.traces !== undefined && message.traces.length === 2) {

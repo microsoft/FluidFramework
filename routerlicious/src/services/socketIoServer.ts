@@ -23,6 +23,10 @@ class SocketIoSocket implements core.IWebSocket {
     public async join(id: string): Promise<void> {
         await socketJoin(this.socket, id);
     }
+
+    public async send(data: any, topic: string) {
+        this.socket.emit(topic, data);
+    }
 }
 
 class SocketIoServer implements core.IWebSocketServer {

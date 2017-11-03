@@ -15,6 +15,10 @@ class WsSocket implements core.IWebSocket {
     public async join(id: string): Promise<void> {
         return Promise.resolve();
     }
+
+    public async send(data: any) {
+        this.socket.send(data);
+    }
 }
 
 class WsServer implements core.IWebSocketServer {

@@ -7,9 +7,12 @@ export interface IWebServerFactory {
 }
 
 export interface IWebSocket {
+
     on(event: string, listener: (...args: any[]) => void);
 
     join(id: string): Promise<void>;
+
+    send(data: any, topic?: string, cb?: (err: Error) => void): void;
 }
 
 export interface IWebServer {
