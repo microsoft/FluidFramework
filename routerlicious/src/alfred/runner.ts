@@ -6,11 +6,11 @@ import { Deferred } from "../core-utils";
 import * as utils from "../utils";
 import * as app from "./app";
 import * as io from "./io";
-import * as io2 from "./io2";
+// import * as io2 from "./io2";
 
 export class AlfredRunner implements utils.IRunner {
     private server: core.IWebServer;
-    private server2: core.IWebServer;
+   // private server2: core.IWebServer;
     private runningDeferred: Deferred<void>;
 
     constructor(
@@ -33,7 +33,8 @@ export class AlfredRunner implements utils.IRunner {
         alfred.set("port", this.port);
 
         this.server = this.serverFactory.create(alfred);
-        this.server2 = this.serverFactory2.create(alfred);
+        this.serverFactory2 = null;
+        // this.server2 = this.serverFactory2.create(alfred);
 
         const httpServer = this.server.httpServer;
         // const httpServer2 = this.server2.httpServer;
@@ -48,13 +49,14 @@ export class AlfredRunner implements utils.IRunner {
             this.metricClientConfig);
 
         // Remove (mdaumi): We need to register one.
+        /*
         io2.register(
             this.server2.webSocketServer,
             this.config,
             this.mongoManager,
             this.producer,
             this.documentsCollectionName,
-            this.metricClientConfig);
+            this.metricClientConfig);*/
 
         // Listen on provided port, on all network interfaces.
         httpServer.listen(this.port);
@@ -63,15 +65,6 @@ export class AlfredRunner implements utils.IRunner {
 
         // httpServer2.on("error", (error) => this.onError(error));
         // httpServer2.on("listening", () => this.onListening());
-
-        /*
-        io2.register(
-            this.config,
-            this.mongoManager,
-            this.producer,
-            this.documentsCollectionName,
-            this.metricClientConfig,
-        );*/
 
         return this.runningDeferred.promise;
     }
