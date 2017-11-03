@@ -110,10 +110,10 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>lib\node.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>lib\debug\node.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /y "$(ProjectDir)lib\*.dll" "$(OutDir)"</Command>
+      <Command>xcopy /y "$(ProjectDir)lib\debug\*.dll" "$(OutDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -152,10 +152,10 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>lib\node.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>lib\Release\node.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /y "$(ProjectDir)lib\*.dll" "$(OutDir)"</Command>
+      <Command>xcopy /y "$(ProjectDir)lib\Release\*.dll" "$(OutDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
