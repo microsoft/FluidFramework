@@ -618,7 +618,6 @@ export function TestPack(verbose = true) {
         const clientCountB = 2;
         const fileSegCount = 0;
         let initString = "";
-        let includeMarkers = false;
 
         if (!startFile) {
             initString = "don't ask for whom the bell tolls; it tolls for thee";
@@ -663,8 +662,10 @@ export function TestPack(verbose = true) {
         }
         serverA.startCollaboration("theServerA");
         serverA.addClients(clientsA);
+        serverA.addListeners([serverB]);
         serverB.startCollaboration("theServerB", 0, 1);
         serverB.addClients(clientsB);
+        serverB.addUpstreamClients(clientsA);
 
         function checkTextMatch(clients: MergeTree.Client[], server: MergeTree.TestServer) {
             //console.log(`checking text match @${server.getCurrentSeq()}`);
@@ -693,9 +694,9 @@ export function TestPack(verbose = true) {
                         }
                         console.log(`text: ${diffPart.value} ` + annotes);
                     }
-                    console.log("Server...");
+                    console.log(`Server ${server.longClientId}`);
                     console.log(server.mergeTree.toString());
-                    console.log("Client...");
+                    console.log(`Client ${client.longClientId}`);
                     console.log(client.mergeTree.toString());
                     return true;
                 }
@@ -730,66 +731,40 @@ export function TestPack(verbose = true) {
         }
 
         function randomSpateOfInserts(client: MergeTree.Client, server: MergeTree.TestServer,
-            charIndex: number, auxServer?: MergeTree.TestServer) {
+            charIndex: number) {
             let textLen = randTextLength();
             let text = randomString(textLen, String.fromCharCode(zedCode + ((client.getCurrentSeq() + charIndex) % 50)));
             let preLen = client.getLength();
             let pos = random.integer(0, preLen)(mt);
-            if (includeMarkers) {
-                let msg = client.makeInsertMarkerMsg("test", ops.MarkerBehaviors.Tile,
-                    pos, MergeTree.UnassignedSequenceNumber, client.getCurrentSeq(), "");
-                server.enqueueMsg(msg);
-                if (auxServer) {
-                    msg = client.makeInsertMarkerMsg("test", ops.MarkerBehaviors.Tile,
-                        pos, MergeTree.UnassignedSequenceNumber, client.getCurrentSeq(), "");
-                    auxServer.enqueueMsg(msg);
-                }
-                client.insertMarkerLocal(pos, ops.MarkerBehaviors.Tile,
-                    { [MergeTree.reservedTileLabelsKey]: "test" });
-            }
             let msg = client.makeInsertMsg(text, pos, MergeTree.UnassignedSequenceNumber,
                 client.getCurrentSeq(), server.longClientId);
             server.enqueueMsg(msg);
-            if (auxServer) {
-                msg = client.makeInsertMsg(text, pos, MergeTree.UnassignedSequenceNumber,
-                    client.getCurrentSeq(), auxServer.longClientId);
-                auxServer.enqueueMsg(msg);
-            }
             client.insertTextLocal(text, pos);
             if (MergeTree.useCheckQ) {
                 client.enqueueTestString();
             }
         }
 
-        function randomSpateOfRemoves(client: MergeTree.Client, server: MergeTree.TestServer, auxServer: MergeTree.TestServer) {
+        function randomSpateOfRemoves(client: MergeTree.Client, server: MergeTree.TestServer) {
             let dlen = randTextLength();
             let preLen = client.getLength();
             let pos = random.integer(0, preLen)(mt);
             let msg = client.makeRemoveMsg(pos, pos + dlen, MergeTree.UnassignedSequenceNumber,
                 client.getCurrentSeq(), server.longClientId);
             server.enqueueMsg(msg);
-            if (auxServer) {
-                msg = client.makeRemoveMsg(pos, pos + dlen, MergeTree.UnassignedSequenceNumber,
-                    client.getCurrentSeq(), auxServer.longClientId);
-                auxServer.enqueueMsg(msg);
-            }
             client.removeSegmentLocal(pos, pos + dlen);
             if (MergeTree.useCheckQ) {
                 client.enqueueTestString();
             }
         }
 
-        function randomWordMove(client: MergeTree.Client, server: MergeTree.TestServer, auxServer?: MergeTree.TestServer) {
+        function randomWordMove(client: MergeTree.Client, server: MergeTree.TestServer) {
             let word1 = findRandomWord(client.mergeTree, client.getClientId());
             if (word1) {
                 let removeStart = word1.pos;
                 let removeEnd = removeStart + word1.text.length;
                 server.enqueueMsg(client.makeRemoveMsg(removeStart, removeEnd, MergeTree.UnassignedSequenceNumber,
                     client.getCurrentSeq(), server.longClientId));
-                if (auxServer) {
-                    auxServer.enqueueMsg(client.makeRemoveMsg(removeStart, removeEnd, MergeTree.UnassignedSequenceNumber,
-                        client.getCurrentSeq(), auxServer.longClientId));
-                }
                 client.removeSegmentLocal(removeStart, removeEnd);
                 if (MergeTree.useCheckQ) {
                     client.enqueueTestString();
@@ -801,10 +776,6 @@ export function TestPack(verbose = true) {
                 let pos = word2.pos + word2.text.length;
                 server.enqueueMsg(client.makeInsertMsg(word1.text, pos, MergeTree.UnassignedSequenceNumber,
                     client.getCurrentSeq(), server.longClientId));
-                if (auxServer) {
-                    auxServer.enqueueMsg(client.makeInsertMsg(word1.text, pos, MergeTree.UnassignedSequenceNumber,
-                        client.getCurrentSeq(), auxServer.longClientId));
-                }
                 client.insertTextLocal(word1.text, pos);
                 if (MergeTree.useCheckQ) {
                     client.enqueueTestString();
@@ -871,12 +842,16 @@ export function TestPack(verbose = true) {
         }
 
         function round(roundCount: number, clients: MergeTree.Client[],
-            server: MergeTree.TestServer, auxServer?: MergeTree.TestServer) {
+            server: MergeTree.TestServer) {
+            let small = false;
             for (let client of clients) {
                 let insertSegmentCount = randSmallSegmentCount();
+                if (small) {
+                    insertSegmentCount = 1;
+                }
                 for (let j = 0; j < insertSegmentCount; j++) {
                     if (startFile) {
-                        randomWordMove(client, server, auxServer);
+                        randomWordMove(client, server);
                     }
                     else {
                         randomSpateOfInserts(client, server, j);
@@ -888,19 +863,16 @@ export function TestPack(verbose = true) {
                 clientProcessSome(client);
 
                 let removeSegmentCount = Math.floor(3 * insertSegmentCount / 4);
-                if (removeSegmentCount < 1) {
+                if (small || (removeSegmentCount < 1)) {
                     removeSegmentCount = 1;
                 }
                 for (let j = 0; j < removeSegmentCount; j++) {
                     if (startFile) {
-                        randomWordMove(client, server, auxServer);
+                        randomWordMove(client, server);
                     }
                     else {
-                        randomSpateOfRemoves(client, server, auxServer);
-                        if (includeMarkers) {
-                            if (client.getLength() > 200) {
-                                randomSpateOfRemoves(client, server, auxServer);
-                            }
+                        if (client.getLength() > 200) {
+                            randomSpateOfRemoves(client, server);
                         }
                     }
                 }
@@ -915,7 +887,7 @@ export function TestPack(verbose = true) {
         let checkTime = 0;
 
         for (let i = 0; i < rounds; i++) {
-            round(i, clientsA, serverA, serverB);
+            round(i, clientsA, serverA);
             round(i, clientsB, serverB);
             finishRound(i);
             if (errorCount > 0) {

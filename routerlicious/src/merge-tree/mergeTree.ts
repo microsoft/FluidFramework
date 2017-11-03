@@ -946,6 +946,9 @@ export class PartialSequenceLengths {
 
     getPartialLength(mergeTree: MergeTree, refSeq: number, clientId: number) {
         let branchId = mergeTree.getBranchId(clientId);
+        if (MergeTree.traceTraversal) {
+            console.log(`plen branch ${branchId}`);
+        }
         if (branchId > 0) {
             return this.downstreamPartialLengths[branchId - 1].getBranchPartialLength(refSeq, clientId);
         } else {
@@ -1039,7 +1042,7 @@ export class PartialSequenceLengths {
         this.updateBranch(mergeTree, 0, block, seq, clientId, collabWindow);
         if (mergeTree.localBranchId > 0) {
             for (let i = 0; i < mergeTree.localBranchId; i++) {
-                this.downstreamPartialLengths[i].updateBranch(mergeTree, i, block, seq, clientId, collabWindow);
+                this.downstreamPartialLengths[i].updateBranch(mergeTree, i + 1, block, seq, clientId, collabWindow);
             }
         }
 
@@ -1056,7 +1059,8 @@ export class PartialSequenceLengths {
             let child = node.children[i];
             if (!child.isLeaf()) {
                 let childBlock = <IMergeBlock>child;
-                let partialLengths = childBlock.partialLengths.partialLengths;
+                let branchPartialLengths = childBlock.partialLengths.partialLengthsForBranch(branchId);
+                let partialLengths = branchPartialLengths.partialLengths;
                 let seqIndex = latestLEQ(partialLengths, seq);
                 if (seqIndex >= 0) {
                     let leqPartial = partialLengths[seqIndex];
@@ -1064,7 +1068,7 @@ export class PartialSequenceLengths {
                         seqSeglen += leqPartial.seglen;
                     }
                 }
-                segCount += childBlock.partialLengths.segmentCount;
+                segCount += branchPartialLengths.segmentCount;
             }
             else {
                 let segment = <Segment>child;
@@ -1275,6 +1279,13 @@ export class PartialSequenceLengths {
         return partialLengthsTopBranch;
     }
 
+    partialLengthsForBranch(branchId: number) {
+        if (branchId>0) {
+            return this.downstreamPartialLengths[branchId - 1];
+        } else {
+            return this;
+        }
+    }
     /**
      * Combine the partial lengths of block's children
      * @param {IMergeBlock} block an interior node; it is assumed that each interior node child of this block
@@ -1341,7 +1352,7 @@ export class PartialSequenceLengths {
                 if (recur) {
                     childBlock.partialLengths = PartialSequenceLengths.combine(mergeTree, childBlock, collabWindow, true);
                 }
-                childPartials.push(childBlock.partialLengths);
+                childPartials.push(childBlock.partialLengths.partialLengthsForBranch(branchId));
             }
         }
         let childPartialsLen = childPartials.length;
@@ -1732,7 +1743,7 @@ export class Client {
         // Apply if an operation message
         if (msg.type === API.OperationType) {
             const operationMessage = msg as API.ISequencedObjectMessage;
-            if (msg.clientId == this.longClientId) {
+            if (msg.clientId === this.longClientId) {
                 let op = <ops.IMergeTreeOp>msg.contents;
                 if (op.type !== ops.MergeTreeDeltaType.ANNOTATE) {
                     let ack = true;
@@ -2066,9 +2077,20 @@ export class TestServer extends Client {
     clients: Client[];
     listeners: Client[]; // listeners do not generate edits
     clientSeqNumbers: Collections.Heap<ClientSeq>;
-
+    upstreamMap: Collections.RedBlackTree<number, number>;
     constructor(initText: string) {
         super(initText);
+    }
+
+    addUpstreamClients(upstreamClients: Client[]) {
+        // assumes addClients already called
+        this.upstreamMap = new Collections.RedBlackTree<number, number>(compareNumbers);
+        for (let upstreamClient of upstreamClients) {
+            this.clientSeqNumbers.add({
+                refSeq: upstreamClient.getCurrentSeq(),
+                clientId: upstreamClient.longClientId
+            });
+        }
     }
 
     addClients(clients: Client[]) {
@@ -2094,10 +2116,37 @@ export class TestServer extends Client {
         }
     }
 
+    // TODO: remove mappings when no longer needed using min seq 
+    // in upstream message
+    transformUpstreamMessage(msg: ISequencedObjectMessage) {
+        if (msg.referenceSequenceNumber > 0) {
+            msg.referenceSequenceNumber =
+                this.upstreamMap.get(msg.referenceSequenceNumber).data;
+        }
+        this.upstreamMap.put(msg.sequenceNumber, this.seq);
+        msg.sequenceNumber = -1;
+    }
+
+    copyMsg(msg: ISequencedObjectMessage) {
+        return <ISequencedObjectMessage>{
+            clientId: msg.clientId,
+            clientSequenceNumber: msg.clientSequenceNumber,
+            contents: msg.contents,
+            minimumSequenceNumber: msg.minimumSequenceNumber,
+            referenceSequenceNumber: msg.referenceSequenceNumber,
+            sequenceNumber: msg.sequenceNumber,
+            traces: msg.traces,
+            type: msg.type
+        }
+    }
+
     applyMessages(msgCount: number) {
         while (msgCount > 0) {
             let msg = this.q.dequeue();
             if (msg) {
+                if (msg.sequenceNumber >= 0) {
+                    this.transformUpstreamMessage(msg);
+                }
                 msg.sequenceNumber = this.seq++;
                 if (this.applyMsg(msg)) {
                     return true;
@@ -2121,7 +2170,7 @@ export class TestServer extends Client {
                     }
                     if (this.listeners) {
                         for (let listener of this.listeners) {
-                            listener.enqueueMsg(msg);
+                            listener.enqueueMsg(this.copyMsg(msg));
                         }
                     }
                 }
