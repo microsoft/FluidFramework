@@ -1,7 +1,16 @@
 import * as querystring from "querystring";
 import * as request from "request";
 import * as api from "../api";
+import * as mergeTree from "../merge-tree";
 import * as socketStorage from "../socket-storage";
+
+interface IAttachedObject {
+    getText: () => string;
+    insertText: (text: string, position: number) => void;
+    on: (callback: (param: any) => void) => void;
+}
+
+declare function pragueAttach(object: IAttachedObject): void;
 
 // For local development
 // const routerlicious = "http://localhost:3000";
@@ -62,17 +71,29 @@ async function run(id: string): Promise<void> {
     }
 
     // Load the text string and listen for updates
-    const text = rootView.get("text");
+    const text = rootView.get("text") as mergeTree.SharedString;
 
-    // Update the text after being loaded as well as when receiving ops
-    text.loaded.then(() => {
-        console.log("inner text");
-        console.log(text.client.getText());
-    });
-    text.on("op", (msg) => {
-        console.log("op - new text");
-        console.log(text.client.getText());
-    });
+    const attached = {
+        getText: () => {
+            return text.client.getText();
+        },
+        insertText: (value: string, position: number) => {
+            text.insertText(value, position);
+        },
+        on: (callback) => {
+            // Update the text after being loaded as well as when receiving ops
+            text.loaded.then(() => {
+                callback(text.client.getText());
+            });
+
+            text.on("op", (msg) => {
+                console.log("op - new text");
+                callback(msg);
+            });
+        },
+    };
+
+    pragueAttach(attached);
 }
 
 const documentId = "test-document-niode2";

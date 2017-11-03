@@ -4,6 +4,7 @@
 #include "stdafx.h"
 #include <shellapi.h>
 #include <io.h>
+#include <codecvt>
 #include "nodelib.h"
 #include "node.h"
 #include "uv.h"
@@ -11,6 +12,11 @@
 #include "v8.h"
 
 #define MAX_LOADSTRING 100
+
+#define IDM_INSERT 200
+
+using namespace v8;
+using namespace node;
 
 // Global Variables:
 HINSTANCE hInst;                                // current instance
@@ -23,8 +29,18 @@ BOOL                InitInstance(HINSTANCE, int);
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 
-using namespace v8;
-using namespace node;
+HWND textEdit;
+HWND positionEdit;
+HWND hWnd;
+
+// To store any attached objects
+Persistent<Object> attachedJSObject;
+Persistent<Context> runningContext;
+Isolate* runningIsolate;
+
+std::wstring currentText;
+
+static void ListenForUpdates(Isolate* isolate, Local<Object> attached);
 
 class MyPlatform : public v8::Platform {
 public:
@@ -52,9 +68,85 @@ public:
     std::unique_ptr<v8::TracingController> tracing_controller_;
 };
 
+static void ChangeCallback(const v8::FunctionCallbackInfo<v8::Value>& args) {
+    Isolate* isolate = args.GetIsolate();
+    HandleScope scope(isolate);
+
+    Local<Object> attached = attachedJSObject.Get(runningIsolate);
+
+    Local<Function> getText = Local<Function>::Cast(attached->Get(String::NewFromUtf8(runningIsolate, "getText")));
+
+    const int argc = 0;
+    v8::Local<v8::Value>* argv = nullptr;
+
+    Local<String> result = getText->Call(attached, argc, argv)->ToString();
+
+    std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
+    currentText = converter.from_bytes(std::string(*v8::String::Utf8Value(result)));
+
+    InvalidateRect(hWnd, 0, TRUE);
+}
+
+static void AttachCallback(const v8::FunctionCallbackInfo<v8::Value>& args) {
+    if (args.Length() < 1) {
+        args.GetReturnValue().Set(Boolean::New(args.GetIsolate(), false));
+    }
+
+    Isolate* isolate = args.GetIsolate();
+    HandleScope scope(isolate);
+    Local<Object> attached = args[0]->ToObject();
+
+    // Store the object in a persistent handle to keep it around after the call
+    attachedJSObject.Reset(isolate, attached);
+
+    // Add a C++ listener for updates to the object
+    ListenForUpdates(isolate, attached);
+
+    args.GetReturnValue().Set(Boolean::New(args.GetIsolate(), true));
+}
+
+static void InsertText(std::wstring text, int position) {
+    Local<Context> context = runningContext.Get(runningIsolate);
+    Local<Object> attached = attachedJSObject.Get(runningIsolate);
+
+    std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
+    std::string utf8String = converter.to_bytes(text);
+
+    Local<Function> insertText = Local<Function>::Cast(attached->Get(String::NewFromUtf8(runningIsolate, "insertText")));
+    const int argc = 2;
+    v8::Local<v8::Value> argv[argc] =
+    {
+        v8::String::NewFromUtf8(runningIsolate, &utf8String[0]),
+        v8::Number::New(runningIsolate, position)
+    };
+
+    insertText->Call(attached, argc, argv);
+}
+
+static void ListenForUpdates(Isolate* isolate, Local<Object> attached) {
+    Local<FunctionTemplate> functionTemplate = FunctionTemplate::New(isolate, ChangeCallback);
+    Local<Function> function = functionTemplate->GetFunction();
+
+    Local<Function> on = Local<Function>::Cast(attached->Get(String::NewFromUtf8(runningIsolate, "on")));
+    const int argc = 1;
+    v8::Local<v8::Value> argv[argc] =
+    {
+        function
+    };
+
+    on->Call(attached, argc, argv);
+}
+
 int Start(HACCEL hAccelTable, uv_loop_t* event_loop, Isolate* isolate, IsolateData* isolate_data, int argc, const char* const* argv, int exec_argc, const char* const* exec_argv) {
+    runningIsolate = isolate;
+
     HandleScope handle_scope(isolate);
-    Local<Context> context = Context::New(isolate);
+
+    Local<ObjectTemplate> global = ObjectTemplate::New(isolate);
+    global->Set(String::NewFromUtf8(isolate, "pragueAttach"), FunctionTemplate::New(isolate, AttachCallback));
+
+    Local<Context> context = Context::New(isolate, NULL, global);
+    runningContext.Reset(isolate, context);
     Context::Scope context_scope(context);
 
     Environment* env = node::CreateEnvironment(isolate_data, context, argc, argv, exec_argc, exec_argv);
@@ -195,7 +287,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(lpCmdLine);
 
+    // Create the console if it doesn't exist and then bind stdout, stderr, etc... to go to it
     RouteStdioToConsole(true);
+    // ... alternatively the below code has them all target the nul device. You will need to do one of these
+    // since node assumes the stdio file descriptors are valid which is not the case for a win32 gui app.
     //for (int fd = 0; fd <= 2; ++fd) {
     //    auto handle = reinterpret_cast<HANDLE>(_get_osfhandle(fd));
     //    if (handle == INVALID_HANDLE_VALUE ||
@@ -310,7 +405,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
     hInst = hInstance; // Store instance handle in our global variable
 
-    HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
+    hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
         CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
 
     if (!hWnd)
@@ -338,6 +433,48 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
     {
+    case WM_CREATE:
+    {
+        HWND button = CreateWindow(
+            L"BUTTON",
+            L"Insert",
+            WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
+            10,
+            10,
+            100,
+            20,
+            hWnd,
+            (HMENU) IDM_INSERT,
+            hInst,
+            NULL);
+        
+        textEdit = CreateWindow(
+            L"EDIT",
+            L"",
+            WS_CHILD | WS_VISIBLE | WS_BORDER,
+            10,
+            50,
+            100,
+            40,
+            hWnd,
+            NULL,
+            hInst,
+            NULL);
+
+        positionEdit = CreateWindow(
+            L"EDIT",
+            L"",
+            WS_CHILD | WS_VISIBLE | WS_BORDER,
+            10,
+            100,
+            100,
+            40,
+            hWnd,
+            NULL,
+            hInst,
+            NULL);
+    }
+    break;
     case WM_COMMAND:
     {
         int wmId = LOWORD(wParam);
@@ -350,6 +487,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         case IDM_EXIT:
             DestroyWindow(hWnd);
             break;
+        case IDM_INSERT:
+        {
+            wchar_t buffer[2000];
+
+            GetWindowText(textEdit, (LPWSTR)buffer, sizeof(buffer));
+            std::wstring text(buffer);
+            GetWindowText(positionEdit, (LPWSTR)buffer, sizeof(buffer));
+            std::wstring position(buffer);
+
+            int positionAsInt = std::stoi(position);
+            InsertText(text, positionAsInt);
+        }
+            break;
         default:
             return DefWindowProc(hWnd, message, wParam, lParam);
         }
@@ -360,6 +510,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         PAINTSTRUCT ps;
         HDC hdc = BeginPaint(hWnd, &ps);
         // TODO: Add any drawing code that uses hdc here...
+        RECT rect{ 10, 200, 400, 500 };
+        DrawText(hdc, currentText.c_str(), -1, &rect, DT_LEFT | DT_WORDBREAK);
         EndPaint(hWnd, &ps);
     }
     break;
