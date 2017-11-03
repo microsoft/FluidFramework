@@ -6,13 +6,16 @@ import { Deferred } from "../core-utils";
 import * as utils from "../utils";
 import * as app from "./app";
 import * as io from "./io";
+import * as io2 from "./io2";
 
 export class AlfredRunner implements utils.IRunner {
     private server: core.IWebServer;
+    private server2: core.IWebServer;
     private runningDeferred: Deferred<void>;
 
     constructor(
         private serverFactory: core.IWebServerFactory,
+        private serverFactory2: core.IWebServerFactory,
         private config: Provider,
         private port: string | number,
         private historian: git.IHistorian,
@@ -30,7 +33,10 @@ export class AlfredRunner implements utils.IRunner {
         alfred.set("port", this.port);
 
         this.server = this.serverFactory.create(alfred);
+        this.server2 = this.serverFactory2.create(alfred);
+
         const httpServer = this.server.httpServer;
+        // const httpServer2 = this.server2.httpServer;
 
         // Register all the socket.io stuff
         io.register(
@@ -41,10 +47,31 @@ export class AlfredRunner implements utils.IRunner {
             this.documentsCollectionName,
             this.metricClientConfig);
 
+        // Remove (mdaumi): We need to register one.
+        io2.register(
+            this.server2.webSocketServer,
+            this.config,
+            this.mongoManager,
+            this.producer,
+            this.documentsCollectionName,
+            this.metricClientConfig);
+
         // Listen on provided port, on all network interfaces.
         httpServer.listen(this.port);
         httpServer.on("error", (error) => this.onError(error));
         httpServer.on("listening", () => this.onListening());
+
+        // httpServer2.on("error", (error) => this.onError(error));
+        // httpServer2.on("listening", () => this.onListening());
+
+        /*
+        io2.register(
+            this.config,
+            this.mongoManager,
+            this.producer,
+            this.documentsCollectionName,
+            this.metricClientConfig,
+        );*/
 
         return this.runningDeferred.promise;
     }
