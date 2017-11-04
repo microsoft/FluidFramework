@@ -19,16 +19,10 @@ export class FlexVideo extends ui.Component {
         this.message.style.backgroundColor = "rgba(0, 240, 20, 0.5)";
         element.appendChild(this.message);
 
-        this.image = document.createElement("img");
-        console.log("image");
-        this.image.src = src;
-        this.image.alt = "Your Buddy!";
-        element.appendChild(this.image);
-
         this.video = document.createElement("video");
         console.log("vid");
         this.video.src = vid;
-        this.video.controls = true;
+        this.video.controls = false;
         this.video.width = 320;
         this.video.height = 240;
         this.video.autoplay = true;
@@ -46,5 +40,9 @@ export class FlexVideo extends ui.Component {
         const overlayInnerRects = bounds.nipHoriz(Math.floor(bounds.width * 0.6));
         overlayInnerRects[0].conformElement(this.message);
         overlayInnerRects[1].conformElement(this.image);
+    }
+
+    public playPause() {
+        this.video.pause();
     }
 }
