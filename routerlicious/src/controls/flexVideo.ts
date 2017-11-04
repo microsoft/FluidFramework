@@ -7,20 +7,12 @@ export class FlexVideo extends ui.Component {
     private message: HTMLSpanElement;
     private image: HTMLImageElement;
     private video: HTMLVideoElement;
+    private playing: boolean;
 
-    constructor(element: HTMLDivElement, vid: string, src: string) {
+    constructor(element: HTMLDivElement, vid: string) {
         super(element);
-        console.log("D-FlexImage");
-        this.message = document.createElement("span");
-        this.message.style.height = "auto";
-        this.message.style.height = "auto";
-        this.message.style.padding = "5px";
-        this.message.style.borderRadius = "8px";
-        this.message.style.backgroundColor = "rgba(0, 240, 20, 0.5)";
-        element.appendChild(this.message);
 
         this.video = document.createElement("video");
-        console.log("vid");
         this.video.src = vid;
         this.video.controls = false;
         this.video.width = 320;
@@ -28,10 +20,15 @@ export class FlexVideo extends ui.Component {
         this.video.autoplay = true;
         this.video.poster = "https://i.pinimg.com/originals/1b/2d/d0/1b2dd03413192c57f8a097969d67d861.jpg";
         element.appendChild(this.video);
-    }
 
-    public setMessage(message: string) {
-        this.message.innerText = message;
+        this.video.onplay = ( (onplay) => {
+            this.playing = true;
+            console.log("a");
+        });
+        this.video.onpause = ( (onpause) => {
+            this.playing = false;
+            console.log("b");
+        });
     }
 
     public resizeCore(bounds: ui.Rectangle) {
@@ -43,6 +40,10 @@ export class FlexVideo extends ui.Component {
     }
 
     public playPause() {
-        this.video.pause();
+        if (this.playing) {
+            this.video.pause();
+        } else {
+            this.video.play();
+        }
     }
 }

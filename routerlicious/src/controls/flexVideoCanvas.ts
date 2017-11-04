@@ -13,15 +13,15 @@ import { FlexVideo } from "./flexVideo";
 export class FlexVideoCanvas extends ui.Component {
     private dock: DockPanel;
     private video: FlexVideo;
+    private playPause: Button;
 
-    constructor(element: HTMLDivElement, doc: api.Document, root: types.IMapView) {
+    constructor(element: HTMLDivElement, docd: api.Document, root: types.IMapView) {
         super(element);
 
         const iFrame = document.createElement("div");
         element.appendChild(iFrame);
         this.video = new FlexVideo(iFrame,
-            "http://video.webmfiles.org/big-buck-bunny_trailer.webm",
-            "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/Balloons-aj.svg/1200px-Balloons-aj.svg.png");
+            "http://video.webmfiles.org/big-buck-bunny_trailer.webm");
         this.addChild(this.video);
 
         const dockElement = document.createElement("div");
@@ -30,13 +30,21 @@ export class FlexVideoCanvas extends ui.Component {
         this.addChild(this.dock);
 
         const buttonSize = { width: 50, height: 50 };
-        const playPause = new Button(
-            document.createElement("div"),
+        const buttonRect = new ui.Rectangle(75, 75, 100, 100);
+        const buttonContainer = document.createElement("div");
+        element.appendChild(buttonContainer);
+
+        this.playPause = new Button(
+            buttonContainer,
             buttonSize,
             ["btn", "btn-palette", "prague-icon-pencil"]);
-        playPause.on("click", (event) => {
+        this.playPause.element.id = "button";
+        this.playPause.resize(buttonRect);
+
+        this.playPause.on("click", (event) => {
             debug("play pause clicked");
             this.video.playPause();
         });
+        this.addChild(this.playPause);
     }
 }
