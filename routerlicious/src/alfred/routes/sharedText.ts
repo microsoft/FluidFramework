@@ -20,7 +20,8 @@ export function create(config: Provider, gitManager: git.GitManager): Router {
         versionP.then(
             (version) => {
                 const parsedTemplate = path.parse(request.query.template ? request.query.template : defaultTemplate);
-                const template = `/public/literature/${parsedTemplate.base}`;
+                const template =
+                    parsedTemplate.base !== "empty" ? `/public/literature/${parsedTemplate.base}` : undefined;
 
                 response.render(
                     "sharedText",

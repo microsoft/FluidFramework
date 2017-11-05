@@ -46,7 +46,8 @@ export async function onLoad(id: string, version: resources.ICommit, config: any
         console.log(`Not existing ${id} - ${performanceNow()}`);
         root.set("presence", collabDoc.createMap());
         const newString = collabDoc.createString() as SharedString.SharedString;
-        const starterText = await downloadRawText(template);
+
+        const starterText = template ? await downloadRawText(template) : " ";
         const segments = SharedString.loadSegments(starterText, 0, true);
         for (const segment of segments) {
             if (segment.getType() === SharedString.SegmentType.Text) {

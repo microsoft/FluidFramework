@@ -8,9 +8,23 @@ import { defaultPartials } from "./partials";
 
 const readDir = promisify(fs.readdir);
 
-async function getTemplates(): Promise<Array<{ ext: string, full: string, name: string }>> {
+interface ITemplate {
+    ext: string;
+    full: string;
+    name: string;
+}
+
+async function getTemplates(): Promise<ITemplate[]> {
+    // Empty template for starting with a blank document
+    const result: ITemplate[] = [{
+        ext: null,
+        full: "empty",
+        name: "empty",
+    }];
+
+    // Load in stored templates
     const info = await readDir(path.join(__dirname, "../../../public/literature"));
-    return info.map((name) => {
+    const templates = info.map((name) => {
         const parsed = path.parse(name);
         return {
             ext: parsed.ext,
@@ -18,6 +32,8 @@ async function getTemplates(): Promise<Array<{ ext: string, full: string, name: 
             name: parsed.name,
         };
     });
+
+    return result.concat(templates);
 }
 
 export function create(config: Provider): Router {
