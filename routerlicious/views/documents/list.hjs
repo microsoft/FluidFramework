@@ -6,7 +6,7 @@
     {{$content}}
         <div class="container">
             <h1>Templates</h1>
-            <ul>
+            <ul class="list-unstyled">
                 {{#templates}}
                 <li><a href="/sharedText/{{documentId}}?template={{full}}">{{name}}</a></li>
                 {{/templates}}
