@@ -1,5 +1,6 @@
 import { Router } from "express";
 import * as fs from "fs";
+import * as moniker from "moniker";
 import { Provider } from "nconf";
 import * as path from "path";
 import { promisify } from "util";
@@ -7,9 +8,16 @@ import { defaultPartials } from "./partials";
 
 const readDir = promisify(fs.readdir);
 
-async function getTemplates(): Promise<string[]> {
+async function getTemplates(): Promise<Array<{ ext: string, full: string, name: string }>> {
     const info = await readDir(path.join(__dirname, "../../../public/literature"));
-    return info;
+    return info.map((name) => {
+        const parsed = path.parse(name);
+        return {
+            ext: parsed.ext,
+            full: name,
+            name: parsed.name,
+        };
+    });
 }
 
 export function create(config: Provider): Router {
@@ -22,9 +30,11 @@ export function create(config: Provider): Router {
         const templatesP = getTemplates();
         templatesP.then(
             (templates) => {
+                const documentId = moniker.choose();
                 response.render(
                     "documents/list",
                     {
+                        documentId,
                         partials: defaultPartials,
                         templates,
                         title: "Templates",
