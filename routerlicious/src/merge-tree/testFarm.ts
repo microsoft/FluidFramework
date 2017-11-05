@@ -149,8 +149,8 @@ export function TestPack(verbose = true) {
             console.log(`local time ${client.localTime} us ops: ${client.localOps} ave time ${aveLocalTime}`);
         }
         console.log(`get text time: ${aveGetTextTime} incr: ${aveIncrGetTextTime} catch up ${aveCatchUpTime}`);
-        console.log(`accum time ${client.accumTime} us ops: ${client.accumOps} ave time ${aveTime} - wtime ${adjTime} pack ${avePackTime} ave window ${aveWindow}`);
-        console.log(`accum window time ${client.accumWindowTime} us ave window time total ${aveWindowTime} not in ops ${aveExtraWindowTime}; max ${client.maxWindowTime}`);
+        console.log(`${client.longClientId} accum time ${client.accumTime} us ops: ${client.accumOps} ave time ${aveTime} - wtime ${adjTime} pack ${avePackTime} ave window ${aveWindow}`);
+        console.log(`${client.longClientId} accum window time ${client.accumWindowTime} us ave window time total ${aveWindowTime} not in ops ${aveExtraWindowTime}; max ${client.maxWindowTime}`);
     }
 
     function manyMergeTrees() {
@@ -799,7 +799,7 @@ export function TestPack(verbose = true) {
             for (let client of clientsB) {
                 clientProcessSome(client, true);
             }
-            let allRounds = true;
+            let allRounds = false;
             if (allRounds || (0 === (roundCount % 100))) {
                 let clockStart = clock();
                 if (checkTextMatch(clientsA, serverA)) {
@@ -818,10 +818,17 @@ export function TestPack(verbose = true) {
                     console.log(`wall clock is ${((Date.now() - startTime) / 1000.0).toFixed(1)}`);
                 }
                 let statsA = serverA.mergeTree.getStats();
+                let statsB = serverB.mergeTree.getStats();
                 let liveAve = (statsA.liveCount / statsA.nodeCount).toFixed(1);
+                let liveAveB = (statsB.liveCount / statsB.nodeCount).toFixed(1);
+                
                 let posLeaves = statsA.leafCount - statsA.removedLeafCount;
-                console.log(`round: ${roundCount} seq ${serverA.seq} char count ${serverA.getLength()} height ${statsA.maxHeight} lv ${statsA.leafCount} rml ${statsA.removedLeafCount} p ${posLeaves} nodes ${statsA.nodeCount} pop ${liveAve} histo ${statsA.histo}`);
+                let posLeavesB = statsB.leafCount - statsB.removedLeafCount;
+                
+                console.log(`round: ${roundCount} A> seqA ${serverA.seq} char count ${serverA.getLength()} height ${statsA.maxHeight} lv ${statsA.leafCount} rml ${statsA.removedLeafCount} p ${posLeaves} nodes ${statsA.nodeCount} pop ${liveAve} histo ${statsA.histo}`);
+                console.log(`round: ${roundCount} B> seqB ${serverB.seq} char count ${serverB.getLength()} height ${statsB.maxHeight} lv ${statsB.leafCount} rml ${statsB.removedLeafCount} p ${posLeavesB} nodes ${statsB.nodeCount} pop ${liveAveB} histo ${statsB.histo}`);
                 reportTiming(serverA);
+                reportTiming(serverB);
                 reportTiming(clientsA[1]);
                 reportTiming(clientsB[1]);
 

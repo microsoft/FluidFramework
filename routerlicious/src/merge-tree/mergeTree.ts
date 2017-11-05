@@ -642,7 +642,7 @@ export class TextSegment extends BaseSegment {
                 if (this.matchProperties(<TextSegment>segment)) {
                     let branchId = mergeTree.getBranchId(this.clientId);
                     let segBranchId = mergeTree.getBranchId(segment.clientId);
-                    if (segBranchId <= branchId) {
+                    if ((segBranchId === branchId) && (mergeTree.localNetLength(segment) > 0)) {
                         return ((this.cachedLength <= MergeTree.TextSegmentGranularity) ||
                             (segment.cachedLength <= MergeTree.TextSegmentGranularity));
                     }
@@ -1039,10 +1039,17 @@ export class PartialSequenceLengths {
     }
 
     update(mergeTree: MergeTree, block: IMergeBlock, seq: number, clientId: number, collabWindow: CollaborationWindow) {
-        this.updateBranch(mergeTree, 0, block, seq, clientId, collabWindow);
+        let segBranchId = mergeTree.getBranchId(clientId);
+        // console.log(`seg br ${segBranchId} cli ${glc(mergeTree, segment.clientId)} me ${glc(mergeTree, mergeTree.collabWindow.clientId)}`);
+        if (segBranchId == 0) {
+            this.updateBranch(mergeTree, 0, block, seq, clientId, collabWindow);
+        }
         if (mergeTree.localBranchId > 0) {
             for (let i = 0; i < mergeTree.localBranchId; i++) {
-                this.downstreamPartialLengths[i].updateBranch(mergeTree, i + 1, block, seq, clientId, collabWindow);
+                let branchId = i + 1;
+                if (segBranchId <= branchId) {
+                    this.downstreamPartialLengths[i].updateBranch(mergeTree, branchId, block, seq, clientId, collabWindow);
+                }
             }
         }
 
@@ -1280,7 +1287,7 @@ export class PartialSequenceLengths {
     }
 
     partialLengthsForBranch(branchId: number) {
-        if (branchId>0) {
+        if (branchId > 0) {
             return this.downstreamPartialLengths[branchId - 1];
         } else {
             return this;
@@ -2314,6 +2321,8 @@ export class MergeTree {
         measureWindowTime: true,
     };
     static searchChunkSize = 256;
+    static traceAppend = false;
+    static traceZRemove = false;
     static traceGatherText = false;
     static diagInsertTie = false;
     static skipLeftShift = true;
@@ -2539,14 +2548,16 @@ export class MergeTree {
             let childNode = node.children[k];
             if (childNode.isLeaf()) {
                 let segment = <Segment>childNode;
-                if ((segment.removedSeq != undefined) && (segment.removedSeq != UnassignedSequenceNumber)) {
+                if ((segment.removedSeq !== undefined) && (segment.removedSeq !== UnassignedSequenceNumber)) {
                     let createBrid = this.getBranchId(segment.clientId);
                     let removeBrid = this.getBranchId(segment.removedClientId);
                     if ((removeBrid != createBrid) || (segment.removedSeq > this.collabWindow.minSeq)) {
                         holdNodes.push(segment);
                     }
                     else {
-                        // console.log(`removed rseq ${segment.removedSeq}`);
+                        if (MergeTree.traceZRemove) {
+                            console.log(`${this.getLongClientId(this.collabWindow.clientId)}: Zremove ${(<TextSegment>segment).text}; cli ${this.getLongClientId(segment.clientId)}`);
+                        }
                         segment.parent = undefined;
                     }
                     prevSegment = undefined;
@@ -2555,12 +2566,19 @@ export class MergeTree {
                     if ((segment.seq <= this.collabWindow.minSeq) &&
                         (!segment.segmentGroup) && (segment.seq != UnassignedSequenceNumber)) {
                         if (prevSegment && prevSegment.canAppend(segment, this)) {
+                            if (MergeTree.traceAppend) {
+                                console.log(`${this.getLongClientId(this.collabWindow.clientId)}: append ${(<TextSegment>prevSegment).text} + ${(<TextSegment>segment).text}; cli ${this.getLongClientId(prevSegment.clientId)} + cli ${this.getLongClientId(segment.clientId)}`);
+                            }
                             prevSegment.append(segment);
                             segment.parent = undefined;
                         }
                         else {
                             holdNodes.push(segment);
-                            prevSegment = segment;
+                            if (this.localNetLength(segment) > 0) {
+                                prevSegment = segment;
+                            } else {
+                                prevSegment = undefined;
+                            }
                         }
                     }
                     else {
@@ -3273,7 +3291,7 @@ export class MergeTree {
         // MergeTree.traceTraversal = true;
         this.insert(pos, refSeq, clientId, seq, text, (block, pos, refSeq, clientId, seq, text) =>
             this.blockInsert(this.root, pos, refSeq, clientId, seq, newSegment));
-        // MergeTree.traceTraversal = false;
+        MergeTree.traceTraversal = false;
         if (this.collabWindow.collaborating && MergeTree.options.zamboniSegments &&
             (seq != UnassignedSequenceNumber)) {
             this.zamboniSegments();
