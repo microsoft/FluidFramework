@@ -42,7 +42,6 @@ services:
         depends_on:
             - redis
             - mongodb
-            - rabbitmq
             - kafka-rest
         command: node dist/tmz/index.js
         environment:
@@ -53,7 +52,6 @@ services:
         build: .
         depends_on:
             - alfred
-            - rabbitmq
         command: node dist/paparazzi/index.js
         environment:
             - DEBUG=routerlicious:*
