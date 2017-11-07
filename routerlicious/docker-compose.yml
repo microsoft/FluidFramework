@@ -48,6 +48,13 @@ services:
             - DEBUG=routerlicious:*
             - NODE_ENV=development
         restart: always
+    routemaster:
+        build: .
+        command: node dist/routemaster/index.js
+        environment:
+            - DEBUG=routerlicious:*
+            - NODE_ENV=development
+        restart: always
     paparazzi:
         build: .
         depends_on:

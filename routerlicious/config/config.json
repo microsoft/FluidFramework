@@ -39,6 +39,16 @@
         "checkpointTimeIntervalMsec": 1000
 
     },
+    "routemaster": {
+        "topics": {
+            "receive": "deltas",
+            "send": "rawdeltas"
+        },
+        "clientId": "routemaster",
+        "groupId": "routemaster",
+        "checkpointBatchSize": 10,
+        "checkpointTimeIntervalMsec": 1000
+    },
     "paparazzi": {
         "queue": "snapshot",
         "bucket": "snapshots",

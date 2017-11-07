@@ -27,15 +27,18 @@ export class RouteMasterResources implements utils.IResources {
 export class RouteMasterResourcesFactory implements utils.IResourcesFactory<RouteMasterResources> {
     public async create(config: Provider): Promise<RouteMasterResources> {
         const mongoUrl = config.get("mongo:endpoint") as string;
+        const documentsCollectionName = config.get("mongo:collectionNames:documents");
+
         const kafkaEndpoint = config.get("kafka:lib:endpoint");
         const kafkaLibrary = config.get("kafka:lib:name");
-        const kafkaClientId = config.get("deli:kafkaClientId");
-        const receiveTopic = config.get("deli:topics:receive");
-        const sendTopic = config.get("deli:topics:send");
-        const checkpointBatchSize = config.get("deli:checkpointBatchSize");
-        const checkpointTimeIntervalMsec = config.get("deli:checkpointTimeIntervalMsec");
-        const documentsCollectionName = config.get("mongo:collectionNames:documents");
-        const groupId = config.get("deli:groupId");
+
+        const kafkaClientId = config.get("routemaster:clientId");
+        const groupId = config.get("routemaster:groupId");
+
+        const receiveTopic = config.get("routemaster:topics:receive");
+        const sendTopic = config.get("routemaster:topics:send");
+        const checkpointBatchSize = config.get("routemaster:checkpointBatchSize");
+        const checkpointTimeIntervalMsec = config.get("routemaster:checkpointTimeIntervalMsec");
 
         // Connection to stored document details
         const mongoFactory = new services.MongoDbFactory(mongoUrl);
