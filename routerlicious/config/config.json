@@ -7,9 +7,6 @@
         "timestamp": true,
         "label": "winston"
     },
-    "rabbitmq": {
-        "connectionString": "amqp://rabbitmq"
-    },
     "mongo": {
         "endpoint": "mongodb://mongodb:27017",
         "collectionNames": {
@@ -78,25 +75,6 @@
     "redis": {
         "host": "redis",
         "port": 6379
-    },
-    "minio": {
-        "endpoint": "minio",
-        "port": 9000,
-        "accessKey": "prague",
-        "secretKey": "mhioAkNXTwdX4dXWgKgXVtHo"
-    },
-    "perf": {
-        "kafkaSendClientId": "perfsend",
-        "kafkaReceiveClientId": "perfreceive",
-        "sendTopic": "rawdeltas",
-        "receiveTopic": "deltas",
-        "bucket": "snapshots",
-        "chunkSize": 400000,
-        "groupId": "perf",
-        "lib": {
-            "name": "kafka-rest",
-            "endpoint": "http://kafka-rest:8082"
-        }
     },
     "worker": {
         "intelligence": {
