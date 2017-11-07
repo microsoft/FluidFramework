@@ -13,7 +13,7 @@
         <script>
             var config = {{{ config }}};
             var version = {{{ version }}};
-            controller.demo.initialize("{{ id }}", version, config);
+            controller.video.initialize("{{ id }}", version, config);
         </script>
     {{/scripts}}
 {{/layout}}

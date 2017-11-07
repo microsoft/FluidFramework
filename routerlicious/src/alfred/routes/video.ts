@@ -17,7 +17,7 @@ export function create(config: Provider, gitManager: git.GitManager): Router {
         versionP.then(
             (version) => {
                 response.render(
-                    "demo",
+                    "video",
                     {
                         config: workerConfig,
                         id: request.params.id,

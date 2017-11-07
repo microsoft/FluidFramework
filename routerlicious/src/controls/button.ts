@@ -10,8 +10,6 @@ export class Button extends ui.Component {
         button.classList.add(...classList);
         element.appendChild(button);
 
-        console.log("button");
-
         button.onclick = (mouseEvent: MouseEvent) => {
             this.emit("click", mouseEvent);
         };

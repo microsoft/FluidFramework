@@ -1,3 +1,4 @@
+import { types } from "../client-api";
 import * as ui from "../ui";
 
 /**
@@ -9,25 +10,32 @@ export class FlexVideo extends ui.Component {
     private video: HTMLVideoElement;
     private playing: boolean;
 
-    constructor(element: HTMLDivElement, vid: string) {
+    constructor(element: HTMLDivElement, vid: string, private root: types.IMap) {
         super(element);
 
         this.video = document.createElement("video");
         this.video.src = vid;
-        this.video.controls = false;
+        this.video.controls = true;
         this.video.width = 320;
         this.video.height = 240;
         this.video.autoplay = true;
         this.video.poster = "https://i.pinimg.com/originals/1b/2d/d0/1b2dd03413192c57f8a097969d67d861.jpg";
         element.appendChild(this.video);
 
-        this.video.onplay = ( (onplay) => {
-            this.playing = true;
-            console.log("a");
+        this.video.onplay = this.handlePlay;
+        this.video.onpause = this.handlePause;
+
+        this.root.on("load", () => {
+            console.log("FlexVideoConstructor: load");
         });
-        this.video.onpause = ( (onpause) => {
-            this.playing = false;
-            console.log("b");
+
+        // This gets triggered locally only. The valueChanged Event appears to get
+        // deduped from the remote client
+        root.on("valueChanged", async (changedValue) => {
+            console.log("flexVideoConstructor: Recieved value changed event");
+            console.log(changedValue);
+            console.log(root.get(changedValue.key));
+            console.log(root);
         });
     }
 
@@ -45,5 +53,15 @@ export class FlexVideo extends ui.Component {
         } else {
             this.video.play();
         }
+    }
+
+    private handlePlay() {
+        this.playing = true;
+        console.log("handlePlay");
+    }
+
+    private handlePause() {
+        this.playing = false;
+        console.log("handlePause");
     }
 }

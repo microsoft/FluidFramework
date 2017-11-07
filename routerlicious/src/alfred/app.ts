@@ -111,7 +111,7 @@ export function create(config: Provider, historian: resources.IHistorian, mongoM
     app.use("/scribe", routes.scribe);
     app.use("/intelligence", routes.intelligence);
     app.use("/democreator", routes.demoCreator);
-    app.use("/demo", routes.demo);
+    app.use("/video", routes.video);
     app.use("/login", routes.login);
     app.use("/ping", routes.ping);
     app.use(routes.home);
