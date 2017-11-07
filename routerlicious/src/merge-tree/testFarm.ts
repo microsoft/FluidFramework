@@ -628,6 +628,7 @@ export function TestPack(verbose = true) {
         serverB.measureOps = true;
         if (startFile) {
             Text.loadTextFromFile(startFile, serverA.mergeTree, fileSegCount);
+            Text.loadTextFromFile(startFile, serverB.mergeTree, fileSegCount);
         }
 
         let clientsA = <MergeTree.Client[]>Array(clientCountA);
@@ -675,28 +676,31 @@ export function TestPack(verbose = true) {
             getTextCalls++;
             // TODO: cross-check reading A from B
             for (let client of clients) {
+                let showDiff = false;
                 let cliText = client.getText();
                 if (cliText != serverText) {
                     console.log(`mismatch @${server.getCurrentSeq()} client @${client.getCurrentSeq()} id: ${client.getClientId()}`);
                     //console.log(serverText);
                     //console.log(cliText);
-                    let diffParts = JsDiff.diffChars(serverText, cliText);
-                    for (let diffPart of diffParts) {
-                        let annotes = "";
-                        if (diffPart.added) {
-                            annotes += "added ";
+                    if (showDiff) {
+                        let diffParts = JsDiff.diffChars(serverText, cliText);
+                        for (let diffPart of diffParts) {
+                            let annotes = "";
+                            if (diffPart.added) {
+                                annotes += "added ";
+                            }
+                            else if (diffPart.removed) {
+                                annotes += "removed ";
+                            }
+                            if (diffPart.count) {
+                                annotes += `count: ${diffPart.count}`;
+                            }
+                            console.log(`text: ${diffPart.value} ` + annotes);
                         }
-                        else if (diffPart.removed) {
-                            annotes += "removed ";
-                        }
-                        if (diffPart.count) {
-                            annotes += `count: ${diffPart.count}`;
-                        }
-                        console.log(`text: ${diffPart.value} ` + annotes);
                     }
-                    console.log(`Server ${server.longClientId}`);
+                    console.log(`Server MT ${server.longClientId}`);
                     console.log(server.mergeTree.toString());
-                    console.log(`Client ${client.longClientId}`);
+                    console.log(`Client MT ${client.longClientId}`);
                     console.log(client.mergeTree.toString());
                     return true;
                 }
@@ -821,10 +825,10 @@ export function TestPack(verbose = true) {
                 let statsB = serverB.mergeTree.getStats();
                 let liveAve = (statsA.liveCount / statsA.nodeCount).toFixed(1);
                 let liveAveB = (statsB.liveCount / statsB.nodeCount).toFixed(1);
-                
+
                 let posLeaves = statsA.leafCount - statsA.removedLeafCount;
                 let posLeavesB = statsB.leafCount - statsB.removedLeafCount;
-                
+
                 console.log(`round: ${roundCount} A> seqA ${serverA.seq} char count ${serverA.getLength()} height ${statsA.maxHeight} lv ${statsA.leafCount} rml ${statsA.removedLeafCount} p ${posLeaves} nodes ${statsA.nodeCount} pop ${liveAve} histo ${statsA.histo}`);
                 console.log(`round: ${roundCount} B> seqB ${serverB.seq} char count ${serverB.getLength()} height ${statsB.maxHeight} lv ${statsB.leafCount} rml ${statsB.removedLeafCount} p ${posLeavesB} nodes ${statsB.nodeCount} pop ${liveAveB} histo ${statsB.histo}`);
                 reportTiming(serverA);
@@ -1144,7 +1148,7 @@ if (chktst) {
 let testPack = TestPack();
 const filename = path.join(__dirname, "../../public/literature", "pp.txt");
 
-let ppTest = false;
+let ppTest = true;
 if (ppTest) {
     testPack.clientServerBranch(filename, 100000);
 } else {
