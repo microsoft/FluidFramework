@@ -8,9 +8,10 @@ export class FlexVideo extends ui.Component {
     private message: HTMLSpanElement;
     private image: HTMLImageElement;
     private video: HTMLVideoElement;
-    private playing: boolean;
+    private videoMap: types.IMap;
+    private videoMapView: types.IMapView;
 
-    constructor(element: HTMLDivElement, vid: string, private root: types.IMap) {
+    constructor(element: HTMLDivElement, vid: string, private videoRoot: Promise<types.IMap>) {
         super(element);
 
         this.video = document.createElement("video");
@@ -18,24 +19,55 @@ export class FlexVideo extends ui.Component {
         this.video.controls = true;
         this.video.width = 320;
         this.video.height = 240;
-        this.video.autoplay = true;
+        this.video.autoplay = false;
         this.video.poster = "https://i.pinimg.com/originals/1b/2d/d0/1b2dd03413192c57f8a097969d67d861.jpg";
         element.appendChild(this.video);
 
-        this.video.onplay = this.handlePlay;
-        this.video.onpause = this.handlePause;
+        this.videoRoot.then((video) => {
+            console.log(video);
+            console.log(videoRoot);
 
-        this.root.on("load", () => {
-            console.log("FlexVideoConstructor: load");
-        });
+            this.videoMap = video;
+            this.videoMap.getView().then( (videoMapView) => {
+                this.videoMapView = videoMapView;
+            });
+            console.log(video);
+            console.log(this.videoMap);
+            this.video.onplay = () => this.handlePlay();
+            this.video.onpause = () => this.handlePause(); // emit play = false
+            this.video.ontimeupdate = () => this.handleTimeUpdate();
+            this.video.onload = () => this.handleLoad();
 
-        // This gets triggered locally only. The valueChanged Event appears to get
-        // deduped from the remote client
-        root.on("valueChanged", async (changedValue) => {
-            console.log("flexVideoConstructor: Recieved value changed event");
-            console.log(changedValue);
-            console.log(root.get(changedValue.key));
-            console.log(root);
+            this.videoMap.get("time").then((time) => {
+                console.log("setting time");
+                this.video.currentTime = time;
+            });
+            this.videoMap.get("play").then((play) => {
+                console.log("setting play");
+                this.playPause(play);
+            });
+
+            this.videoMap.on("valueChanged", async (changedValue) => {
+                console.log("flexVideoConstructor: Recieved value changed event");
+                console.log(changedValue);
+                console.log(this.videoMap.get(changedValue.key));
+                console.log(this.videoMap);
+                // this.videoMap.get(changedValue.key).then((play) => {
+                //     this.playPause(play);
+                // });
+                switch (changedValue.key) {
+                    case("play"):
+                        console.log("Switch:play");
+                        this.videoMap.get(changedValue.key).then((play) => this.playPause(play));
+                        break;
+                    case("time"):
+                        this.videoMap.get(changedValue.key).then((time) => this.timeUpdate(time));
+                        break;
+                    default:
+                        console.log("default case " + changedValue.key);
+                        break;
+                }
+            });
         });
     }
 
@@ -47,21 +79,46 @@ export class FlexVideo extends ui.Component {
         overlayInnerRects[1].conformElement(this.image);
     }
 
-    public playPause() {
-        if (this.playing) {
-            this.video.pause();
+    public playPause(play: boolean) {
+        if (play) {
+            console.log("play");
+            if (this.video.paused) {
+                this.video.play();
+            }
         } else {
-            this.video.play();
+            console.log("pause");
+            if (!this.video.paused) {
+                this.video.pause();
+            }
         }
     }
 
+    public timeUpdate(time: number) {
+        if (Math.abs(this.video.currentTime - time) > 2) {
+            this.video.currentTime = time;
+        }
+    }
+
+    private handleLoad() {
+        this.videoMap.get("time").then((time) => {
+            this.video.currentTime = time;
+        });
+        this.videoMap.get("play").then((play) => {
+            this.playPause(play);
+        });
+    }
+
+    private handleTimeUpdate() {
+        this.videoMap.set("time", this.video.currentTime);
+    }
+
     private handlePlay() {
-        this.playing = true;
         console.log("handlePlay");
+        this.videoMap.set("play", true);
     }
 
     private handlePause() {
-        this.playing = false;
         console.log("handlePause");
+        this.videoMap.set("play", false);
     }
 }
