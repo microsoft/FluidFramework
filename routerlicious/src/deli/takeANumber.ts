@@ -128,7 +128,8 @@ export class TakeANumber {
                 clients,
                 logOffset: this.logOffset,
                 sequenceNumber : this.sequenceNumber,
-            });
+            },
+            null);
     }
 
     /**

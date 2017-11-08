@@ -1,6 +1,5 @@
 import * as bodyParser from "body-parser";
 import * as compression from "compression";
-import * as cors from "cors";
 import * as express from "express";
 import { Express } from "express";
 import * as fs from "fs";
@@ -103,8 +102,8 @@ export function create(config: Provider, historian: resources.IHistorian, mongoM
     // bind routes
     const gitManager = new git.GitManager(historian, gitSettings.repository);
     const routes = alfredRoutes.create(config, gitManager, mongoManager);
-    app.use("/deltas", cors(), routes.deltas);
-    app.use("/documents", routes.documents);
+    app.use(routes.api);
+    app.use("/templates", routes.templates);
     app.use("/maps", routes.maps);
     app.use("/canvas", routes.canvas);
     app.use("/sharedText", routes.sharedText);
