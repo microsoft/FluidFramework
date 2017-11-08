@@ -28,32 +28,24 @@ export class FlexVideo extends ui.Component {
             this.video.ontimeupdate = () => this.handleTimeUpdate();
             this.video.onload = () => this.handleLoad();
 
-            this.videoMap.get("time").then((time) => {
-                this.video.currentTime = time;
-            });
-            this.videoMap.get("play").then((play) => {
-                this.playPause(play);
-            });
-
             this.videoMap.on("valueChanged", async (changedValue) => {
 
                 switch (changedValue.key) {
                     case("play"):
-                        console.log("Switch:play");
-                        this.videoMap.get(changedValue.key).then((play) => this.playPause(play));
+                        this.videoMap.get(changedValue.key).then((play) => this.updatePlay(play));
                         break;
                     case("time"):
-                        this.videoMap.get(changedValue.key).then((time) => this.timeUpdate(time));
+                        this.videoMap.get(changedValue.key).then((time) => this.updateTime(time));
                         break;
                     default:
-                        console.log("default case " + changedValue.key);
+                        console.log("default: " + changedValue.key);
                         break;
                 }
             });
         });
     }
 
-    public playPause(play: boolean) {
+    public updatePlay(play: boolean) {
         if (play) {
             console.log("play");
             if (this.video.paused) {
@@ -67,7 +59,7 @@ export class FlexVideo extends ui.Component {
         }
     }
 
-    public timeUpdate(time: number) {
+    public updateTime(time: number) {
         if (Math.abs(this.video.currentTime - time) > 2) {
             this.video.currentTime = time;
         }
@@ -78,7 +70,7 @@ export class FlexVideo extends ui.Component {
             this.video.currentTime = time;
         });
         this.videoMap.get("play").then((play) => {
-            this.playPause(play);
+            this.updatePlay(play);
         });
     }
 
