@@ -2,11 +2,9 @@ import { types } from "../client-api";
 import * as ui from "../ui";
 
 /**
- * Basic video player
+ * Basic collaborative video player
  */
 export class FlexVideo extends ui.Component {
-    private message: HTMLSpanElement;
-    private image: HTMLImageElement;
     private video: HTMLVideoElement;
     private videoMap: types.IMap;
 
@@ -53,14 +51,6 @@ export class FlexVideo extends ui.Component {
                 }
             });
         });
-    }
-
-    public resizeCore(bounds: ui.Rectangle) {
-        bounds.x = 0;
-        bounds.y = 0;
-        const overlayInnerRects = bounds.nipHoriz(Math.floor(bounds.width * 0.6));
-        overlayInnerRects[0].conformElement(this.message);
-        overlayInnerRects[1].conformElement(this.image);
     }
 
     public playPause(play: boolean) {

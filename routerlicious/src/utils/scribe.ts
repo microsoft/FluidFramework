@@ -1,5 +1,5 @@
 import clone = require("lodash/clone");
-import { api, core, MergeTree, utils } from "../client-api";
+import { api, core, mergeTree, utils } from "../client-api";
 
 export interface IScribeMetrics {
     histogram: utils.Histogram;
@@ -43,9 +43,9 @@ function padTime(value: number) {
  */
 function normalizeText(input: string): string {
     let result = "";
-    const segments = MergeTree.loadSegments(input, 0);
+    const segments = mergeTree.loadSegments(input, 0);
     for (const segment of segments) {
-        result += (<MergeTree.TextSegment> segment).text;
+        result += (<mergeTree.TextSegment> segment).text;
     }
 
     return result;
@@ -181,7 +181,7 @@ function combine(first: number[], second: number[], combine: (a, b) => number): 
  */
 async function typeFile(
     document: api.Document,
-    sharedString: MergeTree.SharedString,
+    sharedString: mergeTree.SharedString,
     fileText: string,
     intervalTime: number,
     callback: ScribeMetricsCallback): Promise<number> {
@@ -331,8 +331,8 @@ async function typeFile(
             }
             if (sharedString.client.getLength() === 0) {
                 // pg marker that will remain at end of text
-                sharedString.insertMarker(insertPosition, MergeTree.MarkerBehaviors.Tile,
-                    {[MergeTree.reservedTileLabelsKey]: ["pg"]});
+                sharedString.insertMarker(insertPosition, mergeTree.MarkerBehaviors.Tile,
+                    {[mergeTree.reservedTileLabelsKey]: ["pg"]});
             }
             // Start inserting text into the string
             let code = fileText.charCodeAt(readPosition);
@@ -342,8 +342,8 @@ async function typeFile(
             }
             trackOperation(() => {
                 if (code === 10) {
-                    sharedString.insertMarker(insertPosition++, MergeTree.MarkerBehaviors.Tile,
-                    {[MergeTree.reservedTileLabelsKey]: ["pg"]});
+                    sharedString.insertMarker(insertPosition++, mergeTree.MarkerBehaviors.Tile,
+                    {[mergeTree.reservedTileLabelsKey]: ["pg"]});
                     readPosition++;
                 } else {
                     sharedString.insertText(fileText.charAt(readPosition++), insertPosition++);
@@ -388,7 +388,7 @@ export async function type(
 
     // Load the shared string extension we will type into
     const document = await api.load(id);
-    const sharedString = document.createString() as MergeTree.SharedString;
+    const sharedString = document.createString() as mergeTree.SharedString;
     await document.getRoot().set("text", sharedString);
     await document.getRoot().set("presence", document.createMap());
 
