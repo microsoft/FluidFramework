@@ -8,7 +8,7 @@ export function create(config: Provider, gitManager: git.GitManager): Router {
     const router: Router = Router();
 
     /**
-     * Loading of a specific collaborative map
+     * Loading of a video demo
      */
     router.get("/:id", (request, response, next) => {
         const workerConfig = JSON.stringify(config.get("worker"));

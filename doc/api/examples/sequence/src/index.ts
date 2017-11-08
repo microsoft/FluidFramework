@@ -1,8 +1,8 @@
 // For local development
- const routerlicious = "http://localhost:3000";
- const historian = "http://localhost:3000";
-// const routerlicious = "http://praguekube.westus2.cloudapp.azure.com";
-// const historian = "http://prague-historian.westus2.cloudapp.azure.com";
+// const routerlicious = "http://localhost:3000";
+// const historian = "http://localhost:3001";
+const routerlicious = "http://praguekube.westus2.cloudapp.azure.com";
+const historian = "http://prague-historian.westus2.cloudapp.azure.com";
 const repository = "prague";
 
 // Register endpoint connection
