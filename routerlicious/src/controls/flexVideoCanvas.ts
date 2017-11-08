@@ -1,7 +1,6 @@
 // The main app code
 import { api, types } from "../client-api";
 import * as ui from "../ui";
-// import { Button } from "./button";
 import { DockPanel } from "./dockPanel";
 import { FlexVideo } from "./flexVideo";
 
@@ -11,9 +10,6 @@ import { FlexVideo } from "./flexVideo";
 export class FlexVideoCanvas extends ui.Component {
     private dock: DockPanel;
     private video: FlexVideo;
-    // private playPause: Button;
-    // private videoMap: types.IMap;
-    // private videoMapView: types.IMapView;
 
     constructor(element: HTMLDivElement, doc: api.Document, root: types.IMap) {
         super(element);
