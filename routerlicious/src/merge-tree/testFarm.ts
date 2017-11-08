@@ -117,6 +117,8 @@ export function TestPack(verbose = true) {
 
     let getTextTime = 0;
     let getTextCalls = 0;
+    let crossGetTextTime = 0;
+    let crossGetTextCalls = 0;
     let incrGetTextTime = 0;
     let incrGetTextCalls = 0;
     let catchUpTime = 0;
@@ -136,19 +138,9 @@ export function TestPack(verbose = true) {
         let aveExtraWindowTime = (client.accumWindowTime / client.accumOps).toFixed(1);
         let aveWindow = (client.accumWindow / client.accumOps).toFixed(1);
         let adjTime = ((client.accumTime - (windowTime - client.accumWindowTime)) / client.accumOps).toFixed(1);
-        let aveGetTextTime = (getTextTime / getTextCalls).toFixed(1);
-        let aveIncrGetTextTime = "off";
-        let aveCatchUpTime = "off";
-        if (catchUps > 0) {
-            aveCatchUpTime = (catchUpTime / catchUps).toFixed(1);
-        }
-        if (checkIncr) {
-            aveIncrGetTextTime = (incrGetTextTime / incrGetTextCalls).toFixed(1);
-        }
         if (client.localOps > 0) {
             console.log(`local time ${client.localTime} us ops: ${client.localOps} ave time ${aveLocalTime}`);
         }
-        console.log(`get text time: ${aveGetTextTime} incr: ${aveIncrGetTextTime} catch up ${aveCatchUpTime}`);
         console.log(`${client.longClientId} accum time ${client.accumTime} us ops: ${client.accumOps} ave time ${aveTime} - wtime ${adjTime} pack ${avePackTime} ave window ${aveWindow}`);
         console.log(`${client.longClientId} accum window time ${client.accumWindowTime} us ave window time total ${aveWindowTime} not in ops ${aveExtraWindowTime}; max ${client.maxWindowTime}`);
     }
@@ -668,15 +660,29 @@ export function TestPack(verbose = true) {
         serverB.addClients(clientsB);
         serverB.addUpstreamClients(clientsA);
 
+        function crossBranchTextMatch(serverA: MergeTree.TestServer, serverB: MergeTree.TestServer, aClientId: string) {
+            let clockStart = clock();
+            let serverAText = serverA.getText();
+            getTextTime += elapsedMicroseconds(clockStart);
+            getTextCalls++;
+            clockStart = clock();
+            let serverBAText = serverB.mergeTree.getText(serverB.getCurrentSeq(), serverB.getOrAddShortClientId(aClientId));
+            crossGetTextTime += elapsedMicroseconds(clockStart);
+            crossGetTextCalls++;
+            if (serverAText != serverBAText) {
+                console.log(`cross mismatch @${serverA.getCurrentSeq()} serverB @${serverB.getCurrentSeq()}`);
+                return true;
+            }
+        }
+
         function checkTextMatch(clients: MergeTree.Client[], server: MergeTree.TestServer) {
             //console.log(`checking text match @${server.getCurrentSeq()}`);
             let clockStart = clock();
             let serverText = server.getText();
             getTextTime += elapsedMicroseconds(clockStart);
             getTextCalls++;
-            // TODO: cross-check reading A from B
             for (let client of clients) {
-                let showDiff = false;
+                let showDiff = true;
                 let cliText = client.getText();
                 if (cliText != serverText) {
                     console.log(`mismatch @${server.getCurrentSeq()} client @${client.getCurrentSeq()} id: ${client.getClientId()}`);
@@ -806,12 +812,14 @@ export function TestPack(verbose = true) {
             let allRounds = false;
             if (allRounds || (0 === (roundCount % 100))) {
                 let clockStart = clock();
+                if (crossBranchTextMatch(serverA, serverB, clientsA[0].longClientId)) {
+                    errorCount++;
+                }
                 if (checkTextMatch(clientsA, serverA)) {
                     console.log(`round: ${roundCount} BREAK`);
                     errorCount++;
                     return errorCount;
                 }
-                // TODO: cross-check reading A from B
                 if (checkTextMatch(clientsB, serverB)) {
                     console.log(`round: ${roundCount} BREAK`);
                     errorCount++;
@@ -835,7 +843,20 @@ export function TestPack(verbose = true) {
                 reportTiming(serverB);
                 reportTiming(clientsA[1]);
                 reportTiming(clientsB[1]);
-
+                let aveGetTextTime = (getTextTime / getTextCalls).toFixed(1);
+                let perLeafAveGetTextTime = ((getTextTime / getTextCalls)/statsA.leafCount).toFixed(1);
+                let perLeafAveCrossGetTextTime = ((crossGetTextTime / crossGetTextCalls)/statsB.leafCount).toFixed(1);
+                let aveCrossGetTextTime = (crossGetTextTime / crossGetTextCalls).toFixed(1);
+                let aveIncrGetTextTime = "off";
+                let aveCatchUpTime = "off";
+                if (catchUps > 0) {
+                    aveCatchUpTime = (catchUpTime / catchUps).toFixed(1);
+                }
+                if (checkIncr) {
+                    aveIncrGetTextTime = (incrGetTextTime / incrGetTextCalls).toFixed(1);
+                }
+                console.log(`get text time: ${aveGetTextTime}; ${perLeafAveGetTextTime}/leaf cross: ${aveCrossGetTextTime}; ${perLeafAveCrossGetTextTime}/leaf`);
+        
                 let totalTime = serverA.accumTime + serverA.accumWindowTime;
                 for (let client of clientsA) {
                     totalTime += (client.accumTime + client.localTime + client.accumWindowTime);
@@ -854,7 +875,7 @@ export function TestPack(verbose = true) {
 
         function round(roundCount: number, clients: MergeTree.Client[],
             server: MergeTree.TestServer) {
-            let small = false;
+            let small = true;
             for (let client of clients) {
                 let insertSegmentCount = randSmallSegmentCount();
                 if (small) {

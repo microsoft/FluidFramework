@@ -2080,6 +2080,8 @@ export var clientSeqComparer: Collections.Comparer<ClientSeq> = {
  * messages in client queues.  
  */
 export class TestServer extends Client {
+    static traceMinSeq = false;
+
     seq = 1;
     clients: Client[];
     listeners: Client[]; // listeners do not generate edits
@@ -2130,6 +2132,7 @@ export class TestServer extends Client {
             msg.referenceSequenceNumber =
                 this.upstreamMap.get(msg.referenceSequenceNumber).data;
         }
+        msg.minimumSequenceNumber = undefined;
         this.upstreamMap.put(msg.sequenceNumber, this.seq);
         msg.sequenceNumber = -1;
     }
@@ -2168,6 +2171,9 @@ export class TestServer extends Client {
                         this.clientSeqNumbers.add(cliSeq);
                         minCli = this.clientSeqNumbers.peek();
                         if (minCli.refSeq > oldSeq) {
+                            if (TestServer.traceMinSeq) {
+                                console.log(`${this.longClientId} updating min seq to ${minCli.refSeq} from ${oldSeq} cli ${minCli.clientId}`);
+                            }
                             msg.minimumSequenceNumber = minCli.refSeq;
                             this.updateMinSeq(minCli.refSeq);
                         }
@@ -3360,6 +3366,10 @@ export class MergeTree {
     }
 
     ensureIntervalBoundary(pos: number, refSeq: number, clientId: number) {
+        if (MergeTree.traceTraversal) {
+            console.log(`eib refseq ${refSeq}`);
+        }
+
         let splitNode = this.insertingWalk(this.root, pos, refSeq, clientId, TreeMaintainanceSequenceNumber,
             SegmentType.Base, { leaf: this.splitLeafSegment });
         this.updateRoot(splitNode, refSeq, clientId, TreeMaintainanceSequenceNumber);
@@ -3554,6 +3564,12 @@ export class MergeTree {
             block.children[childIndex] = newNode;
             newNode.parent = block;
             block.childCount++;
+            if (MergeTree.traceTraversal && (!newNode.isLeaf())) {
+                console.log("POST SPLIT");
+                if (newNode.parent) {
+                    console.log(this.nodeToString(newNode.parent, "", 0));
+                }
+            }
             if (block.childCount < MaxNodesInBlock) {
                 this.blockUpdateLength(block, seq, clientId);
                 return undefined;
@@ -3568,6 +3584,12 @@ export class MergeTree {
     }
 
     private split(node: IMergeBlock) {
+        if (MergeTree.traceTraversal) {
+            console.log("SPLIT");
+            if (node.parent) {
+                console.log(this.nodeToString(node.parent, "", 0));
+            }
+        }
         let halfCount = MaxNodesInBlock / 2;
         let newNode = this.makeBlock(halfCount);
         node.childCount = halfCount;
@@ -3607,6 +3629,7 @@ export class MergeTree {
     }
 
     markRangeRemoved(start: number, end: number, refSeq: number, clientId: number, seq: number) {
+        // MergeTree.traceTraversal = true;
         this.ensureIntervalBoundary(start, refSeq, clientId);
         this.ensureIntervalBoundary(end, refSeq, clientId);
         let segmentGroup: SegmentGroup;
@@ -3673,7 +3696,9 @@ export class MergeTree {
             }
             return true;
         }
-        // MergeTree.traceTraversal = true;
+        if (MergeTree.traceTraversal) {
+            console.log(`mark removed [${start},${end}) refseq ${refSeq}`);
+        }
         this.mapRange({ leaf: markRemoved, post: afterMarkRemoved }, refSeq, clientId, undefined, start, end);
         if (savedLocalRefs.length > 0) {
             let afterSeg: BaseSegment;
@@ -3760,10 +3785,10 @@ export class MergeTree {
         this.nodeUpdateLengthNewStructure(block);
     }
 
-    nodeUpdateLengthNewStructure(node: IMergeBlock, recur = false) {
-        this.blockUpdate(node);
+    nodeUpdateLengthNewStructure(block: IMergeBlock, recur = false) {
+        this.blockUpdate(block);
         if (this.collabWindow.collaborating) {
-            node.partialLengths = PartialSequenceLengths.combine(this, node, this.collabWindow, recur);
+            block.partialLengths = PartialSequenceLengths.combine(this, block, this.collabWindow, recur);
         }
     }
 
