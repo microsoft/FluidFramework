@@ -113,19 +113,19 @@ class Speller {
         let startPGPos = 0;
         let pgText = "";
         let endMarkerFound = false;
-        let mergeTree = this.sharedString.client.mergeTree;
+
         function gatherPG(segment: SharedString.Segment, segpos: number) {
             switch (segment.getType()) {
                 case SharedString.SegmentType.Marker:
                     let marker = <SharedString.Marker>segment;
-                    if (mergeTree.localNetLength(marker)) {
+                    if (marker.netLength()) {
                         if (marker.hasTileLabel("pg")) {
                             if (prevPG) {
                                 // TODO: send paragraph to service
                                 spellParagraph(startPGPos, segpos, pgText);
                                 endMarkerFound = true;
                             }
-                            startPGPos = segpos + mergeTree.localNetLength(marker);
+                            startPGPos = segpos + marker.netLength();
                             prevPG = marker;
                             pgText = "";
                             if (endMarkerFound) {
@@ -133,7 +133,7 @@ class Speller {
                             }
                         }
                         else {
-                            for (let i = 0; i < mergeTree.localNetLength(marker); i++) {
+                            for (let i = 0; i < marker.netLength(); i++) {
                                 pgText += " ";
                             }
                         }
@@ -141,7 +141,7 @@ class Speller {
                     break;
                 case SharedString.SegmentType.Text:
                     let textSegment = <SharedString.TextSegment>segment;
-                    if (mergeTree.localNetLength(textSegment)) {
+                    if (textSegment.netLength()) {
                         pgText += textSegment.text;
                     }
                     break;
@@ -180,7 +180,6 @@ class Speller {
         let sentence = "";
         let fwdSentence = "";
         let wordsFound = false;
-        let mergeTree = this.sharedString.client.mergeTree;
 
         let gatherReverse = (segment: SharedString.Segment) => {
             switch (segment.getType()) {
@@ -196,7 +195,7 @@ class Speller {
                     break;
                 case SharedString.SegmentType.Text:
                     let textSegment = <SharedString.TextSegment>segment;
-                    if (mergeTree.localNetLength(textSegment)) {
+                    if (textSegment.netLength()) {
                         if (!wordsFound) {
                             words = textSegment.text + words;
                         }
@@ -229,7 +228,7 @@ class Speller {
                     break;
                 case SharedString.SegmentType.Text:
                     let textSegment = <SharedString.TextSegment>segment;
-                    if (mergeTree.localNetLength(textSegment)) {
+                    if (textSegment.netLength()) {
                         if (!wordsFound) {
                             fwdWords = fwdWords + textSegment.text;
                         }
