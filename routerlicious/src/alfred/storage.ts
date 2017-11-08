@@ -77,6 +77,10 @@ export async function createFork(
     documentsCollectionName: string,
     id: string): Promise<string> {
 
+    // TODO: this probably wants to insert a control message into the stream indicating that there is a new branch
+    // And then I need some way to echo these messages into the sequenced stream as well. But not send them to the
+    // client.
+
     const db = await mongoManager.getDatabase();
     const collection = db.collection<any>(documentsCollectionName);
     const name = moniker.choose();

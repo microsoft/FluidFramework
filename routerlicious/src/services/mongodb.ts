@@ -39,15 +39,20 @@ export class MongoCollection<T> implements core.ICollection<T> {
     }
 
     private async updateCore(id: string, set: any, addToSet: any, upsert: boolean): Promise<void> {
-        const $set = _.extend( { _id: id }, set);
+        const update: any = {};
+        if (set) {
+            update.$set = _.extend( { _id: id }, set);
+        }
+
+        if (addToSet) {
+            update.$addToSet = addToSet;
+        }
+
         await this.collection.updateOne(
             {
                 _id: id,
             },
-            {
-                $set,
-                $addToSet: addToSet,
-            },
+            update,
             {
                 upsert,
             });

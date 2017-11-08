@@ -11,7 +11,7 @@ export class RouteMasterRunner implements utils.IRunner {
     constructor(
         producer: utils.kafkaProducer.IProducer,
         private consumer: utils.kafkaConsumer.IConsumer,
-        objectsCollection: core.ICollection<any>,
+        private objectsCollection: core.ICollection<any>,
         groupId: string,
         receiveTopic: string,
         checkpointBatchSize: number,
@@ -72,10 +72,21 @@ export class RouteMasterRunner implements utils.IRunner {
         return this.deferred.promise;
     }
 
-    private processMessage(message: any) {
-        const baseMessage = JSON.parse(message.value.toString("utf8")) as core.ISequencedOperationMessage;
-        if (baseMessage.type === core.SequencedOperationType) {
-            winston.info(`${baseMessage.documentId}@${baseMessage.operation.sequenceNumber}`);
+    private processMessage(rawMessage: any) {
+        const message = JSON.parse(rawMessage.value.toString("utf8")) as core.ISequencedOperationMessage;
+        if (message.type !== core.SequencedOperationType) {
+            return;
+        }
+
+        this.routeMessage(message);
+    }
+
+    private async routeMessage(message: core.ISequencedOperationMessage) {
+        const documentDetails = await this.objectsCollection.findOne(message.documentId);
+        const forks = documentDetails.forks || [];
+
+        for (const fork of forks) {
+            winston.info(`Routing ${message.documentId}@${message.operation.sequenceNumber} to ${fork}`);
         }
     }
 }
