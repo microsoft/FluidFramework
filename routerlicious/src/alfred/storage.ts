@@ -77,13 +77,25 @@ export async function createFork(
     documentsCollectionName: string,
     id: string): Promise<string> {
 
-    // TODO: this probably wants to insert a control message into the stream indicating that there is a new branch
-    // And then I need some way to echo these messages into the sequenced stream as well. But not send them to the
-    // client.
+    const name = moniker.choose();
+
+    // Insert the mongodb entry for the forked document
+
+    // Insert in a control message indicating the fork
+
+    // Return back
+
+    // This all assumes that the fork happens at the latest possible point. We can then probably just leverage
+    // the state of the other document at that point in time.
+
+    // Forking in the past would make sense to make a copy but then would you still want to CI it? Or could you
+    // move back up later? Seems out of scope for this first round.
+
+    // I should poll for when the fork is "completed" by having the routemaster update MongoDB with the change and
+    // then have the client poll for the object being in the collection.
 
     const db = await mongoManager.getDatabase();
     const collection = db.collection<any>(documentsCollectionName);
-    const name = moniker.choose();
     await collection.update(id, null, { forks: name });
 
     return name;
