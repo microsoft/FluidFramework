@@ -64,7 +64,7 @@ describe("Routerlicious", () => {
                     message: api.IDocumentMessage): Promise<void> {
 
                     const deferred = new Deferred<void>();
-                    socket.send("submitOp", clientId, message, (error: any, response: any) => {
+                    socket.send("submitOp", clientId, [message], (error: any, response: any) => {
                         if (error) {
                             deferred.reject(error);
                         } else {
