@@ -166,7 +166,8 @@ export class TakeANumber {
             if (message.operation.referenceSequenceNumber < this.minimumSequenceNumber) {
                 // TODO support nacking of clients
                 // Do not assign a ticket to a message outside the MSN. We will need to NACK clients in this case.
-                winston.error(`${message.clientId} sent packet less than MSN of ${this.minimumSequenceNumber}`);
+                // tslint:disable-next-line
+                winston.error(`${message.clientId} sent packet ${message.operation.referenceSequenceNumber} less than MSN of ${this.minimumSequenceNumber}`);
                 return Promise.resolve();
             }
 
