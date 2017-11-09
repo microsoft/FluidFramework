@@ -844,8 +844,8 @@ export function TestPack(verbose = true) {
                 reportTiming(clientsA[1]);
                 reportTiming(clientsB[1]);
                 let aveGetTextTime = (getTextTime / getTextCalls).toFixed(1);
-                let perLeafAveGetTextTime = ((getTextTime / getTextCalls)/statsA.leafCount).toFixed(1);
-                let perLeafAveCrossGetTextTime = ((crossGetTextTime / crossGetTextCalls)/statsB.leafCount).toFixed(1);
+                let perLeafAveGetTextTime = ((getTextTime / getTextCalls) / statsA.leafCount).toFixed(1);
+                let perLeafAveCrossGetTextTime = ((crossGetTextTime / crossGetTextCalls) / statsB.leafCount).toFixed(1);
                 let aveCrossGetTextTime = (crossGetTextTime / crossGetTextCalls).toFixed(1);
                 let aveIncrGetTextTime = "off";
                 let aveCatchUpTime = "off";
@@ -856,7 +856,7 @@ export function TestPack(verbose = true) {
                     aveIncrGetTextTime = (incrGetTextTime / incrGetTextCalls).toFixed(1);
                 }
                 console.log(`get text time: ${aveGetTextTime}; ${perLeafAveGetTextTime}/leaf cross: ${aveCrossGetTextTime}; ${perLeafAveCrossGetTextTime}/leaf`);
-        
+
                 let totalTime = serverA.accumTime + serverA.accumWindowTime;
                 for (let client of clientsA) {
                     totalTime += (client.accumTime + client.localTime + client.accumWindowTime);
@@ -1170,10 +1170,19 @@ let testPack = TestPack();
 const filename = path.join(__dirname, "../../public/literature", "pp.txt");
 
 let ppTest = true;
+let branch = true;
 if (ppTest) {
-    testPack.clientServerBranch(filename, 100000);
+    if (branch) {
+        testPack.clientServerBranch(filename, 100000);
+    } else {
+        testPack.clientServer(filename, 100000);
+    }
 } else {
-    testPack.clientServerBranch(undefined, 100000);
+    if (branch) {
+        testPack.clientServerBranch(undefined, 100000);
+    } else {
+        testPack.clientServer(undefined, 100000);
+    }
 }
 
 export class RandomPack {
