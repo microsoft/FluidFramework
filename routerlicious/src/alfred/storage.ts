@@ -1,5 +1,6 @@
 import { ICommit } from "gitresources";
 import * as moniker from "moniker";
+import * as core from "../core";
 import * as git from "../git-storage";
 import * as utils from "../utils";
 
@@ -73,30 +74,35 @@ export async function getForks(
 }
 
 export async function createFork(
+    producer: utils.kafkaProducer.IProducer,
     mongoManager: utils.MongoManager,
     documentsCollectionName: string,
     id: string): Promise<string> {
 
     const name = moniker.choose();
 
-    // Insert the mongodb entry for the forked document
-
-    // Insert in a control message indicating the fork
-
-    // Return back
-
+    // Insert the mongodb entry for the forked document?
     // This all assumes that the fork happens at the latest possible point. We can then probably just leverage
     // the state of the other document at that point in time.
 
     // Forking in the past would make sense to make a copy but then would you still want to CI it? Or could you
     // move back up later? Seems out of scope for this first round.
 
-    // I should poll for when the fork is "completed" by having the routemaster update MongoDB with the change and
-    // then have the client poll for the object being in the collection.
+    // Broadcast the client connection message
+    const rawMessage: core.ICreateForkMessage = {
+        clientId: null,
+        documentId: id,
+        forkId: name,
+        timestamp: Date.now(),
+        type: core.CreateForkType,
+        userId: null,
+    };
 
-    const db = await mongoManager.getDatabase();
-    const collection = db.collection<any>(documentsCollectionName);
-    await collection.update(id, null, { forks: name });
+    await producer.send(JSON.stringify(rawMessage), id);
+
+    // const db = await mongoManager.getDatabase();
+    // const collection = db.collection<any>(documentsCollectionName);
+    // await collection.update(id, null, { forks: name });
 
     return name;
 }

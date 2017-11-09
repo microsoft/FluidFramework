@@ -29,9 +29,14 @@ export interface IRoutes {
     templates: Router;
 }
 
-export function create(config: Provider, gitManager: git.GitManager, mongoManager: utils.MongoManager) {
+export function create(
+    config: Provider,
+    gitManager: git.GitManager,
+    mongoManager: utils.MongoManager,
+    producer: utils.kafkaProducer.IProducer) {
+
     return {
-        api: api.create(config, gitManager, mongoManager),
+        api: api.create(config, gitManager, mongoManager, producer),
         canvas: canvas.create(config, gitManager),
         cell: cell.create(config, gitManager),
         demoCreator: demoCreator.create(config),

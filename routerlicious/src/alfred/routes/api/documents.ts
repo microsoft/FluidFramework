@@ -4,7 +4,11 @@ import { Provider } from "nconf";
 import * as utils from "../../../utils";
 import * as storage from "../../storage";
 
-export function create(config: Provider, mongoManager: utils.MongoManager): Router {
+export function create(
+    config: Provider,
+    mongoManager: utils.MongoManager,
+    producer: utils.kafkaProducer.IProducer): Router {
+
     const deltasCollectionName = config.get("mongo:collectionNames:documents");
     const router: Router = Router();
 
@@ -26,7 +30,7 @@ export function create(config: Provider, mongoManager: utils.MongoManager): Rout
      * Creates a new fork for the specified document
      */
     router.post("/:id/forks", (request, response, next) => {
-        const forkIdP = storage.createFork(mongoManager, deltasCollectionName, request.params.id);
+        const forkIdP = storage.createFork(producer, mongoManager, deltasCollectionName, request.params.id);
         forkIdP.then(
             (forkId) => {
                 response.status(201).json(forkId);

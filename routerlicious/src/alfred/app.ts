@@ -58,7 +58,12 @@ const stream = split().on("data", (message) => {
     winston.info(message);
 });
 
-export function create(config: Provider, historian: resources.IHistorian, mongoManager: utils.MongoManager) {
+export function create(
+    config: Provider,
+    historian: resources.IHistorian,
+    mongoManager: utils.MongoManager,
+    producer: utils.kafkaProducer.IProducer) {
+
     // Maximum REST request size
     const requestSize = config.get("alfred:restJsonSize");
 
@@ -101,7 +106,7 @@ export function create(config: Provider, historian: resources.IHistorian, mongoM
 
     // bind routes
     const gitManager = new git.GitManager(historian, gitSettings.repository);
-    const routes = alfredRoutes.create(config, gitManager, mongoManager);
+    const routes = alfredRoutes.create(config, gitManager, mongoManager, producer);
     app.use(routes.api);
     app.use("/templates", routes.templates);
     app.use("/maps", routes.maps);

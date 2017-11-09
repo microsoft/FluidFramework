@@ -6,10 +6,15 @@ import * as utils from "../../../utils";
 import * as deltas from "./deltas";
 import * as documents from "./documents";
 
-export function create(config: Provider, gitManager: git.GitManager, mongoManager: utils.MongoManager): Router {
+export function create(
+    config: Provider,
+    gitManager: git.GitManager,
+    mongoManager: utils.MongoManager,
+    producer: utils.kafkaProducer.IProducer): Router {
+
     const router: Router = Router();
     const deltasRoute = deltas.create(config, mongoManager);
-    const documentsRoute = documents.create(config, mongoManager);
+    const documentsRoute = documents.create(config, mongoManager, producer);
 
     router.use(cors());
     router.use("/deltas", deltasRoute);

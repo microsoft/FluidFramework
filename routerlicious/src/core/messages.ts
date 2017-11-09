@@ -6,6 +6,9 @@ export const UpdateReferenceSequenceNumberType = "UpdateReferenceSequenceNumber"
 // String identifying the raw operation message
 export const RawOperationType = "RawOperation";
 
+// Creates a new fork for the given document
+export const CreateForkType = "CreateFork";
+
 // String identifying the sequenced operation message
 export const SequencedOperationType = "SequencedOperation";
 
@@ -49,6 +52,13 @@ export interface IUpdateReferenceSequenceNumberMessage extends IObjectMessage {
 export interface IRawOperationMessage extends IObjectMessage {
     // The message that was submitted
     operation: api.IDocumentMessage;
+}
+
+/**
+ * Description of a new fork operation
+ */
+export interface ICreateForkMessage extends IObjectMessage {
+    forkId: string;
 }
 
 export interface ITicketedMessage extends IMessage {
