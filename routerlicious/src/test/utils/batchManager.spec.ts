@@ -1,5 +1,5 @@
 import * as assert from "assert";
-import { BatchManager } from "../../utils";
+import { BatchManager } from "../../core-utils";
 
 describe("Routerlicious", () => {
     describe("Utils", () => {
