@@ -37,7 +37,8 @@ data:
             "kafkaClientId": "{{ template "alfred.fullname" . }}",
             "topic": "{{ .Values.kafka.topics.rawdeltas }}",
             "bucket": "snapshots",
-            "restJsonSize": "50mb"
+            "restJsonSize": "50mb",
+            "webSocketLib": "socket.io"
         },
         "deli": {
             "topics": {

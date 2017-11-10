@@ -1,6 +1,6 @@
 import * as request from "request";
 import * as url from "url";
-import { core, mergeTree, socketIoClient as io, socketStorage, utils } from "../client-api";
+import { core, MergeTree, socketIoClient as io, socketStorage, utils } from "../client-api";
 import { IntelWork } from "./intelWork";
 import { PingWork } from "./pingWork";
 import { SnapshotWork } from "./snapshotWork";
@@ -15,7 +15,7 @@ export class WorkerService implements core.IWorkerService {
     private socket;
     private documentMap: { [docId: string]: { [work: string]: IWork} } = {};
     private workTypeMap: { [workType: string]: boolean} = {};
-    private dict = new mergeTree.Collections.TST<number>();
+    private dict = new MergeTree.Collections.TST<number>();
 
     constructor(
         private serverUrl: string,

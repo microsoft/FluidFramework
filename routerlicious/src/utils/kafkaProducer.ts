@@ -7,7 +7,7 @@ import { debug } from "./debug";
 /**
  * A pending message the producer is holding on to
  */
-interface IPendingMessage {
+export interface IPendingMessage {
     // The deferred is used to resolve a promise once the message is sent
     deferred: Deferred<any>;
 
@@ -30,21 +30,16 @@ export interface IProducer {
 /**
  * Base producer responsible for batching and sending.
  */
-abstract class Producer {
+export abstract class Producer implements IProducer {
     protected messages: {[key: string]: IPendingMessage[]} = {};
     protected client: any;
     protected producer: any;
-    protected connecting = false;
-    protected connected = false;
-    protected batchProducer: (key: string, messages: IPendingMessage[]) => void;
     protected sendPending = false;
 
-    public abstract close(): Promise<void>;
-
     /**
-     * Push messages locally and request send.
+     * Sends the provided message to Kafka
      */
-    protected sendMessage(message: string, key: string): Promise<any> {
+    public send(message: string, key: string): Promise<any> {
         // Get the list of pending messages for the given key
         if (!(key in this.messages)) {
             this.messages[key] = [];
@@ -61,19 +56,33 @@ abstract class Producer {
         return deferred.promise;
     }
 
+    public abstract close(): Promise<void>;
+
     /**
      * Sends all pending messages
      */
     protected sendPendingMessages() {
         let count = 0;
 
+        // TODO let's log to influx how many messages we have batched
+
         // tslint:disable-next-line:forin
         for (const key in this.messages) {
-            this.batchProducer(key, this.messages[key]);
+            this.sendCore(key, this.messages[key]);
             count += this.messages[key].length;
         }
         this.messages = {};
     }
+
+    /**
+     * Sends the list of messages for the given key
+     */
+    protected abstract sendCore(key: string, messages: IPendingMessage[]);
+
+    /**
+     * Indicates whether it's possible to send messages or not
+     */
+    protected abstract canSend(): boolean;
 
     /**
      * Notifies of the need to send pending messages. We defer sending messages to batch together messages
@@ -86,7 +95,7 @@ abstract class Producer {
         }
 
         // If we aren't connected yet defer sending until connected
-        if (!this.connected) {
+        if (!this.canSend()) {
             return;
         }
 
@@ -104,18 +113,12 @@ abstract class Producer {
  * Kafka-Rest Producer.
  */
 class KafkaRestProducer extends Producer implements IProducer {
+    private connecting = false;
+    private connected = false;
 
     constructor(private endpoint: string, private topic: string) {
         super();
         this.connect();
-        this.initBatchProducer();
-    }
-
-    /**
-     * Sends the provided message to Kafka
-     */
-    public send(message: string, key: string): Promise<any> {
-        return this.sendMessage(message, key);
     }
 
     public close(): Promise<void> {
@@ -123,22 +126,21 @@ class KafkaRestProducer extends Producer implements IProducer {
         return Promise.resolve();
     }
 
-    /**
-     * Implements batch producer through kafka-rest.
-     */
-    private initBatchProducer() {
-        this.batchProducer = (key: string, pendingMessages: IPendingMessage[]) => {
-            const messages = pendingMessages.map((message) => {
-                return {value: message.message, key};
-            });
-            this.producer.produce(messages, (error, data) => {
-                    if (error) {
-                        pendingMessages.forEach((message) => message.deferred.reject(error));
-                    } else {
-                        pendingMessages.forEach((message) => message.deferred.resolve(data));
-                    }
-            });
-        };
+    protected sendCore(key: string, pendingMessages: IPendingMessage[]) {
+        const messages = pendingMessages.map((message) => {
+            return {value: message.message, key};
+        });
+        this.producer.produce(messages, (error, data) => {
+                if (error) {
+                    pendingMessages.forEach((message) => message.deferred.reject(error));
+                } else {
+                    pendingMessages.forEach((message) => message.deferred.resolve(data));
+                }
+        });
+    }
+
+    protected canSend(): boolean {
+        return this.connected;
     }
 
     /**
@@ -164,18 +166,12 @@ class KafkaRestProducer extends Producer implements IProducer {
  * Kafka-Node Producer.
  */
 class KafkaNodeProducer extends Producer implements IProducer {
+    private connecting = false;
+    private connected = false;
 
     constructor(private endpoint: string, private clientId: string, private topic: string) {
         super();
         this.connect();
-        this.initBatchProducer();
-    }
-
-    /**
-     * Sends the provided message to Kafka
-     */
-    public send(message: string, key: string): Promise<any> {
-        return this.sendMessage(message, key);
     }
 
     public async close(): Promise<void> {
@@ -186,21 +182,20 @@ class KafkaNodeProducer extends Producer implements IProducer {
         await util.promisify(((callback) => client.close(callback)) as Function)();
     }
 
-    /**
-     * Implements batch producer through kafka-rest.
-     */
-    private initBatchProducer() {
-        this.batchProducer = (key: string, pendingMessages: IPendingMessage[]) => {
-            const messages = pendingMessages.map((message) => message.message);
-            const kafkaMessage = [{ topic: this.topic, messages, key }];
-            this.producer.send(kafkaMessage, (error, data) => {
-                    if (error) {
-                        pendingMessages.forEach((message) => message.deferred.reject(error));
-                    } else {
-                        pendingMessages.forEach((message) => message.deferred.resolve(data));
-                    }
-            });
-        };
+    protected sendCore(key: string, pendingMessages: IPendingMessage[]) {
+        const messages = pendingMessages.map((message) => message.message);
+        const kafkaMessage = [{ topic: this.topic, messages, key }];
+        this.producer.send(kafkaMessage, (error, data) => {
+                if (error) {
+                    pendingMessages.forEach((message) => message.deferred.reject(error));
+                } else {
+                    pendingMessages.forEach((message) => message.deferred.resolve(data));
+                }
+        });
+    }
+
+    protected canSend(): boolean {
+        return this.connected;
     }
 
     /**

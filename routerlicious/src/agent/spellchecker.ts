@@ -1,6 +1,6 @@
 import * as queue from "async/queue";
 import clone = require("lodash/clone");
-import { core, mergeTree } from "../client-api";
+import { core, MergeTree } from "../client-api";
 import { IIntelligentService } from "../intelligence";
 
 interface ISpellQuery {
@@ -19,12 +19,12 @@ interface ISpellQuery {
 
 interface IPgMarker {
 
-    tile: mergeTree.Marker;
+    tile: MergeTree.Marker;
 
     pos: number;
 }
 
-function compareProxStrings(a: mergeTree.Collections.ProxString<number>, b: mergeTree.Collections.ProxString<number>) {
+function compareProxStrings(a: MergeTree.Collections.ProxString<number>, b: MergeTree.Collections.ProxString<number>) {
     let ascore = ((a.invDistance * 200) * a.val) + a.val;
     let bscore = ((b.invDistance * 200) * b.val) + b.val;
     return bscore - ascore;
@@ -35,7 +35,7 @@ class Speller {
     private static spellerParagraphs = 10000;
     private static idleTimeMS = 500;
     private currentIdleTime: number = 0;
-    private pendingSpellChecks: mergeTree.IMergeTreeOp[] = [];
+    private pendingSpellChecks: MergeTree.IMergeTreeOp[] = [];
     private pendingParagraphs: IPgMarker[] =  new Array<IPgMarker>();
     private offsetMap: { [start: number]: number} = {};
     private verbose = false;
@@ -44,8 +44,8 @@ class Speller {
     private typingQueue: any;
 
     constructor(
-        public sharedString: mergeTree.SharedString,
-        private dict: mergeTree.Collections.TST<number>,
+        public sharedString: MergeTree.SharedString,
+        private dict: MergeTree.Collections.TST<number>,
         private intelligence: IIntelligentService) {
         this.initializeSpellerQueue();
     }
@@ -71,38 +71,38 @@ class Speller {
                 }
             } while (result);
         };
-        let prevPG: mergeTree.Marker;
+        let prevPG: MergeTree.Marker;
         let startPGPos = 0;
         let pgText = "";
         let endMarkerFound = false;
-
-        function gatherPG(segment: mergeTree.Segment, segpos: number) {
+        let mergeTree = this.sharedString.client.mergeTree;
+        function gatherPG(segment: MergeTree.Segment, segpos: number) {
             switch (segment.getType()) {
-                case mergeTree.SegmentType.Marker:
-                    let marker = <mergeTree.Marker> segment;
-                    if (marker.netLength()) {
+                case MergeTree.SegmentType.Marker:
+                    let marker = <MergeTree.Marker> segment;
+                    if (mergeTree.localNetLength(segment)) {
                         if (marker.hasTileLabel("pg")) {
                             if (prevPG) {
                                 // TODO: send paragraph to service
                                 spellParagraph(startPGPos, segpos, pgText);
                                 endMarkerFound = true;
                             }
-                            startPGPos = segpos + marker.netLength();
+                            startPGPos = segpos + mergeTree.localNetLength(segment);
                             prevPG = marker;
                             pgText = "";
                             if (endMarkerFound) {
                                 return false;
                             }
                         } else {
-                            for (let i = 0; i < marker.netLength(); i++) {
+                            for (let i = 0; i < mergeTree.localNetLength(segment); i++) {
                                 pgText += " ";
                             }
                         }
                     }
                     break;
-                case mergeTree.SegmentType.Text:
-                    let textSegment = <mergeTree.TextSegment> segment;
-                    if (textSegment.netLength()) {
+                case MergeTree.SegmentType.Text:
+                    let textSegment = <MergeTree.TextSegment> segment;
+                    if (mergeTree.localNetLength(textSegment)) {
                         pgText += textSegment.text;
                     }
                     break;
@@ -114,7 +114,7 @@ class Speller {
 
         do {
             endMarkerFound = false;
-            this.sharedString.client.mergeTree.mapRange({ leaf: gatherPG }, mergeTree.UniversalSequenceNumber,
+            this.sharedString.client.mergeTree.mapRange({ leaf: gatherPG }, MergeTree.UniversalSequenceNumber,
                 this.sharedString.client.getClientId(), undefined, startPGPos);
         } while (endMarkerFound);
 
@@ -158,7 +158,7 @@ class Speller {
         }
     }
     // TODO: use delayed spell check on each modified paragraph
-    private spellOp(delta: mergeTree.IMergeTreeOp, intelligence: IIntelligentService) {
+    private spellOp(delta: MergeTree.IMergeTreeOp, intelligence: IIntelligentService) {
         // let setPending = () => {
         //     if (this.pendingWordCheckTimer) {
         //         clearTimeout(this.pendingWordCheckTimer);
@@ -167,31 +167,31 @@ class Speller {
         //         this.checkPending(intelligence);
         //     }, 300);
         // }
-        if (delta.type === mergeTree.MergeTreeDeltaType.INSERT) {
+        if (delta.type === MergeTree.MergeTreeDeltaType.INSERT) {
 //            this.pendingCheckInfo = { pos: delta.pos1 };
 //            setPending();
             this.currentWordSpellCheck(intelligence, delta.pos1);
-        } else if (delta.type === mergeTree.MergeTreeDeltaType.REMOVE) {
+        } else if (delta.type === MergeTree.MergeTreeDeltaType.REMOVE) {
 //            this.pendingCheckInfo = { pos: delta.pos1, rev: true };
 //            setPending();
             this.currentWordSpellCheck(intelligence, delta.pos1, true);
-        } else if (delta.type === mergeTree.MergeTreeDeltaType.GROUP) {
+        } else if (delta.type === MergeTree.MergeTreeDeltaType.GROUP) {
             for (let groupOp of delta.ops) {
                 this.spellOp(groupOp, intelligence);
             }
         }
     }
 
-    private enqueueParagraph(delta: mergeTree.IMergeTreeOp) {
-        if (delta.type === mergeTree.MergeTreeDeltaType.INSERT ||
-            delta.type === mergeTree.MergeTreeDeltaType.REMOVE) {
+    private enqueueParagraph(delta: MergeTree.IMergeTreeOp) {
+        if (delta.type === MergeTree.MergeTreeDeltaType.INSERT ||
+            delta.type === MergeTree.MergeTreeDeltaType.REMOVE) {
             let pgMarker = this.sharedString.client.mergeTree.findTile(delta.pos1,
                 this.sharedString.client.getClientId(), "pg");
             if (!pgMarker) {
                 pgMarker = { tile: undefined, pos: 0};
             }
             this.pendingParagraphs.push(pgMarker);
-        } else if (delta.type === mergeTree.MergeTreeDeltaType.GROUP) {
+        } else if (delta.type === MergeTree.MergeTreeDeltaType.GROUP) {
             for (let groupOp of delta.ops) {
                 this.enqueueParagraph(groupOp);
             }
@@ -209,7 +209,7 @@ class Speller {
         }, idleCheckerMS);
         this.sharedString.on("op", (msg: core.ISequencedObjectMessage) => {
             if (msg && msg.contents) {
-                let delta =  <mergeTree.IMergeTreeOp> msg.contents;
+                let delta =  <MergeTree.IMergeTreeOp> msg.contents;
                 this.pendingSpellChecks.push(delta);
                 this.enqueueParagraph(delta);
                 this.currentIdleTime = 0;
@@ -229,7 +229,7 @@ class Speller {
             for (let pg of this.pendingParagraphs) {
                 let offset = 0;
                 if (pg.tile) {
-                    offset = this.sharedString.client.mergeTree.getOffset(pg.tile, mergeTree.UniversalSequenceNumber,
+                    offset = this.sharedString.client.mergeTree.getOffset(pg.tile, MergeTree.UniversalSequenceNumber,
                     this.sharedString.client.getClientId());
                 }
                 const endMarkerPos = this.sharedString.client.mergeTree.findTile(offset,
@@ -238,14 +238,14 @@ class Speller {
                 if (endMarkerPos) {
                     endPos = endMarkerPos.pos;
                 } else {
-                    endPos = this.sharedString.client.mergeTree.getLength(mergeTree.UniversalSequenceNumber,
+                    endPos = this.sharedString.client.mergeTree.getLength(MergeTree.UniversalSequenceNumber,
                         this.sharedString.client.getClientId());
                 }
                 this.offsetMap[offset] = endPos;
             }
             console.log(`Paragraph markers...`);
             for (let start of Object.keys(this.offsetMap)) {
-                const queryString = this.sharedString.client.mergeTree.getText(mergeTree.UniversalSequenceNumber,
+                const queryString = this.sharedString.client.mergeTree.getText(MergeTree.UniversalSequenceNumber,
                     this.sharedString.client.getClientId(), false, Number(start), this.offsetMap[start]);
                 this.enqueNewQuery(intelligence, queryString, Number(start));
             }
@@ -271,22 +271,23 @@ class Speller {
         let sentence = "";
         let fwdSentence = "";
         let wordsFound = false;
+        let mergeTree = this.sharedString.client.mergeTree;
 
-        let gatherReverse = (segment: mergeTree.Segment) => {
+        let gatherReverse = (segment: MergeTree.Segment) => {
             switch (segment.getType()) {
-                case mergeTree.SegmentType.Marker:
+                case MergeTree.SegmentType.Marker:
                     if (!wordsFound) {
                         words = " " + words;
                     }
                     sentence = " " + sentence;
-                    let marker = <mergeTree.Marker> segment;
+                    let marker = <MergeTree.Marker> segment;
                     if (marker.hasTileLabel("pg")) {
                         return false;
                     }
                     break;
-                case mergeTree.SegmentType.Text:
-                    let textSegment = <mergeTree.TextSegment> segment;
-                    if (textSegment.netLength()) {
+                case MergeTree.SegmentType.Text:
+                    let textSegment = <MergeTree.TextSegment> segment;
+                    if (mergeTree.localNetLength(textSegment)) {
                         if (!wordsFound) {
                             words = textSegment.text + words;
                         }
@@ -307,21 +308,21 @@ class Speller {
             return true;
         };
 
-        let gatherForward = (segment: mergeTree.Segment) => {
+        let gatherForward = (segment: MergeTree.Segment) => {
             switch (segment.getType()) {
-                case mergeTree.SegmentType.Marker:
+                case MergeTree.SegmentType.Marker:
                     if (!wordsFound) {
                         fwdWords = fwdWords + " ";
                     }
                     fwdSentence = fwdSentence + " ";
-                    let marker = <mergeTree.Marker> segment;
+                    let marker = <MergeTree.Marker> segment;
                     if (marker.hasTileLabel("pg")) {
                         return false;
                     }
                     break;
-                case mergeTree.SegmentType.Text:
-                    let textSegment = <mergeTree.TextSegment> segment;
-                    if (textSegment.netLength()) {
+                case MergeTree.SegmentType.Text:
+                    let textSegment = <MergeTree.TextSegment> segment;
+                    if (mergeTree.localNetLength(textSegment)) {
                         if (!wordsFound) {
                             fwdWords = fwdWords + textSegment.text;
                         }
@@ -342,7 +343,7 @@ class Speller {
         };
 
         let segoff = this.sharedString.client.mergeTree.getContainingSegment(pos,
-            mergeTree.UniversalSequenceNumber, this.sharedString.client.getClientId());
+            MergeTree.UniversalSequenceNumber, this.sharedString.client.getClientId());
         if (segoff.offset !== 0) {
             console.log("expected pos only at segment boundary");
         }
@@ -522,8 +523,8 @@ class Speller {
 
 export class Spellcheker {
     constructor(
-        private root: mergeTree.SharedString,
-        private dict: mergeTree.Collections.TST<number>,
+        private root: MergeTree.SharedString,
+        private dict: MergeTree.Collections.TST<number>,
         private intelligence: IIntelligentService) {
     }
 

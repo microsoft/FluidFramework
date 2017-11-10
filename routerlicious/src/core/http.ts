@@ -7,9 +7,12 @@ export interface IWebServerFactory {
 }
 
 export interface IWebSocket {
+
     on(event: string, listener: (...args: any[]) => void);
 
     join(id: string): Promise<void>;
+
+    send(data: any, topic?: string, cb?: (err: Error) => void): void;
 }
 
 export interface IWebServer {
@@ -30,7 +33,11 @@ export interface IWebServer {
 }
 
 export interface IWebSocketServer {
+
     on(event: string, listener: (...args: any[]) => void);
+
+    close(): Promise<void>;
+
 }
 
 export interface IHttpServer {

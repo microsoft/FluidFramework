@@ -109,7 +109,7 @@ function makeBookmarks(client: MergeTree.Client, bookmarkCount: number) {
     let clientId = client.getClientId();
     let len = client.mergeTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.NonCollabClient);
     for (let i = 0; i < bookmarkCount; i++) {
-        let pos = random.integer(0, len)(mt);
+        let pos = random.integer(0, len - 1)(mt);
         let segoff = client.mergeTree.getContainingSegment(pos, refseq, clientId);
         bookmarks.push({ segment: segoff.segment, offset: segoff.offset, slideOnRemove: (i & 1) !== 1 });
     }

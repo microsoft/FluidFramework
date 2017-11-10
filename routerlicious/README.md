@@ -24,6 +24,7 @@ Standalone
 
 For Development
 * [Node v8.x](https://nodejs.org/en/)
+* [Node-gyp](https://github.com/nodejs/node-gyp) dependencies
 
 ### Development 
 

@@ -1,12 +1,25 @@
 import { EventEmitter } from "events";
 import * as api from "../api-core";
+import { BatchManager, Deferred } from "../core-utils";
 import { DocumentService } from "./documentService";
+
+/**
+ * A pending message the batch manager is holding on to
+ */
+interface IPendingSend {
+    // The deferred is used to resolve a promise once the message is sent
+    deferred: Deferred<any>;
+
+    // The message to send
+    message: any;
+}
 
 /**
  * Represents a connection to a stream of delta updates
  */
 export class DocumentDeltaConnection implements api.IDocumentDeltaConnection {
     private emitter = new EventEmitter();
+    private submitManager: BatchManager<IPendingSend>;
 
     constructor(
         private service: DocumentService,
@@ -15,6 +28,16 @@ export class DocumentDeltaConnection implements api.IDocumentDeltaConnection {
         public encrypted: boolean,
         public privateKey: string,
         public publicKey: string) {
+
+            this.submitManager = new BatchManager<IPendingSend>((submitType, work) => {
+                this.service.emit(submitType, this.clientId, work.map((message) => message.message), (error) => {
+                    if (error) {
+                        work.forEach((message) => message.deferred.reject(error));
+                    } else {
+                        work.forEach((message) => message.deferred.resolve());
+                    }
+                });
+            });
     }
 
     /**
@@ -30,30 +53,18 @@ export class DocumentDeltaConnection implements api.IDocumentDeltaConnection {
      * Submits a new delta operation to the server
      */
     public submit(message: api.IDocumentMessage): Promise<void> {
-        return new Promise<void>((resolve, reject) => {
-            this.service.emit("submitOp", this.clientId, message, (error) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    resolve();
-                }
-            });
-        });
+        const deferred = new Deferred<any>();
+        this.submitManager.add("submitOp", { deferred, message } );
+        return deferred.promise;
     }
 
     /**
      * Updates the reference sequence number on the given connection to the provided value
      */
-    public updateReferenceSequenceNumber(objectId: string, sequenceNumber: number): Promise<void> {
-        return new Promise<void>((resolve, reject) => {
-            this.service.emit("updateReferenceSequenceNumber", this.clientId, sequenceNumber, (error) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    resolve();
-                }
-            });
-        });
+    public updateReferenceSequenceNumber(objectId: string, message: number): Promise<void> {
+        const deferred = new Deferred<any>();
+        this.submitManager.add("updateReferenceSequenceNumber", { deferred, message } );
+        return deferred.promise;
     }
 
     /**

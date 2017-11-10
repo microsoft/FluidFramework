@@ -3,15 +3,13 @@ import performanceNow = require("performance-now");
 import * as request from "request";
 import * as url from "url";
 import * as agent from "../../agent";
-import { api as API, mergeTree as SharedString, socketStorage, types } from "../../client-api";
+import { api as API, MergeTree as SharedString, socketStorage, types } from "../../client-api";
 import { controls, ui } from "../../client-ui";
 
 // first script loaded
 let clockStart = Date.now();
 
 export let theFlow: controls.FlowView;
-
-const prideAndPrejudice = "/public/literature/pp.txt";
 
 function downloadRawText(textUrl: string): Promise<string> {
     return new Promise<string>((resolve, reject) => {
@@ -32,7 +30,7 @@ async function getInsights(map: types.IMap, id: string): Promise<types.IMap> {
     return insights.wait<types.IMap>(id);
 }
 
-export async function onLoad(id: string, version: resources.ICommit, config: any) {
+export async function onLoad(id: string, version: resources.ICommit, config: any, template: string) {
     const host = new ui.BrowserContainerHost();
 
     socketStorage.registerAsDefault(document.location.origin, config.blobStorageUrl, config.repository);
@@ -48,7 +46,8 @@ export async function onLoad(id: string, version: resources.ICommit, config: any
         console.log(`Not existing ${id} - ${performanceNow()}`);
         root.set("presence", collabDoc.createMap());
         const newString = collabDoc.createString() as SharedString.SharedString;
-        const starterText = await downloadRawText(prideAndPrejudice);
+
+        const starterText = template ? await downloadRawText(template) : " ";
         const segments = SharedString.loadSegments(starterText, 0, true);
         for (const segment of segments) {
             if (segment.getType() === SharedString.SegmentType.Text) {
