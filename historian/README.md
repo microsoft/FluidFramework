@@ -14,9 +14,6 @@ You can build the production container by running.
 And then mount it for development by running.
 
 `docker run -it -v "$(pwd):/home/node/server" -p 3000:3000 historian /bin/sh`
-pwd == echo %cd% in windows... also I had issues with the port #?
-`docker run -it -v "$(echo %cd%):/home/node/server" -p 3000:3000 historian /bin/sh`
-
 
 When mounted for development you'll want to run the following commands. These also work if you would like to
 develop outside of the container.

@@ -6,6 +6,7 @@ import * as ui from "../ui";
  */
 export class FlexVideo extends ui.Component {
     private video: HTMLVideoElement;
+    private videoMapView: types.IMapView;
     private videoMap: types.IMap;
 
     constructor(element: HTMLDivElement, vid: string, private videoRoot: Promise<types.IMap>) {
@@ -20,46 +21,57 @@ export class FlexVideo extends ui.Component {
         this.video.poster = "https://i.pinimg.com/originals/1b/2d/d0/1b2dd03413192c57f8a097969d67d861.jpg";
         element.appendChild(this.video);
 
-        this.videoRoot.then((video) => {
-            this.videoMap = video;
+        this.setEventHandlers();
+    }
 
-            this.video.onplay = () => this.handlePlay();
-            this.video.onpause = () => this.handlePause();
-            this.video.ontimeupdate = () => this.handleTimeUpdate();
-            this.video.onload = () => this.handleLoad();
+    private async setEventHandlers() {
+        this.videoMap = await this.videoRoot;
+        this.videoMapView = await this.videoMap.getView();
 
-            this.videoMap.on("valueChanged", async (changedValue) => {
+        this.video.onplay = () => this.handlePlay();
+        this.video.onpause = () => this.handlePause();
+        this.video.ontimeupdate = () => this.handleTimeUpdate();
+        this.video.onload = () => this.handleLoad();
 
-                switch (changedValue.key) {
-                    case("play"):
-                        this.videoMap.get(changedValue.key).then((play) => this.updatePlay(play));
-                        break;
-                    case("time"):
-                        this.videoMap.get(changedValue.key).then((time) => this.updateTime(time));
-                        break;
-                    default:
-                        console.log("default: " + changedValue.key);
-                        break;
-                }
-            });
+        this.videoMap.on("valueChanged", async (changedValue) => {
+            // switch (changedValue.key) {
+            //     case("play"):
+            //         this.videoMap.get(changedValue.key).then((play) => this.updatePlay(play));
+            //         break;
+            //     case("time"):
+            //         this.videoMap.get(changedValue.key).then((time) => this.updateTime(time));
+            //         break;
+            //     default:
+            //         console.log("default: " + changedValue.key);
+            //         break;
+            // }
+            switch (changedValue.key) {
+                case("play"):
+                    this.updatePlay(this.videoMapView.get(changedValue.key));
+                    break;
+                case("time"):
+                   this.updateTime(this.videoMapView.get(changedValue.key));
+                    break;
+                default:
+                    console.log("default: " + changedValue.key);
+                    break;
+            }
         });
     }
 
-    public updatePlay(play: boolean) {
+    private updatePlay(play: boolean) {
         if (play) {
-            console.log("play");
             if (this.video.paused) {
                 this.video.play();
             }
         } else {
-            console.log("pause");
             if (!this.video.paused) {
                 this.video.pause();
             }
         }
     }
 
-    public updateTime(time: number) {
+    private updateTime(time: number) {
         if (Math.abs(this.video.currentTime - time) > 2) {
             this.video.currentTime = time;
         }
@@ -79,12 +91,10 @@ export class FlexVideo extends ui.Component {
     }
 
     private handlePlay() {
-        console.log("handlePlay");
         this.videoMap.set("play", true);
     }
 
     private handlePause() {
-        console.log("handlePause");
         this.videoMap.set("play", false);
     }
 }

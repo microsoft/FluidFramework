@@ -25,7 +25,7 @@ export async function initialize(id: string, version: resources.ICommit, config:
     const doc = await loadDocument(id, version);
     const root = doc.getRoot();
 
-    const canvasDiv = document.createElement("div");
-    const canvas = new controls.FlexVideoCanvas(canvasDiv, doc, root);
+    const videoDiv = document.createElement("div");
+    const canvas = new controls.FlexVideoCanvas(videoDiv, doc, root);
     host.attach(canvas);
 }
