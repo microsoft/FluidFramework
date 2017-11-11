@@ -1,5 +1,6 @@
 import { ICommit } from "gitresources";
 import * as moniker from "moniker";
+import * as api from "../api-core";
 import * as core from "../core";
 import * as git from "../git-storage";
 import * as utils from "../utils";
@@ -70,7 +71,7 @@ export async function getForks(
     const collection = db.collection<any>(documentsCollectionName);
     const document = await collection.findOne(id);
 
-    return document.forks || [];
+    return document;
 }
 
 export async function createFork(
@@ -81,28 +82,33 @@ export async function createFork(
 
     const name = moniker.choose();
 
-    // Insert the mongodb entry for the forked document?
-    // This all assumes that the fork happens at the latest possible point. We can then probably just leverage
-    // the state of the other document at that point in time.
+    // Get access to Mongo to update the route tables
+    const db = await mongoManager.getDatabase();
+    const collection = db.collection<any>(documentsCollectionName);
 
-    // Forking in the past would make sense to make a copy but then would you still want to CI it? Or could you
-    // move back up later? Seems out of scope for this first round.
+    // Insert the fork entry and update the parent
+    const insertFork = collection.insertOne(name, { forks: [], parent: id });
+    const updateParent = await collection.update(id, null, null, { forks: { id: name } });
+    await Promise.all([insertFork, updateParent]);
 
-    // Broadcast the client connection message
-    const rawMessage: core.ICreateForkMessage = {
+    // And then add the fork creation message to the stream
+    const rawMessage: core.IRawOperationMessage = {
         clientId: null,
         documentId: id,
-        forkId: name,
+        operation: {
+            clientSequenceNumber: -1,
+            contents: name,
+            encrypted: false,
+            encryptedContents: null,
+            referenceSequenceNumber: -1,
+            traces: [],
+            type: api.Fork,
+        },
         timestamp: Date.now(),
-        type: core.CreateForkType,
+        type: core.RawOperationType,
         userId: null,
     };
-
     await producer.send(JSON.stringify(rawMessage), id);
-
-    // const db = await mongoManager.getDatabase();
-    // const collection = db.collection<any>(documentsCollectionName);
-    // await collection.update(id, null, { forks: name });
 
     return name;
 }

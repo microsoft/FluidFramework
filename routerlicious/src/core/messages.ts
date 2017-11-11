@@ -1,16 +1,10 @@
 import * as api from "../api-core";
 
-// String identifying the update reference sequence number message
-export const UpdateReferenceSequenceNumberType = "UpdateReferenceSequenceNumber";
-
 // String identifying the raw operation message
-export const RawOperationType = "RawOperation";
-
-// Creates a new fork for the given document
-export const CreateForkType = "CreateFork";
+export const RawOperationType: string = "RawOperation";
 
 // String identifying the sequenced operation message
-export const SequencedOperationType = "SequencedOperation";
+export const SequencedOperationType: string = "SequencedOperation";
 
 /**
  * Base class for messages placed on the distributed log
@@ -52,13 +46,6 @@ export interface IUpdateReferenceSequenceNumberMessage extends IObjectMessage {
 export interface IRawOperationMessage extends IObjectMessage {
     // The message that was submitted
     operation: api.IDocumentMessage;
-}
-
-/**
- * Description of a new fork operation
- */
-export interface ICreateForkMessage extends IObjectMessage {
-    forkId: string;
 }
 
 export interface ITicketedMessage extends IMessage {

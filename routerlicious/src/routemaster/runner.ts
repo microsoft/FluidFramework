@@ -3,22 +3,32 @@ import * as winston from "winston";
 import * as core from "../core";
 import { Deferred } from "../core-utils";
 import * as utils from "../utils";
+import { Router } from "./router";
 
 export class RouteMasterRunner implements utils.IRunner {
     private deferred: Deferred<void>;
     private q: AsyncQueue<string>;
+    private routers = new Map<string, Router>();
 
     constructor(
-        producer: utils.kafkaProducer.IProducer,
+        private producer: utils.kafkaProducer.IProducer,
         private consumer: utils.kafkaConsumer.IConsumer,
         private objectsCollection: core.ICollection<any>,
-        groupId: string,
-        receiveTopic: string,
-        checkpointBatchSize: number,
-        checkpointTimeIntervalMsec: number) {
+        private groupId: string,
+        private receiveTopic: string,
+        private checkpointBatchSize: number,
+        private checkpointTimeIntervalMsec: number) {
     }
 
     public start(): Promise<void> {
+        const partitionManager = new core.PartitionManager(
+            this.groupId,
+            this.receiveTopic,
+            this.consumer,
+            this.checkpointBatchSize,
+            this.checkpointTimeIntervalMsec,
+        );
+
         this.deferred = new Deferred<void>();
         this.consumer.on("data", (message) => {
             this.q.push(message);
@@ -31,7 +41,13 @@ export class RouteMasterRunner implements utils.IRunner {
 
         winston.info("Waiting for messages");
         this.q = queue((message: any, callback) => {
-            this.processMessage(message);
+            this.processMessage(message, partitionManager);
+
+            // Checkpoint periodically
+            if (message.offset % this.checkpointBatchSize === 0) {
+                partitionManager.checkPoint();
+            }
+
             callback();
         }, 1);
 
@@ -72,21 +88,22 @@ export class RouteMasterRunner implements utils.IRunner {
         return this.deferred.promise;
     }
 
-    private processMessage(rawMessage: any) {
+    private processMessage(rawMessage: any, partitionManager: core.PartitionManager) {
         const message = JSON.parse(rawMessage.value.toString("utf8")) as core.ISequencedOperationMessage;
         if (message.type !== core.SequencedOperationType) {
             return;
         }
 
-        this.routeMessage(message);
-    }
-
-    private async routeMessage(message: core.ISequencedOperationMessage) {
-        const documentDetails = await this.objectsCollection.findOne(message.documentId);
-        const forks = documentDetails.forks || [];
-
-        for (const fork of forks) {
-            winston.info(`Routing ${message.documentId}@${message.operation.sequenceNumber} to ${fork}`);
+        // Create the router if it doesn't exist
+        if (!this.routers.has(message.documentId)) {
+            const router = new Router(message.documentId, this.objectsCollection, this.producer);
+            this.routers.set(message.documentId, router);
         }
+
+        // Route the message
+        const router = this.routers.get(message.documentId);
+        router.route(message);
+
+        partitionManager.update(rawMessage.partition, rawMessage.offset);
     }
 }

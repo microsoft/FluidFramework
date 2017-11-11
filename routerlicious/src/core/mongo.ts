@@ -17,9 +17,9 @@ export interface ICollection<T> {
 
     findOne(id: string): Promise<T>;
 
-    upsert(id: string, set: any, addToSet: any): Promise<void>;
+    upsert(id: string, filter: any, set: any, addToSet: any): Promise<void>;
 
-    update(id: string, set: any, addToSet: any): Promise<void>;
+    update(id: string, filter: any, set: any, addToSet: any): Promise<void>;
 
     insertOne(id: string, values: any): Promise<void>;
 

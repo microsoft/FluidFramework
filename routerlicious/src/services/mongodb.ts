@@ -17,12 +17,12 @@ export class MongoCollection<T> implements core.ICollection<T> {
         return this.collection.findOne({ _id: id });
     }
 
-    public async update(id: string, set: any, addToSet: any): Promise<void> {
-        return this.updateCore(id, set, addToSet, false);
+    public async update(id: string, select: any, set: any, addToSet: any): Promise<void> {
+        return this.updateCore(id, select, set, addToSet, false);
     }
 
-    public async upsert(id: string, set: any, addToSet: any): Promise<void> {
-        return this.updateCore(id, set, addToSet, true);
+    public async upsert(id: string, select: any, set: any, addToSet: any): Promise<void> {
+        return this.updateCore(id, select, set, addToSet, true);
     }
 
     public async insertOne(id: string, values: any): Promise<void> {
@@ -38,7 +38,7 @@ export class MongoCollection<T> implements core.ICollection<T> {
         await this.collection.createIndex(index, { unique });
     }
 
-    private async updateCore(id: string, set: any, addToSet: any, upsert: boolean): Promise<void> {
+    private async updateCore(id: string, select: any, set: any, addToSet: any, upsert: boolean): Promise<void> {
         const update: any = {};
         if (set) {
             update.$set = _.extend( { _id: id }, set);
@@ -48,14 +48,12 @@ export class MongoCollection<T> implements core.ICollection<T> {
             update.$addToSet = addToSet;
         }
 
-        await this.collection.updateOne(
-            {
-                _id: id,
-            },
-            update,
-            {
-                upsert,
-            });
+        const filter = _.extend({ _id: id }, select);
+        const options = { upsert };
+
+        console.log(filter);
+
+        await this.collection.updateOne(filter, update, options);
     }
 }
 
