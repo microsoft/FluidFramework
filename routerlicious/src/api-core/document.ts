@@ -1,4 +1,4 @@
-import { IEnvelope, ILatencyMessage, IObjectMessage } from "./protocol";
+import { IEnvelope, ILatencyMessage, IObjectMessage, ITrace } from "./protocol";
 import { ICollaborativeObject } from "./types";
 
 export interface IObjectStorageService {
@@ -22,6 +22,8 @@ export interface IDeltaConnection {
 
     referenceSequenceNumber: number;
 
+    baseSequenceNumber: number;
+
     /**
      * Subscribe to events emitted by the object
      */
@@ -31,6 +33,18 @@ export interface IDeltaConnection {
      * Send new messages to the server
      */
     submit(message: IObjectMessage): Promise<void>;
+
+    setBaseMapping(sequenceNumber: number, documentSequenceNumber: number);
+
+    baseMappingIsSet(): boolean;
+
+    transformDocumentSequenceNumber(value: number);
+
+    emit(message: IObjectMessage, clientId: string, documentSequenceNumber: number,
+        documentMinimumSequenceNumber: number, traces: ITrace[]);
+
+    updateMinSequenceNumber(value: number);
+
 }
 
 export interface IDocument {

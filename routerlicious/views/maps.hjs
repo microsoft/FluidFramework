@@ -14,7 +14,8 @@
         <script>
             var config = {{{ config }}};
             var version = {{{ version }}};
-            controller.maps.load("{{ id }}", version, config);
+            var loadPartial = {{{ loadPartial }}};
+            controller.maps.load("{{ id }}", version, config, loadPartial);
         </script>
     {{/scripts}}
 {{/layout}}

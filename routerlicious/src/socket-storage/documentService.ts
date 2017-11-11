@@ -15,7 +15,7 @@ type ConnectionMap = { [connectionId: string]: api.IDocumentDeltaConnection };
 type ObjectMap = { [objectId: string]: ConnectionMap };
 type EventMap = { [event: string]: ObjectMap };
 
-const emptyHeader: api.IDocumentHeader = {
+export const emptyHeader: api.IDocumentHeader = {
     attributes: {
         minimumSequenceNumber: 0,
         sequenceNumber: 0,

@@ -54,3 +54,7 @@ export async function getLatestVersion(gitManager: git.GitManager, id: string): 
     const commits = await gitManager.getCommits(id, 1);
     return commits.length > 0 ? commits[0] : null;
 }
+
+export async function getAllVersions(gitManager: git.GitManager, id: string): Promise<ICommit[]> {
+    return await gitManager.getCommits(id, 1);
+}
