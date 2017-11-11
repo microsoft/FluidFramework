@@ -15,7 +15,7 @@ export class TestCollection implements ICollection<any> {
         return Promise.resolve(this.findOneInternal(id));
     }
 
-    public async update(id: string, set: any, addToSet: any): Promise<void> {
+    public async update(id: string, filter: any, set: any, addToSet: any): Promise<void> {
         let value = this.findOneInternal(id);
         if (!value) {
             return Promise.reject("Not found");
@@ -23,7 +23,7 @@ export class TestCollection implements ICollection<any> {
         _.extend(value, set);
     }
 
-    public async upsert(id: string, set: any, addToSet: any): Promise<void> {
+    public async upsert(id: string, filter: any, set: any, addToSet: any): Promise<void> {
         let value = this.findOneInternal(id);
         if (!value) {
             value = {
