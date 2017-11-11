@@ -108,6 +108,14 @@ export class FlowContainer extends ui.Component {
             this.overlayCanvas.enableInk(value);
         });
 
+        // this.status.addButton("branch", "branch");
+        // this.status.on("branch", () => {
+        //     console.log("Time to branch the document!!!");
+        //     collabDocument.branch().then((branchId) => {
+        //         window.open(`/sharedText/${branchId}`, "_blank");
+        //     });
+        // });
+
         // Add children to the panel once we have both
         this.layerPanel.addChild(this.flowView);
         this.layerPanel.addChild(this.overlayCanvas);

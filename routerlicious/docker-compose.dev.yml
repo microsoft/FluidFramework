@@ -15,3 +15,6 @@ services:
     paparazzi:
         volumes:
             - .:/usr/src/server
+    routemaster:
+        volumes:
+            - .:/usr/src/server
