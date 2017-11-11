@@ -71,7 +71,7 @@ export async function getForks(
     const collection = db.collection<any>(documentsCollectionName);
     const document = await collection.findOne(id);
 
-    return document;
+    return document.forks || [];
 }
 
 export async function createFork(

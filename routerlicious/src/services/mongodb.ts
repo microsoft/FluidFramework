@@ -51,8 +51,6 @@ export class MongoCollection<T> implements core.ICollection<T> {
         const filter = _.extend({ _id: id }, select);
         const options = { upsert };
 
-        console.log(filter);
-
         await this.collection.updateOne(filter, update, options);
     }
 }

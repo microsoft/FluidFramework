@@ -111,6 +111,9 @@ export class FlowContainer extends ui.Component {
         this.status.addButton("branch", "branch");
         this.status.on("branch", () => {
             console.log("Time to branch the document!!!");
+            collabDocument.branch().then((branchId) => {
+                window.open(`/sharedText/${branchId}`, "_blank");
+            });
         });
 
         // Add children to the panel once we have both

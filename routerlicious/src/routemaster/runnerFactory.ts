@@ -10,6 +10,7 @@ export class RouteMasterResources implements utils.IResources {
         public consumer: utils.kafkaConsumer.IConsumer,
         public mongoManager: utils.MongoManager,
         public collection: core.ICollection<any>,
+        public deltas: core.ICollection<any>,
         public groupId: string,
         public receiveTopic: string,
         public checkpointBatchSize: number,
@@ -28,6 +29,7 @@ export class RouteMasterResourcesFactory implements utils.IResourcesFactory<Rout
     public async create(config: Provider): Promise<RouteMasterResources> {
         const mongoUrl = config.get("mongo:endpoint") as string;
         const documentsCollectionName = config.get("mongo:collectionNames:documents");
+        const deltasCollectionName = config.get("mongo:collectionNames:deltas");
 
         const kafkaEndpoint = config.get("kafka:lib:endpoint");
         const kafkaLibrary = config.get("kafka:lib:name");
@@ -45,6 +47,7 @@ export class RouteMasterResourcesFactory implements utils.IResourcesFactory<Rout
         const mongoManager = new utils.MongoManager(mongoFactory, false);
         const client = await mongoManager.getDatabase();
         const collection = await client.collection(documentsCollectionName);
+        const deltas = await client.collection(deltasCollectionName);
 
         // Prep Kafka producer and consumer
         let producer = utils.kafkaProducer.create(kafkaLibrary, kafkaEndpoint, kafkaClientId, sendTopic);
@@ -55,6 +58,7 @@ export class RouteMasterResourcesFactory implements utils.IResourcesFactory<Rout
             consumer,
             mongoManager,
             collection,
+            deltas,
             groupId,
             receiveTopic,
             checkpointBatchSize,
@@ -68,6 +72,7 @@ export class RouteMasterRunnerFactory implements utils.IRunnerFactory<RouteMaste
             resources.producer,
             resources.consumer,
             resources.collection,
+            resources.deltas,
             resources.groupId,
             resources.receiveTopic,
             resources.checkpointBatchSize,

@@ -5,14 +5,22 @@ import * as core from "../core";
 import * as utils from "../utils";
 
 export class DocumentManager {
-    public static async Create(id: string, collection: core.ICollection<core.IDocument>): Promise<DocumentManager> {
+    public static async Create(
+        id: string,
+        collection: core.ICollection<core.IDocument>,
+        deltas: core.ICollection<any>): Promise<DocumentManager> {
+
         const document = await collection.findOne(id);
-        return new DocumentManager(document, collection);
+        return new DocumentManager(document, collection, deltas);
     }
 
     private activeForks: Set<string>;
 
-    private constructor(private document: core.IDocument, private collection: core.ICollection<core.IDocument>) {
+    private constructor(
+        private document: core.IDocument,
+        private collection: core.ICollection<core.IDocument>,
+        private deltas: core.ICollection<any>) {
+
         const forks = document.forks || [];
         const filtered = forks
             .filter((value) => value.sequenceNumber !== undefined)
@@ -40,6 +48,22 @@ export class DocumentManager {
             { "forks.$.sequenceNumber": sequenceNumber },
             null);
     }
+
+    public async getDeltas(to: number): Promise<core.ISequencedOperationMessage[]> {
+        // TODO we are racing scriptorium here for packets since both are processing the delta stream. But
+        // the below is just a temp until we can encode enough details so the API can load off of the parent
+        // branch snapshot + deltas before switching to the branch flow
+
+        const query = {
+            "documentId": this.document._id,
+            "operation.sequenceNumber": {
+                $lt: to,
+            },
+        };
+
+        const dbDeltas = await this.deltas.find(query, { "operation.sequenceNumber": 1 });
+        return dbDeltas;
+    }
 }
 
 export class Router {
@@ -49,9 +73,10 @@ export class Router {
     constructor(
         id: string,
         collection: core.ICollection<core.IDocument>,
+        deltas: core.ICollection<any>,
         private producer: utils.kafkaProducer.IProducer) {
 
-        this.documentDetailsP = DocumentManager.Create(id, collection);
+        this.documentDetailsP = DocumentManager.Create(id, collection, deltas);
         this.queue = async.queue<core.ISequencedOperationMessage, any>(
             (message, callback) => {
                 this.routeCore(message).then(
@@ -105,6 +130,13 @@ export class Router {
 
         // Load all deltas from the current document up to forkSequenceNumber and forward them
         // to the forked document
+        // Create an optional filter to restrict the delta range
+        const deltas = await document.getDeltas(forkSequenceNumber);
+        console.log(`Retrieved ${deltas.length} deltas`);
+        for (const delta of deltas) {
+            console.log(`Routing ${delta.operation}`);
+            this.routeToDeli(forkId, delta);
+        }
 
         // Activating the fork will complete the operation
         await document.activateFork(forkId, forkSequenceNumber);
@@ -118,26 +150,52 @@ export class Router {
         const forks = document.getActiveForks();
 
         for (const fork of forks) {
-            winston.info(`Routing ${message.documentId}@${message.operation.sequenceNumber} to ${fork}`);
-            const rawMessage: core.IRawOperationMessage = {
-                clientId: null,
-                documentId: fork,
-                operation: {
-                    clientSequenceNumber: -1,
-                    contents: message,
-                    encrypted: false,
-                    encryptedContents: null,
-                    referenceSequenceNumber: -1,
-                    traces: [],
-                    type: api.Integrate,
-                },
-                timestamp: Date.now(),
-                type: core.RawOperationType,
-                userId: null,
-            };
-
-            // TODO handle the output of this promise and update any errors, etc...
-            this.producer.send(JSON.stringify(rawMessage), fork);
+            this.routeToDeli(fork, message);
         }
+    }
+
+    /**
+     * Routes the provided messages to deli
+     */
+    private routeToDeli(fork: string, message: core.ISequencedOperationMessage) {
+        winston.info(`Routing ${message.documentId}@${message.operation.sequenceNumber} to ${fork}`);
+        // const rawMessage: core.IRawOperationMessage = {
+        //     clientId: null,
+        //     documentId: fork,
+        //     operation: {
+        //         clientSequenceNumber: -1,
+        //         contents: message,
+        //         encrypted: false,
+        //         encryptedContents: null,
+        //         referenceSequenceNumber: -1,
+        //         traces: [],
+        //         type: api.Integrate,
+        //     },
+        //     timestamp: Date.now(),
+        //     type: core.RawOperationType,
+        //     userId: null,
+        // };
+
+        // Completely swap the message into what looks like a raw mesage - this will flip to a custom
+        // integration wrapped messagae later
+        const rawMessage: core.IRawOperationMessage = {
+            clientId: message.operation.clientId,
+            documentId: fork,
+            operation: {
+                clientSequenceNumber: message.operation.clientSequenceNumber,
+                contents: message.operation.contents,
+                encrypted: false,
+                encryptedContents: null,
+                referenceSequenceNumber: message.operation.referenceSequenceNumber,
+                traces: message.operation.traces,
+                type: message.operation.type,
+            },
+            timestamp: Date.now(),
+            type: core.RawOperationType,
+            userId: message.operation.userId,
+        };
+
+        // TODO handle the output of this promise and update any errors, etc...
+        this.producer.send(JSON.stringify(rawMessage), fork);
     }
 }

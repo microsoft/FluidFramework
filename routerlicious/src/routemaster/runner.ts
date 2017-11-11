@@ -14,6 +14,7 @@ export class RouteMasterRunner implements utils.IRunner {
         private producer: utils.kafkaProducer.IProducer,
         private consumer: utils.kafkaConsumer.IConsumer,
         private objectsCollection: core.ICollection<any>,
+        private deltas: core.ICollection<any>,
         private groupId: string,
         private receiveTopic: string,
         private checkpointBatchSize: number,
@@ -96,7 +97,7 @@ export class RouteMasterRunner implements utils.IRunner {
 
         // Create the router if it doesn't exist
         if (!this.routers.has(message.documentId)) {
-            const router = new Router(message.documentId, this.objectsCollection, this.producer);
+            const router = new Router(message.documentId, this.objectsCollection, this.deltas, this.producer);
             this.routers.set(message.documentId, router);
         }
 
