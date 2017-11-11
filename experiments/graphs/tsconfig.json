@@ -1,0 +1,23 @@
+{    
+    "exclude": [
+        "dist",
+        "node_modules"
+    ],
+    "compilerOptions": {
+        "target": "es6",
+        "noImplicitAny": false,
+        "noUnusedLocals": true,
+        "moduleResolution": "node",
+        "outDir": "dist",
+        "sourceMap": true,
+        "inlineSources": true
+    },
+    "include": [
+        "src/prague.umd.d.ts",
+        "src/prague.d.ts",
+        "src/index.ts",
+        "src/graphDemo.ts",
+        "src/graphLib.d.ts",
+        "src/orderedGraph.ts"
+    ]
+}
