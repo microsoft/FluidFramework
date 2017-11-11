@@ -3,7 +3,7 @@ import * as path from "path";
 import * as supertest from "supertest";
 import * as app from "../../alfred/app";
 import { MongoManager } from "../../utils";
-import { TestDbFactory, TestHistorian } from "../testUtils";
+import { TestDbFactory, TestHistorian, TestKafka } from "../testUtils";
 
 const defaultConfig = nconf.file(path.join(__dirname, "../../../config.test.json")).use("memory");
 
@@ -11,6 +11,7 @@ describe("Routerlicious", () => {
     describe("Alfred", () => {
         describe("Server", () => {
             let testServer: supertest.SuperTest<supertest.Test>;
+            let testKafka: TestKafka;
 
             beforeEach(() => {
                 const testData = {
@@ -20,7 +21,8 @@ describe("Routerlicious", () => {
                 const testDbFactory = new TestDbFactory(testData);
                 const mongoManager = new MongoManager(testDbFactory);
                 const testHistorian = new TestHistorian();
-                const alfred = app.create(defaultConfig, testHistorian, mongoManager);
+                testKafka = new TestKafka();
+                const alfred = app.create(defaultConfig, testHistorian, mongoManager, testKafka.createProducer());
                 testServer = supertest(alfred);
             });
 

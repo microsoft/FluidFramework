@@ -69,6 +69,24 @@ export class Status extends ui.Component implements IStatus {
         this.commands.push({ element, event, text });
     }
 
+    /**
+     * Adds a clickable button to the status bar
+     */
+    public addButton(event: string, text: string) {
+        const element = document.createElement("li");
+        this.listElement.appendChild(element);
+
+        const button = document.createElement("button");
+        button.innerText = text;
+        button.onclick = () => {
+            this.emit(event);
+        };
+
+        this.listElement.appendChild(button);
+
+        this.commands.push({ element, event, text });
+    }
+
     public removeOption(event: string) {
         const index = this.commands.findIndex((value) => value.event === event);
         if (index !== -1) {
@@ -105,7 +123,7 @@ export class Status extends ui.Component implements IStatus {
     }
 
     public measure(size: ui.ISize): ui.ISize {
-        return { width: size.width, height: 22 };
+        return { width: size.width, height: 30 };
     }
 
     private findKV(key: string) {

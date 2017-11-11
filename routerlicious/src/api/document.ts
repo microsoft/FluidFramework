@@ -116,7 +116,7 @@ export class Document {
         // Connect to the document
         const encryptedProperty = "encrypted";
         const document = await service.connect(id, version, connect, options[encryptedProperty]);
-        const returnValue = new Document(document, registry, options);
+        const returnValue = new Document(document, registry, service, options);
 
         // Load in distributed objects stored within the document
         for (const distributedObject of document.distributedObjects) {
@@ -170,6 +170,7 @@ export class Document {
     private constructor(
         private document: IDocumentResource,
         private registry: Registry,
+        private service: IDocumentService,
         private opts: Object) {
 
         this.lastMinSequenceNumber = this.document.minimumSequenceNumber;
@@ -297,6 +298,10 @@ export class Document {
     public removeListener(event: string, listener: (...args: any[]) => void): this {
         this.events.removeListener(event, listener);
         return this;
+    }
+
+    public branch(): Promise<string> {
+        return this.service.branch(this.id);
     }
 
     /**

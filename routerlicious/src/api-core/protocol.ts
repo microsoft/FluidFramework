@@ -18,6 +18,12 @@ export const ClientJoin = "join";
 // System message sent to indicate a client has left the collaboration
 export const ClientLeave = "leave";
 
+// System message to indicate the creation of a new fork
+export const Fork = "fork";
+
+// Message sent when forwarding a sequenced message to an upstream branch
+export const Integrate = "integrate";
+
 // Message to indicate successful round trip.
 export const RoundTrip = "tripComplete";
 
