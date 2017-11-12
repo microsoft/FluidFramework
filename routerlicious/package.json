@@ -139,6 +139,7 @@
     "diff": "^3.2.0",
     "es6-promisify": "^5.0.0",
     "express": "^4.15.2",
+    "gitgraph.js": "^1.11.4",
     "gitresources": "https://praguenpm.blob.core.windows.net/packages/gitresources-0.2.0.tgz",
     "hjs": "0.0.6",
     "jquery": "^3.2.1",
