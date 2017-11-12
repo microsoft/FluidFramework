@@ -52,8 +52,8 @@ data:
         },
         "routemaster": {
             "topics": {
-                "receive": "{{ .Values.kafka.topics.deltas }}"
-                "send": "{{ .Values.kafka.topics.rawdeltas }}",
+                "receive": "{{ .Values.kafka.topics.deltas }}",
+                "send": "{{ .Values.kafka.topics.rawdeltas }}"
             },
             "clientId": "routemaster",
             "groupId": "routemaster",
