@@ -21,3 +21,6 @@ export { login };
 
 import * as ping from "./ping";
 export { ping };
+
+import * as commits from "./commits";
+export { commits };

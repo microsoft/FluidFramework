@@ -34,14 +34,20 @@ export function create(config: Provider, gitManager: git.GitManager): Router {
     });
 
     /**
-     * Just to view the list of commits
-     * TODO: Remove later.
+     * Loads all commits.
      */
     router.get("/:id/commits", (request, response, next) => {
         const versionsP = storage.getAllVersions(gitManager, request.params.id);
         versionsP.then(
             (versions) => {
-                console.log(`All commits: ${JSON.stringify(versions)}`);
+                response.render(
+                    "commits",
+                    {
+                        id: request.params.id,
+                        partials: defaultPartials,
+                        type: "maps",
+                        versions: JSON.stringify(versions),
+                    });
             },
             (error) => {
                 response.status(400).json(error);
