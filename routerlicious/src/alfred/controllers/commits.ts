@@ -52,21 +52,23 @@ function generateGraph(type: string, id: string, versions: resources.ICommit[]):
         template,
     };
     const graph = new GitGraph(config);
-    graph.hover = (event) => {
-        this.style.cursor = "pointer";
-    };
+
     const master = graph.branch("master");
+    let index: number = versions.length;
     for (let version of versions) {
         master.commit({
             dotSize: 20,
-            message: "c1",
+            message: "c-" + index,
             onClick: (commit: any) => {
                 console.log(commit);
                 const url = `${document.location.origin}/${type}/${id}/commit?version=${commit.sha1}`;
                 window.open(url, "_blank");
             },
             sha1: version.sha,
+            // tag: "tag",
+            tooltipDisplay: true,
         });
+        --index;
     }
 }
 

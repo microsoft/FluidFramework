@@ -243,7 +243,6 @@ class Speller {
                 }
                 this.offsetMap[offset] = endPos;
             }
-            console.log(`Paragraph markers...`);
             for (let start of Object.keys(this.offsetMap)) {
                 const queryString = this.sharedString.client.mergeTree.getText(MergeTree.UniversalSequenceNumber,
                     this.sharedString.client.getClientId(), false, Number(start), this.offsetMap[start]);
