@@ -17,18 +17,12 @@ export class MongoCollection<T> implements core.ICollection<T> {
         return this.collection.findOne({ _id: id });
     }
 
-    public async upsert(id: string, values: any): Promise<void> {
-        const $set = _.extend( { _id: id }, values);
-        await this.collection.updateOne(
-            {
-                _id: id,
-            },
-            {
-                $set,
-            },
-            {
-                upsert: true,
-            });
+    public async update(id: string, select: any, set: any, addToSet: any): Promise<void> {
+        return this.updateCore(id, select, set, addToSet, false);
+    }
+
+    public async upsert(id: string, select: any, set: any, addToSet: any): Promise<void> {
+        return this.updateCore(id, select, set, addToSet, true);
     }
 
     public async insertOne(id: string, values: any): Promise<void> {
@@ -42,6 +36,22 @@ export class MongoCollection<T> implements core.ICollection<T> {
 
     public async createIndex(index: any, unique: boolean): Promise<void> {
         await this.collection.createIndex(index, { unique });
+    }
+
+    private async updateCore(id: string, select: any, set: any, addToSet: any, upsert: boolean): Promise<void> {
+        const update: any = {};
+        if (set) {
+            update.$set = _.extend( { _id: id }, set);
+        }
+
+        if (addToSet) {
+            update.$addToSet = addToSet;
+        }
+
+        const filter = _.extend({ _id: id }, select);
+        const options = { upsert };
+
+        await this.collection.updateOne(filter, update, options);
     }
 }
 
