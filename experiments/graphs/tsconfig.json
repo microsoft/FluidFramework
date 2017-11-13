@@ -17,7 +17,6 @@
         "src/prague.d.ts",
         "src/index.ts",
         "src/graphDemo.ts",
-        "src/graphLib.d.ts",
-        "src/orderedGraph.ts"
+        "src/graphLib.d.ts"
     ]
 }
