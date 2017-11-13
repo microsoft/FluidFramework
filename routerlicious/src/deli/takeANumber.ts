@@ -124,11 +124,13 @@ export class TakeANumber {
 
         return this.collection.upsert(
             this.documentId,
+            null,
             {
                 clients,
                 logOffset: this.logOffset,
                 sequenceNumber : this.sequenceNumber,
-            });
+            },
+            null);
     }
 
     /**
@@ -166,7 +168,8 @@ export class TakeANumber {
             if (message.operation.referenceSequenceNumber < this.minimumSequenceNumber) {
                 // TODO support nacking of clients
                 // Do not assign a ticket to a message outside the MSN. We will need to NACK clients in this case.
-                winston.error(`${message.clientId} sent packet less than MSN of ${this.minimumSequenceNumber}`);
+                // tslint:disable-next-line
+                winston.error(`${message.clientId} sent packet ${message.operation.referenceSequenceNumber} less than MSN of ${this.minimumSequenceNumber}`);
                 return Promise.resolve();
             }
 
@@ -178,6 +181,10 @@ export class TakeANumber {
             // The system will notify of clients leaving - in this case we can remove them from the MSN map
             if (message.operation.type === api.ClientLeave) {
                 this.removeClient(message.operation.contents);
+            } else if (message.operation.type === api.Fork) {
+                winston.info(`Fork ${message.documentId} -> ${message.operation}`);
+            } else if (message.operation.type === api.Integrate) {
+                winston.info(`Integration message ${message.operation.contents.documentId} -> ${message.documentId}`);
             }
         }
 

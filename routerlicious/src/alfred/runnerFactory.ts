@@ -1,8 +1,6 @@
 import * as git from "gitresources";
-import * as _ from "lodash";
 import { Provider } from "nconf";
-import * as redis from "redis";
-import * as util from "util";
+import * as core from "../core";
 import * as services from "../services";
 import * as clientServices from "../services-client";
 import * as utils from "../utils";
@@ -28,28 +26,30 @@ function normalizePort(val) {
 }
 
 export class AlfredResources implements utils.IResources {
-    public webServerFactory: services.WebServerFactory;
+    public webServerFactory: core.IWebServerFactory;
+    public webServerFactory2: core.IWebServerFactory;
 
     constructor(
         public config: Provider,
         public producer: utils.kafkaProducer.IProducer,
-        public pub: redis.RedisClient,
-        public sub: redis.RedisClient,
+        public redisConfig: any,
+        public webSocketLibrary: string,
         public historian: git.IHistorian,
         public mongoManager: utils.MongoManager,
         public port: any,
         public documentsCollectionName: string,
         public metricClientConfig: any) {
 
-        this.webServerFactory = new services.WebServerFactory(this.pub, this.sub);
+        // Remove (mdaumi): Call just one library.
+        this.webServerFactory = webSocketLibrary === "socket.io" ?
+            new services.SocketIoWebServerFactory(this.redisConfig) : new services.WsWebServerFactory();
+        this.webServerFactory2 = new services.WsWebServerFactory();
     }
 
     public async dispose(): Promise<void> {
         const producerClosedP = this.producer.close();
-        const pubClosedP = util.promisify(((callback) => this.pub.quit(callback)) as Function)();
-        const subClosedP = util.promisify(((callback) => this.sub.quit(callback)) as Function)();
         const mongoClosedP = this.mongoManager.close();
-        await Promise.all([producerClosedP, pubClosedP, subClosedP, mongoClosedP]);
+        await Promise.all([producerClosedP, mongoClosedP]);
     }
 }
 
@@ -62,21 +62,8 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
         const topic = config.get("alfred:topic");
         const metricClientConfig = config.get("metric");
         const producer = utils.kafkaProducer.create(kafkaLibrary, kafkaEndpoint, kafkaClientId, topic);
-
-        // Setup Redis endpoints
         const redisConfig = config.get("redis");
-        let options: any = { auth_pass: redisConfig.pass };
-        if (config.get("redis:tls")) {
-            options.tls = {
-                servername: redisConfig.host,
-            };
-        }
-
-        let pubOptions = _.clone(options);
-        let subOptions = _.clone(options);
-
-        let pub = redis.createClient(redisConfig.port, redisConfig.host, pubOptions);
-        let sub = redis.createClient(redisConfig.port, redisConfig.host, subOptions);
+        const webSocketLibrary = config.get("alfred:webSocketLib");
 
         // Database connection
         const mongoUrl = config.get("mongo:endpoint") as string;
@@ -90,7 +77,7 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
 
         let port = normalizePort(process.env.PORT || "3000");
 
-        return new AlfredResources(config, producer, pub, sub, historian, mongoManager,
+        return new AlfredResources(config, producer, redisConfig, webSocketLibrary, historian, mongoManager,
                                    port, documentsCollectionName, metricClientConfig);
     }
 }
@@ -99,6 +86,7 @@ export class AlfredRunnerFactory implements utils.IRunnerFactory<AlfredResources
     public async create(resources: AlfredResources): Promise<utils.IRunner> {
         return new AlfredRunner(
             resources.webServerFactory,
+            resources.webServerFactory2,
             resources.config,
             resources.port,
             resources.historian,

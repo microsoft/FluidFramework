@@ -1,4 +1,4 @@
-import { api, mergeTree, types } from "../client-api";
+import { api, MergeTree, types } from "../client-api";
 import * as ui from "../ui";
 import { debug } from "./debug";
 import { DockPanel } from "./dockPanel";
@@ -28,7 +28,7 @@ export class FlowContainer extends ui.Component {
     constructor(
         element: HTMLDivElement,
         collabDocument: api.Document,
-        sharedString: mergeTree.SharedString,
+        sharedString: MergeTree.SharedString,
         private overlayMap: types.IMap,
         private image: Image) {
 
@@ -73,8 +73,8 @@ export class FlowContainer extends ui.Component {
             // Inserts the marker at the flow view's cursor position
             sharedString.insertMarker(
                 position,
-                mergeTree.MarkerBehaviors.None,
-                { [mergeTree.reservedMarkerIdKey]: model.id });
+                MergeTree.MarkerBehaviors.None,
+                { [MergeTree.reservedMarkerIdKey]: model.id });
         });
 
         this.status.on("dry", (value) => {
@@ -107,6 +107,14 @@ export class FlowContainer extends ui.Component {
         this.status.on("ink", (value) => {
             this.overlayCanvas.enableInk(value);
         });
+
+        // this.status.addButton("branch", "branch");
+        // this.status.on("branch", () => {
+        //     console.log("Time to branch the document!!!");
+        //     collabDocument.branch().then((branchId) => {
+        //         window.open(`/sharedText/${branchId}`, "_blank");
+        //     });
+        // });
 
         // Add children to the panel once we have both
         this.layerPanel.addChild(this.flowView);

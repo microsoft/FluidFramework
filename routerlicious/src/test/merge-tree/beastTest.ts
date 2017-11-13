@@ -319,7 +319,7 @@ export function mergeTreeLargeTest() {
 }
 
 export function mergeTreeCheckedTest() {
-    let segTree = new MergeTree.MergeTree("the cat is on the mat");
+    let mergeTree = new MergeTree.MergeTree("the cat is on the mat");
     const insertCount = 2000;
     const removeCount = 1400;
     const largeRemoveCount = 20;
@@ -349,18 +349,18 @@ export function mergeTreeCheckedTest() {
     for (let i = 0; i < insertCount; i++) {
         let slen = randInt();
         let s = randomString(slen, String.fromCharCode(48 + slen));
-        let preLen = segTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
+        let preLen = mergeTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
         let pos = random.integer(0, preLen)(mt);
-        if (!checkInsertMergeTree(segTree, pos, makeCollabTextSegment(s), true)) {
-            console.log(`i: ${i} preLen ${preLen} pos: ${pos} slen: ${slen} s: ${s} itree len: ${segTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId)}`);
-            console.log(segTree.toString());
+        if (!checkInsertMergeTree(mergeTree, pos, makeCollabTextSegment(s), true)) {
+            console.log(`i: ${i} preLen ${preLen} pos: ${pos} slen: ${slen} s: ${s} itree len: ${mergeTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId)}`);
+            console.log(mergeTree.toString());
             errorCount++;
             break;
         }
         if ((i > 0) && (0 == (i % 1000))) {
             let perIter = (accumTime / (i + 1)).toFixed(3);
             treeCount++;
-            accumTreeSize += segTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
+            accumTreeSize += mergeTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
             let averageTreeSize = (accumTreeSize / treeCount).toFixed(3);
             console.log(`i: ${i} time: ${accumTime}us which is average ${perIter} per insert with average tree size ${averageTreeSize}`);
         }
@@ -370,18 +370,18 @@ export function mergeTreeCheckedTest() {
     treeCount = 0;
     for (let i = 0; i < largeRemoveCount; i++) {
         let dlen = randLargeInt();
-        let preLen = segTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
+        let preLen = mergeTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
         let pos = random.integer(0, preLen)(mt);
         // console.log(itree.toString());
-        if (!checkRemoveMergeTree(segTree, pos, pos + dlen, true)) {
-            console.log(`i: ${i} preLen ${preLen} pos: ${pos} dlen: ${dlen} itree len: ${segTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId)}`);
-            console.log(segTree.toString());
+        if (!checkRemoveMergeTree(mergeTree, pos, pos + dlen, true)) {
+            console.log(`i: ${i} preLen ${preLen} pos: ${pos} dlen: ${dlen} itree len: ${mergeTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId)}`);
+            console.log(mergeTree.toString());
             break;
         }
         if ((i > 0) && (0 == (i % 10))) {
             let perIter = (accumTime / (i + 1)).toFixed(3);
             treeCount++;
-            accumTreeSize += segTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
+            accumTreeSize += mergeTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
             let averageTreeSize = (accumTreeSize / treeCount).toFixed(3);
             console.log(`i: ${i} time: ${accumTime}us which is average ${perIter} per large del with average tree size ${averageTreeSize}`);
         }
@@ -391,21 +391,21 @@ export function mergeTreeCheckedTest() {
     treeCount = 0;
     for (let i = 0; i < removeCount; i++) {
         let dlen = randInt();
-        let preLen = segTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
+        let preLen = mergeTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
         let pos = random.integer(0, preLen)(mt);
         // console.log(itree.toString());
         if (i & 1) {
-            if (!checkMarkRemoveMergeTree(segTree, pos, pos + dlen, true)) {
-                console.log(`i: ${i} preLen ${preLen} pos: ${pos} dlen: ${dlen} itree len: ${segTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId)}`);
-                console.log(segTree.toString());
+            if (!checkMarkRemoveMergeTree(mergeTree, pos, pos + dlen, true)) {
+                console.log(`mr i: ${i} preLen ${preLen} pos: ${pos} dlen: ${dlen} itree len: ${mergeTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId)}`);
+                console.log(mergeTree.toString());
                 errorCount++;
                 break;
             }
         }
         else {
-            if (!checkRemoveMergeTree(segTree, pos, pos + dlen, true)) {
-                console.log(`i: ${i} preLen ${preLen} pos: ${pos} dlen: ${dlen} itree len: ${segTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId)}`);
-                console.log(segTree.toString());
+            if (!checkRemoveMergeTree(mergeTree, pos, pos + dlen, true)) {
+                console.log(`i: ${i} preLen ${preLen} pos: ${pos} dlen: ${dlen} itree len: ${mergeTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId)}`);
+                console.log(mergeTree.toString());
                 errorCount++;
                 break;
             }
@@ -414,7 +414,7 @@ export function mergeTreeCheckedTest() {
         if ((i > 0) && (0 == (i % 1000))) {
             let perIter = (accumTime / (i + 1)).toFixed(3);
             treeCount++;
-            accumTreeSize += segTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
+            accumTreeSize += mergeTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
             let averageTreeSize = (accumTreeSize / treeCount).toFixed(3);
             console.log(`i: ${i} time: ${accumTime}us which is average ${perIter} per del with average tree size ${averageTreeSize}`);
         }
@@ -425,18 +425,18 @@ export function mergeTreeCheckedTest() {
     for (let i = 0; i < insertCount; i++) {
         let slen = randInt();
         let s = randomString(slen, String.fromCharCode(48 + slen));
-        let preLen = segTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
+        let preLen = mergeTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
         let pos = random.integer(0, preLen)(mt);
-        if (!checkInsertMergeTree(segTree, pos, makeCollabTextSegment(s), true)) {
-            console.log(`i: ${i} preLen ${preLen} pos: ${pos} slen: ${slen} s: ${s} itree len: ${segTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId)}`);
-            console.log(segTree.toString());
+        if (!checkInsertMergeTree(mergeTree, pos, makeCollabTextSegment(s), true)) {
+            console.log(`i: ${i} preLen ${preLen} pos: ${pos} slen: ${slen} s: ${s} itree len: ${mergeTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId)}`);
+            console.log(mergeTree.toString());
             errorCount++;
             break;
         }
         if ((i > 0) && (0 == (i % 1000))) {
             let perIter = (accumTime / (i + 1)).toFixed(3);
             treeCount++;
-            accumTreeSize += segTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
+            accumTreeSize += mergeTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
             let averageTreeSize = (accumTreeSize / treeCount).toFixed(3);
             console.log(`i: ${i} time: ${accumTime}us which is average ${perIter} per insert with average tree size ${averageTreeSize}`);
         }
@@ -446,21 +446,21 @@ export function mergeTreeCheckedTest() {
     treeCount = 0;
     for (let i = 0; i < removeCount; i++) {
         let dlen = randInt();
-        let preLen = segTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
+        let preLen = mergeTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
         let pos = random.integer(0, preLen)(mt);
         // console.log(itree.toString());
         if (i & 1) {
-            if (!checkMarkRemoveMergeTree(segTree, pos, pos + dlen, true)) {
-                console.log(`i: ${i} preLen ${preLen} pos: ${pos} dlen: ${dlen} itree len: ${segTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId)}`);
-                console.log(segTree.toString());
+            if (!checkMarkRemoveMergeTree(mergeTree, pos, pos + dlen, true)) {
+                console.log(`i: ${i} preLen ${preLen} pos: ${pos} dlen: ${dlen} itree len: ${mergeTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId)}`);
+                console.log(mergeTree.toString());
                 errorCount++;
                 break;
             }
         }
         else {
-            if (!checkRemoveMergeTree(segTree, pos, pos + dlen, true)) {
-                console.log(`i: ${i} preLen ${preLen} pos: ${pos} dlen: ${dlen} itree len: ${segTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId)}`);
-                console.log(segTree.toString());
+            if (!checkRemoveMergeTree(mergeTree, pos, pos + dlen, true)) {
+                console.log(`i: ${i} preLen ${preLen} pos: ${pos} dlen: ${dlen} itree len: ${mergeTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId)}`);
+                console.log(mergeTree.toString());
                 errorCount++;
                 break;
             }
@@ -469,7 +469,7 @@ export function mergeTreeCheckedTest() {
         if ((i > 0) && (0 == (i % 1000))) {
             let perIter = (accumTime / (i + 1)).toFixed(3);
             treeCount++;
-            accumTreeSize += segTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
+            accumTreeSize += mergeTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
             let averageTreeSize = (accumTreeSize / treeCount).toFixed(3);
             console.log(`i: ${i} time: ${accumTime}us which is average ${perIter} per del with average tree size ${averageTreeSize}`);
         }

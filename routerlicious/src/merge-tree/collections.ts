@@ -299,7 +299,7 @@ export function LinearDictionary<TKey, TData>(compareKeys: Base.KeyComparer<TKey
     }
 
     function put(key: TKey, data: TData) {
-        if (key) {
+        if (key!==undefined) {
             if (data === undefined) {
                 remove(key);
             }
@@ -310,7 +310,7 @@ export function LinearDictionary<TKey, TData>(compareKeys: Base.KeyComparer<TKey
         }
     }
     function remove(key: TKey) {
-        if (key) {
+        if (key!==undefined) {
             for (let i = 0, len = a.length; i < len; i++) {
                 if (a[i].key == key) {
                     a[i] = a[len - 1];
@@ -368,7 +368,7 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
         return this.root;
     }
     get(key: TKey) {
-        if (key) {
+        if (key!==undefined) {
             return this.nodeGet(this.root, key);
         }
     }
@@ -390,7 +390,7 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
         return this.get(key);
     }
     put(key: TKey, data: TData, conflict?: Base.ConflictAction<TKey, TData>) {
-        if (key) {
+        if (key!==undefined) {
             if (data === undefined) {
                 this.remove(key);
             }
@@ -491,7 +491,7 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
     }
 
     remove(key: TKey) {
-        if (key) {
+        if (key!==undefined) {
             if (!this.contains(key)) {
                 return;
             }

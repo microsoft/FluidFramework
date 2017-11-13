@@ -34,17 +34,6 @@ export class FlexVideo extends ui.Component {
         this.video.onload = () => this.handleLoad();
 
         this.videoMap.on("valueChanged", async (changedValue) => {
-            // switch (changedValue.key) {
-            //     case("play"):
-            //         this.videoMap.get(changedValue.key).then((play) => this.updatePlay(play));
-            //         break;
-            //     case("time"):
-            //         this.videoMap.get(changedValue.key).then((time) => this.updateTime(time));
-            //         break;
-            //     default:
-            //         console.log("default: " + changedValue.key);
-            //         break;
-            // }
             switch (changedValue.key) {
                 case("play"):
                     this.updatePlay(this.videoMapView.get(changedValue.key));

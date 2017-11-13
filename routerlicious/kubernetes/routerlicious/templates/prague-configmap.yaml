@@ -37,7 +37,8 @@ data:
             "kafkaClientId": "{{ template "alfred.fullname" . }}",
             "topic": "{{ .Values.kafka.topics.rawdeltas }}",
             "bucket": "snapshots",
-            "restJsonSize": "50mb"
+            "restJsonSize": "50mb",
+            "webSocketLib": "socket.io"
         },
         "deli": {
             "topics": {
@@ -46,6 +47,16 @@ data:
             },
             "kafkaClientId": "{{ template "deli.fullname" . }}",
             "groupId": "{{ template "deli.fullname" . }}",
+            "checkpointBatchSize": 10,
+            "checkpointTimeIntervalMsec": 1000
+        },
+        "routemaster": {
+            "topics": {
+                "receive": "{{ .Values.kafka.topics.deltas }}",
+                "send": "{{ .Values.kafka.topics.rawdeltas }}"
+            },
+            "clientId": "routemaster",
+            "groupId": "routemaster",
             "checkpointBatchSize": 10,
             "checkpointTimeIntervalMsec": 1000
         },

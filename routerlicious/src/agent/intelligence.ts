@@ -1,4 +1,4 @@
-import { api, core, mergeTree, types } from "../client-api";
+import { api, core, MergeTree, types } from "../client-api";
 import * as intelligence from "../intelligence";
 import { RateLimiter } from "./rateLimiter";
 
@@ -23,9 +23,9 @@ export class IntelligentServicesManager {
 
     public process(object: core.ICollaborativeObject) {
         // TODO expose way for intelligent services to express their supported document types
-        if (object.type === mergeTree.CollaboritiveStringExtension.Type) {
+        if (object.type === MergeTree.CollaboritiveStringExtension.Type) {
             if (!this.intelInvoked) {
-                const sharedString = object as mergeTree.SharedString;
+                const sharedString = object as MergeTree.SharedString;
 
                 // And then run plugin insights rate limited
                 this.rateLimiter = new RateLimiter(

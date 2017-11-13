@@ -117,8 +117,7 @@ export class DeliRunner implements utils.IRunner {
         objectsCollection: core.ICollection<any>) {
 
         const baseMessage = JSON.parse(message.value.toString("utf8")) as core.IMessage;
-        if (baseMessage.type === core.UpdateReferenceSequenceNumberType ||
-            baseMessage.type === core.RawOperationType) {
+        if (baseMessage.type === core.RawOperationType) {
 
             // Trace for the message.
             const startTrace: api.ITrace = { service: "deli", action: "start", timestamp: Date.now()};

@@ -2,7 +2,7 @@ import { queue } from "async";
 import * as winston from "winston";
 import * as core from "../core";
 import { Deferred } from "../core-utils";
-import { ThroughputCounter } from "../core-utils";
+import { BatchManager, ThroughputCounter } from "../core-utils";
 import * as utils from "../utils";
 
 export class ScriptoriumRunner implements utils.IRunner {
@@ -10,7 +10,7 @@ export class ScriptoriumRunner implements utils.IRunner {
     private checkpointTimer: any;
     private partitionManager: core.PartitionManager;
     private q: AsyncQueue<string>;
-    private ioBatchManager: utils.BatchManager<core.ISequencedOperationMessage>;
+    private ioBatchManager: BatchManager<core.ISequencedOperationMessage>;
 
     constructor(
         private consumer: utils.kafkaConsumer.IConsumer,
@@ -47,7 +47,7 @@ export class ScriptoriumRunner implements utils.IRunner {
         // Mongo insert we've made for each document. And then perform a then on this to maintain causal ordering
         // for any dependent operations (i.e. socket.io writes)
         const lastMongoInsertP: { [documentId: string]: Promise<any> } = {};
-        this.ioBatchManager = new utils.BatchManager<core.ISequencedOperationMessage>((documentId, work) => {
+        this.ioBatchManager = new BatchManager<core.ISequencedOperationMessage>((documentId, work) => {
             // Add trace to each message before routing.
             work.map((value) => {
                 if (value.operation.traces !== undefined) {

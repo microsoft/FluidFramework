@@ -1,6 +1,6 @@
 // tslint:disable:no-bitwise whitespace
 import performanceNow = require("performance-now");
-import { core, mergeTree as SharedString, types } from "../client-api";
+import { core, MergeTree as SharedString, types } from "../client-api";
 import { findRandomWord } from "../merge-tree-utils";
 import * as ui from "../ui";
 import { Status } from "./status";

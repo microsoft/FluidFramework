@@ -102,45 +102,48 @@ export function register(
         });
 
         // Message sent when a new operation is submitted to the router
-        socket.on("submitOp", (clientId: string, message: api.IDocumentMessage, response) => {
+        socket.on("submitOp", (clientId: string, messages: api.IDocumentMessage[], response) => {
             // Verify the user has connected on this object id
             if (!connectionsMap[clientId]) {
                 return response("Invalid client ID", null);
             }
-            if (message.type === api.RoundTrip) {
-                // End of tracking. Write traces.
-                if (message.traces !== undefined) {
-                    metricLogger.writeLatencyMetric("latency", message.traces)
-                    .catch((error) => {
-                        winston.error(error.stack);
-                    });
+            for (let message of messages) {
+                if (message.type === api.RoundTrip) {
+                    // End of tracking. Write traces.
+                    if (message.traces !== undefined) {
+                        metricLogger.writeLatencyMetric("latency", message.traces)
+                        .catch((error) => {
+                            winston.error(error.stack);
+                        });
+                    }
+                    response(null, "Roundtrip message received");
+                    continue;
                 }
-                return response(null, "Roundtrip message received");
+
+                const documentId = connectionsMap[clientId];
+                const rawMessage: core.IRawOperationMessage = {
+                    clientId,
+                    documentId,
+                    operation: message,
+                    timestamp: Date.now(),
+                    type: core.RawOperationType,
+                    userId: null,
+                };
+
+                throughput.produce();
+
+                // Add trace
+                rawMessage.operation.traces.push( {service: "alfred", action: "start", timestamp: Date.now()} );
+
+                sendAndTrack(rawMessage).then(
+                    (responseMessage) => {
+                        response(null, responseMessage);
+                    },
+                    (error) => {
+                        winston.error(error);
+                        response(error, null);
+                    });
             }
-
-            const documentId = connectionsMap[clientId];
-            const rawMessage: core.IRawOperationMessage = {
-                clientId,
-                documentId,
-                operation: message,
-                timestamp: Date.now(),
-                type: core.RawOperationType,
-                userId: null,
-            };
-
-            throughput.produce();
-
-            // Add trace
-            rawMessage.operation.traces.push( {service: "alfred", action: "start", timestamp: Date.now()} );
-
-            sendAndTrack(rawMessage).then(
-                (responseMessage) => {
-                    response(null, responseMessage);
-                },
-                (error) => {
-                    winston.error(error);
-                    response(error, null);
-                });
         });
 
         // Message sent when a ping operation is submitted to the router
@@ -148,7 +151,8 @@ export function register(
             // Ack the unacked message.
             if (!message.acked) {
                 message.acked = true;
-                return response(null, message);
+                // return response(null, message);
+                socket.send(message, "pingObject");
             } else {
                 // Only write if the traces are correctly timestamped twice.
                 if (message.traces !== undefined && message.traces.length === 2) {

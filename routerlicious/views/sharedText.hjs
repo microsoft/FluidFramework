@@ -12,7 +12,7 @@
             var config = {{{ config }}};
             var version = {{{ version }}};
             console.log(`Starting load at - ${performance.now()}`);
-            controller.sharedText.onLoad("{{ id }}", version, config);
+            controller.sharedText.onLoad("{{ id }}", version, config, "{{ template }}");
         </script>
     {{/scripts}}
 {{/layout}}
