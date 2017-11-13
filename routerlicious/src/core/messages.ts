@@ -1,13 +1,10 @@
 import * as api from "../api-core";
 
-// String identifying the update reference sequence number message
-export const UpdateReferenceSequenceNumberType = "UpdateReferenceSequenceNumber";
-
 // String identifying the raw operation message
-export const RawOperationType = "RawOperation";
+export const RawOperationType: string = "RawOperation";
 
 // String identifying the sequenced operation message
-export const SequencedOperationType = "SequencedOperation";
+export const SequencedOperationType: string = "SequencedOperation";
 
 /**
  * Base class for messages placed on the distributed log

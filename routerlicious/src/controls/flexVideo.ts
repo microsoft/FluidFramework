@@ -60,7 +60,7 @@ export class FlexVideo extends ui.Component {
     }
 
     public updateTime(time: number) {
-        if (Math.abs(this.video.currentTime - time) > 2) {
+        if (Math.abs(this.video.currentTime - time) > .5) {
             this.video.currentTime = time;
         }
     }

@@ -44,6 +44,10 @@ scriptorium:
   name: scriptorium
   replicas: 1
 
+routemaster:
+  name: routemaster
+  replicas: 1
+
 tmz:
   name: tmz
   replicas: 1

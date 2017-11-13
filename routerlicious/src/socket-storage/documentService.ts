@@ -1,6 +1,7 @@
 import * as resources from "gitresources";
 import cloneDeep = require("lodash/cloneDeep");
 import performanceNow = require("performance-now");
+import * as request from "request";
 import * as io from "socket.io-client";
 import * as api from "../api-core";
 import { DocumentStorageService } from "./blobStorageService";
@@ -51,8 +52,11 @@ export class DocumentService implements api.IDocumentService {
     private eventMap: EventMap = {};
     private socket;
 
-    constructor(url: string, private deltaStorage: api.IDeltaStorageService,
-                private blobStorge: api.IBlobStorageService) {
+    constructor(
+        private url: string,
+        private deltaStorage: api.IDeltaStorageService,
+        private blobStorge: api.IBlobStorageService) {
+
         debug(`Creating document service ${performanceNow()}`);
         this.socket = io(url, { transports: ["websocket"] });
     }
@@ -129,6 +133,29 @@ export class DocumentService implements api.IDocumentService {
         return document;
     }
 
+    public async branch(id: string): Promise<string> {
+        const forkId = await this.createFork(id);
+
+        return new Promise<string>((resolve, reject) => {
+            const interval = setInterval(
+                () => {
+                    this.getForks(id).then(
+                        (forks) => {
+                            for (const fork of forks) {
+                                if (fork.id === forkId && fork.sequenceNumber !== undefined) {
+                                    clearInterval(interval);
+                                    resolve(forkId);
+                                }
+                            }
+                        },
+                        (error) => {
+                            reject(error);
+                        });
+                },
+                0);
+        });
+    }
+
     /**
      * Emits a message on the socket
      */
@@ -182,5 +209,37 @@ export class DocumentService implements api.IDocumentService {
                 connectionMap[clientId].dispatchEvent(event, clone);
             }
         }
+    }
+
+    private createFork(id: string): Promise<string> {
+        return new Promise<string>((resolve, reject) => {
+            request.post(
+                { url: `${this.url}/documents/${id}/forks`, json: true },
+                (error, response, body) => {
+                    if (error) {
+                        reject(error);
+                    } else if (response.statusCode !== 201) {
+                        reject(response.statusCode);
+                    } else {
+                        resolve(body);
+                    }
+                });
+        });
+    }
+
+    private getForks(id: string): Promise<any> {
+        return new Promise<string>((resolve, reject) => {
+            request.get(
+                { url: `${this.url}/documents/${id}/forks`, json: true },
+                (error, response, body) => {
+                    if (error) {
+                        reject(error);
+                    } else if (response.statusCode !== 200) {
+                        reject(response.statusCode);
+                    } else {
+                        resolve(body);
+                    }
+                });
+        });
     }
 }

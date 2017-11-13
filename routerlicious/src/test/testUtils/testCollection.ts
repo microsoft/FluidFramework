@@ -15,7 +15,15 @@ export class TestCollection implements ICollection<any> {
         return Promise.resolve(this.findOneInternal(id));
     }
 
-    public async upsert(id: string, values: any): Promise<void> {
+    public async update(id: string, filter: any, set: any, addToSet: any): Promise<void> {
+        let value = this.findOneInternal(id);
+        if (!value) {
+            return Promise.reject("Not found");
+        }
+        _.extend(value, set);
+    }
+
+    public async upsert(id: string, filter: any, set: any, addToSet: any): Promise<void> {
         let value = this.findOneInternal(id);
         if (!value) {
             value = {
@@ -24,7 +32,7 @@ export class TestCollection implements ICollection<any> {
             this.collection.push(value);
         }
 
-        _.extend(value, values);
+        _.extend(value, set);
     }
 
     public async insertOne(id: string, values: any): Promise<any> {

@@ -249,6 +249,11 @@ export interface IDocumentResource {
 
 export interface IDocumentService {
     connect(id: string, version: resources.ICommit, connect: boolean, encrypted: boolean): Promise<IDocumentResource>;
+
+    /**
+     * Creates a branch of the document with the given ID. Returns the new ID.
+     */
+    branch(id: string): Promise<string>;
 }
 
 export interface IBlobStorageService {

@@ -71,4 +71,8 @@ export class TestDocumentService implements api.IDocumentService {
 
         return Promise.resolve(document);
     }
+
+    public branch(id: string): Promise<string> {
+        return Promise.reject("Not implemented");
+    }
 }

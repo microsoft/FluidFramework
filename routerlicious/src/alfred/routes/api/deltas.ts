@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { Provider } from "nconf";
-import * as api from "../../api-core";
-import * as utils from "../../utils";
+import * as api from "../../../api-core";
+import * as utils from "../../../utils";
 
 export function getDeltas(
     mongoManager: utils.MongoManager,
