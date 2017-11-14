@@ -5,6 +5,18 @@ export interface IAuthor {
     date: string;
 }
 
+export interface ICommitter {
+    name: string;
+    email: string;
+    // ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ
+    date: string;
+}
+
+export interface ICommitHash {
+    sha: string;
+    url: string;
+}
+
 export interface ICreateCommitParams {
     message: string;
     tree: string;
@@ -15,11 +27,12 @@ export interface ICreateCommitParams {
 
 export interface ICommit {
     sha: string;
-    tree: {
-        sha: string,
-        url: string,
-    };
     url: string;
+    author: IAuthor;
+    committer: ICommitter;
+    message: string;
+    tree: ICommitHash;
+    parents: ICommitHash[];
 }
 
 export interface IBlob {
