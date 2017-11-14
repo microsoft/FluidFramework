@@ -116,6 +116,7 @@ export function create(
     app.use("/scribe", routes.scribe);
     app.use("/intelligence", routes.intelligence);
     app.use("/democreator", routes.demoCreator);
+    app.use("/video", routes.video);
     app.use("/login", routes.login);
     app.use("/ping", routes.ping);
     app.use(routes.home);
