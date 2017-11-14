@@ -131,8 +131,7 @@ export class DeltaManager {
      */
     private handleOutOfOrderMessage(message: protocol.ISequencedDocumentMessage) {
         if (message.sequenceNumber <= this.baseSequenceNumber) {
-            // tslint:disable-next-line:max-line-length
-            debug(`Received duplicate message ${this.documentId}@${message.sequenceNumber}...${this.baseSequenceNumber}`);
+            debug(`Received duplicate message ${this.documentId}@${message.sequenceNumber}`);
             return;
         }
 
