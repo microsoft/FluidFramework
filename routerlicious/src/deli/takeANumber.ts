@@ -1,3 +1,4 @@
+import { EventEmitter } from "events";
 import * as winston from "winston";
 import * as agent from "../agent";
 import * as api from "../api-core";
@@ -11,8 +12,6 @@ interface IPendingTicket<T> {
     resolve: (value?: T | PromiseLike<T>) => void;
     reject: (value?: T | PromiseLike<T>) => void;
 }
-
-const StartingSequenceNumber = 0;
 
 // We expire clients after 5 minutes of no activity
 export const ClientSequenceTimeout = 5 * 60 * 1000;
@@ -36,6 +35,7 @@ const SequenceNumberComparer: utils.IComparer<IClientSequenceNumber> = {
  * Class to handle distributing sequence numbers to a collaborative object
  */
 export class TakeANumber {
+    private events = new EventEmitter();
     private throughput = new ThroughputCounter(winston.info, "Delta Topic ");
     private queue: Array<IPendingTicket<void>> = [];
     private error: any;
@@ -48,20 +48,19 @@ export class TakeANumber {
 
     constructor(
         private documentId: string,
-        private collection: core.ICollection<any>,
+        private collection: core.ICollection<core.IDocument>,
         private producer: utils.kafkaProducer.IProducer) {
+
         // Lookup the last sequence number stored
         const dbObjectP = this.collection.findOne({ _id: this.documentId });
         dbObjectP.then(
             (dbObject) => {
                 if (!dbObject) {
-                    throw new Error("Object does not exist");
+                    this.events.emit("error", "Object does not exist - cannot sequence");
+                    return;
                 }
 
-                // TODO add in a deli specific sequencing field here?
-
-                // The object exists but we may have yet to update the deli related fields
-
+                // Initialize TakeANumber based on Deli related fields
                 if (dbObject.clients) {
                     for (const client of dbObject.clients) {
                         this.upsertClient(
@@ -69,10 +68,17 @@ export class TakeANumber {
                             client.referenceSequenceNumber,
                             client.lastUpdate);
                     }
+                } else {
+                    const parentInfo = dbObject.parent
+                        // tslint:disable-next-line:max-line-length
+                        ? ` from ${dbObject.parent.id}@${dbObject.parent.sequenceNumber}:${dbObject.parent.minimumSequenceNumber}`
+                        : "";
+                    winston.info(`New document ${documentId}${parentInfo}`);
                 }
 
-                this.sequenceNumber = dbObject.sequenceNumber ? dbObject.sequenceNumber : StartingSequenceNumber;
-                this.logOffset = dbObject.logOffset ? dbObject.logOffset : undefined;
+                // Initialize counting context
+                this.sequenceNumber = dbObject.sequenceNumber;
+                this.logOffset = dbObject.logOffset;
 
                 this.resolvePending();
             },
@@ -143,6 +149,13 @@ export class TakeANumber {
         return this.logOffset;
     }
 
+    /**
+     * Adds in a new event listener
+     */
+    public on(event: string, listener: (...args: any[]) => void) {
+        this.events.on(event, listener);
+    }
+
     private ticketCore(rawMessage: any, trace: api.ITrace): Promise<void> {
         // In cases where we are reprocessing messages we have already checkpointed exit early
         if (rawMessage.offset < this.logOffset) {
@@ -166,14 +179,6 @@ export class TakeANumber {
         // Update and retrieve the minimum sequence number
         const message = objectMessage as core.IRawOperationMessage;
 
-        if (message.operation.type === api.CreateDeltaStream) {
-            winston.info(`Create document message`);
-
-            // If there is a parent branch specified we need to add it in to the list
-
-            // Use parent branch to seed the ticketing context
-        }
-
         // Process the reference sequence number for non-system messages
         if (message.clientId) {
             if (message.operation.referenceSequenceNumber < this.minimumSequenceNumber) {
@@ -193,7 +198,7 @@ export class TakeANumber {
             if (message.operation.type === api.ClientLeave) {
                 this.removeClient(message.operation.contents);
             } else if (message.operation.type === api.Fork) {
-                winston.info(`Fork ${message.documentId} -> ${message.operation}`);
+                winston.info(`Fork ${message.documentId} -> ${message.operation.contents.name}`);
             } else if (message.operation.type === api.Integrate) {
                 // Need to provide the mapping from the branch space to this one
                 winston.info(`Integration message ${message.operation.contents.documentId} -> ${message.documentId}`);

@@ -6,6 +6,8 @@ import * as core from "../core";
 import * as git from "../git-storage";
 import * as utils from "../utils";
 
+const StartingSequenceNumber = 0;
+
 /**
  * Retrieves database details for the given document
  */
@@ -29,7 +31,20 @@ async function getOrCreateObject(
 
     const db = await mongoManager.getDatabase();
     const collection = db.collection<core.IDocument>(documentsCollectionName);
-    const result = await collection.findOrCreate({ _id: id }, { _id: id, privateKey, publicKey, forks: [] });
+    const result = await collection.findOrCreate(
+        {
+            _id: id,
+        },
+        {
+            _id: id,
+            clients: undefined,
+            forks: [],
+            logOffset: undefined,
+            parent: null,
+            privateKey,
+            publicKey,
+            sequenceNumber: StartingSequenceNumber,
+        });
 
     return result;
 }
@@ -120,11 +135,11 @@ export async function createFork(
     winston.info(JSON.stringify(head));
 
     let sequenceNumber: number;
-    let minSequenceNumber: number;
+    let minimumSequenceNumber: number;
     if (head === null) {
-        // Set the Seq# and MSN# to 0
-        minSequenceNumber = 0;
-        sequenceNumber = 0;
+        // Set the Seq# and MSN# to StartingSequenceNumber
+        minimumSequenceNumber = StartingSequenceNumber;
+        sequenceNumber = StartingSequenceNumber;
     } else {
         // Create a new commit, referecing the ref head, but swap out the metadata to indicate the branch details
 
@@ -134,15 +149,27 @@ export async function createFork(
 
     // Get access to Mongo to update the route tables
     const db = await mongoManager.getDatabase();
-    const collection = db.collection<any>(documentsCollectionName);
+    const collection = db.collection<core.IDocument>(documentsCollectionName);
 
     // Insert the fork entry and update the parent to prep storage for both objects
-    const insertFork = collection.insertOne({ _id: name, forks: [], parent: id });
+    const insertFork = collection.insertOne(
+        {
+            _id: name,
+            clients: undefined,
+            forks: [],
+            logOffset: undefined,
+            parent: {
+                id,
+                minimumSequenceNumber,
+                sequenceNumber,
+            },
+            sequenceNumber,
+        });
     const updateParent = await collection.update({ _id: id }, null, { forks: { id: name } });
     await Promise.all([insertFork, updateParent]);
 
     // Notify the parent branch of the fork and the desire to integrate changes
-    await sendIntegrateStream(id, sequenceNumber, minSequenceNumber, name, producer);
+    await sendIntegrateStream(id, sequenceNumber, minimumSequenceNumber, name, producer);
 
     return name;
 }
