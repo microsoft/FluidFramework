@@ -21,6 +21,9 @@ export const ClientLeave = "leave";
 // System message to indicate the creation of a new fork
 export const Fork = "fork";
 
+// Message indication the creation of a new collaborative document
+export const CreateDeltaStream = "createDeltaStream";
+
 // Message sent when forwarding a sequenced message to an upstream branch
 export const Integrate = "integrate";
 

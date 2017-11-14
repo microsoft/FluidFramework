@@ -10,7 +10,7 @@ export class DocumentManager {
         collection: core.ICollection<core.IDocument>,
         deltas: core.ICollection<any>): Promise<DocumentManager> {
 
-        const document = await collection.findOne(id);
+        const document = await collection.findOne({ _id: id });
         return new DocumentManager(document, collection, deltas);
     }
 
@@ -43,9 +43,13 @@ export class DocumentManager {
         // If fork is already active because we are reprocessing a message we can skip this step. But will assert
         // the sequence number is identical
         await this.collection.update(
-            this.document._id,
-            { "forks.id": id },
-            { "forks.$.sequenceNumber": sequenceNumber },
+            {
+                "_id": this.document._id,
+                "forks.id": id,
+            },
+            {
+                "forks.$.sequenceNumber": sequenceNumber,
+            },
             null);
     }
 
@@ -104,14 +108,14 @@ export class Router {
     /**
      * Callback invoked to process a message
      */
-    private async routeCore(message: core.ISequencedOperationMessage) {
-        // Switch off the message type and route to the appropriate handler
-        switch (message.operation.type) {
-            case api.Fork:
-                return this.createFork(message);
-            default:
-                return this.routeToForks(message);
+    private async routeCore(message: core.ISequencedOperationMessage): Promise<void> {
+        // Create the fork first then route any messages. This will make the fork creation the first message
+        // routed to the fork
+        if (message.operation.type === api.Fork) {
+            await this.createFork(message);
         }
+
+        return this.routeToForks(message);
     }
 
     private async createFork(message: core.ISequencedOperationMessage): Promise<void> {
@@ -128,15 +132,16 @@ export class Router {
             return;
         }
 
+        // TODO what do I want to do here - I stored this sequence number in the branch table
         // Load all deltas from the current document up to forkSequenceNumber and forward them
         // to the forked document
         // Create an optional filter to restrict the delta range
-        const deltas = await document.getDeltas(forkSequenceNumber);
-        console.log(`Retrieved ${deltas.length} deltas`);
-        for (const delta of deltas) {
-            console.log(`Routing ${delta.operation}`);
-            this.routeToDeli(forkId, delta);
-        }
+        // const deltas = await document.getDeltas(forkSequenceNumber);
+        // console.log(`Retrieved ${deltas.length} deltas`);
+        // for (const delta of deltas) {
+        //     console.log(`Routing ${delta.operation}`);
+        //     this.routeToDeli(forkId, delta);
+        // }
 
         // Activating the fork will complete the operation
         await document.activateFork(forkId, forkSequenceNumber);
@@ -159,40 +164,22 @@ export class Router {
      */
     private routeToDeli(fork: string, message: core.ISequencedOperationMessage) {
         winston.info(`Routing ${message.documentId}@${message.operation.sequenceNumber} to ${fork}`);
-        // const rawMessage: core.IRawOperationMessage = {
-        //     clientId: null,
-        //     documentId: fork,
-        //     operation: {
-        //         clientSequenceNumber: -1,
-        //         contents: message,
-        //         encrypted: false,
-        //         encryptedContents: null,
-        //         referenceSequenceNumber: -1,
-        //         traces: [],
-        //         type: api.Integrate,
-        //     },
-        //     timestamp: Date.now(),
-        //     type: core.RawOperationType,
-        //     userId: null,
-        // };
 
-        // Completely swap the message into what looks like a raw mesage - this will flip to a custom
-        // integration wrapped messagae later
         const rawMessage: core.IRawOperationMessage = {
-            clientId: message.operation.clientId,
+            clientId: null,
             documentId: fork,
             operation: {
-                clientSequenceNumber: message.operation.clientSequenceNumber,
-                contents: message.operation.contents,
+                clientSequenceNumber: -1,
+                contents: message,
                 encrypted: false,
                 encryptedContents: null,
-                referenceSequenceNumber: message.operation.referenceSequenceNumber,
-                traces: message.operation.traces,
-                type: message.operation.type,
+                referenceSequenceNumber: -1,
+                traces: [],
+                type: api.Integrate,
             },
             timestamp: Date.now(),
             type: core.RawOperationType,
-            userId: message.operation.userId,
+            userId: null,
         };
 
         // TODO handle the output of this promise and update any errors, etc...

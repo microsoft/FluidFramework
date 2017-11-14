@@ -10,4 +10,8 @@ export interface IDocument {
     _id: string;
 
     forks: IFork[];
+
+    publicKey: string;
+
+    privateKey: string;
 }

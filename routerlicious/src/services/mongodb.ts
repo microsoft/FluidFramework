@@ -1,4 +1,3 @@
-import * as _ from "lodash";
 import { Collection, Db, MongoClient, MongoClientOptions } from "mongodb";
 import * as core from "../core";
 
@@ -6,27 +5,26 @@ export class MongoCollection<T> implements core.ICollection<T> {
     constructor(private collection: Collection<T>) {
     }
 
-    public find(query: any, sort: any): Promise<T[]> {
+    public find(query: Object, sort: any): Promise<T[]> {
         return this.collection
             .find(query)
             .sort(sort)
             .toArray();
     }
 
-    public findOne(id: string): Promise<T> {
-        return this.collection.findOne({ _id: id });
+    public findOne(query: Object): Promise<T> {
+        return this.collection.findOne(query);
     }
 
-    public async update(id: string, select: any, set: any, addToSet: any): Promise<void> {
-        return this.updateCore(id, select, set, addToSet, false);
+    public async update(filter: Object, set: any, addToSet: any): Promise<void> {
+        return this.updateCore(filter, set, addToSet, false);
     }
 
-    public async upsert(id: string, select: any, set: any, addToSet: any): Promise<void> {
-        return this.updateCore(id, select, set, addToSet, true);
+    public async upsert(filter: Object, set: any, addToSet: any): Promise<void> {
+        return this.updateCore(filter, set, addToSet, true);
     }
 
-    public async insertOne(id: string, values: any): Promise<void> {
-        const value = _.extend( { _id: id }, values);
+    public async insertOne(value: T): Promise<void> {
         await this.collection.insertOne(value);
     }
 
@@ -38,17 +36,34 @@ export class MongoCollection<T> implements core.ICollection<T> {
         await this.collection.createIndex(index, { unique });
     }
 
-    private async updateCore(id: string, select: any, set: any, addToSet: any, upsert: boolean): Promise<void> {
+    public async findOrCreate(query: any, value: T): Promise<{ value: T, existing: boolean }> {
+        const result = await this.collection.findOneAndUpdate(
+            query,
+            {
+                $setOnInsert: value,
+            },
+            {
+                returnOriginal: true,
+                upsert: true,
+            });
+
+        if (result.value) {
+            return { value: result.value, existing: true };
+        } else {
+            return { value, existing: false };
+        }
+    }
+
+    private async updateCore(filter: any, set: any, addToSet: any, upsert: boolean): Promise<void> {
         const update: any = {};
         if (set) {
-            update.$set = _.extend( { _id: id }, set);
+            update.$set = set;
         }
 
         if (addToSet) {
             update.$addToSet = addToSet;
         }
 
-        const filter = _.extend({ _id: id }, select);
         const options = { upsert };
 
         await this.collection.updateOne(filter, update, options);

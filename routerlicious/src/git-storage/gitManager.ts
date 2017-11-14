@@ -96,6 +96,18 @@ export class GitManager {
         return this.historian.createCommit(this.repository, commit);
     }
 
+    public async getRef(ref: string): Promise<resources.IRef> {
+        return this.historian
+            .getRef(this.repository, ref)
+            .catch((error) => {
+                if (error === 400 || error === 404) {
+                    return null;
+                } else {
+                    return Promise.reject(error);
+                }
+            });
+    }
+
     public async upsertRef(branch: string, commitSha: string): Promise<resources.IRef> {
         // Update (force) the ref to the new commit
         const ref: resources.IPatchRefParams = {

@@ -1,16 +1,28 @@
 import { Router } from "express";
 import { Provider } from "nconf";
-// import * as api from "../../../api-core";
+import * as git from "../../../git-storage";
 import * as utils from "../../../utils";
 import * as storage from "../../storage";
 
 export function create(
     config: Provider,
+    gitManager: git.GitManager,
     mongoManager: utils.MongoManager,
     producer: utils.kafkaProducer.IProducer): Router {
 
     const deltasCollectionName = config.get("mongo:collectionNames:documents");
     const router: Router = Router();
+
+    router.get("/:id", (request, response, next) => {
+        const documentP = storage.getDocument(mongoManager, deltasCollectionName, request.params.id);
+        documentP.then(
+            (document) => {
+                response.status(200).json(document);
+            },
+            (error) => {
+                response.status(400).json(error);
+            });
+    });
 
     /**
      * Lists all forks of the specified document
@@ -30,7 +42,12 @@ export function create(
      * Creates a new fork for the specified document
      */
     router.post("/:id/forks", (request, response, next) => {
-        const forkIdP = storage.createFork(producer, mongoManager, deltasCollectionName, request.params.id);
+        const forkIdP = storage.createFork(
+            producer,
+            gitManager,
+            mongoManager,
+            deltasCollectionName,
+            request.params.id);
         forkIdP.then(
             (forkId) => {
                 response.status(201).json(forkId);
