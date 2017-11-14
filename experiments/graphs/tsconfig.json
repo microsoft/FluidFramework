@@ -15,7 +15,6 @@
     "include": [
         "src/prague.umd.d.ts",
         "src/prague.d.ts",
-        "src/index.ts",
         "src/graphDemo.ts",
         "src/graphLib.d.ts"
     ]
