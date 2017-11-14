@@ -158,7 +158,7 @@ export class Document {
             // Loads the document from header.
             const encryptedProperty = "encrypted";
             const document = await service.connect(id, version, connect, options[encryptedProperty]);
-            const returnValue = new Document(document, registry, options);
+            const returnValue = new Document(document, registry, service, options);
 
             // Load in distributed objects stored within the document
             for (const distributedObject of document.distributedObjects) {

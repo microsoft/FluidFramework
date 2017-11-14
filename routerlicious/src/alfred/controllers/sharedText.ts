@@ -140,9 +140,7 @@ async function loadCommit(id: string, version: resources.ICommit, config: any) {
     theFlow = container.flowView;
     host.attach(container);
 
-    getInsights(collabDoc.getRoot(), sharedString.id).then((insightsMap) => {
-        container.trackInsights(insightsMap);
-    });
+    getInsights(collabDoc.getRoot(), sharedString.id);
 
     if (sharedString.client.getLength() > 0) {
         theFlow.render(0, true);

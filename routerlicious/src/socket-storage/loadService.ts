@@ -59,4 +59,8 @@ export class LoadService implements api.IDocumentService {
         return document;
     }
 
+    public branch(id: string): Promise<string> {
+        return Promise.resolve("");
+    }
+
 }
