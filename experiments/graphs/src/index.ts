@@ -35,7 +35,7 @@ class GraphProxy {
 }
 
 function createGraphProxy() {
-
+    
 }
 
 async function run(id: string): Promise<void> {
@@ -48,7 +48,7 @@ async function run(id: string): Promise<void> {
 
     const rootView = await collabDoc.getRoot().getView();
     if (!rootView.has("graphs")) {
-        rootView.set("graphs", this.doc.createMap());
+        rootView.set("graphs", collabDoc.createMap());
     }
 }
 

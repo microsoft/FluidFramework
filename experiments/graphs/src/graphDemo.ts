@@ -1,166 +1,230 @@
-		// Program starts here. Creates a sample graph in the
-		// DOM node with the specified ID. This function is invoked
-		// from the onLoad event handler of the document (see below).
-		function main(container)
-		{
-			// Checks if the browser is supported
-			if (!mxClient.isBrowserSupported())
-			{
-				// Displays an error message if the browser is not supported.
-				mxUtils.error('Browser is not supported!', 200, false);
-			}
-			else
-			{
-				mxEvent.disableContextMenu(container);
-				
-				var mxCellRendererInstallCellOverlayListeners = mxCellRenderer.prototype.installCellOverlayListeners;
-				mxCellRenderer.prototype.installCellOverlayListeners = function(state, overlay, shape)
-				{
-					mxCellRendererInstallCellOverlayListeners.apply(this, arguments);
+// For local development
+// const routerlicious = "http://localhost:3000";
+// const historian = "http://localhost:3001";
+const routerlicious = "http://praguekube.westus2.cloudapp.azure.com";
+const historian = "http://prague-historian.westus2.cloudapp.azure.com";
+const repository = "prague";
 
-					mxEvent.addListener(shape.node, (mxClient.IS_POINTER) ? 'pointerdown' : 'mousedown', function (evt)
-					{
-						overlay.fireEvent(new mxEventObject('pointerdown', 'event', evt, 'state', state));
-					});
-					
-					if (!mxClient.IS_POINTER && mxClient.IS_TOUCH)
-					{
-						mxEvent.addListener(shape.node, 'touchstart', function (evt)
-						{
-							overlay.fireEvent(new mxEventObject('pointerdown', 'event', evt, 'state', state));
-						});
-					}
-				};
-				
-				// Creates the graph inside the given container
-				var graph = new mxGraph(container);
-				graph.setPanning(true);
-				graph.panningHandler.useLeftButtonForPanning = true;
-				graph.setAllowDanglingEdges(false);
-				graph.connectionHandler.select = false;
-				graph.view.setTranslate(20, 20);
+// Register endpoint connection
+prague.socketStorage.registerAsDefault(routerlicious, historian, repository);
 
-				// Enables rubberband selection
-				new mxRubberband(graph);
-				
-				// Gets the default parent for inserting new cells. This
-				// is normally the first child of the root (ie. layer 0).
-				var parent = graph.getDefaultParent();
-				
-				var addOverlay = function(cell)
-				{
-					// Creates a new overlay with an image and a tooltip
-					var overlay = new mxCellOverlay(new mxImage('images/add.png', 24, 24), 'Add outgoing');
-					overlay.cursor = 'hand';
-
-					// Installs a handler for clicks on the overlay							
-					overlay.addListener(mxEvent.CLICK, function(sender, evt2)
-					{
-						graph.clearSelection();
-						var geo = graph.getCellGeometry(cell);
-						
-						var v2;
-						
-						executeLayout(function()
-						{
-							v2 = graph.insertVertex(parent, null, 'World!', geo.x, geo.y, 80, 30);
-							addOverlay(v2);
-							graph.view.refresh(v2);
-							graph.insertEdge(parent, null, '', cell, v2);
-						}, function()
-						{
-							graph.scrollCellToVisible(v2);
-						});
-					});
-					
-					// Special CMS event
-					overlay.addListener('pointerdown', function(sender, eo)
-					{
-						var evt2 = eo.getProperty('event');
-						var state = eo.getProperty('state');
-						
-						graph.popupMenuHandler.hideMenu();
-						graph.stopEditing(false);
-						
-						var pt = mxUtils.convertPoint(graph.container,
-								mxEvent.getClientX(evt2), mxEvent.getClientY(evt2));
-						graph.connectionHandler.start(state, pt.x, pt.y);
-						graph.isMouseDown = true;
-						graph.isMouseTrigger = mxEvent.isMouseEvent(evt2);
-						mxEvent.consume(evt2);
-					});
-					
-					// Sets the overlay for the cell in the graph
-					graph.addCellOverlay(cell, overlay);
+function getLatestVersion(id: string): Promise<any> {
+	const versionP = new Promise<any>((resolve, reject) => {
+		const versionsP = $.getJSON(`${historian}/repos/${repository}/commits?sha=${encodeURIComponent(id)}&count=1`);
+		versionsP
+			.done((version) => {
+				resolve(version[0]);
+			})
+			.fail((error) => {
+				if (error.status === 400) {
+					resolve(null);
+				} else {
+					reject(error.status);
 				}
-								
-				// Adds cells to the model in a single step
-				graph.getModel().beginUpdate();
-				var v1;
-				try
-				{
-					v1 = graph.insertVertex(parent, null, 'Hello,', 0, 0, 80, 30);
-					addOverlay(v1);
-				}
-				finally
-				{
-					// Updates the display
-					graph.getModel().endUpdate();
-				}
+			});
+	});
 
-				var layout = new mxHierarchicalLayout(graph, mxConstants.DIRECTION_WEST);
-				
-				var executeLayout = function(change?, post?)
-				{
-					graph.getModel().beginUpdate();
-					try
-					{
-						if (change != null)
-						{
-							change();
-						}
-						
-		    			layout.execute(graph.getDefaultParent(), v1);
-					}
-					catch (e)
-					{
-						throw e;
-					}
-					finally
-					{
-						// New API for animating graph layout results asynchronously
-						var morph = new mxMorphing(graph);
-						morph.addListener(mxEvent.DONE, mxUtils.bind(this, function()
-						{
-							graph.getModel().endUpdate();
-							
-							if (post != null)
-							{
-								post();
-							}
-						}));
-						
-						morph.startAnimation();
-					}
-				};
-				
-				var edgeHandleConnect = mxEdgeHandler.prototype.connect;
-				mxEdgeHandler.prototype.connect = function(edge, terminal, isSource, isClone, me)
-				{
-					edgeHandleConnect.apply(this, arguments);
-					executeLayout();
-				};
-				
-				graph.resizeCell = function()
-				{
-					mxGraph.prototype.resizeCell.apply(this, arguments);
+	return versionP;
+}
 
-					executeLayout();
-				};
+let id = "testGraph1";
 
-				graph.connectionHandler.addListener(mxEvent.CONNECT, function()
-				{
-					executeLayout();
+interface ISharedVertex {
+
+}
+
+interface ISharedEdge {
+
+}
+
+class SharedGraph {
+	constructor(public vertices: prague.types.ISet<ISharedVertex>,
+		public edges: prague.types.ISet<ISharedEdge>) {
+
+	}
+}
+
+async function main(container: HTMLDivElement) {
+	let sharedGraph: SharedGraph;
+
+	// Get the latest version of the document
+	const version = await getLatestVersion(id);
+	console.log(version);
+
+	// Load in the latest and connect to the document
+	const collabDoc = await prague.api.load(id, { blockUpdateMarkers: true }, version);
+
+	const rootView = await collabDoc.getRoot().getView();
+	let graphMap: prague.types.IMap;
+	if (!rootView.has("graph")) {
+		graphMap = collabDoc.createMap();
+		rootView.set("graph", graphMap);
+		let vertexSet = await graphMap.createSet<ISharedVertex>("vertices");
+		let edgeSet = await graphMap.createSet<ISharedEdge>("edges");
+		sharedGraph = new SharedGraph(vertexSet, edgeSet);
+	} else {
+		graphMap = rootView.get("graph");
+		const graphView = await graphMap.getView();
+		let vertexSet: prague.types.ISet<ISharedVertex> = graphView.get("vertices");
+		let edgeSet: prague.types.ISet<ISharedEdge> = graphView.get("edges");
+		sharedGraph = new SharedGraph(vertexSet, edgeSet);
+	}
+	mainMX(container, sharedGraph, collabDoc);
+}
+
+// Program starts here. Creates a sample graph in the
+// DOM node with the specified ID. This function is invoked
+// from the onLoad event handler of the document (see below).
+function mainMX(container: HTMLDivElement, sharedGraph: SharedGraph,
+	collabDoc: prague.api.Document) {
+	// Checks if the browser is supported
+	if (!mxClient.isBrowserSupported()) {
+		// Displays an error message if the browser is not supported.
+		mxUtils.error('Browser is not supported!', 200, false);
+	}
+	else {
+		mxEvent.disableContextMenu(container);
+
+		var mxCellRendererInstallCellOverlayListeners = mxCellRenderer.prototype.installCellOverlayListeners;
+		mxCellRenderer.prototype.installCellOverlayListeners = function (state, overlay, shape) {
+			mxCellRendererInstallCellOverlayListeners.apply(this, arguments);
+
+			mxEvent.addListener(shape.node, (mxClient.IS_POINTER) ? 'pointerdown' : 'mousedown', function (evt) {
+				overlay.fireEvent(new mxEventObject('pointerdown', 'event', evt, 'state', state));
+			});
+
+			if (!mxClient.IS_POINTER && mxClient.IS_TOUCH) {
+				mxEvent.addListener(shape.node, 'touchstart', function (evt) {
+					overlay.fireEvent(new mxEventObject('pointerdown', 'event', evt, 'state', state));
 				});
 			}
 		};
+
+		// Creates the graph inside the given container
+		var graph = new mxGraph(container);
+		graph.setPanning(true);
+		graph.panningHandler.useLeftButtonForPanning = true;
+		graph.setAllowDanglingEdges(false);
+		graph.connectionHandler.select = false;
+		graph.view.setTranslate(20, 20);
+
+		// Enables rubberband selection
+		new mxRubberband(graph);
+
+		// Gets the default parent for inserting new cells. This
+		// is normally the first child of the root (ie. layer 0).
+		var parent = graph.getDefaultParent();
+		let localVertexMap = prague.mergeTree.createMap<ISharedVertex>();
+		let localVertexIndex = 0;
+		let localIdPrefix = collabDoc.clientId;
+		function makeId(objectType: string) {
+			let countSuffix = localVertexIndex++;
+			return `${objectType}${localIdPrefix}${countSuffix}`;
+		}
+		function sendGraphUpdate(v1: IVertex, v2: IVertex, label:string, x: number, y: number,
+		width: number,height: number) {
+			v2.sharedId = makeId("N");
+			 
+		}
+		var addOverlay = function (cell) {
+			// Creates a new overlay with an image and a tooltip
+			var overlay = new mxCellOverlay(new mxImage('images/add.png', 24, 24), 'Add outgoing');
+			overlay.cursor = 'hand';
+
+			// Installs a handler for clicks on the overlay							
+			overlay.addListener(mxEvent.CLICK, function (sender, evt2) {
+				graph.clearSelection();
+				var geo = graph.getCellGeometry(cell);
+
+				var v2;
+
+				executeLayout(function () {
+					let label = "L"
+					v2 = graph.insertVertex(parent, null, label, geo.x, geo.y, 80, 30);
+					addOverlay(v2);
+					graph.view.refresh(v2);
+					graph.insertEdge(parent, null, '', cell, v2);
+					sendGraphUpdate(cell, v2,label,geo.x,geo.y,80,30);
+				}, function () {
+						graph.scrollCellToVisible(v2);
+					});
+			});
+
+			// Special CMS event
+			overlay.addListener('pointerdown', function (sender, eo) {
+				var evt2 = eo.getProperty('event');
+				var state = eo.getProperty('state');
+
+				graph.popupMenuHandler.hideMenu();
+				graph.stopEditing(false);
+
+				var pt = mxUtils.convertPoint(graph.container,
+					mxEvent.getClientX(evt2), mxEvent.getClientY(evt2));
+				graph.connectionHandler.start(state, pt.x, pt.y);
+				graph.isMouseDown = true;
+				graph.isMouseTrigger = mxEvent.isMouseEvent(evt2);
+				mxEvent.consume(evt2);
+			});
+
+			// Sets the overlay for the cell in the graph
+			graph.addCellOverlay(cell, overlay);
+		}
+
+		// Adds cells to the model in a single step
+		graph.getModel().beginUpdate();
+		var v1;
+		try {
+			v1 = graph.insertVertex(parent, null, 'Hello,', 0, 0, 80, 30);
+			addOverlay(v1);
+		}
+		finally {
+			// Updates the display
+			graph.getModel().endUpdate();
+		}
+
+		var layout = new mxHierarchicalLayout(graph, mxConstants.DIRECTION_WEST);
+
+		var executeLayout = function (change?, post?) {
+			graph.getModel().beginUpdate();
+			try {
+				if (change != null) {
+					change();
+				}
+
+				layout.execute(graph.getDefaultParent(), v1);
+			}
+			catch (e) {
+				throw e;
+			}
+			finally {
+				// New API for animating graph layout results asynchronously
+				var morph = new mxMorphing(graph);
+				morph.addListener(mxEvent.DONE, mxUtils.bind(this, function () {
+					graph.getModel().endUpdate();
+
+					if (post != null) {
+						post();
+					}
+				}));
+
+				morph.startAnimation();
+			}
+		};
+
+		var edgeHandleConnect = mxEdgeHandler.prototype.connect;
+		mxEdgeHandler.prototype.connect = function (edge, terminal, isSource, isClone, me) {
+			edgeHandleConnect.apply(this, arguments);
+			executeLayout();
+		};
+
+		graph.resizeCell = function () {
+			mxGraph.prototype.resizeCell.apply(this, arguments);
+
+			executeLayout();
+		};
+
+		graph.connectionHandler.addListener(mxEvent.CONNECT, function () {
+			executeLayout();
+		});
+	}
+};
