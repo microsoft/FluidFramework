@@ -74,7 +74,7 @@ export class TakeANumber {
                     return;
                 }
 
-                // Initialize TakeANumber based on Deli related fields
+                // Instantiate existing clients
                 if (dbObject.clients) {
                     for (const client of dbObject.clients) {
                         this.upsertClient(
@@ -83,14 +83,13 @@ export class TakeANumber {
                             client.lastUpdate,
                             client.canEvict);
                     }
-                } else {
-                    const parentInfo = dbObject.parent
-                        // tslint:disable-next-line:max-line-length
-                        ? ` from ${dbObject.parent.id}@${dbObject.parent.sequenceNumber}:${dbObject.parent.minimumSequenceNumber}`
-                        : "";
-                    winston.info(`New document ${documentId}${parentInfo}`);
+                }
 
-                    if (dbObject.parent) {
+                // Setup branch information
+                if (dbObject.parent) {
+                    if (dbObject.branchMap) {
+                        this.branchMap = new RangeTracker(dbObject.branchMap);
+                    } else {
                         // Initialize the range tracking window
                         this.branchMap = new RangeTracker(
                             dbObject.parent.minimumSequenceNumber,
@@ -100,6 +99,7 @@ export class TakeANumber {
                             this.branchMap.add(i, i);
                         }
 
+                        // Add in the client representing the parent
                         this.upsertClient(
                             getBranchClientId(dbObject.parent.id),
                             dbObject.parent.minimumSequenceNumber,
@@ -167,6 +167,7 @@ export class TakeANumber {
                 _id: this.documentId,
             },
             {
+                branchMap: this.branchMap ? this.branchMap.serialize() : undefined,
                 clients,
                 logOffset: this.logOffset,
                 sequenceNumber : this.sequenceNumber,
@@ -218,8 +219,6 @@ export class TakeANumber {
 
         // TODO - move this back to the below - for now we don't do the work just want to know it made it!
         if (message.operation.type === api.Integrate) {
-            winston.info(`Integration message ${message.operation.contents.documentId} -> ${message.documentId}`);
-
             // Branch operation is the original message
             const branchOperation = message.operation.contents as core.ISequencedOperationMessage;
             const branchDocumentMessage = branchOperation.operation as api.ISequencedDocumentMessage;

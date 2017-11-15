@@ -57,7 +57,7 @@ export class RangeTracker {
             lastPrimary: this.lastPrimary,
             lastSecondary: this.lastSecondary,
             ranges: cloneDeep(this.ranges),
-        }
+        };
     }
 
     // primary is time - secondary is the MSN

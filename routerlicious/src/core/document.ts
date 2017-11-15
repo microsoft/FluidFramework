@@ -1,3 +1,5 @@
+import { IRangeTrackerSnapshot } from "../core-utils";
+
 export interface IFork {
     // The id of the fork
     id: string;
@@ -31,6 +33,7 @@ export interface IDocument {
 
     privateKey?: string;
 
+    // TODO package up the below under some kind of deli object
     // Deli specific information - we might want to consolidate this into a field to separate it
     clients: [{
         // Whether deli is allowed to evict the client from the MSN queue (i.e. due to timeouts, etc...)
@@ -42,6 +45,8 @@ export interface IDocument {
 
         lastUpdate: number,
     }];
+
+    branchMap: IRangeTrackerSnapshot;
 
     sequenceNumber: number;
 

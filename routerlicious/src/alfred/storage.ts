@@ -37,6 +37,7 @@ async function getOrCreateObject(
         },
         {
             _id: id,
+            branchMap: undefined,
             clients: undefined,
             createTime: Date.now(),
             forks: [],
@@ -158,6 +159,7 @@ export async function createFork(
     const insertFork = collection.insertOne(
         {
             _id: name,
+            branchMap: undefined,
             clients: undefined,
             createTime: Date.now(),
             forks: [],
