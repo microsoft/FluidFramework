@@ -26,12 +26,28 @@ export enum GitObjectType {
     refdelta = 7,   /** < A delta, base is given by object id. */
 }
 
+function authorToIAuthor(author: git.Signature): resources.IAuthor {
+    return {
+        date: "",
+        email: author.email,
+        name: author.name,
+    };
+}
+
+function oidToCommitHash(oid: git.Oid): resources.ICommitHash {
+    return { sha: oid.tostrS(), url: "" };
+}
+
 /**
  * Helper function to convert from a nodegit commit to our resource representation
  */
 export async function commitToICommit(commit: git.Commit): Promise<resources.ICommit> {
     const tree = await commit.getTree();
     return {
+        author: authorToIAuthor(commit.author()),
+        committer: authorToIAuthor(commit.committer()),
+        message: commit.message(),
+        parents: commit.parents().map((parent) => oidToCommitHash(parent)),
         sha: commit.id().tostrS(),
         tree: {
             sha: tree.id().tostrS(),
