@@ -78,6 +78,29 @@ describe("Routerlicious", () => {
                 });
             });
 
+            describe(".serialize", () => {
+                beforeEach(() => {
+                    rangeTracker.add(5, 10);
+                    rangeTracker.add(10, 20);
+                });
+
+                it("Should be able to create a serialized copy of the range tracker", () => {
+                    const serialized = rangeTracker.serialize();
+                    assert.ok(serialized);
+                });
+
+                it("Should be able to load a serialized copy", () => {
+                    const serialized = rangeTracker.serialize();
+                    const copy = new RangeTracker(serialized);
+                    assert.equal(rangeTracker.get(0), copy.get(0));
+                    assert.equal(rangeTracker.get(5), copy.get(5));
+                    assert.equal(rangeTracker.get(10), copy.get(10));
+                    assert.equal(rangeTracker.get(20), copy.get(20));
+                    assert.equal(rangeTracker.primaryHead, copy.primaryHead);
+                    assert.equal(rangeTracker.secondaryHead, copy.secondaryHead);
+                });
+            });
+
             describe(".get", () => {
                 it("Should return the corresponding secondary value for a primary value", () => {
                     rangeTracker.add(5, 10);

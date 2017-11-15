@@ -147,7 +147,6 @@ export class Router {
     }
 
     private async createFork(message: core.ISequencedOperationMessage): Promise<void> {
-        winston.info(`Received Fork message`);
         const contents = message.operation.contents as core.IForkOperation;
         const forkId = contents.name;
         console.log(forkId);
@@ -192,8 +191,6 @@ export class Router {
      * Routes the provided messages to deli
      */
     private routeToDeli(fork: string, message: core.ISequencedOperationMessage) {
-        winston.info(`Routing ${message.documentId}@${message.operation.sequenceNumber} to ${fork}`);
-
         // Create the integration message that sends a sequenced operation from an upstream branch to
         // the downstream branch
         const rawMessage: core.IRawOperationMessage = {
