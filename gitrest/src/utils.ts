@@ -26,11 +26,19 @@ export enum GitObjectType {
     refdelta = 7,   /** < A delta, base is given by object id. */
 }
 
-function authorToIAuthor(author: git.Signature): resources.IAuthor {
+function authorToIAuthor(author: git.Signature, time: Date): resources.IAuthor {
     return {
-        date: "",
+        date: time.toISOString(),
         email: author.email,
         name: author.name,
+    };
+}
+
+function committerToICommitter(committer: git.Signature, time: Date): resources.ICommitter {
+    return {
+        date: time.toISOString(),
+        email: committer.email,
+        name: committer.name,
     };
 }
 
@@ -44,10 +52,11 @@ function oidToCommitHash(oid: git.Oid): resources.ICommitHash {
 export async function commitToICommit(commit: git.Commit): Promise<resources.ICommit> {
     const tree = await commit.getTree();
     return {
-        author: authorToIAuthor(commit.author()),
-        committer: authorToIAuthor(commit.committer()),
+        author: authorToIAuthor(commit.author(), commit.date()),
+        committer: committerToICommitter(commit.committer(), commit.date()),
         message: commit.message(),
-        parents: commit.parents().map((parent) => oidToCommitHash(parent)),
+        // tslint:disable-next-line
+        parents: commit.parents() && commit.parents().length > 0 ? commit.parents().map((parent) => oidToCommitHash(parent)) : null,
         sha: commit.id().tostrS(),
         tree: {
             sha: tree.id().tostrS(),
