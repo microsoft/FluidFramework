@@ -128,8 +128,14 @@ export class DeliRunner implements utils.IRunner {
             // Go grab the takeANumber machine for the objectId and mark it as dirty.
             // Store it in the partition map. We need to add an eviction strategy here.
             if (!(documentId in dispensers)) {
-                dispensers[documentId] = new TakeANumber(documentId, objectsCollection, producer);
-                winston.info(`New document ${documentId}`);
+                const newDispenser = new TakeANumber(documentId, objectsCollection, producer);
+                dispensers[documentId] = newDispenser;
+
+                newDispenser.on("error", (error) => {
+                    winston.error(error);
+                });
+
+                winston.info(`Starting ticketing for ${documentId}`);
             }
             const dispenser = dispensers[documentId];
 

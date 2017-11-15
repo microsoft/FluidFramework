@@ -141,7 +141,7 @@ describe("Routerlicious", () => {
 
                     await ticketer.checkpoint();
 
-                    const document = await testCollection.findOne(testId);
+                    const document = await testCollection.findOne({ _id: testId });
                     assert.equal(document.logOffset, kafkaOffset - 1);
 
                     const sent = testKafka.getRawMessages();

@@ -1,9 +1,16 @@
 import * as assert from "assert";
+import cloneDeep = require("lodash/cloneDeep");
 
-interface IRange {
+export interface IRange {
     primary: number;
     secondary: number;
     length: number;
+}
+
+export interface IRangeTrackerSnapshot {
+    ranges: IRange[];
+    lastPrimary: number;
+    lastSecondary: number;
 }
 
 /**
@@ -13,9 +20,8 @@ interface IRange {
  */
 export class RangeTracker {
     private ranges: IRange[];
-
-    private lastPrimary;
-    private lastSecondary;
+    private lastPrimary: number;
+    private lastSecondary: number;
 
     get base() {
         return this.ranges[0].primary;
@@ -29,10 +35,29 @@ export class RangeTracker {
         return this.lastSecondary;
     }
 
-    constructor(primary: number, secondary: number) {
-        this.ranges = [{ length: 0, primary, secondary }];
-        this.lastPrimary = primary;
-        this.lastSecondary = secondary;
+    constructor(primary: IRangeTrackerSnapshot)
+    constructor(primary: number, secondary: number)
+    constructor(primary: IRangeTrackerSnapshot | number, secondary?: number) {
+        if (typeof primary === "number") {
+            this.ranges = [{ length: 0, primary, secondary }];
+            this.lastPrimary = primary;
+            this.lastSecondary = secondary;
+        } else {
+            this.ranges = cloneDeep(primary.ranges);
+            this.lastPrimary = primary.lastPrimary;
+            this.lastSecondary = primary.lastSecondary;
+        }
+    }
+
+    /**
+     * Returns a serialized form of the RangeTracker
+     */
+    public serialize(): IRangeTrackerSnapshot {
+        return {
+            lastPrimary: this.lastPrimary,
+            lastSecondary: this.lastSecondary,
+            ranges: cloneDeep(this.ranges),
+        };
     }
 
     // primary is time - secondary is the MSN

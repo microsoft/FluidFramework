@@ -9,7 +9,7 @@ export function getDefaultService(deltaUrl: string, blobUrl: string, repository:
     const gitManager = new GitManager(historian, repository);
     const blobStorage = new socketStorage.BlobStorageService(gitManager);
     const deltaStorage = new socketStorage.DeltaStorageService(deltaUrl);
-    const service = new socketStorage.DocumentService(deltaUrl, deltaStorage, blobStorage);
+    const service = new socketStorage.DocumentService(deltaUrl, deltaStorage, blobStorage, gitManager);
 
     return service;
 }
