@@ -108,7 +108,7 @@ export class FlowContainer extends ui.Component {
             this.overlayCanvas.enableInk(value);
         });
 
-        this.status.addButton("branch", "branch");
+        // this.status.addButton("branch", "branch");
         this.status.on("branch", () => {
             collabDocument.branch().then((branchId) => {
                 window.open(`/sharedText/${branchId}`, "_blank");
