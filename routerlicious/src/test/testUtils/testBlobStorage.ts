@@ -21,6 +21,10 @@ export class TestBlobStorageService implements api.IBlobStorageService  {
 
     public write(id: string, tree: api.ITree, message: string): Promise<resources.ICommit> {
         const commit: resources.ICommit = {
+            author: { date: "", email: "", name: ""},
+            committer: { date: "", email: "", name: ""},
+            message: "",
+            parents: [],
             sha: "test",
             tree: {
                 sha: "test",
