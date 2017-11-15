@@ -20,7 +20,7 @@ export interface ICommitHash {
 export interface ICreateCommitParams {
     message: string;
     tree: string;
-    parents: string[];
+    parents: ICommitHash[];
     // GitHub has signature verification on the author
     author: IAuthor;
 }
