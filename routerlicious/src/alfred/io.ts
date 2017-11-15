@@ -66,11 +66,11 @@ export function register(
                             clientId: null,
                             documentId: message.id,
                             operation: {
-                                clientSequenceNumber: 0,
+                                clientSequenceNumber: -1,
                                 contents: clientId,
                                 encrypted: false,
                                 encryptedContents: null,
-                                referenceSequenceNumber: 0,
+                                referenceSequenceNumber: -1,
                                 traces: [],
                                 type: api.ClientJoin,
                             },

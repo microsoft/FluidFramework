@@ -41,6 +41,20 @@ export interface IUpdateReferenceSequenceNumberMessage extends IObjectMessage {
 }
 
 /**
+ * Branch origin information
+ */
+export interface IBranchOrigin {
+    // Origin branch of the message
+    id: string;
+
+    // Sequence number for the message in branch id
+    sequenceNumber: number;
+
+    // Min sequence number for the message in branch id
+    minimumSequenceNumber: number;
+}
+
+/**
  * Raw message inserted into the event hub queue
  */
 export interface IRawOperationMessage extends IObjectMessage {
@@ -59,4 +73,19 @@ export interface ITicketedMessage extends IMessage {
 export interface ISequencedOperationMessage extends ITicketedMessage {
     // The sequenced operation
     operation: api.ISequencedDocumentMessage;
+
+    // Origin branch information for the message. Can be marked undefined if the current
+    // message is also the origin.
+    origin: IBranchOrigin;
+}
+
+export interface IForkOperation {
+    // The minimum sequence number for the fork
+    minSequenceNumber: number;
+
+    // The name of the target branch
+    name: string;
+
+    // The ID of messages after which we want to integrate
+    sequenceNumber: number;
 }

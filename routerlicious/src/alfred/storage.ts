@@ -38,6 +38,7 @@ async function getOrCreateObject(
         {
             _id: id,
             clients: undefined,
+            createTime: Date.now(),
             forks: [],
             logOffset: undefined,
             parent: null,
@@ -59,16 +60,18 @@ async function sendIntegrateStream(
     name: string,
     producer: utils.kafkaProducer.IProducer): Promise<void> {
 
+    const contents: core.IForkOperation = {
+        minSequenceNumber,
+        name,
+        sequenceNumber,
+    };
+
     const integrateMessage: core.IRawOperationMessage = {
         clientId: null,
         documentId: id,
         operation: {
             clientSequenceNumber: -1,
-            contents: {
-                minSequenceNumber,
-                name,
-                sequenceNumber,
-            },
+            contents,
             encrypted: false,
             encryptedContents: null,
             referenceSequenceNumber: -1,
@@ -156,6 +159,7 @@ export async function createFork(
         {
             _id: name,
             clients: undefined,
+            createTime: Date.now(),
             forks: [],
             logOffset: undefined,
             parent: {

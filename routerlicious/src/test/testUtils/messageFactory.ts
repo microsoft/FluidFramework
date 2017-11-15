@@ -86,6 +86,7 @@ export class MessageFactory {
         const message: ISequencedOperationMessage = {
             documentId: this.documentId,
             operation: sequencedOperation,
+            origin: undefined,
             type: SequencedOperationType,
         };
 
