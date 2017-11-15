@@ -11,7 +11,7 @@ describe("Routerlicious", () => {
         describe("TakeANumber", () => {
             const testId = "test";
             const testClientId = "quiet-rat";
-            const testData = [{ _id: testId }];
+            const testData = [{ _id: testId, sequenceNumber: 0, logOffset: undefined }];
             const testTrace: ITrace = null;
 
             let testCollection: TestCollection;
