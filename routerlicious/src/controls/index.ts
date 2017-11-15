@@ -3,6 +3,8 @@ export * from "./flowContainer";
 export * from "./flexView";
 export * from "./flowView";
 export * from "./image";
+export * from "./flexVideo";
+export * from "./flexVideoCanvas";
 export * from "./layerPanel";
 export * from "./popup";
 export * from "./status";

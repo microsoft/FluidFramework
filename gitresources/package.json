@@ -1,6 +1,6 @@
 {
   "name": "gitresources",
-  "version": "0.2.0",
+  "version": "0.3.1",
   "description": "Git resource definitions",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

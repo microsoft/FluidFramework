@@ -7,7 +7,8 @@ import * as utils from "../../utils";
 async function getCommits(
     repoManager: utils.RepositoryManager,
     repo: string,
-    ref: string): Promise<resources.ICommit[]> {
+    ref: string,
+    count: number): Promise<resources.ICommit[]> {
 
     const repository = await repoManager.open(repo);
     const walker = git.Revwalk.create(repository);
@@ -18,7 +19,7 @@ async function getCommits(
     // Lookup the commits specified from the given revision
     const revObj = await git.Revparse.single(repository, ref);
     walker.push(revObj.id());
-    const commits = await walker.getCommits(10);
+    const commits = await walker.getCommits(count);
 
     return await Promise.all(commits.map((commit) => utils.commitToICommit(commit)));
 }
@@ -33,7 +34,7 @@ export function create(store: nconf.Provider, repoManager: utils.RepositoryManag
     // since
     // until
     router.get("/repos/:repo/commits", (request, response, next) => {
-        const resultP = getCommits(repoManager, request.params.repo, request.query.sha);
+        const resultP = getCommits(repoManager, request.params.repo, request.query.sha, request.query.count);
         return resultP.then(
             (blob) => {
                 response.status(200).json(blob);

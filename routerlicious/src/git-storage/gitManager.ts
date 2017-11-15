@@ -126,7 +126,7 @@ export class GitManager {
                 name: "Kurt Berglund",
             },
             message,
-            parents: lastCommit.length > 0 ? [lastCommit[0].sha] : [],
+            parents: lastCommit.length > 0 ? [{sha: lastCommit[0].sha, url: ""}] : [],
             tree: tree.sha,
         };
 

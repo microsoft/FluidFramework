@@ -14,6 +14,7 @@ import * as ping from "./ping";
 import * as scribe from "./scribe";
 import * as sharedText from "./sharedText";
 import * as templates from "./templates";
+import * as video from "./video";
 
 export interface IRoutes {
     api: Router;
@@ -26,6 +27,7 @@ export interface IRoutes {
     maps: Router;
     scribe: Router;
     sharedText: Router;
+    video: Router;
     templates: Router;
 }
 
@@ -48,5 +50,6 @@ export function create(
         scribe: scribe.create(config),
         sharedText: sharedText.create(config, gitManager),
         templates: templates.create(config),
+        video: video.create(config, gitManager),
     };
 }
