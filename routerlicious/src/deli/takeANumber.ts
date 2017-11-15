@@ -238,7 +238,7 @@ export class TakeANumber {
             // A merge message contains the sequencing information in the target branch's (i.e. this)
             // coordinate space. But contains the original message in the contents.
             const transformed: core.IRawOperationMessage = {
-                clientId: getBranchClientId(branchOperation.documentId),
+                clientId: branchDocumentMessage.clientId,
                 documentId: this.documentId,
                 operation: {
                     clientSequenceNumber: branchDocumentMessage.sequenceNumber,
