@@ -215,7 +215,7 @@ export class TakeANumber {
         // Increment and grab the next sequence number
         const sequenceNumber = this.revSequenceNumber();
 
-        let origin: core.IBranchOrigin = undefined;
+        let origin: api.IBranchOrigin = undefined;
 
         // TODO - move this back to the below - for now we don't do the work just want to know it made it!
         if (message.operation.type === api.Integrate) {
@@ -309,6 +309,7 @@ export class TakeANumber {
             encrypted: message.operation.encrypted,
             encryptedContents: message.operation.encryptedContents,
             minimumSequenceNumber: this.minimumSequenceNumber,
+            origin,
             referenceSequenceNumber: message.operation.referenceSequenceNumber,
             sequenceNumber,
             traces,
@@ -322,7 +323,6 @@ export class TakeANumber {
         const sequencedMessage: core.ISequencedOperationMessage = {
             documentId: objectMessage.documentId,
             operation: outputMessage,
-            origin,
             type: core.SequencedOperationType,
         };
 

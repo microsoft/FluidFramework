@@ -35,7 +35,7 @@ export class GitManager {
     /**
      * Retrieves the object at the given revision number
      */
-    public getObject(commit: string, path: string): Promise<any> {
+    public getContent(commit: string, path: string): Promise<resources.IBlob> {
         return this.historian.getContent(this.repository, path, commit);
     }
 
@@ -98,7 +98,7 @@ export class GitManager {
 
     public async getRef(ref: string): Promise<resources.IRef> {
         return this.historian
-            .getRef(this.repository, ref)
+            .getRef(this.repository, `heads/${ref}`)
             .catch((error) => {
                 if (error === 400 || error === 404) {
                     return null;

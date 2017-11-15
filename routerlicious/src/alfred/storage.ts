@@ -146,9 +146,14 @@ export async function createFork(
         sequenceNumber = StartingSequenceNumber;
     } else {
         // Create a new commit, referecing the ref head, but swap out the metadata to indicate the branch details
+        const attributesContentP = gitManager.getContent(head.object.sha, ".attributes");
+        const branchP = gitManager.upsertRef(name, head.object.sha);
+        const [attributesContent] = await Promise.all([attributesContentP, branchP]);
 
-        // Need to load in the MSN, etc... off of this
-        winston.info("There is a snapshot we can work off of");
+        const attributesJson = Buffer.from(attributesContent.content, "base64").toString("utf-8");
+        const attributes = JSON.parse(attributesJson) as api.IDocumentAttributes;
+        minimumSequenceNumber = attributes.minimumSequenceNumber;
+        sequenceNumber = attributes.sequenceNumber;
     }
 
     // Get access to Mongo to update the route tables

@@ -139,7 +139,7 @@ export class Router {
     private async routeCore(message: core.ISequencedOperationMessage): Promise<void> {
         // Create the fork first then route any messages. This will make the fork creation the first message
         // routed to the fork. We only process the fork on the route branch it is defined.
-        if (!message.origin && message.operation.type === api.Fork) {
+        if (!message.operation.origin && message.operation.type === api.Fork) {
             await this.createFork(message);
         }
 

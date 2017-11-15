@@ -554,7 +554,7 @@ export class Document {
 export async function load(
     id: string,
     options: Object = defaultDocumentOptions,
-    version: resources.ICommit = null,
+    version: resources.ICommit = undefined,
     registry: Registry = defaultRegistry,
     service: IDocumentService = defaultDocumentService,
     connect = true): Promise<Document> {

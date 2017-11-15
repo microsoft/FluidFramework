@@ -76,6 +76,7 @@ export class MessageFactory {
             encrypted: operation.encrypted,
             encryptedContents: operation.encryptedContents,
             minimumSequenceNumber: 0,
+            origin: undefined,
             referenceSequenceNumber: operation.referenceSequenceNumber,
             sequenceNumber: this.sequenceNumber++,
             traces: [],
@@ -86,7 +87,6 @@ export class MessageFactory {
         const message: ISequencedOperationMessage = {
             documentId: this.documentId,
             operation: sequencedOperation,
-            origin: undefined,
             type: SequencedOperationType,
         };
 
