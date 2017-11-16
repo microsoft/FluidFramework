@@ -34,10 +34,10 @@ export function create(config: Provider, gitManager: git.GitManager): Router {
     });
 
     /**
-     * Loads all commits.
+     * Loads count number of latest commits.
      */
     router.get("/:id/commits", (request, response, next) => {
-        const versionsP = storage.getAllVersions(gitManager, request.params.id);
+        const versionsP = storage.getVersions(gitManager, request.params.id, 10);
         versionsP.then(
             (versions) => {
                 response.render(
@@ -59,24 +59,19 @@ export function create(config: Provider, gitManager: git.GitManager): Router {
      */
     router.get("/:id/commit", (request, response, next) => {
         const targetVersionSha = request.query.version;
-        console.log(targetVersionSha);
-        const versionsP = storage.getAllVersions(gitManager, request.params.id);
+        const versionsP = storage.getVersion(gitManager, targetVersionSha);
         versionsP.then(
-            (versions) => {
-                for (let version of versions) {
-                    if (version.sha === targetVersionSha) {
-                        response.render(
-                            "maps",
-                            {
-                                config: workerConfig,
-                                id: request.params.id,
-                                loadPartial: true,
-                                partials: defaultPartials,
-                                title: request.params.id,
-                                version: JSON.stringify(version),
-                            });
-                    }
-                }
+            (version) => {
+                response.render(
+                    "maps",
+                    {
+                        config: workerConfig,
+                        id: request.params.id,
+                        loadPartial: true,
+                        partials: defaultPartials,
+                        title: request.params.id,
+                        version: JSON.stringify(version),
+                    });
             },
             (error) => {
                 response.status(400).json(error);

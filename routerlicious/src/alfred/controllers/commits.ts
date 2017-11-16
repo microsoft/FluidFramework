@@ -58,7 +58,7 @@ function generateGraph(type: string, id: string, versions: resources.ICommit[]):
     for (let version of versions) {
         master.commit({
             dotSize: 20,
-            message: "c-" + index,
+            message: version.message,
             onClick: (commit: any) => {
                 console.log(commit);
                 const url = `${document.location.origin}/${type}/${id}/commit?version=${commit.sha1}`;
@@ -73,6 +73,7 @@ function generateGraph(type: string, id: string, versions: resources.ICommit[]):
 }
 
 export async function load(type: string, id: string, versions: resources.ICommit[]) {
+    console.log(JSON.stringify(versions));
     $("#commitsView").append($(`<h2>Document ${id} commit graph</h2>`));
     generateGraph(type, id, versions);
 }

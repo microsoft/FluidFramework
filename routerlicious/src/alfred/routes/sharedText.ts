@@ -41,10 +41,10 @@ export function create(config: Provider, gitManager: git.GitManager): Router {
     });
 
     /**
-     * Loads all commits.
+     * Loads count number of latest commits.
      */
     router.get("/:id/commits", (request, response, next) => {
-        const versionsP = storage.getAllVersions(gitManager, request.params.id);
+        const versionsP = storage.getVersions(gitManager, request.params.id, 10);
         versionsP.then(
             (versions) => {
                 response.render(
@@ -66,25 +66,20 @@ export function create(config: Provider, gitManager: git.GitManager): Router {
      */
     router.get("/:id/commit", (request, response, next) => {
         const targetVersionSha = request.query.version;
-        console.log(targetVersionSha);
-        const versionsP = storage.getAllVersions(gitManager, request.params.id);
-        versionsP.then(
-            (versions) => {
-                for (let version of versions) {
-                    if (version.sha === targetVersionSha) {
-                        response.render(
-                            "sharedText",
-                            {
-                                config: workerConfig,
-                                id: request.params.id,
-                                loadPartial: true,
-                                partials: defaultPartials,
-                                template: undefined,
-                                title: request.params.id,
-                                version: JSON.stringify(version),
-                            });
-                    }
-                }
+        const versionP = storage.getVersion(gitManager, targetVersionSha);
+        versionP.then(
+            (version) => {
+                response.render(
+                    "sharedText",
+                    {
+                        config: workerConfig,
+                        id: request.params.id,
+                        loadPartial: true,
+                        partials: defaultPartials,
+                        template: undefined,
+                        title: request.params.id,
+                        version: JSON.stringify(version),
+                    });
             },
             (error) => {
                 response.status(400).json(error);
