@@ -19,6 +19,7 @@ export class CollaboritiveStringExtension implements api.IExtension {
         sequenceNumber: number,
         services: api.IDistributedObjectServices,
         version: resources.ICommit,
+        headerOrigin: string,
         header: string): api.ICollaborativeObject {
 
         let collaborativeString = new SharedString(document, id, sequenceNumber, services);

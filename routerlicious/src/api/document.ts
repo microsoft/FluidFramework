@@ -122,7 +122,7 @@ export class Document {
         for (const distributedObject of document.distributedObjects) {
             const services = returnValue.getObjectServices(distributedObject.id);
             services.deltaConnection.setBaseMapping(distributedObject.sequenceNumber, document.minimumSequenceNumber);
-            returnValue.loadInternal(distributedObject, services);
+            returnValue.loadInternal(distributedObject, services, document.snapshotOriginBranch);
         }
 
         // Apply pending deltas - first the list of transformed messages between the msn and sequence number
@@ -368,6 +368,7 @@ export class Document {
 
         // Save attributes for the document
         const documentAttributes: IDocumentAttributes = {
+            branch: this.id,
             minimumSequenceNumber: this.deltaManager.minimumSequenceNumber,
             sequenceNumber: this.deltaManager.referenceSequenceNumber,
         };
@@ -441,7 +442,7 @@ export class Document {
      * Loads in a distributed object and stores it in the internal Document object map
      * @param distributedObject The distributed object to load
      */
-    private loadInternal(distributedObject: IDistributedObject, services: IAttachedServices) {
+    private loadInternal(distributedObject: IDistributedObject, services: IAttachedServices, originBranch: string) {
         const extension = this.registry.getExtension(distributedObject.type);
         const value = extension.load(
             this,
@@ -449,6 +450,7 @@ export class Document {
             distributedObject.sequenceNumber,
             services,
             this.document.version,
+            originBranch,
             distributedObject.header);
 
         this.upsertDistributedObject(value, services);
@@ -526,7 +528,8 @@ export class Document {
                     objectStorage: localStorage,
                 };
 
-                this.loadInternal(distributedObject, services);
+                const origin = message.origin ? message.origin.id : this.id;
+                this.loadInternal(distributedObject, services, origin);
             } else {
                 this.distributedObjects[attachMessage.id].connection.setBaseMapping(0, message.sequenceNumber);
             }

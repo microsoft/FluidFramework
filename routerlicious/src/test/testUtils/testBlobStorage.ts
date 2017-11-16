@@ -5,6 +5,7 @@ export class TestBlobStorageService implements api.IBlobStorageService  {
     public getHeader(id: string, version: resources.ICommit): Promise<api.IDocumentHeader> {
         const emptyHeader: api.IDocumentHeader = {
             attributes: {
+                branch: id,
                 minimumSequenceNumber: 0,
                 sequenceNumber: 0,
             },

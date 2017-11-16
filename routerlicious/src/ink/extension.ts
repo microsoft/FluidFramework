@@ -13,6 +13,7 @@ export class InkExtension implements api.IExtension {
         sequenceNumber: number,
         services: api.IDistributedObjectServices,
         version: resources.ICommit,
+        headerOrigin: string,
         header: string): api.ICollaborativeObject {
 
         return new InkCollaborativeObject(document, id, sequenceNumber, services, version, header);
