@@ -31,7 +31,7 @@ export class Historian implements git.IHistorian {
             count,
             sha,
         });
-        return this.get(`/repos/${encodeURIComponent(repo)}/commits?${query}`)
+        return this.get<git.ICommit[]>(`/repos/${encodeURIComponent(repo)}/commits?${query}`)
             .catch((error) => error === 400 ? [] as git.ICommit[] : Promise.reject<git.ICommit[]>(error));
     }
 

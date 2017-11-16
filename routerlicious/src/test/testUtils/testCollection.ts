@@ -11,40 +11,42 @@ export class TestCollection implements ICollection<any> {
         return this.collection;
     }
 
-    public findOne(id: string): Promise<any> {
-        return Promise.resolve(this.findOneInternal(id));
+    public findOne(query: any): Promise<any> {
+        return Promise.resolve(this.findOneInternal(query));
     }
 
-    public async update(id: string, filter: any, set: any, addToSet: any): Promise<void> {
-        let value = this.findOneInternal(id);
+    public async update(filter: any, set: any, addToSet: any): Promise<void> {
+        let value = this.findOneInternal(filter);
         if (!value) {
             return Promise.reject("Not found");
         }
         _.extend(value, set);
     }
 
-    public async upsert(id: string, filter: any, set: any, addToSet: any): Promise<void> {
-        let value = this.findOneInternal(id);
+    public async upsert(filter: any, set: any, addToSet: any): Promise<void> {
+        let value = this.findOneInternal(filter);
         if (!value) {
-            value = {
-                _id: id,
-            };
-            this.collection.push(value);
+            this.collection.push(set);
         }
 
         _.extend(value, set);
     }
 
-    public async insertOne(id: string, values: any): Promise<any> {
-        if (this.findOneInternal(id) !== null) {
+    public async insertOne(value: any): Promise<any> {
+        if (this.findOneInternal(value) !== null) {
             return Promise.resolve("existing object");
         }
 
-        let value = {
-            _id: id,
-        };
-        value = _.extend(value, values);
-        this.collection.push(value);
+        return this.insertOneInternal(value);
+    }
+
+    public async findOrCreate(query: any, value: any): Promise<{ value: any, existing: boolean }> {
+        const existing = this.findOneInternal(query);
+        if (existing) {
+            return { value: existing, existing: true };
+        }
+
+        return { value: this.insertOneInternal(value), existing: false };
     }
 
     public async insertMany(values: any[], ordered: boolean): Promise<void> {
@@ -55,8 +57,13 @@ export class TestCollection implements ICollection<any> {
         throw new Error("Method not implemented.");
     }
 
-    private findOneInternal(id: string): any {
-        const returnValue = this.collection.find((value) => value._id === id);
+    private insertOneInternal(value: any): any {
+        this.collection.push(value);
+        return value;
+    }
+
+    private findOneInternal(query: any): any {
+        const returnValue = this.collection.find((value) => value._id === query._id);
         return returnValue === undefined ? null : returnValue;
     }
 }

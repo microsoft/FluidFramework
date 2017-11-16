@@ -27,6 +27,9 @@ export interface IConnected {
     // Whether or not this is an existing object
     existing: boolean;
 
+    // The parent branch for the document
+    parentBranch: string;
+
     // The true private key for use by the client to decrypt deltas from the server
     privateKey: string;
 

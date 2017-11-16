@@ -39,6 +39,20 @@ export interface IEnvelope {
 }
 
 /**
+ * Branch origin information
+ */
+export interface IBranchOrigin {
+    // Origin branch of the message
+    id: string;
+
+    // Sequence number for the message in branch id
+    sequenceNumber: number;
+
+    // Min sequence number for the message in branch id
+    minimumSequenceNumber: number;
+}
+
+/**
  * Messages to track latency trace
  */
 export interface ITrace {
@@ -181,6 +195,10 @@ export interface ISequencedDocumentMessage {
 
     // The encrypted version of the contents of the message
     encryptedContents: string;
+
+    // Origin branch information for the message. Can be marked undefined if the current
+    // message is also the origin.
+    origin: IBranchOrigin;
 
     // Traces related to the packet.
     traces: ITrace[];

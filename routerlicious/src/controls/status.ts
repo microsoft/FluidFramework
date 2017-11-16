@@ -70,21 +70,25 @@ export class Status extends ui.Component implements IStatus {
     }
 
     /**
-     * Adds a clickable button to the status bar
+     * Adds a clickable button to the status bar does a form post on the action target
      */
-    public addButton(event: string, text: string) {
+    public addPostButton(text: string, action: string) {
         const element = document.createElement("li");
         this.listElement.appendChild(element);
 
-        const button = document.createElement("button");
-        button.innerText = text;
-        button.onclick = () => {
-            this.emit(event);
-        };
+        const form = document.createElement("form");
+        form.classList.add("inline-form");
+        form.action = action;
+        form.method = "post";
+        form.target = "_blank";
+        element.appendChild(form);
 
-        this.listElement.appendChild(button);
+        const button = document.createElement("input");
+        button.type = "submit";
+        button.value = text;
+        form.appendChild(button);
 
-        this.commands.push({ element, event, text });
+        this.listElement.appendChild(element);
     }
 
     public removeOption(event: string) {

@@ -245,6 +245,11 @@ export interface IDocumentResource {
      * Directory information for objects contained in the snapshot
      */
     tree: ISnapshotTree;
+
+    /**
+     * Parent branch
+     */
+    parentBranch: string;
 }
 
 export interface IDocumentService {

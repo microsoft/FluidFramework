@@ -30,6 +30,7 @@ export class TestDocumentService implements api.IDocumentService {
             "test-client",
             false,
             version,
+            null,
             deltaConnection,
             documentStorage,
             deltaStorage,
