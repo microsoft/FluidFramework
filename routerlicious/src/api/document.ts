@@ -165,6 +165,13 @@ export class Document {
     }
 
     /**
+     * Returns the parent branch for this document
+     */
+    public get parentBranch(): string {
+        return this.document.parentBranch;
+    }
+
+    /**
      * Constructs a new document from the provided details
      */
     private constructor(

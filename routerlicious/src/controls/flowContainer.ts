@@ -108,7 +108,10 @@ export class FlowContainer extends ui.Component {
             this.overlayCanvas.enableInk(value);
         });
 
-        this.status.addPostButton("Branch", `/sharedText/${this.collabDocument.id}/fork`);
+        // For now only allow one level deep of branching
+        if (!this.collabDocument.parentBranch) {
+            this.status.addPostButton("Branch", `/sharedText/${this.collabDocument.id}/fork`);
+        }
 
         // Add children to the panel once we have both
         this.layerPanel.addChild(this.flowView);

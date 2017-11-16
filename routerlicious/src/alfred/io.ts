@@ -80,11 +80,14 @@ export function register(
                         };
                         sendAndTrack(rawMessage);
 
+                        const parentBranch = documentDetails.value.parent ? documentDetails.value.parent.id : null;
+
                         // And return the connection information to the client
                         const connectedMessage: socketStorage.IConnected = {
                             clientId,
                             encrypted: documentDetails.value.privateKey ? true : false,
                             existing: documentDetails.existing,
+                            parentBranch,
                             privateKey: documentDetails.value.privateKey,
                             publicKey: documentDetails.value.publicKey,
                         };
