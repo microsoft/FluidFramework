@@ -145,25 +145,7 @@ export class DocumentService implements api.IDocumentService {
 
     public async branch(id: string): Promise<string> {
         const forkId = await this.createFork(id);
-
-        return new Promise<string>((resolve, reject) => {
-            const interval = setInterval(
-                () => {
-                    this.getForks(id).then(
-                        (forks) => {
-                            for (const fork of forks) {
-                                if (fork.id === forkId && fork.sequenceNumber !== undefined) {
-                                    clearInterval(interval);
-                                    resolve(forkId);
-                                }
-                            }
-                        },
-                        (error) => {
-                            reject(error);
-                        });
-                },
-                0);
-        });
+        return forkId;
     }
 
     /**
@@ -229,22 +211,6 @@ export class DocumentService implements api.IDocumentService {
                     if (error) {
                         reject(error);
                     } else if (response.statusCode !== 201) {
-                        reject(response.statusCode);
-                    } else {
-                        resolve(body);
-                    }
-                });
-        });
-    }
-
-    private getForks(id: string): Promise<any> {
-        return new Promise<string>((resolve, reject) => {
-            request.get(
-                { url: `${this.url}/documents/${id}/forks`, json: true },
-                (error, response, body) => {
-                    if (error) {
-                        reject(error);
-                    } else if (response.statusCode !== 200) {
                         reject(response.statusCode);
                     } else {
                         resolve(body);

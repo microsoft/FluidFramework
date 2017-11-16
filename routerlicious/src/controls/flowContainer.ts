@@ -27,7 +27,7 @@ export class FlowContainer extends ui.Component {
 
     constructor(
         element: HTMLDivElement,
-        collabDocument: api.Document,
+        private collabDocument: api.Document,
         sharedString: MergeTree.SharedString,
         private overlayMap: types.IMap,
         private image: Image) {
@@ -108,12 +108,7 @@ export class FlowContainer extends ui.Component {
             this.overlayCanvas.enableInk(value);
         });
 
-        // this.status.addButton("branch", "branch");
-        this.status.on("branch", () => {
-            collabDocument.branch().then((branchId) => {
-                window.open(`/sharedText/${branchId}`, "_blank");
-            });
-        });
+        this.status.addPostButton("Branch", `/sharedText/${this.collabDocument.id}/fork`);
 
         // Add children to the panel once we have both
         this.layerPanel.addChild(this.flowView);

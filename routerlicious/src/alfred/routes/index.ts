@@ -48,7 +48,7 @@ export function create(
         maps: maps.create(config, gitManager),
         ping: ping.create(),
         scribe: scribe.create(config),
-        sharedText: sharedText.create(config, gitManager),
+        sharedText: sharedText.create(config, gitManager, mongoManager, producer),
         templates: templates.create(config),
         video: video.create(config, gitManager),
     };

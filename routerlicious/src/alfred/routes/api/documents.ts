@@ -10,11 +10,11 @@ export function create(
     mongoManager: utils.MongoManager,
     producer: utils.kafkaProducer.IProducer): Router {
 
-    const deltasCollectionName = config.get("mongo:collectionNames:documents");
+    const documentsCollectionName = config.get("mongo:collectionNames:documents");
     const router: Router = Router();
 
     router.get("/:id", (request, response, next) => {
-        const documentP = storage.getDocument(mongoManager, deltasCollectionName, request.params.id);
+        const documentP = storage.getDocument(mongoManager, documentsCollectionName, request.params.id);
         documentP.then(
             (document) => {
                 response.status(200).json(document);
@@ -28,7 +28,7 @@ export function create(
      * Lists all forks of the specified document
      */
     router.get("/:id/forks", (request, response, next) => {
-        const forksP = storage.getForks(mongoManager, deltasCollectionName, request.params.id);
+        const forksP = storage.getForks(mongoManager, documentsCollectionName, request.params.id);
         forksP.then(
             (forks) => {
                 response.status(200).json(forks);
@@ -46,7 +46,7 @@ export function create(
             producer,
             gitManager,
             mongoManager,
-            deltasCollectionName,
+            documentsCollectionName,
             request.params.id);
         forkIdP.then(
             (forkId) => {
