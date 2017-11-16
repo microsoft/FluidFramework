@@ -2,24 +2,26 @@ import * as async from "async";
 import * as winston from "winston";
 import * as api from "../api-core";
 import * as core from "../core";
+import { Deferred } from "../core-utils";
 import * as utils from "../utils";
 
 export class DocumentManager {
     public static async Create(
         id: string,
         collection: core.ICollection<core.IDocument>,
-        deltas: core.ICollection<any>): Promise<DocumentManager> {
+        deltas: core.ICollection<core.ISequencedOperationMessage>): Promise<DocumentManager> {
 
-        const document = await collection.findOne(id);
+        const document = await collection.findOne({ _id: id });
         return new DocumentManager(document, collection, deltas);
     }
 
     private activeForks: Set<string>;
+    private sequenceNumber: number;
 
     private constructor(
         private document: core.IDocument,
         private collection: core.ICollection<core.IDocument>,
-        private deltas: core.ICollection<any>) {
+        private deltas: core.ICollection<core.ISequencedOperationMessage>) {
 
         const forks = document.forks || [];
         const filtered = forks
@@ -43,26 +45,56 @@ export class DocumentManager {
         // If fork is already active because we are reprocessing a message we can skip this step. But will assert
         // the sequence number is identical
         await this.collection.update(
-            this.document._id,
-            { "forks.id": id },
-            { "forks.$.sequenceNumber": sequenceNumber },
+            {
+                "_id": this.document._id,
+                "forks.id": id,
+            },
+            {
+                "forks.$.sequenceNumber": sequenceNumber,
+            },
             null);
     }
 
-    public async getDeltas(to: number): Promise<core.ISequencedOperationMessage[]> {
-        // TODO we are racing scriptorium here for packets since both are processing the delta stream. But
-        // the below is just a temp until we can encode enough details so the API can load off of the parent
-        // branch snapshot + deltas before switching to the branch flow
+    public async getDeltas(from: number, to: number): Promise<core.ISequencedOperationMessage[]> {
+        const finalLength = Math.max(0, to - from - 1);
+        let result: core.ISequencedOperationMessage[] = [];
+        const deferred = new Deferred<core.ISequencedOperationMessage[]>();
 
-        const query = {
-            "documentId": this.document._id,
-            "operation.sequenceNumber": {
-                $lt: to,
-            },
+        const pollDeltas = () => {
+            const query = {
+                "documentId": this.document._id,
+                "operation.sequenceNumber": {
+                    $gt: from,
+                    $lt: to,
+                },
+            };
+
+            const deltasP = this.deltas.find(query, { "operation.sequenceNumber": 1 });
+            deltasP.then(
+                (deltas) => {
+                    result = result.concat(deltas);
+                    if (result.length === finalLength) {
+                        deferred.resolve(result);
+                    } else {
+                        setTimeout(() => pollDeltas(), 100);
+                    }
+                },
+                (error) => {
+                    deferred.reject(error);
+                });
         };
 
-        const dbDeltas = await this.deltas.find(query, { "operation.sequenceNumber": 1 });
-        return dbDeltas;
+        // Start polling for the full set of deltas
+        pollDeltas();
+
+        return deferred.promise;
+    }
+
+    /**
+     * Tracks the last forwarded message for the document
+     */
+    public trackForward(sequenceNumber: number) {
+        this.sequenceNumber = sequenceNumber;
     }
 }
 
@@ -104,19 +136,19 @@ export class Router {
     /**
      * Callback invoked to process a message
      */
-    private async routeCore(message: core.ISequencedOperationMessage) {
-        // Switch off the message type and route to the appropriate handler
-        switch (message.operation.type) {
-            case api.Fork:
-                return this.createFork(message);
-            default:
-                return this.routeToForks(message);
+    private async routeCore(message: core.ISequencedOperationMessage): Promise<void> {
+        // Create the fork first then route any messages. This will make the fork creation the first message
+        // routed to the fork. We only process the fork on the route branch it is defined.
+        if (!message.operation.origin && message.operation.type === api.Fork) {
+            await this.createFork(message);
         }
+
+        return this.routeToForks(message);
     }
 
     private async createFork(message: core.ISequencedOperationMessage): Promise<void> {
-        winston.info(`Received Fork message`);
-        const forkId = message.operation.contents;
+        const contents = message.operation.contents as core.IForkOperation;
+        const forkId = contents.name;
         console.log(forkId);
 
         const document = await this.documentDetailsP;
@@ -128,10 +160,9 @@ export class Router {
             return;
         }
 
-        // Load all deltas from the current document up to forkSequenceNumber and forward them
-        // to the forked document
-        // Create an optional filter to restrict the delta range
-        const deltas = await document.getDeltas(forkSequenceNumber);
+        // Forward all deltas greater than contents.sequenceNumber but less than forkSequenceNumber
+        // to the fork. All messages after this will be automatically forwarded.
+        const deltas = await document.getDeltas(contents.sequenceNumber, forkSequenceNumber);
         console.log(`Retrieved ${deltas.length} deltas`);
         for (const delta of deltas) {
             console.log(`Routing ${delta.operation}`);
@@ -152,47 +183,31 @@ export class Router {
         for (const fork of forks) {
             this.routeToDeli(fork, message);
         }
+
+        document.trackForward(message.operation.sequenceNumber);
     }
 
     /**
      * Routes the provided messages to deli
      */
     private routeToDeli(fork: string, message: core.ISequencedOperationMessage) {
-        winston.info(`Routing ${message.documentId}@${message.operation.sequenceNumber} to ${fork}`);
-        // const rawMessage: core.IRawOperationMessage = {
-        //     clientId: null,
-        //     documentId: fork,
-        //     operation: {
-        //         clientSequenceNumber: -1,
-        //         contents: message,
-        //         encrypted: false,
-        //         encryptedContents: null,
-        //         referenceSequenceNumber: -1,
-        //         traces: [],
-        //         type: api.Integrate,
-        //     },
-        //     timestamp: Date.now(),
-        //     type: core.RawOperationType,
-        //     userId: null,
-        // };
-
-        // Completely swap the message into what looks like a raw mesage - this will flip to a custom
-        // integration wrapped messagae later
+        // Create the integration message that sends a sequenced operation from an upstream branch to
+        // the downstream branch
         const rawMessage: core.IRawOperationMessage = {
-            clientId: message.operation.clientId,
+            clientId: null,
             documentId: fork,
             operation: {
-                clientSequenceNumber: message.operation.clientSequenceNumber,
-                contents: message.operation.contents,
+                clientSequenceNumber: -1,
+                contents: message,
                 encrypted: false,
                 encryptedContents: null,
-                referenceSequenceNumber: message.operation.referenceSequenceNumber,
-                traces: message.operation.traces,
-                type: message.operation.type,
+                referenceSequenceNumber: -1,
+                traces: [],
+                type: api.Integrate,
             },
             timestamp: Date.now(),
             type: core.RawOperationType,
-            userId: message.operation.userId,
+            userId: null,
         };
 
         // TODO handle the output of this promise and update any errors, etc...

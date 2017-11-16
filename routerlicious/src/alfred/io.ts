@@ -49,6 +49,7 @@ export function register(
             const documentDetailsP = storage.getOrCreateDocument(
                 mongoManager,
                 documentsCollectionName,
+                producer,
                 message.id,
                 message.privateKey,
                 message.publicKey);
@@ -65,11 +66,11 @@ export function register(
                             clientId: null,
                             documentId: message.id,
                             operation: {
-                                clientSequenceNumber: 0,
+                                clientSequenceNumber: -1,
                                 contents: clientId,
                                 encrypted: false,
                                 encryptedContents: null,
-                                referenceSequenceNumber: 0,
+                                referenceSequenceNumber: -1,
                                 traces: [],
                                 type: api.ClientJoin,
                             },
@@ -79,13 +80,16 @@ export function register(
                         };
                         sendAndTrack(rawMessage);
 
+                        const parentBranch = documentDetails.value.parent ? documentDetails.value.parent.id : null;
+
                         // And return the connection information to the client
                         const connectedMessage: socketStorage.IConnected = {
                             clientId,
-                            encrypted: documentDetails.docPrivateKey ? true : false,
+                            encrypted: documentDetails.value.privateKey ? true : false,
                             existing: documentDetails.existing,
-                            privateKey: documentDetails.docPrivateKey,
-                            publicKey: documentDetails.docPublicKey,
+                            parentBranch,
+                            privateKey: documentDetails.value.privateKey,
+                            publicKey: documentDetails.value.publicKey,
                         };
                         profiler.done(`Loaded ${message.id}`);
                         response(null, connectedMessage);

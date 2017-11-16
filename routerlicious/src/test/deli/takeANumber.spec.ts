@@ -11,7 +11,7 @@ describe("Routerlicious", () => {
         describe("TakeANumber", () => {
             const testId = "test";
             const testClientId = "quiet-rat";
-            const testData = [{ _id: testId }];
+            const testData = [{ _id: testId, sequenceNumber: 0, logOffset: undefined }];
             const testTrace: ITrace = null;
 
             let testCollection: TestCollection;
@@ -141,7 +141,7 @@ describe("Routerlicious", () => {
 
                     await ticketer.checkpoint();
 
-                    const document = await testCollection.findOne(testId);
+                    const document = await testCollection.findOne({ _id: testId });
                     assert.equal(document.logOffset, kafkaOffset - 1);
 
                     const sent = testKafka.getRawMessages();

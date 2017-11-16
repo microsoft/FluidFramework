@@ -4,6 +4,7 @@ import performanceNow = require("performance-now");
 import * as request from "request";
 import * as io from "socket.io-client";
 import * as api from "../api-core";
+import { GitManager } from "../git-storage";
 import { DocumentStorageService } from "./blobStorageService";
 import { debug } from "./debug";
 import { DocumentDeltaStorageService } from "./deltaStorageService";
@@ -32,6 +33,7 @@ export class DocumentResource implements api.IDocumentResource {
         public clientId: string,
         public existing: boolean,
         public version: resources.ICommit,
+        public parentBranch: string,
         public deltaConnection: api.IDocumentDeltaConnection,
         public documentStorageService: api.IDocumentStorageService,
         public deltaStorageService: api.IDocumentDeltaStorageService,
@@ -55,7 +57,8 @@ export class DocumentService implements api.IDocumentService {
     constructor(
         private url: string,
         private deltaStorage: api.IDeltaStorageService,
-        private blobStorge: api.IBlobStorageService) {
+        private blobStorge: api.IBlobStorageService,
+        private gitManager: GitManager) {
 
         debug(`Creating document service ${performanceNow()}`);
         this.socket = io(url, { transports: ["websocket"] });
@@ -81,9 +84,17 @@ export class DocumentService implements api.IDocumentService {
 
         const connectMessage: messages.IConnect = { id, privateKey, publicKey, encrypted };
 
-        const headerP = version
-            ? this.blobStorge.getHeader(id, version)
-            : Promise.resolve(emptyHeader);
+        // If a version is specified we will load it directly - otherwise will query historian for the latest
+        // version and then load it
+        if (version === undefined) {
+            const commits = await this.gitManager.getCommits(id, 1);
+            version = commits.length > 0 ? commits[0] : null;
+        }
+
+        // Load in the header for the version. At this point if version is still null that means there are no
+        // snapshots and we should start with an empty header.
+        const headerP = version ? this.blobStorge.getHeader(id, version) : Promise.resolve(emptyHeader);
+
         const connectionP = new Promise<messages.IConnected>((resolve, reject) => {
             this.socket.emit(
                 "connectDocument",
@@ -121,6 +132,7 @@ export class DocumentService implements api.IDocumentService {
             connection.clientId,
             connection.existing,
             version,
+            connection.parentBranch,
             deltaConnection,
             documentStorage,
             deltaStorage,
@@ -135,25 +147,7 @@ export class DocumentService implements api.IDocumentService {
 
     public async branch(id: string): Promise<string> {
         const forkId = await this.createFork(id);
-
-        return new Promise<string>((resolve, reject) => {
-            const interval = setInterval(
-                () => {
-                    this.getForks(id).then(
-                        (forks) => {
-                            for (const fork of forks) {
-                                if (fork.id === forkId && fork.sequenceNumber !== undefined) {
-                                    clearInterval(interval);
-                                    resolve(forkId);
-                                }
-                            }
-                        },
-                        (error) => {
-                            reject(error);
-                        });
-                },
-                0);
-        });
+        return forkId;
     }
 
     /**
@@ -219,22 +213,6 @@ export class DocumentService implements api.IDocumentService {
                     if (error) {
                         reject(error);
                     } else if (response.statusCode !== 201) {
-                        reject(response.statusCode);
-                    } else {
-                        resolve(body);
-                    }
-                });
-        });
-    }
-
-    private getForks(id: string): Promise<any> {
-        return new Promise<string>((resolve, reject) => {
-            request.get(
-                { url: `${this.url}/documents/${id}/forks`, json: true },
-                (error, response, body) => {
-                    if (error) {
-                        reject(error);
-                    } else if (response.statusCode !== 200) {
                         reject(response.statusCode);
                     } else {
                         resolve(body);

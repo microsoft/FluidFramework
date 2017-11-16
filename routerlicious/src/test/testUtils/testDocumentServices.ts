@@ -62,6 +62,7 @@ export class TestDocumentService implements api.IDocumentService {
             documentStorageService: new TestDocumentStorageService(),
             existing,
             minimumSequenceNumber,
+            parentBranch: null,
             pendingDeltas,
             sequenceNumber,
             transformedMessages,

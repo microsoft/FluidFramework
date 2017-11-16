@@ -9,6 +9,8 @@ interface IStorageServices {
     blobStorage: socketStorage.BlobStorageService;
 
     deltaStorage: socketStorage.DeltaStorageService;
+
+    gitManager: GitManager;
 }
 
 function getStorageServices(deltaUrl: string, blobUrl: string, repository: string): IStorageServices {
@@ -16,12 +18,12 @@ function getStorageServices(deltaUrl: string, blobUrl: string, repository: strin
     const gitManager = new GitManager(historian, repository);
     const blobStorage = new socketStorage.BlobStorageService(gitManager);
     const deltaStorage = new socketStorage.DeltaStorageService(deltaUrl);
-    return { blobStorage, deltaStorage };
+    return { blobStorage, deltaStorage, gitManager};
 }
 
 function getDefaultService(deltaUrl: string, blobUrl: string, repository: string): apiCore.IDocumentService {
     const storage = getStorageServices(deltaUrl, blobUrl, repository);
-    return new socketStorage.DocumentService(deltaUrl, storage.deltaStorage, storage.blobStorage);
+    return new socketStorage.DocumentService(deltaUrl, storage.deltaStorage, storage.blobStorage, storage.gitManager);
 }
 
 function getLoadService(deltaUrl: string, blobUrl: string, repository: string): apiCore.IDocumentService {
