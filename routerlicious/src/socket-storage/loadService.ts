@@ -47,6 +47,7 @@ export class LoadService implements api.IDocumentService {
             "loadClient",
             true,
             version,
+            "",
             deltaConnection,
             documentStorage,
             deltaStorage,
