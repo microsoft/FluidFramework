@@ -65,10 +65,10 @@ zookeeper:
   url: praguekafka-broker-1:2181
 
 mongodb:
-  url: mongodb://innocent-otter-mongodb:27017
+  url: mongodb://honorary-chimp-mongodb:27017
 
 redis:
-  url: coiled-toucan-redis
+  url: winsome-wombat-redis
 
 kafka:
   topics:
