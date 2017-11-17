@@ -70,7 +70,7 @@
         <script src="{{#hfurl}}/public/scripts/dist/index.js{{/hfurl}}"></script>
         <script>
             var config = {{{ config }}};
-            controller.scribe.initialize("{{ id }}", config);
+            controller.scribe.initialize(config);
         </script>
     {{/scripts}}
 {{/layout}}
