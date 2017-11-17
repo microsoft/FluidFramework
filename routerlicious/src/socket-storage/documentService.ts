@@ -17,7 +17,7 @@ type ConnectionMap = { [connectionId: string]: api.IDocumentDeltaConnection };
 type ObjectMap = { [objectId: string]: ConnectionMap };
 type EventMap = { [event: string]: ObjectMap };
 
-function getEmptyHeader(id: string): api.IDocumentHeader {
+export function getEmptyHeader(id: string): api.IDocumentHeader {
     const emptyHeader: api.IDocumentHeader = {
         attributes: {
             branch: id,

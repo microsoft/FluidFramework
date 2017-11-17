@@ -167,7 +167,7 @@ export class Document {
             // Load in distributed objects stored within the document
             for (const distributedObject of document.distributedObjects) {
                 const services = returnValue.getIdleObjectServices(distributedObject.id);
-                returnValue.loadInternal(distributedObject, services);
+                returnValue.loadInternal(distributedObject, services, document.snapshotOriginBranch);
             }
 
             debug(`Document Loaded ${id} - ${performanceNow()}`);

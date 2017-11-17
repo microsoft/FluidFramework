@@ -1,4 +1,4 @@
-import { IEnvelope, ILatencyMessage, IObjectMessage, ITrace } from "./protocol";
+import { IBranchOrigin, IEnvelope, ILatencyMessage, IObjectMessage, ITrace } from "./protocol";
 import { ICollaborativeObject } from "./types";
 
 export interface IObjectStorageService {
@@ -40,8 +40,13 @@ export interface IDeltaConnection {
 
     transformDocumentSequenceNumber(value: number);
 
-    emit(message: IObjectMessage, clientId: string, documentSequenceNumber: number,
-        documentMinimumSequenceNumber: number, traces: ITrace[]);
+    emit(
+        message: IObjectMessage,
+        clientId: string,
+        documentSequenceNumber: number,
+        documentMinimumSequenceNumber: number,
+        origin: IBranchOrigin,
+        traces: ITrace[]);
 
     updateMinSequenceNumber(value: number);
 

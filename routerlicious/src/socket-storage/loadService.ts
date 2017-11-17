@@ -4,7 +4,7 @@ import * as api from "../api-core";
 import { DocumentStorageService } from "./blobStorageService";
 import { debug } from "./debug";
 import { DocumentDeltaStorageService } from "./deltaStorageService";
-import { DocumentResource, emptyHeader} from "./documentService";
+import { DocumentResource, getEmptyHeader } from "./documentService";
 import { IdleDocumentDeltaConnection } from "./idleDocumentDeltaConnection";
 
 /**
@@ -26,7 +26,7 @@ export class LoadService implements api.IDocumentService {
 
         const headerP = version
             ? this.blobStorge.getHeader(id, version)
-            : Promise.resolve(emptyHeader);
+            : Promise.resolve(getEmptyHeader(id));
 
         const header = await headerP;
 
@@ -47,13 +47,14 @@ export class LoadService implements api.IDocumentService {
             "loadClient",
             true,
             version,
-            "",
+            null,
             deltaConnection,
             documentStorage,
             deltaStorage,
             header.distributedObjects,
             null,
             header.transformedMessages,
+            id,
             header.attributes.sequenceNumber,
             header.attributes.minimumSequenceNumber,
             header.tree);
