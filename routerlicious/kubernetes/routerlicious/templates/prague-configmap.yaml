@@ -55,8 +55,8 @@ data:
                 "receive": "{{ .Values.kafka.topics.deltas }}",
                 "send": "{{ .Values.kafka.topics.rawdeltas }}"
             },
-            "clientId": "routemaster",
-            "groupId": "routemaster",
+            "clientId": "{{ template "routemaster.fullname" . }}",
+            "groupId": "{{ template "routemaster.fullname" . }}",
             "checkpointBatchSize": 10,
             "checkpointTimeIntervalMsec": 1000
         },
