@@ -1,3 +1,4 @@
+import { EventEmitter } from "events";
 import * as winston from "winston";
 import * as agent from "../agent";
 import * as api from "../api-core";
@@ -12,12 +13,12 @@ interface IPendingTicket<T> {
     reject: (value?: T | PromiseLike<T>) => void;
 }
 
-const StartingSequenceNumber = 0;
-
 // We expire clients after 5 minutes of no activity
 export const ClientSequenceTimeout = 5 * 60 * 1000;
 
 interface IClientSequenceNumber {
+    // Whether or not the object can expire
+    canEvict: boolean;
     clientId: string;
     lastUpdate: number;
     referenceSequenceNumber: number;
@@ -26,6 +27,7 @@ interface IClientSequenceNumber {
 const SequenceNumberComparer: utils.IComparer<IClientSequenceNumber> = {
     compare: (a, b) => a.referenceSequenceNumber - b.referenceSequenceNumber,
     min: {
+        canEvict: true,
         clientId: undefined,
         lastUpdate: -1,
         referenceSequenceNumber: -1,
@@ -33,44 +35,82 @@ const SequenceNumberComparer: utils.IComparer<IClientSequenceNumber> = {
 };
 
 /**
+ * Maps from a branch to a clientId stored in the MSN map
+ */
+function getBranchClientId(branch: string) {
+    return `branch$${branch}`;
+}
+
+/**
  * Class to handle distributing sequence numbers to a collaborative object
  */
 export class TakeANumber {
+    private events = new EventEmitter();
     private throughput = new ThroughputCounter(winston.info, "Delta Topic ");
     private queue: Array<IPendingTicket<void>> = [];
     private error: any;
     private sequenceNumber: number = undefined;
     private logOffset: number;
+
+    // Client sequence number mapping
     private clientNodeMap: { [key: string]: utils.IHeapNode<IClientSequenceNumber> } = {};
     private clientSeqNumbers = new utils.Heap<IClientSequenceNumber>(SequenceNumberComparer);
     private minimumSequenceNumber;
     private window: RangeTracker;
 
+    private branchMap: RangeTracker;
+
     constructor(
         private documentId: string,
-        private collection: core.ICollection<any>,
+        private collection: core.ICollection<core.IDocument>,
         private producer: utils.kafkaProducer.IProducer) {
+
         // Lookup the last sequence number stored
-        const dbObjectP = this.collection.findOne(this.documentId);
+        const dbObjectP = this.collection.findOne({ _id: this.documentId });
         dbObjectP.then(
             (dbObject) => {
                 if (!dbObject) {
-                    throw new Error("Object does not exist");
+                    this.events.emit("error", "Object does not exist - cannot sequence");
+                    return;
                 }
 
-                // The object exists but we may have yet to update the deli related fields
-
+                // Instantiate existing clients
                 if (dbObject.clients) {
                     for (const client of dbObject.clients) {
                         this.upsertClient(
                             client.clientId,
                             client.referenceSequenceNumber,
-                            client.lastUpdate);
+                            client.lastUpdate,
+                            client.canEvict);
                     }
                 }
 
-                this.sequenceNumber = dbObject.sequenceNumber ? dbObject.sequenceNumber : StartingSequenceNumber;
-                this.logOffset = dbObject.logOffset ? dbObject.logOffset : undefined;
+                // Setup branch information
+                if (dbObject.parent) {
+                    if (dbObject.branchMap) {
+                        this.branchMap = new RangeTracker(dbObject.branchMap);
+                    } else {
+                        // Initialize the range tracking window
+                        this.branchMap = new RangeTracker(
+                            dbObject.parent.minimumSequenceNumber,
+                            dbObject.parent.minimumSequenceNumber);
+                        // tslint:disable-next-line:max-line-length
+                        for (let i = dbObject.parent.minimumSequenceNumber + 1; i <= dbObject.parent.sequenceNumber; i++) {
+                            this.branchMap.add(i, i);
+                        }
+
+                        // Add in the client representing the parent
+                        this.upsertClient(
+                            getBranchClientId(dbObject.parent.id),
+                            dbObject.parent.minimumSequenceNumber,
+                            dbObject.createTime,
+                            false);
+                    }
+                }
+
+                // Initialize counting context
+                this.sequenceNumber = dbObject.sequenceNumber;
+                this.logOffset = dbObject.logOffset;
 
                 this.resolvePending();
             },
@@ -122,10 +162,12 @@ export class TakeANumber {
             clients.push(this.clientNodeMap[clientId].value);
         }
 
-        return this.collection.upsert(
-            this.documentId,
-            null,
+        return this.collection.update(
             {
+                _id: this.documentId,
+            },
+            {
+                branchMap: this.branchMap ? this.branchMap.serialize() : undefined,
                 clients,
                 logOffset: this.logOffset,
                 sequenceNumber : this.sequenceNumber,
@@ -138,6 +180,13 @@ export class TakeANumber {
      */
     public getOffset(): number {
         return this.logOffset;
+    }
+
+    /**
+     * Adds in a new event listener
+     */
+    public on(event: string, listener: (...args: any[]) => void) {
+        this.events.on(event, listener);
     }
 
     private ticketCore(rawMessage: any, trace: api.ITrace): Promise<void> {
@@ -161,38 +210,89 @@ export class TakeANumber {
         }
 
         // Update and retrieve the minimum sequence number
-        const message = objectMessage as core.IRawOperationMessage;
+        let message = objectMessage as core.IRawOperationMessage;
 
-        // Process the reference sequence number for non-system messages
-        if (message.clientId) {
-            if (message.operation.referenceSequenceNumber < this.minimumSequenceNumber) {
-                // TODO support nacking of clients
-                // Do not assign a ticket to a message outside the MSN. We will need to NACK clients in this case.
-                // tslint:disable-next-line
-                winston.error(`${message.clientId} sent packet ${message.operation.referenceSequenceNumber} less than MSN of ${this.minimumSequenceNumber}`);
-                return Promise.resolve();
-            }
+        // Increment and grab the next sequence number
+        const sequenceNumber = this.revSequenceNumber();
 
-            this.upsertClient(
-                message.clientId,
-                message.operation.referenceSequenceNumber,
-                message.timestamp);
+        let origin: api.IBranchOrigin = undefined;
+
+        // TODO - move this back to the below - for now we don't do the work just want to know it made it!
+        if (message.operation.type === api.Integrate) {
+            // Branch operation is the original message
+            const branchOperation = message.operation.contents as core.ISequencedOperationMessage;
+            const branchDocumentMessage = branchOperation.operation as api.ISequencedDocumentMessage;
+            const branchClientId = getBranchClientId(branchOperation.documentId);
+
+            // Do I transform the ref or the MSN - I guess the ref here because it's that key space
+            const transformedRefSeqNumber = this.transformBranchSequenceNumber(
+                branchDocumentMessage.referenceSequenceNumber);
+            const transformedMinSeqNumber = this.transformBranchSequenceNumber(
+                branchDocumentMessage.minimumSequenceNumber);
+
+            // Update the branch mappings
+            this.branchMap.add(branchDocumentMessage.sequenceNumber, sequenceNumber);
+            this.branchMap.updateBase(branchDocumentMessage.minimumSequenceNumber);
+
+            // A merge message contains the sequencing information in the target branch's (i.e. this)
+            // coordinate space. But contains the original message in the contents.
+            const transformed: core.IRawOperationMessage = {
+                clientId: branchDocumentMessage.clientId,
+                documentId: this.documentId,
+                operation: {
+                    clientSequenceNumber: branchDocumentMessage.sequenceNumber,
+                    contents: branchDocumentMessage.contents,
+                    encrypted: branchDocumentMessage.encrypted,
+                    encryptedContents: branchDocumentMessage.encryptedContents,
+                    referenceSequenceNumber: transformedRefSeqNumber,
+                    traces: message.operation.traces,
+                    type: branchDocumentMessage.type,
+                },
+                timestamp: message.timestamp,
+                type: core.RawOperationType,
+                userId: branchDocumentMessage.userId,
+            };
+
+            // Set origin information for the message
+            origin = {
+                id: branchOperation.documentId,
+                minimumSequenceNumber: branchDocumentMessage.minimumSequenceNumber,
+                sequenceNumber: branchDocumentMessage.sequenceNumber,
+            };
+
+            message = transformed;
+
+            // Update the entry for the branch client
+            this.upsertClient(branchClientId, transformedMinSeqNumber, message.timestamp, false);
         } else {
-            // The system will notify of clients leaving - in this case we can remove them from the MSN map
-            if (message.operation.type === api.ClientLeave) {
-                this.removeClient(message.operation.contents);
-            } else if (message.operation.type === api.Fork) {
-                winston.info(`Fork ${message.documentId} -> ${message.operation}`);
-            } else if (message.operation.type === api.Integrate) {
-                winston.info(`Integration message ${message.operation.contents.documentId} -> ${message.documentId}`);
+            if (message.clientId) {
+                if (message.operation.referenceSequenceNumber < this.minimumSequenceNumber) {
+                    // TODO support nacking of clients
+                    // Do not assign a ticket to a message outside the MSN. We will need to NACK clients in this case.
+                    // tslint:disable-next-line
+                    winston.error(`${message.clientId} sent packet ${message.operation.referenceSequenceNumber} less than MSN of ${this.minimumSequenceNumber}`);
+                    return Promise.resolve();
+                }
+
+                this.upsertClient(
+                    message.clientId,
+                    message.operation.referenceSequenceNumber,
+                    message.timestamp,
+                    true);
+            } else {
+                // The system will notify of clients leaving - in this case we can remove them from the MSN map
+                if (message.operation.type === api.ClientLeave) {
+                    this.removeClient(message.operation.contents);
+                } else if (message.operation.type === api.Fork) {
+                    winston.info(`Fork ${message.documentId} -> ${message.operation.contents.name}`);
+                } else if (message.operation.type === api.Integrate) {
+                    // Need to provide the mapping from the branch space to this one
+                }
             }
         }
 
         // Store the previous minimum sequene number we returned and then update it
         this.minimumSequenceNumber = this.getMinimumSequenceNumber(objectMessage.timestamp);
-
-        // Increment and grab the next sequence number
-        const sequenceNumber = this.revSequenceNumber();
 
         // Add traces
         let traces = message.operation.traces;
@@ -209,6 +309,7 @@ export class TakeANumber {
             encrypted: message.operation.encrypted,
             encryptedContents: message.operation.encryptedContents,
             minimumSequenceNumber: this.minimumSequenceNumber,
+            origin,
             referenceSequenceNumber: message.operation.referenceSequenceNumber,
             sequenceNumber,
             traces,
@@ -239,6 +340,11 @@ export class TakeANumber {
      */
     private revSequenceNumber(): number {
         return ++this.sequenceNumber;
+    }
+
+    private transformBranchSequenceNumber(sequenceNumber: number): number {
+        // -1 indicates an unused sequence number
+        return sequenceNumber !== -1 ? this.branchMap.get(sequenceNumber) : -1;
     }
 
     /**
@@ -280,11 +386,13 @@ export class TakeANumber {
     private upsertClient(
         clientId: string,
         referenceSequenceNumber: number,
-        timestamp: number) {
+        timestamp: number,
+        canEvict: boolean) {
 
         // Add the client ID to our map if this is the first time we've seen it
         if (!(clientId in this.clientNodeMap)) {
             const newNode = this.clientSeqNumbers.add({
+                canEvict,
                 clientId,
                 lastUpdate: timestamp,
                 referenceSequenceNumber,
@@ -314,11 +422,7 @@ export class TakeANumber {
     /**
      * Updates the sequence number of the specified client
      */
-    private updateClient(
-        clientId: string,
-        timestamp: number,
-        referenceSequenceNumber: number) {
-
+    private updateClient(clientId: string, timestamp: number, referenceSequenceNumber: number) {
         // Lookup the node and then update its value based on the message
         const heapNode = this.clientNodeMap[clientId];
 
@@ -369,7 +473,7 @@ export class TakeANumber {
     private getClientMinimumSequenceNumber(timestamp: number): number {
         while (this.clientSeqNumbers.count() > 0) {
             const client = this.clientSeqNumbers.peek();
-            if (timestamp - client.value.lastUpdate < ClientSequenceTimeout) {
+            if (!client.value.canEvict || timestamp - client.value.lastUpdate < ClientSequenceTimeout) {
                 return client.value.referenceSequenceNumber;
             }
 

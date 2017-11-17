@@ -60,3 +60,14 @@ export interface ISequencedOperationMessage extends ITicketedMessage {
     // The sequenced operation
     operation: api.ISequencedDocumentMessage;
 }
+
+export interface IForkOperation {
+    // The minimum sequence number for the fork
+    minSequenceNumber: number;
+
+    // The name of the target branch
+    name: string;
+
+    // The ID of messages after which we want to integrate
+    sequenceNumber: number;
+}

@@ -10,18 +10,18 @@ export interface IDbFactory {
     connect(): Promise<IDb>;
 }
 
-// TODO Do I want to expose the _id field or abstract it?
-
 export interface ICollection<T> {
     find(query: any, sort: any): Promise<T[]>;
 
-    findOne(id: string): Promise<T>;
+    findOne(query: any): Promise<T>;
 
-    upsert(id: string, filter: any, set: any, addToSet: any): Promise<void>;
+    findOrCreate(query: any, value: T): Promise<{ value: T, existing: boolean }>;
 
-    update(id: string, filter: any, set: any, addToSet: any): Promise<void>;
+    update(filter: any, set: any, addToSet: any): Promise<void>;
 
-    insertOne(id: string, values: any): Promise<void>;
+    upsert(filter: any, set: any, addToSet: any): Promise<void>;
+
+    insertOne(value: T): Promise<void>;
 
     insertMany(values: T[], ordered: boolean): Promise<void>;
 
