@@ -321,6 +321,12 @@ export class Document {
     public async snapshot(): Promise<void> {
         const entries: ITreeEntry[] = [];
 
+        // TODO: support for branch snapshots. For now simply no-op when a branch snapshot is requested
+        if (this.document.parentBranch) {
+            debug(`Skipping snapshot due to being branch of ${this.document.parentBranch}`);
+            return;
+        }
+
         // Transform ops in the window relative to the MSN - the window is all ops between the min sequence number
         // and the current sequence number
         assert.equal(
