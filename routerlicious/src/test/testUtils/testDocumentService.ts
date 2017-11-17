@@ -37,6 +37,7 @@ export class TestDocumentService implements api.IDocumentService {
             [],
             [],
             [],
+            id,
             0,
             0,
             null);

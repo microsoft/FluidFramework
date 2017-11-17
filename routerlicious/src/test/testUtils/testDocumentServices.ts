@@ -65,6 +65,7 @@ export class TestDocumentService implements api.IDocumentService {
             parentBranch: null,
             pendingDeltas,
             sequenceNumber,
+            snapshotOriginBranch: id,
             transformedMessages,
             tree,
             version,

@@ -1565,6 +1565,7 @@ export class Client {
             objectId: objectId,
             userId: undefined,
             offset: seq,
+            origin: null,
             contents: {
                 type: ops.MergeTreeDeltaType.INSERT, marker: { type: markerType, behaviors }, pos1: pos
             },
@@ -1583,6 +1584,7 @@ export class Client {
             objectId: objectId,
             userId: undefined,
             offset: seq,
+            origin: null,
             contents: {
                 type: ops.MergeTreeDeltaType.INSERT, text: text, pos1: pos
             },
@@ -1601,6 +1603,7 @@ export class Client {
             objectId: objectId,
             userId: undefined,
             offset: seq,
+            origin: null,
             contents: {
                 type: ops.MergeTreeDeltaType.REMOVE, pos1: start, pos2: end,
             },
@@ -1619,6 +1622,7 @@ export class Client {
             userId: undefined,
             minimumSequenceNumber: undefined,
             offset: seq,
+            origin: null,
             contents: {
                 type: ops.MergeTreeDeltaType.ANNOTATE, pos1: start, pos2: end, props
             },
@@ -1746,6 +1750,14 @@ export class Client {
         if ((msg !== undefined) && (msg.minimumSequenceNumber > this.mergeTree.getCollabWindow().minSeq)) {
             this.updateMinSeq(msg.minimumSequenceNumber);
         }
+
+        // Ensure client ID is registered
+        // TODO support for more than two branch IDs
+        // The existance of msg.origin means we are a branch message - and so should be marked as 0
+        // The non-existance of msg.origin indicates we are local - and should inherit the collab mode ID
+        const branchId = msg.origin ? 0 : this.mergeTree.localBranchId;
+        this.getOrAddShortClientId(msg.clientId, branchId);
+
         // Apply if an operation message
         if (msg.type === API.OperationType) {
             const operationMessage = msg as API.ISequencedObjectMessage;

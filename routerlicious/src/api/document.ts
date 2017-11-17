@@ -124,13 +124,17 @@ export class Document {
         for (const distributedObject of document.distributedObjects) {
             const services = returnValue.getObjectServices(distributedObject.id);
             services.deltaConnection.setBaseMapping(distributedObject.sequenceNumber, document.minimumSequenceNumber);
-            returnValue.loadInternal(distributedObject, services);
+            returnValue.loadInternal(distributedObject, services, document.snapshotOriginBranch);
         }
 
         // Apply pending deltas - first the list of transformed messages between the msn and sequence number
         // and then any pending deltas that have happened since that sequenceNumber
-        returnValue.processPendingMessages(document.transformedMessages);
+        returnValue.processPendingMessages(
+            document.transformedMessages,
+            document.snapshotOriginBranch !== id ? document.snapshotOriginBranch : null);
         assert.equal(returnValue.deltaManager.referenceSequenceNumber, document.sequenceNumber);
+
+        // These messages were not contained within the snapshot
         returnValue.processPendingMessages(document.pendingDeltas);
 
         // If it's a new document we create the root map object - otherwise we wait for it to become available
@@ -163,7 +167,7 @@ export class Document {
             // Load in distributed objects stored within the document
             for (const distributedObject of document.distributedObjects) {
                 const services = returnValue.getIdleObjectServices(distributedObject.id);
-                returnValue.loadInternal(distributedObject, services);
+                returnValue.loadInternal(distributedObject, services, document.snapshotOriginBranch);
             }
 
             debug(`Document Loaded ${id} - ${performanceNow()}`);
@@ -347,6 +351,12 @@ export class Document {
     public async snapshot(): Promise<void> {
         const entries: ITreeEntry[] = [];
 
+        // TODO: support for branch snapshots. For now simply no-op when a branch snapshot is requested
+        if (this.document.parentBranch) {
+            debug(`Skipping snapshot due to being branch of ${this.document.parentBranch}`);
+            return;
+        }
+
         // Transform ops in the window relative to the MSN - the window is all ops between the min sequence number
         // and the current sequence number
         assert.equal(
@@ -398,6 +408,7 @@ export class Document {
 
         // Save attributes for the document
         const documentAttributes: IDocumentAttributes = {
+            branch: this.id,
             minimumSequenceNumber: this.deltaManager.minimumSequenceNumber,
             sequenceNumber: this.deltaManager.referenceSequenceNumber,
         };
@@ -452,8 +463,17 @@ export class Document {
         return message;
     }
 
-    private processPendingMessages(messages: ISequencedDocumentMessage[]) {
+    private processPendingMessages(messages: ISequencedDocumentMessage[], parentBranch?: string) {
         for (const message of messages) {
+            // Append branch information when transforming for the case of messages stashed with the snapshot
+            if (parentBranch) {
+                message.origin = {
+                    id: parentBranch,
+                    minimumSequenceNumber: message.minimumSequenceNumber,
+                    sequenceNumber: message.sequenceNumber,
+                };
+            }
+
             this.deltaManager.handleOp(message);
         }
     }
@@ -471,7 +491,7 @@ export class Document {
      * Loads in a distributed object and stores it in the internal Document object map
      * @param distributedObject The distributed object to load
      */
-    private loadInternal(distributedObject: IDistributedObject, services: IAttachedServices) {
+    private loadInternal(distributedObject: IDistributedObject, services: IAttachedServices, originBranch: string) {
         const extension = this.registry.getExtension(distributedObject.type);
         const value = extension.load(
             this,
@@ -479,6 +499,7 @@ export class Document {
             distributedObject.sequenceNumber,
             services,
             this.document.version,
+            originBranch,
             distributedObject.header);
 
         this.upsertDistributedObject(value, services);
@@ -537,6 +558,7 @@ export class Document {
                 message.clientId,
                 message.sequenceNumber,
                 message.minimumSequenceNumber,
+                message.origin,
                 message.traces);
         } else if (message.type === AttachObject) {
             const attachMessage = message.contents as IAttachMessage;
@@ -565,7 +587,8 @@ export class Document {
                     objectStorage: localStorage,
                 };
 
-                this.loadInternal(distributedObject, services);
+                const origin = message.origin ? message.origin.id : this.id;
+                this.loadInternal(distributedObject, services, origin);
             } else {
                 this.distributedObjects[attachMessage.id].connection.setBaseMapping(0, message.sequenceNumber);
             }

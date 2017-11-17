@@ -221,6 +221,7 @@ export class CellExtension implements api.IExtension {
         sequenceNumber: number,
         services: api.IDistributedObjectServices,
         version: resources.ICommit,
+        headerOrigin: string,
         header: string): ICell {
 
         return new Cell(document, id, sequenceNumber, services, version, header);

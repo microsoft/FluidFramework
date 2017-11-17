@@ -1,5 +1,5 @@
 import { IDeltaConnection, IDocument } from "./document";
-import { IObjectMessage, ITrace } from "./protocol";
+import { IBranchOrigin, IObjectMessage, ITrace } from "./protocol";
 
 // Mimics a connection to a delta notification stream for document loading.
 export class IdleDeltaConnection implements IDeltaConnection {
@@ -40,8 +40,9 @@ export class IdleDeltaConnection implements IDeltaConnection {
         clientId: string,
         documentSequenceNumber: number,
         documentMinimumSequenceNumber: number,
+        origin: IBranchOrigin,
         traces: ITrace[]) {
-            // No implementation
+        // No implementation
     }
 
     public transformDocumentSequenceNumber(value: number) {

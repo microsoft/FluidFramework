@@ -17,15 +17,20 @@ type ConnectionMap = { [connectionId: string]: api.IDocumentDeltaConnection };
 type ObjectMap = { [objectId: string]: ConnectionMap };
 type EventMap = { [event: string]: ObjectMap };
 
-export const emptyHeader: api.IDocumentHeader = {
-    attributes: {
-        minimumSequenceNumber: 0,
-        sequenceNumber: 0,
-    },
-    distributedObjects: [],
-    transformedMessages: [],
-    tree: null,
-};
+export function getEmptyHeader(id: string): api.IDocumentHeader {
+    const emptyHeader: api.IDocumentHeader = {
+        attributes: {
+            branch: id,
+            minimumSequenceNumber: 0,
+            sequenceNumber: 0,
+        },
+        distributedObjects: [],
+        transformedMessages: [],
+        tree: null,
+    };
+
+    return emptyHeader;
+}
 
 export class DocumentResource implements api.IDocumentResource {
     constructor(
@@ -40,6 +45,7 @@ export class DocumentResource implements api.IDocumentResource {
         public distributedObjects: api.IDistributedObject[],
         public pendingDeltas: api.ISequencedDocumentMessage[],
         public transformedMessages: api.ISequencedDocumentMessage[],
+        public snapshotOriginBranch: string,
         public sequenceNumber: number,
         public minimumSequenceNumber: number,
         public tree: api.ISnapshotTree) {
@@ -93,7 +99,9 @@ export class DocumentService implements api.IDocumentService {
 
         // Load in the header for the version. At this point if version is still null that means there are no
         // snapshots and we should start with an empty header.
-        const headerP = version ? this.blobStorge.getHeader(id, version) : Promise.resolve(emptyHeader);
+        const headerP = version
+            ? this.blobStorge.getHeader(id, version)
+            : Promise.resolve(getEmptyHeader(id));
 
         const connectionP = new Promise<messages.IConnected>((resolve, reject) => {
             this.socket.emit(
@@ -139,6 +147,7 @@ export class DocumentService implements api.IDocumentService {
             header.distributedObjects,
             pendingDeltas,
             header.transformedMessages,
+            header.attributes.branch,
             header.attributes.sequenceNumber,
             header.attributes.minimumSequenceNumber,
             header.tree);

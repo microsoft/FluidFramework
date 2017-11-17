@@ -2,8 +2,19 @@ import * as resources from "gitresources";
 import { IDocumentMessage, ISequencedDocumentMessage } from "./protocol";
 
 export interface IDocumentAttributes {
+    /**
+     * Name of the branch that created the snapshot
+     */
+    branch: string;
+
+    /**
+     * Sequence number at which the snapshot was taken
+     */
     sequenceNumber: number;
 
+    /**
+     * Minimum sequence number when the snapshot was taken
+     */
     minimumSequenceNumber: number;
 }
 
@@ -230,6 +241,11 @@ export interface IDocumentResource {
      * Pending deltas that have not yet been included in a snapshot
      */
     pendingDeltas: ISequencedDocumentMessage[];
+
+    /**
+     * Branch identifier where snapshots originated
+     */
+    snapshotOriginBranch: string;
 
     /**
      * The smallest sequence number that can be used as a reference sequence number

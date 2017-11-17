@@ -30,6 +30,7 @@ export interface IExtension {
         sequenceNumber: number,
         services: IDistributedObjectServices,
         version: resources.ICommit,
+        headerOrigin: string,
         header: string): types.ICollaborativeObject;
 
     /**

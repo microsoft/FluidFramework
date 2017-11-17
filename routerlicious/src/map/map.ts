@@ -536,6 +536,7 @@ export class MapExtension implements api.IExtension {
         sequenceNumber: number,
         services: api.IDistributedObjectServices,
         version: resources.ICommit,
+        headerOrigin: string,
         header: string): IMap {
 
         return new CollaborativeMap(document, id, sequenceNumber, services, version, header);
