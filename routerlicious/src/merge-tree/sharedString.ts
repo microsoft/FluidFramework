@@ -101,7 +101,7 @@ export class SharedString extends api.CollaborativeObject {
         if (collaborative) {
             console.log(`Start ${this.id} collab - ${performanceNow()}`);
             // TODO currently only assumes two levels of branching
-            const branchId = originBranch ? 1 : 0;
+            const branchId = originBranch === this.document.id ? 0 : 1;
             this.client.startCollaboration(this.document.clientId, sequenceNumber, branchId);
         }
         console.log(`Apply ${this.id} pending - ${performanceNow()}`);

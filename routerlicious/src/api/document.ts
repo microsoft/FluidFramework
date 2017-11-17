@@ -127,7 +127,9 @@ export class Document {
 
         // Apply pending deltas - first the list of transformed messages between the msn and sequence number
         // and then any pending deltas that have happened since that sequenceNumber
-        returnValue.processPendingMessages(document.transformedMessages);
+        returnValue.processPendingMessages(
+            document.transformedMessages,
+            document.snapshotOriginBranch !== id ? document.snapshotOriginBranch : null);
         assert.equal(returnValue.deltaManager.referenceSequenceNumber, document.sequenceNumber);
 
         // These messages were not contained within the snapshot
@@ -425,8 +427,17 @@ export class Document {
         return message;
     }
 
-    private processPendingMessages(messages: ISequencedDocumentMessage[]) {
+    private processPendingMessages(messages: ISequencedDocumentMessage[], parentBranch?: string) {
         for (const message of messages) {
+            // Append branch information when transforming for the case of messages stashed with the snapshot
+            if (parentBranch) {
+                message.origin = {
+                    id: parentBranch,
+                    minimumSequenceNumber: message.minimumSequenceNumber,
+                    sequenceNumber: message.sequenceNumber,
+                };
+            }
+
             this.deltaManager.handleOp(message);
         }
     }

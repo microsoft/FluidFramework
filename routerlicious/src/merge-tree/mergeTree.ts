@@ -1753,8 +1753,10 @@ export class Client {
 
         // Ensure client ID is registered
         // TODO support for more than two branch IDs
-        const shortClientId = this.getOrAddShortClientId(msg.clientId, msg.origin ? 1 : 0);
-        console.log(`Msg for branch ${this.getBranchId(shortClientId)}`);
+        // The existance of msg.origin means we are a branch message - and so should be marked as 0
+        // The non-existance of msg.origin indicates we are local - and should inherit the collab mode ID
+        const branchId = msg.origin ? 0 : this.mergeTree.localBranchId;
+        this.getOrAddShortClientId(msg.clientId, branchId);
 
         // Apply if an operation message
         if (msg.type === API.OperationType) {
