@@ -1,2 +1,2 @@
 persistence:
-  storageClass: ssd
+  storageClass: managed-premium

@@ -5,13 +5,13 @@ imagePullPolicy: IfNotPresent
 historian:
   name: historian
   image: prague.azurecr.io/historian:1011
-  redis: coiled-toucan-redis
+  redis: lumpy-condor-redis
 
 gitrest:
   name: gitrest
   image: prague.azurecr.io/gitrest:1010
   persistence:
-    storageClass: ssd
+    storageClass: managed-premium
     size: 128Gi
     accessMode: ReadWriteOnce
 

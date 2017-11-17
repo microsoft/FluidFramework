@@ -1,12 +1,46 @@
 // For local development
-// const routerlicious = "http://localhost:3000";
-// const historian = "http://localhost:3001";
-const routerlicious = "http://praguekube.westus2.cloudapp.azure.com";
-const historian = "http://prague-historian.westus2.cloudapp.azure.com";
+const routerlicious = "http://localhost:3000";
+const historian = "http://localhost:3001";
+//const routerlicious = "http://praguekube.westus2.cloudapp.azure.com";
+//const historian = "http://prague-historian.westus2.cloudapp.azure.com";
 const repository = "prague";
 
 // Register endpoint connection
 prague.socketStorage.registerAsDefault(routerlicious, historian, repository);
+
+let id = "testGraph-pooch7";
+
+interface ISharedVertex {
+	id: string;
+	x: number;
+	y: number;
+	width: number;
+	height: number;
+	label: string;
+}
+
+interface ISharedEdge {
+	nodeId1: string;
+	nodeId2: string;
+	label: string;
+}
+
+class SharedGraph {
+	constructor(public vertices: prague.types.ISet<ISharedVertex>,
+		public edges: prague.types.ISet<ISharedEdge>) {
+
+	}
+	async addVertex(id: string, label: string, x: number, y: number, width: number, height: number) {
+		await this.vertices.add(<ISharedVertex>{
+			id, x, y, width, height, label
+		});
+	}
+	async addEdge(nodeId1: string, nodeId2: string, label: string) {
+		await this.edges.add(<ISharedEdge>{
+			nodeId1, nodeId2, label
+		});
+	}
+}
 
 function getLatestVersion(id: string): Promise<any> {
 	const versionP = new Promise<any>((resolve, reject) => {
@@ -27,26 +61,9 @@ function getLatestVersion(id: string): Promise<any> {
 	return versionP;
 }
 
-let id = "testGraph1";
-
-interface ISharedVertex {
-
-}
-
-interface ISharedEdge {
-
-}
-
-class SharedGraph {
-	constructor(public vertices: prague.types.ISet<ISharedVertex>,
-		public edges: prague.types.ISet<ISharedEdge>) {
-
-	}
-}
-
 async function main(container: HTMLDivElement) {
 	let sharedGraph: SharedGraph;
-
+	let graphView: prague.types.IMapView;
 	// Get the latest version of the document
 	const version = await getLatestVersion(id);
 	console.log(version);
@@ -62,21 +79,23 @@ async function main(container: HTMLDivElement) {
 		let vertexSet = await graphMap.createSet<ISharedVertex>("vertices");
 		let edgeSet = await graphMap.createSet<ISharedEdge>("edges");
 		sharedGraph = new SharedGraph(vertexSet, edgeSet);
+		graphView = await graphMap.getView();
 	} else {
 		graphMap = rootView.get("graph");
-		const graphView = await graphMap.getView();
+		graphView = await graphMap.getView();
 		let vertexSet: prague.types.ISet<ISharedVertex> = graphView.get("vertices");
 		let edgeSet: prague.types.ISet<ISharedEdge> = graphView.get("edges");
 		sharedGraph = new SharedGraph(vertexSet, edgeSet);
 	}
-	mainMX(container, sharedGraph, collabDoc);
+	mainMX(container, sharedGraph, collabDoc, graphView, graphMap);
 }
 
 // Program starts here. Creates a sample graph in the
 // DOM node with the specified ID. This function is invoked
 // from the onLoad event handler of the document (see below).
 function mainMX(container: HTMLDivElement, sharedGraph: SharedGraph,
-	collabDoc: prague.api.Document) {
+	collabDoc: prague.api.Document, graphView: prague.types.IMapView,
+	graphMap: prague.types.IMap) {
 	// Checks if the browser is supported
 	if (!mxClient.isBrowserSupported()) {
 		// Displays an error message if the browser is not supported.
@@ -114,18 +133,33 @@ function mainMX(container: HTMLDivElement, sharedGraph: SharedGraph,
 		// Gets the default parent for inserting new cells. This
 		// is normally the first child of the root (ie. layer 0).
 		var parent = graph.getDefaultParent();
-		let localVertexMap = prague.mergeTree.createMap<ISharedVertex>();
+		let localVertexMap = Object.create(null);
 		let localVertexIndex = 0;
 		let localIdPrefix = collabDoc.clientId;
+
 		function makeId(objectType: string) {
 			let countSuffix = localVertexIndex++;
 			return `${objectType}${localIdPrefix}${countSuffix}`;
 		}
-		function sendGraphUpdate(v1: IVertex, v2: IVertex, label:string, x: number, y: number,
-		width: number,height: number) {
-			v2.sharedId = makeId("N");
-			 
+
+		let localOp = false;
+
+		function sendAddVertex(v: IVertex, label: string, x: number, y: number, width: number, height: number) {
+			v.sharedId = makeId("N");
+			localVertexMap[v.sharedId] = v;
+			localOp = true;
+			sharedGraph.addVertex(v.sharedId, label, x, y, width, height);
+			localOp = false;
 		}
+
+		function sendGraphUpdate(v1: IVertex, v2: IVertex, label: string, x: number, y: number,
+			width: number, height: number) {
+				sendAddVertex(v2, label, x, y, width, height);
+			localOp = true;
+			sharedGraph.addEdge(v1.sharedId, v2.sharedId, "");
+			localOp = false;
+		}
+
 		var addOverlay = function (cell) {
 			// Creates a new overlay with an image and a tooltip
 			var overlay = new mxCellOverlay(new mxImage('images/add.png', 24, 24), 'Add outgoing');
@@ -144,10 +178,10 @@ function mainMX(container: HTMLDivElement, sharedGraph: SharedGraph,
 					addOverlay(v2);
 					graph.view.refresh(v2);
 					graph.insertEdge(parent, null, '', cell, v2);
-					sendGraphUpdate(cell, v2,label,geo.x,geo.y,80,30);
+					sendGraphUpdate(cell, v2, label, geo.x, geo.y, 80, 30);
 				}, function () {
-						graph.scrollCellToVisible(v2);
-					});
+					graph.scrollCellToVisible(v2);
+				});
 			});
 
 			// Special CMS event
@@ -176,6 +210,7 @@ function mainMX(container: HTMLDivElement, sharedGraph: SharedGraph,
 		try {
 			v1 = graph.insertVertex(parent, null, 'Hello,', 0, 0, 80, 30);
 			addOverlay(v1);
+			sendAddVertex(v1, 'Hello', 0, 0, 80, 30);
 		}
 		finally {
 			// Updates the display
@@ -210,6 +245,48 @@ function mainMX(container: HTMLDivElement, sharedGraph: SharedGraph,
 				morph.startAnimation();
 			}
 		};
+
+		function addEdgeFromRemote(e: ISharedEdge) {
+			let v1 = localVertexMap[e.nodeId1];
+			let v2 = localVertexMap[e.nodeId2];
+			executeLayout(function () {
+				graph.insertEdge(parent, null, e.label, v1, v2);
+			}, function () {
+				graph.scrollCellToVisible(v2);
+			});
+		}
+
+		function addVertexFromRemote(v: ISharedVertex) {
+			let iv: IVertex;
+			executeLayout(function () {
+				let iv = graph.insertVertex(parent, null, v.label, v.x, v.y, v.width, v.height);
+				localVertexMap[v.id] = iv;
+				addOverlay(iv);
+				graph.view.refresh(iv);
+			}, function () {
+				graph.scrollCellToVisible(iv);
+			});
+		}
+		interface IElementAdded {
+			key: string;
+		}
+
+		interface ITypedElementAdded<T> extends IElementAdded {
+			key: string;
+			value: T;
+		}
+		let never = false;
+		graphMap.on("setElementAdded", (delta: IElementAdded) => {
+			if ((!localOp) && (!never)) {
+				if (delta.key === "vertices") {
+					let tdelta = <ITypedElementAdded<ISharedVertex>>delta;
+					addVertexFromRemote(tdelta.value);
+				} else if (delta.key === "edges") {
+					let tdelta = <ITypedElementAdded<ISharedEdge>>delta;
+					addEdgeFromRemote(tdelta.value);
+				}
+			}
+		});
 
 		var edgeHandleConnect = mxEdgeHandler.prototype.connect;
 		mxEdgeHandler.prototype.connect = function (edge, terminal, isSource, isClone, me) {

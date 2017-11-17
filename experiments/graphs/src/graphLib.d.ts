@@ -49,6 +49,7 @@ interface ICell {
 }
 
 interface IVertex extends ICell {
+    sharedId?: string;
 }
 
 interface IPanningHandler {
