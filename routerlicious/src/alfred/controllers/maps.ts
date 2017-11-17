@@ -104,13 +104,33 @@ async function randomizeMap(map: types.IMap) {
     }, 1000);
 }
 
-export function load(id: string, version: resources.ICommit, config: any) {
+export async function load(id: string, version: resources.ICommit, config: any, loadPartial: boolean) {
+    loadPartial ? loadCommit(id, version, config) : loadFull(id, version, config);
+}
+
+function loadFull(id: string, version: resources.ICommit, config: any) {
     socketStorage.registerAsDefault(document.location.origin, config.blobStorageUrl, config.repository);
 
     $(document).ready(() => {
         // Bootstrap worker service.
         agent.registerWorker(config, "maps");
         loadDocument(id, version).then(async (doc) => {
+            // tslint:disable-next-line
+            window["doc"] = doc;
+
+            const root = doc.getRoot();
+
+            // Display the initial values and then listen for updates
+            displayMap($("#mapViews"), null, root, null, doc);
+        });
+    });
+}
+
+function loadCommit(id: string, version: resources.ICommit, config: any) {
+    socketStorage.registerAsLoader(document.location.origin, config.blobStorageUrl, config.repository);
+
+    $(document).ready(() => {
+        api.loadVersion(id, { encrypted: false /* api.isUserLoggedIn() */ }, version).then(async (doc) => {
             // tslint:disable-next-line
             window["doc"] = doc;
 

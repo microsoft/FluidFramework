@@ -30,7 +30,12 @@ async function getInsights(map: types.IMap, id: string): Promise<types.IMap> {
     return insights.wait<types.IMap>(id);
 }
 
-export async function onLoad(id: string, version: resources.ICommit, config: any, template: string) {
+// tslint:disable-next-line
+export async function onLoad(id: string, version: resources.ICommit, config: any, template: string, loadPartial: boolean) {
+    loadPartial ? loadCommit(id, version, config) : loadFull(id, version, config, template);
+}
+
+async function loadFull(id: string, version: resources.ICommit, config: any, template: string) {
     const host = new ui.BrowserContainerHost();
 
     socketStorage.registerAsDefault(document.location.origin, config.blobStorageUrl, config.repository);
@@ -102,4 +107,51 @@ export async function onLoad(id: string, version: resources.ICommit, config: any
 
         theFlow.loadFinished(clockStart);
     });
+}
+
+async function loadCommit(id: string, version: resources.ICommit, config: any) {
+    console.log(`Load document ${id} upto commit ${JSON.stringify(version)}.`);
+
+    const host = new ui.BrowserContainerHost();
+
+    socketStorage.registerAsLoader(document.location.origin, config.blobStorageUrl, config.repository);
+    console.log(`collabDoc loading ${id} - ${performanceNow()}`);
+    const collabDoc = await API.loadVersion(id, { blockUpdateMarkers: true }, version);
+    console.log(`collabDoc loaded ${id} - ${performanceNow()}`);
+    const root = await collabDoc.getRoot().getView();
+    console.log(`Getting root ${id} - ${performanceNow()}`);
+
+    const sharedString = root.get("text") as SharedString.SharedString;
+    console.log(`Shared string ready - ${performanceNow()}`);
+    console.log(window.navigator.userAgent);
+    console.log(`id is ${id}`);
+    console.log(`Partial load fired - ${performanceNow()}`);
+
+    // Higher plane ink
+    const inkPlane = root.get("ink");
+
+    // Bindy for insights
+    const image = new controls.Image(
+        document.createElement("div"),
+        url.resolve(document.baseURI, "/public/images/bindy.svg"));
+
+    const containerDiv = document.createElement("div");
+    const container = new controls.FlowContainer(containerDiv, collabDoc, sharedString, inkPlane, image);
+    theFlow = container.flowView;
+    host.attach(container);
+
+    getInsights(collabDoc.getRoot(), sharedString.id);
+
+    if (sharedString.client.getLength() > 0) {
+        theFlow.render(0, true);
+    }
+    theFlow.timeToEdit = theFlow.timeToImpression = Date.now() - clockStart;
+
+    theFlow.setEdit(root);
+
+    sharedString.loaded.then(() => {
+
+        theFlow.loadFinished(clockStart);
+    });
+
 }

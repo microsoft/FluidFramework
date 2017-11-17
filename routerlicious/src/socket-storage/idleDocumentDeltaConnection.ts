@@ -1,10 +1,11 @@
-import * as api from "../../api-core";
-import { TestDocumentService} from "./";
+import * as api from "../api-core";
+import { LoadService } from "../socket-storage";
 
-export class TestDocumentDeltaConnection implements api.IDocumentDeltaConnection {
+// Mimics a connection to a document delta connection for document loading.
+export class IdleDocumentDeltaConnection implements api.IDocumentDeltaConnection {
 
     constructor(
-        public service: TestDocumentService,
+        public service: LoadService,
         public documentId: string,
         public clientId: string,
         public encrypted: boolean,

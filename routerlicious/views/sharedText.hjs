@@ -11,8 +11,9 @@
         <script>
             var config = {{{ config }}};
             var version = {{{ version }}};
+            var loadPartial = {{{ loadPartial }}};
             console.log(`Starting load at - ${performance.now()}`);
-            controller.sharedText.onLoad("{{ id }}", version, config, "{{ template }}");
+            controller.sharedText.onLoad("{{ id }}", version, config, "{{ template }}", loadPartial);
         </script>
     {{/scripts}}
 {{/layout}}

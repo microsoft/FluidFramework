@@ -110,6 +110,14 @@ export async function getLatestVersion(gitManager: git.GitManager, id: string): 
     return commits.length > 0 ? commits[0] : null;
 }
 
+export async function getVersions(gitManager: git.GitManager, id: string, count: number): Promise<ICommit[]> {
+    return await gitManager.getCommits(id, count);
+}
+
+export async function getVersion(gitManager: git.GitManager, sha: string): Promise<ICommit> {
+    return await gitManager.getCommit(sha);
+}
+
 /**
  * Retrieves the forks for the given document
  */

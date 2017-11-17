@@ -9,8 +9,10 @@ import {
     DeltaManager,
     IAttachMessage,
     ICollaborativeObject,
+    IDeltaConnection,
     IDistributedObject,
     IDistributedObjectServices,
+    IdleDeltaConnection,
     IDocumentAttributes,
     IDocumentResource,
     IDocumentService,
@@ -71,7 +73,7 @@ interface IDistributedObjectState {
 
     storage: IObjectStorageService;
 
-    connection: DeltaConnection;
+    connection: IDeltaConnection;
 }
 
 /**
@@ -95,7 +97,7 @@ function waitForRoot(document: Document): Promise<void> {
 }
 
 interface IAttachedServices {
-    deltaConnection: DeltaConnection;
+    deltaConnection: IDeltaConnection;
     objectStorage: IObjectStorageService;
 }
 
@@ -144,6 +146,32 @@ export class Document {
         return returnValue;
     }
 
+    public static async Load(
+        id: string,
+        registry: Registry,
+        service: IDocumentService,
+        options: Object,
+        version: resources.ICommit,
+        connect: boolean): Promise<Document> {
+            debug(`Document loading ${id} - ${performanceNow()}`);
+
+            // Loads the document from header.
+            const encryptedProperty = "encrypted";
+            const document = await service.connect(id, version, connect, options[encryptedProperty]);
+            const returnValue = new Document(document, registry, service, options);
+
+            // Load in distributed objects stored within the document
+            for (const distributedObject of document.distributedObjects) {
+                const services = returnValue.getIdleObjectServices(distributedObject.id);
+                returnValue.loadInternal(distributedObject, services);
+            }
+
+            debug(`Document Loaded ${id} - ${performanceNow()}`);
+
+            // And return the new object
+            return returnValue;
+    }
+
     // Map from the object ID to the collaborative object for it. If the object is not yet attached its service
     // entries will be null
     private distributedObjects: { [key: string]: IDistributedObjectState } = {};
@@ -181,12 +209,14 @@ export class Document {
         private opts: Object) {
 
         this.lastMinSequenceNumber = this.document.minimumSequenceNumber;
-        this.deltaManager = new DeltaManager(
-            this.document.documentId,
-            this.document.minimumSequenceNumber,
-            this.document.deltaStorageService,
-            this.document.deltaConnection);
-        this.deltaManager.onDelta((message) => this.processRemoteMessage(message));
+        if (this.document.deltaConnection !== null) {
+            this.deltaManager = new DeltaManager(
+                this.document.documentId,
+                this.document.minimumSequenceNumber,
+                this.document.deltaStorageService,
+                this.document.deltaConnection);
+            this.deltaManager.onDelta((message) => this.processRemoteMessage(message));
+        }
     }
 
     public get options(): Object {
@@ -455,17 +485,26 @@ export class Document {
     }
 
     private getObjectServices(id: string): IAttachedServices {
+        const connection = new DeltaConnection(id, this);
+        return {
+            deltaConnection: connection,
+            objectStorage: this.getStorageService(id),
+        };
+    }
+
+    private getIdleObjectServices(id: string): IAttachedServices {
+        const connection = new IdleDeltaConnection(id, this);
+        return {
+            deltaConnection: connection,
+            objectStorage: this.getStorageService(id),
+        };
+    }
+
+    private getStorageService(id: string): IObjectStorageService {
         const tree = this.document.tree && id in this.document.tree.trees
             ? this.document.tree.trees[id]
             : null;
-
-        const connection = new DeltaConnection(id, this);
-        const storage = new ObjectStorageService(tree, this.document.documentStorageService);
-
-        return {
-            deltaConnection: connection,
-            objectStorage: storage,
-        };
+        return new ObjectStorageService(tree, this.document.documentStorageService);
     }
 
     private upsertDistributedObject(object: ICollaborativeObject, services: IAttachedServices) {
@@ -577,4 +616,28 @@ export async function load(
     }
 
     return Document.Create(id, registry, service, options, version, connect);
+}
+
+/**
+ * Loads a specific version (commit) of the collaborative object
+ */
+export async function loadVersion(
+    id: string,
+    options: Object = defaultDocumentOptions,
+    version: resources.ICommit = null,
+    registry: Registry = defaultRegistry,
+    service: IDocumentService = defaultDocumentService,
+    connect = true): Promise<Document> {
+
+    // Verify an extensions registry was provided
+    if (!registry) {
+        throw new Error("No extension registry provided");
+    }
+
+    // Verify we have services to load the document with
+    if (!service) {
+        throw new Error("Document service not provided to load call");
+    }
+
+    return Document.Load(id, registry, service, options, version, connect);
 }
