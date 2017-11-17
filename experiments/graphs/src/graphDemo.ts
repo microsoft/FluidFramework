@@ -1,14 +1,14 @@
 // For local development
-// const routerlicious = "http://localhost:3000";
-// const historian = "http://localhost:3001";
-const routerlicious = "http://praguekube.westus2.cloudapp.azure.com";
-const historian = "http://prague-historian.westus2.cloudapp.azure.com";
+const routerlicious = "http://localhost:3000";
+const historian = "http://localhost:3001";
+//const routerlicious = "http://praguekube.westus2.cloudapp.azure.com";
+//const historian = "http://prague-historian.westus2.cloudapp.azure.com";
 const repository = "prague";
 
 // Register endpoint connection
 prague.socketStorage.registerAsDefault(routerlicious, historian, repository);
 
-let id = "testGraph-pooch1";
+let id = "testGraph-pooch7";
 
 interface ISharedVertex {
 	id: string;
@@ -30,13 +30,13 @@ class SharedGraph {
 		public edges: prague.types.ISet<ISharedEdge>) {
 
 	}
-	addVertex(id: string, label: string, x: number, y: number, width: number, height: number) {
-		this.vertices.add(<ISharedVertex>{
+	async addVertex(id: string, label: string, x: number, y: number, width: number, height: number) {
+		await this.vertices.add(<ISharedVertex>{
 			id, x, y, width, height, label
 		});
 	}
-	addEdge(nodeId1: string, nodeId2: string, label: string) {
-		this.edges.add(<ISharedEdge>{
+	async addEdge(nodeId1: string, nodeId2: string, label: string) {
+		await this.edges.add(<ISharedEdge>{
 			nodeId1, nodeId2, label
 		});
 	}
@@ -142,16 +142,22 @@ function mainMX(container: HTMLDivElement, sharedGraph: SharedGraph,
 			return `${objectType}${localIdPrefix}${countSuffix}`;
 		}
 
+		let localOp = false;
+
 		function sendAddVertex(v: IVertex, label: string, x: number, y: number, width: number, height: number) {
 			v.sharedId = makeId("N");
 			localVertexMap[v.sharedId] = v;
+			localOp = true;
 			sharedGraph.addVertex(v.sharedId, label, x, y, width, height);
+			localOp = false;
 		}
 
 		function sendGraphUpdate(v1: IVertex, v2: IVertex, label: string, x: number, y: number,
 			width: number, height: number) {
-			sendAddVertex(v2, label, x, y, width, height);
+				sendAddVertex(v2, label, x, y, width, height);
+			localOp = true;
 			sharedGraph.addEdge(v1.sharedId, v2.sharedId, "");
+			localOp = false;
 		}
 
 		var addOverlay = function (cell) {
@@ -242,7 +248,7 @@ function mainMX(container: HTMLDivElement, sharedGraph: SharedGraph,
 
 		function addEdgeFromRemote(e: ISharedEdge) {
 			let v1 = localVertexMap[e.nodeId1];
-			let v2 = localVertexMap[e.nodeId1];
+			let v2 = localVertexMap[e.nodeId2];
 			executeLayout(function () {
 				graph.insertEdge(parent, null, e.label, v1, v2);
 			}, function () {
@@ -254,6 +260,7 @@ function mainMX(container: HTMLDivElement, sharedGraph: SharedGraph,
 			let iv: IVertex;
 			executeLayout(function () {
 				let iv = graph.insertVertex(parent, null, v.label, v.x, v.y, v.width, v.height);
+				localVertexMap[v.id] = iv;
 				addOverlay(iv);
 				graph.view.refresh(iv);
 			}, function () {
@@ -268,14 +275,16 @@ function mainMX(container: HTMLDivElement, sharedGraph: SharedGraph,
 			key: string;
 			value: T;
 		}
-
+		let never = false;
 		graphMap.on("setElementAdded", (delta: IElementAdded) => {
-			if (delta.key === "vertices") {
-				let tdelta = <ITypedElementAdded<ISharedVertex>>delta;
-				addVertexFromRemote(tdelta.value);
-			} else if (delta.key === "edges") {
-				let tdelta = <ITypedElementAdded<ISharedEdge>>delta;
-				addEdgeFromRemote(tdelta.value);
+			if ((!localOp) && (!never)) {
+				if (delta.key === "vertices") {
+					let tdelta = <ITypedElementAdded<ISharedVertex>>delta;
+					addVertexFromRemote(tdelta.value);
+				} else if (delta.key === "edges") {
+					let tdelta = <ITypedElementAdded<ISharedEdge>>delta;
+					addEdgeFromRemote(tdelta.value);
+				}
 			}
 		});
 
