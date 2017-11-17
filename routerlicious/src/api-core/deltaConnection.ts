@@ -2,7 +2,7 @@ import * as assert from "assert";
 import { EventEmitter } from "events";
 import { RangeTracker } from "../core-utils";
 import { IDeltaConnection, IDocument } from "./document";
-import { IObjectMessage, ISequencedObjectMessage, ITrace } from "./protocol";
+import { IBranchOrigin, IObjectMessage, ISequencedObjectMessage, ITrace } from "./protocol";
 
 export class DeltaConnection implements IDeltaConnection {
     protected events = new EventEmitter();
@@ -64,6 +64,7 @@ export class DeltaConnection implements IDeltaConnection {
         clientId: string,
         documentSequenceNumber: number,
         documentMinimumSequenceNumber: number,
+        origin: IBranchOrigin,
         traces: ITrace[]) {
 
         assert(this.baseMappingIsSet());
@@ -79,6 +80,7 @@ export class DeltaConnection implements IDeltaConnection {
             clientSequenceNumber: message.clientSequenceNumber,
             contents: message.contents,
             minimumSequenceNumber: this.minSequenceNumber,
+            origin,
             referenceSequenceNumber: this.refSequenceNumber,
             sequenceNumber,
             traces,

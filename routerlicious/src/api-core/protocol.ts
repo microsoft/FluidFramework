@@ -108,6 +108,10 @@ export interface ISequencedObjectMessage {
     // The contents of the message
     contents: any;
 
+    // Origin branch information for the message. Can be marked undefined if the current
+    // message is also the origin.
+    origin: IBranchOrigin;
+
     // Traces related to the packet.
     traces: ITrace[];
 }

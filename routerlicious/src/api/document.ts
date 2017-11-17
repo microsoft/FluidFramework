@@ -129,6 +129,8 @@ export class Document {
         // and then any pending deltas that have happened since that sequenceNumber
         returnValue.processPendingMessages(document.transformedMessages);
         assert.equal(returnValue.deltaManager.referenceSequenceNumber, document.sequenceNumber);
+
+        // These messages were not contained within the snapshot
         returnValue.processPendingMessages(document.pendingDeltas);
 
         // If it's a new document we create the root map object - otherwise we wait for it to become available
@@ -500,6 +502,7 @@ export class Document {
                 message.clientId,
                 message.sequenceNumber,
                 message.minimumSequenceNumber,
+                message.origin,
                 message.traces);
         } else if (message.type === AttachObject) {
             const attachMessage = message.contents as IAttachMessage;

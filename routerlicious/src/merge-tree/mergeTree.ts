@@ -1565,6 +1565,7 @@ export class Client {
             objectId: objectId,
             userId: undefined,
             offset: seq,
+            origin: null,
             contents: {
                 type: ops.MergeTreeDeltaType.INSERT, marker: { type: markerType, behaviors }, pos1: pos
             },
@@ -1583,6 +1584,7 @@ export class Client {
             objectId: objectId,
             userId: undefined,
             offset: seq,
+            origin: null,
             contents: {
                 type: ops.MergeTreeDeltaType.INSERT, text: text, pos1: pos
             },
@@ -1601,6 +1603,7 @@ export class Client {
             objectId: objectId,
             userId: undefined,
             offset: seq,
+            origin: null,
             contents: {
                 type: ops.MergeTreeDeltaType.REMOVE, pos1: start, pos2: end,
             },
@@ -1619,6 +1622,7 @@ export class Client {
             userId: undefined,
             minimumSequenceNumber: undefined,
             offset: seq,
+            origin: null,
             contents: {
                 type: ops.MergeTreeDeltaType.ANNOTATE, pos1: start, pos2: end, props
             },
@@ -1746,6 +1750,11 @@ export class Client {
         if ((msg !== undefined) && (msg.minimumSequenceNumber > this.mergeTree.getCollabWindow().minSeq)) {
             this.updateMinSeq(msg.minimumSequenceNumber);
         }
+
+        // Ensure client ID is registered
+        // TODO support for more than two branch IDs
+        const shortClientId = this.getOrAddShortClientId(msg.clientId, msg.origin ? 1 : 0);
+        console.log(`Msg for branch ${this.getBranchId(shortClientId)}`);
 
         // Apply if an operation message
         if (msg.type === API.OperationType) {

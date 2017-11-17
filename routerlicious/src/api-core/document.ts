@@ -34,6 +34,8 @@ export interface IDeltaConnection {
 }
 
 export interface IDocument {
+    id: string;
+
     clientId: string;
 
     options: Object;

@@ -23,14 +23,14 @@ export class CollaboritiveStringExtension implements api.IExtension {
         header: string): api.ICollaborativeObject {
 
         let collaborativeString = new SharedString(document, id, sequenceNumber, services);
-        collaborativeString.load(sequenceNumber, header, true);
+        collaborativeString.load(sequenceNumber, header, true, headerOrigin);
 
         return collaborativeString;
     }
 
     public create(document: api.IDocument, id: string, options?: Object): api.ICollaborativeObject {
         let collaborativeString = new SharedString(document, id, 0);
-        collaborativeString.load(0, null, false);
+        collaborativeString.load(0, null, false, document.id);
 
         return collaborativeString;
     }
@@ -78,7 +78,7 @@ export class SharedString extends api.CollaborativeObject {
         this.client = new MergeTree.Client("", document.options);
     }
 
-    public async load(sequenceNumber: number, header: string, collaborative: boolean) {
+    public async load(sequenceNumber: number, header: string, collaborative: boolean, originBranch: string) {
         let chunk: ops.MergeTreeChunk;
 
         console.log(`Async load ${this.id} - ${performanceNow()}`);
@@ -100,7 +100,9 @@ export class SharedString extends api.CollaborativeObject {
         assert.equal(sequenceNumber, chunk.chunkSequenceNumber);
         if (collaborative) {
             console.log(`Start ${this.id} collab - ${performanceNow()}`);
-            this.client.startCollaboration(this.document.clientId, sequenceNumber);
+            // TODO currently only assumes two levels of branching
+            const branchId = originBranch ? 1 : 0;
+            this.client.startCollaboration(this.document.clientId, sequenceNumber, branchId);
         }
         console.log(`Apply ${this.id} pending - ${performanceNow()}`);
         this.applyPending();
