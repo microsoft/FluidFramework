@@ -69,7 +69,7 @@ async function run(id: string): Promise<void> {
     };
 }
 
-const documentId = "test-document";
+const documentId = "test-document-444!MMM";
 run(documentId).catch((error) => {
     console.error(error);
 })

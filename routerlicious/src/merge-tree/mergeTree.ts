@@ -1746,7 +1746,6 @@ export class Client {
         if ((msg !== undefined) && (msg.minimumSequenceNumber > this.mergeTree.getCollabWindow().minSeq)) {
             this.updateMinSeq(msg.minimumSequenceNumber);
         }
-
         // Apply if an operation message
         if (msg.type === API.OperationType) {
             const operationMessage = msg as API.ISequencedObjectMessage;
