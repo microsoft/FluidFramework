@@ -3,14 +3,14 @@ telegraf and influxdb are deployed using helm charts. Chart configs are mostly c
 To install the charts. Run:
 ```bash
 $ helm install --name data --namespace metric ./influxdb/
-$ helm install --name polling --namespace metric ./telegraf-service/
-$ helm install --name hosts --namespace metric ./telegraf-daemonset/
+$ helm install --name polling --namespace metric ./telegraf/telegraf-service/
+$ helm install --name hosts --namespace metric ./telegraf/telegraf-daemonset/
 ```
 To deploy grafana. Run:
 
 ```bash
-$ kubectl apply -f grafana-deployment.yaml
-$ kubectl apply -f grafana-service.yaml
+$ kubectl apply -f ./grafana/grafana-deployment.yaml
+$ kubectl apply -f ./grafana/grafana-service.yaml
 ```
 
 Dashboard configurations are kept up to date in the "dashboards" folder. In the event of redeployment, use grafana's "import dashboard" option to restore the graphs.
