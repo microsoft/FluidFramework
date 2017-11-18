@@ -4,14 +4,14 @@ imagePullPolicy: IfNotPresent
 
 historian:
   name: historian
-  image: prague.azurecr.io/historian:1011
+  image: prague.azurecr.io/historian:1039
   redis: lumpy-condor-redis
 
 gitrest:
   name: gitrest
-  image: prague.azurecr.io/gitrest:1010
+  image: prague.azurecr.io/gitrest:1038
   persistence:
-    storageClass: managed-premium
+    storageClass: unmanaged-premium
     size: 128Gi
     accessMode: ReadWriteOnce
 

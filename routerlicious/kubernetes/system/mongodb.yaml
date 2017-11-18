@@ -1,2 +1,2 @@
 persistence:
-  storageClass: managed-premium
+  storageClass: unmanaged-premium

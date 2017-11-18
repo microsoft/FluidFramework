@@ -40,8 +40,10 @@ We will move these to Kubernetes jobs. But for now they need to be applied manua
 
 ```
 ssh -i ~/.ssh/azure_kubernetes_rsa <admin>@<worker>.westus2.cloudapp.azure.com
-./kafka-topics --zookeeper praguekafka-broker-1:2181 --partitions 8 --replication-factor 3 --create --topic deltas
-./kafka-topics --zookeeper praguekafka-broker-1:2181 --partitions 8 --replication-factor 3 --create --topic rawdeltas
+./kafka-topics --zookeeper praguekafkawestus2-broker-1:2181 --partitions 8 --replication-factor 3 --create --topic rawdeltas
+./kafka-topics --zookeeper praguekafkawestus2-broker-1:2181 --partitions 8 --replication-factor 3 --create --topic deltas
+./kafka-topics --zookeeper praguekafkawestus2-broker-1:2181 --partitions 8 --replication-factor 3 --create --topic rawdeltas-ppe
+./kafka-topics --zookeeper praguekafkawestus2-broker-1:2181 --partitions 8 --replication-factor 3 --create --topic deltas-ppe
 curl -H "Content-Type: application/json" -X POST -d '{"name": "prague"}' --verbose prague-historian.westus2.cloudapp.azure.com/repos
 ```
 
@@ -90,4 +92,4 @@ Historian - terrific-otter
 Prod
 Mongo - honorary-chimp
 Redis - winsome-wombat
-Historian -smelly-wolf
+Historian - smelly-wolf

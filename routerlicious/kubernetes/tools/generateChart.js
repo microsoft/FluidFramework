@@ -62,7 +62,7 @@ historian:
 
 zookeeper:
   local: false
-  url: praguekafka-broker-1:2181
+  url: praguekafkawestus2-broker-1:2181
 
 mongodb:
   url: mongodb://honorary-chimp-mongodb:27017
