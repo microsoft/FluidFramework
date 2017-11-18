@@ -29,16 +29,28 @@ You can create a set on a map key. We support addition, removal, and enumeration
 **Optional parameters:**<br/>
 *value*: Initial set elements (default is [])<br/>
 ```
-createSet<T>(key: string, value?: T[]): Promise<ISet<T>>;
+createSet<T>(key: string, value?: T[]): ISet<T>;
 ```
 ### Set interface.
 ```
 export interface ISet<T> {
-    add(value: T): Promise<T[]>;
-    delete(value: T): Promise<T[]>;
-    entries(): Promise<T[]>;
+    add(value: T): ISet<T>;
+    delete(value: T): ISet<T>;
+    entries(): T[];
+    getInternalSet(): Set<T>
  }
 ```
+Creating set emits "setCreated" event on the map. The created set is also returned along with the map key. Example:
+```
+map.on("setCreated", (changed: api.IKeyValueChanged) => {
+    // changed.key is the key for the set.
+    // changed.value is the created set.
+    const newSet = changed.value as types.ISet<number>;
+    newSet.add(100);
+});
+```
+
+
 Adding/deleting elements from a set emits "setElementAdded"/"setElementRemoved" events on the map. The added/removed element is also returned along with the map key. Example:
 ```
 map.on("setElementAdded", (changed: api.IKeyValueChanged) => {

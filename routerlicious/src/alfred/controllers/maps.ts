@@ -3,6 +3,7 @@ import * as $ from "jquery";
 import hasIn = require("lodash/hasIn");
 import * as agent from "../../agent";
 import { api, socketStorage, types } from "../../client-api";
+import { IValueChanged } from "../../data-types";
 
 async function loadDocument(id: string, version: resources.ICommit): Promise<api.Document> {
     console.log("Loading in root document...");
@@ -29,7 +30,11 @@ async function updateOrCreateKey(key: string, map: types.IMap, container: JQuery
             displayMap(keyElement, key, value, map, doc);
         }
     } else {
-        keyElement.text(`${key}: ${JSON.stringify(value)}`);
+        if (key === "set") {
+            keyElement.text(`${key}: ${JSON.stringify(value.entries())}`);
+        } else {
+            keyElement.text(`${key}: ${JSON.stringify(value)}`);
+        }
     }
 }
 
@@ -43,7 +48,7 @@ async function displayValues(map: types.IMap, container: JQuery, doc: api.Docume
     }
 
     // Listen and process updates
-    map.on("valueChanged", async (changed) => {
+    map.on("valueChanged", async (changed: IValueChanged ) => {
         updateOrCreateKey(changed.key, map, values, doc);
     });
 
@@ -93,7 +98,7 @@ async function randomizeMap(map: types.IMap) {
     // link up the randomize button
     const keys = ["foo", "bar", "baz", "binky", "winky", "twinkie"];
     const counter = await map.createCounter("counter", 100) as types.ICounter;
-    const set = await map.createSet("set", [1, 2, 3, 3, 2, 4]) as types.ISet<number>;
+    const set = map.createSet("set", [1, 2, 3, 3, 2, 4]) as types.ISet<number>;
     setInterval(async () => {
         const key = keys[Math.floor(Math.random() * keys.length)];
         map.set(key, Math.floor(Math.random() * 100000).toString());
