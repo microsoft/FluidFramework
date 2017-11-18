@@ -4,7 +4,7 @@ import * as nconf from "nconf";
 import * as git from "nodegit";
 import * as utils from "../../utils";
 
-async function getCommits(
+export async function getCommits(
     repoManager: utils.RepositoryManager,
     repo: string,
     ref: string,

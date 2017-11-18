@@ -2,10 +2,9 @@ import { Router } from "express";
 import { ICommit, ICreateCommitParams } from "gitresources";
 import * as nconf from "nconf";
 import * as git from "nodegit";
-import * as winston from "winston";
 import * as utils from "../../utils";
 
-async function createCommit(
+export async function createCommit(
     repoManager: utils.RepositoryManager,
     repo: string,
     blob: ICreateCommitParams): Promise<ICommit> {
@@ -38,11 +37,6 @@ async function createCommit(
 async function getCommit(repoManager: utils.RepositoryManager, repo: string, sha: string): Promise<ICommit> {
     const repository = await repoManager.open(repo);
     const commit = await repository.getCommit(sha);
-
-    winston.info(commit.message());
-    const author = commit.author();
-    winston.info(JSON.stringify(author));
-
     return utils.commitToICommit(commit);
 }
 
