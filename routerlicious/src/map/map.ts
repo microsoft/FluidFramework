@@ -179,7 +179,14 @@ export class MapView implements IMapView {
     public serialize(): string {
         const serialized: any = {};
         this.data.forEach((value, key) => {
-            serialized[key] = value;
+            switch (value.type) {
+                case ValueType[ValueType.Set]:
+                    const set = value.value as ISet<any>;
+                    serialized[key] = { type: value.type, value: set.entries() };
+                    break;
+                default:
+                    serialized[key] = value;
+            }
         });
         return JSON.stringify(serialized);
     }
@@ -239,24 +246,34 @@ export class MapView implements IMapView {
         this.events.emit("valueChanged", { key });
     }
 
-    public initSet<T>(key: string, value: T[]) {
+    public initSet<T>(object: CollaborativeMap, key: string, value: T[]): ISet<any> {
         const operationValue: IMapValue = {type: ValueType[ValueType.Set], value};
         const op: IMapOperation = {
             key,
             type: "initSet",
             value: operationValue,
         };
-        this.initSetCore(op.key, op.value);
         this.submitLocalOperation(op);
+        return this.initSetCore(object, op.key, op.value);
     }
 
-    public initSetCore(key: string, value: IMapValue) {
-        const newValue: IMapValue = {type: ValueType[ValueType.Set], value: DistributedSet.initSet(value.value)};
+    public loadSet<T>(object: CollaborativeMap, key: string, value: T[]) {
+        const newSet = new DistributedSet<T>(object, key);
+        const newValue: IMapValue = { type: ValueType[ValueType.Set], value: newSet.init(value) as ISet<T> };
+        this.data.set(key, newValue);
+    }
+
+    public initSetCore<T>(object: CollaborativeMap, key: string, value: IMapValue): ISet<T> {
+        const newSet = new DistributedSet<T>(object, key);
+        newSet.init(value.value);
+        const newValue: IMapValue = {type: ValueType[ValueType.Set], value: newSet as ISet<T>};
         this.data.set(key, newValue);
         this.events.emit("valueChanged", { key });
+        this.events.emit("setCreated", {key, value: newSet});
+        return newValue.value;
     }
 
-    public insertSet<T>(key: string, value: T): T[] {
+    public insertSet<T>(key: string, value: T): ISet<T> {
         const operationValue: IMapValue = {type: ValueType[ValueType.Set], value};
         const op: IMapOperation = {
             key,
@@ -265,20 +282,17 @@ export class MapView implements IMapView {
         };
         this.insertSetCore(op.key, op.value);
         this.submitLocalOperation(op);
-        return this.data.get(key).value;
+        return this.data.get(key).value as ISet<T>;
     }
 
-    public insertSetCore(key: string, value: IMapValue) {
-        const newValue: IMapValue = {
-            type: ValueType[ValueType.Set],
-            value: DistributedSet.addElement(this.get(key), value.value),
-        };
-        this.data.set(key, newValue);
+    public insertSetCore<T>(key: string, value: IMapValue) {
+        const currentSet = this.get(key) as ISet<T>;
+        currentSet.getInternalSet().add(value.value);
         this.events.emit("valueChanged", { key });
         this.events.emit("setElementAdded", {key, value: value.value});
     }
 
-    public deleteSet<T>(key: string, value: T): T[] {
+    public deleteSet<T>(key: string, value: T): ISet<T> {
         const operationValue: IMapValue = {type: ValueType[ValueType.Set], value};
         const op: IMapOperation = {
             key,
@@ -287,15 +301,12 @@ export class MapView implements IMapView {
         };
         this.deleteSetCore(op.key, op.value);
         this.submitLocalOperation(op);
-        return this.data.get(key).value;
+        return this.data.get(key).value as ISet<T>;
     }
 
-    public deleteSetCore(key: string, value: IMapValue) {
-        const newValue: IMapValue = {
-            type: ValueType[ValueType.Set],
-            value: DistributedSet.removeElement(this.get(key), value.value),
-        };
-        this.data.set(key, newValue);
+    public deleteSetCore<T>(key: string, value: IMapValue) {
+        const currentSet = this.get(key) as ISet<T>;
+        currentSet.getInternalSet().delete(value.value);
         this.events.emit("valueChanged", { key });
         this.events.emit("setElementRemoved", {key, value: value.value});
     }
@@ -400,25 +411,28 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
         return compatible.reject !== null ? compatible.reject : Promise.resolve(compatible.data.value);
     }
 
-    public createSet<T>(key: string, value?: T[]): Promise<ISet<T>> {
+    public createSet<T>(key: string, value?: T[]): ISet<T> {
         value = getOrDefault(value, []);
-        this.view.initSet(key, value);
-        return Promise.resolve(new DistributedSet(this, key));
+        return this.view.initSet(this, key, value);
     }
 
-    public insertSet<T>(key: string, value: T): Promise<T[]> {
+    public insertSet<T>(key: string, value: T): ISet<T> {
         const compatible = this.ensureCompatibility(key, ValueType[ValueType.Set]);
-        return compatible.reject !== null ? compatible.reject : Promise.resolve(this.view.insertSet(key, value));
+        return compatible.reject !== null ? null : this.view.insertSet(key, value);
     }
 
-    public deleteSet<T>(key: string, value: T): Promise<T[]> {
+    public deleteSet<T>(key: string, value: T): ISet<T> {
         const compatible = this.ensureCompatibility(key, ValueType[ValueType.Set]);
-        return compatible.reject !== null ? compatible.reject : Promise.resolve(this.view.deleteSet(key, value));
+        return compatible.reject !== null ? null : this.view.deleteSet(key, value);
     }
 
-    public enumerateSet<T>(key: string): Promise<T[]> {
+    public enumerateSet<T>(key: string): any[] {
         const compatible = this.ensureCompatibility(key, ValueType[ValueType.Set]);
-        return compatible.reject !== null ? compatible.reject : Promise.resolve(compatible.data.value);
+        if (compatible.reject !== null) {
+            return null;
+        }
+        const resultSet = compatible.data.value as ISet<T>;
+        return Array.from(resultSet.getInternalSet().values());
     }
 
     public snapshot(): api.ITree {
@@ -443,6 +457,24 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
      */
     public getView(): Promise<IMapView> {
         return Promise.resolve(this.view);
+    }
+
+    // Deserializes the map values into specific types (e.g., set, counter etc.)
+    public deserialize() {
+        const mapView = this.view;
+        const keys = mapView.keys();
+        for (let key of keys) {
+            const value = mapView.getMapValue(key);
+            if (value !== undefined) {
+                switch (value.type) {
+                    case ValueType[ValueType.Set]:
+                        mapView.loadSet(this, key, value.value);
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
     }
 
     protected submitCore(message: api.IObjectMessage) {
@@ -484,7 +516,7 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
                     this.view.incrementCounterCore(op.key, op.value);
                     break;
                 case "initSet":
-                    this.view.initSetCore(op.key, op.value);
+                    this.view.initSetCore(this, op.key, op.value);
                     break;
                 case "insertSet":
                     this.view.insertSetCore(op.key, op.value);
@@ -539,7 +571,9 @@ export class MapExtension implements api.IExtension {
         headerOrigin: string,
         header: string): IMap {
 
-        return new CollaborativeMap(document, id, sequenceNumber, services, version, header);
+        const map = new CollaborativeMap(document, id, sequenceNumber, services, version, header);
+        map.deserialize();
+        return map;
     }
 
     public create(document: api.IDocument, id: string): IMap {

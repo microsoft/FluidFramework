@@ -110,7 +110,7 @@ export interface IMap extends ICollaborativeObject {
     /**
      * Creates a set inside the map.
      */
-    createSet<T>(key: string, value?: T[]): Promise<ISet<T>>;
+    createSet<T>(key: string, value?: T[]): ISet<T>;
 }
 
 /**
@@ -133,17 +133,22 @@ export interface ICounter {
  */
 export interface ISet<T> {
     /**
-     * Inserts element to the set.
+     * Inserts an element to the set.
      */
-    add(value: T): Promise<T[]>;
+    add(value: T): ISet<T>;
 
     /**
-     * delete element from the set.
+     * Deletes an element from the set.
      */
-    delete(value: T): Promise<T[]>;
+    delete(value: T): ISet<T>;
 
     /**
-     * Returns elements of the set.
+     * Returns elements of the set as an array.
      */
-    entries(): Promise<T[]>;
+    entries(): any[];
+
+    /**
+     * Returns the underlying set.
+     */
+    getInternalSet(): Set<T>;
  }
