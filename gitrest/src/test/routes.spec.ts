@@ -1,8 +1,22 @@
 import * as assert from "assert";
-import { ICreateBlobParams, ICreateCommitParams, ICreateRefParams, ICreateTreeParams } from "gitresources";
+import * as async from "async";
+import {
+    ICommit,
+    ICreateBlobParams,
+    ICreateBlobResponse,
+    ICreateCommitParams,
+    ICreateRefParams,
+    ICreateTreeParams,
+} from "gitresources";
+import * as lorem from "lorem-ipsum";
+import * as moniker from "moniker";
 import * as request from "supertest";
-import * as winston from "winston";
 import * as app from "../app";
+import { createBlob as createBlobInternal } from "../routes/git/blobs";
+import { createCommit as createCommitInternal } from "../routes/git/commits";
+import { createTree as createTreeInternal } from "../routes/git/trees";
+import { getCommits } from "../routes/repository/commits";
+import * as utils from "../utils";
 import * as testUtils from "./utils";
 
 function createRepo(supertest: request.SuperTest<request.Test>, name: string) {
@@ -213,10 +227,7 @@ describe("Historian", () => {
 
                     return supertest
                         .get(`/repos/${testRepoName}/git/trees/${commit.body.tree.sha}?recursive=1`)
-                        .expect(200)
-                        .expect((treeResult) => {
-                            winston.info(JSON.stringify(treeResult.body, null, 2));
-                        });
+                        .expect(200);
                 });
             });
 
@@ -342,6 +353,91 @@ describe("Historian", () => {
             });
         });
 
+        describe("Stress", () => {
+            it("Run a long time and break", async () => {
+                const MaxTreeLength = 10;
+                const MaxParagraphs = 200;
+
+                await initBaseRepo(supertest, testRepoName, testBlob, testTree, testCommit, testRef);
+                const manager = new utils.RepositoryManager(testUtils.defaultProvider.get("storageDir"));
+
+                let lastCommit;
+
+                async function runRound() {
+                    const total = Math.floor(Math.random() * MaxTreeLength);
+                    const blobsP: Array<Promise<ICreateBlobResponse>> = [];
+                    for (let i = 0; i < total; i++) {
+                        const param: ICreateBlobParams = {
+                            content: lorem({
+                                count: Math.floor(Math.random() * MaxParagraphs),
+                                units: "paragraphs",
+                            }),
+                            encoding: "utf-8",
+                        };
+                        blobsP.push(createBlobInternal(manager, testRepoName, param));
+                    }
+
+                    const blobs = await Promise.all(blobsP);
+                    const files = blobs.map((blob) => {
+                        return {
+                            mode: "100644",
+                            path: `${moniker.choose()}.txt`,
+                            sha: blob.sha,
+                            type: "blob",
+                        };
+                    });
+                    const createTreeParams: ICreateTreeParams = {
+                        tree: files,
+                    };
+
+                    const tree = await createTreeInternal(manager, testRepoName, createTreeParams);
+
+                    const parents = [];
+                    if (lastCommit) {
+                        const commits = await getCommits(manager, testRepoName, lastCommit, 1);
+                        const parentCommit = commits[0] as ICommit;
+                        parents.push({ sha: parentCommit.sha, url: "" });
+                    }
+
+                    const commitParams: ICreateCommitParams = {
+                        author: {
+                            date: new Date().toISOString(),
+                            email: "kurtb@microsoft.com",
+                            name: "Kurt Berglund",
+                        },
+                        message: lorem({ count: 1, units: "sentences" }),
+                        parents,
+                        tree: tree.sha,
+                    };
+                    const commit = await createCommitInternal(manager, testRepoName, commitParams);
+
+                    lastCommit = commit.sha;
+                }
+
+                const queue = async.queue(
+                    (task, callback) => {
+                        runRound().then(() => callback(), (error) => callback(error));
+                    },
+                    5);
+
+                const resultP = new Promise((resolve, reject) => {
+                    queue.drain = () => {
+                        resolve();
+                    };
+
+                    queue.error = (error) => {
+                        reject(error);
+                    };
+                });
+
+                for (let i = 0; i < 100; i++) {
+                    queue.push(i);
+                }
+
+                return resultP;
+            });
+        });
+
         // Higher level repository tests
         describe("Repository", () => {
             describe("Commits", () => {
@@ -361,11 +457,7 @@ describe("Historian", () => {
                     await initBaseRepo(supertest, testRepoName, testBlob, testTree, testCommit, testRef);
                     return supertest
                         .get(`/repos/${testRepoName}/contents/${testTree.tree[0].path}?ref=${testRef.sha}`)
-                        .expect(200)
-                        .expect((result) => {
-                            // tslint:disable
-                            console.log(result.body);
-                        });
+                        .expect(200);
                 });
             });
         });

@@ -1,7 +1,6 @@
 import { Router } from "express";
 import { IBlob, ICreateBlobParams, ICreateBlobResponse } from "gitresources";
 import * as nconf from "nconf";
-import * as winston from "winston";
 import * as utils from "../../utils";
 
 /**
@@ -11,24 +10,27 @@ function validateEncoding(encoding: string) {
     return encoding === "utf-8" || encoding === "base64";
 }
 
-async function getBlob(repoManager: utils.RepositoryManager, repo: string, sha: string): Promise<IBlob> {
+function validateBlob(blob: string): boolean {
+    return blob !== undefined && blob !== null;
+}
+
+export async function getBlob(repoManager: utils.RepositoryManager, repo: string, sha: string): Promise<IBlob> {
     const repository = await repoManager.open(repo);
     const blob = await repository.getBlob(sha);
 
     return utils.blobToIBlob(blob, repo);
 }
 
-async function createBlob(
+export async function createBlob(
     repoManager: utils.RepositoryManager,
     repo: string,
     blob: ICreateBlobParams): Promise<ICreateBlobResponse> {
 
-    if (!blob || !blob.content || !validateEncoding(blob.encoding)) {
+    if (!blob || !validateBlob(blob.content) || !validateEncoding(blob.encoding)) {
         return Promise.reject("Invalid blob");
     }
 
     const repository = await repoManager.open(repo);
-    winston.info(`Opened ${repo}`);
     const id = await repository.createBlobFromBuffer(new Buffer(blob.content, blob.encoding));
     const sha = id.tostrS();
 

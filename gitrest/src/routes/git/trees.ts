@@ -4,7 +4,11 @@ import * as nconf from "nconf";
 import * as git from "nodegit";
 import * as utils from "../../utils";
 
-async function createTree(repoManager: utils.RepositoryManager, repo: string, tree: ICreateTreeParams): Promise<ITree> {
+export async function createTree(
+    repoManager: utils.RepositoryManager,
+    repo: string,
+    tree: ICreateTreeParams): Promise<ITree> {
+
     const repository = await repoManager.open(repo);
     // TODO if base_tree exists look it up here and assume everything else is an insert
     const builder = await git.Treebuilder.create(repository, null);

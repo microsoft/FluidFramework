@@ -24,8 +24,10 @@
     "winston": "^2.3.1"
   },
   "devDependencies": {
+    "@types/async": "^2.0.45",
     "@types/cors": "^2.8.1",
     "@types/debug": "0.0.29",
+    "@types/lorem-ipsum": "^1.0.2",
     "@types/mocha": "^2.2.41",
     "@types/morgan": "^1.7.32",
     "@types/nconf": "0.0.34",
@@ -34,6 +36,7 @@
     "@types/supertest": "^2.0.1",
     "@types/winston": "^2.3.3",
     "async": "^2.5.0",
+    "lorem-ipsum": "^1.0.4",
     "mocha": "^3.4.2",
     "moniker": "^0.1.2",
     "nyc": "^11.1.0",
