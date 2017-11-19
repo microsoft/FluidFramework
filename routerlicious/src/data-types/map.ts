@@ -105,7 +105,7 @@ export interface IMap extends ICollaborativeObject {
     /**
      * Creates a counter inside the map.
      */
-    createCounter(key: string, value?: number, min?: number, max?: number): Promise<ICounter>;
+    createCounter(key: string, value?: number, min?: number, max?: number): ICounter;
 
     /**
      * Creates a set inside the map.
@@ -120,12 +120,27 @@ export interface ICounter {
     /**
      * Increment/decrement the underlying value.
      */
-    increment(value: number): Promise<void>;
+    increment(value: number): ICounter;
 
     /**
-     * Increment/decrement the underlying value.
+     * Sets the underlying value.
      */
-    get(): Promise<number>;
+    set(value: number): void;
+
+    /**
+     * Returns the underlying value.
+     */
+    get(): number;
+
+    /**
+     * Returns the minimum allowed value.
+     */
+    getMin(): number;
+
+    /**
+     * Returns the maximum allowed value.
+     */
+    getMax();
  }
 
 /**

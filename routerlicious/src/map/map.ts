@@ -184,6 +184,17 @@ export class MapView implements IMapView {
                     const set = value.value as ISet<any>;
                     serialized[key] = { type: value.type, value: set.entries() };
                     break;
+                case ValueType[ValueType.Counter]:
+                    const counter = value.value as ICounter;
+                    serialized[key] = {
+                        type: value.type,
+                        value: {
+                            max: counter.getMax(),
+                            min: counter.getMin(),
+                            value: counter.get(),
+                        },
+                    };
+                    break;
                 default:
                     serialized[key] = value;
             }
@@ -214,20 +225,38 @@ export class MapView implements IMapView {
         this.events.emit("valueChanged", { key });
     }
 
-    public initCounter(key: string, value: number) {
-        const operationValue: IMapValue = {type: ValueType[ValueType.Counter], value};
+    public initCounter(object: CollaborativeMap, key: string, value: number,  min: number, max: number): ICounter {
+        const operationValue: IMapValue = {
+            type: ValueType[ValueType.Counter],
+            value: {
+                value,
+                min,
+                max,
+            },
+        };
         const op: IMapOperation = {
             key,
             type: "initCounter",
             value: operationValue,
         };
-        this.initCounterCore(op.key, op.value);
         this.submitLocalOperation(op);
+        return this.initCounterCore(object, op.key, op.value);
     }
 
-    public initCounterCore(key: string, value: IMapValue) {
-        this.data.set(key, value);
+    public loadCounter(object: CollaborativeMap, key: string, value: number, min: number, max: number) {
+        const newCounter = new Counter(object, key, min, max);
+        const newValue: IMapValue = { type: ValueType[ValueType.Counter], value: newCounter.init(value) as ICounter };
+        this.data.set(key, newValue);
+    }
+
+    public initCounterCore(object: CollaborativeMap, key: string, value: IMapValue): ICounter {
+        const newCounter = new Counter(object, key, value.value.min, value.value.max);
+        newCounter.init(value.value.value);
+        const newValue: IMapValue = { type: ValueType[ValueType.Counter], value: newCounter as ICounter };
+        this.data.set(key, newValue);
         this.events.emit("valueChanged", { key });
+        this.events.emit("initCounter", {key, value: newValue.value});
+        return newValue.value;
     }
 
     public incrementCounter(key: string, value: number, min: number, max: number) {
@@ -237,13 +266,16 @@ export class MapView implements IMapView {
             type: "incrementCounter",
             value: operationValue,
         };
-        this.incrementCounterCore(op.key, op.value);
         this.submitLocalOperation(op);
+        return this.incrementCounterCore(op.key, op.value);
     }
 
-    public incrementCounterCore(key: string, value: IMapValue) {
-        this.data.get(key).value += value.value;
+    public incrementCounterCore(key: string, value: IMapValue): ICounter {
+        const currentCounter = this.get(key) as ICounter;
+        currentCounter.set(currentCounter.get() + value.value);
         this.events.emit("valueChanged", { key });
+        this.events.emit("incrementCounter", {key, value: value.value});
+        return currentCounter;
     }
 
     public initSet<T>(object: CollaborativeMap, key: string, value: T[]): ISet<any> {
@@ -269,7 +301,7 @@ export class MapView implements IMapView {
         const newValue: IMapValue = {type: ValueType[ValueType.Set], value: newSet as ISet<T>};
         this.data.set(key, newValue);
         this.events.emit("valueChanged", { key });
-        this.events.emit("setCreated", {key, value: newSet});
+        this.events.emit("setCreated", {key, value: newValue.value});
         return newValue.value;
     }
 
@@ -375,7 +407,7 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
         return Promise.resolve(this.view.clear());
     }
 
-    public createCounter(key: string, value?: number, min?: number, max?: number): Promise<ICounter> {
+    public createCounter(key: string, value?: number, min?: number, max?: number): ICounter {
         value = getOrDefault(value, 0);
         min = getOrDefault(min, Number.MIN_SAFE_INTEGER);
         max = getOrDefault(max, Number.MAX_SAFE_INTEGER);
@@ -385,25 +417,24 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
         if (value < min || value > max) {
             throw new Error("Initial value exceeds the counter range!");
         }
-        this.view.initCounter(key, value);
-        return Promise.resolve(new Counter(this, key, min, max));
+        return this.view.initCounter(this, key, value, min, max);
     }
 
-    public incrementCounter(key: string, value: number, min: number, max: number): Promise<any> {
+    public incrementCounter(key: string, value: number, min: number, max: number): ICounter {
         if (typeof value !== "number") {
-            return Promise.reject("Incremental amount should be a number.");
+            throw new Error("Incremental amount should be a number.");
         }
         const compatible = this.ensureCompatibility(key, ValueType[ValueType.Counter]);
         if (compatible.reject !== null) {
-            return compatible.reject;
+            throw new Error("Incompatible type.");
         }
         const currentData = compatible.data;
-        const currentValue = currentData.value as number;
-        const nextValue = currentValue + value;
+        const currentValue = currentData.value as ICounter;
+        const nextValue = currentValue.get() + value;
         if ((nextValue < min) || (nextValue > max)) {
-            return Promise.reject("Error: Counter range exceeded!");
+            throw new Error("Error: Counter range exceeded!");
         }
-        return Promise.resolve(this.view.incrementCounter(key, value, min, max));
+        return this.view.incrementCounter(key, value, min, max);
     }
 
     public getCounterValue(key: string): Promise<number> {
@@ -470,6 +501,9 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
                     case ValueType[ValueType.Set]:
                         mapView.loadSet(this, key, value.value);
                         break;
+                    case ValueType[ValueType.Counter]:
+                        mapView.loadCounter(this, key, value.value.value, value.value.min, value.value.max);
+                        break;
                     default:
                         break;
                 }
@@ -510,7 +544,7 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
                     this.view.setCore(op.key, op.value);
                     break;
                 case "initCounter":
-                    this.view.initCounterCore(op.key, op.value);
+                    this.view.initCounterCore(this, op.key, op.value);
                     break;
                 case "incrementCounter":
                     this.view.incrementCounterCore(op.key, op.value);

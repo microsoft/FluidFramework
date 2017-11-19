@@ -32,6 +32,8 @@ async function updateOrCreateKey(key: string, map: types.IMap, container: JQuery
     } else {
         if (key === "set") {
             keyElement.text(`${key}: ${JSON.stringify(value.entries())}`);
+        } else if (key === "counter") {
+            keyElement.text(`${key}: ${value.get()}`);
         } else {
             keyElement.text(`${key}: ${JSON.stringify(value)}`);
         }
@@ -97,7 +99,7 @@ async function displayMap(parentElement: JQuery, key: string, map: types.IMap, p
 async function randomizeMap(map: types.IMap) {
     // link up the randomize button
     const keys = ["foo", "bar", "baz", "binky", "winky", "twinkie"];
-    const counter = await map.createCounter("counter", 100) as types.ICounter;
+    const counter = map.createCounter("counter", 100) as types.ICounter;
     const set = map.createSet("set", [1, 2, 3, 3, 2, 4]) as types.ISet<number>;
     setInterval(async () => {
         const key = keys[Math.floor(Math.random() * keys.length)];
