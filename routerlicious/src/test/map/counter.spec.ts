@@ -19,19 +19,19 @@ describe("Routerlicious", () => {
                 registry = new apiCore.Registry();
                 testDocument = await api.load("testDocument");
                 testMap = testDocument.createMap();
-                counterWithDefault = await testMap.createCounter("defaultCounter");
-                counterWithValue = await testMap.createCounter("valueCounter", 50);
-                counterWithValueAndLimit = await testMap.createCounter("valueCounterWithLimit", 50, 10, 100);
+                counterWithDefault = testMap.createCounter("defaultCounter");
+                counterWithValue = testMap.createCounter("valueCounter", 50);
+                counterWithValueAndLimit = testMap.createCounter("valueCounterWithLimit", 50, 10, 100);
             });
 
             it("Can create a counter with default value", async () => {
                 assert.ok(counterWithDefault);
-                assert.equal(await counterWithDefault.get(), 0);
+                assert.equal(counterWithDefault.get(), 0);
             });
 
             it("Can create a counter with predefined value", async () => {
                 assert.ok(counterWithValue);
-                assert.equal(await counterWithValue.get(), 50);
+                assert.equal(counterWithValue.get(), 50);
             });
 
             it("Does not throw error on valid counter range", () => {
@@ -46,19 +46,17 @@ describe("Routerlicious", () => {
                 }, Error);
             });
 
-            it("Returns rejected promise on out of range increment/decrement", async () => {
-                return counterWithValueAndLimit.increment(60).then(() => {
-                    throw new Error(`Out of range increment should have thrown an error`);
-                }, (error: string) => {
-                    assert.equal(error, "Error: Counter range exceeded!");
-                });
+            it("Throws an error on out of range increment/decrement", () => {
+                assert.throws(() => {
+                    throw counterWithValueAndLimit.increment(60);
+                }, Error, "Error: Counter range exceeded!");
             });
 
             it("Can incrrement and decrement a counter", async () => {
-                await counterWithValue.increment(20);
-                assert.equal(await counterWithValue.get(), 70);
-                await counterWithValue.increment(-40);
-                assert.equal(await counterWithValue.get(), 30);
+                counterWithValue.increment(20);
+                assert.equal(counterWithValue.get(), 70);
+                counterWithValue.increment(-40);
+                assert.equal(counterWithValue.get(), 30);
             });
 
         });
