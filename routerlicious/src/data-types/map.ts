@@ -123,24 +123,9 @@ export interface ICounter {
     increment(value: number): ICounter;
 
     /**
-     * Sets the underlying value.
-     */
-    set(value: number): void;
-
-    /**
      * Returns the underlying value.
      */
     get(): number;
-
-    /**
-     * Returns the minimum allowed value.
-     */
-    getMin(): number;
-
-    /**
-     * Returns the maximum allowed value.
-     */
-    getMax();
  }
 
 /**

@@ -185,7 +185,7 @@ export class MapView implements IMapView {
                     serialized[key] = { type: value.type, value: set.entries() };
                     break;
                 case ValueType[ValueType.Counter]:
-                    const counter = value.value as ICounter;
+                    const counter = value.value as Counter;
                     serialized[key] = {
                         type: value.type,
                         value: {
@@ -259,7 +259,7 @@ export class MapView implements IMapView {
         return newValue.value;
     }
 
-    public incrementCounter(key: string, value: number, min: number, max: number) {
+    public incrementCounter(key: string, value: number) {
         const operationValue: IMapValue = {type: ValueType[ValueType.Counter], value};
         const op: IMapOperation = {
             key,
@@ -271,11 +271,11 @@ export class MapView implements IMapView {
     }
 
     public incrementCounterCore(key: string, value: IMapValue): ICounter {
-        const currentCounter = this.get(key) as ICounter;
+        const currentCounter = this.get(key) as Counter;
         currentCounter.set(currentCounter.get() + value.value);
         this.events.emit("valueChanged", { key });
         this.events.emit("incrementCounter", {key, value: value.value});
-        return currentCounter;
+        return currentCounter as ICounter;
     }
 
     public initSet<T>(object: CollaborativeMap, key: string, value: T[]): ISet<any> {
@@ -434,7 +434,7 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
         if ((nextValue < min) || (nextValue > max)) {
             throw new Error("Error: Counter range exceeded!");
         }
-        return this.view.incrementCounter(key, value, min, max);
+        return this.view.incrementCounter(key, value);
     }
 
     public getCounterValue(key: string): Promise<number> {
