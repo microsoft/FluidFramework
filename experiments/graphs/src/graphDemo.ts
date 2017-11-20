@@ -8,7 +8,7 @@ const repository = "prague";
 // Register endpoint connection
 prague.socketStorage.registerAsDefault(routerlicious, historian, repository);
 
-let id = "testGraph-pooch7";
+let id = "testGraph-pooch10";
 
 interface ISharedVertex {
 	id: string;
@@ -30,13 +30,13 @@ class SharedGraph {
 		public edges: prague.types.ISet<ISharedEdge>) {
 
 	}
-	async addVertex(id: string, label: string, x: number, y: number, width: number, height: number) {
-		await this.vertices.add(<ISharedVertex>{
+	addVertex(id: string, label: string, x: number, y: number, width: number, height: number) {
+		this.vertices.add(<ISharedVertex>{
 			id, x, y, width, height, label
 		});
 	}
-	async addEdge(nodeId1: string, nodeId2: string, label: string) {
-		await this.edges.add(<ISharedEdge>{
+	addEdge(nodeId1: string, nodeId2: string, label: string) {
+		this.edges.add(<ISharedEdge>{
 			nodeId1, nodeId2, label
 		});
 	}
@@ -76,8 +76,8 @@ async function main(container: HTMLDivElement) {
 	if (!rootView.has("graph")) {
 		graphMap = collabDoc.createMap();
 		rootView.set("graph", graphMap);
-		let vertexSet = await graphMap.createSet<ISharedVertex>("vertices");
-		let edgeSet = await graphMap.createSet<ISharedEdge>("edges");
+		let vertexSet = graphMap.createSet<ISharedVertex>("vertices");
+		let edgeSet = graphMap.createSet<ISharedEdge>("edges");
 		sharedGraph = new SharedGraph(vertexSet, edgeSet);
 		graphView = await graphMap.getView();
 	} else {

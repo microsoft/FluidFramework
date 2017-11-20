@@ -1017,7 +1017,7 @@ declare module 'prague/data-types/map' {
             /**
                 * Creates a set inside the map.
                 */
-            createSet<T>(key: string, value?: T[]): Promise<ISet<T>>;
+            createSet<T>(key: string, value?: T[]): ISet<T>;
     }
     /**
         * Counter interface
@@ -1039,15 +1039,15 @@ declare module 'prague/data-types/map' {
             /**
                 * Inserts element to the set.
                 */
-            add(value: T): Promise<T[]>;
+            add(value: T): T;
             /**
                 * delete element from the set.
                 */
-            delete(value: T): Promise<T[]>;
+            delete(value: T): T;
             /**
                 * Returns elements of the set.
                 */
-            entries(): Promise<T[]>;
+            entries(): T[];
     }
 }
 
@@ -1260,7 +1260,7 @@ declare module 'prague/map/map' {
             createCounter(key: string, value?: number, min?: number, max?: number): Promise<ICounter>;
             incrementCounter(key: string, value: number, min: number, max: number): Promise<any>;
             getCounterValue(key: string): Promise<number>;
-            createSet<T>(key: string, value?: T[]): Promise<ISet<T>>;
+            createSet<T>(key: string, value?: T[]): ISet<T>;
             insertSet<T>(key: string, value: T): Promise<T[]>;
             deleteSet<T>(key: string, value: T): Promise<T[]>;
             enumerateSet<T>(key: string): Promise<T[]>;
