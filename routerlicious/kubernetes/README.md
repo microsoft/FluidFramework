@@ -24,31 +24,21 @@ documented at https://kubernetes.io/docs/tasks/configure-pod-container/pull-imag
 down to the below command to create a secret in Kubernetes
 
 ```
-kubectl create secret docker-registry regsecret --docker-server=prague.azurecr.io --docker-username=prague --docker-password=<password> --docker-email=kurtb@microsoft.com
+kubectl create secret docker-registry regsecret --docker-server=prague.azurecr.io --docker-username=prague --docker-password=/vM3i=D+K4+vj+pgha=cg=55OQLDWj3w --docker-email=kurtb@microsoft.com
+```
+
+```
+kubectl apply -f system/azure-unmanaged-premium.yaml
 ```
 
 You'll also need to have a Redis, MongoDB, and Historian instances running.
+
+We install MongoDB from the helm stable repository
 `helm install -f system/mongodb.yaml stable/mongodb`
-`helm install -f system/redis.yaml stable/redis`
-Historian can be installed from the /charts/historian directory
+
+Redis, Kafka and Historian come from the /charts directory. You'll want to install each of them.
 
 Make note of the URLs to each of these and provide a values override for Routerlicious with them.
-
-### Manual steps
-
-We will move these to Kubernetes jobs. But for now they need to be applied manually the first time you create a cluster
-
-```
-ssh -i ~/.ssh/azure_kubernetes_rsa <admin>@<worker>.westus2.cloudapp.azure.com
-./kafka-topics --zookeeper praguekafkawestus2-broker-1:2181 --partitions 8 --replication-factor 3 --create --topic rawdeltas
-./kafka-topics --zookeeper praguekafkawestus2-broker-1:2181 --partitions 8 --replication-factor 3 --create --topic deltas
-./kafka-topics --zookeeper praguekafkawestus2-broker-1:2181 --partitions 8 --replication-factor 3 --create --topic rawdeltas-ppe
-./kafka-topics --zookeeper praguekafkawestus2-broker-1:2181 --partitions 8 --replication-factor 3 --create --topic deltas-ppe
-curl -H "Content-Type: application/json" -X POST -d '{"name": "prague"}' --verbose prague-historian.westus2.cloudapp.azure.com/repos
-```
-
-
-http://praguekafka-w4viw5xf-worker-1.westus2.cloudapp.azure.com:9021/
 
 ### Build the chart
 
@@ -83,6 +73,9 @@ Legacy steps to configure our cluster can be found at [legacy](legacy.md). Most 
 care of by Azure Container Service.
 
 ### Current Environments
+
+Shared
+Kafka - left-numbat
 
 PPE
 Mongo - quoting-armadillo
