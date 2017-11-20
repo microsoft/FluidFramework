@@ -10,10 +10,12 @@
     "@types/node": "^8.0.47",
     "@types/socket.io-client": "^1.4.31",
     "gitresources": "https://praguenpm.blob.core.windows.net/packages/gitresources-0.2.0.tgz",
+    "http-server": "^0.10.0",
     "typescript": "^2.5.3"
   },
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "start": "http-server"
   },
   "author": "Microsoft",
   "license": "Apache-2.0",

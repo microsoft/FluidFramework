@@ -7,10 +7,6 @@
 //   ../events
 
 declare module 'prague' {
-    export * from "prague/client-api/index";
-}
-
-declare module 'prague/client-api/index' {
     import * as api from "prague/api";
     export { api };
     import * as core from "prague/api-core";
@@ -25,8 +21,8 @@ declare module 'prague/client-api/index' {
     export { ink };
     import * as map from "prague/map";
     export { map };
-    import * as mergeTree from "prague/merge-tree";
-    export { mergeTree };
+    import * as MergeTree from "prague/merge-tree";
+    export { MergeTree };
     import * as socketStorage from "prague/socket-storage";
     export { socketStorage };
     import * as assert from "assert";
@@ -53,6 +49,7 @@ declare module 'prague/api-core' {
     export * from "prague/api-core/deltaManager";
     export * from "prague/api-core/localObjectStorageService";
     export * from "prague/api-core/objectStorageService";
+    export * from "prague/api-core/idleDeltaConnection";
 }
 
 declare module 'prague/cell' {
@@ -86,12 +83,13 @@ declare module 'prague/cell' {
     export class CellExtension implements api.IExtension {
             static Type: string;
             type: string;
-            load(document: api.IDocument, id: string, sequenceNumber: number, services: api.IDistributedObjectServices, version: resources.ICommit, header: string): ICell;
+            load(document: api.IDocument, id: string, sequenceNumber: number, services: api.IDistributedObjectServices, version: resources.ICommit, headerOrigin: string, header: string): ICell;
             create(document: api.IDocument, id: string): ICell;
     }
 }
 
 declare module 'prague/core-utils' {
+    export * from "prague/core-utils/batchManager";
     export * from "prague/core-utils/counters";
     export * from "prague/core-utils/promises";
     export * from "prague/core-utils/rangeTracker";
@@ -127,6 +125,7 @@ declare module 'prague/socket-storage' {
     export * from "prague/socket-storage/messages";
     export * from "prague/socket-storage/deltaStorageService";
     export * from "prague/socket-storage/documentService";
+    export * from "prague/socket-storage/loadService";
     export * from "prague/socket-storage/blobStorageService";
     export * from "prague/socket-storage/registration";
 }
@@ -151,8 +150,13 @@ declare module 'prague/api/document' {
         */
     export class Document {
             static Create(id: string, registry: Registry, service: IDocumentService, options: Object, version: resources.ICommit, connect: boolean): Promise<Document>;
+            static Load(id: string, registry: Registry, service: IDocumentService, options: Object, version: resources.ICommit, connect: boolean): Promise<Document>;
             readonly clientId: string;
             readonly id: string;
+            /**
+                * Returns the parent branch for this document
+                */
+            readonly parentBranch: string;
             readonly options: Object;
             /**
                 * Constructs a new collaborative object that can be attached to the document
@@ -204,6 +208,7 @@ declare module 'prague/api/document' {
             submitLatencyMessage(message: ILatencyMessage): void;
             on(event: string, listener: (...args: any[]) => void): this;
             removeListener(event: string, listener: (...args: any[]) => void): this;
+            branch(): Promise<string>;
             /**
                 * Called to snapshot the given document
                 */
@@ -213,6 +218,10 @@ declare module 'prague/api/document' {
         * Loads a collaborative object from the server
         */
     export function load(id: string, options?: Object, version?: resources.ICommit, registry?: Registry, service?: IDocumentService, connect?: boolean): Promise<Document>;
+    /**
+        * Loads a specific version (commit) of the collaborative object
+        */
+    export function loadVersion(id: string, options?: Object, version?: resources.ICommit, registry?: Registry, service?: IDocumentService, connect?: boolean): Promise<Document>;
 }
 
 declare module 'prague/api-core/collaborativeObject' {
@@ -273,7 +282,7 @@ declare module 'prague/api-core/collaborativeObject' {
 declare module 'prague/api-core/deltaConnection' {
     import { EventEmitter } from "events";
     import { IDeltaConnection, IDocument } from "prague/api-core/document";
-    import { IObjectMessage, ITrace } from "prague/api-core/protocol";
+    import { IBranchOrigin, IObjectMessage, ITrace } from "prague/api-core/protocol";
     export class DeltaConnection implements IDeltaConnection {
             objectId: string;
             protected events: EventEmitter;
@@ -294,7 +303,7 @@ declare module 'prague/api-core/deltaConnection' {
                 */
             baseMappingIsSet(): boolean;
             on(event: string, listener: (...args: any[]) => void): this;
-            emit(message: IObjectMessage, clientId: string, documentSequenceNumber: number, documentMinimumSequenceNumber: number, traces: ITrace[]): void;
+            emit(message: IObjectMessage, clientId: string, documentSequenceNumber: number, documentMinimumSequenceNumber: number, origin: IBranchOrigin, traces: ITrace[]): void;
             transformDocumentSequenceNumber(value: number): number;
             updateMinSequenceNumber(value: number): void;
             /**
@@ -329,7 +338,7 @@ declare module 'prague/api-core/deltaManager' {
 }
 
 declare module 'prague/api-core/document' {
-    import { IEnvelope, ILatencyMessage, IObjectMessage } from "prague/api-core/protocol";
+    import { IBranchOrigin, IEnvelope, ILatencyMessage, IObjectMessage, ITrace } from "prague/api-core/protocol";
     import { ICollaborativeObject } from "prague/api-core/types";
     export interface IObjectStorageService {
             /**
@@ -347,6 +356,7 @@ declare module 'prague/api-core/document' {
     export interface IDeltaConnection {
             minimumSequenceNumber: number;
             referenceSequenceNumber: number;
+            baseSequenceNumber: number;
             /**
                 * Subscribe to events emitted by the object
                 */
@@ -355,8 +365,14 @@ declare module 'prague/api-core/document' {
                 * Send new messages to the server
                 */
             submit(message: IObjectMessage): Promise<void>;
+            setBaseMapping(sequenceNumber: number, documentSequenceNumber: number): any;
+            baseMappingIsSet(): boolean;
+            transformDocumentSequenceNumber(value: number): any;
+            emit(message: IObjectMessage, clientId: string, documentSequenceNumber: number, documentMinimumSequenceNumber: number, origin: IBranchOrigin, traces: ITrace[]): any;
+            updateMinSequenceNumber(value: number): any;
     }
     export interface IDocument {
+            id: string;
             clientId: string;
             options: Object;
             attach(object: ICollaborativeObject): IDistributedObjectServices;
@@ -390,7 +406,7 @@ declare module 'prague/api-core/extension' {
                 * for the given object? The latter seems good in general. But both are probably good things. We then just
                 * need a way to allow the document to provide later storage for the object.
                 */
-            load(document: IDocument, id: string, sequenceNumber: number, services: IDistributedObjectServices, version: resources.ICommit, header: string): types.ICollaborativeObject;
+            load(document: IDocument, id: string, sequenceNumber: number, services: IDistributedObjectServices, version: resources.ICommit, headerOrigin: string, header: string): types.ICollaborativeObject;
             /**
                 * Creates a local version of the distributive object.
                 *
@@ -426,6 +442,8 @@ declare module 'prague/api-core/protocol' {
     export const AttachObject = "attach";
     export const ClientJoin = "join";
     export const ClientLeave = "leave";
+    export const Fork = "fork";
+    export const Integrate = "integrate";
     export const RoundTrip = "tripComplete";
     /**
         * An envelope wraps the contents with the intended target
@@ -433,6 +451,14 @@ declare module 'prague/api-core/protocol' {
     export interface IEnvelope {
             address: string;
             contents: any;
+    }
+    /**
+        * Branch origin information
+        */
+    export interface IBranchOrigin {
+            id: string;
+            sequenceNumber: number;
+            minimumSequenceNumber: number;
     }
     /**
         * Messages to track latency trace
@@ -462,6 +488,7 @@ declare module 'prague/api-core/protocol' {
             clientId: string;
             type: string;
             contents: any;
+            origin: IBranchOrigin;
             traces: ITrace[];
     }
     export interface IAttachMessage {
@@ -502,6 +529,7 @@ declare module 'prague/api-core/protocol' {
             contents: any;
             encrypted: boolean;
             encryptedContents: string;
+            origin: IBranchOrigin;
             traces: ITrace[];
     }
 }
@@ -510,7 +538,17 @@ declare module 'prague/api-core/storage' {
     import * as resources from "gitresources";
     import { IDocumentMessage, ISequencedDocumentMessage } from "prague/api-core/protocol";
     export interface IDocumentAttributes {
+            /**
+                * Name of the branch that created the snapshot
+                */
+            branch: string;
+            /**
+                * Sequence number at which the snapshot was taken
+                */
             sequenceNumber: number;
+            /**
+                * Minimum sequence number when the snapshot was taken
+                */
             minimumSequenceNumber: number;
     }
     export interface IObjectAttributes {
@@ -688,6 +726,10 @@ declare module 'prague/api-core/storage' {
                 */
             pendingDeltas: ISequencedDocumentMessage[];
             /**
+                * Branch identifier where snapshots originated
+                */
+            snapshotOriginBranch: string;
+            /**
                 * The smallest sequence number that can be used as a reference sequence number
                 */
             minimumSequenceNumber: number;
@@ -699,9 +741,17 @@ declare module 'prague/api-core/storage' {
                 * Directory information for objects contained in the snapshot
                 */
             tree: ISnapshotTree;
+            /**
+                * Parent branch
+                */
+            parentBranch: string;
     }
     export interface IDocumentService {
             connect(id: string, version: resources.ICommit, connect: boolean, encrypted: boolean): Promise<IDocumentResource>;
+            /**
+                * Creates a branch of the document with the given ID. Returns the new ID.
+                */
+            branch(id: string): Promise<string>;
     }
     export interface IBlobStorageService {
             /**
@@ -797,6 +847,42 @@ declare module 'prague/api-core/objectStorageService' {
     }
 }
 
+declare module 'prague/api-core/idleDeltaConnection' {
+    import { IDeltaConnection, IDocument } from "prague/api-core/document";
+    import { IBranchOrigin, IObjectMessage, ITrace } from "prague/api-core/protocol";
+    export class IdleDeltaConnection implements IDeltaConnection {
+        objectId: string;
+        document: IDocument;
+        minSequenceNumber: number;
+        refSequenceNumber: number;
+        readonly minimumSequenceNumber: number;
+        readonly referenceSequenceNumber: number;
+        readonly baseSequenceNumber: number;
+        constructor(objectId: string, document: IDocument);
+        setBaseMapping(sequenceNumber: number, documentSequenceNumber: number): void;
+        baseMappingIsSet(): boolean;
+        on(event: string, listener: (...args: any[]) => void): this;
+        emit(message: IObjectMessage, clientId: string, documentSequenceNumber: number, documentMinimumSequenceNumber: number, origin: IBranchOrigin, traces: ITrace[]): void;
+        transformDocumentSequenceNumber(value: number): void;
+        updateMinSequenceNumber(value: number): void;
+        /**
+          * Send new messages to the server
+          */
+        submit(message: IObjectMessage): Promise<void>;
+    }
+}
+
+declare module 'prague/core-utils/batchManager' {
+    export class BatchManager<T> {
+        constructor(process: (id: string, work: T[]) => void);
+        add(id: string, work: T): void;
+        /**
+          * Resolves once all pending work is complete
+          */
+        drain(): Promise<void>;
+    }
+}
+
 declare module 'prague/core-utils/counters' {
     /**
         * Computes a histogram of data values
@@ -877,19 +963,34 @@ declare module 'prague/core-utils/promises' {
 }
 
 declare module 'prague/core-utils/rangeTracker' {
+    export interface IRange {
+            primary: number;
+            secondary: number;
+            length: number;
+    }
+    export interface IRangeTrackerSnapshot {
+            ranges: IRange[];
+            lastPrimary: number;
+            lastSecondary: number;
+    }
     /**
-      * Helper class that keeps track of the relation between two ranges in a 1:N fashion. Primary
-      * is continuous and always maps to a single value in secondary above the base value. The range
-      * defines an increasing step function.
-      */
+        * Helper class that keeps track of the relation between two ranges in a 1:N fashion. Primary
+        * is continuous and always maps to a single value in secondary above the base value. The range
+        * defines an increasing step function.
+        */
     export class RangeTracker {
-        readonly base: number;
-        readonly primaryHead: any;
-        readonly secondaryHead: any;
-        constructor(primary: number, secondary: number);
-        add(primary: number, secondary: number): void;
-        get(primary: number): number;
-        updateBase(primary: number): void;
+            readonly base: number;
+            readonly primaryHead: number;
+            readonly secondaryHead: number;
+            constructor(primary: IRangeTrackerSnapshot);
+            constructor(primary: number, secondary: number);
+            /**
+                * Returns a serialized form of the RangeTracker
+                */
+            serialize(): IRangeTrackerSnapshot;
+            add(primary: number, secondary: number): void;
+            get(primary: number): number;
+            updateBase(primary: number): void;
     }
 }
 
@@ -1013,7 +1114,7 @@ declare module 'prague/data-types/map' {
             /**
                 * Creates a counter inside the map.
                 */
-            createCounter(key: string, value?: number, min?: number, max?: number): Promise<ICounter>;
+            createCounter(key: string, value?: number, min?: number, max?: number): ICounter;
             /**
                 * Creates a set inside the map.
                 */
@@ -1026,28 +1127,32 @@ declare module 'prague/data-types/map' {
             /**
                 * Increment/decrement the underlying value.
                 */
-            increment(value: number): Promise<void>;
+            increment(value: number): ICounter;
             /**
-                * Increment/decrement the underlying value.
+                * Returns the underlying value.
                 */
-            get(): Promise<number>;
+            get(): number;
     }
     /**
         * Set interface
         */
     export interface ISet<T> {
             /**
-                * Inserts element to the set.
+                * Inserts an element to the set.
                 */
-            add(value: T): T;
+            add(value: T): ISet<T>;
             /**
-                * delete element from the set.
+                * Deletes an element from the set.
                 */
-            delete(value: T): T;
+            delete(value: T): ISet<T>;
             /**
-                * Returns elements of the set.
+                * Returns elements of the set as an array.
                 */
-            entries(): T[];
+            entries(): any[];
+            /**
+                * Returns the underlying set.
+                */
+            getInternalSet(): Set<T>;
     }
 }
 
@@ -1157,7 +1262,7 @@ declare module 'prague/ink/extension' {
     export class InkExtension implements api.IExtension {
         static Type: string;
         type: string;
-        load(document: api.IDocument, id: string, sequenceNumber: number, services: api.IDistributedObjectServices, version: resources.ICommit, header: string): api.ICollaborativeObject;
+        load(document: api.IDocument, id: string, sequenceNumber: number, services: api.IDistributedObjectServices, version: resources.ICommit, headerOrigin: string, header: string): api.ICollaborativeObject;
         create(document: api.IDocument, id: string): api.ICollaborativeObject;
     }
 }
@@ -1227,16 +1332,18 @@ declare module 'prague/map/map' {
             setCore(key: string, value: IMapValue): void;
             clearCore(): void;
             deleteCore(key: string): void;
-            initCounter(key: string, value: number): void;
-            initCounterCore(key: string, value: IMapValue): void;
-            incrementCounter(key: string, value: number, min: number, max: number): void;
-            incrementCounterCore(key: string, value: IMapValue): void;
-            initSet<T>(key: string, value: T[]): void;
-            initSetCore(key: string, value: IMapValue): void;
-            insertSet<T>(key: string, value: T): T[];
-            insertSetCore(key: string, value: IMapValue): void;
-            deleteSet<T>(key: string, value: T): T[];
-            deleteSetCore(key: string, value: IMapValue): void;
+            initCounter(object: CollaborativeMap, key: string, value: number, min: number, max: number): ICounter;
+            loadCounter(object: CollaborativeMap, key: string, value: number, min: number, max: number): void;
+            initCounterCore(object: CollaborativeMap, key: string, value: IMapValue): ICounter;
+            incrementCounter(key: string, value: number): ICounter;
+            incrementCounterCore(key: string, value: IMapValue): ICounter;
+            initSet<T>(object: CollaborativeMap, key: string, value: T[]): ISet<any>;
+            loadSet<T>(object: CollaborativeMap, key: string, value: T[]): void;
+            initSetCore<T>(object: CollaborativeMap, key: string, value: IMapValue): ISet<T>;
+            insertSet<T>(key: string, value: T): ISet<T>;
+            insertSetCore<T>(key: string, value: IMapValue): void;
+            deleteSet<T>(key: string, value: T): ISet<T>;
+            deleteSetCore<T>(key: string, value: IMapValue): void;
     }
     /**
         * Implementation of a map collaborative object
@@ -1257,18 +1364,19 @@ declare module 'prague/map/map' {
             set(key: string, value: any): Promise<void>;
             delete(key: string): Promise<void>;
             clear(): Promise<void>;
-            createCounter(key: string, value?: number, min?: number, max?: number): Promise<ICounter>;
-            incrementCounter(key: string, value: number, min: number, max: number): Promise<any>;
+            createCounter(key: string, value?: number, min?: number, max?: number): ICounter;
+            incrementCounter(key: string, value: number, min: number, max: number): ICounter;
             getCounterValue(key: string): Promise<number>;
             createSet<T>(key: string, value?: T[]): ISet<T>;
-            insertSet<T>(key: string, value: T): Promise<T[]>;
-            deleteSet<T>(key: string, value: T): Promise<T[]>;
-            enumerateSet<T>(key: string): Promise<T[]>;
+            insertSet<T>(key: string, value: T): ISet<T>;
+            deleteSet<T>(key: string, value: T): ISet<T>;
+            enumerateSet<T>(key: string): any[];
             snapshot(): api.ITree;
             /**
                 * Returns a synchronous view of the map
                 */
             getView(): Promise<IMapView>;
+            deserialize(): void;
             protected submitCore(message: api.IObjectMessage): void;
             protected processMinSequenceNumberChanged(value: number): void;
             protected processCore(message: api.ISequencedObjectMessage): void;
@@ -1279,7 +1387,7 @@ declare module 'prague/map/map' {
     export class MapExtension implements api.IExtension {
             static Type: string;
             type: string;
-            load(document: api.IDocument, id: string, sequenceNumber: number, services: api.IDistributedObjectServices, version: resources.ICommit, header: string): IMap;
+            load(document: api.IDocument, id: string, sequenceNumber: number, services: api.IDistributedObjectServices, version: resources.ICommit, headerOrigin: string, header: string): IMap;
             create(document: api.IDocument, id: string): IMap;
     }
 }
@@ -1459,17 +1567,19 @@ declare module 'prague/merge-tree/mergeTree' {
             Marker = 2,
             External = 3,
     }
-    export interface Segment extends IMergeNode {
-            segmentGroup?: SegmentGroup;
-            seq?: number;
-            clientId?: number;
+    export interface IRemovalInfo {
             removedSeq?: number;
             removedClientId?: number;
             removedClientOverlap?: number[];
+    }
+    export interface Segment extends IMergeNode, IRemovalInfo {
+            segmentGroup?: SegmentGroup;
+            seq?: number;
+            clientId?: number;
             localRefs?: LocalReference[];
+            removalsByBranch?: IRemovalInfo[];
             splitAt(pos: number): Segment;
-            netLength(): number;
-            canAppend(segment: Segment): boolean;
+            canAppend(segment: Segment, mergeTree: MergeTree): boolean;
             append(segment: Segment): any;
             getType(): SegmentType;
             removeRange(start: number, end: number): boolean;
@@ -1485,7 +1595,7 @@ declare module 'prague/merge-tree/mergeTree' {
             (block: IMergeBlock, pos: number, refSeq: number, clientId: number, start: number, end: number, accum?: TClientData): boolean;
     }
     export interface NodeAction<TClientData> {
-            (node: IMergeNode, pos: number, refSeq: number, clientId: number, start: number, end: number, clientData?: TClientData): boolean;
+            (node: MergeNode, pos: number, refSeq: number, clientId: number, start: number, end: number, clientData?: TClientData): boolean;
     }
     export interface IncrementalSegmentAction<TContext> {
             (segment: Segment, state: IncrementalMapState<TContext>): any;
@@ -1534,18 +1644,19 @@ declare module 'prague/merge-tree/mergeTree' {
             clientId: number;
             seglen: number;
     }
-    export class IMergeNode implements IMergeNode {
+    export class MergeNode implements IMergeNode {
             parent: IMergeBlock;
             cachedLength: number;
+            isLeaf(): boolean;
     }
     export let MaxNodesInBlock: number;
-    export class MergeBlock extends IMergeNode implements IMergeBlock {
+    export class MergeBlock extends MergeNode implements IMergeBlock {
             childCount: number;
-            children: IMergeNode[];
+            children: MergeNode[];
             constructor(childCount: number);
             hierBlock(): any;
     }
-    export abstract class BaseSegment extends IMergeNode implements Segment {
+    export abstract class BaseSegment extends MergeNode implements Segment {
             seq: number;
             clientId: number;
             constructor(seq?: number, clientId?: number);
@@ -1560,8 +1671,7 @@ declare module 'prague/merge-tree/mergeTree' {
             addProperties(newProps: Properties.PropertySet, op?: ops.ICombiningOp): void;
             isLeaf(): boolean;
             cloneInto(b: BaseSegment): void;
-            netLength(): number;
-            canAppend(segment: Segment): boolean;
+            canAppend(segment: Segment, mergeTree: MergeTree): boolean;
             abstract clone(): BaseSegment;
             abstract append(segment: Segment): Segment;
             abstract getType(): SegmentType;
@@ -1615,7 +1725,7 @@ declare module 'prague/merge-tree/mergeTree' {
             clone(): TextSegment;
             getType(): SegmentType;
             matchProperties(b: TextSegment): boolean;
-            canAppend(segment: Segment): boolean;
+            canAppend(segment: Segment, mergeTree: MergeTree): boolean;
             toString(): string;
             append(segment: Segment): this;
             removeRange(start: number, end: number): boolean;
@@ -1675,6 +1785,7 @@ declare module 'prague/merge-tree/mergeTree' {
             segmentCount: number;
             partialLengths: PartialSequenceLength[];
             clientSeqNumbers: PartialSequenceLength[][];
+            downstreamPartialLengths: PartialSequenceLengths[];
             static options: {
                     zamboni: boolean;
             };
@@ -1682,26 +1793,35 @@ declare module 'prague/merge-tree/mergeTree' {
             cliLatestLEQ(clientId: number, refSeq: number): number;
             cliLatest(clientId: number): number;
             compare(b: PartialSequenceLengths): boolean;
-            toString(glc?: (id: number) => string): string;
-            getPartialLength(refSeq: number, clientId: number): number;
+            branchToString(glc?: (id: number) => string, branchId?: number): string;
+            toString(glc?: (id: number) => string, indentCount?: number): string;
+            getPartialLength(mergeTree: MergeTree, refSeq: number, clientId: number): number;
+            getBranchPartialLength(refSeq: number, clientId: number): number;
             zamboni(segmentWindow: CollaborationWindow): void;
             addClientSeqNumber(clientId: number, seq: number, seglen: number): void;
             addClientSeqNumberFromPartial(partialLength: PartialSequenceLength): void;
-            update(node: IMergeBlock, seq: number, clientId: number, collabWindow: CollaborationWindow): void;
-            static fromLeaves(combinedPartialLengths: PartialSequenceLengths, block: IMergeBlock, collabWindow: CollaborationWindow): void;
+            update(mergeTree: MergeTree, block: IMergeBlock, seq: number, clientId: number, collabWindow: CollaborationWindow): void;
+            updateBranch(mergeTree: MergeTree, branchId: number, node: IMergeBlock, seq: number, clientId: number, collabWindow: CollaborationWindow): void;
+            static fromLeaves(mergeTree: MergeTree, branchId: number, combinedPartialLengths: PartialSequenceLengths, block: IMergeBlock, collabWindow: CollaborationWindow): void;
+            static combine(mergeTree: MergeTree, block: IMergeBlock, collabWindow: CollaborationWindow, recur?: boolean): PartialSequenceLengths;
+            partialLengthsForBranch(branchId: number): PartialSequenceLengths;
             /**
-                * Combine the partial lengths of textSegmentBlock's children
-                * @param {TextSegmentBlock} textSegmentBlock an interior node; it is assumed that each interior node child of this block
+                * Combine the partial lengths of block's children
+                * @param {IMergeBlock} block an interior node; it is assumed that each interior node child of this block
                 * has its partials up to date
-                * @param {SegmentWindow} segmentWindow segment window fo the segment tree containing textSegmentBlock
+                * @param {CollaborationWindow} collabWindow segment window fo the segment tree containing textSegmentBlock
                 */
-            static combine(block: IMergeBlock, collabWindow: CollaborationWindow, recur?: boolean): PartialSequenceLengths;
+            static combineBranch(mergeTree: MergeTree, block: IMergeBlock, collabWindow: CollaborationWindow, branchId: number, recur?: boolean): PartialSequenceLengths;
     }
     /**
         * Used for in-memory testing.  This will queue a reference string for each client message.
         */
     export const useCheckQ: boolean;
     export function internedSpaces(n: number): string;
+    export interface ClientIds {
+            clientId: number;
+            branchId: number;
+    }
     export class Client {
             mergeTree: MergeTree;
             accumTime: number;
@@ -1716,14 +1836,16 @@ declare module 'prague/merge-tree/mergeTree' {
             q: Collections.List<API.ISequencedObjectMessage>;
             checkQ: Collections.List<string>;
             clientSequenceNumber: number;
-            clientNameToId: Collections.RedBlackTree<string, number>;
+            clientNameToIds: Collections.RedBlackTree<string, ClientIds>;
             shortClientIdMap: string[];
+            shortClientBranchIdMap: number[];
             longClientId: string;
             constructor(initText: string, options?: Properties.PropertySet);
-            getOrAddShortClientId(longClientId: string): number;
+            getOrAddShortClientId(longClientId: string, branchId?: number): number;
             getShortClientId(longClientId: string): number;
             getLongClientId(clientId: number): string;
-            addLongClientId(longClientId: string): void;
+            addLongClientId(longClientId: string, branchId?: number): void;
+            getBranchId(clientId: number): number;
             makeInsertMarkerMsg(markerType: string, behaviors: ops.MarkerBehaviors, pos: number, seq: number, refSeq: number, objectId: string): ISequencedObjectMessage;
             makeInsertMsg(text: string, pos: number, seq: number, refSeq: number, objectId: string): ISequencedObjectMessage;
             makeRemoveMsg(start: number, end: number, seq: number, refSeq: number, objectId: string): ISequencedObjectMessage;
@@ -1761,7 +1883,7 @@ declare module 'prague/merge-tree/mergeTree' {
             getTextRangeWithPlaceholders(start: number, end: number): string;
             getLength(): number;
             relText(clientId: number, refSeq: number): string;
-            startCollaboration(longClientId: string, minSeq?: number): void;
+            startCollaboration(longClientId: string, minSeq?: number, branchId?: number): void;
     }
     export interface ClientSeq {
             refSeq: number;
@@ -1777,10 +1899,14 @@ declare module 'prague/merge-tree/mergeTree' {
             clients: Client[];
             listeners: Client[];
             clientSeqNumbers: Collections.Heap<ClientSeq>;
+            upstreamMap: Collections.RedBlackTree<number, number>;
             constructor(initText: string);
+            addUpstreamClients(upstreamClients: Client[]): void;
             addClients(clients: Client[]): void;
             addListeners(listeners: Client[]): void;
             applyMsg(msg: API.ISequencedObjectMessage): boolean;
+            transformUpstreamMessage(msg: ISequencedObjectMessage): void;
+            copyMsg(msg: ISequencedObjectMessage): ISequencedObjectMessage;
             applyMessages(msgCount: number): boolean;
     }
     export interface LRUSegment {
@@ -1802,6 +1928,8 @@ declare module 'prague/merge-tree/mergeTree' {
                     measureWindowTime: boolean;
             };
             static searchChunkSize: number;
+            static traceAppend: boolean;
+            static traceZRemove: boolean;
             static traceGatherText: boolean;
             static diagInsertTie: boolean;
             static skipLeftShift: boolean;
@@ -1819,6 +1947,8 @@ declare module 'prague/merge-tree/mergeTree' {
             pendingSegments: Collections.List<SegmentGroup>;
             segmentsToScour: Collections.Heap<LRUSegment>;
             idToSegment: Properties.MapLike<Segment>;
+            clientIdToBranchId: number[];
+            localBranchId: number;
             transactionSegmentGroup: SegmentGroup;
             getLongClientId: (id: number) => string;
             constructor(text: string, options?: Properties.PropertySet);
@@ -1827,13 +1957,15 @@ declare module 'prague/merge-tree/mergeTree' {
             segmentClone(segment: Segment): BaseSegment;
             startGroupOperation(): void;
             endGroupOperation(): void;
+            localNetLength(segment: Segment): number;
+            getBranchId(clientId: number): number;
             mapIdToSegment(id: string, segment: Segment): void;
-            addNode(block: IMergeBlock, node: IMergeNode): number;
+            addNode(block: IMergeBlock, node: MergeNode): number;
             reloadFromSegments(segments: Segment[]): void;
-            startCollaboration(localClientId: number, minSeq: number): void;
+            startCollaboration(localClientId: number, minSeq: number, branchId: number): void;
             addToLRUSet(segment: Segment, seq: number): void;
             underflow(node: IMergeBlock): boolean;
-            scourNode(node: IMergeBlock, holdNodes: IMergeNode[]): void;
+            scourNode(node: IMergeBlock, holdNodes: MergeNode[]): void;
             pack(block: IMergeBlock): void;
             zamboniSegments(): void;
             getCollabWindow(): CollaborationWindow;
@@ -1842,11 +1974,12 @@ declare module 'prague/merge-tree/mergeTree' {
             tardisPositionFromClient(pos: number, fromSeq: number, toSeq: number, fromClientId: number, toClientId?: number): number;
             tardisRange(rangeStart: number, rangeEnd: number, fromSeq: number, toSeq: number, toClientId?: number): IRange[];
             getLength(refSeq: number, clientId: number): number;
-            getOffset(node: IMergeNode, refSeq: number, clientId: number): number;
+            getOffset(node: MergeNode, refSeq: number, clientId: number): number;
             searchFromPos(pos: number, target: RegExp): {
                     text: string;
                     pos: number;
             };
+            ogatherText: (segment: Segment, pos: number, refSeq: number, clientId: number, start: number, end: number, accumText: TextAccumulator) => boolean;
             gatherText: (segment: Segment, pos: number, refSeq: number, clientId: number, start: number, end: number, accumText: TextAccumulator) => boolean;
             incrementalGetText(refSeq: number, clientId: number, start?: number, end?: number): string;
             getText(refSeq: number, clientId: number, placeholders?: boolean, start?: number, end?: number): string;
@@ -1855,7 +1988,8 @@ declare module 'prague/merge-tree/mergeTree' {
                     offset: number;
             };
             blockLength(node: IMergeBlock, refSeq: number, clientId: number): number;
-            nodeLength(node: IMergeNode, refSeq: number, clientId: number): number;
+            getRemovalInfo(branchId: number, segBranchId: number, segment: Segment): IRemovalInfo;
+            nodeLength(node: MergeNode, refSeq: number, clientId: number): number;
             updateLocalMinSeq(localMinSeq: number): void;
             setMinSeq(minSeq: number): void;
             commitGlobalMin(): void;
@@ -1886,10 +2020,10 @@ declare module 'prague/merge-tree/mergeTree' {
             blockInsert<T extends Segment>(block: IMergeBlock, pos: number, refSeq: number, clientId: number, seq: number, newSegment: T): MergeBlock;
             splitLeafSegment: (segment: Segment, pos: number) => SegmentChanges;
             ensureIntervalBoundary(pos: number, refSeq: number, clientId: number): void;
-            breakTie(pos: number, len: number, seq: number, node: IMergeNode, refSeq: number, clientId: number, segType: SegmentType): boolean;
-            leftExcursion<TClientData>(node: IMergeNode, leafAction: SegmentAction<TClientData>): void;
-            rightExcursion<TClientData>(node: IMergeNode, leafAction: SegmentAction<TClientData>): void;
-            addOverlappingClient(textSegment: Segment, clientId: number): void;
+            breakTie(pos: number, len: number, seq: number, node: MergeNode, refSeq: number, clientId: number, segType: SegmentType): boolean;
+            leftExcursion<TClientData>(node: MergeNode, leafAction: SegmentAction<TClientData>): void;
+            rightExcursion<TClientData>(node: MergeNode, leafAction: SegmentAction<TClientData>): void;
+            addOverlappingClient(removalInfo: IRemovalInfo, clientId: number): void;
             annotateRange(props: Properties.PropertySet, start: number, end: number, refSeq: number, clientId: number, seq: number, combiningOp?: ops.ICombiningOp): void;
             markRangeRemoved(start: number, end: number, refSeq: number, clientId: number, seq: number): void;
             removeRange(start: number, end: number, refSeq: number, clientId: number): void;
@@ -2005,7 +2139,7 @@ declare module 'prague/merge-tree/sharedString' {
     export class CollaboritiveStringExtension implements api.IExtension {
         static Type: string;
         type: string;
-        load(document: api.IDocument, id: string, sequenceNumber: number, services: api.IDistributedObjectServices, version: resources.ICommit, header: string): api.ICollaborativeObject;
+        load(document: api.IDocument, id: string, sequenceNumber: number, services: api.IDistributedObjectServices, version: resources.ICommit, headerOrigin: string, header: string): api.ICollaborativeObject;
         create(document: api.IDocument, id: string, options?: Object): api.ICollaborativeObject;
     }
     export class SharedString extends api.CollaborativeObject {
@@ -2013,7 +2147,7 @@ declare module 'prague/merge-tree/sharedString' {
         client: MergeTree.Client;
         readonly loaded: Promise<void>;
         constructor(document: api.IDocument, id: string, sequenceNumber: number, services?: api.IDistributedObjectServices);
-        load(sequenceNumber: number, header: string, collaborative: boolean): Promise<void>;
+        load(sequenceNumber: number, header: string, collaborative: boolean, originBranch: string): Promise<void>;
         insertMarker(pos: number, behaviors: ops.MarkerBehaviors, props?: Properties.PropertySet): void;
         insertText(text: string, pos: number, props?: Properties.PropertySet): void;
         removeText(start: number, end: number): void;
@@ -2077,6 +2211,7 @@ declare module 'prague/socket-storage/messages' {
     export interface IConnected {
             clientId: string;
             existing: boolean;
+            parentBranch: string;
             privateKey: string;
             publicKey: string;
             encrypted: boolean;
@@ -2117,29 +2252,34 @@ declare module 'prague/socket-storage/deltaStorageService' {
 declare module 'prague/socket-storage/documentService' {
     import * as resources from "gitresources";
     import * as api from "prague/api-core";
+    import { GitManager } from "prague/git-storage";
+    export function getEmptyHeader(id: string): api.IDocumentHeader;
     export class DocumentResource implements api.IDocumentResource {
             documentId: string;
             clientId: string;
             existing: boolean;
             version: resources.ICommit;
+            parentBranch: string;
             deltaConnection: api.IDocumentDeltaConnection;
             documentStorageService: api.IDocumentStorageService;
             deltaStorageService: api.IDocumentDeltaStorageService;
             distributedObjects: api.IDistributedObject[];
             pendingDeltas: api.ISequencedDocumentMessage[];
             transformedMessages: api.ISequencedDocumentMessage[];
+            snapshotOriginBranch: string;
             sequenceNumber: number;
             minimumSequenceNumber: number;
             tree: api.ISnapshotTree;
-            constructor(documentId: string, clientId: string, existing: boolean, version: resources.ICommit, deltaConnection: api.IDocumentDeltaConnection, documentStorageService: api.IDocumentStorageService, deltaStorageService: api.IDocumentDeltaStorageService, distributedObjects: api.IDistributedObject[], pendingDeltas: api.ISequencedDocumentMessage[], transformedMessages: api.ISequencedDocumentMessage[], sequenceNumber: number, minimumSequenceNumber: number, tree: api.ISnapshotTree);
+            constructor(documentId: string, clientId: string, existing: boolean, version: resources.ICommit, parentBranch: string, deltaConnection: api.IDocumentDeltaConnection, documentStorageService: api.IDocumentStorageService, deltaStorageService: api.IDocumentDeltaStorageService, distributedObjects: api.IDistributedObject[], pendingDeltas: api.ISequencedDocumentMessage[], transformedMessages: api.ISequencedDocumentMessage[], snapshotOriginBranch: string, sequenceNumber: number, minimumSequenceNumber: number, tree: api.ISnapshotTree);
     }
     /**
         * The DocumentService manages the Socket.IO connection and manages routing requests to connected
         * clients
         */
     export class DocumentService implements api.IDocumentService {
-            constructor(url: string, deltaStorage: api.IDeltaStorageService, blobStorge: api.IBlobStorageService);
+            constructor(url: string, deltaStorage: api.IDeltaStorageService, blobStorge: api.IBlobStorageService, gitManager: GitManager);
             connect(id: string, version: resources.ICommit, connect: boolean, encrypted: boolean): Promise<api.IDocumentResource>;
+            branch(id: string): Promise<string>;
             /**
                 * Emits a message on the socket
                 */
@@ -2148,6 +2288,19 @@ declare module 'prague/socket-storage/documentService' {
                 * Registers the given connection to receive events of the given type
                 */
             registerForEvent(event: string, connection: api.IDocumentDeltaConnection): void;
+    }
+}
+
+declare module 'prague/socket-storage/loadService' {
+    import * as resources from "gitresources";
+    import * as api from "prague/api-core";
+    /**
+      * The LoadService connects to storage and loads a specific version of the document.
+      */
+    export class LoadService implements api.IDocumentService {
+        constructor(url: string, deltaStorage: api.IDeltaStorageService, blobStorge: api.IBlobStorageService);
+        connect(id: string, version: resources.ICommit, connect: boolean, encrypted: boolean): Promise<api.IDocumentResource>;
+        branch(id: string): Promise<string>;
     }
 }
 
@@ -2175,9 +2328,8 @@ declare module 'prague/socket-storage/blobStorageService' {
 }
 
 declare module 'prague/socket-storage/registration' {
-    import * as apiCore from "prague/api-core";
-    export function getDefaultService(deltaUrl: string, blobUrl: string, repository: string): apiCore.IDocumentService;
     export function registerAsDefault(deltaUrl: string, blobUrl: string, repository: string): void;
+    export function registerAsLoader(deltaUrl: string, blobUrl: string, repository: string): void;
 }
 
 declare module 'prague/merge-tree/base' {
@@ -2231,10 +2383,11 @@ declare module 'prague/git-storage/gitManager' {
             /**
                 * Retrieves the object at the given revision number
                 */
-            getObject(commit: string, path: string): Promise<any>;
+            getContent(commit: string, path: string): Promise<resources.IBlob>;
             createBlob(content: string, encoding: string): Promise<resources.ICreateBlobResponse>;
             createTree(files: api.ITree): Promise<resources.ITree>;
             createCommit(commit: resources.ICreateCommitParams): Promise<resources.ICommit>;
+            getRef(ref: string): Promise<resources.IRef>;
             upsertRef(branch: string, commitSha: string): Promise<resources.IRef>;
             /**
                 * Writes to the object with the given ID
