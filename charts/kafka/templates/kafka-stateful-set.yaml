@@ -27,7 +27,7 @@ spec:
           containerPort: 9092
         env:
         - name: "KAFKA_ADVERTISED_HOST_NAME"
-          value: "{{ template "kafka.fullname" . }}-0.{{ template "kafka.fullname" . }}"
+          value: "{{ template "kafka.fullname" . }}"
         - name: "KAFKA_ADVERTISED_PORT"
           value: "9092"
         - name: "KAFKA_AUTO_CREATE_TOPICS_ENABLE"
