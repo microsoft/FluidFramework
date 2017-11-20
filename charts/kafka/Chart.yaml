@@ -1,0 +1,5 @@
+ ## Generated from a tool - do not edit directly
+name: kafka
+version: 0.1.0
+description: Kafka for Prague
+home: https://github.com/microsoft/prague

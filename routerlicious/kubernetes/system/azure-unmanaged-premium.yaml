@@ -6,4 +6,4 @@ provisioner: kubernetes.io/azure-disk
 parameters:
   skuName: Premium_LRS
   location: westus2
-  storageAccount: pvc2390018694001
+  storageAccount: pvc2335720863001
