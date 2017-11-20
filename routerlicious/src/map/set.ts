@@ -3,36 +3,30 @@ import { CollaborativeMap } from "./map";
 
 export class DistributedSet<T> implements ISet<T> {
 
-    public static initSet<T>(values: T[]): T[] {
-        const newSet = new Set<T>(values);
-        return Array.from(newSet);
-    }
-
-    public static addElement<T>(values: T[], elementToAdd: T): T[] {
-        const newSet = new Set<T>(values);
-        newSet.add(elementToAdd);
-        return Array.from(newSet);
-    }
-
-    public static removeElement<T>(values: T[], elementToRemove: T): T[] {
-        const newSet = new Set<T>(values);
-        newSet.delete(elementToRemove);
-        return Array.from(newSet);
-    }
+    private internalSet: Set<T>;
 
     constructor(private parentMap: CollaborativeMap, private key: string) {
 
     }
 
-    public add(value: T): Promise<T[]> {
+    public init(values: T[]): ISet<T> {
+        this.internalSet = new Set<T>(values);
+        return this;
+    }
+
+    public add(value: T): ISet<T> {
         return this.parentMap.insertSet(this.key, value);
     }
 
-    public delete(value: T): Promise<T[]> {
+    public delete(value: T): ISet<T> {
         return this.parentMap.deleteSet(this.key, value);
     }
 
-    public entries(): Promise<T[]> {
+    public entries(): any[] {
         return this.parentMap.enumerateSet(this.key);
+    }
+
+    public getInternalSet(): Set<T> {
+        return this.internalSet;
     }
 }

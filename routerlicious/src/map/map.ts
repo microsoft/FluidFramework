@@ -179,7 +179,25 @@ export class MapView implements IMapView {
     public serialize(): string {
         const serialized: any = {};
         this.data.forEach((value, key) => {
-            serialized[key] = value;
+            switch (value.type) {
+                case ValueType[ValueType.Set]:
+                    const set = value.value as ISet<any>;
+                    serialized[key] = { type: value.type, value: set.entries() };
+                    break;
+                case ValueType[ValueType.Counter]:
+                    const counter = value.value as Counter;
+                    serialized[key] = {
+                        type: value.type,
+                        value: {
+                            max: counter.getMax(),
+                            min: counter.getMin(),
+                            value: counter.get(),
+                        },
+                    };
+                    break;
+                default:
+                    serialized[key] = value;
+            }
         });
         return JSON.stringify(serialized);
     }
@@ -207,56 +225,87 @@ export class MapView implements IMapView {
         this.events.emit("valueChanged", { key });
     }
 
-    public initCounter(key: string, value: number) {
-        const operationValue: IMapValue = {type: ValueType[ValueType.Counter], value};
+    public initCounter(object: CollaborativeMap, key: string, value: number,  min: number, max: number): ICounter {
+        const operationValue: IMapValue = {
+            type: ValueType[ValueType.Counter],
+            value: {
+                value,
+                min,
+                max,
+            },
+        };
         const op: IMapOperation = {
             key,
             type: "initCounter",
             value: operationValue,
         };
-        this.initCounterCore(op.key, op.value);
         this.submitLocalOperation(op);
+        return this.initCounterCore(object, op.key, op.value);
     }
 
-    public initCounterCore(key: string, value: IMapValue) {
-        this.data.set(key, value);
+    public loadCounter(object: CollaborativeMap, key: string, value: number, min: number, max: number) {
+        const newCounter = new Counter(object, key, min, max);
+        const newValue: IMapValue = { type: ValueType[ValueType.Counter], value: newCounter.init(value) as ICounter };
+        this.data.set(key, newValue);
+    }
+
+    public initCounterCore(object: CollaborativeMap, key: string, value: IMapValue): ICounter {
+        const newCounter = new Counter(object, key, value.value.min, value.value.max);
+        newCounter.init(value.value.value);
+        const newValue: IMapValue = { type: ValueType[ValueType.Counter], value: newCounter as ICounter };
+        this.data.set(key, newValue);
         this.events.emit("valueChanged", { key });
+        this.events.emit("initCounter", {key, value: newValue.value});
+        return newValue.value;
     }
 
-    public incrementCounter(key: string, value: number, min: number, max: number) {
+    public incrementCounter(key: string, value: number) {
         const operationValue: IMapValue = {type: ValueType[ValueType.Counter], value};
         const op: IMapOperation = {
             key,
             type: "incrementCounter",
             value: operationValue,
         };
-        this.incrementCounterCore(op.key, op.value);
         this.submitLocalOperation(op);
+        return this.incrementCounterCore(op.key, op.value);
     }
 
-    public incrementCounterCore(key: string, value: IMapValue) {
-        this.data.get(key).value += value.value;
+    public incrementCounterCore(key: string, value: IMapValue): ICounter {
+        const currentCounter = this.get(key) as Counter;
+        currentCounter.set(currentCounter.get() + value.value);
         this.events.emit("valueChanged", { key });
+        this.events.emit("incrementCounter", {key, value: value.value});
+        return currentCounter as ICounter;
     }
 
-    public initSet<T>(key: string, value: T[]) {
+    public initSet<T>(object: CollaborativeMap, key: string, value: T[]): ISet<any> {
         const operationValue: IMapValue = {type: ValueType[ValueType.Set], value};
         const op: IMapOperation = {
             key,
             type: "initSet",
             value: operationValue,
         };
-        this.initSetCore(op.key, op.value);
         this.submitLocalOperation(op);
+        return this.initSetCore(object, op.key, op.value);
     }
 
-    public initSetCore(key: string, value: IMapValue) {
-        const newValue: IMapValue = {type: ValueType[ValueType.Set], value: DistributedSet.initSet(value.value)};
+    public loadSet<T>(object: CollaborativeMap, key: string, value: T[]) {
+        const newSet = new DistributedSet<T>(object, key);
+        const newValue: IMapValue = { type: ValueType[ValueType.Set], value: newSet.init(value) as ISet<T> };
+        this.data.set(key, newValue);
+    }
+
+    public initSetCore<T>(object: CollaborativeMap, key: string, value: IMapValue): ISet<T> {
+        const newSet = new DistributedSet<T>(object, key);
+        newSet.init(value.value);
+        const newValue: IMapValue = {type: ValueType[ValueType.Set], value: newSet as ISet<T>};
         this.data.set(key, newValue);
         this.events.emit("valueChanged", { key });
+        this.events.emit("setCreated", {key, value: newValue.value});
+        return newValue.value;
     }
 
-    public insertSet<T>(key: string, value: T): T[] {
+    public insertSet<T>(key: string, value: T): ISet<T> {
         const operationValue: IMapValue = {type: ValueType[ValueType.Set], value};
         const op: IMapOperation = {
             key,
@@ -265,20 +314,17 @@ export class MapView implements IMapView {
         };
         this.insertSetCore(op.key, op.value);
         this.submitLocalOperation(op);
-        return this.data.get(key).value;
+        return this.data.get(key).value as ISet<T>;
     }
 
-    public insertSetCore(key: string, value: IMapValue) {
-        const newValue: IMapValue = {
-            type: ValueType[ValueType.Set],
-            value: DistributedSet.addElement(this.get(key), value.value),
-        };
-        this.data.set(key, newValue);
+    public insertSetCore<T>(key: string, value: IMapValue) {
+        const currentSet = this.get(key) as ISet<T>;
+        currentSet.getInternalSet().add(value.value);
         this.events.emit("valueChanged", { key });
         this.events.emit("setElementAdded", {key, value: value.value});
     }
 
-    public deleteSet<T>(key: string, value: T): T[] {
+    public deleteSet<T>(key: string, value: T): ISet<T> {
         const operationValue: IMapValue = {type: ValueType[ValueType.Set], value};
         const op: IMapOperation = {
             key,
@@ -287,15 +333,12 @@ export class MapView implements IMapView {
         };
         this.deleteSetCore(op.key, op.value);
         this.submitLocalOperation(op);
-        return this.data.get(key).value;
+        return this.data.get(key).value as ISet<T>;
     }
 
-    public deleteSetCore(key: string, value: IMapValue) {
-        const newValue: IMapValue = {
-            type: ValueType[ValueType.Set],
-            value: DistributedSet.removeElement(this.get(key), value.value),
-        };
-        this.data.set(key, newValue);
+    public deleteSetCore<T>(key: string, value: IMapValue) {
+        const currentSet = this.get(key) as ISet<T>;
+        currentSet.getInternalSet().delete(value.value);
         this.events.emit("valueChanged", { key });
         this.events.emit("setElementRemoved", {key, value: value.value});
     }
@@ -364,7 +407,7 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
         return Promise.resolve(this.view.clear());
     }
 
-    public createCounter(key: string, value?: number, min?: number, max?: number): Promise<ICounter> {
+    public createCounter(key: string, value?: number, min?: number, max?: number): ICounter {
         value = getOrDefault(value, 0);
         min = getOrDefault(min, Number.MIN_SAFE_INTEGER);
         max = getOrDefault(max, Number.MAX_SAFE_INTEGER);
@@ -374,25 +417,24 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
         if (value < min || value > max) {
             throw new Error("Initial value exceeds the counter range!");
         }
-        this.view.initCounter(key, value);
-        return Promise.resolve(new Counter(this, key, min, max));
+        return this.view.initCounter(this, key, value, min, max);
     }
 
-    public incrementCounter(key: string, value: number, min: number, max: number): Promise<any> {
+    public incrementCounter(key: string, value: number, min: number, max: number): ICounter {
         if (typeof value !== "number") {
-            return Promise.reject("Incremental amount should be a number.");
+            throw new Error("Incremental amount should be a number.");
         }
         const compatible = this.ensureCompatibility(key, ValueType[ValueType.Counter]);
         if (compatible.reject !== null) {
-            return compatible.reject;
+            throw new Error("Incompatible type.");
         }
         const currentData = compatible.data;
-        const currentValue = currentData.value as number;
-        const nextValue = currentValue + value;
+        const currentValue = currentData.value as ICounter;
+        const nextValue = currentValue.get() + value;
         if ((nextValue < min) || (nextValue > max)) {
-            return Promise.reject("Error: Counter range exceeded!");
+            throw new Error("Error: Counter range exceeded!");
         }
-        return Promise.resolve(this.view.incrementCounter(key, value, min, max));
+        return this.view.incrementCounter(key, value);
     }
 
     public getCounterValue(key: string): Promise<number> {
@@ -400,25 +442,28 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
         return compatible.reject !== null ? compatible.reject : Promise.resolve(compatible.data.value);
     }
 
-    public createSet<T>(key: string, value?: T[]): Promise<ISet<T>> {
+    public createSet<T>(key: string, value?: T[]): ISet<T> {
         value = getOrDefault(value, []);
-        this.view.initSet(key, value);
-        return Promise.resolve(new DistributedSet(this, key));
+        return this.view.initSet(this, key, value);
     }
 
-    public insertSet<T>(key: string, value: T): Promise<T[]> {
+    public insertSet<T>(key: string, value: T): ISet<T> {
         const compatible = this.ensureCompatibility(key, ValueType[ValueType.Set]);
-        return compatible.reject !== null ? compatible.reject : Promise.resolve(this.view.insertSet(key, value));
+        return compatible.reject !== null ? null : this.view.insertSet(key, value);
     }
 
-    public deleteSet<T>(key: string, value: T): Promise<T[]> {
+    public deleteSet<T>(key: string, value: T): ISet<T> {
         const compatible = this.ensureCompatibility(key, ValueType[ValueType.Set]);
-        return compatible.reject !== null ? compatible.reject : Promise.resolve(this.view.deleteSet(key, value));
+        return compatible.reject !== null ? null : this.view.deleteSet(key, value);
     }
 
-    public enumerateSet<T>(key: string): Promise<T[]> {
+    public enumerateSet<T>(key: string): any[] {
         const compatible = this.ensureCompatibility(key, ValueType[ValueType.Set]);
-        return compatible.reject !== null ? compatible.reject : Promise.resolve(compatible.data.value);
+        if (compatible.reject !== null) {
+            return null;
+        }
+        const resultSet = compatible.data.value as ISet<T>;
+        return Array.from(resultSet.getInternalSet().values());
     }
 
     public snapshot(): api.ITree {
@@ -443,6 +488,27 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
      */
     public getView(): Promise<IMapView> {
         return Promise.resolve(this.view);
+    }
+
+    // Deserializes the map values into specific types (e.g., set, counter etc.)
+    public deserialize() {
+        const mapView = this.view;
+        const keys = mapView.keys();
+        for (let key of keys) {
+            const value = mapView.getMapValue(key);
+            if (value !== undefined) {
+                switch (value.type) {
+                    case ValueType[ValueType.Set]:
+                        mapView.loadSet(this, key, value.value);
+                        break;
+                    case ValueType[ValueType.Counter]:
+                        mapView.loadCounter(this, key, value.value.value, value.value.min, value.value.max);
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
     }
 
     protected submitCore(message: api.IObjectMessage) {
@@ -478,13 +544,13 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
                     this.view.setCore(op.key, op.value);
                     break;
                 case "initCounter":
-                    this.view.initCounterCore(op.key, op.value);
+                    this.view.initCounterCore(this, op.key, op.value);
                     break;
                 case "incrementCounter":
                     this.view.incrementCounterCore(op.key, op.value);
                     break;
                 case "initSet":
-                    this.view.initSetCore(op.key, op.value);
+                    this.view.initSetCore(this, op.key, op.value);
                     break;
                 case "insertSet":
                     this.view.insertSetCore(op.key, op.value);
@@ -539,7 +605,9 @@ export class MapExtension implements api.IExtension {
         headerOrigin: string,
         header: string): IMap {
 
-        return new CollaborativeMap(document, id, sequenceNumber, services, version, header);
+        const map = new CollaborativeMap(document, id, sequenceNumber, services, version, header);
+        map.deserialize();
+        return map;
     }
 
     public create(document: api.IDocument, id: string): IMap {
