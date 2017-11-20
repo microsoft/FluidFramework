@@ -1,6 +1,8 @@
 import * as protocol from "./protocol";
 import * as storage from "./storage";
 
+export const SAVE = "save";
+
 /**
  * Helper interface to wrap a snapshot with the sequence number it was taken at
  */
@@ -8,6 +10,10 @@ export interface ICollaborativeObjectSnapshot {
     sequenceNumber: number;
 
     snapshot: any;
+}
+
+export interface ICollaborativeObjectSave {
+    type: string;
 }
 
 export interface ICollaborativeObject {

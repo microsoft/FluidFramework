@@ -1,3 +1,4 @@
+import { SaveOperation } from "../api-core";
 import { api, core } from "../client-api";
 
 // Loads a document from DB.
@@ -11,6 +12,12 @@ export class Serializer {
     }
 
     public run(op: core.ISequencedDocumentMessage) {
+        // Forced snapshot.
+        if (op.type === SaveOperation) {
+            const tagMessage = `;${op.clientId}`;
+            this.snapshot(tagMessage);
+            return;
+        }
         // Exit early in the case that the minimum sequence number hasn't changed
         if (this.currentMsn === op.minimumSequenceNumber) {
             return;
@@ -55,9 +62,9 @@ export class Serializer {
     /**
      * Performs the actual snapshot of the collaborative document
      */
-    private snapshot() {
+    private snapshot(tagMessage: string = undefined) {
         console.log(`Snapshotting ${this.document.id}@${this.currentMsn}`);
-        return this.document.snapshot().catch((error) => {
+        return this.document.snapshot(tagMessage).catch((error) => {
             // TODO we will just log errors for now. Will want a better strategy later on (replay, wait)
             if (error) {
                 console.error(`Error snapshotting ${this.document.id}`, error);

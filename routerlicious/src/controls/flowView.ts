@@ -3259,6 +3259,9 @@ export class FlowView extends ui.Component {
             case CharacterCodes.G:
                 this.viewTileProps();
                 break;
+            case CharacterCodes.S:
+                this.sharedString.save();
+                break;
             default:
                 console.log(`got command key ${String.fromCharCode(charCode)}`);
                 break;

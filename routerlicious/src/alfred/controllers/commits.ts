@@ -2,15 +2,6 @@ import "gitgraph.js";
 import * as resources from "gitresources";
 import * as $ from "jquery";
 
-/*
-function displayCommits(element: JQuery, type: string, id: string, versions: resources.ICommit[]) {
-    element.append($(`<h2>Document ${id} commits.</h2>`));
-    for (let version of versions) {
-        const url = `${document.location.origin}/${type}/${id}/commit?version=${version.sha}`;
-        element.append($(`<li><a href="${url}" target="_blank">${version.sha}</a></li>`));
-    }
-}*/
-
 let templateConfig = {
     arrow: {
         offset: 2.5,
@@ -48,7 +39,7 @@ function generateGraph(type: string, id: string, versions: resources.ICommit[]):
     const config: GitGraph.GitGraphOptions = {
         initCommitOffsetX: -20,
         initCommitOffsetY: -10,
-        orientation: "horizontal",
+        orientation: "vertical",
         template,
     };
     const graph = new GitGraph(config);
@@ -56,16 +47,17 @@ function generateGraph(type: string, id: string, versions: resources.ICommit[]):
     const master = graph.branch("master");
     let index: number = versions.length;
     for (let version of versions) {
+        const commitTag = version.message.split(";");
         master.commit({
             dotSize: 20,
-            message: version.message,
+            message: commitTag.length >= 1 ? commitTag[0] : "",
             onClick: (commit: any) => {
                 console.log(commit);
                 const url = `${document.location.origin}/${type}/${id}/commit?version=${commit.sha1}`;
                 window.open(url, "_blank");
             },
             sha1: version.sha,
-            // tag: "tag",
+            tag: commitTag.length >= 2 ? commitTag[1] : "",
             tooltipDisplay: true,
         });
         --index;
