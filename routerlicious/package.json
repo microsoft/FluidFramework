@@ -17,6 +17,7 @@
     "browserify:agent": "browserify src/agent/index.ts --debug -s pragueAgent -p [ tsify ] | exorcist public/scripts/dist/agent.js.map > public/scripts/dist/agent.js",
     "browserify:agent:min": "browserify src/agent/index.ts --debug -s pragueAgent -p [ tsify ] | uglifyjs --source-map content=inline,url=agent.min.js.map -o public/scripts/dist/agent.min.js",
     "build": "concurrently \"npm run tslint\" \"npm run tsc\" \"npm run browserify\" \"npm run less\"",
+    "build:dts": "dts-bundle --main dist/client-api/index.d.ts --name prague --baseDir ./dist --out ../public/scripts/dist/prague.d.ts",
     "build:full": "npm run build && npm run browserify:all:min",
     "build:watch": "watch 'npm run tsc && npm run browserify' src",
     "less": "lessc src/stylesheets/style.less public/stylesheets/dist/style.css",
