@@ -9,6 +9,7 @@ import {
     DeltaManager,
     IAttachMessage,
     ICollaborativeObject,
+    ICollaborativeObjectSave,
     IDeltaConnection,
     IDistributedObject,
     IDistributedObjectServices,
@@ -30,8 +31,10 @@ import {
     ObjectStorageService,
     Registry,
     RoundTrip,
+    SaveOperation,
     TreeEntry } from "../api-core";
 import * as cell from "../cell";
+import { getOrDefault } from "../core-utils";
 import { ICell, IInk, IMap } from "../data-types";
 import * as ink from "../ink";
 import * as mapExtension from "../map";
@@ -327,6 +330,10 @@ export class Document {
         return this.submitMessage(ObjectOperation, envelope);
     }
 
+    public submitSaveMessage(message: ICollaborativeObjectSave): Promise<void> {
+        return this.submitMessage(SaveOperation, message);
+    }
+
     public submitLatencyMessage(message: ILatencyMessage) {
         this.deltaManager.submitRoundtrip(RoundTrip, message);
     }
@@ -348,7 +355,7 @@ export class Document {
     /**
      * Called to snapshot the given document
      */
-    public async snapshot(): Promise<void> {
+    public async snapshot(tagMessage: string = undefined): Promise<void> {
         const entries: ITreeEntry[] = [];
 
         // TODO: support for branch snapshots. For now simply no-op when a branch snapshot is requested
@@ -426,7 +433,7 @@ export class Document {
             entries,
         };
 
-        const message = `Commit @${this.deltaManager.minimumSequenceNumber}`;
+        const message = `Commit @${this.deltaManager.minimumSequenceNumber}${getOrDefault(tagMessage, "")}`;
         await this.document.documentStorageService.write(root, message);
     }
 

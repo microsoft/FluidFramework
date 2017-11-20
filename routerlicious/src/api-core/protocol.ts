@@ -9,6 +9,9 @@ export const NoOp = "noop";
 // Operation performed on a distributed data type
 export const ObjectOperation = "objOp";
 
+// Save Operation performed on a distributed data type
+export const SaveOperation = "saveOp";
+
 // Attaches a new object to the document
 export const AttachObject = "attach";
 

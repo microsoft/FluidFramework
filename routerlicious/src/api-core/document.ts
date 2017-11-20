@@ -1,5 +1,5 @@
 import { IBranchOrigin, IEnvelope, ILatencyMessage, IObjectMessage, ITrace } from "./protocol";
-import { ICollaborativeObject } from "./types";
+import { ICollaborativeObject, ICollaborativeObjectSave } from "./types";
 
 export interface IObjectStorageService {
     /**
@@ -67,4 +67,6 @@ export interface IDocument {
 
     // TODO Should I hide this internally on the message - doesn't seem to be a primary object
     submitLatencyMessage(message: ILatencyMessage);
+
+    submitSaveMessage(message: ICollaborativeObjectSave);
 }

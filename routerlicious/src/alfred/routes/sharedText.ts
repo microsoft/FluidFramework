@@ -51,7 +51,7 @@ export function create(
      * Loads count number of latest commits.
      */
     router.get("/:id/commits", (request, response, next) => {
-        const versionsP = storage.getVersions(gitManager, request.params.id, 10);
+        const versionsP = storage.getVersions(gitManager, request.params.id, 100);
         versionsP.then(
             (versions) => {
                 response.render(
