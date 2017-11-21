@@ -4,6 +4,15 @@ import * as kafkaRest from "kafka-rest";
 import * as util from "util";
 import { debug } from "./debug";
 
+export interface IMessage {
+    topic: string;
+    value: string;
+    offset: number;
+    partition: number;
+    highWaterOffset: number;
+    key: number;
+}
+
 export interface IConsumer {
     groupId: string;
 
@@ -17,6 +26,7 @@ export interface IConsumer {
     /**
      * Event Handler.
      */
+    on(event: "data", listener: (message: IMessage) => void): this;
     on(event: string, listener: Function): this;
 
     /**

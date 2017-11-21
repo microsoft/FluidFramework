@@ -10,7 +10,7 @@ import { TakeANumber } from "./takeANumber";
 export class DeliRunner implements utils.IRunner {
     private deferred: Deferred<void>;
     private checkpointTimer: any;
-    private q: AsyncQueue<string>;
+    private q: AsyncQueue<utils.kafkaConsumer.IMessage>;
 
     constructor(
         private producer: utils.kafkaProducer.IProducer,

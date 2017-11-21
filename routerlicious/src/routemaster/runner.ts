@@ -7,7 +7,7 @@ import { Router } from "./router";
 
 export class RouteMasterRunner implements utils.IRunner {
     private deferred: Deferred<void>;
-    private q: AsyncQueue<string>;
+    private q: AsyncQueue<utils.kafkaConsumer.IMessage>;
     private routers = new Map<string, Router>();
 
     constructor(

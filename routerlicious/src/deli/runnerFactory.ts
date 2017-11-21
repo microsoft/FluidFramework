@@ -47,8 +47,8 @@ export class DeliResourcesFactory implements utils.IResourcesFactory<DeliResourc
         let producer = utils.kafkaProducer.create(kafkaLibrary, kafkaEndpoint, kafkaClientId, sendTopic);
         let consumer = utils.kafkaConsumer.create(
             kafkaLibrary,
-            kafkaClientId,
             kafkaEndpoint,
+            kafkaClientId,
             groupId,
             receiveTopic,
             false);

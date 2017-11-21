@@ -1,27 +1,20 @@
 import { queue } from "async";
 import * as winston from "winston";
-import * as core from "../core";
 import { Deferred } from "../core-utils";
 import * as utils from "../utils";
 
 export class KafkaRunner implements utils.IRunner {
     private deferred: Deferred<void>;
-    private q: AsyncQueue<string>;
+    private q: AsyncQueue<utils.kafkaConsumer.IMessage>;
 
     constructor(
         private consumer: utils.kafkaConsumer.IConsumer,
         // This wants to be a checkpointing strategy. Check out GOF
-        private checkpointBatchSize: number,
-        private checkpointTimeIntervalMsec: number) {
+        checkpointBatchSize: number,
+        checkpointTimeIntervalMsec: number) {
     }
 
     public start(): Promise<void> {
-        const partitionManager = new core.PartitionManager(
-            this.consumer,
-            this.checkpointBatchSize,
-            this.checkpointTimeIntervalMsec,
-        );
-
         this.deferred = new Deferred<void>();
         this.consumer.on("data", (message) => {
             this.q.push(message);
@@ -34,7 +27,8 @@ export class KafkaRunner implements utils.IRunner {
 
         winston.info("Waiting for messages");
         this.q = queue((message: any, callback) => {
-            this.processMessage(message, partitionManager);
+            // NOTE processMessage
+            this.processMessage(message);
 
             // TODO check checkpoint
 
@@ -78,8 +72,8 @@ export class KafkaRunner implements utils.IRunner {
         return this.deferred.promise;
     }
 
-    private processMessage(rawMessage: any, partitionManager: core.PartitionManager) {
-        // Something
+    private processMessage(rawMessage: any) {
         winston.info("Processing a message");
+        winston.info(JSON.stringify(rawMessage));
     }
 }
