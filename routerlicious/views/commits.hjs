@@ -7,7 +7,9 @@
     {{$content}}
         <div class="container-fluid">
             <div id="commitsView"></div>
-            <canvas id="gitGraph" class="graph-canvas"></canvas>
+            <div id="parent-canvas">
+                <canvas id="gitGraph" class="graph-canvas" width="2500" height="5000"></canvas>
+            </div>
         </div>
     {{/content}}
 
