@@ -1,14 +1,14 @@
 // For local development
-const routerlicious = "http://localhost:3000";
-const historian = "http://localhost:3001";
-//const routerlicious = "http://praguekube.westus2.cloudapp.azure.com";
-//const historian = "http://prague-historian.westus2.cloudapp.azure.com";
+//const routerlicious = "http://localhost:3000";
+//const historian = "http://localhost:3001";
+const routerlicious = "http://praguekube.westus2.cloudapp.azure.com";
+const historian = "http://prague-historian.westus2.cloudapp.azure.com";
 const repository = "prague";
 
 // Register endpoint connection
 prague.socketStorage.registerAsDefault(routerlicious, historian, repository);
 
-let id = "testGraph-pooch10";
+let id = "testGraph-pooch12";
 
 interface ISharedVertex {
 	id: string;
@@ -73,7 +73,9 @@ async function main(container: HTMLDivElement) {
 
 	const rootView = await collabDoc.getRoot().getView();
 	let graphMap: prague.types.IMap;
+	let initiator = false;
 	if (!rootView.has("graph")) {
+		initiator = true;
 		graphMap = collabDoc.createMap();
 		rootView.set("graph", graphMap);
 		let vertexSet = graphMap.createSet<ISharedVertex>("vertices");
@@ -87,7 +89,7 @@ async function main(container: HTMLDivElement) {
 		let edgeSet: prague.types.ISet<ISharedEdge> = graphView.get("edges");
 		sharedGraph = new SharedGraph(vertexSet, edgeSet);
 	}
-	mainMX(container, sharedGraph, collabDoc, graphView, graphMap);
+	mainMX(container, sharedGraph, collabDoc, graphView, graphMap, initiator);
 }
 
 // Program starts here. Creates a sample graph in the
@@ -95,7 +97,7 @@ async function main(container: HTMLDivElement) {
 // from the onLoad event handler of the document (see below).
 function mainMX(container: HTMLDivElement, sharedGraph: SharedGraph,
 	collabDoc: prague.api.Document, graphView: prague.types.IMapView,
-	graphMap: prague.types.IMap) {
+	graphMap: prague.types.IMap, initiator: boolean) {
 	// Checks if the browser is supported
 	if (!mxClient.isBrowserSupported()) {
 		// Displays an error message if the browser is not supported.
@@ -154,7 +156,7 @@ function mainMX(container: HTMLDivElement, sharedGraph: SharedGraph,
 
 		function sendGraphUpdate(v1: IVertex, v2: IVertex, label: string, x: number, y: number,
 			width: number, height: number) {
-				sendAddVertex(v2, label, x, y, width, height);
+			sendAddVertex(v2, label, x, y, width, height);
 			localOp = true;
 			sharedGraph.addEdge(v1.sharedId, v2.sharedId, "");
 			localOp = false;
@@ -206,17 +208,18 @@ function mainMX(container: HTMLDivElement, sharedGraph: SharedGraph,
 
 		// Adds cells to the model in a single step
 		graph.getModel().beginUpdate();
-		var v1;
-		try {
-			v1 = graph.insertVertex(parent, null, 'Hello,', 0, 0, 80, 30);
-			addOverlay(v1);
-			sendAddVertex(v1, 'Hello', 0, 0, 80, 30);
+		let root: IVertex;
+		if (initiator) {
+			try {
+				root = graph.insertVertex(parent, null, 'Hello,', 0, 0, 80, 30);
+				addOverlay(root);
+				sendAddVertex(root, 'Hello', 0, 0, 80, 30);
+			}
+			finally {
+				// Updates the display
+				graph.getModel().endUpdate();
+			}
 		}
-		finally {
-			// Updates the display
-			graph.getModel().endUpdate();
-		}
-
 		var layout = new mxHierarchicalLayout(graph, mxConstants.DIRECTION_WEST);
 
 		var executeLayout = function (change?, post?) {
@@ -226,7 +229,7 @@ function mainMX(container: HTMLDivElement, sharedGraph: SharedGraph,
 					change();
 				}
 
-				layout.execute(graph.getDefaultParent(), v1);
+				layout.execute(graph.getDefaultParent(), root);
 			}
 			catch (e) {
 				throw e;
@@ -262,6 +265,9 @@ function mainMX(container: HTMLDivElement, sharedGraph: SharedGraph,
 				let iv = graph.insertVertex(parent, null, v.label, v.x, v.y, v.width, v.height);
 				localVertexMap[v.id] = iv;
 				addOverlay(iv);
+				if (!root) {
+					root = iv;
+				}
 				graph.view.refresh(iv);
 			}, function () {
 				graph.scrollCellToVisible(iv);
