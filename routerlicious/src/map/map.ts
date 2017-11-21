@@ -374,6 +374,7 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
 
         const data = header ? JSON.parse(Buffer.from(header, "base64").toString("utf-8")) : {};
         this.view = new MapView(document, id, data, this.events, (op) => this.submitLocalOperation(op));
+        this.deserialize();
     }
 
     public async keys(): Promise<string[]> {
@@ -490,27 +491,6 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
         return Promise.resolve(this.view);
     }
 
-    // Deserializes the map values into specific types (e.g., set, counter etc.)
-    public deserialize() {
-        const mapView = this.view;
-        const keys = mapView.keys();
-        for (let key of keys) {
-            const value = mapView.getMapValue(key);
-            if (value !== undefined) {
-                switch (value.type) {
-                    case ValueType[ValueType.Set]:
-                        mapView.loadSet(this, key, value.value);
-                        break;
-                    case ValueType[ValueType.Counter]:
-                        mapView.loadCounter(this, key, value.value.value, value.value.min, value.value.max);
-                        break;
-                    default:
-                        break;
-                }
-            }
-        }
-    }
-
     protected submitCore(message: api.IObjectMessage) {
         // TODO chain these requests given the attach is async
         const op = message.contents as IMapOperation;
@@ -566,6 +546,27 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
         this.events.emit("op", message);
     }
 
+    // Deserializes the map values into specific types (e.g., set, counter etc.)
+    private deserialize() {
+        const mapView = this.view;
+        const keys = mapView.keys();
+        for (let key of keys) {
+            const value = mapView.getMapValue(key);
+            if (value !== undefined) {
+                switch (value.type) {
+                    case ValueType[ValueType.Set]:
+                        mapView.loadSet(this, key, value.value);
+                        break;
+                    case ValueType[ValueType.Counter]:
+                        mapView.loadCounter(this, key, value.value.value, value.value.min, value.value.max);
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+    }
+
     // Check if key exists in the map and if the value type is of the desired type (e.g., set, counter etc.)
     private ensureCompatibility(key: string, targetType: string): IMapDataCompatibility {
         const currentData = this.view.getMapValue(key);
@@ -605,9 +606,7 @@ export class MapExtension implements api.IExtension {
         headerOrigin: string,
         header: string): IMap {
 
-        const map = new CollaborativeMap(document, id, sequenceNumber, services, version, header);
-        map.deserialize();
-        return map;
+        return new CollaborativeMap(document, id, sequenceNumber, services, version, header);
     }
 
     public create(document: api.IDocument, id: string): IMap {
