@@ -14,6 +14,8 @@ export interface ICollaborativeObjectSnapshot {
 
 export interface ICollaborativeObjectSave {
     type: string;
+
+    message: string;
 }
 
 export interface ICollaborativeObject {

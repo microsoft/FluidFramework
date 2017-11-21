@@ -14,7 +14,8 @@ export class Serializer {
     public run(op: core.ISequencedDocumentMessage) {
         // Forced snapshot.
         if (op.type === SaveOperation) {
-            const tagMessage = `;${op.clientId}`;
+            const saveMessage = op.contents.message === null ? "" : `-${op.contents.message}`;
+            const tagMessage = `;${op.clientId}${saveMessage}`;
             this.snapshot(tagMessage);
             return;
         }

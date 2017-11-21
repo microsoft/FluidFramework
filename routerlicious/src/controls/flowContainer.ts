@@ -45,7 +45,7 @@ export class FlowContainer extends ui.Component {
         // FlowView holds the text
         const flowViewDiv = document.createElement("div");
         flowViewDiv.classList.add("flow-view");
-        this.flowView = new FlowView(flowViewDiv, sharedString, this.status);
+        this.flowView = new FlowView(flowViewDiv, collabDocument, sharedString, this.status);
 
         // Layer panel lets us put the overlay canvas on top of the text
         const layerPanelDiv = document.createElement("div");

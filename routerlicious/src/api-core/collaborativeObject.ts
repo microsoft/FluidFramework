@@ -4,7 +4,7 @@ import { debug } from "./debug";
 import { IDistributedObjectServices, IDocument } from "./document";
 import { ILatencyMessage, IObjectMessage, ISequencedObjectMessage, OperationType } from "./protocol";
 import { ITree } from "./storage";
-import { ICollaborativeObject, ICollaborativeObjectSave, SAVE } from "./types";
+import { ICollaborativeObject } from "./types";
 
 export abstract class CollaborativeObject implements ICollaborativeObject {
     // tslint:disable-next-line:variable-name
@@ -62,12 +62,6 @@ export abstract class CollaborativeObject implements ICollaborativeObject {
     public removeAllListeners(event?: string): this {
         this.events.removeAllListeners(event);
         return this;
-    }
-
-    public save() {
-        console.log(`Forcing snapshot`);
-        const saveMessage: ICollaborativeObjectSave = { type: SAVE};
-        this.submitSaveMessage(saveMessage);
     }
 
     /**
@@ -218,9 +212,5 @@ export abstract class CollaborativeObject implements ICollaborativeObject {
             traces: message.traces,
         };
         this.document.submitLatencyMessage(latencyMessage);
-    }
-
-    private submitSaveMessage(message: ICollaborativeObjectSave) {
-        this.document.submitSaveMessage(message);
     }
 }

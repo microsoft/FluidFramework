@@ -1,6 +1,6 @@
 // tslint:disable:no-bitwise whitespace
 import performanceNow = require("performance-now");
-import { core, MergeTree as SharedString, types } from "../client-api";
+import { api, core, MergeTree as SharedString, types } from "../client-api";
 import { findRandomWord } from "../merge-tree-utils";
 import * as ui from "../ui";
 import { Status } from "./status";
@@ -2465,6 +2465,7 @@ export class FlowView extends ui.Component {
 
     constructor(
         element: HTMLDivElement,
+        public collabDocument: api.Document,
         public sharedString: SharedString.SharedString,
         public status: Status) {
 
@@ -3260,7 +3261,7 @@ export class FlowView extends ui.Component {
                 this.viewTileProps();
                 break;
             case CharacterCodes.S:
-                this.sharedString.save();
+                this.collabDocument.save();
                 break;
             default:
                 console.log(`got command key ${String.fromCharCode(charCode)}`);
