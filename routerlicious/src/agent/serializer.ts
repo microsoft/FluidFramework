@@ -1,3 +1,4 @@
+import * as queue from "async/queue";
 import { SaveOperation } from "../api-core";
 import { api, core } from "../client-api";
 
@@ -7,8 +8,22 @@ export class Serializer {
     private currentMsn: number = -1;
     private snapshotRequested = false;
     private snapshotTimer: any = null;
+    private saveQueue: any;
+    private forceSaving: boolean = false;
 
     constructor(private document: api.Document) {
+        // Snapshot queue to perform snapshots sequentially.
+        this.saveQueue = queue((message: string, callback) => {
+            this.forceSaving = true;
+            const snapshotP = this.snapshot(message);
+            snapshotP.then((result) => {
+                this.forceSaving = false;
+                callback();
+            }, (error) => {
+                this.forceSaving = false;
+                callback();
+            });
+        }, 1);
     }
 
     public run(op: core.ISequencedDocumentMessage) {
@@ -16,7 +31,7 @@ export class Serializer {
         if (op.type === SaveOperation) {
             const saveMessage = op.contents.message === null ? "" : `-${op.contents.message}`;
             const tagMessage = `;${op.clientId}${saveMessage}`;
-            this.snapshot(tagMessage);
+            this.saveQueue.push(tagMessage);
             return;
         }
         // Exit early in the case that the minimum sequence number hasn't changed
@@ -45,7 +60,7 @@ export class Serializer {
                 // We will snapshot if no snapshot was requested within the interval (i.e. we idled) or we have
                 // been waiting for a specified amount of time without being able to snapshot
                 const delta = Date.now() - snapshotRequestTime;
-                if (!snapshotRequested || delta > 60000) {
+                if ((!snapshotRequested || delta > 60000) && !this.forceSaving) {
                     // Stop the timer but don't clear the field to avoid anyone else starting the timer
                     clearInterval(this.snapshotTimer);
                     this.snapshot().then(() => {

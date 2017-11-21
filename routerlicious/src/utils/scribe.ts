@@ -215,6 +215,7 @@ async function typeFile(
     return new Promise<number>((resolve, reject) => {
         let insertPosition = sharedString.client.getLength();
         let readPosition = 0;
+        let lineNumber = 0;
 
         const historgramRange = 5;
         const histogram = new utils.Histogram(historgramRange);
@@ -345,6 +346,7 @@ async function typeFile(
                     sharedString.insertMarker(insertPosition++, MergeTree.MarkerBehaviors.Tile,
                     {[MergeTree.reservedTileLabelsKey]: ["pg"]});
                     readPosition++;
+                    document.save(`Line ${++lineNumber}`);
                 } else {
                     sharedString.insertText(fileText.charAt(readPosition++), insertPosition++);
                 }
