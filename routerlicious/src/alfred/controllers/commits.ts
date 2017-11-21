@@ -45,7 +45,6 @@ function generateGraph(type: string, id: string, versions: resources.ICommit[]):
     const graph = new GitGraph(config);
 
     const master = graph.branch("master");
-    let index: number = versions.length;
     for (let version of versions) {
         const commitTag = version.message.split(";");
         master.commit({
@@ -60,7 +59,6 @@ function generateGraph(type: string, id: string, versions: resources.ICommit[]):
             tag: commitTag.length >= 2 ? commitTag[1] : "",
             tooltipDisplay: true,
         });
-        --index;
     }
 }
 
