@@ -7,8 +7,6 @@ describe("Routerlicious", () => {
         describe("Runner", () => {
             const testId = "test";
             const testClientId = "quiet-rat";
-            const testGroupId = "testGroup";
-            const testReceiveTopic = "testReceiveTopic";
             const testCheckpointBatchSize = 10;
             const testCheckpointTimeIntervalMsec = 10000;
 
@@ -35,8 +33,6 @@ describe("Routerlicious", () => {
                     consumer,
                     testCollection,
                     testDeltasCollection,
-                    testGroupId,
-                    testReceiveTopic,
                     testCheckpointBatchSize,
                     testCheckpointTimeIntervalMsec);
 

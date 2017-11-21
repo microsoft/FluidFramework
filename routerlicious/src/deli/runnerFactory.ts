@@ -45,7 +45,13 @@ export class DeliResourcesFactory implements utils.IResourcesFactory<DeliResourc
 
         // Prep Kafka producer and consumer
         let producer = utils.kafkaProducer.create(kafkaLibrary, kafkaEndpoint, kafkaClientId, sendTopic);
-        let consumer = utils.kafkaConsumer.create(kafkaLibrary, kafkaEndpoint, groupId, receiveTopic, false);
+        let consumer = utils.kafkaConsumer.create(
+            kafkaLibrary,
+            kafkaClientId,
+            kafkaEndpoint,
+            groupId,
+            receiveTopic,
+            false);
 
         return new DeliResources(
             producer,
@@ -65,8 +71,6 @@ export class DeliRunnerFactory implements utils.IRunnerFactory<DeliResources> {
             resources.producer,
             resources.consumer,
             resources.collection,
-            resources.groupId,
-            resources.receiveTopic,
             resources.checkpointBatchSize,
             resources.checkpointTimeIntervalMsec);
     }

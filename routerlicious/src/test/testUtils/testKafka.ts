@@ -11,6 +11,9 @@ class TestConsumer implements utils.kafkaConsumer.IConsumer {
     private emitter = new EventEmitter();
     private pausedQueue: string[] = null;
 
+    constructor(public groupId: string, public topic: string) {
+    }
+
     public commitOffset(data: any): Promise<void> {
         throw new Error("Method not implemented.");
     }
@@ -79,7 +82,7 @@ export class TestKafka {
     }
 
     public createConsumer(): utils.kafkaConsumer.IConsumer {
-        const consumer = new TestConsumer();
+        const consumer = new TestConsumer("test", "test");
         this.consumers.push(consumer);
 
         return consumer;

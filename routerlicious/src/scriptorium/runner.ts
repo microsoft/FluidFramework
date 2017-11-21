@@ -22,8 +22,6 @@ export class ScriptoriumRunner implements utils.IRunner {
         private checkpointTimeIntervalMsec: number) {
 
         this.partitionManager = new core.PartitionManager(
-            groupId,
-            topic,
             this.consumer,
             this.checkpointBatchSize,
             this.checkpointTimeIntervalMsec);

@@ -3,18 +3,14 @@ import * as winston from "winston";
 import * as core from "../core";
 import { Deferred } from "../core-utils";
 import * as utils from "../utils";
-import { Router } from "./router";
 
-export class RouteMasterRunner implements utils.IRunner {
+export class KafkaRunner implements utils.IRunner {
     private deferred: Deferred<void>;
     private q: AsyncQueue<string>;
-    private routers = new Map<string, Router>();
 
     constructor(
-        private producer: utils.kafkaProducer.IProducer,
         private consumer: utils.kafkaConsumer.IConsumer,
-        private objectsCollection: core.ICollection<any>,
-        private deltas: core.ICollection<any>,
+        // This wants to be a checkpointing strategy. Check out GOF
         private checkpointBatchSize: number,
         private checkpointTimeIntervalMsec: number) {
     }
@@ -40,10 +36,7 @@ export class RouteMasterRunner implements utils.IRunner {
         this.q = queue((message: any, callback) => {
             this.processMessage(message, partitionManager);
 
-            // Checkpoint periodically
-            if (message.offset % this.checkpointBatchSize === 0) {
-                partitionManager.checkPoint();
-            }
+            // TODO check checkpoint
 
             callback();
         }, 1);
@@ -86,21 +79,7 @@ export class RouteMasterRunner implements utils.IRunner {
     }
 
     private processMessage(rawMessage: any, partitionManager: core.PartitionManager) {
-        const message = JSON.parse(rawMessage.value.toString("utf8")) as core.ISequencedOperationMessage;
-        if (message.type !== core.SequencedOperationType) {
-            return;
-        }
-
-        // Create the router if it doesn't exist
-        if (!this.routers.has(message.documentId)) {
-            const router = new Router(message.documentId, this.objectsCollection, this.deltas, this.producer);
-            this.routers.set(message.documentId, router);
-        }
-
-        // Route the message
-        const router = this.routers.get(message.documentId);
-        router.route(message);
-
-        partitionManager.update(rawMessage.partition, rawMessage.offset);
+        // Something
+        winston.info("Processing a message");
     }
 }
