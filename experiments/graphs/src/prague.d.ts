@@ -1148,7 +1148,7 @@ declare module 'prague/data-types/map' {
             /**
                 * Returns elements of the set as an array.
                 */
-            entries(): any[];
+            entries(): T[];
             /**
                 * Returns the underlying set.
                 */

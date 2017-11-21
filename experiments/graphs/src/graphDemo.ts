@@ -8,7 +8,7 @@ const repository = "prague";
 // Register endpoint connection
 prague.socketStorage.registerAsDefault(routerlicious, historian, repository);
 
-let id = "testGraph-pooch12";
+let id = "testGraph-pooch14";
 
 interface ISharedVertex {
 	id: string;
@@ -206,20 +206,6 @@ function mainMX(container: HTMLDivElement, sharedGraph: SharedGraph,
 			graph.addCellOverlay(cell, overlay);
 		}
 
-		// Adds cells to the model in a single step
-		graph.getModel().beginUpdate();
-		let root: IVertex;
-		if (initiator) {
-			try {
-				root = graph.insertVertex(parent, null, 'Hello,', 0, 0, 80, 30);
-				addOverlay(root);
-				sendAddVertex(root, 'Hello', 0, 0, 80, 30);
-			}
-			finally {
-				// Updates the display
-				graph.getModel().endUpdate();
-			}
-		}
 		var layout = new mxHierarchicalLayout(graph, mxConstants.DIRECTION_WEST);
 
 		var executeLayout = function (change?, post?) {
@@ -248,7 +234,6 @@ function mainMX(container: HTMLDivElement, sharedGraph: SharedGraph,
 				morph.startAnimation();
 			}
 		};
-
 		function addEdgeFromRemote(e: ISharedEdge) {
 			let v1 = localVertexMap[e.nodeId1];
 			let v2 = localVertexMap[e.nodeId2];
@@ -273,6 +258,33 @@ function mainMX(container: HTMLDivElement, sharedGraph: SharedGraph,
 				graph.scrollCellToVisible(iv);
 			});
 		}
+		// Adds cells to the model in a single step
+		graph.getModel().beginUpdate();
+		let root: IVertex;
+		if (initiator) {
+			try {
+				root = graph.insertVertex(parent, null, 'Hello,', 0, 0, 80, 30);
+				addOverlay(root);
+				sendAddVertex(root, 'Hello', 0, 0, 80, 30);
+			}
+			finally {
+				// Updates the display
+				graph.getModel().endUpdate();
+			}
+		} else {
+			try {
+				for (let v of sharedGraph.vertices.entries()) {
+					addVertexFromRemote(v);
+				}
+				for (let e of sharedGraph.edges.entries()) {
+					addEdgeFromRemote(e);
+				}
+			}
+			finally {
+				graph.getModel().endUpdate();
+			}
+		}
+
 		interface IElementAdded {
 			key: string;
 		}
