@@ -29,7 +29,7 @@ export class Serializer {
     public run(op: core.ISequencedDocumentMessage) {
         // Forced snapshot.
         if (op.type === SaveOperation) {
-            const saveMessage = op.contents.message === null ? "" : `-${op.contents.message}`;
+            const saveMessage = op.contents.message === null ? "" : `: ${op.contents.message}`;
             const tagMessage = `;${op.clientId}${saveMessage}`;
             this.saveQueue.push(tagMessage);
             return;
