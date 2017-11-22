@@ -1,5 +1,24 @@
+import * as queue from "async/queue";
 import { SaveOperation } from "../api-core";
 import { api, core } from "../client-api";
+
+/**
+ * Checks a flag every 'checkInterval' ms to see if its been cleared.
+ */
+function checkFlag(flag: boolean, checkInterval: number, resolve, reject) {
+    if (!flag) {
+        resolve();
+    } else {
+        setTimeout(() => checkFlag(flag, checkInterval, resolve, reject), checkInterval);
+    }
+}
+
+/**
+ * Returns a promie that resolves once snapshotting flag is cleared.
+ */
+function waitForFlagClear(flag: boolean, checkInterval: number): Promise<void> {
+    return new Promise<void>((resolve, reject) => checkFlag(flag, checkInterval, resolve, reject));
+}
 
 // Loads a document from DB.
 export class Serializer {
@@ -7,15 +26,32 @@ export class Serializer {
     private currentMsn: number = -1;
     private snapshotRequested = false;
     private snapshotTimer: any = null;
+    private saveQueue: any;
+    private forceSaving: boolean = false;
+    private autoSaving: boolean = false;
 
     constructor(private document: api.Document) {
+        // Snapshot queue to perform snapshots sequentially.
+        this.saveQueue = queue( async (message: string, callback) => {
+            this.forceSaving = true;
+            await waitForFlagClear(this.autoSaving, 5);
+            const snapshotP = this.snapshot(message);
+            snapshotP.then((result) => {
+                this.forceSaving = false;
+                callback();
+            }, (error) => {
+                this.forceSaving = false;
+                callback();
+            });
+        }, 1);
     }
 
     public run(op: core.ISequencedDocumentMessage) {
         // Forced snapshot.
         if (op.type === SaveOperation) {
-            const tagMessage = `;${op.clientId}`;
-            this.snapshot(tagMessage);
+            const saveMessage = op.contents.message === null ? "" : `: ${op.contents.message}`;
+            const tagMessage = `;${op.clientId}${saveMessage}`;
+            this.saveQueue.push(tagMessage);
             return;
         }
         // Exit early in the case that the minimum sequence number hasn't changed
@@ -44,14 +80,19 @@ export class Serializer {
                 // We will snapshot if no snapshot was requested within the interval (i.e. we idled) or we have
                 // been waiting for a specified amount of time without being able to snapshot
                 const delta = Date.now() - snapshotRequestTime;
-                if (!snapshotRequested || delta > 60000) {
+                if ((!snapshotRequested || delta > 60000) && !this.forceSaving) {
                     // Stop the timer but don't clear the field to avoid anyone else starting the timer
                     clearInterval(this.snapshotTimer);
+                    this.autoSaving = true;
                     this.snapshot().then(() => {
                         this.snapshotTimer = null;
+                        this.autoSaving = false;
                         if (this.snapshotRequested) {
                             this.requestSnapshot();
                         }
+                    }, (error) => {
+                        this.snapshotTimer = null;
+                        this.autoSaving = false;
                     });
                 }
             },

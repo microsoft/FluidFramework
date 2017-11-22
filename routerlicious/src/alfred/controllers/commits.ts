@@ -15,7 +15,7 @@ let templateConfig = {
       },
     commit: {
         dot: {
-           size: 16,
+           size: 24,
            strokeColor: "#000000",
            strokeWidth: 5,
         },
@@ -24,10 +24,13 @@ let templateConfig = {
             displayAuthor: false,
             displayBranch: false,
             displayHash: false,
-            font: "normal 12pt Arial",
+            font: "normal 10pt Arial",
         },
         shouldDisplayTooltipsInCompactMode: true, // default = true
         spacingY: -80,
+        tag: {
+            font: "normal 8pt Arial",
+        },
         tooltipHTMLFormatter: (commit) => {
             return "" + commit.sha1 + "" + ": " + commit.message;
         },
@@ -45,7 +48,6 @@ function generateGraph(type: string, id: string, versions: resources.ICommit[]):
     const graph = new GitGraph(config);
 
     const master = graph.branch("master");
-    let index: number = versions.length;
     for (let version of versions) {
         const commitTag = version.message.split(";");
         master.commit({
@@ -60,7 +62,6 @@ function generateGraph(type: string, id: string, versions: resources.ICommit[]):
             tag: commitTag.length >= 2 ? commitTag[1] : "",
             tooltipDisplay: true,
         });
-        --index;
     }
 }
 

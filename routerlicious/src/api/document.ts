@@ -31,6 +31,7 @@ import {
     ObjectStorageService,
     Registry,
     RoundTrip,
+    SAVE,
     SaveOperation,
     TreeEntry } from "../api-core";
 import * as cell from "../cell";
@@ -317,6 +318,14 @@ export class Document {
      */
     public getRoot(): IMap {
         return this.distributedObjects[rootMapId].object as IMap;
+    }
+
+    /**
+     * Saves the document by performing a snapshot.
+     */
+    public save(tag: string = null) {
+        const saveMessage: ICollaborativeObjectSave = { type: SAVE, message: tag};
+        this.submitSaveMessage(saveMessage);
     }
 
     /**
