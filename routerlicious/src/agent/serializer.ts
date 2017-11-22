@@ -2,6 +2,24 @@ import * as queue from "async/queue";
 import { SaveOperation } from "../api-core";
 import { api, core } from "../client-api";
 
+/**
+ * Checks a flag every 'checkInterval' ms to see if its been cleared.
+ */
+function checkFlag(flag: boolean, checkInterval: number, resolve, reject) {
+    if (!flag) {
+        resolve();
+    } else {
+        setTimeout(() => checkFlag(flag, checkInterval, resolve, reject), checkInterval);
+    }
+}
+
+/**
+ * Returns a promie that resolves once snapshotting flag is cleared.
+ */
+function waitForFlagClear(flag: boolean, checkInterval: number): Promise<void> {
+    return new Promise<void>((resolve, reject) => checkFlag(flag, checkInterval, resolve, reject));
+}
+
 // Loads a document from DB.
 export class Serializer {
 
@@ -10,11 +28,13 @@ export class Serializer {
     private snapshotTimer: any = null;
     private saveQueue: any;
     private forceSaving: boolean = false;
+    private autoSaving: boolean = false;
 
     constructor(private document: api.Document) {
         // Snapshot queue to perform snapshots sequentially.
-        this.saveQueue = queue((message: string, callback) => {
+        this.saveQueue = queue( async (message: string, callback) => {
             this.forceSaving = true;
+            await waitForFlagClear(this.autoSaving, 5);
             const snapshotP = this.snapshot(message);
             snapshotP.then((result) => {
                 this.forceSaving = false;
@@ -63,11 +83,16 @@ export class Serializer {
                 if ((!snapshotRequested || delta > 60000) && !this.forceSaving) {
                     // Stop the timer but don't clear the field to avoid anyone else starting the timer
                     clearInterval(this.snapshotTimer);
+                    this.autoSaving = true;
                     this.snapshot().then(() => {
                         this.snapshotTimer = null;
+                        this.autoSaving = false;
                         if (this.snapshotRequested) {
                             this.requestSnapshot();
                         }
+                    }, (error) => {
+                        this.snapshotTimer = null;
+                        this.autoSaving = false;
                     });
                 }
             },
