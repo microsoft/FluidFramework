@@ -27,7 +27,7 @@ if (!sharedStringId) {
 // Mark socket storage as our default provider
 socketStorage.registerAsDefault(commander.server, commander.storage, commander.repository);
 
-fs.readFile(commander.file, "utf8", (error, data: string) => {
+fs.readFile(commander.file, "utf8", async (error, data: string) => {
     if (error) {
         console.error(error);
         process.exit(1);
@@ -44,8 +44,8 @@ fs.readFile(commander.file, "utf8", (error, data: string) => {
             incomplete: " ",
             total: data.length,
         });
+    await scribe.create(sharedStringId);
     const typeP = scribe.type(
-        sharedStringId,
         commander.interval,
         data,
         (metrics) => {
