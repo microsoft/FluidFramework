@@ -5,6 +5,8 @@ export * from "./flowView";
 export * from "./image";
 export * from "./flexVideo";
 export * from "./flexVideoCanvas";
+export * from "./youtubeVideo";
+export * from "./youtubeVideoCanvas";
 export * from "./layerPanel";
 export * from "./popup";
 export * from "./status";

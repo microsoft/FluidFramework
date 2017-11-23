@@ -14,6 +14,7 @@
                 <li><a href="/templates/list">Document Templates</a></li>
                 <li><a href="/scribe">Scribe</a></li>
                 <li><a href="/video/video">Collaborative Video</a></li>
+                <li><a href="/youtubeVideo/youtubeVideo">Youtube Video</a></li>
                 <li><a href="/democreator">Demo Creator</a></li>
                 <li><a href="/login">Login</a></li>
             </ul>

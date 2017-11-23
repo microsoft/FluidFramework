@@ -15,6 +15,7 @@ import * as scribe from "./scribe";
 import * as sharedText from "./sharedText";
 import * as templates from "./templates";
 import * as video from "./video";
+import * as youtubeVideo from "./youtubeVideo";
 
 export interface IRoutes {
     api: Router;
@@ -28,6 +29,7 @@ export interface IRoutes {
     scribe: Router;
     sharedText: Router;
     video: Router;
+    youtubeVideo: Router;
     templates: Router;
 }
 
@@ -51,5 +53,6 @@ export function create(
         sharedText: sharedText.create(config, gitManager, mongoManager, producer),
         templates: templates.create(config),
         video: video.create(config, gitManager),
+        youtubeVideo: youtubeVideo.create(config, gitManager),
     };
 }
