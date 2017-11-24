@@ -1,6 +1,10 @@
 import clone = require("lodash/clone");
 import { api, core, MergeTree, utils } from "../client-api";
 
+let document: api.Document;
+let sharedString: MergeTree.SharedString;
+let play: boolean = false;
+
 export interface IScribeMetrics {
     histogram: utils.Histogram;
 
@@ -180,14 +184,14 @@ function combine(first: number[], second: number[], combine: (a, b) => number): 
  * Types the given file into the shared string - starting at the end of the string
  */
 async function typeFile(
-    document: api.Document,
-    sharedString: MergeTree.SharedString,
+    doc: api.Document,
+    ss: MergeTree.SharedString,
     fileText: string,
     intervalTime: number,
     callback: ScribeMetricsCallback): Promise<number> {
 
     // And also load a canvas document where we will place the metrics
-    const metricsDoc = await api.load(`${document.id}-metrics`);
+    const metricsDoc = await api.load(`${doc.id}-metrics`);
     const root = await metricsDoc.getRoot().getView();
 
     const components = metricsDoc.createMap();
@@ -213,7 +217,7 @@ async function typeFile(
     const startTime = Date.now();
 
     return new Promise<number>((resolve, reject) => {
-        let insertPosition = sharedString.client.getLength();
+        let insertPosition = ss.client.getLength();
         let readPosition = 0;
         let lineNumber = 0;
 
@@ -265,8 +269,8 @@ async function typeFile(
             }
         }, 1000);
 
-        sharedString.on("op", (message: core.ISequencedObjectMessage) => {
-            if (message.clientSequenceNumber && message.clientId === document.clientId) {
+        ss.on("op", (message: core.ISequencedObjectMessage) => {
+            if (message.clientSequenceNumber && message.clientId === doc.clientId) {
 
                 ackCounter.increment(1);
                 if (ackCounter.elapsed() > samplingRate) {
@@ -330,9 +334,12 @@ async function typeFile(
             if (readPosition === fileText.length) {
                 return false;
             }
-            if (sharedString.client.getLength() === 0) {
+            if (!play) {
+                return true;
+            }
+            if (ss.client.getLength() === 0) {
                 // pg marker that will remain at end of text
-                sharedString.insertMarker(insertPosition, MergeTree.MarkerBehaviors.Tile,
+                ss.insertMarker(insertPosition, MergeTree.MarkerBehaviors.Tile,
                     {[MergeTree.reservedTileLabelsKey]: ["pg"]});
             }
             // Start inserting text into the string
@@ -343,12 +350,12 @@ async function typeFile(
             }
             trackOperation(() => {
                 if (code === 10) {
-                    sharedString.insertMarker(insertPosition++, MergeTree.MarkerBehaviors.Tile,
+                    ss.insertMarker(insertPosition++, MergeTree.MarkerBehaviors.Tile,
                     {[MergeTree.reservedTileLabelsKey]: ["pg"]});
                     readPosition++;
-                    document.save(`Line ${++lineNumber}`);
+                    doc.save(`Line ${++lineNumber}`);
                 } else {
-                    sharedString.insertText(fileText.charAt(readPosition++), insertPosition++);
+                    ss.insertText(fileText.charAt(readPosition++), insertPosition++);
                 }
             });
 
@@ -382,18 +389,38 @@ async function typeFile(
     });
 }
 
+export async function create(id: string): Promise<void> {
+    // Load the shared string extension we will type into
+    document = await api.load(id);
+    const root = await document.getRoot().getView();
+
+    root.set("presence", document.createMap());
+    sharedString = document.createString() as MergeTree.SharedString;
+
+    /*
+    const segments = MergeTree.loadSegments(" ", 0, true);
+    for (const segment of segments) {
+        if (segment.getType() === MergeTree.SegmentType.Text) {
+            let textSegment = <MergeTree.TextSegment> segment;
+            sharedString.insertText(textSegment.text, sharedString.client.getLength(),
+                textSegment.properties);
+        } else {
+            // assume marker
+            let marker = <MergeTree.Marker> segment;
+            sharedString.insertMarker(sharedString.client.getLength(), marker.behaviors, marker.properties);
+        }
+    }*/
+
+    root.set("text", sharedString);
+    return Promise.resolve();
+}
+
 export async function type(
-    id: string,
     intervalTime: number,
     text: string,
     callback: ScribeMetricsCallback): Promise<number> {
 
-    // Load the shared string extension we will type into
-    const document = await api.load(id);
-    const sharedString = document.createString() as MergeTree.SharedString;
-    await document.getRoot().set("text", sharedString);
-    await document.getRoot().set("presence", document.createMap());
-
+    // Type the file.
     return new Promise<number>((resolve, reject) => {
         typeFile(document, sharedString, text, intervalTime, callback).then(
             (totalTime) => {
@@ -403,4 +430,11 @@ export async function type(
                 reject(error);
             });
     });
+}
+
+/**
+ * Toggle between play and pause.
+ */
+export function togglePlay() {
+    play = !play;
 }
