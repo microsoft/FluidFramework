@@ -174,7 +174,7 @@ class KafkaNodeConsumer implements IConsumer {
                 () => {
                     this.instance = new kafkaNode.HighLevelConsumer(this.client, [{topic: this.topic}], <any> {
                         autoCommit: this.autoCommit,
-                        fetchMaxBytes: 1024 * 1024 * 64,
+                        fetchMaxBytes: 1024 * 1024,
                         fetchMinBytes: 1,
                         fromOffset: true,
                         groupId,
