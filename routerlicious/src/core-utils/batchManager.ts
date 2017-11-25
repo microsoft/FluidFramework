@@ -1,3 +1,4 @@
+import { setImmediate } from "timers";
 import { Deferred } from "../core-utils";
 
 export class BatchManager<T> {
@@ -17,7 +18,7 @@ export class BatchManager<T> {
 
         if (!this.workPending) {
             this.workPending = new Deferred<void>();
-            process.nextTick(() => {
+            setImmediate(() => {
                 // Clear the internal flags first to avoid issues in case any of the pending work calls back into
                 // the batch manager. We could also do this with a second setImmediate call but avodiing in order
                 // to process the work quicker.
