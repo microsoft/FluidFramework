@@ -4,6 +4,8 @@ import * as util from "util";
 import { Deferred } from "../core-utils";
 import { debug } from "./debug";
 
+const defaultBatchSize = 100;
+
 /**
  * A pending message the producer is holding on to
  */
@@ -35,6 +37,10 @@ export abstract class Producer implements IProducer {
     protected client: any;
     protected producer: any;
     protected sendPending = false;
+    private messageCount: number = 0;
+
+    constructor(private batchSize: number) {
+    }
 
     /**
      * Sends the provided message to Kafka
@@ -49,6 +55,7 @@ export abstract class Producer implements IProducer {
         // Insert a new pending message
         const deferred = new Deferred<any>();
         pending.push({ deferred, message });
+        ++this.messageCount;
 
         // Mark the need to send a message
         this.requestSend();
@@ -101,8 +108,14 @@ export abstract class Producer implements IProducer {
 
         this.sendPending = true;
 
-        // use setImmediate to play well with the node event loop
-        setImmediate(() => {
+        // Force send when message count exceeds allowed batch size.
+        if (this.messageCount >= this.batchSize) {
+            this.sendPendingMessages();
+            this.sendPending = false;
+        }
+
+        // use process.nextTick() to play well with the node event loop
+        process.nextTick(() => {
             this.sendPendingMessages();
             this.sendPending = false;
         });
@@ -116,8 +129,8 @@ class KafkaRestProducer extends Producer implements IProducer {
     private connecting = false;
     private connected = false;
 
-    constructor(private endpoint: string, private topic: string) {
-        super();
+    constructor(private endpoint: string, private topic: string, batchSize: number = defaultBatchSize) {
+        super(batchSize);
         this.connect();
     }
 
@@ -169,8 +182,9 @@ class KafkaNodeProducer extends Producer implements IProducer {
     private connecting = false;
     private connected = false;
 
-    constructor(private endpoint: string, private clientId: string, private topic: string) {
-        super();
+    constructor(private endpoint: string, private clientId: string, private topic: string,
+                batchSize: number = defaultBatchSize) {
+        super(batchSize);
         this.connect();
     }
 

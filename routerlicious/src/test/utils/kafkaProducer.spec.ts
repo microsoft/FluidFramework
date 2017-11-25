@@ -23,7 +23,7 @@ describe("Routerlicious", () => {
         let producer: TestProducer;
 
         beforeEach(() => {
-            producer = new TestProducer();
+            producer = new TestProducer(100);
         });
 
         describe("Producer", () => {
