@@ -17,6 +17,7 @@ export class BatchManager<T> {
 
         this.pendingWork[id].push(work);
 
+        // Start processing either depending on the batchsize or nexttick.
         if (this.pendingWork[id].length >= this.batchSize) {
             this.startWork();
         }
@@ -50,7 +51,6 @@ export class BatchManager<T> {
     }
 
     private processPendingWork(pendingWork: { [id: string]: T[] }) {
-        console.log(`Actually working`);
         // TODO log to influx how much pending work there is. We want to limit the size of a batch
         // tslint:disable-next-line:forin
         for (const id in pendingWork) {
