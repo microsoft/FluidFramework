@@ -121,6 +121,8 @@ export interface Item {
     iconURL?: string;
 }
 
+let viewOptions: Object;
+
 export function namesToItems(names: string[]): Item[] {
     let items: Item[] = new Array(names.length);
 
@@ -2141,10 +2143,11 @@ function makeSegSpan(
     span.seg = textSegment;
     span.segPos = segpos;
     let textErr = false;
+    const spellOption = "spellchecker";
     if (textSegment.properties) {
         // tslint:disable-next-line
         for (let key in textSegment.properties) {
-            if (key === "textError") {
+            if (key === "textError" && (viewOptions === undefined || viewOptions[spellOption] !== "disabled")) {
                 textErr = true;
                 if (textErrorRun === undefined) {
                     textErrorRun = {
@@ -2467,7 +2470,8 @@ export class FlowView extends ui.Component {
         element: HTMLDivElement,
         public collabDocument: api.Document,
         public sharedString: SharedString.SharedString,
-        public status: Status) {
+        public status: Status,
+        public options: Object = undefined) {
 
         super(element);
 
@@ -2487,6 +2491,7 @@ export class FlowView extends ui.Component {
         });
 
         this.cursor = new Cursor(this.viewportDiv);
+        this.setViewOption(this.options);
     }
 
     public treeForViewport() {
@@ -3453,6 +3458,10 @@ export class FlowView extends ui.Component {
             this.pendingRender = false;
             this.render(this.topChar, true);
         });
+    }
+
+    public setViewOption(options: Object) {
+        viewOptions = options;
     }
 
     protected resizeCore(bounds: ui.Rectangle) {

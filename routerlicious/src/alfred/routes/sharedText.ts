@@ -7,6 +7,7 @@ import * as storage from "../storage";
 import { defaultPartials } from "./partials";
 
 const defaultTemplate = "pp.txt";
+const defaultSpellChecking = "enabled";
 
 export function create(
     config: Provider,
@@ -30,12 +31,20 @@ export function create(
                 const template =
                     parsedTemplate.base !== "empty" ? `/public/literature/${parsedTemplate.base}` : undefined;
 
+                const parsedSpellchecking =
+                    path.parse(request.query.spellchecking ? request.query.spellchecking : defaultSpellChecking);
+                const spellchecker = parsedSpellchecking.base === "disabled" ? `disabled` : defaultSpellChecking;
+                const options = {
+                    spellchecker,
+                };
+
                 response.render(
                     "sharedText",
                     {
                         config: workerConfig,
                         id: request.params.id,
                         loadPartial: false,
+                        options: JSON.stringify(options),
                         partials: defaultPartials,
                         template,
                         title: request.params.id,

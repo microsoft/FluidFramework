@@ -1,18 +1,17 @@
 import { types } from "../client-api";
 import * as ui from "../ui";
 
-// tslint:disable-next-line:no-string-literal
-const Microsoft = typeof window !== "undefined" ? window["Microsoft"] : undefined;
-export const DefaultHost = (Microsoft && Microsoft.Charts) ?
-    new Microsoft.Charts.Host({ base: "https://charts.microsoft.com" }) : null;
-
 export class Chart extends ui.Component {
     private chart: any;
     private lastSize: ui.ISize = { width: -1, height: -1 };
 
-    constructor(element: HTMLDivElement, private cell: types.ICell, host = DefaultHost) {
+    constructor(element: HTMLDivElement, private cell: types.ICell) {
         super(element);
-        this.chart = new Microsoft.Charts.Chart(host, element);
+        // tslint:disable-next-line:no-string-literal
+        const Microsoft = typeof window !== "undefined" ? window["Microsoft"] : undefined;
+        const DefaultHost = (Microsoft && Microsoft.Charts) ?
+        new Microsoft.Charts.Host({ base: "https://charts.microsoft.com" }) : null;
+        this.chart = new Microsoft.Charts.Chart(DefaultHost, element);
         this.chart.setRenderer(Microsoft.Charts.IvyRenderer.Svg);
 
         this.cell.on("valueChanged", () => {

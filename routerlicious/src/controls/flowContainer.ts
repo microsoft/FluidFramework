@@ -30,7 +30,8 @@ export class FlowContainer extends ui.Component {
         private collabDocument: api.Document,
         sharedString: MergeTree.SharedString,
         private overlayMap: types.IMap,
-        private image: Image) {
+        private image: Image,
+        private options: Object = undefined) {
 
         super(element);
 
@@ -45,7 +46,7 @@ export class FlowContainer extends ui.Component {
         // FlowView holds the text
         const flowViewDiv = document.createElement("div");
         flowViewDiv.classList.add("flow-view");
-        this.flowView = new FlowView(flowViewDiv, collabDocument, sharedString, this.status);
+        this.flowView = new FlowView(flowViewDiv, collabDocument, sharedString, this.status, this.options);
 
         // Layer panel lets us put the overlay canvas on top of the text
         const layerPanelDiv = document.createElement("div");
@@ -106,6 +107,13 @@ export class FlowContainer extends ui.Component {
         this.status.addOption("ink", "ink");
         this.status.on("ink", (value) => {
             this.overlayCanvas.enableInk(value);
+        });
+
+        const spellOption = "spellchecker";
+        const spellcheckOn = (this.options === undefined || this.options[spellOption] !== "disabled") ? true : false;
+        this.status.addOption("spellcheck", "spellcheck", spellcheckOn);
+        this.status.on("spellcheck", (value) => {
+            this.initSpellcheck(value);
         });
 
         // For now only allow one level deep of branching
@@ -227,5 +235,18 @@ export class FlowContainer extends ui.Component {
                 this.overlayCanvas.removeLayer(layer.layer);
             }
         }
+    }
+
+    private initSpellcheck(value: boolean) {
+        if (value) {
+            this.flowView.setViewOption({
+                spellchecker: "enabled",
+            });
+        } else {
+            this.flowView.setViewOption({
+                spellchecker: "disabled",
+            });
+        }
+        this.flowView.render();
     }
 }

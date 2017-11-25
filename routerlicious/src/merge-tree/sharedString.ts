@@ -180,7 +180,6 @@ export class SharedString extends api.CollaborativeObject {
         if (op) {
             annotateMessage.combiningOp = op;
         }
-
         this.client.annotateSegmentLocal(props, start, end, op);
         this.submitLocalOperation(annotateMessage);
     }

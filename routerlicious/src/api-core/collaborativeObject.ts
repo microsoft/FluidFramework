@@ -202,7 +202,7 @@ export abstract class CollaborativeObject implements ICollaborativeObject {
             this.pingMap[message.clientSequenceNumber] = Date.now();
         }, (error) => {
             // TODO need reconnection logic upon loss of connection
-            debug("Lost connection to server");
+            debug(`Lost connection to server: ${JSON.stringify(error)}`);
         });
 
     }
