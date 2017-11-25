@@ -85,12 +85,14 @@ export class SharedString extends api.CollaborativeObject {
 
         if (header) {
             chunk = Paparazzo.Snapshot.processChunk(header);
-            this.client.mergeTree.reloadFromSegments(textsToSegments(chunk.segmentTexts));
+            let segs = textsToSegments(chunk.segmentTexts);
+            this.client.mergeTree.reloadFromSegments(segs, true);
             console.log(`Loading ${this.id} body - ${performanceNow()}`);
             chunk = await Paparazzo.Snapshot.loadChunk(this.services, "body");
             console.log(`Loaded ${this.id} body - ${performanceNow()}`);
+            let seq = segs.length + 1;
             for (let segSpec of chunk.segmentTexts) {
-                this.client.mergeTree.appendSegment(segSpec);
+                this.client.mergeTree.appendSegment(segSpec, seq++);
             }
         } else {
             chunk = Paparazzo.Snapshot.EmptyChunk;

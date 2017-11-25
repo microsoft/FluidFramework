@@ -2489,6 +2489,10 @@ export class FlowView extends ui.Component {
         this.cursor = new Cursor(this.viewportDiv);
     }
 
+    public treeForViewport() {
+        console.log(this.sharedString.client.mergeTree.rangeToString(this.viewportStartPos,this.viewportEndPos));
+    }
+
     public addPresenceMap(presenceMap: types.IMap) {
         this.presenceMap = presenceMap;
         presenceMap.on("valueChanged", (delta: types.IValueChanged) => {

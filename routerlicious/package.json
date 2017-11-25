@@ -102,7 +102,6 @@
     "@types/winston": "^2.3.3",
     "@types/youtube": "0.0.31",
     "@types/ws": "^3.2.0",
-
     "browserify": "^14.1.0",
     "browserify-shim": "^3.8.13",
     "concurrently": "^3.4.0",

@@ -2141,6 +2141,11 @@ export class TestServer extends Client {
             msg.referenceSequenceNumber =
                 this.upstreamMap.get(msg.referenceSequenceNumber).data;
         }
+        msg.origin = {
+            id: "A",
+            sequenceNumber: msg.sequenceNumber,
+            minimumSequenceNumber: msg.minimumSequenceNumber,
+        };
         this.upstreamMap.put(msg.sequenceNumber, this.seq);
         msg.sequenceNumber = -1;
     }
@@ -2465,7 +2470,12 @@ export class MergeTree {
         return index;
     }
 
-    reloadFromSegments(segments: Segment[]) {
+    reloadFromSegments(segments: Segment[], incrSeq = false) {
+        if (incrSeq) {
+            for (let i = 0, len = segments.length; i < len; i++) {
+                segments[i].seq = i + 1;
+            }
+        }
         let segCap = MaxNodesInBlock - 1;
         const measureReloadTime = false;
         let buildMergeBlock: (nodes: MergeNode[]) => IMergeBlock = (nodes: Segment[]) => {
@@ -3266,16 +3276,16 @@ export class MergeTree {
     }
 
     // assumes not collaborating for now
-    appendSegment(segSpec: ops.IPropertyString) {
+    appendSegment(segSpec: ops.IPropertyString, seq = UniversalSequenceNumber) {
         let pos = this.root.cachedLength;
         if (segSpec.text) {
-            this.insertText(pos, UniversalSequenceNumber, LocalClientId, UniversalSequenceNumber, segSpec.text,
+            this.insertText(pos, UniversalSequenceNumber, LocalClientId, seq, segSpec.text,
                 segSpec.props as Properties.PropertySet);
         }
         else {
             // assume marker for now
             this.insertMarker(pos, UniversalSequenceNumber, LocalClientId,
-                UniversalSequenceNumber, segSpec.marker.behaviors, segSpec.props as Properties.PropertySet);
+                seq, segSpec.marker.behaviors, segSpec.props as Properties.PropertySet);
         }
     }
 
