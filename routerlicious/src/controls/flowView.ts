@@ -2491,7 +2491,7 @@ export class FlowView extends ui.Component {
         });
 
         this.cursor = new Cursor(this.viewportDiv);
-        viewOptions = this.options;
+        this.setViewOption(this.options);
     }
 
     public addPresenceMap(presenceMap: types.IMap) {
@@ -3454,6 +3454,10 @@ export class FlowView extends ui.Component {
             this.pendingRender = false;
             this.render(this.topChar, true);
         });
+    }
+
+    public setViewOption(options: Object) {
+        viewOptions = options;
     }
 
     protected resizeCore(bounds: ui.Rectangle) {

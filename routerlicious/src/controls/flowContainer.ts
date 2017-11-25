@@ -109,6 +109,13 @@ export class FlowContainer extends ui.Component {
             this.overlayCanvas.enableInk(value);
         });
 
+        const spellOption = "spellchecker";
+        const spellcheckOn = (this.options === undefined || this.options[spellOption] !== "disabled") ? true : false;
+        this.status.addOption("spellcheck", "spellcheck", spellcheckOn);
+        this.status.on("spellcheck", (value) => {
+            this.initSpellcheck(value);
+        });
+
         // For now only allow one level deep of branching
         if (!this.collabDocument.parentBranch) {
             this.status.addPostButton("Branch", `/sharedText/${this.collabDocument.id}/fork`);
@@ -228,5 +235,18 @@ export class FlowContainer extends ui.Component {
                 this.overlayCanvas.removeLayer(layer.layer);
             }
         }
+    }
+
+    private initSpellcheck(value: boolean) {
+        if (value) {
+            this.flowView.setViewOption({
+                spellchecker: "enabled",
+            });
+        } else {
+            this.flowView.setViewOption({
+                spellchecker: "disabled",
+            });
+        }
+        this.flowView.render();
     }
 }

@@ -51,7 +51,7 @@ export class Status extends ui.Component implements IStatus {
         this.renderBar();
     }
 
-    public addOption(event: string, text: string) {
+    public addOption(event: string, text: string, value: boolean = undefined) {
         const element = document.createElement("li");
         this.listElement.appendChild(element);
 
@@ -60,6 +60,7 @@ export class Status extends ui.Component implements IStatus {
         input.onchange = (changeEvent) => {
             this.emit(event, input.checked);
         };
+        input.defaultChecked = (value === undefined) ? false : value;
 
         const title = document.createTextNode(text);
 
