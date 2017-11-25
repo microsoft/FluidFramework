@@ -178,7 +178,7 @@ export class SharedString extends api.CollaborativeObject {
         if (op) {
             annotateMessage.combiningOp = op;
         }
-
+        console.log(`Debug spellcheck: ${start} -> ${end}`);
         this.client.annotateSegmentLocal(props, start, end, op);
         this.submitLocalOperation(annotateMessage);
     }
