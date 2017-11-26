@@ -2495,7 +2495,7 @@ export class FlowView extends ui.Component {
     }
 
     public treeForViewport() {
-        console.log(this.sharedString.client.mergeTree.rangeToString(this.viewportStartPos,this.viewportEndPos));
+        console.log(this.sharedString.client.mergeTree.rangeToString(this.viewportStartPos, this.viewportEndPos));
     }
 
     public addPresenceMap(presenceMap: types.IMap) {
