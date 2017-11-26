@@ -4,8 +4,6 @@ import * as util from "util";
 import { Deferred } from "../core-utils";
 import { debug } from "./debug";
 
-const defaultBatchSize = 100;
-
 /**
  * A pending message the producer is holding on to
  */
@@ -37,9 +35,8 @@ export abstract class Producer implements IProducer {
     protected client: any;
     protected producer: any;
     protected sendPending = false;
-    private messageCount: number = 0;
 
-    constructor(private batchSize: number) {
+    constructor(private maxSendSize = 100) {
     }
 
     /**
@@ -55,7 +52,6 @@ export abstract class Producer implements IProducer {
         // Insert a new pending message
         const deferred = new Deferred<any>();
         pending.push({ deferred, message });
-        ++this.messageCount;
 
         // Mark the need to send a message
         this.requestSend();
@@ -69,14 +65,16 @@ export abstract class Producer implements IProducer {
      * Sends all pending messages
      */
     protected sendPendingMessages() {
-        let count = 0;
-
         // TODO let's log to influx how many messages we have batched
 
         // tslint:disable-next-line:forin
         for (const key in this.messages) {
-            this.sendCore(key, this.messages[key]);
-            count += this.messages[key].length;
+            const messages = this.messages[key];
+
+            while (messages.length > 0) {
+                const sendBatch = messages.splice(0, this.maxSendSize);
+                this.sendCore(key, sendBatch);
+            }
         }
         this.messages = {};
     }
@@ -108,14 +106,8 @@ export abstract class Producer implements IProducer {
 
         this.sendPending = true;
 
-        // Force send when message count exceeds allowed batch size.
-        if (this.messageCount >= this.batchSize) {
-            this.sendPendingMessages();
-            this.sendPending = false;
-        }
-
-        // use process.nextTick() to play well with the node event loop
-        process.nextTick(() => {
+        // use setImmediate to play well with the node event loop
+        setImmediate(() => {
             this.sendPendingMessages();
             this.sendPending = false;
         });
@@ -129,8 +121,8 @@ class KafkaRestProducer extends Producer implements IProducer {
     private connecting = false;
     private connected = false;
 
-    constructor(private endpoint: string, private topic: string, batchSize: number = defaultBatchSize) {
-        super(batchSize);
+    constructor(private endpoint: string, private topic: string) {
+        super();
         this.connect();
     }
 
@@ -182,9 +174,8 @@ class KafkaNodeProducer extends Producer implements IProducer {
     private connecting = false;
     private connected = false;
 
-    constructor(private endpoint: string, private clientId: string, private topic: string,
-                batchSize: number = defaultBatchSize) {
-        super(batchSize);
+    constructor(private endpoint: string, private clientId: string, private topic: string) {
+        super();
         this.connect();
     }
 

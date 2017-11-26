@@ -92,6 +92,7 @@ export function runService<T extends IResources>(
             process.exit(0);
         },
         (error) => {
+            winston.error("Service exiting due to error");
             winston.error(error);
             process.exit(1);
         });
