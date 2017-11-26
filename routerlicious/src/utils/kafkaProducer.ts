@@ -36,6 +36,9 @@ export abstract class Producer implements IProducer {
     protected producer: any;
     protected sendPending = false;
 
+    constructor(private maxSendSize = 100) {
+    }
+
     /**
      * Sends the provided message to Kafka
      */
@@ -62,14 +65,16 @@ export abstract class Producer implements IProducer {
      * Sends all pending messages
      */
     protected sendPendingMessages() {
-        let count = 0;
-
         // TODO let's log to influx how many messages we have batched
 
         // tslint:disable-next-line:forin
         for (const key in this.messages) {
-            this.sendCore(key, this.messages[key]);
-            count += this.messages[key].length;
+            const messages = this.messages[key];
+
+            while (messages.length > 0) {
+                const sendBatch = messages.splice(0, this.maxSendSize);
+                this.sendCore(key, sendBatch);
+            }
         }
         this.messages = {};
     }
