@@ -12,3 +12,4 @@ export * from "./popup";
 export * from "./status";
 export * from "./overlayCanvas";
 export * from "./shapeRecognizer";
+export * from "./title";

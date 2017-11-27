@@ -8,6 +8,7 @@ import { LayerPanel } from "./layerPanel";
 import { InkLayer, Layer, OverlayCanvas } from "./overlayCanvas";
 import { IRange } from "./scrollBar";
 import { Status } from "./status";
+import { Title } from "./title";
 
 interface IOverlayLayerStatus {
     layer: Layer;
@@ -17,6 +18,7 @@ interface IOverlayLayerStatus {
 
 export class FlowContainer extends ui.Component {
     public status: Status;
+    public title: Title;
     public flowView: FlowView;
     private dockPanel: DockPanel;
     private layerPanel: LayerPanel;
@@ -37,6 +39,12 @@ export class FlowContainer extends ui.Component {
 
         // TODO the below code is becoming controller like and probably doesn't belong in a constructor. Likely
         // a better API model.
+
+        // Title bar at the top
+        const titleDiv = document.createElement("div");
+        this.title = new Title(titleDiv);
+        this.title.setTitle(collabDocument.id);
+        this.title.setBackgroundColor(collabDocument.id);
 
         // Status bar at the bottom
         const statusDiv = document.createElement("div");
@@ -129,6 +137,7 @@ export class FlowContainer extends ui.Component {
         this.addChild(this.dockPanel);
 
         // Use the dock panel to layout the viewport - layer panel as the content and then status bar at the bottom
+        this.dockPanel.addTop(this.title);
         this.dockPanel.addContent(this.layerPanel);
         this.dockPanel.addBottom(this.status);
 
