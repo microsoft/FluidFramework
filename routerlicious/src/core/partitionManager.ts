@@ -19,8 +19,6 @@ export class PartitionManager {
     private lastCheckpointTimestamp: number = 0;
 
     constructor(
-        private groupId: string,
-        private topic: string,
         private consumer: utils.kafkaConsumer.IConsumer,
         private batchSize: number,
         private checkPointInterval: number) {
@@ -50,7 +48,7 @@ export class PartitionManager {
                 this.checkPoint();
             },
             (error) => {
-                debug(`${this.groupId}: Error checkpointing kafka offset: ${JSON.stringify(error)}`);
+                debug(`${this.consumer.groupId}: Error checkpointing kafka offset: ${JSON.stringify(error)}`);
                 this.checkpointing = false;
                 // Triggering another round.
                 this.checkPoint();
@@ -82,8 +80,10 @@ export class PartitionManager {
                 }
 
                 // Push to checkpoint queue and update the offset.
-                commitDetails.push({ offset: currentPartition.latestOffset, partition: Number(partition),
-                                     topic: this.topic});
+                commitDetails.push({
+                    offset: currentPartition.latestOffset,
+                    partition: Number(partition),
+                });
                 currentPartition.checkpointedOffset = currentPartition.latestOffset;
             }
 
@@ -93,7 +93,7 @@ export class PartitionManager {
                     resolve({ data: true });
                 },
                 (error) => {
-                    debug(`${this.groupId}: Error checkpointing kafka offsets: ${error}`);
+                    debug(`${this.consumer.groupId}: Error checkpointing kafka offsets: ${error}`);
                     reject(error);
                 });
         });

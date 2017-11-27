@@ -48,7 +48,7 @@ export class ScriptoriumResourcesFactory implements utils.IResourcesFactory<Scri
 
         const publisher = new services.SocketIoRedisPublisher(redisConfig.port, redisConfig.host);
 
-        const consumer = utils.kafkaConsumer.create(kafkaLibrary, kafkaEndpoint, groupId, topic, false);
+        const consumer = utils.kafkaConsumer.create(kafkaLibrary, kafkaEndpoint, groupId, groupId, topic, false);
 
         return new ScriptoriumResources(
             consumer,

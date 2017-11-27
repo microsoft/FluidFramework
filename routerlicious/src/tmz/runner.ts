@@ -10,7 +10,7 @@ import * as workerFactory from "./workerFactory";
 export class TmzRunner implements utils.IRunner {
     private deferred = new Deferred<void>();
     private foreman: messages.IForeman;
-    private q: AsyncQueue<string>;
+    private q: AsyncQueue<utils.kafkaConsumer.IMessage>;
     private pendingWork: Set<string> = new Set();
     private checkerInterval: NodeJS.Timer;
     private workerJoined = false;

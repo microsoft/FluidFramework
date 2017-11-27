@@ -51,7 +51,13 @@ export class RouteMasterResourcesFactory implements utils.IResourcesFactory<Rout
 
         // Prep Kafka producer and consumer
         let producer = utils.kafkaProducer.create(kafkaLibrary, kafkaEndpoint, kafkaClientId, sendTopic);
-        let consumer = utils.kafkaConsumer.create(kafkaLibrary, kafkaEndpoint, groupId, receiveTopic, false);
+        let consumer = utils.kafkaConsumer.create(
+            kafkaLibrary,
+            kafkaEndpoint,
+            kafkaClientId,
+            groupId,
+            receiveTopic,
+            false);
 
         return new RouteMasterResources(
             producer,
@@ -73,8 +79,6 @@ export class RouteMasterRunnerFactory implements utils.IRunnerFactory<RouteMaste
             resources.consumer,
             resources.collection,
             resources.deltas,
-            resources.groupId,
-            resources.receiveTopic,
             resources.checkpointBatchSize,
             resources.checkpointTimeIntervalMsec);
     }

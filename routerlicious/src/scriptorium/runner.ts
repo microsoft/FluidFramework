@@ -9,7 +9,7 @@ export class ScriptoriumRunner implements utils.IRunner {
     private deferred = new Deferred<void>();
     private checkpointTimer: any;
     private partitionManager: core.PartitionManager;
-    private q: AsyncQueue<string>;
+    private q: AsyncQueue<utils.kafkaConsumer.IMessage>;
     private ioBatchManager: BatchManager<core.ISequencedOperationMessage>;
 
     constructor(
@@ -22,8 +22,6 @@ export class ScriptoriumRunner implements utils.IRunner {
         private checkpointTimeIntervalMsec: number) {
 
         this.partitionManager = new core.PartitionManager(
-            groupId,
-            topic,
             this.consumer,
             this.checkpointBatchSize,
             this.checkpointTimeIntervalMsec);

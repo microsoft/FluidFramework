@@ -10,9 +10,13 @@ export interface IKafkaMessage {
 class TestConsumer implements utils.kafkaConsumer.IConsumer {
     private emitter = new EventEmitter();
     private pausedQueue: string[] = null;
+    private offset: number;
 
-    public commitOffset(data: any): Promise<void> {
-        throw new Error("Method not implemented.");
+    constructor(public groupId: string, public topic: string) {
+    }
+
+    public async commitOffset(data: any): Promise<void> {
+        this.offset = data.offset;
     }
 
     public on(event: string, listener: Function): this {
@@ -79,7 +83,7 @@ export class TestKafka {
     }
 
     public createConsumer(): utils.kafkaConsumer.IConsumer {
-        const consumer = new TestConsumer();
+        const consumer = new TestConsumer("test", "test");
         this.consumers.push(consumer);
 
         return consumer;

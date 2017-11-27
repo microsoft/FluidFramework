@@ -7,7 +7,7 @@ import { Router } from "./router";
 
 export class RouteMasterRunner implements utils.IRunner {
     private deferred: Deferred<void>;
-    private q: AsyncQueue<string>;
+    private q: AsyncQueue<utils.kafkaConsumer.IMessage>;
     private routers = new Map<string, Router>();
 
     constructor(
@@ -15,16 +15,12 @@ export class RouteMasterRunner implements utils.IRunner {
         private consumer: utils.kafkaConsumer.IConsumer,
         private objectsCollection: core.ICollection<any>,
         private deltas: core.ICollection<any>,
-        private groupId: string,
-        private receiveTopic: string,
         private checkpointBatchSize: number,
         private checkpointTimeIntervalMsec: number) {
     }
 
     public start(): Promise<void> {
         const partitionManager = new core.PartitionManager(
-            this.groupId,
-            this.receiveTopic,
             this.consumer,
             this.checkpointBatchSize,
             this.checkpointTimeIntervalMsec,

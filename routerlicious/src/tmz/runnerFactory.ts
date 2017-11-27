@@ -65,7 +65,7 @@ export class TmzResourcesFactory implements utils.IResourcesFactory<TmzResources
         const onlyServer = config.get("tmz:onlyServer");
         const tasks = config.get("tmz:tasks");
 
-        let consumer = utils.kafkaConsumer.create(kafkaLibrary, kafkaEndpoint, groupId, topic, true);
+        let consumer = utils.kafkaConsumer.create(kafkaLibrary, kafkaEndpoint, groupId, groupId, topic, true);
 
         return new TmzResources(io, pub, sub, port, consumer, schedulerType, onlyServer, checkerTimeout, tasks);
     }

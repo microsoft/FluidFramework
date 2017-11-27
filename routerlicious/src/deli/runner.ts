@@ -10,14 +10,12 @@ import { TakeANumber } from "./takeANumber";
 export class DeliRunner implements utils.IRunner {
     private deferred: Deferred<void>;
     private checkpointTimer: any;
-    private q: AsyncQueue<string>;
+    private q: AsyncQueue<utils.kafkaConsumer.IMessage>;
 
     constructor(
         private producer: utils.kafkaProducer.IProducer,
         private consumer: utils.kafkaConsumer.IConsumer,
         private objectsCollection: core.ICollection<any>,
-        private groupId: string,
-        private receiveTopic: string,
         private checkpointBatchSize: number,
         private checkpointTimeIntervalMsec: number) {
     }
@@ -26,8 +24,6 @@ export class DeliRunner implements utils.IRunner {
         this.deferred = new Deferred<void>();
         const dispensers: { [key: string]: TakeANumber } = {};
         const partitionManager = new core.PartitionManager(
-            this.groupId,
-            this.receiveTopic,
             this.consumer,
             this.checkpointBatchSize,
             this.checkpointTimeIntervalMsec,

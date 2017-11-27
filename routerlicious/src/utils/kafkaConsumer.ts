@@ -4,15 +4,29 @@ import * as kafkaRest from "kafka-rest";
 import * as util from "util";
 import { debug } from "./debug";
 
+export interface IMessage {
+    topic: string;
+    value: string;
+    offset: number;
+    partition: number;
+    highWaterOffset: number;
+    key: string;
+}
+
 export interface IConsumer {
+    groupId: string;
+
+    topic: string;
+
     /**
      * Commits consumer offset.
      */
-    commitOffset(data: any): Promise<void>;
+    commitOffset(data: any[]): Promise<void>;
 
     /**
      * Event Handler.
      */
+    on(event: "data", listener: (message: IMessage) => void): this;
     on(event: string, listener: Function): this;
 
     /**
@@ -38,11 +52,12 @@ class KafkaRestConsumer implements IConsumer {
     private connecting = false;
     private connected = false;
 
-    constructor(private endpoint: string, private groupId: string, private topic: string, private autoCommit: boolean) {
+    constructor(private endpoint: string, public groupId: string, public topic: string, private autoCommit: boolean) {
         this.connect();
     }
 
     public commitOffset(commitRequest: any): Promise<void> {
+        commitRequest.forEach((commit) => commit.topic = this.topic);
         return new Promise<any>((resolve, reject) => {
             this.client.post(this.instance.getUri() + "/offsets", {offsets: commitRequest}, null, (err, data) => {
                 if (err) {
@@ -131,11 +146,17 @@ class KafkaNodeConsumer implements IConsumer {
     private connecting = false;
     private connected = false;
 
-    constructor(private endpoint: string, private groupId: string, private topic: string, private autoCommit: boolean) {
+    constructor(
+        private endpoint: string,
+        private clientId: string,
+        public groupId: string,
+        public topic: string,
+        private autoCommit: boolean) {
         this.connect();
     }
 
-    public commitOffset(commitRequest: any): Promise<void> {
+    public commitOffset(commitRequest: any[]): Promise<void> {
+        commitRequest.forEach((commit) => commit.topic = this.topic);
         return new Promise<any>((resolve, reject) => {
             this.offset.commit(this.groupId, commitRequest, (err, data) => {
                 if (err) {
@@ -166,7 +187,7 @@ class KafkaNodeConsumer implements IConsumer {
     }
 
     private connect() {
-        this.client = new kafkaNode.Client(this.endpoint, this.groupId);
+        this.client = new kafkaNode.Client(this.endpoint, this.clientId);
         this.offset = new kafkaNode.Offset(this.client);
         const groupId = this.groupId;
         return new Promise<any>((resolve, reject) => {
@@ -239,7 +260,14 @@ class KafkaNodeConsumer implements IConsumer {
     }
 }
 
-export function create(type: string, endPoint: string, groupId: string, topic: string, autoCommit: boolean): IConsumer {
-    return type === "kafka-rest" ? new KafkaRestConsumer(endPoint, groupId, topic, autoCommit)
-                                 : new KafkaNodeConsumer(endPoint, groupId, topic, autoCommit);
+export function create(
+    type: string,
+    endPoint: string,
+    clientId: string,
+    groupId: string,
+    topic: string,
+    autoCommit: boolean): IConsumer {
+    return type === "kafka-rest"
+        ? new KafkaRestConsumer(endPoint, groupId, topic, autoCommit)
+        : new KafkaNodeConsumer(endPoint, clientId, groupId, topic, autoCommit);
 }
