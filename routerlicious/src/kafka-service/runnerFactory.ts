@@ -1,10 +1,12 @@
 import * as moniker from "moniker";
 import { Provider } from "nconf";
 import * as utils from "../utils";
+import { IPartitionLambdaFactory } from "./lambdas";
 import { KafkaRunner } from "./runner";
 
 export class KafkaResources implements utils.IResources {
     constructor(
+        public lambdaFactory: IPartitionLambdaFactory,
         public consumer: utils.kafkaConsumer.IConsumer,
         public checkpointBatchSize: number,
         public checkpointTimeIntervalMsec: number) {
@@ -18,6 +20,8 @@ export class KafkaResources implements utils.IResources {
 
 export class KafkaResourcesFactory implements utils.IResourcesFactory<KafkaResources> {
     public async create(config: Provider): Promise<KafkaResources> {
+        const lambdaFactory = require(process.argv[2]).create() as IPartitionLambdaFactory;
+
         const kafkaEndpoint = config.get("kafka:lib:endpoint");
         const kafkaLibrary = config.get("kafka:lib:name");
 
@@ -30,6 +34,7 @@ export class KafkaResourcesFactory implements utils.IResourcesFactory<KafkaResou
         let consumer = utils.kafkaConsumer.create(kafkaLibrary, kafkaEndpoint, clientId, groupId, receiveTopic, false);
 
         return new KafkaResources(
+            lambdaFactory,
             consumer,
             checkpointBatchSize,
             checkpointTimeIntervalMsec);
@@ -39,6 +44,7 @@ export class KafkaResourcesFactory implements utils.IResourcesFactory<KafkaResou
 export class KafkaRunnerFactory implements utils.IRunnerFactory<KafkaResources> {
     public async create(resources: KafkaResources): Promise<utils.IRunner> {
         return new KafkaRunner(
+            resources.lambdaFactory,
             resources.consumer,
             resources.checkpointBatchSize,
             resources.checkpointTimeIntervalMsec);

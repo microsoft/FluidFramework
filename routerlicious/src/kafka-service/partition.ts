@@ -8,8 +8,6 @@ import { IPartitionLambda, IPartitionLambdaFactory } from "./lambdas";
 // partition should have its own Lambda type thing. Have some way to create threads off the partition, etc...
 // private routers = new Map<string, Router>();
 
-// TODO do I want a topic processor to know how to split off messages???
-
 // // TODO this type of breakout is pretty specific to us. We might want some kind of topic handler, etc...
 // const message = JSON.parse(rawMessage.value) as core.ISequencedOperationMessage;
 // if (message.type !== core.SequencedOperationType) {

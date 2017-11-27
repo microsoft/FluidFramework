@@ -2,14 +2,8 @@ import * as winston from "winston";
 import { Deferred } from "../core-utils";
 import * as utils from "../utils";
 import { ICheckpointStrategy } from "./checkpointManager";
-import { IPartitionLambda, IPartitionLambdaFactory } from "./lambdas";
+import { IPartitionLambdaFactory } from "./lambdas";
 import { PartitionManager } from "./partitionManager";
-
-class Blergh implements IPartitionLambdaFactory {
-    public create(): Promise<IPartitionLambda> {
-        throw new Error("Method not implemented.");
-    }
-}
 
 class CheckpointStrategy implements ICheckpointStrategy {
     public shouldCheckpoint(offset: number): boolean {
@@ -22,12 +16,13 @@ export class KafkaRunner implements utils.IRunner {
     private partitionManager: PartitionManager;
 
     constructor(
+        factory: IPartitionLambdaFactory,
         private consumer: utils.kafkaConsumer.IConsumer,
         // This wants to be a checkpointing strategy. Check out GOF
         checkpointBatchSize: number,
         checkpointTimeIntervalMsec: number) {
 
-        this.partitionManager = new PartitionManager(new Blergh(), new CheckpointStrategy(), consumer);
+        this.partitionManager = new PartitionManager(factory, new CheckpointStrategy(), consumer);
     }
 
     public start(): Promise<void> {
@@ -36,9 +31,6 @@ export class KafkaRunner implements utils.IRunner {
         // Place new Kafka messages into our processing queue
         this.consumer.on("data", (message) => {
             this.partitionManager.process(message);
-
-            // TODO TODO TODO
-            // Query checkpointing system to see if we should checkpoint
         });
 
         // On any Kafka errors immediately stop processing
