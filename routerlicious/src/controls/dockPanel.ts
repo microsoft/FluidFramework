@@ -54,6 +54,7 @@ export class DockPanel extends ui.Component {
         ui.removeAllChildren(this.element);
         this.addChildIfExists(this.content);
         this.addChildIfExists(this.bottom);
+        this.addChildIfExists(this.top);
         this.resizeCore(this.size);
     }
 
