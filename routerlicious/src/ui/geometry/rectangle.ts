@@ -66,6 +66,14 @@ export class Rectangle {
         ];
     }
 
+    public nipVertTopBottom(topPixels: number, bottomPixels: number) {
+        return [
+            new Rectangle(this.x, this.y, this.width, topPixels),
+            new Rectangle(this.x, this.y + topPixels, this.width, this.height - topPixels - bottomPixels),
+            new Rectangle(this.x, this.y + (this.height - bottomPixels), this.width, bottomPixels),
+        ];
+    }
+
     public nipHoriz(pixels: number) {
         return [
             new Rectangle(this.x, this.y, pixels, this.height),
