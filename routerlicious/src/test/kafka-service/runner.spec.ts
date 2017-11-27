@@ -18,8 +18,4 @@ describe("kafka-service", () => {
             });
         });
     });
-
-    describe("PartitionManager", () => {
-        //
-    });
 });

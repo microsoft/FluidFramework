@@ -1,60 +1,47 @@
-import { queue } from "async";
 import * as winston from "winston";
 import * as utils from "../utils";
+import { ICheckpointStrategy } from "./checkpointManager";
+import { IPartitionLambdaFactory } from "./lambdas";
 import { Partition } from "./partition";
 
+// Partition contains a collection of threads
+// Threads execute a lambda handler and in order
+// Thread maintains an execution context across call
+// Partition queries threads for how far completed they are
+
+/**
+ * The PartitionManager is responsible for maintaining a list of partitions for the given Kafka topic.
+ * It will route incoming messages to the appropriate partition for the messages.
+ */
 export class PartitionManager {
-    private q: AsyncQueue<utils.kafkaConsumer.IMessage>;
     private partitions = new Map<number, Partition>();
 
-    constructor() {
-        // Create the incoming message queue
-        this.q = queue((message: utils.kafkaConsumer.IMessage, callback) => {
-            // NOTE processMessage
-
-            // TODO I should be try..catch'ing around this
-            this.processMessage(message);
-
-            // TODO check checkpoint
-
-            // Process the next message
-            callback();
-        }, 1);
+    constructor(
+        private factory: IPartitionLambdaFactory,
+        private checkpointStrategy: ICheckpointStrategy,
+        private consumer: utils.kafkaConsumer.IConsumer) {
     }
 
     public async stop(): Promise<void> {
-        // Drain the queue of any pending operations
-        const drainedP = new Promise<void>((resolve, reject) => {
-            // If not entries in the queue we can exit immediatley
-            if (this.q.length() === 0) {
-                winston.info("No pending work exiting early");
-                return resolve();
-            }
-
-            // Wait until the queue is drained
-            winston.info("Waiting for queue to drain");
-            this.q.drain = () => {
-                winston.info("Drained");
-                resolve();
-            };
-        });
-
-        return drainedP;
+        // And then wait for each partition to fully process all messages
+        const partitionsStoppedP: Array<Promise<void>> = [];
+        for (const [, partition] of this.partitions) {
+            const stopP = partition.stop();
+            partitionsStoppedP.push(stopP);
+        }
+        await Promise.all(partitionsStoppedP);
     }
 
     public process(message: utils.kafkaConsumer.IMessage) {
-        this.q.push(message);
-    }
+        winston.info(`${message.topic}:${message.partition}@${message.offset}`);
 
-    private processMessage(rawMessage: utils.kafkaConsumer.IMessage) {
-        winston.info(`${rawMessage.topic}:${rawMessage.partition}@${rawMessage.offset}`);
-
-        if (!this.partitions.has(rawMessage.partition)) {
-            const newPartition = new Partition();
-            this.partitions.set(rawMessage.partition, newPartition);
+        // Create the partition if this is the first message we've seen
+        if (!this.partitions.has(message.partition)) {
+            const newPartition = new Partition(message.partition, this.factory, this.checkpointStrategy, this.consumer);
+            this.partitions.set(message.partition, newPartition);
         }
 
-        const partition = this.partitions.get(rawMessage.partition);
-        partition.process(rawMessage);
+        const partition = this.partitions.get(message.partition);
+        partition.process(message);
     }
 }

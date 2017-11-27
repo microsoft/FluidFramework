@@ -1,17 +1,33 @@
 import * as winston from "winston";
 import { Deferred } from "../core-utils";
 import * as utils from "../utils";
+import { ICheckpointStrategy } from "./checkpointManager";
+import { IPartitionLambda, IPartitionLambdaFactory } from "./lambdas";
 import { PartitionManager } from "./partitionManager";
+
+class Blergh implements IPartitionLambdaFactory {
+    public create(): Promise<IPartitionLambda> {
+        throw new Error("Method not implemented.");
+    }
+}
+
+class CheckpointStrategy implements ICheckpointStrategy {
+    public shouldCheckpoint(offset: number): boolean {
+        return true;
+    }
+}
 
 export class KafkaRunner implements utils.IRunner {
     private deferred: Deferred<void>;
-    private partitionManager = new PartitionManager();
+    private partitionManager: PartitionManager;
 
     constructor(
         private consumer: utils.kafkaConsumer.IConsumer,
         // This wants to be a checkpointing strategy. Check out GOF
         checkpointBatchSize: number,
         checkpointTimeIntervalMsec: number) {
+
+        this.partitionManager = new PartitionManager(new Blergh(), new CheckpointStrategy(), consumer);
     }
 
     public start(): Promise<void> {

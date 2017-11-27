@@ -10,7 +10,7 @@ export interface IMessage {
     offset: number;
     partition: number;
     highWaterOffset: number;
-    key: number;
+    key: string;
 }
 
 export interface IConsumer {
