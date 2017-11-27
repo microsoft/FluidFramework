@@ -3,11 +3,17 @@ import * as core from "../core";
 import * as utils from "../utils";
 import { Router } from "./router";
 
+// partition should have its own Lambda type thing. Have some way to create threads off the partition, etc...
+
+/**
+ * Partition of a message stream. Manages routing messages to individual handlers. And then maintaining the
+ * overall partition offset.
+ */
 export class Partition {
     private routers = new Map<string, Router>();
 
     public process(rawMessage: utils.kafkaConsumer.IMessage) {
-        // TODO do I want a topic processor???
+        // TODO do I want a topic processor to know how to split off messages???
 
         winston.info(`${rawMessage.topic}:${rawMessage.partition}@${rawMessage.offset}`);
 
@@ -27,4 +33,6 @@ export class Partition {
         const router = this.routers.get(message.documentId);
         router.route(message);
     }
+
+    // This needs to maintain the checkpoint
 }

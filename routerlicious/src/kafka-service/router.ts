@@ -4,6 +4,23 @@ import * as core from "../core";
 
 // TODO better name than router - since is actually doing the processing
 
+export interface ILambda {
+    // And then this is the createFork section.
+    // What would it mean if this was *completely* stateless. We load position, write it, etc...
+    // each time? Can we afford to serialize to Mongo each time? Does it hurt throughput to enable this?
+    handler(message: core.ISequencedOperationMessage): Promise<void>;
+}
+
+export interface ILambdaFactory {
+    // This would be the DocumentManager.Create part...
+    create(): Promise<ILambda>;
+}
+
+// Partition contains a collection of threads
+// Threads execute a lambda handler and in order
+// Thread maintains an execution context across call
+// Partition queries threads for how far completed they are
+
 export class Router {
     private queue: AsyncQueue<core.ISequencedOperationMessage>;
 

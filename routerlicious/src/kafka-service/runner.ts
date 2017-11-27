@@ -21,6 +21,7 @@ export class KafkaRunner implements utils.IRunner {
         this.consumer.on("data", (message) => {
             this.partitionManager.process(message);
 
+            // TODO TODO TODO
             // Query checkpointing system to see if we should checkpoint
         });
 

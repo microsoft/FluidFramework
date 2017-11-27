@@ -46,14 +46,6 @@ export class PartitionManager {
         this.q.push(message);
     }
 
-    /**
-     * Returns the latest possible checkpoint information for the partitions. Returns immediately so does
-     * not take into account pending work.
-     */
-    public checkpoint() {
-        return null;
-    }
-
     private processMessage(rawMessage: utils.kafkaConsumer.IMessage) {
         winston.info(`${rawMessage.topic}:${rawMessage.partition}@${rawMessage.offset}`);
 
