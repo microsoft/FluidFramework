@@ -41,7 +41,7 @@ async function loadFull(id: string, version: resources.ICommit, config: any, tem
 
     socketStorage.registerAsDefault(document.location.origin, config.blobStorageUrl, config.repository);
     console.log(`collabDoc loading ${id} - ${performanceNow()}`);
-    const collabDoc = await API.load(id, { blockUpdateMarkers: true, localMinSeq: 0 }, version);
+    const collabDoc = await API.load(id, { blockUpdateMarkers: true }, version);
     console.log(`collabDoc loaded ${id} - ${performanceNow()}`);
     const root = await collabDoc.getRoot().getView();
     console.log(`Getting root ${id} - ${performanceNow()}`);

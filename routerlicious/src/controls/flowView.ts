@@ -2019,10 +2019,13 @@ function renderFlow(layoutContext: ILayoutContext, deferWhole = false): IRenderO
         if ((segoff.segment.getType() === SharedString.SegmentType.Marker) &&
             ((<SharedString.Marker>segoff.segment).hasRangeLabel("table"))) {
             let marker = <SharedString.Marker>segoff.segment;
-            renderTable(marker, docContext, layoutContext, deferredPGs);
             let tableView = (<ITableMarker>marker).view;
-            deferredHeight += tableView.deferredHeight;
-            layoutContext.viewport.vskip(layoutContext.docContext.tableVspace);
+            // TODO: branches
+            if (marker.removedSeq === undefined) {
+                renderTable(marker, docContext, layoutContext, deferredPGs);
+                deferredHeight += tableView.deferredHeight;
+                layoutContext.viewport.vskip(layoutContext.docContext.tableVspace);
+            }
             let endTablePos = getOffset(layoutContext.flowView, tableView.endTableMarker);
             currentPos = endTablePos + 1;
             segoff = undefined;
@@ -2452,6 +2455,8 @@ export class FlowView extends ui.Component {
     public viewportDiv: HTMLDivElement;
     public viewportRect: ui.Rectangle;
     public client: SharedString.Client;
+    public historyClient: SharedString.Client;
+    public savedClient: SharedString.Client;
     public ticking = false;
     public wheelTicking = false;
     public topChar = -1;
@@ -2496,6 +2501,43 @@ export class FlowView extends ui.Component {
 
     public treeForViewport() {
         console.log(this.sharedString.client.mergeTree.rangeToString(this.viewportStartPos, this.viewportEndPos));
+    }
+
+    public measureClone() {
+        let clock = Date.now();
+        this.client.cloneFromSegments();
+        console.log(`clone took ${Date.now() - clock}ms`);
+    }
+
+    public goHistorical() {
+        if (!this.historyClient) {
+            this.historyClient = this.client.cloneFromSegments();
+            this.savedClient = this.client;
+            this.client = this.historyClient;
+        }
+    }
+
+    public backToTheFuture() {
+        if (this.historyClient) {
+            this.client = this.savedClient;
+            this.historyClient = undefined;
+            this.topChar = 0;
+            this.localQueueRender(0);
+        }
+    }
+
+    public historyBack() {
+        this.goHistorical();
+        this.client.undo();
+        this.cursor.pos = FlowView.docStartPosition;
+        this.localQueueRender(FlowView.docStartPosition);
+    }
+
+    public historyForward() {
+        this.goHistorical();
+        this.client.redo();
+        this.cursor.pos = FlowView.docStartPosition;
+        this.localQueueRender(FlowView.docStartPosition);
     }
 
     public addPresenceMap(presenceMap: types.IMap) {
@@ -3252,6 +3294,15 @@ export class FlowView extends ui.Component {
 
     public keyCmd(charCode: number) {
         switch (charCode) {
+            case CharacterCodes.U:
+                this.historyBack();
+                break;
+            case CharacterCodes.J:
+                this.historyForward();
+                break;
+            case CharacterCodes.Q:
+                this.backToTheFuture();
+                break;
             case CharacterCodes.R:
                 this.updatePGInfo(this.cursor.pos - 1);
                 createTable(this.cursor.pos, this);

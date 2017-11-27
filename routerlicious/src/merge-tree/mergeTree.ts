@@ -1493,6 +1493,12 @@ export interface ClientIds {
     branchId: number;
 }
 
+export interface IUndoInfo {
+    seq: number;
+    seg: Segment;
+    op: ops.MergeTreeDeltaType;
+}
+
 export class Client {
     mergeTree: MergeTree;
     accumTime = 0;
@@ -1511,6 +1517,8 @@ export class Client {
     shortClientIdMap = <string[]>[];
     shortClientBranchIdMap = <number[]>[];
     public longClientId: string;
+    public undoSegments: IUndoInfo[];
+    public redoSegments: IUndoInfo[];
 
     constructor(initText: string, options?: Properties.PropertySet) {
         this.mergeTree = new MergeTree(initText, options);
@@ -1518,6 +1526,73 @@ export class Client {
         this.mergeTree.clientIdToBranchId = this.shortClientBranchIdMap;
         this.q = Collections.ListMakeHead<API.ISequencedObjectMessage>();
         this.checkQ = Collections.ListMakeHead<string>();
+    }
+
+    undoSingleSequenceNumber(undoSegments: IUndoInfo[], redoSegments: IUndoInfo[]) {
+        let len = undoSegments.length;
+        let index = len - 1;
+        let seq = undoSegments[index].seq;
+        if (seq === 0) {
+            return;
+        }
+        while (index >= 0) {
+            let undoInfo = undoSegments[index];
+            if (seq === undoInfo.seq) {
+                this.mergeTree.cherryPickedUndo(undoInfo);
+                redoSegments.push(undoInfo);
+            } else {
+                break;
+            }
+            index--;
+        }
+        undoSegments.length = index + 1;
+    }
+
+    undo() {
+        this.undoSingleSequenceNumber(this.undoSegments, this.redoSegments);
+    }
+
+    redo() {
+        this.undoSingleSequenceNumber(this.redoSegments, this.undoSegments);
+    }
+
+    cloneFromSegments() {
+        let clone = new Client("", this.mergeTree.options);
+        let segments = <Segment[]>[];
+        this.mergeTree.blockCloneFromSegments(this.mergeTree.root, segments);
+        clone.mergeTree.reloadFromSegments(segments);
+        let undoSeg = <IUndoInfo[]>[];
+        for (let segment of segments) {
+            if (segment.seq !== 0) {
+                undoSeg.push({
+                    seq: segment.seq,
+                    seg: segment,
+                    op: ops.MergeTreeDeltaType.INSERT
+                });
+            }
+            if (segment.removedSeq !== undefined) {
+                undoSeg.push({
+                    seq: segment.removedSeq,
+                    seg: segment,
+                    op: ops.MergeTreeDeltaType.REMOVE
+                });
+            }
+        }
+        undoSeg = undoSeg.sort((a, b) => {
+            if (b.seq === a.seq) {
+                return 0;
+            } else if (b.seq === UnassignedSequenceNumber) {
+                return -1;
+            } else if (a.seq === UnassignedSequenceNumber) {
+                return 1;
+            } else {
+                return a.seq - b.seq;
+            }
+
+        });
+        clone.undoSegments = undoSeg;
+        clone.redoSegments = [];
+        return clone;
     }
 
     getOrAddShortClientId(longClientId: string, branchId = 0) {
@@ -2396,6 +2471,17 @@ export class MergeTree {
         return block;
     }
 
+    blockCloneFromSegments(block: IMergeBlock, segments: Segment[]) {
+        for (let i = 0; i < block.childCount; i++) {
+            let child = block.children[i];
+            if (child.isLeaf()) {
+                segments.push(this.segmentClone(<Segment>block.children[i]));
+            } else {
+                this.blockCloneFromSegments(<IMergeBlock>child, segments);
+            }
+        }
+    }
+
     clone() {
         let options = {
             blockUpdateMarkers: this.blockUpdateMarkers,
@@ -2470,12 +2556,7 @@ export class MergeTree {
         return index;
     }
 
-    reloadFromSegments(segments: Segment[], incrSeq = false) {
-        if (incrSeq) {
-            for (let i = 0, len = segments.length; i < len; i++) {
-                segments[i].seq = i + 1;
-            }
-        }
+    reloadFromSegments(segments: Segment[]) {
         let segCap = MaxNodesInBlock - 1;
         const measureReloadTime = false;
         let buildMergeBlock: (nodes: MergeNode[]) => IMergeBlock = (nodes: Segment[]) => {
@@ -3089,18 +3170,22 @@ export class MergeTree {
         return searchInfo.stacks;
     }
 
-    localUndo(segment: Segment) {
-        if (segment.removedSeq === UnassignedSequenceNumber) {
-            // TODO: handle case of overlapping delete (restore seq from
-            // overlapping delete)
+    // TODO: with annotation op change value
+    cherryPickedUndo(undoInfo: IUndoInfo) {
+        let segment = undoInfo.seg;
+        // no branches 
+        if (segment.removedSeq !== undefined) {
             segment.removedSeq = undefined;
             segment.removedClientId = undefined;
-        } else if (segment.seq === UnassignedSequenceNumber) {
-            // physical delete
-            let segpos = this.getOffset(segment, UniversalSequenceNumber, this.collabWindow.clientId);
-            let segend = segpos + segment.cachedLength;
-            this.removeRange(segpos, segend, UniversalSequenceNumber, this.collabWindow.clientId);
+        } else {
+            if (undoInfo.op === ops.MergeTreeDeltaType.REMOVE) {
+                segment.removedSeq = undoInfo.seq;
+            } else {
+                segment.removedSeq = UnassignedSequenceNumber;
+            }
+            segment.removedClientId = this.collabWindow.clientId;
         }
+        this.blockUpdatePathLengths(segment.parent, UnassignedSequenceNumber, -1, true);
     }
 
     // TODO: filter function
