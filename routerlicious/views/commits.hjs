@@ -8,7 +8,7 @@
         <div class="container-fluid">
             <div id="commitsView"></div>
             <div id="parent-canvas">
-                <canvas id="gitGraph" class="graph-canvas" width="2500" height="5000"></canvas>
+                <canvas id="gitGraph" class="graph-canvas" width="5000" height="5000"></canvas>
             </div>
         </div>
     {{/content}}
