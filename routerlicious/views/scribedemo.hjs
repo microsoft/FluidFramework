@@ -15,7 +15,7 @@
             <form id="text-form">
                 <div class="form-group">
                     <label for="interval">Typing Interval (ms)</label>
-                    <input type="text" class="form-control" id="interval" value="100">
+                    <input type="text" class="form-control" id="interval" value="50">
                 </div>
                 <button class="btn btn-default" id="create" style="margin-bottom: 10px;">Create</button>
             </form>
@@ -29,6 +29,8 @@
                     <a href="" target="_blank" id="document-link"></a>
                     <br/>
                     <a href="" target="_blank" id="metrics-link"></a>
+                    <br />
+                    <a href="" target="_blank" id="insights-link"></a>
                 </p>
             </div>
 

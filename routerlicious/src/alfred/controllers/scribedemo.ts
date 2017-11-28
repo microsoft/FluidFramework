@@ -91,6 +91,10 @@ export function initialize(config: any, textId: string, template: string) {
             metricsLink.href = `/canvas/${id}-metrics`;
             metricsLink.innerText = metricsLink.href;
 
+            const insightsLink = document.getElementById("insights-link") as HTMLAnchorElement;
+            insightsLink.href = `/maps/${id}`;
+            insightsLink.innerText = insightsLink.href;
+
             startButton.classList.remove("hidden");
             createDetails.classList.remove("hidden");
             createButton.classList.add("hidden");

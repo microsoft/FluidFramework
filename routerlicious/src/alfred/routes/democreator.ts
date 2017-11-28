@@ -9,39 +9,18 @@ export function create(config: Provider): Router {
     /**
      * Loading the demo creator page.
      */
-    router.get("/:id?", (request, response, next) => {
-        const id = request.params.id ? request.params.id : "test";
-
-        const currentDate = new Date().toJSON().slice(0, 10).replace(/-/g, "-");
-
-        // Generate monikers for offnet original OT links.
-        const nocomposeMoniker = currentDate + "-" + moniker.choose() + "?nocompose";
-        const composeMoniker   = currentDate + "-" + moniker.choose();
-
-        /**
-         * Generate monikers for Prague demos. Note that beginning with a single
-         * slash will cause Hogan/HTML to automatically fill-in the root of the
-         * URL (and use these monikers as relative paths)!
-         */
-        const mapsMoniker = "/maps/" + currentDate + "-" + moniker.choose();
-        const cellMoniker = "/cell/" + currentDate + "-" + moniker.choose();
-        const canvasMoniker = "/canvas/" + currentDate + "-" + moniker.choose();
-        const sharedTextMoniker = "/sharedText/" + currentDate + "-" + moniker.choose();
-        const scribeMoniker = "/scribe/";
-
+    router.get("/", (request, response, next) => {
         response.render(
             "democreator",
             {
-                id,
+                canvasMoniker: moniker.choose(),
+                composeMoniker: moniker.choose(),
+                emptyMoniker: moniker.choose(),
+                noComposeMoniker: moniker.choose(),
                 partials: defaultPartials,
-                title: id,
-                nocomposeMoniker,
-                composeMoniker,
-                mapsMoniker,
-                cellMoniker,
-                canvasMoniker,
-                sharedTextMoniker,
-                scribeMoniker,
+                sharedTextMoniker: moniker.choose(),
+                title: "Prague Demos",
+                videoMoniker: moniker.choose(),
             });
     });
 

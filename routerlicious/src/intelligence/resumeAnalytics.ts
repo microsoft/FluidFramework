@@ -34,7 +34,7 @@ class ResumeAnalyticsIntelligentService implements IIntelligentService {
         return new Promise<any>((resolve, reject) => {
             const text = data.documents[0].text as string;
             // tslint:disable-next-line
-            if (text.indexOf("involving Windows for Workgroups, Windows NT Advanced Server, Microsoft SQL Server, Oracle7, and UNIX.") !== -1) {
+            if (text.indexOf("(bsd & SVr3/r4)") !== -1) {
                 resolve(0.87);
             } else {
                 resolve(0.2);

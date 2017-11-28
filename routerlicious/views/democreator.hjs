@@ -8,27 +8,42 @@
 
         <div class="container">
 
-            <h1> Demo Creator </h1>
+            <h1>Prague Demos</h1>
 
-            <p> OT Demos: </p>
-            <div id="ot-list" class="ot-links">
-                <ul class="list-unstyled">
-                    <li><a href="https://offnet.azurewebsites.net/canvas/{{nocomposeMoniker}}"> OT Nay-Compose </a></li>
-                    <li><a href="https://offnet.azurewebsites.net/canvas/{{composeMoniker}}"> OT Yay-Compose </a></li>
-                </ul>
-            </div>
+            <h3>Competitive Analysis</h3>
+            <ul class="list-unstyled">
+                <li><a href="https://docs.google.com/document/d/1Ed3_Bgmfj4L1tvjjh8geSHNZMbh_X6SaRd1uZGSQSio/edit">Google Docs Pride and Prejudice</a></li>
+                <li><a href="https://microsoft-my.sharepoint-df.com/:w:/r/personal/kurtb_microsoft_com/_layouts/15/Doc.aspx?sourcedoc=%7B3fc69ddc-eb43-4653-be42-cc3d34425a67%7D&action=edit">Word Online Pride and Prejudice</a></li>
+                <li><a href="https://offnet.azurewebsites.net/canvas/{{noComposeMoniker}}?nocompose">Ink (no compose)</a></li>
+                <li><a href="https://offnet.azurewebsites.net/canvas/{{composeMoniker}}">Ink (compose)</a></li>
+            </ul>
 
-            <p> Prague Demos: </p>
-            <div id="prague-list" class="prague-links">
-                <ul class="list-unstyled">
-                    <li><a class="plink" href="{{mapsMoniker}}"> Collaborative Map </a></li>
-                    <li><a class="plink" href="{{cellMoniker}}"> Collaborative Cell </a></li>
-                    <li><a class="plink" href="{{canvasMoniker}}"> Ink Canvas </a></li>
-                    <li><a class="plink" href="{{sharedTextMoniker}}"> Shared String </a></li>
-                    <li><a class="plink" href="{{scribeMoniker}}"> Scribe </a></li>
-                </ul>
-            </div>
+            <h3>Routerlicious</h3>
+            <ul class="list-unstyled">
+                <li><a href="/sharedText/{{sharedTextMoniker}}?spellchecking=disabled">Pride and Prejudice</a></li>
+                <li><a href="http://prague-grafana.westus2.cloudapp.azure.com/dashboard/db/latency-summary">Performance Metrics</a></li>
+                <li><a href="/canvas/{{canvasMoniker}}">Ink</a></li>
+            </ul>
 
+            <h3>Rich Text</h3>
+            <ul class="list-unstyled">
+                <li><a href="/sharedText/{{sharedTextMoniker}}?spellchecking=disabled">Rich Text and Presence</a></li>
+            </ul>
+
+            <h3>Intelligent Services</h3>
+            <ul class="list-unstyled">
+                <li><a href="/scribedemo">Scribe</a></li>
+            </ul>
+
+            <h3>Versioning and Branching</h3>
+            <ul class="list-unstyled">
+                <li><a href="/sharedText/{{emptyMoniker}}?template=empty">Starter Document</a></li>
+            </ul>
+
+            <h3>Distributive Data Type Apps</h3>
+            <ul class="list-unstyled">
+                <li><a href="/youtubeVideo/{{videoMoniker}}">Video player</a></li>
+            </ul>
         </div>
 
     {{/content}}
