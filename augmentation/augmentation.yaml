@@ -11,7 +11,7 @@ spec:
     spec:
       containers:
       - name: augmentation
-        image: prague.azurecr.io/augmentation:807
+        image: prague.azurecr.io/augmentation:833
         command:
           - 'node'
           - 'dist/index.js'

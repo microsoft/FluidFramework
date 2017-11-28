@@ -33,9 +33,9 @@ class ResumeAnalyticsIntelligentService implements IIntelligentService {
     private invokeRequest(service: string, data: any): Promise<any> {
         return new Promise<any>((resolve, reject) => {
             const text = data.documents[0].text as string;
-            // tslint:disable-next-line
             if (text.indexOf("(bsd & SVr3/r4)") !== -1) {
-                resolve(0.87);
+                const prob = Math.random() * (92 - 80) + 80;
+                resolve((prob * 1.0) / 100);
             } else {
                 resolve(0.2);
             }
