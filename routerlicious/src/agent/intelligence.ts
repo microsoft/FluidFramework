@@ -3,7 +3,7 @@ import * as intelligence from "../intelligence";
 import { RateLimiter } from "./rateLimiter";
 
 // 5s wait time between intelligent service calls
-const defaultWaitTime = 20 * 1000;
+const defaultWaitTime = 10 * 1000;
 
 export class IntelligentServicesManager {
     private services: intelligence.IIntelligentService[] = [];
