@@ -2,9 +2,14 @@ import * as ui from "../ui";
 
 export class Title extends ui.Component {
 
+    public viewportRect: ui.Rectangle;
+    public viewportDiv: HTMLDivElement;
+
     constructor(element: HTMLDivElement) {
         super(element);
-        this.element.classList.add("title-bar");
+        this.viewportDiv = document.createElement("div");
+        this.element.appendChild(this.viewportDiv);
+        this.viewportDiv.classList.add("title-bar");
     }
 
     public measure(size: ui.ISize): ui.ISize {
@@ -12,7 +17,7 @@ export class Title extends ui.Component {
     }
 
     public setTitle(title: string) {
-        this.element.innerHTML = `<span style="font-size:20px;font-family:Book Antiqua">${title}</span>`;
+        this.viewportDiv.innerHTML = `<span style="font-size:20px;font-family:Book Antiqua">${title}</span>`;
     }
 
     public setBackgroundColor(title: string) {
@@ -20,6 +25,11 @@ export class Title extends ui.Component {
         const gradient = `linear-gradient(to right, rgba(${rgb[0]},${rgb[1]},${rgb[2]},0),
                           rgba(${rgb[0]},${rgb[1]},${rgb[2]},1))`;
         this.element.style.background = gradient;
+    }
+
+    protected resizeCore(bounds: ui.Rectangle) {
+        this.viewportRect = bounds.inner(0.92);
+        ui.Rectangle.conformElementToRect(this.viewportDiv, this.viewportRect);
     }
 
     // Implementation of java String#hashCode
