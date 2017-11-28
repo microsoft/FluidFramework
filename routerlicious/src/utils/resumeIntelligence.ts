@@ -113,7 +113,9 @@ export class ResumeIntelligentSerivce implements IIntelligentService {
                 });
 
                 const deferred = this.messagePromises[payload.MessageId];
-                deferred.resolve(payload.Payload);
+                if (deferred !== undefined) {
+                    deferred.resolve(payload.Payload);
+                }
             });
 
         return client;
