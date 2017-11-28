@@ -5,6 +5,8 @@ let document: api.Document;
 let sharedString: MergeTree.SharedString;
 let play: boolean = false;
 
+const saveLineFrequency = 5;
+
 export interface IScribeMetrics {
     histogram: utils.Histogram;
 
@@ -353,7 +355,10 @@ async function typeFile(
                     ss.insertMarker(insertPosition++, MergeTree.MarkerBehaviors.Tile,
                     {[MergeTree.reservedTileLabelsKey]: ["pg"]});
                     readPosition++;
-                    doc.save(`Line ${++lineNumber}`);
+                    ++lineNumber;
+                    if (lineNumber % saveLineFrequency === 0) {
+                        doc.save(`Line ${lineNumber}`);
+                    }
                 } else {
                     ss.insertText(fileText.charAt(readPosition++), insertPosition++);
                 }

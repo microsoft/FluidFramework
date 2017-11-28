@@ -15,7 +15,8 @@ let templateConfig = {
       },
     commit: {
         dot: {
-           size: 24,
+           color: "#f2f2f2",
+           size: 40,
            strokeColor: "#000000",
            strokeWidth: 5,
         },
@@ -24,12 +25,12 @@ let templateConfig = {
             displayAuthor: false,
             displayBranch: false,
             displayHash: false,
-            font: "normal 10pt Arial",
+            font: "normal 12pt Arial",
         },
         shouldDisplayTooltipsInCompactMode: true, // default = true
         spacingY: -80,
         tag: {
-            font: "normal 8pt Arial",
+            font: "normal 12pt Arial",
         },
         tooltipHTMLFormatter: (commit) => {
             return "" + commit.sha1 + "" + ": " + commit.message;
