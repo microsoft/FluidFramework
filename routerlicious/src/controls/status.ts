@@ -21,6 +21,7 @@ export class Status extends ui.Component implements IStatus {
     public info: IKeyMsgPair[] = [];
     private commands: IOption[] = [];
     private listElement: HTMLUListElement;
+    private sliderElement: HTMLDivElement;
 
     constructor(element: HTMLDivElement) {
         super(element);
@@ -100,6 +101,16 @@ export class Status extends ui.Component implements IStatus {
         }
     }
 
+    public addSlider(sliderDiv: HTMLDivElement) {
+        this.sliderElement = sliderDiv;
+        this.renderBar();
+    }
+
+    public removeSlider() {
+        this.sliderElement = undefined;
+        this.renderBar();
+    }
+
     public renderBar() {
         let buf = "";
         let first = true;
@@ -125,6 +136,9 @@ export class Status extends ui.Component implements IStatus {
 
         // Add options
         this.element.appendChild(this.listElement);
+        if (this.sliderElement) {
+            this.element.appendChild(this.sliderElement);
+        }
     }
 
     public measure(size: ui.ISize): ui.ISize {
