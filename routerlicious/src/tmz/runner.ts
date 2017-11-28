@@ -91,24 +91,27 @@ export class TmzRunner implements utils.IRunner {
         });
 
         this.q = queue(async (message: any, callback) => {
-            const value = JSON.parse(message.value.toString("utf8")) as core.IRawOperationMessage;
-            const documentId = value.documentId;
+            const baseMessage = JSON.parse(message.value.toString("utf8")) as core.IMessage;
+            if (baseMessage.type === core.SequencedOperationType) {
+                const documentId = (baseMessage as core.ISequencedOperationMessage).documentId;
 
-            // Check if already requested. Update the Timestamp in the process.
-            if (this.foreman.getManager().updateDocumentIfFound(documentId)) {
-                callback();
-                return;
+                // Check if already requested. Update the Timestamp in the process.
+                if (this.foreman.getManager().updateDocumentIfFound(documentId)) {
+                    callback();
+                    return;
+                }
+
+                // No worker joined yet. Store document to process later.
+                if (!this.workerJoined) {
+                    this.pendingWork.add(documentId);
+                    callback();
+                    return;
+                }
+
+                winston.info(`Requesting work for ${documentId}`);
+                await this.processDocuments([documentId]);
             }
 
-            // No worker joined yet. Store document to process later.
-            if (!this.workerJoined) {
-                this.pendingWork.add(documentId);
-                callback();
-                return;
-            }
-
-            winston.info(`Requesting work for ${documentId}`);
-            await this.processDocuments([documentId]);
             callback();
         }, 1);
 

@@ -20,13 +20,14 @@ export class KafkaResources implements utils.IResources {
 
 export class KafkaResourcesFactory implements utils.IResourcesFactory<KafkaResources> {
     public async create(config: Provider): Promise<KafkaResources> {
-        const lambdaFactory = require(process.argv[2]).create() as IPartitionLambdaFactory;
+        const plugin = require(process.argv[2]);
+        const lambdaFactory = plugin.create() as IPartitionLambdaFactory;
 
         const kafkaEndpoint = config.get("kafka:lib:endpoint");
         const kafkaLibrary = config.get("kafka:lib:name");
 
-        const groupId = config.get("routemaster:groupId");
-        const clientId = `${config.get("routemaster:clientId")}-${moniker.choose()}`;
+        const groupId = plugin.id;
+        const clientId = moniker.choose();
         const receiveTopic = config.get("routemaster:topics:receive");
         const checkpointBatchSize = config.get("routemaster:checkpointBatchSize");
         const checkpointTimeIntervalMsec = config.get("routemaster:checkpointTimeIntervalMsec");

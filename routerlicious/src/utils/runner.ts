@@ -1,6 +1,10 @@
+import * as moniker from "moniker";
 import * as nconf from "nconf";
+import * as os from "os";
 import * as path from "path";
 import * as winston from "winston";
+import * as core from "../core";
+import * as utils from "../utils";
 import { configureLogging } from "./logger";
 
 /**
@@ -73,6 +77,41 @@ export async function run<T extends IResources>(
     await resources.dispose();
 }
 
+async function runTracked<T extends IResources>(
+    config: nconf.Provider,
+    producer: utils.kafkaProducer.IProducer,
+    group: string,
+    resourceFactory: IResourcesFactory<T>,
+    runnerFactory: IRunnerFactory<T>): Promise<void> {
+
+    // Notify of the join
+    const joinMessage: core.ISystemMessage = {
+        group,
+        id: os.hostname(),
+        operation: core.SystemOperations[core.SystemOperations.Join],
+        type: core.SystemType,
+    };
+    await producer.send(JSON.stringify(joinMessage), "__system__").catch((error) => {
+        winston.error(error);
+    });
+
+    // Run the service
+    const runError = await run(config, resourceFactory, runnerFactory).then(() => null, (error) => error);
+
+    // Notify of the leave
+    const leaveMessage: core.ISystemMessage = {
+        group,
+        id: os.hostname(),
+        operation: core.SystemOperations[core.SystemOperations.Leave],
+        type: core.SystemType,
+    };
+    await producer.send(JSON.stringify(leaveMessage), "__system__").catch((error) => {
+        winston.error(error);
+    });
+
+    return runError ? Promise.resolve() : Promise.reject(runError);
+}
+
 /**
  * Variant of run that is used to fully run a service. It configures base settings such as logging. And then will
  * exit the service once the runner completes.
@@ -80,12 +119,25 @@ export async function run<T extends IResources>(
 export function runService<T extends IResources>(
     resourceFactory: IResourcesFactory<T>,
     runnerFactory: IRunnerFactory<T>,
+    group: string,
     configFile = path.join(__dirname, "../../config/config.json")) {
 
     const config = nconf.argv().env(<any> "__").file(configFile).use("memory");
     configureLogging(config.get("logger"));
 
-    const runningP = run(config, resourceFactory, runnerFactory);
+    // Initialize system bus connection
+    const kafkaConfig = config.get("kafka:lib");
+    const sendTopic = config.get("system:topics:send");
+    const kafkaClientId = moniker.choose();
+
+    const producer = utils.kafkaProducer.create(
+        kafkaConfig.name,
+        kafkaConfig.endpoint,
+        kafkaClientId,
+        sendTopic);
+
+    // notify of connection
+    const runningP = runTracked(config, producer, group, resourceFactory, runnerFactory);
     runningP.then(
         () => {
             winston.info("Exiting");

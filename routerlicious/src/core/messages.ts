@@ -6,12 +6,33 @@ export const RawOperationType: string = "RawOperation";
 // String identifying the sequenced operation message
 export const SequencedOperationType: string = "SequencedOperation";
 
+export const SystemType: string = "System";
+
 /**
  * Base class for messages placed on the distributed log
  */
 export interface IMessage {
     // The type of the message
     type: string;
+}
+
+export enum SystemOperations {
+    // Service joining the cluster
+    Join,
+
+    // Service leaving the cluster
+    Leave,
+}
+
+export interface ISystemMessage extends IMessage {
+    // Id of the service sending the message
+    id: string;
+
+    // Group that the service belongs to
+    group: string;
+
+    // System operation being performed
+    operation: any;
 }
 
 /**

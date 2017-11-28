@@ -57,6 +57,10 @@ paparazzi:
   name: paparazzi
   replicas: 1
 
+serviceGraph:
+  name: serviceGraph
+  replicas: 1
+
 historian:
   externalUrl: http://prague-historian.westus2.cloudapp.azure.com
 
