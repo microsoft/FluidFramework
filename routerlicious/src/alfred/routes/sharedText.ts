@@ -85,12 +85,16 @@ export function create(
         const versionP = storage.getVersion(gitManager, targetVersionSha);
         versionP.then(
             (version) => {
+                const options = {
+                    spellchecker: "disabled",
+                };
                 response.render(
                     "sharedText",
                     {
                         config: workerConfig,
                         id: request.params.id,
                         loadPartial: true,
+                        options: JSON.stringify(options),
                         partials: defaultPartials,
                         template: undefined,
                         title: request.params.id,

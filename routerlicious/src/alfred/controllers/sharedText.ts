@@ -33,7 +33,7 @@ async function getInsights(map: types.IMap, id: string): Promise<types.IMap> {
 // tslint:disable-next-line
 export async function onLoad(id: string, version: resources.ICommit, config: any, template: string, loadPartial: boolean, options: Object) {
     console.log(`Load Option: ${JSON.stringify(options)}`);
-    loadPartial ? loadCommit(id, version, config) : loadFull(id, version, config, template, options);
+    loadPartial ? loadCommit(id, version, config, options) : loadFull(id, version, config, template, options);
 }
 
 async function loadFull(id: string, version: resources.ICommit, config: any, template: string, options: Object) {
@@ -110,7 +110,7 @@ async function loadFull(id: string, version: resources.ICommit, config: any, tem
     });
 }
 
-async function loadCommit(id: string, version: resources.ICommit, config: any) {
+async function loadCommit(id: string, version: resources.ICommit, config: any, options: Object) {
     console.log(`Load document ${id} upto commit ${JSON.stringify(version)}.`);
 
     const host = new ui.BrowserContainerHost();
@@ -137,7 +137,7 @@ async function loadCommit(id: string, version: resources.ICommit, config: any) {
         url.resolve(document.baseURI, "/public/images/bindy.svg"));
 
     const containerDiv = document.createElement("div");
-    const container = new controls.FlowContainer(containerDiv, collabDoc, sharedString, inkPlane, image);
+    const container = new controls.FlowContainer(containerDiv, collabDoc, sharedString, inkPlane, image, options);
     theFlow = container.flowView;
     host.attach(container);
 
