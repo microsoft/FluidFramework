@@ -2023,12 +2023,15 @@ function renderFlow(layoutContext: ILayoutContext, deferWhole = false): IRenderO
         if ((segoff.segment.getType() === SharedString.SegmentType.Marker) &&
             ((<SharedString.Marker>segoff.segment).hasRangeLabel("table"))) {
             let marker = <SharedString.Marker>segoff.segment;
-            let tableView = (<ITableMarker>marker).view;
             // TODO: branches
+            let tableView: TableView;
             if (marker.removedSeq === undefined) {
                 renderTable(marker, docContext, layoutContext, deferredPGs);
+                tableView = (<ITableMarker>marker).view;
                 deferredHeight += tableView.deferredHeight;
                 layoutContext.viewport.vskip(layoutContext.docContext.tableVspace);
+            } else {
+                tableView = parseTable(marker,currentPos,docContext,flowView);
             }
             let endTablePos = getOffset(layoutContext.flowView, tableView.endTableMarker);
             currentPos = endTablePos + 1;
