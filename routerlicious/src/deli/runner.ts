@@ -1,4 +1,4 @@
-import { queue } from "async";
+import { AsyncQueue, queue } from "async";
 import * as _ from "lodash";
 import * as winston from "winston";
 import * as api from "../api-core";

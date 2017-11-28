@@ -22,7 +22,7 @@ export interface ILambdaFactory {
 // Partition queries threads for how far completed they are
 
 export class Router {
-    private queue: AsyncQueue<core.ISequencedOperationMessage>;
+    private queue: async.AsyncQueue<core.ISequencedOperationMessage>;
 
     constructor(id: string) {
         this.queue = async.queue<core.ISequencedOperationMessage, any>(

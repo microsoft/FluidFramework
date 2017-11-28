@@ -1,5 +1,5 @@
 import * as assert from "assert";
-import { queue } from "async";
+import { AsyncQueue, queue } from "async";
 import * as winston from "winston";
 import * as utils from "../utils";
 import { CheckpointManager, ICheckpointStrategy } from "./checkpointManager";

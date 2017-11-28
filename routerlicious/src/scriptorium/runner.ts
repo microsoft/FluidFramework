@@ -1,4 +1,4 @@
-import { queue } from "async";
+import { AsyncQueue, queue } from "async";
 import * as winston from "winston";
 import * as core from "../core";
 import { Deferred } from "../core-utils";

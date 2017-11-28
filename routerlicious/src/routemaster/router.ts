@@ -99,7 +99,7 @@ export class DocumentManager {
 }
 
 export class Router {
-    private queue: AsyncQueue<core.ISequencedOperationMessage>;
+    private queue: async.AsyncQueue<core.ISequencedOperationMessage>;
     private documentDetailsP: Promise<DocumentManager>;
 
     constructor(
