@@ -52,7 +52,7 @@ data:
         },
         "system": {
             "topics": {
-                "send": "deltas"
+                "send": "{{ .Values.kafka.topics.deltas }}"
             }
         },
         "routemaster": {
