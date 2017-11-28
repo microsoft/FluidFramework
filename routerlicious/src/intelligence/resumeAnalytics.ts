@@ -1,4 +1,4 @@
-import * as request from "request";
+// import * as request from "request";
 import { IIntelligentService, IIntelligentServiceFactory } from "./api";
 
 export interface IConfig {
@@ -16,7 +16,7 @@ class ResumeAnalyticsIntelligentService implements IIntelligentService {
     }
 
     public async run(value: string): Promise<any> {
-        const condensed = value.substring(0, Math.min(value.length, 5012));
+        const condensed = value.substring(0, Math.min(value.length, 10000));
         const data: any = {
             documents: [{
                 id: "1",
@@ -29,6 +29,20 @@ class ResumeAnalyticsIntelligentService implements IIntelligentService {
         };
     }
 
+    // This is a fake resume classifier just for the demo since the original service is not working.
+    private invokeRequest(service: string, data: any): Promise<any> {
+        return new Promise<any>((resolve, reject) => {
+            const text = data.documents[0].text as string;
+            // tslint:disable-next-line
+            if (text.indexOf("involving Windows for Workgroups, Windows NT Advanced Server, Microsoft SQL Server, Oracle7, and UNIX.") !== -1) {
+                resolve(0.87);
+            } else {
+                resolve(0.2);
+            }
+        });
+    }
+
+    /*
     private invokeRequest(service: string, data: any): Promise<any> {
         return new Promise<any>((resolve, reject) => {
             request.post(
@@ -53,7 +67,8 @@ class ResumeAnalyticsIntelligentService implements IIntelligentService {
                     return resolve(body);
                 });
         });
-    }
+    }*/
+
 }
 
 export class ResumeAnalyticsFactory implements IIntelligentServiceFactory {
