@@ -479,7 +479,7 @@ export class OverlayCanvas extends ui.Component {
                 this.activeLayer = new InkLayer({ width: 0, height: 0 }, model);
                 this.activeLayer.setPosition(translatedPoint);
                 this.addLayer(this.activeLayer);
-                this.emit("ink", this.activeLayer, model, translatedPoint);
+                this.emit("ink", this.activeLayer, model, { x: evt.pageX, y: evt.pageY });
             }
 
             this.stopDryTimer();
@@ -597,8 +597,8 @@ export class OverlayCanvas extends ui.Component {
     private translatePoint(relative: HTMLElement, event: PointerEvent): ui.IPoint {
         const boundingRect = relative.getBoundingClientRect();
         const offset = {
-            x: boundingRect.top + document.body.scrollTop,
-            y: boundingRect.left + document.body.scrollLeft,
+            x: boundingRect.left + document.body.scrollLeft,
+            y: boundingRect.top + document.body.scrollTop,
         };
 
         return {

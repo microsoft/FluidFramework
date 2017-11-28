@@ -199,8 +199,12 @@ export class FlowContainer extends ui.Component {
         location.x += activeLayer.cursorOffset.x;
         location.y += activeLayer.cursorOffset.y;
 
+        // Translate from global to local coordinates
+        const bounds = this.flowView.element.getBoundingClientRect();
+        const translated = { x: location.x - bounds.left, y: location.y - bounds.top };
+
         // Update the position unless we're in the process of drawing the layer
-        this.activeLayers[id].layer.setPosition(location);
+        this.activeLayers[id].layer.setPosition(translated);
     }
 
     private async updateInsights(insights: types.IMap) {
