@@ -37,7 +37,11 @@
         "groupId": "deli",
         "checkpointBatchSize": 10,
         "checkpointTimeIntervalMsec": 1000
-
+    },
+    "system": {
+        "topics": {
+            "send": "deltas"
+        }
     },
     "routemaster": {
         "topics": {

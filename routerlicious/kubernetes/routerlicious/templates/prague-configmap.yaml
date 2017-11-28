@@ -50,6 +50,11 @@ data:
             "checkpointBatchSize": 10,
             "checkpointTimeIntervalMsec": 1000
         },
+        "system": {
+            "topics": {
+                "send": "{{ .Values.kafka.topics.deltas }}"
+            }
+        },
         "routemaster": {
             "topics": {
                 "receive": "{{ .Values.kafka.topics.deltas }}",

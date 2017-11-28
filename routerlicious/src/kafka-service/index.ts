@@ -7,4 +7,4 @@ if (process.argv.length !== 3) {
     process.exit(1);
 }
 
-utils.runService(new KafkaResourcesFactory(), new KafkaRunnerFactory());
+utils.runService(new KafkaResourcesFactory(), new KafkaRunnerFactory(), "kafka-service");
