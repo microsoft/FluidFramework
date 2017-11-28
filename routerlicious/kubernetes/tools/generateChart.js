@@ -58,7 +58,7 @@ paparazzi:
   replicas: 1
 
 serviceGraph:
-  name: serviceGraph
+  name: servicegraph
   replicas: 1
 
 historian:
