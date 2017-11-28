@@ -8,7 +8,7 @@ const repository = "prague";
 // Register endpoint connection
 prague.socketStorage.registerAsDefault(routerlicious, historian, repository);
 
-let id = "testGraph-pooch14";
+let id = "veal85";
 
 interface ISharedVertex {
 	id: string;

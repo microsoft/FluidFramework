@@ -1533,7 +1533,7 @@ export class Client {
         let index = len - 1;
         let seq = undoSegments[index].seq;
         if (seq === 0) {
-            return;
+            return 0;
         }
         while (index >= 0) {
             let undoInfo = undoSegments[index];
@@ -1546,14 +1546,15 @@ export class Client {
             index--;
         }
         undoSegments.length = index + 1;
+        return seq;
     }
 
     undo() {
-        this.undoSingleSequenceNumber(this.undoSegments, this.redoSegments);
+        return this.undoSingleSequenceNumber(this.undoSegments, this.redoSegments);
     }
 
     redo() {
-        this.undoSingleSequenceNumber(this.redoSegments, this.undoSegments);
+        return this.undoSingleSequenceNumber(this.redoSegments, this.undoSegments);
     }
 
     cloneFromSegments() {

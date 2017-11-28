@@ -756,6 +756,7 @@ function renderSegmentIntoLine(
         }
     } else if (segType === SharedString.SegmentType.Marker) {
         let marker = <SharedString.Marker>segment;
+        // console.log(`marker pos: ${segpos}`);
         if (endRenderSegments(marker)) {
             if (lineContext.flowView.cursor.pos === segpos) {
                 showPositionEndOfLine(lineContext);
@@ -2016,6 +2017,9 @@ function renderFlow(layoutContext: ILayoutContext, deferWhole = false): IRenderO
         if (fetchLog) {
             console.log(`got segment ${segoff.segment.toString()}`);
         }
+        if (!segoff.segment) {
+            break;
+        }
         if ((segoff.segment.getType() === SharedString.SegmentType.Marker) &&
             ((<SharedString.Marker>segoff.segment).hasRangeLabel("table"))) {
             let marker = <SharedString.Marker>segoff.segment;
@@ -2077,6 +2081,9 @@ function renderFlow(layoutContext: ILayoutContext, deferWhole = false): IRenderO
                 // tslint:disable:max-line-length
                 console.log(`egregious content width ${contentWidth} bound ${layoutContext.viewport.currentLineWidth()}`);
             }
+            if (flowView.historyClient) {
+                clearContentCaches(curPGMarker);
+            }
             if ((!curPGMarker.cache) || (curPGMarker.cache.singleLineWidth !== contentWidth)) {
                 if (!curPGMarker.itemCache) {
                     itemsContext.itemInfo = { items: [], minWidth: 0 };
@@ -2092,10 +2099,10 @@ function renderFlow(layoutContext: ILayoutContext, deferWhole = false): IRenderO
             pgCount++;
             paragraphLexer.reset();
             // TODO: more accurate end of document reasoning
-            if (currentPos < (totalLength - 1)) {
+            if (currentPos < totalLength) {
                 renderPG(curPGMarker, currentPos, indentWidth, indentSymbol, contentWidth);
                 currentPos = curPGMarkerPos + curPGMarker.cachedLength;
-                if (currentPos >= (totalLength - 1)) {
+                if (currentPos >= totalLength) {
                     break;
                 }
                 segoff = getContainingSegment(flowView, currentPos);
@@ -2456,6 +2463,9 @@ export class FlowView extends ui.Component {
     public viewportRect: ui.Rectangle;
     public client: SharedString.Client;
     public historyClient: SharedString.Client;
+    public historyWidget: HTMLDivElement;
+    public historyBubble: HTMLDivElement;
+    public historyVersion: HTMLSpanElement;
     public savedClient: SharedString.Client;
     public ticking = false;
     public wheelTicking = false;
@@ -2509,11 +2519,51 @@ export class FlowView extends ui.Component {
         console.log(`clone took ${Date.now() - clock}ms`);
     }
 
+    public updateHistoryBubble(seq: number) {
+        let widgetDivBounds = this.historyWidget.getBoundingClientRect();
+        let w = widgetDivBounds.width - 14;
+        let count = this.client.undoSegments.length + this.client.redoSegments.length;
+        let pct = this.client.undoSegments.length / count;
+        let l = 7 + Math.floor(pct * w);
+        this.historyBubble.style.left = `${l}px`;
+        this.historyVersion.innerText = `Version @${seq}`;
+    }
+
+    public makeHistoryWidget() {
+        let bounds = ui.Rectangle.fromClientRect(this.status.element.getBoundingClientRect());
+        let x = Math.floor(bounds.width / 2);
+        let y = 2;
+        let widgetRect = new ui.Rectangle(x, y, Math.floor(bounds.width * 0.4),
+            (bounds.height - 4));
+        let widgetDiv = document.createElement("div");
+        widgetRect.conformElement(widgetDiv);
+        widgetDiv.style.zIndex = "3";
+        let bubble = document.createElement("div");
+        widgetDiv.style.borderRadius = "6px";
+        bubble.style.position = "absolute";
+        bubble.style.width = "8px";
+        bubble.style.height = `${bounds.height - 6}px`;
+        bubble.style.borderRadius = "5px";
+        bubble.style.top = "1px";
+        bubble.style.left = `${widgetRect.width - 7}px`;
+        bubble.style.backgroundColor = "pink";
+        widgetDiv.style.backgroundColor = "rgba(179,179,179,0.3)";
+        widgetDiv.appendChild(bubble);
+        let versionSpan = document.createElement("span");
+        widgetDiv.appendChild(versionSpan);
+        versionSpan.innerText="History";
+        versionSpan.style.padding="3px";
+        this.historyVersion = versionSpan;
+        this.historyWidget = widgetDiv;
+        this.historyBubble = bubble;
+        this.status.addSlider(this.historyWidget);
+    }
     public goHistorical() {
         if (!this.historyClient) {
             this.historyClient = this.client.cloneFromSegments();
             this.savedClient = this.client;
             this.client = this.historyClient;
+            this.makeHistoryWidget();
         }
     }
 
@@ -2521,6 +2571,7 @@ export class FlowView extends ui.Component {
         if (this.historyClient) {
             this.client = this.savedClient;
             this.historyClient = undefined;
+            this.status.removeSlider();
             this.topChar = 0;
             this.localQueueRender(0);
         }
@@ -2528,16 +2579,22 @@ export class FlowView extends ui.Component {
 
     public historyBack() {
         this.goHistorical();
-        this.client.undo();
-        this.cursor.pos = FlowView.docStartPosition;
-        this.localQueueRender(FlowView.docStartPosition);
+        if (this.client.undoSegments.length > 0) {
+            let seq = this.client.undo();
+            this.updateHistoryBubble(seq);
+            this.cursor.pos = FlowView.docStartPosition;
+            this.localQueueRender(FlowView.docStartPosition);
+        }
     }
 
     public historyForward() {
         this.goHistorical();
-        this.client.redo();
-        this.cursor.pos = FlowView.docStartPosition;
-        this.localQueueRender(FlowView.docStartPosition);
+        if (this.client.redoSegments.length > 0) {
+            let seq = this.client.redo();
+            this.updateHistoryBubble(seq);
+            this.cursor.pos = FlowView.docStartPosition;
+            this.localQueueRender(FlowView.docStartPosition);
+        }
     }
 
     public addPresenceMap(presenceMap: types.IMap) {
@@ -3415,17 +3472,20 @@ export class FlowView extends ui.Component {
 
     public render(topChar?: number, changed = false) {
         let len = this.client.getLength();
+        if (len === 0) {
+            return;
+        }
         if (topChar !== undefined) {
             if (((this.topChar === topChar) || ((this.topChar === -1) && (topChar < 0)))
                 && (!changed)) {
                 return;
             }
             this.topChar = topChar;
-            if (this.topChar >= len) {
-                this.topChar = len - (this.viewportCharCount() / 2);
-            }
             if (this.topChar < 0) {
                 this.topChar = 0;
+            }
+            if (this.topChar >= len) {
+                this.topChar = len - (this.viewportCharCount() / 2);
             }
         }
 
@@ -3518,7 +3578,9 @@ export class FlowView extends ui.Component {
     protected resizeCore(bounds: ui.Rectangle) {
         this.viewportRect = bounds.inner(0.92);
         ui.Rectangle.conformElementToRect(this.viewportDiv, this.viewportRect);
-        this.render(this.topChar, true);
+        if (this.client.getLength() > 0) {
+            this.render(this.topChar, true);
+        }
     }
 
     private increaseIndent(tile: IParagraphMarker, pos: number, decrease = false) {
