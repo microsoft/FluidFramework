@@ -29,15 +29,15 @@ export class DocumentDeltaConnection implements api.IDocumentDeltaConnection {
         public privateKey: string,
         public publicKey: string) {
 
-            this.submitManager = new BatchManager<IPendingSend>((submitType, work) => {
-                this.service.emit(submitType, this.clientId, work.map((message) => message.message), (error) => {
-                    if (error) {
-                        work.forEach((message) => message.deferred.reject(error));
-                    } else {
-                        work.forEach((message) => message.deferred.resolve());
-                    }
-                });
+        this.submitManager = new BatchManager<IPendingSend>((submitType, work) => {
+            this.service.emit(submitType, this.clientId, work.map((message) => message.message), (error) => {
+                if (error) {
+                    work.forEach((message) => message.deferred.reject(error));
+                } else {
+                    work.forEach((message) => message.deferred.resolve());
+                }
             });
+        });
     }
 
     /**

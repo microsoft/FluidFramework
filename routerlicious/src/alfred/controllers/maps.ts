@@ -134,10 +134,10 @@ function loadFull(id: string, version: resources.ICommit, config: any) {
 }
 
 function loadCommit(id: string, version: resources.ICommit, config: any) {
-    socketStorage.registerAsLoader(document.location.origin, config.blobStorageUrl, config.repository);
+    socketStorage.registerAsDefault(document.location.origin, config.blobStorageUrl, config.repository);
 
     $(document).ready(() => {
-        api.loadVersion(id, { encrypted: false /* api.isUserLoggedIn() */ }, version).then(async (doc) => {
+        api.load(id, { encrypted: false /* api.isUserLoggedIn() */ }, version, false).then(async (doc) => {
             // tslint:disable-next-line
             window["doc"] = doc;
 

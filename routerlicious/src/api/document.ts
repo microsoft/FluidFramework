@@ -13,7 +13,6 @@ import {
     IDeltaConnection,
     IDistributedObject,
     IDistributedObjectServices,
-    IdleDeltaConnection,
     IDocumentAttributes,
     IDocumentResource,
     IDocumentService,
@@ -109,7 +108,7 @@ interface IAttachedServices {
  * A document is a collection of collaborative types.
  */
 export class Document {
-    public static async Create(
+    public static async Load(
         id: string,
         registry: Registry,
         service: IDocumentService,
@@ -117,7 +116,7 @@ export class Document {
         version: resources.ICommit,
         connect: boolean): Promise<Document> {
 
-        debug(`Document Creating ${id} - ${performanceNow()}`);
+        debug(`Document loading ${id} - ${performanceNow()}`);
 
         // Connect to the document
         const encryptedProperty = "encrypted";
@@ -126,6 +125,7 @@ export class Document {
 
         // Load in distributed objects stored within the document
         for (const distributedObject of document.distributedObjects) {
+            // const services = returnValue.getIdleObjectServices(distributedObject.id);
             const services = returnValue.getObjectServices(distributedObject.id);
             services.deltaConnection.setBaseMapping(distributedObject.sequenceNumber, document.minimumSequenceNumber);
             returnValue.loadInternal(distributedObject, services, document.snapshotOriginBranch);
@@ -148,36 +148,10 @@ export class Document {
             await waitForRoot(returnValue);
         }
 
-        debug(`Document Created ${id} - ${performanceNow()}`);
+        debug(`Document loaded ${id} - ${performanceNow()}`);
 
         // And return the new object
         return returnValue;
-    }
-
-    public static async Load(
-        id: string,
-        registry: Registry,
-        service: IDocumentService,
-        options: Object,
-        version: resources.ICommit,
-        connect: boolean): Promise<Document> {
-            debug(`Document loading ${id} - ${performanceNow()}`);
-
-            // Loads the document from header.
-            const encryptedProperty = "encrypted";
-            const document = await service.connect(id, version, connect, options[encryptedProperty]);
-            const returnValue = new Document(document, registry, service, options);
-
-            // Load in distributed objects stored within the document
-            for (const distributedObject of document.distributedObjects) {
-                const services = returnValue.getIdleObjectServices(distributedObject.id);
-                returnValue.loadInternal(distributedObject, services, document.snapshotOriginBranch);
-            }
-
-            debug(`Document Loaded ${id} - ${performanceNow()}`);
-
-            // And return the new object
-            return returnValue;
     }
 
     // Map from the object ID to the collaborative object for it. If the object is not yet attached its service
@@ -442,7 +416,7 @@ export class Document {
             entries,
         };
 
-        const message = `Commit @${this.deltaManager.minimumSequenceNumber}${getOrDefault(tagMessage, "")}`;
+        const message = `Commit @${this.deltaManager.referenceSequenceNumber}${getOrDefault(tagMessage, "")}`;
         await this.document.documentStorageService.write(root, message);
     }
 
@@ -523,14 +497,6 @@ export class Document {
 
     private getObjectServices(id: string): IAttachedServices {
         const connection = new DeltaConnection(id, this);
-        return {
-            deltaConnection: connection,
-            objectStorage: this.getStorageService(id),
-        };
-    }
-
-    private getIdleObjectServices(id: string): IAttachedServices {
-        const connection = new IdleDeltaConnection(id, this);
         return {
             deltaConnection: connection,
             objectStorage: this.getStorageService(id),
@@ -634,39 +600,15 @@ export class Document {
 }
 
 /**
- * Loads a collaborative object from the server
+ * Loads a specific version (commit) of the collaborative object
  */
 export async function load(
     id: string,
     options: Object = defaultDocumentOptions,
-    version: resources.ICommit = undefined,
-    registry: Registry = defaultRegistry,
-    service: IDocumentService = defaultDocumentService,
-    connect = true): Promise<Document> {
-
-    // Verify an extensions registry was provided
-    if (!registry) {
-        throw new Error("No extension registry provided");
-    }
-
-    // Verify we have services to load the document with
-    if (!service) {
-        throw new Error("Document service not provided to load call");
-    }
-
-    return Document.Create(id, registry, service, options, version, connect);
-}
-
-/**
- * Loads a specific version (commit) of the collaborative object
- */
-export async function loadVersion(
-    id: string,
-    options: Object = defaultDocumentOptions,
     version: resources.ICommit = null,
+    connect = true,
     registry: Registry = defaultRegistry,
-    service: IDocumentService = defaultDocumentService,
-    connect = true): Promise<Document> {
+    service: IDocumentService = defaultDocumentService): Promise<Document> {
 
     // Verify an extensions registry was provided
     if (!registry) {

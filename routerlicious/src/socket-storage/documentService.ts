@@ -10,6 +10,16 @@ import { debug } from "./debug";
 import { DocumentDeltaStorageService } from "./deltaStorageService";
 import { DocumentDeltaConnection } from "./documentDeltaConnection";
 import * as messages from "./messages";
+import { NullDeltaConnection } from "./nullDeltaConnection";
+
+// Generate encryption keys for new connection.
+// let privateKey: string = null;
+// let publicKey: string = null;
+// if (encrypted) {
+//     const asymmetricKeys = await api.generateAsymmetricKeys(2048, "", id);
+//     privateKey = asymmetricKeys.privateKey;
+//     publicKey = asymmetricKeys.publicKey;
+// }
 
 // Type aliases for mapping from events, to the objects interested in those events, to the connections for those
 // objects
@@ -75,20 +85,13 @@ export class DocumentService implements api.IDocumentService {
         version: resources.ICommit,
         connect: boolean,
         encrypted: boolean): Promise<api.IDocumentResource> {
-
         debug(`Connecting to ${id} - ${performanceNow()}`);
 
-        // Generate encryption keys for new connection.
-        let privateKey: string = null;
-        let publicKey: string = null;
+        if (!connect && !version) {
+            return Promise.reject("Must specify a version if connect is set to false");
+        }
 
-        // if (encrypted) {
-        //     const asymmetricKeys = await api.generateAsymmetricKeys(2048, "", id);
-        //     privateKey = asymmetricKeys.privateKey;
-        //     publicKey = asymmetricKeys.publicKey;
-        // }
-
-        const connectMessage: messages.IConnect = { id, privateKey, publicKey, encrypted };
+        const connectMessage: messages.IConnect = { id, privateKey: null, publicKey: null, encrypted };
 
         // If a version is specified we will load it directly - otherwise will query historian for the latest
         // version and then load it
@@ -103,20 +106,22 @@ export class DocumentService implements api.IDocumentService {
             ? this.blobStorge.getHeader(id, version)
             : Promise.resolve(getEmptyHeader(id));
 
-        const connectionP = new Promise<messages.IConnected>((resolve, reject) => {
-            this.socket.emit(
-                "connectDocument",
-                connectMessage,
-                (error, response: messages.IConnected) => {
-                    if (error) {
-                        return reject(error);
-                    } else {
-                        return resolve(response);
-                    }
-                });
-        });
+        const connectionP = connect
+            ? new Promise<messages.IConnected>((resolve, reject) => {
+                    this.socket.emit(
+                        "connectDocument",
+                        connectMessage,
+                        (error, response: messages.IConnected) => {
+                            if (error) {
+                                return reject(error);
+                            } else {
+                                return resolve(response);
+                            }
+                        });
+                })
+            : Promise.resolve<messages.IConnected>(null);
         const pendingDeltasP = headerP.then((header) => {
-            return this.deltaStorage.get(id, header ? header.attributes.sequenceNumber : 0);
+            return connect ? this.deltaStorage.get(id, header ? header.attributes.sequenceNumber : 0) : [];
         });
 
         // header *should* be enough to return the document. Pull it first as well as any pending delta
@@ -125,22 +130,27 @@ export class DocumentService implements api.IDocumentService {
         const [header, connection, pendingDeltas] = await Promise.all([headerP, connectionP, pendingDeltasP]);
 
         debug(`Connected to ${id} - ${performanceNow()}`);
-        const deltaConnection = new DocumentDeltaConnection(
-            this,
-            id,
-            connection.clientId,
-            encrypted,
-            connection.privateKey,
-            connection.publicKey);
+        let deltaConnection: api.IDocumentDeltaConnection;
+        if (connect) {
+            deltaConnection = new DocumentDeltaConnection(
+                this,
+                id,
+                connection.clientId,
+                encrypted,
+                connection.privateKey,
+                connection.publicKey);
+        } else {
+            deltaConnection = new NullDeltaConnection(id);
+        }
         const deltaStorage = new DocumentDeltaStorageService(id, this.deltaStorage);
         const documentStorage = new DocumentStorageService(id, version, this.blobStorge);
 
         const document = new DocumentResource(
             id,
-            connection.clientId,
-            connection.existing,
+            deltaConnection.clientId,
+            connection ? connection.existing : true,
             version,
-            connection.parentBranch,
+            connection ? connection.parentBranch : (header.attributes.branch !== id ? header.attributes.branch : null),
             deltaConnection,
             documentStorage,
             deltaStorage,

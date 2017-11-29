@@ -11,6 +11,7 @@ export interface IConfig {
 
 class ResumeAnalyticsIntelligentService implements IIntelligentService {
     public name: string = "ResumeAnalytics";
+    private lastProb = 0;
 
     constructor(private url: string) {
     }
@@ -34,7 +35,8 @@ class ResumeAnalyticsIntelligentService implements IIntelligentService {
         return new Promise<any>((resolve, reject) => {
             const text = data.documents[0].text as string;
             if (text.indexOf("(bsd & SVr3/r4)") !== -1) {
-                const prob = Math.random() * (92 - 80) + 80;
+                const prob = Math.max(this.lastProb, Math.random() * (92 - 80) + 80);
+                this.lastProb = prob;
                 resolve((prob * 1.0) / 100);
             } else {
                 resolve(0.2);

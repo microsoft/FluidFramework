@@ -115,9 +115,9 @@ async function loadCommit(id: string, version: resources.ICommit, config: any, o
 
     const host = new ui.BrowserContainerHost();
 
-    socketStorage.registerAsLoader(document.location.origin, config.blobStorageUrl, config.repository);
+    socketStorage.registerAsDefault(document.location.origin, config.blobStorageUrl, config.repository);
     console.log(`collabDoc loading ${id} - ${performanceNow()}`);
-    const collabDoc = await API.loadVersion(id, { blockUpdateMarkers: true }, version);
+    const collabDoc = await API.load(id, { blockUpdateMarkers: true }, version, false);
     console.log(`collabDoc loaded ${id} - ${performanceNow()}`);
     const root = await collabDoc.getRoot().getView();
     console.log(`Getting root ${id} - ${performanceNow()}`);

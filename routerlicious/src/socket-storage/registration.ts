@@ -26,17 +26,7 @@ function getDefaultService(deltaUrl: string, blobUrl: string, repository: string
     return new socketStorage.DocumentService(deltaUrl, storage.deltaStorage, storage.blobStorage, storage.gitManager);
 }
 
-function getLoadService(deltaUrl: string, blobUrl: string, repository: string): apiCore.IDocumentService {
-    const storage = getStorageServices(deltaUrl, blobUrl, repository);
-    return new socketStorage.LoadService(deltaUrl, storage.deltaStorage, storage.blobStorage);
-}
-
 export function registerAsDefault(deltaUrl: string, blobUrl: string, repository: string) {
     const service = getDefaultService(deltaUrl, blobUrl, repository);
-    api.registerDocumentService(service);
-}
-
-export function registerAsLoader(deltaUrl: string, blobUrl: string, repository: string) {
-    const service = getLoadService(deltaUrl, blobUrl, repository);
     api.registerDocumentService(service);
 }

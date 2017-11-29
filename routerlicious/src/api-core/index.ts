@@ -9,4 +9,3 @@ export * from "./types";
 export * from "./deltaManager";
 export * from "./localObjectStorageService";
 export * from "./objectStorageService";
-export * from "./idleDeltaConnection";
