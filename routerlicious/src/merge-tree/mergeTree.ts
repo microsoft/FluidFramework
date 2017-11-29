@@ -1549,6 +1549,24 @@ export class Client {
         return seq;
     }
 
+    historyToPct(pct: number) {
+        let count = this.undoSegments.length + this.redoSegments.length;
+        let curPct = this.undoSegments.length/count;
+        let seq = -1;
+        if (curPct>=pct) {
+            while (curPct>pct) {
+                seq = this.undoSingleSequenceNumber(this.undoSegments, this.redoSegments);
+                curPct = this.undoSegments.length/count;
+            }
+        } else {
+            while (curPct<pct) {
+                seq = this.undoSingleSequenceNumber(this.redoSegments, this.undoSegments);
+                curPct = this.undoSegments.length/count;
+            }
+        }
+        return seq;
+    }
+
     undo() {
         return this.undoSingleSequenceNumber(this.undoSegments, this.redoSegments);
     }

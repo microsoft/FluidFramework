@@ -2031,7 +2031,7 @@ function renderFlow(layoutContext: ILayoutContext, deferWhole = false): IRenderO
                 deferredHeight += tableView.deferredHeight;
                 layoutContext.viewport.vskip(layoutContext.docContext.tableVspace);
             } else {
-                tableView = parseTable(marker,currentPos,docContext,flowView);
+                tableView = parseTable(marker, currentPos, docContext, flowView);
             }
             let endTablePos = getOffset(layoutContext.flowView, tableView.endTableMarker);
             currentPos = endTablePos + 1;
@@ -2452,6 +2452,12 @@ function getOffset(flowView: FlowView, segment: SharedString.Segment) {
         flowView.client.getClientId());
 }
 
+function preventD(e: Event) {
+    e.returnValue = false;
+    e.preventDefault();
+    return false;
+}
+
 export class FlowView extends ui.Component {
     public static docStartPosition = 0;
     public timeToImpression: number;
@@ -2522,6 +2528,22 @@ export class FlowView extends ui.Component {
         console.log(`clone took ${Date.now() - clock}ms`);
     }
 
+    public xUpdateHistoryBubble(x: number) {
+        let widgetDivBounds = this.historyWidget.getBoundingClientRect();
+        let w = widgetDivBounds.width - 14;
+        let diffX = x - (widgetDivBounds.left + 7);
+        if (diffX <= 0) {
+            diffX = 0;
+        }
+        let pct = diffX / w;
+        let l = 7 + Math.floor(pct * w);
+        let seq = this.client.historyToPct(pct);
+        this.historyVersion.innerText = `Version @${seq}`;
+        this.historyBubble.style.left = `${l}px`;
+        this.cursor.pos = FlowView.docStartPosition;
+        this.localQueueRender(FlowView.docStartPosition);
+    }
+
     public updateHistoryBubble(seq: number) {
         let widgetDivBounds = this.historyWidget.getBoundingClientRect();
         let w = widgetDivBounds.width - 14;
@@ -2554,11 +2576,24 @@ export class FlowView extends ui.Component {
         widgetDiv.appendChild(bubble);
         let versionSpan = document.createElement("span");
         widgetDiv.appendChild(versionSpan);
-        versionSpan.innerText="History";
-        versionSpan.style.padding="3px";
+        versionSpan.innerText = "History";
+        versionSpan.style.padding = "3px";
         this.historyVersion = versionSpan;
         this.historyWidget = widgetDiv;
         this.historyBubble = bubble;
+        let clickHistory = (ev: MouseEvent) => {
+            this.xUpdateHistoryBubble(ev.clientX);
+        };
+        let mouseDownBubble = (ev: MouseEvent) => {
+            widgetDiv.onmousemove = clickHistory;
+        };
+        let cancelHistory = (ev: MouseEvent) => {
+            widgetDiv.onmousemove = preventD;
+        };
+        bubble.onmousedown = mouseDownBubble;
+        widgetDiv.onmouseup = cancelHistory;
+        widgetDiv.onmousemove = preventD;
+        bubble.onmouseup = cancelHistory;
         this.status.addSlider(this.historyWidget);
     }
     public goHistorical() {
@@ -3062,12 +3097,6 @@ export class FlowView extends ui.Component {
 
     public setEdit(docRoot: types.IMapView) {
         this.docRoot = docRoot;
-
-        let preventD = (e) => {
-            e.returnValue = false;
-            e.preventDefault();
-            return false;
-        };
 
         window.oncontextmenu = preventD;
         this.element.onmousemove = preventD;
