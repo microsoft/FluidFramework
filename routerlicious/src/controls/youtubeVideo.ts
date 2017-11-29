@@ -39,28 +39,34 @@ export class YouTubeVideo extends ui.Component {
     }
 
     private async setVideoPlayerHandlers() {
-        this.videoPlayer.addEventListener("onReady", (state) => {
-            this.handleState(JSON.parse(this.videoMapView.get("state")));
+        this.videoPlayer.addEventListener("onReady", (x) => {
+            let incomingState = JSON.parse(this.videoMapView.get("state"));
+            // This is a hack... play is getting auto triggered
+            this.handleState(incomingState);
+            setTimeout( () => this.pauseVideo(incomingState), 500);
         });
 
         this.videoPlayer.addEventListener("onStateChange", (state) => {
             let stateChange = state as YT.OnStateChangeEvent;
-
+            let localState = this.getState();
             switch (stateChange.data) {
-                case(YT.PlayerState.UNSTARTED):
-                case(YT.PlayerState.CUED):
-                case(YT.PlayerState.BUFFERING):
+                case(YT.PlayerState.UNSTARTED): // -1
                     break;
-                case(YT.PlayerState.PAUSED):
+                case(YT.PlayerState.CUED): // 5
+                    break;
+                case(YT.PlayerState.BUFFERING): // 3
+                    break;
+                case(YT.PlayerState.PAUSED): // 2
                     // Buffer Event
-                    if (Math.abs(this.getState().elapsedTime
-                        - this.getElapsedTime(JSON.parse(this.videoMapView.get("state")))) > 2) {
+                    let incomingState = JSON.parse(this.videoMapView.get("state"));
+                    if (Math.abs(localState.elapsedTime
+                        - this.getElapsedTime(incomingState)) > 2 && incomingState.playing) {
                             this.videoPlayer.playVideo();
                         } else {
                             this.updateState();
                         }
                     break;
-                case(YT.PlayerState.PLAYING):
+                case(YT.PlayerState.PLAYING): // 1
                     this.updateState();
                     break;
                 default:
@@ -87,10 +93,17 @@ export class YouTubeVideo extends ui.Component {
         return new VideoState(playing, this.videoPlayer.getCurrentTime(), Date.now(), null);
     }
 
+    private pauseVideo(incomingState: VideoState): void {
+        if (!incomingState.playing) {
+            this.videoPlayer.pauseVideo();
+        }
+    }
+
     private updateState() {
         this.videoMapView.set("state", JSON.stringify(this.getState()));
     }
 
+    // Replicate the incoming state
     private handleState(incomingState: VideoState) {
         let localState = this.getState();
         if (!incomingState.playing) {
@@ -98,7 +111,6 @@ export class YouTubeVideo extends ui.Component {
             this.videoPlayer.pauseVideo();
             this.videoPlayer.seekTo(incomingState.elapsedTime, true);
         } else {
-
             // elapsed time + the difference current and when "incoming" was recorded
             let elapsedTime = this.getElapsedTime(incomingState);
             if (Math.abs(elapsedTime - localState.elapsedTime) > 1 ) {

@@ -42,7 +42,11 @@ export class YouTubeVideoCanvas extends ui.Component {
     public onYouTubeIframeAPIReady() {
         let player = new YT.Player("player", {
             height: 390,
-            videoId: this.youtubeIdParser("https://www.youtube.com/watch?v=eTFy8RnUkoU"),
+            playerVars: {
+                autoplay: YT.AutoPlay.NoAutoPlay,
+                start: 0,
+                },
+            videoId: this.youtubeIdParser("https://www.youtube.com/watch?v=-Of_yz-4iXs"),
             width: 640,
         });
         this.player = player;
