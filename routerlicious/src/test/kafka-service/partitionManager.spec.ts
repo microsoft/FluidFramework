@@ -1,4 +1,5 @@
 import * as assert from "assert";
+import * as nconf from "nconf";
 import { ICheckpointStrategy } from "../../kafka-service/checkpointManager";
 import { IPartitionLambda, IPartitionLambdaFactory } from "../../kafka-service/lambdas";
 import { Partition } from "../../kafka-service/partition";
@@ -40,9 +41,10 @@ describe("kafka-service", () => {
         let kafka: TestKafka;
 
         beforeEach(() => {
+            const config = nconf.use("memory");
             kafka = new TestKafka();
             factory = new TestPartitionLambdaFactory();
-            partition = new Partition(0, factory, new CheckpointStrategy(), kafka.createConsumer());
+            partition = new Partition(0, factory, new CheckpointStrategy(), kafka.createConsumer(), config);
         });
 
         describe(".process()", () => {

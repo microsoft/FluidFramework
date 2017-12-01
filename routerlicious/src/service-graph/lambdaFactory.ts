@@ -1,22 +1,118 @@
+import { Provider } from "nconf";
 import * as winston from "winston";
+import * as api from "../api";
 import * as core from "../core";
+import { IMap, ISet } from "../data-types";
 import { IPartitionLambda, IPartitionLambdaFactory } from "../kafka-service/lambdas";
+import * as socketStorage from "../socket-storage";
 import * as utils from "../utils";
 
+interface ISharedVertex {
+    id: string;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    label: string;
+}
+
+interface ISharedEdge {
+    nodeId1: string;
+    nodeId2: string;
+    label: string;
+}
+
+class SharedGraph {
+    constructor(public vertices: ISet<ISharedVertex>, public edges: ISet<ISharedEdge>) {
+        for (const vertex of vertices.getInternalSet()) {
+            winston.info(`${vertex.id} ${vertex.label}`);
+        }
+    }
+
+    public addVertex(id: string, label: string, x: number, y: number, width: number, height: number) {
+        this.vertices.add(<ISharedVertex> {
+            height,
+            id,
+            label,
+            width,
+            x,
+            y,
+        });
+    }
+
+    public removeVertex(id: string) {
+        for (const value of this.vertices.getInternalSet()) {
+            if (value.id === id) {
+                this.vertices.delete(value);
+            }
+        }
+    }
+
+    public addEdge(nodeId1: string, nodeId2: string, label: string) {
+        this.edges.add(<ISharedEdge> {
+            nodeId1,
+            nodeId2,
+            label,
+        });
+    }
+}
+
 class ServiceGraphLambda implements IPartitionLambda {
-    public handler(message: utils.kafkaConsumer.IMessage): Promise<any> {
+    constructor(baseGraph: IMap, private graph: SharedGraph) {
+        baseGraph.on("error", (error) => {
+            winston.error(error);
+            // Force exit for now on any error to cause a reconnect. But will want to return a promise
+            // from the set operations to know when the operation completed. And then have a plan to
+            // reconnect to the document.
+            process.exit(1);
+        });
+    }
+
+    public async handler(message: utils.kafkaConsumer.IMessage): Promise<any> {
         const baseMessage = JSON.parse(message.value) as core.IMessage;
-        if (baseMessage.type === core.SystemType) {
-            const systemMessage = baseMessage as core.ISystemMessage;
-            winston.info(`System message ${systemMessage.operation} from ${systemMessage.id}:${systemMessage.group}`);
+        if (baseMessage.type !== core.SystemType) {
+            return;
         }
 
-        return Promise.resolve();
+        const systemMessage = baseMessage as core.ISystemMessage;
+        winston.info(`System message ${systemMessage.operation} from ${systemMessage.id}:${systemMessage.group}`);
+
+        switch (core.SystemOperations[systemMessage.operation as string]) {
+            case core.SystemOperations.Join:
+                this.graph.addVertex(systemMessage.id, systemMessage.group, 0, 0, 100, 50);
+                break;
+            case core.SystemOperations.Leave:
+                this.graph.removeVertex(systemMessage.id);
+                break;
+            default:
+                break;
+        }
     }
 }
 
 export class ServiceGraphLambdaFactory implements IPartitionLambdaFactory {
-    public create(): Promise<IPartitionLambda> {
-        return Promise.resolve(new ServiceGraphLambda());
+    public async create(config: Provider): Promise<IPartitionLambda> {
+        const alfred = config.get("paparazzi:alfred");
+        const git = config.get("git");
+        socketStorage.registerAsDefault(alfred, git.historian, git.repository);
+
+        const document = await api.load("__system__graph");
+        const root = await document.getRoot().getView();
+
+        // Initialize if it doesn't exist
+        if (!root.has("graph")) {
+            const graph = document.createMap();
+            graph.createSet("vertices");
+            graph.createSet("edges");
+            root.set("graph", graph);
+        }
+
+        const graph = root.get("graph");
+        const view = await graph.getView();
+        const vertexSet: ISet<ISharedVertex> = view.get("vertices");
+        const edgeSet: ISet<ISharedEdge> = view.get("edges");
+        const sharedGraph = new SharedGraph(vertexSet, edgeSet);
+
+        return new ServiceGraphLambda(graph, sharedGraph);
     }
 }

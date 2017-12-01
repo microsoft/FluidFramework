@@ -9,7 +9,8 @@ export class KafkaResources implements utils.IResources {
         public lambdaFactory: IPartitionLambdaFactory,
         public consumer: utils.kafkaConsumer.IConsumer,
         public checkpointBatchSize: number,
-        public checkpointTimeIntervalMsec: number) {
+        public checkpointTimeIntervalMsec: number,
+        public config: Provider) {
     }
 
     public async dispose(): Promise<void> {
@@ -38,7 +39,8 @@ export class KafkaResourcesFactory implements utils.IResourcesFactory<KafkaResou
             lambdaFactory,
             consumer,
             checkpointBatchSize,
-            checkpointTimeIntervalMsec);
+            checkpointTimeIntervalMsec,
+            config);
     }
 }
 
@@ -48,6 +50,7 @@ export class KafkaRunnerFactory implements utils.IRunnerFactory<KafkaResources> 
             resources.lambdaFactory,
             resources.consumer,
             resources.checkpointBatchSize,
-            resources.checkpointTimeIntervalMsec);
+            resources.checkpointTimeIntervalMsec,
+            resources.config);
     }
 }
