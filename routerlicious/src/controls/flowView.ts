@@ -1710,7 +1710,7 @@ function tokenToItems(
         if (divHeight !== itemsContext.docContext.defaultLineDivHeight) {
             block.height = divHeight;
         }
-        itemsContext.itemInfo.items.push(makeIPGBlock(textWidth, text, leadSegment));
+        itemsContext.itemInfo.items.push(block);
     } else {
         itemsContext.itemInfo.items.push(makeGlue(textWidth, text, leadSegment,
             docContext.wordSpacing / 2, docContext.wordSpacing / 3));
