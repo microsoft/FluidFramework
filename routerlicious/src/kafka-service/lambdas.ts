@@ -1,3 +1,4 @@
+import * as nconf from "nconf";
 import * as utils from "../utils";
 
 export interface IPartitionLambda {
@@ -5,5 +6,5 @@ export interface IPartitionLambda {
 }
 
 export interface IPartitionLambdaFactory {
-    create(): Promise<IPartitionLambda>;
+    create(config: nconf.Provider): Promise<IPartitionLambda>;
 }

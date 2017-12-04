@@ -197,14 +197,16 @@ export abstract class CollaborativeObject implements ICollaborativeObject {
 
     private submit(message: IObjectMessage): void {
         this.submitCore(message);
-        this.services.deltaConnection.submit(message).then(() => {
-            // Message acked by socketio. Store timestamp locally.
-            this.pingMap[message.clientSequenceNumber] = Date.now();
-        }, (error) => {
-            // TODO need reconnection logic upon loss of connection
-            debug(`Lost connection to server: ${JSON.stringify(error)}`);
-        });
-
+        this.services.deltaConnection.submit(message).then(
+            () => {
+                // Message acked by socketio. Store timestamp locally.
+                this.pingMap[message.clientSequenceNumber] = Date.now();
+            },
+            (error) => {
+                // TODO need reconnection logic upon loss of connection
+                debug(`Lost connection to server: ${JSON.stringify(error)}`);
+                this.events.emit("error", error);
+            });
     }
 
     private submitLatencyMessage(message: ISequencedObjectMessage) {

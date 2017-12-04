@@ -1,3 +1,4 @@
+import { Provider } from "nconf";
 import * as winston from "winston";
 import * as utils from "../utils";
 import { ICheckpointStrategy } from "./checkpointManager";
@@ -19,7 +20,8 @@ export class PartitionManager {
     constructor(
         private factory: IPartitionLambdaFactory,
         private checkpointStrategy: ICheckpointStrategy,
-        private consumer: utils.kafkaConsumer.IConsumer) {
+        private consumer: utils.kafkaConsumer.IConsumer,
+        private config: Provider) {
     }
 
     public async stop(): Promise<void> {
@@ -33,11 +35,16 @@ export class PartitionManager {
     }
 
     public process(message: utils.kafkaConsumer.IMessage) {
-        winston.info(`${message.topic}:${message.partition}@${message.offset}`);
+        winston.verbose(`${message.topic}:${message.partition}@${message.offset}`);
 
         // Create the partition if this is the first message we've seen
         if (!this.partitions.has(message.partition)) {
-            const newPartition = new Partition(message.partition, this.factory, this.checkpointStrategy, this.consumer);
+            const newPartition = new Partition(
+                message.partition,
+                this.factory,
+                this.checkpointStrategy,
+                this.consumer,
+                this.config);
             this.partitions.set(message.partition, newPartition);
         }
 

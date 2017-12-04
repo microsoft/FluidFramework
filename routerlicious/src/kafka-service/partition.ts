@@ -1,5 +1,6 @@
 import * as assert from "assert";
 import { AsyncQueue, queue } from "async";
+import { Provider } from "nconf";
 import * as winston from "winston";
 import * as utils from "../utils";
 import { CheckpointManager, ICheckpointStrategy } from "./checkpointManager";
@@ -40,10 +41,11 @@ export class Partition {
         id: number,
         factory: IPartitionLambdaFactory,
         checkpointStrategy: ICheckpointStrategy,
-        consumer: utils.kafkaConsumer.IConsumer) {
+        consumer: utils.kafkaConsumer.IConsumer,
+        config: Provider) {
 
         this.checkpointManager = new CheckpointManager(id, checkpointStrategy, consumer);
-        this.lambdaP = factory.create();
+        this.lambdaP = factory.create(config);
 
         // Create the incoming message queue
         this.q = queue((message: utils.kafkaConsumer.IMessage, callback) => {
@@ -98,7 +100,7 @@ export class Partition {
     }
 
     private async processCore(message: utils.kafkaConsumer.IMessage): Promise<void> {
-        winston.info(`${message.topic}:${message.partition}@${message.offset}`);
+        winston.verbose(`${message.topic}:${message.partition}@${message.offset}`);
         const lambda = await this.lambdaP;
         return lambda.handler(message);
     }
