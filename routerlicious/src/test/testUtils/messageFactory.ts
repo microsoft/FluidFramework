@@ -6,7 +6,7 @@ import * as utils from "../../utils";
 export class KafkaMessageFactory {
     private offsets: number[] = [];
 
-    constructor(public topic = "test", partitions = 8) {
+    constructor(public topic = "test", partitions = 1) {
         for (let i = 0; i < partitions; i++) {
             this.offsets.push(0);
         }

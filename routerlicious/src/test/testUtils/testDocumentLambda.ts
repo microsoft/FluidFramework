@@ -13,8 +13,12 @@ export class TestLambda implements IPartitionLambda {
 }
 
 export class TestLambdaFactory implements IPartitionLambdaFactory {
+    public lambdas: TestLambda[] = [];
+
     public async create(config: Provider, context: IContext): Promise<IPartitionLambda> {
-        return new TestLambda(config, context);
+        const lambda = new TestLambda(config, context);
+        this.lambdas.push(lambda);
+        return lambda;
     }
 }
 
@@ -24,9 +28,21 @@ export function create(): IPartitionLambdaFactory {
 
 export const id = "test-lambda";
 
-export function createTestPlugin() {
+export interface ITestLambdaModule {
+    create: () => TestLambdaFactory;
+    factories: TestLambdaFactory[];
+    id: string;
+}
+
+export function createTestModule(): ITestLambdaModule {
+    const factories: TestLambdaFactory[] = [];
     return {
-        create: () => new TestLambdaFactory(),
+        create: () => {
+            const factory = new TestLambdaFactory();
+            factories.push(factory);
+            return factory;
+        },
+        factories,
         id: "test-lambda",
     };
 }
