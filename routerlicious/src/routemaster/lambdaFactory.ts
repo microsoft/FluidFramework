@@ -1,11 +1,15 @@
 import { Provider } from "nconf";
-import { IPartitionLambda, IPartitionLambdaFactory } from "../kafka-service/lambdas";
+import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "../kafka-service/lambdas";
 import * as services from "../services";
 import * as utils from "../utils";
+import { DocumentManager } from "./documentManager";
 import { RouteMasterLambda } from "./lambda";
 
 export class RouteMasterLambdaFactory implements IPartitionLambdaFactory {
-    public async create(config: Provider): Promise<IPartitionLambda> {
+    public async create(config: Provider, context: IContext): Promise<IPartitionLambda> {
+        // TODO The resources really want to be created once and then reused per
+        // partition. This is creating a lambda per document.
+
         const mongoUrl = config.get("mongo:endpoint") as string;
         const documentsCollectionName = config.get("mongo:collectionNames:documents");
         const deltasCollectionName = config.get("mongo:collectionNames:deltas");
@@ -24,6 +28,16 @@ export class RouteMasterLambdaFactory implements IPartitionLambdaFactory {
         const deltas = await client.collection(deltasCollectionName);
         const producer = utils.kafkaProducer.create(kafkaLibrary, kafkaEndpoint, kafkaClientId, sendTopic);
 
-        return new RouteMasterLambda(mongoManager, collection, deltas, producer);
+        const id = config.get("documentId");
+        const documentDetails = await DocumentManager.Create(id, collection, deltas);
+
+        return new RouteMasterLambda(documentDetails, producer, context);
     }
+
+    // // TODO integrate dispose
+    // public async dispose(): Promise<void> {
+    //     const producerClosedP = this.producer.close();
+    //     const mongoClosedP = this.mongoManager.close();
+    //     await Promise.all([producerClosedP, mongoClosedP]);
+    // }
 }

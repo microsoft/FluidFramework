@@ -1,38 +1,99 @@
+import * as assert from "assert";
+import * as api from "../api-core";
 import * as core from "../core";
-import { IPartitionLambda } from "../kafka-service/lambdas";
+import { IContext, IPartitionLambda } from "../kafka-service/lambdas";
 import * as utils from "../utils";
+import { DocumentManager } from "./documentManager";
 
 export class RouteMasterLambda implements IPartitionLambda {
     constructor(
-        private mongoManager: utils.MongoManager,
-        collection: core.ICollection<core.IDocument>,
-        deltas: core.ICollection<core.ISequencedOperationMessage>,
-        private producer: utils.kafkaProducer.IProducer) {
+        private document: DocumentManager,
+        private producer: utils.kafkaProducer.IProducer,
+        private context: IContext) {
     }
 
     public async handler(rawMessage: utils.kafkaConsumer.IMessage): Promise<any> {
         const message = JSON.parse(rawMessage.value) as core.ISequencedOperationMessage;
-        if (message.type !== core.SequencedOperationType) {
+        assert(message.type === core.SequencedOperationType);
+
+        await this.handlerCore(message);
+        this.context.checkpoint(rawMessage.offset);
+    }
+
+    private handlerCore(message: core.ISequencedOperationMessage): Promise<any> {
+        // Create the fork first then route any messages. This will make the fork creation the first message
+        // routed to the fork. We only process the fork on the route branch it is defined.
+        if (!message.operation.origin && message.operation.type === api.Fork) {
+            return this.createFork(message);
+        } else {
+            return this.routeToForks(message);
+        }
+    }
+
+    private async createFork(message: core.ISequencedOperationMessage): Promise<void> {
+        const contents = message.operation.contents as core.IForkOperation;
+        const forkId = contents.name;
+        console.log(forkId);
+
+        const forkSequenceNumber = message.operation.sequenceNumber;
+
+        // If the fork is already active return early - retry logic could have caused a second fork message to be
+        // inserted or we may be replaying the delta stream after an error
+        if (this.document.getActiveForks().has(forkId)) {
             return;
         }
 
-        // // TODO create the context under which to operate
-        // // Create the router if it doesn't exist
-        // if (!this.routers.has(message.documentId)) {
-        //     const router = new Router(message.documentId, this.objectsCollection, this.deltas, this.producer);
-        //     this.routers.set(message.documentId, router);
-        // }
+        // Forward all deltas greater than contents.sequenceNumber but less than forkSequenceNumber
+        // to the fork. All messages after this will be automatically forwarded.
+        const deltas = await this.document.getDeltas(contents.sequenceNumber, forkSequenceNumber);
+        console.log(`Retrieved ${deltas.length} deltas`);
+        for (const delta of deltas) {
+            console.log(`Routing ${delta.operation}`);
+            this.routeToDeli(forkId, delta);
+        }
 
-        // // Route the message
-        // const router = this.routers.get(message.documentId);
-        // router.route(message);
-
-        // partitionManager.update(rawMessage.partition, rawMessage.offset);
+        // Activating the fork will complete the operation
+        await this.document.activateFork(forkId, forkSequenceNumber);
     }
 
-    public async dispose(): Promise<void> {
-        const producerClosedP = this.producer.close();
-        const mongoClosedP = this.mongoManager.close();
-        await Promise.all([producerClosedP, mongoClosedP]);
+    /**
+     * Routes the provided message to all active forks
+     */
+    private async routeToForks(message: core.ISequencedOperationMessage): Promise<void> {
+        const document = this.document;
+        const forks = document.getActiveForks();
+
+        for (const fork of forks) {
+            this.routeToDeli(fork, message);
+        }
+
+        document.trackForward(message.operation.sequenceNumber);
+    }
+
+    /**
+     * Routes the provided messages to deli
+     */
+    private routeToDeli(fork: string, message: core.ISequencedOperationMessage) {
+        // Create the integration message that sends a sequenced operation from an upstream branch to
+        // the downstream branch
+        const rawMessage: core.IRawOperationMessage = {
+            clientId: null,
+            documentId: fork,
+            operation: {
+                clientSequenceNumber: -1,
+                contents: message,
+                encrypted: false,
+                encryptedContents: null,
+                referenceSequenceNumber: -1,
+                traces: [],
+                type: api.Integrate,
+            },
+            timestamp: Date.now(),
+            type: core.RawOperationType,
+            userId: null,
+        };
+
+        // TODO handle the output of this promise and update any errors, etc...
+        this.producer.send(JSON.stringify(rawMessage), fork);
     }
 }
