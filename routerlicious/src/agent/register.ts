@@ -14,7 +14,11 @@ export function registerWorker(config: any, clientType: string) {
             storageUrl,
             repository,
             config,
-            clientType);
+            clientType,
+            (id: string) => {
+                return Promise.reject("Module loader not implemented!");
+            },
+        );
         let workerP = workerService.connect("Client");
         workerP.catch((error) => {
             console.log(`Error connecting to worker`);

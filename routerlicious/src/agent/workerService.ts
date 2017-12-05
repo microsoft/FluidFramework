@@ -23,7 +23,8 @@ export class WorkerService implements core.IWorkerService {
         private storageUrl: string,
         private repo: string,
         private config: any,
-        private clientType: string) {
+        private clientType: string,
+        private moduleLoader: (id: string) => Promise<any>) {
 
         this.socket = io(this.workerUrl, { transports: ["websocket"] });
         for (let workType of config.permission[this.clientType]) {
@@ -140,6 +141,12 @@ export class WorkerService implements core.IWorkerService {
                 this.startTask(docId, workType, snapshotWork);
                 break;
             case "intel":
+                this.moduleLoader("sillyname").then((loadedModule) => {
+                    console.log(`Success loading module in worker!`);
+                    console.log(loadedModule());
+                }, (error) =>  {
+                    console.log(`Error loading module sillyname: ${error}`);
+                });
                 const intelWork = new IntelWork(docId, this.config);
                 this.startTask(docId, workType, intelWork);
                 break;
