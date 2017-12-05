@@ -1,4 +1,8 @@
-import * as utils from "../utils";
-import { RouteMasterResourcesFactory, RouteMasterRunnerFactory } from "./runnerFactory";
+import { IPartitionLambdaFactory } from "../kafka-service/lambdas";
+import { RouteMasterLambdaFactory } from "./lambdaFactory";
 
-utils.runService(new RouteMasterResourcesFactory(), new RouteMasterRunnerFactory(), "routemaster");
+export function create(): IPartitionLambdaFactory {
+    return new RouteMasterLambdaFactory();
+}
+
+export const id = "routemaster";
