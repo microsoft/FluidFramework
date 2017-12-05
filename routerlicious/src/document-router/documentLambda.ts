@@ -1,3 +1,4 @@
+import { Provider } from "nconf";
 import * as core from "../core";
 import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "../kafka-service/lambdas";
 import * as utils from "../utils";
@@ -9,7 +10,7 @@ export class DocumentLambda implements IPartitionLambda {
     private documents = new Map<string, DocumentPartition>();
     private contextManager: DocumentContextManager;
 
-    constructor(private factory: IPartitionLambdaFactory, context: IContext) {
+    constructor(private factory: IPartitionLambdaFactory, private config: Provider, context: IContext) {
         this.contextManager = new DocumentContextManager(context);
     }
 
@@ -32,7 +33,11 @@ export class DocumentLambda implements IPartitionLambda {
         const sequencedMessage = message as core.ISequencedOperationMessage;
         if (!this.documents.has(sequencedMessage.documentId)) {
             const documentContext = new DocumentContext();
-            const document = new DocumentPartition(this.factory, sequencedMessage.documentId, documentContext);
+            const document = new DocumentPartition(
+                this.factory,
+                this.config,
+                sequencedMessage.documentId,
+                documentContext);
             this.documents.set(sequencedMessage.documentId, document);
         }
 

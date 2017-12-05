@@ -17,6 +17,9 @@ export class RouteMasterLambda implements IPartitionLambda {
         assert(message.type === core.SequencedOperationType);
 
         await this.handlerCore(message);
+
+        // TODO don't await above - instead process - have some kind of DX/'present' mechanism to signal completion
+        // on some kind of interval
         this.context.checkpoint(rawMessage.offset);
     }
 

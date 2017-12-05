@@ -1,5 +1,6 @@
 import * as assert from "assert";
 import { AsyncQueue, queue } from "async";
+import { Provider } from "nconf";
 import * as winston from "winston";
 import { IPartitionLambda, IPartitionLambdaFactory } from "../kafka-service/lambdas";
 import * as utils from "../utils";
@@ -9,7 +10,10 @@ export class DocumentPartition {
     private q: AsyncQueue<utils.kafkaConsumer.IMessage>;
     private lambdaP: Promise<IPartitionLambda>;
 
-    constructor(factory: IPartitionLambdaFactory, id: string, public context: DocumentContext) {
+    constructor(factory: IPartitionLambdaFactory, config: Provider, id: string, public context: DocumentContext) {
+        // TODO need to parse into a specific config - maybe I need an interface for this???
+        this.lambdaP = factory.create(config, context);
+
         this.q = queue((message: utils.kafkaConsumer.IMessage, callback) => {
             const processedP = this.processCore(message).catch((error) => {
                     // TODO dead letter queue for bad messages, etc...

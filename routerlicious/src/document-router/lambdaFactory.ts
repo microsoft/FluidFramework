@@ -4,6 +4,9 @@ import { DocumentLambda } from "./documentLambda";
 
 export class DocumentLambdaFactory implements IPartitionLambdaFactory {
     public async create(config: Provider, context: IContext): Promise<IPartitionLambda> {
-        return new DocumentLambda(config.get("documentLambda"), context);
+        const plugin = require(config.get("documentLambda"));
+        const factory = plugin.create() as IPartitionLambdaFactory;
+
+        return new DocumentLambda(factory, config, context);
     }
 }
