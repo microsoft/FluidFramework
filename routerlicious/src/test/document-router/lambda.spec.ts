@@ -1,5 +1,6 @@
 import * as assert from "assert";
 import * as nconf from "nconf";
+import { Deferred } from "../../core-utils";
 import * as plugin from "../../document-router";
 import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "../../kafka-service/lambdas";
 import {
@@ -11,9 +12,31 @@ import {
 
 class TestContext implements IContext {
     public offset;
+    private waits: Array<{ offset: number, deferred: Deferred<void> }> = [];
 
     public checkpoint(offset: number) {
+        if (offset === this.offset) {
+            return;
+        }
+
         this.offset = offset;
+
+        // fire any pending waits and then remove from the list
+        this.waits
+            .filter((value) => value.offset <= this.offset)
+            .forEach((value) => value.deferred.resolve());
+        this.waits = this.waits.filter((value) => value.offset > this.offset);
+    }
+
+    public waitForOffset(offset: number): Promise<void> {
+        if (offset <= this.offset) {
+            return Promise.resolve();
+        }
+
+        const deferred = new Deferred<void>();
+        this.waits.push({ deferred, offset });
+
+        return deferred.promise;
     }
 }
 
@@ -61,10 +84,12 @@ describe("DocumentRouter", () => {
                     messageFactories.push(new MessageFactory(`test${i}`, `client${i}`));
                 }
 
+                let lastOffset: number;
                 for (let i = 0; i < messagesPerDocument; i++) {
                     for (const messageFactory of messageFactories) {
                         const message = messageFactory.createSequencedOperation();
                         const kafkaMessage = kafkaMessageFactory.sequenceMessage(message, "test");
+                        lastOffset = kafkaMessage.offset;
                         await lambda.handler(kafkaMessage);
                     }
                 }
@@ -72,6 +97,9 @@ describe("DocumentRouter", () => {
                 // Should have created a single factory that itself created a single lambda
                 assert.equal(testModule.factories.length, 1);
                 assert.equal(testModule.factories[0].lambdas.length, totalDocuments);
+
+                // Want some ability to either close the stream or wait for a specific checkpoint
+                await context.waitForOffset(lastOffset);
             });
         });
     });

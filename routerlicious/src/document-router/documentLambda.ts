@@ -32,7 +32,10 @@ export class DocumentLambda implements IPartitionLambda {
 
         const sequencedMessage = message as core.ISequencedOperationMessage;
         if (!this.documents.has(sequencedMessage.documentId)) {
+            // Create a new context and begin tracking it
             const documentContext = new DocumentContext();
+            this.contextManager.trackContext(documentContext);
+
             const document = new DocumentPartition(
                 this.factory,
                 this.config,

@@ -3,12 +3,12 @@ import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "../../kafka
 import * as utils from "../../utils";
 
 export class TestLambda implements IPartitionLambda {
-    constructor(config: Provider, context: IContext) {
+    constructor(config: Provider, private context: IContext) {
         // TODO will also fill this in
     }
 
     public async handler(message: utils.kafkaConsumer.IMessage): Promise<any> {
-        // TODO will fill this in
+        this.context.checkpoint(message.offset);
     }
 }
 
