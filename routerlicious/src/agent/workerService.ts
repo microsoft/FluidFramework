@@ -59,6 +59,13 @@ export class WorkerService implements core.IWorkerService {
                 if (error) {
                     deferred.reject(error);
                 } else if (ack === "Acked") {
+                    // Check whether worker is ready to load a new agent.
+                    this.socket.on("AgentObject", (cId: string, moduleName: string, response) => {
+                        // TODO: Need some rule here to deny a new agent loading.
+                        console.log(`Received work to load module ${moduleName}!`);
+                        this.loadNewModule(moduleName);
+                        response(null, clientDetail);
+                    });
                     // Check whether worker is ready to work.
                     this.socket.on("ReadyObject", (cId: string, id: string, workType: string, response) => {
                         if (workType in this.workTypeMap) {
@@ -134,6 +141,15 @@ export class WorkerService implements core.IWorkerService {
         socketStorage.registerAsDefault(this.serverUrl, this.storageUrl, this.repo);
     }
 
+    private loadNewModule(moduleName: string) {
+        this.moduleLoader(moduleName).then((loadedModule) => {
+            console.log(`Success loading module ${moduleName} in worker!`);
+            console.log(loadedModule());
+        }, (error) =>  {
+            console.log(`Error loading module sillyname: ${error}`);
+        });
+    }
+
     private processDocumentWork(docId: string, workType: string) {
         switch (workType) {
             case "snapshot":
@@ -141,12 +157,6 @@ export class WorkerService implements core.IWorkerService {
                 this.startTask(docId, workType, snapshotWork);
                 break;
             case "intel":
-                this.moduleLoader("sillyname").then((loadedModule) => {
-                    console.log(`Success loading module in worker!`);
-                    console.log(loadedModule());
-                }, (error) =>  {
-                    console.log(`Error loading module sillyname: ${error}`);
-                });
                 const intelWork = new IntelWork(docId, this.config);
                 this.startTask(docId, workType, intelWork);
                 break;

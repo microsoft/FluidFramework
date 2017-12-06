@@ -1,6 +1,7 @@
 import * as fs from "fs";
 import * as request from "request";
 import * as unzip from "unzip";
+import * as url from "url";
 import * as winston from "winston";
 import * as agent from "../agent";
 import { Deferred } from "../core-utils";
@@ -26,7 +27,7 @@ export class PaparazziRunner implements utils.IRunner {
             repo,
             workerConfig,
             "paparazzi",
-            this.initLoadModule());
+            this.initLoadModule(alfredUrl));
     }
 
     public start(): Promise<void> {
@@ -40,9 +41,11 @@ export class PaparazziRunner implements utils.IRunner {
         return this.running.promise;
     }
 
-    private initLoadModule(): (name: string) => Promise<any> {
-        return (moduleName: string) => {
-            let zipUrl = `http://alfred:3000/public/modules/${moduleName}.zip`;
+    private initLoadModule(alfredUrl: string): (name: string) => Promise<any> {
+        return (moduleFile: string) => {
+            const moduleUrl = url.resolve(alfredUrl, `agent/${moduleFile}`);
+            const moduleName = moduleFile.split(".")[0];
+            winston.info(`Worker will load ${moduleName}`);
 
             return new Promise<any>((resolve, reject) => {
                 fs.access(`intel_modules/${moduleName}`, (error) => {
@@ -51,7 +54,7 @@ export class PaparazziRunner implements utils.IRunner {
                       reject("Module already exists");
                     } else {    // Otherwise load the module
                         request
-                        .get(zipUrl)
+                        .get(moduleUrl)
                         .on("response", (response) => {
                             if (response.statusCode !== 200) {
                                 reject(`Invalid response code while fetching custom module: ${response.statusCode}`);

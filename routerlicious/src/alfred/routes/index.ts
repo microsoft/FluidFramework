@@ -2,6 +2,7 @@ import { Router } from "express";
 import { Provider } from "nconf";
 import * as git from "../../git-storage";
 import * as utils from "../../utils";
+import * as agent from "./agent";
 import * as api from "./api";
 import * as canvas from "./canvas";
 import * as cell from "./cell";
@@ -19,6 +20,7 @@ import * as video from "./video";
 import * as youtubeVideo from "./youtubeVideo";
 
 export interface IRoutes {
+    agent: Router;
     api: Router;
     canvas: Router;
     cell: Router;
@@ -42,6 +44,7 @@ export function create(
     producer: utils.kafkaProducer.IProducer) {
 
     return {
+        agent: agent.create(config),
         api: api.create(config, gitManager, mongoManager, producer),
         canvas: canvas.create(config, gitManager),
         cell: cell.create(config, gitManager),

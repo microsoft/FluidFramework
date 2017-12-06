@@ -46,9 +46,7 @@ export class TmzRunner implements utils.IRunner {
         minioHelper.getOrCreateBucket(minioClient, minioBucket).then(() => {
             minioClient.listenBucketNotification(minioBucket, "", "", ["s3:ObjectCreated:*"])
             .on("notification", (record) => {
-                console.log("New object: %s/%s (size: %d)", record.s3.bucket.name,
-                            record.s3.object.key, record.s3.object.size);
-                console.log(`Object detail: ${JSON.stringify(record)}`);
+                this.foreman.broadcastNewAgentModule(record.s3.object.key);
             });
         }, (error) => {
             this.deferred.reject(error);
