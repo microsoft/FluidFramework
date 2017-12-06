@@ -1,10 +1,12 @@
 import { AsyncQueue, queue } from "async";
+import * as minio from "minio";
 import * as winston from "winston";
 import * as core from "../core";
 import { Deferred } from "../core-utils";
 import * as socketStorage from "../socket-storage";
 import * as utils from "../utils";
 import * as messages from "./messages";
+import * as minioHelper from "./minioHelper";
 import * as workerFactory from "./workerFactory";
 
 export class TmzRunner implements utils.IRunner {
@@ -18,6 +20,7 @@ export class TmzRunner implements utils.IRunner {
 
     constructor(
         private io: any,
+        private minioConfig: any,
         private port: any,
         private consumer: utils.kafkaConsumer.IConsumer,
         schedulerType: string,
@@ -29,6 +32,28 @@ export class TmzRunner implements utils.IRunner {
     }
 
     public start(): Promise<void> {
+
+        const minioClient = new minio.Client({
+            accessKey: this.minioConfig.accessKey,
+            endPoint: this.minioConfig.endpoint,
+            port: this.minioConfig.port,
+            secretKey: this.minioConfig.secretKey,
+            secure: false,
+        });
+
+        const minioBucket = this.minioConfig.bucket;
+        // Prep minio and start listening to module uploads.
+        minioHelper.getOrCreateBucket(minioClient, minioBucket).then(() => {
+            minioClient.listenBucketNotification(minioBucket, "", "", ["s3:ObjectCreated:*"])
+            .on("notification", (record) => {
+                console.log("New object: %s/%s (size: %d)", record.s3.bucket.name,
+                            record.s3.object.key, record.s3.object.size);
+                console.log(`Object detail: ${JSON.stringify(record)}`);
+            });
+        }, (error) => {
+            this.deferred.reject(error);
+        });
+
         // open a socketio connection and start listening for workers.
         this.io.on("connection", (socket) => {
             // On joining, add the worker to manager.

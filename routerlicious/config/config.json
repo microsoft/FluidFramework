@@ -127,5 +127,12 @@
     "git": {
         "repository": "prague",
         "historian": "http://historian:3000"
+    },
+    "minio": {
+        "endpoint": "minio",
+        "port": 9000,
+        "accessKey": "prague",
+        "secretKey": "mhioAkNXTwdX4dXWgKgXVtHo",
+        "bucket": "agents"
     }
 }
