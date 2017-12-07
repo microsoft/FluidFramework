@@ -75,6 +75,21 @@ describe("DocumentRouter", () => {
                 assert.equal(testModule.factories[0].lambdas.length, 1);
             });
 
+            it("Should be able to process non-document messages", async () => {
+                const totalMessages = 10;
+
+                let lastOffset: number;
+                for (let i = 0; i < totalMessages; i++) {
+                    const message = defaultMessageFactory.create();
+                    const kafkaMessage = kafkaMessageFactory.sequenceMessage(message, "test");
+                    lastOffset = kafkaMessage.offset;
+                    await lambda.handler(kafkaMessage);
+                }
+
+                await context.waitForOffset(lastOffset);
+                assert.equal(context.offset, lastOffset);
+            });
+
             it("Should be able to process a document message from multiple documents", async () => {
                 const totalDocuments = 4;
                 const messagesPerDocument = 10;

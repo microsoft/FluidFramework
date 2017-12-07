@@ -21,6 +21,7 @@ export class DocumentContextManager {
 
     public setMaxOffset(value: number) {
         this.maxOffsetInternal = value;
+        this.updateCheckpoint();
     }
 
     private updateCheckpoint() {
