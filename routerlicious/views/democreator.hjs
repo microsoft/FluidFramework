@@ -32,7 +32,7 @@
 
             <h3>Intelligent Services</h3>
             <ul class="list-unstyled">
-                <li><a href="/scribedemo">Scribe</a></li>
+                <li><a href="/scribe/demo">Scribe</a></li>
             </ul>
 
             <h3>Versioning and Branching</h3>

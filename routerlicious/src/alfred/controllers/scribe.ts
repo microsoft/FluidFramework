@@ -1,11 +1,26 @@
+import * as request from "request";
+import * as url from "url";
 import { socketStorage } from "../../client-api";
 import * as scribe from "../../utils/scribe";
 
 // Text represents the loaded file text
 let text: string;
-let id: string;
 let intervalTime: number;
 let initialRun: boolean = true;
+
+function downloadRawText(textUrl: string): Promise<string> {
+    return new Promise<string>((resolve, reject) => {
+        request.get(url.resolve(document.baseURI, textUrl), (error, response, body: string) => {
+            if (error) {
+                reject(error);
+            } else if (response.statusCode !== 200) {
+                reject(response.statusCode);
+            } else {
+                resolve(body);
+            }
+        });
+    });
+}
 
 function updateProgressBar(progressBar: HTMLElement, progress: number) {
     if (progress !== undefined) {
@@ -70,16 +85,16 @@ function handleFiles(createButton: HTMLButtonElement,
     reader.readAsText(file);
 }
 
-export function initialize(config: any) {
+export function initialize(config: any, id: string, template: string) {
+    const loadFile = !id;
+
     // Easy access to a couple of page elements
     const textForm = document.getElementById("text-form") as HTMLFormElement;
     const startForm = document.getElementById("start-form") as HTMLFormElement;
-    const inputElement = document.getElementById("file") as HTMLInputElement;
     const createButton = document.getElementById("create") as HTMLButtonElement;
     const startButton = document.getElementById("start") as HTMLButtonElement;
     const createDetails = document.getElementById("create-details") as HTMLElement;
     const typingDetails = document.getElementById("typing-details") as HTMLElement;
-    const sharedTextId = document.getElementById("shared-text-id") as HTMLInputElement;
     const intervalElement = document.getElementById("interval") as HTMLInputElement;
     const documentLink = document.getElementById("document-link") as HTMLAnchorElement;
     const typingProgress = document.getElementById("typing-progress") as HTMLElement;
@@ -87,18 +102,32 @@ export function initialize(config: any) {
     const ackProgress = document.getElementById("ack-progress") as HTMLElement;
     const ackProgressBar = ackProgress.getElementsByClassName("progress-bar")[0] as HTMLElement;
 
-    inputElement.addEventListener(
-        "change",
-        () => {
-            handleFiles(createButton, startButton, createDetails, inputElement.files);
-        },
-        false);
+    if (loadFile) {
+        const inputElement = document.getElementById("file") as HTMLInputElement; // BINGO
+        inputElement.addEventListener(
+            "change",
+            () => {
+                handleFiles(createButton, startButton, createDetails, inputElement.files);
+            },
+            false);
+    } else {
+        downloadRawText(template).then((rawText) => {
+            text = rawText;
+            createButton.classList.remove("hidden");
+        }, (error) => {
+            console.log(`Error downloading document ${error}`);
+        });
+    }
 
     textForm.addEventListener("submit", (event) => {
-        id = sharedTextId.value;
-        intervalTime = Number.parseInt(intervalElement.value);
+        if (!id) {
+            const sharedTextId = document.getElementById("shared-text-id") as HTMLInputElement;
+            id = sharedTextId.value;
+        }
 
+        intervalTime = Number.parseInt(intervalElement.value);
         const scribeP =  scribe.create(id);
+
         scribeP.then(() => {
             // Initialize the scribe link UI
             documentLink.href = `/sharedText/${id}`;
@@ -108,10 +137,13 @@ export function initialize(config: any) {
             metricsLink.href = `/canvas/${id}-metrics`;
             metricsLink.innerText = metricsLink.href;
 
+            const insightsLink = document.getElementById("insights-link") as HTMLAnchorElement;
+            insightsLink.href = `/maps/${id}`;
+            insightsLink.innerText = insightsLink.href;
+
             startButton.classList.remove("hidden");
             createDetails.classList.remove("hidden");
             createButton.classList.add("hidden");
-
         }, (err) => {
             console.log(err);
         });
