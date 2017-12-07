@@ -4,6 +4,7 @@ import { debug } from "./debug";
 import { DockPanel } from "./dockPanel";
 import { FlowView, IOverlayMarker } from "./flowView";
 import { Image } from "./image";
+import { InkCanvas } from "./inkCanvas";
 import { LayerPanel } from "./layerPanel";
 import { InkLayer, Layer, OverlayCanvas } from "./overlayCanvas";
 import { IRange } from "./scrollBar";
@@ -33,6 +34,7 @@ export class FlowContainer extends ui.Component {
         sharedString: MergeTree.SharedString,
         private overlayMap: types.IMap,
         private image: Image,
+        ink: types.IInk,
         private options: Object = undefined) {
 
         super(element);
@@ -55,6 +57,12 @@ export class FlowContainer extends ui.Component {
         const flowViewDiv = document.createElement("div");
         flowViewDiv.classList.add("flow-view");
         this.flowView = new FlowView(flowViewDiv, collabDocument, sharedString, this.status, this.options);
+
+        // Create the optional full ink canvas
+        const inkCanvas = ink ? new InkCanvas(document.createElement("div"), ink) : null;
+        if (inkCanvas) {
+            inkCanvas.enableInkHitTest(false);
+        }
 
         // Layer panel lets us put the overlay canvas on top of the text
         const layerPanelDiv = document.createElement("div");
@@ -115,6 +123,10 @@ export class FlowContainer extends ui.Component {
         this.status.addOption("ink", "ink");
         this.status.on("ink", (value) => {
             this.overlayCanvas.enableInk(value);
+
+            if (inkCanvas) {
+                inkCanvas.enableInkHitTest(value);
+            }
         });
 
         const spellOption = "spellchecker";
@@ -133,6 +145,9 @@ export class FlowContainer extends ui.Component {
         // Add children to the panel once we have both
         this.layerPanel.addChild(this.flowView);
         this.layerPanel.addChild(this.overlayCanvas);
+        if (inkCanvas) {
+            this.layerPanel.addChild(inkCanvas);
+        }
 
         this.dockPanel = new DockPanel(element);
         this.addChild(this.dockPanel);

@@ -21,13 +21,9 @@
             <h3>Routerlicious</h3>
             <ul class="list-unstyled">
                 <li><a href="/sharedText/{{sharedTextMoniker}}?spellchecking=disabled">Pride and Prejudice</a></li>
+                <li><a href="/sharedText/{{sharedTextPageInkMoniker}}?pageInk=true">Pride and Prejudice (page ink)</a></li>
                 <li><a href="http://prague-grafana.westus2.cloudapp.azure.com/dashboard/db/latency-summary">Performance Metrics</a></li>
                 <li><a href="/canvas/{{canvasMoniker}}">Ink</a></li>
-            </ul>
-
-            <h3>Rich Text</h3>
-            <ul class="list-unstyled">
-                <li><a href="/sharedText/{{sharedTextMoniker}}?spellchecking=disabled">Rich Text and Presence</a></li>
             </ul>
 
             <h3>Intelligent Services</h3>
