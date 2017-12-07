@@ -1,5 +1,6 @@
 import * as assert from "assert";
 import { AsyncQueue, queue } from "async";
+import * as _ from "lodash";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import { IPartitionLambda, IPartitionLambdaFactory } from "../kafka-service/lambdas";
@@ -11,8 +12,11 @@ export class DocumentPartition {
     private lambdaP: Promise<IPartitionLambda>;
 
     constructor(factory: IPartitionLambdaFactory, config: Provider, id: string, public context: DocumentContext) {
-        // TODO need to parse into a specific config - maybe I need an interface for this???
-        this.lambdaP = factory.create(config, context);
+        // TODO extend existing type definition
+        const clonedConfig = _.cloneDeep((config as any).get());
+        clonedConfig.documentId = id;
+        const documentConfig = new Provider({}).defaults(clonedConfig).use("memory");
+        this.lambdaP = factory.create(documentConfig, context);
 
         this.q = queue((message: utils.kafkaConsumer.IMessage, callback) => {
             const processedP = this.processCore(message).catch((error) => {

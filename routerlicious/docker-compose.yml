@@ -50,10 +50,11 @@ services:
         restart: always
     routemaster:
         build: .
-        command: node dist/routemaster/index.js
+        command: node dist/kafka-service/index.js ../document-router/index.js
         environment:
             - DEBUG=routerlicious:*
             - NODE_ENV=development
+            - documentLambda=../routemaster/index.js
         restart: always
     paparazzi:
         build: .
