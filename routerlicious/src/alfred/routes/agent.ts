@@ -18,6 +18,23 @@ export function create(config: Provider): Router {
     const router: Router = Router();
 
     /**
+     * Retrieves a list of all module names stored in db.
+     */
+    router.get("/", (request, response, next) => {
+        let names: string[] = [];
+        let objectsStream = minioClient.listObjects(storageBucket, "", true);
+        objectsStream.on("data", (obj) => {
+            names.push(obj.name as string);
+        });
+        objectsStream.on("error", (error) => {
+            response.status(500).json(error);
+        });
+        objectsStream.on("end", (data) => {
+            response.status(200).json( { names } );
+        });
+    });
+
+    /**
      * Retrieves the stored module from server.
      */
     router.get("/:id", async (request, response, next) => {

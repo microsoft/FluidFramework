@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import * as request from "request";
-import * as unzip from "unzip";
+import * as unzip from "unzip-stream";
 import * as url from "url";
 import * as winston from "winston";
 import * as agent from "../agent";
@@ -49,10 +49,14 @@ export class PaparazziRunner implements utils.IRunner {
 
             return new Promise<any>((resolve, reject) => {
                 fs.access(`intel_modules/${moduleName}`, (error) => {
-                    // Check module existence first.
+                    // Module already exists locally. Just import it!
                     if (!error) {
-                      reject("Module already exists");
-                    } else {    // Otherwise load the module
+                      winston.info(`Module ${moduleName} already exists locally`);
+                      import(`../../intel_modules/${moduleName}/${moduleName}`).then((loadedModule) => {
+                            winston.info(`${moduleName} loaded!`);
+                            resolve(loadedModule);
+                        });
+                    } else {    // Otherwise load the module from db, write it locally, and import it.
                         request
                         .get(moduleUrl)
                         .on("response", (response) => {
@@ -63,6 +67,7 @@ export class PaparazziRunner implements utils.IRunner {
                         .on("error", (err) => {
                             reject(`Error requesting intel module from server: ${err}`);
                         })
+                        // Unzipping one level nested to avoid collision with any OS generated folder/file.
                         .pipe(unzip.Extract({ path: `intel_modules/${moduleName}` })
                         .on("error", (err) => {
                             reject(`Error writing unzipped module ${moduleName}: ${err}`);

@@ -7,6 +7,19 @@ import { SnapshotWork } from "./snapshotWork";
 import { SpellcheckerWork } from "./spellcheckerWork";
 import { IWork } from "./work";
 
+// Interface for a remote module.
+interface IModule {
+
+    name: string;
+
+    code: any;
+};
+
+// Interface for uploaded module names
+interface IAgents {
+    names: string[];
+};
+
 /**
  * The WorkerService manages the Socket.IO connection and work sent to it.
  */
@@ -16,6 +29,8 @@ export class WorkerService implements core.IWorkerService {
     private documentMap: { [docId: string]: { [work: string]: IWork} } = {};
     private workTypeMap: { [workType: string]: boolean} = {};
     private dict = new MergeTree.Collections.TST<number>();
+    // List of modules added during the lifetime of this object.
+    private runtimeModules: IModule[] = [];
 
     constructor(
         private serverUrl: string,
@@ -63,7 +78,7 @@ export class WorkerService implements core.IWorkerService {
                     this.socket.on("AgentObject", (cId: string, moduleName: string, response) => {
                         // TODO: Need some rule here to deny a new agent loading.
                         console.log(`Received work to load module ${moduleName}!`);
-                        this.loadNewModule(moduleName);
+                        this.loadNewModule( { name: moduleName, code: null } );
                         response(null, clientDetail);
                     });
                     // Check whether worker is ready to work.
@@ -97,6 +112,16 @@ export class WorkerService implements core.IWorkerService {
                                 }
                             });
                     }, this.config.intervalMSec);
+
+                    // TMZ is responsible for creating module storage. So we are loading here to avoid race condition.
+                    this.loadUploadedModuleNames().then((moduleNames: any) => {
+                        const modules = JSON.parse(moduleNames) as IAgents;
+                        for (const moduleName of modules.names) {
+                            this.loadNewModule( { name: moduleName, code: null } );
+                        }
+                    }, (err) => {
+                        console.log(`Error loading uploaded modules: ${err}`);
+                    });
                 } else {
                     deferred.resolve();
                 }
@@ -141,12 +166,26 @@ export class WorkerService implements core.IWorkerService {
         socketStorage.registerAsDefault(this.serverUrl, this.storageUrl, this.repo);
     }
 
-    private loadNewModule(moduleName: string) {
-        this.moduleLoader(moduleName).then((loadedModule) => {
-            console.log(`Success loading module ${moduleName} in worker!`);
-            console.log(loadedModule());
+    private loadNewModule(newModule: IModule) {
+        this.moduleLoader(newModule.name).then((loadedCode) => {
+            console.log(`Success loading module ${newModule.name} in worker!`);
+
+            // Update the code.
+            newModule.code = loadedCode;
+
+            // Register the module for all active documents.
+            for (const docId of Object.keys(this.documentMap)) {
+                for (const workType of Object.keys(this.documentMap[docId])) {
+                    if (workType === "intel") {
+                        const intelWork = this.documentMap[docId][workType] as IntelWork;
+                        intelWork.registerNewService(newModule.code);
+                    }
+                }
+            }
+            // Push the module for all future documents.
+            this.runtimeModules.push(newModule);
         }, (error) =>  {
-            console.log(`Error loading module sillyname: ${error}`);
+            console.log(`Error loading module ${newModule.name}: ${error}`);
         });
     }
 
@@ -199,7 +238,19 @@ export class WorkerService implements core.IWorkerService {
         }
         if (!(workType in this.documentMap[docId])) {
             this.documentMap[docId][workType] = worker;
-            worker.start();
+            if (workType !== "intel") {
+                worker.start();
+            } else {
+                // register all runtime added modules one by one.
+                const intelWork = this.documentMap[docId][workType] as IntelWork;
+                intelWork.start().then(() => {
+                    for (const loadedModule of this.runtimeModules) {
+                        intelWork.registerNewService(loadedModule.code);
+                    }
+                }, (err) => {
+                    console.log(`Error starting intel work: ${err}`);
+                });
+            }
         }
     }
 
@@ -227,4 +278,19 @@ export class WorkerService implements core.IWorkerService {
             });
         });
     }
+
+    private loadUploadedModuleNames(): Promise<any> {
+        return new Promise<any>((resolve, reject) => {
+            request.get(url.resolve(this.serverUrl, `agent`), (error, response, body) => {
+                if (error) {
+                    reject(error);
+                } else if (response.statusCode !== 200) {
+                    reject(response.statusCode);
+                } else {
+                    resolve(body);
+                }
+            });
+        });
+    }
+
 }
