@@ -29,8 +29,12 @@ class CheckpointStrategy implements ICheckpointStrategy {
 class TestPartitionLambdaFactory implements IPartitionLambdaFactory {
     public handledMessages = 0;
 
-    public create(): Promise<IPartitionLambda> {
+    public create(config: nconf.Provider): Promise<IPartitionLambda> {
         return Promise.resolve(new TestLambda(this));
+    }
+
+    public async dispose(): Promise<void> {
+        return;
     }
 }
 

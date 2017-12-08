@@ -122,4 +122,9 @@ export class ServiceGraphLambdaFactory implements IPartitionLambdaFactory {
 
         return new ServiceGraphLambda(graph, sharedGraph, context);
     }
+
+    public async dispose(): Promise<void> {
+        // TODO will want the ability to flush/close the document
+        return;
+    }
 }

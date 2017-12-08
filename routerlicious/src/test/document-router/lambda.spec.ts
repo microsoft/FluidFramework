@@ -58,8 +58,8 @@ describe("DocumentRouter", () => {
 
             defaultMessageFactory = new MessageFactory("test", "test");
             kafkaMessageFactory = new KafkaMessageFactory();
-            factory = plugin.create();
             config = (new nconf.Provider({})).defaults(defaultConfig).use("memory");
+            factory = await plugin.create(config);
             context = new TestContext();
             lambda = await factory.create(config, context);
         });

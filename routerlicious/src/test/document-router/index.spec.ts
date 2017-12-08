@@ -21,9 +21,9 @@ describe("DocumentRouter", () => {
         let factory: IPartitionLambdaFactory;
         let config: nconf.Provider;
 
-        beforeEach(() => {
-            factory = plugin.create();
+        beforeEach(async () => {
             config = (new nconf.Provider({})).defaults(defaultConfig).use("memory");
+            factory = await plugin.create(config);
         });
 
         describe("id", () => {
