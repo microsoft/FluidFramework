@@ -133,8 +133,8 @@ async function loadFull(
 async function loadCommit(
     id: string,
     version: resources.ICommit,
-    config: any,
     pageInk: boolean,
+    config: any,
     options: Object) {
     console.log(`Load document ${id} upto commit ${JSON.stringify(version)}.`);
 
