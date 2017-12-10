@@ -1,20 +1,17 @@
 import * as assert from "assert";
 import * as api from "../../api";
-import * as apiCore from "../../api-core";
 import { IMap, IMapView } from "../../data-types";
 import { copyMap, MapExtension, MapView } from "../../map";
 import * as testUtils from "../testUtils";
 
 describe("Routerlicious", () => {
     describe("Map", () => {
-        let registry: apiCore.Registry;
         let testDocument: api.Document;
         let rootMap: IMap;
         let testMap: IMap;
 
         beforeEach(async () => {
             testUtils.registerAsTest("", "", "");
-            registry = new apiCore.Registry();
             testDocument = await api.load("testDocument");
             rootMap = testDocument.getRoot();
             testMap = testDocument.createMap();
