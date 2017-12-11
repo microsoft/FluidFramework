@@ -1,8 +1,8 @@
-import * as assert from "assert";
 import { AsyncQueue, queue } from "async";
 import * as _ from "lodash";
 import { Provider } from "nconf";
 import * as winston from "winston";
+import { assertNotRejected } from "../core-utils";
 import { IPartitionLambda, IPartitionLambdaFactory } from "../kafka-service/lambdas";
 import * as utils from "../utils";
 import { DocumentContext } from "./documentContext";
@@ -24,17 +24,8 @@ export class DocumentPartition {
                     winston.error("Error processing partition message", error);
                 });
 
-            // TODO abstract me into a util to break on any error
-            processedP.then(
-                () => {
-                    // We will send in more messages after they resolve the promise
-                    callback();
-                },
-                (error) => {
-                    // This promise should never have an error case. Might want a util to enforce this
-                    // type of handling
-                    assert.ok(false);
-                });
+            // Validate processedP only resolves - then call the next message
+            assertNotRejected(processedP).then(() => callback());
         }, 1);
     }
 

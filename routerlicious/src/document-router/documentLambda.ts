@@ -1,5 +1,4 @@
 import { Provider } from "nconf";
-import * as winston from "winston";
 import * as core from "../core";
 import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "../kafka-service/lambdas";
 import * as utils from "../utils";
@@ -21,7 +20,6 @@ export class DocumentLambda implements IPartitionLambda {
     // Need to understand what retry logic looks like
 
     public async handler(message: utils.kafkaConsumer.IMessage): Promise<any> {
-        winston.info(`${message.partition}@${message.offset}`);
         await this.handlerCore(message);
         this.contextManager.setMaxOffset(message.offset);
     }

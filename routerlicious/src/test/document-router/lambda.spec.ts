@@ -64,6 +64,10 @@ describe("DocumentRouter", () => {
             lambda = await factory.create(config, context);
         });
 
+        afterEach(async () => {
+            await factory.dispose();
+        });
+
         describe(".handler()", () => {
             it("Should be able to process a document message from a single document", async () => {
                 const message = defaultMessageFactory.createSequencedOperation();

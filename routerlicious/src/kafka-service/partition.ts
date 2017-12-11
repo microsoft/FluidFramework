@@ -2,6 +2,7 @@ import * as assert from "assert";
 import { AsyncQueue, queue } from "async";
 import { Provider } from "nconf";
 import * as winston from "winston";
+import { assertNotRejected } from "../core-utils";
 import * as utils from "../utils";
 import { CheckpointManager, ICheckpointStrategy } from "./checkpointManager";
 import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "./lambdas";
@@ -77,17 +78,8 @@ export class Partition {
                     winston.error("Error processing partition message", error);
                 });
 
-            // TODO abstract me into a util to break on any error
-            processedP.then(
-                () => {
-                    // We will send in more messages after they resolve the promise
-                    callback();
-                },
-                (error) => {
-                    // This promise should never have an error case. Might want a util to enforce this
-                    // type of handling
-                    assert.ok(false);
-                });
+            // assert processedP only resolves
+            assertNotRejected(processedP).then(() => callback());
         }, 1);
 
         // Need to expose error information

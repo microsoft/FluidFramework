@@ -1,3 +1,5 @@
+import * as assert from "assert";
+
 /**
  * A deferred creates a promise and the ability to resolve or reject it
  */
@@ -33,4 +35,16 @@ export class Deferred<T> {
     public reject(error: any) {
         this.rej(error);
     }
+}
+
+/**
+ * Helper function that asserts that the given promise only resolves
+ */
+export function assertNotRejected<T>(promise: Promise<T>): Promise<T> {
+    // Assert that the given promise only resolves
+    promise.catch((error) => {
+        assert.ok(false);
+    });
+
+    return promise;
 }
