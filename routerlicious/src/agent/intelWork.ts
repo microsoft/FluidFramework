@@ -1,10 +1,12 @@
 import { api, core, types } from "../client-api";
-import { nativeTextAnalytics, resumeAnalytics, textAnalytics } from "../intelligence";
+import { nativeTextAnalytics, textAnalytics } from "../intelligence";
 import { BaseWork} from "./baseWork";
 import { IntelligentServicesManager } from "./intelligence";
 import { IWork} from "./work";
 
 export class IntelWork extends BaseWork implements IWork {
+
+    private intelligenceManager: IntelligentServicesManager;
 
     constructor(docId: string, config: any) {
         super(docId, config);
@@ -21,22 +23,25 @@ export class IntelWork extends BaseWork implements IWork {
         return this.processIntelligenceWork(this.document, insightsMapView);
     }
 
+    public registerNewService(service: any) {
+        this.intelligenceManager.registerService(service.factory.create(this.config.intelligence.resume));
+    }
+
     private processIntelligenceWork(doc: api.Document, insightsMap: types.IMapView): Promise<void> {
-        const intelligenceManager = new IntelligentServicesManager(doc, insightsMap);
-        intelligenceManager.registerService(resumeAnalytics.factory.create(this.config.intelligence.resume));
-        intelligenceManager.registerService(textAnalytics.factory.create(this.config.intelligence.textAnalytics));
+        this.intelligenceManager = new IntelligentServicesManager(doc, insightsMap);
+        this.intelligenceManager.registerService(textAnalytics.factory.create(this.config.intelligence.textAnalytics));
         if (this.config.intelligence.nativeTextAnalytics.enable) {
-            intelligenceManager.registerService(
+            this.intelligenceManager.registerService(
                 nativeTextAnalytics.factory.create(this.config.intelligence.nativeTextAnalytics));
         }
         const eventHandler = (op: core.ISequencedDocumentMessage) => {
             if (op.type === core.ObjectOperation) {
                 const objectId = op.contents.address;
                 const object = doc.get(objectId);
-                intelligenceManager.process(object);
+                this.intelligenceManager.process(object);
             } else if (op.type === core.AttachObject) {
                 const object = doc.get(op.contents.id);
-                intelligenceManager.process(object);
+                this.intelligenceManager.process(object);
             }
         };
         this.operation = eventHandler;
