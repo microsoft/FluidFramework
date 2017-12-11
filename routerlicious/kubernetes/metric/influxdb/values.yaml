@@ -21,13 +21,13 @@ persistence:
   ##
   storageClass: unmanaged-premium
   accessMode: ReadWriteOnce
-  size: 8Gi
+  size: 1024Gi
 
 ## Configure resource requests and limits
 ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
 resources:
   requests:
-    memory: 256Mi
+    memory: 512Mi
     cpu: 0.1
   limits:
     memory: 16Gi

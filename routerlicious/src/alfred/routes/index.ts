@@ -2,6 +2,7 @@ import { Router } from "express";
 import { Provider } from "nconf";
 import * as git from "../../git-storage";
 import * as utils from "../../utils";
+import * as agent from "./agent";
 import * as api from "./api";
 import * as canvas from "./canvas";
 import * as cell from "./cell";
@@ -12,13 +13,13 @@ import * as login from "./login";
 import * as maps from "./maps";
 import * as ping from "./ping";
 import * as scribe from "./scribe";
-import * as scribeDemo from "./scribedemo";
 import * as sharedText from "./sharedText";
 import * as templates from "./templates";
 import * as video from "./video";
 import * as youtubeVideo from "./youtubeVideo";
 
 export interface IRoutes {
+    agent: Router;
     api: Router;
     canvas: Router;
     cell: Router;
@@ -28,7 +29,6 @@ export interface IRoutes {
     login: Router;
     maps: Router;
     scribe: Router;
-    scribeDemo: Router;
     sharedText: Router;
     video: Router;
     youtubeVideo: Router;
@@ -42,6 +42,7 @@ export function create(
     producer: utils.kafkaProducer.IProducer) {
 
     return {
+        agent: agent.create(config),
         api: api.create(config, gitManager, mongoManager, producer),
         canvas: canvas.create(config, gitManager),
         cell: cell.create(config, gitManager),
@@ -52,7 +53,6 @@ export function create(
         maps: maps.create(config, gitManager),
         ping: ping.create(),
         scribe: scribe.create(config),
-        scribeDemo: scribeDemo.create(config),
         sharedText: sharedText.create(config, gitManager, mongoManager, producer),
         templates: templates.create(config),
         video: video.create(config, gitManager),

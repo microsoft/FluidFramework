@@ -1,6 +1,10 @@
-FROM node:8.4.0-alpine
+FROM node:8.9.3-alpine
 
-RUN apk add --no-cache tini
+# node-gyp dependencies
+RUN apk add --no-cache --virtual .gyp python make g++
+
+# tini so node doesn't run as PID 1 
+RUN apk add --no-cache tini python make g++
 
 # Copy over and build the server
 WORKDIR /usr/src/server
@@ -13,6 +17,9 @@ RUN npm install
 # And now copy over our actual code and build
 COPY . .
 RUN npm run build:full
+
+# Remove build tools
+RUN apk del .gyp
 
 # Expose the port the app runs under
 EXPOSE 3000

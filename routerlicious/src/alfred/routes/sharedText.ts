@@ -23,7 +23,6 @@ export function create(
      * Loading of a specific shared text.
      */
     router.get("/:id", (request, response, next) => {
-
         const versionP = storage.getLatestVersion(gitManager, request.params.id);
         versionP.then(
             (version) => {
@@ -45,6 +44,7 @@ export function create(
                         id: request.params.id,
                         loadPartial: false,
                         options: JSON.stringify(options),
+                        pageInk: request.query.pageInk === "true",
                         partials: defaultPartials,
                         template,
                         title: request.params.id,
@@ -95,6 +95,7 @@ export function create(
                         id: request.params.id,
                         loadPartial: true,
                         options: JSON.stringify(options),
+                        pageInk: request.query.pageInk === "true",
                         partials: defaultPartials,
                         template: undefined,
                         title: request.params.id,

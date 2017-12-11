@@ -19,6 +19,7 @@ export function create(config: Provider): Router {
                 noComposeMoniker: moniker.choose(),
                 partials: defaultPartials,
                 sharedTextMoniker: moniker.choose(),
+                sharedTextPageInkMoniker: moniker.choose(),
                 title: "Prague Demos",
                 videoMoniker: moniker.choose(),
             });

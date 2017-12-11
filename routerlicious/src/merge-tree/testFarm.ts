@@ -20,19 +20,19 @@ function elapsedMicroseconds(start: [number, number]) {
     return duration;
 }
 
-enum AsyncRoundState {
-    Insert,
-    Remove,
-    Tail
-}
+// enum AsyncRoundState {
+//     Insert,
+//     Remove,
+//     Tail
+// }
 
-interface AsyncRoundInfo {
-    clientIndex: number;
-    state: AsyncRoundState;
-    insertSegmentCount?: number;
-    removeSegmentCount?: number;
-    iterIndex: number;
-}
+// interface AsyncRoundInfo {
+//     clientIndex: number;
+//     state: AsyncRoundState;
+//     insertSegmentCount?: number;
+//     removeSegmentCount?: number;
+//     iterIndex: number;
+// }
 
 export function propertyCopy() {
     const propCount = 2000;
@@ -119,10 +119,10 @@ export function TestPack(verbose = true) {
     let getTextCalls = 0;
     let crossGetTextTime = 0;
     let crossGetTextCalls = 0;
-    let incrGetTextTime = 0;
-    let incrGetTextCalls = 0;
-    let catchUpTime = 0;
-    let catchUps = 0;
+    // let incrGetTextTime = 0;
+    // let incrGetTextCalls = 0;
+    // let catchUpTime = 0;
+    // let catchUps = 0;
 
     function reportTiming(client: MergeTree.Client) {
         if (!verbose) {
@@ -229,8 +229,8 @@ export function TestPack(verbose = true) {
             if (checkIncr) {
                 clockStart = clock();
                 let serverIncrText = incrGetText(server);
-                incrGetTextTime += elapsedMicroseconds(clockStart);
-                incrGetTextCalls++;
+                // incrGetTextTime += elapsedMicroseconds(clockStart);
+                // incrGetTextCalls++;
                 if (serverIncrText != serverText) {
                     console.log("incr get text mismatch");
                 }
@@ -347,64 +347,64 @@ export function TestPack(verbose = true) {
 
         let errorCount = 0;
 
-        function asyncRoundStep(asyncInfo: AsyncRoundInfo, roundCount: number) {
-            if (asyncInfo.state == AsyncRoundState.Insert) {
-                if (!asyncInfo.insertSegmentCount) {
-                    asyncInfo.insertSegmentCount = randSmallSegmentCount();
-                }
-                if (asyncInfo.clientIndex == clients.length) {
-                    asyncInfo.state = AsyncRoundState.Remove;
-                    asyncInfo.iterIndex = 0;
-                }
-                else {
-                    let client = clients[asyncInfo.clientIndex];
-                    if (startFile) {
-                        randomWordMove(client);
-                    }
-                    else {
-                        randomSpateOfInserts(client, asyncInfo.iterIndex);
-                    }
-                    asyncInfo.iterIndex++;
-                    if (asyncInfo.iterIndex == asyncInfo.insertSegmentCount) {
-                        asyncInfo.clientIndex++;
-                        asyncInfo.insertSegmentCount = undefined;
-                        asyncInfo.iterIndex = 0;
-                    }
-                }
-            }
-            if (asyncInfo.state == AsyncRoundState.Remove) {
-                if (!asyncInfo.removeSegmentCount) {
-                    asyncInfo.removeSegmentCount = Math.floor(3 * asyncInfo.insertSegmentCount / 4);
-                    if (asyncInfo.removeSegmentCount < 1) {
-                        asyncInfo.removeSegmentCount = 1;
-                    }
-                }
-                if (asyncInfo.clientIndex == clients.length) {
-                    asyncInfo.state = AsyncRoundState.Tail;
-                }
-                else {
-                    let client = clients[asyncInfo.clientIndex];
-                    if (startFile) {
-                        randomWordMove(client);
-                    }
-                    else {
-                        randomSpateOfInserts(client, asyncInfo.iterIndex);
-                    }
-                    asyncInfo.iterIndex++;
-                    if (asyncInfo.iterIndex == asyncInfo.removeSegmentCount) {
-                        asyncInfo.clientIndex++;
-                        asyncInfo.removeSegmentCount = undefined;
-                        asyncInfo.iterIndex = 0;
-                    }
-                }
-            }
-            if (asyncInfo.state == AsyncRoundState.Tail) {
-                finishRound(roundCount);
-            }
-            else {
-                setImmediate(asyncRoundStep, asyncInfo, roundCount);
-            }
-        }
+        // function asyncRoundStep(asyncInfo: AsyncRoundInfo, roundCount: number) {
+        //     if (asyncInfo.state == AsyncRoundState.Insert) {
+        //         if (!asyncInfo.insertSegmentCount) {
+        //             asyncInfo.insertSegmentCount = randSmallSegmentCount();
+        //         }
+        //         if (asyncInfo.clientIndex == clients.length) {
+        //             asyncInfo.state = AsyncRoundState.Remove;
+        //             asyncInfo.iterIndex = 0;
+        //         }
+        //         else {
+        //             let client = clients[asyncInfo.clientIndex];
+        //             if (startFile) {
+        //                 randomWordMove(client);
+        //             }
+        //             else {
+        //                 randomSpateOfInserts(client, asyncInfo.iterIndex);
+        //             }
+        //             asyncInfo.iterIndex++;
+        //             if (asyncInfo.iterIndex == asyncInfo.insertSegmentCount) {
+        //                 asyncInfo.clientIndex++;
+        //                 asyncInfo.insertSegmentCount = undefined;
+        //                 asyncInfo.iterIndex = 0;
+        //             }
+        //         }
+        //     }
+        //     if (asyncInfo.state == AsyncRoundState.Remove) {
+        //         if (!asyncInfo.removeSegmentCount) {
+        //             asyncInfo.removeSegmentCount = Math.floor(3 * asyncInfo.insertSegmentCount / 4);
+        //             if (asyncInfo.removeSegmentCount < 1) {
+        //                 asyncInfo.removeSegmentCount = 1;
+        //             }
+        //         }
+        //         if (asyncInfo.clientIndex == clients.length) {
+        //             asyncInfo.state = AsyncRoundState.Tail;
+        //         }
+        //         else {
+        //             let client = clients[asyncInfo.clientIndex];
+        //             if (startFile) {
+        //                 randomWordMove(client);
+        //             }
+        //             else {
+        //                 randomSpateOfInserts(client, asyncInfo.iterIndex);
+        //             }
+        //             asyncInfo.iterIndex++;
+        //             if (asyncInfo.iterIndex == asyncInfo.removeSegmentCount) {
+        //                 asyncInfo.clientIndex++;
+        //                 asyncInfo.removeSegmentCount = undefined;
+        //                 asyncInfo.iterIndex = 0;
+        //             }
+        //         }
+        //     }
+        //     if (asyncInfo.state == AsyncRoundState.Tail) {
+        //         finishRound(roundCount);
+        //     }
+        //     else {
+        //         setImmediate(asyncRoundStep, asyncInfo, roundCount);
+        //     }
+        // }
 
         // function asyncRound(roundCount: number) {
         //     let asyncInfo = <AsyncRoundInfo>{
@@ -847,14 +847,14 @@ export function TestPack(verbose = true) {
                 let perLeafAveGetTextTime = ((getTextTime / getTextCalls) / statsA.leafCount).toFixed(1);
                 let perLeafAveCrossGetTextTime = ((crossGetTextTime / crossGetTextCalls) / statsB.leafCount).toFixed(1);
                 let aveCrossGetTextTime = (crossGetTextTime / crossGetTextCalls).toFixed(1);
-                let aveIncrGetTextTime = "off";
-                let aveCatchUpTime = "off";
-                if (catchUps > 0) {
-                    aveCatchUpTime = (catchUpTime / catchUps).toFixed(1);
-                }
-                if (checkIncr) {
-                    aveIncrGetTextTime = (incrGetTextTime / incrGetTextCalls).toFixed(1);
-                }
+                // let aveIncrGetTextTime = "off";
+                // let aveCatchUpTime = "off";
+                // if (catchUps > 0) {
+                //     aveCatchUpTime = (catchUpTime / catchUps).toFixed(1);
+                // }
+                // if (checkIncr) {
+                //     aveIncrGetTextTime = (incrGetTextTime / incrGetTextCalls).toFixed(1);
+                // }
                 console.log(`get text time: ${aveGetTextTime}; ${perLeafAveGetTextTime}/leaf cross: ${aveCrossGetTextTime}; ${perLeafAveCrossGetTextTime}/leaf`);
 
                 let totalTime = serverA.accumTime + serverA.accumWindowTime;
