@@ -1,5 +1,33 @@
+import hash = require("string-hash");
 import * as api from "../../api-core";
 import { IRawOperationMessage, ISequencedOperationMessage, RawOperationType, SequencedOperationType } from "../../core";
+import * as utils from "../../utils";
+
+export class KafkaMessageFactory {
+    private offsets: number[] = [];
+
+    constructor(public topic = "test", partitions = 1) {
+        for (let i = 0; i < partitions; i++) {
+            this.offsets.push(0);
+        }
+    }
+
+    public sequenceMessage(value: any, key: string): utils.kafkaConsumer.IMessage {
+        const partition = hash(key) % this.offsets.length;
+        const offset = this.offsets[partition]++;
+
+        const kafkaMessage: utils.kafkaConsumer.IMessage = {
+            highWaterOffset: offset,
+            key,
+            offset,
+            partition,
+            topic: this.topic,
+            value: JSON.stringify(value),
+        };
+
+        return kafkaMessage;
+    }
+}
 
 export class MessageFactory {
     private clientSequenceNumber = 0;
