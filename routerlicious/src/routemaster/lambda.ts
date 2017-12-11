@@ -49,9 +49,7 @@ export class RouteMasterLambda implements IPartitionLambda {
         // Forward all deltas greater than contents.sequenceNumber but less than forkSequenceNumber
         // to the fork. All messages after this will be automatically forwarded.
         const deltas = await this.document.getDeltas(contents.sequenceNumber, forkSequenceNumber);
-        console.log(`Retrieved ${deltas.length} deltas`);
         for (const delta of deltas) {
-            console.log(`Routing ${delta.operation}`);
             this.routeToDeli(forkId, delta);
         }
 

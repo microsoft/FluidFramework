@@ -22,7 +22,7 @@ export class KafkaResources implements utils.IResources {
 export class KafkaResourcesFactory implements utils.IResourcesFactory<KafkaResources> {
     public async create(config: Provider): Promise<KafkaResources> {
         const plugin = require(process.argv[2]);
-        const lambdaFactory = plugin.create() as IPartitionLambdaFactory;
+        const lambdaFactory = await plugin.create(config) as IPartitionLambdaFactory;
 
         const kafkaEndpoint = config.get("kafka:lib:endpoint");
         const kafkaLibrary = config.get("kafka:lib:name");
