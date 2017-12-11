@@ -30,6 +30,3 @@ export { ping };
 
 import * as commits from "./commits";
 export { commits };
-
-import * as scribeDemo from "./scribedemo";
-export { scribeDemo };

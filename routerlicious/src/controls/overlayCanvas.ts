@@ -291,16 +291,10 @@ export abstract class Layer {
     public position: ui.IPoint = { x: 0, y: 0 };
     public node = document.createElement("div");
     public drawingContext = new DrawingContext();
-    private size: ui.ISize;
 
     constructor(size: ui.ISize) {
-        this.size = { width: size.width, height: size.height };
         this.node.appendChild(this.drawingContext.canvas);
         this.updatePosition();
-    }
-
-    public setSize(size: ui.ISize) {
-        this.size = { width: size.width, height: size.height };
     }
 
     public setPosition(position: ui.IPoint) {

@@ -330,7 +330,6 @@ export function selectionListBoxCreate(
     }
 
     function updateSelectionList() {
-        let render = false;
         clearSubtree(listContainer);
         let len = items.length;
         for (let i = 0; i < itemCapacity; i++) {
@@ -343,7 +342,6 @@ export function selectionListBoxCreate(
                     item.div = document.createElement("div");
                     listContainer.appendChild(item.div);
                     makeItemDiv(indx, item.div);
-                    render = true;
                 } else {
                     listContainer.appendChild(item.div);
                 }
@@ -1901,15 +1899,12 @@ function renderFlow(layoutContext: ILayoutContext, deferWhole = false): IRenderO
     // TODO: for stable viewports cache the geometry and the divs
     // TODO: cache all this pre-amble in style blocks; override with pg properties
     let docContext = layoutContext.docContext;
-    let pgCount = 0;
     let viewportStartPos = -1;
-    let lineCount = 0;
     let lastLineDiv = undefined;
 
     function makeLineDiv(r: ui.Rectangle, lineFontstr) {
         let lineDiv = makeContentDiv(r, lineFontstr);
         layoutContext.viewport.div.appendChild(lineDiv);
-        lineCount++;
         lastLineDiv = lineDiv;
         return lineDiv;
     }
@@ -2099,7 +2094,6 @@ function renderFlow(layoutContext: ILayoutContext, deferWhole = false): IRenderO
                 let breaks = breakPGIntoLinesFF(itemsContext.itemInfo.items, contentWidth);
                 curPGMarker.cache = { breaks, singleLineWidth: contentWidth };
             }
-            pgCount++;
             paragraphLexer.reset();
             // TODO: more accurate end of document reasoning
             if (currentPos < totalLength) {

@@ -14,7 +14,6 @@ describe("Routerlicious", () => {
             let testDeltasCollection: TestCollection;
             let receiveTopic: TestKafka;
             let sendTopic: TestKafka;
-            let kafkaOffset: number;
             let runner: RouteMasterRunner;
             let messageFactory: MessageFactory;
 
@@ -24,7 +23,6 @@ describe("Routerlicious", () => {
                 testDeltasCollection = new TestCollection(testData);
                 receiveTopic = new TestKafka();
                 sendTopic = new TestKafka();
-                kafkaOffset = 0;
 
                 const producer = sendTopic.createProducer();
                 const consumer = receiveTopic.createConsumer();

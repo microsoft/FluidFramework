@@ -120,7 +120,6 @@ export function create(
     app.use("/youtubeVideo", routes.youtubeVideo);
     app.use("/login", routes.login);
     app.use("/ping", routes.ping);
-    app.use("/scribedemo", routes.scribeDemo);
     app.use("/agent", routes.agent);
     app.use(routes.home);
 

@@ -13,7 +13,6 @@ import * as login from "./login";
 import * as maps from "./maps";
 import * as ping from "./ping";
 import * as scribe from "./scribe";
-import * as scribeDemo from "./scribedemo";
 import * as sharedText from "./sharedText";
 import * as templates from "./templates";
 import * as video from "./video";
@@ -30,7 +29,6 @@ export interface IRoutes {
     login: Router;
     maps: Router;
     scribe: Router;
-    scribeDemo: Router;
     sharedText: Router;
     video: Router;
     youtubeVideo: Router;
@@ -55,7 +53,6 @@ export function create(
         maps: maps.create(config, gitManager),
         ping: ping.create(),
         scribe: scribe.create(config),
-        scribeDemo: scribeDemo.create(config),
         sharedText: sharedText.create(config, gitManager, mongoManager, producer),
         templates: templates.create(config),
         video: video.create(config, gitManager),
