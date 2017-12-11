@@ -10,6 +10,7 @@ import { TmzRunner } from "./runner";
 export class TmzResources implements utils.IResources {
     constructor(
         public io: any,
+        public alfredUrl: string,
         public minio: any,
         public pub: redis.RedisClient,
         public sub: redis.RedisClient,
@@ -38,6 +39,7 @@ export class TmzResourcesFactory implements utils.IResourcesFactory<TmzResources
         const topic = config.get("tmz:topic");
         const groupId = config.get("tmz:groupId");
         const minioConfig = config.get("minio");
+        const alfredUrl = config.get("tmz:alfred");
 
         // Setup redis for socketio
         let io = socketIo();
@@ -70,7 +72,7 @@ export class TmzResourcesFactory implements utils.IResourcesFactory<TmzResources
         let consumer = utils.kafkaConsumer.create(kafkaLibrary, kafkaEndpoint, groupId, groupId, topic, true);
 
         // tslint:disable-next-line
-        return new TmzResources(io, minioConfig, pub, sub, port, consumer, schedulerType, onlyServer, checkerTimeout, tasks);
+        return new TmzResources(io, alfredUrl, minioConfig, pub, sub, port, consumer, schedulerType, onlyServer, checkerTimeout, tasks);
     }
 }
 
@@ -78,6 +80,7 @@ export class TmzRunnerFactory implements utils.IRunnerFactory<TmzResources> {
     public async create(resources: TmzResources): Promise<utils.IRunner> {
         return new TmzRunner(
             resources.io,
+            resources.alfredUrl,
             resources.minio,
             resources.port,
             resources.consumer,

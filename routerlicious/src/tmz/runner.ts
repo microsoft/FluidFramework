@@ -1,5 +1,7 @@
 import { AsyncQueue, queue } from "async";
 import * as minio from "minio";
+import * as request from "request";
+import * as url from "url";
 import * as winston from "winston";
 import * as core from "../core";
 import { Deferred } from "../core-utils";
@@ -20,6 +22,7 @@ export class TmzRunner implements utils.IRunner {
 
     constructor(
         private io: any,
+        private alfredUrl: string,
         private minioConfig: any,
         private port: any,
         private consumer: utils.kafkaConsumer.IConsumer,
@@ -44,12 +47,26 @@ export class TmzRunner implements utils.IRunner {
         const minioBucket = this.minioConfig.bucket;
         // Prep minio and start listening to module uploads.
         minioHelper.getOrCreateBucket(minioClient, minioBucket).then(() => {
-            minioClient.listenBucketNotification(minioBucket, "", "", ["s3:ObjectCreated:*"])
+            // Set up bucket policy to readwrite.
+            minioClient.setBucketPolicy(minioBucket, "", minio.Policy.READWRITE, (err) => {
+                if (err) {
+                    winston.info(`Error setting up bucket bolicy. ${err}`);
+                }
+            });
+            // Set up notification.
+            minioClient.listenBucketNotification(minioBucket, "", ".zip", ["s3:ObjectCreated:*"])
             .on("notification", (record) => {
-                this.foreman.broadcastNewAgentModule(record.s3.object.key);
+                this.foreman.broadcastNewAgentModule(record.s3.object.key, "server");
+                const moduleUrl = url.resolve(this.alfredUrl, `/agent/js/${record.s3.object.key}`);
+                request.post(moduleUrl);
+            });
+            minioClient.listenBucketNotification(minioBucket, "", ".js", ["s3:ObjectCreated:*"])
+            .on("notification", (record) => {
+                winston.info(`We have a new webpacked scrtipt: ${record.s3.object.key}`);
+                this.foreman.broadcastNewAgentModule(record.s3.object.key, "client");
             });
         }, (error) => {
-            this.deferred.reject(error);
+            winston.error(error);
         });
 
         // open a socketio connection and start listening for workers.

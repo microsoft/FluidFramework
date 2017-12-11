@@ -33,9 +33,10 @@ export class BaseForeman {
         return revokedPromises;
     }
 
-    public broadcastNewAgentModule(moduleName: string) {
-        // TODO: Need some rule here to distinguish between server and client module.
-        for (const worker of this.manager.getActiveWorkers()) {
+    public broadcastNewAgentModule(moduleName: string, workerType: string) {
+        // tslint:disable-next-line
+        const workers = workerType === "server" ? this.manager.getActiveServerWorkers() : this.manager.getActiveClientWorkers();
+        for (const worker of workers) {
             worker.socket.emit("AgentObject", worker.worker.clientId, moduleName,
             (nack, ack: socketStorage.IWorker) => {
                 if (ack) {

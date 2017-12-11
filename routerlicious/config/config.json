@@ -67,6 +67,7 @@
         "checkpointTimeIntervalMsec": 1000
     },
     "tmz": {
+        "alfred": "http://alfred:3000",
         "queue": "snapshot",
         "topic": "deltas",
         "kafkaClientId": "tmz",
@@ -112,6 +113,7 @@
         },
         "url": "http://localhost:4000",
         "blobStorageUrl": "http://localhost:3001",
+        "scriptUrl": "http://localhost:9000/agents/",
         "repository": "prague",
         "storageBucket": "snapshots",
         "intervalMSec": 5000,

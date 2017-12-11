@@ -42,5 +42,6 @@ nyc
 # Chart dependencies
 **/charts/*.tgz
 
-# Generated intel modeuls
+# Generated modeuls
 intel_modules/
+temp_modules/

@@ -117,7 +117,14 @@ export class WorkerService implements core.IWorkerService {
                     this.loadUploadedModuleNames().then((moduleNames: any) => {
                         const modules = JSON.parse(moduleNames) as IAgents;
                         for (const moduleName of modules.names) {
-                            this.loadNewModule( { name: moduleName, code: null } );
+                            // paparazzi just loads zipped module.
+                            if (this.clientType === "paparazzi" && moduleName.indexOf(".zip") !== -1) {
+                                this.loadNewModule( { name: moduleName, code: null } );
+                            }
+                            // Anything else just loads .js file.
+                            if (this.clientType !== "paparazzi" && moduleName.indexOf(".js") !== -1) {
+                                this.loadNewModule( { name: moduleName, code: null } );
+                            }
                         }
                     }, (err) => {
                         console.log(`Error loading uploaded modules: ${err}`);
