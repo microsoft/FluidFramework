@@ -67,8 +67,6 @@ export class RouteMasterLambda implements IPartitionLambda {
         for (const fork of forks) {
             this.routeToDeli(fork, message);
         }
-
-        document.trackForward(message.operation.sequenceNumber);
     }
 
     /**
