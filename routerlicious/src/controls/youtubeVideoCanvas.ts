@@ -16,7 +16,6 @@ declare global {
  */
 export class YouTubeVideoCanvas extends ui.Component {
     public player: any;
-    private video: YouTubeVideo;
 
     constructor(private elem: HTMLDivElement, doc: api.Document, root: types.IMap) {
         super(elem);
@@ -25,9 +24,10 @@ export class YouTubeVideoCanvas extends ui.Component {
 
         // this.elem = element;
         this.elem.addEventListener("YouTube-Loaded", (e) => {
-            this.video = new YouTubeVideo(document.createElement("div"),
+            const video = new YouTubeVideo(document.createElement("div"),
                 this.player,
                 this.fetchVideoRoot(root, doc));
+            this.addChild(video);
         });
 
         const playerDiv = document.createElement("div");

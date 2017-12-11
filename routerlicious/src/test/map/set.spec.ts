@@ -1,13 +1,11 @@
 import * as assert from "assert";
 import * as api from "../../api";
-import * as apiCore from "../../api-core";
 import { IMap, ISet } from "../../data-types";
 import * as testUtils from "../testUtils";
 
 describe("Routerlicious", () => {
     describe("Map", () => {
         describe("set", () => {
-            let registry: apiCore.Registry;
             let testDocument: api.Document;
             let testMap: IMap;
             let emptySet: ISet<number>;
@@ -15,7 +13,6 @@ describe("Routerlicious", () => {
 
             beforeEach(async () => {
                 testUtils.registerAsTest("", "", "");
-                registry = new apiCore.Registry();
                 testDocument = await api.load("testDocument");
                 testMap = testDocument.createMap();
                 emptySet = testMap.createSet("emptySet") as ISet<number>;

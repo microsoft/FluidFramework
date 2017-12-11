@@ -16,7 +16,6 @@ export class DocumentManager {
     }
 
     private activeForks: Set<string>;
-    private sequenceNumber: number;
 
     private constructor(
         private document: core.IDocument,
@@ -88,13 +87,6 @@ export class DocumentManager {
         pollDeltas();
 
         return deferred.promise;
-    }
-
-    /**
-     * Tracks the last forwarded message for the document
-     */
-    public trackForward(sequenceNumber: number) {
-        this.sequenceNumber = sequenceNumber;
     }
 }
 
@@ -183,8 +175,6 @@ export class Router {
         for (const fork of forks) {
             this.routeToDeli(fork, message);
         }
-
-        document.trackForward(message.operation.sequenceNumber);
     }
 
     /**

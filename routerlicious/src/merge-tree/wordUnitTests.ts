@@ -120,9 +120,8 @@ function measureFetch(startFile: string, withBookmarks = false) {
     let bookmarkCount = 20000;
     let client = new MergeTree.Client("", { blockUpdateMarkers: true });
     Text.loadTextFromFileWithMarkers(startFile, client.mergeTree);
-    let bookmarks: MergeTree.LocalReference[];
     if (withBookmarks) {
-        bookmarks = makeBookmarks(client, bookmarkCount);
+        makeBookmarks(client, bookmarkCount);
         console.log(`inserting ${bookmarkCount} refs into text`);
     }
     let reps = 20;
@@ -130,13 +129,13 @@ function measureFetch(startFile: string, withBookmarks = false) {
     let count = 0;
     for (let i = 0; i < reps; i++) {
         for (let pos = 0; pos < client.getLength();) {
-            let prevPG = client.mergeTree.findTile(pos, client.getClientId(), "pg");
-            let caBegin: number;
-            if (prevPG) {
-                caBegin = prevPG.pos;
-            } else {
-                caBegin = 0;
-            }
+            // let prevPG = client.mergeTree.findTile(pos, client.getClientId(), "pg");
+            // let caBegin: number;
+            // if (prevPG) {
+            //     caBegin = prevPG.pos;
+            // } else {
+            //     caBegin = 0;
+            // }
             // curPG.pos is ca end
             let curPG = client.mergeTree.findTile(pos, client.getClientId(), "pg", false);
             let properties = curPG.tile.properties;

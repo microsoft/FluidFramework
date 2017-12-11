@@ -477,19 +477,19 @@ export function mergeTreeCheckedTest() {
     return errorCount;
 }
 
-enum AsyncRoundState {
-    Insert,
-    Remove,
-    Tail
-}
+// enum AsyncRoundState {
+//     Insert,
+//     Remove,
+//     Tail
+// }
 
-interface AsyncRoundInfo {
-    clientIndex: number;
-    state: AsyncRoundState;
-    insertSegmentCount?: number;
-    removeSegmentCount?: number;
-    iterIndex: number;
-}
+// interface AsyncRoundInfo {
+//     clientIndex: number;
+//     state: AsyncRoundState;
+//     insertSegmentCount?: number;
+//     removeSegmentCount?: number;
+//     iterIndex: number;
+// }
 
 export function TestPack(verbose = true) {
     let mt = random.engines.mt19937();
@@ -751,64 +751,64 @@ export function TestPack(verbose = true) {
 
         let errorCount = 0;
 
-        function asyncRoundStep(asyncInfo: AsyncRoundInfo, roundCount: number) {
-            if (asyncInfo.state == AsyncRoundState.Insert) {
-                if (!asyncInfo.insertSegmentCount) {
-                    asyncInfo.insertSegmentCount = randSmallSegmentCount();
-                }
-                if (asyncInfo.clientIndex == clients.length) {
-                    asyncInfo.state = AsyncRoundState.Remove;
-                    asyncInfo.iterIndex = 0;
-                }
-                else {
-                    let client = clients[asyncInfo.clientIndex];
-                    if (startFile) {
-                        randomWordMove(client);
-                    }
-                    else {
-                        randomSpateOfInserts(client, asyncInfo.iterIndex);
-                    }
-                    asyncInfo.iterIndex++;
-                    if (asyncInfo.iterIndex == asyncInfo.insertSegmentCount) {
-                        asyncInfo.clientIndex++;
-                        asyncInfo.insertSegmentCount = undefined;
-                        asyncInfo.iterIndex = 0;
-                    }
-                }
-            }
-            if (asyncInfo.state == AsyncRoundState.Remove) {
-                if (!asyncInfo.removeSegmentCount) {
-                    asyncInfo.removeSegmentCount = Math.floor(3 * asyncInfo.insertSegmentCount / 4);
-                    if (asyncInfo.removeSegmentCount < 1) {
-                        asyncInfo.removeSegmentCount = 1;
-                    }
-                }
-                if (asyncInfo.clientIndex == clients.length) {
-                    asyncInfo.state = AsyncRoundState.Tail;
-                }
-                else {
-                    let client = clients[asyncInfo.clientIndex];
-                    if (startFile) {
-                        randomWordMove(client);
-                    }
-                    else {
-                        randomSpateOfInserts(client, asyncInfo.iterIndex);
-                    }
-                    asyncInfo.iterIndex++;
-                    if (asyncInfo.iterIndex == asyncInfo.removeSegmentCount) {
-                        asyncInfo.clientIndex++;
-                        asyncInfo.removeSegmentCount = undefined;
-                        asyncInfo.iterIndex = 0;
-                    }
-                }
-            }
-            if (asyncInfo.state == AsyncRoundState.Tail) {
-                finishRound(roundCount);
-            }
-            else {
-                setImmediate(asyncRoundStep, asyncInfo, roundCount);
-            }
-        }
+        // function asyncRoundStep(asyncInfo: AsyncRoundInfo, roundCount: number) {
+        //     if (asyncInfo.state == AsyncRoundState.Insert) {
+        //         if (!asyncInfo.insertSegmentCount) {
+        //             asyncInfo.insertSegmentCount = randSmallSegmentCount();
+        //         }
+        //         if (asyncInfo.clientIndex == clients.length) {
+        //             asyncInfo.state = AsyncRoundState.Remove;
+        //             asyncInfo.iterIndex = 0;
+        //         }
+        //         else {
+        //             let client = clients[asyncInfo.clientIndex];
+        //             if (startFile) {
+        //                 randomWordMove(client);
+        //             }
+        //             else {
+        //                 randomSpateOfInserts(client, asyncInfo.iterIndex);
+        //             }
+        //             asyncInfo.iterIndex++;
+        //             if (asyncInfo.iterIndex == asyncInfo.insertSegmentCount) {
+        //                 asyncInfo.clientIndex++;
+        //                 asyncInfo.insertSegmentCount = undefined;
+        //                 asyncInfo.iterIndex = 0;
+        //             }
+        //         }
+        //     }
+        //     if (asyncInfo.state == AsyncRoundState.Remove) {
+        //         if (!asyncInfo.removeSegmentCount) {
+        //             asyncInfo.removeSegmentCount = Math.floor(3 * asyncInfo.insertSegmentCount / 4);
+        //             if (asyncInfo.removeSegmentCount < 1) {
+        //                 asyncInfo.removeSegmentCount = 1;
+        //             }
+        //         }
+        //         if (asyncInfo.clientIndex == clients.length) {
+        //             asyncInfo.state = AsyncRoundState.Tail;
+        //         }
+        //         else {
+        //             let client = clients[asyncInfo.clientIndex];
+        //             if (startFile) {
+        //                 randomWordMove(client);
+        //             }
+        //             else {
+        //                 randomSpateOfInserts(client, asyncInfo.iterIndex);
+        //             }
+        //             asyncInfo.iterIndex++;
+        //             if (asyncInfo.iterIndex == asyncInfo.removeSegmentCount) {
+        //                 asyncInfo.clientIndex++;
+        //                 asyncInfo.removeSegmentCount = undefined;
+        //                 asyncInfo.iterIndex = 0;
+        //             }
+        //         }
+        //     }
+        //     if (asyncInfo.state == AsyncRoundState.Tail) {
+        //         finishRound(roundCount);
+        //     }
+        //     else {
+        //         setImmediate(asyncRoundStep, asyncInfo, roundCount);
+        //     }
+        // }
 
         // function asyncRound(roundCount: number) {
         //     let asyncInfo = <AsyncRoundInfo>{
@@ -1377,10 +1377,10 @@ function tst() {
         return count;
     }
     let clockStart = clock();
-    let count = addCorpus(corpusContent, corpusTree);
+    addCorpus(corpusContent, corpusTree);
     corpusFilename = path.join(__dirname, "../../public/literature/shakespeare.txt")
     corpusContent = fs.readFileSync(corpusFilename, "utf8");
-    count += addCorpus(corpusContent, corpusTree);
+    addCorpus(corpusContent, corpusTree);
     let a = shuffle(splitContent);
     for (let entry of a) {
         let freq = corpusTree.get(entry);

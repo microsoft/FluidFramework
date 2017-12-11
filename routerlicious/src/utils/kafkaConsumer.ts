@@ -143,8 +143,6 @@ class KafkaNodeConsumer implements IConsumer {
     private offset: kafkaNode.Offset;
     private instance: kafkaNode.HighLevelConsumer;
     private events = new EventEmitter();
-    private connecting = false;
-    private connected = false;
 
     constructor(
         private endpoint: string,
@@ -203,9 +201,6 @@ class KafkaNodeConsumer implements IConsumer {
                         maxTickMessages: 100000,
                     });
 
-                    this.connected = true;
-                    this.connecting = false;
-
                     this.instance.on("message", (message: any) => {
                         this.events.emit("data", message);
                     });
@@ -254,7 +249,6 @@ class KafkaNodeConsumer implements IConsumer {
             this.client = undefined;
         }
 
-        this.connecting = this.connected = false;
         debug("Kafka error - attempting reconnect", error);
         this.connect();
     }

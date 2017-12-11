@@ -69,6 +69,14 @@ export class InkCanvas extends ui.Component {
         };
     }
 
+    /**
+     * Used to just enable/disable the ink events. Should only be used when needing to temporarily
+     * disable ink (for DOM hit testing events, for example). The enableInk event is probably what you really want.
+     */
+    public enableInkHitTest(enable: boolean) {
+        this.element.style.pointerEvents = enable ? "auto" : "none";
+    }
+
     public setPenColor(color: types.IColor) {
         this.currentPen.color = color;
     }

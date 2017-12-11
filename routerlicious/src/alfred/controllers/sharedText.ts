@@ -31,12 +31,21 @@ async function getInsights(map: types.IMap, id: string): Promise<types.IMap> {
 }
 
 // tslint:disable-next-line
-export async function onLoad(id: string, version: resources.ICommit, config: any, template: string, loadPartial: boolean, options: Object) {
+export async function onLoad(id: string, version: resources.ICommit, pageInk: boolean, config: any, template: string, loadPartial: boolean, options: Object) {
     console.log(`Load Option: ${JSON.stringify(options)}`);
-    loadPartial ? loadCommit(id, version, config, options) : loadFull(id, version, config, template, options);
+    loadPartial
+        ? loadCommit(id, version, pageInk, config, options)
+        : loadFull(id, version, pageInk, config, template, options);
 }
 
-async function loadFull(id: string, version: resources.ICommit, config: any, template: string, options: Object) {
+async function loadFull(
+    id: string,
+    version: resources.ICommit,
+    pageInk: boolean,
+    config: any,
+    template: string,
+    options: Object) {
+
     const host = new ui.BrowserContainerHost();
 
     socketStorage.registerAsDefault(document.location.origin, config.blobStorageUrl, config.repository);
@@ -69,6 +78,10 @@ async function loadFull(id: string, version: resources.ICommit, config: any, tem
 
         root.set("text", newString);
         root.set("ink", collabDoc.createMap());
+
+        if (pageInk) {
+            root.set("pageInk", collabDoc.createInk());
+        }
     }
 
     const sharedString = root.get("text") as SharedString.SharedString;
@@ -86,7 +99,14 @@ async function loadFull(id: string, version: resources.ICommit, config: any, tem
         url.resolve(document.baseURI, "/public/images/bindy.svg"));
 
     const containerDiv = document.createElement("div");
-    const container = new controls.FlowContainer(containerDiv, collabDoc, sharedString, inkPlane, image, options);
+    const container = new controls.FlowContainer(
+        containerDiv,
+        collabDoc,
+        sharedString,
+        inkPlane,
+        image,
+        root.get("pageInk") as types.IInk,
+        options);
     theFlow = container.flowView;
     host.attach(container);
 
@@ -110,7 +130,12 @@ async function loadFull(id: string, version: resources.ICommit, config: any, tem
     });
 }
 
-async function loadCommit(id: string, version: resources.ICommit, config: any, options: Object) {
+async function loadCommit(
+    id: string,
+    version: resources.ICommit,
+    pageInk: boolean,
+    config: any,
+    options: Object) {
     console.log(`Load document ${id} upto commit ${JSON.stringify(version)}.`);
 
     const host = new ui.BrowserContainerHost();
@@ -137,7 +162,14 @@ async function loadCommit(id: string, version: resources.ICommit, config: any, o
         url.resolve(document.baseURI, "/public/images/bindy.svg"));
 
     const containerDiv = document.createElement("div");
-    const container = new controls.FlowContainer(containerDiv, collabDoc, sharedString, inkPlane, image, options);
+    const container = new controls.FlowContainer(
+        containerDiv,
+        collabDoc,
+        sharedString,
+        inkPlane,
+        image,
+        root.get("pageInk") as types.IInk,
+        options);
     theFlow = container.flowView;
     host.attach(container);
 
@@ -151,8 +183,6 @@ async function loadCommit(id: string, version: resources.ICommit, config: any, o
     theFlow.setEdit(root);
 
     sharedString.loaded.then(() => {
-
         theFlow.loadFinished(clockStart);
     });
-
 }

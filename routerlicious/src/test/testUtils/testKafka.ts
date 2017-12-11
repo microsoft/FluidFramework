@@ -10,13 +10,12 @@ export interface IKafkaMessage {
 class TestConsumer implements utils.kafkaConsumer.IConsumer {
     private emitter = new EventEmitter();
     private pausedQueue: string[] = null;
-    private offset: number;
 
     constructor(public groupId: string, public topic: string) {
     }
 
     public async commitOffset(data: any): Promise<void> {
-        this.offset = data.offset;
+        return;
     }
 
     public on(event: string, listener: Function): this {

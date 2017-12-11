@@ -38,7 +38,6 @@ export class TestWebSocketServer implements core.IWebSocketServer {
 
 export class TestHttpServer implements core.IHttpServer {
     private port: any;
-    private listening = false;
 
     public async close(): Promise<void> {
         return Promise.resolve();
@@ -46,7 +45,6 @@ export class TestHttpServer implements core.IHttpServer {
 
     public listen(port: any) {
         this.port = port;
-        this.listening = true;
     }
 
     public on(event: string, listener: (...args: any[]) => void) {

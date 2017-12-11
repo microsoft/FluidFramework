@@ -41,6 +41,8 @@ If you also need debugging you can run:
 
 * `npm run start:debug` - which will allow you to attach a debugger
 
+After starting the service, you can navigate to http://localhost:3000/ in a browser.
+
 ### Standalone
 
 You can also just run the service directly with Docker. To do so you first need to authenticate to our private

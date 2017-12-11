@@ -41,9 +41,9 @@ export class AlfredResources implements utils.IResources {
         public metricClientConfig: any) {
 
         // Remove (mdaumi): Call just one library.
-        this.webServerFactory = webSocketLibrary === "socket.io" ?
-            new services.SocketIoWebServerFactory(this.redisConfig) : new services.WsWebServerFactory();
-        this.webServerFactory2 = new services.WsWebServerFactory();
+        this.webServerFactory = webSocketLibrary === "socket.io"
+            ? new services.SocketIoWebServerFactory(this.redisConfig)
+            : new services.WsWebServerFactory();
     }
 
     public async dispose(): Promise<void> {
@@ -86,7 +86,6 @@ export class AlfredRunnerFactory implements utils.IRunnerFactory<AlfredResources
     public async create(resources: AlfredResources): Promise<utils.IRunner> {
         return new AlfredRunner(
             resources.webServerFactory,
-            resources.webServerFactory2,
             resources.config,
             resources.port,
             resources.historian,

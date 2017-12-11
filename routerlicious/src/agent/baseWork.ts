@@ -25,7 +25,10 @@ export class BaseWork {
     }
 
     public stop(): Promise<void> {
-        this.document.removeListener("op", this.operation);
+        // Make sure the document is loaded first.
+        if (this.document !== undefined) {
+            this.document.removeListener("op", this.operation);
+        }
         return Promise.resolve();
     }
 }
