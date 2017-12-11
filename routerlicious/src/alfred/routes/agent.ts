@@ -21,6 +21,7 @@ export function create(config: Provider): Router {
         secure: false,
     });
 
+    // Uploads the webpacked script to minio and delete the temorary script.
     function uploadScript(moduleName: string): Promise<any> {
         return new Promise<any>((resolve, reject) => {
             let folder = path.join(__dirname, `build`);
@@ -41,7 +42,6 @@ export function create(config: Provider): Router {
                       winston.error(`Error uploading webpacked ${moduleName} to minio: ${err}`);
                       reject(err);
                   }
-                  winston.info(`Current directory: ${__dirname}`);
                   resolve();
               });
             });
@@ -82,10 +82,9 @@ export function create(config: Provider): Router {
     });
 
     /**
-     * Webpack a node module.
+     * Webpack a node module and delete the temorary folder.
      */
     router.post("/js/:id", async (request, response, next) => {
-        winston.info(`Entry: ${__dirname}`);
         const moduleFile = request.params.id;
         const moduleName = moduleFile.split(".")[0];
         minioClient.getObject(storageBucket, request.params.id, (error, stream: Readable) => {
@@ -100,9 +99,6 @@ export function create(config: Provider): Router {
                 response.status(500).json( {status: "error"} );
             })
             .on("close", () => {
-                winston.info(`${moduleName} should be extracted in server now!`);
-                winston.info(__dirname);
-
                 const compiler = webpack({
                     entry: `temp_modules/${moduleName}/${moduleName}/dist/index.js`,
                     output: {
@@ -121,27 +117,28 @@ export function create(config: Provider): Router {
                 const tempFolder = path.join(__dirname, `../../../temp_modules`);
                 compiler.run((err, stats) => {
                     if (err || stats.hasErrors()) {
-                        winston.info(err);
-                        winston.error(`Error packing!!!!!!!!!!!!!!!`);
+                        winston.error(`Error packing: ${err}`);
                         rimraf(tempFolder, (e) => {
                             if (e) {
                                 winston.error(`Error deleting ${tempFolder}: ${e}`);
                             }
                         });
                     } else {
-                        winston.info(`Success packing..................`);
+                        winston.info(`Success packing!`);
                         rimraf(tempFolder, (e) => {
                             if (e) {
                                 winston.error(`Error deleting ${tempFolder}: ${e}`);
                             }
                         });
                         uploadScript(moduleName).then(() => {
-                            winston.info(`Uploaded script: ${__dirname}`);
+                            winston.info(`Uploaded script from: ${__dirname}`);
+                        }, (uploadError) => {
+                            winston.error(`Error uploading script: ${uploadError}`);
                         });
                     }
                 });
 
-                response.status(200).json( {status: "done"} );
+                response.status(200).json( {status: "Done uploading js file"} );
             }));
         });
     });

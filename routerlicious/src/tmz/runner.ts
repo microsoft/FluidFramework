@@ -50,7 +50,7 @@ export class TmzRunner implements utils.IRunner {
             // Set up bucket policy to readwrite.
             minioClient.setBucketPolicy(minioBucket, "", minio.Policy.READWRITE, (err) => {
                 if (err) {
-                    winston.info(`Error setting up bucket bolicy. ${err}`);
+                    winston.error(`Error setting up bucket bolicy. ${err}`);
                 }
             });
             // Set up notification.
@@ -62,11 +62,11 @@ export class TmzRunner implements utils.IRunner {
             });
             minioClient.listenBucketNotification(minioBucket, "", ".js", ["s3:ObjectCreated:*"])
             .on("notification", (record) => {
-                winston.info(`We have a new webpacked scrtipt: ${record.s3.object.key}`);
+                winston.info(`TMZ received a new webpacked scrtipt: ${record.s3.object.key}`);
                 this.foreman.broadcastNewAgentModule(record.s3.object.key, "client");
             });
         }, (error) => {
-            winston.error(error);
+            winston.error(`Error creating bucket ${minioBucket}: ${error}`);
         });
 
         // open a socketio connection and start listening for workers.
