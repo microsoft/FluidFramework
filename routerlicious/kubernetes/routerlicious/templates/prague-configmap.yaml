@@ -79,6 +79,7 @@ data:
             "checkpointTimeIntervalMsec": 1000
         },
         "tmz": {
+            "alfred": "http://{{ template "alfred.fullname" . }}",
             "queue": "snapshot",
             "topic": "{{ .Values.kafka.topics.deltas }}",
             "kafkaClientId": "{{ template "tmz.fullname" . }}",
@@ -124,6 +125,7 @@ data:
             },
             "url": "{{ .Values.tmz.externalUrl }}",
             "blobStorageUrl": "{{ .Values.historian.externalUrl }}",
+            "scriptUrl": "http://52.229.22.212:9000/agents/",
             "repository": "prague",
             "storageBucket": "snapshots",
             "intervalMSec": 5000,
@@ -146,5 +148,12 @@ data:
                 "host": "polling-telegraf-service.metric",
                 "port": 8094
             }
+        },
+        "minio": {
+            "endpoint": "agents-storage-minio-svc",
+            "port": 9000,
+            "accessKey": "prague",
+            "secretKey": "mhioAkNXTwdX4dXWgKgXVtHo",
+            "bucket": "agents"
         }
     }
