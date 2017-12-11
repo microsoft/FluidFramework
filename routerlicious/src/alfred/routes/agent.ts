@@ -26,7 +26,7 @@ export function create(config: Provider): Router {
             let folder = path.join(__dirname, `build`);
             let file = path.join(folder, `${moduleName}/webpacked_index.js`);
             let fileStream = fs.createReadStream(file);
-            let fileStat = fs.stat(file, (error, stats) => {
+            fs.stat(file, (error, stats) => {
               if (error) {
                   winston.error(`Webpacked file does not exist: ${error}`);
                   reject(error);
