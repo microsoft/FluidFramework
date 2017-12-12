@@ -41,6 +41,3 @@ spec:
         - name: config
           configMap:
             name: {{ template "routerlicious.fullname" . }}
-      securityContext:
-        privileged: true
-
