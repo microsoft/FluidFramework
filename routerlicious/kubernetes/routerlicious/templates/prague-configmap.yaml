@@ -65,6 +65,16 @@ data:
             "checkpointBatchSize": 10,
             "checkpointTimeIntervalMsec": 1000
         },
+        "lambdas": {
+            "routemaster": {
+                "group": "{{ template "routemaster.fullname" . }}",
+                "topic": "{{ .Values.kafka.topics.deltas }}"
+            },
+            "serviceGraph": {
+                "group": "{{ template "serviceGraph.fullname" . }}",
+                "topic": "{{ .Values.kafka.topics.deltas }}"
+            }
+        },
         "paparazzi": {
             "queue": "snapshot",
             "bucket": "snapshots",
