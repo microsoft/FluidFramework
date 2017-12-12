@@ -49,9 +49,17 @@
             "send": "rawdeltas"
         },
         "clientId": "routemaster",
-        "groupId": "routemaster",
-        "checkpointBatchSize": 10,
-        "checkpointTimeIntervalMsec": 1000
+        "groupId": "routemaster"
+    },
+    "lambdas": {
+        "routemaster": {
+            "group": "routemaster",
+            "topic": "deltas"
+        },
+        "serviceGraph": {
+            "group": "serviceGraph",
+            "topic": "deltas"
+        }
     },
     "paparazzi": {
         "queue": "snapshot",

@@ -19,9 +19,6 @@ export class KafkaRunner implements utils.IRunner {
     constructor(
         factory: IPartitionLambdaFactory,
         private consumer: utils.kafkaConsumer.IConsumer,
-        // This wants to be a checkpointing strategy. Check out GOF
-        checkpointBatchSize: number,
-        checkpointTimeIntervalMsec: number,
         config: Provider) {
 
         this.partitionManager = new PartitionManager(factory, new CheckpointStrategy(), consumer, config);

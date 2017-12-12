@@ -50,7 +50,7 @@ services:
         restart: always
     routemaster:
         build: .
-        command: node dist/kafka-service/index.js ../document-router/index.js
+        command: node dist/kafka-service/index.js routemaster ../document-router/index.js
         environment:
             - DEBUG=routerlicious:*
             - NODE_ENV=development
@@ -68,7 +68,7 @@ services:
         restart: always
     service-graph:
         build: .
-        command: node dist/kafka-service/index.js ../service-graph/index.js
+        command: node dist/kafka-service/index.js serviceGraph ../service-graph/index.js
         environment:
             - DEBUG=routerlicious:*
             - NODE_ENV=development
