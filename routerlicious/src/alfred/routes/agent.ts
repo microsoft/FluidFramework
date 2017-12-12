@@ -138,7 +138,7 @@ export function create(config: Provider): Router {
                     }
                 });
 
-                response.status(200).json( {status: "Done uploading js file"} );
+                response.status(200).json( {status: "Done uploading webpacked js file!"} );
             }));
         });
     });
