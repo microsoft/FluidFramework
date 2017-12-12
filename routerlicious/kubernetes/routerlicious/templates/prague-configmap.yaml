@@ -135,7 +135,7 @@ data:
             },
             "url": "{{ .Values.tmz.externalUrl }}",
             "blobStorageUrl": "{{ .Values.historian.externalUrl }}",
-            "scriptUrl": "http://52.229.22.212:9000/agents/",
+            "scriptUrl": "http://pragueminio.westus2.cloudapp.azure.com:9000/agents/",
             "repository": "prague",
             "storageBucket": "snapshots",
             "intervalMSec": 5000,
