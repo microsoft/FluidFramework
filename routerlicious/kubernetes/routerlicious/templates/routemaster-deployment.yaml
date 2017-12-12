@@ -31,6 +31,8 @@ spec:
           value: "routerlicious:*"
         - name: NODE_ENV
           value: production
+        - name: documentLambda
+          value: "../routemaster/index.js"
         volumeMounts:
         - name: config
           mountPath: /usr/src/server/config/config.json
