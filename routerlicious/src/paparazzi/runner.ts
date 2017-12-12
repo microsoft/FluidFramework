@@ -48,11 +48,11 @@ export class PaparazziRunner implements utils.IRunner {
             winston.info(`Worker will load ${moduleName}`);
 
             return new Promise<any>((resolve, reject) => {
-                fs.access(`intel_modules/${moduleName}`, (error) => {
+                fs.access(`../../../tmp/intel_modules/${moduleName}`, (error) => {
                     // Module already exists locally. Just import it!
                     if (!error) {
                       winston.info(`Module ${moduleName} already exists locally`);
-                      import(`../../intel_modules/${moduleName}/${moduleName}`).then((loadedModule) => {
+                      import(`../../../../../tmp/intel_modules/${moduleName}/${moduleName}`).then((loadedModule) => {
                             winston.info(`${moduleName} loaded!`);
                             resolve(loadedModule);
                         });
@@ -68,12 +68,13 @@ export class PaparazziRunner implements utils.IRunner {
                             reject(`Error requesting intel module from server: ${err}`);
                         })
                         // Unzipping one level nested to avoid collision with any OS generated folder/file.
-                        .pipe(unzip.Extract({ path: `intel_modules/${moduleName}` })
+                        .pipe(unzip.Extract({ path: `../../../tmp/intel_modules/${moduleName}` })
                         .on("error", (err) => {
                             reject(`Error writing unzipped module ${moduleName}: ${err}`);
                         })
                         .on("close", () => {
-                            import(`../../intel_modules/${moduleName}/${moduleName}`).then((loadedModule) => {
+                            import(`../../../../../tmp/intel_modules/${moduleName}/${moduleName}`)
+                            .then((loadedModule) => {
                                 winston.info(`${moduleName} loaded!`);
                                 resolve(loadedModule);
                             });
