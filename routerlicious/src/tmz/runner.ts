@@ -56,13 +56,14 @@ export class TmzRunner implements utils.IRunner {
             // Set up notification.
             minioClient.listenBucketNotification(minioBucket, "", ".zip", ["s3:ObjectCreated:*"])
             .on("notification", (record) => {
+                winston.info(`New module uploaded: ${record.s3.object.key}`);
                 this.foreman.broadcastNewAgentModule(record.s3.object.key, "server");
                 const moduleUrl = url.resolve(this.alfredUrl, `/agent/js/${record.s3.object.key}`);
                 request.post(moduleUrl);
             });
             minioClient.listenBucketNotification(minioBucket, "", ".js", ["s3:ObjectCreated:*"])
             .on("notification", (record) => {
-                winston.info(`TMZ received a new webpacked scrtipt: ${record.s3.object.key}`);
+                winston.info(`Received a new webpacked scrtipt: ${record.s3.object.key}`);
                 this.foreman.broadcastNewAgentModule(record.s3.object.key, "client");
             });
         }, (error) => {
