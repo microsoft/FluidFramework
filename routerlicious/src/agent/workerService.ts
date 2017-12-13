@@ -119,10 +119,12 @@ export class WorkerService implements core.IWorkerService {
                         for (const moduleName of modules.names) {
                             // paparazzi just loads zipped module.
                             if (this.clientType === "paparazzi" && moduleName.indexOf(".zip") !== -1) {
+                                console.log(`Loading ${moduleName}`);
                                 this.loadNewModule( { name: moduleName, code: null } );
                             }
                             // Anything else just loads .js file.
                             if (this.clientType !== "paparazzi" && moduleName.indexOf(".js") !== -1) {
+                                console.log(`Loading ${moduleName}`);
                                 this.loadNewModule( { name: moduleName, code: null } );
                             }
                         }
@@ -288,7 +290,7 @@ export class WorkerService implements core.IWorkerService {
 
     private loadUploadedModuleNames(): Promise<any> {
         return new Promise<any>((resolve, reject) => {
-            request.get(url.resolve(this.serverUrl, `agent`), (error, response, body) => {
+            request.get(url.resolve(this.config.alfredUrl, `agent`), (error, response, body) => {
                 if (error) {
                     reject(error);
                 } else if (response.statusCode !== 200) {

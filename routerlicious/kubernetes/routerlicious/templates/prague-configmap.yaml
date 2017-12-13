@@ -133,6 +133,7 @@ data:
                     "url": "http://augmentation.westus2.cloudapp.azure.com/spellchecker/api"
                 }
             },
+            "alfredUrl": "http://{{ template "alfred.fullname" . }}",
             "url": "{{ .Values.tmz.externalUrl }}",
             "blobStorageUrl": "{{ .Values.historian.externalUrl }}",
             "scriptUrl": "http://pragueminio.westus2.cloudapp.azure.com:9000/agents/",
