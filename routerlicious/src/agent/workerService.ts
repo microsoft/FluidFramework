@@ -114,7 +114,8 @@ export class WorkerService implements core.IWorkerService {
                     }, this.config.intervalMSec);
 
                     // TMZ is responsible for creating module storage. So we are loading here to avoid race condition.
-                    this.loadUploadedModuleNames().then((moduleNames: any) => {
+                    const agentServer = this.clientType === "paparazzi" ? this.config.alfredUrl : this.serverUrl;
+                    this.loadUploadedModuleNames(agentServer).then((moduleNames: any) => {
                         const modules = JSON.parse(moduleNames) as IAgents;
                         for (const moduleName of modules.names) {
                             // paparazzi just loads zipped module.
@@ -288,9 +289,9 @@ export class WorkerService implements core.IWorkerService {
         });
     }
 
-    private loadUploadedModuleNames(): Promise<any> {
+    private loadUploadedModuleNames(agentServer: string): Promise<any> {
         return new Promise<any>((resolve, reject) => {
-            request.get(url.resolve(this.config.alfredUrl, `agent`), (error, response, body) => {
+            request.get(url.resolve(agentServer, `agent`), (error, response, body) => {
                 if (error) {
                     reject(error);
                 } else if (response.statusCode !== 200) {
