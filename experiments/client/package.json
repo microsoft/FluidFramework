@@ -1,0 +1,20 @@
+{
+  "name": "prague-client",
+  "version": "0.0.1",
+  "description": "Prague electron client",
+  "main": "dist/index.js",
+  "scripts": {
+    "start": "electron dist/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "tsc": "tsc",
+    "tslint": "tslint 'src/**/*.ts'"
+  },
+  "author": "",
+  "dependencies": {
+    "electron": "^1.7.9"
+  },
+  "devDependencies": {
+    "tslint": "^5.8.0",
+    "typescript": "^2.6.2"
+  }
+}
