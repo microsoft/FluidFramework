@@ -3,7 +3,7 @@ import * as winston from "winston";
 import * as api from "../api";
 import * as core from "../core";
 import { IMap, ISet } from "../data-types";
-import { IPartitionLambda, IPartitionLambdaFactory } from "../kafka-service/lambdas";
+import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "../kafka-service/lambdas";
 import * as socketStorage from "../socket-storage";
 import * as utils from "../utils";
 
@@ -58,7 +58,7 @@ class SharedGraph {
 }
 
 class ServiceGraphLambda implements IPartitionLambda {
-    constructor(baseGraph: IMap, private graph: SharedGraph) {
+    constructor(baseGraph: IMap, private graph: SharedGraph, private context: IContext) {
         baseGraph.on("error", (error) => {
             winston.error(error);
             // Force exit for now on any error to cause a reconnect. But will want to return a promise
@@ -69,6 +69,13 @@ class ServiceGraphLambda implements IPartitionLambda {
     }
 
     public async handler(message: utils.kafkaConsumer.IMessage): Promise<any> {
+        // TODO - we may want the owner to handle the more complex checkpoint logic - and just bump whenever
+        // this promise resolves
+        this.handleCore(message);
+        this.context.checkpoint(message.offset);
+    }
+
+    private handleCore(message: utils.kafkaConsumer.IMessage) {
         const baseMessage = JSON.parse(message.value) as core.IMessage;
         if (baseMessage.type !== core.SystemType) {
             return;
@@ -91,7 +98,7 @@ class ServiceGraphLambda implements IPartitionLambda {
 }
 
 export class ServiceGraphLambdaFactory implements IPartitionLambdaFactory {
-    public async create(config: Provider): Promise<IPartitionLambda> {
+    public async create(config: Provider, context: IContext): Promise<IPartitionLambda> {
         const alfred = config.get("paparazzi:alfred");
         const git = config.get("git");
         socketStorage.registerAsDefault(alfred, git.historian, git.repository);
@@ -113,6 +120,11 @@ export class ServiceGraphLambdaFactory implements IPartitionLambdaFactory {
         const edgeSet: ISet<ISharedEdge> = view.get("edges");
         const sharedGraph = new SharedGraph(vertexSet, edgeSet);
 
-        return new ServiceGraphLambda(graph, sharedGraph);
+        return new ServiceGraphLambda(graph, sharedGraph, context);
+    }
+
+    public async dispose(): Promise<void> {
+        // TODO will want the ability to flush/close the document
+        return;
     }
 }

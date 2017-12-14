@@ -64,6 +64,11 @@ export interface IDocumentWork {
 export interface IForeman {
 
     /**
+     * Broadcasts a new agent arrival to workers.
+     */
+    broadcastNewAgentModule(moduleName: string, workerType: string): void;
+
+    /**
      * Assigns tasks to workers based on some heuristics.
      */
     assignWork(workToDo: IDocumentWork[]): Array<Promise<void>>;

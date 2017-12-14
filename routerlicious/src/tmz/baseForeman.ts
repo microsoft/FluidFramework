@@ -33,6 +33,21 @@ export class BaseForeman {
         return revokedPromises;
     }
 
+    public broadcastNewAgentModule(moduleName: string, workerType: string) {
+        // tslint:disable-next-line
+        const workers = workerType === "server" ? this.manager.getActiveServerWorkers() : this.manager.getActiveClientWorkers();
+        for (const worker of workers) {
+            worker.socket.emit("AgentObject", worker.worker.clientId, moduleName,
+            (nack, ack: socketStorage.IWorker) => {
+                if (ack) {
+                    winston.info(`${worker.worker.clientId} is ready to load ${moduleName}`);
+                } else {
+                    winston.info(nack);
+                }
+            });
+        }
+    }
+
     private revokeOne(id: string, workType: string, worker: IWorkerDetail): Promise<void> {
         return new Promise<any>((resolve, reject) => {
             worker.socket.emit("RevokeObject", worker.worker.clientId, id, workType,

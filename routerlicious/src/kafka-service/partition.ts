@@ -2,9 +2,10 @@ import * as assert from "assert";
 import { AsyncQueue, queue } from "async";
 import { Provider } from "nconf";
 import * as winston from "winston";
+import { assertNotRejected } from "../core-utils";
 import * as utils from "../utils";
 import { CheckpointManager, ICheckpointStrategy } from "./checkpointManager";
-import { IPartitionLambda, IPartitionLambdaFactory } from "./lambdas";
+import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "./lambdas";
 
 // partition should have its own Lambda type thing. Have some way to create threads off the partition, etc...
 // private routers = new Map<string, Router>();
@@ -25,6 +26,25 @@ import { IPartitionLambda, IPartitionLambdaFactory } from "./lambdas";
 // const router = this.routers.get(message.documentId);
 // router.route(message);
 
+class Context implements IContext {
+    private offset;
+
+    constructor(private checkpointManager: CheckpointManager) {
+    }
+
+    /**
+     * Updates the checkpoint for the partition
+     */
+    public checkpoint(offset: number) {
+        // We should only get increasing offsets from a context checkpoint
+        assert(this.offset === undefined || offset >= this.offset);
+
+        if (this.offset !== offset) {
+            this.checkpointManager.checkpoint(offset);
+        }
+    }
+}
+
 /**
  * Partition of a message stream. Manages routing messages to individual handlers. And then maintaining the
  * overall partition offset.
@@ -34,8 +54,8 @@ import { IPartitionLambda, IPartitionLambdaFactory } from "./lambdas";
 export class Partition {
     private q: AsyncQueue<utils.kafkaConsumer.IMessage>;
     private lambdaP: Promise<IPartitionLambda>;
-    private currentOffset;
     private checkpointManager: CheckpointManager;
+    private context: IContext;
 
     constructor(
         id: number,
@@ -45,26 +65,21 @@ export class Partition {
         config: Provider) {
 
         this.checkpointManager = new CheckpointManager(id, checkpointStrategy, consumer);
-        this.lambdaP = factory.create(config);
+        this.context = new Context(this.checkpointManager);
+        this.lambdaP = factory.create(config, this.context);
+
+        // TODO I could have the lambda specify its checkpointing policy to me - and then auto rev when
+        // each promise returns
 
         // Create the incoming message queue
         this.q = queue((message: utils.kafkaConsumer.IMessage, callback) => {
-            const processedP = this.processCore(message).catch((error) => {
+            const processedP = this.processCore(message, this.context).catch((error) => {
                     // TODO dead letter queue for bad messages, etc...
                     winston.error("Error processing partition message", error);
                 });
 
-            processedP.then(
-                () => {
-                    this.currentOffset = message.offset;
-                    this.checkpointManager.checkpoint(this.currentOffset);
-                    callback();
-                },
-                (error) => {
-                    // This promise should never have an error case. Might want a util to enforce this
-                    // type of handling
-                    assert.ok(false);
-                });
+            // assert processedP only resolves
+            assertNotRejected(processedP).then(() => callback());
         }, 1);
 
         // Need to expose error information
@@ -99,7 +114,7 @@ export class Partition {
         await this.checkpointManager.flush();
     }
 
-    private async processCore(message: utils.kafkaConsumer.IMessage): Promise<void> {
+    private async processCore(message: utils.kafkaConsumer.IMessage, context: IContext): Promise<void> {
         winston.verbose(`${message.topic}:${message.partition}@${message.offset}`);
         const lambda = await this.lambdaP;
         return lambda.handler(message);

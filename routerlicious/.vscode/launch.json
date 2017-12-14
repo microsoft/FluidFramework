@@ -138,8 +138,20 @@
             "outFiles": [ "${workspaceRoot}/dist/**/*.js" ],
             "protocol":"inspector",
             "trace": "sm"
-        }        
-        
-        
+        },
+        {
+            "type": "node",
+            "request": "attach",
+            "name": "Attach to routemaster",
+            "address": "localhost",
+            "port": 5863,
+            "restart": true,
+            "sourceMaps": true,
+            "localRoot": "${workspaceRoot}",
+            "remoteRoot": "/usr/src/server",
+            "outFiles": [ "${workspaceRoot}/dist/**/*.js" ],
+            "protocol":"inspector",
+            "trace": "sm"
+        }
     ]
 }

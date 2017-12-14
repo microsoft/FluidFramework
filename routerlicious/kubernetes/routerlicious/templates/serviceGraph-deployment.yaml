@@ -26,6 +26,7 @@ spec:
         command:
           - 'node'
           - 'dist/kafka-service/index.js'
+          - 'serviceGraph'
           - '../service-graph/index.js'
         env:
         - name: DEBUG

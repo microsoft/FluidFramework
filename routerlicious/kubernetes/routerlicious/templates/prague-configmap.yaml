@@ -65,6 +65,16 @@ data:
             "checkpointBatchSize": 10,
             "checkpointTimeIntervalMsec": 1000
         },
+        "lambdas": {
+            "routemaster": {
+                "group": "{{ template "routemaster.fullname" . }}",
+                "topic": "{{ .Values.kafka.topics.deltas }}"
+            },
+            "serviceGraph": {
+                "group": "{{ template "serviceGraph.fullname" . }}",
+                "topic": "{{ .Values.kafka.topics.deltas }}"
+            }
+        },
         "paparazzi": {
             "queue": "snapshot",
             "bucket": "snapshots",
@@ -79,6 +89,7 @@ data:
             "checkpointTimeIntervalMsec": 1000
         },
         "tmz": {
+            "alfred": "http://{{ template "alfred.fullname" . }}",
             "queue": "snapshot",
             "topic": "{{ .Values.kafka.topics.deltas }}",
             "kafkaClientId": "{{ template "tmz.fullname" . }}",
@@ -122,8 +133,10 @@ data:
                     "url": "http://augmentation.westus2.cloudapp.azure.com/spellchecker/api"
                 }
             },
+            "alfredUrl": "http://{{ template "alfred.fullname" . }}",
             "url": "{{ .Values.tmz.externalUrl }}",
             "blobStorageUrl": "{{ .Values.historian.externalUrl }}",
+            "scriptUrl": "http://pragueminio.westus2.cloudapp.azure.com:9000/agents/",
             "repository": "prague",
             "storageBucket": "snapshots",
             "intervalMSec": 5000,
@@ -146,5 +159,12 @@ data:
                 "host": "polling-telegraf-service.metric",
                 "port": 8094
             }
+        },
+        "minio": {
+            "endpoint": "agents-storage-minio-svc",
+            "port": 9000,
+            "accessKey": "prague",
+            "secretKey": "mhioAkNXTwdX4dXWgKgXVtHo",
+            "bucket": "agents"
         }
     }
