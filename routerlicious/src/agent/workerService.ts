@@ -115,23 +115,8 @@ export class WorkerService implements core.IWorkerService {
 
                     // TMZ is responsible for creating module storage. So we are loading here to avoid race condition.
                     const agentServer = this.clientType === "paparazzi" ? this.config.alfredUrl : this.serverUrl;
-                    this.loadUploadedModuleNames(agentServer).then((moduleNames: any) => {
-                        const modules = JSON.parse(moduleNames) as IAgents;
-                        for (const moduleName of modules.names) {
-                            // paparazzi just loads zipped module.
-                            if (this.clientType === "paparazzi" && moduleName.indexOf(".zip") !== -1) {
-                                console.log(`Loading ${moduleName}`);
-                                this.loadNewModule( { name: moduleName, code: null } );
-                            }
-                            // Anything else just loads .js file.
-                            if (this.clientType !== "paparazzi" && moduleName.indexOf(".js") !== -1) {
-                                console.log(`Loading ${moduleName}`);
-                                this.loadNewModule( { name: moduleName, code: null } );
-                            }
-                        }
-                    }, (err) => {
-                        console.log(`Error loading uploaded modules: ${err}`);
-                    });
+                    let tryCounter = 0;
+                    this.loadUploadedModules(agentServer, tryCounter);
                 } else {
                     deferred.resolve();
                 }
@@ -286,6 +271,31 @@ export class WorkerService implements core.IWorkerService {
                     resolve(body);
                 }
             });
+        });
+    }
+
+    private loadUploadedModules(agentServer: string, tryCounter: number) {
+        ++tryCounter;
+        this.loadUploadedModuleNames(agentServer).then((moduleNames: any) => {
+            const modules = JSON.parse(moduleNames) as IAgents;
+            for (const moduleName of modules.names) {
+                // paparazzi just loads zipped module.
+                if (this.clientType === "paparazzi" && moduleName.indexOf(".zip") !== -1) {
+                    console.log(`Loading ${moduleName}`);
+                    this.loadNewModule( { name: moduleName, code: null } );
+                }
+                // Anything else just loads .js file.
+                if (this.clientType !== "paparazzi" && moduleName.indexOf(".js") !== -1) {
+                    console.log(`Loading ${moduleName}`);
+                    this.loadNewModule( { name: moduleName, code: null } );
+                }
+            }
+        }, (err) => {
+            console.log(`Error loading uploaded modules: ${err}`);
+            // In case alfred is not ready, try to reconnect a few times.
+            if (tryCounter <= 5) {
+                setTimeout(this.loadUploadedModules(agentServer, tryCounter), 10000);
+            }
         });
     }
 
