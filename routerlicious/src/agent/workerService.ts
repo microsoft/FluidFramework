@@ -180,7 +180,7 @@ export class WorkerService implements core.IWorkerService {
             // Push the module for all future documents.
             this.runtimeModules.push(newModule);
         }, (error) =>  {
-            console.log(`Error loading module ${newModule.name}: ${error}`);
+            console.log(`${newModule.name}: ${error}`);
         });
     }
 

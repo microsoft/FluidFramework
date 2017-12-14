@@ -1,4 +1,4 @@
-import * as $ from "jquery";
+// import * as $ from "jquery";
 import { WorkerService } from "./workerService";
 
 export function registerWorker(config: any, clientType: string) {
@@ -26,38 +26,17 @@ export function registerWorker(config: any, clientType: string) {
     }
 }
 
-/*
-let loaded = ( () => {
-    return {
-        factory: null,
-    };
-})();
-
-function load(file, callback) {
-    $.getScript(file, callback);
-}*/
-
 function initLoadModule(config: any): (name: string) => Promise<any> {
     return (scriptName: string) => {
         return new Promise<any>((resolve, reject) => {
-            console.log(`Script name: ${scriptName}`);
-            const scriptUrl = `${config.scriptUrl}${scriptName}`;
-            console.log(`Script url: ${scriptUrl}`);
-
             /*
-            load(scriptUrl, () => {
-                let service = loaded.factory.create(config.intelligence.resume);
-                console.log(service);
-                console.log(service.run("dummy text"));
-            });*/
-
+            const scriptUrl = `${config.scriptUrl}${scriptName}`;
             $.getScript(scriptUrl, (data, textStatus, jqxhr) => {
                 console.log(data);
                 console.log(textStatus);
                 console.log(jqxhr.status);
                 console.log("Load was performed.");
 
-                /*
                 const m1 = "ResumeAnalyticsFactory";
                 const m2 = "factory";
                 import(m1).then((loadedModule) => {
@@ -65,14 +44,15 @@ function initLoadModule(config: any): (name: string) => Promise<any> {
                 }, (err) => {
                     console.log(`Error importing ${scriptName}: ${err}`);
                 });
+
                 import(m2).then((loadedModule) => {
                     console.log(`${loadedModule}`);
                 }, (err) => {
                     console.log(`Error importing ${scriptName}: ${err}`);
-                });*/
-
-                reject("Fake loading!!!");
+                });
               });
+            */
+            reject("Client module loader not implemented yet");
         });
     };
 }
