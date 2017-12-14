@@ -5,6 +5,14 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "WU",
+            "type": "node",
+            "request": "launch",
+            "sourceMaps": true,
+            "protocol": "inspector",
+            "program": "${workspaceRoot}/dist/merge-tree/wordUnitTests.js"
+        },
+        {
             "name": "TestFarm",
             "type": "node",
             "request": "launch",
