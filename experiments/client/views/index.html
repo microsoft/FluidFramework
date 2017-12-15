@@ -3,11 +3,20 @@
   <head>
     <meta charset="UTF-8">
     <title>Hello World!</title>
+    <link href="https://ajax.aspnetcdn.com/ajax/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://ajax.aspnetcdn.com/ajax/bootstrap/3.3.7/css/bootstrap-theme.min.css" rel="stylesheet" />
+    <link href="../stylesheets/style.css" rel="stylesheet" />
   </head>
   <body>
-    <h1>Hello World!</h1>
-    We are using node <script>document.write(process.versions.node)</script>,
-    Chrome <script>document.write(process.versions.chrome)</script>,
-    and Electron <script>document.write(process.versions.electron)</script>.
+      <div id="text"></div>
+      <!-- <h1>Hello World!</h1>
+      <h2>This is adding content</h2>
+      We are using node <script>document.write(process.versions.node)</script>,
+      Chrome <script>document.write(process.versions.chrome)</script>,
+      and Electron <script>document.write(process.versions.electron)</script>.
+      <div id="moniker"></div> -->
+      <script>
+        require('../dist/window.js');
+      </script>
   </body>
 </html>
