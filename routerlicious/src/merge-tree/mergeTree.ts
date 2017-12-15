@@ -38,7 +38,7 @@ export interface IHierBlock extends IMergeBlock {
 }
 
 export interface LocalReference {
-    segment: Segment;
+    segment: BaseSegment;
     offset: number;
     slideOnRemove?: boolean;
 }

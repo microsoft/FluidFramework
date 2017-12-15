@@ -111,7 +111,7 @@ function makeBookmarks(client: MergeTree.Client, bookmarkCount: number) {
     for (let i = 0; i < bookmarkCount; i++) {
         let pos = random.integer(0, len - 1)(mt);
         let segoff = client.mergeTree.getContainingSegment(pos, refseq, clientId);
-        bookmarks.push({ segment: segoff.segment, offset: segoff.offset, slideOnRemove: (i & 1) !== 1 });
+        bookmarks.push({ segment: <MergeTree.BaseSegment>segoff.segment, offset: segoff.offset, slideOnRemove: (i & 1) !== 1 });
     }
     return bookmarks;
 }

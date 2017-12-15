@@ -2675,6 +2675,7 @@ export class FlowView extends ui.Component {
             baseSegment.removeLocalRef(presentPresence.localRef);
             tempXformPos = presentPresence.xformPos;
         }
+        localPresenceInfo.localRef.segment.addLocalRef(localPresenceInfo.localRef);
         this.presenceVector[localPresenceInfo.clientId] = localPresenceInfo;
         if (localPresenceInfo.xformPos !== tempXformPos) {
             this.presenceQueueRender(localPresenceInfo);
