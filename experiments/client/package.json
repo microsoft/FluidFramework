@@ -4,14 +4,16 @@
   "description": "Prague electron client",
   "main": "dist/index.js",
   "scripts": {
+    "build": "tsc",
     "start": "electron dist/index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "tsc": "tsc",
     "tslint": "tslint 'src/**/*.ts'"
   },
   "author": "",
   "dependencies": {
-    "electron": "^1.7.9"
+    "electron": "^1.7.9",
+    "moniker": "^0.1.2",
+    "routerlicious": "file:../../routerlicious"
   },
   "devDependencies": {
     "tslint": "^5.8.0",
