@@ -1,0 +1,10 @@
+{
+    "contacts": [ "{{creator}}", "{{securitygroup}}" ],
+    "description": "",
+    "deployedToProduction": {{externalfacing}},
+    "complianceTypes": [],
+    "inventoryId": [ {{servicetreeids}} ],
+    "schema": {
+        "office": "1.0.0"
+    }
+}

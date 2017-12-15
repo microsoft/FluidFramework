@@ -1,0 +1,14 @@
+- sourceBranch: master
+  strategy: simpleReplace
+  scope: "/"
+  parameters:
+    - name: "{{ServiceTreeIds}}"
+      value: "{{ServiceTreeIds}}"
+    - name: "{{ExternalFacing}}"
+      value: "{{ExternalFacing}}"
+    - name: "{{Justification}}"
+      value: "{{Justification}}"
+    - name: "{{Creator}}"
+      value: "{{Creator}}"
+    - name: "{{SecurityGroup}}"
+      value: "{{SecurityGroup}}"
