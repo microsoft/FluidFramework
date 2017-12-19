@@ -46,84 +46,6 @@ std::wstring currentText;
 
 static void ListenForUpdates(Isolate* isolate, Local<Object> attached);
 
-class MyPlatform : public v8::Platform {
-public:
-    MyPlatform() {
-        tracing_controller_.reset(new TracingController());
-    }
-
-    void CallOnBackgroundThread(v8::Task* task, ExpectedRuntime expected_runtime) override {
-        printf("CallOnBackgroundThread");
-    }
-
-    void CallOnForegroundThread(v8::Isolate* isolate, v8::Task* task) override {
-        printf("CallOnForegroundThread");
-    }
-
-    void CallDelayedOnForegroundThread(v8::Isolate* isolate, v8::Task* task, double delay_in_seconds) override {
-        printf("CallDelayedOnForegroundThread");
-    }
-
-    double MonotonicallyIncreasingTime() override {
-        return uv_hrtime() / 1e9;
-    }
-
-    v8::TracingController* GetTracingController() override {
-        return tracing_controller_.get();
-    }
-
-    std::unique_ptr<v8::TracingController> tracing_controller_;
-};
-
-class NodeDebugger {
-public:
-    explicit NodeDebugger(node::Environment* env)
-        : env_(env), platform_(nullptr) {
-    }
-
-    ~NodeDebugger() {
-        node::FreePlatform(platform_);
-    }
-
-    void Start(int argc, const char* const* argv) {
-        auto inspector = env_->inspector_agent();
-        if (inspector == nullptr)
-            return;
-
-        node::DebugOptions options;
-
-        for (int i = 1; i < argc; i++) {
-            std::string option(argv[i]);
-            options.ParseOption(argv[0], option);
-        }
-
-        if (options.inspector_enabled()) {
-            // Use custom platform since the gin platform does not work correctly
-            // with node's inspector agent. We use the default thread pool size
-            // specified by node.cc
-            platform_ = node::CreatePlatform(
-                /* thread_pool_size */ 4,
-                env_->event_loop(),
-                /* tracing_controller */ nullptr);
-
-        //    //// Set process._debugWaitConnect if --inspect-brk was specified to stop
-        //    //// the debugger on the first line
-        //    if (options.wait_for_connect()) {
-        //    //    mate::Dictionary process(env_->isolate(), env_->process_object());
-        //    //    process.Set("_breakFirstLine", true);
-        //    }
-
-            inspector->Start(platform_, nullptr, options);
-        }
-    }
-
-private:
-    node::Environment* env_;
-    node::NodePlatform* platform_;
-    // DISALLOW_COPY_AND_ASSIGN(NodeDebugger);
-};
-
-
 static void ChangeCallback(const v8::FunctionCallbackInfo<v8::Value>& args) {
     Isolate* isolate = args.GetIsolate();
     HandleScope scope(isolate);
@@ -193,7 +115,7 @@ static void ListenForUpdates(Isolate* isolate, Local<Object> attached) {
     on->Call(attached, argc, argv);
 }
 
-int Start(HACCEL hAccelTable, uv_loop_t* event_loop, Isolate* isolate, IsolateData* isolate_data, int argc, const char* const* argv, int exec_argc, const char* const* exec_argv) {
+int Start(HACCEL hAccelTable, node::NodePlatform* platform, uv_loop_t* event_loop, Isolate* isolate, IsolateData* isolate_data, int argc, const char* const* argv, int exec_argc, const char* const* exec_argv) {
     runningIsolate = isolate;
 
     HandleScope handle_scope(isolate);
@@ -207,8 +129,25 @@ int Start(HACCEL hAccelTable, uv_loop_t* event_loop, Isolate* isolate, IsolateDa
 
     Environment* env = node::CreateEnvironment(isolate_data, context, argc, argv, exec_argc, exec_argv);
 
-    NodeDebugger node_debugger(env);
-    node_debugger.Start(argc, argv);
+    auto inspector = env->inspector_agent();
+    if (inspector != nullptr) {
+        node::DebugOptions options;
+        for (int i = 1; i < argc; i++) {
+            std::string option(argv[i]);
+            options.ParseOption(argv[0], option);
+        }
+
+        if (options.inspector_enabled()) {
+            //    //// Set process._debugWaitConnect if --inspect-brk was specified to stop
+            //    //// the debugger on the first line
+            //    if (options.wait_for_connect()) {
+            //    //    mate::Dictionary process(env_->isolate(), env_->process_object());
+            //    //    process.Set("_breakFirstLine", true);
+            //    }
+
+            inspector->Start(platform, nullptr, options);
+        }
+    }
 
     LoadEnvironment(env);
 
@@ -323,7 +262,7 @@ void RouteStdioToConsole(bool create_console_if_not_found) {
     std::ios::sync_with_stdio();
 }
 
-int Start(HACCEL hAccelTable, uv_loop_t* event_loop, int argc, const char* const* argv, int exec_argc, const char* const* exec_argv) {
+int Start(HACCEL hAccelTable, node::NodePlatform* platform, uv_loop_t* event_loop, int argc, const char* const* argv, int exec_argc, const char* const* exec_argv) {
     Isolate::CreateParams params;
     params.array_buffer_allocator = v8::ArrayBuffer::Allocator::NewDefaultAllocator();
 
@@ -334,7 +273,7 @@ int Start(HACCEL hAccelTable, uv_loop_t* event_loop, int argc, const char* const
     Isolate::Scope isolate_scope(isolate);
     HandleScope handle_scope(isolate);
     node::IsolateData* isolate_data = node::CreateIsolateData(isolate, event_loop);
-    int exit_code = Start(hAccelTable, event_loop, isolate, isolate_data, argc, argv, exec_argc, exec_argv);
+    int exit_code = Start(hAccelTable, platform, event_loop, isolate, isolate_data, argc, argv, exec_argc, exec_argv);
 
     return exit_code;
 }
@@ -404,7 +343,12 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     const char** exec_argv;
     node::Init(&argc, const_cast<const char**>(argv), &exec_argc, &exec_argv);
 
-    v8::V8::InitializePlatform(new MyPlatform());
+    auto platform = node::CreatePlatform(
+        /* thread_pool_size */ 4,
+        uv_default_loop(),
+        /* tracing_controller */ nullptr);
+
+    v8::V8::InitializePlatform(platform);
     v8::V8::Initialize();
 
     // Initialize global strings
@@ -420,7 +364,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_NODELIB));
 
-    int exit_code = Start(hAccelTable, uv_default_loop(), argc, argv, exec_argc, exec_argv);
+    int exit_code = Start(hAccelTable, platform, uv_default_loop(), argc, argv, exec_argc, exec_argv);
 
     return exit_code;
 }
