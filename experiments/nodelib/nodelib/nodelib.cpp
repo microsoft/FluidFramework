@@ -11,6 +11,10 @@
 #include "libplatform/libplatform.h"
 #include "v8.h"
 
+#include "node/env.h"
+#include "node/env-inl.h"
+#include "node/node_platform.h"
+
 #define MAX_LOADSTRING 100
 
 #define IDM_INSERT 200
@@ -49,12 +53,15 @@ public:
     }
 
     void CallOnBackgroundThread(v8::Task* task, ExpectedRuntime expected_runtime) override {
+        printf("CallOnBackgroundThread");
     }
 
     void CallOnForegroundThread(v8::Isolate* isolate, v8::Task* task) override {
+        printf("CallOnForegroundThread");
     }
 
     void CallDelayedOnForegroundThread(v8::Isolate* isolate, v8::Task* task, double delay_in_seconds) override {
+        printf("CallDelayedOnForegroundThread");
     }
 
     double MonotonicallyIncreasingTime() override {
@@ -67,6 +74,55 @@ public:
 
     std::unique_ptr<v8::TracingController> tracing_controller_;
 };
+
+class NodeDebugger {
+public:
+    explicit NodeDebugger(node::Environment* env)
+        : env_(env), platform_(nullptr) {
+    }
+
+    ~NodeDebugger() {
+        node::FreePlatform(platform_);
+    }
+
+    void Start(int argc, const char* const* argv) {
+        auto inspector = env_->inspector_agent();
+        if (inspector == nullptr)
+            return;
+
+        node::DebugOptions options;
+
+        for (int i = 1; i < argc; i++) {
+            std::string option(argv[i]);
+            options.ParseOption(argv[0], option);
+        }
+
+        if (options.inspector_enabled()) {
+            // Use custom platform since the gin platform does not work correctly
+            // with node's inspector agent. We use the default thread pool size
+            // specified by node.cc
+            platform_ = node::CreatePlatform(
+                /* thread_pool_size */ 4,
+                env_->event_loop(),
+                /* tracing_controller */ nullptr);
+
+        //    //// Set process._debugWaitConnect if --inspect-brk was specified to stop
+        //    //// the debugger on the first line
+        //    if (options.wait_for_connect()) {
+        //    //    mate::Dictionary process(env_->isolate(), env_->process_object());
+        //    //    process.Set("_breakFirstLine", true);
+        //    }
+
+            inspector->Start(platform_, nullptr, options);
+        }
+    }
+
+private:
+    node::Environment* env_;
+    node::NodePlatform* platform_;
+    // DISALLOW_COPY_AND_ASSIGN(NodeDebugger);
+};
+
 
 static void ChangeCallback(const v8::FunctionCallbackInfo<v8::Value>& args) {
     Isolate* isolate = args.GetIsolate();
@@ -150,6 +206,10 @@ int Start(HACCEL hAccelTable, uv_loop_t* event_loop, Isolate* isolate, IsolateDa
     Context::Scope context_scope(context);
 
     Environment* env = node::CreateEnvironment(isolate_data, context, argc, argv, exec_argc, exec_argv);
+
+    NodeDebugger node_debugger(env);
+    node_debugger.Start(argc, argv);
+
     LoadEnvironment(env);
 
     MSG msg;
