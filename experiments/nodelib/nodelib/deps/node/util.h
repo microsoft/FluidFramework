@@ -25,6 +25,7 @@
 #if defined(NODE_WANT_INTERNALS) && NODE_WANT_INTERNALS
 
 #include "v8.h"
+#include "node.h"
 
 #include <assert.h>
 #include <signal.h>
@@ -79,8 +80,8 @@ void LowMemoryNotification();
 // The slightly odd function signature for Assert() is to ease
 // instruction cache pressure in calls from CHECK.
 NO_RETURN void Abort();
-NO_RETURN void Assert(const char* const (*args)[4]);
-void DumpBacktrace(FILE* fp);
+NODE_EXTERN NO_RETURN void Assert(const char* const (*args)[4]);
+NODE_EXTERN void DumpBacktrace(FILE* fp);
 
 template <typename T> using remove_reference = std::remove_reference<T>;
 

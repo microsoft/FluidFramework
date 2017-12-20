@@ -8,32 +8,9 @@ const repository = "prague";
 // Register endpoint connection
 prague.socketStorage.registerAsDefault(routerlicious, historian, repository);
 
-function getLatestVersion(id: string): Promise<any> {
-    const versionP = new Promise<any>((resolve, reject) => {
-        const versionsP = $.getJSON(`${historian}/repos/${repository}/commits?sha=${encodeURIComponent(id)}&count=1`);
-        versionsP
-            .done((version) => {
-                resolve(version[0]);
-            })
-            .fail((error) => {
-                if (error.status === 400) {
-                    resolve(null);
-                } else {
-                    reject(error.status);
-                }
-            });
-    });
-
-    return versionP;
-}
-
 async function run(id: string): Promise<void> {
-    // Get the latest version of the document
-    const version = await getLatestVersion(id);
-    console.log(version);
-
     // Load in the latest and connect to the document
-    const collabDoc = await prague.api.load(id, { blockUpdateMarkers: true }, version);
+    const collabDoc = await prague.api.load(id, { blockUpdateMarkers: true });
 
     const rootView = await collabDoc.getRoot().getView();
     console.log("Keys");
@@ -69,7 +46,7 @@ async function run(id: string): Promise<void> {
     };
 }
 
-const documentId = "test-document-444!MMM";
+const documentId = "test-document-niode-201";
 run(documentId).catch((error) => {
     console.error(error);
 })
