@@ -22,11 +22,14 @@
 #ifndef SRC_NODE_VERSION_H_
 #define SRC_NODE_VERSION_H_
 
-#define NODE_MAJOR_VERSION 9
-#define NODE_MINOR_VERSION 0
-#define NODE_PATCH_VERSION 0
+#define NODE_MAJOR_VERSION 8
+#define NODE_MINOR_VERSION 9
+#define NODE_PATCH_VERSION 3
 
-#define NODE_VERSION_IS_RELEASE 0
+#define NODE_VERSION_IS_LTS 1
+#define NODE_VERSION_LTS_CODENAME "Carbon"
+
+#define NODE_VERSION_IS_RELEASE 1
 
 #ifndef NODE_STRINGIFY
 #define NODE_STRINGIFY(n) NODE_STRINGIFY_HELPER(n)
@@ -99,10 +102,9 @@
  * V8 5.9: 56
  * V8 6.0: 57
  * V8 6.1: 58
- * V8 6.2: 59
  *
  * More information can be found at https://nodejs.org/en/download/releases/
  */
-#define NODE_MODULE_VERSION 59
+#define NODE_MODULE_VERSION 57
 
 #endif  // SRC_NODE_VERSION_H_

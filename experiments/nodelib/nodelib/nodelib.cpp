@@ -11,12 +11,20 @@
 #include "libplatform/libplatform.h"
 #include "v8.h"
 
+#include "node/env.h"
+#include "node/env-inl.h"
+#include "node/node_platform.h"
+
 #define MAX_LOADSTRING 100
 
 #define IDM_INSERT 200
 
 using namespace v8;
 using namespace node;
+
+static bool force_async_hooks_checks = false;
+static bool trace_sync_io = false;
+static bool abort_on_uncaught_exception = false;
 
 // Global Variables:
 HINSTANCE hInst;                                // current instance
@@ -42,31 +50,11 @@ std::wstring currentText;
 
 static void ListenForUpdates(Isolate* isolate, Local<Object> attached);
 
-class MyPlatform : public v8::Platform {
-public:
-    MyPlatform() {
-        tracing_controller_.reset(new TracingController());
+namespace node {
+    void DumpBacktrace(FILE* fp) {
     }
+}  // namespace node
 
-    void CallOnBackgroundThread(v8::Task* task, ExpectedRuntime expected_runtime) override {
-    }
-
-    void CallOnForegroundThread(v8::Isolate* isolate, v8::Task* task) override {
-    }
-
-    void CallDelayedOnForegroundThread(v8::Isolate* isolate, v8::Task* task, double delay_in_seconds) override {
-    }
-
-    double MonotonicallyIncreasingTime() override {
-        return uv_hrtime() / 1e9;
-    }
-
-    v8::TracingController* GetTracingController() override {
-        return tracing_controller_.get();
-    }
-
-    std::unique_ptr<v8::TracingController> tracing_controller_;
-};
 
 static void ChangeCallback(const v8::FunctionCallbackInfo<v8::Value>& args) {
     Isolate* isolate = args.GetIsolate();
@@ -106,6 +94,7 @@ static void AttachCallback(const v8::FunctionCallbackInfo<v8::Value>& args) {
 }
 
 static void InsertText(std::wstring text, int position) {
+    HandleScope handle_scope(runningIsolate);
     Local<Context> context = runningContext.Get(runningIsolate);
     Local<Object> attached = attachedJSObject.Get(runningIsolate);
 
@@ -137,7 +126,7 @@ static void ListenForUpdates(Isolate* isolate, Local<Object> attached) {
     on->Call(attached, argc, argv);
 }
 
-int Start(HACCEL hAccelTable, uv_loop_t* event_loop, Isolate* isolate, IsolateData* isolate_data, int argc, const char* const* argv, int exec_argc, const char* const* exec_argv) {
+int Start(HACCEL hAccelTable, node::NodePlatform* platform, node::DebugOptions& options, uv_loop_t* event_loop, Isolate* isolate, IsolateData* isolate_data, int argc, const char* const* argv, int exec_argc, const char* const* exec_argv) {
     runningIsolate = isolate;
 
     HandleScope handle_scope(isolate);
@@ -150,40 +139,61 @@ int Start(HACCEL hAccelTable, uv_loop_t* event_loop, Isolate* isolate, IsolateDa
     Context::Scope context_scope(context);
 
     Environment* env = node::CreateEnvironment(isolate_data, context, argc, argv, exec_argc, exec_argv);
-    LoadEnvironment(env);
+    /*CHECK_EQ(0, uv_key_create(&thread_local_env));
+    uv_key_set(&thread_local_env, &env);*/
 
-    MSG msg;
+    env->inspector_agent()->Start(platform, nullptr, options); // these need to be passed in
+    if (options.inspector_enabled() && !env->inspector_agent()->IsStarted())
+        return 12;  // Signal internal error.
 
-    bool more = true;
-    do
+    env->set_abort_on_uncaught_exception(abort_on_uncaught_exception);
+    if (force_async_hooks_checks) {
+        env->async_hooks()->force_checks();
+    }
+
     {
-        if (PeekMessage(&msg, nullptr, 0, 0, PM_NOREMOVE)) {
-            if (GetMessage(&msg, nullptr, 0, 0)) {
-                if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg))
-                {
-                    TranslateMessage(&msg);
-                    DispatchMessage(&msg);
+        Environment::AsyncCallbackScope callback_scope(env);
+        env->async_hooks()->push_async_ids(1, 0);
+        LoadEnvironment(env);
+        env->async_hooks()->pop_async_id(1);
+    }
+
+    env->set_trace_sync_io(trace_sync_io);
+
+    {
+        SealHandleScope seal(isolate);
+        MSG msg;
+        bool more = true;
+        do
+        {
+            if (PeekMessage(&msg, nullptr, 0, 0, PM_NOREMOVE)) {
+                if (GetMessage(&msg, nullptr, 0, 0)) {
+                    if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg))
+                    {
+                        TranslateMessage(&msg);
+                        DispatchMessage(&msg);
+                    }
+                }
+                else {
+                    more = false;
                 }
             }
-            else {
-                more = false;
-            }
-        }
 
-        if (more) {
-            more = uv_run(event_loop, UV_RUN_NOWAIT);
-            if (more == false)
-            {
-                node::EmitBeforeExit(env);
+            if (more) {
+                more = uv_run(event_loop, UV_RUN_NOWAIT);
+                if (more == false)
+                {
+                    node::EmitBeforeExit(env);
 
-                // Emit `beforeExit` if the loop became alive either after emitting
-                // event, or after running some callbacks.
-                more = uv_loop_alive(event_loop);
-                if (uv_run(event_loop, UV_RUN_NOWAIT) != 0)
-                    more = true;
+                    // Emit `beforeExit` if the loop became alive either after emitting
+                    // event, or after running some callbacks.
+                    more = uv_loop_alive(event_loop);
+                    if (uv_run(event_loop, UV_RUN_NOWAIT) != 0)
+                        more = true;
+                }
             }
-        }
-    } while (more == true);
+        } while (more == true);
+    }
 
     int exit_code = node::EmitExit(env);
     node::RunAtExit(env);
@@ -263,21 +273,41 @@ void RouteStdioToConsole(bool create_console_if_not_found) {
     std::ios::sync_with_stdio();
 }
 
-int Start(HACCEL hAccelTable, uv_loop_t* event_loop, int argc, const char* const* argv, int exec_argc, const char* const* exec_argv) {
+static Mutex node_isolate_mutex;
+static v8::Isolate* node_isolate;
+
+int Start(HACCEL hAccelTable, node::NodePlatform* platform, node::DebugOptions& options, uv_loop_t* event_loop, int argc, const char* const* argv, int exec_argc, const char* const* exec_argv) {
     Isolate::CreateParams params;
     params.array_buffer_allocator = v8::ArrayBuffer::Allocator::NewDefaultAllocator();
 
     Isolate* const isolate = Isolate::New(params);
+    // isolate->AddMessageListener(OnMessage);
+    // isolate->SetAbortOnUncaughtExceptionCallback(ShouldAbortOnUncaughtException);
     isolate->SetAutorunMicrotasks(false);
+    // isolate->SetFatalErrorHandler(OnFatalError);
+
+    {
+        Mutex::ScopedLock scoped_lock(node_isolate_mutex);
+        CHECK_EQ(node_isolate, nullptr);
+        node_isolate = isolate;
+    }
 
     Locker locker(isolate);
     Isolate::Scope isolate_scope(isolate);
     HandleScope handle_scope(isolate);
     node::IsolateData* isolate_data = node::CreateIsolateData(isolate, event_loop);
-    int exit_code = Start(hAccelTable, event_loop, isolate, isolate_data, argc, argv, exec_argc, exec_argv);
+    int exit_code = Start(hAccelTable, platform, options, event_loop, isolate, isolate_data, argc, argv, exec_argc, exec_argv);
+
+    {
+        Mutex::ScopedLock scoped_lock(node_isolate_mutex);
+        CHECK_EQ(node_isolate, isolate);
+        node_isolate = nullptr;
+    }
 
     return exit_code;
 }
+
+bool runDefaultNodeLoop = false;
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     _In_opt_ HINSTANCE hPrevInstance,
@@ -339,30 +369,46 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         }
     }
 
-    argv = uv_setup_args(argc, argv);
-    int exec_argc;
-    const char** exec_argv;
-    node::Init(&argc, const_cast<const char**>(argv), &exec_argc, &exec_argv);
-
-    v8::V8::InitializePlatform(new MyPlatform());
-    v8::V8::Initialize();
-
-    // Initialize global strings
-    LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
-    LoadStringW(hInstance, IDC_NODELIB, szWindowClass, MAX_LOADSTRING);
-    MyRegisterClass(hInstance);
-
-    // Perform application initialization:
-    if (!InitInstance(hInstance, nCmdShow))
-    {
-        return FALSE;
+    if (runDefaultNodeLoop) {
+        node::Start(argc, argv);
     }
+    else {
+        argv = uv_setup_args(argc, argv);
+        int exec_argc;
+        const char** exec_argv;
+        node::Init(&argc, const_cast<const char**>(argv), &exec_argc, &exec_argv);
 
-    HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_NODELIB));
+        node::DebugOptions options;
+        for (int i = 0; i < exec_argc; i++) {
+            std::string option(exec_argv[i]);
+            options.ParseOption(argv[0], option);
+        }
 
-    int exit_code = Start(hAccelTable, uv_default_loop(), argc, argv, exec_argc, exec_argv);
+        auto platform = node::CreatePlatform(
+            /* thread_pool_size */ 4,
+            uv_default_loop(),
+            /* tracing_controller */ nullptr);
 
-    return exit_code;
+        v8::V8::InitializePlatform(platform);
+        v8::V8::Initialize();
+
+        // Initialize global strings
+        LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
+        LoadStringW(hInstance, IDC_NODELIB, szWindowClass, MAX_LOADSTRING);
+        MyRegisterClass(hInstance);
+
+        // Perform application initialization:
+        if (!InitInstance(hInstance, nCmdShow))
+        {
+            return FALSE;
+        }
+
+        HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_NODELIB));
+
+        int exit_code = Start(hAccelTable, platform, options, uv_default_loop(), argc, argv, exec_argc, exec_argv);
+
+        return exit_code;
+    }
 }
 
 //

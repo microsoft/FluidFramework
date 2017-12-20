@@ -96,6 +96,11 @@
 // Forward-declare libuv loop
 struct uv_loop_s;
 
+// Forward-declare TracingController, used by CreatePlatform.
+namespace v8 {
+  class TracingController;
+}
+
 // Forward-declare these functions now to stop MSVS from becoming
 // terminally confused when it's done in node_internals.h
 namespace node {
@@ -208,6 +213,7 @@ NODE_EXTERN void Init(int* argc,
 
 class IsolateData;
 class Environment;
+class NodePlatform;
 
 NODE_EXTERN IsolateData* CreateIsolateData(v8::Isolate* isolate,
                                            struct uv_loop_s* loop);
@@ -222,6 +228,12 @@ NODE_EXTERN Environment* CreateEnvironment(IsolateData* isolate_data,
 
 NODE_EXTERN void LoadEnvironment(Environment* env);
 NODE_EXTERN void FreeEnvironment(Environment* env);
+
+NODE_EXTERN NodePlatform* CreatePlatform(
+  int thread_pool_size,
+  struct uv_loop_s* loop,
+  v8::TracingController* tracing_controller);
+NODE_EXTERN void FreePlatform(NodePlatform* platform);
 
 NODE_EXTERN void EmitBeforeExit(Environment* env);
 NODE_EXTERN int EmitExit(Environment* env);
@@ -536,7 +548,15 @@ typedef double async_id;
 struct async_context {
   ::node::async_id async_id;
   ::node::async_id trigger_async_id;
+
+  // Legacy, Node 8.x only.
+  NODE_DEPRECATED("Use async_context directly as returned by EmitAsyncInit()",
+                  operator ::node::async_id() const {
+    return async_id;
+  });
 };
+
+typedef async_id async_uid;  // Legacy, Node 8.x only
 
 /* Registers an additional v8::PromiseHook wrapper. This API exists because V8
  * itself supports only a single PromiseHook. */
@@ -548,9 +568,26 @@ NODE_EXTERN void AddPromiseHook(v8::Isolate* isolate,
  * zero then no execution has been set. This will happen if the user handles
  * I/O from native code. */
 NODE_EXTERN async_id AsyncHooksGetExecutionAsyncId(v8::Isolate* isolate);
+/* legacy alias */
+NODE_EXTERN NODE_DEPRECATED("Use AsyncHooksGetExecutionAsyncId(isolate)",
+                async_id AsyncHooksGetCurrentId(v8::Isolate* isolate));
+
 
 /* Return same value as async_hooks.triggerAsyncId(); */
 NODE_EXTERN async_id AsyncHooksGetTriggerAsyncId(v8::Isolate* isolate);
+/* legacy alias */
+NODE_EXTERN NODE_DEPRECATED("Use AsyncHooksGetTriggerAsyncId(isolate)",
+                async_id AsyncHooksGetTriggerId(v8::Isolate* isolate));
+
+// This is a legacy overload of EmitAsyncInit that has to remain for ABI
+// compatibility during Node 8.x. Do not use.
+NODE_EXTERN async_uid EmitAsyncInit(v8::Isolate* isolate,
+                                    v8::Local<v8::Object> resource,
+                                    const char* name,
+                                    async_id trigger_async_id);
+
+// From now on EmitAsyncInit always refers to the proper, new version.
+#define EmitAsyncInit EmitAsyncInit__New
 
 /* If the native API doesn't inherit from the helper class then the callbacks
  * must be triggered manually. This triggers the init() callback. The return
@@ -635,6 +672,36 @@ v8::MaybeLocal<v8::Value> MakeCallback(v8::Isolate* isolate,
                                        v8::Local<v8::Value>* argv,
                                        async_context asyncContext);
 
+// Legacy, Node 8.x only.
+
+NODE_EXTERN
+NODE_DEPRECATED("Use MakeCallback(..., async_context asyncContext) instead",
+    v8::MaybeLocal<v8::Value> MakeCallback(v8::Isolate* isolate,
+                                           v8::Local<v8::Object> recv,
+                                           v8::Local<v8::Function> callback,
+                                           int argc,
+                                           v8::Local<v8::Value>* argv,
+                                           async_id asyncId,
+                                           async_id triggerAsyncId));
+NODE_EXTERN
+NODE_DEPRECATED("Use MakeCallback(..., async_context asyncContext) instead",
+    v8::MaybeLocal<v8::Value> MakeCallback(v8::Isolate* isolate,
+                                           v8::Local<v8::Object> recv,
+                                           const char* method,
+                                           int argc,
+                                           v8::Local<v8::Value>* argv,
+                                           async_id asyncId,
+                                           async_id triggerAsyncId));
+NODE_EXTERN
+NODE_DEPRECATED("Use MakeCallback(..., async_context asyncContext) instead",
+    v8::MaybeLocal<v8::Value> MakeCallback(v8::Isolate* isolate,
+                                           v8::Local<v8::Object> recv,
+                                           v8::Local<v8::String> symbol,
+                                           int argc,
+                                           v8::Local<v8::Value>* argv,
+                                           async_id asyncId,
+                                           async_id triggerAsyncId));
+
 /* Helper class users can optionally inherit from. If
  * `AsyncResource::MakeCallback()` is used, then all four callbacks will be
  * called automatically. */
@@ -694,6 +761,12 @@ class AsyncResource {
     v8::Local<v8::Object> get_resource() {
       return resource_.Get(isolate_);
     }
+
+    NODE_DEPRECATED("Use AsyncResource::get_async_id()",
+      async_id get_uid() const {
+        return get_async_id();
+      }
+    )
 
     async_id get_async_id() const {
       return async_context_.async_id;
