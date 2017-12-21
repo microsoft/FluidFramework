@@ -5,6 +5,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
+    "babel": "babel public/scripts/dist -d public/scripts/es5",
     "browserify": "mkdirp public/scripts/dist && npm run browserify:all",
     "browserify:all": "concurrently \"npm run browserify:api\" \"npm run browserify:ui\" \"npm run browserify:controllers\" \"npm run browserify:agent\"",
     "browserify:all:min": "concurrently \"npm run browserify:api:min\" \"npm run browserify:ui:min\" \"npm run browserify:controllers:min\" \"npm run browserify:agent:min\"",
@@ -104,6 +105,8 @@
     "@types/winston": "^2.3.3",
     "@types/ws": "^3.2.1",
     "@types/youtube": "0.0.31",
+    "babel-cli": "^6.26.0",
+    "babel-preset-env": "^1.6.1",
     "browserify": "^14.1.0",
     "browserify-shim": "^3.8.13",
     "concurrently": "^3.4.0",
