@@ -335,15 +335,12 @@ div.titleletters {
 <body>
     <div id="text"></div>
 
-    <!-- Scripts -->
-    <script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.2.1.min.js"></script>
-    <script src="https://ajax.aspnetcdn.com/ajax/bootstrap/3.3.7/bootstrap.min.js"></script>
-
     <!-- Prague API - first contains socket.io definitions - second is API itself -->
+    <script src="node_modules/babel-polyfill/dist/polyfill.js"></script>
     <script src="api.js"></script>
     <script src="ui.js"></script>
 
     <!-- Example Code -->
-    <script src="dist/index.js"></script>
+    <script src="dist/index.es5.js"></script>
 </body>
 </html>
