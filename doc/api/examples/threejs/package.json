@@ -1,0 +1,22 @@
+{
+  "name": "threejs",
+  "version": "0.1.0",
+  "description": "Prague example making use of three.js and webpack",
+  "main": "index.js",
+  "scripts": {
+    "build": "npm run tsc && npm run tslint && npm run webpack",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "tsc": "tsc",
+    "tslint": "tslint 'src/**/*.ts'",
+    "webpack": "webpack --config webpack.config.js"
+  },
+  "dependencies": {
+    "three": "^0.89.0",
+    "typescript": "^2.6.2"
+  },
+  "devDependencies": {
+    "@types/three": "^0.84.36",
+    "tslint": "^5.8.0",
+    "webpack": "^3.10.0"
+  }
+}
