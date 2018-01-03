@@ -11,10 +11,6 @@
 #include "libplatform/libplatform.h"
 #include "v8.h"
 
-#include "node/env.h"
-#include "node/env-inl.h"
-#include "node/node_platform.h"
-
 #define MAX_LOADSTRING 100
 
 #define IDM_INSERT 200
@@ -126,7 +122,7 @@ static void ListenForUpdates(Isolate* isolate, Local<Object> attached) {
     on->Call(attached, argc, argv);
 }
 
-int Start(HACCEL hAccelTable, node::NodePlatform* platform, node::DebugOptions& options, uv_loop_t* event_loop, Isolate* isolate, IsolateData* isolate_data, int argc, const char* const* argv, int exec_argc, const char* const* exec_argv) {
+int Start(HACCEL hAccelTable, node::NodePlatform* platform, uv_loop_t* event_loop, Isolate* isolate, IsolateData* isolate_data, int argc, const char* const* argv, int exec_argc, const char* const* exec_argv) {
     runningIsolate = isolate;
 
     HandleScope handle_scope(isolate);
@@ -142,23 +138,12 @@ int Start(HACCEL hAccelTable, node::NodePlatform* platform, node::DebugOptions& 
     /*CHECK_EQ(0, uv_key_create(&thread_local_env));
     uv_key_set(&thread_local_env, &env);*/
 
-    env->inspector_agent()->Start(platform, nullptr, options); // these need to be passed in
-    if (options.inspector_enabled() && !env->inspector_agent()->IsStarted())
-        return 12;  // Signal internal error.
+	bool inspectorReady = node::StartInspector(env, platform);
+	if (!inspectorReady) {
+		return 12;  // Signal internal error.
+	}    
 
-    env->set_abort_on_uncaught_exception(abort_on_uncaught_exception);
-    if (force_async_hooks_checks) {
-        env->async_hooks()->force_checks();
-    }
-
-    {
-        Environment::AsyncCallbackScope callback_scope(env);
-        env->async_hooks()->push_async_ids(1, 0);
-        LoadEnvironment(env);
-        env->async_hooks()->pop_async_id(1);
-    }
-
-    env->set_trace_sync_io(trace_sync_io);
+	node::LoadEnvironmentFull(env);
 
     {
         SealHandleScope seal(isolate);
@@ -201,82 +186,7 @@ int Start(HACCEL hAccelTable, node::NodePlatform* platform, node::DebugOptions& 
     return exit_code;
 }
 
-// Redirect function coming from
-// https://chromium.googlesource.com/chromium/src/base/+/master/process/launch_win.cc
-void RouteStdioToConsole(bool create_console_if_not_found) {
-    // Don't change anything if stdout or stderr already point to a
-    // valid stream.
-    //
-    // If we are running under Buildbot or under Cygwin's default
-    // terminal (mintty), stderr and stderr will be pipe handles.  In
-    // that case, we don't want to open CONOUT$, because its output
-    // likely does not go anywhere.
-    //
-    // We don't use GetStdHandle() to check stdout/stderr here because
-    // it can return dangling IDs of handles that were never inherited
-    // by this process.  These IDs could have been reused by the time
-    // this function is called.  The CRT checks the validity of
-    // stdout/stderr on startup (before the handle IDs can be reused).
-    // _fileno(stdout) will return -2 (_NO_CONSOLE_FILENO) if stdout was
-    // invalid.
-    if (_fileno(stdout) >= 0 || _fileno(stderr) >= 0) {
-        // _fileno was broken for SUBSYSTEM:WINDOWS from VS2010 to VS2012/2013.
-        // http://crbug.com/358267. Confirm that the underlying HANDLE is valid
-        // before aborting.
-
-        intptr_t stdout_handle = _get_osfhandle(_fileno(stdout));
-        intptr_t stderr_handle = _get_osfhandle(_fileno(stderr));
-        if (stdout_handle >= 0 || stderr_handle >= 0)
-            return;
-    }
-
-    if (!AttachConsole(ATTACH_PARENT_PROCESS)) {
-        unsigned int result = GetLastError();
-        // Was probably already attached.
-        if (result == ERROR_ACCESS_DENIED)
-            return;
-        // Don't bother creating a new console for each child process if the
-        // parent process is invalid (eg: crashed).
-        if (result == ERROR_GEN_FAILURE)
-            return;
-        if (create_console_if_not_found) {
-            // Make a new console if attaching to parent fails with any other error.
-            // It should be ERROR_INVALID_HANDLE at this point, which means the
-            // browser was likely not started from a console.
-            AllocConsole();
-        }
-        else {
-            return;
-        }
-    }
-
-    // Arbitrary byte count to use when buffering output lines.  More
-    // means potential waste, less means more risk of interleaved
-    // log-lines in output.
-    enum { kOutputBufferSize = 64 * 1024 };
-
-    if (freopen("CONOUT$", "w", stdout)) {
-        setvbuf(stdout, nullptr, _IOLBF, kOutputBufferSize);
-        // Overwrite FD 1 for the benefit of any code that uses this FD
-        // directly.  This is safe because the CRT allocates FDs 0, 1 and
-        // 2 at startup even if they don't have valid underlying Windows
-        // handles.  This means we won't be overwriting an FD created by
-        // _open() after startup.
-        _dup2(_fileno(stdout), 1);
-    }
-    if (freopen("CONOUT$", "w", stderr)) {
-        setvbuf(stderr, nullptr, _IOLBF, kOutputBufferSize);
-        _dup2(_fileno(stderr), 2);
-    }
-
-    // Fix all cout, wcout, cin, wcin, cerr, wcerr, clog and wclog.
-    std::ios::sync_with_stdio();
-}
-
-static Mutex node_isolate_mutex;
-static v8::Isolate* node_isolate;
-
-int Start(HACCEL hAccelTable, node::NodePlatform* platform, node::DebugOptions& options, uv_loop_t* event_loop, int argc, const char* const* argv, int exec_argc, const char* const* exec_argv) {
+int Start(HACCEL hAccelTable, node::NodePlatform* platform, uv_loop_t* event_loop, int argc, const char* const* argv, int exec_argc, const char* const* exec_argv) {
     Isolate::CreateParams params;
     params.array_buffer_allocator = v8::ArrayBuffer::Allocator::NewDefaultAllocator();
 
@@ -286,23 +196,11 @@ int Start(HACCEL hAccelTable, node::NodePlatform* platform, node::DebugOptions& 
     isolate->SetAutorunMicrotasks(false);
     // isolate->SetFatalErrorHandler(OnFatalError);
 
-    {
-        Mutex::ScopedLock scoped_lock(node_isolate_mutex);
-        CHECK_EQ(node_isolate, nullptr);
-        node_isolate = isolate;
-    }
-
     Locker locker(isolate);
     Isolate::Scope isolate_scope(isolate);
     HandleScope handle_scope(isolate);
     node::IsolateData* isolate_data = node::CreateIsolateData(isolate, event_loop);
-    int exit_code = Start(hAccelTable, platform, options, event_loop, isolate, isolate_data, argc, argv, exec_argc, exec_argv);
-
-    {
-        Mutex::ScopedLock scoped_lock(node_isolate_mutex);
-        CHECK_EQ(node_isolate, isolate);
-        node_isolate = nullptr;
-    }
+    int exit_code = Start(hAccelTable, platform, event_loop, isolate, isolate_data, argc, argv, exec_argc, exec_argv);
 
     return exit_code;
 }
@@ -378,19 +276,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         const char** exec_argv;
         node::Init(&argc, const_cast<const char**>(argv), &exec_argc, &exec_argv);
 
-        node::DebugOptions options;
-        for (int i = 0; i < exec_argc; i++) {
-            std::string option(exec_argv[i]);
-            options.ParseOption(argv[0], option);
-        }
-
-        auto platform = node::CreatePlatform(
+        auto platform = node::CreateAndInitializePlatform(
             /* thread_pool_size */ 4,
             uv_default_loop(),
             /* tracing_controller */ nullptr);
-
-        v8::V8::InitializePlatform(platform);
-        v8::V8::Initialize();
 
         // Initialize global strings
         LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
@@ -405,7 +294,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
         HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_NODELIB));
 
-        int exit_code = Start(hAccelTable, platform, options, uv_default_loop(), argc, argv, exec_argc, exec_argv);
+        int exit_code = Start(hAccelTable, platform, uv_default_loop(), argc, argv, exec_argc, exec_argv);
 
         return exit_code;
     }

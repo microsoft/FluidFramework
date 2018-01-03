@@ -9,7 +9,6 @@
 #error("This header can only be used when inspector is enabled")
 #endif
 
-#include "node.h"
 #include "node_debug_options.h"
 #include "v8.h"
 
@@ -35,7 +34,7 @@ class InspectorSessionDelegate {
 class InspectorIo;
 class NodeInspectorClient;
 
-class NODE_EXTERN Agent {
+class Agent {
  public:
   explicit Agent(node::Environment* env);
   ~Agent();

@@ -228,12 +228,16 @@ NODE_EXTERN Environment* CreateEnvironment(IsolateData* isolate_data,
 
 NODE_EXTERN void LoadEnvironment(Environment* env);
 NODE_EXTERN void FreeEnvironment(Environment* env);
+NODE_EXTERN void RouteStdioToConsole(bool create_console_if_not_found);
 
-NODE_EXTERN NodePlatform* CreatePlatform(
+NODE_EXTERN NodePlatform* CreateAndInitializePlatform(
   int thread_pool_size,
   struct uv_loop_s* loop,
   v8::TracingController* tracing_controller);
 NODE_EXTERN void FreePlatform(NodePlatform* platform);
+
+NODE_EXTERN bool StartInspector(Environment* environment, node::NodePlatform* platform);
+NODE_EXTERN void LoadEnvironmentFull(Environment* environment);
 
 NODE_EXTERN void EmitBeforeExit(Environment* env);
 NODE_EXTERN int EmitExit(Environment* env);
