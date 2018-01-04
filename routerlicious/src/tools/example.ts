@@ -42,6 +42,7 @@ async function run(id: string): Promise<void> {
         },
         insertText: (value: string, position: number) => {
             text.insertText(value, position);
+            setTimeout(() => { return; }, 0);
         },
         on: (callback) => {
             // Update the text after being loaded as well as when receiving ops
