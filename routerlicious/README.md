@@ -43,6 +43,16 @@ If you also need debugging you can run:
 
 After starting the service, you can navigate to http://localhost:3000/ in a browser.
 
+#### Dev Flow
+An example developer flow would be to:
+* `npm run start:debug` - attach a debugger
+
+Then use another command window to deliver the changes:
+* `npm run build` - build
+* `docker-compose restart {modified service}` - allow the container to pick up the changes stored on the local machine
+or
+* `npm run browserify` - rebuild the view code (.hjs, view controllers) and reload the browser
+
 ### Standalone
 
 You can also just run the service directly with Docker. To do so you first need to authenticate to our private
