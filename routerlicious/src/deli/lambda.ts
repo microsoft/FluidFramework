@@ -1,20 +1,10 @@
-import { EventEmitter } from "events";
 import * as winston from "winston";
 import * as agent from "../agent";
 import * as api from "../api-core";
 import * as core from "../core";
 import { RangeTracker, ThroughputCounter } from "../core-utils";
+import { IPartitionLambda } from "../kafka-service/lambdas";
 import * as utils from "../utils";
-
-interface IPendingTicket<T> {
-    message: any;
-    trace: api.ITrace;
-    resolve: (value?: T | PromiseLike<T>) => void;
-    reject: (value?: T | PromiseLike<T>) => void;
-}
-
-// We expire clients after 5 minutes of no activity
-export const ClientSequenceTimeout = 5 * 60 * 1000;
 
 interface IClientSequenceNumber {
     // Whether or not the object can expire
@@ -41,14 +31,8 @@ function getBranchClientId(branch: string) {
     return `branch$${branch}`;
 }
 
-/**
- * Class to handle distributing sequence numbers to a collaborative object
- */
-export class TakeANumber {
-    private events = new EventEmitter();
+export class DeliLambda implements IPartitionLambda {
     private throughput = new ThroughputCounter(winston.info, "Delta Topic ");
-    private queue: Array<IPendingTicket<void>> = [];
-    private error: any;
     private sequenceNumber: number = undefined;
     private logOffset: number;
 
@@ -62,86 +46,48 @@ export class TakeANumber {
 
     constructor(
         private documentId: string,
-        private collection: core.ICollection<core.IDocument>,
-        private producer: utils.kafkaProducer.IProducer) {
+        dbObject: any,
+        private collection: core.ICollection<any>,
+        private producer: utils.kafkaProducer.IProducer,
+        private clientTimeout: number) {
 
-        // Lookup the last sequence number stored
-        const dbObjectP = this.collection.findOne({ _id: this.documentId });
-        dbObjectP.then(
-            (dbObject) => {
-                if (!dbObject) {
-                    this.events.emit("error", "Object does not exist - cannot sequence");
-                    return;
-                }
-
-                // Instantiate existing clients
-                if (dbObject.clients) {
-                    for (const client of dbObject.clients) {
-                        this.upsertClient(
-                            client.clientId,
-                            client.referenceSequenceNumber,
-                            client.lastUpdate,
-                            client.canEvict);
-                    }
-                }
-
-                // Setup branch information
-                if (dbObject.parent) {
-                    if (dbObject.branchMap) {
-                        this.branchMap = new RangeTracker(dbObject.branchMap);
-                    } else {
-                        // Initialize the range tracking window
-                        this.branchMap = new RangeTracker(
-                            dbObject.parent.minimumSequenceNumber,
-                            dbObject.parent.minimumSequenceNumber);
-                        // tslint:disable-next-line:max-line-length
-                        for (let i = dbObject.parent.minimumSequenceNumber + 1; i <= dbObject.parent.sequenceNumber; i++) {
-                            this.branchMap.add(i, i);
-                        }
-
-                        // Add in the client representing the parent
-                        this.upsertClient(
-                            getBranchClientId(dbObject.parent.id),
-                            dbObject.parent.minimumSequenceNumber,
-                            dbObject.createTime,
-                            false);
-                    }
-                }
-
-                // Initialize counting context
-                this.sequenceNumber = dbObject.sequenceNumber;
-                this.logOffset = dbObject.logOffset;
-
-                this.resolvePending();
-            },
-            (error) => {
-                this.error = error;
-                this.rejectPending(error);
-            });
-    }
-
-    /**
-     * Assigns a number number to the given message at the provided offset
-     */
-    public ticket(message: any, trace: api.ITrace): Promise<void> {
-        // If we don't have a base sequence number then we queue the message for ticketing otherwise we can immediately
-        // ticket the message
-        if (this.sequenceNumber === undefined) {
-            if (this.error) {
-                return Promise.reject(this.error);
-            } else {
-                return new Promise<void>((resolve, reject) => {
-                    this.queue.push({
-                        message,
-                        trace,
-                        reject,
-                        resolve,
-                    });
-                });
+        // Instantiate existing clients
+        if (dbObject.clients) {
+            for (const client of dbObject.clients) {
+                this.upsertClient(
+                    client.clientId,
+                    client.referenceSequenceNumber,
+                    client.lastUpdate,
+                    client.canEvict);
             }
-        } else {
-            return this.ticketCore(message, trace);
         }
+
+        // Setup branch information
+        if (dbObject.parent) {
+            if (dbObject.branchMap) {
+                this.branchMap = new RangeTracker(dbObject.branchMap);
+            } else {
+                // Initialize the range tracking window
+                this.branchMap = new RangeTracker(
+                    dbObject.parent.minimumSequenceNumber,
+                    dbObject.parent.minimumSequenceNumber);
+                // tslint:disable-next-line:max-line-length
+                for (let i = dbObject.parent.minimumSequenceNumber + 1; i <= dbObject.parent.sequenceNumber; i++) {
+                    this.branchMap.add(i, i);
+                }
+
+                // Add in the client representing the parent
+                this.upsertClient(
+                    getBranchClientId(dbObject.parent.id),
+                    dbObject.parent.minimumSequenceNumber,
+                    dbObject.createTime,
+                    false);
+            }
+        }
+
+        // Initialize counting context
+        this.sequenceNumber = dbObject.sequenceNumber;
+        this.logOffset = dbObject.logOffset;
     }
 
     /**
@@ -175,18 +121,14 @@ export class TakeANumber {
             null);
     }
 
-    /**
-     * Returns the offset of the last sequenced message.
-     */
-    public getOffset(): number {
-        return this.logOffset;
-    }
+    public async handler(message: utils.kafkaConsumer.IMessage): Promise<any> {
+        // Trace for the message.
+        const trace: api.ITrace = { service: "deli", action: "start", timestamp: Date.now()};
 
-    /**
-     * Adds in a new event listener
-     */
-    public on(event: string, listener: (...args: any[]) => void) {
-        this.events.on(event, listener);
+        const baseMessage = JSON.parse(message.value.toString()) as core.IMessage;
+        if (baseMessage.type === core.RawOperationType) {
+            this.ticketCore(message, trace);
+        }
     }
 
     private ticketCore(rawMessage: any, trace: api.ITrace): Promise<void> {
@@ -347,42 +289,6 @@ export class TakeANumber {
         return sequenceNumber !== -1 ? this.branchMap.get(sequenceNumber) : -1;
     }
 
-    /**
-     * Resolves all pending tickets
-     */
-    private resolvePending() {
-        for (const ticket of this.queue) {
-            this.resolveTicket(ticket);
-        }
-
-        this.queue = [];
-    }
-
-    /**
-     * Tickets and then resolves the stored promise for the given pending ticket
-     */
-    private resolveTicket(ticket: IPendingTicket<void>) {
-        const ticketP = this.ticketCore(ticket.message, ticket.trace);
-        ticketP.then(
-            () => {
-                ticket.resolve();
-            },
-            (error) => {
-                ticket.reject(error);
-            });
-    }
-
-    /**
-     * Rejects any pending messages in the ticketing queue
-     */
-    private rejectPending(error: any) {
-        for (const pendingTicket of this.queue) {
-            pendingTicket.reject(error);
-        }
-
-        this.queue = [];
-    }
-
     private upsertClient(
         clientId: string,
         referenceSequenceNumber: number,
@@ -473,7 +379,7 @@ export class TakeANumber {
     private getClientMinimumSequenceNumber(timestamp: number): number {
         while (this.clientSeqNumbers.count() > 0) {
             const client = this.clientSeqNumbers.peek();
-            if (!client.value.canEvict || timestamp - client.value.lastUpdate < ClientSequenceTimeout) {
+            if (!client.value.canEvict || timestamp - client.value.lastUpdate < this.clientTimeout) {
                 return client.value.referenceSequenceNumber;
             }
 
