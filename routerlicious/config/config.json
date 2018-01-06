@@ -52,6 +52,10 @@
         "groupId": "routemaster"
     },
     "lambdas": {
+        "deli": {
+            "group": "deli",
+            "topic": "rawdeltas"
+        },
         "routemaster": {
             "group": "routemaster",
             "topic": "deltas"
