@@ -118,6 +118,7 @@ export function create(
     app.use("/democreator", routes.demoCreator);
     app.use("/video", routes.video);
     app.use("/youtubeVideo", routes.youtubeVideo);
+    app.use("/graph", routes.graph);
     app.use("/login", routes.login);
     app.use("/ping", routes.ping);
     app.use("/agent", routes.agent);

@@ -132,6 +132,12 @@ export interface ICounter {
  * Set interface
  */
 export interface ISet<T> {
+
+    internalSet: Set<T>;
+    parentMap: IMap;
+    key: string;
+
+    init(values: T[]): ISet<T>;
     /**
      * Inserts an element to the set.
      */

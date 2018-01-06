@@ -7,6 +7,7 @@ import * as api from "./api";
 import * as canvas from "./canvas";
 import * as cell from "./cell";
 import * as demoCreator from "./democreator";
+import * as graph from "./graph";
 import * as home from "./home";
 import * as intelligence from "./intelligence";
 import * as login from "./login";
@@ -32,6 +33,7 @@ export interface IRoutes {
     sharedText: Router;
     video: Router;
     youtubeVideo: Router;
+    graph: Router;
     templates: Router;
 }
 
@@ -47,6 +49,7 @@ export function create(
         canvas: canvas.create(config, gitManager),
         cell: cell.create(config, gitManager),
         demoCreator: demoCreator.create(config),
+        graph: graph.create(config, gitManager),
         home: home.create(config),
         intelligence: intelligence.create(config),
         login: login.create(config),

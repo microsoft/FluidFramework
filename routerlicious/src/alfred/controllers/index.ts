@@ -4,6 +4,9 @@ export { canvas };
 import * as cell from "./cell";
 export { cell };
 
+import * as graph from "./graph";
+export { graph };
+
 import * as video from "./video";
 export { video };
 

@@ -3,9 +3,9 @@ import { CollaborativeMap } from "./map";
 
 export class DistributedSet<T> implements ISet<T> {
 
-    private internalSet: Set<T>;
+    public internalSet: Set<T>;
 
-    constructor(private parentMap: CollaborativeMap, private key: string) {
+    constructor(public parentMap: CollaborativeMap, public key: string) {
 
     }
 
