@@ -10,7 +10,7 @@ export const ClientSequenceTimeout = 5 * 60 * 1000;
 export class DeliLambdaFactory implements IPartitionLambdaFactory {
     constructor(
         private mongoManager: utils.MongoManager,
-        private collection: core.ICollection<any>,
+        private collection: core.ICollection<core.IDocument>,
         private producer: utils.kafkaProducer.IProducer) {
     }
 
@@ -23,7 +23,7 @@ export class DeliLambdaFactory implements IPartitionLambdaFactory {
             return Promise.reject("Object does not exist - cannot sequence");
         }
 
-        return new DeliLambda(documentId, dbObject, this.collection, this.producer, ClientSequenceTimeout);
+        return new DeliLambda(context, documentId, dbObject, this.collection, this.producer, ClientSequenceTimeout);
     }
 
     public async dispose(): Promise<void> {

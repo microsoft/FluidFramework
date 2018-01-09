@@ -1,4 +1,5 @@
 import { Provider } from "nconf";
+import * as core from "../core";
 import { IPartitionLambdaFactory } from "../kafka-service/lambdas";
 import * as services from "../services";
 import * as utils from "../utils";
@@ -16,7 +17,7 @@ export async function create(config: Provider): Promise<IPartitionLambdaFactory>
     const mongoFactory = new services.MongoDbFactory(mongoUrl);
     const mongoManager = new utils.MongoManager(mongoFactory, false);
     const client = await mongoManager.getDatabase();
-    const collection = await client.collection(documentsCollectionName);
+    const collection = await client.collection<core.IDocument>(documentsCollectionName);
 
     let producer = utils.kafkaProducer.create(kafkaLibrary, kafkaEndpoint, kafkaClientId, sendTopic);
 

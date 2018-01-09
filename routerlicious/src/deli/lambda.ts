@@ -1,18 +1,12 @@
+import * as _ from "lodash";
 import * as winston from "winston";
 import * as agent from "../agent";
 import * as api from "../api-core";
 import * as core from "../core";
 import { RangeTracker, ThroughputCounter } from "../core-utils";
-import { IPartitionLambda } from "../kafka-service/lambdas";
+import { IContext, IPartitionLambda } from "../kafka-service/lambdas";
 import * as utils from "../utils";
-
-interface IClientSequenceNumber {
-    // Whether or not the object can expire
-    canEvict: boolean;
-    clientId: string;
-    lastUpdate: number;
-    referenceSequenceNumber: number;
-}
+import { CheckpointContext, ICheckpoint, IClientSequenceNumber } from "./checkpointContext";
 
 const SequenceNumberComparer: utils.IComparer<IClientSequenceNumber> = {
     compare: (a, b) => a.referenceSequenceNumber - b.referenceSequenceNumber,
@@ -41,13 +35,14 @@ export class DeliLambda implements IPartitionLambda {
     private clientSeqNumbers = new utils.Heap<IClientSequenceNumber>(SequenceNumberComparer);
     private minimumSequenceNumber;
     private window: RangeTracker;
-
     private branchMap: RangeTracker;
+    private checkpointContext: CheckpointContext;
 
     constructor(
+        context: IContext,
         private documentId: string,
-        dbObject: any,
-        private collection: core.ICollection<any>,
+        dbObject: core.IDocument,
+        collection: core.ICollection<core.IDocument>,
         private producer: utils.kafkaProducer.IProducer,
         private clientTimeout: number) {
 
@@ -88,37 +83,7 @@ export class DeliLambda implements IPartitionLambda {
         // Initialize counting context
         this.sequenceNumber = dbObject.sequenceNumber;
         this.logOffset = dbObject.logOffset;
-    }
-
-    /**
-     * Stores the latest sequence number of the take a number machine
-     */
-    public checkpoint(): Promise<any> {
-        // TOOD I probably want to fail if someone attempts to checkpoint prior to all messages having been
-        // ticketed and ackowledged. The clients of this already perform this but extra safety would be good.
-
-        if (this.sequenceNumber === undefined) {
-            return Promise.reject("Cannot checkpoint before sequence number is defined");
-        }
-
-        // Copy the client offsets for storage in the checkpoint
-        const clients: IClientSequenceNumber[] = [];
-        // tslint:disable-next-line:forin
-        for (const clientId in this.clientNodeMap) {
-            clients.push(this.clientNodeMap[clientId].value);
-        }
-
-        return this.collection.update(
-            {
-                _id: this.documentId,
-            },
-            {
-                branchMap: this.branchMap ? this.branchMap.serialize() : undefined,
-                clients,
-                logOffset: this.logOffset,
-                sequenceNumber : this.sequenceNumber,
-            },
-            null);
+        this.checkpointContext = new CheckpointContext(documentId, collection, context);
     }
 
     public async handler(message: utils.kafkaConsumer.IMessage): Promise<any> {
@@ -127,28 +92,24 @@ export class DeliLambda implements IPartitionLambda {
 
         const baseMessage = JSON.parse(message.value.toString()) as core.IMessage;
         if (baseMessage.type === core.RawOperationType) {
-            this.ticketCore(message, trace);
+            this.ticket(message, trace);
         }
     }
 
-    private ticketCore(rawMessage: any, trace: api.ITrace): Promise<void> {
+    private ticket(rawMessage: utils.kafkaConsumer.IMessage, trace: api.ITrace): void {
         // In cases where we are reprocessing messages we have already checkpointed exit early
         if (rawMessage.offset < this.logOffset) {
-            return Promise.resolve();
+            return;
         }
 
         this.logOffset = rawMessage.offset;
 
         // Update the client's reference sequence number based on the message type
-        const objectMessage = JSON.parse(rawMessage.value.toString("utf8")) as core.IObjectMessage;
-
-        // NOTE at one point we had a custom min sequence number update packet. This one would exit early
-        // and not sequence a packet that didn't cause a change to the min sequence number. There shouldn't be
-        // so many of these that we need to not include them. They are also easy to elide later.
+        const objectMessage = JSON.parse(rawMessage.value.toString()) as core.IObjectMessage;
 
         // Exit out early for unknown messages
         if (objectMessage.type !== core.RawOperationType) {
-            return Promise.resolve();
+            return;
         }
 
         // Update and retrieve the minimum sequence number
@@ -213,7 +174,7 @@ export class DeliLambda implements IPartitionLambda {
                     // Do not assign a ticket to a message outside the MSN. We will need to NACK clients in this case.
                     // tslint:disable-next-line
                     winston.error(`${message.clientId} sent packet ${message.operation.referenceSequenceNumber} less than MSN of ${this.minimumSequenceNumber}`);
-                    return Promise.resolve();
+                    return;
                 }
 
                 this.upsertClient(
@@ -268,13 +229,36 @@ export class DeliLambda implements IPartitionLambda {
             type: core.SequencedOperationType,
         };
 
+        this.sendSequenced(sequencedMessage);
+    }
+
+    private sendSequenced(message: core.ISequencedOperationMessage) {
+        // Checkpoint the current state
+        const checkpoint = this.generateCheckpoint();
+
         // Otherwise send the message to the event hub
         this.throughput.produce();
-        return this.producer.send(JSON.stringify(sequencedMessage), sequencedMessage.documentId)
-            .then((result) => {
+        this.producer.send(JSON.stringify(message), message.documentId).then(
+            (result) => {
                 this.throughput.acknolwedge();
-                return result;
+                this.checkpointContext.checkpoint(checkpoint);
+            },
+            (error) => {
+                // TODO issue with Kafka - need to propagate the issue somehow
+                winston.error("Could not send message", error);
             });
+    }
+
+    /**
+     * Generates a checkpoint of the current ticketing state
+     */
+    private generateCheckpoint(): ICheckpoint {
+        return {
+            branchMap: this.branchMap ? this.branchMap.serialize() : undefined,
+            clients: _.clone(_.values(this.clientNodeMap).map((value) => value.value)),
+            logOffset: this.logOffset,
+            sequenceNumber : this.sequenceNumber,
+        };
     }
 
     /**
