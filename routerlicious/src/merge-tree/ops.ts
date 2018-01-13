@@ -31,6 +31,7 @@ export interface IMergeTreeDelta {
 
 export interface IMarkerPosition {
     id: string;
+    before?: boolean;
 }
 
 export interface IMergeTreeInsertMsg extends IMergeTreeDelta {

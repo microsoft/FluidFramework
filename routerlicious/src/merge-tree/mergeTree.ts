@@ -7,6 +7,7 @@ import * as API from "../api-core";
 import { ISequencedObjectMessage } from "../api-core";
 import * as Properties from "./properties";
 import * as assert from "assert";
+import { IMarkerPosition } from "./index";
 
 export type RangeStackMap = Properties.MapLike<Collections.Stack<Marker>>;
 
@@ -1551,17 +1552,17 @@ export class Client {
 
     historyToPct(pct: number) {
         let count = this.undoSegments.length + this.redoSegments.length;
-        let curPct = this.undoSegments.length/count;
+        let curPct = this.undoSegments.length / count;
         let seq = -1;
-        if (curPct>=pct) {
-            while (curPct>pct) {
+        if (curPct >= pct) {
+            while (curPct > pct) {
                 seq = this.undoSingleSequenceNumber(this.undoSegments, this.redoSegments);
-                curPct = this.undoSegments.length/count;
+                curPct = this.undoSegments.length / count;
             }
         } else {
-            while (curPct<pct) {
+            while (curPct < pct) {
                 seq = this.undoSingleSequenceNumber(this.redoSegments, this.undoSegments);
-                curPct = this.undoSegments.length/count;
+                curPct = this.undoSegments.length / count;
             }
         }
         return seq;
@@ -1804,6 +1805,14 @@ export class Client {
         let clid = this.getOrAddShortClientId(msg.clientId);
         switch (op.type) {
             case ops.MergeTreeDeltaType.INSERT:
+                if (op.markerPos1) {
+                    op.pos1 = this.mergeTree.posFromMarkerPos(op.markerPos1,
+                        msg.referenceSequenceNumber, clid);
+                    if (op.pos1<0) {
+                        // TODO: event when marker id not found
+                        return;
+                    }
+                }
                 if (op.text !== undefined) {
                     this.insertTextRemote(op.text, op.pos1, op.props as Properties.PropertySet, msg.sequenceNumber, msg.referenceSequenceNumber,
                         clid);
@@ -3393,8 +3402,27 @@ export class MergeTree {
         }
     }
 
+    // TODO: error checking
     getSegmentFromId(id: string) {
         return this.idToSegment[id];
+    }
+    /**
+     * Given a position specified relative to a marker id, lookup the marker 
+     * and convert the position to a character position.
+     * @param markerPos Id of marker and whether position is before or after marker.
+     * @param refseq The reference sequence number at which to compute the position.
+     * @param clientId The client id with which to compute the position.
+     */
+    posFromMarkerPos(markerPos: IMarkerPosition, refseq: number, clientId: number) {
+        let pos = -1;
+        let marker = this.getSegmentFromId(markerPos.id);
+        if (marker) {
+            pos = this.getOffset(marker, refseq, clientId);
+            if (!markerPos.before) {
+                pos += marker.cachedLength;
+            }
+        }
+        return pos;
     }
 
     insert<T>(pos: number, refSeq: number, clientId: number, seq: number, segData: T,
