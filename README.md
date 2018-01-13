@@ -4,7 +4,7 @@
 
 Prague is investigating and prototyping key design questions around interactive documents and MUIs.
 
-We're currently in the middle of [Sprint 2](./doc/sprints/sprint2/readme.md). Highlights include rich text, git based storage, and intelligent services in an augmentation loop.
+We're currently in the middle of [Sprint 4](./doc/sprints/sprint4/readme.md) and focused on self-hosting.
 
 ## Source Code Overview
 
