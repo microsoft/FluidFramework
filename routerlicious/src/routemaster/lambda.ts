@@ -1,38 +1,66 @@
 import * as assert from "assert";
+import { AsyncQueue, queue } from "async";
 import * as api from "../api-core";
 import * as core from "../core";
 import { IContext, IPartitionLambda } from "../kafka-service/lambdas";
 import * as utils from "../utils";
 import { DocumentManager } from "./documentManager";
 
-export class RouteMasterLambda implements IPartitionLambda {
-    constructor(
-        private document: DocumentManager,
-        private producer: utils.kafkaProducer.IProducer,
-        private context: IContext) {
+/**
+ * A sequenced lambda processes incoming messages one at a time based on a promise returned by the message handler.
+ */
+export abstract class SequencedLambda implements IPartitionLambda {
+    private q: AsyncQueue<utils.kafkaConsumer.IMessage>;
+
+    constructor(protected context: IContext) {
+        this.q = queue((message: utils.kafkaConsumer.IMessage, callback) => {
+            this.handlerCore(message).then(
+                () => {
+                    callback();
+                },
+                (error) => {
+                    callback(error);
+                });
+        }, 1);
+
+        this.q.error = (error) => {
+            context.close(error);
+        };
     }
 
-    public handler(rawMessage: utils.kafkaConsumer.IMessage): void {
+    public handler(message: utils.kafkaConsumer.IMessage): void {
+        this.q.push(message);
+    }
+
+    /**
+     * Derived classes override this method to do per message processing. The sequenced lambda will only move on
+     * to the next message once the returned promise is resolved.
+     */
+    protected abstract handlerCore(message: utils.kafkaConsumer.IMessage): Promise<void>;
+}
+
+export class RouteMasterLambda extends SequencedLambda {
+    constructor(private document: DocumentManager, private producer: utils.kafkaProducer.IProducer, context: IContext) {
+        super(context);
+    }
+
+    protected async handlerCore(rawMessage: utils.kafkaConsumer.IMessage): Promise<void> {
         const message = JSON.parse(rawMessage.value) as core.ISequencedOperationMessage;
         assert(message.type === core.SequencedOperationType);
 
-        this.handlerCore(message);
-
-        // TODO this needs to be resolved with other work
-        this.context.checkpoint(rawMessage.offset);
-    }
-
-    private handlerCore(message: core.ISequencedOperationMessage): void {
         // Create the fork first then route any messages. This will make the fork creation the first message
         // routed to the fork. We only process the fork on the route branch it is defined.
         if (!message.operation.origin && message.operation.type === api.Fork) {
-            return this.createFork(message);
-        } else {
-            return this.routeToForks(message);
+            await this.createFork(message);
         }
+
+        // Route the fork message to all clients
+        // TODO - routing the message keeps the sequenced messages exact - but should all clients see fork requests
+        // ont he parent?
+        this.routeToForks(message, rawMessage.offset);
     }
 
-    private createFork(message: core.ISequencedOperationMessage): void {
+    private async createFork(message: core.ISequencedOperationMessage): Promise<void> {
         const contents = message.operation.contents as core.IForkOperation;
         const forkId = contents.name;
         const forkSequenceNumber = message.operation.sequenceNumber;
@@ -44,11 +72,14 @@ export class RouteMasterLambda implements IPartitionLambda {
         }
 
         // Forward all deltas greater than contents.sequenceNumber but less than forkSequenceNumber
-        // to the fork. All messages after this will be automatically forwarded.
+        // to the fork. All messages after this will be automatically forwarded. We wait on the last message
+        // to ensure its delivery.
         const deltas = await this.document.getDeltas(contents.sequenceNumber, forkSequenceNumber);
+        let routedP = Promise.resolve();
         for (const delta of deltas) {
-            this.routeToDeli(forkId, delta);
+            routedP = this.routeToDeli(forkId, delta);
         }
+        await routedP;
 
         // Activating the fork will complete the operation
         await this.document.activateFork(forkId, forkSequenceNumber);
@@ -57,7 +88,7 @@ export class RouteMasterLambda implements IPartitionLambda {
     /**
      * Routes the provided message to all active forks
      */
-    private routeToForks(message: core.ISequencedOperationMessage): void {
+    private routeToForks(message: core.ISequencedOperationMessage, offset: number): void {
         const document = this.document;
         const forks = document.getActiveForks();
 
@@ -70,8 +101,10 @@ export class RouteMasterLambda implements IPartitionLambda {
         // TODO can checkpoint here
         Promise.all(maps).then(
             () => {
+                this.context.checkpoint(offset);
             },
             (error) => {
+                this.context.close(error);
             });
     }
 
