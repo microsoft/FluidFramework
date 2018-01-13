@@ -2,11 +2,19 @@ import * as nconf from "nconf";
 import * as utils from "../utils";
 
 export interface IContext {
+    /**
+     * Updates the checkpoint offset
+     */
     checkpoint(offset: number);
+
+    /**
+     * Closes the context with an optional error.
+     */
+    close?(error?: any);
 }
 
 export interface IPartitionLambda {
-    handler(message: utils.kafkaConsumer.IMessage): Promise<any>;
+    handler(message: utils.kafkaConsumer.IMessage): void;
 }
 
 /**

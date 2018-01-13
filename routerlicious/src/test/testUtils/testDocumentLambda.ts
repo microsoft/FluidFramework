@@ -12,7 +12,7 @@ export class TestLambda implements IPartitionLambda {
         assert(this.documentId);
     }
 
-    public async handler(message: utils.kafkaConsumer.IMessage): Promise<any> {
+    public handler(message: utils.kafkaConsumer.IMessage): void {
         const sequencedMessage = JSON.parse(message.value) as core.ISequencedOperationMessage;
         assert.equal(this.documentId, sequencedMessage.documentId);
         this.context.checkpoint(message.offset);

@@ -86,7 +86,7 @@ export class DeliLambda implements IPartitionLambda {
         this.checkpointContext = new CheckpointContext(documentId, collection, context);
     }
 
-    public async handler(message: utils.kafkaConsumer.IMessage): Promise<any> {
+    public handler(message: utils.kafkaConsumer.IMessage): void {
         // Trace for the message.
         const trace: api.ITrace = { service: "deli", action: "start", timestamp: Date.now()};
 
@@ -94,6 +94,8 @@ export class DeliLambda implements IPartitionLambda {
         if (baseMessage.type === core.RawOperationType) {
             this.ticket(message, trace);
         }
+
+        // TODO need to mark non raw base
     }
 
     private ticket(rawMessage: utils.kafkaConsumer.IMessage, trace: api.ITrace): void {

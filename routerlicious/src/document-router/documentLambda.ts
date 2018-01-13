@@ -19,12 +19,12 @@ export class DocumentLambda implements IPartitionLambda {
     //
     // Need to understand what retry logic looks like
 
-    public async handler(message: utils.kafkaConsumer.IMessage): Promise<any> {
+    public handler(message: utils.kafkaConsumer.IMessage): void {
         this.contextManager.setMaxOffset(message.offset);
-        await this.handlerCore(message);
+        this.handlerCore(message);
     }
 
-    public async handlerCore(kafkaMessage: utils.kafkaConsumer.IMessage): Promise<any> {
+    private handlerCore(kafkaMessage: utils.kafkaConsumer.IMessage): void {
         const message = JSON.parse(kafkaMessage.value) as core.IMessage;
         if (!("documentId" in message)) {
             return;

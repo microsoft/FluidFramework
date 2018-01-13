@@ -12,11 +12,10 @@ class TestLambda implements IPartitionLambda {
     constructor(private factory: TestPartitionLambdaFactory) {
     }
 
-    public handler(message: utils.kafkaConsumer.IMessage): Promise<any> {
+    public handler(message: utils.kafkaConsumer.IMessage): void {
         assert.ok((this.lastOffset === undefined) || (this.lastOffset + 1 === message.offset));
         this.lastOffset = message.offset;
         this.factory.handledMessages++;
-        return Promise.resolve();
     }
 }
 

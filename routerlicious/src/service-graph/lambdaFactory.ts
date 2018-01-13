@@ -68,9 +68,7 @@ class ServiceGraphLambda implements IPartitionLambda {
         });
     }
 
-    public async handler(message: utils.kafkaConsumer.IMessage): Promise<any> {
-        // TODO - we may want the owner to handle the more complex checkpoint logic - and just bump whenever
-        // this promise resolves
+    public handler(message: utils.kafkaConsumer.IMessage): void {
         this.handleCore(message);
         this.context.checkpoint(message.offset);
     }

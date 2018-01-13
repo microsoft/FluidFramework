@@ -12,18 +12,17 @@ export class RouteMasterLambda implements IPartitionLambda {
         private context: IContext) {
     }
 
-    public async handler(rawMessage: utils.kafkaConsumer.IMessage): Promise<any> {
+    public handler(rawMessage: utils.kafkaConsumer.IMessage): void {
         const message = JSON.parse(rawMessage.value) as core.ISequencedOperationMessage;
         assert(message.type === core.SequencedOperationType);
 
-        await this.handlerCore(message);
+        this.handlerCore(message);
 
-        // TODO don't await above - instead process - have some kind of DX/'present' mechanism to signal completion
-        // on some kind of interval
+        // TODO this needs to be resolved with other work
         this.context.checkpoint(rawMessage.offset);
     }
 
-    private handlerCore(message: core.ISequencedOperationMessage): Promise<any> {
+    private handlerCore(message: core.ISequencedOperationMessage): void {
         // Create the fork first then route any messages. This will make the fork creation the first message
         // routed to the fork. We only process the fork on the route branch it is defined.
         if (!message.operation.origin && message.operation.type === api.Fork) {
@@ -33,11 +32,9 @@ export class RouteMasterLambda implements IPartitionLambda {
         }
     }
 
-    private async createFork(message: core.ISequencedOperationMessage): Promise<void> {
+    private createFork(message: core.ISequencedOperationMessage): void {
         const contents = message.operation.contents as core.IForkOperation;
         const forkId = contents.name;
-        console.log(forkId);
-
         const forkSequenceNumber = message.operation.sequenceNumber;
 
         // If the fork is already active return early - retry logic could have caused a second fork message to be
@@ -60,19 +57,28 @@ export class RouteMasterLambda implements IPartitionLambda {
     /**
      * Routes the provided message to all active forks
      */
-    private async routeToForks(message: core.ISequencedOperationMessage): Promise<void> {
+    private routeToForks(message: core.ISequencedOperationMessage): void {
         const document = this.document;
         const forks = document.getActiveForks();
 
+        let maps = new Array<Promise<void>>();
         for (const fork of forks) {
-            this.routeToDeli(fork, message);
+            const routeP = this.routeToDeli(fork, message);
+            maps.push(routeP);
         }
+
+        // TODO can checkpoint here
+        Promise.all(maps).then(
+            () => {
+            },
+            (error) => {
+            });
     }
 
     /**
      * Routes the provided messages to deli
      */
-    private routeToDeli(fork: string, message: core.ISequencedOperationMessage) {
+    private routeToDeli(fork: string, message: core.ISequencedOperationMessage): Promise<void> {
         // Create the integration message that sends a sequenced operation from an upstream branch to
         // the downstream branch
         const rawMessage: core.IRawOperationMessage = {
@@ -92,7 +98,6 @@ export class RouteMasterLambda implements IPartitionLambda {
             userId: null,
         };
 
-        // TODO handle the output of this promise and update any errors, etc...
-        this.producer.send(JSON.stringify(rawMessage), fork);
+        return this.producer.send(JSON.stringify(rawMessage), fork);
     }
 }
