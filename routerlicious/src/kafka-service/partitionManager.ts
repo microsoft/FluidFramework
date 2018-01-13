@@ -5,11 +5,6 @@ import { ICheckpointStrategy } from "./checkpointManager";
 import { IPartitionLambdaFactory } from "./lambdas";
 import { Partition } from "./partition";
 
-// Partition contains a collection of threads
-// Threads execute a lambda handler and in order
-// Thread maintains an execution context across call
-// Partition queries threads for how far completed they are
-
 /**
  * The PartitionManager is responsible for maintaining a list of partitions for the given Kafka topic.
  * It will route incoming messages to the appropriate partition for the messages.

@@ -1,30 +1,11 @@
 import * as assert from "assert";
-import { AsyncQueue, queue } from "async";
+import { AsyncQueue, queue, retry } from "async";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import { assertNotRejected } from "../core-utils";
 import * as utils from "../utils";
 import { CheckpointManager, ICheckpointStrategy } from "./checkpointManager";
 import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "./lambdas";
-
-// partition should have its own Lambda type thing. Have some way to create threads off the partition, etc...
-// private routers = new Map<string, Router>();
-
-// // TODO this type of breakout is pretty specific to us. We might want some kind of topic handler, etc...
-// const message = JSON.parse(rawMessage.value) as core.ISequencedOperationMessage;
-// if (message.type !== core.SequencedOperationType) {
-//     return;
-// }
-
-// // Create the router if it doesn't exist
-// if (!this.routers.has(message.documentId)) {
-//     const router = new Router(message.documentId /* possibly pass initialization context to router */);
-//     this.routers.set(message.documentId, router);
-// }
-
-// // Route the message
-// const router = this.routers.get(message.documentId);
-// router.route(message);
 
 class Context implements IContext {
     private offset;
@@ -48,8 +29,6 @@ class Context implements IContext {
 /**
  * Partition of a message stream. Manages routing messages to individual handlers. And then maintaining the
  * overall partition offset.
- *
- * I think I want these to maintain checkpoint information per partition
  */
 export class Partition {
     private q: AsyncQueue<utils.kafkaConsumer.IMessage>;
@@ -66,23 +45,40 @@ export class Partition {
 
         this.checkpointManager = new CheckpointManager(id, checkpointStrategy, consumer);
         this.context = new Context(this.checkpointManager);
-        this.lambdaP = factory.create(config, this.context);
 
-        // TODO I could have the lambda specify its checkpointing policy to me - and then auto rev when
-        // each promise returns
+        // Indefinitely attempt to create the lambda
+        this.lambdaP = new Promise<IPartitionLambda>((resolve, reject) => {
+            retry(
+                {
+                    interval: 100,
+                    times: Number.MAX_VALUE,
+                },
+                (callback) => {
+                    factory.create(config, this.context).then(
+                        (lambda) => callback(null, lambda),
+                        (error) => {
+                            winston.info("Error creating lambda - retrying", error);
+                            callback(error);
+                        });
+                },
+                (error, result) => {
+                    // This should never return an error. The retry logic is setup to indefinitely retry in the
+                    // case we can't create the lambda
+                    assert.ok(!error);
+                    resolve(result);
+                });
+        });
 
         // Create the incoming message queue
         this.q = queue((message: utils.kafkaConsumer.IMessage, callback) => {
             const processedP = this.processCore(message, this.context).catch((error) => {
                     // TODO dead letter queue for bad messages, etc...
-                    winston.error("Error processing partition message", error);
+                    winston.error("Error processing partition message. Possible data loss.", error);
                 });
 
             // assert processedP only resolves
             assertNotRejected(processedP).then(() => callback());
         }, 1);
-
-        // Need to expose error information
     }
 
     public process(rawMessage: utils.kafkaConsumer.IMessage) {
@@ -117,6 +113,6 @@ export class Partition {
     private async processCore(message: utils.kafkaConsumer.IMessage, context: IContext): Promise<void> {
         winston.verbose(`${message.topic}:${message.partition}@${message.offset}`);
         const lambda = await this.lambdaP;
-        return lambda.handler(message);
+        lambda.handler(message);
     }
 }

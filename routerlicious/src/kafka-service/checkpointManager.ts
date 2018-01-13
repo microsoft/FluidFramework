@@ -11,8 +11,6 @@ export class CheckpointManager {
     private commitedOffset: number;
     private lastOffset: number;
 
-    // Add in an operation
-
     constructor(
         private id: number,
         private checkpointStrategy: ICheckpointStrategy,
