@@ -1,6 +1,7 @@
 import * as winston from "winston";
 import * as utils from "../utils";
-import { KafkaResourcesFactory, KafkaRunnerFactory } from "./runnerFactory";
+import { KafkaResourcesFactory } from "./resourcesFactory";
+import { KafkaRunnerFactory } from "./runnerFactory";
 
 if (process.argv.length !== 4) {
     winston.error("node index.js <name> <lambda>");
