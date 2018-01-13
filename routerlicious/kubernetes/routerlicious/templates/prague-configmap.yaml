@@ -66,6 +66,10 @@ data:
             "checkpointTimeIntervalMsec": 1000
         },
         "lambdas": {
+            "deli": {
+                "group": "{{ template "deli.fullname" . }}",
+                "topic": "{{ .Values.kafka.topics.rawdeltas }}"
+            },
             "routemaster": {
                 "group": "{{ template "routemaster.fullname" . }}",
                 "topic": "{{ .Values.kafka.topics.deltas }}"

@@ -19,10 +19,12 @@ services:
             - redis
             - mongodb
             - kafka-rest
-        command: node dist/deli/index.js
+        command: node dist/kafka-service/index.js deli ../document-router/index.js
         environment:
             - worker__intelligence__resume__url=http://alfred:3000/intelligence/resume
+            - DEBUG=routerlicious:*
             - NODE_ENV=development
+            - documentLambda=../deli/index.js
         restart: always
     scriptorium:
         build: .

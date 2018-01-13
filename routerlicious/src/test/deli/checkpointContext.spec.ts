@@ -1,0 +1,43 @@
+import { CheckpointContext, ICheckpoint } from "../../deli/checkpointContext";
+import * as testUtils from "../testUtils";
+
+describe("Routerlicious", () => {
+    describe("Deli", () => {
+        describe("CheckpointContext", () => {
+            const testId = "test";
+            let testCheckpointContext: CheckpointContext;
+            let testCollection: testUtils.TestCollection;
+            let testContext: testUtils.TestContext;
+
+            function createCheckpoint(logOffset: number, sequenceNumber: number): ICheckpoint {
+                return {
+                    branchMap: null,
+                    clients: null,
+                    logOffset,
+                    sequenceNumber,
+                };
+            }
+
+            beforeEach(() => {
+                testContext = new testUtils.TestContext();
+                testCollection = new testUtils.TestCollection([{ _id: testId }]);
+                testCheckpointContext = new CheckpointContext(testId, testCollection, testContext);
+            });
+
+            describe(".checkpoint", () => {
+                it("Should be able to submit a new checkpoint", async () => {
+                    testCheckpointContext.checkpoint(createCheckpoint(0, 0));
+                    await testContext.waitForOffset(0);
+                });
+
+                it("Should be able to submit multiple checkpoints", async () => {
+                    let i;
+                    for (i = 0; i < 10; i++) {
+                        testCheckpointContext.checkpoint(createCheckpoint(i, i));
+                    }
+                    await testContext.waitForOffset(i - 1);
+                });
+            });
+        });
+    });
+});
