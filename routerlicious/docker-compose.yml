@@ -32,10 +32,11 @@ services:
             - redis
             - mongodb
             - kafka-rest
-        command: node dist/scriptorium/index.js
+        command: node dist/kafka-service/index.js scriptorium ../document-router/index.js
         environment:
             - DEBUG=routerlicious:*
             - NODE_ENV=development
+            - documentLambda=../scriptorium/index.js
         restart: always
     tmz:
         build: .

@@ -60,6 +60,10 @@
             "group": "routemaster",
             "topic": "deltas"
         },
+        "scriptorium": {
+            "group": "scriptorium",
+            "topic": "deltas"
+        },
         "serviceGraph": {
             "group": "serviceGraph",
             "topic": "deltas"
