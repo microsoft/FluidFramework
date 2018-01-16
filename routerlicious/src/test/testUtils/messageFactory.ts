@@ -13,7 +13,7 @@ export class KafkaMessageFactory {
     }
 
     public sequenceMessage(value: any, key: string): utils.kafkaConsumer.IMessage {
-        const partition = hash(key) % this.offsets.length;
+        const partition = this.getPartition(key);
         const offset = this.offsets[partition]++;
 
         const kafkaMessage: utils.kafkaConsumer.IMessage = {
@@ -26,6 +26,14 @@ export class KafkaMessageFactory {
         };
 
         return kafkaMessage;
+    }
+
+    public getHeadOffset(key: string) {
+        return this.offsets[this.getPartition(key)] - 1;
+    }
+
+    private getPartition(key: string): number {
+        return hash(key) % this.offsets.length;
     }
 }
 
