@@ -27,14 +27,12 @@ spec:
           - 'node'
           - 'dist/kafka-service/index.js'
           - 'scriptorium'
-          - '../document-router/index.js'
+          - '../scriptorium/index.js'
         env:
         - name: DEBUG
           value: "routerlicious:*"
         - name: NODE_ENV
           value: production
-        - name: documentLambda
-          value: "../scriptorium/index.js"
         volumeMounts:
         - name: config
           mountPath: /usr/src/server/config/config.json
