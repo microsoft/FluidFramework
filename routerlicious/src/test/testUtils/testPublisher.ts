@@ -7,13 +7,18 @@ export interface IEvent {
 }
 
 export class TestTopic implements core.ITopic {
-    public events: IEvent[] = [];
+    public events = new Map<string, IEvent[]>();
 
     public emit(event: string, ...args: any[]) {
-        this.events.push({
-            args,
-            event,
-        });
+        if (!this.events.has(event)) {
+            this.events.set(event, []);
+        }
+
+        this.events.get(event).push({ args, event });
+    }
+
+    public getEvents(key: string) {
+        return this.events.get(key);
     }
 }
 
