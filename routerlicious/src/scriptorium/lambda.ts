@@ -1,10 +1,46 @@
 import * as winston from "winston";
 import * as core from "../core";
-import { BatchManager } from "../core-utils";
 import { IContext, IPartitionLambda } from "../kafka-service/lambdas";
 import * as utils from "../utils";
 
+// Will accumulate a batch of operations. Periodically will want to flush the batch. Do I want this to be
+// automated or should I just force it and then update things? I think probably easier if I track the
+// highest sequence number in the batch. And then trigger the flush
+export class Batch<T> {
+    private pendingWork: { [id: string]: T[] } = {};
+    private workPending: Deferred<void>;
+
+    constructor() {
+    }
+
+    public add(id: string, work: T) {
+        if (!(id in this.pendingWork)) {
+            this.pendingWork[id] = [];
+        }
+
+        this.pendingWork[id].push(work);
+
+        // Start processing either depending on the batchsize or nexttick.
+        if (this.pendingWork[id].length >= this.batchSize) {
+            this.startWork();
+        }
+        process.nextTick(() => {
+            this.startWork();
+        });
+    }
+
+    private processPendingWork(pendingWork: { [id: string]: T[] }) {
+        // TODO log to influx how much pending work there is. We want to limit the size of a batch
+        // tslint:disable-next-line:forin
+        for (const id in pendingWork) {
+            this.process(id, pendingWork[id]);
+        }
+    }
+}
+
 export class ScriptoriumLambda implements IPartitionLambda {
+    // TODO swap between two batches - the pending one and then the one being sent - like double buffering
+
     private ioBatchManager: BatchManager<core.ISequencedOperationMessage>;
 
     constructor(private io: core.IPublisher, private collection: core.ICollection<any>, protected context: IContext) {
