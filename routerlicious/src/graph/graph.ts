@@ -1,20 +1,15 @@
-import { ISet } from "../data-types";
-import { IEdge, IGraph, IMap, IVertex} from "../data-types/index";
-import { DistributedSet } from "../map/set";
+import { IEdge, IGraph, ISet, IVertex} from "../data-types";
 
 /**
  * Implementation of a map collaborative object
  */
 export class CollaborativeGraph implements IGraph {
-    private edges: DistributedSet<IEdge>;
-    private vertices: DistributedSet<IVertex>;
+    private edges: ISet<IEdge>;
+    private vertices: ISet<IVertex>;
 
-    constructor(root?: IMap, edges?: DistributedSet<IEdge>, vertices?: DistributedSet<IVertex>) {
-        let edgeList: IEdge[] = [];
-        let vertexList: IVertex[] = [];
-
-        this.edges = edges ? edges : root.createSet<IEdge>("edge", edgeList) as DistributedSet<Edge>;
-        this.vertices = vertices ? vertices : root.createSet<IVertex>("vertex", vertexList) as DistributedSet<Vertex>;
+    constructor(edges?: ISet<IEdge>, vertices?: ISet<IVertex>) {
+        this.edges = edges;
+        this.vertices = vertices;
     }
 
     public addVertex(id: number, label: string) {
@@ -38,37 +33,8 @@ export class CollaborativeGraph implements IGraph {
 
 export class Edge implements IEdge {
     constructor(public nodeId1: number, public nodeId2: number, public label: string) {}
-
-    public toLink(): {
-       source: number,
-       target: number,
-       value: number,
-       length?: number,
-    } {
-       let link = {
-            length: 1,
-            source: this.nodeId1,
-            target: this.nodeId2,
-            value: 2,
-       };
-       return link;
-    }
 }
 
 export class Vertex implements IVertex {
     constructor(public id: number, public label: string) {}
-
-    public toInputNode(): {
-        index?: number,
-        x?: number,
-        y?: number,
-        width?: number,
-        height?: number,
-        fixed?: number} {
-
-        let inputNode = {
-            index: this.id,
-        };
-        return inputNode;
-    }
 }

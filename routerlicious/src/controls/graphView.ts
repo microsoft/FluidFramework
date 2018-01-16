@@ -2,8 +2,8 @@ import * as d3 from "d3";
 import * as cola from "webcola";
 import { Link, Node } from "webcola";
 import { api, types } from "../client-api";
-import { IMap } from "../data-types/index";
-import { CollaborativeGraph } from "../graph/index";
+import { IMap} from "../data-types";
+import { CollaborativeGraph, Edge, Vertex } from "../graph";
 import * as ui from "../ui";
 
 /**
@@ -12,7 +12,6 @@ import * as ui from "../ui";
 export class Graph extends ui.Component {
     public graph: types.IGraph;
     public graphMapView: types.IMapView;
-    public curNode: number;
     private svg: any;
     private d3Graph: any;
 
@@ -22,40 +21,68 @@ export class Graph extends ui.Component {
     constructor(element: HTMLDivElement, doc: api.Document, public graphMap: IMap) {
         super(element);
 
-        this.curNode = 2;
+        element.appendChild(document.getElementById("node-form")) as HTMLFormElement;
+        let addNodeButton = element.getElementsByClassName("add-node-button")[0] as HTMLButtonElement;
+        let inputNode = element.getElementsByClassName("node-id-input")[0] as HTMLInputElement;
+        addNodeButton.onclick = () => this.addVertexTo(Number(inputNode.value));
 
-        let width = 960;
-        let height = 500;
+        this.svg = d3.select(element).append("svg");
 
-        this.svg = d3.select(element).append("svg")
+        this.d3Graph = cola.d3adaptor(d3)
+            .symmetricDiffLinkLengths(50);
+
+        this.graphHandler(graphMap, doc, element);
+    }
+
+    public async addVertexTo(nodeId1: number) {
+        let cur = this.graph.getVertices().entries().length;
+
+        this.graph.addVertex(cur, "node-" + cur);
+        this.graph.addEdge(nodeId1, cur, "1-" + cur);
+    }
+
+    protected resizeCore(bounds: ui.Rectangle) {
+        let width = bounds.width;
+        let height = bounds.height;
+
+        this.svg
             .attr("width", width)
             .attr("height", height);
 
-        // This is the graph setup...
-        this.d3Graph = cola.d3adaptor(d3)
-            .size([width, height])
-            .symmetricDiffLinkLengths(50);
-
-        this.fetchGraph(graphMap, doc);
-
-        this.generateButtons(element);
+        this.d3Graph
+            .size([width, height]);
     }
 
-    public async addVertexToGraph() {
-        this.graph.addVertex(this.curNode, "node-" + this.curNode);
-        this.graph.addEdge(1, this.curNode, "1-" + this.curNode);
-        this.curNode++;
-    }
+    private async graphHandler(root: types.IMap, doc: api.Document, element: HTMLDivElement) {
+        this.graphMapView = await root.getView();
 
-    public createGraph(element: HTMLDivElement) {
+        this.fetchGraph(root, doc);
+
+        if (this.nodes === undefined || this.links === undefined) {
+            this.nodes = [];
+            this.links = [];
+        }
+
+        for (let edge of this.graph.getEdges().entries()) {
+            this.links.push({source: edge.nodeId1, target: edge.nodeId2, weight: 1});
+        }
+        for (let node of this.graph.getVertices().entries()) {
+            this.nodes.push(node);
+        }
 
         this.startGraph();
+        this.bindGraph(element);
+    }
 
-        this.graphMap.on("setElementAdded", async (value) => {
-            if ((value.value.label as string).indexOf("node") >= 0) {
-                this.nodes.push({index: value.value.id} as Node);
+    private bindGraph(element: HTMLDivElement) {
+
+        this.graphMap.on("setElementAdded", async (update) => {
+            if ((update.value.label as string).indexOf("node") >= 0) {
+                let vertex = update.value as Vertex;
+                this.nodes.push(this.toNode(vertex));
             } else {
-                this.links.push({source: value.value.nodeId1, target: value.value.nodeId2, weight: 1});
+                let edge = update.value as Edge;
+                this.links.push(this.toEdge(edge));
             }
 
             this.startGraph();
@@ -108,62 +135,37 @@ export class Graph extends ui.Component {
             .attr("stroke", "black");
     }
 
-    private async fetchGraph(root: types.IMap, doc: api.Document) {
-        this.graphMapView = await root.getView();
+    private fetchGraph(root: types.IMap, doc: api.Document) {
+
         const hasEdge = this.graphMapView.has("edge");
 
-        if (this.nodes === undefined || this.links === undefined) {
-            this.nodes = [];
-            this.links = [];
-        }
-
         if (!hasEdge) {
-            this.graph = new CollaborativeGraph(root);
+            this.graph = new CollaborativeGraph(root.createSet<Edge>("edge"), root.createSet<Vertex>("vertex"));
 
             // Seed the graph with edges
             this.graph.addVertex(0, "node-0");
             this.graph.addVertex(1, "node-1");
             this.graph.addEdge(0, 1, "0-1");
         } else {
-            this.graph = new CollaborativeGraph(null, this.graphMapView.get("edge"), this.graphMapView.get("vertex"));
-
-            for (let edge of this.graph.getEdges().internalSet) {
-                this.links.push({source: edge.nodeId1, target: edge.nodeId2, weight: 1});
-            }
-            for (let node of this.graph.getVertices().internalSet as Set<Node>) {
-                this.nodes.push(node);
-            }
-        }
-
-        if (this.nodes.length === 0) {
-            this.nodes.push({index: 1} as Node);
-            this.nodes.push({index: 2} as Node);
-        }
-        if (this.links.length === 0) {
-            this.links.push({source: 0, target: 1, weight: 1});
+            this.graph = new CollaborativeGraph(this.graphMapView.get("edge"), this.graphMapView.get("vertex"));
         }
     }
 
-    private generateButtons(element: HTMLDivElement) {
+    private toEdge(edge: Edge): Link<any> {
+        let link = {
+            length: 1,
+            source: edge.nodeId1,
+            target: edge.nodeId2,
+            value: 2,
+        } as Link<any>;
 
-        let vertexButton = document.createElement("button");
-        vertexButton.onclick = () => this.addVertexToGraph();
-        vertexButton.style.height = "30px";
-        vertexButton.style.width = "120px";
-        vertexButton.style.color = "blue";
-        let vertexLabel = document.createElement("label");
-        vertexLabel.textContent = "vertexButton";
-        vertexButton.appendChild(vertexLabel);
-        element.appendChild(vertexButton);
+        return link;
+    }
 
-        let createGraph = document.createElement("button");
-        createGraph.onclick = () => this.createGraph(element);
-        createGraph.style.height = "50px";
-        createGraph.style.width = "120px";
-        createGraph.style.color = "blue";
-        let graphLabel = document.createElement("label");
-        graphLabel.textContent = "createGraph";
-        createGraph.appendChild(graphLabel);
-        element.appendChild(createGraph);
+    private toNode(vertex: Vertex): Node {
+        let inputNode = {
+            index: vertex.id,
+        };
+        return inputNode as Node;
     }
 }
