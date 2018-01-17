@@ -4,7 +4,7 @@ import { Provider } from "nconf";
 import * as winston from "winston";
 import { assertNotRejected } from "../core-utils";
 import * as utils from "../utils";
-import { CheckpointManager, ICheckpointStrategy } from "./checkpointManager";
+import { CheckpointManager } from "./checkpointManager";
 import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "./lambdas";
 
 class Context implements IContext {
@@ -39,11 +39,10 @@ export class Partition {
     constructor(
         id: number,
         factory: IPartitionLambdaFactory,
-        checkpointStrategy: ICheckpointStrategy,
         consumer: utils.kafkaConsumer.IConsumer,
         config: Provider) {
 
-        this.checkpointManager = new CheckpointManager(id, checkpointStrategy, consumer);
+        this.checkpointManager = new CheckpointManager(id, consumer);
         this.context = new Context(this.checkpointManager);
 
         // Indefinitely attempt to create the lambda

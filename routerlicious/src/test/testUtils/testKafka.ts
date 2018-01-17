@@ -1,21 +1,47 @@
+import * as assert from "assert";
 import { EventEmitter } from "events";
 import * as core from "../../core";
 import * as utils from "../../utils";
+import { TestContext } from "./testContext";
 
 export interface IKafkaMessage {
     offset: number;
     value: Buffer;
 }
 
-class TestConsumer implements utils.kafkaConsumer.IConsumer {
+export class TestConsumer implements utils.kafkaConsumer.IConsumer {
     private emitter = new EventEmitter();
     private pausedQueue: string[] = null;
+    private failOnCommit = false;
+
+    // Leverage the context code for storing and tracking an offset
+    private context = new TestContext();
 
     constructor(public groupId: string, public topic: string) {
     }
 
-    public async commitOffset(data: any): Promise<void> {
-        return;
+    public setFailOnCommit(value: boolean) {
+        this.failOnCommit = value;
+    }
+
+    public async commitOffset(data: any[]): Promise<void> {
+        // For now we assume a single partition for the test consumer
+        assert(data.length === 1 && data[0].partition === 0);
+
+        if (this.failOnCommit) {
+            return Promise.reject("TestConsumer set to fail on commit");
+        } else {
+            this.context.checkpoint(data[0].offset);
+            return;
+        }
+    }
+
+    public getOffset(): number {
+        return this.context.offset;
+    }
+
+    public async waitForOffset(offset: number): Promise<void> {
+        return this.context.waitForOffset(offset);
     }
 
     public on(event: string, listener: Function): this {
@@ -55,7 +81,7 @@ class TestConsumer implements utils.kafkaConsumer.IConsumer {
     }
 }
 
-class TestProducer implements utils.kafkaProducer.IProducer {
+export class TestProducer implements utils.kafkaProducer.IProducer {
     constructor(private kafka: TestKafka) {
     }
 
@@ -77,11 +103,11 @@ export class TestKafka {
     private offset = 0;
     private consumers: TestConsumer[] = [];
 
-    public createProducer(): utils.kafkaProducer.IProducer {
+    public createProducer(): TestProducer {
         return new TestProducer(this);
     }
 
-    public createConsumer(): utils.kafkaConsumer.IConsumer {
+    public createConsumer(): TestConsumer {
         const consumer = new TestConsumer("test", "test");
         this.consumers.push(consumer);
 

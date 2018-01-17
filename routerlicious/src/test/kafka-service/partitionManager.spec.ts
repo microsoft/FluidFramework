@@ -1,6 +1,5 @@
 import * as assert from "assert";
 import * as nconf from "nconf";
-import { ICheckpointStrategy } from "../../kafka-service/checkpointManager";
 import { IPartitionLambda, IPartitionLambdaFactory } from "../../kafka-service/lambdas";
 import { Partition } from "../../kafka-service/partition";
 import * as utils from "../../utils";
@@ -16,12 +15,6 @@ class TestLambda implements IPartitionLambda {
         assert.ok((this.lastOffset === undefined) || (this.lastOffset + 1 === message.offset));
         this.lastOffset = message.offset;
         this.factory.handledMessages++;
-    }
-}
-
-class CheckpointStrategy implements ICheckpointStrategy {
-    public shouldCheckpoint(offset: number): boolean {
-        return true;
     }
 }
 
@@ -47,7 +40,7 @@ describe("kafka-service", () => {
             const config = nconf.use("memory");
             kafka = new TestKafka();
             factory = new TestPartitionLambdaFactory();
-            partition = new Partition(0, factory, new CheckpointStrategy(), kafka.createConsumer(), config);
+            partition = new Partition(0, factory, kafka.createConsumer(), config);
         });
 
         describe(".process()", () => {

@@ -1,7 +1,6 @@
 import { Provider } from "nconf";
 import * as winston from "winston";
 import * as utils from "../utils";
-import { ICheckpointStrategy } from "./checkpointManager";
 import { IPartitionLambdaFactory } from "./lambdas";
 import { Partition } from "./partition";
 
@@ -14,7 +13,6 @@ export class PartitionManager {
 
     constructor(
         private factory: IPartitionLambdaFactory,
-        private checkpointStrategy: ICheckpointStrategy,
         private consumer: utils.kafkaConsumer.IConsumer,
         private config: Provider) {
     }
@@ -37,7 +35,6 @@ export class PartitionManager {
             const newPartition = new Partition(
                 message.partition,
                 this.factory,
-                this.checkpointStrategy,
                 this.consumer,
                 this.config);
             this.partitions.set(message.partition, newPartition);
