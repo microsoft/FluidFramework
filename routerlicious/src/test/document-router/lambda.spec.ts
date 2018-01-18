@@ -28,6 +28,10 @@ class TestContext implements IContext {
         this.waits = this.waits.filter((value) => value.offset > this.offset);
     }
 
+    public close(error: any, restart: boolean) {
+        // TODO implement
+    }
+
     public waitForOffset(offset: number): Promise<void> {
         if (offset <= this.offset) {
             return Promise.resolve();

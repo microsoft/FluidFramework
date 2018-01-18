@@ -8,9 +8,10 @@ export interface IContext {
     checkpoint(offset: number);
 
     /**
-     * Closes the context with an optional error.
+     * Closes the context with an error. The restart flag indicates whether the error is recoverable and the lambda
+     * should be restarted.
      */
-    close?(error?: any);
+    close(error: any, restart: boolean);
 }
 
 export interface IPartitionLambda {

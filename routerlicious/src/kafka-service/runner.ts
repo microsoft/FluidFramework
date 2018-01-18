@@ -15,6 +15,9 @@ export class KafkaRunner implements utils.IRunner {
         config: Provider) {
 
         this.partitionManager = new PartitionManager(factory, consumer, config);
+
+        // TODO need to register for events on the manager - mostly close events which should trigger
+        // us to restart
     }
 
     public start(): Promise<void> {

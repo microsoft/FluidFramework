@@ -1,5 +1,6 @@
 import * as assert from "assert";
-import { AsyncQueue, queue, retry } from "async";
+import { AsyncQueue, queue } from "async";
+import { EventEmitter } from "events";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import { assertNotRejected } from "../core-utils";
@@ -7,10 +8,11 @@ import * as utils from "../utils";
 import { CheckpointManager } from "./checkpointManager";
 import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "./lambdas";
 
-class Context implements IContext {
+class Context extends EventEmitter implements IContext {
     private offset;
 
     constructor(private checkpointManager: CheckpointManager) {
+        super();
     }
 
     /**
@@ -21,58 +23,60 @@ class Context implements IContext {
         assert(this.offset === undefined || offset >= this.offset);
 
         if (this.offset !== offset) {
-            this.checkpointManager.checkpoint(offset);
+            this.checkpointManager.checkpoint(offset).catch((error) => {
+                // Close context on error. Once the checkpointManager enters an error state it will stay there.
+                // We will look to restart on checkpointing given it likely indicates a Kafka connection issue.
+                this.emit("close", error, true);
+            });
         }
     }
+
+    /**
+     * Closes the context with an error. The restart flag indicates whether the error is recoverable and the lambda
+     * should be restarted.
+     */
+    public close(error: any, restart: boolean) {
+        this.emit("close", error, restart);
+    }
+}
+
+export interface IPartitionRetryParams {
+    interval: number;
+    times: number;
 }
 
 /**
  * Partition of a message stream. Manages routing messages to individual handlers. And then maintaining the
  * overall partition offset.
  */
-export class Partition {
+export class Partition extends EventEmitter {
     private q: AsyncQueue<utils.kafkaConsumer.IMessage>;
     private lambdaP: Promise<IPartitionLambda>;
     private checkpointManager: CheckpointManager;
-    private context: IContext;
+    private context: Context;
 
     constructor(
         id: number,
         factory: IPartitionLambdaFactory,
         consumer: utils.kafkaConsumer.IConsumer,
         config: Provider) {
+        super();
 
         this.checkpointManager = new CheckpointManager(id, consumer);
         this.context = new Context(this.checkpointManager);
-
-        // Indefinitely attempt to create the lambda
-        this.lambdaP = new Promise<IPartitionLambda>((resolve, reject) => {
-            retry(
-                {
-                    interval: 100,
-                    times: Number.MAX_VALUE,
-                },
-                (callback) => {
-                    factory.create(config, this.context).then(
-                        (lambda) => callback(null, lambda),
-                        (error) => {
-                            winston.info("Error creating lambda - retrying", error);
-                            callback(error);
-                        });
-                },
-                (error, result) => {
-                    // This should never return an error. The retry logic is setup to indefinitely retry in the
-                    // case we can't create the lambda
-                    assert.ok(!error);
-                    resolve(result);
-                });
+        this.context.on("close", (error: any, restart: boolean) => {
+            this.emit("close", error, restart);
         });
+
+        this.lambdaP = factory.create(config, this.context);
 
         // Create the incoming message queue
         this.q = queue((message: utils.kafkaConsumer.IMessage, callback) => {
             const processedP = this.processCore(message, this.context).catch((error) => {
-                    // TODO dead letter queue for bad messages, etc...
-                    winston.error("Error processing partition message. Possible data loss.", error);
+                    // There was an issue processing a message. Log the error and then close the partition in order
+                    // to restart.
+                    winston.error("Unexpected error processing partition message.", error);
+                    this.emit("close", error, true);
                 });
 
             // assert processedP only resolves

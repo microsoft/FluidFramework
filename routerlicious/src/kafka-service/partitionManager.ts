@@ -37,6 +37,10 @@ export class PartitionManager {
                 this.factory,
                 this.consumer,
                 this.config);
+
+            // TODO need to register for events on the partition - mostly close events which should trigger
+            // us to restart
+
             this.partitions.set(message.partition, newPartition);
         }
 

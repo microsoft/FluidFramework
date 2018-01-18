@@ -29,6 +29,10 @@ export class DocumentContext implements IContext {
         }
     }
 
+    public close(error: any, restart: boolean) {
+        // TODO implement close
+    }
+
     public addListener(event: "checkpoint", callback: (...args: any[]) => void)
     public addListener(event: string, callback: (...args: any[]) => void) {
         this.events.on(event, callback);

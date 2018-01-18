@@ -10,6 +10,10 @@ class TestContext implements IContext {
     public checkpoint(offset: number) {
         this.offset = offset;
     }
+
+    public close(error: any, restart: boolean) {
+        // TODO implement
+    }
 }
 
 describe("DocumentRouter", () => {

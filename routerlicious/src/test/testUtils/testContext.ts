@@ -26,6 +26,10 @@ export class TestContext implements IContext {
         });
     }
 
+    public close(error: any, restart: boolean) {
+        // TODO fill in implementation
+    }
+
     public waitForOffset(value: number): Promise<void> {
         if (value <= this.offset) {
             return Promise.resolve();
