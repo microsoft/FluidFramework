@@ -22,7 +22,7 @@ async function makeBucket(minioClient, bucket: string) {
     });
 }
 
-export async function getOrCreateBucket(minioClient, bucket: string) {
+export async function getOrCreateMinioBucket(minioClient, bucket: string) {
     const exists = await bucketExists(minioClient, bucket);
     if (!exists) {
         return await makeBucket(minioClient, bucket);

@@ -1,5 +1,4 @@
 import { AsyncQueue, queue } from "async";
-import * as minio from "minio";
 import * as request from "request";
 import * as url from "url";
 import * as winston from "winston";
@@ -8,7 +7,6 @@ import { Deferred } from "../core-utils";
 import * as socketStorage from "../socket-storage";
 import * as utils from "../utils";
 import * as messages from "./messages";
-import * as minioHelper from "./minioHelper";
 import * as workerFactory from "./workerFactory";
 
 export class TmzRunner implements utils.IRunner {
@@ -23,9 +21,9 @@ export class TmzRunner implements utils.IRunner {
     constructor(
         private io: any,
         private alfredUrl: string,
-        private minioConfig: any,
         private port: any,
         private consumer: utils.kafkaConsumer.IConsumer,
+        private agentUploader: messages.IAgentUploader,
         schedulerType: string,
         private onlyServer: boolean,
         private checkerTimeout: number,
@@ -36,43 +34,29 @@ export class TmzRunner implements utils.IRunner {
 
     public start(): Promise<void> {
 
-        const minioClient = new minio.Client({
-            accessKey: this.minioConfig.accessKey,
-            endPoint: this.minioConfig.endpoint,
-            port: this.minioConfig.port,
-            secretKey: this.minioConfig.secretKey,
-            secure: false,
-        });
-
-        const minioBucket = this.minioConfig.bucket;
-        // Prep minio and start listening to module uploads.
-        minioHelper.getOrCreateBucket(minioClient, minioBucket).then(() => {
-            // Set up bucket policy to readwrite.
-            minioClient.setBucketPolicy(minioBucket, "", minio.Policy.READWRITE, (err) => {
-                if (err) {
-                    winston.error(`Error setting up bucket bolicy. ${err}`);
-                }
-            });
-            // Set up notification.
-            minioClient.listenBucketNotification(minioBucket, "", ".zip", ["s3:ObjectCreated:*"])
-            .on("notification", (record) => {
-                winston.info(`New module uploaded: ${record.s3.object.key}`);
-                this.foreman.broadcastNewAgentModule(record.s3.object.key, "server", "add");
-                const moduleUrl = url.resolve(this.alfredUrl, `/agent/js/${record.s3.object.key}`);
+        // Preps and start listening to agent uploader.
+        this.agentUploader.initialize();
+        this.agentUploader.on("agentAdded", (agent: messages.IAgent) => {
+            if (agent.type === "server") {
+                winston.info(`New module uploaded: ${agent.name}`);
+                this.foreman.broadcastNewAgentModule(agent.name, agent.type, "add");
+                const moduleUrl = url.resolve(this.alfredUrl, `/agent/js/${agent.name}`);
                 request.post(moduleUrl);
-            });
-            minioClient.listenBucketNotification(minioBucket, "", ".zip", ["s3:ObjectRemoved:*"])
-            .on("notification", (record) => {
-                winston.info(`Module deleted: ${record.s3.object.key}`);
-                this.foreman.broadcastNewAgentModule(record.s3.object.key, "server", "remove");
-            });
-            minioClient.listenBucketNotification(minioBucket, "", ".js", ["s3:ObjectCreated:*"])
-            .on("notification", (record) => {
-                winston.info(`Received a new webpacked scrtipt: ${record.s3.object.key}`);
-                this.foreman.broadcastNewAgentModule(record.s3.object.key, "client", "add");
-            });
-        }, (error) => {
-            winston.error(`Error creating bucket ${minioBucket}: ${error}`);
+            } else if (agent.type === "client") {
+                winston.info(`Received a new webpacked scrtipt: ${agent.name}`);
+                this.foreman.broadcastNewAgentModule(agent.name, agent.type, "add");
+            }
+        });
+        this.agentUploader.on("agentRemoved", (agent: messages.IAgent) => {
+            if (agent.type === "server") {
+                winston.info(`Module deleted: ${agent.name}`);
+                this.foreman.broadcastNewAgentModule(agent.name, agent.type, "remove");
+            } else if (agent.type === "client") {
+                // TODO: Implement removal from client.
+            }
+        });
+        this.agentUploader.on("error", (err) => {
+            winston.error(err);
         });
 
         // open a socketio connection and start listening for workers.
