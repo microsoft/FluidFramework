@@ -15,9 +15,9 @@ export class KafkaRunner implements utils.IRunner {
         config: Provider) {
 
         this.partitionManager = new PartitionManager(factory, consumer, config);
-
-        // TODO need to register for events on the manager - mostly close events which should trigger
-        // us to restart
+        this.partitionManager.on("close", (error, restart) => {
+            this.deferred.reject(error);
+        });
     }
 
     public start(): Promise<void> {
@@ -47,13 +47,8 @@ export class KafkaRunner implements utils.IRunner {
         this.consumer.pause();
 
         // Mark ourselves done once the topic manager has stopped processing
-        this.partitionManager.stop().then(
-            () => {
-                this.deferred.resolve();
-            },
-            (error) => {
-                this.deferred.reject(error);
-            });
+        const stopP = this.partitionManager.stop();
+        this.deferred.resolve(stopP);
 
         return this.deferred.promise;
     }

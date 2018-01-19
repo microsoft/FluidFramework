@@ -4,11 +4,6 @@ import * as core from "../../core";
 import * as utils from "../../utils";
 import { TestContext } from "./testContext";
 
-export interface IKafkaMessage {
-    offset: number;
-    value: Buffer;
-}
-
 export class TestConsumer implements utils.kafkaConsumer.IConsumer {
     private emitter = new EventEmitter();
     private pausedQueue: string[] = null;
@@ -72,6 +67,13 @@ export class TestConsumer implements utils.kafkaConsumer.IConsumer {
         }
     }
 
+    /**
+     * Manually signal an error
+     */
+    public emitError(error: any) {
+        this.emitter.emit("error", error);
+    }
+
     public emit(message: any) {
         if (this.pausedQueue) {
             this.pausedQueue.push(message);
@@ -86,7 +88,7 @@ export class TestProducer implements utils.kafkaProducer.IProducer {
     }
 
     public send(message: string, key: string): Promise<any> {
-        this.kafka.addMessage(message);
+        this.kafka.addMessage(message, key);
         return Promise.resolve();
     }
 
@@ -99,7 +101,7 @@ export class TestProducer implements utils.kafkaProducer.IProducer {
  * Test Kafka implementation. Allows for the creation of a joined producer/consumer pair.
  */
 export class TestKafka {
-    private messages: IKafkaMessage[] = [];
+    private messages: utils.kafkaConsumer.IMessage[] = [];
     private offset = 0;
     private consumers: TestConsumer[] = [];
 
@@ -114,14 +116,19 @@ export class TestKafka {
         return consumer;
     }
 
-    public getRawMessages(): IKafkaMessage[] {
+    public getRawMessages(): utils.kafkaConsumer.IMessage[] {
         return this.messages;
     }
 
-    public addMessage(message: string) {
-        const storedMessage = {
-            offset: this.offset++,
-            value: Buffer.from(message),
+    public addMessage(message: string, topic: string) {
+        const offset = this.offset++;
+        const storedMessage: utils.kafkaConsumer.IMessage = {
+            highWaterOffset: offset,
+            key: null,
+            offset,
+            partition: 0,
+            topic,
+            value: message,
         };
         this.messages.push(storedMessage);
 
