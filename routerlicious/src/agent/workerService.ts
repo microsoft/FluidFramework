@@ -29,8 +29,9 @@ export class WorkerService implements core.IWorkerService {
     private documentMap: { [docId: string]: { [work: string]: IWork} } = {};
     private workTypeMap: { [workType: string]: boolean} = {};
     private dict = new MergeTree.Collections.TST<number>();
+
     // List of modules added during the lifetime of this object.
-    private runtimeModules: IModule[] = [];
+    private runtimeModules: { [name: string]: IModule } = {};
 
     constructor(
         private serverUrl: string,
@@ -75,11 +76,17 @@ export class WorkerService implements core.IWorkerService {
                     deferred.reject(error);
                 } else if (ack === "Acked") {
                     // Check whether worker is ready to load a new agent.
-                    this.socket.on("AgentObject", (cId: string, moduleName: string, response) => {
+                    this.socket.on("AgentObject", (cId: string, moduleName: string, action: string, response) => {
                         // TODO: Need some rule here to deny a new agent loading.
-                        console.log(`Received work to load module ${moduleName}!`);
-                        this.loadNewModule( { name: moduleName, code: null } );
-                        response(null, clientDetail);
+                        if (action === "add") {
+                            console.log(`Received work to load new module ${moduleName}!`);
+                            this.loadNewModule( { name: moduleName, code: null } );
+                            response(null, clientDetail);
+                        } else if (action === "remove") {
+                            console.log(`Received work to unload the module ${moduleName}!`);
+                            this.unloadModule( { name: moduleName, code: null } );
+                            response(null, clientDetail);
+                        }
                     });
                     // Check whether worker is ready to work.
                     this.socket.on("ReadyObject", (cId: string, id: string, workType: string, response) => {
@@ -178,10 +185,17 @@ export class WorkerService implements core.IWorkerService {
                 }
             }
             // Push the module for all future documents.
-            this.runtimeModules.push(newModule);
+            this.runtimeModules[newModule.name] = newModule;
         }, (error) =>  {
             console.log(`${newModule.name}: ${error}`);
         });
+    }
+
+    // Unload the module for all future documents.
+    private unloadModule(module: IModule) {
+        if (module.name in this.runtimeModules) {
+            delete this.runtimeModules[module.name];
+        }
     }
 
     private processDocumentWork(docId: string, workType: string) {
@@ -239,8 +253,9 @@ export class WorkerService implements core.IWorkerService {
                 // register all runtime added modules one by one.
                 const intelWork = this.documentMap[docId][workType] as IntelWork;
                 intelWork.start().then(() => {
-                    for (const loadedModule of this.runtimeModules) {
-                        intelWork.registerNewService(loadedModule.code);
+                    // tslint:disable-next-line
+                    for (let name in this.runtimeModules) {
+                        intelWork.registerNewService(this.runtimeModules[name].code);
                     }
                 }, (err) => {
                     console.log(`Error starting intel work: ${err}`);
