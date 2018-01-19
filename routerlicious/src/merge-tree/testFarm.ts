@@ -1,3 +1,5 @@
+// tslint:disable
+
 import * as JsDiff from "diff";
 import * as path from "path";
 import * as random from "random-js";
@@ -6,9 +8,8 @@ import * as Collections from "./collections";
 import * as MergeTree from "./mergeTree";
 import * as ops from "./ops";
 import * as Properties from "./properties";
+// import { SharedString } from "./sharedString";
 import * as Text from "./text";
-
-// tslint:disable
 
 function clock() {
     return process.hrtime();
@@ -1465,5 +1466,17 @@ export class DocumentTree {
         return new DocumentTree("box", DocumentTree.generateContent(rowProbability));
     }
 }
+/*
+class OverlayTree {
+    constructor(public sharedString: SharedString) {
 
+    }
+}
+
+class DocumentGraph {
+    constructor(public sharedString: SharedString) {
+
+    }
+}
+*/
 // DocumentTree.test1();
