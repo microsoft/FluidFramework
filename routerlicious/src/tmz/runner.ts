@@ -57,14 +57,19 @@ export class TmzRunner implements utils.IRunner {
             minioClient.listenBucketNotification(minioBucket, "", ".zip", ["s3:ObjectCreated:*"])
             .on("notification", (record) => {
                 winston.info(`New module uploaded: ${record.s3.object.key}`);
-                this.foreman.broadcastNewAgentModule(record.s3.object.key, "server");
+                this.foreman.broadcastNewAgentModule(record.s3.object.key, "server", "add");
                 const moduleUrl = url.resolve(this.alfredUrl, `/agent/js/${record.s3.object.key}`);
                 request.post(moduleUrl);
+            });
+            minioClient.listenBucketNotification(minioBucket, "", ".zip", ["s3:ObjectRemoved:*"])
+            .on("notification", (record) => {
+                winston.info(`Module deleted: ${record.s3.object.key}`);
+                this.foreman.broadcastNewAgentModule(record.s3.object.key, "server", "remove");
             });
             minioClient.listenBucketNotification(minioBucket, "", ".js", ["s3:ObjectCreated:*"])
             .on("notification", (record) => {
                 winston.info(`Received a new webpacked scrtipt: ${record.s3.object.key}`);
-                this.foreman.broadcastNewAgentModule(record.s3.object.key, "client");
+                this.foreman.broadcastNewAgentModule(record.s3.object.key, "client", "add");
             });
         }, (error) => {
             winston.error(`Error creating bucket ${minioBucket}: ${error}`);
