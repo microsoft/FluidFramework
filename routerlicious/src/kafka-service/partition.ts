@@ -3,7 +3,6 @@ import { AsyncQueue, queue } from "async";
 import { EventEmitter } from "events";
 import { Provider } from "nconf";
 import * as winston from "winston";
-import { assertNotRejected } from "../core-utils";
 import * as utils from "../utils";
 import { CheckpointManager } from "./checkpointManager";
 import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "./lambdas";
@@ -69,19 +68,24 @@ export class Partition extends EventEmitter {
         });
 
         this.lambdaP = factory.create(config, this.context);
+        this.lambdaP.catch((error) => {
+            this.emit("close", error, true);
+        });
 
         // Create the incoming message queue
         this.q = queue((message: utils.kafkaConsumer.IMessage, callback) => {
-            const processedP = this.processCore(message, this.context).catch((error) => {
-                    // There was an issue processing a message. Log the error and then close the partition in order
-                    // to restart.
-                    winston.error("Unexpected error processing partition message.", error);
-                    this.emit("close", error, true);
+            this.processCore(message, this.context).then(
+                () => {
+                    callback();
+                },
+                (error) => {
+                    callback(error);
                 });
-
-            // assert processedP only resolves
-            assertNotRejected(processedP).then(() => callback());
         }, 1);
+
+        this.q.error = (error) => {
+            this.emit("close", error, true);
+        };
     }
 
     public process(rawMessage: utils.kafkaConsumer.IMessage) {
