@@ -17,22 +17,6 @@ describe("kafka-service", () => {
         });
 
         describe(".checkpoint", () => {
-            it("Should require offset to be increasing", () => {
-               testContext.checkpoint(10);
-               try {
-                   testContext.checkpoint(5);
-                   assert(false);
-               } catch (exception) {
-                   assert(true);
-               }
-            });
-
-            it("Should allow checkpoints at same offset", async () => {
-                testContext.checkpoint(10);
-                testContext.checkpoint(10);
-                await testConsumer.waitForOffset(10);
-            });
-
             it("Should be able to checkpoint at a given offset", async () => {
                 testContext.checkpoint(10);
                 testContext.checkpoint(30);

@@ -1,65 +1,8 @@
 import * as assert from "assert";
 import { Provider } from "nconf";
-import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "../../kafka-service/lambdas";
 import { Partition } from "../../kafka-service/partition";
-import * as utils from "../../utils";
 import { KafkaMessageFactory, TestConsumer, TestKafka } from "../testUtils/index";
-
-class TestLambda implements IPartitionLambda {
-    constructor(private factory: TestPartitionLambdaFactory, private throwHandler: boolean, private context: IContext) {
-    }
-
-    public handler(message: utils.kafkaConsumer.IMessage): void {
-        if (this.throwHandler) {
-            throw "Requested failure";
-        }
-
-        this.factory.handleCount++;
-        this.context.checkpoint(message.offset);
-    }
-
-    public close(error: string, restart: boolean) {
-        this.context.close(error, restart);
-    }
-}
-
-class TestPartitionLambdaFactory implements IPartitionLambdaFactory {
-    public handleCount = 0;
-    private failCreate = false;
-    private throwHandler = false;
-    private lambdas = new Array<TestLambda>();
-
-    public async create(config: Provider, context: IContext): Promise<IPartitionLambda> {
-        if (this.failCreate) {
-            return Promise.reject("Set to fail create");
-        }
-
-        const lambda = new TestLambda(this, this.throwHandler, context);
-        this.lambdas.push(lambda);
-        return lambda;
-    }
-
-    public async dispose(): Promise<void> {
-        return;
-    }
-
-    public setFailCreate(value: boolean) {
-        this.failCreate = value;
-    }
-
-    public setThrowHandler(value: boolean) {
-        this.throwHandler = value;
-    }
-
-    /**
-     * Closes all created lambdas
-     */
-    public closeLambdas(error: string, restart: boolean) {
-        for (const lambda of this.lambdas) {
-            lambda.close(error, restart);
-        }
-    }
-}
+import { TestPartitionLambdaFactory } from "./testPartitionLambdaFactory";
 
 /**
  * Helper function to wrap partition close testing

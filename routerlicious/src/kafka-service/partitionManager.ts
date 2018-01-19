@@ -1,3 +1,4 @@
+import { EventEmitter } from "events";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import * as utils from "../utils";
@@ -8,13 +9,14 @@ import { Partition } from "./partition";
  * The PartitionManager is responsible for maintaining a list of partitions for the given Kafka topic.
  * It will route incoming messages to the appropriate partition for the messages.
  */
-export class PartitionManager {
+export class PartitionManager extends EventEmitter {
     private partitions = new Map<number, Partition>();
 
     constructor(
         private factory: IPartitionLambdaFactory,
         private consumer: utils.kafkaConsumer.IConsumer,
         private config: Provider) {
+        super();
     }
 
     public async stop(): Promise<void> {
@@ -38,8 +40,16 @@ export class PartitionManager {
                 this.consumer,
                 this.config);
 
-            // TODO need to register for events on the partition - mostly close events which should trigger
-            // us to restart
+            // Listen for close events to know when the partition has stopped processing due to an error or explicit
+            // close
+            newPartition.on("close", (error, restart) => {
+                // For simplicity we will close the entire manager whenever any partition closes. A close primarily
+                // indicates that there was an error and this likely affects all partitions being managed (i.e.
+                // database write failed, connection issue, etc...).
+                // In the case that the restart flag is false and there was an error we will eventually need a way
+                // to signify that a partition is 'poisoned'.
+                this.emit("close", error, true);
+            });
 
             this.partitions.set(message.partition, newPartition);
         }
