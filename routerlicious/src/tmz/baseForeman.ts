@@ -33,11 +33,11 @@ export class BaseForeman {
         return revokedPromises;
     }
 
-    public broadcastNewAgentModule(moduleName: string, workerType: string) {
+    public broadcastNewAgentModule(moduleName: string, workerType: string, action: string) {
         // tslint:disable-next-line
         const workers = workerType === "server" ? this.manager.getActiveServerWorkers() : this.manager.getActiveClientWorkers();
         for (const worker of workers) {
-            worker.socket.emit("AgentObject", worker.worker.clientId, moduleName,
+            worker.socket.emit("AgentObject", worker.worker.clientId, moduleName, action,
             (nack, ack: socketStorage.IWorker) => {
                 if (ack) {
                     winston.info(`${worker.worker.clientId} is ready to load ${moduleName}`);

@@ -19,6 +19,9 @@ export { ink };
 import * as map from "../map";
 export { map };
 
+import * as graph from "../graph";
+export { graph };
+
 import * as MergeTree from "../merge-tree";
 export { MergeTree };
 

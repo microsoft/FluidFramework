@@ -5,17 +5,19 @@ import * as socketIo from "socket.io";
 import * as socketIoRedis from "socket.io-redis";
 import * as util from "util";
 import * as utils from "../utils";
+import { createUploader } from "./agentUploader";
+import { IAgentUploader } from "./messages";
 import { TmzRunner } from "./runner";
 
 export class TmzResources implements utils.IResources {
     constructor(
         public io: any,
         public alfredUrl: string,
-        public minio: any,
         public pub: redis.RedisClient,
         public sub: redis.RedisClient,
         public port: any,
         public consumer: utils.kafkaConsumer.IConsumer,
+        public uploader: IAgentUploader,
         public schedulerType: string,
         public onlyServer: boolean,
         public checkerTimeout: number,
@@ -70,9 +72,10 @@ export class TmzResourcesFactory implements utils.IResourcesFactory<TmzResources
         const tasks = config.get("tmz:tasks");
 
         let consumer = utils.kafkaConsumer.create(kafkaLibrary, kafkaEndpoint, groupId, groupId, topic, true);
+        let uploader = createUploader("minio", minioConfig);
 
         // tslint:disable-next-line
-        return new TmzResources(io, alfredUrl, minioConfig, pub, sub, port, consumer, schedulerType, onlyServer, checkerTimeout, tasks);
+        return new TmzResources(io, alfredUrl, pub, sub, port, consumer, uploader, schedulerType, onlyServer, checkerTimeout, tasks);
     }
 }
 
@@ -81,9 +84,9 @@ export class TmzRunnerFactory implements utils.IRunnerFactory<TmzResources> {
         return new TmzRunner(
             resources.io,
             resources.alfredUrl,
-            resources.minio,
             resources.port,
             resources.consumer,
+            resources.uploader,
             resources.schedulerType,
             resources.onlyServer,
             resources.checkerTimeout,
