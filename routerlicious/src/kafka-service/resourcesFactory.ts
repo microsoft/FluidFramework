@@ -3,7 +3,15 @@ import { Provider } from "nconf";
 import * as utils from "../utils";
 import { IPartitionLambdaFactory } from "./lambdas";
 
-export class KafkaResources implements utils.IResources {
+export interface IKafkaResources extends utils.IResources {
+    lambdaFactory: IPartitionLambdaFactory;
+
+    consumer: utils.kafkaConsumer.IConsumer;
+
+    config: Provider;
+}
+
+export class KafkaResources implements IKafkaResources {
     constructor(
         public lambdaFactory: IPartitionLambdaFactory,
         public consumer: utils.kafkaConsumer.IConsumer,
