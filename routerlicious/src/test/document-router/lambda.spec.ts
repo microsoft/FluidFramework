@@ -28,7 +28,7 @@ class TestContext implements IContext {
         this.waits = this.waits.filter((value) => value.offset > this.offset);
     }
 
-    public close(error: any, restart: boolean) {
+    public error(error: any, restart: boolean) {
         // TODO implement
     }
 

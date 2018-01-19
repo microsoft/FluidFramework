@@ -26,7 +26,7 @@ export class TestContext implements IContext {
         });
     }
 
-    public close(error: any, restart: boolean) {
+    public error(error: any, restart: boolean) {
         // TODO fill in implementation
     }
 

@@ -20,8 +20,8 @@ export class TestLambda implements IPartitionLambda {
         this.context.checkpoint(message.offset);
     }
 
-    public close(error: string, restart: boolean) {
-        this.context.close(error, restart);
+    public error(error: string, restart: boolean) {
+        this.context.error(error, restart);
     }
 }
 
@@ -58,7 +58,7 @@ export class TestPartitionLambdaFactory implements IPartitionLambdaFactory {
      */
     public closeLambdas(error: string, restart: boolean) {
         for (const lambda of this.lambdas) {
-            lambda.close(error, restart);
+            lambda.error(error, restart);
         }
     }
 }

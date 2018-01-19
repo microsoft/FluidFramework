@@ -13,7 +13,7 @@ function verifyClose(
     expectedRestart: boolean = true): Promise<void> {
 
     return new Promise<void>((resolve, reject) => {
-        partition.on("close", (error, restart) => {
+        partition.on("error", (error, restart) => {
             // Clients can either send an explicit value for the error or a boolean indicating whether
             // or not there should have been an error
             if (typeof(expectedError) === "boolean") {
@@ -60,11 +60,11 @@ describe("kafka-service", () => {
                 assert.equal(messageCount, testFactory.handleCount);
             });
 
-            it("Should emit the close event with restart true if cannot create lambda", async () => {
+            it("Should emit an error event with restart true if cannot create lambda", async () => {
                 testFactory.setFailCreate(true);
                 return new Promise<void>((resolve, reject) => {
                     const testPartition = new Partition(0, testFactory, testConsumer, testConfig);
-                    testPartition.on("close", (error, restart) => {
+                    testPartition.on("error", (error, restart) => {
                         assert(error);
                         assert(restart);
                         resolve();

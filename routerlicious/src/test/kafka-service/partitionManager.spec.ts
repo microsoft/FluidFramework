@@ -35,8 +35,8 @@ describe("kafka-service", () => {
 
             it("Should emit an error event if a partition encounters an error", async () => {
                 testFactory.setThrowHandler(true);
-                const closeP = new Promise<void>((resolve, reject) => {
-                    testManager.on("close", (error, restart) => {
+                const errorP = new Promise<void>((resolve, reject) => {
+                    testManager.on("error", (error, restart) => {
                         assert(error);
                         assert(restart);
                         resolve();
@@ -44,7 +44,7 @@ describe("kafka-service", () => {
                 });
 
                 testManager.process(kafkaMessageFactory.sequenceMessage({}, "test"));
-                await closeP;
+                await errorP;
             });
         });
     });

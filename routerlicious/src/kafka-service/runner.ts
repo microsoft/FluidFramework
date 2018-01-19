@@ -15,7 +15,7 @@ export class KafkaRunner implements utils.IRunner {
         config: Provider) {
 
         this.partitionManager = new PartitionManager(factory, consumer, config);
-        this.partitionManager.on("close", (error, restart) => {
+        this.partitionManager.on("error", (error, restart) => {
             this.deferred.reject(error);
         });
     }

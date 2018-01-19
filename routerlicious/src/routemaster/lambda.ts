@@ -24,7 +24,7 @@ export abstract class SequencedLambda implements IPartitionLambda {
         }, 1);
 
         this.q.error = (error) => {
-            context.close(error, true);
+            context.error(error, true);
         };
     }
 
@@ -104,7 +104,7 @@ export class RouteMasterLambda extends SequencedLambda {
                 this.context.checkpoint(offset);
             },
             (error) => {
-                this.context.close(error, true);
+                this.context.error(error, true);
             });
     }
 

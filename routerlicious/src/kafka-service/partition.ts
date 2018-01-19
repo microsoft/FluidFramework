@@ -26,13 +26,13 @@ export class Partition extends EventEmitter {
 
         this.checkpointManager = new CheckpointManager(id, consumer);
         this.context = new Context(this.checkpointManager);
-        this.context.on("close", (error: any, restart: boolean) => {
-            this.emit("close", error, restart);
+        this.context.on("error", (error: any, restart: boolean) => {
+            this.emit("error", error, restart);
         });
 
         this.lambdaP = factory.create(config, this.context);
         this.lambdaP.catch((error) => {
-            this.emit("close", error, true);
+            this.emit("error", error, true);
         });
 
         // Create the incoming message queue
@@ -47,7 +47,7 @@ export class Partition extends EventEmitter {
         }, 1);
 
         this.q.error = (error) => {
-            this.emit("close", error, true);
+            this.emit("error", error, true);
         };
     }
 

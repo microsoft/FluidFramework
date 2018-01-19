@@ -132,7 +132,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
     constructor(private io: core.IPublisher, private collection: core.ICollection<any>, protected context: IContext) {
         this.io.on("error", (error) => {
             // After an IO error we need to recreate the lambda
-            this.context.close(error, true);
+            this.context.error(error, true);
         });
     }
 
@@ -191,6 +191,6 @@ export class ScriptoriumLambda implements IPartitionLambda {
      */
     private batchError(error: string) {
         winston.error(error);
-        this.context.close(error, true);
+        this.context.error(error, true);
     }
 }

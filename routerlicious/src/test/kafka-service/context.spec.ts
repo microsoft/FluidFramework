@@ -24,18 +24,18 @@ describe("kafka-service", () => {
             });
         });
 
-        describe(".close", () => {
-            it("Should emit a close event", async () => {
+        describe(".error", () => {
+            it("Should emit an error event", async () => {
                 const testError = null;
                 const testRestart = true;
 
-                const closedP = testContext.addListener("close", (error, restart) => {
+                const errorP = testContext.addListener("error", (error, restart) => {
                     assert.equal(error, testError);
                     assert.equal(restart, testRestart);
                 });
-                testContext.close(testError, testRestart);
+                testContext.error(testError, testRestart);
 
-                await closedP;
+                await errorP;
             });
         });
     });

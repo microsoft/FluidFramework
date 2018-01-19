@@ -11,7 +11,7 @@ export interface IContext {
      * Closes the context with an error. The restart flag indicates whether the error is recoverable and the lambda
      * should be restarted.
      */
-    close(error: any, restart: boolean);
+    error(error: any, restart: boolean);
 }
 
 export interface IPartitionLambda {

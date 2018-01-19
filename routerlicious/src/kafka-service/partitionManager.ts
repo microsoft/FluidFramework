@@ -40,15 +40,14 @@ export class PartitionManager extends EventEmitter {
                 this.consumer,
                 this.config);
 
-            // Listen for close events to know when the partition has stopped processing due to an error or explicit
-            // close
-            newPartition.on("close", (error, restart) => {
+            // Listen for error events to know when the partition has stopped processing due to an error
+            newPartition.on("error", (error, restart) => {
                 // For simplicity we will close the entire manager whenever any partition closes. A close primarily
                 // indicates that there was an error and this likely affects all partitions being managed (i.e.
                 // database write failed, connection issue, etc...).
                 // In the case that the restart flag is false and there was an error we will eventually need a way
                 // to signify that a partition is 'poisoned'.
-                this.emit("close", error, true);
+                this.emit("error", error, true);
             });
 
             this.partitions.set(message.partition, newPartition);
