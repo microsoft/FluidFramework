@@ -105,6 +105,7 @@
     "@types/webcola": "^3.2.0",
     "@types/winston": "^2.3.3",
     "@types/ws": "^3.2.1",
+    "@types/xmldoc": "^1.1.2",
     "@types/youtube": "0.0.31",
     "babel-cli": "^6.26.0",
     "babel-preset-env": "^1.6.1",
@@ -183,7 +184,8 @@
     "webpack": "^3.10.0",
     "winston": "^2.4.0",
     "ws": "^3.2.0",
-    "xhr": "^2.4.0"
+    "xhr": "^2.4.0",
+    "xmldoc": "^1.1.0"
   },
   "browser": {
     "request": "xhr"
