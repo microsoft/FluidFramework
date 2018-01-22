@@ -77,7 +77,7 @@ export async function run<T extends IResources>(
     await resources.dispose();
 }
 
-async function runTracked<T extends IResources>(
+export async function runTracked<T extends IResources>(
     config: nconf.Provider,
     producer: utils.kafkaProducer.IProducer,
     group: string,
@@ -110,7 +110,7 @@ async function runTracked<T extends IResources>(
         winston.error(error);
     });
 
-    return runError ? Promise.resolve() : Promise.reject(runError);
+    return runError ? Promise.reject(runError) : Promise.resolve();
 }
 
 /**
