@@ -95,7 +95,8 @@ async function runTracked<T extends IResources>(
         winston.error(error);
     });
 
-    // Run the service
+    // Run the service. The return result is null if run ran to completion. Or the error itself. We await on it
+    // so that we won't send the leave message until the run completes.
     const runError = await run(config, resourceFactory, runnerFactory).then(() => null, (error) => error);
 
     // Notify of the leave

@@ -20,8 +20,8 @@ export class DocumentLambda implements IPartitionLambda {
     // Need to understand what retry logic looks like
 
     public handler(message: utils.kafkaConsumer.IMessage): void {
-        this.contextManager.setMaxOffset(message.offset);
         this.handlerCore(message);
+        this.contextManager.setOffset(message.offset);
     }
 
     private handlerCore(kafkaMessage: utils.kafkaConsumer.IMessage): void {
