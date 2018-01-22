@@ -16,7 +16,7 @@ class TestContext implements IContext {
     }
 }
 
-describe("DocumentRouter", () => {
+describe("document-router", () => {
     describe("Plugin", () => {
         const defaultConfig = {
             documentLambda: path.join(__dirname, "../testUtils/testDocumentLambda"),

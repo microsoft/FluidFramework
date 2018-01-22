@@ -2,39 +2,54 @@ import * as assert from "assert";
 import { EventEmitter } from "events";
 import { IContext } from "../kafka-service/lambdas";
 
-export class DocumentContext implements IContext {
-    private events = new EventEmitter();
-    private offsetInternal: number;
-    private maxOffsetInternal: number;
+export class DocumentContext extends EventEmitter implements IContext {
+    // We track two offsets - head and tail. Head represents the largest offset related to this document we
+    // have seen. Tail represents the last checkpointed offset. When head and tail match we have fully checkpointed
+    // the document.
+    private tailInternal: number;
+    private headInternal: number;
 
-    public get maxOffset(): number {
-        return this.maxOffsetInternal;
+    constructor(head: number, tail: number) {
+        super();
+
+        assert(head > tail);
+        this.headInternal = head;
+        this.tailInternal = tail;
     }
 
-    public get offset(): number {
-        return this.offsetInternal;
+    public get head(): number {
+        return this.headInternal;
     }
 
-    public setMaxOffset(offset: number) {
-        assert(this.maxOffset === undefined || offset > this.maxOffset);
-        this.maxOffsetInternal = offset;
+    public get tail(): number {
+        return this.tailInternal;
+    }
+
+    /**
+     * Returns whether or not there is pending work in flight - i.e. the head and tail are not equal
+     */
+    public hasPendingWork(): boolean {
+        return this.headInternal !== this.tailInternal;
+    }
+
+    /**
+     * Updates the head offset for the context.
+     */
+    public setHead(head: number) {
+        assert(head > this.head);
+        this.headInternal = head;
     }
 
     public checkpoint(offset: number) {
-        assert(this.offsetInternal === undefined || offset > this.offsetInternal);
-        if (this.offsetInternal !== offset) {
-            // Need to broadcast to some context manager that it changed and should eval whether it can propagate
-            this.offsetInternal = offset;
-            this.events.emit("checkpoint", this);
-        }
+        // Assert offset is between the current tail and head
+        assert(offset > this.tail && offset <= this.head);
+
+        // Update the tail and broadcast the checkpoint
+        this.tailInternal = offset;
+        this.emit("checkpoint", this);
     }
 
     public error(error: any, restart: boolean) {
-        // TODO implement close
-    }
-
-    public addListener(event: "checkpoint", callback: (...args: any[]) => void)
-    public addListener(event: string, callback: (...args: any[]) => void) {
-        this.events.on(event, callback);
+        this.emit("error", error, restart);
     }
 }

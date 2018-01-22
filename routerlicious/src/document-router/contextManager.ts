@@ -1,36 +1,68 @@
+import * as assert from "assert";
+import { EventEmitter } from "events";
 import { IContext } from "../kafka-service/lambdas";
 import { DocumentContext } from "./documentContext";
 
-// Maybe I should merge the context into the document
+// Constant representing the previous checkpointed offset
+const LastCheckpointedOffset = -1;
 
-export class DocumentContextManager {
+/**
+ * The DocumentContextManager manages a set of created DocumentContexts and computes an aggregate checkpoint offset
+ * from them.
+ */
+export class DocumentContextManager extends EventEmitter {
     private contexts: DocumentContext[] = [];
-    private offset: number;
+
+    // Head and tail represent our processing position of the queue. Head is the latest message seen and
+    // tail is the last message processed
+    private head = LastCheckpointedOffset;
+    private tail = LastCheckpointedOffset;
+
+    // Offset represents the last offset checkpointed
+    private checkpointOffset = LastCheckpointedOffset;
 
     constructor(private partitionContext: IContext) {
+        super();
     }
 
-    public trackContext(context: DocumentContext) {
+    public createContext(offset: number): DocumentContext {
+        // Contexts should only be created within the processing range of the manager
+        assert(offset > this.tail && offset <= this.head);
+
+        // Create the new context and register for listeners on it
+        const context = new DocumentContext(offset, this.checkpointOffset);
         this.contexts.push(context);
         context.addListener("checkpoint", () => this.updateCheckpoint());
+        context.addListener("error", (error, restart) => this.emit("error", error, restart));
+        return context;
     }
 
-    public setOffset(value: number) {
-        this.offset = value;
+    public setHead(head: number) {
+        assert(head > this.head, `${head} > ${this.head}`);
+        this.head = head;
+    }
+
+    public setTail(tail: number) {
+        assert(tail > this.tail && tail <= this.head, `${tail} > ${this.tail} && ${tail} <= ${this.head}`);
+        this.tail = tail;
         this.updateCheckpoint();
     }
 
     private updateCheckpoint() {
-        let offset = this.offset;
+        // Set the starting offset at the tail. Contexts can then lower that offset based on their positions.
+        let offset = this.tail;
         this.contexts.forEach((context) => {
-            // Adjust context if document is not caught up
-            if (context.offset !== undefined && context.offset !== context.maxOffset) {
-                offset = Math.min(offset, context.offset);
+            // Utilize the tail of the context if there is still pending work. If there isn't pending work then we
+            // are fully caught up
+            if (context.hasPendingWork()) {
+                offset = Math.min(offset, context.tail);
             }
         });
 
-        if (offset !== undefined) {
+        // Checkpoint once the offset has changed
+        if (this.checkpointOffset !== offset) {
             this.partitionContext.checkpoint(offset);
+            this.checkpointOffset = offset;
         }
     }
 }

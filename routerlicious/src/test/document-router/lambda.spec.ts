@@ -44,7 +44,7 @@ class TestContext implements IContext {
     }
 }
 
-describe("DocumentRouter", () => {
+describe("document-router", () => {
     describe("Lambda", () => {
         let testModule: ITestLambdaModule;
         let factory: IPartitionLambdaFactory;
