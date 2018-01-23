@@ -4,6 +4,11 @@
     {{/styles}}
 
     {{$content}}
+        <div id="node-form">
+            <input class="node-id-input" type="number" name="node_id_1" value=1>
+            <br>
+            <button class="add-node-button" type="button">Add Node</button>
+        </div>
     {{/content}}
 
     {{$scripts}}

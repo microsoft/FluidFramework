@@ -1,14 +1,17 @@
+// tslint:disable
+
 import * as JsDiff from "diff";
 import * as path from "path";
 import * as random from "random-js";
+import * as fs from "fs";
 import { findRandomWord } from "../merge-tree-utils";
 import * as Collections from "./collections";
 import * as MergeTree from "./mergeTree";
 import * as ops from "./ops";
 import * as Properties from "./properties";
 import * as Text from "./text";
-
-// tslint:disable
+import * as Xmldoc from "xmldoc";
+import { insertOverlayNode, OverlayNodePosition } from "./overlayTree";
 
 function clock() {
     return process.hrtime();
@@ -1465,5 +1468,34 @@ export class DocumentTree {
         return new DocumentTree("box", DocumentTree.generateContent(rowProbability));
     }
 }
+
+function insertElm(elm: Xmldoc.XmlElement, parentId: string, client: MergeTree.Client) {
+    let elmProps = Properties.createMap<any>();
+    elmProps["XMLattributes"] = elm.attr;
+    let elmId = insertOverlayNode(client, elm.name,
+        OverlayNodePosition.Append, elmProps, parentId);
+
+    for (let child of elm.children) {
+        insertElm(child, elmId, client);
+    }
+    if (elm.val) {
+        insertOverlayNode(client, "Text", OverlayNodePosition.Prepend,
+            undefined, elmId);
+    }
+}
+
+function testOverlayTree() {
+    const xfilename = path.join(__dirname, "../../public/literature", "test.xml");
+    let xmlString = fs.readFileSync(xfilename, "utf8");
+    let xmldoc = new Xmldoc.XmlDocument(xmlString);
+    let props = Properties.createMap<any>();
+    props["XMLattributes"] = xmldoc.attr;
+    let client = new MergeTree.Client("");
+    let rootId = insertOverlayNode(client, "root",
+        OverlayNodePosition.Root, props);
+    insertElm(xmldoc, rootId, client);
+}
+
+testOverlayTree();
 
 // DocumentTree.test1();

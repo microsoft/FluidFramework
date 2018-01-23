@@ -4,9 +4,7 @@ import { ISet } from "../data-types";
  * Collaborative graph interface
  */
 export interface IGraph {
-    /**
-     * Retrieves the cell value.
-     */
+
     getVertices(): ISet<any>;
 
     getEdges(): ISet<any>;

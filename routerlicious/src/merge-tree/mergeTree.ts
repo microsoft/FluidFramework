@@ -2461,6 +2461,8 @@ export class MergeTree {
     pendingSegments: Collections.List<SegmentGroup>;
     segmentsToScour: Collections.Heap<LRUSegment>;
     // TODO: change this to ES6 map; add remove on segment remove
+    // for now assume only markers have ids and so point directly at the Segment 
+    // if we need to have pointers to non-markers, we can change to point at local refs
     idToSegment = Properties.createMap<Segment>();
     clientIdToBranchId: number[] = [];
     localBranchId = 0;
