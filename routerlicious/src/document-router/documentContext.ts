@@ -51,7 +51,6 @@ export class DocumentContext extends EventEmitter implements IContext {
     }
 
     public checkpoint(offset: number) {
-        console.log(`DocumentContext.checkpoint(${offset}) - ${this.head} ${this.tail}`);
         // Assert offset is between the current tail and head
         assert(offset > this.tail && offset <= this.head);
 
