@@ -11,6 +11,9 @@ export class DocumentLambda implements IPartitionLambda {
 
     constructor(private factory: IPartitionLambdaFactory, private config: Provider, context: IContext) {
         this.contextManager = new DocumentContextManager(context);
+        this.contextManager.on("error", (error, restart) => {
+            context.error(error, restart);
+        });
     }
 
     public handler(message: utils.kafkaConsumer.IMessage): void {

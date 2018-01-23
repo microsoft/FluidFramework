@@ -6,6 +6,8 @@ import * as utils from "../../utils";
 
 export class TestLambda implements IPartitionLambda {
     private documentId: string;
+    private failHandler = false;
+    private throwHandler = false;
 
     constructor(config: Provider, private context: IContext) {
         this.documentId = config.get("documentId");
@@ -15,12 +17,28 @@ export class TestLambda implements IPartitionLambda {
     public handler(message: utils.kafkaConsumer.IMessage): void {
         const sequencedMessage = JSON.parse(message.value) as core.ISequencedOperationMessage;
         assert.equal(this.documentId, sequencedMessage.documentId);
-        this.context.checkpoint(message.offset);
+
+        if (this.failHandler) {
+            this.context.error("Test failure", true);
+        } else if (this.throwHandler) {
+            throw "Test Error";
+        } else {
+            this.context.checkpoint(message.offset);
+        }
+    }
+
+    public setThrowExceptionInHandler(value: boolean) {
+        this.throwHandler = value;
+    }
+
+    public setFailHandlers(value: boolean) {
+        this.failHandler = value;
     }
 }
 
 export class TestLambdaFactory implements IPartitionLambdaFactory {
     public lambdas: TestLambda[] = [];
+    public disposed = false;
 
     public async create(config: Provider, context: IContext): Promise<IPartitionLambda> {
         const lambda = new TestLambda(config, context);
@@ -29,7 +47,20 @@ export class TestLambdaFactory implements IPartitionLambdaFactory {
     }
 
     public async dispose(): Promise<void> {
+        this.disposed = true;
         return;
+    }
+
+    public setThrowExceptionInHandler(value: boolean) {
+        for (const lambda of this.lambdas) {
+            lambda.setThrowExceptionInHandler(value);
+        }
+    }
+
+    public setFailHandlers(value: boolean) {
+        for (const lambda of this.lambdas) {
+            lambda.setFailHandlers(value);
+        }
     }
 }
 
@@ -37,12 +68,9 @@ export function create(config: Provider): IPartitionLambdaFactory {
     return new TestLambdaFactory();
 }
 
-export const id = "test-lambda";
-
 export interface ITestLambdaModule {
     create: () => TestLambdaFactory;
     factories: TestLambdaFactory[];
-    id: string;
 }
 
 export function createTestModule(): ITestLambdaModule {
@@ -54,6 +82,5 @@ export function createTestModule(): ITestLambdaModule {
             return factory;
         },
         factories,
-        id: "test-lambda",
     };
 }

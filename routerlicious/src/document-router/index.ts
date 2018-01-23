@@ -11,8 +11,3 @@ export async function create(config: Provider): Promise<IPartitionLambdaFactory>
 
     return new DocumentLambdaFactory(factory);
 }
-
-// This probably needs to be a function off of something else - that way the inner lambda
-// can return something custom
-
-export const id = "document-router";
