@@ -9,38 +9,44 @@ import { DocumentContext } from "./documentContext";
 export class DocumentPartition {
     private q: AsyncQueue<utils.kafkaConsumer.IMessage>;
     private lambdaP: Promise<IPartitionLambda>;
+    private corrupt = false;
 
     constructor(factory: IPartitionLambdaFactory, config: Provider, id: string, public context: DocumentContext) {
         const clonedConfig = _.cloneDeep((config as any).get());
         clonedConfig.documentId = id;
         const documentConfig = new Provider({}).defaults(clonedConfig).use("memory");
+
+        // Create the lambda to handle the document messages
         this.lambdaP = factory.create(documentConfig, context);
+        this.lambdaP.catch((error) => {
+            context.error(error, true);
+            this.q.kill();
+        });
 
         this.q = queue((message: utils.kafkaConsumer.IMessage, callback) => {
-            this.processCore(message).then(
-                () => {
-                    callback();
-                },
-                (error) => {
+            winston.verbose(`${message.topic}:${message.partition}@${message.offset}`);
+            this.lambdaP.then((lambda) => {
+                try {
+                    if (!this.corrupt) {
+                        lambda.handler(message);
+                    } else {
+                        // Until we can dead letter - simply checkpoint as handled
+                        this.context.checkpoint(message.offset);
+                    }
+                } catch (error) {
                     // TODO dead letter queue for bad messages, etc... when the lambda is throwing an exception
+                    // for now we will simply continue on to keep the queue flowing
                     winston.error("Error processing partition message", error);
-                    callback(error);
-                });
-        }, 1);
+                    this.corrupt = true;
+                }
 
-        // Relay any processing errors back to the parent context
-        this.q.error = (error) => {
-            this.context.error(error, true);
-        };
+                // handle the next message
+                callback();
+            });
+        }, 1);
     }
 
     public process(message: utils.kafkaConsumer.IMessage) {
         this.q.push(message);
-    }
-
-    private async processCore(message: utils.kafkaConsumer.IMessage): Promise<void> {
-        winston.verbose(`${message.topic}:${message.partition}@${message.offset}`);
-        const lambda = await this.lambdaP;
-        lambda.handler(message);
     }
 }

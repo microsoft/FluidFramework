@@ -113,7 +113,7 @@ describe("document-router", () => {
                 });
             });
 
-            it("Should emit an error on lambda exception", async () => {
+            it("Should skip future messages after lambda exception (in future will dead letter queue)", async () => {
                 const totalMessages = 10;
 
                 for (let i = 0; i < totalMessages; i++) {
@@ -126,16 +126,28 @@ describe("document-router", () => {
                 // Switch on the flag to fail future requests
                 testModule.factories.forEach((testFactory) => testFactory.setThrowExceptionInHandler(true));
 
+                for (let i = 0; i < totalMessages; i++) {
+                    const message = defaultMessageFactory.create();
+                    const kafkaMessage = kafkaMessageFactory.sequenceMessage(message, "test");
+                    lambda.handler(kafkaMessage);
+                }
+                await context.waitForOffset(kafkaMessageFactory.getHeadOffset("test"));
+                assert.equal(testModule.factories[0].lambdas[0].handleCalls, totalMessages + 1);
+            });
+
+            it("Should emit an error on lambda creation exception", async () => {
                 // And trigger a new message that will fail
                 return new Promise<void>((resolve, reject) => {
+                    testModule.factories[0].setFailCreateLambda(true);
+
                     context.on("error", (error, restart) => {
                         assert.ok(error);
                         assert.ok(restart);
                         resolve();
                     });
 
-                    // Send the message that should fail
-                    const kafkaMessage = kafkaMessageFactory.sequenceMessage(defaultMessageFactory.create(), "test");
+                    const message = defaultMessageFactory.create();
+                    const kafkaMessage = kafkaMessageFactory.sequenceMessage(message, "test");
                     lambda.handler(kafkaMessage);
                 });
             });

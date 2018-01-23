@@ -5,6 +5,8 @@ import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "../../kafka
 import * as utils from "../../utils";
 
 export class TestLambda implements IPartitionLambda {
+    public handleCalls = 0;
+
     private documentId: string;
     private failHandler = false;
     private throwHandler = false;
@@ -15,6 +17,7 @@ export class TestLambda implements IPartitionLambda {
     }
 
     public handler(message: utils.kafkaConsumer.IMessage): void {
+        this.handleCalls++;
         const sequencedMessage = JSON.parse(message.value) as core.ISequencedOperationMessage;
         assert.equal(this.documentId, sequencedMessage.documentId);
 
@@ -39,16 +42,25 @@ export class TestLambda implements IPartitionLambda {
 export class TestLambdaFactory implements IPartitionLambdaFactory {
     public lambdas: TestLambda[] = [];
     public disposed = false;
+    private failCreatelambda = false;
 
     public async create(config: Provider, context: IContext): Promise<IPartitionLambda> {
-        const lambda = new TestLambda(config, context);
-        this.lambdas.push(lambda);
-        return lambda;
+        if (this.failCreatelambda) {
+            return Promise.reject("Test failure");
+        } else {
+            const lambda = new TestLambda(config, context);
+            this.lambdas.push(lambda);
+            return lambda;
+        }
     }
 
     public async dispose(): Promise<void> {
         this.disposed = true;
         return;
+    }
+
+    public setFailCreateLambda(value: boolean) {
+        this.failCreatelambda = value;
     }
 
     public setThrowExceptionInHandler(value: boolean) {
