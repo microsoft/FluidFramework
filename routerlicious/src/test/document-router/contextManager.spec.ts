@@ -67,7 +67,7 @@ describe("document-router", () => {
                 context0.setHead(12);
                 context0.checkpoint(0);
                 testContextManager.setTail(12);
-                assert.equal(testContext.offset, -1);
+                assert.equal(testContext.offset, 0);
 
                 // New message and checkpoint the second message at the initial message.
                 // Overall checkpoint still unaffected
@@ -75,7 +75,7 @@ describe("document-router", () => {
                 context1.setHead(15);
                 context1.checkpoint(5);
                 testContextManager.setTail(15);
-                assert.equal(testContext.offset, -1);
+                assert.equal(testContext.offset, 0);
 
                 // Checkpoint the third context at its head - this should have the checkpoint be at the 0th
                 // context's tail since it's the earliest
@@ -94,6 +94,32 @@ describe("document-router", () => {
                 // Move the second context to the head. This will make the manager's offset take over
                 context1.checkpoint(15);
                 assert.equal(testContext.offset, 20);
+            });
+
+            it("Should correctly compute the checkpointed offset after contexts switch pending work state", () => {
+                // Create an initial context
+                testContextManager.setHead(0);
+                const context = testContextManager.createContext(0);
+                testContextManager.setTail(0);
+
+                // Checkpoint the main context at a later point - having it no longer have pending work
+                testContextManager.setHead(12);
+                context.setHead(12);
+                context.checkpoint(12);
+                testContextManager.setTail(12);
+
+                // Move the overall offsets - context having no pending work will have it not affect the offset
+                // computation
+                testContextManager.setHead(20);
+                testContextManager.setTail(20);
+                assert.equal(testContext.offset, 20);
+
+                // Update context's head. This will transition it from no work to having pending work (the new head
+                // at offset 25).
+                testContextManager.setHead(25);
+                context.setHead(25);
+                testContextManager.setTail(25);
+                assert.equal(testContext.offset, 24);
             });
 
             it("Should ignore contexts without pending work", () => {

@@ -15,7 +15,7 @@ describe("document-router", () => {
         let testContext: DocumentContext;
 
         beforeEach(async () => {
-            testContext = new DocumentContext(0, -1);
+            testContext = new DocumentContext(0);
         });
 
         describe(".setHead", () => {
