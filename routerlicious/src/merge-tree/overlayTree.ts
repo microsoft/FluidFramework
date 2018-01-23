@@ -10,13 +10,15 @@ export enum OverlayNodePosition {
     Root
 }
 
-let onodeTypeKey = "onodeType";
+export let onodeTypeKey = "onodeType";
 
 function createTreeMarkerOps(beginMarkerPos: MergeLib.IMarkerPosition, endMarkerPos: MergeLib.IMarkerPosition,
     id: string, nodeType: string, beginMarkerProps?: MergeLib.PropertySet) {
     let endMarkerProps = MergeLib.createMap<any>();
     endMarkerProps[MergeLib.reservedMarkerIdKey] = "end-" + id;
     endMarkerProps[MergeLib.reservedRangeLabelsKey] = ["onode"];
+    endMarkerProps[onodeTypeKey] = nodeType;
+    
     if (!beginMarkerProps) {
         beginMarkerProps = MergeLib.createMap<any>();
     }
@@ -41,7 +43,11 @@ function createTreeMarkerOps(beginMarkerPos: MergeLib.IMarkerPosition, endMarker
 
 let idSuffix = 0;
 function makeId(client: MergeLib.Client) {
-    return `${client.longClientId}Node${idSuffix++}`;
+    let longClientId = client.longClientId;
+    if (!longClientId) {
+        longClientId = "";
+    }
+    return `${longClientId}Node${idSuffix++}`;
 }
 
 function endIdFromId(id: string) {

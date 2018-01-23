@@ -11,7 +11,7 @@ import * as ops from "./ops";
 import * as Properties from "./properties";
 import * as Text from "./text";
 import * as Xmldoc from "xmldoc";
-import { insertOverlayNode, OverlayNodePosition } from "./overlayTree";
+import { insertOverlayNode, OverlayNodePosition, onodeTypeKey } from "./overlayTree";
 
 function clock() {
     return process.hrtime();
@@ -1172,19 +1172,22 @@ if (chktst) {
 let testPack = TestPack();
 const filename = path.join(__dirname, "../../public/literature", "pp.txt");
 
+let clientServerTest = false;
 let ppTest = true;
 let branch = true;
-if (ppTest) {
-    if (branch) {
-        testPack.clientServerBranch(filename, 100000);
+if (clientServerTest) {
+    if (ppTest) {
+        if (branch) {
+            testPack.clientServerBranch(filename, 100000);
+        } else {
+            testPack.clientServer(filename, 100000);
+        }
     } else {
-        testPack.clientServer(filename, 100000);
-    }
-} else {
-    if (branch) {
-        testPack.clientServerBranch(undefined, 100000);
-    } else {
-        testPack.clientServer(undefined, 100000);
+        if (branch) {
+            testPack.clientServerBranch(undefined, 100000);
+        } else {
+            testPack.clientServer(undefined, 100000);
+        }
     }
 }
 
@@ -1469,31 +1472,81 @@ export class DocumentTree {
     }
 }
 
-function insertElm(elm: Xmldoc.XmlElement, parentId: string, client: MergeTree.Client) {
+function insertElm(elm: Xmldoc.XmlElement, client: MergeTree.Client, parentId?: string) {
     let elmProps = Properties.createMap<any>();
-    elmProps["XMLattributes"] = elm.attr;
-    let elmId = insertOverlayNode(client, elm.name,
-        OverlayNodePosition.Append, elmProps, parentId);
-
-    for (let child of elm.children) {
-        insertElm(child, elmId, client);
+    if (elm.attr) {
+        elmProps["XMLattributes"] = elm.attr;
     }
-    if (elm.val) {
-        insertOverlayNode(client, "Text", OverlayNodePosition.Prepend,
-            undefined, elmId);
+    let nodePos = OverlayNodePosition.Append;
+    if (!parentId) {
+        nodePos = OverlayNodePosition.Root;
+    }
+    let elmId = insertOverlayNode(client, elm.name, nodePos,
+        elmProps, parentId);
+    if (elm.children) {
+        for (let child of elm.children) {
+            if (child.name) {
+                insertElm(child, client, elmId);
+            }
+        }
+    }
+    if (elm.val && /[^\s]/.test(elm.val)) {
+        client.insertTextMarkerRelative(elm.val, { id: elmId });
     }
 }
 
+function printOverlayTree(client: MergeTree.Client) {
+    let indentAmt = 0;
+    const indentDelta = 4;
+    let strbuf = "";
+    function attrString(attrs: Properties.PropertySet) {
+        let attrStrbuf = "";
+        if (attrs) {
+            for (let attr in attrs) {
+                attrStrbuf += ` ${attr}='${attrs[attr]}'`;
+            }
+        }
+        return attrStrbuf;
+    }
+    function leaf(segment: MergeTree.Segment) {
+        if (segment.getType() == MergeTree.SegmentType.Text) {
+            let textSegment = <MergeTree.TextSegment>segment;
+            strbuf += MergeTree.internedSpaces(indentAmt);
+            strbuf += textSegment.text;
+            strbuf += "\n";
+        } else {
+            let marker = <MergeTree.Marker>segment;
+            if (marker.behaviors & ops.MarkerBehaviors.RangeBegin) {
+                strbuf += MergeTree.internedSpaces(indentAmt);
+                let nodeType = marker.properties[onodeTypeKey];
+                strbuf += `<${nodeType}`;
+                let attrs = marker.properties["XMLattributes"];
+                if (attrs) {
+                    strbuf += attrString(attrs);
+                }
+                strbuf += ">\n";
+                indentAmt += indentDelta;
+            } else if (marker.behaviors & ops.MarkerBehaviors.RangeEnd) {
+                indentAmt -= indentDelta;
+                strbuf += MergeTree.internedSpaces(indentAmt);
+                let nodeType = marker.properties[onodeTypeKey];
+                strbuf += `</${nodeType}>\n`;
+            }
+        }
+        return true;
+    }
+    client.mergeTree.map({ leaf }, MergeTree.UniversalSequenceNumber,
+        client.getClientId());
+    console.log(strbuf);
+}
+
 function testOverlayTree() {
-    const xfilename = path.join(__dirname, "../../public/literature", "test.xml");
+    const xfilename = path.join(__dirname, "../../public/literature", "book.xml");
     let xmlString = fs.readFileSync(xfilename, "utf8");
     let xmldoc = new Xmldoc.XmlDocument(xmlString);
-    let props = Properties.createMap<any>();
-    props["XMLattributes"] = xmldoc.attr;
-    let client = new MergeTree.Client("");
-    let rootId = insertOverlayNode(client, "root",
-        OverlayNodePosition.Root, props);
-    insertElm(xmldoc, rootId, client);
+    let client = new MergeTree.Client("", { blockUpdateMarkers: true });
+    insertElm(xmldoc, client);
+    printOverlayTree(client);
 }
 
 testOverlayTree();

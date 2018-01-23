@@ -1808,7 +1808,7 @@ export class Client {
                 if (op.markerPos1) {
                     op.pos1 = this.mergeTree.posFromMarkerPos(op.markerPos1,
                         msg.referenceSequenceNumber, clid);
-                    if (op.pos1<0) {
+                    if (op.pos1 < 0) {
                         // TODO: event when marker id not found
                         return;
                     }
@@ -1917,6 +1917,13 @@ export class Client {
         for (let op of groupOp.ops) {
             switch (op.type) {
                 case ops.MergeTreeDeltaType.INSERT:
+                    if (op.markerPos1) {
+                        op.pos1 = this.mergeTree.posFromMarkerPos(op.markerPos1,
+                        UniversalSequenceNumber, this.getClientId());
+                        if (op.pos1<0) {
+                            break;
+                        }
+                    }
                     if (op.marker) {
                         this.insertMarkerLocal(op.pos1, op.marker.behaviors,
                             op.props);
@@ -2039,6 +2046,27 @@ export class Client {
         }
         if (this.verboseOps) {
             console.log(`insert local text ${text} pos ${pos} cli ${this.getLongClientId(clientId)} ref seq ${refSeq}`);
+        }
+    }
+
+    insertTextMarkerRelative(text: string, markerPos: IMarkerPosition, props?: Properties.PropertySet) {
+        let segWindow = this.mergeTree.getCollabWindow();
+        let clientId = segWindow.clientId;
+        let refSeq = segWindow.currentSeq;
+        let seq = this.getLocalSequenceNumber();
+        let clockStart;
+        if (this.measureOps) {
+            clockStart = clock();
+        }
+
+        this.mergeTree.insertTextMarkerRelative(markerPos, refSeq, clientId, seq, text, props);
+
+        if (this.measureOps) {
+            this.localTime += elapsedMicroseconds(clockStart);
+            this.localOps++;
+        }
+        if (this.verboseOps) {
+            console.log(`insert local text marker relative ${text} pos ${markerPos.id} cli ${this.getLongClientId(clientId)} ref seq ${refSeq}`);
         }
     }
 
@@ -2543,12 +2571,16 @@ export class MergeTree {
 
     startGroupOperation() {
         // TODO: assert undefined
-        this.transactionSegmentGroup = <SegmentGroup>{ segments: [] };
-        this.pendingSegments.enqueue(this.transactionSegmentGroup);
+        if (this.collabWindow.collaborating) {
+            this.transactionSegmentGroup = <SegmentGroup>{ segments: [] };
+            this.pendingSegments.enqueue(this.transactionSegmentGroup);
+        }
     }
 
     endGroupOperation() {
-        this.transactionSegmentGroup = undefined;
+        if (this.collabWindow.collaborating) {
+            this.transactionSegmentGroup = undefined;
+        }
     }
 
     localNetLength(segment: Segment) {
@@ -3441,6 +3473,22 @@ export class MergeTree {
         let marker = Marker.make(behaviors, props, seq, clientId);
         this.insert(pos, refSeq, clientId, seq, marker, (block, pos, refSeq, clientId, seq, marker) =>
             this.blockInsert(block, pos, refSeq, clientId, seq, marker));
+    }
+
+    insertTextMarkerRelative(markerPos: IMarkerPosition, refSeq: number, clientId: number, seq: number,
+        text: string, props?: Properties.PropertySet) {
+        let pos = this.posFromMarkerPos(markerPos, refSeq, clientId);
+        if (pos >= 0) {
+            let newSegment = TextSegment.make(text, props, seq, clientId);
+            // MergeTree.traceTraversal = true;
+            this.insert(pos, refSeq, clientId, seq, text, (block, pos, refSeq, clientId, seq, text) =>
+                this.blockInsert(this.root, pos, refSeq, clientId, seq, newSegment));
+            MergeTree.traceTraversal = false;
+            if (this.collabWindow.collaborating && MergeTree.options.zamboniSegments &&
+                (seq != UnassignedSequenceNumber)) {
+                this.zamboniSegments();
+            }
+        }
     }
 
     insertText(pos: number, refSeq: number, clientId: number, seq: number, text: string, props?: Properties.PropertySet) {
