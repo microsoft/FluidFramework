@@ -77,7 +77,7 @@ export async function run<T extends IResources>(
     await resources.dispose();
 }
 
-async function runTracked<T extends IResources>(
+export async function runTracked<T extends IResources>(
     config: nconf.Provider,
     producer: utils.kafkaProducer.IProducer,
     group: string,
@@ -95,7 +95,8 @@ async function runTracked<T extends IResources>(
         winston.error(error);
     });
 
-    // Run the service
+    // Run the service. The return result is null if run ran to completion. Or the error itself. We await on it
+    // so that we won't send the leave message until the run completes.
     const runError = await run(config, resourceFactory, runnerFactory).then(() => null, (error) => error);
 
     // Notify of the leave
@@ -109,7 +110,7 @@ async function runTracked<T extends IResources>(
         winston.error(error);
     });
 
-    return runError ? Promise.resolve() : Promise.reject(runError);
+    return runError ? Promise.reject(runError) : Promise.resolve();
 }
 
 /**

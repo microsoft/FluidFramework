@@ -7,7 +7,7 @@ services:
     deli:
         ports:
             - "5859:5858"
-        command: node --inspect=0.0.0.0:5858 dist/deli/index.js
+        command: node --inspect=0.0.0.0:5858 dist/kafka-service/index.js deli ../document-router/index.js
     paparazzi:
         ports:
             - "5860:5858"
@@ -15,7 +15,7 @@ services:
     scriptorium:
         ports:
             - "5861:5858"
-        command: node --inspect=0.0.0.0:5858 dist/scriptorium/index.js
+        command: node --inspect=0.0.0.0:5858 dist/kafka-service/index.js scriptorium ../scriptorium/index.js
     tmz:
         ports:
             - "5862:5858"
@@ -23,4 +23,4 @@ services:
     routemaster:
         ports:
             - "5863:5858"
-        command: node --inspect=0.0.0.0:5858 dist/kafka-service/index.js ../document-router/index.js
+        command: node --inspect=0.0.0.0:5858 dist/kafka-service/index.js routemaster ../document-router/index.js

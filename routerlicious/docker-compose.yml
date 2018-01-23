@@ -32,7 +32,7 @@ services:
             - redis
             - mongodb
             - kafka-rest
-        command: node dist/scriptorium/index.js
+        command: node dist/kafka-service/index.js scriptorium ../scriptorium/index.js
         environment:
             - DEBUG=routerlicious:*
             - NODE_ENV=development

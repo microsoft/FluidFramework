@@ -2,11 +2,20 @@ import * as nconf from "nconf";
 import * as utils from "../utils";
 
 export interface IContext {
+    /**
+     * Updates the checkpoint offset
+     */
     checkpoint(offset: number);
+
+    /**
+     * Closes the context with an error. The restart flag indicates whether the error is recoverable and the lambda
+     * should be restarted.
+     */
+    error(error: any, restart: boolean);
 }
 
 export interface IPartitionLambda {
-    handler(message: utils.kafkaConsumer.IMessage): Promise<any>;
+    handler(message: utils.kafkaConsumer.IMessage): void;
 }
 
 /**

@@ -1,88 +1,54 @@
-import * as assert from "assert";
 import { AsyncQueue, queue } from "async";
+import { EventEmitter } from "events";
 import { Provider } from "nconf";
 import * as winston from "winston";
-import { assertNotRejected } from "../core-utils";
 import * as utils from "../utils";
-import { CheckpointManager, ICheckpointStrategy } from "./checkpointManager";
+import { CheckpointManager } from "./checkpointManager";
+import { Context } from "./context";
 import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "./lambdas";
-
-// partition should have its own Lambda type thing. Have some way to create threads off the partition, etc...
-// private routers = new Map<string, Router>();
-
-// // TODO this type of breakout is pretty specific to us. We might want some kind of topic handler, etc...
-// const message = JSON.parse(rawMessage.value) as core.ISequencedOperationMessage;
-// if (message.type !== core.SequencedOperationType) {
-//     return;
-// }
-
-// // Create the router if it doesn't exist
-// if (!this.routers.has(message.documentId)) {
-//     const router = new Router(message.documentId /* possibly pass initialization context to router */);
-//     this.routers.set(message.documentId, router);
-// }
-
-// // Route the message
-// const router = this.routers.get(message.documentId);
-// router.route(message);
-
-class Context implements IContext {
-    private offset;
-
-    constructor(private checkpointManager: CheckpointManager) {
-    }
-
-    /**
-     * Updates the checkpoint for the partition
-     */
-    public checkpoint(offset: number) {
-        // We should only get increasing offsets from a context checkpoint
-        assert(this.offset === undefined || offset >= this.offset);
-
-        if (this.offset !== offset) {
-            this.checkpointManager.checkpoint(offset);
-        }
-    }
-}
 
 /**
  * Partition of a message stream. Manages routing messages to individual handlers. And then maintaining the
  * overall partition offset.
- *
- * I think I want these to maintain checkpoint information per partition
  */
-export class Partition {
+export class Partition extends EventEmitter {
     private q: AsyncQueue<utils.kafkaConsumer.IMessage>;
     private lambdaP: Promise<IPartitionLambda>;
     private checkpointManager: CheckpointManager;
-    private context: IContext;
+    private context: Context;
 
     constructor(
         id: number,
         factory: IPartitionLambdaFactory,
-        checkpointStrategy: ICheckpointStrategy,
         consumer: utils.kafkaConsumer.IConsumer,
         config: Provider) {
+        super();
 
-        this.checkpointManager = new CheckpointManager(id, checkpointStrategy, consumer);
+        this.checkpointManager = new CheckpointManager(id, consumer);
         this.context = new Context(this.checkpointManager);
-        this.lambdaP = factory.create(config, this.context);
+        this.context.on("error", (error: any, restart: boolean) => {
+            this.emit("error", error, restart);
+        });
 
-        // TODO I could have the lambda specify its checkpointing policy to me - and then auto rev when
-        // each promise returns
+        this.lambdaP = factory.create(config, this.context);
+        this.lambdaP.catch((error) => {
+            this.emit("error", error, true);
+        });
 
         // Create the incoming message queue
         this.q = queue((message: utils.kafkaConsumer.IMessage, callback) => {
-            const processedP = this.processCore(message, this.context).catch((error) => {
-                    // TODO dead letter queue for bad messages, etc...
-                    winston.error("Error processing partition message", error);
+            this.processCore(message, this.context).then(
+                () => {
+                    callback();
+                },
+                (error) => {
+                    callback(error);
                 });
-
-            // assert processedP only resolves
-            assertNotRejected(processedP).then(() => callback());
         }, 1);
 
-        // Need to expose error information
+        this.q.error = (error) => {
+            this.emit("error", error, true);
+        };
     }
 
     public process(rawMessage: utils.kafkaConsumer.IMessage) {
@@ -117,6 +83,6 @@ export class Partition {
     private async processCore(message: utils.kafkaConsumer.IMessage, context: IContext): Promise<void> {
         winston.verbose(`${message.topic}:${message.partition}@${message.offset}`);
         const lambda = await this.lambdaP;
-        return lambda.handler(message);
+        lambda.handler(message);
     }
 }

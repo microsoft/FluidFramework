@@ -1,4 +1,5 @@
 import * as assert from "assert";
+import { EventEmitter } from "events";
 import * as utils from "../../core-utils";
 import { IContext } from "../../kafka-service/lambdas";
 
@@ -7,7 +8,7 @@ interface IWaitOffset {
     value: number;
 }
 
-export class TestContext implements IContext {
+export class TestContext extends EventEmitter implements IContext {
     public offset: number = -1;
     private waits = new Array<IWaitOffset>();
 
@@ -24,6 +25,10 @@ export class TestContext implements IContext {
                 return true;
             }
         });
+    }
+
+    public error(error: any, restart: boolean) {
+        this.emit("error", error, restart);
     }
 
     public waitForOffset(value: number): Promise<void> {

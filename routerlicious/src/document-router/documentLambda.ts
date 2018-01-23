@@ -3,7 +3,6 @@ import * as core from "../core";
 import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "../kafka-service/lambdas";
 import * as utils from "../utils";
 import { DocumentContextManager } from "./contextManager";
-import { DocumentContext } from "./documentContext";
 import { DocumentPartition } from "./documentPartition";
 
 export class DocumentLambda implements IPartitionLambda {
@@ -12,41 +11,45 @@ export class DocumentLambda implements IPartitionLambda {
 
     constructor(private factory: IPartitionLambdaFactory, private config: Provider, context: IContext) {
         this.contextManager = new DocumentContextManager(context);
+        this.contextManager.on("error", (error, restart) => {
+            context.error(error, restart);
+        });
     }
 
-    // THOUGHT - does this maybe not even want to return a promise? It's just sync and we maintain a max outstanding
-    // message count? Maybe put in async just to do flow control, etc... or rely on inbound calls to keep things sync?
-    //
-    // Need to understand what retry logic looks like
-
-    public async handler(message: utils.kafkaConsumer.IMessage): Promise<any> {
-        this.contextManager.setMaxOffset(message.offset);
-        await this.handlerCore(message);
+    public handler(message: utils.kafkaConsumer.IMessage): void {
+        this.contextManager.setHead(message.offset);
+        this.handlerCore(message);
+        this.contextManager.setTail(message.offset);
     }
 
-    public async handlerCore(kafkaMessage: utils.kafkaConsumer.IMessage): Promise<any> {
+    private handlerCore(kafkaMessage: utils.kafkaConsumer.IMessage): void {
         const message = JSON.parse(kafkaMessage.value) as core.IMessage;
         if (!("documentId" in message)) {
             return;
         }
 
         const sequencedMessage = message as core.ISequencedOperationMessage;
+
+        // Create or update the DocumentPartition
+        let document: DocumentPartition;
         if (!this.documents.has(sequencedMessage.documentId)) {
             // Create a new context and begin tracking it
-            const documentContext = new DocumentContext();
-            this.contextManager.trackContext(documentContext);
+            const documentContext = this.contextManager.createContext(kafkaMessage.offset);
 
-            const document = new DocumentPartition(
+            document = new DocumentPartition(
                 this.factory,
                 this.config,
                 sequencedMessage.documentId,
                 documentContext);
             this.documents.set(sequencedMessage.documentId, document);
+        } else {
+            document = this.documents.get(sequencedMessage.documentId);
+            // setHead assumes it will always receive increasing offsets. So we need to split the creation case
+            // from the update case.
+            document.context.setHead(kafkaMessage.offset);
         }
 
         // Forward the message to the document queue and then resolve the promise to begin processing more messages
-        const document = this.documents.get(sequencedMessage.documentId);
-        document.context.setMaxOffset(kafkaMessage.offset);
         document.process(kafkaMessage);
     }
 }

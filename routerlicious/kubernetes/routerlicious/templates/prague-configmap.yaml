@@ -74,6 +74,10 @@ data:
                 "group": "{{ template "routemaster.fullname" . }}",
                 "topic": "{{ .Values.kafka.topics.deltas }}"
             },
+            "scriptorium": {
+                "group": "{{ template "scriptorium.fullname" . }}",
+                "topic": "{{ .Values.kafka.topics.deltas }}"
+            },
             "serviceGraph": {
                 "group": "{{ template "serviceGraph.fullname" . }}",
                 "topic": "{{ .Values.kafka.topics.deltas }}"

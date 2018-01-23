@@ -2,15 +2,8 @@ import { Provider } from "nconf";
 import * as winston from "winston";
 import { Deferred } from "../core-utils";
 import * as utils from "../utils";
-import { ICheckpointStrategy } from "./checkpointManager";
 import { IPartitionLambdaFactory } from "./lambdas";
 import { PartitionManager } from "./partitionManager";
-
-class CheckpointStrategy implements ICheckpointStrategy {
-    public shouldCheckpoint(offset: number): boolean {
-        return true;
-    }
-}
 
 export class KafkaRunner implements utils.IRunner {
     private deferred: Deferred<void>;
@@ -21,7 +14,10 @@ export class KafkaRunner implements utils.IRunner {
         private consumer: utils.kafkaConsumer.IConsumer,
         config: Provider) {
 
-        this.partitionManager = new PartitionManager(factory, new CheckpointStrategy(), consumer, config);
+        this.partitionManager = new PartitionManager(factory, consumer, config);
+        this.partitionManager.on("error", (error, restart) => {
+            this.deferred.reject(error);
+        });
     }
 
     public start(): Promise<void> {
@@ -51,13 +47,8 @@ export class KafkaRunner implements utils.IRunner {
         this.consumer.pause();
 
         // Mark ourselves done once the topic manager has stopped processing
-        this.partitionManager.stop().then(
-            () => {
-                this.deferred.resolve();
-            },
-            (error) => {
-                this.deferred.reject(error);
-            });
+        const stopP = this.partitionManager.stop();
+        this.deferred.resolve(stopP);
 
         return this.deferred.promise;
     }

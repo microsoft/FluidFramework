@@ -1,21 +1,42 @@
+import * as assert from "assert";
 import { EventEmitter } from "events";
 import * as core from "../../core";
 import * as utils from "../../utils";
+import { TestContext } from "./testContext";
 
-export interface IKafkaMessage {
-    offset: number;
-    value: Buffer;
-}
-
-class TestConsumer implements utils.kafkaConsumer.IConsumer {
+export class TestConsumer implements utils.kafkaConsumer.IConsumer {
     private emitter = new EventEmitter();
     private pausedQueue: string[] = null;
+    private failOnCommit = false;
+
+    // Leverage the context code for storing and tracking an offset
+    private context = new TestContext();
 
     constructor(public groupId: string, public topic: string) {
     }
 
-    public async commitOffset(data: any): Promise<void> {
-        return;
+    public setFailOnCommit(value: boolean) {
+        this.failOnCommit = value;
+    }
+
+    public async commitOffset(data: any[]): Promise<void> {
+        // For now we assume a single partition for the test consumer
+        assert(data.length === 1 && data[0].partition === 0);
+
+        if (this.failOnCommit) {
+            return Promise.reject("TestConsumer set to fail on commit");
+        } else {
+            this.context.checkpoint(data[0].offset);
+            return;
+        }
+    }
+
+    public getOffset(): number {
+        return this.context.offset;
+    }
+
+    public async waitForOffset(offset: number): Promise<void> {
+        return this.context.waitForOffset(offset);
     }
 
     public on(event: string, listener: Function): this {
@@ -46,6 +67,13 @@ class TestConsumer implements utils.kafkaConsumer.IConsumer {
         }
     }
 
+    /**
+     * Manually signal an error
+     */
+    public emitError(error: any) {
+        this.emitter.emit("error", error);
+    }
+
     public emit(message: any) {
         if (this.pausedQueue) {
             this.pausedQueue.push(message);
@@ -55,12 +83,12 @@ class TestConsumer implements utils.kafkaConsumer.IConsumer {
     }
 }
 
-class TestProducer implements utils.kafkaProducer.IProducer {
+export class TestProducer implements utils.kafkaProducer.IProducer {
     constructor(private kafka: TestKafka) {
     }
 
     public send(message: string, key: string): Promise<any> {
-        this.kafka.addMessage(message);
+        this.kafka.addMessage(message, key);
         return Promise.resolve();
     }
 
@@ -73,29 +101,34 @@ class TestProducer implements utils.kafkaProducer.IProducer {
  * Test Kafka implementation. Allows for the creation of a joined producer/consumer pair.
  */
 export class TestKafka {
-    private messages: IKafkaMessage[] = [];
+    private messages: utils.kafkaConsumer.IMessage[] = [];
     private offset = 0;
     private consumers: TestConsumer[] = [];
 
-    public createProducer(): utils.kafkaProducer.IProducer {
+    public createProducer(): TestProducer {
         return new TestProducer(this);
     }
 
-    public createConsumer(): utils.kafkaConsumer.IConsumer {
+    public createConsumer(): TestConsumer {
         const consumer = new TestConsumer("test", "test");
         this.consumers.push(consumer);
 
         return consumer;
     }
 
-    public getRawMessages(): IKafkaMessage[] {
+    public getRawMessages(): utils.kafkaConsumer.IMessage[] {
         return this.messages;
     }
 
-    public addMessage(message: string) {
-        const storedMessage = {
-            offset: this.offset++,
-            value: Buffer.from(message),
+    public addMessage(message: string, topic: string) {
+        const offset = this.offset++;
+        const storedMessage: utils.kafkaConsumer.IMessage = {
+            highWaterOffset: offset,
+            key: null,
+            offset,
+            partition: 0,
+            topic,
+            value: message,
         };
         this.messages.push(storedMessage);
 

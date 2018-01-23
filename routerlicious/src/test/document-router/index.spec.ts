@@ -2,17 +2,10 @@ import * as assert from "assert";
 import * as nconf from "nconf";
 import * as path from "path";
 import * as plugin from "../../document-router";
-import { IContext, IPartitionLambdaFactory } from "../../kafka-service/lambdas";
+import { IPartitionLambdaFactory } from "../../kafka-service/lambdas";
+import { TestContext } from "../testUtils/testContext";
 
-class TestContext implements IContext {
-    public offset;
-
-    public checkpoint(offset: number) {
-        this.offset = offset;
-    }
-}
-
-describe("DocumentRouter", () => {
+describe("document-router", () => {
     describe("Plugin", () => {
         const defaultConfig = {
             documentLambda: path.join(__dirname, "../testUtils/testDocumentLambda"),
@@ -24,12 +17,6 @@ describe("DocumentRouter", () => {
         beforeEach(async () => {
             config = (new nconf.Provider({})).defaults(defaultConfig).use("memory");
             factory = await plugin.create(config);
-        });
-
-        describe("id", () => {
-            it("Should provide a plugin id", () => {
-                assert.ok(plugin.id);
-            });
         });
 
         describe(".create", () => {

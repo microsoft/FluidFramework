@@ -1,73 +1,50 @@
 import * as assert from "assert";
-import * as nconf from "nconf";
-import { ICheckpointStrategy } from "../../kafka-service/checkpointManager";
-import { IPartitionLambda, IPartitionLambdaFactory } from "../../kafka-service/lambdas";
-import { Partition } from "../../kafka-service/partition";
-import * as utils from "../../utils";
-import { TestKafka } from "../testUtils";
-
-class TestLambda implements IPartitionLambda {
-    private lastOffset: number;
-
-    constructor(private factory: TestPartitionLambdaFactory) {
-    }
-
-    public handler(message: utils.kafkaConsumer.IMessage): Promise<any> {
-        assert.ok((this.lastOffset === undefined) || (this.lastOffset + 1 === message.offset));
-        this.lastOffset = message.offset;
-        this.factory.handledMessages++;
-        return Promise.resolve();
-    }
-}
-
-class CheckpointStrategy implements ICheckpointStrategy {
-    public shouldCheckpoint(offset: number): boolean {
-        return true;
-    }
-}
-
-class TestPartitionLambdaFactory implements IPartitionLambdaFactory {
-    public handledMessages = 0;
-
-    public create(config: nconf.Provider): Promise<IPartitionLambda> {
-        return Promise.resolve(new TestLambda(this));
-    }
-
-    public async dispose(): Promise<void> {
-        return;
-    }
-}
+import { Provider } from "nconf";
+import { PartitionManager } from "../../kafka-service/partitionManager";
+import { KafkaMessageFactory, TestConsumer, TestKafka } from "../testUtils";
+import { TestPartitionLambdaFactory } from "./testPartitionLambdaFactory";
 
 describe("kafka-service", () => {
     describe("PartitionManager", () => {
-        let partition: Partition;
-        let factory: TestPartitionLambdaFactory;
-        let kafka: TestKafka;
+        let testManager: PartitionManager;
+        let testFactory: TestPartitionLambdaFactory;
+        let testKafka: TestKafka;
+        let testConsumer: TestConsumer;
+        let kafkaMessageFactory: KafkaMessageFactory;
 
         beforeEach(() => {
-            const config = nconf.use("memory");
-            kafka = new TestKafka();
-            factory = new TestPartitionLambdaFactory();
-            partition = new Partition(0, factory, new CheckpointStrategy(), kafka.createConsumer(), config);
+            const config = (new Provider({})).defaults({}).use("memory");
+            testKafka = new TestKafka();
+            testFactory = new TestPartitionLambdaFactory();
+            testConsumer = testKafka.createConsumer();
+            testManager = new PartitionManager(testFactory, testConsumer, config);
+            kafkaMessageFactory = new KafkaMessageFactory();
         });
 
-        describe(".process()", () => {
-            it("Should be able to stop after starting", async () => {
-                const TotalMessages = 100;
-                for (let i = 0; i < TotalMessages; i++) {
-                    const message: utils.kafkaConsumer.IMessage = {
-                        highWaterOffset: TotalMessages,
-                        key: "test",
-                        offset: i,
-                        partition: 0,
-                        topic: "test",
-                        value: "test",
-                    };
-                    partition.process(message);
+        describe(".process", () => {
+            it("Should be able to stop after processing messages", async () => {
+                let messageCount = 10;
+                for (let i = 0; i < messageCount; i++) {
+                    testManager.process(kafkaMessageFactory.sequenceMessage({}, "test"));
                 }
 
-                // stop the partition to process all pending messages
-                await partition.stop();
+                await testManager.stop();
+
+                assert.equal(messageCount, testFactory.handleCount);
+            });
+
+            it("Should emit an error event if a partition encounters an error", async () => {
+                testFactory.setThrowHandler(true);
+                const errorP = new Promise<void>((resolve, reject) => {
+                    testManager.on("error", (error, restart) => {
+                        assert(error);
+                        assert(restart);
+                        resolve();
+                    });
+                });
+
+                testManager.process(kafkaMessageFactory.sequenceMessage({}, "test"));
+                await errorP;
             });
         });
     });

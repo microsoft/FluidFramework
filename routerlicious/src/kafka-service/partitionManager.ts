@@ -1,27 +1,22 @@
+import { EventEmitter } from "events";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import * as utils from "../utils";
-import { ICheckpointStrategy } from "./checkpointManager";
 import { IPartitionLambdaFactory } from "./lambdas";
 import { Partition } from "./partition";
-
-// Partition contains a collection of threads
-// Threads execute a lambda handler and in order
-// Thread maintains an execution context across call
-// Partition queries threads for how far completed they are
 
 /**
  * The PartitionManager is responsible for maintaining a list of partitions for the given Kafka topic.
  * It will route incoming messages to the appropriate partition for the messages.
  */
-export class PartitionManager {
+export class PartitionManager extends EventEmitter {
     private partitions = new Map<number, Partition>();
 
     constructor(
         private factory: IPartitionLambdaFactory,
-        private checkpointStrategy: ICheckpointStrategy,
         private consumer: utils.kafkaConsumer.IConsumer,
         private config: Provider) {
+        super();
     }
 
     public async stop(): Promise<void> {
@@ -42,9 +37,19 @@ export class PartitionManager {
             const newPartition = new Partition(
                 message.partition,
                 this.factory,
-                this.checkpointStrategy,
                 this.consumer,
                 this.config);
+
+            // Listen for error events to know when the partition has stopped processing due to an error
+            newPartition.on("error", (error, restart) => {
+                // For simplicity we will close the entire manager whenever any partition closes. A close primarily
+                // indicates that there was an error and this likely affects all partitions being managed (i.e.
+                // database write failed, connection issue, etc...).
+                // In the case that the restart flag is false and there was an error we will eventually need a way
+                // to signify that a partition is 'poisoned'.
+                this.emit("error", error, true);
+            });
+
             this.partitions.set(message.partition, newPartition);
         }
 
