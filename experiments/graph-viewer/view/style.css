@@ -1,0 +1,18 @@
+body {
+    touch-action: none;
+    margin: 0px 0px 0px 0px;
+    font-family: 'Segoe UI', sans-serif;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    position: absolute;
+  }
+  #content {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    bottom: 50px;
+    right: 0px;
+    z-index: 0;
+    background-color: darkgrey;
+  }
