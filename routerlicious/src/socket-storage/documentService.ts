@@ -84,14 +84,15 @@ export class DocumentService implements api.IDocumentService {
         id: string,
         version: resources.ICommit,
         connect: boolean,
-        encrypted: boolean): Promise<api.IDocumentResource> {
+        encrypted: boolean,
+        token?: string): Promise<api.IDocumentResource> {
         debug(`Connecting to ${id} - ${performanceNow()}`);
 
         if (!connect && !version) {
             return Promise.reject("Must specify a version if connect is set to false");
         }
 
-        const connectMessage: messages.IConnect = { id, privateKey: null, publicKey: null, encrypted };
+        const connectMessage: messages.IConnect = { id, privateKey: null, publicKey: null, encrypted, token };
 
         // If a version is specified we will load it directly - otherwise will query historian for the latest
         // version and then load it
@@ -127,7 +128,10 @@ export class DocumentService implements api.IDocumentService {
         // header *should* be enough to return the document. Pull it first as well as any pending delta
         // messages which should be taken into account before client logic.
 
-        const [header, connection, pendingDeltas] = await Promise.all([headerP, connectionP, pendingDeltasP]);
+        const [header, connection, pendingDeltas] = await Promise.all([headerP, connectionP, pendingDeltasP])
+            .catch((err) => {
+                return Promise.reject(err);
+            });
 
         debug(`Connected to ${id} - ${performanceNow()}`);
         let deltaConnection: api.IDocumentDeltaConnection;

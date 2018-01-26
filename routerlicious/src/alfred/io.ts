@@ -40,6 +40,11 @@ export function register(
             const profiler = winston.startTimer();
             connectionProfiler.done(`Client has requested to load ${message.id}`);
 
+            // TODO (auth): Call auth service here.
+            if (message.token) {
+                response("Not authorized", null);
+            }
+
             /**
              * NOTE: Should there be an extra check to verify that if 'encrypted' is false, the passed keys are empty?
              * Food for thought: what should the correct behavior be if someone requests an encrypted connection to a

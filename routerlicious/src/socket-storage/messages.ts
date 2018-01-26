@@ -13,6 +13,9 @@ export interface IConnect {
 
     // Flag indicating whether encryption has been requested
     encrypted: boolean;
+
+    // authorization token
+    token?: string;
 }
 
 /**

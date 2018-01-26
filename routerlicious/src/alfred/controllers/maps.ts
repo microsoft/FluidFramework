@@ -5,9 +5,11 @@ import * as agent from "../../agent";
 import { api, socketStorage, types } from "../../client-api";
 import { IValueChanged } from "../../data-types";
 
-async function loadDocument(id: string, version: resources.ICommit): Promise<api.Document> {
+async function loadDocument(id: string, version: resources.ICommit, token?: string): Promise<api.Document> {
     console.log("Loading in root document...");
-    const document = await api.load(id, { encrypted: false /* api.isUserLoggedIn() */ }, version);
+    const document = await api.load(id, { encrypted: false, token }, version).catch((err) => {
+        return Promise.reject(err);
+    });
 
     console.log("Document loaded");
     return document;
@@ -111,17 +113,17 @@ async function randomizeMap(map: types.IMap) {
     }, 1000);
 }
 
-export async function load(id: string, version: resources.ICommit, config: any, loadPartial: boolean) {
-    loadPartial ? loadCommit(id, version, config) : loadFull(id, version, config);
+export async function load(id: string, version: resources.ICommit, config: any, loadPartial: boolean, token?: string) {
+    loadPartial ? loadCommit(id, version, config) : loadFull(id, version, config, token);
 }
 
-function loadFull(id: string, version: resources.ICommit, config: any) {
+function loadFull(id: string, version: resources.ICommit, config: any, token?: string) {
     socketStorage.registerAsDefault(document.location.origin, config.blobStorageUrl, config.repository);
 
     $(document).ready(() => {
         // Bootstrap worker service.
         agent.registerWorker(config, "maps");
-        loadDocument(id, version).then(async (doc) => {
+        loadDocument(id, version, token).then(async (doc) => {
             // tslint:disable-next-line
             window["doc"] = doc;
 
@@ -129,6 +131,9 @@ function loadFull(id: string, version: resources.ICommit, config: any) {
 
             // Display the initial values and then listen for updates
             displayMap($("#mapViews"), null, root, null, doc);
+        }, (err) => {
+            // TODO (auth): Display an error page here.
+            console.log(err);
         });
     });
 }

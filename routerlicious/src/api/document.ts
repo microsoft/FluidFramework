@@ -120,7 +120,11 @@ export class Document {
 
         // Connect to the document
         const encryptedProperty = "encrypted";
-        const document = await service.connect(id, version, connect, options[encryptedProperty]);
+        const tknProperty = "token";
+        const document = await service.connect(id, version, connect, options[encryptedProperty], options[tknProperty]).
+            catch((err) => {
+                return Promise.reject(err);
+            });
         const returnValue = new Document(document, registry, service, options);
 
         // Load in distributed objects stored within the document

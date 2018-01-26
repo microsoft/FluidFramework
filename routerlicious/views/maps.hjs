@@ -15,7 +15,8 @@
             var config = {{{ config }}};
             var version = {{{ version }}};
             var loadPartial = {{{ loadPartial }}};
-            controller.maps.load("{{ id }}", version, config, loadPartial);
+            // TODO (auth): Replace this with an actual JWT token first. Then pass from tenant service.
+            controller.maps.load("{{ id }}", version, config, loadPartial, "SomeBadToken");
         </script>
     {{/scripts}}
 {{/layout}}
