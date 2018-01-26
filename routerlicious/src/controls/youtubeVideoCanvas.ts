@@ -3,14 +3,6 @@ import { api, types } from "../client-api";
 import * as ui from "../ui";
 import { YouTubeVideo } from "./youtubeVideo";
 
-// tslint:disable-next-line:no-namespace
-declare global {
-    // tslint:disable-next-line:interface-name
-    interface Window {
-        onYouTubeIframeAPIReady?: () => void;
-    }
-}
-
 /**
  * youtube video app
  */
@@ -40,10 +32,10 @@ export class YouTubeVideoCanvas extends ui.Component {
     }
 
     public onYouTubeIframeAPIReady() {
-        let player = new YT.Player("player", {
+        let player = new window.YT.Player("player", {
             height: 390,
             playerVars: {
-                autoplay: YT.AutoPlay.NoAutoPlay,
+                autoplay: 0, // YT.AutoPlay.NoAutoPlay
                 start: 0,
                 },
             videoId: this.youtubeIdParser("https://www.youtube.com/watch?v=-Of_yz-4iXs"),

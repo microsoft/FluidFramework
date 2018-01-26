@@ -106,7 +106,6 @@
     "@types/winston": "^2.3.3",
     "@types/ws": "^3.2.1",
     "@types/xmldoc": "^1.1.2",
-    "@types/youtube": "0.0.31",
     "babel-cli": "^6.26.0",
     "babel-preset-env": "^1.6.1",
     "browserify": "^14.1.0",

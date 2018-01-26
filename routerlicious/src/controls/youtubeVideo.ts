@@ -1,6 +1,15 @@
 import { types } from "../client-api";
 import * as ui from "../ui";
 
+// tslint:disable-next-line:no-namespace
+declare global {
+    // tslint:disable-next-line:interface-name
+    interface Window {
+        onYouTubeIframeAPIReady?: () => void;
+        YT: any;
+    }
+}
+
 class VideoState {
     public playing: boolean;
     public elapsedTime: number;
@@ -22,7 +31,7 @@ export class YouTubeVideo extends ui.Component {
     private videoMap: types.IMap;
     private videoMapView: types.IMapView;
 
-    constructor(element: HTMLDivElement, private videoPlayer: YT.Player,
+    constructor(element: HTMLDivElement, private videoPlayer: any,
                 private videoRoot: Promise<types.IMap>) {
         super(element);
 
@@ -47,16 +56,16 @@ export class YouTubeVideo extends ui.Component {
         });
 
         this.videoPlayer.addEventListener("onStateChange", (state) => {
-            let stateChange = state as YT.OnStateChangeEvent;
+            let stateChange = state as any;
             let localState = this.getState();
             switch (stateChange.data) {
-                case(YT.PlayerState.UNSTARTED): // -1
+                case(-1): // YT.PlayerState.UNSTARTED
                     break;
-                case(YT.PlayerState.CUED): // 5
+                case(5): // 5 YT.PlayerState.CUED
                     break;
-                case(YT.PlayerState.BUFFERING): // 3
+                case(3): // YT.PlayerState.BUFFERING
                     break;
-                case(YT.PlayerState.PAUSED): // 2
+                case(2): // YT.PlayerState.PAUSED
                     // Buffer Event
                     let incomingState = JSON.parse(this.videoMapView.get("state"));
                     if (Math.abs(localState.elapsedTime
@@ -66,7 +75,7 @@ export class YouTubeVideo extends ui.Component {
                             this.updateState();
                         }
                     break;
-                case(YT.PlayerState.PLAYING): // 1
+                case(1): // YT.PlayerState.PLAYING
                     this.updateState();
                     break;
                 default:
@@ -89,7 +98,7 @@ export class YouTubeVideo extends ui.Component {
     }
 
     private getState(): VideoState {
-        let playing = (this.videoPlayer.getPlayerState() === YT.PlayerState.PLAYING);
+        let playing = (this.videoPlayer.getPlayerState() as number === 1); // YT.PlayerState.PLAYING
         return new VideoState(playing, this.videoPlayer.getCurrentTime(), Date.now(), null);
     }
 
