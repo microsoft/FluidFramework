@@ -22,7 +22,7 @@
     "jsdom": "^11.5.1",
     "querystring": "^0.2.0",
     "request": "^2.83.0",
-    "routerlicious": "https://praguenpm.blob.core.windows.net/api/Release-192/routerlicious-0.1.0.tgz",
+    "routerlicious": "https://praguenpm.blob.core.windows.net/packages/routerlicious-0.1.1276.tgz",
     "webcola": "^3.3.6"
   },
   "devDependencies": {
