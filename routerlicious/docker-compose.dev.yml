@@ -21,3 +21,6 @@ services:
     service-graph:
         volumes:
             - .:/usr/src/server
+    riddler:
+        volumes:
+            - .:/usr/src/server

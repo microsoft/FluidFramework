@@ -12,7 +12,8 @@
         "collectionNames": {
             "deltas": "deltas",
             "documents": "documents",
-            "partitions": "partitions"
+            "partitions": "partitions",
+            "tenants": "tenants"
         }
     },
     "kafka": {
@@ -102,6 +103,10 @@
         "workerType": "random",
         "workerAckTimeMSec": 250,
         "onlyServer": false
+    },
+    "riddler": {
+        "port": 5000,
+        "key": "symmetric_key"
     },
     "redis": {
         "host": "redis",

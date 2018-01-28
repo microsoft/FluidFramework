@@ -75,6 +75,17 @@ services:
             - DEBUG=routerlicious:*
             - NODE_ENV=development
         restart: always
+    riddler:
+        build: .
+        ports:
+            - "5000:5000"
+        depends_on:
+            - mongodb
+        command: node dist/riddler/www.js
+        environment:
+            - DEBUG=routerlicious:*
+            - NODE_ENV=development
+        restart: always
     historian:
         image: prague.azurecr.io/historian:1011
         ports:
