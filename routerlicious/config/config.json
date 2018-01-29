@@ -44,6 +44,9 @@
             "send": "deltas"
         }
     },
+    "auth": {
+        "endpoint": "http://riddler:5000/api"
+    },
     "routemaster": {
         "topics": {
             "receive": "deltas",

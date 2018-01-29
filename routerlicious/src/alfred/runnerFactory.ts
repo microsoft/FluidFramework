@@ -38,7 +38,8 @@ export class AlfredResources implements utils.IResources {
         public mongoManager: utils.MongoManager,
         public port: any,
         public documentsCollectionName: string,
-        public metricClientConfig: any) {
+        public metricClientConfig: any,
+        public authEndpoint: string) {
 
         // Remove (mdaumi): Call just one library.
         this.webServerFactory = webSocketLibrary === "socket.io"
@@ -64,6 +65,7 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
         const producer = utils.kafkaProducer.create(kafkaLibrary, kafkaEndpoint, kafkaClientId, topic);
         const redisConfig = config.get("redis");
         const webSocketLibrary = config.get("alfred:webSocketLib");
+        const authEndpoint = config.get("auth:endpoint");
 
         // Database connection
         const mongoUrl = config.get("mongo:endpoint") as string;
@@ -78,7 +80,7 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
         let port = normalizePort(process.env.PORT || "3000");
 
         return new AlfredResources(config, producer, redisConfig, webSocketLibrary, historian, mongoManager,
-                                   port, documentsCollectionName, metricClientConfig);
+                                   port, documentsCollectionName, metricClientConfig, authEndpoint);
     }
 }
 
@@ -92,6 +94,7 @@ export class AlfredRunnerFactory implements utils.IRunnerFactory<AlfredResources
             resources.mongoManager,
             resources.producer,
             resources.documentsCollectionName,
-            resources.metricClientConfig);
+            resources.metricClientConfig,
+            resources.authEndpoint);
     }
 }

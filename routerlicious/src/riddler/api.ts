@@ -2,12 +2,6 @@ import { Router } from "express";
 import * as jwt from "jsonwebtoken";
 import * as utils from "../utils";
 
-interface IAuthenticatedUser {
-    user: any;
-    tenantid: string;
-    permission: string;
-}
-
 interface IDecodedToken {
     user: any;
     tenantid: string;
@@ -22,8 +16,8 @@ const t2 = "linkedin";
 tenantKeyMap[t1] = "secret_key";
 tenantKeyMap[t2] = "secret_key_2";
 
-async function verifyToken(token: string, hashKey: string): Promise<IAuthenticatedUser> {
-    return new Promise<IAuthenticatedUser>((resolve, reject) => {
+async function verifyToken(token: string, hashKey: string): Promise<utils.IAuthenticatedUser> {
+    return new Promise<utils.IAuthenticatedUser>((resolve, reject) => {
         jwt.verify(token, hashKey, (err, decoded: IDecodedToken) => {
             if (err) {
                 reject(err);
@@ -47,7 +41,7 @@ export function create(collectionName: string, mongoManager: utils.MongoManager,
      * Verifies the passed token and matches with DB.
      */
     router.post("/", (request, response, next) => {
-        verifyToken(request.body.token, hashKey).then((data: IAuthenticatedUser) => {
+        verifyToken(request.body.token, hashKey).then((data: utils.IAuthenticatedUser) => {
             response.status(200).json(data);
         }, (err) => {
             response.status(500).json(err);

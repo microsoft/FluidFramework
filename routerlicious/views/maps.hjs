@@ -15,8 +15,9 @@
             var config = {{{ config }}};
             var version = {{{ version }}};
             var loadPartial = {{{ loadPartial }}};
-            // TODO (auth): Replace this with an actual JWT token first. Then pass from tenant service.
-            controller.maps.load("{{ id }}", version, config, loadPartial, "SomeBadToken");
+            // TODO (auth): The token should come from the tenant service.
+            // var token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoidGFudmlyYXVtaUBnbWFpbC5jb20iLCJkYXRhIjp7fX0sInRlbmFudGlkIjoicHJhZ3VlIiwic2VjcmV0Ijoic2VjcmV0X2tleSIsInBlcm1pc3Npb24iOiJyZWFkOndyaXRlIiwiaWF0IjoxNTE3MTE5NTAxfQ.nh1Af21ZH69OPtn9vduhmdkNNxTuGU6XRFOfb5xQuO8";
+            controller.maps.load("{{ id }}", version, config, loadPartial);
         </script>
     {{/scripts}}
 {{/layout}}

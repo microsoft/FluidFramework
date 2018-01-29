@@ -15,10 +15,12 @@ export function register(
     mongoManager: utils.MongoManager,
     producer: utils.kafkaProducer.IProducer,
     documentsCollectionName: string,
-    metricClientConfig: any) {
+    metricClientConfig: any,
+    authEndpoint: string) {
 
     const throughput = new ThroughputCounter(winston.info);
     const metricLogger = agent.createMetricClient(metricClientConfig);
+    let authenticatedUser: utils.IAuthenticatedUser;
 
     webSocketServer.on("connection", (socket: core.IWebSocket) => {
         const connectionProfiler = winston.startTimer();
@@ -34,80 +36,94 @@ export function register(
             return sendP;
         }
 
-        // Note connect is a reserved socket.io word so we use connectDocument to represent the connect request
-        socket.on("connectDocument", (message: socketStorage.IConnect, response) => {
-            // Join the room first to ensure the client will start receiving delta updates
-            const profiler = winston.startTimer();
-            connectionProfiler.done(`Client has requested to load ${message.id}`);
-
-            // TODO (auth): Call auth service here.
-            if (message.token) {
-                response("Not authorized", null);
+        // Verify if the user is authenticated or not. For now we only verify if the token is present.
+        // TODO (auth): We should verify all connection request.
+        function checkAuth(message: socketStorage.IConnect): Promise<any> {
+            if (!message.token) {
+                return Promise.resolve(null);
+            } else {
+                return utils.verifyAuthToken(authEndpoint, message.token);
             }
+        }
 
+        // Note connect is a reserved socket.io word so we use connectDocument to represent the connect request
+        socket.on("connectDocument", async (message: socketStorage.IConnect, response) => {
+            // Join the room first to ensure the client will start receiving delta updates
             /**
              * NOTE: Should there be an extra check to verify that if 'encrypted' is false, the passed keys are empty?
              * Food for thought: what should the correct behavior be if someone requests an encrypted connection to a
              * document that mongoDB has marked as unencrypted (or vice-versa)?
              */
+            const authP = checkAuth(message);
+            authP.then((user: any) => {
+                if (user !== null) {
+                    authenticatedUser = user as utils.IAuthenticatedUser;
+                    winston.info(`User ${authenticatedUser.user.id} wants to access ${message.id}`);
+                    // TODO (auth): Do stuff with the authed user.
+                }
+                const profiler = winston.startTimer();
+                connectionProfiler.done(`Client has requested to load ${message.id}`);
+                const documentDetailsP = storage.getOrCreateDocument(
+                    mongoManager,
+                    documentsCollectionName,
+                    producer,
+                    message.id,
+                    message.privateKey,
+                    message.publicKey);
 
-            const documentDetailsP = storage.getOrCreateDocument(
-                mongoManager,
-                documentsCollectionName,
-                producer,
-                message.id,
-                message.privateKey,
-                message.publicKey);
+                documentDetailsP.then(
+                    (documentDetails) => {
+                        socket.join(message.id).then(() => {
+                            // Create and set a new client ID
+                            const clientId = moniker.choose();
+                            connectionsMap[clientId] = message.id;
 
-            documentDetailsP.then(
-                (documentDetails) => {
-                    socket.join(message.id).then(() => {
-                        // Create and set a new client ID
-                        const clientId = moniker.choose();
-                        connectionsMap[clientId] = message.id;
+                            // Broadcast the client connection message
+                            const rawMessage: core.IRawOperationMessage = {
+                                clientId: null,
+                                documentId: message.id,
+                                operation: {
+                                    clientSequenceNumber: -1,
+                                    contents: clientId,
+                                    encrypted: false,
+                                    encryptedContents: null,
+                                    referenceSequenceNumber: -1,
+                                    traces: [],
+                                    type: api.ClientJoin,
+                                },
+                                timestamp: Date.now(),
+                                type: core.RawOperationType,
+                                userId: null,
+                            };
+                            sendAndTrack(rawMessage);
 
-                        // Broadcast the client connection message
-                        const rawMessage: core.IRawOperationMessage = {
-                            clientId: null,
-                            documentId: message.id,
-                            operation: {
-                                clientSequenceNumber: -1,
-                                contents: clientId,
-                                encrypted: false,
-                                encryptedContents: null,
-                                referenceSequenceNumber: -1,
-                                traces: [],
-                                type: api.ClientJoin,
-                            },
-                            timestamp: Date.now(),
-                            type: core.RawOperationType,
-                            userId: null,
-                        };
-                        sendAndTrack(rawMessage);
+                            const parentBranch = documentDetails.value.parent ? documentDetails.value.parent.id : null;
 
-                        const parentBranch = documentDetails.value.parent ? documentDetails.value.parent.id : null;
-
-                        // And return the connection information to the client
-                        const connectedMessage: socketStorage.IConnected = {
-                            clientId,
-                            encrypted: documentDetails.value.privateKey ? true : false,
-                            existing: documentDetails.existing,
-                            parentBranch,
-                            privateKey: documentDetails.value.privateKey,
-                            publicKey: documentDetails.value.publicKey,
-                        };
-                        profiler.done(`Loaded ${message.id}`);
-                        response(null, connectedMessage);
-                    },
-                    (error) => {
-                        if (error) {
-                            return response(error, null);
-                        }
+                            // And return the connection information to the client
+                            const connectedMessage: socketStorage.IConnected = {
+                                clientId,
+                                encrypted: documentDetails.value.privateKey ? true : false,
+                                existing: documentDetails.existing,
+                                parentBranch,
+                                privateKey: documentDetails.value.privateKey,
+                                publicKey: documentDetails.value.publicKey,
+                            };
+                            profiler.done(`Loaded ${message.id}`);
+                            response(null, connectedMessage);
+                        },
+                        (error) => {
+                            if (error) {
+                                return response(error, null);
+                            }
+                        });
+                    }, (error) => {
+                        winston.error("Error fetching", error);
+                        response(error, null);
                     });
-                }, (error) => {
-                    winston.error("Error fetching", error);
-                    response(error, null);
-                });
+            }, (err) => {
+                winston.info(`Unautherized access to document ${message.id}. ${JSON.stringify(err)}`);
+                return response(`Unautherized access to document ${message.id}. ${JSON.stringify(err)}`, null);
+            });
         });
 
         // Message sent when a new operation is submitted to the router
