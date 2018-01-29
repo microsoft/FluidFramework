@@ -57,7 +57,7 @@ data:
             }
         },
         "auth": {
-            "endpoint": "http://{{ template "riddler.fullname" . }}/api",
+            "endpoint": "http://{{ template "riddler.fullname" . }}/api"
         },
         "routemaster": {
             "topics": {
