@@ -19,7 +19,7 @@ services:
         image: telegraf:latest
         container_name: telegraf
         ports:
-            - "8094: 8094"
+            - "8094:8094"
         links:
             - influxdb
         volumes:
