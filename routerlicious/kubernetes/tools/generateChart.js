@@ -61,6 +61,10 @@ serviceGraph:
   name: servicegraph
   replicas: 1
 
+riddler:
+  name: riddler
+  replicas: 1
+
 historian:
   externalUrl: http://prague-historian.westus2.cloudapp.azure.com
 

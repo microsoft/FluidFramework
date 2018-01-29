@@ -24,7 +24,8 @@ data:
             "collectionNames": {
                 "deltas": "deltas",
                 "documents": "documents",
-                "partitions": "partitions"
+                "partitions": "partitions",
+                "tenants": "tenants"
             }
         },
         "kafka": {
@@ -54,6 +55,9 @@ data:
             "topics": {
                 "send": "{{ .Values.kafka.topics.deltas }}"
             }
+        },
+        "auth": {
+            "endpoint": "http://{{ template "riddler.fullname" . }}/api",
         },
         "routemaster": {
             "topics": {
@@ -116,6 +120,10 @@ data:
             "workerType": "random",
             "workerAckTimeMSec": 250,
             "onlyServer": false
+        },
+        "riddler": {
+            "port": 5000,
+            "key": "symmetric_key"
         },
         "redis": {
             "host": "{{ .Values.redis.url }}",
