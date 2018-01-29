@@ -3454,7 +3454,15 @@ export class MergeTree {
             pos = this.getOffset(marker, refseq, clientId);
             if (!markerPos.before) {
                 pos += marker.cachedLength;
+                if (markerPos.offset!==undefined) {
+                    pos += markerPos.offset;
+                }
+            } else {
+                if (markerPos.offset!==undefined) {
+                    pos -= markerPos.offset;
+                }
             }
+            
         }
         return pos;
     }

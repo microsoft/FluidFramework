@@ -1472,7 +1472,7 @@ export class DocumentTree {
     }
 }
 
-function insertElm(elm: Xmldoc.XmlElement, client: MergeTree.Client, parentId?: string) {
+function insertElm(treeLabel: string, elm: Xmldoc.XmlElement, client: MergeTree.Client, parentId?: string) {
     let elmProps = Properties.createMap<any>();
     if (elm.attr) {
         elmProps["XMLattributes"] = elm.attr;
@@ -1481,18 +1481,19 @@ function insertElm(elm: Xmldoc.XmlElement, client: MergeTree.Client, parentId?: 
     if (!parentId) {
         nodePos = OverlayNodePosition.Root;
     }
-    let elmId = insertOverlayNode(client, elm.name, nodePos,
+    let elmId = insertOverlayNode(treeLabel, client, elm.name, nodePos,
         elmProps, parentId);
     if (elm.children) {
         for (let child of elm.children) {
             if (child.name) {
-                insertElm(child, client, elmId);
+                insertElm(treeLabel, child, client, elmId);
             }
         }
     }
     if (elm.val && /[^\s]/.test(elm.val)) {
         client.insertTextMarkerRelative(elm.val, { id: elmId });
     }
+    return elmId;
 }
 
 function printOverlayTree(client: MergeTree.Client) {
@@ -1541,11 +1542,16 @@ function printOverlayTree(client: MergeTree.Client) {
 }
 
 function testOverlayTree() {
-    const xfilename = path.join(__dirname, "../../public/literature", "book.xml");
-    let xmlString = fs.readFileSync(xfilename, "utf8");
-    let xmldoc = new Xmldoc.XmlDocument(xmlString);
+    const booksFilename = path.join(__dirname, "../../public/literature", "book.xml");
+    const plantsFilename = path.join(__dirname, "../../public/literature", "plants.xml");
+    let books = fs.readFileSync(booksFilename, "utf8");
+    let booksDoc = new Xmldoc.XmlDocument(books);
     let client = new MergeTree.Client("", { blockUpdateMarkers: true });
-    insertElm(xmldoc, client);
+    let plants = fs.readFileSync(plantsFilename, "utf8");
+    let plantsDoc = new Xmldoc.XmlDocument(plants);
+    insertElm("booksDoc", booksDoc, client);
+    insertElm("plantsDoc", plantsDoc, client);
+
     printOverlayTree(client);
 }
 

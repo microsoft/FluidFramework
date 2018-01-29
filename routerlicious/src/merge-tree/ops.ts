@@ -29,9 +29,24 @@ export interface IMergeTreeDelta {
     type: MergeTreeDeltaType;
 }
 
+/**
+ * A segment-relative position.
+ */
 export interface IMarkerPosition {
+    /**
+     * String identifier specifying a segment.
+     */
     id: string;
+    /**
+     * If true, insert before the specified segment.  If false or not defined,
+     * insert after the specified segment.
+     */
     before?: boolean;
+    /**
+     * A positive number >= 1.  If before is false, offset is added to the position.
+     * If before is true, offset is subtracted from the position.
+     */
+    offset?: number;
 }
 
 export interface IMergeTreeInsertMsg extends IMergeTreeDelta {
