@@ -35,7 +35,7 @@ async function instantiate() {
     let graphElement = new Graph($("#graph-div")[0] as HTMLDivElement, graphMap);
     console.log(graphElement.element);
 
-    host.attach(graphElement);//new Graph($("#graph-div")[0] as HTMLDivElement, graphMap));
+    host.attach(graphElement);
 }
 
 // https://stackoverflow.com/questions/37656592/define-global-variable-with-webpack
