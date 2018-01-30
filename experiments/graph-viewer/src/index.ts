@@ -15,10 +15,6 @@ const app = express();
 
 app.get('/', (req, res) => {
     let viewPath = path.join(__dirname, '../view/index.html');
-    // copyFile(viewPath, __dirname, () => {
-    //     res.sendFile(DeliverHtml());
-    // });
-    // res.sendFile(DeliverHtml())
     let paths = viewPath + "\n" + __dirname;
     res.sendFile(viewPath);
 });
