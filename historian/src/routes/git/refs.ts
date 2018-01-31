@@ -1,29 +1,29 @@
 import { Router } from "express";
-import * as git from "gitresources";
 import * as nconf from "nconf";
+import { StorageProvider } from "../../services";
 import * as utils from "../utils";
 
-export function create(store: nconf.Provider, gitService: git.IGitService): Router {
+export function create(store: nconf.Provider, provider: StorageProvider): Router {
     const router: Router = Router();
 
-    router.get("/repos/:repo/git/refs", (request, response, next) => {
-        const refsP = gitService.getRefs(request.params.repo);
+    router.get(provider.translatePath("/repos/:repo/git/refs"), (request, response, next) => {
+        const refsP = provider.historian.getRefs(request.params.repo);
         utils.handleResponse(
             refsP,
             response,
             false);
     });
 
-    router.get("/repos/:repo/git/refs/*", (request, response, next) => {
-        const refP = gitService.getRef(request.params.repo, request.params[0]);
+    router.get(provider.translatePath("/repos/:repo/git/refs/*"), (request, response, next) => {
+        const refP = provider.historian.getRef(request.params.repo, request.params[0]);
         utils.handleResponse(
             refP,
             response,
             false);
     });
 
-    router.post("/repos/:repo/git/refs", (request, response, next) => {
-        const refP = gitService.createRef(request.params.repo, request.body);
+    router.post(provider.translatePath("/repos/:repo/git/refs"), (request, response, next) => {
+        const refP = provider.historian.createRef(request.params.repo, request.body);
         utils.handleResponse(
             refP,
             response,
@@ -31,16 +31,16 @@ export function create(store: nconf.Provider, gitService: git.IGitService): Rout
             201);
     });
 
-    router.patch("/repos/:repo/git/refs/*", (request, response, next) => {
-        const refP = gitService.updateRef(request.params.repo, request.params[0], request.body);
+    router.patch(provider.translatePath("/repos/:repo/git/refs/*"), (request, response, next) => {
+        const refP = provider.historian.updateRef(request.params.repo, request.params[0], request.body);
         utils.handleResponse(
             refP,
             response,
             false);
     });
 
-    router.delete("/repos/:repo/git/refs/*", (request, response, next) => {
-        const refP = gitService.deleteRef(request.params.repo, request.params[0]);
+    router.delete(provider.translatePath("/repos/:repo/git/refs/*"), (request, response, next) => {
+        const refP = provider.historian.deleteRef(request.params.repo, request.params[0]);
         utils.handleResponse(
             refP,
             response,

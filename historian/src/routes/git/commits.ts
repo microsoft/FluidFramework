@@ -1,13 +1,13 @@
 import { Router } from "express";
-import * as git from "gitresources";
 import * as nconf from "nconf";
+import { StorageProvider } from "../../services";
 import * as utils from "../utils";
 
-export function create(store: nconf.Provider, gitService: git.IGitService): Router {
+export function create(store: nconf.Provider, provider: StorageProvider): Router {
     const router: Router = Router();
 
-    router.post("/repos/:repo/git/commits", (request, response, next) => {
-        const commitP = gitService.createCommit(request.params.repo, request.body);
+    router.post(provider.translatePath("/repos/:repo/git/commits"), (request, response, next) => {
+        const commitP = provider.historian.createCommit(request.params.repo, request.body);
         utils.handleResponse(
             commitP,
             response,
@@ -15,8 +15,8 @@ export function create(store: nconf.Provider, gitService: git.IGitService): Rout
             201);
     });
 
-    router.get("/repos/:repo/git/commits/:sha", (request, response, next) => {
-        const commitP = gitService.getCommit(request.params.repo, request.params.sha);
+    router.get(provider.translatePath("/repos/:repo/git/commits/:sha"), (request, response, next) => {
+        const commitP = provider.historian.getCommit(request.params.repo, request.params.sha);
         utils.handleResponse(commitP, response);
     });
 

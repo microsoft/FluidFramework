@@ -4,9 +4,11 @@ services:
         build: .
         ports:
             - 3000:3000
-        volumes:
-            - .:/home/node/server
+            - 5858:5858
+        command: node --inspect=0.0.0.0:5858 dist/www.js
     gitrest:
-        image: prague.azurecr.io/gitrest:629
+        image: prague.azurecr.io/gitrest:1038
+    cobalt:
+        image: prague.azurecr.io/cobalt:1296
     redis:
         image: redis:alpine

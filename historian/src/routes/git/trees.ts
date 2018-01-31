@@ -1,13 +1,13 @@
 import { Router } from "express";
-import * as git from "gitresources";
 import * as nconf from "nconf";
+import { StorageProvider } from "../../services";
 import * as utils from "../utils";
 
-export function create(store: nconf.Provider, gitService: git.IGitService): Router {
+export function create(store: nconf.Provider, provider: StorageProvider): Router {
     const router: Router = Router();
 
-    router.post("/repos/:repo/git/trees", (request, response, next) => {
-        const treeP = gitService.createTree(request.params.repo, request.body);
+    router.post(provider.translatePath("/repos/:repo/git/trees"), (request, response, next) => {
+        const treeP = provider.historian.createTree(request.params.repo, request.body);
         utils.handleResponse(
             treeP,
             response,
@@ -15,8 +15,11 @@ export function create(store: nconf.Provider, gitService: git.IGitService): Rout
             201);
     });
 
-    router.get("/repos/:repo/git/trees/:sha", (request, response, next) => {
-        const treeP = gitService.getTree(request.params.repo, request.params.sha, request.query.recursive === "1");
+    router.get(provider.translatePath("/repos/:repo/git/trees/:sha"), (request, response, next) => {
+        const treeP = provider.historian.getTree(
+            request.params.repo,
+            request.params.sha,
+            request.query.recursive === "1");
         utils.handleResponse(
             treeP,
             response);

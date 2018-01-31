@@ -44,7 +44,7 @@ function buildHierarchy(flatTree: git.ITree): ITree {
     return root;
 }
 
-export class RestGitService implements git.IGitService {
+export class RestGitService implements git.IHistorian {
     constructor(private gitServerUrl: string, private cache: ICache) {
     }
 

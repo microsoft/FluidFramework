@@ -1,6 +1,6 @@
 import { Router } from "express";
-import * as git from "gitresources";
 import * as nconf from "nconf";
+import { StorageProvider } from "../services";
 import * as blobs from "./git/blobs";
 import * as commits from "./git/commits";
 import * as refs from "./git/refs";
@@ -29,21 +29,21 @@ export interface IRoutes {
 
 export function create(
     store: nconf.Provider,
-    historianService: git.IHistorian): IRoutes {
+    provider: StorageProvider): IRoutes {
 
     return {
         git: {
-            blobs: blobs.create(store, historianService),
-            commits: commits.create(store, historianService),
-            refs: refs.create(store, historianService),
-            repos: repos.create(store, historianService),
-            tags: tags.create(store, historianService),
-            trees: trees.create(store, historianService),
+            blobs: blobs.create(store, provider),
+            commits: commits.create(store, provider),
+            refs: refs.create(store, provider),
+            repos: repos.create(store, provider),
+            tags: tags.create(store, provider),
+            trees: trees.create(store, provider),
         },
         repository: {
-            commits: repositoryCommits.create(store, historianService),
-            contents: contents.create(store, historianService),
-            headers: headers.create(store, historianService),
+            commits: repositoryCommits.create(store, provider),
+            contents: contents.create(store, provider),
+            headers: headers.create(store, provider),
         },
     };
 }
