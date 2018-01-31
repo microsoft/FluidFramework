@@ -202,6 +202,27 @@ export class SharedString extends api.CollaborativeObject {
         return message;
     }
 
+    public createLocalReference(pos: number, slideOnRemove = false) {
+        let segoff = this.client.mergeTree.getContainingSegment(pos,
+            this.client.getCurrentSeq(), this.client.getClientId());
+        if (segoff && segoff.segment) {
+            return <MergeTree.LocalReference> {
+                offset: segoff.offset,
+                segment: segoff.segment,
+                slideOnRemove,
+            };
+        }
+    }
+
+    public localRefToPos(localRef: MergeTree.LocalReference) {
+        if (localRef.segment) {
+            return localRef.offset + this.client.mergeTree.getOffset(localRef.segment,
+                this.client.getCurrentSeq(), this.client.getClientId());
+        } else {
+            return -1;
+        }
+    }
+
     protected processCore(message: api.ISequencedObjectMessage) {
         if (!this.isLoaded) {
             this.client.enqueueMsg(message);
