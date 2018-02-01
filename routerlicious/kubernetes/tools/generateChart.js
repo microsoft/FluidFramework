@@ -35,6 +35,7 @@ name: routerlicious
 alfred:
   name: alfred
   replicas: 4
+  externalUrl: http://praguekube.westus2.cloudapp.azure.com
 
 deli:
   name: deli

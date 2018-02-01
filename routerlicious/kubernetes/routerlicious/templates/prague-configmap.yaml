@@ -150,6 +150,7 @@ data:
                 }
             },
             "alfredUrl": "http://{{ template "alfred.fullname" . }}",
+            "serverUrl": "{{ .Values.alfred.externalUrl }}",
             "url": "{{ .Values.tmz.externalUrl }}",
             "blobStorageUrl": "{{ .Values.historian.externalUrl }}",
             "scriptUrl": "http://pragueminio.westus2.cloudapp.azure.com:9000/agents/",

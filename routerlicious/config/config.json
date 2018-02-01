@@ -136,6 +136,7 @@
             }
         },
         "alfredUrl": "http://alfred:3000",
+        "serverUrl": "http://localhost:3000",
         "url": "http://localhost:4000",
         "blobStorageUrl": "http://localhost:3001",
         "scriptUrl": "http://localhost:9000/agents/",

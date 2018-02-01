@@ -6,11 +6,12 @@ export function registerWorker(config: any, clientType: string) {
         const workerUrl =  config.url;
         const storageUrl = config.blobStorageUrl;
         const repository = config.repository;
+        const serverUrl = config.serverUrl;
 
         // Bootstrap service and connect. On failure, try to connect again.
         console.log(`Registering as worker`);
         const workerService = new WorkerService(
-            document.location.origin,
+            serverUrl,
             workerUrl,
             storageUrl,
             repository,
