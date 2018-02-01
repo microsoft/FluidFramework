@@ -6,8 +6,8 @@ import * as utils from "../utils";
 export function create(store: nconf.Provider, provider: StorageProvider): Router {
     const router: Router = Router();
 
-    router.post(provider.translatePath("/repos/:repo/git/blobs"), (request, response, next) => {
-        const blobP = provider.historian.createBlob(request.params.repo, request.body);
+    router.post(provider.translatePath("/repos/:owner?/:repo/git/blobs"), (request, response, next) => {
+        const blobP = provider.historian.createBlob(request.params.owner, request.params.repo, request.body);
         utils.handleResponse(
             blobP,
             response,
@@ -18,8 +18,8 @@ export function create(store: nconf.Provider, provider: StorageProvider): Router
     /**
      * Retrieves the given blob from the repository
      */
-    router.get(provider.translatePath("/repos/:repo/git/blobs/:sha"), (request, response, next) => {
-        const blobP = provider.historian.getBlob(request.params.repo, request.params.sha);
+    router.get(provider.translatePath("/repos/:owner?/:repo/git/blobs/:sha"), (request, response, next) => {
+        const blobP = provider.historian.getBlob(request.params.owner, request.params.repo, request.params.sha);
         utils.handleResponse(
             blobP,
             response);

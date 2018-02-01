@@ -6,8 +6,8 @@ import * as utils from "../utils";
 export function create(store: nconf.Provider, provider: StorageProvider): Router {
     const router: Router = Router();
 
-    router.post(provider.translatePath("/repos/:repo/git/commits"), (request, response, next) => {
-        const commitP = provider.historian.createCommit(request.params.repo, request.body);
+    router.post(provider.translatePath("/repos/:owner?/:repo/git/commits"), (request, response, next) => {
+        const commitP = provider.historian.createCommit(request.params.owner, request.params.repo, request.body);
         utils.handleResponse(
             commitP,
             response,
@@ -15,8 +15,8 @@ export function create(store: nconf.Provider, provider: StorageProvider): Router
             201);
     });
 
-    router.get(provider.translatePath("/repos/:repo/git/commits/:sha"), (request, response, next) => {
-        const commitP = provider.historian.getCommit(request.params.repo, request.params.sha);
+    router.get(provider.translatePath("/repos/:owner?/:repo/git/commits/:sha"), (request, response, next) => {
+        const commitP = provider.historian.getCommit(request.params.owner, request.params.repo, request.params.sha);
         utils.handleResponse(commitP, response);
     });
 

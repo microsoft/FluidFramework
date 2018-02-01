@@ -8,6 +8,8 @@ import * as app from "./app";
 import * as services from "./services";
 import { IStorageProvider, StorageProvider } from "./services";
 
+// tslint:disable-next-line:no-var-requires
+const packageDetails = require("../package.json");
 const provider = nconf.argv().env("__" as any).file(path.join(__dirname, "../config.json")).use("memory");
 
 /**
@@ -43,7 +45,11 @@ const redisClient = redis.createClient(redisConfig.port, redisConfig.host);
 const storageProvidersConfig = provider.get("storageProviders") as IStorageProvider[];
 const storageProviders = storageProvidersConfig.map((storageProviderConfig) => {
   const cache = new services.RedisCache(redisClient, storageProviderConfig.name);
-  const restService = new services.RestGitService(storageProviderConfig.url, cache);
+  const restService = new services.RestGitService(
+    storageProviderConfig.url,
+    storageProviderConfig.credentials,
+    cache,
+    `Historian/${packageDetails.version}`);
   return new StorageProvider(restService, storageProviderConfig);
 });
 

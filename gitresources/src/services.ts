@@ -5,35 +5,35 @@ import * as git from "./resources";
  */
 export interface IGitService {
     // Blobs
-    getBlob(repo: string, sha: string): Promise<git.IBlob>;
-    createBlob(repo: string, blob: git.ICreateBlobParams): Promise<git.ICreateBlobResponse>;
+    getBlob(owner: string, repo: string, sha: string): Promise<git.IBlob>;
+    createBlob(owner: string, repo: string, blob: git.ICreateBlobParams): Promise<git.ICreateBlobResponse>;
 
     // Content
-    getContent(repo: string, path: string, ref: string): Promise<any>;
+    getContent(owner: string, repo: string, path: string, ref: string): Promise<any>;
 
     // Commits
-    getCommits(repo: string, sha: string, count: number): Promise<git.ICommit[]>;
-    getCommit(repo: string, sha: string): Promise<git.ICommit>;
-    createCommit(repo: string, commit: git.ICreateCommitParams): Promise<git.ICommit>;
+    getCommits(owner: string, repo: string, sha: string, count: number): Promise<git.ICommit[]>;
+    getCommit(owner: string, repo: string, sha: string): Promise<git.ICommit>;
+    createCommit(owner: string, repo: string, commit: git.ICreateCommitParams): Promise<git.ICommit>;
 
     // Refs
-    getRefs(repo: string): Promise<git.IRef[]>;
-    getRef(repo: string, ref: string): Promise<git.IRef>;
-    createRef(repo: string, params: git.ICreateRefParams): Promise<git.IRef>;
-    updateRef(repo: string, ref: string, params: git.IPatchRefParams): Promise<git.IRef>;
-    deleteRef(repo: string, ref: string): Promise<void>;
+    getRefs(owner: string, repo: string): Promise<git.IRef[]>;
+    getRef(owner: string, repo: string, ref: string): Promise<git.IRef>;
+    createRef(owner: string, repo: string, params: git.ICreateRefParams): Promise<git.IRef>;
+    updateRef(owner: string, repo: string, ref: string, params: git.IPatchRefParams): Promise<git.IRef>;
+    deleteRef(owner: string, repo: string, ref: string): Promise<void>;
 
     // Repos
-    createRepo(repo: git.ICreateRepoParams): Promise<any>;
-    getRepo(repo: string): Promise<any>;
+    createRepo(owner: string, repo: git.ICreateRepoParams): Promise<any>;
+    getRepo(owner: string, repo: string): Promise<any>;
 
     // Tags
-    createTag(repo: string, tag: git.ICreateTagParams): Promise<git.ITag>;
-    getTag(repo: string, tag: string): Promise<git.ITag>;
+    createTag(owner: string, repo: string, tag: git.ICreateTagParams): Promise<git.ITag>;
+    getTag(owner: string, repo: string, tag: string): Promise<git.ITag>;
 
     // Trees
-    createTree(repo: string, tree: git.ICreateTreeParams): Promise<git.ITree>;
-    getTree(repo: string, sha: string, recursive: boolean): Promise<git.ITree>;
+    createTree(owner: string, repo: string, tree: git.ICreateTreeParams): Promise<git.ITree>;
+    getTree(owner: string, repo: string, sha: string, recursive: boolean): Promise<git.ITree>;
 }
 
 /**
@@ -44,5 +44,5 @@ export interface IHistorian extends IGitService {
     /**
      * Retrieves the header for the given document
      */
-    getHeader(repo: string, sha: string): Promise<any>;
+    getHeader(owner: string, repo: string, sha: string): Promise<any>;
 }

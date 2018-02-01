@@ -19,6 +19,16 @@
             "url": "http://cobalt",
             "name": "cobalt",
             "isDefault": false
+        },
+        {
+            "type": "git",
+            "url": "https://api.github.com",
+            "credentials": {
+                "user": "praguegit",
+                "password": "8d043006d0a2704d4dd9972f848f1982026672a1"
+            },
+            "name": "github",
+            "isDefault": false
         }
     ],
     "redis": {

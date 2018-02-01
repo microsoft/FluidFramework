@@ -1,21 +1,5 @@
 import { IHistorian } from "gitresources";
-
-/**
- * Interface representing a git storage provider
- */
-export interface IStorageProvider {
-    // The type of provider
-    type: "git" | "cobalt";
-
-    // URL to the provider
-    url: string;
-
-    // Name for the provider
-    name: string;
-
-    // Whether or not this should be the default provider
-    isDefault: boolean;
-}
+import { IStorageProvider } from "./definitions";
 
 /**
  * Helper class that manages a storage provider definition
