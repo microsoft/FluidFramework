@@ -66,7 +66,7 @@ export async function commitToICommit(commit: git.Commit): Promise<resources.ICo
     };
 }
 
-export function blobToIBlob(blob: git.Blob, repo: string): resources.IBlob {
+export function blobToIBlob(blob: git.Blob, owner: string, repo: string): resources.IBlob {
     const buffer = blob.content();
     const sha = blob.id().tostrS();
 
@@ -75,7 +75,7 @@ export function blobToIBlob(blob: git.Blob, repo: string): resources.IBlob {
         encoding: "base64",
         sha,
         size: buffer.length,
-        url: `/repos/${repo}/git/blobs/${sha}`,
+        url: `/repos/${owner}/${repo}/git/blobs/${sha}`,
     };
 }
 
@@ -86,34 +86,47 @@ export class RepositoryManager {
     constructor(private baseDir) {
     }
 
-    public async create(name: string): Promise<git.Repository> {
-        const parsed = path.parse(name);
-        if (parsed.dir !== "") {
-            return Promise.reject("Invalid repo name");
-        }
+    public async create(owner: string, name: string): Promise<git.Repository> {
+        // Verify that both inputs are valid folder names
+        const repoPath = this.getRepoPath(owner, name);
 
         // Create and then cache the repository
         const isBare: any = 1;
-        const repository = await git.Repository.init(`${this.baseDir}/${parsed.base}`, isBare);
-        this.repositoryCache[parsed.base] = Promise.resolve(repository);
+        const repository = git.Repository.init(`${this.baseDir}/${repoPath}`, isBare);
+        this.repositoryCache[repoPath] = repository;
+
+        return repository;
     }
 
-    public async open(name: string): Promise<git.Repository> {
-        const parsed = path.parse(name);
-        if (parsed.dir !== "") {
-            return Promise.reject("Invalid repo name");
-        }
+    public async open(owner: string, name: string): Promise<git.Repository> {
+        const repoPath = this.getRepoPath(owner, name);
 
-        if (!(parsed.base in this.repositoryCache)) {
-            const directory = `${this.baseDir}/${parsed.base}`;
+        if (!(repoPath in this.repositoryCache)) {
+            const directory = `${this.baseDir}/${repoPath}`;
 
             if (!await exists(directory)) {
                 return Promise.reject("Repo does not exist");
             }
 
-            this.repositoryCache[parsed.base] = git.Repository.open(directory);
+            this.repositoryCache[repoPath] = git.Repository.open(directory);
         }
 
-        return this.repositoryCache[parsed.base];
+        return this.repositoryCache[repoPath];
+    }
+
+    /**
+     * Retrieves the full repository path. Or throws an error if not valid.
+     */
+    private getRepoPath(owner: string, name: string) {
+        // Verify that both inputs are valid folder names
+        const parsedOwner = path.parse(owner);
+        const parsedName = path.parse(name);
+        const repoPath = `${owner}/${name}`;
+
+        if (parsedName.dir !== "" || parsedOwner.dir !== "") {
+            throw new Error(`Invalid repo name ${repoPath}`);
+        }
+
+        return repoPath;
     }
 }

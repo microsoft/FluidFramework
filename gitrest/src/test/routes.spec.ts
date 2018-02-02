@@ -19,45 +19,65 @@ import { getCommits } from "../routes/repository/commits";
 import * as utils from "../utils";
 import * as testUtils from "./utils";
 
-function createRepo(supertest: request.SuperTest<request.Test>, name: string) {
+function createRepo(supertest: request.SuperTest<request.Test>, owner: string, name: string) {
     return supertest
-        .post("/repos")
+        .post(`/${owner}/repos`)
         .set("Accept", "application/json")
         .set("Content-Type", "application/json")
         .send({ name })
         .expect(201);
 }
 
-function createBlob(supertest: request.SuperTest<request.Test>, repoName: string, blob: ICreateBlobParams) {
+function createBlob(
+    supertest: request.SuperTest<request.Test>,
+    owner: string,
+    repoName: string,
+    blob: ICreateBlobParams) {
+
     return supertest
-        .post(`/repos/${repoName}/git/blobs`)
+        .post(`/repos/${owner}/${repoName}/git/blobs`)
         .set("Accept", "application/json")
         .set("Content-Type", "application/json")
         .send(blob)
         .expect(201);
 }
 
-function createTree(supertest: request.SuperTest<request.Test>, repoName: string, tree: ICreateTreeParams) {
+function createTree(
+    supertest: request.SuperTest<request.Test>,
+    owner: string,
+    repoName: string,
+    tree: ICreateTreeParams) {
+
     return supertest
-        .post(`/repos/${repoName}/git/trees`)
+        .post(`/repos/${owner}/${repoName}/git/trees`)
         .set("Accept", "application/json")
         .set("Content-Type", "application/json")
         .send(tree)
         .expect(201);
 }
 
-function createCommit(supertest: request.SuperTest<request.Test>, repoName: string, commit: ICreateCommitParams) {
+function createCommit(
+    supertest: request.SuperTest<request.Test>,
+    owner: string,
+    repoName: string,
+    commit: ICreateCommitParams) {
+
     return supertest
-        .post(`/repos/${repoName}/git/commits`)
+        .post(`/repos/${owner}/${repoName}/git/commits`)
         .set("Accept", "application/json")
         .set("Content-Type", "application/json")
         .send(commit)
         .expect(201);
 }
 
-function createRef(supertest: request.SuperTest<request.Test>, repoName: string, ref: ICreateRefParams) {
+function createRef(
+    supertest: request.SuperTest<request.Test>,
+    owner: string,
+    repoName: string,
+    ref: ICreateRefParams) {
+
     return supertest
-        .post(`/repos/${repoName}/git/refs`)
+        .post(`/repos/${owner}/${repoName}/git/refs`)
         .set("Accept", "application/json")
         .set("Content-Type", "application/json")
         .send(ref)
@@ -66,20 +86,23 @@ function createRef(supertest: request.SuperTest<request.Test>, repoName: string,
 
 async function initBaseRepo(
     supertest: request.SuperTest<request.Test>,
+    owner: string,
     repoName: string,
     testBlob: ICreateBlobParams,
     testTree: ICreateTreeParams,
     testCommit: ICreateCommitParams,
     testRef: ICreateRefParams) {
-    await createRepo(supertest, repoName);
-    await createBlob(supertest, repoName, testBlob);
-    await createTree(supertest, repoName, testTree);
-    await createCommit(supertest, repoName, testCommit);
-    await createRef(supertest, repoName, testRef);
+
+    await createRepo(supertest, owner, repoName);
+    await createBlob(supertest, owner, repoName, testBlob);
+    await createTree(supertest, owner, repoName, testTree);
+    await createCommit(supertest, owner, repoName, testCommit);
+    await createRef(supertest, owner, repoName, testRef);
 }
 
 describe("Historian", () => {
     describe("Routes", () => {
+        const testOwnerName = "owner";
         const testRepoName = "test";
         const testBlob: ICreateBlobParams = {
             content: "Hello, World!",
@@ -122,21 +145,21 @@ describe("Historian", () => {
         describe("Git", () => {
             describe("Repos", () => {
                 it("Can create and get a new repo", async () => {
-                    await createRepo(supertest, testRepoName);
+                    await createRepo(supertest, testOwnerName, testRepoName);
                     return supertest
-                        .get(`/repos/${testRepoName}`)
+                        .get(`/repos/${testOwnerName}/${testRepoName}`)
                         .expect(200);
                 });
 
                 it("Returns 400 for an unknown repo", async () => {
                     return supertest
-                        .get(`/repos/${testRepoName}`)
+                        .get(`/repos/${testOwnerName}/${testRepoName}`)
                         .expect(400);
                 });
 
                 it("Rejects invalid repo names", () => {
                     return supertest
-                        .post("/repos")
+                        .post(`/${testOwnerName}/repos`)
                         .set("Accept", "application/json")
                         .set("Content-Type", "application/json")
                         .send({ name: "../evilrepo"})
@@ -145,19 +168,19 @@ describe("Historian", () => {
 
                 it("Rejects missing repo names", () => {
                     return supertest
-                        .post("/repos")
+                        .post(`/${testOwnerName}/repos`)
                         .expect(400);
                 });
             });
 
             describe("Blobs", () => {
                 it("Can create and retrieve a blob", async () => {
-                    await createRepo(supertest, testRepoName);
-                    const result = await createBlob(supertest, testRepoName, testBlob);
+                    await createRepo(supertest, testOwnerName, testRepoName);
+                    const result = await createBlob(supertest,  testOwnerName, testRepoName, testBlob);
                     assert.equal(result.body.sha, "b45ef6fec89518d314f546fd6c3025367b721684");
 
                     return supertest
-                        .get(`/repos/${testRepoName}/git/blobs/${result.body.sha}`)
+                        .get(`/repos/${testOwnerName}/${testRepoName}/git/blobs/${result.body.sha}`)
                         .expect(200)
                         .expect((getResult) => {
                             assert.equal(getResult.body.sha, result.body.sha);
@@ -165,21 +188,21 @@ describe("Historian", () => {
                 });
 
                 it("Can create an existing blob without error", async () => {
-                    await createRepo(supertest, testRepoName);
-                    await createBlob(supertest, testRepoName, testBlob);
-                    await createBlob(supertest, testRepoName, testBlob);
+                    await createRepo(supertest, testOwnerName, testRepoName);
+                    await createBlob(supertest, testOwnerName, testRepoName, testBlob);
+                    await createBlob(supertest, testOwnerName, testRepoName, testBlob);
                 });
             });
 
             describe("Trees", () => {
                 it("Can create and retrieve a tree", async () => {
-                    await createRepo(supertest, testRepoName);
-                    await createBlob(supertest, testRepoName, testBlob);
-                    const tree = await createTree(supertest, testRepoName, testTree);
+                    await createRepo(supertest, testOwnerName, testRepoName);
+                    await createBlob(supertest, testOwnerName, testRepoName, testBlob);
+                    const tree = await createTree(supertest,  testOwnerName, testRepoName, testTree);
                     assert.equal(tree.body.sha, "bf4db183cbd07f48546a5dde098b4510745d79a1");
 
                     return supertest
-                        .get(`/repos/${testRepoName}/git/trees/${tree.body.sha}`)
+                        .get(`/repos/${testOwnerName}/${testRepoName}/git/trees/${tree.body.sha}`)
                         .expect(200)
                         .expect((getResult) => {
                             assert.equal(getResult.body.sha, tree.body.sha);
@@ -188,11 +211,12 @@ describe("Historian", () => {
 
                 it("Can recursively retrieve a tree", async () => {
                     // Create a tree with a single sub directory
-                    await createRepo(supertest, testRepoName);
-                    await createBlob(supertest, testRepoName, testBlob);
-                    await createTree(supertest, testRepoName, testTree);
+                    await createRepo(supertest, testOwnerName, testRepoName);
+                    await createBlob(supertest, testOwnerName, testRepoName, testBlob);
+                    await createTree(supertest, testOwnerName, testRepoName, testTree);
                     const parentBlob = await createBlob(
                         supertest,
+                        testOwnerName,
                         testRepoName,
                         { content: "Parent", encoding: "utf-8" });
                     const parentTree = {
@@ -210,7 +234,7 @@ describe("Historian", () => {
                                 type: "tree",
                             }],
                     };
-                    const tree = await createTree(supertest, testRepoName, parentTree);
+                    const tree = await createTree(supertest, testOwnerName, testRepoName, parentTree);
 
                     // And then a commit to reference it
                     const treeCommit: ICreateCommitParams = {
@@ -223,24 +247,24 @@ describe("Historian", () => {
                         parents: [],
                         tree: tree.body.sha,
                     };
-                    const commit = await createCommit(supertest, testRepoName, treeCommit);
+                    const commit = await createCommit(supertest, testOwnerName, testRepoName, treeCommit);
 
                     return supertest
-                        .get(`/repos/${testRepoName}/git/trees/${commit.body.tree.sha}?recursive=1`)
+                        .get(`/repos/${testOwnerName}/${testRepoName}/git/trees/${commit.body.tree.sha}?recursive=1`)
                         .expect(200);
                 });
             });
 
             describe("Commits", () => {
                 it("Can create and retrieve a commit", async () => {
-                    await createRepo(supertest, testRepoName);
-                    await createBlob(supertest, testRepoName, testBlob);
-                    await createTree(supertest, testRepoName, testTree);
-                    const commit = await createCommit(supertest, testRepoName, testCommit);
+                    await createRepo(supertest, testOwnerName, testRepoName);
+                    await createBlob(supertest, testOwnerName, testRepoName, testBlob);
+                    await createTree(supertest, testOwnerName, testRepoName, testTree);
+                    const commit = await createCommit(supertest, testOwnerName, testRepoName, testCommit);
                     assert.equal(commit.body.sha, "cf0b592907d683143b28edd64d274ca70f68998e");
 
                     return supertest
-                        .get(`/repos/${testRepoName}/git/commits/${commit.body.sha}`)
+                        .get(`/repos/${testOwnerName}/${testRepoName}/git/commits/${commit.body.sha}`)
                         .expect(200)
                         .expect((getResult) => {
                             assert.equal(getResult.body.sha, commit.body.sha);
@@ -250,15 +274,15 @@ describe("Historian", () => {
 
             describe("Refs", () => {
                 it("Can create and retrieve a reference", async () => {
-                    await createRepo(supertest, testRepoName);
-                    await createBlob(supertest, testRepoName, testBlob);
-                    await createTree(supertest, testRepoName, testTree);
-                    await createCommit(supertest, testRepoName, testCommit);
-                    const ref = await createRef(supertest, testRepoName, testRef);
+                    await createRepo(supertest, testOwnerName, testRepoName);
+                    await createBlob(supertest, testOwnerName, testRepoName, testBlob);
+                    await createTree(supertest, testOwnerName, testRepoName, testTree);
+                    await createCommit(supertest, testOwnerName, testRepoName, testCommit);
+                    const ref = await createRef(supertest, testOwnerName, testRepoName, testRef);
                     assert.equal(ref.body.ref, testRef.ref);
 
                     return supertest
-                        .get(`/repos/${testRepoName}/git/${testRef.ref}`)
+                        .get(`/repos/${testOwnerName}/${testRepoName}/git/${testRef.ref}`)
                         .expect(200)
                         .expect((getResult) => {
                             assert.equal(getResult.body.ref, ref.body.ref);
@@ -266,9 +290,9 @@ describe("Historian", () => {
                 });
 
                 it("Can retrieve all references", async () => {
-                    await initBaseRepo(supertest, testRepoName, testBlob, testTree, testCommit, testRef);
+                    await initBaseRepo(supertest, testOwnerName, testRepoName, testBlob, testTree, testCommit, testRef);
                     return supertest
-                        .get(`/repos/${testRepoName}/git/refs`)
+                        .get(`/repos/${testOwnerName}/${testRepoName}/git/refs`)
                         .expect(200)
                         .expect((getResult) => {
                             assert.equal(getResult.body.length, 1);
@@ -279,9 +303,9 @@ describe("Historian", () => {
                 // TODO need to verify the GitHub API works this way - odd to create a new commit via a patch command
                 // but this simplfiies cases where we want to upsert
                 it("Can patch to create a reference", async () => {
-                    await initBaseRepo(supertest, testRepoName, testBlob, testTree, testCommit, testRef);
+                    await initBaseRepo(supertest, testOwnerName, testRepoName, testBlob, testTree, testCommit, testRef);
                     return supertest
-                        .patch(`/repos/${testRepoName}/git/refs/heads/patch`)
+                        .patch(`/repos/${testOwnerName}/${testRepoName}/git/refs/heads/patch`)
                         .set("Accept", "application/json")
                         .set("Content-Type", "application/json")
                         .send({ force: true, sha: "cf0b592907d683143b28edd64d274ca70f68998e" })
@@ -289,9 +313,9 @@ describe("Historian", () => {
                 });
 
                 it("Can't patch an existing reference without force flag set", async () => {
-                    await initBaseRepo(supertest, testRepoName, testBlob, testTree, testCommit, testRef);
+                    await initBaseRepo(supertest, testOwnerName, testRepoName, testBlob, testTree, testCommit, testRef);
                     return supertest
-                        .patch(`/repos/${testRepoName}/git/${testRef.ref}`)
+                        .patch(`/repos/${testOwnerName}/${testRepoName}/git/${testRef.ref}`)
                         .set("Accept", "application/json")
                         .set("Content-Type", "application/json")
                         .send({ force: false, sha: "cf0b592907d683143b28edd64d274ca70f68998e" })
@@ -299,9 +323,9 @@ describe("Historian", () => {
                 });
 
                 it("Can patch an existing reference with force flag set", async () => {
-                    await initBaseRepo(supertest, testRepoName, testBlob, testTree, testCommit, testRef);
+                    await initBaseRepo(supertest, testOwnerName, testRepoName, testBlob, testTree, testCommit, testRef);
                     return supertest
-                        .patch(`/repos/${testRepoName}/git/${testRef.ref}`)
+                        .patch(`/repos/${testOwnerName}/${testRepoName}/git/${testRef.ref}`)
                         .set("Accept", "application/json")
                         .set("Content-Type", "application/json")
                         .send({ force: true, sha: "cf0b592907d683143b28edd64d274ca70f68998e" })
@@ -309,13 +333,13 @@ describe("Historian", () => {
                 });
 
                 it("Can delete a reference", async () => {
-                    await initBaseRepo(supertest, testRepoName, testBlob, testTree, testCommit, testRef);
+                    await initBaseRepo(supertest, testOwnerName, testRepoName, testBlob, testTree, testCommit, testRef);
                     await supertest
-                        .delete(`/repos/test/git/${testRef.ref}`)
+                        .delete(`/repos/${testOwnerName}/${testRepoName}/git/${testRef.ref}`)
                         .expect(204);
 
                     return supertest
-                        .get(`/repos/${testRepoName}/git/${testRef.ref}`)
+                        .get(`/repos/${testOwnerName}/${testRepoName}/git/${testRef.ref}`)
                         .expect(400);
                 });
             });
@@ -334,9 +358,9 @@ describe("Historian", () => {
                         type: "commit",
                     };
 
-                    await initBaseRepo(supertest, testRepoName, testBlob, testTree, testCommit, testRef);
+                    await initBaseRepo(supertest, testOwnerName, testRepoName, testBlob, testTree, testCommit, testRef);
                     const tag = await supertest
-                        .post(`/repos/${testRepoName}/git/tags`)
+                        .post(`/repos/${testOwnerName}/${testRepoName}/git/tags`)
                         .set("Accept", "application/json")
                         .set("Content-Type", "application/json")
                         .send(tagParams)
@@ -344,7 +368,7 @@ describe("Historian", () => {
                     assert.equal(tag.body.sha, "a8588b3913aa692c3642697d6f136cec470dd82c");
 
                     return supertest
-                        .get(`/repos/${testRepoName}/git/tags/${tag.body.sha}`)
+                        .get(`/repos/${testOwnerName}/${testRepoName}/git/tags/${tag.body.sha}`)
                         .expect(200)
                         .expect((result) => {
                             assert.equal(result.body.sha, tag.body.sha);
@@ -358,7 +382,7 @@ describe("Historian", () => {
                 const MaxTreeLength = 10;
                 const MaxParagraphs = 200;
 
-                await initBaseRepo(supertest, testRepoName, testBlob, testTree, testCommit, testRef);
+                await initBaseRepo(supertest, testOwnerName, testRepoName, testBlob, testTree, testCommit, testRef);
                 const manager = new utils.RepositoryManager(testUtils.defaultProvider.get("storageDir"));
 
                 let lastCommit;
@@ -374,7 +398,7 @@ describe("Historian", () => {
                             }),
                             encoding: "utf-8",
                         };
-                        blobsP.push(createBlobInternal(manager, testRepoName, param));
+                        blobsP.push(createBlobInternal(manager, testOwnerName, testRepoName, param));
                     }
 
                     const blobs = await Promise.all(blobsP);
@@ -390,11 +414,11 @@ describe("Historian", () => {
                         tree: files,
                     };
 
-                    const tree = await createTreeInternal(manager, testRepoName, createTreeParams);
+                    const tree = await createTreeInternal(manager, testOwnerName, testRepoName, createTreeParams);
 
                     const parents = [];
                     if (lastCommit) {
-                        const commits = await getCommits(manager, testRepoName, lastCommit, 1);
+                        const commits = await getCommits(manager, testOwnerName, testRepoName, lastCommit, 1);
                         const parentCommit = commits[0] as ICommit;
                         parents.push({ sha: parentCommit.sha, url: "" });
                     }
@@ -409,7 +433,7 @@ describe("Historian", () => {
                         parents,
                         tree: tree.sha,
                     };
-                    const commit = await createCommitInternal(manager, testRepoName, commitParams);
+                    const commit = await createCommitInternal(manager, testOwnerName, testRepoName, commitParams);
 
                     lastCommit = commit.sha;
                 }
@@ -442,9 +466,9 @@ describe("Historian", () => {
         describe("Repository", () => {
             describe("Commits", () => {
                 it("Can list recent commits", async () => {
-                    await initBaseRepo(supertest, testRepoName, testBlob, testTree, testCommit, testRef);
+                    await initBaseRepo(supertest, testOwnerName, testRepoName, testBlob, testTree, testCommit, testRef);
                     return supertest
-                        .get(`/repos/${testRepoName}/commits?sha=master`)
+                        .get(`/repos/${testOwnerName}/${testRepoName}/commits?sha=master`)
                         .expect(200)
                         .expect((result) => {
                             assert.equal(result.body.length, 1);
@@ -454,9 +478,10 @@ describe("Historian", () => {
 
             describe("Content", () => {
                 it("Can retrieve a stored object", async () => {
-                    await initBaseRepo(supertest, testRepoName, testBlob, testTree, testCommit, testRef);
+                    await initBaseRepo(supertest, testOwnerName, testRepoName, testBlob, testTree, testCommit, testRef);
+                    const fullRepoPath = `${testOwnerName}/${testRepoName}`;
                     return supertest
-                        .get(`/repos/${testRepoName}/contents/${testTree.tree[0].path}?ref=${testRef.sha}`)
+                        .get(`/repos/${fullRepoPath}/contents/${testTree.tree[0].path}?ref=${testRef.sha}`)
                         .expect(200);
                 });
             });

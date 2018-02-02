@@ -6,11 +6,12 @@ import * as utils from "../../utils";
 
 export async function getCommits(
     repoManager: utils.RepositoryManager,
+    owner: string,
     repo: string,
     ref: string,
     count: number): Promise<resources.ICommit[]> {
 
-    const repository = await repoManager.open(repo);
+    const repository = await repoManager.open(owner, repo);
     const walker = git.Revwalk.create(repository);
 
     // tslint:disable-next-line:no-bitwise
@@ -33,8 +34,13 @@ export function create(store: nconf.Provider, repoManager: utils.RepositoryManag
     // author
     // since
     // until
-    router.get("/repos/:repo/commits", (request, response, next) => {
-        const resultP = getCommits(repoManager, request.params.repo, request.query.sha, request.query.count);
+    router.get("/repos/:owner/:repo/commits", (request, response, next) => {
+        const resultP = getCommits(
+            repoManager,
+            request.params.owner,
+            request.params.repo,
+            request.query.sha,
+            request.query.count);
         return resultP.then(
             (blob) => {
                 response.status(200).json(blob);

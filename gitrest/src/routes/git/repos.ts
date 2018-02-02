@@ -9,13 +9,13 @@ export function create(store: nconf.Provider, repoManager: utils.RepositoryManag
     /**
      * Creates a new git repository
      */
-    router.post("/repos", (request, response, next) => {
+    router.post("/:owner/repos", (request, response, next) => {
         const createParams = request.body as ICreateRepoParams;
         if (!createParams || !createParams.name) {
             return response.status(400).json("Invalid repo name");
         }
 
-        const repoP = repoManager.create(createParams.name);
+        const repoP = repoManager.create(request.params.owner, createParams.name);
         repoP.then(
             (repository) => {
                 return response.status(201).json();
@@ -28,8 +28,8 @@ export function create(store: nconf.Provider, repoManager: utils.RepositoryManag
     /**
      * Retrieves an existing get repository
      */
-    router.get("/repos/:repo", (request, response, next) => {
-        const repoP = repoManager.open(request.params.repo);
+    router.get("/repos/:owner/:repo", (request, response, next) => {
+        const repoP = repoManager.open(request.params.owner, request.params.repo);
         repoP.then(
             (repository) => {
                 return response.status(200).json({ name: request.params.repo });
