@@ -1,0 +1,20 @@
+{{<layout}}
+    {{$styles}}
+        <link href="{{#hfurl}}/public/stylesheets/dist/style.css{{/hfurl}}" rel="stylesheet" />
+    {{/styles}}
+
+    {{$content}}
+        <div class="container-fluid">
+            <div id="mapViews"></div>
+        </div>
+    {{/content}}
+
+    {{$scripts}}
+        <script src="{{#hfurl}}/public/scripts/dist/index.js{{/hfurl}}"></script>
+        <script>
+            var endpoints = {{{ endpoints }}};
+            var workerConfig = {{{ workerConfig }}};
+            controller.maps.load("{{ id }}", "{{ repository }}", endpoints, "{{ token }}", workerConfig);
+        </script>
+    {{/scripts}}
+{{/layout}}

@@ -1,0 +1,49 @@
+{
+  "name": "apps",
+  "version": "0.0.1",
+  "description": "Collection of apps built on top of routerlicious",
+  "main": "dist/www.js",
+  "scripts": {
+    "build": "concurrently \"npm run tslint\" \"npm run tsc && npm run webpack\" \"npm run less\"",
+    "webpack": "webpack --config webpack.config.js",
+    "tsc": "tsc",
+    "tslint": "tslint 'src/**/*.ts'",
+    "less": "lessc src/stylesheets/style.less public/stylesheets/dist/style.css",
+    "start": "docker-compose up",
+    "start:debug": "docker-compose -f docker-compose.yml -f docker-compose.debug.yml up",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "body-parser": "^1.18.2",
+    "compression": "^1.7.1",
+    "concurrently": "^3.5.1",
+    "debug": "^3.1.0",
+    "express": "^4.16.2",
+    "gitresources": "https://praguenpm.blob.core.windows.net/packages/gitresources-0.2.0.tgz",
+    "hjs": "0.0.6",
+    "jquery": "^3.3.1",
+    "less": "^2.7.3",
+    "morgan": "^1.9.0",
+    "nconf": "^0.10.0",
+    "routerlicious": "https://praguenpm.blob.core.windows.net/packages/routerlicious-0.1.1307.tgz",
+    "serve-favicon": "^2.4.5",
+    "split": "^1.0.1",
+    "static-expiry": "0.0.11",
+    "winston": "^2.4.0"
+  },
+  "devDependencies": {
+    "@types/compression": "0.0.35",
+    "@types/debug": "0.0.30",
+    "@types/express": "^4.11.0",
+    "@types/jquery": "^3.3.0",
+    "@types/morgan": "^1.7.35",
+    "@types/nconf": "0.0.37",
+    "@types/serve-favicon": "^2.2.30",
+    "@types/split": "^0.3.28",
+    "@types/winston": "^2.3.7",
+    "source-map-loader": "^0.2.3",
+    "tslint": "^5.9.1",
+    "typescript": "^2.6.2",
+    "webpack": "^3.10.0"
+  }
+}
