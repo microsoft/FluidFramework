@@ -86,7 +86,7 @@ export class RestGitService implements git.IHistorian {
         return this.get(`/repos/${this.getRepoPath(owner, repo)}/contents/${path}?${query}`);
     }
 
-    public getCommits(owner: string, repo: string, sha: string, count: number): Promise<git.ICommit[]> {
+    public getCommits(owner: string, repo: string, sha: string, count: number): Promise<git.ICommitDetails[]> {
         const query = querystring.stringify({
             count,
             sha,
@@ -110,7 +110,6 @@ export class RestGitService implements git.IHistorian {
             `/repos/${this.getRepoPath(owner, repo)}/git/commits`,
             commitParams);
 
-        winston.info(`${JSON.stringify(commit, null, 2)}`);
         this.setCache(commit.sha, commit);
 
         // Also fetch the tree for the commit to have it in cache
@@ -150,7 +149,6 @@ export class RestGitService implements git.IHistorian {
     }
 
     public getRepo(owner: string, repo: string): Promise<any> {
-        winston.info(`${owner} ${repo}`);
         return this.get(`/repos/${this.getRepoPath(owner, repo)}`);
     }
 
@@ -196,7 +194,6 @@ export class RestGitService implements git.IHistorian {
      */
     private getRepoPath(owner: string, repo: string): string {
         const val = owner ? `${encodeURIComponent(owner)}/${encodeURIComponent(repo)}` : encodeURIComponent(repo);
-        winston.info(`${val}`);
         return val;
     }
 
@@ -264,7 +261,6 @@ export class RestGitService implements git.IHistorian {
             url: `${this.gitServerUrl}${url}`,
         };
         this.authorize(options);
-        winston.info(`${JSON.stringify(options)}`);
 
         return this.request(options, 200);
     }
@@ -331,7 +327,7 @@ export class RestGitService implements git.IHistorian {
                     if (error) {
                         return reject(error);
                     } else if (response.statusCode !== statusCode) {
-                        winston.error(response.body);
+                        winston.info(response.body);
                         return reject(response.statusCode);
                     } else {
                         return resolve(response.body);

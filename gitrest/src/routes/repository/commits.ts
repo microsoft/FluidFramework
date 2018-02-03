@@ -9,7 +9,7 @@ export async function getCommits(
     owner: string,
     repo: string,
     ref: string,
-    count: number): Promise<resources.ICommit[]> {
+    count: number): Promise<resources.ICommitDetails[]> {
 
     const repository = await repoManager.open(owner, repo);
     const walker = git.Revwalk.create(repository);
@@ -22,7 +22,23 @@ export async function getCommits(
     walker.push(revObj.id());
     const commits = await walker.getCommits(count);
 
-    return await Promise.all(commits.map((commit) => utils.commitToICommit(commit)));
+    const detailedCommits = commits.map(async (rawCommit) => {
+        const gitCommit = await utils.commitToICommit(rawCommit);
+        return {
+            commit: {
+                author: gitCommit.author,
+                committer: gitCommit.committer,
+                message: gitCommit.message,
+                tree: gitCommit.tree,
+                url: gitCommit.url,
+            },
+            parents: gitCommit.parents,
+            sha: gitCommit.sha,
+            url: "",
+        } as resources.ICommitDetails;
+    });
+
+    return await Promise.all(detailedCommits);
 }
 
 export function create(store: nconf.Provider, repoManager: utils.RepositoryManager): Router {
@@ -42,8 +58,8 @@ export function create(store: nconf.Provider, repoManager: utils.RepositoryManag
             request.query.sha,
             request.query.count);
         return resultP.then(
-            (blob) => {
-                response.status(200).json(blob);
+            (result) => {
+                response.status(200).json(result);
             },
             (error) => {
                 response.status(400).json(error);

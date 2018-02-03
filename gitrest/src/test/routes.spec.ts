@@ -1,7 +1,7 @@
 import * as assert from "assert";
 import * as async from "async";
 import {
-    ICommit,
+    ICommitDetails,
     ICreateBlobParams,
     ICreateBlobResponse,
     ICreateCommitParams,
@@ -416,11 +416,12 @@ describe("Historian", () => {
 
                     const tree = await createTreeInternal(manager, testOwnerName, testRepoName, createTreeParams);
 
-                    const parents = [];
+                    const parents: string[] = [];
                     if (lastCommit) {
                         const commits = await getCommits(manager, testOwnerName, testRepoName, lastCommit, 1);
-                        const parentCommit = commits[0] as ICommit;
-                        parents.push({ sha: parentCommit.sha, url: "" });
+                        const parentCommit = commits[0] as ICommitDetails;
+                        assert.ok(parentCommit.commit);
+                        parents.push(parentCommit.sha);
                     }
 
                     const commitParams: ICreateCommitParams = {
