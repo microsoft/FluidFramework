@@ -12,7 +12,7 @@ export interface IGitService {
     getContent(owner: string, repo: string, path: string, ref: string): Promise<any>;
 
     // Commits
-    getCommits(owner: string, repo: string, sha: string, count: number): Promise<git.ICommit[]>;
+    getCommits(owner: string, repo: string, sha: string, count: number): Promise<git.ICommitDetails[]>;
     getCommit(owner: string, repo: string, sha: string): Promise<git.ICommit>;
     createCommit(owner: string, repo: string, commit: git.ICreateCommitParams): Promise<git.ICommit>;
 
