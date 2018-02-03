@@ -1,0 +1,14 @@
+{{<layout}}
+    {{$styles}}
+        <link href="{{#hfurl}}/public/stylesheets/dist/style.css{{/hfurl}}" rel="stylesheet" />
+    {{/styles}}
+
+    {{$content}}
+        <div class="container">
+            <h1>Demos</h1>
+            <ul class="list-unstyled">
+                <li><a href="/login">Login</a></li>
+            </ul>
+        </div>
+    {{/content}}
+{{/layout}}
