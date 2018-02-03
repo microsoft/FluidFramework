@@ -1,13 +1,13 @@
 import { Router } from "express";
-import * as git from "gitresources";
 import * as nconf from "nconf";
+import { StorageProvider } from "../../services";
 import * as utils from "../utils";
 
-export function create(store: nconf.Provider, gitService: git.IHistorian): Router {
+export function create(store: nconf.Provider, provider: StorageProvider): Router {
     const router: Router = Router();
 
-    router.get("/repos/:repo/headers/:sha", (request, response, next) => {
-        const headerP = gitService.getHeader(request.params.repo, request.params.sha);
+    router.get(provider.translatePath("/repos/:owner?/:repo/headers/:sha"), (request, response, next) => {
+        const headerP = provider.historian.getHeader(request.params.owner, request.params.repo, request.params.sha);
         utils.handleResponse(headerP, response);
     });
 

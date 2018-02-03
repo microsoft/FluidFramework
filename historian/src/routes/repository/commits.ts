@@ -1,13 +1,17 @@
 import { Router } from "express";
-import * as git from "gitresources";
 import * as nconf from "nconf";
+import { StorageProvider } from "../../services";
 import * as utils from "../utils";
 
-export function create(store: nconf.Provider, gitService: git.IGitService): Router {
+export function create(store: nconf.Provider, provider: StorageProvider): Router {
     const router: Router = Router();
 
-    router.get("/repos/:repo/commits", (request, response, next) => {
-        const commitsP = gitService.getCommits(request.params.repo, request.query.sha, request.query.count);
+    router.get(provider.translatePath("/repos/:owner?/:repo/commits"), (request, response, next) => {
+        const commitsP = provider.historian.getCommits(
+            request.params.owner,
+            request.params.repo,
+            request.query.sha,
+            request.query.count);
         utils.handleResponse(
             commitsP,
             response,
