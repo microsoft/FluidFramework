@@ -1,5 +1,6 @@
 import { Router } from "express";
 import * as moniker from "moniker";
+import { ensureAuthenticated } from "./authCheker";
 import { defaultPartials } from "./partials";
 
 function renderView(request, response, id: string, config: any) {
@@ -24,7 +25,7 @@ export function create(config: any): Router {
         response.redirect(`/maps/${moniker.choose()}`);
     });
 
-    router.get("/:id", (request, response, next) => {
+    router.get("/:id", ensureAuthenticated, (request, response, next) => {
         renderView(request, response, request.params.id, config);
     });
 

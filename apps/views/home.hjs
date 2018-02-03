@@ -5,12 +5,21 @@
 
     {{$content}}
         <div class="container">
-            <h1>Demos</h1>
-            <ul class="list-unstyled">
+            {{#user}}
+                <h1>Hello, {{ user.displayName }}!</h1>
+                <h3>
+                    <li><a href="/maps">Maps</a></li>
+                    <li><a href="/cells">Cells</a></li>
+                </h3>
+                <br><br>
+                <li><a href="/logout">Logout</a></li>
+            {{/user}}
+            {{^user}}
+                <h1>Login to use the apps</h1>
+                <br>
                 <li><a href="/login">Login</a></li>
-                <li><a href="/maps">map</a></li>
-                <li><a href="/cells">cell</a></li>
-            </ul>
+            {{/user}}
         </div>
     {{/content}}
+
 {{/layout}}
