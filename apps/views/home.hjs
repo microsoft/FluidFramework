@@ -8,6 +8,8 @@
             <h1>Demos</h1>
             <ul class="list-unstyled">
                 <li><a href="/login">Login</a></li>
+                <li><a href="/maps">map</a></li>
+                <li><a href="/cells">cell</a></li>
             </ul>
         </div>
     {{/content}}
