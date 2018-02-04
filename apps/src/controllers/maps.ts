@@ -96,6 +96,11 @@ async function displayMap(parentElement: JQuery, key: string, map: types.IMap, p
     parentElement.append(container, childMaps);
 }
 
+function displayUserId(parentElement: JQuery, userId: string) {
+    const idElement = $(`<h4 align="right" class="userid">${userId}</h4>`);
+    parentElement.append(idElement);
+}
+
 /**
  * Randomly changes the values in the map
  */
@@ -126,6 +131,9 @@ export async function load(id: string, repository: string, endPoints: any, token
             window["doc"] = doc;
 
             const root = doc.getRoot();
+
+            // Display the user id.
+            displayUserId($("#mapViews"), doc.getUserId());
 
             // Display the initial values and then listen for updates
             displayMap($("#mapViews"), null, root, null, doc);

@@ -97,6 +97,11 @@ function addAnotherCell(parent: JQuery, cell: types.ICell, element1: JQuery, ele
     displayCell(childCell, newCell, doc);
 }
 
+function displayUserId(parentElement: JQuery, userId: string) {
+    const idElement = $(`<h4 align="right" class="userid">${userId}</h4>`);
+    parentElement.append(idElement);
+}
+
 /**
  * Randomly changes the values in the cell
  */
@@ -128,6 +133,9 @@ export async function load(id: string, repository: string, endPoints: any, token
                 cell = doc.createCell();
                 root.set("cell", cell);
             }
+
+            // Display the user id.
+            displayUserId($("#cellViews"), doc.getUserId());
 
             // Display the initial value and then listen for updates
             displayCell($("#cellViews"), cell, doc);

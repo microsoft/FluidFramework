@@ -32,7 +32,7 @@
     "nconf": "^0.10.0",
     "passport": "^0.4.0",
     "passport-azure-ad": "^3.0.10",
-    "routerlicious": "https://praguenpm.blob.core.windows.net/packages/routerlicious-0.1.1307.tgz",
+    "routerlicious": "https://praguenpm.blob.core.windows.net/packages/routerlicious-0.1.1319.tgz",
     "serve-favicon": "^2.4.5",
     "split": "^1.0.1",
     "static-expiry": "0.0.11",
