@@ -193,6 +193,11 @@ export interface IDocumentDeltaConnection {
 
 export interface IDocumentResource {
     /**
+     * User identifier connecting to the document.
+     */
+    userId: string;
+
+    /**
      * Client identifier for this session
      */
     clientId: string;

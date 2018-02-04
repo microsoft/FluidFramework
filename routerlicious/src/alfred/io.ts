@@ -20,7 +20,7 @@ export function register(
 
     const throughput = new ThroughputCounter(winston.info);
     const metricLogger = agent.createMetricClient(metricClientConfig);
-    let authenticatedUser: utils.IAuthenticatedUser;
+    let authenticatedUser: utils.IAuthenticatedUser = null;
 
     webSocketServer.on("connection", (socket: core.IWebSocket) => {
         const connectionProfiler = winston.startTimer();
@@ -59,7 +59,6 @@ export function register(
                 if (user !== null) {
                     authenticatedUser = user as utils.IAuthenticatedUser;
                     winston.info(`User ${authenticatedUser.user.id} wants to access ${message.id}`);
-                    // TODO (auth): Do stuff with the authed user.
                 }
                 const profiler = winston.startTimer();
                 connectionProfiler.done(`Client has requested to load ${message.id}`);
@@ -107,6 +106,7 @@ export function register(
                                 parentBranch,
                                 privateKey: documentDetails.value.privateKey,
                                 publicKey: documentDetails.value.publicKey,
+                                userId: authenticatedUser === null ? null : authenticatedUser.user.id,
                             };
                             profiler.done(`Loaded ${message.id}`);
                             response(null, connectedMessage);

@@ -24,6 +24,9 @@ export interface IConnect {
  * TODO Is the below a connection to the actual Kafka stream?
  */
 export interface IConnected {
+    // The user who is sending the message
+    userId: string;
+
     // The client who is sending the message
     clientId: string;
 

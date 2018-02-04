@@ -45,6 +45,7 @@ export function getEmptyHeader(id: string): api.IDocumentHeader {
 export class DocumentResource implements api.IDocumentResource {
     constructor(
         public documentId: string,
+        public userId: string,
         public clientId: string,
         public existing: boolean,
         public version: resources.ICommit,
@@ -151,6 +152,7 @@ export class DocumentService implements api.IDocumentService {
 
         const document = new DocumentResource(
             id,
+            connection.userId,
             deltaConnection.clientId,
             connection ? connection.existing : true,
             version,
