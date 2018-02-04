@@ -20,7 +20,7 @@ export interface ICommitHash {
 export interface ICreateCommitParams {
     message: string;
     tree: string;
-    parents: ICommitHash[];
+    parents: string[];
     // GitHub has signature verification on the author
     author: IAuthor;
 }
@@ -32,6 +32,27 @@ export interface ICommit {
     committer: ICommitter;
     message: string;
     tree: ICommitHash;
+    parents: ICommitHash[];
+}
+
+/**
+ * GitHub differentiates the commit resource returned from its git and repos routes. The repos
+ * route returns more site specific information (like links to the developer's account) while the git
+ * route is what is actually stored in the Git repo
+ *
+ * https://developer.github.com/v3/git/commits/
+ * https://developer.github.com/v3/repos/commits/
+ */
+export interface ICommitDetails {
+    url: string;
+    sha: string;
+    commit: {
+        url: string;
+        author: IAuthor;
+        committer: ICommitter;
+        message: string;
+        tree: ICommitHash;
+    };
     parents: ICommitHash[];
 }
 

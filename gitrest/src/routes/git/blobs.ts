@@ -14,15 +14,20 @@ function validateBlob(blob: string): boolean {
     return blob !== undefined && blob !== null;
 }
 
-export async function getBlob(repoManager: utils.RepositoryManager, repo: string, sha: string): Promise<IBlob> {
-    const repository = await repoManager.open(repo);
+export async function getBlob(
+    repoManager: utils.RepositoryManager,
+    owner: string,
+    repo: string,
+    sha: string): Promise<IBlob> {
+    const repository = await repoManager.open(owner, repo);
     const blob = await repository.getBlob(sha);
 
-    return utils.blobToIBlob(blob, repo);
+    return utils.blobToIBlob(blob, owner, repo);
 }
 
 export async function createBlob(
     repoManager: utils.RepositoryManager,
+    owner: string,
     repo: string,
     blob: ICreateBlobParams): Promise<ICreateBlobResponse> {
 
@@ -30,21 +35,25 @@ export async function createBlob(
         return Promise.reject("Invalid blob");
     }
 
-    const repository = await repoManager.open(repo);
+    const repository = await repoManager.open(owner, repo);
     const id = await repository.createBlobFromBuffer(new Buffer(blob.content, blob.encoding));
     const sha = id.tostrS();
 
     return {
         sha,
-        url: `/repos/${repo}/git/blobs/${sha}`,
+        url: `/repos/${owner}/${repo}/git/blobs/${sha}`,
     };
 }
 
 export function create(store: nconf.Provider, repoManager: utils.RepositoryManager): Router {
     const router: Router = Router();
 
-    router.post("/repos/:repo/git/blobs", (request, response, next) => {
-        const blobP = createBlob(repoManager, request.params.repo, request.body as ICreateBlobParams);
+    router.post("/repos/:owner/:repo/git/blobs", (request, response, next) => {
+        const blobP = createBlob(
+            repoManager,
+            request.params.owner,
+            request.params.repo,
+            request.body as ICreateBlobParams);
         return blobP.then(
             (blob) => {
                 response.status(201).json(blob);
@@ -57,8 +66,12 @@ export function create(store: nconf.Provider, repoManager: utils.RepositoryManag
     /**
      * Retrieves the given blob from the repository
      */
-    router.get("/repos/:repo/git/blobs/:sha", (request, response, next) => {
-        const blobP = getBlob(repoManager, request.params.repo, request.params.sha);
+    router.get("/repos/:owner/:repo/git/blobs/:sha", (request, response, next) => {
+        const blobP = getBlob(
+            repoManager,
+            request.params.owner,
+            request.params.repo,
+            request.params.sha);
         return blobP.then(
             (blob) => {
                 response.status(200).json(blob);

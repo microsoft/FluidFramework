@@ -12,3 +12,32 @@ export interface ICache {
      */
     set<T>(key: string, value: T): Promise<void>;
 }
+
+/**
+ * Credentials used to access a storage provider
+ */
+export interface ICredentials {
+    user: string;
+
+    password: string;
+}
+
+/**
+ * Interface representing a git storage provider
+ */
+export interface IStorageProvider {
+    // The type of provider
+    type: "git" | "cobalt";
+
+    // URL to the provider
+    url: string;
+
+    // Optional credentials needed to access the given URL
+    credentials?: ICredentials;
+
+    // Name for the provider
+    name: string;
+
+    // Whether or not this should be the default provider
+    isDefault: boolean;
+}

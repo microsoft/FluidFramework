@@ -6,7 +6,10 @@ import * as redis from "redis";
 import * as winston from "winston";
 import * as app from "./app";
 import * as services from "./services";
+import { IStorageProvider, StorageProvider } from "./services";
 
+// tslint:disable-next-line:no-var-requires
+const packageDetails = require("../package.json");
 const provider = nconf.argv().env("__" as any).file(path.join(__dirname, "../config.json")).use("memory");
 
 /**
@@ -14,16 +17,16 @@ const provider = nconf.argv().env("__" as any).file(path.join(__dirname, "../con
  */
 const loggerConfig = provider.get("logger");
 winston.configure({
-    transports: [
-        new winston.transports.Console({
-            colorize: loggerConfig.colorize,
-            handleExceptions: true,
-            json: loggerConfig.json,
-            level: loggerConfig.level,
-            stringify: (obj) => JSON.stringify(obj),
-            timestamp: loggerConfig.timestamp,
-        }),
-    ],
+  transports: [
+    new winston.transports.Console({
+      colorize: loggerConfig.colorize,
+      handleExceptions: true,
+      json: loggerConfig.json,
+      level: loggerConfig.level,
+      stringify: (obj) => JSON.stringify(obj),
+      timestamp: loggerConfig.timestamp,
+    }),
+  ],
 });
 
 // Update debug library to output to winston
@@ -31,18 +34,27 @@ winston.configure({
 // override the default log format to not include the timestamp since winston will do this for us
 // tslint:disable-next-line:only-arrow-functions
 (debug as any).formatArgs = function(args) {
-    const name = this.namespace;
-    args[0] = name + " " + args[0];
+  const name = this.namespace;
+  args[0] = name + " " + args[0];
 };
 
 // Create services
 const redisConfig = provider.get("redis");
 const redisClient = redis.createClient(redisConfig.port, redisConfig.host);
-const cache = new services.RedisCache(redisClient);
-const restService = new services.RestGitService(provider.get("gitServerUrl"), cache);
+
+const storageProvidersConfig = provider.get("storageProviders") as IStorageProvider[];
+const storageProviders = storageProvidersConfig.map((storageProviderConfig) => {
+  const cache = new services.RedisCache(redisClient, storageProviderConfig.name);
+  const restService = new services.RestGitService(
+    storageProviderConfig.url,
+    storageProviderConfig.credentials,
+    cache,
+    `Historian/${packageDetails.version}`);
+  return new StorageProvider(restService, storageProviderConfig);
+});
 
 // Create the historian app
-const historian = app.create(provider, restService);
+const historian = app.create(provider, storageProviders);
 
 /**
  * Get port from environment and store in Express.

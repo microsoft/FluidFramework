@@ -27,13 +27,18 @@ function tagToITag(tag: git.Tag): ITag {
     };
 }
 
-async function createTag(repoManager: utils.RepositoryManager, repo: string, tag: ICreateTagParams): Promise<ITag> {
+async function createTag(
+    repoManager: utils.RepositoryManager,
+    owner: string,
+    repo: string,
+    tag: ICreateTagParams): Promise<ITag> {
+
     const date = Date.parse(tag.tagger.date);
     if (isNaN(date)) {
         return Promise.reject("Invalid input");
     }
 
-    const repository = await repoManager.open(repo);
+    const repository = await repoManager.open(owner, repo);
     // TODO detect timezone information in date string rather than specifying UTC by default
     const signature = git.Signature.create(tag.tagger.name, tag.tagger.email, Math.floor(date), 0);
     const object = await git.Object.lookup(
@@ -45,8 +50,8 @@ async function createTag(repoManager: utils.RepositoryManager, repo: string, tag
     return tagToITag(await git.Tag.lookup(repository, tagOid));
 }
 
-async function getTag(repoManager: utils.RepositoryManager, repo: string, tagId: string): Promise<ITag> {
-    const repository = await repoManager.open(repo);
+async function getTag(repoManager: utils.RepositoryManager, owner: string, repo: string, tagId: string): Promise<ITag> {
+    const repository = await repoManager.open(owner, repo);
     const tag = await git.Tag.lookup(repository, tagId);
     return tagToITag(tag);
 }
@@ -56,8 +61,13 @@ export function create(store: nconf.Provider, repoManager: utils.RepositoryManag
 
     // https://developer.github.com/v3/git/tags/
 
-    router.post("/repos/:repo/git/tags", (request, response, next) => {
-        const blobP = createTag(repoManager, request.params.repo, request.body as ICreateTagParams);
+    router.post("/repos/:owner/:repo/git/tags", (request, response, next) => {
+        const blobP = createTag(
+            repoManager,
+            request.params.owner,
+            request.params.repo,
+            request.body as ICreateTagParams);
+
         return blobP.then(
             (blob) => {
                 response.status(201).json(blob);
@@ -67,8 +77,8 @@ export function create(store: nconf.Provider, repoManager: utils.RepositoryManag
             });
     });
 
-    router.get("/repos/:repo/git/tags/*", (request, response, next) => {
-        const blobP = getTag(repoManager, request.params.repo, request.params[0]);
+    router.get("/repos/:owner/:repo/git/tags/*", (request, response, next) => {
+        const blobP = getTag(repoManager, request.params.owner, request.params.repo, request.params[0]);
         return blobP.then(
             (blob) => {
                 response.status(200).json(blob);

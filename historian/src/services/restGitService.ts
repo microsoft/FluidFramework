@@ -3,7 +3,7 @@ import * as pathApi from "path";
 import * as querystring from "querystring";
 import * as request from "request";
 import * as winston from "winston";
-import { ICache } from "./definitions";
+import { ICache, ICredentials } from "./definitions";
 
 export interface IDocument {
     existing: boolean;
@@ -44,134 +44,163 @@ function buildHierarchy(flatTree: git.ITree): ITree {
     return root;
 }
 
-export class RestGitService implements git.IGitService {
-    constructor(private gitServerUrl: string, private cache: ICache) {
+export class RestGitService implements git.IHistorian {
+    private authHeader: string;
+
+    constructor(
+        private gitServerUrl: string,
+        credentials: ICredentials,
+        private cache: ICache,
+        private userAgent: string) {
+
+        if (credentials) {
+            this.authHeader = `Basic ${new Buffer(`${credentials.user}:${credentials.password}`).toString("base64")}`;
+        }
     }
 
-    public getBlob(repo: string, sha: string): Promise<git.IBlob> {
+    public getBlob(owner: string, repo: string, sha: string): Promise<git.IBlob> {
         return this.resolveFromCache(
             sha,
-            () => this.get<git.IBlob>(`/repos/${encodeURIComponent(repo)}/git/blobs/${encodeURIComponent(sha)}`));
+            () => this.get<git.IBlob>(`/repos/${this.getRepoPath(owner, repo)}/git/blobs/${encodeURIComponent(sha)}`));
     }
 
-    public async createBlob(repo: string, blob: git.ICreateBlobParams): Promise<git.ICreateBlobResponse> {
+    public async createBlob(
+        owner: string,
+        repo: string,
+        blob: git.ICreateBlobParams): Promise<git.ICreateBlobResponse> {
+
         const createResults = await this.post<git.ICreateBlobResponse>(
-            `/repos/${encodeURIComponent(repo)}/git/blobs`,
+            `/repos/${this.getRepoPath(owner, repo)}/git/blobs`,
             blob);
 
         // Fetch the full blob so we can have it in cache
-        this.getBlob(repo, createResults.sha).catch((error) => {
+        this.getBlob(owner, repo, createResults.sha).catch((error) => {
             winston.error(`Error fetching blob ${createResults.sha}`);
         });
 
         return createResults;
     }
 
-    public getContent(repo: string, path: string, ref: string): Promise<any> {
+    public getContent(owner: string, repo: string, path: string, ref: string): Promise<any> {
         const query = querystring.stringify({ ref });
-        return this.get(`/repos/${encodeURIComponent(repo)}/contents/${path}?${query}`);
+        return this.get(`/repos/${this.getRepoPath(owner, repo)}/contents/${path}?${query}`);
     }
 
-    public getCommits(repo: string, sha: string, count: number): Promise<git.ICommit[]> {
+    public getCommits(owner: string, repo: string, sha: string, count: number): Promise<git.ICommitDetails[]> {
         const query = querystring.stringify({
             count,
             sha,
         });
-        return this.get(`/repos/${encodeURIComponent(repo)}/commits?${query}`);
+        return this.get(`/repos/${this.getRepoPath(owner, repo)}/commits?${query}`);
     }
 
-    public async getCommit(repo: string, sha: string): Promise<git.ICommit> {
+    public async getCommit(owner: string, repo: string, sha: string): Promise<git.ICommit> {
         return this.resolveFromCache(
             sha,
-            () => this.get<git.ICommit>(`/repos/${encodeURIComponent(repo)}/git/commits/${encodeURIComponent(sha)}`));
+            () => this.get<git.ICommit>(
+                `/repos/${this.getRepoPath(owner, repo)}/git/commits/${encodeURIComponent(sha)}`));
     }
 
-    public async createCommit(repo: string, commitParams: git.ICreateCommitParams): Promise<git.ICommit> {
-        const commit = await this.post<git.ICommit>(`/repos/${encodeURIComponent(repo)}/git/commits`, commitParams);
+    public async createCommit(
+        owner: string,
+        repo: string,
+        commitParams: git.ICreateCommitParams): Promise<git.ICommit> {
+
+        const commit = await this.post<git.ICommit>(
+            `/repos/${this.getRepoPath(owner, repo)}/git/commits`,
+            commitParams);
 
         this.setCache(commit.sha, commit);
 
         // Also fetch the tree for the commit to have it in cache
-        this.getTree(repo, commit.tree.sha, true).catch((error) => {
+        this.getTree(owner, repo, commit.tree.sha, true).catch((error) => {
             winston.error(`Error fetching commit tree ${commit.tree.sha}`);
         });
         // ... as well as pull in the header for it
-        this.getHeader(repo, commit.sha).catch((error) => {
+        this.getHeader(owner, repo, commit.sha).catch((error) => {
             winston.error(`Error fetching header ${commit.sha}`);
         });
 
         return commit;
     }
 
-    public getRefs(repo: string): Promise<git.IRef[]> {
-        return this.get(`/repos/${encodeURIComponent(repo)}/git/refs`);
+    public getRefs(owner: string, repo: string): Promise<git.IRef[]> {
+        return this.get(`/repos/${this.getRepoPath(owner, repo)}/git/refs`);
     }
 
-    public getRef(repo: string, ref: string): Promise<git.IRef> {
-        return this.get(`/repos/${encodeURIComponent(repo)}/git/refs/${ref}`);
+    public getRef(owner: string, repo: string, ref: string): Promise<git.IRef> {
+        return this.get(`/repos/${this.getRepoPath(owner, repo)}/git/refs/${ref}`);
     }
 
-    public createRef(repo: string, params: git.ICreateRefParams): Promise<git.IRef> {
-        return this.post(`/repos/${encodeURIComponent(repo)}/git/refs`, params);
+    public createRef(owner: string, repo: string, params: git.ICreateRefParams): Promise<git.IRef> {
+        return this.post(`/repos/${this.getRepoPath(owner, repo)}/git/refs`, params);
     }
 
-    public updateRef(repo: string, ref: string, params: git.IPatchRefParams): Promise<git.IRef> {
-        return this.patch(`/repos/${encodeURIComponent(repo)}/git/refs/${ref}`, params);
+    public updateRef(owner: string, repo: string, ref: string, params: git.IPatchRefParams): Promise<git.IRef> {
+        return this.patch(`/repos/${this.getRepoPath(owner, repo)}/git/refs/${ref}`, params);
     }
 
-    public deleteRef(repo: string, ref: string): Promise<void> {
-        return this.delete(`/repos/${encodeURIComponent(repo)}/git/refs/${ref}`);
+    public deleteRef(owner: string, repo: string, ref: string): Promise<void> {
+        return this.delete(`/repos/${this.getRepoPath(owner, repo)}/git/refs/${ref}`);
     }
 
-    public createRepo(repo: git.ICreateRepoParams): Promise<any> {
-        winston.info(`Create ${repo.name}`);
-        return this.post(`/repos`, repo);
+    public createRepo(owner: string, repo: git.ICreateRepoParams): Promise<any> {
+        return this.post(`${owner ? `/${owner}` : ""}/repos`, repo);
     }
 
-    public getRepo(repo: string): Promise<any> {
-        return this.get(`/repos/${encodeURIComponent(repo)}`);
+    public getRepo(owner: string, repo: string): Promise<any> {
+        return this.get(`/repos/${this.getRepoPath(owner, repo)}`);
     }
 
-    public createTag(repo: string, tag: git.ICreateTagParams): Promise<git.ITag> {
-        return this.post(`/repos/${encodeURIComponent(repo)}/git/tags`, tag);
+    public createTag(owner: string, repo: string, tag: git.ICreateTagParams): Promise<git.ITag> {
+        return this.post(`/repos/${this.getRepoPath(owner, repo)}/git/tags`, tag);
     }
 
-    public getTag(repo: string, tag: string): Promise<git.ITag> {
-        return this.get(`/repos/${encodeURIComponent(repo)}/git/tags/${tag}`);
+    public getTag(owner: string, repo: string, tag: string): Promise<git.ITag> {
+        return this.get(`/repos/${this.getRepoPath(owner, repo)}/git/tags/${tag}`);
     }
 
-    public async createTree(repo: string, treeParams: git.ICreateTreeParams): Promise<git.ITree> {
-        const tree = await this.post<git.ITree>(`/repos/${encodeURIComponent(repo)}/git/trees`, treeParams);
+    public async createTree(owner: string, repo: string, treeParams: git.ICreateTreeParams): Promise<git.ITree> {
+        const tree = await this.post<git.ITree>(`/repos/${this.getRepoPath(owner, repo)}/git/trees`, treeParams);
 
         this.setCache(tree.sha, tree);
 
         return tree;
     }
 
-    public getTree(repo: string, sha: string, recursive: boolean): Promise<git.ITree> {
+    public getTree(owner: string, repo: string, sha: string, recursive: boolean): Promise<git.ITree> {
         const key = recursive ? `${sha}:recursive` : sha;
         return this.resolveFromCache(
             key,
             () => {
                 const query = querystring.stringify({ recursive: recursive ? 1 : 0 });
                 return this.get<git.ITree>(
-                    `/repos/${encodeURIComponent(repo)}/git/trees/${encodeURIComponent(sha)}?${query}`);
+                    `/repos/${this.getRepoPath(owner, repo)}/git/trees/${encodeURIComponent(sha)}?${query}`);
             });
     }
 
-    public async getHeader(repo: string, sha: string): Promise<any> {
-        const version = await this.getCommit(repo, sha);
+    public async getHeader(owner: string, repo: string, sha: string): Promise<any> {
+        const version = await this.getCommit(owner, repo, sha);
 
         const key = `${version.sha}:header`;
         return this.resolveFromCache(
             key,
-            () => this.getHeaderCore(repo, version));
+            () => this.getHeaderCore(owner, repo, version));
     }
 
-    private async getHeaderCore(repo: string, version: git.ICommit): Promise<any> {
+    /**
+     * Helper method to translate from an owner repo pair to the URL component for it. In the future we will require
+     * the owner parameter. But for back compat we allow it to be optional.
+     */
+    private getRepoPath(owner: string, repo: string): string {
+        const val = owner ? `${encodeURIComponent(owner)}/${encodeURIComponent(repo)}` : encodeURIComponent(repo);
+        return val;
+    }
+
+    private async getHeaderCore(owner: string, repo: string, version: git.ICommit): Promise<any> {
         // NOTE we currently grab the entire repository. Should this ever become a bottleneck we can move to manually
         // walking and looking for entries. But this will requre more round trips.
-        const rawTree = await this.getTree(repo, version.tree.sha, true);
+        const rawTree = await this.getTree(owner, repo, version.tree.sha, true);
         const tree = buildHierarchy(rawTree);
 
         // Pull out the root attributes file
@@ -185,21 +214,21 @@ export class RestGitService implements git.IGitService {
 
         // Pull in transformed messages between the msn and the reference
         const messagesSha = tree.blobs[".messages"];
-        const messagesP = this.getBlob(repo, messagesSha).then((messages) => {
+        const messagesP = this.getBlob(owner, repo, messagesSha).then((messages) => {
             const messagesJSON = Buffer.from(messages.content, "base64").toString();
             return JSON.parse(messagesJSON); // as api.ISequencedDocumentMessage[];
         });
 
         // Fetch the attributes and distirbuted object headers
-        const docAttributesP = this.getBlob(repo, docAttributesSha).then((docAttributes) => {
+        const docAttributesP = this.getBlob(owner, repo, docAttributesSha).then((docAttributes) => {
             const attributes = Buffer.from(docAttributes.content, "base64").toString();
             return JSON.parse(attributes); // as api.IDocumentAttributes;
         });
 
         const blobsP: Array<Promise<any>> = [];
         for (const blob of objectBlobs) {
-            const headerP = this.getBlob(repo, blob.headerSha).then((header) => header.content);
-            const attributesP = this.getBlob(repo, blob.attributesSha).then((objectType) => {
+            const headerP = this.getBlob(owner, repo, blob.headerSha).then((header) => header.content);
+            const attributesP = this.getBlob(owner, repo, blob.attributesSha).then((objectType) => {
                 const attributes = Buffer.from(objectType.content, "base64").toString();
                 return JSON.parse(attributes); // as api.IObjectAttributes;
             });
@@ -224,10 +253,15 @@ export class RestGitService implements git.IGitService {
 
     private get<T>(url: string): Promise<T> {
         const options: request.OptionsWithUrl = {
+            headers: {
+                "User-Agent": this.userAgent,
+            },
             json: true,
             method: "GET",
             url: `${this.gitServerUrl}${url}`,
         };
+        this.authorize(options);
+
         return this.request(options, 200);
     }
 
@@ -236,19 +270,27 @@ export class RestGitService implements git.IGitService {
             body: requestBody,
             headers: {
                 "Content-Type": "application/json",
+                "User-Agent": this.userAgent,
             },
             json: true,
             method: "POST",
             url: `${this.gitServerUrl}${url}`,
         };
+        this.authorize(options);
+
         return this.request(options, 201);
     }
 
     private delete<T>(url: string): Promise<T> {
         const options: request.OptionsWithUrl = {
+            headers: {
+                "User-Agent": this.userAgent,
+            },
             method: "DELETE",
             url: `${this.gitServerUrl}${url}`,
         };
+        this.authorize(options);
+
         return this.request(options, 204);
     }
 
@@ -257,12 +299,24 @@ export class RestGitService implements git.IGitService {
             body: requestBody,
             headers: {
                 "Content-Type": "application/json",
+                "User-Agent": this.userAgent,
             },
             json: true,
             method: "PATCH",
             url: `${this.gitServerUrl}${url}`,
         };
+        this.authorize(options);
+
         return this.request(options, 200);
+    }
+
+    /**
+     * Updates the provided options with authorization information
+     */
+    private authorize(options: request.OptionsWithUrl) {
+        if (this.authHeader) {
+            options.headers.Authorization = this.authHeader;
+        }
     }
 
     private request<T>(options: request.OptionsWithUrl, statusCode: number): Promise<T> {
@@ -273,6 +327,7 @@ export class RestGitService implements git.IGitService {
                     if (error) {
                         return reject(error);
                     } else if (response.statusCode !== statusCode) {
+                        winston.info(response.body);
                         return reject(response.statusCode);
                     } else {
                         return resolve(response.body);

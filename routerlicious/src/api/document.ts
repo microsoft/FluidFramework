@@ -425,6 +425,13 @@ export class Document {
     }
 
     /**
+     * Returns the user id connected to the document.
+     */
+    public getUserId(): string {
+        return this.document.userId;
+    }
+
+    /**
      * Helper function to determine if we should snapshot the given object. We only will snapshot non-local
      * objects whose time of attach is outside the collaboration window
      */

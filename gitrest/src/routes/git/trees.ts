@@ -6,10 +6,11 @@ import * as utils from "../../utils";
 
 export async function createTree(
     repoManager: utils.RepositoryManager,
+    owner: string,
     repo: string,
     tree: ICreateTreeParams): Promise<ITree> {
 
-    const repository = await repoManager.open(repo);
+    const repository = await repoManager.open(owner, repo);
     // TODO if base_tree exists look it up here and assume everything else is an insert
     const builder = await git.Treebuilder.create(repository, null);
 
@@ -23,13 +24,18 @@ export async function createTree(
     return getTreeInternal(repository, id.tostrS());
 }
 
-async function getTree(repoManager: utils.RepositoryManager, repo: string, sha: string): Promise<ITree> {
-    const repository = await repoManager.open(repo);
+async function getTree(repoManager: utils.RepositoryManager, owner: string, repo: string, sha: string): Promise<ITree> {
+    const repository = await repoManager.open(owner, repo);
     return getTreeInternal(repository, sha);
 }
 
-async function getTreeRecursive(repoManager: utils.RepositoryManager, repo: string, sha: string): Promise<ITree> {
-    const repository = await repoManager.open(repo);
+async function getTreeRecursive(
+    repoManager: utils.RepositoryManager,
+    owner: string,
+    repo: string,
+    sha: string): Promise<ITree> {
+
+    const repository = await repoManager.open(owner, repo);
     const root = await repository.getTree(sha);
 
     const walker = root.walk(false);
@@ -86,8 +92,12 @@ function treeEntryToITreeEntry(entry: git.TreeEntry): ITreeEntry {
 export function create(store: nconf.Provider, repoManager: utils.RepositoryManager): Router {
     const router: Router = Router();
 
-    router.post("/repos/:repo/git/trees", (request, response, next) => {
-        const blobP = createTree(repoManager, request.params.repo, request.body as ICreateTreeParams);
+    router.post("/repos/:owner/:repo/git/trees", (request, response, next) => {
+        const blobP = createTree(
+            repoManager,
+            request.params.owner,
+            request.params.repo,
+            request.body as ICreateTreeParams);
         return blobP.then(
             (blob) => {
                 response.status(201).json(blob);
@@ -97,10 +107,10 @@ export function create(store: nconf.Provider, repoManager: utils.RepositoryManag
             });
     });
 
-    router.get("/repos/:repo/git/trees/:sha", (request, response, next) => {
+    router.get("/repos/:owner/:repo/git/trees/:sha", (request, response, next) => {
         const blobP = request.query.recursive === "1"
-            ? getTreeRecursive(repoManager, request.params.repo, request.params.sha)
-            : getTree(repoManager, request.params.repo, request.params.sha);
+            ? getTreeRecursive(repoManager, request.params.owner, request.params.repo, request.params.sha)
+            : getTree(repoManager, request.params.owner, request.params.repo, request.params.sha);
         return blobP.then(
             (blob) => {
                 response.status(200).json(blob);
