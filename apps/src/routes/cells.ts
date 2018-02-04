@@ -26,6 +26,7 @@ export function create(config: any): Router {
     });
 
     router.get("/:id", ensureAuthenticated, (request, response, next) => {
+        request.query.token = response.locals.token;
         renderView(request, response, request.params.id, config);
     });
 
