@@ -40,4 +40,7 @@ export interface IStorageProvider {
 
     // Whether or not this should be the default provider
     isDefault: boolean;
+
+    // When an owner is not specified (for back compat) this field provides the owner to use
+    defaultOwner: string;
 }

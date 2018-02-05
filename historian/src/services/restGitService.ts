@@ -51,7 +51,8 @@ export class RestGitService implements git.IHistorian {
         private gitServerUrl: string,
         credentials: ICredentials,
         private cache: ICache,
-        private userAgent: string) {
+        private userAgent: string,
+        private defaultOwner: string) {
 
         if (credentials) {
             this.authHeader = `Basic ${new Buffer(`${credentials.user}:${credentials.password}`).toString("base64")}`;
@@ -193,8 +194,8 @@ export class RestGitService implements git.IHistorian {
      * the owner parameter. But for back compat we allow it to be optional.
      */
     private getRepoPath(owner: string, repo: string): string {
-        const val = owner ? `${encodeURIComponent(owner)}/${encodeURIComponent(repo)}` : encodeURIComponent(repo);
-        return val;
+        owner = owner ? owner : this.defaultOwner;
+        return `${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`;
     }
 
     private async getHeaderCore(owner: string, repo: string, version: git.ICommit): Promise<any> {
