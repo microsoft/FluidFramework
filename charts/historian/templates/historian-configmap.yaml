@@ -19,7 +19,30 @@ data:
             "timestamp": false
         },
         "requestSizeLimit": "1gb",
-        "gitServerUrl": "http://{{ template "gitrest.fullname" . }}",
+        "storageProviders": [
+                {
+                    "type": "git",
+                    "url": "http://{{ template "gitrest.fullname" . }}",
+                    "name": "git",
+                    "isDefault": true
+                },
+                {
+                    "type": "cobalt",
+                    "url": "http://{{ template "cobalt.fullname" . }}",
+                    "name": "cobalt",
+                    "isDefault": false
+                },
+                {
+                    "type": "git",
+                    "url": "https://api.github.com",
+                    "credentials": {
+                        "user": "praguegit",
+                        "password": "8d043006d0a2704d4dd9972f848f1982026672a1"
+                    },
+                    "name": "github",
+                    "isDefault": false
+                }
+        ],
         "redis": {
             "host": "{{ .Values.historian.redis }}",
             "port": 6379

@@ -1,0 +1,40 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: {{ template "cobalt.fullname" . }}
+  labels:
+    app: {{ template "historian.fullname" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    component: "{{ .Values.cobalt.name }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+spec:
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: {{ template "historian.fullname" . }}
+        component: "{{ .Values.cobalt.name }}"
+        release: {{ .Release.Name }}
+    spec:
+      containers:
+      - name: {{ template "cobalt.fullname" . }}
+        image: "{{ .Values.cobalt.image }}"
+        imagePullPolicy: {{ default "" .Values.imagePullPolicy | quote }}
+        ports:
+        - name: http
+          containerPort: 80
+        env:
+        - name: COBALT_STORAGE_LOCATION
+          value: /var/lib/cobalt/
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/cobalt/
+      imagePullSecrets:
+      - name: regsecret
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ .Values.cobalt.persistence.existingClaim | default (include "cobalt.fullname" .) }}
+
