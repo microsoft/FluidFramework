@@ -1,10 +1,10 @@
-import { ICommit } from "gitresources";
+import { ICommit, ICommitDetails } from "gitresources";
 import * as moniker from "moniker";
 import * as winston from "winston";
 import * as api from "../api-core";
 import * as core from "../core";
-import * as git from "../git-storage";
 import * as utils from "../utils";
+import { getFullId } from "./utils";
 
 const StartingSequenceNumber = 0;
 
@@ -14,11 +14,143 @@ const StartingSequenceNumber = 0;
 export async function getDocument(
     mongoManager: utils.MongoManager,
     documentsCollectionName: string,
-    id: string): Promise<any> {
+    tenantId: string,
+    documentId: string): Promise<any> {
 
+    const id = getFullId(tenantId, documentId);
     const db = await mongoManager.getDatabase();
     const collection = db.collection<any>(documentsCollectionName);
     return collection.findOne({ _id: id });
+}
+
+export async function getOrCreateDocument(
+    mongoManager: utils.MongoManager,
+    documentsCollectionName: string,
+    producer: utils.kafkaProducer.IProducer,
+    id: string,
+    privateKey: string,
+    publicKey: string): Promise<{existing: boolean, value: core.IDocument }> {
+
+    const getOrCreateP = getOrCreateObject(
+        mongoManager,
+        documentsCollectionName,
+        producer,
+        id,
+        privateKey,
+        publicKey);
+
+    return getOrCreateP;
+}
+
+export async function getLatestVersion(
+    tenantManager: api.ITenantManager,
+    tenantId: string,
+    documentId: string): Promise<ICommitDetails> {
+
+    const commits = await getVersions(tenantManager, tenantId, documentId, 1);
+    return commits.length > 0 ? commits[0] : null;
+}
+
+export async function getVersions(
+    tenantManager: api.ITenantManager,
+    tenantId: string,
+    documentId: string,
+    count: number): Promise<ICommitDetails[]> {
+
+    const fullId = getFullId(tenantId, documentId);
+    const gitManager = tenantManager.getTenant(tenantId).gitManager;
+    return await gitManager.getCommits(fullId, count);
+}
+
+export async function getVersion(
+    tenantManager: api.ITenantManager,
+    tenantId: string,
+    documentId: string,
+    sha: string): Promise<ICommit> {
+
+    const gitManager = tenantManager.getTenant(tenantId).gitManager;
+    return await gitManager.getCommit(sha);
+}
+
+/**
+ * Retrieves the forks for the given document
+ */
+export async function getForks(
+    mongoManager: utils.MongoManager,
+    documentsCollectionName: string,
+    tenantId: string,
+    documentId: string): Promise<string[]> {
+
+    const id = getFullId(tenantId, documentId);
+    const db = await mongoManager.getDatabase();
+    const collection = db.collection<any>(documentsCollectionName);
+    const document = await collection.findOne({ _id: id });
+
+    return document.forks || [];
+}
+
+export async function createFork(
+    producer: utils.kafkaProducer.IProducer,
+    tenantManager: api.ITenantManager,
+    mongoManager: utils.MongoManager,
+    documentsCollectionName: string,
+    tenantId: string,
+    id: string): Promise<string> {
+
+    const name = moniker.choose();
+    const fullId = getFullId(tenantId, id);
+    const fullName = getFullId(tenantId, name);
+
+    // Load in the latest snapshot
+    const gitManager = tenantManager.getTenant(tenantId).gitManager;
+    const head = await gitManager.getRef(id);
+    winston.info(JSON.stringify(head));
+
+    let sequenceNumber: number;
+    let minimumSequenceNumber: number;
+    if (head === null) {
+        // Set the Seq# and MSN# to StartingSequenceNumber
+        minimumSequenceNumber = StartingSequenceNumber;
+        sequenceNumber = StartingSequenceNumber;
+    } else {
+        // Create a new commit, referecing the ref head, but swap out the metadata to indicate the branch details
+        const attributesContentP = gitManager.getContent(head.object.sha, ".attributes");
+        const branchP = gitManager.upsertRef(name, head.object.sha);
+        const [attributesContent] = await Promise.all([attributesContentP, branchP]);
+
+        const attributesJson = Buffer.from(attributesContent.content, "base64").toString("utf-8");
+        const attributes = JSON.parse(attributesJson) as api.IDocumentAttributes;
+        minimumSequenceNumber = attributes.minimumSequenceNumber;
+        sequenceNumber = attributes.sequenceNumber;
+    }
+
+    // Get access to Mongo to update the route tables
+    const db = await mongoManager.getDatabase();
+    const collection = db.collection<core.IDocument>(documentsCollectionName);
+
+    // Insert the fork entry and update the parent to prep storage for both objects
+    const insertFork = collection.insertOne(
+        {
+            _id: fullName,
+            branchMap: undefined,
+            clients: undefined,
+            createTime: Date.now(),
+            forks: [],
+            logOffset: undefined,
+            parent: {
+                id: fullId,
+                minimumSequenceNumber,
+                sequenceNumber,
+            },
+            sequenceNumber,
+        });
+    const updateParent = await collection.update({ _id: fullId }, null, { forks: { id: fullName } });
+    await Promise.all([insertFork, updateParent]);
+
+    // Notify the parent branch of the fork and the desire to integrate changes
+    await sendIntegrateStream(id, sequenceNumber, minimumSequenceNumber, fullName, producer);
+
+    return name;
 }
 
 async function getOrCreateObject(
@@ -84,111 +216,4 @@ async function sendIntegrateStream(
         userId: null,
     };
     await producer.send(JSON.stringify(integrateMessage), id);
-}
-
-export async function getOrCreateDocument(
-    mongoManager: utils.MongoManager,
-    documentsCollectionName: string,
-    producer: utils.kafkaProducer.IProducer,
-    id: string,
-    privateKey: string,
-    publicKey: string): Promise<{existing: boolean, value: core.IDocument }> {
-
-    const getOrCreateP = getOrCreateObject(
-        mongoManager,
-        documentsCollectionName,
-        producer,
-        id,
-        privateKey,
-        publicKey);
-
-    return getOrCreateP;
-}
-
-export async function getLatestVersion(gitManager: git.GitManager, id: string): Promise<ICommit> {
-    const commits = await gitManager.getCommits(id, 1);
-    return commits.length > 0 ? commits[0] : null;
-}
-
-export async function getVersions(gitManager: git.GitManager, id: string, count: number): Promise<ICommit[]> {
-    return await gitManager.getCommits(id, count);
-}
-
-export async function getVersion(gitManager: git.GitManager, sha: string): Promise<ICommit> {
-    return await gitManager.getCommit(sha);
-}
-
-/**
- * Retrieves the forks for the given document
- */
-export async function getForks(
-    mongoManager: utils.MongoManager,
-    documentsCollectionName: string,
-    id: string): Promise<string[]> {
-
-    const db = await mongoManager.getDatabase();
-    const collection = db.collection<any>(documentsCollectionName);
-    const document = await collection.findOne({ _id: id });
-
-    return document.forks || [];
-}
-
-export async function createFork(
-    producer: utils.kafkaProducer.IProducer,
-    gitManager: git.GitManager,
-    mongoManager: utils.MongoManager,
-    documentsCollectionName: string,
-    id: string): Promise<string> {
-
-    const name = moniker.choose();
-
-    // Load in the latest snapshot
-    const head = await gitManager.getRef(id);
-    winston.info(JSON.stringify(head));
-
-    let sequenceNumber: number;
-    let minimumSequenceNumber: number;
-    if (head === null) {
-        // Set the Seq# and MSN# to StartingSequenceNumber
-        minimumSequenceNumber = StartingSequenceNumber;
-        sequenceNumber = StartingSequenceNumber;
-    } else {
-        // Create a new commit, referecing the ref head, but swap out the metadata to indicate the branch details
-        const attributesContentP = gitManager.getContent(head.object.sha, ".attributes");
-        const branchP = gitManager.upsertRef(name, head.object.sha);
-        const [attributesContent] = await Promise.all([attributesContentP, branchP]);
-
-        const attributesJson = Buffer.from(attributesContent.content, "base64").toString("utf-8");
-        const attributes = JSON.parse(attributesJson) as api.IDocumentAttributes;
-        minimumSequenceNumber = attributes.minimumSequenceNumber;
-        sequenceNumber = attributes.sequenceNumber;
-    }
-
-    // Get access to Mongo to update the route tables
-    const db = await mongoManager.getDatabase();
-    const collection = db.collection<core.IDocument>(documentsCollectionName);
-
-    // Insert the fork entry and update the parent to prep storage for both objects
-    const insertFork = collection.insertOne(
-        {
-            _id: name,
-            branchMap: undefined,
-            clients: undefined,
-            createTime: Date.now(),
-            forks: [],
-            logOffset: undefined,
-            parent: {
-                id,
-                minimumSequenceNumber,
-                sequenceNumber,
-            },
-            sequenceNumber,
-        });
-    const updateParent = await collection.update({ _id: id }, null, { forks: { id: name } });
-    await Promise.all([insertFork, updateParent]);
-
-    // Notify the parent branch of the fork and the desire to integrate changes
-    await sendIntegrateStream(id, sequenceNumber, minimumSequenceNumber, name, producer);
-
-    return name;
 }

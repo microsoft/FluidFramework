@@ -108,7 +108,7 @@ function randomizeCell(cell: types.ICell, element1: JQuery, element2: JQuery) {
 }
 
 export async function load(id: string, version: resources.ICommit, config: any) {
-    socketStorage.registerAsDefault(document.location.origin, config.blobStorageUrl, config.repository);
+    socketStorage.registerAsDefault(document.location.origin, config.blobStorageUrl, config.owner, config.repository);
 
     // Bootstrap worker service.
     agent.registerWorker(config, "cell");

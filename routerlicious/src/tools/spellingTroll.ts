@@ -323,6 +323,7 @@ let sharedStringId;
 commander.version("0.0.1")
     .option("-s, --server [server]", "server url", "http://localhost:3000")
     .option("-t, --storage [server]", "storage server url", "http://localhost:3001")
+    .option("-o, --owner [owner]", "git owner", "prague")
     .option("-r, --repository [repo]", "git repository", "prague")
     .arguments("<id>")
     .action((id: string) => {
@@ -336,6 +337,6 @@ if (!sharedStringId) {
 }
 else {
     // Mark socket storage as our default provider
-    socketStorage.registerAsDefault(commander.server, commander.storage, commander.repository);
+    socketStorage.registerAsDefault(commander.server, commander.storage, commander.owner, commander.repository);
     initSpell(sharedStringId);
 }

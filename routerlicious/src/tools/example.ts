@@ -15,10 +15,11 @@ declare function pragueAttach(object: IAttachedObject): void;
 // const historian = "http://localhost:3001";
 const routerlicious = "http://praguekube.westus2.cloudapp.azure.com";
 const historian = "http://prague-historian.westus2.cloudapp.azure.com";
+const owner = "prague";
 const repository = "prague";
 
 // Register endpoint connection
-socketStorage.registerAsDefault(routerlicious, historian, repository);
+socketStorage.registerAsDefault(routerlicious, historian, owner, repository);
 
 async function run(id: string): Promise<void> {
     // Load in the latest and connect to the document

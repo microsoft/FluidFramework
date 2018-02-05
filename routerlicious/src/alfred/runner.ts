@@ -1,23 +1,21 @@
-import * as git from "gitresources";
 import { Provider } from "nconf";
 import * as winston from "winston";
+import { ITenantManager } from "../api-core";
 import * as core from "../core";
 import { Deferred } from "../core-utils";
 import * as utils from "../utils";
 import * as app from "./app";
 import * as io from "./io";
-// import * as io2 from "./io2";
 
 export class AlfredRunner implements utils.IRunner {
     private server: core.IWebServer;
-   // private server2: core.IWebServer;
     private runningDeferred: Deferred<void>;
 
     constructor(
         private serverFactory: core.IWebServerFactory,
         private config: Provider,
         private port: string | number,
-        private historian: git.IHistorian,
+        private tenantManager: ITenantManager,
         private mongoManager: utils.MongoManager,
         private producer: utils.kafkaProducer.IProducer,
         private documentsCollectionName: string,
@@ -29,7 +27,7 @@ export class AlfredRunner implements utils.IRunner {
         this.runningDeferred = new Deferred<void>();
 
         // Create the HTTP server and attach alfred to it
-        const alfred = app.create(this.config, this.historian, this.mongoManager, this.producer);
+        const alfred = app.create(this.config, this.tenantManager, this.mongoManager, this.producer);
         alfred.set("port", this.port);
 
         this.server = this.serverFactory.create(alfred);

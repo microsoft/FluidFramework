@@ -8,12 +8,12 @@ export class IntelWork extends BaseWork implements IWork {
 
     private intelligenceManager: IntelligentServicesManager;
 
-    constructor(docId: string, config: any) {
+    constructor(docId: string, config: any, private service: core.IDocumentService) {
         super(docId, config);
     }
 
     public async start(): Promise<void> {
-        await this.loadDocument({ localMinSeq: 0, encrypted: undefined });
+        await this.loadDocument({ localMinSeq: 0, encrypted: undefined }, this.service);
         const root = await this.document.getRoot().getView();
         if (!root.has("insights")) {
             root.set("insights", this.document.createMap());

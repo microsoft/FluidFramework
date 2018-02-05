@@ -30,8 +30,15 @@ async function getInsights(map: types.IMap, id: string): Promise<types.IMap> {
     return insights.wait<types.IMap>(id);
 }
 
-// tslint:disable-next-line
-export async function onLoad(id: string, version: resources.ICommit, pageInk: boolean, config: any, template: string, loadPartial: boolean, options: Object) {
+export async function onLoad(
+    id: string,
+    version: resources.ICommit,
+    pageInk: boolean,
+    config: any,
+    template: string,
+    loadPartial: boolean,
+    options: Object) {
+
     console.log(`Load Option: ${JSON.stringify(options)}`);
     loadPartial
         ? loadCommit(id, version, pageInk, config, options)
@@ -48,7 +55,7 @@ async function loadFull(
 
     const host = new ui.BrowserContainerHost();
 
-    socketStorage.registerAsDefault(document.location.origin, config.blobStorageUrl, config.repository);
+    socketStorage.registerAsDefault(document.location.origin, config.blobStorageUrl, config.owner, config.repository);
     console.log(`collabDoc loading ${id} - ${performanceNow()}`);
     const collabDoc = await API.load(id, { blockUpdateMarkers: true }, version);
     console.log(`collabDoc loaded ${id} - ${performanceNow()}`);
@@ -140,7 +147,7 @@ async function loadCommit(
 
     const host = new ui.BrowserContainerHost();
 
-    socketStorage.registerAsDefault(document.location.origin, config.blobStorageUrl, config.repository);
+    socketStorage.registerAsDefault(document.location.origin, config.blobStorageUrl, config.owner, config.repository);
     console.log(`collabDoc loading ${id} - ${performanceNow()}`);
     const collabDoc = await API.load(id, { blockUpdateMarkers: true }, version, false);
     console.log(`collabDoc loaded ${id} - ${performanceNow()}`);

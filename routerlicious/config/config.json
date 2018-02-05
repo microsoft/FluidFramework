@@ -152,10 +152,36 @@
             "sharedText": ["ping"]
         }
     },
-    "git": {
-        "repository": "prague",
-        "historian": "http://historian:3000"
-    },
+    "tenantConfig": [
+        {
+            "name": "git",
+            "storage": {
+                "url": "http://historian:3000",
+                "publicUrl": "http://localhost:3001",
+                "owner": "prague",
+                "repository": "prague"
+            },
+            "isDefault": true
+        },
+        {
+            "name": "github",
+            "storage": {
+                "url": "http://historian:3000/github",
+                "publicUrl": "http://localhost:3001/github",
+                "owner": "kurtb",
+                "repository": "praguedocs"
+            }
+        },
+        {
+            "name": "cobalt",
+            "storage": {
+                "url": "http://historian:3000/cobalt",
+                "publicUrl": "http://localhost:3001/cobalt",
+                "owner": "prague",
+                "repository": "prague"
+            }
+        }
+    ],
     "minio": {
         "endpoint": "minio",
         "port": 9000,

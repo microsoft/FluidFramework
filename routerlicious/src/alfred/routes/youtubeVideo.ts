@@ -1,18 +1,21 @@
 import { Router } from "express";
 import { Provider } from "nconf";
-import * as git from "../../git-storage";
+import { ITenantManager } from "../../api-core";
 import * as storage from "../storage";
+import * as utils from "../utils";
 import { defaultPartials } from "./partials";
 
-export function create(config: Provider, gitManager: git.GitManager): Router {
+export function create(config: Provider, tenantManager: ITenantManager): Router {
     const router: Router = Router();
 
     /**
      * Loading of a youtube video demo
      */
-    router.get("/:id", (request, response, next) => {
-        const workerConfig = JSON.stringify(config.get("worker"));
-        const versionP = storage.getLatestVersion(gitManager, request.params.id);
+    router.get("/:tenantId/:id", (request, response, next) => {
+        const id = utils.getFullId(request.params.tenantId, request.params.id);
+
+        const workerConfig = utils.getConfig(config.get("worker"), tenantManager, request.params.tenantId);
+        const versionP = storage.getLatestVersion(tenantManager, request.params.tenantId, request.params.id);
 
         versionP.then(
             (version) => {
@@ -20,7 +23,7 @@ export function create(config: Provider, gitManager: git.GitManager): Router {
                     "youtubeVideo",
                     {
                         config: workerConfig,
-                        id: request.params.id,
+                        id,
                         partials: defaultPartials,
                         title: request.params.id,
                         version: JSON.stringify(version),

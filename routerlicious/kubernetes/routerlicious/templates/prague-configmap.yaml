@@ -166,10 +166,36 @@ data:
                 "sharedText": ["ping"]
             }
         },
-        "git": {
-            "repository": "prague",
-            "historian": "{{ .Values.historian.externalUrl }}"
-        },
+        "tenantConfig": [
+            {
+                "name": "git",
+                "storage": {
+                    "url": "{{ .Values.historian.externalUrl }}",
+                    "publicUrl": "{{ .Values.historian.externalUrl }}",
+                    "owner": "prague",
+                    "repository": "prague"
+                },
+                "isDefault": true
+            },
+            {
+                "name": "github",
+                "storage": {
+                    "url": "{{ .Values.historian.externalUrl }}/github",
+                    "publicUrl": "{{ .Values.historian.externalUrl }}/github",
+                    "owner": "kurtb",
+                    "repository": "praguedocs"
+                }
+            },
+            {
+                "name": "cobalt",
+                "storage": {
+                    "url": "{{ .Values.historian.externalUrl }}/cobalt",
+                    "publicUrl": "{{ .Values.historian.externalUrl }}/cobalt",
+                    "owner": "prague",
+                    "repository": "prague"
+                }
+            }
+        ],
         "metric": {
             "client": "telegraf",
             "telegraf": {

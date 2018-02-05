@@ -20,11 +20,14 @@ interface IAgents {
     names: string[];
 };
 
+export interface IDocumentServiceFactory {
+    getService(tenantId: string): core.IDocumentService;
+}
+
 /**
  * The WorkerService manages the Socket.IO connection and work sent to it.
  */
 export class WorkerService implements core.IWorkerService {
-
     private socket;
     private documentMap: { [docId: string]: { [work: string]: IWork} } = {};
     private workTypeMap: { [workType: string]: boolean} = {};
@@ -36,8 +39,7 @@ export class WorkerService implements core.IWorkerService {
     constructor(
         private serverUrl: string,
         private workerUrl: string,
-        private storageUrl: string,
-        private repo: string,
+        private serviceFactory: IDocumentServiceFactory,
         private config: any,
         private clientType: string,
         private moduleLoader: (id: string) => Promise<any>) {
@@ -50,7 +52,8 @@ export class WorkerService implements core.IWorkerService {
         if ("spell" in this.workTypeMap) {
             this.loadDict();
         }
-        this.initializeServices();
+
+        // Will need to take in the list of endpoints
     }
 
     /**
@@ -163,11 +166,6 @@ export class WorkerService implements core.IWorkerService {
         });
     }
 
-    private initializeServices() {
-        // TODO for testing want to be able to pass in the services to use
-        socketStorage.registerAsDefault(this.serverUrl, this.storageUrl, this.repo);
-    }
-
     private loadNewModule(newModule: IModule) {
         this.moduleLoader(newModule.name).then((loadedCode) => {
             console.log(`Success loading module ${newModule.name} in worker!`);
@@ -198,18 +196,28 @@ export class WorkerService implements core.IWorkerService {
         }
     }
 
+    private getServiceForDoc(docId: string): core.IDocumentService {
+        const slashIndex = docId.indexOf("/");
+        const tenantName = slashIndex !== -1 ? docId.slice(0, slashIndex) : "";
+
+        const service = this.serviceFactory.getService(tenantName);
+        return service;
+    }
+
     private processDocumentWork(docId: string, workType: string) {
+        const services = this.getServiceForDoc(docId);
+
         switch (workType) {
             case "snapshot":
-                const snapshotWork = new SnapshotWork(docId, this.config);
+                const snapshotWork = new SnapshotWork(docId, this.config, services);
                 this.startTask(docId, workType, snapshotWork);
                 break;
             case "intel":
-                const intelWork = new IntelWork(docId, this.config);
+                const intelWork = new IntelWork(docId, this.config, services);
                 this.startTask(docId, workType, intelWork);
                 break;
             case "spell":
-                const spellcheckWork = new SpellcheckerWork(docId, this.config, this.dict);
+                const spellcheckWork = new SpellcheckerWork(docId, this.config, this.dict, services);
                 this.startTask(docId, workType, spellcheckWork);
                 break;
             case "ping":

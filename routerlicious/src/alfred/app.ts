@@ -3,7 +3,6 @@ import * as compression from "compression";
 import * as express from "express";
 import { Express } from "express";
 import * as fs from "fs";
-import * as resources from "gitresources";
 import * as morgan from "morgan";
 import { Provider } from "nconf";
 import * as passport from "passport";
@@ -12,7 +11,7 @@ import * as favicon from "serve-favicon";
 import split = require("split");
 import * as expiry from "static-expiry";
 import * as winston from "winston";
-import * as git from "../git-storage";
+import { ITenantManager } from "../api-core";
 import * as utils from "../utils";
 import * as alfredRoutes from "./routes";
 
@@ -60,7 +59,7 @@ const stream = split().on("data", (message) => {
 
 export function create(
     config: Provider,
-    historian: resources.IHistorian,
+    tenantManager: ITenantManager,
     mongoManager: utils.MongoManager,
     producer: utils.kafkaProducer.IProducer) {
 
@@ -99,14 +98,8 @@ export function create(
     app.use(passport.initialize());
     app.use(passport.session());
 
-    const gitSettings = config.get("git");
-    git.getOrCreateRepository(historian, gitSettings.repository).catch((error) => {
-        winston.error(`Error creating ${gitSettings.repository} repository`, error);
-    });
-
     // bind routes
-    const gitManager = new git.GitManager(historian, gitSettings.repository);
-    const routes = alfredRoutes.create(config, gitManager, mongoManager, producer);
+    const routes = alfredRoutes.create(config, tenantManager, mongoManager, producer);
     app.use(routes.api);
     app.use("/templates", routes.templates);
     app.use("/maps", routes.maps);

@@ -187,5 +187,5 @@ export function initialize(config: any, id: string, template: string) {
     });
 
     // Mark socket storage as our default provider
-    socketStorage.registerAsDefault(document.location.origin, config.blobStorageUrl, config.repository);
+    socketStorage.registerAsDefault(document.location.origin, config.blobStorageUrl, config.owner, config.repository);
 }

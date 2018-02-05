@@ -10,7 +10,7 @@ export function create(config: Provider) {
 
     const workerConfig = JSON.stringify(config.get("worker"));
 
-    function fooThing(response, id?: string, template?: string) {
+    function handleResponse(response, id?: string, template?: string) {
         response.render(
             "scribe",
             {
@@ -27,14 +27,14 @@ export function create(config: Provider) {
      * Script entry point root
      */
     router.get("/", (request, response, next) => {
-        fooThing(response);
+        handleResponse(response);
     });
 
     /**
      * Script entry point root
      */
     router.get("/demo", (request, response, next) => {
-        fooThing(response, moniker.choose(), defaultTemplate);
+        handleResponse(response, moniker.choose(), defaultTemplate);
     });
 
     return router;

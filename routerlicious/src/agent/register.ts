@@ -1,11 +1,15 @@
-// import * as $ from "jquery";
-import { WorkerService } from "./workerService";
+import { api, core } from "../client-api";
+import { IDocumentServiceFactory, WorkerService } from "./workerService";
+
+class DefaultDocumentServiceFactory implements IDocumentServiceFactory {
+    public getService(tenantId: string): core.IDocumentService {
+        return api.getDefaultDocumentService();
+    }
+}
 
 export function registerWorker(config: any, clientType: string) {
     if (!config.onlyServer) {
         const workerUrl =  config.url;
-        const storageUrl = config.blobStorageUrl;
-        const repository = config.repository;
         const serverUrl = config.serverUrl;
 
         // Bootstrap service and connect. On failure, try to connect again.
@@ -13,12 +17,12 @@ export function registerWorker(config: any, clientType: string) {
         const workerService = new WorkerService(
             serverUrl,
             workerUrl,
-            storageUrl,
-            repository,
+            new DefaultDocumentServiceFactory(),
             config,
             clientType,
             initLoadModule(config),
         );
+
         let workerP = workerService.connect("Client");
         workerP.catch((error) => {
             console.log(`Error connecting to worker`);

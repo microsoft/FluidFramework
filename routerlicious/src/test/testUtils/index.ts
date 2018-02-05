@@ -10,4 +10,5 @@ export * from "./testHistorian";
 export * from "./testKafka";
 export * from "./testPublisher";
 export * from "./testRegistration";
+export * from "./testTenantManager";
 export * from "./testWebServer";

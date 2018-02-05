@@ -1,4 +1,4 @@
-import { api } from "../client-api";
+import { api, core } from "../client-api";
 
 export class BaseWork {
 
@@ -10,8 +10,8 @@ export class BaseWork {
         this.config = this.conf;
     }
 
-    public loadDocument(options: Object): Promise<void> {
-        const documentP = api.load(this.id, options);
+    public loadDocument(options: Object, service: core.IDocumentService): Promise<void> {
+        const documentP = api.load(this.id, options, null, true, api.defaultRegistry, service);
         return new Promise<void>((resolve, reject) => {
             documentP.then(async (doc) => {
                 console.log(`Loaded document ${this.id}`);

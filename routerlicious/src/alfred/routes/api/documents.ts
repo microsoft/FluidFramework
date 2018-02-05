@@ -1,20 +1,24 @@
 import { Router } from "express";
 import { Provider } from "nconf";
-import * as git from "../../../git-storage";
+import { ITenantManager } from "../../../api-core";
 import * as utils from "../../../utils";
 import * as storage from "../../storage";
 
 export function create(
     config: Provider,
-    gitManager: git.GitManager,
+    tenantManager: ITenantManager,
     mongoManager: utils.MongoManager,
     producer: utils.kafkaProducer.IProducer): Router {
 
     const documentsCollectionName = config.get("mongo:collectionNames:documents");
     const router: Router = Router();
 
-    router.get("/:id", (request, response, next) => {
-        const documentP = storage.getDocument(mongoManager, documentsCollectionName, request.params.id);
+    router.get("/:tenantId?/:id", (request, response, next) => {
+        const documentP = storage.getDocument(
+            mongoManager,
+            documentsCollectionName,
+            request.params.tenantId,
+            request.params.id);
         documentP.then(
             (document) => {
                 response.status(200).json(document);
@@ -27,8 +31,12 @@ export function create(
     /**
      * Lists all forks of the specified document
      */
-    router.get("/:id/forks", (request, response, next) => {
-        const forksP = storage.getForks(mongoManager, documentsCollectionName, request.params.id);
+    router.get("/:tenantId?/:id/forks", (request, response, next) => {
+        const forksP = storage.getForks(
+            mongoManager,
+            documentsCollectionName,
+            request.params.tenantId,
+            request.params.id);
         forksP.then(
             (forks) => {
                 response.status(200).json(forks);
@@ -41,12 +49,13 @@ export function create(
     /**
      * Creates a new fork for the specified document
      */
-    router.post("/:id/forks", (request, response, next) => {
+    router.post("/:tenantId?/:id/forks", (request, response, next) => {
         const forkIdP = storage.createFork(
             producer,
-            gitManager,
+            tenantManager,
             mongoManager,
             documentsCollectionName,
+            request.params.tenantId,
             request.params.id);
         forkIdP.then(
             (forkId) => {

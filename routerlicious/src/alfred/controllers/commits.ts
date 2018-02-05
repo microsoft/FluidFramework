@@ -39,7 +39,7 @@ let templateConfig = {
   };
   let template = new GitGraph.Template(templateConfig);
 
-function generateGraph(type: string, id: string, versions: resources.ICommit[]): void {
+function generateGraph(type: string, id: string, versions: resources.ICommitDetails[]): void {
     const config: GitGraph.GitGraphOptions = {
         initCommitOffsetX: -20,
         initCommitOffsetY: -10,
@@ -50,7 +50,7 @@ function generateGraph(type: string, id: string, versions: resources.ICommit[]):
 
     const master = graph.branch("master");
     for (let version of versions) {
-        const commitTag = version.message.split(";");
+        const commitTag = version.commit.message.split(";");
         master.commit({
             dotSize: 20,
             message: commitTag.length >= 1 ? commitTag[0] : "",
@@ -66,7 +66,7 @@ function generateGraph(type: string, id: string, versions: resources.ICommit[]):
     }
 }
 
-export async function load(type: string, id: string, versions: resources.ICommit[]) {
+export async function load(type: string, id: string, versions: resources.ICommitDetails[]) {
     console.log(JSON.stringify(versions));
     $("#commitsView").append($(`<h2>Document ${id} commit graph</h2>`));
     generateGraph(type, id, versions);

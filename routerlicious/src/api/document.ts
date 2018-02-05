@@ -129,7 +129,6 @@ export class Document {
 
         // Load in distributed objects stored within the document
         for (const distributedObject of document.distributedObjects) {
-            // const services = returnValue.getIdleObjectServices(distributedObject.id);
             const services = returnValue.getObjectServices(distributedObject.id);
             services.deltaConnection.setBaseMapping(distributedObject.sequenceNumber, document.minimumSequenceNumber);
             returnValue.loadInternal(distributedObject, services, document.snapshotOriginBranch);

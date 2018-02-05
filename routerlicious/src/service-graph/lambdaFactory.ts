@@ -98,8 +98,13 @@ class ServiceGraphLambda implements IPartitionLambda {
 export class ServiceGraphLambdaFactory implements IPartitionLambdaFactory {
     public async create(config: Provider, context: IContext): Promise<IPartitionLambda> {
         const alfred = config.get("paparazzi:alfred");
-        const git = config.get("git");
-        socketStorage.registerAsDefault(alfred, git.historian, git.repository);
+
+        const tenants = config.get("tenantConfig");
+        let defaultTenant = tenants.find((tenant) => tenant.isDefault);
+        if (!defaultTenant) {
+            return Promise.reject("Could not find tenant information");
+        }
+        socketStorage.registerAsDefault(alfred, defaultTenant.url, defaultTenant.owner, defaultTenant.repository);
 
         const document = await api.load("__system__graph");
         const root = await document.getRoot().getView();

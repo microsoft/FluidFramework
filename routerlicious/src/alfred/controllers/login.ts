@@ -86,7 +86,7 @@ function toggleShowLogin(): void {
 }
 
 export function load(config: any) {
-    socketStorage.registerAsDefault(document.location.origin, config.blobStorageUrl, config.repository);
+    socketStorage.registerAsDefault(document.location.origin, config.blobStorageUrl, config.owner, config.repository);
 
     $(document).ready(() => {
 

@@ -3,40 +3,44 @@ import * as resources from "gitresources";
 import * as api from "../api-core";
 
 export class GitManager {
-    constructor(private historian: resources.IHistorian, private repository: string) {
+    constructor(
+        private historian: resources.IHistorian,
+        public endpoint: string,    // TODO before commit - consider exposing endpoint on Historian
+        private owner: string,
+        private repository: string) {
     }
 
     public getHeader(id: string, sha: string): Promise<api.IDocumentHeader> {
-        return this.historian.getHeader(this.repository, sha);
+        return this.historian.getHeader(this.owner, this.repository, sha);
     }
 
     public async getCommit(sha: string): Promise<resources.ICommit> {
-        return this.historian.getCommit(this.repository, sha);
+        return this.historian.getCommit(this.owner, this.repository, sha);
     }
 
     /**
      * Reads the object with the given ID. We defer to the client implementation to do the actual read.
      */
-    public async getCommits(sha: string, count: number): Promise<resources.ICommit[]> {
-        return this.historian.getCommits(this.repository, sha, count);
+    public async getCommits(sha: string, count: number): Promise<resources.ICommitDetails[]> {
+        return this.historian.getCommits(this.owner, this.repository, sha, count);
     }
 
     /**
      * Reads the object with the given ID. We defer to the client implementation to do the actual read.
      */
     public async getTree(root: string, recursive = true): Promise<resources.ITree> {
-        return this.historian.getTree(this.repository, root, recursive);
+        return this.historian.getTree(this.owner, this.repository, root, recursive);
     }
 
     public async getBlob(sha: string): Promise<resources.IBlob> {
-        return this.historian.getBlob(this.repository, sha);
+        return this.historian.getBlob(this.owner, this.repository, sha);
     }
 
     /**
      * Retrieves the object at the given revision number
      */
     public getContent(commit: string, path: string): Promise<resources.IBlob> {
-        return this.historian.getContent(this.repository, path, commit);
+        return this.historian.getContent(this.owner, this.repository, path, commit);
     }
 
     public createBlob(content: string, encoding: string): Promise<resources.ICreateBlobResponse> {
@@ -44,7 +48,7 @@ export class GitManager {
             content,
             encoding,
         };
-        return this.historian.createBlob(this.repository, blob);
+        return this.historian.createBlob(this.owner, this.repository, blob);
     }
 
     public async createTree(files: api.ITree): Promise<resources.ITree> {
@@ -88,17 +92,17 @@ export class GitManager {
         const requestBody: resources.ICreateTreeParams = {
             tree,
         };
-        const treeP = this.historian.createTree(this.repository, requestBody);
+        const treeP = this.historian.createTree(this.owner, this.repository, requestBody);
         return treeP;
     }
 
     public async createCommit(commit: resources.ICreateCommitParams): Promise<resources.ICommit> {
-        return this.historian.createCommit(this.repository, commit);
+        return this.historian.createCommit(this.owner, this.repository, commit);
     }
 
     public async getRef(ref: string): Promise<resources.IRef> {
         return this.historian
-            .getRef(this.repository, `heads/${ref}`)
+            .getRef(this.owner, this.repository, `heads/${ref}`)
             .catch((error) => {
                 if (error === 400 || error === 404) {
                     return null;
@@ -108,6 +112,15 @@ export class GitManager {
             });
     }
 
+    public async createRef(branch: string, sha: string): Promise<resources.IRef> {
+        const createRefParams: resources.ICreateRefParams = {
+            ref: `refs/heads/${branch}`,
+            sha,
+        };
+
+        return this.historian.createRef(this.owner, this.repository, createRefParams);
+    }
+
     public async upsertRef(branch: string, commitSha: string): Promise<resources.IRef> {
         // Update (force) the ref to the new commit
         const ref: resources.IPatchRefParams = {
@@ -115,7 +128,7 @@ export class GitManager {
             sha: commitSha,
         };
 
-        return this.historian.updateRef(this.repository, `heads/${branch}`, ref);
+        return this.historian.updateRef(this.owner, this.repository, `heads/${branch}`, ref);
     }
 
     /**
@@ -138,34 +151,47 @@ export class GitManager {
                 name: "Kurt Berglund",
             },
             message,
-            parents: lastCommit.length > 0 ? [{sha: lastCommit[0].sha, url: ""}] : [],
+            parents: lastCommit.length > 0 ? [lastCommit[0].sha] : [],
             tree: tree.sha,
         };
 
-        const commit = await this.historian.createCommit(this.repository, commitParams);
-        await this.upsertRef(branch, commit.sha);
+        const commit = await this.historian.createCommit(this.owner, this.repository, commitParams);
+
+        // Create or update depending on if ref exists.
+        // TODO optimize the update to know up front if the ref exists
+        const existingRef = await this.getRef(branch);
+        if (existingRef) {
+            await this.upsertRef(branch, commit.sha);
+        } else {
+            await this.createRef(branch, commit.sha);
+        }
 
         return commit;
     }
 }
 
-async function repositoryExists(historian: resources.IHistorian, repository: string): Promise<boolean> {
-    const details = await historian.getRepo(repository);
+async function repositoryExists(historian: resources.IHistorian, owner: string, repository: string): Promise<boolean> {
+    const details = await historian.getRepo(owner, repository);
     return !!details;
 }
 
-function createRepository(historian: resources.IHistorian, repository: string): Promise<void> {
+function createRepository(historian: resources.IHistorian, owner: string, repository: string): Promise<void> {
     const createParams: resources.ICreateRepoParams = {
         name: repository,
     };
-    return historian.createRepo(createParams);
+    return historian.createRepo(owner, createParams);
 }
 
-export async function getOrCreateRepository(historian: resources.IHistorian, repository: string): Promise<GitManager> {
-    const exists = await repositoryExists(historian, repository);
+export async function getOrCreateRepository(
+    historian: resources.IHistorian,
+    endpoint: string,
+    owner: string,
+    repository: string): Promise<GitManager> {
+
+    const exists = await repositoryExists(historian, owner, repository);
     if (!exists) {
-        await createRepository(historian, repository);
+        await createRepository(historian, owner, repository);
     }
 
-    return new GitManager(historian, repository);
+    return new GitManager(historian, endpoint, owner, repository);
 }

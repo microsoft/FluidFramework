@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { Provider } from "nconf";
-import * as git from "../../git-storage";
+import { ITenantManager } from "../../api-core";
 import * as utils from "../../utils";
 import * as agent from "./agent";
 import * as api from "./api";
@@ -39,26 +39,26 @@ export interface IRoutes {
 
 export function create(
     config: Provider,
-    gitManager: git.GitManager,
+    tenantManager: ITenantManager,
     mongoManager: utils.MongoManager,
     producer: utils.kafkaProducer.IProducer) {
 
     return {
         agent: agent.create(config),
-        api: api.create(config, gitManager, mongoManager, producer),
-        canvas: canvas.create(config, gitManager),
-        cell: cell.create(config, gitManager),
+        api: api.create(config, tenantManager, mongoManager, producer),
+        canvas: canvas.create(config, tenantManager),
+        cell: cell.create(config, tenantManager),
         demoCreator: demoCreator.create(config),
-        graph: graph.create(config, gitManager),
+        graph: graph.create(config, tenantManager),
         home: home.create(config),
         intelligence: intelligence.create(config),
         login: login.create(config),
-        maps: maps.create(config, gitManager),
+        maps: maps.create(config, tenantManager),
         ping: ping.create(),
         scribe: scribe.create(config),
-        sharedText: sharedText.create(config, gitManager, mongoManager, producer),
+        sharedText: sharedText.create(config, tenantManager, mongoManager, producer),
         templates: templates.create(config),
-        video: video.create(config, gitManager),
-        youtubeVideo: youtubeVideo.create(config, gitManager),
+        video: video.create(config, tenantManager),
+        youtubeVideo: youtubeVideo.create(config, tenantManager),
     };
 }

@@ -1,72 +1,39 @@
 import { Router } from "express";
 import { Provider } from "nconf";
 import * as path from "path";
-import * as git from "../../git-storage";
+import { ITenantManager } from "../../api-core";
 import * as utils from "../../utils";
 import * as storage from "../storage";
+import { getConfig, getFullId } from "../utils";
 import { defaultPartials } from "./partials";
 
 const defaultTemplate = "pp.txt";
 const defaultSpellChecking = "enabled";
 
+// This one is going to need to have references to all storage options
+
 export function create(
     config: Provider,
-    gitManager: git.GitManager,
+    tenantManager: ITenantManager,
     mongoManager: utils.MongoManager,
     producer: utils.kafkaProducer.IProducer): Router {
+
     const router: Router = Router();
-    const workerConfig = JSON.stringify(config.get("worker"));
-
     const documentsCollectionName = config.get("mongo:collectionNames:documents");
-
-    /**
-     * Loading of a specific shared text.
-     */
-    router.get("/:id", (request, response, next) => {
-        const versionP = storage.getLatestVersion(gitManager, request.params.id);
-        versionP.then(
-            (version) => {
-                const parsedTemplate = path.parse(request.query.template ? request.query.template : defaultTemplate);
-                const template =
-                    parsedTemplate.base !== "empty" ? `/public/literature/${parsedTemplate.base}` : undefined;
-
-                const parsedSpellchecking =
-                    path.parse(request.query.spellchecking ? request.query.spellchecking : defaultSpellChecking);
-                const spellchecker = parsedSpellchecking.base === "disabled" ? `disabled` : defaultSpellChecking;
-                const options = {
-                    spellchecker,
-                };
-
-                response.render(
-                    "sharedText",
-                    {
-                        config: workerConfig,
-                        id: request.params.id,
-                        loadPartial: false,
-                        options: JSON.stringify(options),
-                        pageInk: request.query.pageInk === "true",
-                        partials: defaultPartials,
-                        template,
-                        title: request.params.id,
-                        version: JSON.stringify(version),
-                    });
-            },
-            (error) => {
-                response.status(400).json(error);
-            });
-    });
 
     /**
      * Loads count number of latest commits.
      */
-    router.get("/:id/commits", (request, response, next) => {
-        const versionsP = storage.getVersions(gitManager, request.params.id, 30);
+    router.get("/:tenantId?/:id/commits", (request, response, next) => {
+        const id = getFullId(request.params.tenantId, request.params.id);
+
+        const versionsP = storage.getVersions(tenantManager, request.params.tenantId, request.params.id, 30);
         versionsP.then(
             (versions) => {
                 response.render(
                     "commits",
                     {
-                        id: request.params.id,
+                        id,
                         partials: defaultPartials,
                         type: "sharedText",
                         versions: JSON.stringify(versions),
@@ -80,9 +47,17 @@ export function create(
     /**
      * Loading of a specific version of shared text.
      */
-    router.get("/:id/commit", (request, response, next) => {
+    router.get("/:tenantId?/:id/commit", (request, response, next) => {
+        const id = getFullId(request.params.tenantId, request.params.id);
+
+        const workerConfig = getConfig(config.get("worker"), tenantManager, request.params.tenantId);
         const targetVersionSha = request.query.version;
-        const versionP = storage.getVersion(gitManager, targetVersionSha);
+        const versionP = storage.getVersion(
+            tenantManager,
+            request.params.tenantId,
+            request.params.id,
+            targetVersionSha);
+
         versionP.then(
             (version) => {
                 const options = {
@@ -92,7 +67,7 @@ export function create(
                     "sharedText",
                     {
                         config: workerConfig,
-                        id: request.params.id,
+                        id,
                         loadPartial: true,
                         options: JSON.stringify(options),
                         pageInk: request.query.pageInk === "true",
@@ -107,16 +82,61 @@ export function create(
             });
     });
 
-    router.post("/:id/fork", (request, response, next) => {
+    router.post("/:tenantId?/:id/fork", (request, response, next) => {
         const forkP = storage.createFork(
             producer,
-            gitManager,
+            tenantManager,
             mongoManager,
             documentsCollectionName,
+            request.params.tenantId,
             request.params.id);
         forkP.then(
             (fork) => {
                 response.redirect(`/sharedText/${fork}`);
+            },
+            (error) => {
+                response.status(400).json(error);
+            });
+    });
+
+    /**
+     * Loading of a specific shared text.
+     */
+    router.get("/:tenantId?/:id", (request, response, next) => {
+        const id = getFullId(request.params.tenantId, request.params.id);
+
+        const workerConfig = getConfig(config.get("worker"), tenantManager, request.params.tenantId);
+        const versionP = storage.getLatestVersion(tenantManager, request.params.tenantId, request.params.id);
+        versionP.then(
+            (version) => {
+                const parsedTemplate = path.parse(request.query.template ? request.query.template : defaultTemplate);
+                const template =
+                    parsedTemplate.base !== "empty" ? `/public/literature/${parsedTemplate.base}` : undefined;
+
+                const parsedSpellchecking =
+                    path.parse(request.query.spellchecking ? request.query.spellchecking : defaultSpellChecking);
+                const spellchecker = parsedSpellchecking.base === "disabled" ? `disabled` : defaultSpellChecking;
+                const options = {
+                    spellchecker,
+                };
+
+                // I need a way to specify the storage location from the URL here. Using the tenant to look it up
+                // would be useful. Otherwise I need a way to create a document, store some metadata, and then use
+                // that
+
+                response.render(
+                    "sharedText",
+                    {
+                        config: workerConfig,
+                        id,
+                        loadPartial: false,
+                        options: JSON.stringify(options),
+                        pageInk: request.query.pageInk === "true",
+                        partials: defaultPartials,
+                        template,
+                        title: request.params.id,
+                        version: JSON.stringify(version),
+                    });
             },
             (error) => {
                 response.status(400).json(error);

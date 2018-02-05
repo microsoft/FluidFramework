@@ -128,7 +128,7 @@ export function load(id: string, config: any) {
         event.stopPropagation();
     });
 
-    socketStorage.registerAsDefault(document.location.origin, config.blobStorageUrl, config.repository);
+    socketStorage.registerAsDefault(document.location.origin, config.blobStorageUrl, config.owner, config.repository);
 
     $(document).ready(() => {
         loadDocument(id).then(async (doc) => {

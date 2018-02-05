@@ -1,32 +1,30 @@
 import * as socketStorage from ".";
 import * as api from "../api";
-import * as apiCore from "../api-core";
+import { IDocumentService } from "../api-core";
 import { GitManager } from "../git-storage";
 import { Historian } from "../services-client";
 
-interface IStorageServices {
+export function createDocumentService(
+    deltaUrl: string,
+    gitUrl: string,
+    owner: string,
+    repository: string): IDocumentService {
 
-    blobStorage: socketStorage.BlobStorageService;
-
-    deltaStorage: socketStorage.DeltaStorageService;
-
-    gitManager: GitManager;
-}
-
-function getStorageServices(deltaUrl: string, blobUrl: string, repository: string): IStorageServices {
-    const historian = new Historian(blobUrl);
-    const gitManager = new GitManager(historian, repository);
+    const historian = new Historian(gitUrl);
+    const gitManager = new GitManager(historian, gitUrl, owner, repository);
     const blobStorage = new socketStorage.BlobStorageService(gitManager);
     const deltaStorage = new socketStorage.DeltaStorageService(deltaUrl);
-    return { blobStorage, deltaStorage, gitManager};
+
+    const service = new socketStorage.DocumentService(
+        deltaUrl,
+        deltaStorage,
+        blobStorage,
+        gitManager);
+
+    return service;
 }
 
-function getDefaultService(deltaUrl: string, blobUrl: string, repository: string): apiCore.IDocumentService {
-    const storage = getStorageServices(deltaUrl, blobUrl, repository);
-    return new socketStorage.DocumentService(deltaUrl, storage.deltaStorage, storage.blobStorage, storage.gitManager);
-}
-
-export function registerAsDefault(deltaUrl: string, blobUrl: string, repository: string) {
-    const service = getDefaultService(deltaUrl, blobUrl, repository);
+export function registerAsDefault(deltaUrl: string, gitUrl: string, owner: string, repository: string) {
+    const service = createDocumentService(deltaUrl, gitUrl, owner, repository);
     api.registerDocumentService(service);
 }

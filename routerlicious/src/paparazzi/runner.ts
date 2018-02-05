@@ -4,10 +4,33 @@ import * as unzip from "unzip-stream";
 import * as url from "url";
 import * as winston from "winston";
 import * as agent from "../agent";
+import { IDocumentService, ITenantManager } from "../api-core";
 import { Deferred } from "../core-utils";
+import * as socketStorage from "../socket-storage";
 import * as utils from "../utils";
 
 // TODO can likely consolidate the runner and the worker service
+
+class DocumentServiceFactory implements agent.IDocumentServiceFactory {
+    private serviceCache = new Map<string, IDocumentService>();
+
+    constructor(private serverUrl, private tenantManager: ITenantManager) {
+    }
+
+    public getService(tenantId: string): IDocumentService {
+        if (!this.serviceCache.has(tenantId)) {
+            const tenant = this.tenantManager.getTenant(tenantId);
+            const services = socketStorage.createDocumentService(
+                this.serverUrl,
+                tenant.storage.url,
+                tenant.storage.owner,
+                tenant.storage.repository);
+            this.serviceCache.set(tenantId, services);
+        }
+
+        return this.serviceCache.get(tenantId);
+    }
+}
 
 export class PaparazziRunner implements utils.IRunner {
     private workerService: agent.WorkerService;
@@ -17,14 +40,13 @@ export class PaparazziRunner implements utils.IRunner {
         alfredUrl: string,
         tmzUrl: string,
         workerConfig: string,
-        historianUrl: string,
-        repo: string) {
+        tenantManager: ITenantManager) {
 
+        const factory = new DocumentServiceFactory(alfredUrl, tenantManager);
         this.workerService = new agent.WorkerService(
             alfredUrl,
             tmzUrl,
-            historianUrl,
-            repo,
+            factory,
             workerConfig,
             "paparazzi",
             this.initLoadModule(alfredUrl));
@@ -46,6 +68,8 @@ export class PaparazziRunner implements utils.IRunner {
             const moduleUrl = url.resolve(alfredUrl, `agent/${moduleFile}`);
             const moduleName = moduleFile.split(".")[0];
             winston.info(`Worker will load ${moduleName}`);
+
+            // TODO - switch these to absolute paths
 
             return new Promise<any>((resolve, reject) => {
                 fs.access(`../../../tmp/intel_modules/${moduleName}`, (error) => {

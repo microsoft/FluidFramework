@@ -1,8 +1,7 @@
-import * as git from "gitresources";
 import { Provider } from "nconf";
+import { ITenantManager } from "../api-core";
 import * as core from "../core";
 import * as services from "../services";
-import * as clientServices from "../services-client";
 import * as utils from "../utils";
 import { AlfredRunner } from "./runner";
 
@@ -34,7 +33,7 @@ export class AlfredResources implements utils.IResources {
         public producer: utils.kafkaProducer.IProducer,
         public redisConfig: any,
         public webSocketLibrary: string,
-        public historian: git.IHistorian,
+        public tenantManager: ITenantManager,
         public mongoManager: utils.MongoManager,
         public port: any,
         public documentsCollectionName: string,
@@ -73,14 +72,23 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
         const mongoManager = new utils.MongoManager(mongoFactory);
         const documentsCollectionName = config.get("mongo:collectionNames:documents");
 
-        // Historian for document storage
-        const settings = config.get("git");
-        const historian: git.IHistorian = new clientServices.Historian(settings.historian);
+        // Tenant configuration
+        const tenantManager = await services.TenantManager.Load(config.get("tenantConfig"));
 
+        // This wanst to create stuff
         let port = normalizePort(process.env.PORT || "3000");
 
-        return new AlfredResources(config, producer, redisConfig, webSocketLibrary, historian, mongoManager,
-                                   port, documentsCollectionName, metricClientConfig, authEndpoint);
+        return new AlfredResources(
+            config,
+            producer,
+            redisConfig,
+            webSocketLibrary,
+            tenantManager,
+            mongoManager,
+            port,
+            documentsCollectionName,
+            metricClientConfig,
+            authEndpoint);
     }
 }
 
@@ -90,7 +98,7 @@ export class AlfredRunnerFactory implements utils.IRunnerFactory<AlfredResources
             resources.webServerFactory,
             resources.config,
             resources.port,
-            resources.historian,
+            resources.tenantManager,
             resources.mongoManager,
             resources.producer,
             resources.documentsCollectionName,

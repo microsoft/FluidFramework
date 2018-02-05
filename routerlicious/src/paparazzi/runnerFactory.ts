@@ -1,4 +1,6 @@
 import { Provider } from "nconf";
+import { ITenantManager } from "../api-core";
+import { TenantManager } from "../services";
 import * as utils from "../utils";
 import { PaparazziRunner } from "./runner";
 
@@ -7,8 +9,7 @@ export class PaparazziResources implements utils.IResources {
         public alfredUrl: string,
         public tmzUrl: string,
         public workerConfig: any,
-        public historian: string,
-        public repository: string) {
+        public tenantManager: ITenantManager) {
     }
 
     public dispose(): Promise<void> {
@@ -21,9 +22,13 @@ export class PaparazziResourcesFactory implements utils.IResourcesFactory<Papara
         const alfredUrl = config.get("paparazzi:alfred");
         const tmzUrl = config.get("paparazzi:tmz");
         const workerConfig = config.get("worker");
-        const gitConfig = config.get("git");
+        const tenantManager = await TenantManager.Load(config.get("tenantConfig"));
 
-        return new PaparazziResources(alfredUrl, tmzUrl, workerConfig, gitConfig.historian, gitConfig.repository);
+        return new PaparazziResources(
+            alfredUrl,
+            tmzUrl,
+            workerConfig,
+            tenantManager);
     }
 }
 
@@ -33,7 +38,6 @@ export class PaparazziRunnerFactory implements utils.IRunnerFactory<PaparazziRes
             resources.alfredUrl,
             resources.tmzUrl,
             resources.workerConfig,
-            resources.historian,
-            resources.repository);
+            resources.tenantManager);
     }
 }

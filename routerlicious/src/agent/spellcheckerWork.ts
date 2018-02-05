@@ -9,13 +9,18 @@ export class SpellcheckerWork extends BaseWork implements IWork {
     private dict = new MergeTree.Collections.TST<number>();
     private spellcheckInvoked: boolean = false;
 
-    constructor(docId: string, config: any, dictionary: MergeTree.Collections.TST<number>) {
+    constructor(
+        docId: string,
+        config: any,
+        dictionary: MergeTree.Collections.TST<number>,
+        private service: core.IDocumentService) {
+
         super(docId, config);
         this.dict = dictionary;
     }
 
     public async start(): Promise<void> {
-        await this.loadDocument({ blockUpdateMarkers: true, localMinSeq: 0, encrypted: undefined });
+        await this.loadDocument({ blockUpdateMarkers: true, localMinSeq: 0, encrypted: undefined }, this.service);
         const eventHandler = (op: core.ISequencedDocumentMessage) => {
             if (op.type === core.ObjectOperation) {
                 const objectId = op.contents.address;

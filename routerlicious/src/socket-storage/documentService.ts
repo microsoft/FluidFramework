@@ -93,13 +93,19 @@ export class DocumentService implements api.IDocumentService {
             return Promise.reject("Must specify a version if connect is set to false");
         }
 
-        const connectMessage: messages.IConnect = { id, privateKey: null, publicKey: null, encrypted, token };
+        const connectMessage: messages.IConnect = {
+            encrypted,
+            id,
+            privateKey: null,
+            publicKey: null,
+            token,  // token is going to indicate tenant level information, etc...
+        };
 
         // If a version is specified we will load it directly - otherwise will query historian for the latest
         // version and then load it
         if (version === undefined) {
             const commits = await this.gitManager.getCommits(id, 1);
-            version = commits.length > 0 ? commits[0] : null;
+            version = commits.length > 0 ? this.translateCommit(commits[0]) : null;
         }
 
         // Load in the header for the version. At this point if version is still null that means there are no
@@ -244,5 +250,17 @@ export class DocumentService implements api.IDocumentService {
                     }
                 });
         });
+    }
+
+    private translateCommit(details: resources.ICommitDetails): resources.ICommit {
+        return {
+            author: details.commit.author,
+            committer: details.commit.committer,
+            message: details.commit.message,
+            parents: details.parents,
+            sha: details.sha,
+            tree: details.commit.tree,
+            url: details.commit.url,
+        };
     }
 }

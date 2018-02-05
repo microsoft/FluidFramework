@@ -1,4 +1,3 @@
-// Load environment varaibles and pass to the controller.
 import { Router } from "express";
 import { defaultPartials } from "./partials";
 
