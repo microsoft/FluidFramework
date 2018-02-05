@@ -6,18 +6,19 @@ import * as winston from "winston";
 import * as app from "./app";
 import { configureLogging } from "./logger";
 
-const configFile = path.join(__dirname, "../config.json");
-const config = nconf.argv().env("__" as any).file(configFile).use("memory");
+const config = nconf.argv().env("__" as any).file(path.join(__dirname, "../config.json")).use("memory");
+const appConfig = config.get("app");
+const aadConfig = config.get("aad");
 
 // Configure winston logger.
-configureLogging(config.get("logger"));
+configureLogging(appConfig.logger);
 
 /**
  * Get port from environment and store in Express.
  */
 // tslint:disable-next-line:no-string-literal
-const port = normalizePort(process.env["PORT"] || config.get("port"));
-const expressApp = app.create(config);
+const port = normalizePort(process.env["PORT"] || appConfig.port);
+const expressApp = app.create(appConfig, aadConfig);
 expressApp.set("port", port);
 
 /**

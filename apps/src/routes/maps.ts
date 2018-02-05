@@ -1,23 +1,33 @@
 import { Router } from "express";
-import { Provider } from "nconf";
+import * as moniker from "moniker";
+import { ensureAuthenticated } from "./authCheker";
 import { defaultPartials } from "./partials";
 
-export function create(config: Provider): Router {
+function renderView(request, response, id: string, config: any) {
+    response.render(
+        "maps",
+        {
+            endpoints: JSON.stringify(config.endpoints),
+            id,
+            partials: defaultPartials,
+            repository: config.repository,
+            title: id,
+            token: request.query.token,
+            workerConfig: JSON.stringify(config.worker),
+        },
+    );
+}
+
+export function create(config: any): Router {
     const router: Router = Router();
 
-    router.get("/:id", (request, response, next) => {
-        response.render(
-            "maps",
-            {
-                endpoints: JSON.stringify(config.get("endpoints")),
-                id: request.params.id,
-                partials: defaultPartials,
-                repository: config.get("repository"),
-                title: request.params.id,
-                token: request.query.token,
-                workerConfig: JSON.stringify(config.get("worker")),
-            },
-        );
+    router.get("/", (request, response, next) => {
+        response.redirect(`/maps/${moniker.choose()}`);
+    });
+
+    router.get("/:id", ensureAuthenticated, (request, response, next) => {
+        request.query.token = response.locals.token;
+        renderView(request, response, request.params.id, config);
     });
 
     return router;

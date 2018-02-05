@@ -1,52 +1,84 @@
 {
-    "logger": {
-        "colorize": true,
-        "morganFormat": "dev",
-        "json": false,
-        "level": "info",
-        "timestamp": true,
-        "label": "winston"
-    },
-    "port": 3000,
-    "endpoints": {
-        "delta": "http://praguekube-ppe.westus2.cloudapp.azure.com",
-        "storage": "http://prague-historian-ppe.westus2.cloudapp.azure.com"
-    },
-    "repository": "prague",
-    "worker": {
-        "intelligence": {
-            "resume": {
-                "deviceId": "routerlicious",
-                "host": "pkarimov-paidIOT.azure-devices.net",
-                "sharedAccessKeyName": "iothubowner",
-                "sharedAccessKey": "8mvOmNnUklwnuzY+U96V51w+qCq262ZUpSkdw8nTZ18=",
-                "url": "http://praguekube-ppe.westus2.cloudapp.azure.com/intelligence/resume"
-            },
-            "textAnalytics": {
-                "key": "c8b60dc5e49849ce903d7d29a2dce550"
-            },
-            "nativeTextAnalytics": {
-                "enable": false,
-                "url": "http://praguepy.westus2.cloudapp.azure.com/"
-            },
-            "spellchecker": {
-                "url": "http://augmentation.westus2.cloudapp.azure.com/spellchecker/api"
-            }
+    "app": {
+        "logger": {
+            "colorize": true,
+            "morganFormat": "dev",
+            "json": false,
+            "level": "info",
+            "timestamp": true,
+            "label": "winston"
         },
-        "serverUrl": "http://praguekube-ppe.westus2.cloudapp.azure.com",
-        "url": "http://praguetmz-ppe.westus2.cloudapp.azure.com",
-        "blobStorageUrl": "http://prague-historian-ppe.westus2.cloudapp.azure.com",
-        "scriptUrl": "http://pragueminio.westus2.cloudapp.azure.com:9000/agents/",
+        "port": 3000,
+        "endpoints": {
+            "delta": "http://praguekube-ppe.westus2.cloudapp.azure.com",
+            "storage": "http://prague-historian-ppe.westus2.cloudapp.azure.com"
+        },
         "repository": "prague",
-        "storageBucket": "snapshots",
-        "intervalMSec": 5000,
-        "onlyServer": false,
-        "permission": {
-            "paparazzi": ["snapshot", "spell", "intel"],
-            "canvas": ["ping"],
-            "cells": ["ping", "snapshot"],
-            "maps": ["ping", "snapshot"],
-            "sharedText": ["ping"]
+        "worker": {
+            "intelligence": {
+                "resume": {
+                    "deviceId": "routerlicious",
+                    "host": "pkarimov-paidIOT.azure-devices.net",
+                    "sharedAccessKeyName": "iothubowner",
+                    "sharedAccessKey": "8mvOmNnUklwnuzY+U96V51w+qCq262ZUpSkdw8nTZ18=",
+                    "url": "http://praguekube-ppe.westus2.cloudapp.azure.com/intelligence/resume"
+                },
+                "textAnalytics": {
+                    "key": "c8b60dc5e49849ce903d7d29a2dce550"
+                },
+                "nativeTextAnalytics": {
+                    "enable": false,
+                    "url": "http://praguepy.westus2.cloudapp.azure.com/"
+                },
+                "spellchecker": {
+                    "url": "http://augmentation.westus2.cloudapp.azure.com/spellchecker/api"
+                }
+            },
+            "serverUrl": "http://praguekube-ppe.westus2.cloudapp.azure.com",
+            "url": "http://praguetmz-ppe.westus2.cloudapp.azure.com",
+            "blobStorageUrl": "http://prague-historian-ppe.westus2.cloudapp.azure.com",
+            "scriptUrl": "http://pragueminio.westus2.cloudapp.azure.com:9000/agents/",
+            "repository": "prague",
+            "storageBucket": "snapshots",
+            "intervalMSec": 5000,
+            "onlyServer": false,
+            "permission": {
+                "paparazzi": ["snapshot", "spell", "intel"],
+                "canvas": ["ping"],
+                "cells": ["ping", "snapshot"],
+                "maps": ["ping", "snapshot"],
+                "sharedText": ["ping"]
+            }
         }
+    },
+    "aad": {
+        "creds": {
+            "identityMetadata": "https://login.microsoftonline.com/microsoft.onmicrosoft.com/.well-known/openid-configuration",
+            "clientID": "3d642166-9884-4463-8248-78961b8c1300",
+            "responseType": "code id_token",
+            "responseMode": "form_post",
+            "redirectUrl": "http://localhost:7000/auth/openid/return",
+            "allowHttpForRedirectUrl": true,
+            "clientSecret": "IefegJIsumWtD1Of/9AIUWvm6ryR624vgMtKRmcNEsQ=",
+            "validateIssuer": true,
+            "isB2C": false,
+            "issuer": null,
+            "passReqToCallback": false,
+            "useCookieInsteadOfSession": true,
+            "cookieEncryptionKeys": [
+              { "key": "12345678901234567890123456789012", "iv": "123456789012" },
+              { "key": "abcdefghijklmnopqrstuvwxyzabcdef", "iv": "abcdefghijkl" }
+            ],
+            "scope": ["email", "profile"],
+            "loggingLevel": "info",
+            "nonceLifetime": null,
+            "nonceMaxAmount": 5,
+            "clockSkew": null
+        },
+        "resourceURL": "https://graph.windows.net",
+        "destroySessionUrl": "https://login.microsoftonline.com/common/oauth2/logout?post_logout_redirect_uri=http://localhost:7000",
+        "useMongoDBSessionStore": false,
+        "databaseUri": null,
+        "mongoDBSessionMaxAge": 14400
     }
 }
