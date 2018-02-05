@@ -24,13 +24,15 @@ data:
                     "type": "git",
                     "url": "http://{{ template "gitrest.fullname" . }}",
                     "name": "git",
-                    "isDefault": true
+                    "isDefault": true,
+                    "defaultOwner": "prague"
                 },
                 {
                     "type": "cobalt",
                     "url": "http://{{ template "cobalt.fullname" . }}",
                     "name": "cobalt",
-                    "isDefault": false
+                    "isDefault": false,
+                    "defaultOwner": "prague"
                 },
                 {
                     "type": "git",
@@ -40,7 +42,8 @@ data:
                         "password": "8d043006d0a2704d4dd9972f848f1982026672a1"
                     },
                     "name": "github",
-                    "isDefault": false
+                    "isDefault": false,
+                    "defaultOwner": "kurtb"
                 }
         ],
         "redis": {

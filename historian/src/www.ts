@@ -50,7 +50,7 @@ const storageProviders = storageProvidersConfig.map((storageProviderConfig) => {
     storageProviderConfig.credentials,
     cache,
     `Historian/${packageDetails.version}`,
-  storageProviderConfig.defaultOwner);
+    storageProviderConfig.defaultOwner);
   return new StorageProvider(restService, storageProviderConfig);
 });
 
