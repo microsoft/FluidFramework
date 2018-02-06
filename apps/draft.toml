@@ -1,0 +1,7 @@
+[environments]
+  [environments.development]
+    name = "apps"
+    namespace = "tenants"
+    wait = false
+    watch = false
+    watch_delay = 2
