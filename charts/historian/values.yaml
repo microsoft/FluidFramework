@@ -4,7 +4,7 @@ imagePullPolicy: IfNotPresent
 
 historian:
   name: historian
-  image: prague.azurecr.io/historian:1328
+  image: prague.azurecr.io/historian:1341
   redis: lumpy-condor-redis
 
 gitrest:
