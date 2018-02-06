@@ -34,6 +34,7 @@ export async function onLoad(
     id: string,
     version: resources.ICommit,
     pageInk: boolean,
+    disableCache: boolean,
     config: any,
     template: string,
     loadPartial: boolean,
@@ -42,20 +43,26 @@ export async function onLoad(
     console.log(`Load Option: ${JSON.stringify(options)}`);
     loadPartial
         ? loadCommit(id, version, pageInk, config, options)
-        : loadFull(id, version, pageInk, config, template, options);
+        : loadFull(id, version, pageInk, disableCache, config, template, options);
 }
 
 async function loadFull(
     id: string,
     version: resources.ICommit,
     pageInk: boolean,
+    disableCache: boolean,
     config: any,
     template: string,
     options: Object) {
 
     const host = new ui.BrowserContainerHost();
 
-    socketStorage.registerAsDefault(document.location.origin, config.blobStorageUrl, config.owner, config.repository);
+    socketStorage.registerAsDefault(
+        document.location.origin,
+        config.blobStorageUrl,
+        config.owner,
+        config.repository,
+        disableCache);
     console.log(`collabDoc loading ${id} - ${performanceNow()}`);
     const collabDoc = await API.load(id, { blockUpdateMarkers: true }, version);
     console.log(`collabDoc loaded ${id} - ${performanceNow()}`);

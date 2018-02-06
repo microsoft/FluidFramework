@@ -7,7 +7,7 @@ export function create(store: nconf.Provider, provider: StorageProvider): Router
     const router: Router = Router();
 
     router.post(provider.translatePath("/repos/:owner?/:repo/git/tags"), (request, response, next) => {
-        const tagP = provider.historian.createTag(request.params.owner, request.params.repo, request.body);
+        const tagP = provider.gitService.createTag(request.params.owner, request.params.repo, request.body);
         utils.handleResponse(
             tagP,
             response,
@@ -16,7 +16,7 @@ export function create(store: nconf.Provider, provider: StorageProvider): Router
     });
 
     router.get(provider.translatePath("/repos/:owner?/:repo/git/tags/*"), (request, response, next) => {
-        const tagP = provider.historian.getTag(request.params.owner, request.params.repo, request.params[0]);
+        const tagP = provider.gitService.getTag(request.params.owner, request.params.repo, request.params[0]);
         utils.handleResponse(
             tagP,
             response,

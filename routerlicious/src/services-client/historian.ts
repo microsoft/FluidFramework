@@ -6,7 +6,7 @@ import * as request from "request";
  * Implementation of the IHistorian interface that calls out to a REST interface
  */
 export class Historian implements git.IHistorian {
-    constructor(private endpoint: string) {
+    constructor(private endpoint: string, private disableCache: boolean) {
         console.log(`Historian Endpoint: ${endpoint}`);
     }
 
@@ -141,6 +141,11 @@ export class Historian implements git.IHistorian {
     }
 
     private request<T>(options: request.OptionsWithUrl, statusCode: number): Promise<T> {
+        // Append cache param if requested
+        if (this.disableCache) {
+            options.url = `${options.url}?disableCache`;
+        }
+
         return new Promise<T>((resolve, reject) => {
             request(
                 options,

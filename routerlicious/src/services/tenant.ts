@@ -4,7 +4,7 @@ import * as clientServices from "../services-client";
 
 export class Tenant implements ITenant {
     public static async Load(config: ITenantConfig): Promise<Tenant> {
-        const historian = new clientServices.Historian(config.storage.url);
+        const historian = new clientServices.Historian(config.storage.url, false);
         const gitManager = await getOrCreateRepository(
             historian,
             config.storage.url,

@@ -128,6 +128,7 @@ export function create(
                     "sharedText",
                     {
                         config: workerConfig,
+                        disableCache: ("disableCache" in request.query),
                         id,
                         loadPartial: false,
                         options: JSON.stringify(options),

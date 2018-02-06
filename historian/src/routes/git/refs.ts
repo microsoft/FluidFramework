@@ -7,7 +7,7 @@ export function create(store: nconf.Provider, provider: StorageProvider): Router
     const router: Router = Router();
 
     router.get(provider.translatePath("/repos/:owner?/:repo/git/refs"), (request, response, next) => {
-        const refsP = provider.historian.getRefs(request.params.owner, request.params.repo);
+        const refsP = provider.gitService.getRefs(request.params.owner, request.params.repo);
         utils.handleResponse(
             refsP,
             response,
@@ -15,7 +15,7 @@ export function create(store: nconf.Provider, provider: StorageProvider): Router
     });
 
     router.get(provider.translatePath("/repos/:owner?/:repo/git/refs/*"), (request, response, next) => {
-        const refP = provider.historian.getRef(request.params.owner, request.params.repo, request.params[0]);
+        const refP = provider.gitService.getRef(request.params.owner, request.params.repo, request.params[0]);
         utils.handleResponse(
             refP,
             response,
@@ -25,7 +25,7 @@ export function create(store: nconf.Provider, provider: StorageProvider): Router
     router.post(provider.translatePath("/repos/:owner?/:repo/git/refs"), (request, response, next) => {
         // tslint:disable-next-line
         console.log(`Post ref: ${request.body}`);
-        const refP = provider.historian.createRef(request.params.owner, request.params.repo, request.body);
+        const refP = provider.gitService.createRef(request.params.owner, request.params.repo, request.body);
         utils.handleResponse(
             refP,
             response,
@@ -34,7 +34,7 @@ export function create(store: nconf.Provider, provider: StorageProvider): Router
     });
 
     router.patch(provider.translatePath("/repos/:owner?/:repo/git/refs/*"), (request, response, next) => {
-        const refP = provider.historian.updateRef(
+        const refP = provider.gitService.updateRef(
             request.params.owner,
             request.params.repo,
             request.params[0], request.body);
@@ -45,7 +45,7 @@ export function create(store: nconf.Provider, provider: StorageProvider): Router
     });
 
     router.delete(provider.translatePath("/repos/:owner?/:repo/git/refs/*"), (request, response, next) => {
-        const refP = provider.historian.deleteRef(request.params.owner, request.params.repo, request.params[0]);
+        const refP = provider.gitService.deleteRef(request.params.owner, request.params.repo, request.params[0]);
         utils.handleResponse(
             refP,
             response,

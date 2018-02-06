@@ -44,7 +44,7 @@ function buildHierarchy(flatTree: git.ITree): ITree {
     return root;
 }
 
-export class RestGitService implements git.IHistorian {
+export class RestGitService {
     private authHeader: string;
 
     constructor(
@@ -59,10 +59,11 @@ export class RestGitService implements git.IHistorian {
         }
     }
 
-    public getBlob(owner: string, repo: string, sha: string): Promise<git.IBlob> {
-        return this.resolveFromCache(
+    public getBlob(owner: string, repo: string, sha: string, useCache: boolean): Promise<git.IBlob> {
+        return this.resolve(
             sha,
-            () => this.get<git.IBlob>(`/repos/${this.getRepoPath(owner, repo)}/git/blobs/${encodeURIComponent(sha)}`));
+            () => this.get<git.IBlob>(`/repos/${this.getRepoPath(owner, repo)}/git/blobs/${encodeURIComponent(sha)}`),
+            useCache);
     }
 
     public async createBlob(
@@ -75,7 +76,7 @@ export class RestGitService implements git.IHistorian {
             blob);
 
         // Fetch the full blob so we can have it in cache
-        this.getBlob(owner, repo, createResults.sha).catch((error) => {
+        this.getBlob(owner, repo, createResults.sha, true).catch((error) => {
             winston.error(`Error fetching blob ${createResults.sha}`);
         });
 
@@ -95,11 +96,12 @@ export class RestGitService implements git.IHistorian {
         return this.get(`/repos/${this.getRepoPath(owner, repo)}/commits?${query}`);
     }
 
-    public async getCommit(owner: string, repo: string, sha: string): Promise<git.ICommit> {
-        return this.resolveFromCache(
+    public async getCommit(owner: string, repo: string, sha: string, useCache: boolean): Promise<git.ICommit> {
+        return this.resolve(
             sha,
             () => this.get<git.ICommit>(
-                `/repos/${this.getRepoPath(owner, repo)}/git/commits/${encodeURIComponent(sha)}`));
+                `/repos/${this.getRepoPath(owner, repo)}/git/commits/${encodeURIComponent(sha)}`),
+            useCache);
     }
 
     public async createCommit(
@@ -114,11 +116,11 @@ export class RestGitService implements git.IHistorian {
         this.setCache(commit.sha, commit);
 
         // Also fetch the tree for the commit to have it in cache
-        this.getTree(owner, repo, commit.tree.sha, true).catch((error) => {
+        this.getTree(owner, repo, commit.tree.sha, true, true).catch((error) => {
             winston.error(`Error fetching commit tree ${commit.tree.sha}`);
         });
         // ... as well as pull in the header for it
-        this.getHeader(owner, repo, commit.sha).catch((error) => {
+        this.getHeader(owner, repo, commit.sha, true).catch((error) => {
             winston.error(`Error fetching header ${commit.sha}`);
         });
 
@@ -169,24 +171,32 @@ export class RestGitService implements git.IHistorian {
         return tree;
     }
 
-    public getTree(owner: string, repo: string, sha: string, recursive: boolean): Promise<git.ITree> {
+    public getTree(
+        owner: string,
+        repo: string,
+        sha: string,
+        recursive: boolean,
+        useCache: boolean): Promise<git.ITree> {
+
         const key = recursive ? `${sha}:recursive` : sha;
-        return this.resolveFromCache(
+        return this.resolve(
             key,
             () => {
                 const query = querystring.stringify({ recursive: recursive ? 1 : 0 });
                 return this.get<git.ITree>(
                     `/repos/${this.getRepoPath(owner, repo)}/git/trees/${encodeURIComponent(sha)}?${query}`);
-            });
+            },
+            useCache);
     }
 
-    public async getHeader(owner: string, repo: string, sha: string): Promise<any> {
-        const version = await this.getCommit(owner, repo, sha);
+    public async getHeader(owner: string, repo: string, sha: string, useCache: boolean): Promise<any> {
+        const version = await this.getCommit(owner, repo, sha, useCache);
 
         const key = `${version.sha}:header`;
-        return this.resolveFromCache(
+        return this.resolve(
             key,
-            () => this.getHeaderCore(owner, repo, version));
+            () => this.getHeaderCore(owner, repo, version, useCache),
+            useCache);
     }
 
     /**
@@ -198,10 +208,10 @@ export class RestGitService implements git.IHistorian {
         return `${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`;
     }
 
-    private async getHeaderCore(owner: string, repo: string, version: git.ICommit): Promise<any> {
+    private async getHeaderCore(owner: string, repo: string, version: git.ICommit, useCache: boolean): Promise<any> {
         // NOTE we currently grab the entire repository. Should this ever become a bottleneck we can move to manually
         // walking and looking for entries. But this will requre more round trips.
-        const rawTree = await this.getTree(owner, repo, version.tree.sha, true);
+        const rawTree = await this.getTree(owner, repo, version.tree.sha, true, useCache);
         const tree = buildHierarchy(rawTree);
 
         // Pull out the root attributes file
@@ -215,21 +225,21 @@ export class RestGitService implements git.IHistorian {
 
         // Pull in transformed messages between the msn and the reference
         const messagesSha = tree.blobs[".messages"];
-        const messagesP = this.getBlob(owner, repo, messagesSha).then((messages) => {
+        const messagesP = this.getBlob(owner, repo, messagesSha, useCache).then((messages) => {
             const messagesJSON = Buffer.from(messages.content, "base64").toString();
             return JSON.parse(messagesJSON); // as api.ISequencedDocumentMessage[];
         });
 
         // Fetch the attributes and distirbuted object headers
-        const docAttributesP = this.getBlob(owner, repo, docAttributesSha).then((docAttributes) => {
+        const docAttributesP = this.getBlob(owner, repo, docAttributesSha, useCache).then((docAttributes) => {
             const attributes = Buffer.from(docAttributes.content, "base64").toString();
             return JSON.parse(attributes); // as api.IDocumentAttributes;
         });
 
         const blobsP: Array<Promise<any>> = [];
         for (const blob of objectBlobs) {
-            const headerP = this.getBlob(owner, repo, blob.headerSha).then((header) => header.content);
-            const attributesP = this.getBlob(owner, repo, blob.attributesSha).then((objectType) => {
+            const headerP = this.getBlob(owner, repo, blob.headerSha, useCache).then((header) => header.content);
+            const attributesP = this.getBlob(owner, repo, blob.attributesSha, useCache).then((objectType) => {
                 const attributes = Buffer.from(objectType.content, "base64").toString();
                 return JSON.parse(attributes); // as api.IObjectAttributes;
             });
@@ -347,23 +357,27 @@ export class RestGitService implements git.IHistorian {
         });
     }
 
-    private async resolveFromCache<T>(key: string, fetch: () => Promise<T>): Promise<T> {
-        // Attempt to grab the value from the cache. Log any errors but don't fail the request
-        const cachedValue = await this.cache.get<T>(key).catch((error) => {
-            winston.error(`Error fetching ${key} from cache`, error);
-            return null;
-        });
+    private async resolve<T>(key: string, fetch: () => Promise<T>, useCache: boolean): Promise<T> {
+        if (useCache) {
+            // Attempt to grab the value from the cache. Log any errors but don't fail the request
+            const cachedValue = await this.cache.get<T>(key).catch((error) => {
+                winston.error(`Error fetching ${key} from cache`, error);
+                return null;
+            });
 
-        if (cachedValue) {
-            winston.info(`Resolving ${key} from cache`);
-            return cachedValue;
+            if (cachedValue) {
+                winston.info(`Resolving ${key} from cache`);
+                return cachedValue;
+            }
+
+            // Value is not cached - fetch it with the provided function and then cache the value
+            winston.info(`Fetching ${key}`);
+            const value = await fetch();
+            this.setCache(key, value);
+
+            return value;
+        } else {
+            return fetch();
         }
-
-        // Value is not cached - fetch it with the provided function and then cache the value
-        winston.info(`Fetching ${key}`);
-        const value = await fetch();
-        this.setCache(key, value);
-
-        return value;
     }
 }

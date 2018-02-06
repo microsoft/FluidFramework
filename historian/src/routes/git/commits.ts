@@ -19,7 +19,7 @@ export function create(store: nconf.Provider, provider: StorageProvider): Router
             });
         }
 
-        const commitP = provider.historian.createCommit(request.params.owner, request.params.repo, request.body);
+        const commitP = provider.gitService.createCommit(request.params.owner, request.params.repo, request.body);
         utils.handleResponse(
             commitP,
             response,
@@ -28,8 +28,13 @@ export function create(store: nconf.Provider, provider: StorageProvider): Router
     });
 
     router.get(provider.translatePath("/repos/:owner?/:repo/git/commits/:sha"), (request, response, next) => {
-        const commitP = provider.historian.getCommit(request.params.owner, request.params.repo, request.params.sha);
-        utils.handleResponse(commitP, response);
+        const useCache = !("disableCache" in request.query);
+        const commitP = provider.gitService.getCommit(
+            request.params.owner,
+            request.params.repo,
+            request.params.sha,
+            useCache);
+        utils.handleResponse(commitP, response, useCache);
     });
 
     return router;

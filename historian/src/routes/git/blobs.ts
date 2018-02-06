@@ -7,7 +7,7 @@ export function create(store: nconf.Provider, provider: StorageProvider): Router
     const router: Router = Router();
 
     router.post(provider.translatePath("/repos/:owner?/:repo/git/blobs"), (request, response, next) => {
-        const blobP = provider.historian.createBlob(request.params.owner, request.params.repo, request.body);
+        const blobP = provider.gitService.createBlob(request.params.owner, request.params.repo, request.body);
         utils.handleResponse(
             blobP,
             response,
@@ -19,10 +19,17 @@ export function create(store: nconf.Provider, provider: StorageProvider): Router
      * Retrieves the given blob from the repository
      */
     router.get(provider.translatePath("/repos/:owner?/:repo/git/blobs/:sha"), (request, response, next) => {
-        const blobP = provider.historian.getBlob(request.params.owner, request.params.repo, request.params.sha);
+        const useCache = !("disableCache" in request.query);
+
+        const blobP = provider.gitService.getBlob(
+            request.params.owner,
+            request.params.repo,
+            request.params.sha,
+            useCache);
         utils.handleResponse(
             blobP,
-            response);
+            response,
+            useCache);
     });
 
     return router;

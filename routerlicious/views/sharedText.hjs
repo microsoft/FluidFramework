@@ -14,7 +14,15 @@
             var options = {{{ options }}};
             var loadPartial = {{{ loadPartial }}};
             console.log(`Starting load at - ${performance.now()}`);
-            controller.sharedText.onLoad("{{ id }}", version, {{ pageInk }}, config, "{{ template }}", loadPartial, options);
+            controller.sharedText.onLoad(
+                "{{ id }}",
+                version,
+                {{ pageInk }},
+                {{ disableCache }},
+                config,
+                "{{ template }}",
+                loadPartial,
+                options);
         </script>
     {{/scripts}}
 {{/layout}}

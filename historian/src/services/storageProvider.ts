@@ -1,16 +1,16 @@
-import { IHistorian } from "gitresources";
 import { IStorageProvider } from "./definitions";
+import { RestGitService } from "./restGitService";
 
 /**
  * Helper class that manages a storage provider definition
  */
 export class StorageProvider {
     // Getter for the historian interface that manages access to the underlying storage provider
-    public get historian(): IHistorian {
-        return this.historianService;
+    public get gitService(): RestGitService {
+        return this.git;
     }
 
-    constructor(private historianService: IHistorian, private provider: IStorageProvider) {
+    constructor(private git: RestGitService, private provider: IStorageProvider) {
     }
 
     /**

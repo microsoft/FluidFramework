@@ -27,7 +27,7 @@ export function create(store: nconf.Provider, provider: StorageProvider): Router
     const router: Router = Router();
 
     router.get(provider.translatePath("/repos/:owner?/:repo/commits"), (request, response, next) => {
-        const commitsP = provider.historian.getCommits(
+        const commitsP = provider.gitService.getCommits(
             request.params.owner,
             request.params.repo,
             request.query.sha,
