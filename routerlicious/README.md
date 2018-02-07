@@ -166,3 +166,37 @@ By default, the service does not run locally. To run locally, first add the foll
     }
 ```
 This will enable the metric writer to write to telegraf client. Then run `docker-compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.metric.yml up` to bring up telegraf, influxdb, and grafana containers. Navigate "http://localhost:5000" to see grafana up and running.
+
+## Authentication model
+Routerlicious uses a token based authentication model. Tenants are registered to routerlicious first and a secret key is generated for each tenant. Apps are expected to pass <secret-key>, <tenant-id>, and <user-info> as a signed token to routerlicious. Tenants are given a symmetric-key beforehand to sign the token.
+
+When a user from a tenant wants to create/access a document in routerlicious, it passes the signed token in api load call. Routerlicious verifies the token, matches the secret-key for the tenant and on a successful verification, grants the user access to the document. The access token is valid for the entire websocket session. User is expected to pass in another signed token for any subsequent api load call.
+
+For now, token is optional. So passing no token would grant access to the user.
+
+### Creating a token
+Routerlicious uses [jsonwebtoken](https://www.npmjs.com/package/jsonwebtoken) library for verifying the token. Example of a token creation:
+
+```javascript
+    jwt.sign(
+        {
+            permission: "read:write",   // optional for now.
+            secret: <secret_key>,     // required
+            tenantid: <tenant_id>,    // required
+            user: {
+                    data: null,     // optinoal
+                    id: email,      // required
+            },
+        },
+        SYMMETRIC_SIGN_KEY);
+```
+
+### Passing auth token to the API
+Add a token field to api load call.
+
+```javascript
+await prague.api.load(id, { encrypted: false, token }).catch((err) => {
+    return Promise.reject(err);
+});
+```
+Passing an invalid token will fail the load call.
