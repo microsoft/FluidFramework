@@ -42,6 +42,11 @@ export interface LocalReference {
     segment: BaseSegment;
     offset: number;
     slideOnRemove?: boolean;
+    properties?: Properties.PropertySet;
+}
+
+export function addReferenceProperties(lref: LocalReference, props: Properties.PropertySet, op: ops.ICombiningOp) {
+    lref.properties = Properties.addProperties(lref.properties, props, op);
 }
 
 export enum SegmentType {
@@ -330,10 +335,7 @@ export abstract class BaseSegment extends MergeNode implements Segment {
     }
 
     addProperties(newProps: Properties.PropertySet, op?: ops.ICombiningOp) {
-        if ((!this.properties) || (op && (op.name === "rewrite"))) {
-            this.properties = Properties.createMap<any>();
-        }
-        Properties.extend(this.properties, newProps, op);
+        this.properties = Properties.addProperties(this.properties, newProps, op);
     }
 
     isLeaf() {
@@ -1919,8 +1921,8 @@ export class Client {
                 case ops.MergeTreeDeltaType.INSERT:
                     if (op.markerPos1) {
                         op.pos1 = this.mergeTree.posFromMarkerPos(op.markerPos1,
-                        UniversalSequenceNumber, this.getClientId());
-                        if (op.pos1<0) {
+                            UniversalSequenceNumber, this.getClientId());
+                        if (op.pos1 < 0) {
                             break;
                         }
                     }
@@ -3454,15 +3456,15 @@ export class MergeTree {
             pos = this.getOffset(marker, refseq, clientId);
             if (!markerPos.before) {
                 pos += marker.cachedLength;
-                if (markerPos.offset!==undefined) {
+                if (markerPos.offset !== undefined) {
                     pos += markerPos.offset;
                 }
             } else {
-                if (markerPos.offset!==undefined) {
+                if (markerPos.offset !== undefined) {
                     pos -= markerPos.offset;
                 }
             }
-            
+
         }
         return pos;
     }

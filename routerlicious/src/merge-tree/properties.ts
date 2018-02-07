@@ -89,7 +89,7 @@ export function contingentExtend<T>(contingentBase: ContingentPropertySet,
             } else {
                 newProp = v;
             }
-            if (contingentBase[key]===undefined) {
+            if (contingentBase[key] === undefined) {
                 contingentBase[key] = Collections.ListMakeHead<any>();
             }
             contingentBase[key].enqueue(newProp);
@@ -109,7 +109,7 @@ export function extend<T>(base: MapLike<T>, extension: MapLike<T>, combiningOp?:
                 delete base[key];
             } else {
                 // TODO: consider some type constraints on ops
-                if (combiningOp && (combiningOp.name!=="rewrite")) {
+                if (combiningOp && (combiningOp.name !== "rewrite")) {
                     base[key] = combine(combiningOp, base[key], v);
                 } else {
                     base[key] = v;
@@ -118,6 +118,14 @@ export function extend<T>(base: MapLike<T>, extension: MapLike<T>, combiningOp?:
         }
     }
     return base;
+}
+
+export function addProperties(oldProps: PropertySet, newProps: PropertySet, op?: ops.ICombiningOp) {
+    if ((!oldProps) || (op && (op.name === "rewrite"))) {
+        oldProps = createMap<any>();
+    }
+    extend(oldProps, newProps, op);
+    return oldProps;
 }
 
 export function extendIfUndefined<T>(base: MapLike<T>, extension: MapLike<T>) {
