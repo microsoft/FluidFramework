@@ -5,6 +5,15 @@ export interface ITenantStorage {
     publicUrl: string;
     owner: string;
     repository: string;
+
+    /**
+     * (optional) Direct access to storage historian is providing cached access to
+     */
+    direct?: string;
+    credentials?: {
+        user: string,
+        password: string,
+    };
 }
 
 export interface ITenantConfig {

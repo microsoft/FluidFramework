@@ -62,7 +62,9 @@ async function loadFull(
         config.blobStorageUrl,
         config.owner,
         config.repository,
-        disableCache);
+        disableCache,
+        config.historianApi,
+        config.credentials);
     console.log(`collabDoc loading ${id} - ${performanceNow()}`);
     const collabDoc = await API.load(id, { blockUpdateMarkers: true }, version);
     console.log(`collabDoc loaded ${id} - ${performanceNow()}`);
@@ -154,7 +156,11 @@ async function loadCommit(
 
     const host = new ui.BrowserContainerHost();
 
-    socketStorage.registerAsDefault(document.location.origin, config.blobStorageUrl, config.owner, config.repository);
+    socketStorage.registerAsDefault(
+        document.location.origin,
+        config.blobStorageUrl,
+        config.owner,
+        config.repository);
     console.log(`collabDoc loading ${id} - ${performanceNow()}`);
     const collabDoc = await API.load(id, { blockUpdateMarkers: true }, version, false);
     console.log(`collabDoc loaded ${id} - ${performanceNow()}`);

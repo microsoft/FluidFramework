@@ -9,9 +9,11 @@ export function createDocumentService(
     gitUrl: string,
     owner: string,
     repository: string,
-    disableCache = false): IDocumentService {
+    disableCache = false,
+    historianApi = true,
+    credentials?): IDocumentService {
 
-    const historian = new Historian(gitUrl, disableCache);
+    const historian = new Historian(gitUrl, historianApi, disableCache, credentials);
     const gitManager = new GitManager(historian, gitUrl, owner, repository);
     const blobStorage = new socketStorage.BlobStorageService(gitManager);
     const deltaStorage = new socketStorage.DeltaStorageService(deltaUrl);
@@ -30,8 +32,17 @@ export function registerAsDefault(
     gitUrl: string,
     owner: string,
     repository: string,
-    disableCache = false) {
+    disableCache = false,
+    historianApi = true,
+    credentials?) {
 
-    const service = createDocumentService(deltaUrl, gitUrl, owner, repository, disableCache);
+    const service = createDocumentService(
+        deltaUrl,
+        gitUrl,
+        owner,
+        repository,
+        disableCache,
+        historianApi,
+        credentials);
     api.registerDocumentService(service);
 }

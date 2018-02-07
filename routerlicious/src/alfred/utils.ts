@@ -4,14 +4,27 @@ import { ITenantManager } from "../api-core";
 /**
  * Helper functioin to return tenant specific configuration
  */
-export function getConfig(config: any, tenantManager: ITenantManager, tenantId: string): string {
+export function getConfig(
+    config: any,
+    tenantManager: ITenantManager,
+    tenantId: string,
+    direct = false): string {
+
     // Make a copy of the config to avoid destructive modifications to the original
     const updatedConfig = _.cloneDeep(config);
 
     const tenant = tenantManager.getTenant(tenantId);
-    updatedConfig.blobStorageUrl = tenant.storage.publicUrl;
     updatedConfig.owner = tenant.storage.owner;
     updatedConfig.repository = tenant.storage.repository;
+
+    if (direct) {
+        updatedConfig.credentials = tenant.storage.credentials;
+        updatedConfig.blobStorageUrl = tenant.storage.direct;
+        updatedConfig.historianApi = false;
+    } else {
+        updatedConfig.blobStorageUrl = tenant.storage.publicUrl;
+        updatedConfig.historianApi = true;
+    }
 
     return JSON.stringify(updatedConfig);
 }

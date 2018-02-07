@@ -105,7 +105,14 @@ export function create(
     router.get("/:tenantId?/:id", (request, response, next) => {
         const id = getFullId(request.params.tenantId, request.params.id);
 
-        const workerConfig = getConfig(config.get("worker"), tenantManager, request.params.tenantId);
+        const disableCache = "disableCache" in request.query;
+        const direct = "direct" in request.query;
+
+        const workerConfig = getConfig(
+            config.get("worker"),
+            tenantManager,
+            request.params.tenantId,
+            direct);
         const versionP = storage.getLatestVersion(tenantManager, request.params.tenantId, request.params.id);
         versionP.then(
             (version) => {
@@ -120,15 +127,11 @@ export function create(
                     spellchecker,
                 };
 
-                // I need a way to specify the storage location from the URL here. Using the tenant to look it up
-                // would be useful. Otherwise I need a way to create a document, store some metadata, and then use
-                // that
-
                 response.render(
                     "sharedText",
                     {
                         config: workerConfig,
-                        disableCache: ("disableCache" in request.query),
+                        disableCache,
                         id,
                         loadPartial: false,
                         options: JSON.stringify(options),
