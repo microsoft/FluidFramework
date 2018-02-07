@@ -8,7 +8,6 @@ import { ISequencedObjectMessage } from "../api-core";
 import * as Properties from "./properties";
 import * as assert from "assert";
 import { IRelativePosition } from "./index";
-import { relative } from "path";
 
 export interface ReferencePosition {
     properties: Properties.PropertySet;
