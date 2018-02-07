@@ -1,6 +1,6 @@
 // tslint:disable:no-bitwise
-export enum MarkerBehaviors {
-    None =          0x0,
+export enum ReferenceType {
+    Simple =        0x0,
     Tile =          0x1,
     RangeBegin =    0x2,
     RangeEnd =      0x4,
@@ -8,7 +8,7 @@ export enum MarkerBehaviors {
 }
 
 export interface IMarkerDef {
-    behaviors?: MarkerBehaviors;
+    refType?: ReferenceType;
 }
 
 export interface IComponentDef {
@@ -32,11 +32,15 @@ export interface IMergeTreeDelta {
 /**
  * A segment-relative position.
  */
-export interface IMarkerPosition {
+export interface IRelativePosition {
     /**
-     * String identifier specifying a segment.
+     * String identifier specifying a segment or indirect reference to segment.
      */
     id: string;
+    /**
+     * True if the id refers to the segment indirectly.
+     */
+    indirect?: boolean;
     /**
      * If true, insert before the specified segment.  If false or not defined,
      * insert after the specified segment.
@@ -52,7 +56,7 @@ export interface IMarkerPosition {
 export interface IMergeTreeInsertMsg extends IMergeTreeDelta {
     type: MergeTreeDeltaType.INSERT;
     pos1?: number;
-    markerPos1?: IMarkerPosition;
+    relativePos1?: IRelativePosition;
     props?: Object;
     text?: string;
     marker?: IMarkerDef;
@@ -62,9 +66,9 @@ export interface IMergeTreeInsertMsg extends IMergeTreeDelta {
 export interface IMergeTreeRemoveMsg extends IMergeTreeDelta {
     type: MergeTreeDeltaType.REMOVE;
     pos1?: number;
-    markerPos1?: IMarkerPosition;
+    relativePos1?: IRelativePosition;
     pos2?: number;
-    markerPos2?: IMarkerPosition;
+    relativePos2?: IRelativePosition;
 }
 
 export interface ICombiningOp {
@@ -81,9 +85,9 @@ export interface IContingencyCheck {
 export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
     type: MergeTreeDeltaType.ANNOTATE;
     pos1?: number;
-    markerPos1?: IMarkerPosition;
+    markerPos1?: IRelativePosition;
     pos2?: number;
-    markerPos2?: IMarkerPosition;
+    markerPos2?: IRelativePosition;
     props: Object;
     combiningOp?: ICombiningOp;
     when?: IContingencyCheck;

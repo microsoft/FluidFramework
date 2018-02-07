@@ -31,7 +31,7 @@ export function loadSegments(content: string, segLimit: number, markers = false)
     for (let paragraph of paragraphs) {
         let pgMarker: MergeTree.Marker;
         if (markers) {
-            pgMarker = MergeTree.Marker.make(ops.MarkerBehaviors.Tile,
+            pgMarker = MergeTree.Marker.make(ops.ReferenceType.Tile,
                 { [MergeTree.reservedTileLabelsKey]: ["pg"] }, seq, cli);
         }
         if (withProps) {

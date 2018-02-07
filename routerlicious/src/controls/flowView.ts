@@ -720,7 +720,7 @@ function showPositionInLine(
 function endRenderSegments(marker: SharedString.Marker) {
     return (marker.hasTileLabel("pg") ||
         ((marker.hasRangeLabel("box") &&
-            (marker.behaviors & SharedString.MarkerBehaviors.RangeEnd))));
+            (marker.refType & SharedString.ReferenceType.RangeEnd))));
 }
 
 function renderSegmentIntoLine(
@@ -882,7 +882,7 @@ function getPrecedingTile(
     while (tilePos > 0) {
         tilePos = tilePos - 1;
         let prevTileInfo = findTile(flowView, tilePos, label);
-        if (prevTileInfo && filter(prevTileInfo.tile)) {
+        if (prevTileInfo && filter(<SharedString.Marker>prevTileInfo.tile)) {
             return prevTileInfo;
         }
     }
@@ -985,7 +985,8 @@ function getListCacheInfo(
                 let precedingTilePos = getPrecedingTile(flowView, tile, tilePos, "list",
                     (t) => isListTile(t) && (t.properties.listKind === listKind), precedingTileCache);
                 if (precedingTilePos && ((tilePos - precedingTilePos.pos) < maxListDistance)) {
-                    getListCacheInfo(flowView, precedingTilePos.tile, precedingTilePos.pos, precedingTileCache);
+                    getListCacheInfo(flowView, <SharedString.Marker>precedingTilePos.tile,
+                        precedingTilePos.pos, precedingTileCache);
                     let precedingTile = <IParagraphMarker>precedingTilePos.tile;
                     tile.listHeadCache = precedingTile.listHeadCache;
                     let indentLevel = tile.properties.indentLevel;
@@ -1063,12 +1064,12 @@ let boxIdSuffix = 0;
 let rowIdSuffix = 0;
 
 function createMarkerOp(
-    pos1: number, id: string, behaviors: SharedString.MarkerBehaviors, rangeLabels: string[], tileLabels?: string[]) {
+    pos1: number, id: string, refType: SharedString.ReferenceType, rangeLabels: string[], tileLabels?: string[]) {
 
     let props = <SharedString.MapLike<any>>{
     };
     if (id.length > 0) {
-        props[SharedString.reservedMarkerIdKey] = id;
+        props[SharedString.reservedReferenceIdKey] = id;
     }
     if (rangeLabels.length > 0) {
         props[SharedString.reservedRangeLabelsKey] = rangeLabels;
@@ -1077,7 +1078,7 @@ function createMarkerOp(
         props[SharedString.reservedTileLabelsKey] = tileLabels;
     }
     return <SharedString.IMergeTreeInsertMsg>{
-        marker: { behaviors },
+        marker: { refType },
         pos1,
         props,
         type: SharedString.MergeTreeDeltaType.INSERT,
@@ -1101,7 +1102,7 @@ let endPrefix = "end-";
 function createBox(opList: SharedString.IMergeTreeOp[], idBase: string, pos: number, word?: string) {
     let boxId = idBase + `box${boxIdSuffix++}`;
     opList.push(createMarkerOp(pos, boxId,
-        SharedString.MarkerBehaviors.RangeBegin, ["box"]));
+        SharedString.ReferenceType.RangeBegin, ["box"]));
     pos++;
     if (word) {
         let insertStringOp = <SharedString.IMergeTreeInsertMsg>{
@@ -1113,11 +1114,11 @@ function createBox(opList: SharedString.IMergeTreeOp[], idBase: string, pos: num
         pos += word.length;
     }
     let pgOp = createMarkerOp(pos, boxId + "C",
-        SharedString.MarkerBehaviors.Tile, [], ["pg"]);
+        SharedString.ReferenceType.Tile, [], ["pg"]);
     opList.push(pgOp);
     pos++;
     opList.push(createMarkerOp(pos, endPrefix + boxId,
-        SharedString.MarkerBehaviors.RangeEnd, ["box"]));
+        SharedString.ReferenceType.RangeEnd, ["box"]));
     pos++;
     return pos;
 }
@@ -1141,28 +1142,28 @@ function createTable(pos: number, flowView: FlowView, nrows = 3, nboxes = 3) {
     if (pgAtStart) {
         // TODO: copy pg properties from pg marker after pos
         let pgOp = createMarkerOp(pos, "",
-            SharedString.MarkerBehaviors.Tile, [], ["pg"]);
+            SharedString.ReferenceType.Tile, [], ["pg"]);
         opList.push(pgOp);
         pos++;
     }
     opList.push(createMarkerOp(pos, idBase,
-        SharedString.MarkerBehaviors.RangeBegin, ["table"]));
+        SharedString.ReferenceType.RangeBegin, ["table"]));
     pos++;
     for (let row = 0; row < nrows; row++) {
         let rowId = idBase + `row${rowIdSuffix++}`;
         opList.push(createMarkerOp(pos, rowId,
-            SharedString.MarkerBehaviors.RangeBegin, ["row"]));
+            SharedString.ReferenceType.RangeBegin, ["row"]));
         pos++;
         for (let box = 0; box < nboxes; box++) {
             pos = createBox(opList, idBase, pos, content[(box + (nboxes * row)) % content.length]);
         }
         opList.push(createMarkerOp(pos, endPrefix + rowId,
-            SharedString.MarkerBehaviors.RangeEnd, ["row"]));
+            SharedString.ReferenceType.RangeEnd, ["row"]));
         pos++;
     }
     opList.push(createMarkerOp(pos, endPrefix + idBase,
-        SharedString.MarkerBehaviors.RangeEnd |
-        SharedString.MarkerBehaviors.Tile, ["table"], ["pg"]));
+        SharedString.ReferenceType.RangeEnd |
+        SharedString.ReferenceType.Tile, ["table"], ["pg"]));
     pos++;
     let groupOp = <SharedString.IMergeTreeGroupMsg>{
         ops: opList,
@@ -1516,7 +1517,7 @@ function renderBox(boxView: BoxView, layoutInfo: ILayoutContext, defer = false, 
         boxLayoutInfo.startPos = boxPos + boxView.marker.cachedLength;
     } else {
         let nextTable = layoutInfo.startingPosStack.table.items[layoutInfo.stackIndex + 1];
-        boxLayoutInfo.startPos = getOffset(layoutInfo.flowView, nextTable);
+        boxLayoutInfo.startPos = getOffset(layoutInfo.flowView, <SharedString.Marker>nextTable);
         boxLayoutInfo.stackIndex = layoutInfo.stackIndex + 1;
     }
     boxView.renderOutput = renderFlow(boxLayoutInfo, defer);
@@ -1658,7 +1659,7 @@ function renderTree(viewportDiv: HTMLDivElement, requestedPosition: number, flow
     };
     if (startingPosStack.table && (!startingPosStack.table.empty())) {
         let outerTable = startingPosStack.table.items[0];
-        let outerTablePos = flowView.client.mergeTree.getOffset(outerTable,
+        let outerTablePos = flowView.client.mergeTree.getOffset(<SharedString.Marker>outerTable,
             SharedString.UniversalSequenceNumber, flowView.client.getClientId());
         layoutContext.startPos = outerTablePos;
         layoutContext.stackIndex = 0;
@@ -1716,7 +1717,7 @@ function tokenToItems(
 }
 
 function isEndBox(marker: SharedString.Marker) {
-    return (marker.behaviors & SharedString.MarkerBehaviors.RangeEnd) &&
+    return (marker.refType & SharedString.ReferenceType.RangeEnd) &&
         marker.hasRangeLabel("box");
 }
 
@@ -1747,7 +1748,7 @@ function gatherOverlayLayer(
 
     if (segment.getType() === SharedString.SegmentType.Marker) {
         let marker = <SharedString.Marker>segment;
-        if (marker.behaviors === SharedString.MarkerBehaviors.None) {
+        if (marker.refType === SharedString.ReferenceType.Simple) {
             context.push({ id: marker.getId(), position: segpos });
         }
     }
@@ -2105,7 +2106,7 @@ function renderFlow(layoutContext: ILayoutContext, deferWhole = false): IRenderO
                 segoff = getContainingSegment(flowView, currentPos);
                 if (segoff.segment.getType() === SharedString.SegmentType.Marker) {
                     let marker = <SharedString.Marker>segoff.segment;
-                    if (marker.hasRangeLabel("box") && (marker.behaviors & SharedString.MarkerBehaviors.RangeEnd)) {
+                    if (marker.hasRangeLabel("box") && (marker.refType & SharedString.ReferenceType.RangeEnd)) {
                         layoutContext.viewport.vskip(layoutContext.docContext.boxVspace);
                         break;
                     }
@@ -2711,8 +2712,8 @@ export class FlowView extends ui.Component {
                 key: remotePresenceInfo.key,
                 localRef: <SharedString.LocalReference>{
                     offset: segoff.offset,
+                    refType: SharedString.ReferenceType.SlideOnRemove,
                     segment: segoff.segment,
-                    slideOnRemove: true,
                 },
             };
 
@@ -2874,7 +2875,7 @@ export class FlowView extends ui.Component {
             this.cursor.pos = span.segPos + computed;
             let tilePos = findTile(this, this.cursor.pos, "pg", false);
             if (tilePos) {
-                this.curPG = tilePos.tile;
+                this.curPG = <SharedString.Marker>tilePos.tile;
             }
             this.updatePresence();
             this.cursor.updateView(this);
@@ -2960,9 +2961,9 @@ export class FlowView extends ui.Component {
             if (segoff.segment.getType() !== SharedString.SegmentType.Text) {
                 // REVIEW: assume marker for now (could be external later)
                 let marker = <SharedString.Marker>segoff.segment;
-                if ((marker.behaviors & SharedString.MarkerBehaviors.Tile) &&
+                if ((marker.refType & SharedString.ReferenceType.Tile) &&
                     (marker.hasTileLabel("pg"))) {
-                    if (marker.hasRangeLabel("table") && (marker.behaviors & SharedString.MarkerBehaviors.RangeEnd)) {
+                    if (marker.hasRangeLabel("table") && (marker.refType & SharedString.ReferenceType.RangeEnd)) {
                         this.cursorRev();
                     }
                 } else {
@@ -2981,14 +2982,14 @@ export class FlowView extends ui.Component {
             if (segoff.segment.getType() !== SharedString.SegmentType.Text) {
                 // REVIEW: assume marker for now
                 let marker = <SharedString.Marker>segoff.segment;
-                if ((marker.behaviors & SharedString.MarkerBehaviors.Tile) &&
+                if ((marker.refType & SharedString.ReferenceType.Tile) &&
                     (marker.hasTileLabel("pg"))) {
-                    if (marker.hasRangeLabel("table") && (marker.behaviors & SharedString.MarkerBehaviors.RangeEnd)) {
+                    if (marker.hasRangeLabel("table") && (marker.refType & SharedString.ReferenceType.RangeEnd)) {
                         this.cursorFwd();
                     } else {
                         return;
                     }
-                } else if (marker.behaviors & SharedString.MarkerBehaviors.RangeBegin) {
+                } else if (marker.refType & SharedString.ReferenceType.RangeBegin) {
                     if (marker.hasRangeLabel("table")) {
                         this.cursor.pos += 3;
                     } else if (marker.hasRangeLabel("row")) {
@@ -2998,7 +2999,7 @@ export class FlowView extends ui.Component {
                     } else {
                         this.cursorFwd();
                     }
-                } else if (marker.behaviors & SharedString.MarkerBehaviors.RangeEnd) {
+                } else if (marker.refType & SharedString.ReferenceType.RangeEnd) {
                     if (marker.hasRangeLabel("row")) {
                         this.cursorFwd();
                     } else if (marker.hasRangeLabel("table")) {
@@ -3251,7 +3252,7 @@ export class FlowView extends ui.Component {
                 this.sharedString.annotateRange(newProps, pgPos, pgPos + 1,
                     { name: "rewrite" });
                 // new marker gets existing props
-                this.sharedString.insertMarker(pos, SharedString.MarkerBehaviors.Tile, curProps);
+                this.sharedString.insertMarker(pos, SharedString.ReferenceType.Tile, curProps);
             } else {
                 this.sharedString.insertText(String.fromCharCode(code), pos);
                 this.updatePGInfo(pos);

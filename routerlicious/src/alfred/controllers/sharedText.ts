@@ -88,7 +88,7 @@ async function loadFull(
             } else {
                 // assume marker
                 let marker = <SharedString.Marker> segment;
-                newString.insertMarker(newString.client.getLength(), marker.behaviors, marker.properties);
+                newString.insertMarker(newString.client.getLength(), marker.refType, marker.properties);
             }
         }
 

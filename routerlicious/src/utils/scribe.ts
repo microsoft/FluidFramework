@@ -341,7 +341,7 @@ async function typeFile(
             }
             if (ss.client.getLength() === 0) {
                 // pg marker that will remain at end of text
-                ss.insertMarker(insertPosition, MergeTree.MarkerBehaviors.Tile,
+                ss.insertMarker(insertPosition, MergeTree.ReferenceType.Tile,
                     {[MergeTree.reservedTileLabelsKey]: ["pg"]});
             }
             // Start inserting text into the string
@@ -352,7 +352,7 @@ async function typeFile(
             }
             trackOperation(() => {
                 if (code === 10) {
-                    ss.insertMarker(insertPosition++, MergeTree.MarkerBehaviors.Tile,
+                    ss.insertMarker(insertPosition++, MergeTree.ReferenceType.Tile,
                     {[MergeTree.reservedTileLabelsKey]: ["pg"]});
                     readPosition++;
                     ++lineNumber;

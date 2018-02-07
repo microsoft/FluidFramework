@@ -47,7 +47,7 @@ function textsToSegments(texts: ops.IPropertyString[]) {
         } else {
             // for now assume marker
             segment = MergeTree.Marker.make(
-                ptext.marker.behaviors,
+                ptext.marker.refType,
                 ptext.props as Properties.PropertySet,
                 MergeTree.UniversalSequenceNumber,
                 MergeTree.LocalClientId);
@@ -113,17 +113,17 @@ export class SharedString extends api.CollaborativeObject {
 
     public insertMarker(
         pos: number,
-        behaviors: ops.MarkerBehaviors,
+        refType: ops.ReferenceType,
         props?: Properties.PropertySet) {
 
         const insertMessage: ops.IMergeTreeInsertMsg = {
-            marker: { behaviors },
+            marker: { refType },
             pos1: pos,
             props,
             type: ops.MergeTreeDeltaType.INSERT,
         };
 
-        this.client.insertMarkerLocal(pos, behaviors, props);
+        this.client.insertMarkerLocal(pos, refType, props);
         this.submitLocalOperation(insertMessage);
     }
 
@@ -206,10 +206,15 @@ export class SharedString extends api.CollaborativeObject {
         let segoff = this.client.mergeTree.getContainingSegment(pos,
             this.client.getCurrentSeq(), this.client.getClientId());
         if (segoff && segoff.segment) {
+            let refType = ops.ReferenceType.Simple;
+            if (slideOnRemove) {
+                // tslint:disable:no-bitwise
+                refType |= ops.ReferenceType.SlideOnRemove;
+            }
             return <MergeTree.LocalReference> {
                 offset: segoff.offset,
+                refType,
                 segment: segoff.segment,
-                slideOnRemove,
             };
         }
     }

@@ -88,7 +88,11 @@ function makeBookmarks(client: MergeTree.Client, bookmarkCount: number) {
         let pos = random.integer(0, len - 1)(mt);
         let segoff = client.mergeTree.getContainingSegment(pos, refseq, clientId);
         if (segoff && segoff.segment) {
-            bookmarks.push({ segment: <MergeTree.BaseSegment>segoff.segment, offset: segoff.offset, slideOnRemove: (i & 1) !== 1 });
+            let lref = <MergeTree.LocalReference>{ segment: <MergeTree.BaseSegment>segoff.segment, offset: segoff.offset};
+            if (i&1) {
+                lref.refType = ops.ReferenceType.SlideOnRemove;
+            }
+            bookmarks.push(lref);
         } else {
             i--;
         }
@@ -298,9 +302,9 @@ export function TestPack(verbose = true) {
             let preLen = client.getLength();
             let pos = random.integer(0, preLen)(mt);
             if (includeMarkers) {
-                server.enqueueMsg(client.makeInsertMarkerMsg("test", ops.MarkerBehaviors.Tile,
+                server.enqueueMsg(client.makeInsertMarkerMsg("test", ops.ReferenceType.Tile,
                     pos, MergeTree.UnassignedSequenceNumber, client.getCurrentSeq(), ""));
-                client.insertMarkerLocal(pos, ops.MarkerBehaviors.Tile,
+                client.insertMarkerLocal(pos, ops.ReferenceType.Tile,
                     { [MergeTree.reservedTileLabelsKey]: "test" });
             }
             server.enqueueMsg(client.makeInsertMsg(text, pos, MergeTree.UnassignedSequenceNumber,
@@ -435,7 +439,7 @@ export function TestPack(verbose = true) {
                 let clientId = server.getClientId();
                 let clockStart = clock();
                 for (let i = 0; i < bookmarkReadsPerRound; i++) {
-                    server.mergeTree.getOffset(bookmarks[i].segment, refseq, clientId);
+                    bookmarks[i].offset + server.mergeTree.getOffset(bookmarks[i].segment, refseq, clientId);
                     bookmarkReads++;
                 }
                 bookmarkReadTime += elapsedMicroseconds(clockStart);
@@ -1172,9 +1176,9 @@ if (chktst) {
 let testPack = TestPack();
 const filename = path.join(__dirname, "../../public/literature", "pp.txt");
 
-let clientServerTest = false;
+let clientServerTest = true;
 let ppTest = true;
-let branch = true;
+let branch = false;
 if (clientServerTest) {
     if (ppTest) {
         if (branch) {
@@ -1253,7 +1257,7 @@ export class DocumentTree {
         } else {
             let id: number;
             if (docNode.name === "pg") {
-                client.insertMarkerLocal(this.pos, ops.MarkerBehaviors.Tile,
+                client.insertMarkerLocal(this.pos, ops.ReferenceType.Tile,
                     {
                         [MergeTree.reservedTileLabelsKey]: [docNode.name],
                     },
@@ -1264,13 +1268,13 @@ export class DocumentTree {
                 docNode.id = trid;
                 id = this.ids[docNode.name]++;
                 let props = {
-                    [MergeTree.reservedMarkerIdKey]: trid,
+                    [MergeTree.reservedReferenceIdKey]: trid,
                     [MergeTree.reservedRangeLabelsKey]: [docNode.name],
                 };
-                let behaviors = ops.MarkerBehaviors.RangeBegin;
+                let behaviors = ops.ReferenceType.RangeBegin;
                 if (docNode.name === "row") {
                     props[MergeTree.reservedTileLabelsKey] = ["pg"];
-                    behaviors |= ops.MarkerBehaviors.Tile;
+                    behaviors |= ops.ReferenceType.Tile;
                 }
 
                 client.insertMarkerLocal(this.pos, behaviors, props);
@@ -1281,9 +1285,9 @@ export class DocumentTree {
             }
             if (docNode.name !== "pg") {
                 let etrid = "end-" + docNode.name + id.toString();
-                client.insertMarkerLocal(this.pos, ops.MarkerBehaviors.RangeEnd,
+                client.insertMarkerLocal(this.pos, ops.ReferenceType.RangeEnd,
                     {
-                        [MergeTree.reservedMarkerIdKey]: etrid,
+                        [MergeTree.reservedReferenceIdKey]: etrid,
                         [MergeTree.reservedRangeLabelsKey]: [docNode.name],
                     },
                 );
@@ -1517,7 +1521,7 @@ function printOverlayTree(client: MergeTree.Client) {
             strbuf += "\n";
         } else {
             let marker = <MergeTree.Marker>segment;
-            if (marker.behaviors & ops.MarkerBehaviors.RangeBegin) {
+            if (marker.refType & ops.ReferenceType.RangeBegin) {
                 strbuf += MergeTree.internedSpaces(indentAmt);
                 let nodeType = marker.properties[onodeTypeKey];
                 strbuf += `<${nodeType}`;
@@ -1527,7 +1531,7 @@ function printOverlayTree(client: MergeTree.Client) {
                 }
                 strbuf += ">\n";
                 indentAmt += indentDelta;
-            } else if (marker.behaviors & ops.MarkerBehaviors.RangeEnd) {
+            } else if (marker.refType & ops.ReferenceType.RangeEnd) {
                 indentAmt -= indentDelta;
                 strbuf += MergeTree.internedSpaces(indentAmt);
                 let nodeType = marker.properties[onodeTypeKey];

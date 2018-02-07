@@ -90,8 +90,8 @@ export class FlowContainer extends ui.Component {
             // Inserts the marker at the flow view's cursor position
             sharedString.insertMarker(
                 position,
-                MergeTree.MarkerBehaviors.None,
-                { [MergeTree.reservedMarkerIdKey]: model.id });
+                MergeTree.ReferenceType.Simple,
+                { [MergeTree.reservedReferenceIdKey]: model.id });
         });
 
         this.status.on("dry", (value) => {

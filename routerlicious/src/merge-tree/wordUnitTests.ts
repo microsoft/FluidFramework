@@ -2,6 +2,7 @@
 
 import * as MergeTree from "./mergeTree";
 import * as Properties from "./properties";
+import * as ops from "./ops";
 import * as path from "path";
 import * as random from "random-js";
 import * as Text from "./text";
@@ -111,7 +112,12 @@ function makeBookmarks(client: MergeTree.Client, bookmarkCount: number) {
     for (let i = 0; i < bookmarkCount; i++) {
         let pos = random.integer(0, len - 1)(mt);
         let segoff = client.mergeTree.getContainingSegment(pos, refseq, clientId);
-        bookmarks.push({ segment: <MergeTree.BaseSegment>segoff.segment, offset: segoff.offset, slideOnRemove: (i & 1) !== 1 });
+        let refType = ops.ReferenceType.Simple;
+        if (i&1) {
+            refType = ops.ReferenceType.SlideOnRemove;
+        }
+        let lref = new MergeTree.LocalReference(<MergeTree.BaseSegment>segoff.segment, segoff.offset, refType);
+        bookmarks.push(lref);
     }
     return bookmarks;
 }
