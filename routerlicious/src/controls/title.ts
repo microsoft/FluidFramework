@@ -17,7 +17,8 @@ export class Title extends ui.Component {
     }
 
     public setTitle(title: string) {
-        this.viewportDiv.innerHTML = `<span style="font-size:20px;font-family:Book Antiqua">${title}</span>`;
+        // tslint:disable-next-line
+        this.viewportDiv.innerHTML = `<span id="docname" style="font-size:20px;font-family:Book Antiqua">${title} <span id="doctoken"></span></span>`;
     }
 
     public setBackgroundColor(title: string) {
