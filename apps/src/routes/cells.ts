@@ -9,6 +9,7 @@ function renderView(request, response, id: string, config: any) {
         {
             endpoints: JSON.stringify(config.endpoints),
             id,
+            owner: config.owner,
             partials: defaultPartials,
             repository: config.repository,
             title: id,

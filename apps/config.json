@@ -14,6 +14,7 @@
             "storage": "http://prague-historian-ppe.westus2.cloudapp.azure.com"
         },
         "repository": "prague",
+        "owner": "prague",
         "worker": {
             "intelligence": {
                 "resume": {

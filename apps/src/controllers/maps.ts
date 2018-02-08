@@ -97,7 +97,8 @@ async function displayMap(parentElement: JQuery, key: string, map: types.IMap, p
 }
 
 function displayUserId(parentElement: JQuery, userId: string) {
-    const idElement = $(`<h4 align="right" class="userid">${userId}</h4>`);
+    // tslint:disable-next-line
+    const idElement = $(`<h4 align="right"><span class="userid">${userId} </span><a href="/logout" class="logout">(Logout)</a></h4>`);
     parentElement.append(idElement);
 }
 
@@ -119,8 +120,9 @@ async function randomizeMap(map: types.IMap) {
     }, 1000);
 }
 
-export async function load(id: string, repository: string, endPoints: any, token?: string, workerConfig?: any) {
-    prague.socketStorage.registerAsDefault(endPoints.delta, endPoints.storage, repository);
+export async function load(id: string, repository: string,  owner: string, endPoints: any, token?: string,
+                           workerConfig?: any) {
+    prague.socketStorage.registerAsDefault(endPoints.delta, endPoints.storage, owner, repository);
     $(document).ready(() => {
         // Only register to work if the config is present.
         if (workerConfig) {
@@ -133,7 +135,8 @@ export async function load(id: string, repository: string, endPoints: any, token
             const root = doc.getRoot();
 
             // Display the user id.
-            displayUserId($("#mapViews"), doc.getUserId());
+            displayUserId($("#mapViews"), doc.getUser().user.id);
+            console.log(doc.getUser());
 
             // Display the initial values and then listen for updates
             displayMap($("#mapViews"), null, root, null, doc);

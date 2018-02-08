@@ -98,7 +98,8 @@ function addAnotherCell(parent: JQuery, cell: types.ICell, element1: JQuery, ele
 }
 
 function displayUserId(parentElement: JQuery, userId: string) {
-    const idElement = $(`<h4 align="right" class="userid">${userId}</h4>`);
+    // tslint:disable-next-line
+    const idElement = $(`<h4 align="right"><span class="userid">${userId} </span><a href="/logout" class="logout">(Logout)</a></h4>`);
     parentElement.append(idElement);
 }
 
@@ -116,8 +117,9 @@ function randomizeCell(cell: types.ICell, element1: JQuery, element2: JQuery) {
 }
 
 // TODO (auth): No worker service registration for now. We need to change routerlicious API to enable this.
-export async function load(id: string, repository: string, endPoints: any, token?: string, workerConfig?: any) {
-    prague.socketStorage.registerAsDefault(endPoints.delta, endPoints.storage, repository);
+export async function load(id: string, repository: string, owner: string, endPoints: any, token?: string,
+                           workerConfig?: any) {
+    prague.socketStorage.registerAsDefault(endPoints.delta, endPoints.storage, owner, repository);
     $("document").ready(() => {
         // Only register to work if the config is present.
         if (workerConfig) {
@@ -135,7 +137,8 @@ export async function load(id: string, repository: string, endPoints: any, token
             }
 
             // Display the user id.
-            displayUserId($("#cellViews"), doc.getUserId());
+            displayUserId($("#cellViews"), doc.getUser().user.id);
+            console.log(doc.getUser());
 
             // Display the initial value and then listen for updates
             displayCell($("#cellViews"), cell, doc);
