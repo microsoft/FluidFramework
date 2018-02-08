@@ -1,43 +1,10 @@
 import * as assert from "assert";
-import { AsyncQueue, queue } from "async";
 import * as api from "../api-core";
 import * as core from "../core";
-import { IContext, IPartitionLambda } from "../kafka-service/lambdas";
+import { IContext } from "../kafka-service/lambdas";
+import { SequencedLambda } from "../kafka-service/sequencedLambda";
 import * as utils from "../utils";
 import { DocumentManager } from "./documentManager";
-
-/**
- * A sequenced lambda processes incoming messages one at a time based on a promise returned by the message handler.
- */
-export abstract class SequencedLambda implements IPartitionLambda {
-    private q: AsyncQueue<utils.kafkaConsumer.IMessage>;
-
-    constructor(protected context: IContext) {
-        this.q = queue((message: utils.kafkaConsumer.IMessage, callback) => {
-            this.handlerCore(message).then(
-                () => {
-                    callback();
-                },
-                (error) => {
-                    callback(error);
-                });
-        }, 1);
-
-        this.q.error = (error) => {
-            context.error(error, true);
-        };
-    }
-
-    public handler(message: utils.kafkaConsumer.IMessage): void {
-        this.q.push(message);
-    }
-
-    /**
-     * Derived classes override this method to do per message processing. The sequenced lambda will only move on
-     * to the next message once the returned promise is resolved.
-     */
-    protected abstract handlerCore(message: utils.kafkaConsumer.IMessage): Promise<void>;
-}
 
 export class RouteMasterLambda extends SequencedLambda {
     constructor(private document: DocumentManager, private producer: utils.kafkaProducer.IProducer, context: IContext) {

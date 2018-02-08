@@ -71,6 +71,10 @@
         "serviceGraph": {
             "group": "serviceGraph",
             "topic": "deltas"
+        },
+        "tmz": {
+            "group": "tmz",
+            "topic": "deltas"
         }
     },
     "paparazzi": {
@@ -89,9 +93,6 @@
     "tmz": {
         "alfred": "http://alfred:3000",
         "queue": "snapshot",
-        "topic": "deltas",
-        "kafkaClientId": "tmz",
-        "groupId": "tmz",
         "port": 4000,
         "timeoutMSec": {
             "checker": 10000,

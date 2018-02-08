@@ -1,8 +1,6 @@
-import { AsyncQueue, queue } from "async";
 import * as request from "request";
 import * as url from "url";
 import * as winston from "winston";
-import * as core from "../core";
 import { Deferred } from "../core-utils";
 import * as socketStorage from "../socket-storage";
 import * as utils from "../utils";
@@ -12,7 +10,6 @@ import * as workerFactory from "./workerFactory";
 export class TmzRunner implements utils.IRunner {
     private deferred = new Deferred<void>();
     private foreman: messages.IForeman;
-    private q: AsyncQueue<utils.kafkaConsumer.IMessage>;
     private pendingWork: Set<string> = new Set();
     private checkerInterval: NodeJS.Timer;
     private workerJoined = false;
@@ -22,7 +19,6 @@ export class TmzRunner implements utils.IRunner {
         private io: any,
         private alfredUrl: string,
         private port: any,
-        private consumer: utils.kafkaConsumer.IConsumer,
         private agentUploader: messages.IAgentUploader,
         schedulerType: string,
         private onlyServer: boolean,
@@ -33,7 +29,6 @@ export class TmzRunner implements utils.IRunner {
     }
 
     public start(): Promise<void> {
-
         // Preps and start listening to agent uploader.
         this.agentUploader.initialize();
         this.agentUploader.on("agentAdded", (agent: messages.IAgent) => {
@@ -111,72 +106,30 @@ export class TmzRunner implements utils.IRunner {
             await this.adjustWorkAssignment();
         }, this.checkerTimeout);
 
-        this.consumer.on("data", (message) => {
-            this.q.push(message);
-        });
-
-        this.consumer.on("error", (err) => {
-            this.consumer.close();
-            this.deferred.reject(err);
-        });
-
-        this.q = queue(async (message: any, callback) => {
-            const baseMessage = JSON.parse(message.value.toString("utf8")) as core.IMessage;
-            if (baseMessage.type === core.SequencedOperationType) {
-                const documentId = (baseMessage as core.ISequencedOperationMessage).documentId;
-
-                // Check if already requested. Update the Timestamp in the process.
-                if (this.foreman.getManager().updateDocumentIfFound(documentId)) {
-                    callback();
-                    return;
-                }
-
-                // No worker joined yet. Store document to process later.
-                if (!this.workerJoined) {
-                    this.pendingWork.add(documentId);
-                    callback();
-                    return;
-                }
-
-                winston.info(`Requesting work for ${documentId}`);
-                await this.processDocuments([documentId]);
-            }
-
-            callback();
-        }, 1);
-
         return this.deferred.promise;
     }
 
     public stop(): Promise<void> {
         winston.info("Stop requested");
-
         clearInterval(this.checkerInterval);
-        this.consumer.pause();
-
-        // Drain the queue of any pending operations
-        const drainedP = new Promise<void>((resolve, reject) => {
-            // If not entries in the queue we can exit immediatley
-            if (this.q.length() === 0) {
-                winston.info("No pending work exiting early");
-                return resolve();
-            }
-
-            // Wait until the queue is drained
-            winston.info("Waiting for queue to drain");
-            this.q.drain = () => {
-                winston.info("Drained");
-                resolve();
-            };
-        });
-
-        // Mark ourselves done once the queue is cleaned
-        drainedP.then(() => {
-            // TODO perform one last checkpoint here
-            this.deferred.resolve();
-        });
 
         return this.deferred.promise;
+    }
+
+    public async trackDocument(id: string): Promise<void> {
+        // Check if already requested. Update the Timestamp in the process.
+        if (this.foreman.getManager().updateDocumentIfFound(id)) {
+            return;
+        }
+
+        // No worker joined yet. Store document to process later.
+        if (!this.workerJoined) {
+            this.pendingWork.add(id);
+            return;
+        }
+
+        winston.info(`Requesting work for ${id}`);
+        await this.processDocuments([id]);
     }
 
     // Request subscribers to pick up the work for a new/expired document.
