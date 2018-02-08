@@ -1,3 +1,5 @@
+import { IAuthenticatedUser } from "../utils";
+
 /**
  * Message sent to connect to the given object
  */
@@ -25,7 +27,7 @@ export interface IConnect {
  */
 export interface IConnected {
     // The user who is sending the message
-    userId: string;
+    user: IAuthenticatedUser;
 
     // The client who is sending the message
     clientId: string;

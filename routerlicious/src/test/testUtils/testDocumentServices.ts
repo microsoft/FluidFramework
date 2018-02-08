@@ -44,7 +44,6 @@ export class TestDocumentService implements api.IDocumentService {
         connect: boolean,
         encrypted: boolean): Promise<api.IDocumentResource> {
 
-        const userId = "test-user";
         const clientId = "Fill me in!";
         const existing = false;
         const distributedObjects: api.IDistributedObject[] = [];
@@ -55,7 +54,6 @@ export class TestDocumentService implements api.IDocumentService {
         const tree: api.ISnapshotTree = null;
 
         const document: api.IDocumentResource = {
-            userId,
             clientId,
             deltaConnection: new TestDocumentDeltaConnection(),
             deltaStorageService: new TestDocumentDeltaStorageService(),
@@ -70,6 +68,7 @@ export class TestDocumentService implements api.IDocumentService {
             snapshotOriginBranch: id,
             transformedMessages,
             tree,
+            user: null,
             version,
         };
 

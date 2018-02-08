@@ -106,7 +106,7 @@ export function register(
                                 parentBranch,
                                 privateKey: documentDetails.value.privateKey,
                                 publicKey: documentDetails.value.publicKey,
-                                userId: authenticatedUser === null ? null : authenticatedUser.user.id,
+                                user: authenticatedUser,
                             };
                             profiler.done(`Loaded ${message.id}`);
                             response(null, connectedMessage);

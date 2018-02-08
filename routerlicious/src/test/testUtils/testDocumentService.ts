@@ -27,7 +27,7 @@ export class TestDocumentService implements api.IDocumentService {
         const documentStorage = new DocumentStorageService(id, version, this.blobStorge);
         const document = new DocumentResource(
             id,
-            "test-user",
+            null,
             "test-client",
             false,
             version,
