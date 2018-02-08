@@ -11,6 +11,7 @@
                     <br>
                     <h4><li><a href="/maps">Maps</a></li></h4>
                     <h4><li><a href="/cells">Cells</a></li></h4>
+                    <h4><li><a href="/sharedText">Shared String</a></li></h4>
                 </h4>
             {{/user}}
             {{^user}}
