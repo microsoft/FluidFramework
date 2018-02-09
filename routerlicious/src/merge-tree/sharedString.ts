@@ -211,11 +211,7 @@ export class SharedString extends api.CollaborativeObject {
                 // tslint:disable:no-bitwise
                 refType |= ops.ReferenceType.SlideOnRemove;
             }
-            return <MergeTree.LocalReference> {
-                offset: segoff.offset,
-                refType,
-                segment: segoff.segment,
-            };
+            return new MergeTree.LocalReference(<MergeTree.BaseSegment> segoff.segment, segoff.offset, refType);
         }
     }
 
