@@ -3,6 +3,7 @@ import * as resources from "gitresources";
 import performanceNow = require("performance-now");
 import * as api from "../api-core";
 import { Deferred } from "../core-utils";
+import { CollaborativeMap } from "../map";
 import * as MergeTree from "./mergeTree";
 import * as ops from "./ops";
 import * as Properties from "./properties";
@@ -57,7 +58,7 @@ function textsToSegments(texts: ops.IPropertyString[]) {
     return segments;
 }
 
-export class SharedString extends api.CollaborativeObject {
+export class SharedString extends CollaborativeMap {
     public client: MergeTree.Client;
     private isLoaded = false;
     private pendingMinSequenceNumber: number = 0;
@@ -74,7 +75,8 @@ export class SharedString extends api.CollaborativeObject {
         public id: string,
         sequenceNumber: number,
         services?: api.IDistributedObjectServices) {
-        super(document, id, CollaboritiveStringExtension.Type, sequenceNumber, services);
+
+        super(document, id, sequenceNumber, CollaboritiveStringExtension.Type, services);
         this.client = new MergeTree.Client("", document.options);
     }
 
