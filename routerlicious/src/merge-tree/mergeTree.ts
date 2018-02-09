@@ -2385,8 +2385,8 @@ export class TestServer extends Client {
     listeners: Client[]; // listeners do not generate edits
     clientSeqNumbers: Collections.Heap<ClientSeq>;
     upstreamMap: Collections.RedBlackTree<number, number>;
-    constructor(initText: string) {
-        super(initText);
+    constructor(initText: string,  options?: Properties.PropertySet) {
+        super(initText, options);
     }
 
     addUpstreamClients(upstreamClients: Client[]) {

@@ -77,27 +77,78 @@ if (testPropCopy) {
     propertyCopy();
 }
 
+interface Bookmark {
+    rangeBegin: MergeTree.LocalReference;
+    rangeEnd: MergeTree.LocalReference;
+}
+
 function makeBookmarks(client: MergeTree.Client, bookmarkCount: number) {
     let mt = random.engines.mt19937();
     mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
-    let bookmarks = <MergeTree.LocalReference[]>[];
+    let bookmarks = <Bookmark[]>[];
     let refseq = client.getCurrentSeq();
     let clientId = client.getClientId();
     let len = client.mergeTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.NonCollabClient);
+    let maxRangeLen = Math.min(Math.floor(len/100), 30);
     for (let i = 0; i < bookmarkCount; i++) {
-        let pos = random.integer(0, len - 1)(mt);
-        let segoff = client.mergeTree.getContainingSegment(pos, refseq, clientId);
-        if (segoff && segoff.segment) {
-            let lref = <MergeTree.LocalReference>{ segment: <MergeTree.BaseSegment>segoff.segment, offset: segoff.offset};
-            if (i&1) {
-                lref.refType = ops.ReferenceType.SlideOnRemove;
-            }
-            bookmarks.push(lref);
+        let pos1 = random.integer(0, len - 1)(mt);
+        let rangeLen = random.integer(0, maxRangeLen)(mt);
+        let pos2 = pos1 + rangeLen;
+        if (pos2>=len) {
+            pos2 = len - 2;
+        }
+        if (pos1 > pos2) {
+            let temp = pos1;
+            pos1 = pos2;
+            pos2 = temp;
+        }
+        let segoff1 = client.mergeTree.getContainingSegment(pos1, refseq, clientId);
+        let segoff2 = client.mergeTree.getContainingSegment(pos2, refseq, clientId);
+
+        if (segoff1 && segoff1.segment && segoff2 && segoff2.segment) {
+            let baseSegment1 = <MergeTree.BaseSegment>segoff1.segment;
+            let baseSegment2 = <MergeTree.BaseSegment>segoff2.segment;
+            let lref1 = new MergeTree.LocalReference(baseSegment1,segoff1.offset);
+            let lref2 = new MergeTree.LocalReference(baseSegment2,segoff2.offset);
+            lref1.refType = ops.ReferenceType.RangeBegin;
+            lref1.addProperties({ [MergeTree.reservedRangeLabelsKey]: ["bookmark"] });
+            // can do this locally; for shared refs need to use id/index to ref end
+            lref1["cachedEnd"] =  lref2;
+            lref2.refType = ops.ReferenceType.RangeEnd;
+            lref2.addProperties({ [MergeTree.reservedRangeLabelsKey]: ["bookmark"] });
+            baseSegment1.addLocalRef(lref1);
+            baseSegment2.addLocalRef(lref2);
+            bookmarks.push({ rangeBegin: lref1, rangeEnd: lref2 });
         } else {
             i--;
         }
     }
     return bookmarks;
+}
+
+function makeReferences(client: MergeTree.Client, referenceCount: number) {
+    let mt = random.engines.mt19937();
+    mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
+    let refs = <MergeTree.LocalReference[]>[];
+    let refseq = client.getCurrentSeq();
+    let clientId = client.getClientId();
+    let len = client.mergeTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.NonCollabClient);
+    for (let i = 0; i < referenceCount; i++) {
+        let pos = random.integer(0, len - 1)(mt);
+        let segoff = client.mergeTree.getContainingSegment(pos, refseq, clientId);
+        if (segoff && segoff.segment) {
+            let baseSegment = <MergeTree.BaseSegment>segoff.segment;
+            let lref = new MergeTree.LocalReference(baseSegment, segoff.offset);
+            if (i & 1) {
+                lref.refType = ops.ReferenceType.SlideOnRemove;
+            }
+            baseSegment.addLocalRef(lref);
+            refs.push(lref);
+        } else {
+            i--;
+        }
+    }
+    return refs;
 }
 
 export function TestPack(verbose = true) {
@@ -171,10 +222,14 @@ export function TestPack(verbose = true) {
         let extractSnap = false;
         let includeMarkers = false;
         let measureBookmarks = true;
-        let bookmarkCount = 12000;
-        let bookmarks: MergeTree.LocalReference[];
-        let bookmarkReads = 0;
-        let bookmarkReadTime = 0;
+        let referenceCount = 2000;
+        let bookmarkCount = 1000;
+        let references: MergeTree.LocalReference[];
+        let refReads = 0;
+        let refReadTime = 0;
+        let posContextChecks = 0;
+        let posContextTime = 0;
+        let posContextResults = 0;
 
         let testSyncload = false;
         let snapClient: MergeTree.Client;
@@ -182,7 +237,11 @@ export function TestPack(verbose = true) {
         if (!startFile) {
             initString = "don't ask for whom the bell tolls; it tolls for thee";
         }
-        let server = new MergeTree.TestServer(initString);
+        let options = {};
+        if (measureBookmarks) {
+            options = { blockUpdateMarkers: true};
+        }
+        let server = new MergeTree.TestServer(initString, options);
         server.measureOps = true;
         if (startFile) {
             Text.loadTextFromFile(startFile, server.mergeTree, fileSegCount);
@@ -200,7 +259,8 @@ export function TestPack(verbose = true) {
         server.startCollaboration("theServer");
         server.addClients(clients);
         if (measureBookmarks) {
-            bookmarks = makeBookmarks(server, bookmarkCount);
+            references = makeReferences(server, referenceCount);
+            makeBookmarks(server, bookmarkCount);
         }
         if (testSyncload) {
             let clockStart = clock();
@@ -434,15 +494,33 @@ export function TestPack(verbose = true) {
             }
 
             if (measureBookmarks) {
-                let bookmarkReadsPerRound = 400;
+                let refReadsPerRound = 400;
+                let posChecksPerRound = 400;
                 let refseq = server.getCurrentSeq();
                 let clientId = server.getClientId();
                 let clockStart = clock();
-                for (let i = 0; i < bookmarkReadsPerRound; i++) {
-                    bookmarks[i].offset + server.mergeTree.getOffset(bookmarks[i].segment, refseq, clientId);
-                    bookmarkReads++;
+                for (let i = 0; i < refReadsPerRound; i++) {
+                    references[i].offset + server.mergeTree.getOffset(references[i].segment, refseq, clientId);
+                    refReads++;
                 }
-                bookmarkReadTime += elapsedMicroseconds(clockStart);
+                refReadTime += elapsedMicroseconds(clockStart);
+                let mt = random.engines.mt19937();
+                mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
+                let len = server.mergeTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.NonCollabClient);
+                let checkPos = <number[]>[];
+                for (let i = 0; i < posChecksPerRound; i++) {
+                    checkPos[i] = random.integer(0, len - 2)(mt);
+                }
+                clockStart = clock();
+                for (let i = 0; i < posChecksPerRound; i++) {
+                    let context = server.mergeTree.getStackContext(checkPos[i], clientId, ["bookmark"]);
+                    let stack = context["bookmark"];
+                    if (stack) {
+                        posContextResults += stack.items.length;
+                    }
+                }
+                posContextTime += elapsedMicroseconds(clockStart);
+                posContextChecks += posChecksPerRound;
             }
 
             if (extractSnap) {
@@ -486,9 +564,12 @@ export function TestPack(verbose = true) {
                 }
                 reportTiming(server);
                 if (measureBookmarks) {
-                    let timePerRead = (bookmarkReadTime / bookmarkReads).toFixed(2);
-                    let bookmarksPerSeg = (bookmarkCount / stats.leafCount).toFixed(2);
-                    console.log(`bookmark count ${bookmarkCount} ave. per seg ${bookmarksPerSeg} time/read ${timePerRead}`);
+                    let timePerRead = (refReadTime / refReads).toFixed(2);
+                    let bookmarksPerSeg = (referenceCount / stats.leafCount).toFixed(2);
+                    console.log(`bookmark count ${referenceCount} ave. per seg ${bookmarksPerSeg} time/read ${timePerRead}`);
+                    let timePerContextCheck = (posContextTime / posContextChecks).toFixed(2);
+                    let results = (posContextResults/posContextChecks).toFixed(2);
+                    console.log(`ave. per bookmark context check ${timePerContextCheck} ave results per check ${results}`);
                 }
                 reportTiming(clients[2]);
                 let totalTime = server.accumTime + server.accumWindowTime;

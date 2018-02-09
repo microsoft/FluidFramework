@@ -29,6 +29,8 @@ export interface IMergeTreeDelta {
     type: MergeTreeDeltaType;
 }
 
+// TODO: when ref collections are in, then change this to be either
+// marker id or { ref collection id, index }
 /**
  * A segment-relative position.
  */

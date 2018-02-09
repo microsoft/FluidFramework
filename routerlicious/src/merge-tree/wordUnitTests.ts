@@ -116,7 +116,9 @@ function makeBookmarks(client: MergeTree.Client, bookmarkCount: number) {
         if (i&1) {
             refType = ops.ReferenceType.SlideOnRemove;
         }
-        let lref = new MergeTree.LocalReference(<MergeTree.BaseSegment>segoff.segment, segoff.offset, refType);
+        let baseSegment = <MergeTree.BaseSegment>segoff.segment;
+        let lref = new MergeTree.LocalReference(baseSegment, segoff.offset, refType);
+        baseSegment.addLocalRef(lref);
         bookmarks.push(lref);
     }
     return bookmarks;
