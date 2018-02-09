@@ -34,7 +34,7 @@ export class FlowContainer extends ui.Component {
         sharedString: MergeTree.SharedString,
         private overlayMap: types.IMap,
         private image: Image,
-        ink: types.IInk,
+        ink: types.IStream,
         private options: Object = undefined) {
 
         super(element);
@@ -73,7 +73,7 @@ export class FlowContainer extends ui.Component {
         overlayCanvasDiv.classList.add("overlay-canvas");
         this.overlayCanvas = new OverlayCanvas(collabDocument, overlayCanvasDiv, layerPanelDiv);
 
-        this.overlayCanvas.on("ink", (layer: InkLayer, model: types.IInk, start: ui.IPoint) =>  {
+        this.overlayCanvas.on("ink", (layer: InkLayer, model: types.IStream, start: ui.IPoint) =>  {
             this.overlayCanvas.enableInkHitTest(false);
             const position = this.flowView.getNearestPosition(start);
             this.overlayCanvas.enableInkHitTest(true);
@@ -192,7 +192,7 @@ export class FlowContainer extends ui.Component {
         if (this.activeLayers[id]) {
             this.activeLayers[id].active = true;
         }
-        const ink = await this.overlayMap.get(id) as types.IInk;
+        const ink = await this.overlayMap.get(id) as types.IStream;
 
         if (!(id in this.layerCache)) {
             const layer = new InkLayer(this.size, ink);

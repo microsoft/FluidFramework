@@ -2,6 +2,7 @@ import * as resources from "gitresources";
 import hasIn = require("lodash/hasIn");
 import * as api from "../api-core";
 import { ICell } from "../data-types";
+import * as map from "../map";
 
 /**
  * Description of a cell delta operation
@@ -50,7 +51,7 @@ const snapshotFileName = "header";
 /**
  * Implementation of a cell collaborative object
  */
-class Cell extends api.CollaborativeObject implements ICell {
+class Cell extends map.CollaborativeMap implements ICell {
     // Cell data
     private data: ICellValue;
 
@@ -66,8 +67,7 @@ class Cell extends api.CollaborativeObject implements ICell {
         version?: resources.ICommit,
         header?: string) {
 
-        super(document, id, CellExtension.Type, sequenceNumber, services);
-
+        super(document, id, sequenceNumber, CellExtension.Type, services);
         this.data = header ? JSON.parse(Buffer.from(header, "base64").toString("utf-8")) : null;
     }
 

@@ -146,7 +146,7 @@ export function getStylusId(operation: IOperation): string {
     }
 }
 
-export interface IInk extends api.ICollaborativeObject {
+export interface IStream extends api.ICollaborativeObject {
     getLayers(): IInkLayer[];
 
     getLayer(key: string): IInkLayer;
@@ -239,7 +239,7 @@ export interface IDelta {
     operations: IOperation[];
 }
 
-export interface IInk extends api.ICollaborativeObject {
+export interface IStream extends api.ICollaborativeObject {
     getLayers(): IInkLayer[];
 
     getLayer(key: string): IInkLayer;

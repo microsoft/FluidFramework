@@ -51,7 +51,7 @@ export class FlexView extends ui.Component {
         // Add the ink canvas to the dock
         const inkCanvasElement = document.createElement("div");
         if (!root.has("ink")) {
-            root.set("ink", doc.createInk());
+            root.set("ink", doc.createStream());
         }
         this.ink = new InkCanvas(inkCanvasElement, root.get("ink"));
         this.dock.addContent(this.ink);

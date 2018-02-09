@@ -367,10 +367,11 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
         document: api.IDocument,
         id: string,
         sequenceNumber: number,
+        type = MapExtension.Type,
         services?: api.IDistributedObjectServices,
         version?: resources.ICommit,
         header?: string) {
-        super(document, id, MapExtension.Type, sequenceNumber, services);
+        super(document, id, type, sequenceNumber, services);
 
         const data = header ? JSON.parse(Buffer.from(header, "base64").toString("utf-8")) : {};
         this.view = new MapView(document, id, data, this.events, (op) => this.submitLocalOperation(op));
@@ -606,7 +607,7 @@ export class MapExtension implements api.IExtension {
         headerOrigin: string,
         header: string): IMap {
 
-        return new CollaborativeMap(document, id, sequenceNumber, services, version, header);
+        return new CollaborativeMap(document, id, sequenceNumber, MapExtension.Type, services, version, header);
     }
 
     public create(document: api.IDocument, id: string): IMap {

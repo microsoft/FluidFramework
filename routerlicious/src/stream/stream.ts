@@ -1,7 +1,7 @@
 import * as resources from "gitresources";
 import * as api from "../api-core";
-import { IDelta, IInk, IInkLayer } from "../data-types";
-import { InkExtension } from "./extension";
+import { IDelta, IInkLayer, IStream } from "../data-types";
+import { StreamExtension } from "./extension";
 import { ISnapshot, Snapshot } from "./snapshot";
 
 /**
@@ -15,7 +15,7 @@ export interface IInkSnapshot {
 
 const snapshotFileName = "header";
 
-export class InkCollaborativeObject extends api.CollaborativeObject implements IInk {
+export class Stream extends api.CollaborativeObject implements IStream {
     // The current ink snapshot
     private inkSnapshot: Snapshot;
 
@@ -26,7 +26,7 @@ export class InkCollaborativeObject extends api.CollaborativeObject implements I
         services?: api.IDistributedObjectServices,
         version?: resources.ICommit,
         header?: string) {
-        super(document, id, InkExtension.Type, sequenceNumber, services);
+        super(document, id, StreamExtension.Type, sequenceNumber, services);
         const data = header
             ? JSON.parse(Buffer.from(header, "base64").toString("utf-8"))
             : { layers: [], layerIndex: {} };

@@ -35,10 +35,10 @@ import {
     TreeEntry } from "../api-core";
 import * as cell from "../cell";
 import { getOrDefault } from "../core-utils";
-import { ICell, IInk, IMap } from "../data-types";
-import * as ink from "../ink";
+import { ICell, IMap, IStream } from "../data-types";
 import * as mapExtension from "../map";
 import * as mergeTree from "../merge-tree";
+import * as stream from "../stream";
 import { debug } from "./debug";
 
 const rootMapId = "root";
@@ -51,7 +51,7 @@ export const defaultRegistry = new Registry();
 export const defaultDocumentOptions = Object.create(null);
 defaultRegistry.register(new mapExtension.MapExtension());
 defaultRegistry.register(new mergeTree.CollaboritiveStringExtension());
-defaultRegistry.register(new ink.InkExtension());
+defaultRegistry.register(new stream.StreamExtension());
 defaultRegistry.register(new cell.CellExtension());
 
 export function registerExtension(extension: IExtension) {
@@ -286,8 +286,8 @@ export class Document {
     /**
      * Creates a new ink collaborative object
      */
-    public createInk(): IInk {
-        return this.create(ink.InkExtension.Type) as IInk;
+    public createStream(): IStream {
+        return this.create(stream.StreamExtension.Type) as IStream;
     }
 
     /**
