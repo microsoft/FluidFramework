@@ -1,5 +1,6 @@
 import { Router } from "express";
 import * as jwt from "jsonwebtoken";
+import * as winston from "winston";
 import * as utils from "../utils";
 
 interface IDecodedToken {
@@ -18,13 +19,17 @@ tenantKeyMap[t2] = "secret_key_2";
 
 async function verifyToken(token: string, hashKey: string): Promise<utils.IAuthenticatedUser> {
     return new Promise<utils.IAuthenticatedUser>((resolve, reject) => {
+        winston.info(`Token to verify: ${token}`);
         jwt.verify(token, hashKey, (err, decoded: IDecodedToken) => {
             if (err) {
+                winston.info(`Token verification error: ${JSON.stringify(err)}`);
                 reject(err);
             }
             if (tenantKeyMap[decoded.tenantid] !== decoded.secret) {
+                winston.info(`Token verification error: Wrong secret key!`);
                 reject(`Wrong secret key!`);
             }
+            winston.info(`Decoded token: ${JSON.stringify(decoded)}`);
             resolve({
                 permission: decoded.permission,
                 tenantid: decoded.tenantid,

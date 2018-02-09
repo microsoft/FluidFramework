@@ -426,8 +426,8 @@ export class Document {
     /**
      * Returns the user id connected to the document.
      */
-    public getUserId(): string {
-        return this.document.userId;
+    public getUser(): any {
+        return this.document.user;
     }
 
     /**

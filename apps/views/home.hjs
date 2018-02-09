@@ -6,18 +6,20 @@
     {{$content}}
         <div class="container">
             {{#user}}
-                <h1>Hello, {{ user.displayName }}!</h1>
-                <h3>
-                    <li><a href="/maps">Maps</a></li>
-                    <li><a href="/cells">Cells</a></li>
-                </h3>
-                <br><br>
-                <li><a href="/logout">Logout</a></li>
+                <h5 align="right"><a href="/logout">Logout</a></h5>
+                <h3>Hello, {{ user.displayName }}!</h3>
+                    <br>
+                    <h4><li><a href="/maps">Maps</a></li></h4>
+                    <h4><li><a href="/cells">Cells</a></li></h4>
+                    <h4><li><a href="/sharedText">Shared String</a></li></h4>
+                </h4>
             {{/user}}
             {{^user}}
-                <h1>Login to use the apps</h1>
+                <h3>Login to use the apps</h3>
                 <br>
-                <li><a href="/login">Login</a></li>
+                <a href="/login" class="btn btn-social btn-microsoft">
+                    <span class="fa fa-windows"></span> Sign in with @microsoft account
+                </a>
             {{/user}}
         </div>
     {{/content}}

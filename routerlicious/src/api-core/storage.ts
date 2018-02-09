@@ -1,4 +1,5 @@
 import * as resources from "gitresources";
+import { IAuthenticatedUser } from "../utils";
 import { IDocumentMessage, ISequencedDocumentMessage } from "./protocol";
 
 export interface IDocumentAttributes {
@@ -193,9 +194,9 @@ export interface IDocumentDeltaConnection {
 
 export interface IDocumentResource {
     /**
-     * User identifier connecting to the document.
+     * User connecting to the document.
      */
-    userId: string;
+    user: IAuthenticatedUser;
 
     /**
      * Client identifier for this session

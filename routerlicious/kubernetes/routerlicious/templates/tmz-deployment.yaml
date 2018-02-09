@@ -28,7 +28,9 @@ spec:
           containerPort: 4000
         command:
           - 'node'
-          - 'dist/tmz/index.js'
+          - 'dist/kafka-service/index.js'
+          - 'tmz'
+          - '../tmz/index.js'
         env:
         - name: DEBUG
           value: "routerlicious:*"

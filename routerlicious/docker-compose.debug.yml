@@ -19,7 +19,7 @@ services:
     tmz:
         ports:
             - "5862:5858"
-        command: node --inspect=0.0.0.0:5858 dist/tmz/index.js
+        command: node --inspect=0.0.0.0:5858 dist/kafka-service/index.js tmz ../tmz/index.js
     routemaster:
         ports:
             - "5863:5858"

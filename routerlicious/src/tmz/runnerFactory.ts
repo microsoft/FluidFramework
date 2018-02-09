@@ -11,12 +11,11 @@ import { TmzRunner } from "./runner";
 
 export class TmzResources implements utils.IResources {
     constructor(
-        public io: any,
+        public io: SocketIO.Server,
         public alfredUrl: string,
         public pub: redis.RedisClient,
         public sub: redis.RedisClient,
         public port: any,
-        public consumer: utils.kafkaConsumer.IConsumer,
         public uploader: IAgentUploader,
         public schedulerType: string,
         public onlyServer: boolean,
@@ -25,21 +24,15 @@ export class TmzResources implements utils.IResources {
     }
 
     public async dispose(): Promise<void> {
-        const consumerClosedP = this.consumer.close();
         const socketIoP = util.promisify(((callback) => this.io.close(callback)) as Function)();
         const pubP = util.promisify(((callback) => this.pub.quit(callback)) as Function)();
         const subP = util.promisify(((callback) => this.sub.quit(callback)) as Function)();
-        await Promise.all([consumerClosedP, socketIoP, pubP, subP]);
+        await Promise.all([socketIoP, pubP, subP]);
     }
 }
 
 export class TmzResourcesFactory implements utils.IResourcesFactory<TmzResources> {
     public async create(config: Provider): Promise<TmzResources> {
-        // Setup Kafka connection
-        const kafkaEndpoint = config.get("kafka:lib:endpoint");
-        const kafkaLibrary = config.get("kafka:lib:name");
-        const topic = config.get("tmz:topic");
-        const groupId = config.get("tmz:groupId");
         const minioConfig = config.get("minio");
         const alfredUrl = config.get("tmz:alfred");
 
@@ -71,21 +64,19 @@ export class TmzResourcesFactory implements utils.IResourcesFactory<TmzResources
         const onlyServer = config.get("tmz:onlyServer");
         const tasks = config.get("tmz:tasks");
 
-        let consumer = utils.kafkaConsumer.create(kafkaLibrary, kafkaEndpoint, groupId, groupId, topic, true);
         let uploader = createUploader("minio", minioConfig);
 
         // tslint:disable-next-line
-        return new TmzResources(io, alfredUrl, pub, sub, port, consumer, uploader, schedulerType, onlyServer, checkerTimeout, tasks);
+        return new TmzResources(io, alfredUrl, pub, sub, port, uploader, schedulerType, onlyServer, checkerTimeout, tasks);
     }
 }
 
 export class TmzRunnerFactory implements utils.IRunnerFactory<TmzResources> {
-    public async create(resources: TmzResources): Promise<utils.IRunner> {
+    public async create(resources: TmzResources): Promise<TmzRunner> {
         return new TmzRunner(
             resources.io,
             resources.alfredUrl,
             resources.port,
-            resources.consumer,
             resources.uploader,
             resources.schedulerType,
             resources.onlyServer,

@@ -45,7 +45,7 @@ services:
             - redis
             - mongodb
             - kafka-rest
-        command: node dist/tmz/index.js
+        command: node dist/kafka-service/index.js tmz ../tmz/index.js
         environment:
             - DEBUG=routerlicious:*
             - NODE_ENV=development

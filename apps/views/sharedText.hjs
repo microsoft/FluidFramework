@@ -1,0 +1,29 @@
+{{<layout}}
+    {{$styles}}
+        <link href="{{#hfurl}}/public/stylesheets/dist/style.css{{/hfurl}}" rel="stylesheet" />
+    {{/styles}}
+
+    {{$content}}
+    {{/content}}
+
+    {{$scripts}}
+        <script src="{{#hfurl}}/public/scripts/dist/index.js{{/hfurl}}"></script>
+        <script>
+            var workerConfig = {{{ workerConfig }}};
+            var options = {{{ options }}};
+            var endpoints = {{{ endpoints }}};
+            console.log(`Starting load at - ${performance.now()}`);
+            controller.sharedText.onLoad(
+                "{{ id }}",
+                "{{ repository }}",
+                "{{ owner }}",
+                endpoints,
+                {{ pageInk }},
+                {{ disableCache }},
+                "{{ template }}",
+                options,
+                "{{ token }}",
+                workerConfig);
+        </script>
+    {{/scripts}}
+{{/layout}}

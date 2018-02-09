@@ -5,6 +5,7 @@ import * as request from "request";
 import * as io from "socket.io-client";
 import * as api from "../api-core";
 import { GitManager } from "../git-storage";
+import { IAuthenticatedUser } from "../utils";
 import { DocumentStorageService } from "./blobStorageService";
 import { debug } from "./debug";
 import { DocumentDeltaStorageService } from "./deltaStorageService";
@@ -45,7 +46,7 @@ export function getEmptyHeader(id: string): api.IDocumentHeader {
 export class DocumentResource implements api.IDocumentResource {
     constructor(
         public documentId: string,
-        public userId: string,
+        public user: IAuthenticatedUser,
         public clientId: string,
         public existing: boolean,
         public version: resources.ICommit,
@@ -158,7 +159,7 @@ export class DocumentService implements api.IDocumentService {
 
         const document = new DocumentResource(
             id,
-            connection.userId,
+            connection.user,
             deltaConnection.clientId,
             connection ? connection.existing : true,
             version,
