@@ -63,7 +63,7 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
      * it is attached to the document.
      */
     public initializeLocal() {
-        throw new Error("Implement me!!!");
+        this.initializeLocalCore();
     }
 
     /**
@@ -74,15 +74,13 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
             return this;
         }
 
+        // Notify the document of the attachment
         this._services = this.document.attach(this);
 
         // Listen for updates to create the delta manager
         this.listenForUpdates();
 
-        // And then submit all pending operations.
-        assert(this.localOps.length === 0);
-
-        // Allow derived classes to perform custom operations
+        // Allow derived classes to perform custom processing
         this.attachCore();
 
         return this;
@@ -107,14 +105,6 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
     public abstract transform(message: IObjectMessage, sequenceNumber: number): IObjectMessage;
 
     /**
-     * Allows the distributive data type the ability to perform custom processing prior to a delta
-     * being submitted to the server
-     */
-    // tslint:disable-next-line:no-empty
-    protected submitCore(message: IObjectMessage) {
-    }
-
-    /**
      * Allows the distributed data type to perform custom loading
      */
     protected abstract loadCore(
@@ -122,6 +112,11 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
         version: ICommit,
         header: string,
         services: IDistributedObjectServices);
+
+    /**
+     * Allows the distributed data type to perform custom local loading
+     */
+    protected abstract initializeLocalCore();
 
     /**
      * Allows the distributive data type the ability to perform custom processing once an attach has happened
@@ -157,9 +152,6 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
 
         // Store the message for when it is ACKed and then submit to the server if connected
         this.localOps.push(message);
-
-        // TODO - validate this is actually required
-        this.submitCore(message);
 
         this.services.deltaConnection.submit(message).then(
             () => {
@@ -205,6 +197,7 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
             } else {
                 debug(`Duplicate ack received ${message.clientSequenceNumber}`);
             }
+
             // Add final trace.
             message.traces.push( { service: "client", action: "end", timestamp: Date.now()});
             // Add ping trace and remove from local map.
@@ -213,6 +206,7 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
                 message.traces.push( { service: "ping", action: "end", timestamp: this.pingMap[message.clientSequenceNumber]});
                 delete this.pingMap[message.clientSequenceNumber];
             }
+
             // Submit the latency message back to server.
             this.submitLatencyMessage(message);
         }

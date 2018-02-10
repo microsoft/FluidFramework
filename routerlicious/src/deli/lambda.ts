@@ -176,6 +176,8 @@ export class DeliLambda implements IPartitionLambda {
                     // Do not assign a ticket to a message outside the MSN. We will need to NACK clients in this case.
                     // tslint:disable-next-line
                     winston.error(`${message.clientId} sent packet ${message.operation.referenceSequenceNumber} less than MSN of ${this.minimumSequenceNumber}`);
+
+                    // By returning we have over counted - need to adjust or nto give out in this case
                     return;
                 }
 
