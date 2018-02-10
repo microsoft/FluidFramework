@@ -67,8 +67,10 @@ class Cell extends map.CollaborativeMap implements ICell {
         version?: resources.ICommit,
         header?: string) {
 
-        super(document, id, sequenceNumber, CellExtension.Type, services);
-        this.data = header ? JSON.parse(Buffer.from(header, "base64").toString("utf-8")) : null;
+        super(id, document, CellExtension.Type);
+
+        // TODO move me in the right direction
+        // this.data = header ? JSON.parse(Buffer.from(header, "base64").toString("utf-8")) : null;
     }
 
     /**
@@ -109,7 +111,7 @@ class Cell extends map.CollaborativeMap implements ICell {
         };
 
         this.setCore(op.value);
-        this.submitLocalOperation(op);
+        this.submitLocalMessage(op);
     }
 
     // Deletes the value from the cell.
@@ -119,7 +121,7 @@ class Cell extends map.CollaborativeMap implements ICell {
         };
 
         this.deleteCore();
-        this.submitLocalOperation(op);
+        this.submitLocalMessage(op);
     }
 
     /**
@@ -177,7 +179,7 @@ class Cell extends map.CollaborativeMap implements ICell {
             }
         }
 
-        this.events.emit("op", message);
+        this.emit("op", message);
     }
 
     protected processMinSequenceNumberChanged(value: number) {
@@ -186,12 +188,12 @@ class Cell extends map.CollaborativeMap implements ICell {
 
     private setCore(value: ICellValue) {
         this.data = value;
-        this.events.emit("valueChanged", this.getCore());
+        this.emit("valueChanged", this.getCore());
     }
 
     private deleteCore() {
         this.data = null;
-        this.events.emit("delete");
+        this.emit("delete");
     }
 
     private getCore(): any {

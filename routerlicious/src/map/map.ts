@@ -5,6 +5,7 @@ import * as api from "../api-core";
 import { getOrDefault } from "../core-utils";
 import { ICounter, IMap, IMapView, ISet } from "../data-types";
 import { Counter } from "./counter";
+import { MapExtension } from "./extension";
 import { DistributedSet } from "./set";
 
 /**
@@ -364,18 +365,13 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
      * be provided
      */
     constructor(
-        document: api.IDocument,
         id: string,
-        sequenceNumber: number,
-        type = MapExtension.Type,
-        services?: api.IDistributedObjectServices,
-        version?: resources.ICommit,
-        header?: string) {
-        super(document, id, type, sequenceNumber, services);
+        document: api.IDocument,
+        type = MapExtension.Type) {
 
-        const data = header ? JSON.parse(Buffer.from(header, "base64").toString("utf-8")) : {};
-        this.view = new MapView(document, id, data, this.events, (op) => this.submitLocalOperation(op));
-        this.deserialize();
+        super(id, document, type);
+
+        // TODO I need some kind of default state!
     }
 
     public async keys(): Promise<string[]> {
@@ -482,7 +478,15 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
             ],
         };
 
+        if (1 === 1 * 1) {
+            throw new Error("Include the content !!!");
+        }
+
         return tree;
+    }
+
+    public transform(message: api.IObjectMessage, sequenceNumber: number): api.IObjectMessage {
+        throw new Error("Implement me!!!");
     }
 
     /**
@@ -490,6 +494,19 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
      */
     public getView(): Promise<IMapView> {
         return Promise.resolve(this.view);
+    }
+
+    protected loadCore(
+        sequenceNum: number,
+        version: resources.ICommit,
+        header: string,
+        services: api.IDistributedObjectServices) {
+
+        // TODO fill me in with previous header stuff for local only case
+
+        const data = header ? JSON.parse(Buffer.from(header, "base64").toString("utf-8")) : {};
+        this.view = new MapView(this.document, this.id, data, this, (op) => this.submitLocalMessage(op));
+        this.deserialize();
     }
 
     protected submitCore(message: api.IObjectMessage) {
@@ -540,11 +557,43 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
                     this.view.deleteSetCore(op.key, op.value);
                     break;
                 default:
-                    throw new Error("Unknown operation");
+                    this.processContent(message);
             }
         }
 
-        this.events.emit("op", message);
+        this.emit("op", message);
+    }
+
+    protected attachCore() {
+        this.attachContent();
+    }
+
+    // The following three methods enable derived classes to provide custom content that is stored
+    // with the map
+
+    protected attachContent() {
+        return;
+    }
+
+    /**
+     * Processes a content message
+     */
+    protected processContent(message: api.ISequencedObjectMessage) {
+        throw new Error("Unknown operation");
+    }
+
+    /**
+     * Snapshots the content
+     */
+    protected snapshotContent(): api.ITree {
+        return null;
+    }
+
+    /**
+     * Notifies the content that the minimum sequence number has changed
+     */
+    protected processMinSequenceNumberChangedContent(value: number) {
+        // no-op
     }
 
     // Deserializes the map values into specific types (e.g., set, counter etc.)
@@ -587,30 +636,5 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
             data: currentData,
             reject: null,
         };
-    }
-}
-
-/**
- * The extension that defines the map
- */
-export class MapExtension implements api.IExtension {
-    public static Type = "https://graph.microsoft.com/types/map";
-
-    public type: string = MapExtension.Type;
-
-    public load(
-        document: api.IDocument,
-        id: string,
-        sequenceNumber: number,
-        services: api.IDistributedObjectServices,
-        version: resources.ICommit,
-        headerOrigin: string,
-        header: string): IMap {
-
-        return new CollaborativeMap(document, id, sequenceNumber, MapExtension.Type, services, version, header);
-    }
-
-    public create(document: api.IDocument, id: string): IMap {
-        return new CollaborativeMap(document, id, 0);
     }
 }

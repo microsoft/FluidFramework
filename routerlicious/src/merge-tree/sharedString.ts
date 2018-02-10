@@ -24,14 +24,17 @@ export class CollaboritiveStringExtension implements api.IExtension {
         header: string): api.ICollaborativeObject {
 
         let collaborativeString = new SharedString(document, id, sequenceNumber, services);
-        collaborativeString.load(sequenceNumber, header, true, headerOrigin);
+        collaborativeString.load(sequenceNumber, version, header, services);
+        // What do these mean??? true, headerOrigin);
 
         return collaborativeString;
     }
 
     public create(document: api.IDocument, id: string, options?: Object): api.ICollaborativeObject {
         let collaborativeString = new SharedString(document, id, 0);
-        collaborativeString.load(0, null, false, document.id);
+        collaborativeString.initializeLocal();
+        // This needs to be fixed up
+        // collaborativeString.load(0, null, false, document.id);
 
         return collaborativeString;
     }
@@ -76,11 +79,11 @@ export class SharedString extends CollaborativeMap {
         sequenceNumber: number,
         services?: api.IDistributedObjectServices) {
 
-        super(document, id, sequenceNumber, CollaboritiveStringExtension.Type, services);
+        super(id, document, CollaboritiveStringExtension.Type);
         this.client = new MergeTree.Client("", document.options);
     }
 
-    public async load(sequenceNumber: number, header: string, collaborative: boolean, originBranch: string) {
+    public async load2(sequenceNumber: number, header: string, collaborative: boolean, originBranch: string) {
         let chunk: ops.MergeTreeChunk;
 
         console.log(`Async load ${this.id} - ${performanceNow()}`);
@@ -126,7 +129,7 @@ export class SharedString extends CollaborativeMap {
         };
 
         this.client.insertMarkerLocal(pos, refType, props);
-        this.submitLocalOperation(insertMessage);
+        this.submitLocalMessage(insertMessage);
     }
 
     public insertText(text: string, pos: number, props?: Properties.PropertySet) {
@@ -138,7 +141,7 @@ export class SharedString extends CollaborativeMap {
         };
 
         this.client.insertTextLocal(text, pos, props);
-        this.submitLocalOperation(insertMessage);
+        this.submitLocalMessage(insertMessage);
     }
 
     public removeText(start: number, end: number) {
@@ -149,7 +152,7 @@ export class SharedString extends CollaborativeMap {
         };
 
         this.client.removeSegmentLocal(start, end);
-        this.submitLocalOperation(removeMessage);
+        this.submitLocalMessage(removeMessage);
     }
 
     public annotateRangeFromPast(
@@ -167,7 +170,7 @@ export class SharedString extends CollaborativeMap {
 
     public transaction(groupOp: ops.IMergeTreeGroupMsg) {
         this.client.localTransaction(groupOp);
-        this.submitLocalOperation(groupOp);
+        this.submitLocalMessage(groupOp);
     }
 
     public annotateRange(props: Properties.PropertySet, start: number, end: number, op?: ops.ICombiningOp) {
@@ -182,18 +185,11 @@ export class SharedString extends CollaborativeMap {
             annotateMessage.combiningOp = op;
         }
         this.client.annotateSegmentLocal(props, start, end, op);
-        this.submitLocalOperation(annotateMessage);
+        this.submitLocalMessage(annotateMessage);
     }
 
     public setLocalMinSeq(lmseq: number) {
         this.client.mergeTree.updateLocalMinSeq(lmseq);
-    }
-
-    public snapshot(): api.ITree {
-        this.client.mergeTree.commitGlobalMin();
-        let snap = new Paparazzo.Snapshot(this.client.mergeTree);
-        snap.extractSync();
-        return snap.emit();
     }
 
     public transform(message: api.IObjectMessage, toSequenceNumber: number): api.IObjectMessage {
@@ -230,7 +226,14 @@ export class SharedString extends CollaborativeMap {
         }
     }
 
-    protected processCore(message: api.ISequencedObjectMessage) {
+    protected snapshotContent(): api.ITree {
+        this.client.mergeTree.commitGlobalMin();
+        let snap = new Paparazzo.Snapshot(this.client.mergeTree);
+        snap.extractSync();
+        return snap.emit();
+    }
+
+    protected processContent(message: api.ISequencedObjectMessage) {
         if (!this.isLoaded) {
             this.client.enqueueMsg(message);
             return;
@@ -239,7 +242,7 @@ export class SharedString extends CollaborativeMap {
         this.applyMessage(message);
     }
 
-    protected processMinSequenceNumberChanged(value: number) {
+    protected processMinSequenceNumberChangedContent(value: number) {
         // Apply directly once loaded - otherwise track so we can update later
         if (this.isLoaded) {
             this.client.updateMinSeq(value);
@@ -248,14 +251,14 @@ export class SharedString extends CollaborativeMap {
         }
     }
 
-    protected attachCore() {
+    protected attachContent() {
         this.client.startCollaboration(this.document.clientId, 0);
     }
 
     private loadFinished(chunk: ops.MergeTreeChunk) {
         this.isLoaded = true;
         this.loadedDeferred.resolve();
-        this.events.emit("loadFinished", chunk, true);
+        this.emit("loadFinished", chunk, true);
     }
 
     private applyPending() {
@@ -271,8 +274,8 @@ export class SharedString extends CollaborativeMap {
     }
 
     private applyMessage(message: api.ISequencedObjectMessage) {
-        this.events.emit("pre-op", message);
+        this.emit("pre-op", message);
         this.client.applyMsg(message);
-        this.events.emit("op", message);
+        this.emit("op", message);
     }
 }

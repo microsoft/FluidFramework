@@ -27,12 +27,14 @@ export class Stream extends CollaborativeMap implements IStream {
         services?: api.IDistributedObjectServices,
         version?: resources.ICommit,
         header?: string) {
-        super(document, id, sequenceNumber, StreamExtension.Type, services);
-        const data = header
-            ? JSON.parse(Buffer.from(header, "base64").toString("utf-8"))
-            : { layers: [], layerIndex: {} };
 
-        this.inkSnapshot = Snapshot.Clone(data);
+        super(id, document, StreamExtension.Type);
+
+        // TODO I need to go into a load core
+        // const data = header
+        //     ? JSON.parse(Buffer.from(header, "base64").toString("utf-8"))
+        //     : { layers: [], layerIndex: {} };
+        // this.inkSnapshot = Snapshot.Clone(data);
     }
 
     public snapshot(): api.ITree {
@@ -61,7 +63,7 @@ export class Stream extends CollaborativeMap implements IStream {
     }
 
     public submitOp(op: IDelta) {
-        this.submitLocalOperation(op);
+        this.submitLocalMessage(op);
         this.inkSnapshot.apply(op);
     }
 
@@ -70,7 +72,7 @@ export class Stream extends CollaborativeMap implements IStream {
             this.inkSnapshot.apply(message.contents as IDelta);
         }
 
-        this.events.emit("op", message);
+        this.emit("op", message);
     }
 
     protected processMinSequenceNumberChanged(value: number) {

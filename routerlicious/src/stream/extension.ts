@@ -16,10 +16,16 @@ export class StreamExtension implements api.IExtension {
         headerOrigin: string,
         header: string): api.ICollaborativeObject {
 
-        return new Stream(document, id, sequenceNumber, services, version, header);
+        const stream = new Stream(document, id, sequenceNumber, services, version, header);
+        stream.load(sequenceNumber, version, header, services);
+
+        return stream;
     }
 
     public create(document: api.IDocument, id: string): api.ICollaborativeObject {
-        return new Stream(document, id, 0);
+        const stream = new Stream(document, id, 0);
+        stream.initializeLocal();
+
+        return stream;
     }
 }

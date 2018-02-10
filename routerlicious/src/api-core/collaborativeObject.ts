@@ -1,18 +1,24 @@
 import * as assert from "assert";
 import { EventEmitter } from "events";
+import { ICommit } from "gitresources";
 import { debug } from "./debug";
 import { IDistributedObjectServices, IDocument } from "./document";
 import { ILatencyMessage, IObjectMessage, ISequencedObjectMessage, OperationType } from "./protocol";
 import { ITree } from "./storage";
 import { ICollaborativeObject } from "./types";
 
-export abstract class CollaborativeObject implements ICollaborativeObject {
+export abstract class CollaborativeObject extends EventEmitter implements ICollaborativeObject {
     // tslint:disable-next-line:variable-name
     public __collaborativeObject__ = true;
 
-    protected events = new EventEmitter();
+    // Private fields exposed via getters
+    // tslint:disable:variable-name
+    private _services: IDistributedObjectServices;
+    private _minimumSequenceNumber: number;
+    private _sequenceNumber: number;
+    // tslint:enable:variable-name
 
-    // Locally applied operations not yet sent to the server
+    // Locally applied operations not yet ACK'd by the server
     private localOps: IObjectMessage[] = [];
 
     // Socketio acked messages timestamp.
@@ -20,48 +26,44 @@ export abstract class CollaborativeObject implements ICollaborativeObject {
 
     // Sequence number for operations local to this client
     private clientSequenceNumber = 0;
-    private minSequenceNumber;
 
     public get sequenceNumber(): number {
-        return this.sequenceNum;
+        return this._sequenceNumber;
     }
 
     public get minimumSequenceNumber(): number {
-        return this.minSequenceNumber;
+        return this._minimumSequenceNumber;
     }
 
     public get referenceSequenceNumber(): number {
         return this.services.deltaConnection.referenceSequenceNumber;
     }
 
-    constructor(
-        protected document: IDocument,
-        public id: string,
-        public type: string,
-        private sequenceNum: number,
-        protected services?: IDistributedObjectServices) {
+    protected get services(): IDistributedObjectServices {
+        return this._services;
+    }
 
+    constructor(public id: string, protected document: IDocument, public type: string) {
+        super();
+    }
+
+    /**
+     * A collaborative object, after construction, can either be loaded in the case that it is already part of
+     * a collaborative document. Or later attached if it is being newly added.
+     */
+    public load(sequenceNum: number, version: ICommit, header: string, services: IDistributedObjectServices) {
         // Min sequence number starts off at the initialized sequence number
-        this.minSequenceNumber = sequenceNum;
-
-        if (this.services) {
-            this.listenForUpdates();
-        }
+        this._minimumSequenceNumber = sequenceNum;
+        this.loadCore(sequenceNum, version, header, services);
+        this.listenForUpdates();
     }
 
-    public on(event: string, listener: (...args: any[]) => void): this {
-        this.events.on(event, listener);
-        return this;
-    }
-
-    public removeListener(event: string, listener: (...args: any[]) => void): this {
-        this.events.removeListener(event, listener);
-        return this;
-    }
-
-    public removeAllListeners(event?: string): this {
-        this.events.removeAllListeners(event);
-        return this;
+    /**
+     * Initializes the object as a local, non-collaborative object. This object can become collaborative after
+     * it is attached to the document.
+     */
+    public initializeLocal() {
+        throw new Error("Implement me!!!");
     }
 
     /**
@@ -72,7 +74,7 @@ export abstract class CollaborativeObject implements ICollaborativeObject {
             return this;
         }
 
-        this.services = this.document.attach(this);
+        this._services = this.document.attach(this);
 
         // Listen for updates to create the delta manager
         this.listenForUpdates();
@@ -102,10 +104,7 @@ export abstract class CollaborativeObject implements ICollaborativeObject {
      * Creates a new message from the provided message that is relative to the given sequenceNumber. It is valid
      * to modify the passed in object in place.
      */
-    public transform(message: IObjectMessage, sequenceNumber: number): IObjectMessage {
-        message.referenceSequenceNumber = sequenceNumber;
-        return message;
-    }
+    public abstract transform(message: IObjectMessage, sequenceNumber: number): IObjectMessage;
 
     /**
      * Allows the distributive data type the ability to perform custom processing prior to a delta
@@ -116,20 +115,33 @@ export abstract class CollaborativeObject implements ICollaborativeObject {
     }
 
     /**
+     * Allows the distributed data type to perform custom loading
+     */
+    protected abstract loadCore(
+        sequenceNum: number,
+        version: ICommit,
+        header: string,
+        services: IDistributedObjectServices);
+
+    /**
      * Allows the distributive data type the ability to perform custom processing once an attach has happened
      */
-    // tslint:disable-next-line:no-empty
-    protected attachCore() {
-    }
+    protected abstract attachCore();
 
+    /**
+     * Derived classes must override this to do custom processing on a remote message
+     */
     protected abstract processCore(message: ISequencedObjectMessage);
 
+    /**
+     * Method called when the minimum sequence number for the object has changed
+     */
     protected abstract processMinSequenceNumberChanged(value: number);
 
     /**
      * Processes a message by the local client
      */
-    protected submitLocalOperation(contents: any): void {
+    protected submitLocalMessage(contents: any): void {
         // Local only operations we can discard as the attach will take care of them
         if (this.isLocal()) {
             return;
@@ -145,31 +157,44 @@ export abstract class CollaborativeObject implements ICollaborativeObject {
 
         // Store the message for when it is ACKed and then submit to the server if connected
         this.localOps.push(message);
-        if (this.services) {
-            this.submit(message);
-        }
+
+        // TODO - validate this is actually required
+        this.submitCore(message);
+
+        this.services.deltaConnection.submit(message).then(
+            () => {
+                // Message acked by socketio. Store timestamp locally.
+                this.pingMap[message.clientSequenceNumber] = Date.now();
+            },
+            (error) => {
+                // TODO need reconnection logic upon loss of connection
+                debug(`Lost connection to server: ${JSON.stringify(error)}`);
+                this.emit("error", error);
+            });
     }
 
+    /**
+     * Causes the collaborative object to begin listening for remote messages
+     */
     private listenForUpdates() {
         this.services.deltaConnection.on("op", (message) => {
             this.processRemoteMessage(message);
         });
 
-        // Min sequence number changed
         this.services.deltaConnection.on("minSequenceNumber", (value) => {
-            this.minSequenceNumber = value;
+            this._minimumSequenceNumber = value;
             this.processMinSequenceNumberChanged(this.minimumSequenceNumber);
         });
     }
 
     /**
-     * Handles a message coming from the remote service
+     * Handles a message being received from the remote delta server
      */
     private processRemoteMessage(message: ISequencedObjectMessage) {
         // server messages should only be delivered to this method in sequence number order
         assert.equal(this.sequenceNumber + 1, message.sequenceNumber);
-        this.sequenceNum = message.sequenceNumber;
-        this.minSequenceNumber = message.minimumSequenceNumber;
+        this._sequenceNumber = message.sequenceNumber;
+        this._minimumSequenceNumber = message.minimumSequenceNumber;
 
         if (message.type === OperationType && message.clientId === this.document.clientId) {
             // One of our messages was sequenced. We can remove it from the local message list. Given these arrive
@@ -195,20 +220,9 @@ export abstract class CollaborativeObject implements ICollaborativeObject {
         this.processCore(message);
     }
 
-    private submit(message: IObjectMessage): void {
-        this.submitCore(message);
-        this.services.deltaConnection.submit(message).then(
-            () => {
-                // Message acked by socketio. Store timestamp locally.
-                this.pingMap[message.clientSequenceNumber] = Date.now();
-            },
-            (error) => {
-                // TODO need reconnection logic upon loss of connection
-                debug(`Lost connection to server: ${JSON.stringify(error)}`);
-                this.events.emit("error", error);
-            });
-    }
-
+    /**
+     * Submits a heartbeat message to the remote server
+     */
     private submitLatencyMessage(message: ISequencedObjectMessage) {
         const latencyMessage: ILatencyMessage = {
             traces: message.traces,
