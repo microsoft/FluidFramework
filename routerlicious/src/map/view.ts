@@ -15,7 +15,7 @@ export class MapView implements IMapView {
         id: string,
         data: {[key: string]: IMapValue },
         private events: EventEmitter,
-        private submitLocalOperation: (op) => void) {
+        private submitLocalOperation: (op: IMapOperation) => void) {
 
         // Initialize the map of values
         // tslint:disable-next-line:forin

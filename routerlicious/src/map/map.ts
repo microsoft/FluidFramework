@@ -141,15 +141,14 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
             ],
         };
 
-        if (1 === 1 * 1) {
-            throw new Error("Include the content !!!");
-        }
+        // TODO include the content
 
         return tree;
     }
 
     public transform(message: api.IObjectMessage, sequenceNumber: number): api.IObjectMessage {
-        throw new Error("Implement me!!!");
+        // TODO this needs to defer to derived classes
+        return message;
     }
 
     /**
@@ -165,31 +164,12 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
         header: string,
         services: api.IDistributedObjectServices) {
 
-        // TODO 1 fill me in with previous header stuff for local only case
         const data = header ? JSON.parse(Buffer.from(header, "base64").toString("utf-8")) : {};
-        this.view = new MapView(this.document, this.id, data, this, (op) => this.submitLocalMessage(op));
-        this.deserialize();
+        this.initializeView(data);
     }
 
     protected initializeLocalCore() {
-        // TODO 2 this is the base empty case
-        throw new Error("Not implemented");
-    }
-
-    protected submitCore(message: api.IObjectMessage) {
-        // TODO need to call this again at the time of the submit
-
-        // TODO chain these requests given the attach is async
-        const op = message.contents as IMapOperation;
-
-        // We need to translate any local collaborative object sets to the serialized form
-        if (op.type === "set" && op.value.type === ValueType[ValueType.Collaborative]) {
-            // We need to attach the object prior to submitting the message so that its state is available
-            // to upstream users following the attach
-            const collabMapValue = op.value.value as ICollaborativeMapValue;
-            const collabObject = this.document.get(collabMapValue.id);
-            collabObject.attach();
-        }
+        this.initializeView({});
     }
 
     protected processMinSequenceNumberChanged(value: number) {
@@ -269,19 +249,42 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
         // no-op
     }
 
-    // Deserializes the map values into specific types (e.g., set, counter etc.)
-    private deserialize() {
-        const mapView = this.view;
-        const keys = mapView.keys();
-        for (let key of keys) {
-            const value = mapView.getMapValue(key);
+    private initializeView(data: any) {
+        this.view = new MapView(
+            this.document,
+            this.id,
+            data,
+            this,
+            (op) => {
+                // Local operations do not require any extra processing
+                if (this.isLocal()) {
+                    return;
+                }
+
+                // We need to translate any local collaborative object sets to the serialized form
+                if (op.type === "set" && op.value.type === ValueType[ValueType.Collaborative]) {
+                    // We need to attach the object prior to submitting the message so that its state is available
+                    // to upstream users following the attach
+                    const collabMapValue = op.value.value as ICollaborativeMapValue;
+                    const collabObject = this.document.get(collabMapValue.id);
+                    collabObject.attach();
+                }
+
+                // Once we have performed the attach submit the local operation
+                this.submitLocalMessage(op);
+            });
+
+        // This should probably be done on data - like with the collab objects - prior to giving to view.
+        // Or have the view do all the loading
+        for (let key of this.view.keys()) {
+            const value = this.view.getMapValue(key);
             if (value !== undefined) {
                 switch (value.type) {
                     case ValueType[ValueType.Set]:
-                        mapView.loadSet(this, key, value.value);
+                        this.view.loadSet(this, key, value.value);
                         break;
                     case ValueType[ValueType.Counter]:
-                        mapView.loadCounter(this, key, value.value.value, value.value.min, value.value.max);
+                        this.view.loadCounter(this, key, value.value.value, value.value.min, value.value.max);
                         break;
                     default:
                         break;

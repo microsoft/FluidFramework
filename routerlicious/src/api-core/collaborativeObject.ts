@@ -51,10 +51,11 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
      * A collaborative object, after construction, can either be loaded in the case that it is already part of
      * a collaborative document. Or later attached if it is being newly added.
      */
-    public load(sequenceNum: number, version: ICommit, header: string, services: IDistributedObjectServices) {
-        // Min sequence number starts off at the initialized sequence number
-        this._minimumSequenceNumber = sequenceNum;
-        this.loadCore(sequenceNum, version, header, services);
+    public load(sequenceNumber: number, version: ICommit, header: string, services: IDistributedObjectServices) {
+        this._sequenceNumber = sequenceNumber;
+        this._minimumSequenceNumber = sequenceNumber;
+        this._services = services;
+        this.loadCore(sequenceNumber, version, header, services);
         this.listenForUpdates();
     }
 
@@ -63,6 +64,8 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
      * it is attached to the document.
      */
     public initializeLocal() {
+        this._sequenceNumber = 0;
+        this._minimumSequenceNumber = 0;
         this.initializeLocalCore();
     }
 
@@ -137,10 +140,7 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
      * Processes a message by the local client
      */
     protected submitLocalMessage(contents: any): void {
-        // Local only operations we can discard as the attach will take care of them
-        if (this.isLocal()) {
-            return;
-        }
+        assert(!this.isLocal());
 
         // Prep the message
         const message: IObjectMessage = {
