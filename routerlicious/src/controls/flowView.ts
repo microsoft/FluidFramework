@@ -2710,11 +2710,8 @@ export class FlowView extends ui.Component {
                 clientId: remotePresenceInfo.clientId,
                 fresh: true,
                 key: remotePresenceInfo.key,
-                localRef: <SharedString.LocalReference>{
-                    offset: segoff.offset,
-                    refType: SharedString.ReferenceType.SlideOnRemove,
-                    segment: segoff.segment,
-                },
+                localRef: new SharedString.LocalReference(<SharedString.BaseSegment>segoff.segment, segoff.offset,
+                    SharedString.ReferenceType.SlideOnRemove),
             };
 
             this.updatePresenceVector(localPresenceInfo);

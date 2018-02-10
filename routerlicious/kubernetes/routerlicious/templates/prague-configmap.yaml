@@ -85,6 +85,10 @@ data:
             "serviceGraph": {
                 "group": "{{ template "serviceGraph.fullname" . }}",
                 "topic": "{{ .Values.kafka.topics.deltas }}"
+            },
+            "tmz": {
+                "group": "{{ template "tmz.fullname" . }}",
+                "topic": "{{ .Values.kafka.topics.deltas }}"
             }
         },
         "paparazzi": {
