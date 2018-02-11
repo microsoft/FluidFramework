@@ -18,6 +18,15 @@ export function copyMap(from: IMapView, to: Map<string, any>) {
     });
 }
 
+class ContentObjectStorage implements api.IObjectStorageService {
+    constructor(private storage: api.IObjectStorageService) {
+    }
+
+    public read(path: string): Promise<string> {
+        return this.storage.read(`content/${path}`);
+    }
+}
+
 /**
  * Implementation of a map collaborative object
  */
@@ -165,15 +174,16 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
     }
 
     protected loadCore(
-        sequenceNum: number,
         version: resources.ICommit,
         header: string,
         headerOrigin: string,
-        services: api.IDistributedObjectServices) {
+        storage: api.IObjectStorageService) {
 
         const data = header ? JSON.parse(Buffer.from(header, "base64").toString("utf-8")) : {};
         this.initializeView(data);
-        this.loadContent(version, header, headerOrigin);
+
+        const contentStorage = new ContentObjectStorage(storage);
+        this.loadContent(version, header, headerOrigin, contentStorage);
     }
 
     protected initializeLocalCore() {
@@ -186,7 +196,11 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
         this.processMinSequenceNumberChangedContent(value);
     }
 
-    protected loadContent(version: resources.ICommit, header: string, headerOrigin: string) {
+    protected loadContent(
+        version: resources.ICommit,
+        header: string,
+        headerOrigin: string,
+        services: api.IObjectStorageService) {
         return;
     }
 

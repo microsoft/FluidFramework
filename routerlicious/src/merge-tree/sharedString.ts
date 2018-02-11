@@ -159,14 +159,19 @@ export class SharedString extends CollaborativeMap {
         }
     }
 
-    protected loadContent(version: resources.ICommit, header: string, headerOrigin: string) {
-        this.initialize(this.sequenceNumber, header, true, headerOrigin).catch((error) => {
+    protected loadContent(
+        version: resources.ICommit,
+        header: string,
+        headerOrigin: string,
+        services: api.IObjectStorageService) {
+
+        this.initialize(this.sequenceNumber, header, true, headerOrigin, services).catch((error) => {
             console.error(error);
         });
     }
 
     protected initializeContent() {
-        this.initialize(0, null, false, this.id).catch((error) => {
+        this.initialize(0, null, false, this.id, null).catch((error) => {
             console.error(error);
         });
     }
@@ -208,7 +213,13 @@ export class SharedString extends CollaborativeMap {
         this.submitLocalMessage(message);
     }
 
-    private async initialize(sequenceNumber: number, header: string, collaborative: boolean, originBranch: string) {
+    private async initialize(
+        sequenceNumber: number,
+        header: string,
+        collaborative: boolean,
+        originBranch: string,
+        services: api.IObjectStorageService) {
+
         let chunk: ops.MergeTreeChunk;
 
         console.log(`Async load ${this.id} - ${performanceNow()}`);
@@ -218,7 +229,7 @@ export class SharedString extends CollaborativeMap {
             let segs = textsToSegments(chunk.segmentTexts);
             this.client.mergeTree.reloadFromSegments(segs);
             console.log(`Loading ${this.id} body - ${performanceNow()}`);
-            chunk = await Paparazzo.Snapshot.loadChunk(this.services, "body");
+            chunk = await Paparazzo.Snapshot.loadChunk(services, "body");
             console.log(`Loaded ${this.id} body - ${performanceNow()}`);
             for (let segSpec of chunk.segmentTexts) {
                 this.client.mergeTree.appendSegment(segSpec);

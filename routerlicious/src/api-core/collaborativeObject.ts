@@ -2,7 +2,7 @@ import * as assert from "assert";
 import { EventEmitter } from "events";
 import { ICommit } from "gitresources";
 import { debug } from "./debug";
-import { IDistributedObjectServices, IDocument } from "./document";
+import { IDistributedObjectServices, IDocument, IObjectStorageService } from "./document";
 import { ILatencyMessage, IObjectMessage, ISequencedObjectMessage, OperationType } from "./protocol";
 import { ITree } from "./storage";
 import { ICollaborativeObject } from "./types";
@@ -13,13 +13,14 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
 
     // Private fields exposed via getters
     // tslint:disable:variable-name
-    private _services: IDistributedObjectServices;
     private _minimumSequenceNumber: number;
     private _sequenceNumber: number;
     // tslint:enable:variable-name
 
     // Locally applied operations not yet ACK'd by the server
     private localOps: IObjectMessage[] = [];
+
+    private services: IDistributedObjectServices;
 
     // Socketio acked messages timestamp.
     private pingMap: { [clientSequenceNumber: number]: number} = {};
@@ -39,10 +40,6 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
         return this.services.deltaConnection.referenceSequenceNumber;
     }
 
-    protected get services(): IDistributedObjectServices {
-        return this._services;
-    }
-
     constructor(public id: string, protected document: IDocument, public type: string) {
         super();
     }
@@ -60,8 +57,8 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
 
         this._sequenceNumber = sequenceNumber;
         this._minimumSequenceNumber = sequenceNumber;
-        this._services = services;
-        this.loadCore(sequenceNumber, version, header, headerOrigin, services);
+        this.services = services;
+        this.loadCore(version, header, headerOrigin, services.objectStorage);
         this.listenForUpdates();
     }
 
@@ -84,7 +81,7 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
         }
 
         // Notify the document of the attachment
-        this._services = this.document.attach(this);
+        this.services = this.document.attach(this);
 
         // Listen for updates to create the delta manager
         this.listenForUpdates();
@@ -117,11 +114,10 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
      * Allows the distributed data type to perform custom loading
      */
     protected abstract loadCore(
-        sequenceNum: number,
         version: ICommit,
         header: string,
         headerOrigin: string,
-        services: IDistributedObjectServices);
+        services: IObjectStorageService);
 
     /**
      * Allows the distributed data type to perform custom local loading
