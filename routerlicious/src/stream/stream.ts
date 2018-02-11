@@ -16,6 +16,8 @@ export interface IInkSnapshot {
 
 const snapshotFileName = "header";
 
+const emptySnapshot: ISnapshot = { layers: [], layerIndex: {} };
+
 export class Stream extends CollaborativeMap implements IStream {
     // The current ink snapshot
     private inkSnapshot: Snapshot;
@@ -29,15 +31,33 @@ export class Stream extends CollaborativeMap implements IStream {
         header?: string) {
 
         super(id, document, StreamExtension.Type);
-
-        // TODO I need to go into a load core
-        // const data = header
-        //     ? JSON.parse(Buffer.from(header, "base64").toString("utf-8"))
-        //     : { layers: [], layerIndex: {} };
-        // this.inkSnapshot = Snapshot.Clone(data);
     }
 
-    public snapshot(): api.ITree {
+    public getLayers(): IInkLayer[] {
+        return this.inkSnapshot.layers;
+    }
+
+    public getLayer(key: string): IInkLayer {
+        return this.inkSnapshot.layers[this.inkSnapshot.layerIndex[key]];
+    }
+
+    public submitOp(op: IDelta) {
+        this.submitLocalMessage(op);
+        this.inkSnapshot.apply(op);
+    }
+
+    protected loadContent(version: resources.ICommit, header: string) {
+        const data: ISnapshot = header
+            ? JSON.parse(Buffer.from(header, "base64").toString("utf-8"))
+            : emptySnapshot;
+        this.initialize(data);
+    }
+
+    protected initializeContent() {
+        this.initialize(emptySnapshot);
+    }
+
+    protected snapshotContent(): api.ITree {
         const tree: api.ITree = {
             entries: [
                 {
@@ -54,28 +74,13 @@ export class Stream extends CollaborativeMap implements IStream {
         return tree;
     }
 
-    public getLayers(): IInkLayer[] {
-        return this.inkSnapshot.layers;
-    }
-
-    public getLayer(key: string): IInkLayer {
-        return this.inkSnapshot.layers[this.inkSnapshot.layerIndex[key]];
-    }
-
-    public submitOp(op: IDelta) {
-        this.submitLocalMessage(op);
-        this.inkSnapshot.apply(op);
-    }
-
-    protected processCore(message: api.ISequencedObjectMessage) {
+    protected processContent(message: api.ISequencedObjectMessage) {
         if (message.type === api.OperationType && message.clientId !== this.document.clientId) {
             this.inkSnapshot.apply(message.contents as IDelta);
         }
-
-        this.emit("op", message);
     }
 
-    protected processMinSequenceNumberChanged(value: number) {
-        // TODO need our own concept of the zamboni here
+    private initialize(data: ISnapshot) {
+        this.inkSnapshot = Snapshot.Clone(data);
     }
 }
