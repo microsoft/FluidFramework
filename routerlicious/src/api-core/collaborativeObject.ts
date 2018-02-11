@@ -51,11 +51,17 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
      * A collaborative object, after construction, can either be loaded in the case that it is already part of
      * a collaborative document. Or later attached if it is being newly added.
      */
-    public load(sequenceNumber: number, version: ICommit, header: string, services: IDistributedObjectServices) {
+    public load(
+        sequenceNumber: number,
+        version: ICommit,
+        header: string,
+        headerOrigin: string,
+        services: IDistributedObjectServices) {
+
         this._sequenceNumber = sequenceNumber;
         this._minimumSequenceNumber = sequenceNumber;
         this._services = services;
-        this.loadCore(sequenceNumber, version, header, services);
+        this.loadCore(sequenceNumber, version, header, headerOrigin, services);
         this.listenForUpdates();
     }
 
@@ -114,6 +120,7 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
         sequenceNum: number,
         version: ICommit,
         header: string,
+        headerOrigin: string,
         services: IDistributedObjectServices);
 
     /**

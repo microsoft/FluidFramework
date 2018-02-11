@@ -139,7 +139,7 @@ export class Cell extends map.CollaborativeMap implements ICell {
         return tree;
     }
 
-    protected loadContent(version: resources.ICommit, header: string) {
+    protected loadContent(version: resources.ICommit, header: string, headerOrigin: string) {
         this.data = header ? JSON.parse(Buffer.from(header, "base64").toString("utf-8")) : null;
     }
 

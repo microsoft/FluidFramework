@@ -21,7 +21,7 @@ export class MapExtension implements api.IExtension {
         header: string): IMap {
 
         const map = new CollaborativeMap(id, document, MapExtension.Type);
-        map.load(sequenceNumber, version, header, services);
+        map.load(sequenceNumber, version, header, headerOrigin, services);
 
         return map;
     }

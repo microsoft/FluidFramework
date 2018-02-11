@@ -21,7 +21,7 @@ export class CellExtension implements api.IExtension {
         header: string): ICell {
 
         const cell = new Cell(id, document);
-        cell.load(sequenceNumber, version, header, services);
+        cell.load(sequenceNumber, version, header, headerOrigin, services);
         return cell;
     }
 

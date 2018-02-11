@@ -17,7 +17,7 @@ export class StreamExtension implements api.IExtension {
         header: string): api.ICollaborativeObject {
 
         const stream = new Stream(document, id, sequenceNumber, services, version, header);
-        stream.load(sequenceNumber, version, header, services);
+        stream.load(sequenceNumber, version, header, headerOrigin, services);
 
         return stream;
     }

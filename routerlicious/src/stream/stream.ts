@@ -46,7 +46,7 @@ export class Stream extends CollaborativeMap implements IStream {
         this.inkSnapshot.apply(op);
     }
 
-    protected loadContent(version: resources.ICommit, header: string) {
+    protected loadContent(version: resources.ICommit, header: string, headerOrigin: string) {
         const data: ISnapshot = header
             ? JSON.parse(Buffer.from(header, "base64").toString("utf-8"))
             : emptySnapshot;

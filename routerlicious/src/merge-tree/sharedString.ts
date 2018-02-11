@@ -1,44 +1,14 @@
 import * as assert from "assert";
-import * as resources from "gitresources";
 import performanceNow = require("performance-now");
+import * as resources from "gitresources";
 import * as api from "../api-core";
 import { Deferred } from "../core-utils";
 import { CollaborativeMap } from "../map";
+import { CollaboritiveStringExtension } from "./extension";
 import * as MergeTree from "./mergeTree";
 import * as ops from "./ops";
 import * as Properties from "./properties";
 import * as Paparazzo from "./snapshot";
-
-export class CollaboritiveStringExtension implements api.IExtension {
-    public static Type = "https://graph.microsoft.com/types/mergeTree";
-
-    public type: string = CollaboritiveStringExtension.Type;
-
-    public load(
-        document: api.IDocument,
-        id: string,
-        sequenceNumber: number,
-        services: api.IDistributedObjectServices,
-        version: resources.ICommit,
-        headerOrigin: string,
-        header: string): api.ICollaborativeObject {
-
-        let collaborativeString = new SharedString(document, id, sequenceNumber, services);
-        collaborativeString.load(sequenceNumber, version, header, services);
-        // What do these mean??? true, headerOrigin);
-
-        return collaborativeString;
-    }
-
-    public create(document: api.IDocument, id: string, options?: Object): api.ICollaborativeObject {
-        let collaborativeString = new SharedString(document, id, 0);
-        collaborativeString.initializeLocal();
-        // This needs to be fixed up
-        // collaborativeString.load(0, null, false, document.id);
-
-        return collaborativeString;
-    }
-}
 
 function textsToSegments(texts: ops.IPropertyString[]) {
     let segments: MergeTree.Segment[] = [];
@@ -83,39 +53,6 @@ export class SharedString extends CollaborativeMap {
         this.client = new MergeTree.Client("", document.options);
     }
 
-    public async load2(sequenceNumber: number, header: string, collaborative: boolean, originBranch: string) {
-        let chunk: ops.MergeTreeChunk;
-
-        console.log(`Async load ${this.id} - ${performanceNow()}`);
-
-        if (header) {
-            chunk = Paparazzo.Snapshot.processChunk(header);
-            let segs = textsToSegments(chunk.segmentTexts);
-            this.client.mergeTree.reloadFromSegments(segs);
-            console.log(`Loading ${this.id} body - ${performanceNow()}`);
-            chunk = await Paparazzo.Snapshot.loadChunk(this.services, "body");
-            console.log(`Loaded ${this.id} body - ${performanceNow()}`);
-            for (let segSpec of chunk.segmentTexts) {
-                this.client.mergeTree.appendSegment(segSpec);
-            }
-        } else {
-            chunk = Paparazzo.Snapshot.EmptyChunk;
-        }
-
-        // This should happen if we have collab services
-        assert.equal(sequenceNumber, chunk.chunkSequenceNumber);
-        if (collaborative) {
-            console.log(`Start ${this.id} collab - ${performanceNow()}`);
-            // TODO currently only assumes two levels of branching
-            const branchId = originBranch === this.document.id ? 0 : 1;
-            this.client.startCollaboration(this.document.clientId, sequenceNumber, branchId);
-        }
-        console.log(`Apply ${this.id} pending - ${performanceNow()}`);
-        this.applyPending();
-        console.log(`Load ${this.id} finished - ${performanceNow()}`);
-        this.loadFinished(chunk);
-    }
-
     public insertMarker(
         pos: number,
         refType: ops.ReferenceType,
@@ -129,7 +66,7 @@ export class SharedString extends CollaborativeMap {
         };
 
         this.client.insertMarkerLocal(pos, refType, props);
-        this.submitLocalMessage(insertMessage);
+        this.submitIfAttached(insertMessage);
     }
 
     public insertText(text: string, pos: number, props?: Properties.PropertySet) {
@@ -141,7 +78,7 @@ export class SharedString extends CollaborativeMap {
         };
 
         this.client.insertTextLocal(text, pos, props);
-        this.submitLocalMessage(insertMessage);
+        this.submitIfAttached(insertMessage);
     }
 
     public removeText(start: number, end: number) {
@@ -152,7 +89,7 @@ export class SharedString extends CollaborativeMap {
         };
 
         this.client.removeSegmentLocal(start, end);
-        this.submitLocalMessage(removeMessage);
+        this.submitIfAttached(removeMessage);
     }
 
     public annotateRangeFromPast(
@@ -170,7 +107,7 @@ export class SharedString extends CollaborativeMap {
 
     public transaction(groupOp: ops.IMergeTreeGroupMsg) {
         this.client.localTransaction(groupOp);
-        this.submitLocalMessage(groupOp);
+        this.submitIfAttached(groupOp);
     }
 
     public annotateRange(props: Properties.PropertySet, start: number, end: number, op?: ops.ICombiningOp) {
@@ -185,7 +122,7 @@ export class SharedString extends CollaborativeMap {
             annotateMessage.combiningOp = op;
         }
         this.client.annotateSegmentLocal(props, start, end, op);
-        this.submitLocalMessage(annotateMessage);
+        this.submitIfAttached(annotateMessage);
     }
 
     public setLocalMinSeq(lmseq: number) {
@@ -222,6 +159,18 @@ export class SharedString extends CollaborativeMap {
         }
     }
 
+    protected loadContent(version: resources.ICommit, header: string, headerOrigin: string) {
+        this.initialize(this.sequenceNumber, header, true, headerOrigin).catch((error) => {
+            console.error(error);
+        });
+    }
+
+    protected initializeContent() {
+        this.initialize(0, null, false, this.id).catch((error) => {
+            console.error(error);
+        });
+    }
+
     protected snapshotContent(): api.ITree {
         this.client.mergeTree.commitGlobalMin();
         let snap = new Paparazzo.Snapshot(this.client.mergeTree);
@@ -249,6 +198,47 @@ export class SharedString extends CollaborativeMap {
 
     protected attachContent() {
         this.client.startCollaboration(this.document.clientId, 0);
+    }
+
+    private submitIfAttached(message: any) {
+        if (this.isLocal()) {
+            return;
+        }
+
+        this.submitLocalMessage(message);
+    }
+
+    private async initialize(sequenceNumber: number, header: string, collaborative: boolean, originBranch: string) {
+        let chunk: ops.MergeTreeChunk;
+
+        console.log(`Async load ${this.id} - ${performanceNow()}`);
+
+        if (header) {
+            chunk = Paparazzo.Snapshot.processChunk(header);
+            let segs = textsToSegments(chunk.segmentTexts);
+            this.client.mergeTree.reloadFromSegments(segs);
+            console.log(`Loading ${this.id} body - ${performanceNow()}`);
+            chunk = await Paparazzo.Snapshot.loadChunk(this.services, "body");
+            console.log(`Loaded ${this.id} body - ${performanceNow()}`);
+            for (let segSpec of chunk.segmentTexts) {
+                this.client.mergeTree.appendSegment(segSpec);
+            }
+        } else {
+            chunk = Paparazzo.Snapshot.EmptyChunk;
+        }
+
+        // This should happen if we have collab services
+        assert.equal(sequenceNumber, chunk.chunkSequenceNumber);
+        if (collaborative) {
+            console.log(`Start ${this.id} collab - ${performanceNow()}`);
+            // TODO currently only assumes two levels of branching
+            const branchId = originBranch === this.document.id ? 0 : 1;
+            this.client.startCollaboration(this.document.clientId, sequenceNumber, branchId);
+        }
+        console.log(`Apply ${this.id} pending - ${performanceNow()}`);
+        this.applyPending();
+        console.log(`Load ${this.id} finished - ${performanceNow()}`);
+        this.loadFinished(chunk);
     }
 
     private loadFinished(chunk: ops.MergeTreeChunk) {

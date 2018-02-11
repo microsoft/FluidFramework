@@ -168,11 +168,12 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
         sequenceNum: number,
         version: resources.ICommit,
         header: string,
+        headerOrigin: string,
         services: api.IDistributedObjectServices) {
 
         const data = header ? JSON.parse(Buffer.from(header, "base64").toString("utf-8")) : {};
         this.initializeView(data);
-        this.loadContent(version, header);
+        this.loadContent(version, header, headerOrigin);
     }
 
     protected initializeLocalCore() {
@@ -185,7 +186,7 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
         this.processMinSequenceNumberChangedContent(value);
     }
 
-    protected loadContent(version: resources.ICommit, header: string) {
+    protected loadContent(version: resources.ICommit, header: string, headerOrigin: string) {
         return;
     }
 
