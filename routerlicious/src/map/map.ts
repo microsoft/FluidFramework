@@ -7,6 +7,7 @@ import { MapExtension } from "./extension";
 import { MapView } from "./view";
 
 const snapshotFileName = "header";
+const contentPath = "content";
 
 /**
  * Copies all values from the provided MapView to the given Map
@@ -141,7 +142,12 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
             ],
         };
 
-        // TODO include the content
+        const contentSnapshot = this.snapshotContent();
+        tree.entries.push({
+            path: contentPath,
+            type: api.TreeEntry[api.TreeEntry.Tree],
+            value: contentSnapshot,
+        });
 
         return tree;
     }
@@ -166,16 +172,25 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
 
         const data = header ? JSON.parse(Buffer.from(header, "base64").toString("utf-8")) : {};
         this.initializeView(data);
+        this.loadContent(version, header);
     }
 
     protected initializeLocalCore() {
         this.initializeView({});
+        this.initializeContent();
     }
 
     protected processMinSequenceNumberChanged(value: number) {
         // TODO need our own concept of the zamboni here
+        this.processMinSequenceNumberChangedContent(value);
+    }
 
-        // TODO this needs to invoke the content
+    protected loadContent(version: resources.ICommit, header: string) {
+        return;
+    }
+
+    protected initializeContent() {
+        return;
     }
 
     protected processCore(message: api.ISequencedObjectMessage) {
@@ -232,7 +247,7 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
      * Processes a content message
      */
     protected processContent(message: api.ISequencedObjectMessage) {
-        throw new Error("Unknown operation");
+        return;
     }
 
     /**
@@ -246,7 +261,7 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
      * Notifies the content that the minimum sequence number has changed
      */
     protected processMinSequenceNumberChangedContent(value: number) {
-        // no-op
+        return;
     }
 
     private initializeView(data: any) {
