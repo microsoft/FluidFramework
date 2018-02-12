@@ -8,7 +8,6 @@ let play: boolean = false;
 const saveLineFrequency = 5;
 
 export interface IScribeMetrics {
-    histogram: utils.Histogram;
 
     // Average latency between when a message is sent and when it is ack'd by the server
     latencyAverage: number;
@@ -23,6 +22,9 @@ export interface IScribeMetrics {
     // The progress of typing and reciving ack for messages in the range [0,1]
     typingProgress: number;
     ackProgress: number;
+
+    time: number;
+    textLength: number;
 }
 
 interface IChartData {
@@ -190,7 +192,7 @@ async function typeFile(
     ss: MergeTree.SharedString,
     fileText: string,
     intervalTime: number,
-    callback: ScribeMetricsCallback): Promise<number> {
+    callback: ScribeMetricsCallback): Promise<IScribeMetrics> {
 
     // And also load a canvas document where we will place the metrics
     const metricsDoc = await api.load(`${doc.id}-metrics`);
@@ -218,7 +220,7 @@ async function typeFile(
 
     const startTime = Date.now();
 
-    return new Promise<number>((resolve, reject) => {
+    return new Promise<IScribeMetrics>((resolve, reject) => {
         let insertPosition = ss.client.getLength();
         let readPosition = 0;
         let lineNumber = 0;
@@ -230,11 +232,12 @@ async function typeFile(
         const metrics: IScribeMetrics = {
             ackProgress: undefined,
             ackRate: undefined,
-            histogram,
             latencyAverage: undefined,
             latencyMaximum: undefined,
             latencyMinimum: undefined,
             latencyStdDev: undefined,
+            textLength: fileText.length,
+            time: 0,
             typingProgress: undefined,
             typingRate: undefined,
         };
@@ -306,7 +309,8 @@ async function typeFile(
                 if (message.clientSequenceNumber >= fileText.length) {
                     const endTime = Date.now();
                     clearInterval(metricsInterval);
-                    resolve(endTime - startTime);
+                    metrics.time = endTime - startTime;
+                    resolve(metrics);
                 }
 
                 // Notify of change in metrics
@@ -423,13 +427,13 @@ export async function create(id: string): Promise<void> {
 export async function type(
     intervalTime: number,
     text: string,
-    callback: ScribeMetricsCallback): Promise<number> {
+    callback: ScribeMetricsCallback): Promise<IScribeMetrics> {
 
     // Type the file.
-    return new Promise<number>((resolve, reject) => {
+    return new Promise<IScribeMetrics>((resolve, reject) => {
         typeFile(document, sharedString, text, intervalTime, callback).then(
-            (totalTime) => {
-                resolve(totalTime);
+            (metrics) => {
+                resolve(metrics);
             },
             (error) => {
                 reject(error);

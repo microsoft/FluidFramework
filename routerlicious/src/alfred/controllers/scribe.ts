@@ -170,7 +170,7 @@ export function initialize(config: any, id: string, template: string) {
             typeP.then(
                 (time) => {
                     document.getElementById("total-time").innerText =
-                        `Total time: ${(time / 1000).toFixed(2)} seconds`;
+                        `Total time: ${(time.time / 1000).toFixed(2)} seconds`;
                     console.log("Done typing file");
                 },
                 (error) => {

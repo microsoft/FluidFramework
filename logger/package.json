@@ -1,0 +1,22 @@
+{
+  "name": "logger",
+  "version": "1.0.0",
+  "description": "An express app built to log events from routerlicious to Aria",
+  "main": "src/ariaLogger.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc",
+    "build:full": "tsc && tslint 'src/**/*'",
+    "start": "node dist/ariaLogger.js",
+    "start:full": "npm run build:full && npm run start"
+  },
+  "dependencies": {
+    "aria-nodejs-sdk": "https://praguenpm.blob.core.windows.net/packages/aria-nodejs-sdk-1.1.1.tgz"
+  },
+  "devDependencies": {
+    "@types/node": "^8.0.47",
+    "docker": "^1.0.0",
+    "tslint": "^5.9.1",
+    "typescript": "^2.6.2"
+  }
+}
