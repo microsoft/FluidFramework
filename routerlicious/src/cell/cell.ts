@@ -139,12 +139,12 @@ export class Cell extends map.CollaborativeMap implements ICell {
         return tree;
     }
 
-    protected loadContent(
+    protected async loadContent(
         version: resources.ICommit,
-        header: string,
         headerOrigin: string,
-        services: api.IObjectStorageService) {
+        storage: api.IObjectStorageService): Promise<void> {
 
+        const header = await storage.read(snapshotFileName);
         this.data = header ? JSON.parse(Buffer.from(header, "base64").toString("utf-8")) : null;
     }
 

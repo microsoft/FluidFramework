@@ -11,17 +11,16 @@ export class MapExtension implements api.IExtension {
 
     public type: string = MapExtension.Type;
 
-    public load(
+    public async load(
         document: api.IDocument,
         id: string,
         sequenceNumber: number,
         services: api.IDistributedObjectServices,
         version: resources.ICommit,
-        headerOrigin: string,
-        header: string): IMap {
+        headerOrigin: string): Promise<IMap> {
 
         const map = new CollaborativeMap(id, document, MapExtension.Type);
-        map.load(sequenceNumber, version, header, headerOrigin, services);
+        await map.load(sequenceNumber, version, headerOrigin, services);
 
         return map;
     }

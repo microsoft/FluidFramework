@@ -159,13 +159,13 @@ export class SharedString extends CollaborativeMap {
         }
     }
 
-    protected loadContent(
+    protected async loadContent(
         version: resources.ICommit,
-        header: string,
         headerOrigin: string,
-        services: api.IObjectStorageService) {
+        storage: api.IObjectStorageService): Promise<void> {
 
-        this.initialize(this.sequenceNumber, header, true, headerOrigin, services).catch((error) => {
+        const header = await storage.read("header");
+        this.initialize(this.sequenceNumber, header, true, headerOrigin, storage).catch((error) => {
             console.error(error);
         });
     }

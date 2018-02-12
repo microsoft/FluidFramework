@@ -173,17 +173,18 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
         return Promise.resolve(this.view);
     }
 
-    protected loadCore(
+    protected async loadCore(
         version: resources.ICommit,
-        header: string,
         headerOrigin: string,
         storage: api.IObjectStorageService) {
+
+        const header = await storage.read(snapshotFileName);
 
         const data = header ? JSON.parse(Buffer.from(header, "base64").toString("utf-8")) : {};
         this.initializeView(data);
 
         const contentStorage = new ContentObjectStorage(storage);
-        this.loadContent(version, header, headerOrigin, contentStorage);
+        await this.loadContent(version, headerOrigin, contentStorage);
     }
 
     protected initializeLocalCore() {
@@ -196,11 +197,10 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
         this.processMinSequenceNumberChangedContent(value);
     }
 
-    protected loadContent(
+    protected async loadContent(
         version: resources.ICommit,
-        header: string,
         headerOrigin: string,
-        services: api.IObjectStorageService) {
+        services: api.IObjectStorageService): Promise<void> {
         return;
     }
 

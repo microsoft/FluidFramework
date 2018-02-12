@@ -48,17 +48,16 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
      * A collaborative object, after construction, can either be loaded in the case that it is already part of
      * a collaborative document. Or later attached if it is being newly added.
      */
-    public load(
+    public async load(
         sequenceNumber: number,
         version: ICommit,
-        header: string,
         headerOrigin: string,
-        services: IDistributedObjectServices) {
+        services: IDistributedObjectServices): Promise<void> {
 
         this._sequenceNumber = sequenceNumber;
         this._minimumSequenceNumber = sequenceNumber;
         this.services = services;
-        this.loadCore(version, header, headerOrigin, services.objectStorage);
+        await this.loadCore(version, headerOrigin, services.objectStorage);
         this.listenForUpdates();
     }
 
@@ -115,9 +114,8 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
      */
     protected abstract loadCore(
         version: ICommit,
-        header: string,
         headerOrigin: string,
-        services: IObjectStorageService);
+        services: IObjectStorageService): Promise<void>;
 
     /**
      * Allows the distributed data type to perform custom local loading
@@ -172,6 +170,7 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
      * Causes the collaborative object to begin listening for remote messages
      */
     private listenForUpdates() {
+        // Do I want to wrap this within an async queue???
         this.services.deltaConnection.on("op", (message) => {
             this.processRemoteMessage(message);
         });

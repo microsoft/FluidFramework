@@ -128,11 +128,12 @@ export class Document {
         const returnValue = new Document(document, registry, service, options);
 
         // Load in distributed objects stored within the document
-        for (const distributedObject of document.distributedObjects) {
+        const objectsLoaded = document.distributedObjects.map(async (distributedObject) => {
             const services = returnValue.getObjectServices(distributedObject.id);
             services.deltaConnection.setBaseMapping(distributedObject.sequenceNumber, document.minimumSequenceNumber);
-            returnValue.loadInternal(distributedObject, services, document.snapshotOriginBranch);
-        }
+            await returnValue.loadInternal(distributedObject, services, document.snapshotOriginBranch);
+        });
+        await Promise.all(objectsLoaded);
 
         // Apply pending deltas - first the list of transformed messages between the msn and sequence number
         // and then any pending deltas that have happened since that sequenceNumber
@@ -491,16 +492,19 @@ export class Document {
      * Loads in a distributed object and stores it in the internal Document object map
      * @param distributedObject The distributed object to load
      */
-    private loadInternal(distributedObject: IDistributedObject, services: IAttachedServices, originBranch: string) {
+    private async loadInternal(
+        distributedObject: IDistributedObject,
+        services: IAttachedServices,
+        originBranch: string): Promise<void> {
+
         const extension = this.registry.getExtension(distributedObject.type);
-        const value = extension.load(
+        const value = await extension.load(
             this,
             distributedObject.id,
             distributedObject.sequenceNumber,
             services,
             this.document.version,
-            originBranch,
-            distributedObject.header);
+            originBranch);
 
         this.upsertDistributedObject(value, services);
     }

@@ -11,17 +11,16 @@ export class CellExtension implements api.IExtension {
 
     public type: string = CellExtension.Type;
 
-    public load(
+    public async load(
         document: api.IDocument,
         id: string,
         sequenceNumber: number,
         services: api.IDistributedObjectServices,
         version: resources.ICommit,
-        headerOrigin: string,
-        header: string): ICell {
+        headerOrigin: string): Promise<ICell> {
 
         const cell = new Cell(id, document);
-        cell.load(sequenceNumber, version, header, headerOrigin, services);
+        await cell.load(sequenceNumber, version, headerOrigin, services);
         return cell;
     }
 

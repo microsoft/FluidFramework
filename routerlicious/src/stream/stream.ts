@@ -25,10 +25,7 @@ export class Stream extends CollaborativeMap implements IStream {
     constructor(
         document: api.IDocument,
         id: string,
-        sequenceNumber: number,
-        services?: api.IDistributedObjectServices,
-        version?: resources.ICommit,
-        header?: string) {
+        sequenceNumber: number) {
 
         super(id, document, StreamExtension.Type);
     }
@@ -46,12 +43,12 @@ export class Stream extends CollaborativeMap implements IStream {
         this.inkSnapshot.apply(op);
     }
 
-    protected loadContent(
+    protected async loadContent(
         version: resources.ICommit,
-        header: string,
         headerOrigin: string,
-        services: api.IObjectStorageService) {
+        storage: api.IObjectStorageService): Promise<void> {
 
+        const header = await storage.read(snapshotFileName);
         const data: ISnapshot = header
             ? JSON.parse(Buffer.from(header, "base64").toString("utf-8"))
             : emptySnapshot;

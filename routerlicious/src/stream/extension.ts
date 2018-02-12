@@ -7,17 +7,16 @@ export class StreamExtension implements api.IExtension {
 
     public type = StreamExtension.Type;
 
-    public load(
+    public async load(
         document: api.IDocument,
         id: string,
         sequenceNumber: number,
         services: api.IDistributedObjectServices,
         version: resources.ICommit,
-        headerOrigin: string,
-        header: string): api.ICollaborativeObject {
+        headerOrigin: string): Promise<api.ICollaborativeObject> {
 
-        const stream = new Stream(document, id, sequenceNumber, services, version, header);
-        stream.load(sequenceNumber, version, header, headerOrigin, services);
+        const stream = new Stream(document, id, sequenceNumber);
+        await stream.load(sequenceNumber, version, headerOrigin, services);
 
         return stream;
     }
