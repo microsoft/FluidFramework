@@ -10,6 +10,8 @@
     "start": "node dist/ariaLogger.js",
     "start:full": "npm run build:full && npm run start"
   },
+  "author": "Microsoft",
+  "repository": "microsoft/prague",
   "dependencies": {
     "aria-nodejs-sdk": "https://praguenpm.blob.core.windows.net/packages/aria-nodejs-sdk-1.1.1.tgz"
   },
