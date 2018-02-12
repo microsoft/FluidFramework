@@ -118,7 +118,7 @@ function makeBookmarks(client: MergeTree.Client, bookmarkCount: number) {
         }
         let baseSegment = <MergeTree.BaseSegment>segoff.segment;
         let lref = new MergeTree.LocalReference(baseSegment, segoff.offset, refType);
-        baseSegment.addLocalRef(lref);
+        client.mergeTree.addLocalReference(baseSegment, lref);
         bookmarks.push(lref);
     }
     return bookmarks;

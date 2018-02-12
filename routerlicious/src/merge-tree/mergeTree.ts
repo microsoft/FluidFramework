@@ -24,6 +24,7 @@ export interface ReferencePosition {
     hasRangeLabel(label: string);
     getTileLabels();
     getRangeLabels();
+    matchEnd(refPos: ReferencePosition): boolean;
 }
 
 export type RangeStackMap = Properties.MapLike<Collections.Stack<ReferencePosition>>;
@@ -57,6 +58,7 @@ export interface IHierBlock extends IMergeBlock {
 
 export class LocalReference implements ReferencePosition {
     properties: Properties.PropertySet;
+    cachedEnd?: LocalReference;
 
     constructor(public segment: BaseSegment, public offset = 0,
         public refType = ops.ReferenceType.Simple) {
@@ -68,6 +70,10 @@ export class LocalReference implements ReferencePosition {
         } else {
             return -1;
         }
+    }
+
+    matchEnd(refPos: ReferencePosition) {
+        return (this.cachedEnd) && (refPos === this.cachedEnd);
     }
 
     getId() {
@@ -269,7 +275,8 @@ function applyRangeReference(stack: Collections.Stack<ReferencePosition>, delta:
     else {
         // assume delta is end reference
         let top = stack.top();
-        if (top && (top.refType & ops.ReferenceType.RangeBegin)) {
+        // TODO: match end with begin
+        if (top && (top.refType & ops.ReferenceType.RangeBegin) && top.matchEnd(delta)) {
             stack.pop();
         }
         else {
@@ -590,6 +597,12 @@ export class Marker extends BaseSegment implements ReferencePosition {
         let b = Marker.make(this.refType, this.properties, this.seq, this.clientId);
         this.cloneInto(b);
         return b;
+    }
+
+    matchEnd(refPos: ReferencePosition) {
+        let id = "end-" + this.getId();
+        let eid = refPos.getId();
+        return (id === eid);
     }
 
     getSegment() {
@@ -2385,7 +2398,7 @@ export class TestServer extends Client {
     listeners: Client[]; // listeners do not generate edits
     clientSeqNumbers: Collections.Heap<ClientSeq>;
     upstreamMap: Collections.RedBlackTree<number, number>;
-    constructor(initText: string,  options?: Properties.PropertySet) {
+    constructor(initText: string, options?: Properties.PropertySet) {
         super(initText, options);
     }
 
@@ -4091,6 +4104,10 @@ export class MergeTree {
                     }
                 }
             }
+            if (afterSeg) {
+                this.blockUpdatePathLengths(afterSeg.parent, TreeMaintainanceSequenceNumber,
+                    LocalClientId);
+            }
         }
         if (this.collabWindow.collaborating && (seq != UnassignedSequenceNumber)) {
             if (MergeTree.options.zamboniSegments) {
@@ -4166,6 +4183,20 @@ export class MergeTree {
         if (this.collabWindow.collaborating) {
             node.partialLengths = PartialSequenceLengths.combine(this, node, this.collabWindow, recur);
         }
+    }
+
+    removeLocalReference(segment: BaseSegment, lref: LocalReference) {
+        let removedRef = segment.removeLocalRef(lref);
+        if (removedRef) {
+            this.blockUpdatePathLengths(segment.parent, TreeMaintainanceSequenceNumber,
+                LocalClientId);
+        }
+    }
+
+    addLocalReference(segment: BaseSegment, lref: LocalReference) {
+        segment.addLocalRef(lref);
+        this.blockUpdatePathLengths(segment.parent, TreeMaintainanceSequenceNumber,
+            LocalClientId);
     }
 
     blockUpdate(block: IMergeBlock) {

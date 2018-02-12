@@ -36,7 +36,7 @@ export interface IMergeTreeDelta {
  */
 export interface IRelativePosition {
     /**
-     * String identifier specifying a segment or indirect reference to segment.
+     * String identifier specifying a segment or reference collection.
      */
     id: string;
     /**

@@ -2673,10 +2673,11 @@ export class FlowView extends ui.Component {
                 localPresenceInfo.cursor.presenceInfoUpdated = true;
             }
             let baseSegment = <SharedString.BaseSegment>presentPresence.localRef.segment;
-            baseSegment.removeLocalRef(presentPresence.localRef);
+            this.client.mergeTree.removeLocalReference(baseSegment, presentPresence.localRef);
             tempXformPos = presentPresence.xformPos;
         }
-        localPresenceInfo.localRef.segment.addLocalRef(localPresenceInfo.localRef);
+        this.client.mergeTree.addLocalReference(localPresenceInfo.localRef.segment,
+            localPresenceInfo.localRef);
         this.presenceVector[localPresenceInfo.clientId] = localPresenceInfo;
         if (localPresenceInfo.xformPos !== tempXformPos) {
             this.presenceQueueRender(localPresenceInfo);
