@@ -1,4 +1,5 @@
 import * as assert from "assert";
+import * as queue from "async/queue";
 import { EventEmitter } from "events";
 import * as resources from "gitresources";
 import * as uuid from "uuid/v4";
@@ -196,12 +197,22 @@ export class Document {
 
         this.lastMinSequenceNumber = this.document.minimumSequenceNumber;
         if (this.document.deltaConnection !== null) {
+            const q = queue((message: ISequencedDocumentMessage, callback) => {
+                this.processRemoteMessage(message).then(
+                    () => {
+                        callback();
+                    },
+                    (error) => {
+                        callback(error);
+                    });
+            }, 1);
+
             this.deltaManager = new DeltaManager(
                 this.document.documentId,
                 this.document.minimumSequenceNumber,
                 this.document.deltaStorageService,
                 this.document.deltaConnection);
-            this.deltaManager.onDelta((message) => this.processRemoteMessage(message));
+            this.deltaManager.onDelta((message) => q.push(message));
         }
     }
 
@@ -539,7 +550,7 @@ export class Document {
         }
     }
 
-    private processRemoteMessage(message: ISequencedDocumentMessage) {
+    private async processRemoteMessage(message: ISequencedDocumentMessage): Promise<void> {
         const minSequenceNumberChanged = this.lastMinSequenceNumber !== message.minimumSequenceNumber;
         this.lastMinSequenceNumber = message.minimumSequenceNumber;
 
@@ -584,7 +595,7 @@ export class Document {
                 };
 
                 const origin = message.origin ? message.origin.id : this.id;
-                this.loadInternal(distributedObject, services, origin);
+                await this.loadInternal(distributedObject, services, origin);
             } else {
                 this.distributedObjects[attachMessage.id].connection.setBaseMapping(0, message.sequenceNumber);
             }

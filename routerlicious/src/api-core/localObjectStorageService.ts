@@ -18,7 +18,7 @@ export class LocalObjectStorageService implements IObjectStorageService {
     }
 
     private readSyncInternal(path: string, tree: storage.ITree): string {
-        for (const entry of this.tree.entries) {
+        for (const entry of tree.entries) {
             switch (entry.type) {
                 case storage.TreeEntry[storage.TreeEntry.Blob]:
                     if (path === entry.path) {
@@ -30,7 +30,7 @@ export class LocalObjectStorageService implements IObjectStorageService {
                     break;
 
                 case storage.TreeEntry[storage.TreeEntry.Tree]:
-                    if (entry.path.indexOf(path) === 0) {
+                    if (path.indexOf(entry.path) === 0) {
                         return this.readSyncInternal(path.substr(entry.path.length + 1), entry.value as storage.ITree);
                     }
                     break;
