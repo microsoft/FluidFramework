@@ -235,9 +235,11 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
     }
 
     protected processCore(message: api.ISequencedObjectMessage) {
+        let handled = false;
         if (message.type === api.OperationType && message.clientId !== this.document.clientId) {
             const op: IMapOperation = message.contents;
 
+            handled = true;
             switch (op.type) {
                 case "clear":
                     this.view.clearCore();
@@ -265,8 +267,12 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
                     break;
                 default:
                     // default the operation to the content
-                    this.processContent(message);
+                    handled = false;
             }
+        }
+
+        if (!handled) {
+            this.processContent(message);
         }
 
         this.emit("op", message);
