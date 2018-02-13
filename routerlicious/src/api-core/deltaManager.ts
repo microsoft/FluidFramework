@@ -1,15 +1,8 @@
 import * as assert from "assert";
 import * as queue from "async/queue";
-import { EventEmitter } from "events";
-import { ThroughputCounter } from "../core-utils";
 import { debug } from "./debug";
 import * as protocol from "./protocol";
 import * as storage from "./storage";
-
-// NOTE This class manages receiving deltas from the routerlicious service.
-// There are the push notification versions as well the ones we're storing in a Mongo database.
-// We might want to decrypt at the endpoint. But it might be easiest to start from here since it's all
-// consolidated together.
 
 /**
  * Helper class that manages incoming delta messages. This class ensures that collaborative objects receive delta
@@ -32,7 +25,9 @@ export class DeltaManager {
 
     private heartbeatTimer: any;
 
-    private emitter = new EventEmitter();
+    private lastSequenceNumber: number;
+
+    private q: any;
 
     public get referenceSequenceNumber(): number {
         return this.baseSequenceNumber;
@@ -43,34 +38,46 @@ export class DeltaManager {
     }
 
     constructor(
-        private documentId: string,
         private baseSequenceNumber: number,
+        pendingMessages: protocol.ISequencedDocumentMessage[],
         private deltaStorage: storage.IDocumentDeltaStorageService,
-        private deltaConnection: storage.IDocumentDeltaConnection) {
+        private deltaConnection: storage.IDocumentDeltaConnection,
+        private handler: (message: protocol.ISequencedDocumentMessage) => Promise<void>) {
 
         // The MSN starts at the base the manager is initialized to
         this.minSequenceNumber = this.baseSequenceNumber;
+        this.lastSequenceNumber = this.baseSequenceNumber;
 
-        const throughputCounter = new ThroughputCounter(debug, `${this.documentId} `);
-        const q = queue<protocol.ISequencedDocumentMessage, void>((op, callback) => {
+        this.q = queue<protocol.ISequencedDocumentMessage, void>((op, callback) => {
             // Handle the op
-            this.handleOp(op);
-            callback();
-            throughputCounter.acknolwedge();
+            this.processMessage(op).then(
+                () => {
+                    callback();
+                },
+                (error) => {
+                    callback(error);
+                });
         }, 1);
 
+        // We start the queue as paused and rely on the client to start it
+        this.q.pause();
+
         // When the queue is drained reset our timer
-        q.drain = () => {
-            q.resume();
+        this.q.drain = () => {
+            this.q.resume();
         };
 
-        // listen for specific events
+        // Prime the DeltaManager with the initial set of provided messages
+        this.enqueueMessages(pendingMessages);
+
+        // listen for new messages
         this.deltaConnection.on("op", (messages: protocol.ISequencedDocumentMessage[]) => {
-            for (const message of messages) {
-                throughputCounter.produce();
-                q.push(message);
-            }
+            this.enqueueMessages(messages);
         });
+    }
+
+    public start() {
+        this.q.resume();
     }
 
     /**
@@ -112,17 +119,34 @@ export class DeltaManager {
         this.deltaConnection.submit(message);
     }
 
-    public onDelta(listener: (message: protocol.ISequencedDocumentMessage) => void) {
-        this.emitter.addListener("op", listener);
+    private enqueueMessages(messages: protocol.ISequencedDocumentMessage[]) {
+        for (const message of messages) {
+            // Check that the messages are arriving in the expected order
+            if (message.sequenceNumber !== this.lastSequenceNumber + 1) {
+                this.handleOutOfOrderMessage(message);
+            } else {
+                this.lastSequenceNumber = message.sequenceNumber;
+                this.q.push(message);
+            }
+        }
     }
 
-    public handleOp(message: protocol.ISequencedDocumentMessage) {
-        // Incoming sequence numbers should be one higher than the previous ones seen. If not we have missed the
-        // stream and need to query the server for the missing deltas.
-        if (message.sequenceNumber !== this.baseSequenceNumber + 1) {
-            this.handleOutOfOrderMessage(message);
-        } else {
-            this.emit(message);
+    private async processMessage(message: protocol.ISequencedDocumentMessage): Promise<void> {
+        assert.equal(message.sequenceNumber, this.baseSequenceNumber + 1);
+
+        // Watch the minimum sequence number and be ready to update as needed
+        this.minSequenceNumber = message.minimumSequenceNumber;
+        this.baseSequenceNumber = message.sequenceNumber;
+
+        // TODO handle error cases, NACK, etc...
+        await this.handler(message);
+
+        // We will queue a message to update our reference sequence number upon receiving a server operation. This
+        // allows the server to know our true reference sequence number and be able to correctly update the minimum
+        // sequence number (MSN). We don't ackowledge other message types similarly (like a min sequence number update)
+        // to avoid ackowledgement cycles (i.e. ack the MSN update, which updates the MSN, then ack the update, etc...).
+        if (message.type !== protocol.NoOp) {
+            this.updateSequenceNumber();
         }
     }
 
@@ -130,14 +154,14 @@ export class DeltaManager {
      * Handles an out of order message retrieved from the server
      */
     private handleOutOfOrderMessage(message: protocol.ISequencedDocumentMessage) {
-        if (message.sequenceNumber <= this.baseSequenceNumber) {
-            debug(`Received duplicate message ${this.documentId}@${message.sequenceNumber}`);
+        if (message.sequenceNumber <= this.lastSequenceNumber) {
+            debug(`Received duplicate message ${message.sequenceNumber}`);
             return;
         }
 
-        debug(`Received out of order message ${message.sequenceNumber} ${this.baseSequenceNumber}`);
+        debug(`Received out of order message ${message.sequenceNumber} ${this.lastSequenceNumber}`);
         this.pending.push(message);
-        this.fetchMissingDeltas(this.baseSequenceNumber, message.sequenceNumber);
+        this.fetchMissingDeltas(this.lastSequenceNumber, message.sequenceNumber);
     }
 
     /**
@@ -165,23 +189,14 @@ export class DeltaManager {
 
     private catchUp(messages: protocol.ISequencedDocumentMessage[]) {
         // Apply current operations
-        for (const message of messages) {
-            // Ignore sequence numbers prior to the base. This can happen at startup when we fetch all missing
-            // deltas while also listening for updates
-            if (message.sequenceNumber > this.baseSequenceNumber) {
-                assert.equal(message.sequenceNumber, this.baseSequenceNumber + 1);
-                this.emit(message);
-            }
-        }
+        this.enqueueMessages(messages);
 
         // Then sort pending operations and attempt to apply them again.
         // This could be optimized to stop handling messages once we realize we need to fetch mising values.
         // But for simplicity, and because catching up should be rare, we just process all of them.
         const pendingSorted = this.pending.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
         this.pending = [];
-        for (const pendingMessage of pendingSorted) {
-            this.handleOp(pendingMessage);
-        }
+        this.enqueueMessages(pendingSorted);
     }
 
     /**
@@ -232,88 +247,4 @@ export class DeltaManager {
         this.updateHasBeenRequested = false;
         this.updateSequenceNumberTimer = undefined;
     }
-
-    /**
-     * Revs the base sequence number based on the message and notifices the listener of the new message
-     */
-    private async emit(message: protocol.ISequencedDocumentMessage) {
-        let emitMessage = message;
-
-        // Watch the minimum sequence number and be ready to update as needed
-        this.minSequenceNumber = message.minimumSequenceNumber;
-        this.baseSequenceNumber = message.sequenceNumber;
-
-        this.emitter.emit("op", emitMessage);
-
-        // We will queue a message to update our reference sequence number upon receiving a server operation. This
-        // allows the server to know our true reference sequence number and be able to correctly update the minimum
-        // sequence number (MSN). We don't ackowledge other message types similarly (like a min sequence number update)
-        // to avoid ackowledgement cycles (i.e. ack the MSN update, which updates the MSN, then ack the update, etc...).
-        if (message.type !== protocol.NoOp) {
-            this.updateSequenceNumber();
-        }
-    }
 }
-
-// TODO I should put in some kind of plugin system for the below. We can use it to enable/disable encryption as well
-// as control the message flow for debugging purposes, etc...
-
-// import * as openpgp from "openpgp";
-// submit() {
-    // const encryptedContents = this.deltaConnection.encrypted ? await this.encryptOp(contents) : "";
-
-// emit() {
-// if (message.encrypted) {
-//     // Decrypt the contents of the message.
-//     let decryptedContents = await this.decryptOp(message.encryptedContents);
-
-//     // Verify integrity of decryption.
-//     assert(JSON.stringify(decryptedContents) === JSON.stringify(message.contents));
-
-//     emitMessage.encryptedContents = decryptedContents;
-// }
-
-// Expose the below as a plugin
-// // Assign symmetric keys. NOTE: Move encryption entirely to DeltaConnection?
-// this.privateKey = this.deltaConnection.privateKey;
-// this.publicKey = this.deltaConnection.publicKey;
-
-// // Private key for signing deltas related to this manager's document
-// private privateKey;
-
-// // Public key for decrypting deltas related to this manager's document
-// private publicKey;
-
-// // NOTE: perhaps unnecessary?
-// private secretPassphrase = "";
-
-// private async encryptOp(op: any): Promise<string> {
-//     // Encode op as JSON string.
-//     const opAsString = JSON.stringify(op);
-
-//     const encryptionOptions = {
-//         data: opAsString,
-//         publicKeys: openpgp.key.readArmored(this.publicKey).keys,
-//     };
-
-//     return openpgp.encrypt(encryptionOptions).then((ciphertext) => {
-//         return ciphertext.data;
-//     });
-// }
-
-// private async decryptOp(encryptedOp: string): Promise<any> {
-//     /**
-//      * First, decrypt the private RSA key using the secret passphrase. Then, decrypt the message using the key.
-//      */
-//     let decryptedRSAPrivateKey = openpgp.key.readArmored(this.privateKey).keys[0];
-//     decryptedRSAPrivateKey.decrypt(this.secretPassphrase);
-
-//     const decryptionOptions = {
-//         message: openpgp.message.readArmored(encryptedOp),
-//         privateKey: decryptedRSAPrivateKey,
-//     };
-
-//     return openpgp.decrypt(decryptionOptions).then((plaintext) => {
-//         return JSON.parse(plaintext.data);
-//     });
-// }

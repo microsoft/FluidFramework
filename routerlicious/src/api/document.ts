@@ -1,5 +1,4 @@
 import * as assert from "assert";
-import * as queue from "async/queue";
 import { EventEmitter } from "events";
 import * as resources from "gitresources";
 import * as uuid from "uuid/v4";
@@ -100,6 +99,19 @@ function waitForRoot(document: Document): Promise<void> {
     return new Promise<void>((resolve, reject) => pollRoot(document, resolve, reject));
 }
 
+function setParentBranch(messages: ISequencedDocumentMessage[], parentBranch?: string) {
+    for (const message of messages) {
+        // Append branch information when transforming for the case of messages stashed with the snapshot
+        if (parentBranch) {
+            message.origin = {
+                id: parentBranch,
+                minimumSequenceNumber: message.minimumSequenceNumber,
+                sequenceNumber: message.sequenceNumber,
+            };
+        }
+    }
+}
+
 interface IAttachedServices {
     deltaConnection: IDeltaConnection;
     objectStorage: IObjectStorageService;
@@ -136,15 +148,8 @@ export class Document {
         });
         await Promise.all(objectsLoaded);
 
-        // Apply pending deltas - first the list of transformed messages between the msn and sequence number
-        // and then any pending deltas that have happened since that sequenceNumber
-        returnValue.processPendingMessages(
-            document.transformedMessages,
-            document.snapshotOriginBranch !== id ? document.snapshotOriginBranch : null);
-        assert.equal(returnValue.deltaManager.referenceSequenceNumber, document.sequenceNumber);
-
-        // These messages were not contained within the snapshot
-        returnValue.processPendingMessages(document.pendingDeltas);
+        // Begin processing deltas
+        returnValue.deltaManager.start();
 
         // If it's a new document we create the root map object - otherwise we wait for it to become available
         if (!document.existing) {
@@ -197,22 +202,19 @@ export class Document {
 
         this.lastMinSequenceNumber = this.document.minimumSequenceNumber;
         if (this.document.deltaConnection !== null) {
-            const q = queue((message: ISequencedDocumentMessage, callback) => {
-                this.processRemoteMessage(message).then(
-                    () => {
-                        callback();
-                    },
-                    (error) => {
-                        callback(error);
-                    });
-            }, 1);
+            if (document.snapshotOriginBranch !== this.id) {
+                setParentBranch(document.transformedMessages, document.snapshotOriginBranch);
+            }
+            const pendingMessages = document.transformedMessages.concat(document.pendingDeltas);
 
             this.deltaManager = new DeltaManager(
-                this.document.documentId,
                 this.document.minimumSequenceNumber,
+                pendingMessages,
                 this.document.deltaStorageService,
-                this.document.deltaConnection);
-            this.deltaManager.onDelta((message) => q.push(message));
+                this.document.deltaConnection,
+                (message) => {
+                    return this.processRemoteMessage(message);
+                });
         }
     }
 
@@ -473,21 +475,6 @@ export class Document {
 
         message.minimumSequenceNumber = sequenceNumber;
         return message;
-    }
-
-    private processPendingMessages(messages: ISequencedDocumentMessage[], parentBranch?: string) {
-        for (const message of messages) {
-            // Append branch information when transforming for the case of messages stashed with the snapshot
-            if (parentBranch) {
-                message.origin = {
-                    id: parentBranch,
-                    minimumSequenceNumber: message.minimumSequenceNumber,
-                    sequenceNumber: message.sequenceNumber,
-                };
-            }
-
-            this.deltaManager.handleOp(message);
-        }
     }
 
     private submitMessage(type: string, contents: any): Promise<void> {

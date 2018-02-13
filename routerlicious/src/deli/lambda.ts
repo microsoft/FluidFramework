@@ -1,3 +1,4 @@
+import * as assert from "assert";
 import * as _ from "lodash";
 import * as winston from "winston";
 import * as agent from "../agent";
@@ -117,6 +118,18 @@ export class DeliLambda implements IPartitionLambda {
         // Update and retrieve the minimum sequence number
         let message = objectMessage as core.IRawOperationMessage;
 
+        if (message.operation.type !== api.Integrate
+            && message.clientId
+            && message.operation.referenceSequenceNumber < this.minimumSequenceNumber) {
+
+            // TODO support nacking of clients
+            // Do not assign a ticket to a message outside the MSN. We will need to NACK clients in this case.
+            // tslint:disable-next-line
+            winston.error(`${message.clientId} sent packet ${message.operation.referenceSequenceNumber} less than MSN of ${this.minimumSequenceNumber}`);
+
+            return;
+        }
+
         // Increment and grab the next sequence number
         const sequenceNumber = this.revSequenceNumber();
 
@@ -171,15 +184,8 @@ export class DeliLambda implements IPartitionLambda {
             this.upsertClient(branchClientId, transformedMinSeqNumber, message.timestamp, false);
         } else {
             if (message.clientId) {
-                if (message.operation.referenceSequenceNumber < this.minimumSequenceNumber) {
-                    // TODO support nacking of clients
-                    // Do not assign a ticket to a message outside the MSN. We will need to NACK clients in this case.
-                    // tslint:disable-next-line
-                    winston.error(`${message.clientId} sent packet ${message.operation.referenceSequenceNumber} less than MSN of ${this.minimumSequenceNumber}`);
-
-                    // By returning we have over counted - need to adjust or nto give out in this case
-                    return;
-                }
+                // We checked earlier for the below case
+                assert(message.operation.referenceSequenceNumber >= this.minimumSequenceNumber);
 
                 this.upsertClient(
                     message.clientId,
@@ -192,8 +198,6 @@ export class DeliLambda implements IPartitionLambda {
                     this.removeClient(message.operation.contents);
                 } else if (message.operation.type === api.Fork) {
                     winston.info(`Fork ${message.documentId} -> ${message.operation.contents.name}`);
-                } else if (message.operation.type === api.Integrate) {
-                    // Need to provide the mapping from the branch space to this one
                 }
             }
         }
