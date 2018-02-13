@@ -16,7 +16,7 @@ export class CollaboritiveStringExtension implements api.IExtension {
         headerOrigin: string): Promise<api.ICollaborativeObject> {
 
         let collaborativeString = new SharedString(document, id, sequenceNumber, services);
-        collaborativeString.load(sequenceNumber, version, headerOrigin, services);
+        await collaborativeString.load(sequenceNumber, version, headerOrigin, services);
         return collaborativeString;
     }
 

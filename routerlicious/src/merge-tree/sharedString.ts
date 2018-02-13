@@ -129,14 +129,6 @@ export class SharedString extends CollaborativeMap {
         this.client.mergeTree.updateLocalMinSeq(lmseq);
     }
 
-    public transform(message: api.IObjectMessage, toSequenceNumber: number): api.IObjectMessage {
-        if (message.contents) {
-            this.client.transform(<api.ISequencedObjectMessage> message, toSequenceNumber);
-        }
-        message.referenceSequenceNumber = toSequenceNumber;
-        return message;
-    }
-
     public createLocalReference(pos: number, slideOnRemove = false) {
         let segoff = this.client.mergeTree.getContainingSegment(pos,
             this.client.getCurrentSeq(), this.client.getClientId());
@@ -157,6 +149,14 @@ export class SharedString extends CollaborativeMap {
         } else {
             return -1;
         }
+    }
+
+    protected transformContent(message: api.IObjectMessage, toSequenceNumber: number): api.IObjectMessage {
+        if (message.contents) {
+            this.client.transform(<api.ISequencedObjectMessage> message, toSequenceNumber);
+        }
+        message.referenceSequenceNumber = toSequenceNumber;
+        return message;
     }
 
     protected async loadContent(

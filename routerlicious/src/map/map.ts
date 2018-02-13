@@ -164,9 +164,11 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
     }
 
     public transform(message: api.IObjectMessage, sequenceNumber: number): api.IObjectMessage {
+        let handled = false;
         if (message.type === api.OperationType) {
             const op: IMapOperation = message.contents;
 
+            handled = true;
             switch (op.type) {
                 case "clear":
                     break;
@@ -185,8 +187,12 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
                 case "deleteSet":
                     break;
                 default:
-                    return this.transformContent(message, sequenceNumber);
+                    handled = false;
             }
+        }
+
+        if (!handled) {
+            message = this.transformContent(message, sequenceNumber);
         }
 
         return message;
