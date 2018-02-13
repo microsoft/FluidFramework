@@ -152,17 +152,43 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
         };
 
         const contentSnapshot = this.snapshotContent();
-        tree.entries.push({
-            path: contentPath,
-            type: api.TreeEntry[api.TreeEntry.Tree],
-            value: contentSnapshot,
-        });
+        if (contentSnapshot) {
+            tree.entries.push({
+                path: contentPath,
+                type: api.TreeEntry[api.TreeEntry.Tree],
+                value: contentSnapshot,
+            });
+        }
 
         return tree;
     }
 
     public transform(message: api.IObjectMessage, sequenceNumber: number): api.IObjectMessage {
-        // TODO this needs to defer to derived classes
+        if (message.type === api.OperationType) {
+            const op: IMapOperation = message.contents;
+
+            switch (op.type) {
+                case "clear":
+                    break;
+                case "delete":
+                    break;
+                case "set":
+                    break;
+                case "initCounter":
+                    break;
+                case "incrementCounter":
+                    break;
+                case "initSet":
+                    break;
+                case "insertSet":
+                    break;
+                case "deleteSet":
+                    break;
+                default:
+                    return this.transformContent(message, sequenceNumber);
+            }
+        }
+
         return message;
     }
 
@@ -209,7 +235,6 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
     }
 
     protected processCore(message: api.ISequencedObjectMessage) {
-        // TODO are the below checks what we want???
         if (message.type === api.OperationType && message.clientId !== this.document.clientId) {
             const op: IMapOperation = message.contents;
 
@@ -277,6 +302,13 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
      */
     protected processMinSequenceNumberChangedContent(value: number) {
         return;
+    }
+
+    /**
+     * Allows derived classes to transform the given message
+     */
+    protected transformContent(message: api.IObjectMessage, sequenceNumber: number): api.IObjectMessage {
+        return message;
     }
 
     private initializeView(data: any) {
