@@ -102,7 +102,7 @@ export class Cell extends map.CollaborativeMap implements ICell {
         };
 
         this.setCore(op.value);
-        this.submitLocalMessage(op);
+        this.submitIfAttached(op);
     }
 
     // Deletes the value from the cell.
@@ -112,7 +112,7 @@ export class Cell extends map.CollaborativeMap implements ICell {
         };
 
         this.deleteCore();
-        this.submitLocalMessage(op);
+        this.submitIfAttached(op);
     }
 
     /**
@@ -182,6 +182,14 @@ export class Cell extends map.CollaborativeMap implements ICell {
                     throw new Error("Unknown operation");
             }
         }
+    }
+
+    private submitIfAttached(message) {
+        if (this.isLocal()) {
+            return;
+        }
+
+        this.submitLocalMessage(message);
     }
 
     private setCore(value: ICellValue) {
