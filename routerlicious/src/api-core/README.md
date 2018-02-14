@@ -17,3 +17,12 @@ General questions
 
 * Do we need some form of discovery on the underlying data type? Probably not since this is placed within the JS from
   the MUI itself
+
+
+
+Collaborative object
+* Base class for all object types
+* Construction puts it in a default, un-initialized state
+* Caller must then either load it - which brings it in from an existing collab object. Or initializeLocal which
+* makes it a local object that is not collaborative. A local object can be later attached which will make it
+* collaborative.

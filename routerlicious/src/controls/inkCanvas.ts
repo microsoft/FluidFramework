@@ -36,7 +36,7 @@ export class InkCanvas extends ui.Component {
     private lastLayerRenderOp: { [key: string]: number } = {};
 
     // constructor
-    constructor(element: HTMLDivElement, private model: types.IInk) {
+    constructor(element: HTMLDivElement, private model: types.IStream) {
         super(element);
 
         this.model.on("op", (op) => {

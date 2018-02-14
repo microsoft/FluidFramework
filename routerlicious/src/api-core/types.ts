@@ -37,17 +37,12 @@ export interface ICollaborativeObject {
     /**
      * Attaches an event listener for the given event
      */
-    on(event: string, listener: Function): this;
+    on(event: string | symbol, listener: (...args: any[]) => void): this;
 
     /**
      * Removes the specified listenever
      */
-    removeListener(event: string, listener: Function): this;
-
-    /**
-     * Removes all listeners, or those of the specified event name
-     */
-    removeAllListeners(event?: string): this;
+    removeListener(event: string | symbol, listener: (...args: any[]) => void): this;
 
     /**
      * Attaches the given collaborative object to its containing document

@@ -30,8 +30,7 @@ export interface IExtension {
         sequenceNumber: number,
         services: IDistributedObjectServices,
         version: resources.ICommit,
-        headerOrigin: string,
-        header: string): types.ICollaborativeObject;
+        headerOrigin: string): Promise<types.ICollaborativeObject>;
 
     /**
      * Creates a local version of the distributive object.

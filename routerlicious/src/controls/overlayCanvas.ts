@@ -313,7 +313,7 @@ export abstract class Layer {
  * Used to render ink
  */
 export class InkLayer extends Layer {
-    constructor(size: ui.ISize, private model: types.IInk) {
+    constructor(size: ui.ISize, private model: types.IStream) {
         super(size);
 
         // Listen for updates and re-render
@@ -469,7 +469,7 @@ export class OverlayCanvas extends ui.Component {
             // Create a new layer if doesn't already exist
             if (!this.activeLayer) {
                 // Create a new layer at the position of the pointer down
-                const model = this.document.createInk();
+                const model = this.document.createStream();
                 this.activeLayer = new InkLayer({ width: 0, height: 0 }, model);
                 this.activeLayer.setPosition(translatedPoint);
                 this.addLayer(this.activeLayer);

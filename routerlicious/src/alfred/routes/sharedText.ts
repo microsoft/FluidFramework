@@ -49,6 +49,7 @@ export function create(
      */
     router.get("/:tenantId?/:id/commit", (request, response, next) => {
         const id = getFullId(request.params.tenantId, request.params.id);
+        const disableCache = "disableCache" in request.query;
 
         const workerConfig = getConfig(config.get("worker"), tenantManager, request.params.tenantId);
         const targetVersionSha = request.query.version;
@@ -67,6 +68,7 @@ export function create(
                     "sharedText",
                     {
                         config: workerConfig,
+                        disableCache,
                         id,
                         loadPartial: true,
                         options: JSON.stringify(options),
