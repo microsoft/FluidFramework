@@ -34,7 +34,7 @@ export class DeliLambda implements IPartitionLambda {
     // Client sequence number mapping
     private clientNodeMap: { [key: string]: utils.IHeapNode<IClientSequenceNumber> } = {};
     private clientSeqNumbers = new utils.Heap<IClientSequenceNumber>(SequenceNumberComparer);
-    private minimumSequenceNumber;
+    private minimumSequenceNumber = -1;
     private window: RangeTracker;
     private branchMap: RangeTracker;
     private checkpointContext: CheckpointContext;
@@ -185,7 +185,9 @@ export class DeliLambda implements IPartitionLambda {
         } else {
             if (message.clientId) {
                 // We checked earlier for the below case
-                assert(message.operation.referenceSequenceNumber >= this.minimumSequenceNumber);
+                assert(
+                    message.operation.referenceSequenceNumber >= this.minimumSequenceNumber,
+                    `${message.operation.referenceSequenceNumber} >= ${this.minimumSequenceNumber}`);
 
                 this.upsertClient(
                     message.clientId,
