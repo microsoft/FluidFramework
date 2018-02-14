@@ -159,7 +159,7 @@ export class DocumentService implements api.IDocumentService {
 
         const document = new DocumentResource(
             id,
-            connection.user,
+            connection ? connection.user : null,
             deltaConnection.clientId,
             connection ? connection.existing : true,
             version,

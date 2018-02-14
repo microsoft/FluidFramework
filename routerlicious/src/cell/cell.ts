@@ -122,7 +122,7 @@ export class Cell extends map.CollaborativeMap implements ICell {
         return this.data === null ? true : false;
     }
 
-    protected snapshotCore(): api.ITree {
+    protected snapshotContent(): api.ITree {
         const tree: api.ITree = {
             entries: [
                 {

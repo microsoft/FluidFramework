@@ -1,5 +1,6 @@
 import * as assert from "assert";
 import * as queue from "async/queue";
+import { Deferred } from "../core-utils";
 import { debug } from "./debug";
 import * as protocol from "./protocol";
 import * as storage from "./storage";
@@ -25,7 +26,15 @@ export class DeltaManager {
 
     private heartbeatTimer: any;
 
-    private lastSequenceNumber: number;
+    // There are three numbers we track
+    // * baseSequenceNumber is the last processed sequence number
+    // * lastQueuedSequenceNumber is the last queued sequence number
+    // * largestSequenceNumber is the largest seen sequence number
+    private lastQueuedSequenceNumber: number;
+    private largestSequenceNumber: number;
+
+    private pauseDeferred: Deferred<void>;
+    private pauseAtOffset: number;
 
     private q: any;
 
@@ -46,12 +55,19 @@ export class DeltaManager {
 
         // The MSN starts at the base the manager is initialized to
         this.minSequenceNumber = this.baseSequenceNumber;
-        this.lastSequenceNumber = this.baseSequenceNumber;
+        this.lastQueuedSequenceNumber = this.baseSequenceNumber;
+        this.largestSequenceNumber = this.baseSequenceNumber;
 
         this.q = queue<protocol.ISequencedDocumentMessage, void>((op, callback) => {
             // Handle the op
             this.processMessage(op).then(
                 () => {
+                    if (this.pauseDeferred && this.pauseAtOffset === this.baseSequenceNumber) {
+                        this.pauseDeferred.resolve();
+                        this.pauseDeferred = undefined;
+                        this.pauseAtOffset = undefined;
+                        this.q.pause();
+                    }
                     callback();
                 },
                 (error) => {
@@ -59,13 +75,13 @@ export class DeltaManager {
                 });
         }, 1);
 
+        this.q.error = (error) => {
+            debug(`Queue processing error`, error);
+            this.q.pause();
+        };
+
         // We start the queue as paused and rely on the client to start it
         this.q.pause();
-
-        // When the queue is drained reset our timer
-        this.q.drain = () => {
-            this.q.resume();
-        };
 
         // Prime the DeltaManager with the initial set of provided messages
         this.enqueueMessages(pendingMessages);
@@ -74,6 +90,23 @@ export class DeltaManager {
         this.deltaConnection.on("op", (messages: protocol.ISequencedDocumentMessage[]) => {
             this.enqueueMessages(messages);
         });
+    }
+
+    /**
+     * Flushes all pending tasks and returns a promise for when they are completed. The queue is marked as paused
+     * upon return.
+     */
+    public flushAndPause(): Promise<void> {
+        // If the queue is caught up we can simply pause it and return. Otherwise we need to indicate when in the
+        // stream to perform the pause
+        if (this.largestSequenceNumber === this.baseSequenceNumber) {
+            this.q.pause();
+            return;
+        } else {
+            this.pauseAtOffset = this.largestSequenceNumber;
+            this.pauseDeferred = new Deferred<void>();
+            return this.pauseDeferred.promise;
+        }
     }
 
     public start() {
@@ -121,11 +154,12 @@ export class DeltaManager {
 
     private enqueueMessages(messages: protocol.ISequencedDocumentMessage[]) {
         for (const message of messages) {
+            this.largestSequenceNumber = Math.max(this.largestSequenceNumber, message.sequenceNumber);
             // Check that the messages are arriving in the expected order
-            if (message.sequenceNumber !== this.lastSequenceNumber + 1) {
+            if (message.sequenceNumber !== this.lastQueuedSequenceNumber + 1) {
                 this.handleOutOfOrderMessage(message);
             } else {
-                this.lastSequenceNumber = message.sequenceNumber;
+                this.lastQueuedSequenceNumber = message.sequenceNumber;
                 this.q.push(message);
             }
         }
@@ -154,14 +188,14 @@ export class DeltaManager {
      * Handles an out of order message retrieved from the server
      */
     private handleOutOfOrderMessage(message: protocol.ISequencedDocumentMessage) {
-        if (message.sequenceNumber <= this.lastSequenceNumber) {
+        if (message.sequenceNumber <= this.lastQueuedSequenceNumber) {
             debug(`Received duplicate message ${message.sequenceNumber}`);
             return;
         }
 
-        debug(`Received out of order message ${message.sequenceNumber} ${this.lastSequenceNumber}`);
+        debug(`Received out of order message ${message.sequenceNumber} ${this.lastQueuedSequenceNumber}`);
         this.pending.push(message);
-        this.fetchMissingDeltas(this.lastSequenceNumber, message.sequenceNumber);
+        this.fetchMissingDeltas(this.lastQueuedSequenceNumber, message.sequenceNumber);
     }
 
     /**

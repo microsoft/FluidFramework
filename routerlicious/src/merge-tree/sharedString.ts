@@ -273,6 +273,5 @@ export class SharedString extends CollaborativeMap {
     private applyMessage(message: api.ISequencedObjectMessage) {
         this.emit("pre-op", message);
         this.client.applyMsg(message);
-        this.emit("op", message);
     }
 }

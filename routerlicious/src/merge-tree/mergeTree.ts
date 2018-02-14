@@ -3082,7 +3082,7 @@ export class MergeTree {
 
     tardisPositionFromClient(pos: number, fromSeq: number, toSeq: number, fromClientId: number,
         toClientId = NonCollabClient) {
-        if (fromSeq < toSeq) {
+        if (fromSeq < toSeq && pos < this.getLength(fromSeq, fromClientId)) {
             if ((toSeq <= this.collabWindow.currentSeq) && (fromSeq >= this.collabWindow.minSeq)) {
                 let segoff = this.getContainingSegment(pos, fromSeq, fromClientId);
                 let toPos = this.getOffset(segoff.segment, toSeq, toClientId);

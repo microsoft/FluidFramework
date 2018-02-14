@@ -356,6 +356,22 @@ export class Document {
      * Called to snapshot the given document
      */
     public async snapshot(tagMessage: string = undefined): Promise<void> {
+        await this.deltaManager.flushAndPause();
+        const root = this.snapshotCore();
+        this.deltaManager.start();
+
+        const message = `Commit @${this.deltaManager.referenceSequenceNumber}${getOrDefault(tagMessage, "")}`;
+        await this.document.documentStorageService.write(root, message);
+    }
+
+    /**
+     * Returns the user id connected to the document.
+     */
+    public getUser(): any {
+        return this.document.user;
+    }
+
+    private snapshotCore(): ITree {
         const entries: ITreeEntry[] = [];
 
         // TODO: support for branch snapshots. For now simply no-op when a branch snapshot is requested
@@ -387,7 +403,6 @@ export class Document {
             const object = this.distributedObjects[objectId];
 
             if (this.shouldSnapshot(object)) {
-                debug(`Snapshotting ${object.object.id}`);
                 const snapshot = object.object.snapshot();
 
                 // Add in the object attributes to the returned tree
@@ -433,15 +448,7 @@ export class Document {
             entries,
         };
 
-        const message = `Commit @${this.deltaManager.referenceSequenceNumber}${getOrDefault(tagMessage, "")}`;
-        await this.document.documentStorageService.write(root, message);
-    }
-
-    /**
-     * Returns the user id connected to the document.
-     */
-    public getUser(): any {
-        return this.document.user;
+        return root;
     }
 
     /**
