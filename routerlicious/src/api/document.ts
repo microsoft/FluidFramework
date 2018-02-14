@@ -456,8 +456,6 @@ export class Document {
      * objects whose time of attach is outside the collaboration window
      */
     private shouldSnapshot(object: IDistributedObjectState) {
-        // tslint:disable-next-line
-        debug(`${object.object.id} ${object.object.isLocal()} - ${object.connection.baseMappingIsSet()} - ${object.connection.baseSequenceNumber} >= ${this.deltaManager.minimumSequenceNumber}`);
         return !object.object.isLocal() &&
             object.connection.baseMappingIsSet() &&
             object.connection.baseSequenceNumber === this.deltaManager.minimumSequenceNumber;
