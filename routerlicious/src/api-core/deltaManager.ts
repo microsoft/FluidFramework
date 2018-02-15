@@ -6,6 +6,22 @@ import * as protocol from "./protocol";
 import * as storage from "./storage";
 
 /**
+ * Interface used to define a strategy for handling incoming delta messages
+ */
+export interface IDeltaHandlerStrategy {
+    /**
+     * Preparess data necessary to process the message. The return value of the method will be passed to the process
+     * function.
+     */
+    prepare: (message: protocol.ISequencedDocumentMessage) => Promise<any>;
+
+    /**
+     * Processes the message. The return value from prepare is passed in the context parameter.
+     */
+    process: (message: protocol.ISequencedDocumentMessage, context: any) => void;
+}
+
+/**
  * Helper class that manages incoming delta messages. This class ensures that collaborative objects receive delta
  * messages in order regardless of possible network conditions or timings causing out of order delivery.
  */
@@ -51,7 +67,7 @@ export class DeltaManager {
         pendingMessages: protocol.ISequencedDocumentMessage[],
         private deltaStorage: storage.IDocumentDeltaStorageService,
         private deltaConnection: storage.IDocumentDeltaConnection,
-        private handler: (message: protocol.ISequencedDocumentMessage) => Promise<void>) {
+        private handler: IDeltaHandlerStrategy) {
 
         // The MSN starts at the base the manager is initialized to
         this.minSequenceNumber = this.baseSequenceNumber;
@@ -168,12 +184,14 @@ export class DeltaManager {
     private async processMessage(message: protocol.ISequencedDocumentMessage): Promise<void> {
         assert.equal(message.sequenceNumber, this.baseSequenceNumber + 1);
 
+        // TODO handle error cases, NACK, etc...
+        const context = await this.handler.prepare(message);
+
         // Watch the minimum sequence number and be ready to update as needed
         this.minSequenceNumber = message.minimumSequenceNumber;
         this.baseSequenceNumber = message.sequenceNumber;
 
-        // TODO handle error cases, NACK, etc...
-        await this.handler(message);
+        this.handler.process(message, context);
 
         // We will queue a message to update our reference sequence number upon receiving a server operation. This
         // allows the server to know our true reference sequence number and be able to correctly update the minimum

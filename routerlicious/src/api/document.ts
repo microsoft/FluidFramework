@@ -112,7 +112,7 @@ function setParentBranch(messages: ISequencedDocumentMessage[], parentBranch?: s
     }
 }
 
-interface IAttachedServices {
+export interface IAttachedServices {
     deltaConnection: IDeltaConnection;
     objectStorage: IObjectStorageService;
 }
@@ -138,30 +138,31 @@ export class Document {
             catch((err) => {
                 return Promise.reject(err);
             });
-        const returnValue = new Document(document, registry, service, options);
+        const result = new Document(document, registry, service, options);
 
         // Load in distributed objects stored within the document
         const objectsLoaded = document.distributedObjects.map(async (distributedObject) => {
-            const services = returnValue.getObjectServices(distributedObject.id);
+            const services = result.getObjectServices(distributedObject.id);
             services.deltaConnection.setBaseMapping(distributedObject.sequenceNumber, document.minimumSequenceNumber);
-            await returnValue.loadInternal(distributedObject, services, document.snapshotOriginBranch);
+            const value = await result.loadInternal(distributedObject, services, document.snapshotOriginBranch);
+            result.upsertDistributedObject(value, services);
         });
         await Promise.all(objectsLoaded);
 
         // Begin processing deltas
-        returnValue.deltaManager.start();
+        result.deltaManager.start();
 
         // If it's a new document we create the root map object - otherwise we wait for it to become available
         if (!document.existing) {
-            returnValue.createAttached("root", mapExtension.MapExtension.Type);
+            result.createAttached("root", mapExtension.MapExtension.Type);
         } else {
-            await waitForRoot(returnValue);
+            await waitForRoot(result);
         }
 
         debug(`Document loaded ${id} - ${performanceNow()}`);
 
         // And return the new object
-        return returnValue;
+        return result;
     }
 
     // Map from the object ID to the collaborative object for it. If the object is not yet attached its service
@@ -212,8 +213,13 @@ export class Document {
                 pendingMessages,
                 this.document.deltaStorageService,
                 this.document.deltaConnection,
-                (message) => {
-                    return this.processRemoteMessage(message);
+                {
+                    prepare: async (message) => {
+                        return this.prepareRemoteMessage(message);
+                    },
+                    process: (message, context) => {
+                        this.processRemoteMessage(message, context);
+                    },
                 });
         }
     }
@@ -371,6 +377,21 @@ export class Document {
         return this.document.user;
     }
 
+    public upsertDistributedObject(object: ICollaborativeObject, services: IAttachedServices) {
+        if (!(object.id in this.distributedObjects)) {
+            this.distributedObjects[object.id] = {
+                connection: services ? services.deltaConnection : null,
+                object,
+                storage: services ? services.objectStorage : null,
+            };
+        } else {
+            const entry = this.distributedObjects[object.id];
+            assert.equal(entry.object, object);
+            entry.connection = services.deltaConnection;
+            entry.storage = services.objectStorage;
+        }
+    }
+
     private snapshotCore(): ITree {
         const entries: ITreeEntry[] = [];
 
@@ -495,13 +516,13 @@ export class Document {
      * Loads in a distributed object and stores it in the internal Document object map
      * @param distributedObject The distributed object to load
      */
-    private async loadInternal(
+    private loadInternal(
         distributedObject: IDistributedObject,
         services: IAttachedServices,
-        originBranch: string): Promise<void> {
+        originBranch: string): Promise<ICollaborativeObject> {
 
         const extension = this.registry.getExtension(distributedObject.type);
-        const value = await extension.load(
+        const value = extension.load(
             this,
             distributedObject.id,
             distributedObject.sequenceNumber,
@@ -509,7 +530,7 @@ export class Document {
             this.document.version,
             originBranch);
 
-        this.upsertDistributedObject(value, services);
+        return value;
     }
 
     private getObjectServices(id: string): IAttachedServices {
@@ -527,22 +548,44 @@ export class Document {
         return new ObjectStorageService(tree, this.document.documentStorageService);
     }
 
-    private upsertDistributedObject(object: ICollaborativeObject, services: IAttachedServices) {
-        if (!(object.id in this.distributedObjects)) {
-            this.distributedObjects[object.id] = {
-                connection: services ? services.deltaConnection : null,
-                object,
-                storage: services ? services.objectStorage : null,
-            };
-        } else {
-            const entry = this.distributedObjects[object.id];
-            assert.equal(entry.object, object);
-            entry.connection = services.deltaConnection;
-            entry.storage = services.objectStorage;
+    private async prepareRemoteMessage(message): Promise<any> {
+        if (message.type !== AttachObject || message.clientId === this.document.clientId) {
+            return;
         }
+
+        const attachMessage = message.contents as IAttachMessage;
+
+        // create storage service that wraps the attach data
+        const localStorage = new LocalObjectStorageService(attachMessage.snapshot);
+        const header = localStorage.readSync("header");
+
+        const connection = new DeltaConnection(
+            attachMessage.id,
+            this);
+        connection.setBaseMapping(0, message.sequenceNumber);
+
+        const distributedObject: IDistributedObject = {
+            header,
+            id: attachMessage.id,
+            sequenceNumber: 0,
+            type: attachMessage.type,
+        };
+
+        const services = {
+            deltaConnection: connection,
+            objectStorage: localStorage,
+        };
+
+        const origin = message.origin ? message.origin.id : this.id;
+        const value = await this.loadInternal(distributedObject, services, origin);
+
+        return {
+            services,
+            value,
+        };
     }
 
-    private async processRemoteMessage(message: ISequencedDocumentMessage): Promise<void> {
+    private processRemoteMessage(message: ISequencedDocumentMessage, context: any) {
         const minSequenceNumberChanged = this.lastMinSequenceNumber !== message.minimumSequenceNumber;
         this.lastMinSequenceNumber = message.minimumSequenceNumber;
 
@@ -565,29 +608,7 @@ export class Document {
             // If a non-local operation then go and create the object - otherwise mark it as officially
             // attached.
             if (message.clientId !== this.document.clientId) {
-                // create storage service that wraps the attach data
-                const localStorage = new LocalObjectStorageService(attachMessage.snapshot);
-                const header = localStorage.readSync("header");
-
-                const connection = new DeltaConnection(
-                    attachMessage.id,
-                    this);
-                connection.setBaseMapping(0, message.sequenceNumber);
-
-                const distributedObject: IDistributedObject = {
-                    header,
-                    id: attachMessage.id,
-                    sequenceNumber: 0,
-                    type: attachMessage.type,
-                };
-
-                const services = {
-                    deltaConnection: connection,
-                    objectStorage: localStorage,
-                };
-
-                const origin = message.origin ? message.origin.id : this.id;
-                await this.loadInternal(distributedObject, services, origin);
+                this.upsertDistributedObject(context.value as ICollaborativeObject, context.services);
             } else {
                 this.distributedObjects[attachMessage.id].connection.setBaseMapping(0, message.sequenceNumber);
             }
