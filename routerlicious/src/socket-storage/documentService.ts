@@ -79,7 +79,9 @@ export class DocumentService implements api.IDocumentService {
         private gitManager: GitManager) {
 
         debug(`Creating document service ${performanceNow()}`);
-        this.socket = io(url, { transports: ["websocket"] });
+        this.socket = url.startsWith("https://") ?
+            io(url, { path: "/alfred/socket.io", transports: ["websocket"] }) :
+            io(url, { transports: ["websocket"] });
     }
 
     public async connect(
