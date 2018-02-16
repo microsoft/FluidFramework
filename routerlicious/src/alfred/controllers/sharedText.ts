@@ -98,7 +98,7 @@ async function loadFull(
         root.set("ink", collabDoc.createMap());
 
         if (pageInk) {
-            root.set("pageInk", collabDoc.createInk());
+            root.set("pageInk", collabDoc.createStream());
         }
     }
 
@@ -125,7 +125,7 @@ async function loadFull(
         sharedString,
         inkPlane,
         image,
-        root.get("pageInk") as types.IInk,
+        root.get("pageInk") as types.IStream,
         options);
     theFlow = container.flowView;
     theFlow.addCommentString(commentString);
@@ -193,7 +193,7 @@ async function loadCommit(
         sharedString,
         inkPlane,
         image,
-        root.get("pageInk") as types.IInk,
+        root.get("pageInk") as types.IStream,
         options);
     theFlow = container.flowView;
     host.attach(container);

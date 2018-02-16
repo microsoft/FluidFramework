@@ -13,8 +13,8 @@ export { utils };
 import * as types from "../data-types";
 export { types };
 
-import * as ink from "../ink";
-export { ink };
+import * as stream from "../stream";
+export { stream };
 
 import * as map from "../map";
 export { map };

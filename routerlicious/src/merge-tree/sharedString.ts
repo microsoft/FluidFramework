@@ -1,40 +1,14 @@
 import * as assert from "assert";
-import * as resources from "gitresources";
 import performanceNow = require("performance-now");
+import * as resources from "gitresources";
 import * as api from "../api-core";
 import { Deferred } from "../core-utils";
+import { CollaborativeMap } from "../map";
+import { CollaboritiveStringExtension } from "./extension";
 import * as MergeTree from "./mergeTree";
 import * as ops from "./ops";
 import * as Properties from "./properties";
 import * as Paparazzo from "./snapshot";
-
-export class CollaboritiveStringExtension implements api.IExtension {
-    public static Type = "https://graph.microsoft.com/types/mergeTree";
-
-    public type: string = CollaboritiveStringExtension.Type;
-
-    public load(
-        document: api.IDocument,
-        id: string,
-        sequenceNumber: number,
-        services: api.IDistributedObjectServices,
-        version: resources.ICommit,
-        headerOrigin: string,
-        header: string): api.ICollaborativeObject {
-
-        let collaborativeString = new SharedString(document, id, sequenceNumber, services);
-        collaborativeString.load(sequenceNumber, header, true, headerOrigin);
-
-        return collaborativeString;
-    }
-
-    public create(document: api.IDocument, id: string, options?: Object): api.ICollaborativeObject {
-        let collaborativeString = new SharedString(document, id, 0);
-        collaborativeString.load(0, null, false, document.id);
-
-        return collaborativeString;
-    }
-}
 
 function textsToSegments(texts: ops.IPropertyString[]) {
     let segments: MergeTree.Segment[] = [];
@@ -57,7 +31,7 @@ function textsToSegments(texts: ops.IPropertyString[]) {
     return segments;
 }
 
-export class SharedString extends api.CollaborativeObject {
+export class SharedString extends CollaborativeMap {
     public client: MergeTree.Client;
     private isLoaded = false;
     private pendingMinSequenceNumber: number = 0;
@@ -74,41 +48,9 @@ export class SharedString extends api.CollaborativeObject {
         public id: string,
         sequenceNumber: number,
         services?: api.IDistributedObjectServices) {
-        super(document, id, CollaboritiveStringExtension.Type, sequenceNumber, services);
+
+        super(id, document, CollaboritiveStringExtension.Type);
         this.client = new MergeTree.Client("", document.options);
-    }
-
-    public async load(sequenceNumber: number, header: string, collaborative: boolean, originBranch: string) {
-        let chunk: ops.MergeTreeChunk;
-
-        console.log(`Async load ${this.id} - ${performanceNow()}`);
-
-        if (header) {
-            chunk = Paparazzo.Snapshot.processChunk(header);
-            let segs = textsToSegments(chunk.segmentTexts);
-            this.client.mergeTree.reloadFromSegments(segs);
-            console.log(`Loading ${this.id} body - ${performanceNow()}`);
-            chunk = await Paparazzo.Snapshot.loadChunk(this.services, "body");
-            console.log(`Loaded ${this.id} body - ${performanceNow()}`);
-            for (let segSpec of chunk.segmentTexts) {
-                this.client.mergeTree.appendSegment(segSpec);
-            }
-        } else {
-            chunk = Paparazzo.Snapshot.EmptyChunk;
-        }
-
-        // This should happen if we have collab services
-        assert.equal(sequenceNumber, chunk.chunkSequenceNumber);
-        if (collaborative) {
-            console.log(`Start ${this.id} collab - ${performanceNow()}`);
-            // TODO currently only assumes two levels of branching
-            const branchId = originBranch === this.document.id ? 0 : 1;
-            this.client.startCollaboration(this.document.clientId, sequenceNumber, branchId);
-        }
-        console.log(`Apply ${this.id} pending - ${performanceNow()}`);
-        this.applyPending();
-        console.log(`Load ${this.id} finished - ${performanceNow()}`);
-        this.loadFinished(chunk);
     }
 
     public insertMarker(
@@ -124,7 +66,7 @@ export class SharedString extends api.CollaborativeObject {
         };
 
         this.client.insertMarkerLocal(pos, refType, props);
-        this.submitLocalOperation(insertMessage);
+        this.submitIfAttached(insertMessage);
     }
 
     public insertText(text: string, pos: number, props?: Properties.PropertySet) {
@@ -136,7 +78,7 @@ export class SharedString extends api.CollaborativeObject {
         };
 
         this.client.insertTextLocal(text, pos, props);
-        this.submitLocalOperation(insertMessage);
+        this.submitIfAttached(insertMessage);
     }
 
     public removeText(start: number, end: number) {
@@ -147,7 +89,7 @@ export class SharedString extends api.CollaborativeObject {
         };
 
         this.client.removeSegmentLocal(start, end);
-        this.submitLocalOperation(removeMessage);
+        this.submitIfAttached(removeMessage);
     }
 
     public annotateRangeFromPast(
@@ -165,7 +107,7 @@ export class SharedString extends api.CollaborativeObject {
 
     public transaction(groupOp: ops.IMergeTreeGroupMsg) {
         this.client.localTransaction(groupOp);
-        this.submitLocalOperation(groupOp);
+        this.submitIfAttached(groupOp);
     }
 
     public annotateRange(props: Properties.PropertySet, start: number, end: number, op?: ops.ICombiningOp) {
@@ -180,26 +122,11 @@ export class SharedString extends api.CollaborativeObject {
             annotateMessage.combiningOp = op;
         }
         this.client.annotateSegmentLocal(props, start, end, op);
-        this.submitLocalOperation(annotateMessage);
+        this.submitIfAttached(annotateMessage);
     }
 
     public setLocalMinSeq(lmseq: number) {
         this.client.mergeTree.updateLocalMinSeq(lmseq);
-    }
-
-    public snapshot(): api.ITree {
-        this.client.mergeTree.commitGlobalMin();
-        let snap = new Paparazzo.Snapshot(this.client.mergeTree);
-        snap.extractSync();
-        return snap.emit();
-    }
-
-    public transform(message: api.IObjectMessage, toSequenceNumber: number): api.IObjectMessage {
-        if (message.contents) {
-            this.client.transform(<api.ISequencedObjectMessage> message, toSequenceNumber);
-        }
-        message.referenceSequenceNumber = toSequenceNumber;
-        return message;
     }
 
     public createLocalReference(pos: number, slideOnRemove = false) {
@@ -224,7 +151,39 @@ export class SharedString extends api.CollaborativeObject {
         }
     }
 
-    protected processCore(message: api.ISequencedObjectMessage) {
+    protected transformContent(message: api.IObjectMessage, toSequenceNumber: number): api.IObjectMessage {
+        if (message.contents) {
+            this.client.transform(<api.ISequencedObjectMessage> message, toSequenceNumber);
+        }
+        message.referenceSequenceNumber = toSequenceNumber;
+        return message;
+    }
+
+    protected async loadContent(
+        version: resources.ICommit,
+        headerOrigin: string,
+        storage: api.IObjectStorageService): Promise<void> {
+
+        const header = await storage.read("header");
+        this.initialize(this.sequenceNumber, header, true, headerOrigin, storage).catch((error) => {
+            console.error(error);
+        });
+    }
+
+    protected initializeContent() {
+        this.initialize(0, null, false, this.id, null).catch((error) => {
+            console.error(error);
+        });
+    }
+
+    protected snapshotContent(): api.ITree {
+        this.client.mergeTree.commitGlobalMin();
+        let snap = new Paparazzo.Snapshot(this.client.mergeTree);
+        snap.extractSync();
+        return snap.emit();
+    }
+
+    protected processContent(message: api.ISequencedObjectMessage) {
         if (!this.isLoaded) {
             this.client.enqueueMsg(message);
             return;
@@ -233,7 +192,7 @@ export class SharedString extends api.CollaborativeObject {
         this.applyMessage(message);
     }
 
-    protected processMinSequenceNumberChanged(value: number) {
+    protected processMinSequenceNumberChangedContent(value: number) {
         // Apply directly once loaded - otherwise track so we can update later
         if (this.isLoaded) {
             this.client.updateMinSeq(value);
@@ -242,14 +201,61 @@ export class SharedString extends api.CollaborativeObject {
         }
     }
 
-    protected attachCore() {
+    protected attachContent() {
         this.client.startCollaboration(this.document.clientId, 0);
+    }
+
+    private submitIfAttached(message: any) {
+        if (this.isLocal()) {
+            return;
+        }
+
+        this.submitLocalMessage(message);
+    }
+
+    private async initialize(
+        sequenceNumber: number,
+        header: string,
+        collaborative: boolean,
+        originBranch: string,
+        services: api.IObjectStorageService) {
+
+        let chunk: ops.MergeTreeChunk;
+
+        console.log(`Async load ${this.id} - ${performanceNow()}`);
+
+        if (header) {
+            chunk = Paparazzo.Snapshot.processChunk(header);
+            let segs = textsToSegments(chunk.segmentTexts);
+            this.client.mergeTree.reloadFromSegments(segs);
+            console.log(`Loading ${this.id} body - ${performanceNow()}`);
+            chunk = await Paparazzo.Snapshot.loadChunk(services, "body");
+            console.log(`Loaded ${this.id} body - ${performanceNow()}`);
+            for (let segSpec of chunk.segmentTexts) {
+                this.client.mergeTree.appendSegment(segSpec);
+            }
+        } else {
+            chunk = Paparazzo.Snapshot.EmptyChunk;
+        }
+
+        // This should happen if we have collab services
+        assert.equal(sequenceNumber, chunk.chunkSequenceNumber);
+        if (collaborative) {
+            console.log(`Start ${this.id} collab - ${performanceNow()}`);
+            // TODO currently only assumes two levels of branching
+            const branchId = originBranch === this.document.id ? 0 : 1;
+            this.client.startCollaboration(this.document.clientId, sequenceNumber, branchId);
+        }
+        console.log(`Apply ${this.id} pending - ${performanceNow()}`);
+        this.applyPending();
+        console.log(`Load ${this.id} finished - ${performanceNow()}`);
+        this.loadFinished(chunk);
     }
 
     private loadFinished(chunk: ops.MergeTreeChunk) {
         this.isLoaded = true;
         this.loadedDeferred.resolve();
-        this.events.emit("loadFinished", chunk, true);
+        this.emit("loadFinished", chunk, true);
     }
 
     private applyPending() {
@@ -265,8 +271,7 @@ export class SharedString extends api.CollaborativeObject {
     }
 
     private applyMessage(message: api.ISequencedObjectMessage) {
-        this.events.emit("pre-op", message);
+        this.emit("pre-op", message);
         this.client.applyMsg(message);
-        this.events.emit("op", message);
     }
 }

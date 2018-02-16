@@ -6,8 +6,8 @@ image:
   pullPolicy: IfNotPresent
 service:
   name: node
-  type: LoadBalancer
-  externalPort: 80
+  type: NodePort
+  externalPort: 8080
   internalPort: 3000
 resources:
   limits:

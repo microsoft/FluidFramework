@@ -79,7 +79,19 @@ export class DocumentService implements api.IDocumentService {
         private gitManager: GitManager) {
 
         debug(`Creating document service ${performanceNow()}`);
-        this.socket = io(url, { transports: ["websocket"] });
+
+        // https connections come with a route (https://<basedomain>.com/<route>). Socketio treats the route path as
+        // a namespace. To avoid this, we send the basedomain as URL and change the path to route/socket.io so that
+        // both http and https connection can use the default path (socket.io).
+        if (url.startsWith("https://")) {
+            const parts = url.split("/");
+            const route = parts.pop();
+            const baseDomain = parts.join("/");
+            this.socket = io(baseDomain, { path: `/${route}/socket.io`, transports: ["websocket"] });
+        } else {
+            this.socket = io(url, { transports: ["websocket"] });
+        }
+
     }
 
     public async connect(
@@ -159,7 +171,7 @@ export class DocumentService implements api.IDocumentService {
 
         const document = new DocumentResource(
             id,
-            connection.user,
+            connection ? connection.user : null,
             deltaConnection.clientId,
             connection ? connection.existing : true,
             version,

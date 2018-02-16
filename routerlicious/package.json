@@ -68,7 +68,6 @@
     "test:ml:debug": "nodemon --exitcrash --inspect=0.0.0.0:5858 dist/perf/mltest.js -w dist"
   },
   "author": "Microsoft",
-  "license": "Apache-2.0",
   "repository": "microsoft/prague",
   "devDependencies": {
     "@types/amqplib": "^0.5.1",

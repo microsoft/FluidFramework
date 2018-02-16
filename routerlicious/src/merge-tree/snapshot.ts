@@ -143,8 +143,8 @@ export class Snapshot {
         return texts;
     }
 
-    public static async loadChunk(services: API.IDistributedObjectServices, path: string): Promise<ops.MergeTreeChunk> {
-        let chunkAsString: string = await services.objectStorage.read(path);
+    public static async loadChunk(storage: API.IObjectStorageService, path: string): Promise<ops.MergeTreeChunk> {
+        let chunkAsString: string = await storage.read(path);
         return Snapshot.processChunk(chunkAsString);
     }
 
