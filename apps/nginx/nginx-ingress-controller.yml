@@ -61,7 +61,16 @@ spec:
           volumeMounts:
             - name: tls-dhparam-vol
               mountPath: /etc/nginx-ssl/dhparam
+            - name: nginx-template-volume
+              mountPath: /etc/nginx/template
+              readOnly: true
       volumes:
         - name: tls-dhparam-vol
           secret:
             secretName: tls-dhparam
+        - name: nginx-template-volume
+        configMap:
+          name: nginx-template
+          items:
+            - key: nginx.tmpl
+              path: nginx.tmpl

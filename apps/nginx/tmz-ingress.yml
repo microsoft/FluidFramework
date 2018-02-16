@@ -1,0 +1,23 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+ name: tmz
+ namespace: default
+ annotations:
+   kubernetes.io/ingress.class: "nginx"
+   ingress.kubernetes.io/rewrite-target: /
+   ingress.kubernetes.io/ssl-redirect: "true"
+   nginx.org/websocket-services: "wiggly-wombat-tmz"
+spec:
+ tls:
+ - hosts:
+   - "pragueapps.westus2.cloudapp.azure.com"
+   secretName: tls-certificate
+ rules:
+ - host: "pragueapps.westus2.cloudapp.azure.com"
+   http:
+     paths:
+     - path: /tmz
+       backend:
+         serviceName: wiggly-wombat-tmz
+         servicePort: 80

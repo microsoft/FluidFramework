@@ -23,7 +23,8 @@
                 "{{ template }}",
                 options,
                 "{{ token }}",
-                workerConfig);
+                workerConfig
+            );
         </script>
     {{/scripts}}
 {{/layout}}

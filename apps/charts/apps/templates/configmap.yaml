@@ -19,8 +19,8 @@ data:
             },
             "port": 3000,
             "endpoints": {
-                "delta": "http://praguekube-ppe.westus2.cloudapp.azure.com",
-                "storage": "http://prague-historian-ppe.westus2.cloudapp.azure.com"
+                "delta": "https://pragueapps.westus2.cloudapp.azure.com/alfred",
+                "storage": "https://pragueapps.westus2.cloudapp.azure.com/historian"
             },
             "repository": "prague",
             "owner": "prague",
@@ -31,7 +31,7 @@ data:
                         "host": "pkarimov-paidIOT.azure-devices.net",
                         "sharedAccessKeyName": "iothubowner",
                         "sharedAccessKey": "8mvOmNnUklwnuzY+U96V51w+qCq262ZUpSkdw8nTZ18=",
-                        "url": "http://praguekube-ppe.westus2.cloudapp.azure.com/intelligence/resume"
+                        "url": "https://pragueapps.westus2.cloudapp.azure.com/alfred/intelligence/resume"
                     },
                     "textAnalytics": {
                         "key": "c8b60dc5e49849ce903d7d29a2dce550"
@@ -41,13 +41,13 @@ data:
                         "url": "http://praguepy.westus2.cloudapp.azure.com/"
                     },
                     "spellchecker": {
-                        "url": "http://augmentation.westus2.cloudapp.azure.com/spellchecker/api"
+                        "url": "https://pragueapps.westus2.cloudapp.azure.com/augmentation/spellchecker/api"
                     }
                 },
-                "serverUrl": "http://praguekube-ppe.westus2.cloudapp.azure.com",
-                "url": "http://praguetmz-ppe.westus2.cloudapp.azure.com",
-                "blobStorageUrl": "http://prague-historian-ppe.westus2.cloudapp.azure.com",
-                "scriptUrl": "http://pragueminio.westus2.cloudapp.azure.com:9000/agents/",
+                "serverUrl": "https://pragueapps.westus2.cloudapp.azure.com/alfred",
+                "url": "https://pragueapps.westus2.cloudapp.azure.com/alfred/tmz",
+                "blobStorageUrl": "https://pragueapps.westus2.cloudapp.azure.com/historian",
+                "scriptUrl": "https://pragueapps.westus2.cloudapp.azure.com/minio/agents/",
                 "repository": "prague",
                 "storageBucket": "snapshots",
                 "intervalMSec": 5000,

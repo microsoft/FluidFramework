@@ -77,7 +77,7 @@ export async function onLoad(
             root.set("ink", collabDoc.createMap());
 
             if (pageInk) {
-                root.set("pageInk", collabDoc.createInk());
+                root.set("pageInk", collabDoc.createStream());
             }
         }
 
@@ -102,7 +102,7 @@ export async function onLoad(
             sharedString,
             inkPlane,
             image,
-            root.get("pageInk") as types.IInk,
+            root.get("pageInk") as types.IStream,
             options);
         theFlow = container.flowView;
         host.attach(container);
@@ -119,7 +119,9 @@ export async function onLoad(
         theFlow.setEdit(root);
 
         // Bootstrap worker service.
-        agent.registerWorker(workerConfig, "sharedText");
+        if (workerConfig) {
+            agent.registerWorker(workerConfig, "sharedText");
+        }
 
         sharedString.loaded.then(() => {
             theFlow.loadFinished(clockStart);
