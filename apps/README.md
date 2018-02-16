@@ -47,6 +47,8 @@ After starting the service, you can navigate to http://localhost:7000/ in a brow
 We use [Kubernetes](https://kubernetes.io/) to deploy our app. [Draft](https://github.com/Azure/draft) is a great developer tool for easy kubernetes app development and building.
 
 ### Prerequisities to run locally
+**Update(02/16/2018):** Due to our recent migration to nginx and https, running locally in minikube won't work for now. But all the steps will still work on remote kubernetes cluster.
+
 Checkout [this](https://github.com/Azure/draft/blob/master/docs/install.md) to install draft and prerequisities. Locally we use [minikube](https://github.com/kubernetes/minikube) to deploy. This will mimic a production kube cluster environment.
 Before you start, run these commands to create a local registry for minikube and point draft to pull images from the local registry.
 

@@ -34,7 +34,7 @@
     "passport-azure-ad": "^3.0.10",
     "performance-now": "^2.1.0",
     "request": "^2.83.0",
-    "routerlicious": "https://praguenpm.blob.core.windows.net/packages/routerlicious-0.1.1451.tgz",
+    "routerlicious": "https://praguenpm.blob.core.windows.net/packages/routerlicious-0.1.1455.tgz",
     "serve-favicon": "^2.4.5",
     "split": "^1.0.1",
     "static-expiry": "0.0.11",
