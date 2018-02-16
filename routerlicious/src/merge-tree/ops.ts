@@ -62,7 +62,6 @@ export interface IMergeTreeInsertMsg extends IMergeTreeDelta {
     props?: Object;
     text?: string;
     marker?: IMarkerDef;
-    component?: IComponentDef;
 }
 
 export interface IMergeTreeRemoveMsg extends IMergeTreeDelta {

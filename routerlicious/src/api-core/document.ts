@@ -1,4 +1,4 @@
-import { IBranchOrigin, IEnvelope, ILatencyMessage, IObjectMessage, ITrace } from "./protocol";
+import { IEnvelope, ILatencyMessage, IObjectMessage, ISequencedObjectMessage } from "./protocol";
 import { ICollaborativeObject, ICollaborativeObjectSave } from "./types";
 
 export interface IObjectStorageService {
@@ -14,42 +14,27 @@ export interface IDistributedObjectServices {
     objectStorage: IObjectStorageService;
 }
 
+export interface IDeltaHandler {
+    prepare: (message: ISequencedObjectMessage) => Promise<any>;
+
+    process: (message: ISequencedObjectMessage, context: any) => void;
+
+    minSequenceNumberChanged: (value: number) => void;
+}
+
 /**
- * Interface to represent a connection to a delta notification stream
+ * Interface to represent a connection to a delta notification stream.
  */
 export interface IDeltaConnection {
-    minimumSequenceNumber: number;
-
-    referenceSequenceNumber: number;
-
-    baseSequenceNumber: number;
-
-    /**
-     * Subscribe to events emitted by the object
-     */
-    on(event: string, listener: Function): this;
-
     /**
      * Send new messages to the server
      */
     submit(message: IObjectMessage): Promise<void>;
 
-    setBaseMapping(sequenceNumber: number, documentSequenceNumber: number);
-
-    baseMappingIsSet(): boolean;
-
-    transformDocumentSequenceNumber(value: number);
-
-    emit(
-        message: IObjectMessage,
-        clientId: string,
-        documentSequenceNumber: number,
-        documentMinimumSequenceNumber: number,
-        origin: IBranchOrigin,
-        traces: ITrace[]);
-
-    updateMinSequenceNumber(value: number);
-
+    /**
+     * Attaches a message handler to the delta connection
+     */
+    attach(handler: IDeltaHandler): void;
 }
 
 export interface IDocument {

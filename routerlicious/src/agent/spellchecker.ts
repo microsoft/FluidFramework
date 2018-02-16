@@ -403,7 +403,7 @@ class Speller {
             if (queryString.length > 0) {
                 this.initialQueue.push({
                     end: startPos + queryString.length,
-                    rsn: this.sharedString.referenceSequenceNumber,
+                    rsn: this.sharedString.sequenceNumber,
                     start: startPos,
                     text: queryString,
                 });
@@ -416,7 +416,7 @@ class Speller {
         if (queryString.length > 0) {
             this.typingQueue.push({
                 end: startPos + queryString.length,
-                rsn: this.sharedString.referenceSequenceNumber,
+                rsn: this.sharedString.sequenceNumber,
                 start: startPos,
                 text: queryString,
             });

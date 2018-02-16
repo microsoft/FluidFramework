@@ -13,7 +13,6 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
 
     // Private fields exposed via getters
     // tslint:disable:variable-name
-    private _minimumSequenceNumber: number;
     private _sequenceNumber: number;
     // tslint:enable:variable-name
 
@@ -32,14 +31,6 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
         return this._sequenceNumber;
     }
 
-    public get minimumSequenceNumber(): number {
-        return this._minimumSequenceNumber;
-    }
-
-    public get referenceSequenceNumber(): number {
-        return this.services.deltaConnection.referenceSequenceNumber;
-    }
-
     constructor(public id: string, protected document: IDocument, public type: string) {
         super();
     }
@@ -55,10 +46,11 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
         services: IDistributedObjectServices): Promise<void> {
 
         this._sequenceNumber = sequenceNumber;
-        this._minimumSequenceNumber = sequenceNumber;
         this.services = services;
-        await this.loadCore(version, headerOrigin, services.objectStorage);
-        this.listenForUpdates();
+        const value = this.loadCore(version, headerOrigin, services.objectStorage);
+        this.attachDeltaHandler();
+
+        return value;
     }
 
     /**
@@ -67,7 +59,6 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
      */
     public initializeLocal() {
         this._sequenceNumber = 0;
-        this._minimumSequenceNumber = 0;
         this.initializeLocalCore();
     }
 
@@ -81,9 +72,7 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
 
         // Notify the document of the attachment
         this.services = this.document.attach(this);
-
-        // Listen for updates to create the delta manager
-        this.listenForUpdates();
+        this.attachDeltaHandler();
 
         // Allow derived classes to perform custom processing
         this.attachCore();
@@ -166,29 +155,31 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
             });
     }
 
-    /**
-     * Causes the collaborative object to begin listening for remote messages
-     */
-    private listenForUpdates() {
-        // Do I want to wrap this within an async queue???
-        this.services.deltaConnection.on("op", (message) => {
-            this.processRemoteMessage(message);
+    private attachDeltaHandler() {
+        this.services.deltaConnection.attach({
+            minSequenceNumberChanged: (value) => {
+                this.processMinSequenceNumberChanged(value);
+            },
+            prepare: async (message) => {
+                return this.prepareRemoteMessage(message);
+            },
+            process: (message, context) => {
+                this.processRemoteMessage(message, context);
+            },
         });
+    }
 
-        this.services.deltaConnection.on("minSequenceNumber", (value) => {
-            this._minimumSequenceNumber = value;
-            this.processMinSequenceNumberChanged(this.minimumSequenceNumber);
-        });
+    private async prepareRemoteMessage(message: ISequencedObjectMessage): Promise<any> {
+        return;
     }
 
     /**
      * Handles a message being received from the remote delta server
      */
-    private processRemoteMessage(message: ISequencedObjectMessage) {
+    private processRemoteMessage(message: ISequencedObjectMessage, context: any) {
         // server messages should only be delivered to this method in sequence number order
         assert.equal(this.sequenceNumber + 1, message.sequenceNumber);
         this._sequenceNumber = message.sequenceNumber;
-        this._minimumSequenceNumber = message.minimumSequenceNumber;
 
         if (message.type === OperationType && message.clientId === this.document.clientId) {
             // One of our messages was sequenced. We can remove it from the local message list. Given these arrive

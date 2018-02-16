@@ -54,6 +54,17 @@ defaultRegistry.register(new mergeTree.CollaboritiveStringExtension());
 defaultRegistry.register(new stream.StreamExtension());
 defaultRegistry.register(new cell.CellExtension());
 
+export interface IAttachedServices {
+    deltaConnection: IDeltaConnection;
+    objectStorage: IObjectStorageService;
+}
+
+// Internal versions of IAttachedServices
+interface IObjectServices {
+    deltaConnection: DeltaConnection;
+    objectStorage: ObjectStorageService;
+}
+
 export function registerExtension(extension: IExtension) {
     defaultRegistry.register(extension);
 }
@@ -74,9 +85,9 @@ export function getDefaultDocumentService(): IDocumentService {
 interface IDistributedObjectState {
     object: ICollaborativeObject;
 
-    storage: IObjectStorageService;
+    storage: ObjectStorageService;
 
-    connection: IDeltaConnection;
+    connection: DeltaConnection;
 }
 
 /**
@@ -110,11 +121,6 @@ function setParentBranch(messages: ISequencedDocumentMessage[], parentBranch?: s
             };
         }
     }
-}
-
-export interface IAttachedServices {
-    deltaConnection: IDeltaConnection;
-    objectStorage: IObjectStorageService;
 }
 
 /**
@@ -377,7 +383,7 @@ export class Document {
         return this.document.user;
     }
 
-    public upsertDistributedObject(object: ICollaborativeObject, services: IAttachedServices) {
+    private upsertDistributedObject(object: ICollaborativeObject, services: IObjectServices) {
         if (!(object.id in this.distributedObjects)) {
             this.distributedObjects[object.id] = {
                 connection: services ? services.deltaConnection : null,
@@ -533,56 +539,57 @@ export class Document {
         return value;
     }
 
-    private getObjectServices(id: string): IAttachedServices {
-        const connection = new DeltaConnection(id, this);
+    private getObjectServices(id: string): IObjectServices {
+        const deltaConnection = new DeltaConnection(id, this);
+        const objectStorage = this.getStorageService(id);
         return {
-            deltaConnection: connection,
-            objectStorage: this.getStorageService(id),
+            deltaConnection,
+            objectStorage,
         };
     }
 
-    private getStorageService(id: string): IObjectStorageService {
+    private getStorageService(id: string): ObjectStorageService {
         const tree = this.document.tree && id in this.document.tree.trees
             ? this.document.tree.trees[id]
             : null;
         return new ObjectStorageService(tree, this.document.documentStorageService);
     }
 
-    private async prepareRemoteMessage(message): Promise<any> {
-        if (message.type !== AttachObject || message.clientId === this.document.clientId) {
-            return;
+    private async prepareRemoteMessage(message: ISequencedDocumentMessage): Promise<any> {
+        if (message.type === ObjectOperation) {
+            const envelope = message.contents as IEnvelope;
+            const objectDetails = this.distributedObjects[envelope.address];
+            return objectDetails.connection.prepare(message);
+        } else if (message.type === AttachObject && message.clientId !== this.document.clientId) {
+            const attachMessage = message.contents as IAttachMessage;
+
+            // create storage service that wraps the attach data
+            const localStorage = new LocalObjectStorageService(attachMessage.snapshot);
+            const header = localStorage.readSync("header");
+
+            const connection = new DeltaConnection(attachMessage.id, this);
+            connection.setBaseMapping(0, message.sequenceNumber);
+
+            const distributedObject: IDistributedObject = {
+                header,
+                id: attachMessage.id,
+                sequenceNumber: 0,
+                type: attachMessage.type,
+            };
+
+            const services = {
+                deltaConnection: connection,
+                objectStorage: localStorage,
+            };
+
+            const origin = message.origin ? message.origin.id : this.id;
+            const value = await this.loadInternal(distributedObject, services, origin);
+
+            return {
+                services,
+                value,
+            };
         }
-
-        const attachMessage = message.contents as IAttachMessage;
-
-        // create storage service that wraps the attach data
-        const localStorage = new LocalObjectStorageService(attachMessage.snapshot);
-        const header = localStorage.readSync("header");
-
-        const connection = new DeltaConnection(
-            attachMessage.id,
-            this);
-        connection.setBaseMapping(0, message.sequenceNumber);
-
-        const distributedObject: IDistributedObject = {
-            header,
-            id: attachMessage.id,
-            sequenceNumber: 0,
-            type: attachMessage.type,
-        };
-
-        const services = {
-            deltaConnection: connection,
-            objectStorage: localStorage,
-        };
-
-        const origin = message.origin ? message.origin.id : this.id;
-        const value = await this.loadInternal(distributedObject, services, origin);
-
-        return {
-            services,
-            value,
-        };
     }
 
     private processRemoteMessage(message: ISequencedDocumentMessage, context: any) {
@@ -595,13 +602,8 @@ export class Document {
         if (message.type === ObjectOperation) {
             const envelope = message.contents as IEnvelope;
             const objectDetails = this.distributedObjects[envelope.address];
-            objectDetails.connection.emit(
-                envelope.contents,
-                message.clientId,
-                message.sequenceNumber,
-                message.minimumSequenceNumber,
-                message.origin,
-                message.traces);
+
+            objectDetails.connection.process(message, context);
         } else if (message.type === AttachObject) {
             const attachMessage = message.contents as IAttachMessage;
 
