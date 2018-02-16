@@ -1481,7 +1481,7 @@ export class DocumentTree {
                     [MergeTree.reservedReferenceIdKey]: trid,
                     [MergeTree.reservedRangeLabelsKey]: [docNode.name],
                 };
-                let behaviors = ops.ReferenceType.RangeBegin;
+                let behaviors = ops.ReferenceType.NestBegin;
                 if (docNode.name === "row") {
                     props[MergeTree.reservedTileLabelsKey] = ["pg"];
                     behaviors |= ops.ReferenceType.Tile;
@@ -1495,7 +1495,7 @@ export class DocumentTree {
             }
             if (docNode.name !== "pg") {
                 let etrid = "end-" + docNode.name + id.toString();
-                client.insertMarkerLocal(this.pos, ops.ReferenceType.RangeEnd,
+                client.insertMarkerLocal(this.pos, ops.ReferenceType.NestEnd,
                     {
                         [MergeTree.reservedReferenceIdKey]: etrid,
                         [MergeTree.reservedRangeLabelsKey]: [docNode.name],

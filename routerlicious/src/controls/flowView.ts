@@ -720,7 +720,7 @@ function showPositionInLine(
 function endRenderSegments(marker: SharedString.Marker) {
     return (marker.hasTileLabel("pg") ||
         ((marker.hasRangeLabel("box") &&
-            (marker.refType & SharedString.ReferenceType.RangeEnd))));
+            (marker.refType & SharedString.ReferenceType.NestEnd))));
 }
 
 function renderSegmentIntoLine(
@@ -1102,7 +1102,7 @@ let endPrefix = "end-";
 function createBox(opList: SharedString.IMergeTreeOp[], idBase: string, pos: number, word?: string) {
     let boxId = idBase + `box${boxIdSuffix++}`;
     opList.push(createMarkerOp(pos, boxId,
-        SharedString.ReferenceType.RangeBegin, ["box"]));
+        SharedString.ReferenceType.NestBegin, ["box"]));
     pos++;
     if (word) {
         let insertStringOp = <SharedString.IMergeTreeInsertMsg>{
@@ -1118,7 +1118,7 @@ function createBox(opList: SharedString.IMergeTreeOp[], idBase: string, pos: num
     opList.push(pgOp);
     pos++;
     opList.push(createMarkerOp(pos, endPrefix + boxId,
-        SharedString.ReferenceType.RangeEnd, ["box"]));
+        SharedString.ReferenceType.NestEnd, ["box"]));
     pos++;
     return pos;
 }
@@ -1147,22 +1147,22 @@ function createTable(pos: number, flowView: FlowView, nrows = 3, nboxes = 3) {
         pos++;
     }
     opList.push(createMarkerOp(pos, idBase,
-        SharedString.ReferenceType.RangeBegin, ["table"]));
+        SharedString.ReferenceType.NestBegin, ["table"]));
     pos++;
     for (let row = 0; row < nrows; row++) {
         let rowId = idBase + `row${rowIdSuffix++}`;
         opList.push(createMarkerOp(pos, rowId,
-            SharedString.ReferenceType.RangeBegin, ["row"]));
+            SharedString.ReferenceType.NestBegin, ["row"]));
         pos++;
         for (let box = 0; box < nboxes; box++) {
             pos = createBox(opList, idBase, pos, content[(box + (nboxes * row)) % content.length]);
         }
         opList.push(createMarkerOp(pos, endPrefix + rowId,
-            SharedString.ReferenceType.RangeEnd, ["row"]));
+            SharedString.ReferenceType.NestEnd, ["row"]));
         pos++;
     }
     opList.push(createMarkerOp(pos, endPrefix + idBase,
-        SharedString.ReferenceType.RangeEnd |
+        SharedString.ReferenceType.NestEnd |
         SharedString.ReferenceType.Tile, ["table"], ["pg"]));
     pos++;
     let groupOp = <SharedString.IMergeTreeGroupMsg>{
@@ -1717,7 +1717,7 @@ function tokenToItems(
 }
 
 function isEndBox(marker: SharedString.Marker) {
-    return (marker.refType & SharedString.ReferenceType.RangeEnd) &&
+    return (marker.refType & SharedString.ReferenceType.NestEnd) &&
         marker.hasRangeLabel("box");
 }
 
@@ -2106,7 +2106,7 @@ function renderFlow(layoutContext: ILayoutContext, deferWhole = false): IRenderO
                 segoff = getContainingSegment(flowView, currentPos);
                 if (segoff.segment.getType() === SharedString.SegmentType.Marker) {
                     let marker = <SharedString.Marker>segoff.segment;
-                    if (marker.hasRangeLabel("box") && (marker.refType & SharedString.ReferenceType.RangeEnd)) {
+                    if (marker.hasRangeLabel("box") && (marker.refType & SharedString.ReferenceType.NestEnd)) {
                         layoutContext.viewport.vskip(layoutContext.docContext.boxVspace);
                         break;
                     }
@@ -2480,6 +2480,7 @@ export class FlowView extends ui.Component {
     public presenceVector: ILocalPresenceInfo[] = [];
     public docRoot: types.IMapView;
     public curPG: SharedString.Marker;
+    public comments: SharedString.SharedString;
     private lastVerticalX = -1;
     private randWordTimer: any;
     private pendingRender = false;
@@ -2511,6 +2512,18 @@ export class FlowView extends ui.Component {
 
         this.cursor = new Cursor(this.viewportDiv);
         this.setViewOption(this.options);
+    }
+
+    public addCommentString(comments: SharedString.SharedString) {
+        this.comments = comments;
+        this.comments.on("op", (msg: core.ISequencedObjectMessage) => {
+            if (msg.clientId !== this.client.longClientId) {
+                console.log(`remote comment op from ${msg.clientId}`);
+            } else {
+                console.log("got comment ack");
+            }
+        });
+        this.comments.insertText("hello", 0);
     }
 
     public treeForViewport() {
@@ -2961,7 +2974,7 @@ export class FlowView extends ui.Component {
                 let marker = <SharedString.Marker>segoff.segment;
                 if ((marker.refType & SharedString.ReferenceType.Tile) &&
                     (marker.hasTileLabel("pg"))) {
-                    if (marker.hasRangeLabel("table") && (marker.refType & SharedString.ReferenceType.RangeEnd)) {
+                    if (marker.hasRangeLabel("table") && (marker.refType & SharedString.ReferenceType.NestEnd)) {
                         this.cursorRev();
                     }
                 } else {
@@ -2982,12 +2995,12 @@ export class FlowView extends ui.Component {
                 let marker = <SharedString.Marker>segoff.segment;
                 if ((marker.refType & SharedString.ReferenceType.Tile) &&
                     (marker.hasTileLabel("pg"))) {
-                    if (marker.hasRangeLabel("table") && (marker.refType & SharedString.ReferenceType.RangeEnd)) {
+                    if (marker.hasRangeLabel("table") && (marker.refType & SharedString.ReferenceType.NestEnd)) {
                         this.cursorFwd();
                     } else {
                         return;
                     }
-                } else if (marker.refType & SharedString.ReferenceType.RangeBegin) {
+                } else if (marker.refType & SharedString.ReferenceType.NestBegin) {
                     if (marker.hasRangeLabel("table")) {
                         this.cursor.pos += 3;
                     } else if (marker.hasRangeLabel("row")) {
@@ -2997,7 +3010,7 @@ export class FlowView extends ui.Component {
                     } else {
                         this.cursorFwd();
                     }
-                } else if (marker.refType & SharedString.ReferenceType.RangeEnd) {
+                } else if (marker.refType & SharedString.ReferenceType.NestEnd) {
                     if (marker.hasRangeLabel("row")) {
                         this.cursorFwd();
                     } else if (marker.hasRangeLabel("table")) {

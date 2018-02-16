@@ -2,9 +2,11 @@
 export enum ReferenceType {
     Simple =        0x0,
     Tile =          0x1,
-    RangeBegin =    0x2,
-    RangeEnd =      0x4,
-    SlideOnRemove = 0x10,
+    NestBegin =     0x2,
+    NestEnd =       0x4,
+    RangeBegin =    0x10,
+    RangeEnd =      0x20,
+    SlideOnRemove = 0x40,
 }
 
 export interface IMarkerDef {

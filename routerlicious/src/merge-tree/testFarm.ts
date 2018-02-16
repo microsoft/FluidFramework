@@ -89,12 +89,12 @@ function makeBookmarks(client: MergeTree.Client, bookmarkCount: number) {
     let refseq = client.getCurrentSeq();
     let clientId = client.getClientId();
     let len = client.mergeTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.NonCollabClient);
-    let maxRangeLen = Math.min(Math.floor(len/100), 30);
+    let maxRangeLen = Math.min(Math.floor(len / 100), 30);
     for (let i = 0; i < bookmarkCount; i++) {
         let pos1 = random.integer(0, len - 1)(mt);
         let rangeLen = random.integer(0, maxRangeLen)(mt);
         let pos2 = pos1 + rangeLen;
-        if (pos2>=len) {
+        if (pos2 >= len) {
             pos2 = len - 2;
         }
         if (pos1 > pos2) {
@@ -108,13 +108,13 @@ function makeBookmarks(client: MergeTree.Client, bookmarkCount: number) {
         if (segoff1 && segoff1.segment && segoff2 && segoff2.segment) {
             let baseSegment1 = <MergeTree.BaseSegment>segoff1.segment;
             let baseSegment2 = <MergeTree.BaseSegment>segoff2.segment;
-            let lref1 = new MergeTree.LocalReference(baseSegment1,segoff1.offset);
-            let lref2 = new MergeTree.LocalReference(baseSegment2,segoff2.offset);
-            lref1.refType = ops.ReferenceType.RangeBegin;
+            let lref1 = new MergeTree.LocalReference(baseSegment1, segoff1.offset);
+            let lref2 = new MergeTree.LocalReference(baseSegment2, segoff2.offset);
+            lref1.refType = ops.ReferenceType.NestBegin;
             lref1.addProperties({ [MergeTree.reservedRangeLabelsKey]: ["bookmark"] });
             // can do this locally; for shared refs need to use id/index to ref end
-            lref1.cachedEnd =  lref2;
-            lref2.refType = ops.ReferenceType.RangeEnd;
+            lref1.cachedEnd = lref2;
+            lref2.refType = ops.ReferenceType.NestEnd;
             lref2.addProperties({ [MergeTree.reservedRangeLabelsKey]: ["bookmark"] });
             client.mergeTree.addLocalReference(baseSegment1, lref1);
             client.mergeTree.addLocalReference(baseSegment2, lref2);
@@ -222,6 +222,7 @@ export function TestPack(verbose = true) {
         let extractSnap = false;
         let includeMarkers = false;
         let measureBookmarks = true;
+        let measureRanges = false;
         let referenceCount = 2000;
         let bookmarkCount = 1000;
         let references: MergeTree.LocalReference[];
@@ -230,7 +231,9 @@ export function TestPack(verbose = true) {
         let posContextChecks = 0;
         let posContextTime = 0;
         let posContextResults = 0;
-
+        let rangeOverlapTime = 0;
+        let rangeOverlapChecks = 0;
+        let overlapIntervalResults = 0;
         let testSyncload = false;
         let snapClient: MergeTree.Client;
 
@@ -239,7 +242,7 @@ export function TestPack(verbose = true) {
         }
         let options = {};
         if (measureBookmarks) {
-            options = { blockUpdateMarkers: true};
+            options = { blockUpdateMarkers: true };
         }
         let server = new MergeTree.TestServer(initString, options);
         server.measureOps = true;
@@ -260,7 +263,9 @@ export function TestPack(verbose = true) {
         server.addClients(clients);
         if (measureBookmarks) {
             references = makeReferences(server, referenceCount);
-            makeBookmarks(server, bookmarkCount);
+            if (measureRanges) {
+                makeBookmarks(server, bookmarkCount);
+            }
         }
         if (testSyncload) {
             let clockStart = clock();
@@ -494,8 +499,9 @@ export function TestPack(verbose = true) {
             }
 
             if (measureBookmarks) {
-                let refReadsPerRound = 400;
-                let posChecksPerRound = 400;
+                let refReadsPerRound = 200;
+                let posChecksPerRound = 200;
+                let rangeChecksPerRound = 200;
                 let refseq = server.getCurrentSeq();
                 let clientId = server.getClientId();
                 let clockStart = clock();
@@ -504,23 +510,37 @@ export function TestPack(verbose = true) {
                     refReads++;
                 }
                 refReadTime += elapsedMicroseconds(clockStart);
-                let mt = random.engines.mt19937();
-                mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
-                let len = server.mergeTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.NonCollabClient);
-                let checkPos = <number[]>[];
-                for (let i = 0; i < posChecksPerRound; i++) {
-                    checkPos[i] = random.integer(0, len - 2)(mt);
-                }
-                clockStart = clock();
-                for (let i = 0; i < posChecksPerRound; i++) {
-                    let context = server.mergeTree.getStackContext(checkPos[i], clientId, ["bookmark"]);
-                    let stack = context["bookmark"];
-                    if (stack) {
-                        posContextResults += stack.items.length;
+                if (measureRanges) {
+                    let mt = random.engines.mt19937();
+                    mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
+                    let len = server.mergeTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.NonCollabClient);
+                    let checkPos = <number[]>[];
+                    let checkRange = <number[][]>[];
+                    for (let i = 0; i < posChecksPerRound; i++) {
+                        checkPos[i] = random.integer(0, len - 2)(mt);
                     }
+                    for (let i = 0; i < rangeChecksPerRound; i++) {
+                        let b = random.integer(0, len - 2)(mt);
+                        let rangeSize = random.integer(0, 1000)(mt);
+                        checkRange[i] = [b, b + rangeSize];
+                    }
+                    clockStart = clock();
+
+                    for (let i = 0; i < posChecksPerRound; i++) {
+                        // TODO: use interval tree
+                    }
+                    posContextTime += elapsedMicroseconds(clockStart);
+                    posContextChecks += posChecksPerRound;
+
+                    clockStart = clock();
+                    for (let i = 0; i < rangeChecksPerRound; i++) {
+                        let ivals = server.mergeTree.findOverlappingIntervals(checkRange[i][0],
+                            checkRange[i][1], ["bookmark"]);
+                        overlapIntervalResults += ivals.length;
+                    }
+                    rangeOverlapTime += elapsedMicroseconds(clockStart);
+                    rangeOverlapChecks += rangeChecksPerRound;
                 }
-                posContextTime += elapsedMicroseconds(clockStart);
-                posContextChecks += posChecksPerRound;
             }
 
             if (extractSnap) {
@@ -567,9 +587,14 @@ export function TestPack(verbose = true) {
                     let timePerRead = (refReadTime / refReads).toFixed(2);
                     let bookmarksPerSeg = (referenceCount / stats.leafCount).toFixed(2);
                     console.log(`bookmark count ${referenceCount} ave. per seg ${bookmarksPerSeg} time/read ${timePerRead}`);
-                    let timePerContextCheck = (posContextTime / posContextChecks).toFixed(2);
-                    let results = (posContextResults/posContextChecks).toFixed(2);
-                    console.log(`ave. per bookmark context check ${timePerContextCheck} ave results per check ${results}`);
+                    if (measureRanges) {
+                        let timePerContextCheck = (posContextTime / posContextChecks).toFixed(2);
+                        let results = (posContextResults / posContextChecks).toFixed(2);
+                        console.log(`ave. per bookmark context check ${timePerContextCheck} ave results per check ${results}`);
+                        let timePerRangeCheck = (rangeOverlapTime / rangeOverlapChecks).toFixed(2);
+                        let resultsRange = (overlapIntervalResults / rangeOverlapChecks).toFixed(2);
+                        console.log(`ave. per bookmark range check ${timePerRangeCheck} ave results per check ${resultsRange}`);
+                    }
                 }
                 reportTiming(clients[2]);
                 let totalTime = server.accumTime + server.accumWindowTime;
@@ -1352,7 +1377,7 @@ export class DocumentTree {
                     [MergeTree.reservedReferenceIdKey]: trid,
                     [MergeTree.reservedRangeLabelsKey]: [docNode.name],
                 };
-                let behaviors = ops.ReferenceType.RangeBegin;
+                let behaviors = ops.ReferenceType.NestBegin;
                 if (docNode.name === "row") {
                     props[MergeTree.reservedTileLabelsKey] = ["pg"];
                     behaviors |= ops.ReferenceType.Tile;
@@ -1366,7 +1391,7 @@ export class DocumentTree {
             }
             if (docNode.name !== "pg") {
                 let etrid = "end-" + docNode.name + id.toString();
-                client.insertMarkerLocal(this.pos, ops.ReferenceType.RangeEnd,
+                client.insertMarkerLocal(this.pos, ops.ReferenceType.NestEnd,
                     {
                         [MergeTree.reservedReferenceIdKey]: etrid,
                         [MergeTree.reservedRangeLabelsKey]: [docNode.name],
@@ -1602,7 +1627,7 @@ function printOverlayTree(client: MergeTree.Client) {
             strbuf += "\n";
         } else {
             let marker = <MergeTree.Marker>segment;
-            if (marker.refType & ops.ReferenceType.RangeBegin) {
+            if (marker.refType & ops.ReferenceType.NestBegin) {
                 strbuf += MergeTree.internedSpaces(indentAmt);
                 let nodeType = marker.properties[onodeTypeKey];
                 strbuf += `<${nodeType}`;
@@ -1612,7 +1637,7 @@ function printOverlayTree(client: MergeTree.Client) {
                 }
                 strbuf += ">\n";
                 indentAmt += indentDelta;
-            } else if (marker.refType & ops.ReferenceType.RangeEnd) {
+            } else if (marker.refType & ops.ReferenceType.NestEnd) {
                 indentAmt -= indentDelta;
                 strbuf += MergeTree.internedSpaces(indentAmt);
                 let nodeType = marker.properties[onodeTypeKey];
