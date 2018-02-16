@@ -80,11 +80,14 @@ export class DocumentService implements api.IDocumentService {
 
         debug(`Creating document service ${performanceNow()}`);
 
+        // https connections come with a route (https://<basedomain>.com/<route>). Socketio treats the route path as
+        // a namespace. To avoid this, we send the basedomain as URL and change the path to route/socket.io so that
+        // both http and https connection can use the default path (socket.io).
         if (url.startsWith("https://")) {
             const parts = url.split("/");
-            parts.pop();
-            const baseUrl = parts.join("/");
-            this.socket = io(baseUrl, { path: "/alfred/socket.io", transports: ["websocket"] });
+            const route = parts.pop();
+            const baseDomain = parts.join("/");
+            this.socket = io(baseDomain, { path: `/${route}/socket.io`, transports: ["websocket"] });
         } else {
             this.socket = io(url, { transports: ["websocket"] });
         }
