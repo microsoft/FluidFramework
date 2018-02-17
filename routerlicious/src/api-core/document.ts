@@ -46,6 +46,8 @@ export interface IDocument {
 
     attach(object: ICollaborativeObject): IDistributedObjectServices;
 
+    getAsync(id: string): Promise<ICollaborativeObject>;
+
     get(id: string): ICollaborativeObject;
 
     submitObjectMessage(envelope: IEnvelope);

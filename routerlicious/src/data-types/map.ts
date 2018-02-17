@@ -147,9 +147,4 @@ export interface ISet<T> {
      * Returns elements of the set as an array.
      */
     entries(): any[];
-
-    /**
-     * Returns the underlying set.
-     */
-    getInternalSet(): Set<T>;
  }

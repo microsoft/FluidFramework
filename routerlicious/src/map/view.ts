@@ -1,4 +1,4 @@
-import { EventEmitter } from "events";
+import * as assert from "assert";
 import hasIn = require("lodash/hasIn");
 import * as api from "../api-core";
 import { ICounter, IMapView, ISet } from "../data-types";
@@ -9,18 +9,60 @@ import { DistributedSet } from "./set";
 
 export class MapView implements IMapView {
     private data = new Map<string, IMapValue>();
+    private distributedObjects = new Map<string, api.ICollaborativeObject>();
 
-    constructor(
-        private document: api.IDocument,
-        id: string,
-        data: {[key: string]: IMapValue },
-        private events: EventEmitter,
-        private submitLocalOperation: (op: IMapOperation) => void) {
+    constructor(private map: CollaborativeMap, private document: api.IDocument, id: string) {
+    }
 
-        // Initialize the map of values
+    public async populate(data: {[key: string]: IMapValue }): Promise<void> {
+        const distributedObjectsP = new Array<Promise<api.ICollaborativeObject>>();
+
         // tslint:disable-next-line:forin
         for (const key in data) {
-            this.data.set(key, data[key]);
+            const value = data[key];
+            const enumValue = ValueType[value.type];
+            switch (enumValue) {
+                case ValueType.Set:
+                    const set = new DistributedSet(key, value.value, this);
+                    this.data.set(
+                        key,
+                        {
+                            type: ValueType[ValueType.Set],
+                            value: set,
+                        });
+                    break;
+
+                case ValueType.Counter:
+                    const counter = new Counter(
+                        key,
+                        value.value.value,
+                        value.value.min,
+                        value.value.max,
+                        this);
+                    this.data.set(
+                        key,
+                        {
+                            type: ValueType[ValueType.Counter],
+                            value: counter,
+                        });
+                    break;
+
+                case ValueType.Collaborative:
+                    const distributedObject = this.document.getAsync(value.value);
+                    distributedObjectsP.push(distributedObject);
+                    this.data.set(key, data[key]);
+                    break;
+
+                default:
+                    this.data.set(key, data[key]);
+                    break;
+            }
+
+            // Stash local references to the distributed objects
+            const resolvedObjects = await Promise.all(distributedObjectsP);
+            for (const resolvedObject of resolvedObjects) {
+                this.distributedObjects.set(resolvedObject.id, resolvedObject);
+            }
         }
     }
 
@@ -50,11 +92,11 @@ export class MapView implements IMapView {
             const callback = (value: { key: string }) => {
                 if (key === value.key) {
                     resolve(this.get(value.key));
-                    this.events.removeListener("valueChanged", callback);
+                    this.map.removeListener("valueChanged", callback);
                 }
             };
 
-            this.events.on("valueChanged", callback);
+            this.map.on("valueChanged", callback);
         });
     }
 
@@ -145,27 +187,19 @@ export class MapView implements IMapView {
         return JSON.stringify(serialized);
     }
 
-    public getMapValue(key: string): IMapValue {
-        if (!this.data.has(key)) {
-            return undefined;
-        }
-
-        return this.data.get(key);
-    }
-
     public setCore(key: string, value: IMapValue) {
         this.data.set(key, value);
-        this.events.emit("valueChanged", { key });
+        this.map.emit("valueChanged", { key });
     }
 
     public clearCore() {
         this.data.clear();
-        this.events.emit("clear");
+        this.map.emit("clear");
     }
 
     public deleteCore(key: string) {
         this.data.delete(key);
-        this.events.emit("valueChanged", { key });
+        this.map.emit("valueChanged", { key });
     }
 
     public initCounter(object: CollaborativeMap, key: string, value: number,  min: number, max: number): ICounter {
@@ -186,39 +220,18 @@ export class MapView implements IMapView {
         return this.initCounterCore(object, op.key, op.value);
     }
 
-    public loadCounter(object: CollaborativeMap, key: string, value: number, min: number, max: number) {
-        const newCounter = new Counter(object, key, min, max);
-        const newValue: IMapValue = { type: ValueType[ValueType.Counter], value: newCounter.init(value) as ICounter };
-        this.data.set(key, newValue);
-    }
-
     public initCounterCore(object: CollaborativeMap, key: string, value: IMapValue): ICounter {
-        const newCounter = new Counter(object, key, value.value.min, value.value.max);
-        newCounter.init(value.value.value);
+        const newCounter = new Counter(
+            key,
+            value.value.value,
+            value.value.min,
+            value.value.max,
+            this);
         const newValue: IMapValue = { type: ValueType[ValueType.Counter], value: newCounter as ICounter };
         this.data.set(key, newValue);
-        this.events.emit("valueChanged", { key });
-        this.events.emit("initCounter", {key, value: newValue.value});
+        this.map.emit("valueChanged", { key });
+        this.map.emit("initCounter", {key, value: newValue.value});
         return newValue.value;
-    }
-
-    public incrementCounter(key: string, value: number) {
-        const operationValue: IMapValue = {type: ValueType[ValueType.Counter], value};
-        const op: IMapOperation = {
-            key,
-            type: "incrementCounter",
-            value: operationValue,
-        };
-        this.submitLocalOperation(op);
-        return this.incrementCounterCore(op.key, op.value);
-    }
-
-    public incrementCounterCore(key: string, value: IMapValue): ICounter {
-        const currentCounter = this.get(key) as Counter;
-        currentCounter.set(currentCounter.get() + value.value);
-        this.events.emit("valueChanged", { key });
-        this.events.emit("incrementCounter", {key, value: value.value});
-        return currentCounter as ICounter;
     }
 
     public initSet<T>(object: CollaborativeMap, key: string, value: T[]): ISet<any> {
@@ -232,64 +245,40 @@ export class MapView implements IMapView {
         return this.initSetCore(object, op.key, op.value);
     }
 
-    public loadSet<T>(object: CollaborativeMap, key: string, value: T[]) {
-        const newSet = new DistributedSet<T>(object, key);
-        const newValue: IMapValue = { type: ValueType[ValueType.Set], value: newSet.init(value) as ISet<T> };
-        this.data.set(key, newValue);
-    }
-
     public initSetCore<T>(object: CollaborativeMap, key: string, value: IMapValue): ISet<T> {
-        const newSet = new DistributedSet<T>(object, key);
-        newSet.init(value.value);
+        const newSet = new DistributedSet<T>(key, value.value, this);
         const newValue: IMapValue = {type: ValueType[ValueType.Set], value: newSet as ISet<T>};
         this.data.set(key, newValue);
-        this.events.emit("valueChanged", { key });
-        this.events.emit("setCreated", {key, value: newValue.value});
+        this.map.emit("valueChanged", { key });
+        this.map.emit("setCreated", {key, value: newValue.value});
         return newValue.value;
     }
 
-    public insertSet<T>(key: string, value: T): ISet<T> {
-        const operationValue: IMapValue = {type: ValueType[ValueType.Set], value};
-        const op: IMapOperation = {
-            key,
-            type: "insertSet",
-            value: operationValue,
-        };
-        this.insertSetCore(op.key, op.value);
-        this.submitLocalOperation(op);
-        return this.data.get(key).value as ISet<T>;
+    public deleteSetCore<T>(key: string, value: IMapValue) {
+        assert.equal(value.type, ValueType[ValueType.Set]);
+        const set = this.get(key) as DistributedSet<T>;
+        set.delete(value.value, false);
+    }
+
+    public incrementCounterCore(key: string, value: IMapValue) {
+        assert.equal(value.type, ValueType[ValueType.Counter]);
+        const counter = this.get(key) as Counter;
+        counter.increment(value.value, false);
     }
 
     public insertSetCore<T>(key: string, value: IMapValue) {
-        const currentSet = this.get(key) as ISet<T>;
-        currentSet.getInternalSet().add(value.value);
-        this.events.emit("valueChanged", { key });
-        this.events.emit("setElementAdded", {key, value: value.value});
-    }
-
-    public deleteSet<T>(key: string, value: T): ISet<T> {
-        const operationValue: IMapValue = {type: ValueType[ValueType.Set], value};
-        const op: IMapOperation = {
-            key,
-            type: "deleteSet",
-            value: operationValue,
-        };
-        this.deleteSetCore(op.key, op.value);
-        this.submitLocalOperation(op);
-        return this.data.get(key).value as ISet<T>;
-    }
-
-    public deleteSetCore<T>(key: string, value: IMapValue) {
-        const currentSet = this.get(key) as ISet<T>;
-        currentSet.getInternalSet().delete(value.value);
-        this.events.emit("valueChanged", { key });
-        this.events.emit("setElementRemoved", {key, value: value.value});
+        assert.equal(value.type, ValueType[ValueType.Set]);
+        const set = this.get(key) as DistributedSet<T>;
+        set.add(value.value, false);
     }
 
     private translateValue(value: IMapValue): any {
         if (value.type === ValueType[ValueType.Collaborative]) {
             const collabMapValue = value.value as ICollaborativeMapValue;
-            return this.document.get(collabMapValue.id);
+            // The map already needs to have this value local for me to keep the translation quick. Should pre-cache
+            // any of these lookups as part of the prepare phases
+            return this.getCollabObject(collabMapValue.id);
+            // return this.document.get(collabMapValue.id);
         } else {
             return value.value;
         }

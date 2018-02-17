@@ -117,9 +117,14 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
     protected abstract attachCore();
 
     /**
+     * Prepares the given message for processing
+     */
+    protected abstract prepareCore(message: ISequencedObjectMessage): Promise<void>;
+
+    /**
      * Derived classes must override this to do custom processing on a remote message
      */
-    protected abstract processCore(message: ISequencedObjectMessage);
+    protected abstract processCore(message: ISequencedObjectMessage, context: any);
 
     /**
      * Method called when the minimum sequence number for the object has changed
@@ -161,22 +166,22 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
                 this.processMinSequenceNumberChanged(value);
             },
             prepare: async (message) => {
-                return this.prepareRemoteMessage(message);
+                return this.prepare(message);
             },
             process: (message, context) => {
-                this.processRemoteMessage(message, context);
+                this.process(message, context);
             },
         });
     }
 
-    private async prepareRemoteMessage(message: ISequencedObjectMessage): Promise<any> {
-        return;
+    private async prepare(message: ISequencedObjectMessage): Promise<any> {
+        return this.prepareCore(message);
     }
 
     /**
      * Handles a message being received from the remote delta server
      */
-    private processRemoteMessage(message: ISequencedObjectMessage, context: any) {
+    private process(message: ISequencedObjectMessage, context: any) {
         // server messages should only be delivered to this method in sequence number order
         assert.equal(this.sequenceNumber + 1, message.sequenceNumber);
         this._sequenceNumber = message.sequenceNumber;
@@ -204,7 +209,7 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
             this.submitLatencyMessage(message);
         }
 
-        this.processCore(message);
+        this.processCore(message, context);
     }
 
     /**

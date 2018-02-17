@@ -13,6 +13,7 @@ import {
     IDeltaConnection,
     IDistributedObject,
     IDistributedObjectServices,
+    IDocument,
     IDocumentAttributes,
     IDocumentResource,
     IDocumentService,
@@ -126,7 +127,7 @@ function setParentBranch(messages: ISequencedDocumentMessage[], parentBranch?: s
 /**
  * A document is a collection of collaborative types.
  */
-export class Document {
+export class Document implements IDocument {
     public static async Load(
         id: string,
         registry: Registry,
