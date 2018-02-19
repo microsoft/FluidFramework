@@ -21,14 +21,6 @@ export enum ValueType {
     Set,
 }
 
-export interface ICollaborativeMapValue {
-    // The type of collaborative object
-    type: string;
-
-    // The id for the collaborative object
-    id: string;
-}
-
 export interface IMapValue {
     // The type of the value
     type: string;

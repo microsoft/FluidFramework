@@ -23,7 +23,7 @@ export class DistributedSet<T> implements ISet<T> {
                 value: operationValue,
             };
 
-            this.map.submit(op);
+            this.map.submitMapMessage(op);
         }
 
         this.map.emit("valueChanged", { key: this.key });
@@ -43,7 +43,7 @@ export class DistributedSet<T> implements ISet<T> {
                 value: operationValue,
             };
 
-            this.map.submit(op);
+            this.map.submitMapMessage(op);
         }
 
         this.map.emit("valueChanged", { key: this.key });

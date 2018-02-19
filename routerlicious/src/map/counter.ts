@@ -31,7 +31,7 @@ export class Counter implements ICounter {
                 value: operationValue,
             };
 
-            this.map.submit(op);
+            this.map.submitMapMessage(op);
         }
 
         this.map.emit("valueChanged", { key: this.key });

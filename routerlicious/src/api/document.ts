@@ -261,6 +261,10 @@ export class Document implements IDocument {
         return id in this.distributedObjects ? this.distributedObjects[id].object : null;
     }
 
+    public async getAsync(id: string): Promise<ICollaborativeObject> {
+        throw new Error("Not implemented");
+    }
+
     /**
      * Attaches the given object to the document which also makes it available to collaborators. The object is
      * expected to immediately submit delta messages for itself once being attached.
