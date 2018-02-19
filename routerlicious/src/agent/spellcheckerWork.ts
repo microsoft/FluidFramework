@@ -21,13 +21,10 @@ export class SpellcheckerWork extends BaseWork implements IWork {
 
     public async start(): Promise<void> {
         await this.loadDocument({ blockUpdateMarkers: true, localMinSeq: 0, encrypted: undefined }, this.service);
-        const eventHandler = (op: core.ISequencedDocumentMessage) => {
+        const eventHandler = (op: core.ISequencedDocumentMessage, object: core.ICollaborativeObject) => {
             if (op.type === core.ObjectOperation) {
-                const objectId = op.contents.address;
-                const object = this.document.get(objectId);
                 this.spellCheck(object);
             } else if (op.type === core.AttachObject) {
-                const object = this.document.get(op.contents.id);
                 this.spellCheck(object);
             }
         };

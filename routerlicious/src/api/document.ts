@@ -91,26 +91,6 @@ interface IDistributedObjectState {
     connection: DeltaConnection;
 }
 
-/**
- * Polls for the root document
- */
-function pollRoot(document: Document, resolve, reject) {
-    if (document.get("root")) {
-        resolve();
-    } else {
-        const pauseAmount = 100;
-        debug(`Did not find root - waiting ${pauseAmount}ms`);
-        setTimeout(() => pollRoot(document, resolve, reject), pauseAmount);
-    }
-}
-
-/**
- * Returns a promie that resolves once the root map is available
- */
-function waitForRoot(document: Document): Promise<void> {
-    return new Promise<void>((resolve, reject) => pollRoot(document, resolve, reject));
-}
-
 function setParentBranch(messages: ISequencedDocumentMessage[], parentBranch?: string) {
     for (const message of messages) {
         // Append branch information when transforming for the case of messages stashed with the snapshot
@@ -163,7 +143,7 @@ export class Document implements IDocument {
         if (!document.existing) {
             result.createAttached("root", mapExtension.MapExtension.Type);
         } else {
-            await waitForRoot(result);
+            await result.waitForRoot();
         }
 
         debug(`Document loaded ${id} - ${performanceNow()}`);
@@ -257,12 +237,9 @@ export class Document implements IDocument {
      *
      * @param id Identifier of the object to load
      */
-    public get(id: string): ICollaborativeObject {
-        return id in this.distributedObjects ? this.distributedObjects[id].object : null;
-    }
-
     public async getAsync(id: string): Promise<ICollaborativeObject> {
-        throw new Error("Not implemented");
+        // TODO this needs to be async
+        return id in this.distributedObjects ? this.distributedObjects[id].object : null;
     }
 
     /**
@@ -604,11 +581,13 @@ export class Document implements IDocument {
         // Add the message to the list of pending messages so we can transform them during a snapshot
         this.messagesSinceMSNChange.push(message);
 
+        const eventArgs: any[] = [message];
         if (message.type === ObjectOperation) {
             const envelope = message.contents as IEnvelope;
             const objectDetails = this.distributedObjects[envelope.address];
 
             objectDetails.connection.process(message, context);
+            eventArgs.push(objectDetails.object);
         } else if (message.type === AttachObject) {
             const attachMessage = message.contents as IAttachMessage;
 
@@ -619,6 +598,7 @@ export class Document implements IDocument {
             } else {
                 this.distributedObjects[attachMessage.id].connection.setBaseMapping(0, message.sequenceNumber);
             }
+            eventArgs.push(this.distributedObjects[attachMessage.id].object);
         }
 
         if (minSequenceNumberChanged) {
@@ -640,7 +620,27 @@ export class Document implements IDocument {
             }
         }
 
-        this.events.emit("op", message);
+        this.events.emit("op", ...eventArgs);
+    }
+
+    /**
+     * Polls for the root document
+     */
+    private pollRoot(resolve, reject) {
+        if ("root" in this.distributedObjects) {
+            resolve();
+        } else {
+            const pauseAmount = 100;
+            debug(`Did not find root - waiting ${pauseAmount}ms`);
+            setTimeout(() => this.pollRoot(resolve, reject), pauseAmount);
+        }
+    }
+
+    /**
+     * Returns a promie that resolves once the root map is available
+     */
+    private waitForRoot(): Promise<void> {
+        return new Promise<void>((resolve, reject) => this.pollRoot(resolve, reject));
     }
 }
 

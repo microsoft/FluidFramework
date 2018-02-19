@@ -31,14 +31,6 @@ export enum CellValueType {
     Plain,
 }
 
-export interface ICollaborativeCellValue {
-    // The type of collaborative object
-    type: string;
-
-    // The id for the collaborative object
-    id: string;
-}
-
 export interface ICellValue {
     // The type of the value
     type: string;
@@ -53,8 +45,7 @@ const snapshotFileName = "header";
  * Implementation of a cell collaborative object
  */
 export class Cell extends map.CollaborativeMap implements ICell {
-    // Cell data
-    private data: ICellValue;
+    private data: any;
 
     /**
      * Constructs a new collaborative cell. If the object is non-local an id and service interfaces will
@@ -68,7 +59,7 @@ export class Cell extends map.CollaborativeMap implements ICell {
      * Retrieves the value of the cell.
      */
     public async get() {
-        return this.getCore();
+        return this.data;
     }
 
     /**
@@ -79,15 +70,13 @@ export class Cell extends map.CollaborativeMap implements ICell {
         if (hasIn(value, "__collaborativeObject__")) {
             // Convert any local collaborative objects to our internal storage format
             const collaborativeObject = value as api.ICollaborativeObject;
-
-            const collabCellValue: ICollaborativeCellValue = {
-                id: collaborativeObject.id,
-                type: collaborativeObject.type,
-            };
+            if (!this.isLocal()) {
+                collaborativeObject.attach();
+            }
 
             operationValue = {
                 type: CellValueType[CellValueType.Collaborative],
-                value: collabCellValue,
+                value: collaborativeObject.id,
             };
         } else {
             operationValue = {
@@ -101,7 +90,7 @@ export class Cell extends map.CollaborativeMap implements ICell {
             value: operationValue,
         };
 
-        this.setCore(op.value);
+        this.setCore(value);
         this.submitIfAttached(op);
     }
 
@@ -119,17 +108,32 @@ export class Cell extends map.CollaborativeMap implements ICell {
      * Returns whether cell is empty or not.
      */
     public async empty() {
-        return this.data === null ? true : false;
+        return this.data === undefined ? true : false;
     }
 
     protected snapshotContent(): api.ITree {
+        // Get a serializable form of data
+        let content: ICellValue;
+        if (this.data && hasIn(this.data, "__collaborativeObject__")) {
+            content = {
+                type: CellValueType[CellValueType.Collaborative],
+                value: (this.data as api.ICollaborativeObject).id,
+            };
+        } else {
+            content = {
+                type: CellValueType[CellValueType.Plain],
+                value: this.data,
+            };
+        }
+
+        // And then construct the tree for it
         const tree: api.ITree = {
             entries: [
                 {
                     path: snapshotFileName,
                     type: api.TreeEntry[api.TreeEntry.Blob],
                     value: {
-                        contents: JSON.stringify(this.data),
+                        contents: JSON.stringify(content),
                         encoding: "utf-8",
                     },
                 },
@@ -144,40 +148,44 @@ export class Cell extends map.CollaborativeMap implements ICell {
         headerOrigin: string,
         storage: api.IObjectStorageService): Promise<void> {
 
-        const header = await storage.read(snapshotFileName);
-        this.data = header ? JSON.parse(Buffer.from(header, "base64").toString("utf-8")) : null;
+        const rawContent = await storage.read(snapshotFileName);
+        const content = rawContent
+            ? JSON.parse(Buffer.from(rawContent, "base64").toString("utf-8")) as ICellValue
+            : { type: CellValueType[CellValueType.Plain], value: undefined };
+
+        this.data = content.type === CellValueType[CellValueType.Collaborative]
+            ? await this.document.getAsync(content.value)
+            : content.value;
     }
 
     protected initializeContent() {
-        this.data = null;
+        this.data = undefined;
     }
 
-    protected submitCore(message: api.IObjectMessage) {
-        const op = message.contents as ICellOperation;
-
-        // We need to translate any local collaborative object sets to the serialized form
-        if (op.type === "setCell" && op.value.type === CellValueType[CellValueType.Collaborative]) {
-            // We need to attach the object prior to submitting the message
-            const collabMapValue = op.value.value as ICollaborativeCellValue;
-            const collabObject = this.document.get(collabMapValue.id);
-
-            if (collabObject.isLocal()) {
-                collabObject.attach();
+    protected async prepareContent(message: api.ISequencedObjectMessage): Promise<any> {
+        if (message.type === api.OperationType && message.clientId !== this.document.clientId) {
+            const op: ICellOperation = message.contents;
+            if (op.type === "setCell") {
+                return op.value.type === CellValueType[CellValueType.Collaborative]
+                    ? await this.document.getAsync(op.value.value)
+                    : op.value.value;
             }
         }
     }
 
-    protected processContent(message: api.ISequencedObjectMessage) {
+    protected processContent(message: api.ISequencedObjectMessage, context: any) {
         if (message.type === api.OperationType && message.clientId !== this.document.clientId) {
             const op: ICellOperation = message.contents;
 
             switch (op.type) {
                 case "setCell":
-                    this.setCore(op.value);
+                    this.setCore(context);
                     break;
+
                 case "deleteCell":
                     this.deleteCore();
                     break;
+
                 default:
                     throw new Error("Unknown operation");
             }
@@ -192,25 +200,13 @@ export class Cell extends map.CollaborativeMap implements ICell {
         this.submitLocalMessage(message);
     }
 
-    private setCore(value: ICellValue) {
+    private setCore(value: any) {
         this.data = value;
-        this.emit("valueChanged", this.getCore());
+        this.emit("valueChanged", value);
     }
 
     private deleteCore() {
-        this.data = null;
+        this.data = undefined;
         this.emit("delete");
-    }
-
-    private getCore(): any {
-        const value = this.data;
-        if (value === null) {
-            return undefined;
-        } else if (value.type === CellValueType[CellValueType.Collaborative]) {
-            const collabCellValue = value.value as ICollaborativeCellValue;
-            return this.document.get(collabCellValue.id);
-        } else {
-            return value.value;
-        }
     }
 }

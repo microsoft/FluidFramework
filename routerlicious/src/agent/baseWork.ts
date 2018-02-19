@@ -4,7 +4,7 @@ export class BaseWork {
 
     protected document: api.Document;
     protected config: any;
-    protected operation: (op: any) => void;
+    protected operation: (...args: any[]) => void;
 
     constructor(private id: string, private conf: any) {
         this.config = this.conf;

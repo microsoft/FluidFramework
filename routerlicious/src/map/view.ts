@@ -113,7 +113,9 @@ export class MapView implements IMapView {
         let operationValue: IMapValue;
         if (hasIn(value, "__collaborativeObject__")) {
             // Attach the collab object to the document. If already attached the attach call will noop
-            value.attach();
+            if (!this.map.isLocal()) {
+                value.attach();
+            }
 
             operationValue = {
                 type: ValueType[ValueType.Collaborative],

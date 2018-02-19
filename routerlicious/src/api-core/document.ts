@@ -48,8 +48,6 @@ export interface IDocument {
 
     getAsync(id: string): Promise<ICollaborativeObject>;
 
-    get(id: string): ICollaborativeObject;
-
     submitObjectMessage(envelope: IEnvelope);
 
     // TODO Should I hide this internally on the message - doesn't seem to be a primary object
