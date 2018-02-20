@@ -160,7 +160,9 @@ export class Document extends EventEmitter {
         });
         await Promise.all(objectsLoaded);
 
-        // Begin processing deltas
+        // Process all pending deltas and then resume
+        document.deltaManager.start();
+        await document.deltaManager.flushAndPause();
         document.deltaManager.start();
 
         // If it's a new document we create the root map object - otherwise we wait for it to become available
@@ -194,6 +196,13 @@ export class Document extends EventEmitter {
 
     public get id(): string {
         return this.document.documentId;
+    }
+
+    /**
+     * Flag indicating whether the document already existed at the time of load
+     */
+    public get existing(): boolean {
+        return this.document.existing;
     }
 
     /**
@@ -512,7 +521,10 @@ export class Document extends EventEmitter {
         // For bootstrapping simplicity we allow root to be reserved multiple times. All other objects should
         // have a single reservation call.
         assert(id === "root" || !this.reservations.has(id));
-        this.reservations.set(id, new Deferred<ICollaborativeObject>());
+
+        if (!this.reservations.has(id)) {
+            this.reservations.set(id, new Deferred<ICollaborativeObject>());
+        }
     }
 
     private fulfillDistributedObject(object: ICollaborativeObject, services: IObjectServices) {

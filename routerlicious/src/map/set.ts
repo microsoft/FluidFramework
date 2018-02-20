@@ -32,7 +32,7 @@ export class DistributedSet<T> implements ISet<T> {
         return this;
     }
 
-    public delete(value: T, submitEvent = false): ISet<T> {
+    public delete(value: T, submitEvent = true): ISet<T> {
         this.internalSet.delete(value);
 
         if (submitEvent) {

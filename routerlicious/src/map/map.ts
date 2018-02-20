@@ -63,7 +63,7 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
             "set",
             {
                 prepare: (map, op) => map.view.prepareSetCore(op.key, op.value),
-                process: (map, op, context) => map.view.setCore(op.key, context),
+                process: (map, op, context) => map.view.setCore(op.key, context.type, context.value),
             });
         handler.set(
             "initCounter",

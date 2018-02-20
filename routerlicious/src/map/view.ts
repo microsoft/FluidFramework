@@ -7,67 +7,30 @@ import { IMapOperation, IMapValue, ValueType } from "./definitions";
 import { CollaborativeMap } from "./map";
 import { DistributedSet } from "./set";
 
+interface ITranslation {
+    key: string;
+    value: IMapValue;
+}
+
 export class MapView implements IMapView {
     private data = new Map<string, IMapValue>();
-    private distributedObjects = new Map<string, api.ICollaborativeObject>();
 
     constructor(private map: CollaborativeMap, private document: api.IDocument, id: string) {
     }
 
     public async populate(data: {[key: string]: IMapValue }): Promise<void> {
-        const distributedObjectsP = new Array<Promise<api.ICollaborativeObject>>();
+        const translationsP = new Array<Promise<ITranslation>>();
 
         // tslint:disable-next-line:forin
         for (const key in data) {
             const value = data[key];
-            const enumValue = ValueType[value.type];
-            switch (enumValue) {
-                case ValueType.Set:
-                    const set = new DistributedSet(key, value.value, this.map);
-                    this.data.set(
-                        key,
-                        {
-                            type: ValueType[ValueType.Set],
-                            value: set,
-                        });
-                    break;
+            const translationP = this.translateToLocal(key, value);
+            translationsP.push(translationP);
+        }
 
-                case ValueType.Counter:
-                    const counter = new Counter(
-                        key,
-                        value.value.value,
-                        value.value.min,
-                        value.value.max,
-                        this.map);
-                    this.data.set(
-                        key,
-                        {
-                            type: ValueType[ValueType.Counter],
-                            value: counter,
-                        });
-                    break;
-
-                case ValueType.Collaborative:
-                    const distributedObject = this.document.get(value.value);
-                    distributedObjectsP.push(distributedObject);
-                    break;
-
-                default:
-                    this.data.set(key, data[key]);
-                    break;
-            }
-
-            // Stash local references to the distributed objects
-            const resolvedObjects = await Promise.all(distributedObjectsP);
-            for (const resolvedObject of resolvedObjects) {
-                this.distributedObjects.set(resolvedObject.id, resolvedObject);
-                this.data.set(
-                    key,
-                    {
-                        type: ValueType[ValueType.Counter],
-                        value: resolvedObject,
-                    });
-            }
+        const translations = await Promise.all(translationsP);
+        for (const translation of translations) {
+            this.data.set(translation.key, translation.value);
         }
     }
 
@@ -112,14 +75,16 @@ export class MapView implements IMapView {
     public set(key: string, value: any): void {
         let operationValue: IMapValue;
         if (hasIn(value, "__collaborativeObject__")) {
+            const distributedObject = value as api.ICollaborativeObject;
+
             // Attach the collab object to the document. If already attached the attach call will noop
             if (!this.map.isLocal()) {
-                value.attach();
+                distributedObject.attach();
             }
 
             operationValue = {
                 type: ValueType[ValueType.Collaborative],
-                value,
+                value: distributedObject.id,
             };
         } else {
             operationValue = {
@@ -134,7 +99,7 @@ export class MapView implements IMapView {
             value: operationValue,
         };
 
-        this.setCore(op.key, op.value);
+        this.setCore(op.key, operationValue.type, value);
         this.map.submitMapMessage(op);
     }
 
@@ -196,15 +161,19 @@ export class MapView implements IMapView {
         return JSON.stringify(serialized);
     }
 
-    public setCore(key: string, value: any) {
-        this.data.set(key, value);
+    public setCore(key: string, type: string, value: IMapValue) {
+        this.data.set(
+            key,
+            {
+                type,
+                value,
+            });
         this.map.emit("valueChanged", { key });
     }
 
-    public prepareSetCore(key: string, value: IMapValue): Promise<api.ICollaborativeObject> {
-        return value.type === ValueType[ValueType.Collaborative]
-            ? this.document.get(value.value)
-            : Promise.resolve(null);
+    public async prepareSetCore(key: string, value: IMapValue): Promise<IMapValue> {
+        const translation = await this.translateToLocal(key, value);
+        return translation.value;
     }
 
     public clearCore() {
@@ -285,5 +254,50 @@ export class MapView implements IMapView {
         assert.equal(value.type, ValueType[ValueType.Set]);
         const set = this.get(key) as DistributedSet<T>;
         set.add(value.value, false);
+    }
+
+    private async translateToLocal(key: string, value: IMapValue): Promise<ITranslation> {
+        const enumValue = ValueType[value.type];
+
+        let translatedValue: IMapValue;
+        switch (enumValue) {
+            case ValueType.Set:
+                const set = new DistributedSet(key, value.value, this.map);
+                translatedValue = {
+                    type: ValueType[ValueType.Set],
+                    value: set,
+                };
+                break;
+
+            case ValueType.Counter:
+                const counter = new Counter(
+                    key,
+                    value.value.value,
+                    value.value.min,
+                    value.value.max,
+                    this.map);
+                translatedValue = {
+                    type: ValueType[ValueType.Counter],
+                    value: counter,
+                };
+                break;
+
+            case ValueType.Collaborative:
+                const distributedObject = await this.document.get(value.value);
+                translatedValue = {
+                    type: ValueType[ValueType.Collaborative],
+                    value: distributedObject,
+                };
+                break;
+
+            default:
+                translatedValue = value;
+                break;
+        }
+
+        return {
+            key,
+            value: translatedValue,
+        };
     }
 }
