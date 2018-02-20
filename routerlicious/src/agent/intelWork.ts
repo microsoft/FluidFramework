@@ -34,13 +34,10 @@ export class IntelWork extends BaseWork implements IWork {
             this.intelligenceManager.registerService(
                 nativeTextAnalytics.factory.create(this.config.intelligence.nativeTextAnalytics));
         }
-        const eventHandler = (op: core.ISequencedDocumentMessage) => {
+        const eventHandler = (op: core.ISequencedDocumentMessage, object: core.ICollaborativeObject) => {
             if (op.type === core.ObjectOperation) {
-                const objectId = op.contents.address;
-                const object = doc.get(objectId);
                 this.intelligenceManager.process(object);
             } else if (op.type === core.AttachObject) {
-                const object = doc.get(op.contents.id);
                 this.intelligenceManager.process(object);
             }
         };

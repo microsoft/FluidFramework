@@ -24,7 +24,7 @@ interface ISharedEdge {
 
 class SharedGraph {
     constructor(public vertices: ISet<ISharedVertex>, public edges: ISet<ISharedEdge>) {
-        for (const vertex of vertices.getInternalSet()) {
+        for (const vertex of vertices.entries()) {
             winston.info(`${vertex.id} ${vertex.label}`);
         }
     }
@@ -41,7 +41,7 @@ class SharedGraph {
     }
 
     public removeVertex(id: string) {
-        for (const value of this.vertices.getInternalSet()) {
+        for (const value of this.vertices.entries()) {
             if (value.id === id) {
                 this.vertices.delete(value);
             }

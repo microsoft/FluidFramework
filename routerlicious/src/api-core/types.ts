@@ -55,9 +55,7 @@ export interface ICollaborativeObject {
     isLocal(): boolean;
 
     /**
-     * Gets a form of the object that can be serialized.
-     * TODO this is temporary to bootstrap the process. For performance/dynamic load/etc... we'll likely expose
-     * access to the snapshot behind the storage objects.
+     * Snapshots the object
      */
     snapshot(): storage.ITree;
 

@@ -1,7 +1,7 @@
 import * as assert from "assert";
 import * as api from "../../api";
 import { IMap, IMapView } from "../../data-types";
-import { copyMap, MapExtension, MapView } from "../../map";
+import { copyMap, MapView } from "../../map";
 import * as testUtils from "../testUtils";
 
 describe("Routerlicious", () => {
@@ -144,8 +144,7 @@ describe("Routerlicious", () => {
                             assert.equal(parsed[key].value, value);
                         } else {
                             assert.equal(parsed[key].type, "Collaborative");
-                            assert.equal(parsed[key].value.id, subMap.id);
-                            assert.equal(parsed[key].value.type, MapExtension.Type);
+                            assert.equal(parsed[key].value, subMap.id);
                         }
                     });
                 });

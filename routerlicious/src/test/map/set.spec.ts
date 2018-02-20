@@ -27,7 +27,7 @@ describe("Routerlicious", () => {
                 emptySet.add(30);
                 emptySet.delete(20);
                 assert.deepEqual(emptySet.entries(), [10, 30]);
-                assert.deepEqual(Array.from(emptySet.getInternalSet().values()), [10, 30]);
+                assert.deepEqual(Array.from(emptySet.entries()), [10, 30]);
             });
 
             it("Can create a set with values and populate it", () => {
@@ -39,7 +39,7 @@ describe("Routerlicious", () => {
                 populatedSet.delete(2);
                 populatedSet.delete(4);
                 assert.deepEqual(populatedSet.entries(), [1, 6, 3, 5]);
-                assert.deepEqual(Array.from(populatedSet.getInternalSet().values()), [1, 6, 3, 5]);
+                assert.deepEqual(Array.from(populatedSet.entries()), [1, 6, 3, 5]);
             });
 
         });

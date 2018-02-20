@@ -2,7 +2,7 @@ import * as resources from "gitresources";
 import * as api from "../api-core";
 import { getOrDefault } from "../core-utils";
 import { ICounter, IMap, IMapView, ISet } from "../data-types";
-import { ICollaborativeMapValue, IMapDataCompatibility, IMapOperation, ValueType } from "./definitions";
+import { IMapOperation } from "./definitions";
 import { MapExtension } from "./extension";
 import { MapView } from "./view";
 
@@ -27,10 +27,80 @@ class ContentObjectStorage implements api.IObjectStorageService {
     }
 }
 
+export interface IMapMessageHandler {
+    prepare(map: CollaborativeMap, op: IMapOperation): Promise<any>;
+    process(map: CollaborativeMap, op: IMapOperation, context: any): void;
+}
+
 /**
  * Implementation of a map collaborative object
  */
 export class CollaborativeMap extends api.CollaborativeObject implements IMap {
+    /**
+     * Initializes message handlers for inbound map messages
+     */
+    public static initializeMessageHandler() {
+        if (CollaborativeMap.messageHandler) {
+            return;
+        }
+
+        const defaultPrepare = (map: CollaborativeMap, op: IMapOperation) => Promise.resolve();
+
+        const handler = new Map<string, IMapMessageHandler>();
+        handler.set(
+            "clear",
+            {
+                prepare: defaultPrepare,
+                process: (map, op, context) => map.view.clearCore(),
+            });
+        handler.set(
+            "delete",
+            {
+                prepare: defaultPrepare,
+                process: (map, op, context) => map.view.deleteCore(op.key),
+            });
+        handler.set(
+            "set",
+            {
+                prepare: (map, op) => map.view.prepareSetCore(op.key, op.value),
+                process: (map, op, context) => map.view.setCore(op.key, context.type, context.value),
+            });
+        handler.set(
+            "initCounter",
+            {
+                prepare: defaultPrepare,
+                process: (map, op, context) => map.view.initCounterCore(op.key, op.value),
+            });
+        handler.set(
+            "incrementCounter",
+            {
+                prepare: defaultPrepare,
+                process: (map, op, context) => map.view.incrementCounterCore(op.key, op.value),
+            });
+        handler.set(
+            "initSet",
+            {
+                prepare: defaultPrepare,
+                process: (map, op, context) => map.view.initSetCore(op.key, op.value),
+            });
+        handler.set(
+            "insertSet",
+            {
+                prepare: defaultPrepare,
+                process: (map, op, context) => map.view.insertSetCore(op.key, op.value),
+            });
+        handler.set(
+            "deleteSet",
+            {
+                prepare: defaultPrepare,
+                process: (map, op, context) => map.view.deleteSetCore(op.key, op.value),
+            });
+
+        CollaborativeMap.messageHandler = handler;
+    }
+
+    private static messageHandler: Map<string, IMapMessageHandler>;
+
     private view: MapView;
 
     /**
@@ -43,8 +113,11 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
         type = MapExtension.Type) {
 
         super(id, document, type);
-
-        // TODO I need some kind of default state!
+        CollaborativeMap.initializeMessageHandler();
+        this.view = new MapView(
+            this,
+            this.document,
+            this.id);
     }
 
     public async keys(): Promise<string[]> {
@@ -88,53 +161,12 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
         if (value < min || value > max) {
             throw new Error("Initial value exceeds the counter range!");
         }
-        return this.view.initCounter(this, key, value, min, max);
-    }
-
-    public incrementCounter(key: string, value: number, min: number, max: number): ICounter {
-        if (typeof value !== "number") {
-            throw new Error("Incremental amount should be a number.");
-        }
-        const compatible = this.ensureCompatibility(key, ValueType[ValueType.Counter]);
-        if (compatible.reject !== null) {
-            throw new Error("Incompatible type.");
-        }
-        const currentData = compatible.data;
-        const currentValue = currentData.value as ICounter;
-        const nextValue = currentValue.get() + value;
-        if ((nextValue < min) || (nextValue > max)) {
-            throw new Error("Error: Counter range exceeded!");
-        }
-        return this.view.incrementCounter(key, value);
-    }
-
-    public getCounterValue(key: string): Promise<number> {
-        const compatible = this.ensureCompatibility(key, ValueType[ValueType.Counter]);
-        return compatible.reject !== null ? compatible.reject : Promise.resolve(compatible.data.value);
+        return this.view.initCounter(key, value, min, max);
     }
 
     public createSet<T>(key: string, value?: T[]): ISet<T> {
         value = getOrDefault(value, []);
-        return this.view.initSet(this, key, value);
-    }
-
-    public insertSet<T>(key: string, value: T): ISet<T> {
-        const compatible = this.ensureCompatibility(key, ValueType[ValueType.Set]);
-        return compatible.reject !== null ? null : this.view.insertSet(key, value);
-    }
-
-    public deleteSet<T>(key: string, value: T): ISet<T> {
-        const compatible = this.ensureCompatibility(key, ValueType[ValueType.Set]);
-        return compatible.reject !== null ? null : this.view.deleteSet(key, value);
-    }
-
-    public enumerateSet<T>(key: string): any[] {
-        const compatible = this.ensureCompatibility(key, ValueType[ValueType.Set]);
-        if (compatible.reject !== null) {
-            return null;
-        }
-        const resultSet = compatible.data.value as ISet<T>;
-        return Array.from(resultSet.getInternalSet().values());
+        return this.view.initSet(key, value);
     }
 
     public snapshot(): api.ITree {
@@ -164,38 +196,25 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
     }
 
     public transform(message: api.IObjectMessage, sequenceNumber: number): api.IObjectMessage {
-        let handled = false;
-        if (message.type === api.OperationType) {
-            const op: IMapOperation = message.contents;
-
-            handled = true;
-            switch (op.type) {
-                case "clear":
-                    break;
-                case "delete":
-                    break;
-                case "set":
-                    break;
-                case "initCounter":
-                    break;
-                case "incrementCounter":
-                    break;
-                case "initSet":
-                    break;
-                case "insertSet":
-                    break;
-                case "deleteSet":
-                    break;
-                default:
-                    handled = false;
-            }
-        }
+        let handled = message.type === api.OperationType
+            ? CollaborativeMap.messageHandler.has((message.contents as IMapOperation).type)
+            : false;
 
         if (!handled) {
             message = this.transformContent(message, sequenceNumber);
         }
 
         return message;
+    }
+
+    public submitMapMessage(op: any): void {
+        // Local operations do not require any extra processing
+        if (this.isLocal()) {
+            return;
+        }
+
+        // Once we have performed the attach submit the local operation
+        this.submitLocalMessage(op);
     }
 
     /**
@@ -213,14 +232,13 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
         const header = await storage.read(snapshotFileName);
 
         const data = header ? JSON.parse(Buffer.from(header, "base64").toString("utf-8")) : {};
-        this.initializeView(data);
+        await this.view.populate(data);
 
         const contentStorage = new ContentObjectStorage(storage);
         await this.loadContent(version, headerOrigin, contentStorage);
     }
 
     protected initializeLocalCore() {
-        this.initializeView({});
         this.initializeContent();
     }
 
@@ -240,45 +258,29 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
         return;
     }
 
-    protected processCore(message: api.ISequencedObjectMessage) {
+    protected prepareCore(message: api.ISequencedObjectMessage): Promise<any> {
+        if (message.type === api.OperationType && message.clientId !== this.document.clientId) {
+            const op: IMapOperation = message.contents;
+            if (CollaborativeMap.messageHandler.has(op.type)) {
+                return CollaborativeMap.messageHandler.get(op.type).prepare(this, op);
+            }
+        }
+
+        return this.prepareContent(message);
+    }
+
+    protected processCore(message: api.ISequencedObjectMessage, context: any) {
         let handled = false;
         if (message.type === api.OperationType && message.clientId !== this.document.clientId) {
             const op: IMapOperation = message.contents;
-
-            handled = true;
-            switch (op.type) {
-                case "clear":
-                    this.view.clearCore();
-                    break;
-                case "delete":
-                    this.view.deleteCore(op.key);
-                    break;
-                case "set":
-                    this.view.setCore(op.key, op.value);
-                    break;
-                case "initCounter":
-                    this.view.initCounterCore(this, op.key, op.value);
-                    break;
-                case "incrementCounter":
-                    this.view.incrementCounterCore(op.key, op.value);
-                    break;
-                case "initSet":
-                    this.view.initSetCore(this, op.key, op.value);
-                    break;
-                case "insertSet":
-                    this.view.insertSetCore(op.key, op.value);
-                    break;
-                case "deleteSet":
-                    this.view.deleteSetCore(op.key, op.value);
-                    break;
-                default:
-                    // default the operation to the content
-                    handled = false;
+            if (CollaborativeMap.messageHandler.has(op.type)) {
+                CollaborativeMap.messageHandler.get(op.type).process(this, op, context);
+                handled = true;
             }
         }
 
         if (!handled) {
-            this.processContent(message);
+            this.processContent(message, context);
         }
 
         this.emit("op", message);
@@ -295,10 +297,14 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
         return;
     }
 
+    protected async prepareContent(message: api.ISequencedObjectMessage): Promise<any> {
+        return;
+    }
+
     /**
      * Processes a content message
      */
-    protected processContent(message: api.ISequencedObjectMessage) {
+    protected processContent(message: api.ISequencedObjectMessage, context: any) {
         return;
     }
 
@@ -321,70 +327,5 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
      */
     protected transformContent(message: api.IObjectMessage, sequenceNumber: number): api.IObjectMessage {
         return message;
-    }
-
-    private initializeView(data: any) {
-        this.view = new MapView(
-            this.document,
-            this.id,
-            data,
-            this,
-            (op) => {
-                // Local operations do not require any extra processing
-                if (this.isLocal()) {
-                    return;
-                }
-
-                // We need to translate any local collaborative object sets to the serialized form
-                if (op.type === "set" && op.value.type === ValueType[ValueType.Collaborative]) {
-                    // We need to attach the object prior to submitting the message so that its state is available
-                    // to upstream users following the attach
-                    const collabMapValue = op.value.value as ICollaborativeMapValue;
-                    const collabObject = this.document.get(collabMapValue.id);
-                    collabObject.attach();
-                }
-
-                // Once we have performed the attach submit the local operation
-                this.submitLocalMessage(op);
-            });
-
-        // This should probably be done on data - like with the collab objects - prior to giving to view.
-        // Or have the view do all the loading
-        for (let key of this.view.keys()) {
-            const value = this.view.getMapValue(key);
-            if (value !== undefined) {
-                switch (value.type) {
-                    case ValueType[ValueType.Set]:
-                        this.view.loadSet(this, key, value.value);
-                        break;
-                    case ValueType[ValueType.Counter]:
-                        this.view.loadCounter(this, key, value.value.value, value.value.min, value.value.max);
-                        break;
-                    default:
-                        break;
-                }
-            }
-        }
-    }
-
-    // Check if key exists in the map and if the value type is of the desired type (e.g., set, counter etc.)
-    private ensureCompatibility(key: string, targetType: string): IMapDataCompatibility {
-        const currentData = this.view.getMapValue(key);
-        if (currentData === undefined) {
-            return {
-                data: null,
-                reject: Promise.reject("Error: No key found!"),
-            };
-        }
-        if (currentData.type !== targetType) {
-            return {
-                data: null,
-                reject: Promise.reject("Error: Incompatible value type!"),
-            };
-        }
-        return {
-            data: currentData,
-            reject: null,
-        };
     }
 }
