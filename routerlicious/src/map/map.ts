@@ -287,6 +287,8 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
     }
 
     protected attachCore() {
+        this.view.attachAll();
+
         this.attachContent();
     }
 

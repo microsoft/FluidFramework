@@ -72,6 +72,14 @@ export class MapView implements IMapView {
         return this.data.has(key);
     }
 
+    public attachAll() {
+        for (const [, value] of this.data) {
+            if (value.type === ValueType[ValueType.Collaborative]) {
+                (value.value as api.ICollaborativeObject).attach();
+            }
+        }
+    }
+
     public set(key: string, value: any): void {
         let operationValue: IMapValue;
         if (hasIn(value, "__collaborativeObject__")) {

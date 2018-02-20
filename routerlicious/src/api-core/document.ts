@@ -44,6 +44,8 @@ export interface IDocument {
 
     options: Object;
 
+    create(type: string, id?: string): ICollaborativeObject;
+
     attach(object: ICollaborativeObject): IDistributedObjectServices;
 
     get(id: string): Promise<ICollaborativeObject>;

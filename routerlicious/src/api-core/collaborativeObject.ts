@@ -70,12 +70,12 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
             return this;
         }
 
+        // Allow derived classes to perform custom processing prior to attaching this object
+        this.attachCore();
+
         // Notify the document of the attachment
         this.services = this.document.attach(this);
         this.attachDeltaHandler();
-
-        // Allow derived classes to perform custom processing
-        this.attachCore();
 
         return this;
     }
