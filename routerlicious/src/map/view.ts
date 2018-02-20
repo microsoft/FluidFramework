@@ -48,7 +48,7 @@ export class MapView implements IMapView {
                     break;
 
                 case ValueType.Collaborative:
-                    const distributedObject = this.document.getAsync(value.value);
+                    const distributedObject = this.document.get(value.value);
                     distributedObjectsP.push(distributedObject);
                     break;
 
@@ -203,7 +203,7 @@ export class MapView implements IMapView {
 
     public prepareSetCore(key: string, value: IMapValue): Promise<api.ICollaborativeObject> {
         return value.type === ValueType[ValueType.Collaborative]
-            ? this.document.getAsync(value.value)
+            ? this.document.get(value.value)
             : Promise.resolve(null);
     }
 

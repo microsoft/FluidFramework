@@ -154,7 +154,7 @@ export class Cell extends map.CollaborativeMap implements ICell {
             : { type: CellValueType[CellValueType.Plain], value: undefined };
 
         this.data = content.type === CellValueType[CellValueType.Collaborative]
-            ? await this.document.getAsync(content.value)
+            ? await this.document.get(content.value)
             : content.value;
     }
 
@@ -167,7 +167,7 @@ export class Cell extends map.CollaborativeMap implements ICell {
             const op: ICellOperation = message.contents;
             if (op.type === "setCell") {
                 return op.value.type === CellValueType[CellValueType.Collaborative]
-                    ? await this.document.getAsync(op.value.value)
+                    ? await this.document.get(op.value.value)
                     : op.value.value;
             }
         }

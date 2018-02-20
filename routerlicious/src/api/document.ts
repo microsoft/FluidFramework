@@ -13,7 +13,6 @@ import {
     IDeltaConnection,
     IDistributedObject,
     IDistributedObjectServices,
-    IDocument,
     IDocumentAttributes,
     IDocumentResource,
     IDocumentService,
@@ -35,7 +34,7 @@ import {
     SaveOperation,
     TreeEntry } from "../api-core";
 import * as cell from "../cell";
-import { getOrDefault } from "../core-utils";
+import { Deferred, getOrDefault } from "../core-utils";
 import { ICell, IMap, IStream } from "../data-types";
 import * as mapExtension from "../map";
 import * as mergeTree from "../merge-tree";
@@ -107,7 +106,7 @@ function setParentBranch(messages: ISequencedDocumentMessage[], parentBranch?: s
 /**
  * A document is a collection of collaborative types.
  */
-export class Document implements IDocument {
+export class Document extends EventEmitter {
     public static async Load(
         id: string,
         registry: Registry,
@@ -116,49 +115,74 @@ export class Document implements IDocument {
         version: resources.ICommit,
         connect: boolean): Promise<Document> {
 
+        // Verify an extensions registry was provided
+        if (!registry) {
+            return Promise.reject("No extension registry provided");
+        }
+
+        // Verify we have services to load the document with
+        if (!service) {
+            return Promise.reject("Document service not provided to load call");
+        }
+
         debug(`Document loading ${id} - ${performanceNow()}`);
 
         // Connect to the document
         const encryptedProperty = "encrypted";
         const tknProperty = "token";
-        const document = await service.connect(id, version, connect, options[encryptedProperty], options[tknProperty]).
-            catch((err) => {
-                return Promise.reject(err);
-            });
-        const result = new Document(document, registry, service, options);
+        const documentConnection = await service.connect(
+            id,
+            version,
+            connect,
+            options[encryptedProperty],
+            options[tknProperty]);
+        const document = new Document(documentConnection, registry, service, options);
+
+        // Make a reservation for the root object
+        document.reserveDistributedObject("root");
+
+        // Make reservations for all distributed objects in the snapshot
+        for (const object of documentConnection.distributedObjects) {
+            document.reserveDistributedObject(object.id);
+        }
 
         // Load in distributed objects stored within the document
-        const objectsLoaded = document.distributedObjects.map(async (distributedObject) => {
-            const services = result.getObjectServices(distributedObject.id);
-            services.deltaConnection.setBaseMapping(distributedObject.sequenceNumber, document.minimumSequenceNumber);
-            const value = await result.loadInternal(distributedObject, services, document.snapshotOriginBranch);
-            result.upsertDistributedObject(value, services);
+        const objectsLoaded = documentConnection.distributedObjects.map(async (distributedObject) => {
+            const services = document.getObjectServices(distributedObject.id);
+            services.deltaConnection.setBaseMapping(
+                distributedObject.sequenceNumber,
+                documentConnection.minimumSequenceNumber);
+            const value = await document.loadInternal(
+                distributedObject,
+                services,
+                documentConnection.snapshotOriginBranch);
+            document.fulfillDistributedObject(value, services);
         });
         await Promise.all(objectsLoaded);
 
         // Begin processing deltas
-        result.deltaManager.start();
+        document.deltaManager.start();
 
         // If it's a new document we create the root map object - otherwise we wait for it to become available
-        if (!document.existing) {
-            result.createAttached("root", mapExtension.MapExtension.Type);
+        if (!documentConnection.existing) {
+            document.createAttached("root", mapExtension.MapExtension.Type);
         } else {
-            await result.waitForRoot();
+            await document.get("root");
         }
 
         debug(`Document loaded ${id} - ${performanceNow()}`);
 
         // And return the new object
-        return result;
+        return document;
     }
 
     // Map from the object ID to the collaborative object for it. If the object is not yet attached its service
     // entries will be null
     private distributedObjects: { [key: string]: IDistributedObjectState } = {};
 
-    private deltaManager: DeltaManager;
+    private reservations = new Map<string, Deferred<ICollaborativeObject>>();
 
-    private events = new EventEmitter();
+    private deltaManager: DeltaManager;
 
     private lastMinSequenceNumber;
 
@@ -187,6 +211,8 @@ export class Document implements IDocument {
         private registry: Registry,
         private service: IDocumentService,
         private opts: Object) {
+
+        super();
 
         this.lastMinSequenceNumber = this.document.minimumSequenceNumber;
         if (this.document.deltaConnection !== null) {
@@ -224,7 +250,8 @@ export class Document implements IDocument {
         const object = extension.create(this, id);
 
         // Store the unattached service in the object map
-        this.upsertDistributedObject(object, null);
+        this.reserveDistributedObject(id);
+        this.fulfillDistributedObject(object, null);
 
         return object;
     }
@@ -237,9 +264,10 @@ export class Document implements IDocument {
      *
      * @param id Identifier of the object to load
      */
-    public async getAsync(id: string): Promise<ICollaborativeObject> {
-        // TODO this needs to be async
-        return id in this.distributedObjects ? this.distributedObjects[id].object : null;
+    public async get(id: string): Promise<ICollaborativeObject> {
+        return this.reservations.has(id)
+            ? this.reservations.get(id).promise
+            : Promise.reject("Object does not exist");
     }
 
     /**
@@ -249,6 +277,10 @@ export class Document implements IDocument {
      * @param object
      */
     public attach(object: ICollaborativeObject): IDistributedObjectServices {
+        if (!this.reservations.has(object.id)) {
+            throw new Error("Attached objects must be created with Document.create");
+        }
+
         // Get the object snapshot and include it in the initial attach
         const snapshot = object.snapshot();
 
@@ -262,12 +294,13 @@ export class Document implements IDocument {
         // Store a reference to the object in our list of objects and then get the services
         // used to attach it to the stream
         const services = this.getObjectServices(object.id);
-        this.upsertDistributedObject(object, services);
+        const entry = this.distributedObjects[object.id];
+        assert.equal(entry.object, object);
+        entry.connection = services.deltaConnection;
+        entry.storage = services.objectStorage;
 
         return services;
     }
-
-    // pause + resume semantics on the op stream? To load a doc at a veresion?
 
     /**
      * Creates a new collaborative map
@@ -332,16 +365,6 @@ export class Document implements IDocument {
         this.deltaManager.submitRoundtrip(RoundTrip, message);
     }
 
-    public on(event: string, listener: (...args: any[]) => void): this {
-        this.events.on(event, listener);
-        return this;
-    }
-
-    public removeListener(event: string, listener: (...args: any[]) => void): this {
-        this.events.removeListener(event, listener);
-        return this;
-    }
-
     public branch(): Promise<string> {
         return this.service.branch(this.id);
     }
@@ -363,21 +386,6 @@ export class Document implements IDocument {
      */
     public getUser(): any {
         return this.document.user;
-    }
-
-    private upsertDistributedObject(object: ICollaborativeObject, services: IObjectServices) {
-        if (!(object.id in this.distributedObjects)) {
-            this.distributedObjects[object.id] = {
-                connection: services ? services.deltaConnection : null,
-                object,
-                storage: services ? services.objectStorage : null,
-            };
-        } else {
-            const entry = this.distributedObjects[object.id];
-            assert.equal(entry.object, object);
-            entry.connection = services.deltaConnection;
-            entry.storage = services.objectStorage;
-        }
     }
 
     private snapshotCore(): ITree {
@@ -500,6 +508,26 @@ export class Document implements IDocument {
         object.attach();
     }
 
+    private reserveDistributedObject(id: string) {
+        // For bootstrapping simplicity we allow root to be reserved multiple times. All other objects should
+        // have a single reservation call.
+        assert(id === "root" || !this.reservations.has(id));
+        this.reservations.set(id, new Deferred<ICollaborativeObject>());
+    }
+
+    private fulfillDistributedObject(object: ICollaborativeObject, services: IObjectServices) {
+        const id = object.id;
+        assert(this.reservations.has(id));
+
+        this.distributedObjects[object.id] = {
+            connection: services ? services.deltaConnection : null,
+            object,
+            storage: services ? services.objectStorage : null,
+        };
+
+        this.reservations.get(id).resolve(object);
+    }
+
     /**
      * Loads in a distributed object and stores it in the internal Document object map
      * @param distributedObject The distributed object to load
@@ -565,6 +593,7 @@ export class Document implements IDocument {
             };
 
             const origin = message.origin ? message.origin.id : this.id;
+            this.reserveDistributedObject(distributedObject.id);
             const value = await this.loadInternal(distributedObject, services, origin);
 
             return {
@@ -594,7 +623,7 @@ export class Document implements IDocument {
             // If a non-local operation then go and create the object - otherwise mark it as officially
             // attached.
             if (message.clientId !== this.document.clientId) {
-                this.upsertDistributedObject(context.value as ICollaborativeObject, context.services);
+                this.fulfillDistributedObject(context.value as ICollaborativeObject, context.services);
             } else {
                 this.distributedObjects[attachMessage.id].connection.setBaseMapping(0, message.sequenceNumber);
             }
@@ -620,27 +649,7 @@ export class Document implements IDocument {
             }
         }
 
-        this.events.emit("op", ...eventArgs);
-    }
-
-    /**
-     * Polls for the root document
-     */
-    private pollRoot(resolve, reject) {
-        if ("root" in this.distributedObjects) {
-            resolve();
-        } else {
-            const pauseAmount = 100;
-            debug(`Did not find root - waiting ${pauseAmount}ms`);
-            setTimeout(() => this.pollRoot(resolve, reject), pauseAmount);
-        }
-    }
-
-    /**
-     * Returns a promie that resolves once the root map is available
-     */
-    private waitForRoot(): Promise<void> {
-        return new Promise<void>((resolve, reject) => this.pollRoot(resolve, reject));
+        this.emit("op", ...eventArgs);
     }
 }
 
@@ -654,16 +663,6 @@ export async function load(
     connect = true,
     registry: Registry = defaultRegistry,
     service: IDocumentService = defaultDocumentService): Promise<Document> {
-
-    // Verify an extensions registry was provided
-    if (!registry) {
-        throw new Error("No extension registry provided");
-    }
-
-    // Verify we have services to load the document with
-    if (!service) {
-        throw new Error("Document service not provided to load call");
-    }
 
     return Document.Load(id, registry, service, options, version, connect);
 }
