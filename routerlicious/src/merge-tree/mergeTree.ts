@@ -52,6 +52,13 @@ export interface IHierBlock extends IMergeBlock {
     startsInterval: Properties.MapLike<boolean>;
 }
 
+export class LocalRangeReference {
+    constructor(public start: LocalReference,
+        public end: LocalReference) {
+
+    }
+}
+
 export class LocalReference implements ReferencePosition {
     properties: Properties.PropertySet;
     cachedEnd?: LocalReference;
@@ -3399,10 +3406,10 @@ export class MergeTree {
     referencePositionToLocalPosition(refPos: ReferencePosition) {
         let seg = refPos.getSegment();
         let offset = refPos.getOffset();
-        return offset + this.getOffset(seg, UniversalSequenceNumber, 
+        return offset + this.getOffset(seg, UniversalSequenceNumber,
             this.collabWindow.clientId);
     }
-    
+
     findOverlappingIntervals(startPos: number, endPos: number, rangeLabels: string[]) {
         let ivals = <ReferencePosition[]>[];
         let stackContext = this.getStackContext(startPos, this.collabWindow.clientId,
@@ -3424,7 +3431,7 @@ export class MergeTree {
             return false;
         }
         let leaf = (segment: Segment, pos: number, refSeq: number,
-                    clientId: number, start: number, end: number) => {
+            clientId: number, start: number, end: number) => {
             if (segment.getType() === SegmentType.Marker) {
                 let marker = <Marker>segment;
                 if (marker.refType & ReferenceType.NestBegin) {
@@ -3434,8 +3441,8 @@ export class MergeTree {
             let baseSeg = <BaseSegment>segment;
             if (baseSeg.localRefs) {
                 for (let localRef of baseSeg.localRefs) {
-                    if ((localRef.refType & ReferenceType.NestBegin)&&
-                        (localRef.offset<end)) {
+                    if ((localRef.refType & ReferenceType.NestBegin) &&
+                        (localRef.offset < end)) {
                         ivals.push(localRef);
                     }
                 }

@@ -1,3 +1,5 @@
+// tslint:disable:whitespace
+
 import * as assert from "assert";
 import performanceNow = require("performance-now");
 import * as resources from "gitresources";
@@ -130,16 +132,39 @@ export class SharedString extends CollaborativeMap {
         this.client.mergeTree.updateLocalMinSeq(lmseq);
     }
 
-    public createLocalReference(pos: number, slideOnRemove = false) {
+    public createRangeReference(start: number, end: number) {
+        let startSegoff = this.client.mergeTree.getContainingSegment(start,
+            this.client.getCurrentSeq(), this.client.getClientId());
+        let endSegoff = this.client.mergeTree.getContainingSegment(end,
+            this.client.getCurrentSeq(), this.client.getClientId());
+        if (startSegoff && endSegoff && startSegoff.segment && endSegoff.segment) {
+            let startBaseSegment = <MergeTree.BaseSegment>startSegoff.segment;
+            let endBaseSegment = <MergeTree.BaseSegment>endSegoff.segment;
+
+            let startLref = new MergeTree.LocalReference(startBaseSegment,
+                startSegoff.offset, ops.ReferenceType.RangeBegin);
+            let endLref = new MergeTree.LocalReference(endBaseSegment,
+                endSegoff.offset, ops.ReferenceType.RangeEnd);
+            startLref.cachedEnd = endLref;
+            this.client.mergeTree.addLocalReference(startBaseSegment, startLref);
+            this.client.mergeTree.addLocalReference(endBaseSegment, endLref);
+            return new MergeTree.LocalRangeReference(startLref, endLref);
+        }
+    }
+
+    public createPositionReference(pos: number, slideOnRemove = false) {
         let segoff = this.client.mergeTree.getContainingSegment(pos,
             this.client.getCurrentSeq(), this.client.getClientId());
         if (segoff && segoff.segment) {
+            let baseSegment = <MergeTree.BaseSegment>segoff.segment;
             let refType = ops.ReferenceType.Simple;
             if (slideOnRemove) {
                 // tslint:disable:no-bitwise
                 refType |= ops.ReferenceType.SlideOnRemove;
             }
-            return new MergeTree.LocalReference(<MergeTree.BaseSegment> segoff.segment, segoff.offset, refType);
+            let lref = new MergeTree.LocalReference(baseSegment, segoff.offset, refType);
+            this.client.mergeTree.addLocalReference(baseSegment, lref);
+            return lref;
         }
     }
 
@@ -154,7 +179,7 @@ export class SharedString extends CollaborativeMap {
 
     protected transformContent(message: api.IObjectMessage, toSequenceNumber: number): api.IObjectMessage {
         if (message.contents) {
-            this.client.transform(<api.ISequencedObjectMessage> message, toSequenceNumber);
+            this.client.transform(<api.ISequencedObjectMessage>message, toSequenceNumber);
         }
         message.referenceSequenceNumber = toSequenceNumber;
         return message;
