@@ -1,7 +1,7 @@
 import * as resources from "gitresources";
 import * as api from "../api-core";
 import { getOrDefault } from "../core-utils";
-import { ICounter, IMap, IMapView, ISet } from "../data-types";
+import { ICounter, IMap, IMapFilter, IMapView, ISet } from "../data-types";
 import { IMapOperation } from "./definitions";
 import { MapExtension } from "./extension";
 import { MapView } from "./view";
@@ -63,7 +63,7 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
             "set",
             {
                 prepare: (map, op) => map.view.prepareSetCore(op.key, op.value),
-                process: (map, op, context) => map.view.setCore(op.key, context.type, context.value),
+                process: (map, op, context) => map.view.setCore(op.key, context),
             });
         handler.set(
             "initCounter",
@@ -222,6 +222,13 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
      */
     public getView(): Promise<IMapView> {
         return Promise.resolve(this.view);
+    }
+
+    /**
+     * Attaches a filter to the map
+     */
+    public attachFilter(filter: IMapFilter): void {
+        this.view.attachFilter(filter);
     }
 
     protected async loadCore(

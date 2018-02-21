@@ -16,6 +16,21 @@ export interface IKeyValueChanged {
     value: any;
 }
 
+/**
+ * Allows for local processing of map operation
+ */
+export interface IMapFilter {
+    /**
+     * Custom filter applied to inbound map operations that allow for translation into a local format.
+     */
+    fill(key: string, remote: any): Promise<any>;
+
+    /**
+     * Filter applied to local map values to convert them into serializable formats
+     */
+    spill(local: any): any;
+}
+
 export interface IMapView {
     /**
      * Retrieves the given key from the map
@@ -62,6 +77,11 @@ export interface IMapView {
  * Collaborative map interface
  */
 export interface IMap extends ICollaborativeObject {
+    /**
+     * Attaches a new filter to the map
+     */
+    attachFilter(filter: IMapFilter): void;
+
     /**
      * Retrieves the given key from the map
      */
