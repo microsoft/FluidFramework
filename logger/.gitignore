@@ -1,6 +1,9 @@
 # Compiled Typescript
 dist
 
+# Latest-Scribe
+scribe-logs
+
 # Logs
 logs
 *.log

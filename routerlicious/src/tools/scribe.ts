@@ -16,6 +16,7 @@ commander
     .option("-r, --repository [repo]", "git repository", "prague")
     .option("-f, --file [file]", "input file", path.join(__dirname, "../../public/literature/resume.txt"))
     .option("-p, --progress [pbar]", "show progress bar")
+    .option("-w, --write [pbar]", "write to specific path", "./latest-scribe.json")
     .arguments("<id>")
     .action((id: string) => {
         sharedStringId = id;
@@ -63,6 +64,8 @@ fs.readFile(commander.file, "utf8", async (error, data: string) => {
                     stdDev: (metrics.latencyStdDev ? metrics.latencyStdDev : 0).toFixed(2),
                     typingRate: (metrics.typingRate ? metrics.typingRate : 0).toFixed(2),
                 });
+            } else if(metrics.ackProgress * 100 % 1 <= .003) {
+                console.log(Math.round(metrics.ackProgress * 100) + "% Completed");
             }
         });
 
@@ -70,11 +73,12 @@ fs.readFile(commander.file, "utf8", async (error, data: string) => {
     typeP.then(
         (metrics) => {
             const metricString = JSON.stringify(metrics);
-
+            ensurePath(commander.write);
             // write to file so output isn't affected by downstream stdout
-            fs.writeFile("latest-scribe.json", metricString, (err) => {
+            fs.writeFile(commander.write, metricString, (err) => {
                 if (err) {
-                    return console.log(err);
+                    console.log(err);
+                    process.exit(1);
                 }
                 process.exit(0);
             });
@@ -84,3 +88,12 @@ fs.readFile(commander.file, "utf8", async (error, data: string) => {
             process.exit(1);
         });
 });
+
+function ensurePath(filePath: string) {
+    let dir = path.dirname(filePath);
+    if (fs.existsSync(dir)) {
+        return true;
+    }
+    ensurePath(dir);
+    fs.mkdirSync(dir);
+}
