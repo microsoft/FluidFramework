@@ -64,7 +64,7 @@ fs.readFile(commander.file, "utf8", async (error, data: string) => {
                     stdDev: (metrics.latencyStdDev ? metrics.latencyStdDev : 0).toFixed(2),
                     typingRate: (metrics.typingRate ? metrics.typingRate : 0).toFixed(2),
                 });
-            } else if(metrics.ackProgress * 100 % 1 <= .003) {
+            } else if (metrics.ackProgress * 100 % 1 <= .003) {
                 console.log(Math.round(metrics.ackProgress * 100) + "% Completed");
             }
         });
