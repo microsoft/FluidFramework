@@ -1,6 +1,7 @@
 // tslint:disable
 
 import * as Base from "./base";
+import { MergeTree } from "../client-api/index";
 
 export class Stack<T> {
     items: T[] = [];
@@ -299,7 +300,7 @@ export function LinearDictionary<TKey, TData>(compareKeys: Base.KeyComparer<TKey
     }
 
     function put(key: TKey, data: TData) {
-        if (key!==undefined) {
+        if (key !== undefined) {
             if (data === undefined) {
                 remove(key);
             }
@@ -310,7 +311,7 @@ export function LinearDictionary<TKey, TData>(compareKeys: Base.KeyComparer<TKey
         }
     }
     function remove(key: TKey) {
-        if (key!==undefined) {
+        if (key !== undefined) {
             for (let i = 0, len = a.length; i < len; i++) {
                 if (a[i].key == key) {
                     a[i] = a[len - 1];
@@ -333,7 +334,7 @@ export function LinearDictionary<TKey, TData>(compareKeys: Base.KeyComparer<TKey
     }
 }
 
-export const enum Color {
+export const enum RBColor {
     RED,
     BLACK
 }
@@ -343,21 +344,45 @@ export interface Node<TKey, TData> {
     data: TData;
     left: Node<TKey, TData>;
     right: Node<TKey, TData>;
-    color: Color;
+    color: RBColor;
     size: number;
+}
+
+export interface IRBAugmentation<TKey, TData> {
+    update(node: Node<TKey, TData>);
+    init?(node: Node<TKey, TData>);
+}
+
+export interface IRBMatcher<TKey, TData> {
+    continueSubtree(node: Node<TKey, TData>, key: TKey): boolean;
+    matchNode(node: Node<TKey, TData>, key: TKey): boolean;
+}
+
+export interface NodeActions<TKey, TData> {
+    infix?(node: Node<TKey, TData>): boolean;
+    pre?(node: Node<TKey, TData>): boolean;
+    post?(node: Node<TKey, TData>): boolean;
+    showStructure?: boolean;
 }
 
 export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TData> {
     root: Node<TKey, TData>;
-    constructor(public compareKeys: Base.KeyComparer<TKey>) {
+    constructor(public compareKeys: Base.KeyComparer<TKey>, public aug?: IRBAugmentation<TKey, TData>) {
 
     }
-    makeNode(key: TKey, data: TData, color: Color, size: number) {
-        return <Node<TKey, TData>>{ key: key, data: data, color: color, size: size };
+
+    makeNode(key: TKey, data: TData, color: RBColor, size: number) {
+        let node = <Node<TKey, TData>>{ key: key, data: data, color: color, size: size };
+        if (this.aug && this.aug.init) {
+            this.aug.init(node);
+        }
+        return node;
     }
+
     isRed(node: Node<TKey, TData>) {
-        return node && (node.color == Color.RED);
+        return node && (node.color == RBColor.RED);
     }
+
     nodeSize(node: Node<TKey, TData>) {
         return node ? node.size : 0;
     }
@@ -368,7 +393,7 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
         return this.root;
     }
     get(key: TKey) {
-        if (key!==undefined) {
+        if (key !== undefined) {
             return this.nodeGet(this.root, key);
         }
     }
@@ -389,20 +414,42 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
     contains(key: TKey) {
         return this.get(key);
     }
+
+    gather(key: TKey, matcher: IRBMatcher<TKey, TData>) {
+        let results = [] as Node<TKey, TData>[];
+        if (key !== undefined) {
+            this.nodeGather(this.root, results, key, matcher);
+        }
+        return results;
+    }
+
+    nodeGather(node: Node<TKey, TData>, results: Node<TKey, TData>[],
+        key: TKey, matcher: IRBMatcher<TKey, TData>) {
+        if (matcher.continueSubtree(node.left, key)) {
+            this.nodeGather(node.left, results, key, matcher);
+        }
+        if (matcher.matchNode(node, key)) {
+            results.push(node);
+        }
+        if (matcher.continueSubtree(node.right, key)) {
+            this.nodeGather(node.right, results, key, matcher);
+        }
+    }
+
     put(key: TKey, data: TData, conflict?: Base.ConflictAction<TKey, TData>) {
-        if (key!==undefined) {
+        if (key !== undefined) {
             if (data === undefined) {
                 this.remove(key);
             }
             else {
                 this.root = this.nodePut(this.root, key, data, conflict);
-                this.root.color = Color.BLACK;
+                this.root.color = RBColor.BLACK;
             }
         }
     }
     nodePut(node: Node<TKey, TData>, key: TKey, data: TData, conflict?: Base.ConflictAction<TKey, TData>) {
         if (!node) {
-            return this.makeNode(key, data, Color.RED, 1);
+            return this.makeNode(key, data, RBColor.RED, 1);
         }
         else {
             let cmp = this.compareKeys(key, node.key);
@@ -430,19 +477,34 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
                 this.flipColors(node);
             }
             node.size = this.nodeSize(node.left) + this.nodeSize(node.right) + 1;
-
+            if (this.aug) {
+                this.updateLocal(node);
+            }
             return node;
         }
     }
+
+    updateLocal(node: Node<TKey, TData>) {
+        if (this.aug) {
+            if (this.isRed(node.left)) {
+                this.aug.update(node.left);
+            }
+            if (this.isRed(node.right)) {
+                this.aug.update(node.right);
+            }
+            this.aug.update(node);
+        }
+    }
+
     removeMin() {
         if (!this.isEmpty()) {
             if ((!this.isRed(this.root.left)) && (!this.isRed(this.root.right))) {
-                this.root.color = Color.RED;
+                this.root.color = RBColor.RED;
             }
 
             this.root = this.nodeRemoveMin(this.root);
             if (!this.isEmpty()) {
-                this.root.color = Color.BLACK;
+                this.root.color = RBColor.BLACK;
             }
         }
         // TODO: error on empty
@@ -461,12 +523,12 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
     removeMax() {
         if (this.isEmpty()) {
             if ((!this.isRed(this.root.left)) && (!this.isRed(this.root.right))) {
-                this.root.color = Color.RED;
+                this.root.color = RBColor.RED;
             }
 
             this.root = this.nodeRemoveMax(this.root);
             if (!this.isEmpty()) {
-                this.root.color = Color.BLACK;
+                this.root.color = RBColor.BLACK;
             }
         }
         // TODO: error on empty
@@ -491,13 +553,13 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
     }
 
     remove(key: TKey) {
-        if (key!==undefined) {
+        if (key !== undefined) {
             if (!this.contains(key)) {
                 return;
             }
 
             if ((!this.isRed(this.root.left)) && (!this.isRed(this.root.right))) {
-                this.root.color = Color.RED;
+                this.root.color = RBColor.RED;
             }
 
             this.root = this.nodeRemove(this.root, key);
@@ -579,6 +641,7 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
         }
         // TODO: error on empty
     }
+
     nodeMin(node: Node<TKey, TData>): Node<TKey, TData> {
         if (!node.left) {
             return node;
@@ -587,12 +650,14 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
             return this.nodeMin(node.left);
         }
     }
+
     max() {
         if (!this.isEmpty()) {
             return this.nodeMax(this.root);
         }
         // TODO: error on empty
     }
+
     nodeMax(node: Node<TKey, TData>): Node<TKey, TData> {
         if (!node.right) {
             return node;
@@ -601,14 +666,19 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
             return this.nodeMax(node.right);
         }
     }
+
     rotateRight(node: Node<TKey, TData>) {
         let leftChild = node.left;
         node.left = leftChild.right;
         leftChild.right = node;
         leftChild.color = leftChild.right.color;
-        leftChild.right.color = Color.RED;
+        leftChild.right.color = RBColor.RED;
         leftChild.size = node.size;
         node.size = this.nodeSize(node.left) + this.nodeSize(node.right) + 1;
+        if (this.aug) {
+            this.updateLocal(node);
+            this.updateLocal(leftChild);
+        }
         return leftChild;
     }
 
@@ -617,14 +687,18 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
         node.right = rightChild.left;
         rightChild.left = node;
         rightChild.color = rightChild.left.color;
-        rightChild.left.color = Color.RED;
+        rightChild.left.color = RBColor.RED;
         rightChild.size = node.size;
         node.size = this.nodeSize(node.left) + this.nodeSize(node.right) + 1;
+        if (this.aug) {
+            this.updateLocal(node);
+            this.updateLocal(rightChild);
+        }
         return rightChild;
     }
 
-    oppositeColor(c: Color) {
-        return (c == Color.BLACK) ? Color.RED : Color.BLACK;
+    oppositeColor(c: RBColor) {
+        return (c == RBColor.BLACK) ? RBColor.RED : RBColor.BLACK;
     }
 
     flipColors(node: Node<TKey, TData>) {
@@ -663,6 +737,9 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
             this.flipColors(node);
         }
         node.size = this.nodeSize(node.left) + this.nodeSize(node.right) + 1;
+        if (this.aug) {
+            this.aug.update(node);
+        }
         return node;
     }
 
@@ -673,6 +750,43 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
     map<TAccum>(action: Base.PropertyAction<TKey, TData>, accum?: TAccum) {
         // TODO: optimize to avoid comparisons
         this.nodeMap(this.root, action, accum);
+    }
+
+    /**
+     * Depth-first traversal with custom action; if action returns
+     * false, traversal is halted.
+     * @param action action to apply to each node 
+     */
+    walk(actions: NodeActions<TKey, TData>) {
+        this.nodeWalk(this.root, actions);
+    }
+
+    nodeWalk(node: Node<TKey, TData>, actions: NodeActions<TKey, TData>) {
+        let go = true;
+        if (node) {
+            if (actions.pre) {
+                if (actions.showStructure||(node.color === RBColor.BLACK)) {
+                    go = actions.pre(node);
+                }
+            }
+            if (node.left) {
+                go = this.nodeWalk(node.left, actions);
+            }
+            if (go && actions.infix) {
+                if (actions.showStructure||(node.color === RBColor.BLACK)) {
+                    go = actions.infix(node);
+                }
+            }
+            if (go) {
+                go = this.nodeWalk(node.right, actions);
+            }
+            if (go && actions.post) {
+                if (actions.showStructure||(node.color === RBColor.BLACK)) {
+                    go = actions.post(node);
+                }
+            }
+        }
+        return go;
     }
 
     nodeMap<TAccum>(node: Node<TKey, TData>, action: Base.PropertyAction<TKey, TData>,
@@ -693,6 +807,7 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
             go = this.nodeMap(node.left, action, accum, start, end);
         }
         if (go && (cmpStart <= 0) && (cmpEnd >= 0)) {
+            // REVIEW: test for black node here
             go = action(node, accum);
         }
         if (go && (cmpEnd > 0)) {
@@ -702,6 +817,126 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
     }
     diag() {
         console.log(`Height is ${this.height()}`);
+    }
+}
+
+export interface AugRangeNode {
+    minmax: Base.IRange;
+}
+
+/**
+ * Union of two ranges; assumes for both ranges start <= end.
+ * @param a A range
+ * @param b A range
+ */
+export function rangeUnion(a: Base.IRange, b: Base.IRange) {
+    return <Base.IRange>{
+        start: Math.min(a.start, b.start),
+        end: Math.max(a.end, b.end)
+    };
+}
+
+export function rangeOverlaps(a: Base.IRange, b: Base.IRange) {
+    return (a.start < b.end) && (a.end > b.start);
+}
+
+export function rangeComparer(a: Base.IRange, b: Base.IRange) {
+    if (a.start === b.start) {
+        return a.end - b.end;
+    } else {
+        return a.start - b.start;
+    }
+}
+
+export function rangeCopy(r: Base.IRange) {
+    return <Base.IRange>{ start: r.start, end: r.end };
+}
+
+export function rangeToString(range: Base.IRange) {
+    return `[${range.start},${range.end})`;
+}
+
+export type RangeNode = Node<Base.IRange, AugRangeNode>;
+
+// TODO: handle duplicate keys
+
+export class RangeTree implements IRBAugmentation<Base.IRange, AugRangeNode>,
+    IRBMatcher<Base.IRange, AugRangeNode> {
+    ranges = new RedBlackTree<Base.IRange, AugRangeNode>(rangeComparer, this);
+    diag = false;
+
+    remove(r: Base.IRange) {
+        this.ranges.remove(r);
+    }
+
+    put(r: Base.IRange) {
+        this.ranges.put(r, { minmax: { start: r.start, end: r.end } });
+    }
+
+    toString() {
+        return this.nodeToString(this.ranges.root);
+    }
+
+    nodeToString(node: RangeNode) {
+        let buf = "";
+        let indentAmt = 0;
+        let actions = {
+            pre: (node: RangeNode) => {
+                let red="";
+                if (node.color===RBColor.RED) {
+                    red="R ";
+                }
+                buf += MergeTree.internedSpaces(indentAmt);
+                buf += `${red}key: ${rangeToString(node.key)} minmax: ${rangeToString(node.data.minmax)}\n`;
+                indentAmt += 2;
+                return true;
+            },
+            post: (node: RangeNode) => {
+                indentAmt -= 2;
+                return true;
+            },
+            showStructure: true
+        }
+        this.ranges.nodeWalk(node, actions);
+        return buf;
+    }
+
+    matchPos(pos: number) {
+        return this.match({ start: pos, end: pos + 1 });
+    }
+
+    match(r: Base.IRange) {
+        return this.ranges.gather(r, this);
+    }
+
+    matchNode(node: RangeNode, key: Base.IRange) {
+        return node && rangeOverlaps(node.key, key);
+    }
+
+    continueSubtree(node: RangeNode, key: Base.IRange) {
+        let cont = node && rangeOverlaps(node.data.minmax, key);
+        if (this.diag && (!cont)) {
+            if (node) {
+                console.log(`skipping subtree of size ${node.size} key ${rangeToString(key)}`);
+                console.log(this.nodeToString(node));
+            }
+        }
+        return cont;
+    }
+
+    update(node: RangeNode) {
+        if (node.left && node.right) {
+            node.data.minmax = rangeUnion(node.key,
+                rangeUnion(node.left.data.minmax, node.right.data.minmax));
+        } else {
+            if (node.left) {
+                node.data.minmax = rangeUnion(node.key, node.left.data.minmax);
+            } else if (node.right) {
+                node.data.minmax = rangeUnion(node.key, node.right.data.minmax);
+            } else {
+                node.data.minmax = rangeCopy(node.key);
+            }
+        } 
     }
 }
 
@@ -795,7 +1030,7 @@ export class TST<T> {
     neighbors(text: string, distance = 2) {
         let q = <ProxString<T>[]>[];
         this.nodeProximity(this.root, { text: "" }, 0, text, distance, q);
-        q = q.filter(value => (value.text.length>0));
+        q = q.filter(value => (value.text.length > 0));
         return q;
     }
 
@@ -856,13 +1091,13 @@ export class TST<T> {
             this.nodeProximity(x.left, prefix, d, pattern, distance, q);
         }
         if (x.val !== undefined) {
-            let remD = distance - (pattern.length - d); 
+            let remD = distance - (pattern.length - d);
             if (remD >= 0) {
                 let invD = distance;
                 if (c !== x.c) {
                     invD--;
                 }
-                q.push({text: prefix.text + x.c, val: x.val, invDistance: invD });
+                q.push({ text: prefix.text + x.c, val: x.val, invDistance: invD });
             }
         }
         let recurD = (d < (pattern.length - 1)) ? d + 1 : d;

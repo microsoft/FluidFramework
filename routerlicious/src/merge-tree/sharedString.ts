@@ -4,6 +4,7 @@ import * as resources from "gitresources";
 import * as api from "../api-core";
 import { Deferred } from "../core-utils";
 import { CollaborativeMap } from "../map";
+import { IRange } from "./base";
 import { CollaboritiveStringExtension } from "./extension";
 import * as MergeTree from "./mergeTree";
 import * as ops from "./ops";
@@ -100,7 +101,7 @@ export class SharedString extends CollaborativeMap {
 
         let ranges = this.client.mergeTree.tardisRange(start, end, fromSeq, this.client.getCurrentSeq(),
             this.client.getClientId());
-        ranges.map((range: MergeTree.IRange) => {
+        ranges.map((range: IRange) => {
             this.annotateRange(props, range.start, range.end);
         });
     }

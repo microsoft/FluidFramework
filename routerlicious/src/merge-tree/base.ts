@@ -6,7 +6,7 @@ export interface Property<TKey, TData> {
 }
 
 export interface PropertyAction<TKey, TData> {
-    <TAccum>(p: Property<TKey, TData>, accum: TAccum): boolean;
+    <TAccum>(p: Property<TKey, TData>, accum?: TAccum): boolean;
 }
 
 export interface ConflictAction<TKey, TData> {
@@ -29,4 +29,11 @@ export interface SortedDictionary<TKey, TData> extends Dictionary<TKey, TData> {
 
 export interface KeyComparer<TKey> {
     (a: TKey, b: TKey): number;
+}
+/**
+ * A range [start, end) 
+ */
+export interface IRange {
+    start: number;
+    end: number;
 }

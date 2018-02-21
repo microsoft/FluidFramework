@@ -29,11 +29,6 @@ export interface ReferencePosition {
 
 export type RangeStackMap = Properties.MapLike<Collections.Stack<ReferencePosition>>;
 
-export interface IRange {
-    start: number;
-    end: number;
-}
-
 export interface IMergeNode {
     parent: IMergeBlock;
     cachedLength: number;
@@ -3122,7 +3117,7 @@ export class MergeTree {
     }
 
     tardisRange(rangeStart: number, rangeEnd: number, fromSeq: number, toSeq: number, toClientId = NonCollabClient) {
-        let ranges = <IRange[]>[];
+        let ranges = <Base.IRange[]>[];
         let recordRange = (segment: Segment, pos: number, refSeq: number, clientId: number, segStart: number,
             segEnd: number) => {
             let offset = this.getOffset(segment, toSeq, toClientId);

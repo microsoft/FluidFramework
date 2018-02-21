@@ -5,6 +5,7 @@ import * as path from "path";
 import * as random from "random-js";
 import * as fs from "fs";
 import { findRandomWord } from "../merge-tree-utils";
+import * as Base from "./base";
 import * as Collections from "./collections";
 import * as MergeTree from "./mergeTree";
 import * as ops from "./ops";
@@ -69,12 +70,6 @@ export function propertyCopy() {
     perIter = (et / iterCount).toFixed(3);
     perProp = (et / (iterCount * propCount)).toFixed(3);
     console.log(`obj prop init time ${perIter} per init; ${perProp} per property`);
-}
-
-let testPropCopy = false;
-
-if (testPropCopy) {
-    propertyCopy();
 }
 
 interface Bookmark {
@@ -1274,33 +1269,6 @@ export function mergeTreeCheckedTest() {
     return errorCount;
 }
 
-let chktst = false;
-if (chktst) {
-    mergeTreeCheckedTest();
-}
-
-let testPack = TestPack();
-const filename = path.join(__dirname, "../../public/literature", "pp.txt");
-
-let clientServerTest = true;
-let ppTest = true;
-let branch = false;
-if (clientServerTest) {
-    if (ppTest) {
-        if (branch) {
-            testPack.clientServerBranch(filename, 100000);
-        } else {
-            testPack.clientServer(filename, 100000);
-        }
-    } else {
-        if (branch) {
-            testPack.clientServerBranch(undefined, 100000);
-        } else {
-            testPack.clientServer(undefined, 100000);
-        }
-    }
-}
-
 export class RandomPack {
     mt: Random.MT19937;
     constructor() {
@@ -1665,6 +1633,102 @@ function testOverlayTree() {
     printOverlayTree(client);
 }
 
-testOverlayTree();
+let docRanges = <Base.IRange[]>[
+    { start: 0, end: 20 },
+    { start: 8, end: 12 },
+    { start: 8, end: 14 },
+    { start: 20, end: 24 },
+    { start: 11, end: 15 },
+    { start: 16, end: 33 },
+    { start: 19, end: 24 },
+    { start: 22, end: 80 },
+    { start: 25, end: 29 },
+    { start: 30, end: 32 },
+    { start: 41, end: 49 },
+    { start: 41, end: 49 },
+    { start: 41, end: 49 },
+    { start: 51, end: 69 },
+    { start: 55, end: 58 },
+    { start: 60, end: 71 },
+    { start: 81, end: 99 },
+    { start: 85, end: 105 },
+    { start: 9, end:  34 },
+];
 
-// DocumentTree.test1();
+let testRanges = <Base.IRange[]>[
+    {start: 9, end: 20},
+    {start: 8, end: 10},
+    {start: 82, end: 110},
+    {start: 54, end: 56 },
+    {start: 57, end: 57 },
+    {start: 58, end: 58 },
+    {start: 22, end: 48 },
+    {start: 3, end: 11 },
+    {start: 43, end: 58 },
+    {start: 19, end: 31 },
+];
+
+function testRangeTree() {
+    let rangeTree = new Collections.RangeTree();
+    for (let docRange of docRanges) {
+        rangeTree.put(docRange);
+    }
+    console.log(rangeTree.toString());
+    function matchRange(r: Base.IRange) {
+        console.log("match range " + Collections.rangeToString(r));
+        let results = rangeTree.match(r);
+        for (let result of results) {
+            console.log(Collections.rangeToString(result.key));
+        }
+    }
+    for (let testRange of testRanges) {
+        matchRange(testRange);
+    }
+}
+
+let rangeTreeTest = true;
+let testPropCopy = false;
+let overlayTree = false;
+let docTree = false;
+let chktst = false;
+let clientServerTest = false;
+
+if (rangeTreeTest) {
+    testRangeTree();
+}
+
+if (chktst) {
+    mergeTreeCheckedTest();
+}
+
+if (testPropCopy) {
+    propertyCopy();
+}
+
+if (overlayTree) {
+    testOverlayTree();
+}
+
+if (docTree) {
+    DocumentTree.test1();
+}
+
+if (clientServerTest) {
+    let ppTest = true;
+    let branch = false;
+    let testPack = TestPack();
+    const filename = path.join(__dirname, "../../public/literature", "pp.txt");
+    if (ppTest) {
+        if (branch) {
+            testPack.clientServerBranch(filename, 100000);
+        } else {
+            testPack.clientServer(filename, 100000);
+        }
+    } else {
+        if (branch) {
+            testPack.clientServerBranch(undefined, 100000);
+        } else {
+            testPack.clientServer(undefined, 100000);
+        }
+    }
+}
