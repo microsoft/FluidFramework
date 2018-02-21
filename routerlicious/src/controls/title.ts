@@ -28,6 +28,10 @@ export class Title extends ui.Component {
         this.element.style.background = gradient;
     }
 
+    public setVisibility(visible: boolean) {
+        this.element.style.visibility = visible ? "visible" : "hidden";
+    }
+
     protected resizeCore(bounds: ui.Rectangle) {
         this.viewportRect = bounds.inner(0.92);
         ui.Rectangle.conformElementToRect(this.viewportDiv, this.viewportRect);

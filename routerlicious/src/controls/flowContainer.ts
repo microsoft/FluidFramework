@@ -163,6 +163,10 @@ export class FlowContainer extends ui.Component {
         element.appendChild(image.element);
     }
 
+    public setTitleVisibility(visible: boolean) {
+        this.title.setVisibility(visible);
+    }
+
     public trackInsights(insights: types.IMap) {
         this.updateInsights(insights);
         insights.on("valueChanged", () => {

@@ -28,6 +28,9 @@ We're currently in the middle of [Sprint 4](./doc/sprints/sprint4/readme.md) and
 
 ## Build Server
 
+Install Docker Community Edition in order to run the following
+https://store.docker.com/editions/community/docker-ce-desktop-windows
+
 We make use of https://hub.docker.com/r/microsoft/vsts-agent/ for our build server agents.
 
 To create an agent first create a work directory for the agent that maps exactly to how it will be mounted in the container (i.e. /var/lib/vsts - more on that below). Get a VSTS token. And then run the following command.
