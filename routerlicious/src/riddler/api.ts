@@ -14,8 +14,10 @@ interface IDecodedToken {
 let tenantKeyMap: { [tenandId: string]: string} = {};
 const t1 = "prague";
 const t2 = "linkedin";
+const t3 = "git";
 tenantKeyMap[t1] = "secret_key";
 tenantKeyMap[t2] = "secret_key_2";
+tenantKeyMap[t3] = "secret_key";
 
 async function verifyToken(token: string, hashKey: string): Promise<utils.IAuthenticatedUser> {
     return new Promise<utils.IAuthenticatedUser>((resolve, reject) => {
