@@ -77,7 +77,6 @@ async function loadFull(
         console.log(`Not existing ${id} - ${performanceNow()}`);
         root.set("presence", collabDoc.createMap());
         const newString = collabDoc.createString() as SharedString.SharedString;
-        const commentString = collabDoc.createString() as SharedString.SharedString;
 
         const starterText = template ? await downloadRawText(template) : " ";
         const segments = SharedString.loadSegments(starterText, 0, true);
@@ -92,8 +91,6 @@ async function loadFull(
                 newString.insertMarker(newString.client.getLength(), marker.refType, marker.properties);
             }
         }
-        commentString.insertText("Z", 0);
-        root.set("comments", commentString);
         root.set("text", newString);
         root.set("ink", collabDoc.createMap());
 
@@ -103,7 +100,6 @@ async function loadFull(
     }
 
     const sharedString = root.get("text") as SharedString.SharedString;
-    const commentString = root.get("comments") as SharedString.SharedString;
 
     console.log(`Shared string ready - ${performanceNow()}`);
     console.log(window.navigator.userAgent);

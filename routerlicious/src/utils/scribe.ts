@@ -419,9 +419,7 @@ export async function create(id: string): Promise<void> {
             sharedString.insertMarker(sharedString.client.getLength(), marker.behaviors, marker.properties);
         }
     }*/
-    const commentString = document.createString() as MergeTree.SharedString;
-    commentString.insertText("Z", 0);
-    root.set("comments", commentString);
+
     root.set("text", sharedString);
     return Promise.resolve();
 }

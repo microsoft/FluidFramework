@@ -2480,7 +2480,6 @@ export class FlowView extends ui.Component {
     public presenceVector: ILocalPresenceInfo[] = [];
     public docRoot: types.IMapView;
     public curPG: SharedString.Marker;
-    public comments: SharedString.SharedString;
     private lastVerticalX = -1;
     private randWordTimer: any;
     private pendingRender = false;
@@ -2512,19 +2511,6 @@ export class FlowView extends ui.Component {
 
         this.cursor = new Cursor(this.viewportDiv);
         this.setViewOption(this.options);
-    }
-
-    // If the root from sharedText doesn't have a comments map, this will break
-    public addCommentString(comments: SharedString.SharedString) {
-        this.comments = comments;
-        this.comments.on("op", (msg: core.ISequencedObjectMessage) => {
-            if (msg.clientId !== this.client.longClientId) {
-                console.log(`remote comment op from ${msg.clientId}`);
-            } else {
-                console.log("got comment ack");
-            }
-        });
-        this.comments.insertText("hello", 0);
     }
 
     public treeForViewport() {
