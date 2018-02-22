@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { initAuthChecker } from "./authCheker";
 import * as cells from "./cells";
 import * as home from "./home";
 import * as maps from "./maps";
@@ -12,6 +13,10 @@ export interface IRoutes {
 }
 
 export function create(config: any): IRoutes {
+
+    // Inits auth checker middleware.
+    initAuthChecker(config.tenantInfo);
+
     return {
         cells: cells.create(config),
         home: home.create(config),

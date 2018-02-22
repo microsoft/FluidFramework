@@ -1,9 +1,10 @@
 import { Router } from "express";
 import * as moniker from "moniker";
+import { getFullId } from "../utils";
 import { ensureAuthenticated } from "./authCheker";
 import { defaultPartials } from "./partials";
 
-function renderView(request, response, id: string, config: any) {
+function renderView(request, response, docId: string, config: any) {
     const options = {
         spellchecker: "enabled",
     };
@@ -11,15 +12,15 @@ function renderView(request, response, id: string, config: any) {
         "sharedText",
         {
             disableCache: false,
-            endpoints: JSON.stringify(config.endpoints),
-            id,
+            endpoints: JSON.stringify(config.tenantInfo.endpoints),
+            id: getFullId(config.tenantInfo.id, docId),
             options: JSON.stringify(options),
-            owner: config.owner,
+            owner: config.tenantInfo.owner,
             pageInk: true,
             partials: defaultPartials,
-            repository: config.repository,
+            repository: config.tenantInfo.repository,
             template: `/public/literature/pp.txt`,
-            title: id,
+            title: docId,
             token: request.query.token,
             workerConfig: JSON.stringify(config.worker),
         },

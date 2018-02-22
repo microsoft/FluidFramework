@@ -18,12 +18,17 @@ data:
                 "label": "winston"
             },
             "port": 3000,
-            "endpoints": {
-                "delta": "https://pragueapps.westus2.cloudapp.azure.com/alfred",
-                "storage": "https://pragueapps.westus2.cloudapp.azure.com/historian"
+            "tenantInfo": {
+                "id": "git",
+                "secretKey": "secret_key",
+                "symmetricKey": "symmetric_key",
+                "repository": "prague",
+                "owner": "prague",
+                "endpoints": {
+                    "delta": "https://pragueapps.westus2.cloudapp.azure.com/alfred",
+                    "storage": "https://pragueapps.westus2.cloudapp.azure.com/historian"
+                }
             },
-            "repository": "prague",
-            "owner": "prague",
             "worker": {
                 "intelligence": {
                     "resume": {

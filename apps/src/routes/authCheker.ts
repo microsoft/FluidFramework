@@ -1,6 +1,10 @@
 import { TokenManager } from "../tokenManager";
 
-const tokenManager = new TokenManager();
+let tokenManager: TokenManager;
+
+export function initAuthChecker(tenantConfig: any) {
+    tokenManager = new TokenManager(tenantConfig.id, tenantConfig.secretKey, tenantConfig.symmetricKey);
+}
 
 /**
  * Middleware to check authentication and passing token.
