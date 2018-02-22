@@ -71,7 +71,7 @@ async function loadFull(
     const root = await collabDoc.getRoot().getView();
     console.log(`Getting root ${id} - ${performanceNow()}`);
 
-    // If a text element already exists load it direclty - otherwise load in price + prejudice
+    // If a text element already exists load it directly - otherwise load in pride + prejudice
     const existing = root.has("text");
     if (!existing) {
         console.log(`Not existing ${id} - ${performanceNow()}`);

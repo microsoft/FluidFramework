@@ -2514,6 +2514,7 @@ export class FlowView extends ui.Component {
         this.setViewOption(this.options);
     }
 
+    // If the root from sharedText doesn't have a comments map, this will break
     public addCommentString(comments: SharedString.SharedString) {
         this.comments = comments;
         this.comments.on("op", (msg: core.ISequencedObjectMessage) => {

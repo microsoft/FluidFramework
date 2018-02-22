@@ -225,8 +225,8 @@ async function typeFile(
         let readPosition = 0;
         let lineNumber = 0;
 
-        const historgramRange = 5;
-        const histogram = new utils.Histogram(historgramRange);
+        const histogramRange = 5;
+        const histogram = new utils.Histogram(histogramRange);
 
         fileText = normalizeText(fileText);
         const metrics: IScribeMetrics = {
@@ -419,7 +419,9 @@ export async function create(id: string): Promise<void> {
             sharedString.insertMarker(sharedString.client.getLength(), marker.behaviors, marker.properties);
         }
     }*/
-
+    const commentString = document.createString() as MergeTree.SharedString;
+    commentString.insertText("Z", 0);
+    root.set("comments", commentString);
     root.set("text", sharedString);
     return Promise.resolve();
 }
