@@ -3,6 +3,7 @@ import * as api from "../api-core";
 import { IMap } from "../data-types";
 import { CounterValueType } from "./counter";
 import { CollaborativeMap } from "./map";
+import { DistributedSetValueType } from "./set";
 
 /**
  * The extension that defines the map
@@ -37,5 +38,6 @@ export class MapExtension implements api.IExtension {
 
     private registerDefaultValueTypes(map: CollaborativeMap) {
         map.registerValueType(new CounterValueType());
+        map.registerValueType(new DistributedSetValueType());
     }
 }

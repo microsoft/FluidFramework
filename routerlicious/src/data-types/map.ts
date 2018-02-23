@@ -153,33 +153,7 @@ export interface IMap extends ICollaborativeObject {
     getView(): Promise<IMapView>;
 
     /**
-     * Creates a set inside the map.
-     */
-    createSet<T>(key: string, value?: T[]): ISet<T>;
-
-    /**
      * Registers a new operation on the map
      */
     registerValueType<T>(type: IValueType<T>);
 }
-
-/**
- * Set interface
- */
-export interface ISet<T> {
-
-    /**
-     * Inserts an element to the set.
-     */
-    add(value: T): ISet<T>;
-
-    /**
-     * Deletes an element from the set.
-     */
-    delete(value: T): ISet<T>;
-
-    /**
-     * Returns elements of the set as an array.
-     */
-    entries(): any[];
- }

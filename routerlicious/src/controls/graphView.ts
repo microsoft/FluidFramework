@@ -4,6 +4,7 @@ import { Link, Node } from "webcola";
 import { api, types } from "../client-api";
 import { IMap} from "../data-types";
 import { CollaborativeGraph, Edge, Vertex } from "../graph";
+import * as map from "../map";
 import * as ui from "../ui";
 
 /**
@@ -140,7 +141,9 @@ export class Graph extends ui.Component {
         const hasEdge = this.graphMapView.has("edge");
 
         if (!hasEdge) {
-            this.graph = new CollaborativeGraph(root.createSet<Edge>("edge"), root.createSet<Vertex>("vertex"));
+            this.graph = new CollaborativeGraph(
+                root.set<map.DistributedSet<Edge>>("edge", undefined, map.DistributedSetValueType.Name),
+                root.set<map.DistributedSet<Vertex>>("vertex", undefined, map.DistributedSetValueType.Name));
 
             // Seed the graph with edges
             this.graph.addVertex(0, "node-0");

@@ -1,7 +1,6 @@
 import * as resources from "gitresources";
 import * as api from "../api-core";
-import { getOrDefault } from "../core-utils";
-import { IMap, IMapView, ISet, IValueType } from "../data-types";
+import { IMap, IMapView, IValueType } from "../data-types";
 import { IMapOperation } from "./definitions";
 import { MapExtension } from "./extension";
 import { MapView } from "./view";
@@ -70,24 +69,6 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
                 prepare: (op) => this.view.prepareSetCore(op.key, op.value),
                 process: (op, context) => this.view.setCore(op.key, context),
             });
-        handler.set(
-            "initSet",
-            {
-                prepare: defaultPrepare,
-                process: (op, context) => this.view.initSetCore(op.key, op.value),
-            });
-        handler.set(
-            "insertSet",
-            {
-                prepare: defaultPrepare,
-                process: (op, context) => this.view.insertSetCore(op.key, op.value),
-            });
-        handler.set(
-            "deleteSet",
-            {
-                prepare: defaultPrepare,
-                process: (op, context) => this.view.deleteSetCore(op.key, op.value),
-            });
         this.messageHandler = handler;
 
         this.view = new MapView(
@@ -125,11 +106,6 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
 
     public clear(): Promise<void> {
         return Promise.resolve(this.view.clear());
-    }
-
-    public createSet<T>(key: string, value?: T[]): ISet<T> {
-        value = getOrDefault(value, []);
-        return this.view.initSet(key, value);
     }
 
     public snapshot(): api.ITree {

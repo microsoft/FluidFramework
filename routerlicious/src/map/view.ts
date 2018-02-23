@@ -1,10 +1,8 @@
-import * as assert from "assert";
 import hasIn = require("lodash/hasIn");
 import * as api from "../api-core";
-import { IMapView, ISet, IValueOpEmitter, IValueType } from "../data-types";
+import { IMapView, IValueOpEmitter, IValueType } from "../data-types";
 import { IMapOperation, IMapValue, ValueType } from "./definitions";
 import { CollaborativeMap, IMapMessageHandler } from "./map";
-import { DistributedSet } from "./set";
 
 interface ITranslation {
     key: string;
@@ -23,11 +21,6 @@ class DefaultFilter {
 
         let translatedValue: any;
         switch (enumValue) {
-            case ValueType.Set:
-                const set = new DistributedSet(key, remote.value, this.map);
-                translatedValue = set;
-                break;
-
             case ValueType.Collaborative:
                 const distributedObject = await this.document.get(remote.value);
                 translatedValue = distributedObject;
@@ -59,11 +52,6 @@ class DefaultFilter {
             return {
                 type: ValueType[ValueType.Collaborative],
                 value: distributedObject.id,
-            };
-        } else if (local instanceof DistributedSet) {
-            return {
-                type: ValueType[ValueType.Set],
-                value: local.entries(),
             };
         } else {
             return {
@@ -272,36 +260,5 @@ export class MapView implements IMapView {
                 handler.process(old, op.value.value, context);
             },
         };
-    }
-
-    public initSet<T>(key: string, value: T[]): ISet<any> {
-        const operationValue: IMapValue = {type: ValueType[ValueType.Set], value};
-        const op: IMapOperation = {
-            key,
-            type: "initSet",
-            value: operationValue,
-        };
-        this.map.submitMapMessage(op);
-        return this.initSetCore(op.key, op.value);
-    }
-
-    public initSetCore<T>(key: string, value: IMapValue): ISet<T> {
-        const newSet = new DistributedSet<T>(key, value.value, this.map);
-        this.data.set(key, newSet);
-        this.map.emit("valueChanged", { key });
-        this.map.emit("setCreated", { key, value: newSet });
-        return newSet;
-    }
-
-    public deleteSetCore<T>(key: string, value: IMapValue) {
-        assert.equal(value.type, ValueType[ValueType.Set]);
-        const set = this.get(key) as DistributedSet<T>;
-        set.delete(value.value, false);
-    }
-
-    public insertSetCore<T>(key: string, value: IMapValue) {
-        assert.equal(value.type, ValueType[ValueType.Set]);
-        const set = this.get(key) as DistributedSet<T>;
-        set.add(value.value, false);
     }
 }

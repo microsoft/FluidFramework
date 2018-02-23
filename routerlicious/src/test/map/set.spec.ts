@@ -1,6 +1,7 @@
 import * as assert from "assert";
 import * as api from "../../api";
-import { IMap, ISet } from "../../data-types";
+import { IMap } from "../../data-types";
+import { DistributedSet, DistributedSetValueType } from "../../map";
 import * as testUtils from "../testUtils";
 
 describe("Routerlicious", () => {
@@ -8,15 +9,19 @@ describe("Routerlicious", () => {
         describe("set", () => {
             let testDocument: api.Document;
             let testMap: IMap;
-            let emptySet: ISet<number>;
-            let populatedSet: ISet<number>;
+            let emptySet: DistributedSet<number>;
+            let populatedSet: DistributedSet<number>;
 
             beforeEach(async () => {
                 testUtils.registerAsTest("", "", "");
                 testDocument = await api.load("testDocument");
                 testMap = testDocument.createMap();
-                emptySet = testMap.createSet("emptySet") as ISet<number>;
-                populatedSet = testMap.createSet("populatedSet", [1, 2, 4, 6]);
+
+                emptySet = testMap.set<DistributedSet<number>>("emptySet", undefined, DistributedSetValueType.Name);
+                populatedSet = testMap.set<DistributedSet<number>>(
+                    "populatedSet",
+                    [1, 2, 4, 6],
+                    DistributedSetValueType.Name);
             });
 
             it("Can create an empty set and populate it", () => {

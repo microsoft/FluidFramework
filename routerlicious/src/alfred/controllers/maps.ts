@@ -103,8 +103,8 @@ async function randomizeMap(map: types.IMap) {
     const keys = ["foo", "bar", "baz", "binky", "winky", "twinkie"];
 
     const counter = map.set<Map.Counter>("counter", undefined, Map.CounterValueType.Name);
+    const set = map.set<Map.DistributedSet<number>>("set", [1, 2, 3, 3, 2, 4], Map.DistributedSetValueType.Name);
 
-    const set = map.createSet("set", [1, 2, 3, 3, 2, 4]) as types.ISet<number>;
     setInterval(async () => {
         const key = keys[Math.floor(Math.random() * keys.length)];
         map.set(key, Math.floor(Math.random() * 100000).toString());
