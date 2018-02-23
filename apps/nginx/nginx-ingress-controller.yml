@@ -44,8 +44,7 @@ spec:
           args:
             - /nginx-ingress-controller
             - --default-backend-service=$(POD_NAMESPACE)/default-http-backend
-            - --default-ssl-certificate=$(POD_NAMESPACE)/tls-certificate
-          # Use downward API
+            - --default-ssl-certificate=$(POD_NAMESPACE)/wu2-tls-certificate
           env:
             - name: POD_NAME
               valueFrom:
@@ -69,8 +68,8 @@ spec:
           secret:
             secretName: tls-dhparam
         - name: nginx-template-volume
-        configMap:
-          name: nginx-template
-          items:
+          configMap:
+            name: nginx-template
+            items:
             - key: nginx.tmpl
               path: nginx.tmpl

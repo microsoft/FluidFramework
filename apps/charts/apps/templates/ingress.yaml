@@ -10,10 +10,10 @@ metadata:
 spec:
   tls:
   - hosts:
-    - "pragueapps.westus2.cloudapp.azure.com"
-    secretName: tls-certificate
+    - "apps.wu2.prague.office-int.com"
+    secretName: wu2-tls-certificate
   rules:
-  - host: "pragueapps.westus2.cloudapp.azure.com"
+  - host: "apps.wu2.prague.office-int.com"
     http:
       paths:
       - path: /
