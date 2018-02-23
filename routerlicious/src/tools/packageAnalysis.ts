@@ -16,14 +16,13 @@ const files = fs.readdirSync(commander.directory);
 let sizeLogs: any = {};
 
 for (let file of files) {
-    if (extensions.findIndex((val) => {
-        return val.indexOf(getExtension(file)) !== -1;
-    }) !== -1) {
+    if (extensions.indexOf(getExtension(file)) !== -1) {
         sizeLogs[file] =  fs.statSync(path.join(commander.directory, file)).size;
     }
 }
 
 const sizeString = JSON.stringify(sizeLogs);
+ensurePath(commander.write);
 
 fs.writeFile(commander.write, sizeString, (err) => {
     if (err) {
@@ -39,4 +38,13 @@ function list(val: string): string[] {
 
 function getExtension(fileName: string): string {
     return fileName.split(".").pop();
+}
+
+function ensurePath(filePath: string) {
+    let dir = path.dirname(filePath);
+    if (fs.existsSync(dir)) {
+        return true;
+    }
+    ensurePath(dir);
+    fs.mkdirSync(dir);
 }
