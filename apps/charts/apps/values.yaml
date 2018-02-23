@@ -9,6 +9,8 @@ service:
   type: NodePort
   externalPort: 8080
   internalPort: 3000
+  host: apps.wu2.prague.office-int.com
+  sslCert: wu2-tls-certificate
 resources:
   limits:
     cpu: 1024m

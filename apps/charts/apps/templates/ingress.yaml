@@ -10,10 +10,10 @@ metadata:
 spec:
   tls:
   - hosts:
-    - "apps.wu2.prague.office-int.com"
-    secretName: wu2-tls-certificate
+    - {{ .Values.service.host }}
+    secretName: {{ .Values.service.sslCert }}
   rules:
-  - host: "apps.wu2.prague.office-int.com"
+  - host: {{ .Values.service.host }}
     http:
       paths:
       - path: /
