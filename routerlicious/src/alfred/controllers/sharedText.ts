@@ -124,7 +124,6 @@ async function loadFull(
         root.get("pageInk") as types.IStream,
         options);
     theFlow = container.flowView;
-    theFlow.addCommentString(commentString);
     host.attach(container);
 
     getInsights(collabDoc.getRoot(), sharedString.id).then((insightsMap) => {
