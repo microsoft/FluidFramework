@@ -25,6 +25,11 @@ export interface IScribeMetrics {
 
     time: number;
     textLength: number;
+
+    pingAverage: number;
+    pingMaximum: number;
+
+    typingInterval: number;
 }
 
 interface IChartData {
@@ -236,8 +241,11 @@ async function typeFile(
             latencyMaximum: undefined,
             latencyMinimum: undefined,
             latencyStdDev: undefined,
+            pingAverage: undefined,
+            pingMaximum: undefined,
             textLength: fileText.length,
             time: 0,
+            typingInterval: intervalTime,
             typingProgress: undefined,
             typingRate: undefined,
         };
@@ -249,6 +257,8 @@ async function typeFile(
         ackCounter.reset();
         const latencyCounter = new utils.RateCounter();
         latencyCounter.reset();
+        const pingCounter = new utils.RateCounter();
+        pingCounter.reset();
         const messageStart: number[] = [];
 
         let mean = 0;
@@ -288,6 +298,14 @@ async function typeFile(
                 if (Date.now() - startTime > RunningCalculationDelay) {
                     const roundTrip = Date.now() - messageStart.pop();
                     latencyCounter.increment(roundTrip);
+
+                    if (message.traces.length === 8 && message.traces[7].service === "ping") {
+                        pingCounter.increment(message.traces[7].timestamp - message.traces[0].timestamp);
+                    }
+
+                    metrics.pingAverage = pingCounter.getValue() / pingCounter.getSamples();
+                    metrics.pingMaximum = pingCounter.getMaximum();
+
                     histogram.add(roundTrip);
                     const samples = latencyCounter.getSamples();
                     metrics.latencyMinimum = latencyCounter.getMinimum();
