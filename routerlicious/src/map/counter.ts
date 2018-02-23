@@ -1,54 +1,104 @@
-import { ICounter } from "../data-types";
-import { IMapOperation, IMapValue, ValueType } from "./definitions";
-import { CollaborativeMap } from "./map";
+import { IValueFactory, IValueOpEmitter, IValueOperation, IValueType } from "../data-types";
 
-export class Counter implements ICounter {
-    constructor(
-        private key: string,
-        private internalValue: number,
-        private min: number,
-        private max: number,
-        private map: CollaborativeMap) {
+export interface ISerializedCounter {
+    max: number;
+    min: number;
+    value: number;
+}
+
+export class CounterFactory implements IValueFactory<Counter> {
+    private static default = {
+        max: Number.MAX_VALUE,
+        min: Number.MIN_VALUE,
+        value: 0,
+    };
+
+    public load(emitter: IValueOpEmitter, raw: ISerializedCounter): Counter {
+        raw = raw || CounterFactory.default;
+        return new Counter(
+            emitter,
+            raw.value || CounterFactory.default.value,
+            raw.min || CounterFactory.default.min,
+            raw.max || CounterFactory.default.max);
     }
 
-    public increment(value: number, submitEvent = true): ICounter {
-        if (typeof value !== "number") {
-            throw new Error("Incremental amount should be a number.");
-        }
+    public store(value: Counter): ISerializedCounter {
+        return {
+            max: value.max,
+            min: value.min,
+            value: value.value,
+        };
+    }
+}
 
-        const nextValue = this.internalValue + value;
-        if ((nextValue < this.min) || (nextValue > this.max)) {
-            throw new Error("Error: Counter range exceeded!");
-        }
+export class Counter {
+    public get value(): number {
+        return this._value;
+    }
 
-        this.internalValue = nextValue;
+    public get min(): number {
+        return this._min;
+    }
 
-        if (submitEvent) {
-            const operationValue: IMapValue = {type: ValueType[ValueType.Counter], value};
-            const op: IMapOperation = {
-                key: this.key,
-                type: "incrementCounter",
-                value: operationValue,
-            };
+    public get max(): number {
+        return this._max;
+    }
 
-            this.map.submitMapMessage(op);
-        }
+    // tslint:disable:variable-name
+    constructor(
+        private emitter: IValueOpEmitter,
+        private _value: number,
+        private _min: number,
+        private _max: number) {
+    }
+    // tslint:enable:variable-name
 
-        this.map.emit("valueChanged", { key: this.key });
-        this.map.emit("incrementCounter", { key: this.key, value });
+    public increment(value: number) {
+        this.apply(value);
+        this.emitter.emit("increment", value);
 
         return this;
     }
 
-    public get(): number {
-        return this.internalValue;
+    public apply(value: number) {
+        this._value = Math.max(Math.min(this.value + value, this.max), this.min);
+    }
+}
+
+export class CounterValueType implements IValueType<Counter> {
+    public static Name = "counter";
+
+    public get name(): string {
+        return CounterValueType.Name;
     }
 
-    public getMin(): number {
-        return this.min;
+    public get factory(): IValueFactory<Counter> {
+        return this._factory;
     }
 
-    public getMax(): number {
-        return this.max;
+    public get ops(): Map<string, IValueOperation<Counter>> {
+        return this._ops;
+    }
+
+    // tslint:disable:variable-name
+    private _factory: IValueFactory<Counter>;
+    private _ops: Map<string, IValueOperation<Counter>>;
+    // tslint:enable:variable-name
+
+    constructor() {
+        this._factory = new CounterFactory();
+        this._ops = new Map<string, IValueOperation<Counter>>(
+            [[
+                "increment",
+                {
+                    prepare: async (old, params) => {
+                        return;
+                    },
+                    process: (old, params, context) => {
+                        old.apply(params);
+                        return old;
+                    },
+                },
+            ]]);
     }
 }

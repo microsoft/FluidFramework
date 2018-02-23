@@ -2,7 +2,6 @@ import * as resources from "gitresources";
 import hasIn = require("lodash/hasIn");
 import * as api from "../api-core";
 import { ICell } from "../data-types";
-import * as map from "../map";
 import { CellExtension } from "./extension";
 
 /**
@@ -44,7 +43,7 @@ const snapshotFileName = "header";
 /**
  * Implementation of a cell collaborative object
  */
-export class Cell extends map.CollaborativeMap implements ICell {
+export class Cell extends api.CollaborativeObject implements ICell {
     private data: any;
 
     /**
@@ -111,7 +110,7 @@ export class Cell extends map.CollaborativeMap implements ICell {
         return this.data === undefined ? true : false;
     }
 
-    protected snapshotContent(): api.ITree {
+    public snapshot(): api.ITree {
         // Get a serializable form of data
         let content: ICellValue;
         if (this.data && hasIn(this.data, "__collaborativeObject__")) {
@@ -143,7 +142,11 @@ export class Cell extends map.CollaborativeMap implements ICell {
         return tree;
     }
 
-    protected async loadContent(
+    public transform(message: api.IObjectMessage, sequenceNumber: number): api.IObjectMessage {
+        return message;
+    }
+
+    protected async loadCore(
         version: resources.ICommit,
         headerOrigin: string,
         storage: api.IObjectStorageService): Promise<void> {
@@ -158,11 +161,15 @@ export class Cell extends map.CollaborativeMap implements ICell {
             : content.value;
     }
 
-    protected initializeContent() {
+    protected initializeLocalCore() {
         this.data = undefined;
     }
 
-    protected async prepareContent(message: api.ISequencedObjectMessage): Promise<any> {
+    protected attachCore() {
+        return;
+    }
+
+    protected async prepareCore(message: api.ISequencedObjectMessage): Promise<any> {
         if (message.type === api.OperationType && message.clientId !== this.document.clientId) {
             const op: ICellOperation = message.contents;
             if (op.type === "setCell") {
@@ -173,7 +180,7 @@ export class Cell extends map.CollaborativeMap implements ICell {
         }
     }
 
-    protected processContent(message: api.ISequencedObjectMessage, context: any) {
+    protected processCore(message: api.ISequencedObjectMessage, context: any) {
         if (message.type === api.OperationType && message.clientId !== this.document.clientId) {
             const op: ICellOperation = message.contents;
 
@@ -190,6 +197,10 @@ export class Cell extends map.CollaborativeMap implements ICell {
                     throw new Error("Unknown operation");
             }
         }
+    }
+
+    protected processMinSequenceNumberChanged(value: number) {
+        return;
     }
 
     private submitIfAttached(message) {

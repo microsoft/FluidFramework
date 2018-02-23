@@ -1,10 +1,9 @@
 import * as assert from "assert";
 import hasIn = require("lodash/hasIn");
 import * as api from "../api-core";
-import { ICounter, IMapFilter, IMapView, ISet } from "../data-types";
-import { Counter } from "./counter";
+import { IMapView, ISet, IValueOpEmitter, IValueType } from "../data-types";
 import { IMapOperation, IMapValue, ValueType } from "./definitions";
-import { CollaborativeMap } from "./map";
+import { CollaborativeMap, IMapMessageHandler } from "./map";
 import { DistributedSet } from "./set";
 
 interface ITranslation {
@@ -15,7 +14,7 @@ interface ITranslation {
 /**
  * Default filter handles translations to or from core map values
  */
-class DefaultFilter implements IMapFilter {
+class DefaultFilter {
     constructor(private map: CollaborativeMap, private document: api.IDocument) {
     }
 
@@ -27,16 +26,6 @@ class DefaultFilter implements IMapFilter {
             case ValueType.Set:
                 const set = new DistributedSet(key, remote.value, this.map);
                 translatedValue = set;
-                break;
-
-            case ValueType.Counter:
-                const counter = new Counter(
-                    key,
-                    remote.value.value,
-                    remote.value.min,
-                    remote.value.max,
-                    this.map);
-                translatedValue = counter;
                 break;
 
             case ValueType.Collaborative:
@@ -76,15 +65,6 @@ class DefaultFilter implements IMapFilter {
                 type: ValueType[ValueType.Set],
                 value: local.entries(),
             };
-        } else if (local instanceof Counter) {
-            return {
-                type: ValueType[ValueType.Counter],
-                value: {
-                    max: local.getMax(),
-                    min: local.getMin(),
-                    value: local.get(),
-                },
-            };
         } else {
             return {
                 type: ValueType[ValueType.Plain],
@@ -94,9 +74,28 @@ class DefaultFilter implements IMapFilter {
     }
 }
 
+class ValueOpEmitter implements IValueOpEmitter {
+    constructor(private type: string, private key: string, private map: CollaborativeMap) {
+    }
+
+    public emit(name: string, params: any) {
+        const op: IMapOperation = {
+            key: this.key,
+            type: this.type,
+            value: {
+                type: name,
+                value: params,
+            },
+        };
+
+        this.map.submitMapMessage(op);
+    }
+}
+
 export class MapView implements IMapView {
     private data = new Map<string, any>();
-    private filter: IMapFilter;
+    private filter: DefaultFilter;
+    private valueTypes = new Map<string, IValueType<any>>();
 
     constructor(private map: CollaborativeMap, document: api.IDocument, id: string) {
         this.filter = new DefaultFilter(map, document);
@@ -164,8 +163,23 @@ export class MapView implements IMapView {
         }
     }
 
-    public set(key: string, value: any): void {
-        let operationValue: IMapValue = this.filter.spill(value);
+    public set<T = any>(key: string, value: any, type?: string): T {
+        let operationValue: IMapValue;
+        if (type) {
+            const valueType = this.valueTypes.get(type);
+            if (!valueType) {
+                throw new Error("Unknown value type specified");
+            }
+
+            // set operationValue first with the raw value params prior to doing the load
+            operationValue = {
+                type,
+                value,
+            };
+            value = valueType.factory.load(new ValueOpEmitter(type, key, this.map), value);
+        } else {
+            operationValue = this.filter.spill(value);
+        }
 
         const op: IMapOperation = {
             key,
@@ -175,6 +189,8 @@ export class MapView implements IMapView {
 
         this.setCore(op.key, value);
         this.map.submitMapMessage(op);
+
+        return value;
     }
 
     public delete(key: string): void {
@@ -231,35 +247,31 @@ export class MapView implements IMapView {
         this.map.emit("valueChanged", { key });
     }
 
-    public initCounter(key: string, value: number,  min: number, max: number): ICounter {
-        const operationValue: IMapValue = {
-            type: ValueType[ValueType.Counter],
-            value: {
-                value,
-                min,
-                max,
+    public registerValueType<T>(type: IValueType<T>): IMapMessageHandler {
+        this.valueTypes.set(type.name, type);
+
+        function getOpHandler(op: IMapOperation) {
+            const handler = type.ops.get(op.value.type);
+            if (!handler) {
+                throw new Error("Unknown type message");
+            }
+
+            return handler;
+        }
+
+        return {
+            prepare: async (op) => {
+                const handler = getOpHandler(op);
+                const old = this.get(op.key);
+                return handler.prepare(old, op.value.value);
+            },
+
+            process: (op, context) => {
+                const handler = getOpHandler(op);
+                const old = this.get(op.key);
+                handler.process(old, op.value.value, context);
             },
         };
-        const op: IMapOperation = {
-            key,
-            type: "initCounter",
-            value: operationValue,
-        };
-        this.map.submitMapMessage(op);
-        return this.initCounterCore(op.key, op.value);
-    }
-
-    public initCounterCore(key: string, value: IMapValue): ICounter {
-        const newCounter = new Counter(
-            key,
-            value.value.value,
-            value.value.min,
-            value.value.max,
-            this.map);
-        this.data.set(key, newCounter);
-        this.map.emit("valueChanged", { key });
-        this.map.emit("initCounter", {key, value: newCounter});
-        return newCounter;
     }
 
     public initSet<T>(key: string, value: T[]): ISet<any> {
@@ -287,21 +299,9 @@ export class MapView implements IMapView {
         set.delete(value.value, false);
     }
 
-    public incrementCounterCore(key: string, value: IMapValue) {
-        assert.equal(value.type, ValueType[ValueType.Counter]);
-        const counter = this.get(key) as Counter;
-        counter.increment(value.value, false);
-    }
-
     public insertSetCore<T>(key: string, value: IMapValue) {
         assert.equal(value.type, ValueType[ValueType.Set]);
         const set = this.get(key) as DistributedSet<T>;
         set.add(value.value, false);
-    }
-
-    public attachFilter(filter: IMapFilter): void {
-        // Should you only be able to attach a filter prior to any messages being processed - i.e. the map
-        // must have been in a snapshot load state?
-        this.filter = filter;
     }
 }

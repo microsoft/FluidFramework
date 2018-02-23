@@ -1,6 +1,7 @@
 import * as assert from "assert";
 import * as api from "../../api";
-import { ICounter, IMap } from "../../data-types";
+import { IMap } from "../../data-types";
+import { Counter, CounterValueType } from "../../map";
 import * as testUtils from "../testUtils";
 
 describe("Routerlicious", () => {
@@ -8,52 +9,64 @@ describe("Routerlicious", () => {
         describe("counter", () => {
             let testDocument: api.Document;
             let testMap: IMap;
-            let counterWithDefault: ICounter;
-            let counterWithValue: ICounter;
-            let counterWithValueAndLimit: ICounter;
+            let counterWithDefault: Counter;
+            let counterWithValue: Counter;
+            let counterWithValueAndLimit: Counter;
 
             beforeEach(async () => {
                 testUtils.registerAsTest("", "", "");
                 testDocument = await api.load("testDocument");
                 testMap = testDocument.createMap();
-                counterWithDefault = testMap.createCounter("defaultCounter");
-                counterWithValue = testMap.createCounter("valueCounter", 50);
-                counterWithValueAndLimit = testMap.createCounter("valueCounterWithLimit", 50, 10, 100);
+                counterWithDefault = testMap.set("defaultCounter", undefined, CounterValueType.Name);
+                counterWithValue = testMap.set(
+                    "valueCounter",
+                    {
+                        value: 50,
+                    },
+                    CounterValueType.Name);
+                counterWithValueAndLimit = testMap.set(
+                    "valueCounterWithLimit",
+                    {
+                        max: 100,
+                        min: 10,
+                        value: 50,
+                    },
+                    CounterValueType.Name);
             });
 
             it("Can create a counter with default value", async () => {
                 assert.ok(counterWithDefault);
-                assert.equal(counterWithDefault.get(), 0);
+                assert.equal(counterWithDefault.value, 0);
             });
 
             it("Can create a counter with predefined value", async () => {
                 assert.ok(counterWithValue);
-                assert.equal(counterWithValue.get(), 50);
+                assert.equal(counterWithValue.value, 50);
             });
 
             it("Does not throw error on valid counter range", () => {
                 assert.doesNotThrow(() => {
-                    testMap.createCounter("validCounter", 100, 10, 110);
+                    testMap.set(
+                        "validCounter",
+                        {
+                            max: 110,
+                            min: 10,
+                            value: 100,
+                        },
+                        CounterValueType.Name);
                 });
             });
 
-            it("Can throw error on invalid counter range", () => {
-                assert.throws(() => {
-                    throw testMap.createCounter("invalidCounter", 100, 10, 90);
-                }, Error);
-            });
-
-            it("Throws an error on out of range increment/decrement", () => {
-                assert.throws(() => {
-                    throw counterWithValueAndLimit.increment(60);
-                }, Error, "Error: Counter range exceeded!");
+            it("caps at max", () => {
+                counterWithValueAndLimit.increment(60);
+                assert.equal(counterWithValueAndLimit.value, counterWithValueAndLimit.max);
             });
 
             it("Can incrrement and decrement a counter", async () => {
                 counterWithValue.increment(20);
-                assert.equal(counterWithValue.get(), 70);
+                assert.equal(counterWithValue.value, 70);
                 counterWithValue.increment(-40);
-                assert.equal(counterWithValue.get(), 30);
+                assert.equal(counterWithValue.value, 30);
             });
 
         });

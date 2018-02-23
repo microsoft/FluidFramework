@@ -2,7 +2,7 @@ import * as resources from "gitresources";
 import * as $ from "jquery";
 import hasIn = require("lodash/hasIn");
 import * as agent from "../../agent";
-import { api, socketStorage, types } from "../../client-api";
+import { api, map as Map, socketStorage, types } from "../../client-api";
 import { IValueChanged } from "../../data-types";
 
 async function loadDocument(id: string, version: resources.ICommit, token?: string): Promise<api.Document> {
@@ -101,7 +101,9 @@ async function displayMap(parentElement: JQuery, key: string, map: types.IMap, p
 async function randomizeMap(map: types.IMap) {
     // link up the randomize button
     const keys = ["foo", "bar", "baz", "binky", "winky", "twinkie"];
-    const counter = map.createCounter("counter", 100) as types.ICounter;
+
+    const counter = map.set<Map.Counter>("counter", undefined, Map.CounterValueType.Name);
+
     const set = map.createSet("set", [1, 2, 3, 3, 2, 4]) as types.ISet<number>;
     setInterval(async () => {
         const key = keys[Math.floor(Math.random() * keys.length)];
