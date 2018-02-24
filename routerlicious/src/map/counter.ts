@@ -1,33 +1,12 @@
 import { IValueFactory, IValueOpEmitter, IValueOperation, IValueType } from "../data-types";
 
-export interface ISerializedCounter {
-    max: number;
-    min: number;
-    value: number;
-}
-
 export class CounterFactory implements IValueFactory<Counter> {
-    private static default = {
-        max: Number.MAX_VALUE,
-        min: Number.MIN_VALUE,
-        value: 0,
-    };
-
-    public load(emitter: IValueOpEmitter, raw: ISerializedCounter): Counter {
-        raw = raw || CounterFactory.default;
-        return new Counter(
-            emitter,
-            raw.value || CounterFactory.default.value,
-            raw.min || CounterFactory.default.min,
-            raw.max || CounterFactory.default.max);
+    public load(emitter: IValueOpEmitter, raw: number): Counter {
+        return new Counter(emitter, raw || 0);
     }
 
-    public store(value: Counter): ISerializedCounter {
-        return {
-            max: value.max,
-            min: value.min,
-            value: value.value,
-        };
+    public store(value: Counter): number {
+        return value.value;
     }
 }
 
@@ -36,32 +15,17 @@ export class Counter {
         return this._value;
     }
 
-    public get min(): number {
-        return this._min;
+    // tslint:disable-next-line:variable-name
+    constructor(private emitter: IValueOpEmitter, private _value: number) {
     }
 
-    public get max(): number {
-        return this._max;
-    }
-
-    // tslint:disable:variable-name
-    constructor(
-        private emitter: IValueOpEmitter,
-        private _value: number,
-        private _min: number,
-        private _max: number) {
-    }
-    // tslint:enable:variable-name
-
-    public increment(value: number) {
-        this.apply(value);
-        this.emitter.emit("increment", value);
+    public increment(value: number, submit = false) {
+        this._value = this._value + value;
+        if (submit) {
+            this.emitter.emit("increment", value);
+        }
 
         return this;
-    }
-
-    public apply(value: number) {
-        this._value = Math.max(Math.min(this.value + value, this.max), this.min);
     }
 }
 
@@ -95,7 +59,7 @@ export class CounterValueType implements IValueType<Counter> {
                         return;
                     },
                     process: (old, params, context) => {
-                        old.apply(params);
+                        old.increment(params, false);
                         return old;
                     },
                 },

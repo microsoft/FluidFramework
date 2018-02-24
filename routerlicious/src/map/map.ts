@@ -50,26 +50,25 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
         super(id, document, type);
         const defaultPrepare = (op: IMapOperation) => Promise.resolve();
 
-        const handler = new Map<string, IMapMessageHandler>();
-        handler.set(
+        this.messageHandler = new Map<string, IMapMessageHandler>();
+        this.messageHandler.set(
             "clear",
             {
                 prepare: defaultPrepare,
                 process: (op, context) => this.view.clearCore(),
             });
-        handler.set(
+        this.messageHandler.set(
             "delete",
             {
                 prepare: defaultPrepare,
                 process: (op, context) => this.view.deleteCore(op.key),
             });
-        handler.set(
+        this.messageHandler.set(
             "set",
             {
                 prepare: (op) => this.view.prepareSetCore(op.key, op.value),
                 process: (op, context) => this.view.setCore(op.key, context),
             });
-        this.messageHandler = handler;
 
         this.view = new MapView(
             this,
