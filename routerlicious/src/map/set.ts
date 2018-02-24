@@ -43,7 +43,7 @@ export class DistributedSet<T> {
 }
 
 export class DistributedSetValueType implements IValueType<DistributedSet<any>> {
-    public static Name = "set";
+    public static Name = "distributedSet";
 
     public get name(): string {
         return DistributedSetValueType.Name;

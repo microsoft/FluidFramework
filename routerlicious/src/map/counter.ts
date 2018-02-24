@@ -19,7 +19,7 @@ export class Counter {
     constructor(private emitter: IValueOpEmitter, private _value: number) {
     }
 
-    public increment(value: number, submit = false) {
+    public increment(value: number, submit = true) {
         this._value = this._value + value;
         if (submit) {
             this.emitter.emit("increment", value);

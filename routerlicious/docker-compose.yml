@@ -68,13 +68,6 @@ services:
             - worker__intelligence__resume__url=http://alfred:3000/intelligence/resume
             - NODE_ENV=development
         restart: always
-    service-graph:
-        build: .
-        command: node dist/kafka-service/index.js serviceGraph ../service-graph/index.js
-        environment:
-            - DEBUG=routerlicious:*
-            - NODE_ENV=development
-        restart: always
     riddler:
         build: .
         ports:

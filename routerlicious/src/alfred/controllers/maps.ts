@@ -4,6 +4,7 @@ import hasIn = require("lodash/hasIn");
 import * as agent from "../../agent";
 import { api, map as Map, socketStorage, types } from "../../client-api";
 import { IValueChanged } from "../../data-types";
+import { Counter, DistributedSet } from "../../map";
 
 async function loadDocument(id: string, version: resources.ICommit, token?: string): Promise<api.Document> {
     console.log("Loading in root document...");
@@ -33,9 +34,11 @@ async function updateOrCreateKey(key: string, map: types.IMap, container: JQuery
         }
     } else {
         if (key === "set") {
-            keyElement.text(`${key}: ${JSON.stringify(value.entries())}`);
+            const set = value as DistributedSet<number>;
+            keyElement.text(`${key}: ${JSON.stringify(set.entries())}`);
         } else if (key === "counter") {
-            keyElement.text(`${key}: ${value.get()}`);
+            const counter = value as Counter;
+            keyElement.text(`${key}: ${counter.value}`);
         } else {
             keyElement.text(`${key}: ${JSON.stringify(value)}`);
         }
