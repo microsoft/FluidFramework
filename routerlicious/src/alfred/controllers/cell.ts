@@ -118,7 +118,7 @@ export async function load(id: string, version: resources.ICommit, config: any) 
 
     let cell: types.ICell;
     if (await root.has("cell")) {
-        cell = await root.get("cell");
+        cell = await root.get<types.ICell>("cell");
     } else {
         cell = doc.createCell();
         root.set("cell", cell);

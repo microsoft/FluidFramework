@@ -1,58 +1,93 @@
-import { ISet } from "../data-types";
-import { IMapOperation, IMapValue, ValueType } from "./definitions";
-import { CollaborativeMap } from "./map";
+import { IValueFactory, IValueOpEmitter, IValueOperation, IValueType } from "../data-types";
 
-export class DistributedSet<T> implements ISet<T> {
-    private internalSet: Set<T>;
-
-    constructor(private key: string, values: T[], private map: CollaborativeMap) {
-        this.internalSet = new Set<T>(values);
+export class DistributedSetFactory<T> implements IValueFactory<DistributedSet<T>> {
+    public load(emitter: IValueOpEmitter, raw: any[]): DistributedSet<T> {
+        return new DistributedSet<any>(emitter, raw || []);
     }
 
-    public add(value: T, submitEvent = true): ISet<T> {
+    public store(value: DistributedSet<T>): any[] {
+        return value.entries();
+    }
+}
+
+export class DistributedSet<T> {
+    private internalSet: Set<T>;
+
+    constructor(private emitter: IValueOpEmitter, value: T[]) {
+        this.internalSet = new Set(value);
+    }
+
+    public add(value: T, submitEvent = true): DistributedSet<T> {
         this.internalSet.add(value);
 
         if (submitEvent) {
-            const operationValue: IMapValue = {
-                type: ValueType[ValueType.Set],
-                value,
-            };
-            const op: IMapOperation = {
-                key: this.key,
-                type: "insertSet",
-                value: operationValue,
-            };
-
-            this.map.submitMapMessage(op);
+            this.emitter.emit("add", value);
         }
-
-        this.map.emit("valueChanged", { key: this.key });
-        this.map.emit("setElementAdded", { key: this.key, value });
 
         return this;
     }
 
-    public delete(value: T, submitEvent = true): ISet<T> {
+    public delete(value: T, submitEvent = true): DistributedSet<T> {
         this.internalSet.delete(value);
 
         if (submitEvent) {
-            const operationValue: IMapValue = { type: ValueType[ValueType.Set], value };
-            const op: IMapOperation = {
-                key: this.key,
-                type: "deleteSet",
-                value: operationValue,
-            };
-
-            this.map.submitMapMessage(op);
+            this.emitter.emit("delete", value);
         }
-
-        this.map.emit("valueChanged", { key: this.key });
-        this.map.emit("setElementRemoved", { key: this.key, value });
 
         return this;
     }
 
     public entries(): any[] {
         return Array.from(this.internalSet.values());
+    }
+}
+
+export class DistributedSetValueType implements IValueType<DistributedSet<any>> {
+    public static Name = "distributedSet";
+
+    public get name(): string {
+        return DistributedSetValueType.Name;
+    }
+
+    public get factory(): IValueFactory<DistributedSet<any>> {
+        return this._factory;
+    }
+
+    public get ops(): Map<string, IValueOperation<DistributedSet<any>>> {
+        return this._ops;
+    }
+
+    // tslint:disable:variable-name
+    private _factory: IValueFactory<DistributedSet<any>>;
+    private _ops: Map<string, IValueOperation<DistributedSet<any>>>;
+    // tslint:enable:variable-name
+
+    constructor() {
+        this._factory = new DistributedSetFactory();
+        this._ops = new Map<string, IValueOperation<DistributedSet<any>>>(
+            [[
+                "add",
+                {
+                    prepare: async (old, params) => {
+                        return;
+                    },
+                    process: (old, params, context) => {
+                        old.add(params, false);
+                        return old;
+                    },
+                },
+            ],
+            [
+                "delete",
+                {
+                    prepare: async (old, params) => {
+                        return;
+                    },
+                    process: (old, params, context) => {
+                        old.delete(params, false);
+                        return old;
+                    },
+                },
+            ]]);
     }
 }

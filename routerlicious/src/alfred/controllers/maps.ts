@@ -2,8 +2,9 @@ import * as resources from "gitresources";
 import * as $ from "jquery";
 import hasIn = require("lodash/hasIn");
 import * as agent from "../../agent";
-import { api, socketStorage, types } from "../../client-api";
+import { api, map as Map, socketStorage, types } from "../../client-api";
 import { IValueChanged } from "../../data-types";
+import { Counter, DistributedSet } from "../../map";
 
 async function loadDocument(id: string, version: resources.ICommit, token?: string): Promise<api.Document> {
     console.log("Loading in root document...");
@@ -33,9 +34,11 @@ async function updateOrCreateKey(key: string, map: types.IMap, container: JQuery
         }
     } else {
         if (key === "set") {
-            keyElement.text(`${key}: ${JSON.stringify(value.entries())}`);
+            const set = value as DistributedSet<number>;
+            keyElement.text(`${key}: ${JSON.stringify(set.entries())}`);
         } else if (key === "counter") {
-            keyElement.text(`${key}: ${value.get()}`);
+            const counter = value as Counter;
+            keyElement.text(`${key}: ${counter.value}`);
         } else {
             keyElement.text(`${key}: ${JSON.stringify(value)}`);
         }
@@ -101,8 +104,10 @@ async function displayMap(parentElement: JQuery, key: string, map: types.IMap, p
 async function randomizeMap(map: types.IMap) {
     // link up the randomize button
     const keys = ["foo", "bar", "baz", "binky", "winky", "twinkie"];
-    const counter = map.createCounter("counter", 100) as types.ICounter;
-    const set = map.createSet("set", [1, 2, 3, 3, 2, 4]) as types.ISet<number>;
+
+    const counter = map.set<Map.Counter>("counter", undefined, Map.CounterValueType.Name);
+    const set = map.set<Map.DistributedSet<number>>("set", [1, 2, 3, 3, 2, 4], Map.DistributedSetValueType.Name);
+
     setInterval(async () => {
         const key = keys[Math.floor(Math.random() * keys.length)];
         map.set(key, Math.floor(Math.random() * 100000).toString());

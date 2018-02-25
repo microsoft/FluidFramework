@@ -16,26 +16,60 @@ export interface IKeyValueChanged {
     value: any;
 }
 
+export interface IValueOpEmitter {
+    emit(name: string, params: any);
+}
+
 /**
- * Allows for local processing of map operation
+ * A value factory is used to serialize/deserialize values to a map
  */
-export interface IMapFilter {
+export interface IValueFactory<T> {
+    load(emitter: IValueOpEmitter, raw: any): T;
+
+    store(value: T): any;
+}
+
+export interface IValueOperation<T> {
     /**
-     * Custom filter applied to inbound map operations that allow for translation into a local format.
+     * Allows the handler to prepare for the operation
      */
-    fill(key: string, remote: any): Promise<any>;
+    prepare(old: T, params: any): Promise<any>;
 
     /**
-     * Filter applied to local map values to convert them into serializable formats
+     * Performs the actual processing on the operation
      */
-    spill(local: any): any;
+    process(old: T, params: any, context: any): T;
+}
+
+/**
+ * Used to register a new value type on a map
+ */
+export interface IValueType<T> {
+    /**
+     * Name of the value type
+     */
+    name: string;
+
+    /**
+     * Factory method used to convert to/from a JSON form of the type
+     */
+    factory: IValueFactory<T>;
+
+    /**
+     * Do we need initialization code here???
+     */
+
+    /**
+     * Operations that can be applied to the value
+     */
+    ops: Map<string, IValueOperation<T>>;
 }
 
 export interface IMapView {
     /**
      * Retrieves the given key from the map
      */
-    get(key: string): any;
+    get<T = any>(key: string): T;
 
     /**
      * A form of get except it will only resolve the promise once the key exists in the map.
@@ -50,7 +84,7 @@ export interface IMapView {
     /**
      * Sets the key to the provided value
      */
-    set(key: string, value: any): void;
+    set<T = any>(key: string, value: T | any, type?: string): T;
 
     /**
      * Deletes the specified key from the map and returns the value of the key at the time of deletion.
@@ -78,14 +112,9 @@ export interface IMapView {
  */
 export interface IMap extends ICollaborativeObject {
     /**
-     * Attaches a new filter to the map
-     */
-    attachFilter(filter: IMapFilter): void;
-
-    /**
      * Retrieves the given key from the map
      */
-    get(key: string): Promise<any>;
+    get<T = any>(key: string): Promise<T>;
 
     /**
      * A form of get except it will only resolve the promise once the key exists in the map.
@@ -98,9 +127,10 @@ export interface IMap extends ICollaborativeObject {
     has(key: string): Promise<boolean>;
 
     /**
-     * Sets the key to the provided value
+     * Sets the key to the provided value. An optional type can be specified to initialize the key
+     * to one of the registered value types.
      */
-    set(key: string, value: any): Promise<void>;
+    set<T = any>(key: string, value: T | any, type?: string): T;
 
     /**
      * Deletes the specified key from the map and returns the value of the key at the time of deletion.
@@ -123,48 +153,7 @@ export interface IMap extends ICollaborativeObject {
     getView(): Promise<IMapView>;
 
     /**
-     * Creates a counter inside the map.
+     * Registers a new operation on the map
      */
-    createCounter(key: string, value?: number, min?: number, max?: number): ICounter;
-
-    /**
-     * Creates a set inside the map.
-     */
-    createSet<T>(key: string, value?: T[]): ISet<T>;
+    registerValueType<T>(type: IValueType<T>);
 }
-
-/**
- * Counter interface
- */
-export interface ICounter {
-    /**
-     * Increment/decrement the underlying value.
-     */
-    increment(value: number): ICounter;
-
-    /**
-     * Returns the underlying value.
-     */
-    get(): number;
- }
-
-/**
- * Set interface
- */
-export interface ISet<T> {
-
-    /**
-     * Inserts an element to the set.
-     */
-    add(value: T): ISet<T>;
-
-    /**
-     * Deletes an element from the set.
-     */
-    delete(value: T): ISet<T>;
-
-    /**
-     * Returns elements of the set as an array.
-     */
-    entries(): any[];
- }

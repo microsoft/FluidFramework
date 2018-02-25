@@ -1,126 +1,62 @@
-import * as assert from "assert";
 import hasIn = require("lodash/hasIn");
 import * as api from "../api-core";
-import { ICounter, IMapFilter, IMapView, ISet } from "../data-types";
-import { Counter } from "./counter";
+import { IMapView, IValueOpEmitter, IValueType } from "../data-types";
 import { IMapOperation, IMapValue, ValueType } from "./definitions";
-import { CollaborativeMap } from "./map";
-import { DistributedSet } from "./set";
+import { CollaborativeMap, IMapMessageHandler } from "./map";
 
-interface ITranslation {
-    key: string;
-    value: IMapValue;
+class ValueOpEmitter implements IValueOpEmitter {
+    constructor(private type: string, private key: string, private map: CollaborativeMap) {
+    }
+
+    public emit(name: string, params: any) {
+        const op: IMapOperation = {
+            key: this.key,
+            type: this.type,
+            value: {
+                type: name,
+                value: params,
+            },
+        };
+
+        this.map.submitMapMessage(op);
+        this.map.emit("valueChanged", { key: this.key });
+    }
 }
 
-/**
- * Default filter handles translations to or from core map values
- */
-class DefaultFilter implements IMapFilter {
-    constructor(private map: CollaborativeMap, private document: api.IDocument) {
-    }
+export interface ILocalViewElement {
+    // The type of local value
+    localType: string;
 
-    public async fill(key: string, remote: IMapValue): Promise<ITranslation> {
-        const enumValue = ValueType[remote.type];
-
-        let translatedValue: any;
-        switch (enumValue) {
-            case ValueType.Set:
-                const set = new DistributedSet(key, remote.value, this.map);
-                translatedValue = set;
-                break;
-
-            case ValueType.Counter:
-                const counter = new Counter(
-                    key,
-                    remote.value.value,
-                    remote.value.min,
-                    remote.value.max,
-                    this.map);
-                translatedValue = counter;
-                break;
-
-            case ValueType.Collaborative:
-                const distributedObject = await this.document.get(remote.value);
-                translatedValue = distributedObject;
-                break;
-
-            default:
-                translatedValue = remote.value;
-                break;
-        }
-
-        return {
-            key,
-            value: translatedValue,
-        };
-    }
-
-    public spill(local: any): IMapValue {
-        if (hasIn(local, "__collaborativeObject__")) {
-            const distributedObject = local as api.ICollaborativeObject;
-
-            // Attach the collab object to the document. If already attached the attach call will noop.
-            // This feels slightly out of place here since it has a side effect. But is part of spilling a document.
-            // Not sure if there is some kind of prep call to separate the op creation from things needed to make it
-            // (like attaching)
-            if (!this.map.isLocal()) {
-                distributedObject.attach();
-            }
-
-            return {
-                type: ValueType[ValueType.Collaborative],
-                value: distributedObject.id,
-            };
-        } else if (local instanceof DistributedSet) {
-            return {
-                type: ValueType[ValueType.Set],
-                value: local.entries(),
-            };
-        } else if (local instanceof Counter) {
-            return {
-                type: ValueType[ValueType.Counter],
-                value: {
-                    max: local.getMax(),
-                    min: local.getMin(),
-                    value: local.get(),
-                },
-            };
-        } else {
-            return {
-                type: ValueType[ValueType.Plain],
-                value: local,
-            };
-        }
-    }
+    // The actual local value
+    localValue: any;
 }
 
 export class MapView implements IMapView {
-    private data = new Map<string, any>();
-    private filter: IMapFilter;
+    private data = new Map<string, ILocalViewElement>();
+    private valueTypes = new Map<string, IValueType<any>>();
 
-    constructor(private map: CollaborativeMap, document: api.IDocument, id: string) {
-        this.filter = new DefaultFilter(map, document);
+    constructor(private map: CollaborativeMap, private document: api.IDocument, id: string) {
     }
 
     public async populate(data: {[key: string]: IMapValue }): Promise<void> {
-        const translationsP = new Array<Promise<ITranslation>>();
+        const localValuesP = new Array<Promise<{key: string, value: ILocalViewElement}>>();
 
         // tslint:disable-next-line:forin
         for (const key in data) {
             const value = data[key];
-            const translationP = this.filter.fill(key, value);
-            translationsP.push(translationP);
+            const localValueP = this.fill(key, value).then((filledValue) => ({key, value: filledValue}));
+            localValuesP.push(localValueP);
         }
 
-        const translations = await Promise.all(translationsP);
-        for (const translation of translations) {
-            this.data.set(translation.key, translation.value);
+        const localValues = await Promise.all(localValuesP);
+        for (const localValue of localValues) {
+            this.data.set(localValue.key, localValue.value);
         }
     }
 
     public forEach(callbackFn: (value, key) => void) {
         this.data.forEach((value, key) => {
-            callbackFn(value, key);
+            callbackFn(value.localValue, key);
         });
     }
 
@@ -129,8 +65,10 @@ export class MapView implements IMapView {
             return undefined;
         }
 
+        // Let's stash the *type* of the object on the key
         const value = this.data.get(key);
-        return value;
+
+        return value.localValue;
     }
 
     public async wait<T>(key: string): Promise<T> {
@@ -158,14 +96,32 @@ export class MapView implements IMapView {
 
     public attachAll() {
         for (const [, value] of this.data) {
-            if (hasIn(value, "__collaborativeObject__")) {
-                (value as api.ICollaborativeObject).attach();
+            if (hasIn(value.localValue, "__collaborativeObject__")) {
+                (value.localValue as api.ICollaborativeObject).attach();
             }
         }
     }
 
-    public set(key: string, value: any): void {
-        let operationValue: IMapValue = this.filter.spill(value);
+    public set<T = any>(key: string, value: any, type?: string): T {
+        let operationValue: IMapValue;
+        if (type) {
+            const valueType = this.valueTypes.get(type);
+            if (!valueType) {
+                throw new Error("Unknown value type specified");
+            }
+
+            // set operationValue first with the raw value params prior to doing the load
+            operationValue = {
+                type,
+                value,
+            };
+            value = valueType.factory.load(new ValueOpEmitter(type, key, this.map), value);
+        } else {
+            const valueType = hasIn(value, "__collaborativeObject__")
+                ? ValueType[ValueType.Collaborative]
+                : ValueType[ValueType.Plain];
+            operationValue = this.spill({ localType: valueType, localValue: value });
+        }
 
         const op: IMapOperation = {
             key,
@@ -173,8 +129,15 @@ export class MapView implements IMapView {
             value: operationValue,
         };
 
-        this.setCore(op.key, value);
+        this.setCore(
+            op.key,
+            {
+                localType: operationValue.type,
+                localValue: value,
+            });
         this.map.submitMapMessage(op);
+
+        return value;
     }
 
     public delete(key: string): void {
@@ -206,19 +169,19 @@ export class MapView implements IMapView {
     public serialize(): string {
         const serialized: any = {};
         this.data.forEach((value, key) => {
-            serialized[key] = this.filter.spill(value);
+            serialized[key] = this.spill(value);
         });
         return JSON.stringify(serialized);
     }
 
-    public setCore(key: string, value: IMapValue) {
+    public setCore(key: string, value: ILocalViewElement) {
         this.data.set(key, value);
         this.map.emit("valueChanged", { key });
     }
 
-    public async prepareSetCore(key: string, value: IMapValue): Promise<IMapValue> {
-        const translation = await this.filter.fill(key, value);
-        return translation.value;
+    public async prepareSetCore(key: string, value: IMapValue): Promise<ILocalViewElement> {
+        const translation = await this.fill(key, value);
+        return translation;
     }
 
     public clearCore() {
@@ -231,77 +194,81 @@ export class MapView implements IMapView {
         this.map.emit("valueChanged", { key });
     }
 
-    public initCounter(key: string, value: number,  min: number, max: number): ICounter {
-        const operationValue: IMapValue = {
-            type: ValueType[ValueType.Counter],
-            value: {
-                value,
-                min,
-                max,
+    public registerValueType<T>(type: IValueType<T>): IMapMessageHandler {
+        this.valueTypes.set(type.name, type);
+
+        function getOpHandler(op: IMapOperation) {
+            const handler = type.ops.get(op.value.type);
+            if (!handler) {
+                throw new Error("Unknown type message");
+            }
+
+            return handler;
+        }
+
+        return {
+            prepare: async (op) => {
+                const handler = getOpHandler(op);
+                const old = this.get(op.key);
+                return handler.prepare(old, op.value.value);
+            },
+
+            process: (op, context) => {
+                const handler = getOpHandler(op);
+                const old = this.get(op.key);
+                handler.process(old, op.value.value, context);
+                this.map.emit("valueChanged", { key: op.key });
             },
         };
-        const op: IMapOperation = {
-            key,
-            type: "initCounter",
-            value: operationValue,
+    }
+
+    private async fill(key: string, remote: IMapValue): Promise<ILocalViewElement> {
+        let translatedValue: any;
+        if (remote.type === ValueType[ValueType.Collaborative]) {
+            const distributedObject = await this.document.get(remote.value);
+            translatedValue = distributedObject;
+        } else if (remote.type === ValueType[ValueType.Plain]) {
+            translatedValue = remote.value;
+        } else if (this.valueTypes.has(remote.type)) {
+            const valueType = this.valueTypes.get(remote.type);
+            translatedValue = valueType.factory.load(new ValueOpEmitter(remote.type, key, this.map), remote.value);
+        } else {
+            return Promise.reject("Unknown value type");
+        }
+
+        return {
+            localType: remote.type,
+            localValue: translatedValue,
         };
-        this.map.submitMapMessage(op);
-        return this.initCounterCore(op.key, op.value);
     }
 
-    public initCounterCore(key: string, value: IMapValue): ICounter {
-        const newCounter = new Counter(
-            key,
-            value.value.value,
-            value.value.min,
-            value.value.max,
-            this.map);
-        this.data.set(key, newCounter);
-        this.map.emit("valueChanged", { key });
-        this.map.emit("initCounter", {key, value: newCounter});
-        return newCounter;
-    }
+    private spill(local: ILocalViewElement): IMapValue {
+        if (local.localType === ValueType[ValueType.Collaborative]) {
+            const distributedObject = local.localValue as api.ICollaborativeObject;
 
-    public initSet<T>(key: string, value: T[]): ISet<any> {
-        const operationValue: IMapValue = {type: ValueType[ValueType.Set], value};
-        const op: IMapOperation = {
-            key,
-            type: "initSet",
-            value: operationValue,
-        };
-        this.map.submitMapMessage(op);
-        return this.initSetCore(op.key, op.value);
-    }
+            // Attach the collab object to the document. If already attached the attach call will noop.
+            // This feels slightly out of place here since it has a side effect. But is part of spilling a document.
+            // Not sure if there is some kind of prep call to separate the op creation from things needed to make it
+            // (like attaching)
+            if (!this.map.isLocal()) {
+                distributedObject.attach();
+            }
 
-    public initSetCore<T>(key: string, value: IMapValue): ISet<T> {
-        const newSet = new DistributedSet<T>(key, value.value, this.map);
-        this.data.set(key, newSet);
-        this.map.emit("valueChanged", { key });
-        this.map.emit("setCreated", { key, value: newSet });
-        return newSet;
-    }
-
-    public deleteSetCore<T>(key: string, value: IMapValue) {
-        assert.equal(value.type, ValueType[ValueType.Set]);
-        const set = this.get(key) as DistributedSet<T>;
-        set.delete(value.value, false);
-    }
-
-    public incrementCounterCore(key: string, value: IMapValue) {
-        assert.equal(value.type, ValueType[ValueType.Counter]);
-        const counter = this.get(key) as Counter;
-        counter.increment(value.value, false);
-    }
-
-    public insertSetCore<T>(key: string, value: IMapValue) {
-        assert.equal(value.type, ValueType[ValueType.Set]);
-        const set = this.get(key) as DistributedSet<T>;
-        set.add(value.value, false);
-    }
-
-    public attachFilter(filter: IMapFilter): void {
-        // Should you only be able to attach a filter prior to any messages being processed - i.e. the map
-        // must have been in a snapshot load state?
-        this.filter = filter;
+            return {
+                type: ValueType[ValueType.Collaborative],
+                value: distributedObject.id,
+            };
+        } else if (this.valueTypes.has(local.localType)) {
+            const valueType = this.valueTypes.get(local.localType);
+            return {
+                type: local.localType,
+                value: valueType.factory.store(local.localValue),
+            };
+        } else {
+            return {
+                type: ValueType[ValueType.Plain],
+                value: local.localValue,
+            };
+        }
     }
 }
