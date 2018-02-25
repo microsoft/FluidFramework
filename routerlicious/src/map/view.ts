@@ -181,7 +181,7 @@ export class MapView implements IMapView {
 
     public async prepareSetCore(key: string, value: IMapValue): Promise<ILocalViewElement> {
         const translation = await this.fill(key, value);
-        return translation[1];
+        return translation;
     }
 
     public clearCore() {
