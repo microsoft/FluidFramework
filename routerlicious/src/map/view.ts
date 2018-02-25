@@ -25,10 +25,10 @@ class ValueOpEmitter implements IValueOpEmitter {
 
 export interface ILocalViewElement {
     // The type of local value
-    t: string;
+    localType: string;
 
     // The actual local value
-    v: any;
+    localValue: any;
 }
 
 export class MapView implements IMapView {
@@ -39,24 +39,24 @@ export class MapView implements IMapView {
     }
 
     public async populate(data: {[key: string]: IMapValue }): Promise<void> {
-        const localValuesP = new Array<Promise<[string, ILocalViewElement]>>();
+        const localValuesP = new Array<Promise<{key: string, value: ILocalViewElement}>>();
 
         // tslint:disable-next-line:forin
         for (const key in data) {
             const value = data[key];
-            const localValueP = this.fill(key, value);
+            const localValueP = this.fill(key, value).then((filledValue) => ({key, value: filledValue}));
             localValuesP.push(localValueP);
         }
 
         const localValues = await Promise.all(localValuesP);
         for (const localValue of localValues) {
-            this.data.set(localValue[0], localValue[1]);
+            this.data.set(localValue.key, localValue.value);
         }
     }
 
     public forEach(callbackFn: (value, key) => void) {
         this.data.forEach((value, key) => {
-            callbackFn(value.v, key);
+            callbackFn(value.localValue, key);
         });
     }
 
@@ -68,7 +68,7 @@ export class MapView implements IMapView {
         // Let's stash the *type* of the object on the key
         const value = this.data.get(key);
 
-        return value.v;
+        return value.localValue;
     }
 
     public async wait<T>(key: string): Promise<T> {
@@ -96,8 +96,8 @@ export class MapView implements IMapView {
 
     public attachAll() {
         for (const [, value] of this.data) {
-            if (hasIn(value.v, "__collaborativeObject__")) {
-                (value.v as api.ICollaborativeObject).attach();
+            if (hasIn(value.localValue, "__collaborativeObject__")) {
+                (value.localValue as api.ICollaborativeObject).attach();
             }
         }
     }
@@ -120,7 +120,7 @@ export class MapView implements IMapView {
             const valueType = hasIn(value, "__collaborativeObject__")
                 ? ValueType[ValueType.Collaborative]
                 : ValueType[ValueType.Plain];
-            operationValue = this.spill({ t: valueType, v: value });
+            operationValue = this.spill({ localType: valueType, localValue: value });
         }
 
         const op: IMapOperation = {
@@ -132,8 +132,8 @@ export class MapView implements IMapView {
         this.setCore(
             op.key,
             {
-                t: operationValue.type,
-                v: value,
+                localType: operationValue.type,
+                localValue: value,
             });
         this.map.submitMapMessage(op);
 
@@ -222,7 +222,7 @@ export class MapView implements IMapView {
         };
     }
 
-    private async fill(key: string, remote: IMapValue): Promise<[string, ILocalViewElement]> {
+    private async fill(key: string, remote: IMapValue): Promise<ILocalViewElement> {
         let translatedValue: any;
         if (remote.type === ValueType[ValueType.Collaborative]) {
             const distributedObject = await this.document.get(remote.value);
@@ -236,17 +236,15 @@ export class MapView implements IMapView {
             return Promise.reject("Unknown value type");
         }
 
-        return [
-            key,
-            {
-                t: remote.type,
-                v: translatedValue,
-            }];
+        return {
+            localType: remote.type,
+            localValue: translatedValue,
+        };
     }
 
     private spill(local: ILocalViewElement): IMapValue {
-        if (local.t === ValueType[ValueType.Collaborative]) {
-            const distributedObject = local.v as api.ICollaborativeObject;
+        if (local.localType === ValueType[ValueType.Collaborative]) {
+            const distributedObject = local.localValue as api.ICollaborativeObject;
 
             // Attach the collab object to the document. If already attached the attach call will noop.
             // This feels slightly out of place here since it has a side effect. But is part of spilling a document.
@@ -260,16 +258,16 @@ export class MapView implements IMapView {
                 type: ValueType[ValueType.Collaborative],
                 value: distributedObject.id,
             };
-        } else if (this.valueTypes.has(local.t)) {
-            const valueType = this.valueTypes.get(local.t);
+        } else if (this.valueTypes.has(local.localType)) {
+            const valueType = this.valueTypes.get(local.localType);
             return {
-                type: local.t,
-                value: valueType.factory.store(local.v),
+                type: local.localType,
+                value: valueType.factory.store(local.localValue),
             };
         } else {
             return {
                 type: ValueType[ValueType.Plain],
-                value: local.v,
+                value: local.localValue,
             };
         }
     }
