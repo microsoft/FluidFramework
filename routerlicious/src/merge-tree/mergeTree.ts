@@ -367,7 +367,6 @@ function addNodeReferences(mergeTree: MergeTree, node: MergeNode,
 }
 
 export let MaxNodesInBlock = 8;
-
 export class MergeBlock extends MergeNode implements IMergeBlock {
     children: MergeNode[];
     constructor(public childCount: number) {
@@ -380,6 +379,15 @@ export class MergeBlock extends MergeNode implements IMergeBlock {
 
     assignChild(child: MergeNode, index: number) {
         child.index = index;
+/*        
+        let localOrdinal: number;
+        let ordinalWidth = 1<<(MaxNodesInBlock - (this.childCount + 1));
+        if (index===0) {
+            localOrdinal = ordinalWidth-1;
+        } else {
+            localOrdinal = 
+        }
+        */
         child.ordinal = (this.ordinal << 3) + index;
         this.children[index] = child;
         child.parent = this;
@@ -4064,7 +4072,7 @@ export class MergeTree {
             block.childCount++;
             if (block.childCount < MaxNodesInBlock) {
                 if (fromSplit) {
-                    console.log(`split ord ${fromSplit.ordinal}`);
+                    // console.log(`split ord ${fromSplit.ordinal}`);
                     this.nodeUpdateOrdinals(fromSplit);
                 }
                 this.blockUpdateLength(block, seq, clientId);
