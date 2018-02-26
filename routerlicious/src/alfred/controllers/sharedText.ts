@@ -5,6 +5,7 @@ import * as url from "url";
 import * as agent from "../../agent";
 import { api as API, MergeTree as SharedString, socketStorage, types } from "../../client-api";
 import { controls, ui } from "../../client-ui";
+// import { map as Map } from "../../client-api";
 
 // first script loaded
 let clockStart = Date.now();
@@ -141,8 +142,13 @@ async function loadFull(
     agent.registerWorker(config, "sharedText");
 
     sharedString.loaded.then(() => {
-
         theFlow.loadFinished(clockStart);
+
+        // sharedString.addBookmark(collabDoc.clientId, 10);
+        // console.log(`Bookmarks`);
+        // sharedString.getBookmarks().forEach((value: Map.DistributedArray<any>, key) => {
+        //     console.log(`${key} => ${JSON.stringify(value.value)}`);
+        // });
     });
 }
 

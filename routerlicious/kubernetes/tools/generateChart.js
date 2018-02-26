@@ -36,6 +36,8 @@ alfred:
   name: alfred
   replicas: 4
   externalUrl: http://praguekube.westus2.cloudapp.azure.com
+  host: alfred.wu2.prague.office-int.com
+  cert: wu2-tls-certificate
 
 deli:
   name: deli
@@ -53,6 +55,8 @@ tmz:
   name: tmz
   replicas: 1
   externalUrl: http://praguetmz.westus2.cloudapp.azure.com
+  host: tmz.wu2.prague.office-int.com
+  cert: wu2-tls-certificate
 
 paparazzi:
   name: paparazzi

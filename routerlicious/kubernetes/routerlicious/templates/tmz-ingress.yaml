@@ -1,0 +1,27 @@
+apiVersion: apps/v1beta1
+kind: Ingress
+metadata:
+  name: {{ template "tmz.fullname" . }}
+  labels:
+    app: {{ template "routerlicious.name" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    component: "{{ .Values.tmz.name }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.org/websocket-services: {{ template "tmz.fullname" . }}
+spec:
+  tls:
+  - hosts:
+    - {{ .Values.tmz.host }}
+    secretName: {{ .Values.tmz.cert }}
+  rules:
+  - host: {{ .Values.tmz.host }}
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: {{ template "tmz.fullname" . }}
+          servicePort: 80

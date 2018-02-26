@@ -2,8 +2,9 @@ import { Provider } from "nconf";
 import * as winston from "winston";
 import * as api from "../api";
 import * as core from "../core";
-import { IMap, ISet } from "../data-types";
+import { IMap } from "../data-types";
 import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "../kafka-service/lambdas";
+import { DistributedSet, DistributedSetValueType } from "../map";
 import * as socketStorage from "../socket-storage";
 import * as utils from "../utils";
 
@@ -23,7 +24,7 @@ interface ISharedEdge {
 }
 
 class SharedGraph {
-    constructor(public vertices: ISet<ISharedVertex>, public edges: ISet<ISharedEdge>) {
+    constructor(public vertices: DistributedSet<ISharedVertex>, public edges: DistributedSet<ISharedEdge>) {
         for (const vertex of vertices.entries()) {
             winston.info(`${vertex.id} ${vertex.label}`);
         }
@@ -112,15 +113,15 @@ export class ServiceGraphLambdaFactory implements IPartitionLambdaFactory {
         // Initialize if it doesn't exist
         if (!root.has("graph")) {
             const graph = document.createMap();
-            graph.createSet("vertices");
-            graph.createSet("edges");
+            graph.set<DistributedSet<number>>("vertices", undefined, DistributedSetValueType.Name);
+            graph.set<DistributedSet<number>>("edges", undefined, DistributedSetValueType.Name);
             root.set("graph", graph);
         }
 
-        const graph = root.get("graph");
+        const graph = root.get("graph") as IMap;
         const view = await graph.getView();
-        const vertexSet: ISet<ISharedVertex> = view.get("vertices");
-        const edgeSet: ISet<ISharedEdge> = view.get("edges");
+        const vertexSet = view.get<DistributedSet<ISharedVertex>>("vertices");
+        const edgeSet = view.get<DistributedSet<ISharedEdge>>("edges");
         const sharedGraph = new SharedGraph(vertexSet, edgeSet);
 
         return new ServiceGraphLambda(graph, sharedGraph, context);

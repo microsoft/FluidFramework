@@ -1,20 +1,20 @@
 import * as assert from "assert";
 import * as api from "../../api";
-import { IMap, IMapView } from "../../data-types";
-import { copyMap, MapView } from "../../map";
+import { IMapView } from "../../data-types";
+import { CollaborativeMap, copyMap, MapView } from "../../map";
 import * as testUtils from "../testUtils";
 
 describe("Routerlicious", () => {
     describe("Map", () => {
         let testDocument: api.Document;
-        let rootMap: IMap;
-        let testMap: IMap;
+        let rootMap: CollaborativeMap;
+        let testMap: CollaborativeMap;
 
         beforeEach(async () => {
             testUtils.registerAsTest("", "", "");
             testDocument = await api.load("testDocument");
-            rootMap = testDocument.getRoot();
-            testMap = testDocument.createMap();
+            rootMap = testDocument.getRoot() as CollaborativeMap;
+            testMap = testDocument.createMap() as CollaborativeMap;
         });
 
         describe("CollaborativeMap", () => {
@@ -134,7 +134,7 @@ describe("Routerlicious", () => {
                     view.set("object", subMap);
 
                     const concrete = view as MapView;
-                    const serialized = concrete.serialize();
+                    const serialized = concrete.serialize((key, value, type) => value);
                     const parsed = JSON.parse(serialized);
 
                     view.forEach((value, key) => {

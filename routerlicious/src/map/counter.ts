@@ -1,54 +1,68 @@
-import { ICounter } from "../data-types";
-import { IMapOperation, IMapValue, ValueType } from "./definitions";
-import { CollaborativeMap } from "./map";
+import { IValueFactory, IValueOpEmitter, IValueOperation, IValueType } from "../data-types";
 
-export class Counter implements ICounter {
-    constructor(
-        private key: string,
-        private internalValue: number,
-        private min: number,
-        private max: number,
-        private map: CollaborativeMap) {
+export class CounterFactory implements IValueFactory<Counter> {
+    public load(emitter: IValueOpEmitter, raw: number): Counter {
+        return new Counter(emitter, raw || 0);
     }
 
-    public increment(value: number, submitEvent = true): ICounter {
-        if (typeof value !== "number") {
-            throw new Error("Incremental amount should be a number.");
+    public store(value: Counter): number {
+        return value.value;
+    }
+}
+
+export class Counter {
+    public get value(): number {
+        return this._value;
+    }
+
+    // tslint:disable-next-line:variable-name
+    constructor(private emitter: IValueOpEmitter, private _value: number) {
+    }
+
+    public increment(value: number, submit = true) {
+        this._value = this._value + value;
+        if (submit) {
+            this.emitter.emit("increment", value);
         }
-
-        const nextValue = this.internalValue + value;
-        if ((nextValue < this.min) || (nextValue > this.max)) {
-            throw new Error("Error: Counter range exceeded!");
-        }
-
-        this.internalValue = nextValue;
-
-        if (submitEvent) {
-            const operationValue: IMapValue = {type: ValueType[ValueType.Counter], value};
-            const op: IMapOperation = {
-                key: this.key,
-                type: "incrementCounter",
-                value: operationValue,
-            };
-
-            this.map.submitMapMessage(op);
-        }
-
-        this.map.emit("valueChanged", { key: this.key });
-        this.map.emit("incrementCounter", { key: this.key, value });
 
         return this;
     }
+}
 
-    public get(): number {
-        return this.internalValue;
+export class CounterValueType implements IValueType<Counter> {
+    public static Name = "counter";
+
+    public get name(): string {
+        return CounterValueType.Name;
     }
 
-    public getMin(): number {
-        return this.min;
+    public get factory(): IValueFactory<Counter> {
+        return this._factory;
     }
 
-    public getMax(): number {
-        return this.max;
+    public get ops(): Map<string, IValueOperation<Counter>> {
+        return this._ops;
+    }
+
+    // tslint:disable:variable-name
+    private _factory: IValueFactory<Counter>;
+    private _ops: Map<string, IValueOperation<Counter>>;
+    // tslint:enable:variable-name
+
+    constructor() {
+        this._factory = new CounterFactory();
+        this._ops = new Map<string, IValueOperation<Counter>>(
+            [[
+                "increment",
+                {
+                    prepare: async (old, params) => {
+                        return;
+                    },
+                    process: (old, params, context) => {
+                        old.increment(params, false);
+                        return old;
+                    },
+                },
+            ]]);
     }
 }

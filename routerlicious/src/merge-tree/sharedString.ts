@@ -1,11 +1,10 @@
-// tslint:disable:whitespace
-
 import * as assert from "assert";
 import performanceNow = require("performance-now");
 import * as resources from "gitresources";
 import * as api from "../api-core";
 import { Deferred } from "../core-utils";
-import { CollaborativeMap } from "../map";
+import { IMap, IMapView } from "../data-types";
+import { CollaborativeMap, DistributedArray, DistributedArrayValueType, MapExtension } from "../map";
 import { IRange } from "./base";
 import { CollaboritiveStringExtension } from "./extension";
 import * as MergeTree from "./mergeTree";
@@ -38,6 +37,7 @@ export class SharedString extends CollaborativeMap {
     public client: MergeTree.Client;
     private isLoaded = false;
     private pendingMinSequenceNumber: number = 0;
+    private bookmarks: IMapView;
 
     // Deferred that triggers once the object is loaded
     private loadedDeferred = new Deferred<void>();
@@ -138,8 +138,8 @@ export class SharedString extends CollaborativeMap {
         let endSegoff = this.client.mergeTree.getContainingSegment(end,
             this.client.getCurrentSeq(), this.client.getClientId());
         if (startSegoff && endSegoff && startSegoff.segment && endSegoff.segment) {
-            let startBaseSegment = <MergeTree.BaseSegment>startSegoff.segment;
-            let endBaseSegment = <MergeTree.BaseSegment>endSegoff.segment;
+            let startBaseSegment = <MergeTree.BaseSegment> startSegoff.segment;
+            let endBaseSegment = <MergeTree.BaseSegment> endSegoff.segment;
 
             let startLref = new MergeTree.LocalReference(startBaseSegment,
                 startSegoff.offset, ops.ReferenceType.RangeBegin);
@@ -156,7 +156,7 @@ export class SharedString extends CollaborativeMap {
         let segoff = this.client.mergeTree.getContainingSegment(pos,
             this.client.getCurrentSeq(), this.client.getClientId());
         if (segoff && segoff.segment) {
-            let baseSegment = <MergeTree.BaseSegment>segoff.segment;
+            let baseSegment = <MergeTree.BaseSegment> segoff.segment;
             let refType = ops.ReferenceType.Simple;
             if (slideOnRemove) {
                 // tslint:disable:no-bitwise
@@ -177,9 +177,23 @@ export class SharedString extends CollaborativeMap {
         }
     }
 
+    public addBookmark(clientId: string, bookmark: any) {
+        if (!this.bookmarks.has(clientId)) {
+            const clientArray = this.bookmarks.set<DistributedArray<any>>(
+                clientId,
+                undefined,
+                DistributedArrayValueType.Name);
+            clientArray.insertAt(0, bookmark);
+        }
+    }
+
+    public getBookmarks(): IMapView {
+        return this.bookmarks;
+    }
+
     protected transformContent(message: api.IObjectMessage, toSequenceNumber: number): api.IObjectMessage {
         if (message.contents) {
-            this.client.transform(<api.ISequencedObjectMessage>message, toSequenceNumber);
+            this.client.transform(<api.ISequencedObjectMessage> message, toSequenceNumber);
         }
         message.referenceSequenceNumber = toSequenceNumber;
         return message;
@@ -191,12 +205,12 @@ export class SharedString extends CollaborativeMap {
         storage: api.IObjectStorageService): Promise<void> {
 
         const header = await storage.read("header");
-        this.initialize(this.sequenceNumber, header, true, headerOrigin, storage).catch((error) => {
-            console.error(error);
-        });
+        return this.initialize(this.sequenceNumber, header, true, headerOrigin, storage);
     }
 
     protected initializeContent() {
+        const bookmarks = this.document.create(MapExtension.Type) as IMap;
+        this.set("bookmarks", bookmarks);
         this.initialize(0, null, false, this.id, null).catch((error) => {
             console.error(error);
         });
@@ -239,6 +253,8 @@ export class SharedString extends CollaborativeMap {
         this.submitLocalMessage(message);
     }
 
+    // TODO I need to split this into two parts - one for the header - one for the body. The loadContent will
+    // resolve on the loading of the header
     private async initialize(
         sequenceNumber: number,
         header: string,
@@ -263,6 +279,15 @@ export class SharedString extends CollaborativeMap {
         } else {
             chunk = Paparazzo.Snapshot.EmptyChunk;
         }
+
+        // Register the filter callback on the bookmarks
+        let bookmarks = await this.get("bookmarks") as IMap;
+        bookmarks.registerSerializeFilter((key, value: number[], type) => {
+            if (type === DistributedArrayValueType.Name) {
+                return value.map((val) => val * 20);
+            }
+        });
+        this.bookmarks = await bookmarks.getView();
 
         // This should happen if we have collab services
         assert.equal(sequenceNumber, chunk.chunkSequenceNumber);
