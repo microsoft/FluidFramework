@@ -5,7 +5,8 @@ import performanceNow = require("performance-now");
 import * as resources from "gitresources";
 import * as api from "../api-core";
 import { Deferred } from "../core-utils";
-import { CollaborativeMap } from "../map";
+import { IMap, IMapView } from "../data-types";
+import { CollaborativeMap, MapExtension } from "../map";
 import { IRange } from "./base";
 import { CollaboritiveStringExtension } from "./extension";
 import * as MergeTree from "./mergeTree";
@@ -38,6 +39,7 @@ export class SharedString extends CollaborativeMap {
     public client: MergeTree.Client;
     private isLoaded = false;
     private pendingMinSequenceNumber: number = 0;
+    private bookmarks: IMapView;
 
     // Deferred that triggers once the object is loaded
     private loadedDeferred = new Deferred<void>();
@@ -177,6 +179,12 @@ export class SharedString extends CollaborativeMap {
         }
     }
 
+    public addBookmark(clientId: string) {
+        if (!this.bookmarks.has(clientId)) {
+            this.bookmarks.set(clientId, this.document.create(MapExtension.Type));
+        }
+    }
+
     protected transformContent(message: api.IObjectMessage, toSequenceNumber: number): api.IObjectMessage {
         if (message.contents) {
             this.client.transform(<api.ISequencedObjectMessage>message, toSequenceNumber);
@@ -191,9 +199,7 @@ export class SharedString extends CollaborativeMap {
         storage: api.IObjectStorageService): Promise<void> {
 
         const header = await storage.read("header");
-        this.initialize(this.sequenceNumber, header, true, headerOrigin, storage).catch((error) => {
-            console.error(error);
-        });
+        return this.initialize(this.sequenceNumber, header, true, headerOrigin, storage);
     }
 
     protected initializeContent() {
@@ -239,6 +245,8 @@ export class SharedString extends CollaborativeMap {
         this.submitLocalMessage(message);
     }
 
+    // TODO I need to split this into two parts - one for the header - one for the body. The loadContent will
+    // resolve on the loading of the header
     private async initialize(
         sequenceNumber: number,
         header: string,
@@ -263,6 +271,14 @@ export class SharedString extends CollaborativeMap {
         } else {
             chunk = Paparazzo.Snapshot.EmptyChunk;
         }
+
+        // Create or load in the bookmarks object
+        let bookmarks = await this.get("bookmarks") as IMap;
+        if (!bookmarks) {
+            bookmarks = this.document.create(MapExtension.Type) as IMap;
+            bookmarks = this.set("bookmarks", bookmarks);
+        }
+        this.bookmarks = await bookmarks.getView();
 
         // This should happen if we have collab services
         assert.equal(sequenceNumber, chunk.chunkSequenceNumber);
