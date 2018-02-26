@@ -1,12 +1,10 @@
-// tslint:disable:whitespace
-
 import * as assert from "assert";
 import performanceNow = require("performance-now");
 import * as resources from "gitresources";
 import * as api from "../api-core";
 import { Deferred } from "../core-utils";
 import { IMap, IMapView } from "../data-types";
-import { CollaborativeMap, MapExtension } from "../map";
+import { CollaborativeMap, DistributedArray, DistributedArrayValueType, MapExtension } from "../map";
 import { IRange } from "./base";
 import { CollaboritiveStringExtension } from "./extension";
 import * as MergeTree from "./mergeTree";
@@ -140,8 +138,8 @@ export class SharedString extends CollaborativeMap {
         let endSegoff = this.client.mergeTree.getContainingSegment(end,
             this.client.getCurrentSeq(), this.client.getClientId());
         if (startSegoff && endSegoff && startSegoff.segment && endSegoff.segment) {
-            let startBaseSegment = <MergeTree.BaseSegment>startSegoff.segment;
-            let endBaseSegment = <MergeTree.BaseSegment>endSegoff.segment;
+            let startBaseSegment = <MergeTree.BaseSegment> startSegoff.segment;
+            let endBaseSegment = <MergeTree.BaseSegment> endSegoff.segment;
 
             let startLref = new MergeTree.LocalReference(startBaseSegment,
                 startSegoff.offset, ops.ReferenceType.RangeBegin);
@@ -158,7 +156,7 @@ export class SharedString extends CollaborativeMap {
         let segoff = this.client.mergeTree.getContainingSegment(pos,
             this.client.getCurrentSeq(), this.client.getClientId());
         if (segoff && segoff.segment) {
-            let baseSegment = <MergeTree.BaseSegment>segoff.segment;
+            let baseSegment = <MergeTree.BaseSegment> segoff.segment;
             let refType = ops.ReferenceType.Simple;
             if (slideOnRemove) {
                 // tslint:disable:no-bitwise
@@ -179,15 +177,23 @@ export class SharedString extends CollaborativeMap {
         }
     }
 
-    public addBookmark(clientId: string) {
+    public addBookmark(clientId: string, bookmark: any) {
         if (!this.bookmarks.has(clientId)) {
-            this.bookmarks.set(clientId, this.document.create(MapExtension.Type));
+            const clientArray = this.bookmarks.set<DistributedArray<any>>(
+                clientId,
+                undefined,
+                DistributedArrayValueType.Name);
+            clientArray.insertAt(0, bookmark);
         }
+    }
+
+    public getBookmarks(): IMapView {
+        return this.bookmarks;
     }
 
     protected transformContent(message: api.IObjectMessage, toSequenceNumber: number): api.IObjectMessage {
         if (message.contents) {
-            this.client.transform(<api.ISequencedObjectMessage>message, toSequenceNumber);
+            this.client.transform(<api.ISequencedObjectMessage> message, toSequenceNumber);
         }
         message.referenceSequenceNumber = toSequenceNumber;
         return message;
@@ -203,6 +209,8 @@ export class SharedString extends CollaborativeMap {
     }
 
     protected initializeContent() {
+        const bookmarks = this.document.create(MapExtension.Type) as IMap;
+        this.set("bookmarks", bookmarks);
         this.initialize(0, null, false, this.id, null).catch((error) => {
             console.error(error);
         });
@@ -272,12 +280,13 @@ export class SharedString extends CollaborativeMap {
             chunk = Paparazzo.Snapshot.EmptyChunk;
         }
 
-        // Create or load in the bookmarks object
+        // Register the filter callback on the bookmarks
         let bookmarks = await this.get("bookmarks") as IMap;
-        if (!bookmarks) {
-            bookmarks = this.document.create(MapExtension.Type) as IMap;
-            bookmarks = this.set("bookmarks", bookmarks);
-        }
+        bookmarks.registerSerializeFilter((key, value: number[], type) => {
+            if (type === DistributedArrayValueType.Name) {
+                return value.map((val) => val * 20);
+            }
+        });
         this.bookmarks = await bookmarks.getView();
 
         // This should happen if we have collab services

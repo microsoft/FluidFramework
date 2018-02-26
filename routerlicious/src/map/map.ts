@@ -1,6 +1,6 @@
 import * as resources from "gitresources";
 import * as api from "../api-core";
-import { IMap, IMapView, IValueType } from "../data-types";
+import { IMap, IMapView, IValueType, SerializeFilter } from "../data-types";
 import { IMapOperation } from "./definitions";
 import { MapExtension } from "./extension";
 import { MapView } from "./view";
@@ -37,6 +37,7 @@ export interface IMapMessageHandler {
 export class CollaborativeMap extends api.CollaborativeObject implements IMap {
     private messageHandler: Map<string, IMapMessageHandler>;
     private view: MapView;
+    private serializeFilter: SerializeFilter;
 
     /**
      * Constructs a new collaborative map. If the object is non-local an id and service interfaces will
@@ -49,6 +50,7 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
 
         super(id, document, type);
         const defaultPrepare = (op: IMapOperation) => Promise.resolve();
+        this.serializeFilter = (key, value, valueType) => value;
 
         this.messageHandler = new Map<string, IMapMessageHandler>();
         this.messageHandler.set(
@@ -114,7 +116,7 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
                     path: snapshotFileName,
                     type: api.TreeEntry[api.TreeEntry.Blob],
                     value: {
-                        contents: this.view.serialize(),
+                        contents: this.view.serialize(this.serializeFilter),
                         encoding: "utf-8",
                     },
                 },
@@ -168,6 +170,10 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
     public registerValueType<T>(type: IValueType<T>) {
         const handler = this.view.registerValueType<T>(type);
         this.messageHandler.set(type.name, handler);
+    }
+
+    public registerSerializeFilter(filter: SerializeFilter) {
+        this.serializeFilter = filter;
     }
 
     protected async loadCore(

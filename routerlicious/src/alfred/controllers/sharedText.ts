@@ -3,7 +3,7 @@ import performanceNow = require("performance-now");
 import * as request from "request";
 import * as url from "url";
 import * as agent from "../../agent";
-import { api as API, MergeTree as SharedString, socketStorage, types } from "../../client-api";
+import { api as API, map as Map, MergeTree as SharedString, socketStorage, types } from "../../client-api";
 import { controls, ui } from "../../client-ui";
 
 // first script loaded
@@ -141,8 +141,13 @@ async function loadFull(
     agent.registerWorker(config, "sharedText");
 
     sharedString.loaded.then(() => {
-
         theFlow.loadFinished(clockStart);
+
+        // sharedString.addBookmark(collabDoc.clientId, 10);
+        // console.log(`Bookmarks`);
+        // sharedString.getBookmarks().forEach((value: Map.DistributedArray<any>, key) => {
+        //     console.log(`${key} => ${JSON.stringify(value.value)}`);
+        // });
     });
 }
 

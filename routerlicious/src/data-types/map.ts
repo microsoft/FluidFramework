@@ -1,5 +1,7 @@
 import { ICollaborativeObject } from "../api-core";
 
+export type SerializeFilter = (key: string, serializedValue: any, type: string) => any;
+
 /**
  * Type of "valueChanged" event parameter
  */
@@ -156,4 +158,10 @@ export interface IMap extends ICollaborativeObject {
      * Registers a new operation on the map
      */
     registerValueType<T>(type: IValueType<T>);
+
+    /**
+     * Registers a custom filter to provide extra processing on the condensed log.
+     * This is a very advanced feature and should be used with extreme caution.
+     */
+    registerSerializeFilter(filter: SerializeFilter);
 }

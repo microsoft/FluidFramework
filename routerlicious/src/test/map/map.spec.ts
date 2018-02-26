@@ -134,7 +134,7 @@ describe("Routerlicious", () => {
                     view.set("object", subMap);
 
                     const concrete = view as MapView;
-                    const serialized = concrete.serialize();
+                    const serialized = concrete.serialize((key, value, type) => value);
                     const parsed = JSON.parse(serialized);
 
                     view.forEach((value, key) => {
