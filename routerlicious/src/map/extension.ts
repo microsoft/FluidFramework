@@ -1,6 +1,7 @@
 import * as resources from "gitresources";
 import * as api from "../api-core";
 import { IMap } from "../data-types";
+import { DistributedArrayValueType } from "./array";
 import { CounterValueType } from "./counter";
 import { CollaborativeMap } from "./map";
 import { DistributedSetValueType } from "./set";
@@ -39,5 +40,6 @@ export class MapExtension implements api.IExtension {
     private registerDefaultValueTypes(map: CollaborativeMap) {
         map.registerValueType(new CounterValueType());
         map.registerValueType(new DistributedSetValueType());
+        map.registerValueType(new DistributedArrayValueType());
     }
 }

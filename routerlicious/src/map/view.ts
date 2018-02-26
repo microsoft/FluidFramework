@@ -1,6 +1,6 @@
 import hasIn = require("lodash/hasIn");
 import * as api from "../api-core";
-import { IMapView, IValueOpEmitter, IValueType } from "../data-types";
+import { IMapView, IValueOpEmitter, IValueType, SerializeFilter } from "../data-types";
 import { IMapOperation, IMapValue, ValueType } from "./definitions";
 import { CollaborativeMap, IMapMessageHandler } from "./map";
 
@@ -166,10 +166,12 @@ export class MapView implements IMapView {
     /**
      * Serializes the collaborative map to a JSON string
      */
-    public serialize(): string {
+    public serialize(filter: SerializeFilter): string {
         const serialized: any = {};
         this.data.forEach((value, key) => {
-            serialized[key] = this.spill(value);
+            const spilledValue = this.spill(value);
+            const filteredValue = filter(key, spilledValue.value, spilledValue.type);
+            serialized[key] = { type: spilledValue.type, value: filteredValue } as IMapValue;
         });
         return JSON.stringify(serialized);
     }
