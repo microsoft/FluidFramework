@@ -32,6 +32,8 @@ export type RangeStackMap = Properties.MapLike<Collections.Stack<ReferencePositi
 export interface IMergeNode {
     parent: IMergeBlock;
     cachedLength: number;
+    index: number;
+    ordinal: number;
     isLeaf(): boolean;
 }
 
@@ -41,6 +43,7 @@ export interface IMergeBlock extends IMergeNode {
     children: IMergeNode[];
     partialLengths?: PartialSequenceLengths;
     hierBlock(): IHierBlock;
+    assignChild(child: IMergeNode, index: number);
 }
 
 export interface IHierBlock extends IMergeBlock {
@@ -222,6 +225,8 @@ export interface MergeTreeStats {
     histo: number[];
     windowTime?: number;
     packTime?: number;
+    ordTime?: number;
+    maxOrdTime?: number;
 }
 
 export interface SegmentGroup {
@@ -234,6 +239,8 @@ export interface OverlapClient {
 }
 
 export class MergeNode implements IMergeNode {
+    index: number;
+    ordinal: number;
     parent: IMergeBlock;
     cachedLength: number;
     isLeaf() {
@@ -370,6 +377,13 @@ export class MergeBlock extends MergeNode implements IMergeBlock {
     hierBlock() {
         return undefined;
     }
+
+    assignChild(child: MergeNode, index: number) {
+        child.index = index;
+        child.ordinal = (this.ordinal << 3) + index;
+        this.children[index] = child;
+        child.parent = this;
+    }
 }
 
 class HierMergeBlock extends MergeBlock implements IMergeBlock {
@@ -423,6 +437,8 @@ export abstract class BaseSegment extends MergeNode implements Segment {
     constructor(public seq?: number, public clientId?: number) {
         super();
     }
+    index: number;
+    ordinal: number;
     removedSeq: number;
     removedClientId: number;
     removedClientOverlap: number[];
@@ -455,6 +471,16 @@ export abstract class BaseSegment extends MergeNode implements Segment {
                 this.localRefs.push(lref);
             }
         }
+    }
+
+    getOrdinal() {
+        let ord = this.index;
+        let parent = this.parent;
+        while (parent) {
+            ord = (ord << 3) + parent.index;
+            parent = parent.parent;
+        }
+        return ord;
     }
 
     removeLocalRef(lref: LocalReference) {
@@ -2651,6 +2677,7 @@ export class MergeTree {
         incrementalUpdate: true,
         zamboniSegments: true,
         measureWindowTime: true,
+        measureOrdinalTime: true,
     };
     static searchChunkSize = 256;
     static traceAppend = false;
@@ -2666,6 +2693,8 @@ export class MergeTree {
 
     windowTime = 0;
     packTime = 0;
+    ordTime = 0;
+    maxOrdTime = 0;
 
     root: IMergeBlock;
     blockUpdateMarkers = false;
@@ -2709,8 +2738,7 @@ export class MergeTree {
 
     private initialTextNode(text: string) {
         let block = this.makeBlock(1);
-        block.children[0] = new TextSegment(text, UniversalSequenceNumber, LocalClientId);
-        block.children[0].parent = block;
+        block.assignChild(new TextSegment(text, UniversalSequenceNumber, LocalClientId), 0);
         block.cachedLength = text.length;
         return block;
     }
@@ -2802,9 +2830,8 @@ export class MergeTree {
     }
 
     addNode(block: IMergeBlock, node: MergeNode) {
-        let index = block.childCount;
-        block.children[block.childCount++] = node;
-        node.parent = block;
+        let index = block.childCount++;
+        block.assignChild(node, index);
         return index;
     }
 
@@ -2850,8 +2877,7 @@ export class MergeTree {
         if (segments.length > 0) {
             this.root = this.makeBlock(1);
             let block = buildMergeBlock(segments);
-            block.parent = this.root;
-            this.root.children[0] = block;
+            this.root.assignChild(block, 0);
             if (this.blockUpdateMarkers) {
                 let hierRoot = this.root.hierBlock();
                 hierRoot.addNodeReferences(this, block);
@@ -2859,12 +2885,14 @@ export class MergeTree {
             if (this.blockUpdateActions) {
                 this.blockUpdateActions.child(this.root, 0);
             }
+            this.nodeUpdateOrdinals(this.root);
             this.root.cachedLength = block.cachedLength;
         }
         else {
             this.root = this.makeBlock(0);
             this.root.cachedLength = 0;
         }
+        this.root.index = 0;
         if (measureReloadTime) {
             console.log(`reload time ${elapsedMicroseconds(clockStart)}`);
         }
@@ -2983,8 +3011,7 @@ export class MergeTree {
             let packedBlock = this.makeBlock(nodeCount);
             for (let packedNodeIndex = 0; packedNodeIndex < nodeCount; packedNodeIndex++) {
                 let nodeToPack = holdNodes[readCount++];
-                packedBlock.children[packedNodeIndex] = nodeToPack;
-                nodeToPack.parent = packedBlock;
+                packedBlock.assignChild(nodeToPack, packedNodeIndex);
             }
             packedBlock.parent = parent;
             packedBlocks[nodeIndex] = packedBlock;
@@ -2994,6 +3021,9 @@ export class MergeTree {
             console.log(`total count ${totalNodeCount} readCount ${readCount}`);
         }
         parent.children = packedBlocks;
+        for (let j = 0; j < childCount; j++) {
+            parent.assignChild(packedBlocks[j], j);
+        }
         parent.childCount = childCount;
         if (this.underflow(parent) && (parent.parent)) {
             this.pack(parent);
@@ -3025,6 +3055,9 @@ export class MergeTree {
                     if (newChildCount < block.childCount) {
                         block.childCount = newChildCount;
                         block.children = childrenCopy;
+                        for (let j = 0; j < newChildCount; j++) {
+                            block.assignChild(childrenCopy[j], j);
+                        }
 
                         if (this.underflow(block) && block.parent) {
                             //nodeUpdatePathLengths(node, UnassignedSequenceNumber, -1, true);
@@ -3099,6 +3132,8 @@ export class MergeTree {
         if (MergeTree.options.measureWindowTime) {
             rootStats.windowTime = this.windowTime;
             rootStats.packTime = this.packTime;
+            rootStats.ordTime = this.ordTime;
+            rootStats.maxOrdTime = this.maxOrdTime;
         }
         return rootStats;
     }
@@ -3597,10 +3632,11 @@ export class MergeTree {
     updateRoot(splitNode: IMergeBlock, refSeq: number, clientId: number, seq: number) {
         if (splitNode !== undefined) {
             let newRoot = this.makeBlock(2);
-            splitNode.parent = newRoot;
-            this.root.parent = newRoot;
-            newRoot.children[0] = this.root;
-            newRoot.children[1] = splitNode;
+            newRoot.index = 0;
+            newRoot.ordinal = 0;
+            newRoot.assignChild(this.root, 0);
+            newRoot.assignChild(splitNode, 1);
+            this.nodeUpdateOrdinals(this.root);
             this.root = newRoot;
             this.nodeUpdateLengthNewStructure(this.root);
         }
@@ -3930,6 +3966,7 @@ export class MergeTree {
         let childIndex: number;
         let child: MergeNode;
         let newNode: MergeNode;
+        let fromSplit: IMergeBlock;
         let found = false;
         for (childIndex = 0; childIndex < block.childCount; childIndex++) {
             child = children[childIndex];
@@ -3970,6 +4007,7 @@ export class MergeTree {
                     }
                     else {
                         newNode = splitNode;
+                        fromSplit = splitNode;
                         childIndex++; // insert after
                     }
                 }
@@ -3980,8 +4018,7 @@ export class MergeTree {
 
                     let segmentChanges = context.leaf(<Segment>child, pos);
                     if (segmentChanges.replaceCurrent) {
-                        block.children[childIndex] = segmentChanges.replaceCurrent;
-                        segmentChanges.replaceCurrent.parent = block;
+                        block.assignChild(segmentChanges.replaceCurrent, childIndex);
                     }
                     if (segmentChanges.next) {
                         newNode = segmentChanges.next;
@@ -4021,16 +4058,20 @@ export class MergeTree {
         }
         if (newNode) {
             for (let i = block.childCount; i > childIndex; i--) {
-                block.children[i] = block.children[i - 1];
+                block.assignChild(block.children[i - 1], i);
             }
-            block.children[childIndex] = newNode;
-            newNode.parent = block;
+            block.assignChild(newNode, childIndex);
             block.childCount++;
             if (block.childCount < MaxNodesInBlock) {
+                if (fromSplit) {
+                    console.log(`split ord ${fromSplit.ordinal}`);
+                    this.nodeUpdateOrdinals(fromSplit);
+                }
                 this.blockUpdateLength(block, seq, clientId);
                 return undefined;
             }
             else {
+                // don't update ordinals because higher block will do it
                 return this.split(block);
             }
         }
@@ -4044,13 +4085,34 @@ export class MergeTree {
         let newNode = this.makeBlock(halfCount);
         node.childCount = halfCount;
         for (let i = 0; i < halfCount; i++) {
-            newNode.children[i] = node.children[halfCount + i];
+            newNode.assignChild(node.children[halfCount + i], i);
             node.children[halfCount + i] = undefined;
-            newNode.children[i].parent = newNode;
         }
         this.nodeUpdateLengthNewStructure(node);
         this.nodeUpdateLengthNewStructure(newNode);
         return newNode;
+    }
+
+    nodeUpdateOrdinals(block: IMergeBlock) {
+        let clockStart;
+        if (MergeTree.options.measureOrdinalTime) {
+            clockStart = clock();
+        }
+        let blockOrd = block.ordinal<<3;
+        for (let i = 0; i < block.childCount; i++) {
+            let child = block.children[i];
+            child.ordinal = blockOrd + child.index;
+            if (!child.isLeaf()) {
+                this.nodeUpdateOrdinals(<IMergeBlock>child);
+            }
+        }
+        if (MergeTree.options.measureOrdinalTime) {
+            let elapsed = elapsedMicroseconds(clockStart);
+            if (elapsed>this.maxOrdTime) {
+                this.maxOrdTime = elapsed;
+            }
+            this.ordTime += elapsed;
+        }
     }
 
     addOverlappingClient(removalInfo: IRemovalInfo, clientId: number) {
@@ -4156,9 +4218,11 @@ export class MergeTree {
                             let afterSegOff = this.getContainingSegment(start, refSeq, clientId);
                             afterSeg = <BaseSegment>afterSegOff.segment;
                         }
-                        localRef.segment = afterSeg;
-                        localRef.offset = 0;
-                        afterSeg.addLocalRef(localRef);
+                        if (afterSeg) {
+                            localRef.segment = afterSeg;
+                            localRef.offset = 0;
+                            afterSeg.addLocalRef(localRef);
+                        }
                     }
                 }
             }
@@ -4229,7 +4293,7 @@ export class MergeTree {
             let copyStart = deleteStart + deleteCount;
             let copyCount = block.childCount - copyStart;
             for (let j = 0; j < copyCount; j++) {
-                children[deleteStart + j] = children[copyStart + j];
+                block.assignChild(children[copyStart + j], deleteStart + j);
             }
             block.childCount -= deleteCount;
         }
@@ -4359,7 +4423,7 @@ export class MergeTree {
 
     nodeToString(block: IMergeBlock, strbuf: string, indentCount = 0) {
         strbuf += internedSpaces(indentCount);
-        strbuf += `Node (len ${block.cachedLength}) p len (${block.parent ? block.parent.cachedLength : 0}) with ${block.childCount} live segments:\n`;
+        strbuf += `Node (len ${block.cachedLength}) p len (${block.parent ? block.parent.cachedLength : 0}) ord ${block.ordinal} with ${block.childCount} segs:\n`;
         if (this.blockUpdateMarkers) {
             strbuf += internedSpaces(indentCount);
             strbuf += (<IHierBlock>block).hierToString(indentCount);
@@ -4377,7 +4441,7 @@ export class MergeTree {
             else {
                 let segment = <Segment>child;
                 strbuf += internedSpaces(indentCount + 4);
-                strbuf += `cli: ${glc(this, segment.clientId)} seq: ${segment.seq}`;
+                strbuf += `cli: ${glc(this, segment.clientId)} seq: ${segment.seq} ord: ${segment.ordinal}`;
                 let segBranchId = this.getBranchId(segment.clientId);
                 let branchId = this.localBranchId;
                 let removalInfo = this.getRemovalInfo(branchId, segBranchId, segment);

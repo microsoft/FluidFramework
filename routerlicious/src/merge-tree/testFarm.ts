@@ -186,7 +186,9 @@ export function TestPack(verbose = true) {
         let stats = client.mergeTree.getStats();
         let windowTime = stats.windowTime;
         let packTime = stats.packTime;
+        let ordTime = stats.ordTime;
         let aveWindowTime = ((windowTime || 0) / (client.accumOps)).toFixed(1);
+        let aveOrdTime = ((ordTime || 0) / (client.accumOps)).toFixed(1);
         let avePackTime = ((packTime || 0) / (client.accumOps)).toFixed(1);
         let aveExtraWindowTime = (client.accumWindowTime / client.accumOps).toFixed(1);
         let aveWindow = (client.accumWindow / client.accumOps).toFixed(1);
@@ -194,6 +196,7 @@ export function TestPack(verbose = true) {
         if (client.localOps > 0) {
             console.log(`local time ${client.localTime} us ops: ${client.localOps} ave time ${aveLocalTime}`);
         }
+        console.log(`ord time average: ${aveOrdTime}us max ${stats.maxOrdTime}us`);
         console.log(`${client.longClientId} accum time ${client.accumTime} us ops: ${client.accumOps} ave time ${aveTime} - wtime ${adjTime} pack ${avePackTime} ave window ${aveWindow}`);
         console.log(`${client.longClientId} accum window time ${client.accumWindowTime} us ave window time total ${aveWindowTime} not in ops ${aveExtraWindowTime}; max ${client.maxWindowTime}`);
     }
@@ -217,6 +220,7 @@ export function TestPack(verbose = true) {
         let extractSnap = false;
         let includeMarkers = false;
         let measureBookmarks = true;
+        let testOrdinals = true;
         let measureRanges = false;
         let referenceCount = 2000;
         let bookmarkCount = 1000;
@@ -261,6 +265,9 @@ export function TestPack(verbose = true) {
             if (measureRanges) {
                 makeBookmarks(server, bookmarkCount);
             }
+        }
+        if (testOrdinals) {
+            console.log(server.mergeTree.toString());
         }
         if (testSyncload) {
             let clockStart = clock();
@@ -505,6 +512,36 @@ export function TestPack(verbose = true) {
                     refReads++;
                 }
                 refReadTime += elapsedMicroseconds(clockStart);
+                if (testOrdinals) {
+                    let mt = random.engines.mt19937();
+                    mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
+                    let checkRange = <number[][]>[];
+                    let len = server.mergeTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.NonCollabClient);
+                    for (let i = 0; i < rangeChecksPerRound; i++) {
+                        let b = random.integer(0, len - 2)(mt);
+                        let rangeSize = random.integer(1, 1000)(mt);
+                        checkRange[i] = [b, b + rangeSize];
+                        let segoff1 = server.mergeTree.getContainingSegment(checkRange[i][0], MergeTree.UniversalSequenceNumber,
+                            MergeTree.NonCollabClient);
+                        let segoff2 = server.mergeTree.getContainingSegment(checkRange[i][1], MergeTree.UniversalSequenceNumber,
+                            MergeTree.NonCollabClient);
+                        if (segoff1 && segoff2 && segoff1.segment &&segoff2.segment) {
+                            console.log(`[${checkRange[i][0]},${checkRange[i][1]})`);
+                            if (segoff1.segment===segoff2.segment) {
+                                console.log("same segment");
+                            }
+                            if (segoff1.segment.ordinal>segoff2.segment.ordinal) {
+                                console.log(`reverse ordinals ${segoff1.segment.ordinal} > ${segoff2.segment.ordinal}`);
+                                console.log(server.mergeTree.toString());
+                                break;
+                            } else {
+                                console.log(`happy ordinals ${segoff1.segment.ordinal} < ${segoff2.segment.ordinal}`);
+                            }
+
+                        }
+                    }
+
+                }
                 if (measureRanges) {
                     let mt = random.engines.mt19937();
                     mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
@@ -1652,20 +1689,20 @@ let docRanges = <Base.IRange[]>[
     { start: 60, end: 71 },
     { start: 81, end: 99 },
     { start: 85, end: 105 },
-    { start: 9, end:  34 },
+    { start: 9, end: 34 },
 ];
 
 let testRanges = <Base.IRange[]>[
-    {start: 9, end: 20},
-    {start: 8, end: 10},
-    {start: 82, end: 110},
-    {start: 54, end: 56 },
-    {start: 57, end: 57 },
-    {start: 58, end: 58 },
-    {start: 22, end: 48 },
-    {start: 3, end: 11 },
-    {start: 43, end: 58 },
-    {start: 19, end: 31 },
+    { start: 9, end: 20 },
+    { start: 8, end: 10 },
+    { start: 82, end: 110 },
+    { start: 54, end: 56 },
+    { start: 57, end: 57 },
+    { start: 58, end: 58 },
+    { start: 22, end: 48 },
+    { start: 3, end: 11 },
+    { start: 43, end: 58 },
+    { start: 19, end: 31 },
 ];
 
 function testRangeTree() {
@@ -1686,12 +1723,12 @@ function testRangeTree() {
     }
 }
 
-let rangeTreeTest = true;
+let rangeTreeTest = false;
 let testPropCopy = false;
 let overlayTree = false;
 let docTree = false;
 let chktst = false;
-let clientServerTest = false;
+let clientServerTest = true;
 
 if (rangeTreeTest) {
     testRangeTree();
@@ -1714,7 +1751,7 @@ if (docTree) {
 }
 
 if (clientServerTest) {
-    let ppTest = true;
+    let ppTest = false;
     let branch = false;
     let testPack = TestPack();
     const filename = path.join(__dirname, "../../public/literature", "pp.txt");
