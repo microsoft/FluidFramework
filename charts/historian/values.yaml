@@ -8,6 +8,7 @@ historian:
   redis: lumpy-condor-redis
   host: historian.wu2.prague.office-int.com
   cert: wu2-tls-certificate
+  ingressClass: nginx-prod
 
 gitrest:
   name: gitrest

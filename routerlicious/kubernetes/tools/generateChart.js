@@ -87,6 +87,9 @@ kafka:
   topics:
     rawdeltas: rawdeltas
     deltas: deltas
+
+ingress:
+  class: nginx-prod
 `;
 
 const writeFileAsync = util.promisify(fs.writeFile);
