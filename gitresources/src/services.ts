@@ -1,5 +1,33 @@
 import * as git from "./resources";
 
+export interface ISnapshotTree {
+    blobs: { [path: string]: string };
+    trees: { [path: string]: ISnapshotTree };
+}
+
+/**
+ * Document header returned from the server
+ */
+export interface IHeader {
+    // Deprecated
+    // Attributes for the document
+    attributes: any;
+
+    // Deprecated
+    // Distributed objects contained within the document
+    distributedObjects: any[];
+
+    // Deprecated
+    // The transformed messages between the minimum sequence number and sequenceNumber
+    transformedMessages: any[];
+
+    // Tree representing all blobs in the snapshot
+    tree: ISnapshotTree & git.ITree;
+
+    // Key blobs returned for performance. These include object headers and attribute files.
+    blobs: git.IBlob[];
+}
+
 /**
  * Interface to a generic Git provider
  */
@@ -44,5 +72,5 @@ export interface IHistorian extends IGitService {
     /**
      * Retrieves the header for the given document
      */
-    getHeader(owner: string, repo: string, sha: string): Promise<any>;
+    getHeader(owner: string, repo: string, sha: string): Promise<IHeader>;
 }
