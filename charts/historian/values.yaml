@@ -24,7 +24,7 @@ gitssh:
 
 cobalt:
   name: cobalt
-  image: prague.azurecr.io/cobalt:1318
+  image: prague.azurecr.io/cobalt:1544
   persistence:
     storageClass: unmanaged-premium
     size: 128Gi

@@ -562,19 +562,18 @@ export class Document extends EventEmitter {
     }
 
     private getObjectServices(id: string): IObjectServices {
+        // Filter the storage tree to only the distributed object
+        const tree = this.document.tree && id in this.document.tree.trees
+            ? this.document.tree.trees[id]
+            : null;
+
         const deltaConnection = new DeltaConnection(id, this);
-        const objectStorage = this.getStorageService(id);
+        const objectStorage = new ObjectStorageService(tree, this.document.documentStorageService);
+
         return {
             deltaConnection,
             objectStorage,
         };
-    }
-
-    private getStorageService(id: string): ObjectStorageService {
-        const tree = this.document.tree && id in this.document.tree.trees
-            ? this.document.tree.trees[id]
-            : null;
-        return new ObjectStorageService(tree, this.document.documentStorageService);
     }
 
     private async prepareRemoteMessage(message: ISequencedDocumentMessage): Promise<any> {
@@ -587,13 +586,10 @@ export class Document extends EventEmitter {
 
             // create storage service that wraps the attach data
             const localStorage = new LocalObjectStorageService(attachMessage.snapshot);
-            const header = localStorage.readSync("header");
-
             const connection = new DeltaConnection(attachMessage.id, this);
             connection.setBaseMapping(0, message.sequenceNumber);
 
             const distributedObject: IDistributedObject = {
-                header,
                 id: attachMessage.id,
                 sequenceNumber: 0,
                 type: attachMessage.type,

@@ -88,7 +88,7 @@ services:
             - NODE_ENV=development
         restart: always
     cobalt:
-        image: prague.azurecr.io/cobalt:1318
+        image: prague.azurecr.io/cobalt:1544
         restart: always
     gitrest:
         image: prague.azurecr.io/gitrest:1316
