@@ -1,4 +1,5 @@
-Create certificate and encryption form files.
+Choose your desired kube cluster and install certificates and encryption form files.
+
 ```bash
 $ kubectl create secret tls <name> --key tls.key --cert tls.crt
 $ kubectl create secret generic <name> --from-file=dhparam.pem
