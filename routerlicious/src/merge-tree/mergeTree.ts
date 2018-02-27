@@ -33,7 +33,7 @@ export interface IMergeNode {
     parent: IMergeBlock;
     cachedLength: number;
     index: number;
-    ordinal: number;
+    ordinal: string;
     isLeaf(): boolean;
 }
 
@@ -44,6 +44,7 @@ export interface IMergeBlock extends IMergeNode {
     partialLengths?: PartialSequenceLengths;
     hierBlock(): IHierBlock;
     assignChild(child: IMergeNode, index: number);
+    setOrdinal(child: IMergeNode, index: number);
 }
 
 export interface IHierBlock extends IMergeBlock {
@@ -240,7 +241,7 @@ export interface OverlapClient {
 
 export class MergeNode implements IMergeNode {
     index: number;
-    ordinal: number;
+    ordinal: string;
     parent: IMergeBlock;
     cachedLength: number;
     isLeaf() {
@@ -366,6 +367,16 @@ function addNodeReferences(mergeTree: MergeTree, node: MergeNode,
     }
 }
 
+export function ordinalToArray(ord: string) {
+    let a = <number[]>[];
+    if (ord) {
+        for (let i = 0, len = ord.length; i < len; i++) {
+            a.push(ord.charCodeAt(i));
+        }
+    }
+    return a;
+}
+
 export let MaxNodesInBlock = 8;
 export class MergeBlock extends MergeNode implements IMergeBlock {
     children: MergeNode[];
@@ -373,22 +384,27 @@ export class MergeBlock extends MergeNode implements IMergeBlock {
         super();
         this.children = new Array<MergeNode>(MaxNodesInBlock);
     }
+
     hierBlock() {
         return undefined;
     }
 
+    setOrdinal(child: IMergeNode, index: number) {
+        let localOrdinal: number;
+        let ordinalWidth = 1 << (MaxNodesInBlock - (this.childCount + 1));
+        if (index === 0) {
+            localOrdinal = ordinalWidth - 1;
+        } else {
+            let prevOrd = this.children[index - 1].ordinal;
+            let prevOrdCode = prevOrd.charCodeAt(prevOrd.length - 1);
+            localOrdinal = prevOrdCode + ordinalWidth;
+        }
+        child.ordinal = this.ordinal + String.fromCharCode(localOrdinal);
+    }
+
     assignChild(child: MergeNode, index: number) {
         child.index = index;
-/*        
-        let localOrdinal: number;
-        let ordinalWidth = 1<<(MaxNodesInBlock - (this.childCount + 1));
-        if (index===0) {
-            localOrdinal = ordinalWidth-1;
-        } else {
-            localOrdinal = 
-        }
-        */
-        child.ordinal = (this.ordinal << 3) + index;
+        this.setOrdinal(child, index);
         this.children[index] = child;
         child.parent = this;
     }
@@ -446,7 +462,7 @@ export abstract class BaseSegment extends MergeNode implements Segment {
         super();
     }
     index: number;
-    ordinal: number;
+    ordinal: string;
     removedSeq: number;
     removedClientId: number;
     removedClientOverlap: number[];
@@ -2736,16 +2752,20 @@ export class MergeTree {
     }
 
     private makeBlock(childCount: number) {
+        let block: MergeBlock;
         if (this.blockUpdateMarkers) {
-            return new HierMergeBlock(childCount);
+            block = new HierMergeBlock(childCount);
         }
         else {
-            return new MergeBlock(childCount);
+            block = new MergeBlock(childCount);
         }
+        block.ordinal = "";
+        return block;
     }
 
     private initialTextNode(text: string) {
         let block = this.makeBlock(1);
+        block.ordinal = "";
         block.assignChild(new TextSegment(text, UniversalSequenceNumber, LocalClientId), 0);
         block.cachedLength = text.length;
         return block;
@@ -3641,7 +3661,7 @@ export class MergeTree {
         if (splitNode !== undefined) {
             let newRoot = this.makeBlock(2);
             newRoot.index = 0;
-            newRoot.ordinal = 0;
+            newRoot.ordinal = "";
             newRoot.assignChild(this.root, 0);
             newRoot.assignChild(splitNode, 1);
             this.nodeUpdateOrdinals(this.root);
@@ -4066,7 +4086,8 @@ export class MergeTree {
         }
         if (newNode) {
             for (let i = block.childCount; i > childIndex; i--) {
-                block.assignChild(block.children[i - 1], i);
+                block.children[i]=block.children[i-1];
+                block.children[i].index = i;
             }
             block.assignChild(newNode, childIndex);
             block.childCount++;
@@ -4106,17 +4127,16 @@ export class MergeTree {
         if (MergeTree.options.measureOrdinalTime) {
             clockStart = clock();
         }
-        let blockOrd = block.ordinal<<3;
         for (let i = 0; i < block.childCount; i++) {
             let child = block.children[i];
-            child.ordinal = blockOrd + child.index;
+            block.setOrdinal(child, i);
             if (!child.isLeaf()) {
                 this.nodeUpdateOrdinals(<IMergeBlock>child);
             }
         }
         if (MergeTree.options.measureOrdinalTime) {
             let elapsed = elapsedMicroseconds(clockStart);
-            if (elapsed>this.maxOrdTime) {
+            if (elapsed > this.maxOrdTime) {
                 this.maxOrdTime = elapsed;
             }
             this.ordTime += elapsed;
@@ -4431,7 +4451,7 @@ export class MergeTree {
 
     nodeToString(block: IMergeBlock, strbuf: string, indentCount = 0) {
         strbuf += internedSpaces(indentCount);
-        strbuf += `Node (len ${block.cachedLength}) p len (${block.parent ? block.parent.cachedLength : 0}) ord ${block.ordinal} with ${block.childCount} segs:\n`;
+        strbuf += `Node (len ${block.cachedLength}) p len (${block.parent ? block.parent.cachedLength : 0}) ord ${ordinalToArray(block.ordinal)} with ${block.childCount} segs:\n`;
         if (this.blockUpdateMarkers) {
             strbuf += internedSpaces(indentCount);
             strbuf += (<IHierBlock>block).hierToString(indentCount);
@@ -4449,7 +4469,7 @@ export class MergeTree {
             else {
                 let segment = <Segment>child;
                 strbuf += internedSpaces(indentCount + 4);
-                strbuf += `cli: ${glc(this, segment.clientId)} seq: ${segment.seq} ord: ${segment.ordinal}`;
+                strbuf += `cli: ${glc(this, segment.clientId)} seq: ${segment.seq} ord: ${ordinalToArray(segment.ordinal)}`;
                 let segBranchId = this.getBranchId(segment.clientId);
                 let branchId = this.localBranchId;
                 let removalInfo = this.getRemovalInfo(branchId, segBranchId, segment);

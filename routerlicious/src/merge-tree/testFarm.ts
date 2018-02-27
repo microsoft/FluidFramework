@@ -220,7 +220,7 @@ export function TestPack(verbose = true) {
         let extractSnap = false;
         let includeMarkers = false;
         let measureBookmarks = true;
-        let testOrdinals = true;
+        let testOrdinals = false;
         let measureRanges = false;
         let referenceCount = 2000;
         let bookmarkCount = 1000;
@@ -531,11 +531,11 @@ export function TestPack(verbose = true) {
                                 console.log("same segment");
                             }
                             if (segoff1.segment.ordinal>segoff2.segment.ordinal) {
-                                console.log(`reverse ordinals ${segoff1.segment.ordinal} > ${segoff2.segment.ordinal}`);
+                                console.log(`reverse ordinals ${MergeTree.ordinalToArray(segoff1.segment.ordinal)} > ${MergeTree.ordinalToArray(segoff2.segment.ordinal)}`);
                                 console.log(server.mergeTree.toString());
                                 break;
                             } else {
-                                console.log(`happy ordinals ${segoff1.segment.ordinal} < ${segoff2.segment.ordinal}`);
+                                console.log(`happy ordinals ${MergeTree.ordinalToArray(segoff1.segment.ordinal)} < ${MergeTree.ordinalToArray(segoff2.segment.ordinal)}`);
                             }
 
                         }
