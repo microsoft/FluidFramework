@@ -35,7 +35,7 @@ name: routerlicious
 alfred:
   name: alfred
   replicas: 4
-  externalUrl: http://praguekube.westus2.cloudapp.azure.com
+  externalUrl: https://alfred.wu2.prague.office-int.com
   host: alfred.wu2.prague.office-int.com
   cert: wu2-tls-certificate
 
@@ -54,7 +54,7 @@ routemaster:
 tmz:
   name: tmz
   replicas: 1
-  externalUrl: http://praguetmz.westus2.cloudapp.azure.com
+  externalUrl: https://tmz.wu2.prague.office-int.com
   host: tmz.wu2.prague.office-int.com
   cert: wu2-tls-certificate
 
@@ -71,7 +71,7 @@ riddler:
   replicas: 1
 
 historian:
-  externalUrl: http://prague-historian.westus2.cloudapp.azure.com
+  externalUrl: https://historian.wu2.prague.office-int.com
 
 zookeeper:
   local: false
