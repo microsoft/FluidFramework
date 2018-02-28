@@ -1,16 +1,11 @@
 import * as git from "./resources";
 
-export interface ISnapshotTree {
-    blobs: { [path: string]: string };
-    trees: { [path: string]: ISnapshotTree };
-}
-
 /**
  * Document header returned from the server
  */
 export interface IHeader {
     // Tree representing all blobs in the snapshot
-    tree: ISnapshotTree & git.ITree;
+    tree: git.ITree;
 
     // Key blobs returned for performance. These include object headers and attribute files.
     blobs: git.IBlob[];
