@@ -1,4 +1,4 @@
-import { api, ui } from "routerlicious";
+import { api, ui } from "@prague/routerlicious";
 import * as d3 from "d3";
 import * as querystring from "querystring";
 import * as request from "request";
@@ -11,9 +11,10 @@ import types = api.types;
 
 const routerliciousEndpoint = "http://praguekube.westus2.cloudapp.azure.com";
 const historian = "http://prague-historian.westus2.cloudapp.azure.com";
+const owner = "prague";
 const repository = "prague";
 
-prague.socketStorage.registerAsDefault(routerliciousEndpoint, historian, repository);
+prague.socketStorage.registerAsDefault(routerliciousEndpoint, historian, owner, repository);
 
 async function instantiate() {
     const docid = "monster5";

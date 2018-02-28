@@ -1,10 +1,11 @@
 import * as d3 from "d3";
 import * as cola from "webcola";
 import { Link, Node } from "webcola";
-import { api, types } from "routerlicious/dist/client-api";
-import { IMap} from "routerlicious/dist/data-types";
-import { CollaborativeGraph, Edge, Vertex } from "routerlicious/dist/graph";
-import * as ui from "routerlicious/dist/ui";
+import { api, types } from "@prague/routerlicious/dist/client-api";
+import { IMap } from "@prague/routerlicious/dist/data-types";
+import { DistributedSet, DistributedSetValueType } from "@prague/routerlicious/dist/map";
+import { CollaborativeGraph, Edge, Vertex } from "@prague/routerlicious/dist/graph";
+import * as ui from "@prague/routerlicious/dist/ui";
 
 /**
  * Basic collaborative Graph Editor
@@ -140,7 +141,9 @@ export class Graph extends ui.Component {
         const hasEdge = this.graphMapView.has("edge");
 
         if (!hasEdge) {
-            this.graph = new CollaborativeGraph(root.createSet<Edge>("edge"), root.createSet<Vertex>("vertex"));
+            this.graph = new CollaborativeGraph(
+                root.set<DistributedSet<Edge>>("edge", undefined, DistributedSetValueType.Name),
+                root.set<DistributedSet<Vertex>>("vertex", undefined, DistributedSetValueType.Name));
 
             // Seed the graph with edges
             this.graph.addVertex(0, "node-0");

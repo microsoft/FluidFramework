@@ -11,6 +11,9 @@
     "webpack": "webpack --config webpack.config.js"
   },
   "dependencies": {
+    "@prague/routerlicious": "^0.1.1607",
+    "@types/express": "^4.11.1",
+    "@types/node": "^9.4.6",
     "three": "^0.89.0",
     "typescript": "^2.6.2"
   },

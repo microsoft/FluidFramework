@@ -2,14 +2,15 @@ import * as express from "express";
 import * as querystring from "querystring";
 import * as request from "request";
 import * as path from "path";
-import * as registration from "routerlicious/dist/socket-storage/registration";
+import * as registration from "@prague/routerlicious/dist/socket-storage/registration";
 import { copyFile } from "fs";
 
 const routerlicious = "http://praguekube.westus2.cloudapp.azure.com";
 const historian = "http://prague-historian.westus2.cloudapp.azure.com";
 
 const repository = "prague";
-registration.registerAsDefault(routerlicious, historian, repository);
+const owner = "prague";
+registration.registerAsDefault(routerlicious, historian, owner, repository);
 
 const app = express();
 
