@@ -5,7 +5,7 @@ import * as api from "../api-core";
 import { Deferred } from "../core-utils";
 import { IMap, IMapView } from "../data-types";
 import { CollaborativeMap, DistributedArray, DistributedArrayValueType, MapExtension } from "../map";
-import { IRange } from "./base";
+import { IIntegerRange } from "./base";
 import { CollaboritiveStringExtension } from "./extension";
 import * as MergeTree from "./mergeTree";
 import * as ops from "./ops";
@@ -103,7 +103,7 @@ export class SharedString extends CollaborativeMap {
 
         let ranges = this.client.mergeTree.tardisRange(start, end, fromSeq, this.client.getCurrentSeq(),
             this.client.getClientId());
-        ranges.map((range: IRange) => {
+        ranges.map((range: IIntegerRange) => {
             this.annotateRange(props, range.start, range.end);
         });
     }

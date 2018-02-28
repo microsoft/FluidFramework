@@ -765,7 +765,7 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
         let go = true;
         if (node) {
             if (actions.pre) {
-                if (actions.showStructure||(node.color === RBColor.BLACK)) {
+                if (actions.showStructure || (node.color === RBColor.BLACK)) {
                     go = actions.pre(node);
                 }
             }
@@ -773,7 +773,7 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
                 go = this.nodeWalk(node.left, actions);
             }
             if (go && actions.infix) {
-                if (actions.showStructure||(node.color === RBColor.BLACK)) {
+                if (actions.showStructure || (node.color === RBColor.BLACK)) {
                     go = actions.infix(node);
                 }
             }
@@ -781,7 +781,7 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
                 go = this.nodeWalk(node.right, actions);
             }
             if (go && actions.post) {
-                if (actions.showStructure||(node.color === RBColor.BLACK)) {
+                if (actions.showStructure || (node.color === RBColor.BLACK)) {
                     go = actions.post(node);
                 }
             }
@@ -820,27 +820,30 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
     }
 }
 
-export interface AugRangeNode {
-    minmax: Base.IRange;
+export interface AugIntegerRangeNode {
+    minmax: Base.IIntegerRange;
 }
 
+export interface AugRangeNode {
+    minmax: IRange;
+}
 /**
  * Union of two ranges; assumes for both ranges start <= end.
  * @param a A range
  * @param b A range
  */
-export function rangeUnion(a: Base.IRange, b: Base.IRange) {
-    return <Base.IRange>{
+export function integerRangeUnion(a: Base.IIntegerRange, b: Base.IIntegerRange) {
+    return <Base.IIntegerRange>{
         start: Math.min(a.start, b.start),
         end: Math.max(a.end, b.end)
     };
 }
 
-export function rangeOverlaps(a: Base.IRange, b: Base.IRange) {
+export function integerRangeOverlaps(a: Base.IIntegerRange, b: Base.IIntegerRange) {
     return (a.start < b.end) && (a.end > b.start);
 }
 
-export function rangeComparer(a: Base.IRange, b: Base.IRange) {
+export function integerRangeComparer(a: Base.IIntegerRange, b: Base.IIntegerRange) {
     if (a.start === b.start) {
         return a.end - b.end;
     } else {
@@ -848,50 +851,50 @@ export function rangeComparer(a: Base.IRange, b: Base.IRange) {
     }
 }
 
-export function rangeCopy(r: Base.IRange) {
-    return <Base.IRange>{ start: r.start, end: r.end };
+export function integerRangeCopy(r: Base.IIntegerRange) {
+    return <Base.IIntegerRange>{ start: r.start, end: r.end };
 }
 
-export function rangeToString(range: Base.IRange) {
+export function integerRangeToString(range: Base.IIntegerRange) {
     return `[${range.start},${range.end})`;
 }
 
-export type RangeNode = Node<Base.IRange, AugRangeNode>;
+export type IntegerRangeNode = Node<Base.IIntegerRange, AugIntegerRangeNode>;
 
 // TODO: handle duplicate keys
 
-export class RangeTree implements IRBAugmentation<Base.IRange, AugRangeNode>,
-    IRBMatcher<Base.IRange, AugRangeNode> {
-    ranges = new RedBlackTree<Base.IRange, AugRangeNode>(rangeComparer, this);
+export class IntegerRangeTree implements IRBAugmentation<Base.IIntegerRange, AugIntegerRangeNode>,
+    IRBMatcher<Base.IIntegerRange, AugIntegerRangeNode> {
+    ranges = new RedBlackTree<Base.IIntegerRange, AugIntegerRangeNode>(integerRangeComparer, this);
     diag = false;
 
-    remove(r: Base.IRange) {
+    remove(r: Base.IIntegerRange) {
         this.ranges.remove(r);
     }
 
-    put(r: Base.IRange) {
-        this.ranges.put(r, { minmax: { start: r.start, end: r.end } });
+    put(r: Base.IIntegerRange) {
+        this.ranges.put(r, { minmax: integerRangeCopy(r) });
     }
 
     toString() {
         return this.nodeToString(this.ranges.root);
     }
 
-    nodeToString(node: RangeNode) {
+    nodeToString(node: IntegerRangeNode) {
         let buf = "";
         let indentAmt = 0;
         let actions = {
-            pre: (node: RangeNode) => {
-                let red="";
-                if (node.color===RBColor.RED) {
-                    red="R ";
+            pre: (node: IntegerRangeNode) => {
+                let red = "";
+                if (node.color === RBColor.RED) {
+                    red = "R ";
                 }
                 buf += MergeTree.internedSpaces(indentAmt);
-                buf += `${red}key: ${rangeToString(node.key)} minmax: ${rangeToString(node.data.minmax)}\n`;
+                buf += `${red}key: ${integerRangeToString(node.key)} minmax: ${integerRangeToString(node.data.minmax)}\n`;
                 indentAmt += 2;
                 return true;
             },
-            post: (node: RangeNode) => {
+            post: (node: IntegerRangeNode) => {
                 indentAmt -= 2;
                 return true;
             },
@@ -905,38 +908,99 @@ export class RangeTree implements IRBAugmentation<Base.IRange, AugRangeNode>,
         return this.match({ start: pos, end: pos + 1 });
     }
 
-    match(r: Base.IRange) {
+    match(r: Base.IIntegerRange) {
         return this.ranges.gather(r, this);
     }
 
-    matchNode(node: RangeNode, key: Base.IRange) {
-        return node && rangeOverlaps(node.key, key);
+    matchNode(node: IntegerRangeNode, key: Base.IIntegerRange) {
+        return node && integerRangeOverlaps(node.key, key);
     }
 
-    continueSubtree(node: RangeNode, key: Base.IRange) {
-        let cont = node && rangeOverlaps(node.data.minmax, key);
+    continueSubtree(node: IntegerRangeNode, key: Base.IIntegerRange) {
+        let cont = node && integerRangeOverlaps(node.data.minmax, key);
         if (this.diag && (!cont)) {
             if (node) {
-                console.log(`skipping subtree of size ${node.size} key ${rangeToString(key)}`);
+                console.log(`skipping subtree of size ${node.size} key ${integerRangeToString(key)}`);
                 console.log(this.nodeToString(node));
             }
         }
         return cont;
     }
 
-    update(node: RangeNode) {
+    update(node: IntegerRangeNode) {
         if (node.left && node.right) {
-            node.data.minmax = rangeUnion(node.key,
-                rangeUnion(node.left.data.minmax, node.right.data.minmax));
+            node.data.minmax = integerRangeUnion(node.key,
+                integerRangeUnion(node.left.data.minmax, node.right.data.minmax));
         } else {
             if (node.left) {
-                node.data.minmax = rangeUnion(node.key, node.left.data.minmax);
+                node.data.minmax = integerRangeUnion(node.key, node.left.data.minmax);
             } else if (node.right) {
-                node.data.minmax = rangeUnion(node.key, node.right.data.minmax);
+                node.data.minmax = integerRangeUnion(node.key, node.right.data.minmax);
             } else {
-                node.data.minmax = rangeCopy(node.key);
+                node.data.minmax = integerRangeCopy(node.key);
             }
-        } 
+        }
+    }
+}
+
+export interface IRange {
+    clone(): IRange;
+    compare(b: IRange): number;
+    overlaps(b: IRange): boolean;
+    union(b: IRange): IRange;
+}
+
+export function rangeComparer(a: IRange, b: IRange) {
+    return a.compare(b);
+}
+export type RangeNode<T extends IRange> = Node<T, AugRangeNode>;
+
+export class RangeTree<T extends IRange> implements IRBAugmentation<T, AugRangeNode>,
+    IRBMatcher<T, AugRangeNode> {
+    ranges = new RedBlackTree<T, AugRangeNode>(rangeComparer, this);
+    diag = false;
+
+    remove(r: T) {
+        this.ranges.remove(r);
+    }
+
+    put(r: T) {
+        this.ranges.put(r, { minmax: r.clone() });
+    }
+
+    // TODO: toString()
+    match(r: T) {
+        return this.ranges.gather(r, this);
+    }
+
+    matchNode(node: RangeNode<T>, key: T) {
+        return node && node.key.overlaps(key);
+    }
+
+    continueSubtree(node: RangeNode<T>, key: T) {
+        let cont = node && node.data.minmax.overlaps(key);
+        if (this.diag && (!cont)) {
+            if (node) {
+                console.log(`skipping subtree of size ${node.size} key ${key.toString()}`);
+                // console.log(this.nodeToString(node));
+            }
+        }
+        return cont;   
+    }
+
+    update(node: RangeNode<T>) {
+        if (node.left && node.right) {
+            node.data.minmax = node.key.union(
+                node.left.data.minmax.union(node.right.data.minmax));
+        } else {
+            if (node.left) {
+                node.data.minmax = node.key.union(node.left.data.minmax);
+            } else if (node.right) {
+                node.data.minmax = node.key.union(node.right.data.minmax);
+            } else {
+                node.data.minmax = node.key.clone();
+            }
+        }
     }
 }
 

@@ -7,7 +7,7 @@ import * as API from "../api-core";
 import { ISequencedObjectMessage } from "../api-core";
 import * as Properties from "./properties";
 import * as assert from "assert";
-import { IRelativePosition, ReferenceType } from "./index";
+import { IRelativePosition } from "./index";
 
 export interface ReferencePosition {
     properties: Properties.PropertySet;
@@ -53,13 +53,34 @@ export interface IHierBlock extends IMergeBlock {
     rightmostTiles: Properties.MapLike<ReferencePosition>;
     leftmostTiles: Properties.MapLike<ReferencePosition>;
     rangeStacks: RangeStackMap;
-    startsInterval: Properties.MapLike<boolean>;
 }
 
-export class LocalRangeReference {
+export class LocalRangeReference implements Collections.IRange {
     constructor(public start: LocalReference,
         public end: LocalReference) {
+    }
 
+    clone() {
+        return new LocalRangeReference(this.start, this.end);
+    }
+
+    compare(b: LocalRangeReference) {
+        let startResult = this.start.compare(b.start);
+        if (startResult === 0) {
+            return (this.end.compare(b.end));
+        } else {
+            return startResult;
+        }
+    }
+
+    overlaps(b: LocalRangeReference) {
+        return (this.start.compare(b.end) < 0) &&
+            (this.end.compare(b.start) > 0);
+    }
+
+    union(b: LocalRangeReference) {
+        return new LocalRangeReference(this.start.min(b.start),
+            this.end.max(b.end));
     }
 }
 
@@ -69,6 +90,34 @@ export class LocalReference implements ReferencePosition {
 
     constructor(public segment: BaseSegment, public offset = 0,
         public refType = ops.ReferenceType.Simple) {
+    }
+
+    min(b: LocalReference) {
+        if (this.compare(b) < 0) {
+            return this;
+        } else {
+            return b;
+        }
+    }
+
+    max(b: LocalReference) {
+        if (this.compare(b) > 0) {
+            return this;
+        } else {
+            return b;
+        }
+    }
+
+    compare(b: LocalReference) {
+        if (this.segment === b.segment) {
+            return this.offset - b.offset;
+        } else {
+            if (this.segment.ordinal < b.segment.ordinal) {
+                return -1;
+            } else {
+                return 1;
+            }
+        }
     }
 
     toPosition(mergeTree: MergeTree, refSeq: number, clientId: number) {
@@ -300,18 +349,14 @@ function applyRangeReference(stack: Collections.Stack<ReferencePosition>, delta:
 
 function addNodeReferences(mergeTree: MergeTree, node: MergeNode,
     rightmostTiles: Properties.MapLike<ReferencePosition>,
-    leftmostTiles: Properties.MapLike<ReferencePosition>, rangeStacks: RangeStackMap,
-    startsInterval: Properties.MapLike<boolean>) {
+    leftmostTiles: Properties.MapLike<ReferencePosition>, rangeStacks: RangeStackMap) {
     function updateRangeInfo(label: string, refPos: ReferencePosition) {
         let stack = rangeStacks[label];
         if (stack === undefined) {
             stack = new Collections.Stack<ReferencePosition>();
             rangeStacks[label] = stack;
         }
-        let hasIntervalStart = applyRangeReference(stack, refPos);
-        if (hasIntervalStart) {
-            startsInterval[label] = true;
-        }
+        applyRangeReference(stack, refPos);
     }
     if (node.isLeaf()) {
         let segment = <Segment>node;
@@ -358,9 +403,6 @@ function addNodeReferences(mergeTree: MergeTree, node: MergeNode,
         }
     } else {
         let block = <IHierBlock>node;
-        for (let label in block.startsInterval) {
-            startsInterval[label] = startsInterval[label] || block.startsInterval[label];
-        }
         applyStackDelta(rangeStacks, block.rangeStacks);
         Properties.extend(rightmostTiles, block.rightmostTiles);
         Properties.extendIfUndefined(leftmostTiles, block.leftmostTiles);
@@ -430,20 +472,18 @@ export class MergeBlock extends MergeNode implements IMergeBlock {
 class HierMergeBlock extends MergeBlock implements IMergeBlock {
     rightmostTiles: Properties.MapLike<ReferencePosition>;
     leftmostTiles: Properties.MapLike<ReferencePosition>;
-    startsInterval: Properties.MapLike<boolean>;
     rangeStacks: Properties.MapLike<Collections.Stack<ReferencePosition>>;
 
     constructor(childCount: number) {
         super(childCount);
         this.rightmostTiles = Properties.createMap<ReferencePosition>();
         this.leftmostTiles = Properties.createMap<ReferencePosition>();
-        this.startsInterval = Properties.createMap<boolean>();
         this.rangeStacks = Properties.createMap<Collections.Stack<ReferencePosition>>();
     }
 
     addNodeReferences(mergeTree: MergeTree, node: MergeNode) {
         addNodeReferences(mergeTree, node, this.rightmostTiles, this.leftmostTiles,
-            this.rangeStacks, this.startsInterval);
+            this.rangeStacks);
     }
 
     hierBlock() {
@@ -3201,7 +3241,7 @@ export class MergeTree {
     }
 
     tardisRange(rangeStart: number, rangeEnd: number, fromSeq: number, toSeq: number, toClientId = NonCollabClient) {
-        let ranges = <Base.IRange[]>[];
+        let ranges = <Base.IIntegerRange[]>[];
         let recordRange = (segment: Segment, pos: number, refSeq: number, clientId: number, segStart: number,
             segEnd: number) => {
             let offset = this.getOffset(segment, toSeq, toClientId);
@@ -3486,51 +3526,7 @@ export class MergeTree {
         return offset + this.getOffset(seg, UniversalSequenceNumber,
             this.collabWindow.clientId);
     }
-
-    findOverlappingIntervals(startPos: number, endPos: number, rangeLabels: string[]) {
-        let ivals = <ReferencePosition[]>[];
-        let stackContext = this.getStackContext(startPos, this.collabWindow.clientId,
-            rangeLabels);
-        for (let label of rangeLabels) {
-            let stack = stackContext[label];
-            if (stack) {
-                for (let refPos of stack.items) {
-                    ivals.push(refPos);
-                }
-            }
-        }
-        let startsInterval = (node: IHierBlock) => {
-            for (let label of rangeLabels) {
-                if (node.startsInterval[label]) {
-                    return true;
-                }
-            }
-            return false;
-        }
-        let leaf = (segment: Segment, pos: number, refSeq: number,
-            clientId: number, start: number, end: number) => {
-            if (segment.getType() === SegmentType.Marker) {
-                let marker = <Marker>segment;
-                if (marker.refType & ReferenceType.NestBegin) {
-                    ivals.push(marker);
-                }
-            }
-            let baseSeg = <BaseSegment>segment;
-            if (baseSeg.localRefs) {
-                for (let localRef of baseSeg.localRefs) {
-                    if ((localRef.refType & ReferenceType.NestBegin) &&
-                        (localRef.offset < end)) {
-                        ivals.push(localRef);
-                    }
-                }
-            }
-            return true;
-        }
-        this.mapRange({ pre: startsInterval, leaf }, UniversalSequenceNumber,
-            this.collabWindow.clientId, undefined, startPos, endPos);
-        return ivals;
-    }
-
+    
     getStackContext(startPos: number, clientId: number, rangeLabels: string[]) {
         let searchInfo = <IMarkerSearchRangeInfo>{
             mergeTree: this,
@@ -4430,7 +4426,6 @@ export class MergeTree {
             hierBlock.rightmostTiles = Properties.createMap<Marker>();
             hierBlock.leftmostTiles = Properties.createMap<Marker>();
             hierBlock.rangeStacks = {};
-            hierBlock.startsInterval = Properties.createMap<boolean>();
         }
         for (let i = 0; i < block.childCount; i++) {
             let child = block.children[i];

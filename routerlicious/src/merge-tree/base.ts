@@ -33,7 +33,7 @@ export interface KeyComparer<TKey> {
 /**
  * A range [start, end) 
  */
-export interface IRange {
+export interface IIntegerRange {
     start: number;
     end: number;
 }
