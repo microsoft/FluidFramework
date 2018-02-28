@@ -14,6 +14,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
+    "@prague/routerlicious": "^0.1.1610",
     "body-parser": "^1.18.2",
     "compression": "^1.7.1",
     "concurrently": "^3.5.1",
@@ -34,7 +35,6 @@
     "passport-azure-ad": "^3.0.10",
     "performance-now": "^2.1.0",
     "request": "^2.83.0",
-    "routerlicious": "https://praguenpm.blob.core.windows.net/packages/routerlicious-0.1.1515.tgz",
     "serve-favicon": "^2.4.5",
     "split": "^1.0.1",
     "static-expiry": "0.0.11",

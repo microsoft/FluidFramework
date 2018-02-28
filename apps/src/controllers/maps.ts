@@ -1,9 +1,10 @@
+import { agent, api } from "@prague/routerlicious";
 import * as $ from "jquery";
 import hasIn = require("lodash/hasIn");
-import { agent, api } from "routerlicious";
 
 import prague = api;
 import types = prague.types;
+import Map = api.map;
 
 async function loadDocument(id: string, token?: string): Promise<prague.api.Document> {
     console.log("Loading in root document...");
@@ -108,8 +109,8 @@ function displayUserId(parentElement: JQuery, userId: string) {
 async function randomizeMap(map: types.IMap) {
     // link up the randomize button
     const keys = ["foo", "bar", "baz", "binky", "winky", "twinkie"];
-    const counter = map.createCounter("counter", 100) as types.ICounter;
-    const set = map.createSet("set", [1, 2, 3, 3, 2, 4]) as types.ISet<number>;
+    const counter = map.set<Map.Counter>("counter", undefined, Map.CounterValueType.Name);
+    const set = map.set<Map.DistributedSet<number>>("set", [1, 2, 3, 3, 2, 4], Map.DistributedSetValueType.Name);
     setInterval(async () => {
         const key = keys[Math.floor(Math.random() * keys.length)];
         map.set(key, Math.floor(Math.random() * 100000).toString());

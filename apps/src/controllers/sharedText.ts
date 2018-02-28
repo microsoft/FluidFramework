@@ -1,7 +1,7 @@
+import { agent, api, ui } from "@prague/routerlicious";
 import * as $ from "jquery";
 import performanceNow = require("performance-now");
 import * as request from "request";
-import { agent, api, ui } from "routerlicious";
 import * as url from "url";
 
 import prague = api;
