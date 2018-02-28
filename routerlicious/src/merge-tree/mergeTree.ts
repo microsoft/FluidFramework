@@ -43,7 +43,7 @@ export interface IMergeBlock extends IMergeNode {
     children: IMergeNode[];
     partialLengths?: PartialSequenceLengths;
     hierBlock(): IHierBlock;
-    assignChild(child: IMergeNode, index: number);
+    assignChild(child: IMergeNode, index: number, updateOrdinal?: boolean);
     setOrdinal(child: IMergeNode, index: number);
 }
 
@@ -377,8 +377,9 @@ export function ordinalToArray(ord: string) {
     return a;
 }
 
-export let MaxNodesInBlock = 8;
+export const MaxNodesInBlock = 8;
 export class MergeBlock extends MergeNode implements IMergeBlock {
+    static traceOrdinals = false;
     children: MergeNode[];
     constructor(public childCount: number) {
         super();
@@ -390,8 +391,13 @@ export class MergeBlock extends MergeNode implements IMergeBlock {
     }
 
     setOrdinal(child: IMergeNode, index: number) {
+        let childCount = this.childCount;
+        if (childCount === 8) {
+            childCount = 7;
+        }
+        assert((childCount >= 1) && (childCount <= 7));
         let localOrdinal: number;
-        let ordinalWidth = 1 << (MaxNodesInBlock - (this.childCount + 1));
+        let ordinalWidth = 1 << (MaxNodesInBlock - (childCount + 1));
         if (index === 0) {
             localOrdinal = ordinalWidth - 1;
         } else {
@@ -400,13 +406,24 @@ export class MergeBlock extends MergeNode implements IMergeBlock {
             localOrdinal = prevOrdCode + ordinalWidth;
         }
         child.ordinal = this.ordinal + String.fromCharCode(localOrdinal);
+        if (MergeBlock.traceOrdinals) {
+            console.log(`so: prnt chld prev ${ordinalToArray(this.ordinal)} ${ordinalToArray(child.ordinal)} ${(index > 0) ? ordinalToArray(this.children[index - 1].ordinal) : "NA"}`);
+        }
+        assert(child.ordinal.length === (this.ordinal.length + 1));
+        if (index > 0) {
+            assert(child.ordinal > this.children[index - 1].ordinal);
+            //console.log(`${ordinalToArray(this.ordinal)} ${ordinalToArray(child.ordinal)} ${ordinalToArray(this.children[index - 1].ordinal)}`);
+            //    console.log(`ord width ${ordinalWidth}`);
+        }
     }
 
-    assignChild(child: MergeNode, index: number) {
-        child.index = index;
-        this.setOrdinal(child, index);
-        this.children[index] = child;
+    assignChild(child: MergeNode, index: number, updateOrdinal = true) {
         child.parent = this;
+        child.index = index;
+        if (updateOrdinal) {
+            this.setOrdinal(child, index);
+        }
+        this.children[index] = child;
     }
 }
 
@@ -495,16 +512,6 @@ export abstract class BaseSegment extends MergeNode implements Segment {
                 this.localRefs.push(lref);
             }
         }
-    }
-
-    getOrdinal() {
-        let ord = this.index;
-        let parent = this.parent;
-        while (parent) {
-            ord = (ord << 3) + parent.index;
-            parent = parent.parent;
-        }
-        return ord;
     }
 
     removeLocalRef(lref: LocalReference) {
@@ -2692,6 +2699,10 @@ function tileShift(node: MergeNode, segpos: number, refSeq: number, clientId: nu
     return true;
 }
 
+export interface RemoveRangeInfo {
+    highestBlockRemovingChildren: IMergeBlock;
+}
+
 // represents a sequence of text segments
 export class MergeTree {
     // must be an even number   
@@ -2706,6 +2717,7 @@ export class MergeTree {
     static searchChunkSize = 256;
     static traceAppend = false;
     static traceZRemove = false;
+    static traceOrdinals = false;
     static traceGatherText = false;
     static diagInsertTie = false;
     static skipLeftShift = true;
@@ -2859,7 +2871,7 @@ export class MergeTree {
 
     addNode(block: IMergeBlock, node: MergeNode) {
         let index = block.childCount++;
-        block.assignChild(node, index);
+        block.assignChild(node, index, false);
         return index;
     }
 
@@ -2905,7 +2917,7 @@ export class MergeTree {
         if (segments.length > 0) {
             this.root = this.makeBlock(1);
             let block = buildMergeBlock(segments);
-            this.root.assignChild(block, 0);
+            this.root.assignChild(block, 0, false);
             if (this.blockUpdateMarkers) {
                 let hierRoot = this.root.hierBlock();
                 hierRoot.addNodeReferences(this, block);
@@ -3039,7 +3051,7 @@ export class MergeTree {
             let packedBlock = this.makeBlock(nodeCount);
             for (let packedNodeIndex = 0; packedNodeIndex < nodeCount; packedNodeIndex++) {
                 let nodeToPack = holdNodes[readCount++];
-                packedBlock.assignChild(nodeToPack, packedNodeIndex);
+                packedBlock.assignChild(nodeToPack, packedNodeIndex, false);
             }
             packedBlock.parent = parent;
             packedBlocks[nodeIndex] = packedBlock;
@@ -3050,13 +3062,14 @@ export class MergeTree {
         }
         parent.children = packedBlocks;
         for (let j = 0; j < childCount; j++) {
-            parent.assignChild(packedBlocks[j], j);
+            parent.assignChild(packedBlocks[j], j, false);
         }
         parent.childCount = childCount;
         if (this.underflow(parent) && (parent.parent)) {
             this.pack(parent);
         }
         else {
+            this.nodeUpdateOrdinals(parent);
             this.blockUpdatePathLengths(parent, UnassignedSequenceNumber, -1, true);
         }
     }
@@ -3084,7 +3097,7 @@ export class MergeTree {
                         block.childCount = newChildCount;
                         block.children = childrenCopy;
                         for (let j = 0; j < newChildCount; j++) {
-                            block.assignChild(childrenCopy[j], j);
+                            block.assignChild(childrenCopy[j], j, false);
                         }
 
                         if (this.underflow(block) && block.parent) {
@@ -3100,6 +3113,7 @@ export class MergeTree {
                             }
                         }
                         else {
+                            this.nodeUpdateOrdinals(block);
                             this.blockUpdatePathLengths(block, UnassignedSequenceNumber, -1, true);
                         }
 
@@ -3662,10 +3676,10 @@ export class MergeTree {
             let newRoot = this.makeBlock(2);
             newRoot.index = 0;
             newRoot.ordinal = "";
-            newRoot.assignChild(this.root, 0);
-            newRoot.assignChild(splitNode, 1);
-            this.nodeUpdateOrdinals(this.root);
+            newRoot.assignChild(this.root, 0, false);
+            newRoot.assignChild(splitNode, 1, false);
             this.root = newRoot;
+            this.nodeUpdateOrdinals(this.root);
             this.nodeUpdateLengthNewStructure(this.root);
         }
     }
@@ -3793,6 +3807,9 @@ export class MergeTree {
     insert<T>(pos: number, refSeq: number, clientId: number, seq: number, segData: T,
         traverse: (block: IMergeBlock, pos: number, refSeq: number, clientId: number, seq: number, segData: T) => IMergeBlock) {
         this.ensureIntervalBoundary(pos, refSeq, clientId);
+        if (MergeTree.traceOrdinals) {
+            this.ordinalIntegrity();
+        }
         //traceTraversal = true;
         let splitNode = traverse(this.root, pos, refSeq, clientId, seq, segData);
         //traceTraversal = false;
@@ -3828,6 +3845,9 @@ export class MergeTree {
         this.insert(pos, refSeq, clientId, seq, text, (block, pos, refSeq, clientId, seq, text) =>
             this.blockInsert(this.root, pos, refSeq, clientId, seq, newSegment));
         MergeTree.traceTraversal = false;
+        if (MergeTree.traceOrdinals) {
+            this.ordinalIntegrity();
+        }
         if (this.collabWindow.collaborating && MergeTree.options.zamboniSegments &&
             (seq != UnassignedSequenceNumber)) {
             this.zamboniSegments();
@@ -4046,7 +4066,11 @@ export class MergeTree {
 
                     let segmentChanges = context.leaf(<Segment>child, pos);
                     if (segmentChanges.replaceCurrent) {
-                        block.assignChild(segmentChanges.replaceCurrent, childIndex);
+                        if (MergeTree.traceOrdinals) {
+                            console.log(`assign from leaf with block ord ${ordinalToArray(block.ordinal)}`);
+                        }
+                        block.assignChild(segmentChanges.replaceCurrent, childIndex, false);
+                        segmentChanges.replaceCurrent.ordinal = child.ordinal;
                     }
                     if (segmentChanges.next) {
                         newNode = segmentChanges.next;
@@ -4086,14 +4110,17 @@ export class MergeTree {
         }
         if (newNode) {
             for (let i = block.childCount; i > childIndex; i--) {
-                block.children[i]=block.children[i-1];
+                block.children[i] = block.children[i - 1];
                 block.children[i].index = i;
             }
-            block.assignChild(newNode, childIndex);
+            block.assignChild(newNode, childIndex, false);
             block.childCount++;
+            block.setOrdinal(newNode, childIndex);
             if (block.childCount < MaxNodesInBlock) {
                 if (fromSplit) {
-                    // console.log(`split ord ${fromSplit.ordinal}`);
+                    if (MergeTree.traceOrdinals) {
+                        console.log(`split ord ${ordinalToArray(fromSplit.ordinal)}`);
+                    }
                     this.nodeUpdateOrdinals(fromSplit);
                 }
                 this.blockUpdateLength(block, seq, clientId);
@@ -4113,8 +4140,10 @@ export class MergeTree {
         let halfCount = MaxNodesInBlock / 2;
         let newNode = this.makeBlock(halfCount);
         node.childCount = halfCount;
+        // update ordinals to reflect lowered child count
+        this.nodeUpdateOrdinals(node);
         for (let i = 0; i < halfCount; i++) {
-            newNode.assignChild(node.children[halfCount + i], i);
+            newNode.assignChild(node.children[halfCount + i], i, false);
             node.children[halfCount + i] = undefined;
         }
         this.nodeUpdateLengthNewStructure(node);
@@ -4122,7 +4151,40 @@ export class MergeTree {
         return newNode;
     }
 
+    ordinalIntegrity() {
+        console.log("chk ordnls");
+        this.nodeOrdinalIntegrity(this.root);
+    }
+
+    nodeOrdinalIntegrity(block: IMergeBlock) {
+        let olen = block.ordinal.length;
+        for (let i = 0; i < block.childCount; i++) {
+            if (block.children[i].ordinal) {
+                if (olen !== (block.children[i].ordinal.length - 1)) {
+                    console.log("node integrity issue");
+
+                }
+                if (i > 0) {
+                    if (block.children[i].ordinal <= block.children[i - 1].ordinal) {
+                        console.log("node sib integrity issue");
+                        console.log(`??: prnt chld prev ${ordinalToArray(block.ordinal)} ${ordinalToArray(block.children[i].ordinal)} ${(i > 0) ? ordinalToArray(block.children[i - 1].ordinal) : "NA"}`);
+                    }
+                }
+                if (!block.children[i].isLeaf()) {
+                    this.nodeOrdinalIntegrity(<IMergeBlock>block.children[i]);
+                }
+            } else {
+                console.log(`node child ordinal not set ${i}`);
+                console.log(`??: prnt ${ordinalToArray(block.ordinal)}`);
+
+            }
+        }
+    }
+
     nodeUpdateOrdinals(block: IMergeBlock) {
+        if (MergeTree.traceOrdinals) {
+            console.log(`update ordinals for children of node with ordinal ${ordinalToArray(block.ordinal)}`);
+        }
         let clockStart;
         if (MergeTree.options.measureOrdinalTime) {
             clockStart = clock();
@@ -4268,10 +4330,15 @@ export class MergeTree {
     }
 
     removeRange(start: number, end: number, refSeq: number, clientId: number) {
-        this.nodeRemoveRange(this.root, start, end, refSeq, clientId);
+        let removeInfo = <RemoveRangeInfo>{};
+        this.nodeRemoveRange(this.root, start, end, refSeq, clientId, removeInfo);
+        if (removeInfo.highestBlockRemovingChildren) {
+            let remBlock = removeInfo.highestBlockRemovingChildren;
+            this.nodeUpdateOrdinals(remBlock);
+        }
     }
 
-    nodeRemoveRange(block: IMergeBlock, start: number, end: number, refSeq: number, clientId: number) {
+    nodeRemoveRange(block: IMergeBlock, start: number, end: number, refSeq: number, clientId: number, removeInfo: RemoveRangeInfo) {
         let children = block.children;
         let startIndex: number;
         if (start < 0) {
@@ -4284,7 +4351,7 @@ export class MergeTree {
             if ((start >= 0) && (start < len)) {
                 startIndex = childIndex;
                 if (!child.isLeaf()) {
-                    this.nodeRemoveRange(<IMergeBlock>child, start, end, refSeq, clientId);
+                    this.nodeRemoveRange(<IMergeBlock>child, start, end, refSeq, clientId, removeInfo);
                 }
                 else {
                     let segment = <Segment>child;
@@ -4299,7 +4366,7 @@ export class MergeTree {
                 if (end > 0) {
                     if (endIndex > startIndex) {
                         if (!child.isLeaf()) {
-                            this.nodeRemoveRange(<IMergeBlock>child, start, end, refSeq, clientId);
+                            this.nodeRemoveRange(<IMergeBlock>child, start, end, refSeq, clientId, removeInfo);
                         }
                         else {
                             let segment = <Segment>child;
@@ -4321,9 +4388,15 @@ export class MergeTree {
             let copyStart = deleteStart + deleteCount;
             let copyCount = block.childCount - copyStart;
             for (let j = 0; j < copyCount; j++) {
-                block.assignChild(children[copyStart + j], deleteStart + j);
+                block.assignChild(children[copyStart + j], deleteStart + j, false);
             }
             block.childCount -= deleteCount;
+            if (removeInfo.highestBlockRemovingChildren && removeInfo.highestBlockRemovingChildren.parent &&
+                (removeInfo.highestBlockRemovingChildren.parent === block.parent)) {
+                removeInfo.highestBlockRemovingChildren = block.parent;
+            } else {
+                removeInfo.highestBlockRemovingChildren = block;
+            }
         }
         this.nodeUpdateLengthNewStructure(block);
     }

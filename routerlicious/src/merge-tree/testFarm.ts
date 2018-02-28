@@ -220,7 +220,9 @@ export function TestPack(verbose = true) {
         let extractSnap = false;
         let includeMarkers = false;
         let measureBookmarks = true;
-        let testOrdinals = false;
+        let testOrdinals = true;
+        let ordErrors = 0;
+        let ordSuccess = 0;
         let measureRanges = false;
         let referenceCount = 2000;
         let bookmarkCount = 1000;
@@ -265,9 +267,6 @@ export function TestPack(verbose = true) {
             if (measureRanges) {
                 makeBookmarks(server, bookmarkCount);
             }
-        }
-        if (testOrdinals) {
-            console.log(server.mergeTree.toString());
         }
         if (testSyncload) {
             let clockStart = clock();
@@ -516,28 +515,36 @@ export function TestPack(verbose = true) {
                     let mt = random.engines.mt19937();
                     mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
                     let checkRange = <number[][]>[];
-                    let len = server.mergeTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.NonCollabClient);
+                    let len = server.mergeTree.getLength(MergeTree.UniversalSequenceNumber, server.getClientId());
                     for (let i = 0; i < rangeChecksPerRound; i++) {
-                        let b = random.integer(0, len - 2)(mt);
-                        let rangeSize = random.integer(1, 1000)(mt);
+                        let e = random.integer(0, len - 2)(mt);
+                        let rangeSize = random.integer(1, Math.min(1000,len-2))(mt);
+                        let b = e - rangeSize;
+                        if (b<0) {
+                            b=0;
+                        }
                         checkRange[i] = [b, b + rangeSize];
                         let segoff1 = server.mergeTree.getContainingSegment(checkRange[i][0], MergeTree.UniversalSequenceNumber,
-                            MergeTree.NonCollabClient);
+                            server.getClientId());
                         let segoff2 = server.mergeTree.getContainingSegment(checkRange[i][1], MergeTree.UniversalSequenceNumber,
-                            MergeTree.NonCollabClient);
+                            server.getClientId());
                         if (segoff1 && segoff2 && segoff1.segment &&segoff2.segment) {
-                            console.log(`[${checkRange[i][0]},${checkRange[i][1]})`);
+                            // console.log(`[${checkRange[i][0]},${checkRange[i][1]})`);
                             if (segoff1.segment===segoff2.segment) {
-                                console.log("same segment");
-                            }
-                            if (segoff1.segment.ordinal>segoff2.segment.ordinal) {
+                                // console.log("same segment");
+                            } else if (segoff1.segment.ordinal>segoff2.segment.ordinal) {
+                                ordErrors++;
                                 console.log(`reverse ordinals ${MergeTree.ordinalToArray(segoff1.segment.ordinal)} > ${MergeTree.ordinalToArray(segoff2.segment.ordinal)}`);
+                                console.log(`segments ${segoff1.segment.toString()} ${segoff2.segment.toString()}`)
                                 console.log(server.mergeTree.toString());
                                 break;
                             } else {
-                                console.log(`happy ordinals ${MergeTree.ordinalToArray(segoff1.segment.ordinal)} < ${MergeTree.ordinalToArray(segoff2.segment.ordinal)}`);
+                                ordSuccess++;
+                                // console.log(`happy ordinals ${MergeTree.ordinalToArray(segoff1.segment.ordinal)} < ${MergeTree.ordinalToArray(segoff2.segment.ordinal)}`);
                             }
 
+                        } else {
+                            // console.log(`no seg for [${b},${e}) with len ${len}`);
                         }
                     }
 
@@ -618,6 +625,12 @@ export function TestPack(verbose = true) {
                 if (measureBookmarks) {
                     let timePerRead = (refReadTime / refReads).toFixed(2);
                     let bookmarksPerSeg = (referenceCount / stats.leafCount).toFixed(2);
+                    if (ordErrors>0) {
+                        console.log(`ord errors: ${ordErrors}`);
+                    }
+                    if (ordSuccess>0) {
+                        console.log(`total ord range tests ${ordSuccess}`);
+                    }
                     console.log(`bookmark count ${referenceCount} ave. per seg ${bookmarksPerSeg} time/read ${timePerRead}`);
                     if (measureRanges) {
                         let timePerContextCheck = (posContextTime / posContextChecks).toFixed(2);
@@ -1751,7 +1764,7 @@ if (docTree) {
 }
 
 if (clientServerTest) {
-    let ppTest = false;
+    let ppTest = true;
     let branch = false;
     let testPack = TestPack();
     const filename = path.join(__dirname, "../../public/literature", "pp.txt");
