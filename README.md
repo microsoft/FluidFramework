@@ -29,11 +29,14 @@ We're currently in the middle of [Sprint 4](./doc/sprints/sprint4/readme.md) and
 ## Build Server
 
 Install Docker Community Edition in order to run the following
-https://store.docker.com/editions/community/docker-ce-desktop-windows
+https://docs.docker.com/install/linux/docker-ce/ubuntu/#set-up-the-repository
 
 We make use of https://hub.docker.com/r/microsoft/vsts-agent/ for our build server agents.
 
-To create an agent first create a work directory for the agent that maps exactly to how it will be mounted in the container (i.e. /var/lib/vsts - more on that below). Get a VSTS token. And then run the following command.
+To create an agent first create a work directory for the agent that maps exactly to how it will be mounted in the container (i.e. /var/lib/vsts - more on that below). This means you'll need
+to be running a Linux box. We make use of [Ubuntu 16.04](https://www.ubuntu.com/download/server/thank-you?country=US&version=16.04.3&architecture=amd64) inside of a Hyper-V VM. If setting up inside of a VM make sure to allocate enough vCPUs.
+
+Then run the following command after getting a VSTS token:
 
 ```
 docker run \
