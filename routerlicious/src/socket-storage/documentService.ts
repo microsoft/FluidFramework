@@ -13,23 +13,31 @@ import { DocumentDeltaConnection } from "./documentDeltaConnection";
 import * as messages from "./messages";
 import { NullDeltaConnection } from "./nullDeltaConnection";
 
-// Generate encryption keys for new connection.
-// let privateKey: string = null;
-// let publicKey: string = null;
-// if (encrypted) {
-//     const asymmetricKeys = await api.generateAsymmetricKeys(2048, "", id);
-//     privateKey = asymmetricKeys.privateKey;
-//     publicKey = asymmetricKeys.publicKey;
-// }
-
 // Type aliases for mapping from events, to the objects interested in those events, to the connections for those
 // objects
 type ConnectionMap = { [connectionId: string]: api.IDocumentDeltaConnection };
 type ObjectMap = { [objectId: string]: ConnectionMap };
 type EventMap = { [event: string]: ObjectMap };
 
-export function getEmptyHeader(id: string): api.IDocumentHeader {
-    const emptyHeader: api.IDocumentHeader = {
+/**
+ * Document details extracted from the header
+ */
+interface IHeaderDetails {
+    // Attributes for the document
+    attributes: api.IDocumentAttributes;
+
+    // Distributed objects contained within the document
+    distributedObjects: api.IDistributedObject[];
+
+    // The transformed messages between the minimum sequence number and sequenceNumber
+    transformedMessages: api.ISequencedDocumentMessage[];
+
+    // Tree representing all blobs in the snapshot
+    tree: api.ISnapshotTree;
+}
+
+function getEmptyHeader(id: string): IHeaderDetails {
+    const emptyHeader: IHeaderDetails = {
         attributes: {
             branch: id,
             minimumSequenceNumber: 0,
@@ -41,6 +49,12 @@ export function getEmptyHeader(id: string): api.IDocumentHeader {
     };
 
     return emptyHeader;
+}
+
+async function readAndParse<T>(storage: api.IBlobStorageService, sha: string): Promise<T> {
+    const encoded = await storage.read(sha);
+    const decoded = Buffer.from(encoded, "base64").toString();
+    return JSON.parse(decoded);
 }
 
 export class DocumentResource implements api.IDocumentResource {
@@ -109,12 +123,11 @@ export class DocumentService implements api.IDocumentService {
             version = commits.length > 0 ? this.translateCommit(commits[0]) : null;
         }
 
-        // Load in the header for the version. At this point if version is still null that means there are no
-        // snapshots and we should start with an empty header.
-        const headerP = version
-            ? this.blobStorge.getHeader(id, version)
-            : Promise.resolve(getEmptyHeader(id));
+        // Kick off three async operations to load the document state
+        // ...get the header which provides access to the 'first page' of the document
+        const headerP = this.getHeader(id, version);
 
+        // ...connect to the op stream
         const connectionP = connect
             ? new Promise<messages.IConnected>((resolve, reject) => {
                     this.socket.emit(
@@ -129,17 +142,14 @@ export class DocumentService implements api.IDocumentService {
                         });
                 })
             : Promise.resolve<messages.IConnected>(null);
+
+        // ...load in all deltas later than the sequence number specified in the header
         const pendingDeltasP = headerP.then((header) => {
             return connect ? this.deltaStorage.get(id, header ? header.attributes.sequenceNumber : 0) : [];
         });
 
-        // header *should* be enough to return the document. Pull it first as well as any pending delta
-        // messages which should be taken into account before client logic.
-
-        const [header, connection, pendingDeltas] = await Promise.all([headerP, connectionP, pendingDeltasP])
-            .catch((err) => {
-                return Promise.reject(err);
-            });
+        // ...and then await all three being resolved
+        const [header, connection, pendingDeltas] = await Promise.all([headerP, connectionP, pendingDeltasP]);
 
         debug(`Connected to ${id} - ${performanceNow()}`);
         let deltaConnection: api.IDocumentDeltaConnection;
@@ -211,6 +221,43 @@ export class DocumentService implements api.IDocumentService {
 
         // And finally store the connection as interested in the given event
         objectMap[connection.documentId][connection.clientId] = connection;
+    }
+
+    private async getHeader(id: string, version: resources.ICommit): Promise<IHeaderDetails> {
+        if (!version) {
+            return getEmptyHeader(id);
+        }
+
+        const tree = await this.blobStorge.getSnapshotTree(id, version);
+
+        const messagesP = readAndParse<api.ISequencedDocumentMessage[]>(this.blobStorge, tree.blobs[".messages"]);
+        const attributesP = readAndParse<api.IDocumentAttributes>(this.blobStorge, tree.blobs[".attributes"]);
+
+        const distributedObjectsP = Array<Promise<api.IDistributedObject>>();
+        // tslint:disable-next-line:forin
+        for (const path in tree.trees) {
+            const objectAttributesP = readAndParse<api.IObjectAttributes>(
+                this.blobStorge,
+                tree.trees[path].blobs[".attributes"]);
+            const objectDetailsP = objectAttributesP.then((attributes) => {
+                return {
+                    id: path,
+                    sequenceNumber: attributes.sequenceNumber,
+                    type: attributes.type,
+                };
+            });
+            distributedObjectsP.push(objectDetailsP);
+        }
+
+        const [messages, attributes, distributedObjects] = await Promise.all(
+            [messagesP, attributesP, Promise.all(distributedObjectsP)]);
+
+        return {
+            attributes,
+            distributedObjects,
+            transformedMessages: messages,
+            tree,
+        };
     }
 
     /**

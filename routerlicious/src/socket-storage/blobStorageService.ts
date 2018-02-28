@@ -25,7 +25,7 @@ export class BlobStorageService implements api.IBlobStorageService {
     constructor(private manager: gitStorage.GitManager) {
     }
 
-    public getHeader(id: string, version: resources.ICommit): Promise<api.IDocumentHeader> {
+    public getSnapshotTree(id: string, version: resources.ICommit): Promise<api.ISnapshotTree> {
         return this.manager.getHeader(id, version ? version.sha : null);
     }
 
@@ -34,7 +34,6 @@ export class BlobStorageService implements api.IBlobStorageService {
         return value.content;
     }
 
-    // TODO (mdaumi): Need to implement some kind of auth mechanism here.
     public write(id: string, tree: api.ITree, message: string): Promise<resources.ICommit> {
         return this.manager.write(id, tree, message);
     }

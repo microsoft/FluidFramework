@@ -116,23 +116,6 @@ export interface ISnapshotTree {
 }
 
 /**
- * Document header returned from the server
- */
-export interface IDocumentHeader {
-    // Attributes for the document
-    attributes: IDocumentAttributes;
-
-    // Distributed objects contained within the document
-    distributedObjects: IDistributedObject[];
-
-    // The transformed messages between the minimum sequence number and sequenceNumber
-    transformedMessages: ISequencedDocumentMessage[];
-
-    // Tree representing all blobs in the snapshot
-    tree: ISnapshotTree;
-}
-
-/**
  * A distributed object is enough information to fully load a distributed object. The object may then require
  * a server call to load in more state.
  */
@@ -287,9 +270,9 @@ export interface IDocumentService {
 
 export interface IBlobStorageService {
     /**
-     * Returns the header.
+     * Returns the snapshot tree.
      */
-    getHeader(id: string, version: resources.ICommit): Promise<IDocumentHeader>;
+    getSnapshotTree(id: string, version: resources.ICommit): Promise<ISnapshotTree>;
 
     /**
      * Reads the blob content.

@@ -150,7 +150,7 @@
     "es6-promisify": "^5.0.0",
     "express": "^4.15.2",
     "gitgraph.js": "^1.11.4",
-    "gitresources": "https://praguenpm.blob.core.windows.net/packages/gitresources-0.5.0.tgz",
+    "gitresources": "https://praguenpm.blob.core.windows.net/packages/gitresources-0.7.0.tgz",
     "hjs": "0.0.6",
     "jquery": "^3.2.1",
     "jsonwebtoken": "^8.1.1",
