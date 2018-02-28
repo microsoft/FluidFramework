@@ -1,5 +1,5 @@
+import { agent, api } from "@prague/routerlicious";
 import * as $ from "jquery";
-import { agent, api } from "routerlicious";
 
 import prague = api;
 import types = prague.types;

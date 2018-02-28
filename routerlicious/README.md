@@ -16,6 +16,10 @@ The services follow the [twelve factor](https://12factor.net) methodology and ar
 
 ## Building and Running
 
+Note that we also provide an npm package of our client side API which allows you to program against the production
+Routerlicious service. See the [API documentation](../doc) for more details. You only need to follow the below steps
+if you'd like to run a local version of the service or need to make changes to it.
+
 ### Prerequisities
 
 Standalone 
