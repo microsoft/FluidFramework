@@ -19,7 +19,7 @@ The [threejs](./api/examples/threejs) example is setup using the above approach.
 ##### @prague/routerlicious
 The core Prague project. This contains the client side code you need to run Prague.
 
-You can choose to run against our production endpoints or run the service yourself locally. See the [Routerlicious README]('../routerlicious') for more information
+You can choose to run against our production endpoints or run the service yourself locally. See the [Routerlicious README](../routerlicious) for more information
 
 If using WebPack you will need to update your config to exclude certain node modules. An example webpack config is given
 below showing how to exclude fs from node. We are working to break these dependencies.
