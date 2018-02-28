@@ -43,6 +43,13 @@ If you also need debugging you can run:
 
 After starting the service, you can navigate to http://localhost:7000/ in a browser. Click the login and sign in using your corp credential. Start using the apps!
 
+To build an image and run it, use the following two commands.
+
+* `docker build --build-arg NPM_TOKEN=<TokenValue> -t <app-name> .`
+* `docker run -p 7000:3000 <app-name>`
+
+<TokenValue> is the jwt token used to authenticate to our private NPM registry.
+
 ## Kubernetes and Draft
 We use [Kubernetes](https://kubernetes.io/) to deploy our app. [Draft](https://github.com/Azure/draft) is a great developer tool for easy kubernetes app development and building.
 
