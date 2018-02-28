@@ -1,10 +1,9 @@
 import * as d3 from "d3";
 import * as cola from "webcola";
 import { Link, Node } from "webcola";
-import { api, types } from "../client-api";
+import { api, map, types } from "../client-api";
 import { IMap} from "../data-types";
 import { CollaborativeGraph, Edge, Vertex } from "../graph";
-import * as map from "../map";
 import * as ui from "../ui";
 
 /**

@@ -4,10 +4,11 @@ imagePullPolicy: IfNotPresent
 
 historian:
   name: historian
-  image: prague.azurecr.io/historian:1341
+  image: prague.azurecr.io/historian:1582
   redis: lumpy-condor-redis
   host: historian.wu2.prague.office-int.com
   cert: wu2-tls-certificate
+  ingressClass: nginx-prod
 
 gitrest:
   name: gitrest
@@ -23,7 +24,7 @@ gitssh:
 
 cobalt:
   name: cobalt
-  image: prague.azurecr.io/cobalt:1318
+  image: prague.azurecr.io/cobalt:1544
   persistence:
     storageClass: unmanaged-premium
     size: 128Gi

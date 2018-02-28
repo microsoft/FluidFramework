@@ -1,4 +1,5 @@
 import * as git from "gitresources";
+import * as _ from "lodash";
 import * as pathApi from "path";
 import * as querystring from "querystring";
 import * as request from "request";
@@ -42,6 +43,16 @@ function buildHierarchy(flatTree: git.ITree): ITree {
     }
 
     return root;
+}
+
+function endsWith(value: string, endings: string[]): boolean {
+    for (const ending of endings) {
+        if (value.endsWith(ending)) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 export class RestGitService {
@@ -189,13 +200,26 @@ export class RestGitService {
             useCache);
     }
 
-    public async getHeader(owner: string, repo: string, sha: string, useCache: boolean): Promise<any> {
+    public async getHeader(owner: string, repo: string, sha: string, useCache: boolean): Promise<git.IHeader> {
         const version = await this.getCommit(owner, repo, sha, useCache);
 
         const key = `${version.sha}:header`;
         return this.resolve(
             key,
-            () => this.getHeaderCore(owner, repo, version, useCache),
+            async () => {
+                const rawTree = await this.getTree(owner, repo, version.tree.sha, true, useCache);
+                const legacyHeaderP = this.getLegacyHeader(owner, repo, rawTree, useCache);
+                const blobsP = this.getHeaderBlobs(owner, repo, rawTree, useCache);
+
+                const [legacyHeader, blobs] = await Promise.all([legacyHeaderP, blobsP]);
+                return {
+                    attributes: legacyHeader.attributes,
+                    blobs,
+                    distributedObjects: legacyHeader.distributedObjects,
+                    transformedMessages: legacyHeader.transformedMessages,
+                    tree: _.extend(rawTree, legacyHeader.tree),
+                };
+            },
             useCache);
     }
 
@@ -208,58 +232,74 @@ export class RestGitService {
         return `${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`;
     }
 
-    private async getHeaderCore(owner: string, repo: string, version: git.ICommit, useCache: boolean): Promise<any> {
-        // NOTE we currently grab the entire repository. Should this ever become a bottleneck we can move to manually
-        // walking and looking for entries. But this will requre more round trips.
-        const rawTree = await this.getTree(owner, repo, version.tree.sha, true, useCache);
+    private async getLegacyHeader(owner: string, repo: string, rawTree: git.ITree, useCache: boolean) {
         const tree = buildHierarchy(rawTree);
 
         // Pull out the root attributes file
-        const docAttributesSha = tree.blobs[".attributes"];
-        const objectBlobs: Array<{ id: string, headerSha: string, attributesSha: string }> = [];
+        const objectBlobs: Array<{ id: string, attributesSha: string }> = [];
         // tslint:disable-next-line:forin
         for (const path in tree.trees) {
             const entry = tree.trees[path];
-            objectBlobs.push({ id: path, headerSha: entry.blobs.header, attributesSha: entry.blobs[".attributes"] });
+            objectBlobs.push({ id: path, attributesSha: entry.blobs[".attributes"] });
         }
 
         // Pull in transformed messages between the msn and the reference
         const messagesSha = tree.blobs[".messages"];
         const messagesP = this.getBlob(owner, repo, messagesSha, useCache).then((messages) => {
             const messagesJSON = Buffer.from(messages.content, "base64").toString();
-            return JSON.parse(messagesJSON); // as api.ISequencedDocumentMessage[];
+            return JSON.parse(messagesJSON);
         });
 
         // Fetch the attributes and distirbuted object headers
+        const docAttributesSha = tree.blobs[".attributes"];
         const docAttributesP = this.getBlob(owner, repo, docAttributesSha, useCache).then((docAttributes) => {
             const attributes = Buffer.from(docAttributes.content, "base64").toString();
-            return JSON.parse(attributes); // as api.IDocumentAttributes;
+            return JSON.parse(attributes);
         });
 
-        const blobsP: Array<Promise<any>> = [];
+        const blobsP: Array<Promise<[string, any]>> = [];
         for (const blob of objectBlobs) {
-            const headerP = this.getBlob(owner, repo, blob.headerSha, useCache).then((header) => header.content);
             const attributesP = this.getBlob(owner, repo, blob.attributesSha, useCache).then((objectType) => {
                 const attributes = Buffer.from(objectType.content, "base64").toString();
                 return JSON.parse(attributes); // as api.IObjectAttributes;
             });
-            blobsP.push(Promise.all([Promise.resolve(blob.id), headerP, attributesP]));
+            blobsP.push(Promise.all([Promise.resolve(blob.id), attributesP]));
         }
 
         const fetched = await Promise.all([docAttributesP, Promise.all(blobsP), messagesP]);
-        const result = {
+        return {
             attributes: fetched[0],
-            distributedObjects: fetched[1].map((fetch) => ({
-                    header: fetch[1],
+            distributedObjects: fetched[1].map((fetch) => {
+                const distributedObject = {
                     id: fetch[0],
-                    sequenceNumber: fetch[2].sequenceNumber,
-                    type: fetch[2].type,
-            })),
+                    sequenceNumber: fetch[1].sequenceNumber,
+                    type: fetch[1].type,
+                };
+                return distributedObject;
+            }),
             transformedMessages: fetched[2],
             tree,
-        }; // as api.IDocumentHeader
+        };
+    }
 
-        return result;
+    private getHeaderBlobs(
+        owner: string,
+        repo: string,
+        tree: git.ITree,
+        useCache: boolean): Promise<git.IBlob[]> {
+
+        // List of blobs that will be included within the cached list of headers
+        const includeBlobs = [".attributes", ".messages", "header"];
+
+        const blobsP: Array<Promise<git.IBlob>> = [];
+        for (const entry of tree.tree) {
+            if (entry.type === "blob" && endsWith(entry.path, includeBlobs)) {
+                const blobP = this.getBlob(owner, repo, entry.sha, useCache);
+                blobsP.push(blobP);
+            }
+        }
+
+        return Promise.all(blobsP);
     }
 
     private get<T>(url: string): Promise<T> {

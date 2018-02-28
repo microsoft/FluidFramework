@@ -68,10 +68,10 @@ Once you are in minikube context, run:
 This will create a new container in the local registry. Draftd (the draft server) installed in minikube cluster is already configured to pull the latest image from the registry.
 
 Once done, run the following command to list all running pods.
-* `kubectl get pods --namespace tenants`
+* `kubectl get pods`
 
 Forward the port to http://localhost:7000 to start running the app.
-* `kubectl port-forward --namespace tenants <pod-name> 7000:3000`
+* `kubectl port-forward <pod-name> 7000:3000`
 
 ### Run in remote cluster
 Once everything is configured, Draft makes it incredibly simple to switch deployment between local (minikube) and prod. Just make sure to switch the context using the following command.

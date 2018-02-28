@@ -9,9 +9,11 @@ metadata:
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"
   annotations:
-    kubernetes.io/ingress.class: "nginx"
+    kubernetes.io/ingress.class: {{ .Values.ingress.class }}
     ingress.kubernetes.io/ssl-redirect: "true"
     nginx.org/websocket-services: {{ template "alfred.fullname" . }}
+    nginx.org/proxy-send-timeout: "7200s"
+    nginx.org/proxy-read-timeout: "7200s"
 spec:
   tls:
   - hosts:

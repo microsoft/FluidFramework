@@ -143,9 +143,6 @@ export interface IDistributedObject {
     // The type of the distributed object
     type: string;
 
-    // Base 64 encoded snapshot information
-    header: string;
-
     // The sequence number for the object
     sequenceNumber: number;
 }

@@ -14,8 +14,7 @@ export function ariaLogger(scribeMetrics: string, eventName: string) {
 
     for (const key in metricsObject) {
         if (metricsObject.hasOwnProperty(key)) {
-
-            event.setProperty(key,
+            event.setProperty(nameFixer(key),
                 metricsObject[key],
                 (metricsObject[key] % 1 === 0) ? aria.AWTPropertyType.Int64 : aria.AWTPropertyType.Double);
         }
@@ -28,10 +27,30 @@ export function ariaLogger(scribeMetrics: string, eventName: string) {
     });
 }
 
-// TODO: Consider running this so logs are commandline input to make it easier to add new tooling
+// TODO: Consider running this so logs are command line input to make it easier to add new tooling
 const path = process.argv[2];
 const name = process.argv[3];
 
 const json = fs.readFileSync(path, "utf8");
 
 ariaLogger(json, name);
+
+// Aria only allows alphanumeric, underscore and dot
+function nameFixer(eventName: string): string {
+    let fixedName = "";
+
+    eventName = eventName.replace(new RegExp("-[0-9]*\.*[0-9]*\.*[0-9]+", "g"), "");
+
+    for (let i = 0; i < eventName.length && i < 100; i++) {
+        const charCode = eventName.charCodeAt(i);
+        if ((charCode >= 0x30 && charCode <= 0x39) ||
+            (charCode >= 0x61 && charCode <= 0x7A) ||
+            (charCode >= 0x41 && charCode <= 0x5A) ||
+            (charCode === 0x2E) ||
+            (charCode === 0x5F)) {
+
+            fixedName += eventName.charAt(i);
+        }
+    }
+    return fixedName;
+}

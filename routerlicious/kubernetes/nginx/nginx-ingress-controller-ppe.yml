@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: nginx-ingress
+  name: nginx-ingress-ppe
 spec:
   type: LoadBalancer
   ports:
@@ -10,23 +10,23 @@ spec:
     - port: 443
       name: https
   selector:
-    k8s-app: nginx-ingress-lb
+    k8s-app: nginx-ingress-ppe-lb
 ---
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: nginx-ingress-controller
+  name: nginx-ingress-ppe-controller
 spec:
-  replicas: 1
+  replicas: 2
   revisionHistoryLimit: 2
   template:
     metadata:
       labels:
-        k8s-app: nginx-ingress-lb
+        k8s-app: nginx-ingress-ppe-lb
     spec:
       terminationGracePeriodSeconds: 60
       containers:
-        - name: nginx-ingress-controller
+        - name: nginx-ingress-ppe-controller
           image: gcr.io/google_containers/nginx-ingress-controller:0.9.0-beta.15
           imagePullPolicy: Always
           readinessProbe:
@@ -44,7 +44,8 @@ spec:
           args:
             - /nginx-ingress-controller
             - --default-backend-service=$(POD_NAMESPACE)/default-http-backend
-            - --default-ssl-certificate=$(POD_NAMESPACE)/wu2-tls-certificate
+            - --default-ssl-certificate=$(POD_NAMESPACE)/wu2-ppe-tls-certificate
+            - --ingress-class=nginx-ppe
           env:
             - name: POD_NAME
               valueFrom:
