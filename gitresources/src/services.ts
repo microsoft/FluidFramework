@@ -9,18 +9,6 @@ export interface ISnapshotTree {
  * Document header returned from the server
  */
 export interface IHeader {
-    // Deprecated
-    // Attributes for the document
-    attributes: any;
-
-    // Deprecated
-    // Distributed objects contained within the document
-    distributedObjects: any[];
-
-    // Deprecated
-    // The transformed messages between the minimum sequence number and sequenceNumber
-    transformedMessages: any[];
-
     // Tree representing all blobs in the snapshot
     tree: ISnapshotTree & git.ITree;
 
