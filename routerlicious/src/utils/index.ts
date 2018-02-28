@@ -5,8 +5,6 @@ export * from "./logger";
 export * from "./mongo";
 export * from "./response";
 export * from "./runner";
-export * from "./messages";
-export * from "./auth";
 
 export interface ISharedAccessPolicy {
     sharedAccessKeyName: string;

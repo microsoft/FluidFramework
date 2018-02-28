@@ -3,10 +3,11 @@
 // const historian = "http://localhost:3001";
 const routerlicious = "http://praguekube.westus2.cloudapp.azure.com";
 const historian = "http://prague-historian.westus2.cloudapp.azure.com";
+const owner = "prague";
 const repository = "prague";
 
 // Register endpoint connection
-prague.socketStorage.registerAsDefault(routerlicious, historian, repository);
+prague.socketStorage.registerAsDefault(routerlicious, historian, owner, repository);
 
 async function run(id: string): Promise<void> {
     // Load in the latest and connect to the document
@@ -46,7 +47,7 @@ async function run(id: string): Promise<void> {
     };
 }
 
-const documentId = "test-document-niode-201";
+const documentId = "test-document-0228";
 run(documentId).catch((error) => {
     console.error(error);
 })

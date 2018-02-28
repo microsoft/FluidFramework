@@ -3,8 +3,8 @@
 //   ../assert
 //   ../debug
 //   ../socket.io-client
-//   ../gitresources
 //   ../events
+//   ../gitresources
 
 declare module 'prague' {
     import * as api from "prague/api";
@@ -17,10 +17,12 @@ declare module 'prague' {
     export { utils };
     import * as types from "prague/data-types";
     export { types };
-    import * as ink from "prague/ink";
-    export { ink };
+    import * as stream from "prague/stream";
+    export { stream };
     import * as map from "prague/map";
     export { map };
+    import * as graph from "prague/graph";
+    export { graph };
     import * as MergeTree from "prague/merge-tree";
     export { MergeTree };
     import * as socketStorage from "prague/socket-storage";
@@ -45,52 +47,23 @@ declare module 'prague/api-core' {
     export * from "prague/api-core/extension";
     export * from "prague/api-core/protocol";
     export * from "prague/api-core/storage";
+    export * from "prague/api-core/tenant";
     export * from "prague/api-core/types";
     export * from "prague/api-core/deltaManager";
     export * from "prague/api-core/localObjectStorageService";
     export * from "prague/api-core/objectStorageService";
-    export * from "prague/api-core/idleDeltaConnection";
 }
 
 declare module 'prague/cell' {
-    import * as resources from "gitresources";
-    import * as api from "prague/api-core";
-    import { ICell } from "prague/data-types";
-    /**
-        * Cell snapshot definition
-        */
-    export interface ICellSnapshot {
-            minimumSequenceNumber: number;
-            offset: number;
-            sequenceNumber: number;
-            snapshot: any;
-    }
-    export enum CellValueType {
-            Collaborative = 0,
-            Plain = 1,
-    }
-    export interface ICollaborativeCellValue {
-            type: string;
-            id: string;
-    }
-    export interface ICellValue {
-            type: string;
-            value: any;
-    }
-    /**
-        * The extension that defines the map
-        */
-    export class CellExtension implements api.IExtension {
-            static Type: string;
-            type: string;
-            load(document: api.IDocument, id: string, sequenceNumber: number, services: api.IDistributedObjectServices, version: resources.ICommit, headerOrigin: string, header: string): ICell;
-            create(document: api.IDocument, id: string): ICell;
-    }
+    export * from "prague/cell/extension";
+    export * from "prague/cell/cell";
 }
 
 declare module 'prague/core-utils' {
+    export * from "prague/core-utils/auth";
     export * from "prague/core-utils/batchManager";
     export * from "prague/core-utils/counters";
+    export * from "prague/core-utils/messages";
     export * from "prague/core-utils/promises";
     export * from "prague/core-utils/rangeTracker";
     export * from "prague/core-utils/utils";
@@ -99,21 +72,33 @@ declare module 'prague/core-utils' {
 declare module 'prague/data-types' {
     export * from "prague/data-types/cell";
     export * from "prague/data-types/map";
+    export * from "prague/data-types/set";
     export * from "prague/data-types/stream";
+    export * from "prague/data-types/graph";
 }
 
-declare module 'prague/ink' {
-    export * from "prague/ink/extension";
-    export * from "prague/ink/snapshot";
+declare module 'prague/stream' {
+    export * from "prague/stream/extension";
+    export * from "prague/stream/snapshot";
 }
 
 declare module 'prague/map' {
+    export * from "prague/map/array";
+    export * from "prague/map/counter";
+    export * from "prague/map/extension";
     export * from "prague/map/map";
+    export * from "prague/map/set";
+    export * from "prague/map/view";
+}
+
+declare module 'prague/graph' {
+    export * from "prague/graph/graph";
 }
 
 declare module 'prague/merge-tree' {
     import * as Collections from "prague/merge-tree/collections";
     export { Collections };
+    export * from "prague/merge-tree/extension";
     export * from "prague/merge-tree/mergeTree";
     export * from "prague/merge-tree/ops";
     export * from "prague/merge-tree/sharedString";
@@ -125,18 +110,22 @@ declare module 'prague/socket-storage' {
     export * from "prague/socket-storage/messages";
     export * from "prague/socket-storage/deltaStorageService";
     export * from "prague/socket-storage/documentService";
-    export * from "prague/socket-storage/loadService";
     export * from "prague/socket-storage/blobStorageService";
     export * from "prague/socket-storage/registration";
 }
 
 declare module 'prague/api/document' {
+    import { EventEmitter } from "events";
     import * as resources from "gitresources";
-    import { ICollaborativeObject, IDistributedObjectServices, IDocumentService, IEnvelope, IExtension, ILatencyMessage, Registry } from "prague/api-core";
-    import { ICell, IInk, IMap } from "prague/data-types";
+    import { ICollaborativeObject, ICollaborativeObjectSave, IDeltaConnection, IDistributedObjectServices, IDocumentService, IEnvelope, IExtension, ILatencyMessage, IObjectStorageService, Registry } from "prague/api-core";
+    import { ICell, IMap, IStream } from "prague/data-types";
     import * as mergeTree from "prague/merge-tree";
     export const defaultRegistry: Registry;
     export const defaultDocumentOptions: any;
+    export interface IAttachedServices {
+            deltaConnection: IDeltaConnection;
+            objectStorage: IObjectStorageService;
+    }
     export function registerExtension(extension: IExtension): void;
     /**
         * Registers the default services to use for interacting with collaborative documents. To simplify the API it is
@@ -148,11 +137,14 @@ declare module 'prague/api/document' {
     /**
         * A document is a collection of collaborative types.
         */
-    export class Document {
-            static Create(id: string, registry: Registry, service: IDocumentService, options: Object, version: resources.ICommit, connect: boolean): Promise<Document>;
+    export class Document extends EventEmitter {
             static Load(id: string, registry: Registry, service: IDocumentService, options: Object, version: resources.ICommit, connect: boolean): Promise<Document>;
             readonly clientId: string;
             readonly id: string;
+            /**
+                * Flag indicating whether the document already existed at the time of load
+                */
+            readonly existing: boolean;
             /**
                 * Returns the parent branch for this document
                 */
@@ -171,7 +163,7 @@ declare module 'prague/api/document' {
                 *
                 * @param id Identifier of the object to load
                 */
-            get(id: string): ICollaborativeObject;
+            get(id: string): Promise<ICollaborativeObject>;
             /**
                 * Attaches the given object to the document which also makes it available to collaborators. The object is
                 * expected to immediately submit delta messages for itself once being attached.
@@ -195,55 +187,62 @@ declare module 'prague/api/document' {
             /**
                 * Creates a new ink collaborative object
                 */
-            createInk(): IInk;
+            createStream(): IStream;
             /**
                 * Retrieves the root collaborative object that the document is based on
                 */
             getRoot(): IMap;
             /**
+                * Saves the document by performing a snapshot.
+                */
+            save(tag?: string): void;
+            /**
                 * Closes the document and detaches all listeners
                 */
             close(): void;
             submitObjectMessage(envelope: IEnvelope): Promise<void>;
+            submitSaveMessage(message: ICollaborativeObjectSave): Promise<void>;
             submitLatencyMessage(message: ILatencyMessage): void;
-            on(event: string, listener: (...args: any[]) => void): this;
-            removeListener(event: string, listener: (...args: any[]) => void): this;
             branch(): Promise<string>;
             /**
                 * Called to snapshot the given document
                 */
-            snapshot(): Promise<void>;
+            snapshot(tagMessage?: string): Promise<void>;
+            /**
+                * Returns the user id connected to the document.
+                */
+            getUser(): any;
     }
-    /**
-        * Loads a collaborative object from the server
-        */
-    export function load(id: string, options?: Object, version?: resources.ICommit, registry?: Registry, service?: IDocumentService, connect?: boolean): Promise<Document>;
     /**
         * Loads a specific version (commit) of the collaborative object
         */
-    export function loadVersion(id: string, options?: Object, version?: resources.ICommit, registry?: Registry, service?: IDocumentService, connect?: boolean): Promise<Document>;
+    export function load(id: string, options?: Object, version?: resources.ICommit, connect?: boolean, registry?: Registry, service?: IDocumentService): Promise<Document>;
 }
 
 declare module 'prague/api-core/collaborativeObject' {
     import { EventEmitter } from "events";
-    import { IDistributedObjectServices, IDocument } from "prague/api-core/document";
+    import { ICommit } from "gitresources";
+    import { IDistributedObjectServices, IDocument, IObjectStorageService } from "prague/api-core/document";
     import { IObjectMessage, ISequencedObjectMessage } from "prague/api-core/protocol";
     import { ITree } from "prague/api-core/storage";
     import { ICollaborativeObject } from "prague/api-core/types";
-    export abstract class CollaborativeObject implements ICollaborativeObject {
-            protected document: IDocument;
+    export abstract class CollaborativeObject extends EventEmitter implements ICollaborativeObject {
             id: string;
+            protected document: IDocument;
             type: string;
-            protected services: IDistributedObjectServices;
             __collaborativeObject__: boolean;
-            protected events: EventEmitter;
             readonly sequenceNumber: number;
-            readonly minimumSequenceNumber: number;
-            readonly referenceSequenceNumber: number;
-            constructor(document: IDocument, id: string, type: string, sequenceNum: number, services?: IDistributedObjectServices);
-            on(event: string, listener: (...args: any[]) => void): this;
-            removeListener(event: string, listener: (...args: any[]) => void): this;
-            removeAllListeners(event?: string): this;
+            constructor(id: string, document: IDocument, type: string);
+            /**
+                * A collaborative object, after construction, can either be loaded in the case that it is already part of
+                * a collaborative document. Or later attached if it is being newly added.
+                */
+            load(sequenceNumber: number, version: ICommit, headerOrigin: string, services: IDistributedObjectServices): Promise<void>;
+            /**
+                * Initializes the object as a local, non-collaborative object. This object can become collaborative after
+                * it is attached to the document.
+                */
+            initializeLocal(): void;
             /**
                 * Attaches the given collaborative object to its containing document
                 */
@@ -260,34 +259,48 @@ declare module 'prague/api-core/collaborativeObject' {
                 * Creates a new message from the provided message that is relative to the given sequenceNumber. It is valid
                 * to modify the passed in object in place.
                 */
-            transform(message: IObjectMessage, sequenceNumber: number): IObjectMessage;
+            abstract transform(message: IObjectMessage, sequenceNumber: number): IObjectMessage;
             /**
-                * Allows the distributive data type the ability to perform custom processing prior to a delta
-                * being submitted to the server
+                * Allows the distributed data type to perform custom loading
                 */
-            protected submitCore(message: IObjectMessage): void;
+            protected abstract loadCore(version: ICommit, headerOrigin: string, services: IObjectStorageService): Promise<void>;
+            /**
+                * Allows the distributed data type to perform custom local loading
+                */
+            protected abstract initializeLocalCore(): any;
             /**
                 * Allows the distributive data type the ability to perform custom processing once an attach has happened
                 */
-            protected attachCore(): void;
-            protected abstract processCore(message: ISequencedObjectMessage): any;
+            protected abstract attachCore(): any;
+            /**
+                * Prepares the given message for processing
+                */
+            protected abstract prepareCore(message: ISequencedObjectMessage): Promise<void>;
+            /**
+                * Derived classes must override this to do custom processing on a remote message
+                */
+            protected abstract processCore(message: ISequencedObjectMessage, context: any): any;
+            /**
+                * Method called when the minimum sequence number for the object has changed
+                */
             protected abstract processMinSequenceNumberChanged(value: number): any;
             /**
                 * Processes a message by the local client
                 */
-            protected submitLocalOperation(contents: any): void;
+            protected submitLocalMessage(contents: any): void;
     }
 }
 
 declare module 'prague/api-core/deltaConnection' {
-    import { EventEmitter } from "events";
-    import { IDeltaConnection, IDocument } from "prague/api-core/document";
-    import { IBranchOrigin, IObjectMessage, ITrace } from "prague/api-core/protocol";
+    import { IDeltaConnection, IDeltaHandler, IDocument } from "prague/api-core/document";
+    import { IObjectMessage, ISequencedDocumentMessage, ISequencedObjectMessage } from "prague/api-core/protocol";
+    export interface IMessageContext {
+            objectMessage: ISequencedObjectMessage;
+            handlerContext: any;
+    }
     export class DeltaConnection implements IDeltaConnection {
             objectId: string;
-            protected events: EventEmitter;
             readonly minimumSequenceNumber: number;
-            readonly referenceSequenceNumber: number;
             /**
                 * The lowest sequence number tracked by this map. Will normally be the document minimum
                 * sequence number but may be higher in the case of an attach after the MSN.
@@ -298,12 +311,13 @@ declare module 'prague/api-core/deltaConnection' {
                 * Sets the base mapping from a local sequence number to the document sequence number that matches it
                 */
             setBaseMapping(sequenceNumber: number, documentSequenceNumber: number): void;
+            attach(handler: IDeltaHandler): void;
             /**
                 * Returns whether or not setBaseMapping has been called
                 */
             baseMappingIsSet(): boolean;
-            on(event: string, listener: (...args: any[]) => void): this;
-            emit(message: IObjectMessage, clientId: string, documentSequenceNumber: number, documentMinimumSequenceNumber: number, origin: IBranchOrigin, traces: ITrace[]): void;
+            prepare(message: ISequencedDocumentMessage): Promise<IMessageContext>;
+            process(message: ISequencedDocumentMessage, context: IMessageContext): void;
             transformDocumentSequenceNumber(value: number): number;
             updateMinSequenceNumber(value: number): void;
             /**
@@ -317,13 +331,33 @@ declare module 'prague/api-core/deltaManager' {
     import * as protocol from "prague/api-core/protocol";
     import * as storage from "prague/api-core/storage";
     /**
+        * Interface used to define a strategy for handling incoming delta messages
+        */
+    export interface IDeltaHandlerStrategy {
+            /**
+                * Preparess data necessary to process the message. The return value of the method will be passed to the process
+                * function.
+                */
+            prepare: (message: protocol.ISequencedDocumentMessage) => Promise<any>;
+            /**
+                * Processes the message. The return value from prepare is passed in the context parameter.
+                */
+            process: (message: protocol.ISequencedDocumentMessage, context: any) => void;
+    }
+    /**
         * Helper class that manages incoming delta messages. This class ensures that collaborative objects receive delta
         * messages in order regardless of possible network conditions or timings causing out of order delivery.
         */
     export class DeltaManager {
             readonly referenceSequenceNumber: number;
             readonly minimumSequenceNumber: number;
-            constructor(documentId: string, baseSequenceNumber: number, deltaStorage: storage.IDocumentDeltaStorageService, deltaConnection: storage.IDocumentDeltaConnection);
+            constructor(baseSequenceNumber: number, pendingMessages: protocol.ISequencedDocumentMessage[], deltaStorage: storage.IDocumentDeltaStorageService, deltaConnection: storage.IDocumentDeltaConnection, handler: IDeltaHandlerStrategy);
+            /**
+                * Flushes all pending tasks and returns a promise for when they are completed. The queue is marked as paused
+                * upon return.
+                */
+            flushAndPause(): Promise<void>;
+            start(): void;
             /**
                 * Submits a new delta operation
                 */
@@ -332,14 +366,12 @@ declare module 'prague/api-core/deltaManager' {
                 * Submits an acked roundtrip operation.
                 */
             submitRoundtrip(type: string, contents: protocol.ILatencyMessage): Promise<void>;
-            onDelta(listener: (message: protocol.ISequencedDocumentMessage) => void): void;
-            handleOp(message: protocol.ISequencedDocumentMessage): void;
     }
 }
 
 declare module 'prague/api-core/document' {
-    import { IBranchOrigin, IEnvelope, ILatencyMessage, IObjectMessage, ITrace } from "prague/api-core/protocol";
-    import { ICollaborativeObject } from "prague/api-core/types";
+    import { IEnvelope, ILatencyMessage, IObjectMessage, ISequencedObjectMessage } from "prague/api-core/protocol";
+    import { ICollaborativeObject, ICollaborativeObjectSave } from "prague/api-core/types";
     export interface IObjectStorageService {
             /**
                 * Reads the object contained at the given path. Returns a base64 string representation for the object.
@@ -350,35 +382,34 @@ declare module 'prague/api-core/document' {
             deltaConnection: IDeltaConnection;
             objectStorage: IObjectStorageService;
     }
+    export interface IDeltaHandler {
+            prepare: (message: ISequencedObjectMessage) => Promise<any>;
+            process: (message: ISequencedObjectMessage, context: any) => void;
+            minSequenceNumberChanged: (value: number) => void;
+    }
     /**
-        * Interface to represent a connection to a delta notification stream
+        * Interface to represent a connection to a delta notification stream.
         */
     export interface IDeltaConnection {
-            minimumSequenceNumber: number;
-            referenceSequenceNumber: number;
-            baseSequenceNumber: number;
-            /**
-                * Subscribe to events emitted by the object
-                */
-            on(event: string, listener: Function): this;
             /**
                 * Send new messages to the server
                 */
             submit(message: IObjectMessage): Promise<void>;
-            setBaseMapping(sequenceNumber: number, documentSequenceNumber: number): any;
-            baseMappingIsSet(): boolean;
-            transformDocumentSequenceNumber(value: number): any;
-            emit(message: IObjectMessage, clientId: string, documentSequenceNumber: number, documentMinimumSequenceNumber: number, origin: IBranchOrigin, traces: ITrace[]): any;
-            updateMinSequenceNumber(value: number): any;
+            /**
+                * Attaches a message handler to the delta connection
+                */
+            attach(handler: IDeltaHandler): void;
     }
     export interface IDocument {
             id: string;
             clientId: string;
             options: Object;
+            create(type: string, id?: string): ICollaborativeObject;
             attach(object: ICollaborativeObject): IDistributedObjectServices;
-            get(id: string): ICollaborativeObject;
+            get(id: string): Promise<ICollaborativeObject>;
             submitObjectMessage(envelope: IEnvelope): any;
             submitLatencyMessage(message: ILatencyMessage): any;
+            submitSaveMessage(message: ICollaborativeObjectSave): any;
     }
 }
 
@@ -406,7 +437,7 @@ declare module 'prague/api-core/extension' {
                 * for the given object? The latter seems good in general. But both are probably good things. We then just
                 * need a way to allow the document to provide later storage for the object.
                 */
-            load(document: IDocument, id: string, sequenceNumber: number, services: IDistributedObjectServices, version: resources.ICommit, headerOrigin: string, header: string): types.ICollaborativeObject;
+            load(document: IDocument, id: string, sequenceNumber: number, services: IDistributedObjectServices, version: resources.ICommit, headerOrigin: string): Promise<types.ICollaborativeObject>;
             /**
                 * Creates a local version of the distributive object.
                 *
@@ -439,6 +470,7 @@ declare module 'prague/api-core/protocol' {
     export const OperationType = "op";
     export const NoOp = "noop";
     export const ObjectOperation = "objOp";
+    export const SaveOperation = "saveOp";
     export const AttachObject = "attach";
     export const ClientJoin = "join";
     export const ClientLeave = "leave";
@@ -536,6 +568,7 @@ declare module 'prague/api-core/protocol' {
 
 declare module 'prague/api-core/storage' {
     import * as resources from "gitresources";
+    import { IAuthenticatedUser } from "prague/core-utils";
     import { IDocumentMessage, ISequencedDocumentMessage } from "prague/api-core/protocol";
     export interface IDocumentAttributes {
             /**
@@ -632,22 +665,12 @@ declare module 'prague/api-core/storage' {
             };
     }
     /**
-        * Document header returned from the server
-        */
-    export interface IDocumentHeader {
-            attributes: IDocumentAttributes;
-            distributedObjects: IDistributedObject[];
-            transformedMessages: ISequencedDocumentMessage[];
-            tree: ISnapshotTree;
-    }
-    /**
         * A distributed object is enough information to fully load a distributed object. The object may then require
         * a server call to load in more state.
         */
     export interface IDistributedObject {
             id: string;
             type: string;
-            header: string;
             sequenceNumber: number;
     }
     export interface IDocumentDeltaConnection {
@@ -685,6 +708,10 @@ declare module 'prague/api-core/storage' {
             dispatchEvent(name: string, ...args: any[]): any;
     }
     export interface IDocumentResource {
+            /**
+                * User connecting to the document.
+                */
+            user: IAuthenticatedUser;
             /**
                 * Client identifier for this session
                 */
@@ -747,7 +774,7 @@ declare module 'prague/api-core/storage' {
             parentBranch: string;
     }
     export interface IDocumentService {
-            connect(id: string, version: resources.ICommit, connect: boolean, encrypted: boolean): Promise<IDocumentResource>;
+            connect(id: string, version: resources.ICommit, connect: boolean, encrypted: boolean, token?: string): Promise<IDocumentResource>;
             /**
                 * Creates a branch of the document with the given ID. Returns the new ID.
                 */
@@ -755,9 +782,9 @@ declare module 'prague/api-core/storage' {
     }
     export interface IBlobStorageService {
             /**
-                * Returns the header.
+                * Returns the snapshot tree.
                 */
-            getHeader(id: string, version: resources.ICommit): Promise<IDocumentHeader>;
+            getSnapshotTree(id: string, version: resources.ICommit): Promise<ISnapshotTree>;
             /**
                 * Reads the blob content.
                 */
@@ -769,15 +796,50 @@ declare module 'prague/api-core/storage' {
     }
 }
 
+declare module 'prague/api-core/tenant' {
+    import { GitManager } from "prague/git-storage";
+    export interface ITenantStorage {
+        url: string;
+        publicUrl: string;
+        owner: string;
+        repository: string;
+        /**
+          * (optional) Direct access to storage historian is providing cached access to
+          */
+        direct?: string;
+        credentials?: {
+            user: string;
+            password: string;
+        };
+    }
+    export interface ITenantConfig {
+        name: string;
+        storage: ITenantStorage;
+        isDefault?: boolean;
+    }
+    export interface ITenant {
+        gitManager: GitManager;
+        storage: ITenantStorage;
+    }
+    export interface ITenantManager {
+        getTenant(tenantid: string): ITenant;
+    }
+}
+
 declare module 'prague/api-core/types' {
     import * as protocol from "prague/api-core/protocol";
     import * as storage from "prague/api-core/storage";
+    export const SAVE = "save";
     /**
         * Helper interface to wrap a snapshot with the sequence number it was taken at
         */
     export interface ICollaborativeObjectSnapshot {
             sequenceNumber: number;
             snapshot: any;
+    }
+    export interface ICollaborativeObjectSave {
+            type: string;
+            message: string;
     }
     export interface ICollaborativeObject {
             /**
@@ -795,15 +857,11 @@ declare module 'prague/api-core/types' {
             /**
                 * Attaches an event listener for the given event
                 */
-            on(event: string, listener: Function): this;
+            on(event: string | symbol, listener: (...args: any[]) => void): this;
             /**
                 * Removes the specified listenever
                 */
-            removeListener(event: string, listener: Function): this;
-            /**
-                * Removes all listeners, or those of the specified event name
-                */
-            removeAllListeners(event?: string): this;
+            removeListener(event: string | symbol, listener: (...args: any[]) => void): this;
             /**
                 * Attaches the given collaborative object to its containing document
                 */
@@ -813,9 +871,7 @@ declare module 'prague/api-core/types' {
                 */
             isLocal(): boolean;
             /**
-                * Gets a form of the object that can be serialized.
-                * TODO this is temporary to bootstrap the process. For performance/dynamic load/etc... we'll likely expose
-                * access to the snapshot behind the storage objects.
+                * Snapshots the object
                 */
             snapshot(): storage.ITree;
             /**
@@ -847,34 +903,83 @@ declare module 'prague/api-core/objectStorageService' {
     }
 }
 
-declare module 'prague/api-core/idleDeltaConnection' {
-    import { IDeltaConnection, IDocument } from "prague/api-core/document";
-    import { IBranchOrigin, IObjectMessage, ITrace } from "prague/api-core/protocol";
-    export class IdleDeltaConnection implements IDeltaConnection {
-        objectId: string;
-        document: IDocument;
-        minSequenceNumber: number;
-        refSequenceNumber: number;
-        readonly minimumSequenceNumber: number;
-        readonly referenceSequenceNumber: number;
-        readonly baseSequenceNumber: number;
-        constructor(objectId: string, document: IDocument);
-        setBaseMapping(sequenceNumber: number, documentSequenceNumber: number): void;
-        baseMappingIsSet(): boolean;
-        on(event: string, listener: (...args: any[]) => void): this;
-        emit(message: IObjectMessage, clientId: string, documentSequenceNumber: number, documentMinimumSequenceNumber: number, origin: IBranchOrigin, traces: ITrace[]): void;
-        transformDocumentSequenceNumber(value: number): void;
-        updateMinSequenceNumber(value: number): void;
-        /**
-          * Send new messages to the server
-          */
-        submit(message: IObjectMessage): Promise<void>;
+declare module 'prague/cell/extension' {
+    import * as resources from "gitresources";
+    import * as api from "prague/api-core";
+    import { ICell } from "prague/data-types";
+    /**
+      * The extension that defines the map
+      */
+    export class CellExtension implements api.IExtension {
+        static Type: string;
+        type: string;
+        load(document: api.IDocument, id: string, sequenceNumber: number, services: api.IDistributedObjectServices, version: resources.ICommit, headerOrigin: string): Promise<ICell>;
+        create(document: api.IDocument, id: string): ICell;
     }
+}
+
+declare module 'prague/cell/cell' {
+    import * as resources from "gitresources";
+    import * as api from "prague/api-core";
+    import { ICell } from "prague/data-types";
+    /**
+        * Cell snapshot definition
+        */
+    export interface ICellSnapshot {
+            minimumSequenceNumber: number;
+            offset: number;
+            sequenceNumber: number;
+            snapshot: any;
+    }
+    export enum CellValueType {
+            Collaborative = 0,
+            Plain = 1,
+    }
+    export interface ICellValue {
+            type: string;
+            value: any;
+    }
+    /**
+        * Implementation of a cell collaborative object
+        */
+    export class Cell extends api.CollaborativeObject implements ICell {
+            /**
+                * Constructs a new collaborative cell. If the object is non-local an id and service interfaces will
+                * be provided
+                */
+            constructor(id: string, document: api.IDocument);
+            /**
+                * Retrieves the value of the cell.
+                */
+            get(): Promise<any>;
+            /**
+                * Sets the value of the cell.
+                */
+            set(value: any): Promise<void>;
+            delete(): Promise<void>;
+            /**
+                * Returns whether cell is empty or not.
+                */
+            empty(): Promise<boolean>;
+            snapshot(): api.ITree;
+            transform(message: api.IObjectMessage, sequenceNumber: number): api.IObjectMessage;
+            protected loadCore(version: resources.ICommit, headerOrigin: string, storage: api.IObjectStorageService): Promise<void>;
+            protected initializeLocalCore(): void;
+            protected attachCore(): void;
+            protected prepareCore(message: api.ISequencedObjectMessage): Promise<any>;
+            protected processCore(message: api.ISequencedObjectMessage, context: any): void;
+            protected processMinSequenceNumberChanged(value: number): void;
+    }
+}
+
+declare module 'prague/core-utils/auth' {
+    import { IAuthenticatedUser } from "prague/core-utils/messages";
+    export function verifyAuthToken(service: string, authToken: any): Promise<IAuthenticatedUser>;
 }
 
 declare module 'prague/core-utils/batchManager' {
     export class BatchManager<T> {
-        constructor(process: (id: string, work: T[]) => void);
+        constructor(process: (id: string, work: T[]) => void, batchSize?: number);
         add(id: string, work: T): void;
         /**
           * Resolves once all pending work is complete
@@ -941,6 +1046,14 @@ declare module 'prague/core-utils/counters' {
     }
 }
 
+declare module 'prague/core-utils/messages' {
+    export interface IAuthenticatedUser {
+        user: any;
+        tenantid: string;
+        permission: string;
+    }
+}
+
 declare module 'prague/core-utils/promises' {
     /**
         * A deferred creates a promise and the ability to resolve or reject it
@@ -960,6 +1073,10 @@ declare module 'prague/core-utils/promises' {
                 */
             reject(error: any): void;
     }
+    /**
+        * Helper function that asserts that the given promise only resolves
+        */
+    export function assertNotRejected<T>(promise: Promise<T>): Promise<T>;
 }
 
 declare module 'prague/core-utils/rangeTracker' {
@@ -1028,6 +1145,7 @@ declare module 'prague/data-types/cell' {
 
 declare module 'prague/data-types/map' {
     import { ICollaborativeObject } from "prague/api-core";
+    export type SerializeFilter = (key: string, serializedValue: any, type: string) => any;
     /**
         * Type of "valueChanged" event parameter
         */
@@ -1041,11 +1159,48 @@ declare module 'prague/data-types/map' {
             key: string;
             value: any;
     }
+    export interface IValueOpEmitter {
+            emit(name: string, params: any): any;
+    }
+    /**
+        * A value factory is used to serialize/deserialize values to a map
+        */
+    export interface IValueFactory<T> {
+            load(emitter: IValueOpEmitter, raw: any): T;
+            store(value: T): any;
+    }
+    export interface IValueOperation<T> {
+            /**
+                * Allows the handler to prepare for the operation
+                */
+            prepare(old: T, params: any): Promise<any>;
+            /**
+                * Performs the actual processing on the operation
+                */
+            process(old: T, params: any, context: any): T;
+    }
+    /**
+        * Used to register a new value type on a map
+        */
+    export interface IValueType<T> {
+            /**
+                * Name of the value type
+                */
+            name: string;
+            /**
+                * Factory method used to convert to/from a JSON form of the type
+                */
+            factory: IValueFactory<T>;
+            /**
+                * Operations that can be applied to the value
+                */
+            ops: Map<string, IValueOperation<T>>;
+    }
     export interface IMapView {
             /**
                 * Retrieves the given key from the map
                 */
-            get(key: string): any;
+            get<T = any>(key: string): T;
             /**
                 * A form of get except it will only resolve the promise once the key exists in the map.
                 */
@@ -1057,7 +1212,7 @@ declare module 'prague/data-types/map' {
             /**
                 * Sets the key to the provided value
                 */
-            set(key: string, value: any): void;
+            set<T = any>(key: string, value: T | any, type?: string): T;
             /**
                 * Deletes the specified key from the map and returns the value of the key at the time of deletion.
                 */
@@ -1082,7 +1237,7 @@ declare module 'prague/data-types/map' {
             /**
                 * Retrieves the given key from the map
                 */
-            get(key: string): Promise<any>;
+            get<T = any>(key: string): Promise<T>;
             /**
                 * A form of get except it will only resolve the promise once the key exists in the map.
                 */
@@ -1092,9 +1247,10 @@ declare module 'prague/data-types/map' {
                 */
             has(key: string): Promise<boolean>;
             /**
-                * Sets the key to the provided value
+                * Sets the key to the provided value. An optional type can be specified to initialize the key
+                * to one of the registered value types.
                 */
-            set(key: string, value: any): Promise<void>;
+            set<T = any>(key: string, value: T | any, type?: string): T;
             /**
                 * Deletes the specified key from the map and returns the value of the key at the time of deletion.
                 */
@@ -1112,47 +1268,22 @@ declare module 'prague/data-types/map' {
                 */
             getView(): Promise<IMapView>;
             /**
-                * Creates a counter inside the map.
+                * Registers a new operation on the map
                 */
-            createCounter(key: string, value?: number, min?: number, max?: number): ICounter;
+            registerValueType<T>(type: IValueType<T>): any;
             /**
-                * Creates a set inside the map.
+                * Registers a custom filter to provide extra processing on the condensed log.
+                * This is a very advanced feature and should be used with extreme caution.
                 */
-            createSet<T>(key: string, value?: T[]): ISet<T>;
+            registerSerializeFilter(filter: SerializeFilter): any;
     }
-    /**
-        * Counter interface
-        */
-    export interface ICounter {
-            /**
-                * Increment/decrement the underlying value.
-                */
-            increment(value: number): ICounter;
-            /**
-                * Returns the underlying value.
-                */
-            get(): number;
-    }
-    /**
-        * Set interface
-        */
+}
+
+declare module 'prague/data-types/set' {
     export interface ISet<T> {
-            /**
-                * Inserts an element to the set.
-                */
-            add(value: T): ISet<T>;
-            /**
-                * Deletes an element from the set.
-                */
-            delete(value: T): ISet<T>;
-            /**
-                * Returns elements of the set as an array.
-                */
-            entries(): any[];
-            /**
-                * Returns the underlying set.
-                */
-            getInternalSet(): Set<T>;
+        add(value: T): ISet<T>;
+        delete(value: T): ISet<T>;
+        entries(): T[];
     }
 }
 
@@ -1199,7 +1330,7 @@ declare module 'prague/data-types/stream' {
         * Helper function to retrieve the ID of the stylus operation
         */
     export function getStylusId(operation: IOperation): string;
-    export interface IInk extends api.ICollaborativeObject {
+    export interface IStream extends api.ICollaborativeObject {
             getLayers(): IInkLayer[];
             getLayer(key: string): IInkLayer;
             submitOp(op: IDelta): any;
@@ -1249,25 +1380,47 @@ declare module 'prague/data-types/stream' {
     export interface IDelta {
             operations: IOperation[];
     }
-    export interface IInk extends api.ICollaborativeObject {
+    export interface IStream extends api.ICollaborativeObject {
             getLayers(): IInkLayer[];
             getLayer(key: string): IInkLayer;
             submitOp(op: IDelta): any;
     }
 }
 
-declare module 'prague/ink/extension' {
+declare module 'prague/data-types/graph' {
+    import { ISet } from "prague/data-types";
+    /**
+      * Collaborative graph interface
+      */
+    export interface IGraph {
+        getVertices(): ISet<any>;
+        getEdges(): ISet<any>;
+        addVertex(id: number, label: string): any;
+        addEdge(nodeId1: number, nodeId2: number, label: string): any;
+    }
+    export interface IVertex {
+        id: number;
+        label: string;
+    }
+    export interface IEdge {
+        nodeId1: number;
+        nodeId2: number;
+        label: string;
+    }
+}
+
+declare module 'prague/stream/extension' {
     import * as resources from "gitresources";
     import * as api from "prague/api-core";
-    export class InkExtension implements api.IExtension {
+    export class StreamExtension implements api.IExtension {
         static Type: string;
         type: string;
-        load(document: api.IDocument, id: string, sequenceNumber: number, services: api.IDistributedObjectServices, version: resources.ICommit, headerOrigin: string, header: string): api.ICollaborativeObject;
+        load(document: api.IDocument, id: string, sequenceNumber: number, services: api.IDistributedObjectServices, version: resources.ICommit, headerOrigin: string): Promise<api.ICollaborativeObject>;
         create(document: api.IDocument, id: string): api.ICollaborativeObject;
     }
 }
 
-declare module 'prague/ink/snapshot' {
+declare module 'prague/stream/snapshot' {
     import { IDelta, IInkLayer, IOperation } from "prague/data-types";
     export interface ISnapshot {
         layers: IInkLayer[];
@@ -1289,61 +1442,73 @@ declare module 'prague/ink/snapshot' {
     }
 }
 
-declare module 'prague/map/map' {
-    import { EventEmitter } from "events";
+declare module 'prague/map/array' {
+    import { IValueFactory, IValueOpEmitter, IValueOperation, IValueType } from "prague/data-types";
+    export class DistributedArrayFactory<T> implements IValueFactory<DistributedArray<T>> {
+        load(emitter: IValueOpEmitter, raw: any[]): DistributedArray<T>;
+        store(value: DistributedArray<T>): any[];
+    }
+    export class DistributedArray<T> {
+        readonly value: T[];
+        constructor(emitter: IValueOpEmitter, value: T[]);
+        insertAt(index: number, value: T, submitEvent?: boolean): DistributedArray<T>;
+    }
+    export class DistributedArrayValueType implements IValueType<DistributedArray<any>> {
+        static Name: string;
+        readonly name: string;
+        readonly factory: IValueFactory<DistributedArray<any>>;
+        readonly ops: Map<string, IValueOperation<DistributedArray<any>>>;
+        constructor();
+    }
+}
+
+declare module 'prague/map/counter' {
+    import { IValueFactory, IValueOpEmitter, IValueOperation, IValueType } from "prague/data-types";
+    export class CounterFactory implements IValueFactory<Counter> {
+        load(emitter: IValueOpEmitter, raw: number): Counter;
+        store(value: Counter): number;
+    }
+    export class Counter {
+        readonly value: number;
+        constructor(emitter: IValueOpEmitter, _value: number);
+        increment(value: number, submit?: boolean): this;
+    }
+    export class CounterValueType implements IValueType<Counter> {
+        static Name: string;
+        readonly name: string;
+        readonly factory: IValueFactory<Counter>;
+        readonly ops: Map<string, IValueOperation<Counter>>;
+        constructor();
+    }
+}
+
+declare module 'prague/map/extension' {
     import * as resources from "gitresources";
     import * as api from "prague/api-core";
-    import { ICounter, IMap, IMapView, ISet } from "prague/data-types";
-    export enum ValueType {
-            Collaborative = 0,
-            Plain = 1,
-            Counter = 2,
-            Set = 3,
+    import { IMap } from "prague/data-types";
+    /**
+      * The extension that defines the map
+      */
+    export class MapExtension implements api.IExtension {
+        static Type: string;
+        type: string;
+        load(document: api.IDocument, id: string, sequenceNumber: number, services: api.IDistributedObjectServices, version: resources.ICommit, headerOrigin: string): Promise<IMap>;
+        create(document: api.IDocument, id: string): IMap;
     }
-    export interface ICollaborativeMapValue {
-            type: string;
-            id: string;
-    }
-    export interface IMapValue {
-            type: string;
-            value: any;
-    }
+}
+
+declare module 'prague/map/map' {
+    import * as resources from "gitresources";
+    import * as api from "prague/api-core";
+    import { IMap, IMapView, IValueType, SerializeFilter } from "prague/data-types";
+    import { IMapOperation } from "prague/map/definitions";
     /**
         * Copies all values from the provided MapView to the given Map
         */
     export function copyMap(from: IMapView, to: Map<string, any>): void;
-    export class MapView implements IMapView {
-            constructor(document: api.IDocument, id: string, data: {
-                    [key: string]: IMapValue;
-            }, events: EventEmitter, submitLocalOperation: (op) => void);
-            forEach(callbackFn: (value, key) => void): void;
-            get(key: string): any;
-            wait<T>(key: string): Promise<T>;
-            has(key: string): boolean;
-            set(key: string, value: any): void;
-            delete(key: string): void;
-            keys(): IterableIterator<string>;
-            clear(): void;
-            /**
-                * Serializes the collaborative map to a JSON string
-                */
-            serialize(): string;
-            getMapValue(key: string): IMapValue;
-            setCore(key: string, value: IMapValue): void;
-            clearCore(): void;
-            deleteCore(key: string): void;
-            initCounter(object: CollaborativeMap, key: string, value: number, min: number, max: number): ICounter;
-            loadCounter(object: CollaborativeMap, key: string, value: number, min: number, max: number): void;
-            initCounterCore(object: CollaborativeMap, key: string, value: IMapValue): ICounter;
-            incrementCounter(key: string, value: number): ICounter;
-            incrementCounterCore(key: string, value: IMapValue): ICounter;
-            initSet<T>(object: CollaborativeMap, key: string, value: T[]): ISet<any>;
-            loadSet<T>(object: CollaborativeMap, key: string, value: T[]): void;
-            initSetCore<T>(object: CollaborativeMap, key: string, value: IMapValue): ISet<T>;
-            insertSet<T>(key: string, value: T): ISet<T>;
-            insertSetCore<T>(key: string, value: IMapValue): void;
-            deleteSet<T>(key: string, value: T): ISet<T>;
-            deleteSetCore<T>(key: string, value: IMapValue): void;
+    export interface IMapMessageHandler {
+            prepare(op: IMapOperation): Promise<any>;
+            process(op: IMapOperation, context: any): void;
     }
     /**
         * Implementation of a map collaborative object
@@ -1353,7 +1518,7 @@ declare module 'prague/map/map' {
                 * Constructs a new collaborative map. If the object is non-local an id and service interfaces will
                 * be provided
                 */
-            constructor(document: api.IDocument, id: string, sequenceNumber: number, services?: api.IDistributedObjectServices, version?: resources.ICommit, header?: string);
+            constructor(id: string, document: api.IDocument, type?: string);
             keys(): Promise<string[]>;
             /**
                 * Retrieves the value with the given key from the map.
@@ -1361,186 +1526,360 @@ declare module 'prague/map/map' {
             get(key: string): Promise<any>;
             wait<T>(key: string): Promise<T>;
             has(key: string): Promise<boolean>;
-            set(key: string, value: any): Promise<void>;
+            set<T>(key: string, value: any, type?: string): T;
             delete(key: string): Promise<void>;
             clear(): Promise<void>;
-            createCounter(key: string, value?: number, min?: number, max?: number): ICounter;
-            incrementCounter(key: string, value: number, min: number, max: number): ICounter;
-            getCounterValue(key: string): Promise<number>;
-            createSet<T>(key: string, value?: T[]): ISet<T>;
-            insertSet<T>(key: string, value: T): ISet<T>;
-            deleteSet<T>(key: string, value: T): ISet<T>;
-            enumerateSet<T>(key: string): any[];
             snapshot(): api.ITree;
+            transform(message: api.IObjectMessage, sequenceNumber: number): api.IObjectMessage;
+            submitMapMessage(op: any): void;
             /**
                 * Returns a synchronous view of the map
                 */
             getView(): Promise<IMapView>;
-            deserialize(): void;
-            protected submitCore(message: api.IObjectMessage): void;
+            /**
+                * Registers a new value type on the map
+                */
+            registerValueType<T>(type: IValueType<T>): void;
+            registerSerializeFilter(filter: SerializeFilter): void;
+            protected loadCore(version: resources.ICommit, headerOrigin: string, storage: api.IObjectStorageService): Promise<void>;
+            protected initializeLocalCore(): void;
             protected processMinSequenceNumberChanged(value: number): void;
-            protected processCore(message: api.ISequencedObjectMessage): void;
+            protected loadContent(version: resources.ICommit, headerOrigin: string, services: api.IObjectStorageService): Promise<void>;
+            protected initializeContent(): void;
+            protected prepareCore(message: api.ISequencedObjectMessage): Promise<any>;
+            protected processCore(message: api.ISequencedObjectMessage, context: any): void;
+            protected attachCore(): void;
+            protected attachContent(): void;
+            protected prepareContent(message: api.ISequencedObjectMessage): Promise<any>;
+            /**
+                * Processes a content message
+                */
+            protected processContent(message: api.ISequencedObjectMessage, context: any): void;
+            /**
+                * Snapshots the content
+                */
+            protected snapshotContent(): api.ITree;
+            /**
+                * Notifies the content that the minimum sequence number has changed
+                */
+            protected processMinSequenceNumberChangedContent(value: number): void;
+            /**
+                * Allows derived classes to transform the given message
+                */
+            protected transformContent(message: api.IObjectMessage, sequenceNumber: number): api.IObjectMessage;
     }
+}
+
+declare module 'prague/map/set' {
+    import { IValueFactory, IValueOpEmitter, IValueOperation, IValueType } from "prague/data-types";
+    export class DistributedSetFactory<T> implements IValueFactory<DistributedSet<T>> {
+        load(emitter: IValueOpEmitter, raw: any[]): DistributedSet<T>;
+        store(value: DistributedSet<T>): any[];
+    }
+    export class DistributedSet<T> {
+        constructor(emitter: IValueOpEmitter, value: T[]);
+        add(value: T, submitEvent?: boolean): DistributedSet<T>;
+        delete(value: T, submitEvent?: boolean): DistributedSet<T>;
+        entries(): any[];
+    }
+    export class DistributedSetValueType implements IValueType<DistributedSet<any>> {
+        static Name: string;
+        readonly name: string;
+        readonly factory: IValueFactory<DistributedSet<any>>;
+        readonly ops: Map<string, IValueOperation<DistributedSet<any>>>;
+        constructor();
+    }
+}
+
+declare module 'prague/map/view' {
+    import * as api from "prague/api-core";
+    import { IMapView, IValueType, SerializeFilter } from "prague/data-types";
+    import { IMapValue } from "prague/map/definitions";
+    import { CollaborativeMap, IMapMessageHandler } from "prague/map/map";
+    export interface ILocalViewElement {
+        localType: string;
+        localValue: any;
+    }
+    export class MapView implements IMapView {
+        constructor(map: CollaborativeMap, document: api.IDocument, id: string);
+        populate(data: {
+            [key: string]: IMapValue;
+        }): Promise<void>;
+        forEach(callbackFn: (value, key) => void): void;
+        get(key: string): any;
+        wait<T>(key: string): Promise<T>;
+        has(key: string): boolean;
+        attachAll(): void;
+        set<T = any>(key: string, value: any, type?: string): T;
+        delete(key: string): void;
+        keys(): IterableIterator<string>;
+        clear(): void;
+        /**
+          * Serializes the collaborative map to a JSON string
+          */
+        serialize(filter: SerializeFilter): string;
+        setCore(key: string, value: ILocalViewElement): void;
+        prepareSetCore(key: string, value: IMapValue): Promise<ILocalViewElement>;
+        clearCore(): void;
+        deleteCore(key: string): void;
+        registerValueType<T>(type: IValueType<T>): IMapMessageHandler;
+    }
+}
+
+declare module 'prague/graph/graph' {
+    import { IEdge, IGraph, ISet, IVertex } from "prague/data-types";
     /**
-        * The extension that defines the map
-        */
-    export class MapExtension implements api.IExtension {
-            static Type: string;
-            type: string;
-            load(document: api.IDocument, id: string, sequenceNumber: number, services: api.IDistributedObjectServices, version: resources.ICommit, headerOrigin: string, header: string): IMap;
-            create(document: api.IDocument, id: string): IMap;
+      * Implementation of a map collaborative object
+      */
+    export class CollaborativeGraph implements IGraph {
+        constructor(edges?: ISet<IEdge>, vertices?: ISet<IVertex>);
+        addVertex(id: number, label: string): void;
+        addEdge(nodeId1: number, nodeId2: number, label: string): void;
+        getVertices(): ISet<any>;
+        getEdges(): ISet<any>;
+    }
+    export class Edge implements IEdge {
+        nodeId1: number;
+        nodeId2: number;
+        label: string;
+        constructor(nodeId1: number, nodeId2: number, label: string);
+    }
+    export class Vertex implements IVertex {
+        id: number;
+        label: string;
+        constructor(id: number, label: string);
     }
 }
 
 declare module 'prague/merge-tree/collections' {
     import * as Base from "prague/merge-tree/base";
     export class Stack<T> {
-        items: T[];
-        push(val: T): void;
-        empty(): boolean;
-        top(): T | undefined;
-        pop(): T | undefined;
+            items: T[];
+            push(val: T): void;
+            empty(): boolean;
+            top(): T | undefined;
+            pop(): T | undefined;
     }
     export function ListRemoveEntry<U>(entry: List<U>): List<U>;
     export function ListMakeEntry<U>(data: U): List<U>;
     export function ListMakeHead<U>(): List<U>;
     export class List<T> {
-        isHead: boolean;
-        data: T;
-        next: List<T>;
-        prev: List<T>;
-        constructor(isHead: boolean, data: T);
-        clear(): void;
-        add(data: T): List<T>;
-        dequeue(): T;
-        enqueue(data: T): List<T>;
-        walk(fn: (data: T, l: List<T>) => void): void;
-        some(fn: (data: T, l: List<T>) => boolean, rev?: boolean): T;
-        count(): number;
-        first(): T;
-        last(): T;
-        empty(): boolean;
-        pushEntry(entry: List<T>): void;
-        push(data: T): void;
-        popEntry(head: List<T>): List<T>;
-        insertEntry(entry: List<T>): List<T>;
-        insertAfter(data: T): List<T>;
-        insertBefore(data: T): List<T>;
-        insertEntryBefore(entry: List<T>): List<T>;
+            isHead: boolean;
+            data: T;
+            next: List<T>;
+            prev: List<T>;
+            constructor(isHead: boolean, data: T);
+            clear(): void;
+            add(data: T): List<T>;
+            dequeue(): T;
+            enqueue(data: T): List<T>;
+            walk(fn: (data: T, l: List<T>) => void): void;
+            some(fn: (data: T, l: List<T>) => boolean, rev?: boolean): T;
+            count(): number;
+            first(): T;
+            last(): T;
+            empty(): boolean;
+            pushEntry(entry: List<T>): void;
+            push(data: T): void;
+            popEntry(head: List<T>): List<T>;
+            insertEntry(entry: List<T>): List<T>;
+            insertAfter(data: T): List<T>;
+            insertBefore(data: T): List<T>;
+            insertEntryBefore(entry: List<T>): List<T>;
     }
     export interface Comparer<T> {
-        compare(a: T, b: T): number;
-        min: T;
+            compare(a: T, b: T): number;
+            min: T;
     }
     export var numberComparer: Comparer<number>;
     export class Heap<T> {
-        comp: Comparer<T>;
-        L: T[];
-        count(): number;
-        constructor(a: T[], comp: Comparer<T>);
-        peek(): T;
-        get(): T;
-        add(x: T): void;
+            comp: Comparer<T>;
+            L: T[];
+            count(): number;
+            constructor(a: T[], comp: Comparer<T>);
+            peek(): T;
+            get(): T;
+            add(x: T): void;
     }
     export function LinearDictionary<TKey, TData>(compareKeys: Base.KeyComparer<TKey>): Base.SortedDictionary<TKey, TData>;
-    export const enum Color {
-        RED = 0,
-        BLACK = 1,
+    export const enum RBColor {
+            RED = 0,
+            BLACK = 1,
     }
     export interface Node<TKey, TData> {
-        key: TKey;
-        data: TData;
-        left: Node<TKey, TData>;
-        right: Node<TKey, TData>;
-        color: Color;
-        size: number;
+            key: TKey;
+            data: TData;
+            left: Node<TKey, TData>;
+            right: Node<TKey, TData>;
+            color: RBColor;
+            size: number;
+    }
+    export interface IRBAugmentation<TKey, TData> {
+            update(node: Node<TKey, TData>): any;
+            init?(node: Node<TKey, TData>): any;
+    }
+    export interface IRBMatcher<TKey, TData> {
+            continueSubtree(node: Node<TKey, TData>, key: TKey): boolean;
+            matchNode(node: Node<TKey, TData>, key: TKey): boolean;
+    }
+    export interface NodeActions<TKey, TData> {
+            infix?(node: Node<TKey, TData>): boolean;
+            pre?(node: Node<TKey, TData>): boolean;
+            post?(node: Node<TKey, TData>): boolean;
+            showStructure?: boolean;
     }
     export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TData> {
-        compareKeys: Base.KeyComparer<TKey>;
-        root: Node<TKey, TData>;
-        constructor(compareKeys: Base.KeyComparer<TKey>);
-        makeNode(key: TKey, data: TData, color: Color, size: number): Node<TKey, TData>;
-        isRed(node: Node<TKey, TData>): boolean;
-        nodeSize(node: Node<TKey, TData>): number;
-        size(): number;
-        isEmpty(): Node<TKey, TData>;
-        get(key: TKey): Node<TKey, TData>;
-        nodeGet(node: Node<TKey, TData>, key: TKey): Node<TKey, TData>;
-        contains(key: TKey): Node<TKey, TData>;
-        put(key: TKey, data: TData, conflict?: Base.ConflictAction<TKey, TData>): void;
-        nodePut(node: Node<TKey, TData>, key: TKey, data: TData, conflict?: Base.ConflictAction<TKey, TData>): Node<TKey, TData>;
-        removeMin(): void;
-        nodeRemoveMin(node: Node<TKey, TData>): Node<TKey, TData>;
-        removeMax(): void;
-        nodeRemoveMax(node: Node<TKey, TData>): Node<TKey, TData>;
-        remove(key: TKey): void;
-        nodeRemove(node: Node<TKey, TData>, key: TKey): Node<TKey, TData>;
-        height(): any;
-        nodeHeight(node: Node<TKey, TData>): any;
-        floor(key: TKey): any;
-        nodeFloor(node: Node<TKey, TData>, key: TKey): any;
-        min(): Node<TKey, TData>;
-        nodeMin(node: Node<TKey, TData>): Node<TKey, TData>;
-        max(): Node<TKey, TData>;
-        nodeMax(node: Node<TKey, TData>): Node<TKey, TData>;
-        rotateRight(node: Node<TKey, TData>): Node<TKey, TData>;
-        rotateLeft(node: Node<TKey, TData>): Node<TKey, TData>;
-        oppositeColor(c: Color): Color;
-        flipColors(node: Node<TKey, TData>): void;
-        moveRedLeft(node: Node<TKey, TData>): Node<TKey, TData>;
-        moveRedRight(node: Node<TKey, TData>): Node<TKey, TData>;
-        balance(node: Node<TKey, TData>): Node<TKey, TData>;
-        mapRange<TAccum>(action: Base.PropertyAction<TKey, TData>, accum?: TAccum, start?: TKey, end?: TKey): void;
-        map<TAccum>(action: Base.PropertyAction<TKey, TData>, accum?: TAccum): void;
-        nodeMap<TAccum>(node: Node<TKey, TData>, action: Base.PropertyAction<TKey, TData>, accum?: TAccum, start?: TKey, end?: TKey): any;
-        diag(): void;
+            compareKeys: Base.KeyComparer<TKey>;
+            aug: IRBAugmentation<TKey, TData>;
+            root: Node<TKey, TData>;
+            constructor(compareKeys: Base.KeyComparer<TKey>, aug?: IRBAugmentation<TKey, TData>);
+            makeNode(key: TKey, data: TData, color: RBColor, size: number): Node<TKey, TData>;
+            isRed(node: Node<TKey, TData>): boolean;
+            nodeSize(node: Node<TKey, TData>): number;
+            size(): number;
+            isEmpty(): Node<TKey, TData>;
+            get(key: TKey): Node<TKey, TData>;
+            nodeGet(node: Node<TKey, TData>, key: TKey): Node<TKey, TData>;
+            contains(key: TKey): Node<TKey, TData>;
+            gather(key: TKey, matcher: IRBMatcher<TKey, TData>): Node<TKey, TData>[];
+            nodeGather(node: Node<TKey, TData>, results: Node<TKey, TData>[], key: TKey, matcher: IRBMatcher<TKey, TData>): void;
+            put(key: TKey, data: TData, conflict?: Base.ConflictAction<TKey, TData>): void;
+            nodePut(node: Node<TKey, TData>, key: TKey, data: TData, conflict?: Base.ConflictAction<TKey, TData>): Node<TKey, TData>;
+            updateLocal(node: Node<TKey, TData>): void;
+            removeMin(): void;
+            nodeRemoveMin(node: Node<TKey, TData>): Node<TKey, TData>;
+            removeMax(): void;
+            nodeRemoveMax(node: Node<TKey, TData>): Node<TKey, TData>;
+            remove(key: TKey): void;
+            nodeRemove(node: Node<TKey, TData>, key: TKey): Node<TKey, TData>;
+            height(): any;
+            nodeHeight(node: Node<TKey, TData>): any;
+            floor(key: TKey): any;
+            nodeFloor(node: Node<TKey, TData>, key: TKey): any;
+            min(): Node<TKey, TData>;
+            nodeMin(node: Node<TKey, TData>): Node<TKey, TData>;
+            max(): Node<TKey, TData>;
+            nodeMax(node: Node<TKey, TData>): Node<TKey, TData>;
+            rotateRight(node: Node<TKey, TData>): Node<TKey, TData>;
+            rotateLeft(node: Node<TKey, TData>): Node<TKey, TData>;
+            oppositeColor(c: RBColor): RBColor;
+            flipColors(node: Node<TKey, TData>): void;
+            moveRedLeft(node: Node<TKey, TData>): Node<TKey, TData>;
+            moveRedRight(node: Node<TKey, TData>): Node<TKey, TData>;
+            balance(node: Node<TKey, TData>): Node<TKey, TData>;
+            mapRange<TAccum>(action: Base.PropertyAction<TKey, TData>, accum?: TAccum, start?: TKey, end?: TKey): void;
+            map<TAccum>(action: Base.PropertyAction<TKey, TData>, accum?: TAccum): void;
+            /**
+                * Depth-first traversal with custom action; if action returns
+                * false, traversal is halted.
+                * @param action action to apply to each node
+                */
+            walk(actions: NodeActions<TKey, TData>): void;
+            nodeWalk(node: Node<TKey, TData>, actions: NodeActions<TKey, TData>): boolean;
+            nodeMap<TAccum>(node: Node<TKey, TData>, action: Base.PropertyAction<TKey, TData>, accum?: TAccum, start?: TKey, end?: TKey): any;
+            diag(): void;
+    }
+    export interface AugRangeNode {
+            minmax: Base.IRange;
+    }
+    /**
+        * Union of two ranges; assumes for both ranges start <= end.
+        * @param a A range
+        * @param b A range
+        */
+    export function rangeUnion(a: Base.IRange, b: Base.IRange): Base.IRange;
+    export function rangeOverlaps(a: Base.IRange, b: Base.IRange): boolean;
+    export function rangeComparer(a: Base.IRange, b: Base.IRange): number;
+    export function rangeCopy(r: Base.IRange): Base.IRange;
+    export function rangeToString(range: Base.IRange): string;
+    export type RangeNode = Node<Base.IRange, AugRangeNode>;
+    export class RangeTree implements IRBAugmentation<Base.IRange, AugRangeNode>, IRBMatcher<Base.IRange, AugRangeNode> {
+            ranges: RedBlackTree<Base.IRange, AugRangeNode>;
+            diag: boolean;
+            remove(r: Base.IRange): void;
+            put(r: Base.IRange): void;
+            toString(): string;
+            nodeToString(node: RangeNode): string;
+            matchPos(pos: number): Node<Base.IRange, AugRangeNode>[];
+            match(r: Base.IRange): Node<Base.IRange, AugRangeNode>[];
+            matchNode(node: RangeNode, key: Base.IRange): boolean;
+            continueSubtree(node: RangeNode, key: Base.IRange): boolean;
+            update(node: RangeNode): void;
     }
     export interface TSTNode<T> {
-        c: string;
-        left?: TSTNode<T>;
-        mid?: TSTNode<T>;
-        right?: TSTNode<T>;
-        val?: T;
+            c: string;
+            left?: TSTNode<T>;
+            mid?: TSTNode<T>;
+            right?: TSTNode<T>;
+            val?: T;
     }
     export interface TSTPrefix {
-        text: string;
+            text: string;
     }
     export interface ProxString<T> {
-        text: string;
-        invDistance: number;
-        val: T;
+            text: string;
+            invDistance: number;
+            val: T;
     }
     export class TST<T> {
-        constructor();
-        size(): number;
-        contains(key: string): T;
-        get(key: string): T;
-        nodeGet(x: TSTNode<T>, key: string, d: number): TSTNode<T>;
-        put(key: string, val: T): void;
-        nodePut(x: TSTNode<T>, key: string, val: T, d: number): TSTNode<T>;
-        neighbors(text: string, distance?: number): ProxString<T>[];
-        keysWithPrefix(text: string): string[];
-        collect(x: TSTNode<T>, prefix: TSTPrefix, q: string[]): void;
-        patternCollect(x: TSTNode<T>, prefix: TSTPrefix, d: number, pattern: string, q: string[]): void;
-        nodeProximity(x: TSTNode<T>, prefix: TSTPrefix, d: number, pattern: string, distance: number, q: ProxString<T>[]): void;
-        match(pattern: string): string[];
+            constructor();
+            size(): number;
+            contains(key: string): T;
+            get(key: string): T;
+            nodeGet(x: TSTNode<T>, key: string, d: number): TSTNode<T>;
+            put(key: string, val: T): void;
+            nodePut(x: TSTNode<T>, key: string, val: T, d: number): TSTNode<T>;
+            neighbors(text: string, distance?: number): ProxString<T>[];
+            keysWithPrefix(text: string): string[];
+            collect(x: TSTNode<T>, prefix: TSTPrefix, q: string[]): void;
+            patternCollect(x: TSTNode<T>, prefix: TSTPrefix, d: number, pattern: string, q: string[]): void;
+            nodeProximity(x: TSTNode<T>, prefix: TSTPrefix, d: number, pattern: string, distance: number, q: ProxString<T>[]): void;
+            match(pattern: string): string[];
+    }
+}
+
+declare module 'prague/merge-tree/extension' {
+    import * as resources from "gitresources";
+    import * as api from "prague/api-core";
+    export class CollaboritiveStringExtension implements api.IExtension {
+        static Type: string;
+        type: string;
+        load(document: api.IDocument, id: string, sequenceNumber: number, services: api.IDistributedObjectServices, version: resources.ICommit, headerOrigin: string): Promise<api.ICollaborativeObject>;
+        create(document: api.IDocument, id: string, options?: Object): api.ICollaborativeObject;
     }
 }
 
 declare module 'prague/merge-tree/mergeTree' {
+    import * as Base from "prague/merge-tree/base";
     import * as Collections from "prague/merge-tree/collections";
     import * as ops from "prague/merge-tree/ops";
     import * as API from "prague/api-core";
     import { ISequencedObjectMessage } from "prague/api-core";
     import * as Properties from "prague/merge-tree/properties";
-    export type RangeStackMap = Properties.MapLike<Collections.Stack<Marker>>;
-    export interface IRange {
-            start: number;
-            end: number;
+    import { IRelativePosition } from "prague/merge-tree/index";
+    export interface ReferencePosition {
+            properties: Properties.PropertySet;
+            refType: ops.ReferenceType;
+            /** True if this reference is a segment. */
+            isLeaf(): boolean;
+            getId(): string;
+            getSegment(): BaseSegment;
+            getOffset(): number;
+            addProperties(newProps: Properties.PropertySet, op?: ops.ICombiningOp): any;
+            hasTileLabels(): any;
+            hasRangeLabels(): any;
+            hasTileLabel(label: string): any;
+            hasRangeLabel(label: string): any;
+            getTileLabels(): any;
+            getRangeLabels(): any;
+            matchEnd(refPos: ReferencePosition): boolean;
     }
+    export type RangeStackMap = Properties.MapLike<Collections.Stack<ReferencePosition>>;
     export interface IMergeNode {
             parent: IMergeBlock;
             cachedLength: number;
+            index: number;
+            ordinal: string;
             isLeaf(): boolean;
     }
     export interface IMergeBlock extends IMergeNode {
@@ -1548,18 +1887,43 @@ declare module 'prague/merge-tree/mergeTree' {
             children: IMergeNode[];
             partialLengths?: PartialSequenceLengths;
             hierBlock(): IHierBlock;
+            assignChild(child: IMergeNode, index: number, updateOrdinal?: boolean): any;
+            setOrdinal(child: IMergeNode, index: number): any;
     }
     export interface IHierBlock extends IMergeBlock {
             hierToString(indentCount: number): any;
-            addNodeMarkers(mergeTree: MergeTree, node: IMergeNode): any;
-            rightmostTiles: Properties.MapLike<Marker>;
-            leftmostTiles: Properties.MapLike<Marker>;
+            addNodeReferences(mergeTree: MergeTree, node: IMergeNode): any;
+            rightmostTiles: Properties.MapLike<ReferencePosition>;
+            leftmostTiles: Properties.MapLike<ReferencePosition>;
             rangeStacks: RangeStackMap;
+            startsInterval: Properties.MapLike<boolean>;
     }
-    export interface LocalReference {
-            segment: Segment;
+    export class LocalRangeReference {
+            start: LocalReference;
+            end: LocalReference;
+            constructor(start: LocalReference, end: LocalReference);
+    }
+    export class LocalReference implements ReferencePosition {
+            segment: BaseSegment;
             offset: number;
-            slideOnRemove?: boolean;
+            refType: ops.ReferenceType;
+            properties: Properties.PropertySet;
+            cachedEnd?: LocalReference;
+            constructor(segment: BaseSegment, offset?: number, refType?: ops.ReferenceType);
+            toPosition(mergeTree: MergeTree, refSeq: number, clientId: number): number;
+            matchEnd(refPos: ReferencePosition): any;
+            getId(): any;
+            hasTileLabels(): any;
+            hasRangeLabels(): any;
+            hasTileLabel(label: string): any;
+            hasRangeLabel(label: string): any;
+            getTileLabels(): any;
+            getRangeLabels(): any;
+            isLeaf(): boolean;
+            addProperties(newProps: Properties.PropertySet, op?: ops.ICombiningOp): void;
+            getSegment(): BaseSegment;
+            getOffset(): number;
+            getProperties(): Properties.MapLike<any>;
     }
     export enum SegmentType {
             Base = 0,
@@ -1636,6 +2000,8 @@ declare module 'prague/merge-tree/mergeTree' {
             histo: number[];
             windowTime?: number;
             packTime?: number;
+            ordTime?: number;
+            maxOrdTime?: number;
     }
     export interface SegmentGroup {
             segments: Segment[];
@@ -1645,27 +2011,36 @@ declare module 'prague/merge-tree/mergeTree' {
             seglen: number;
     }
     export class MergeNode implements IMergeNode {
+            index: number;
+            ordinal: string;
             parent: IMergeBlock;
             cachedLength: number;
             isLeaf(): boolean;
     }
-    export let MaxNodesInBlock: number;
+    export function ordinalToArray(ord: string): number[];
+    export const MaxNodesInBlock = 8;
     export class MergeBlock extends MergeNode implements IMergeBlock {
             childCount: number;
+            static traceOrdinals: boolean;
             children: MergeNode[];
             constructor(childCount: number);
             hierBlock(): any;
+            setOrdinal(child: IMergeNode, index: number): void;
+            assignChild(child: MergeNode, index: number, updateOrdinal?: boolean): void;
     }
     export abstract class BaseSegment extends MergeNode implements Segment {
             seq: number;
             clientId: number;
             constructor(seq?: number, clientId?: number);
+            index: number;
+            ordinal: string;
             removedSeq: number;
             removedClientId: number;
             removedClientOverlap: number[];
             segmentGroup: SegmentGroup;
             properties: Properties.PropertySet;
             localRefs: LocalReference[];
+            hierRefCount?: number;
             addLocalRef(lref: LocalReference): void;
             removeLocalRef(lref: LocalReference): LocalReference;
             addProperties(newProps: Properties.PropertySet, op?: ops.ICombiningOp): void;
@@ -1696,19 +2071,23 @@ declare module 'prague/merge-tree/mergeTree' {
     }
     export let reservedTileLabelsKey: string;
     export let reservedRangeLabelsKey: string;
-    export let reservedMarkerIdKey: string;
-    export class Marker extends BaseSegment {
-            behaviors: ops.MarkerBehaviors;
-            static make(behavior: ops.MarkerBehaviors, props?: Properties.PropertySet, seq?: number, clientId?: number): Marker;
-            constructor(behaviors: ops.MarkerBehaviors, seq?: number, clientId?: number);
+    export let reservedReferenceIdKey: string;
+    export class Marker extends BaseSegment implements ReferencePosition {
+            refType: ops.ReferenceType;
+            static make(refType: ops.ReferenceType, props?: Properties.PropertySet, seq?: number, clientId?: number): Marker;
+            constructor(refType: ops.ReferenceType, seq?: number, clientId?: number);
             clone(): Marker;
+            matchEnd(refPos: ReferencePosition): boolean;
+            getSegment(): this;
+            getOffset(): number;
+            getProperties(): Properties.MapLike<any>;
+            getId(): any;
             hasTileLabels(): any;
             hasRangeLabels(): any;
-            hasTileLabel(label: string): boolean;
-            hasRangeLabel(label: string): boolean;
-            getTileLabels(): string[];
-            getRangeLabels(): string[];
-            getId(): any;
+            hasTileLabel(label: string): any;
+            hasRangeLabel(label: string): any;
+            getTileLabels(): any;
+            getRangeLabels(): any;
             toString(): string;
             getType(): SegmentType;
             removeRange(start: number, end: number): boolean;
@@ -1822,6 +2201,11 @@ declare module 'prague/merge-tree/mergeTree' {
             clientId: number;
             branchId: number;
     }
+    export interface IUndoInfo {
+            seq: number;
+            seg: Segment;
+            op: ops.MergeTreeDeltaType;
+    }
     export class Client {
             mergeTree: MergeTree;
             accumTime: number;
@@ -1840,13 +2224,20 @@ declare module 'prague/merge-tree/mergeTree' {
             shortClientIdMap: string[];
             shortClientBranchIdMap: number[];
             longClientId: string;
+            undoSegments: IUndoInfo[];
+            redoSegments: IUndoInfo[];
             constructor(initText: string, options?: Properties.PropertySet);
+            undoSingleSequenceNumber(undoSegments: IUndoInfo[], redoSegments: IUndoInfo[]): number;
+            historyToPct(pct: number): number;
+            undo(): number;
+            redo(): number;
+            cloneFromSegments(): Client;
             getOrAddShortClientId(longClientId: string, branchId?: number): number;
             getShortClientId(longClientId: string): number;
             getLongClientId(clientId: number): string;
             addLongClientId(longClientId: string, branchId?: number): void;
             getBranchId(clientId: number): number;
-            makeInsertMarkerMsg(markerType: string, behaviors: ops.MarkerBehaviors, pos: number, seq: number, refSeq: number, objectId: string): ISequencedObjectMessage;
+            makeInsertMarkerMsg(markerType: string, behaviors: ops.ReferenceType, pos: number, seq: number, refSeq: number, objectId: string): ISequencedObjectMessage;
             makeInsertMsg(text: string, pos: number, seq: number, refSeq: number, objectId: string): ISequencedObjectMessage;
             makeRemoveMsg(start: number, end: number, seq: number, refSeq: number, objectId: string): ISequencedObjectMessage;
             makeAnnotateMsg(props: Properties.PropertySet, start: number, end: number, seq: number, refSeq: number, objectId: string): ISequencedObjectMessage;
@@ -1868,7 +2259,8 @@ declare module 'prague/merge-tree/mergeTree' {
             removeSegmentLocal(start: number, end: number): void;
             removeSegmentRemote(start: number, end: number, seq: number, refSeq: number, clientId: number): void;
             insertTextLocal(text: string, pos: number, props?: Properties.PropertySet): void;
-            insertMarkerLocal(pos: number, behaviors: ops.MarkerBehaviors, props?: Properties.PropertySet): void;
+            insertTextMarkerRelative(text: string, markerPos: IRelativePosition, props?: Properties.PropertySet): void;
+            insertMarkerLocal(pos: number, behaviors: ops.ReferenceType, props?: Properties.PropertySet): void;
             insertMarkerRemote(marker: ops.IMarkerDef, pos: number, props: Properties.PropertySet, seq: number, refSeq: number, clientId: number): void;
             insertTextRemote(text: string, pos: number, props: Properties.PropertySet, seq: number, refSeq: number, clientId: number): void;
             ackPendingSegment(seq: number): void;
@@ -1900,7 +2292,7 @@ declare module 'prague/merge-tree/mergeTree' {
             listeners: Client[];
             clientSeqNumbers: Collections.Heap<ClientSeq>;
             upstreamMap: Collections.RedBlackTree<number, number>;
-            constructor(initText: string);
+            constructor(initText: string, options?: Properties.PropertySet);
             addUpstreamClients(upstreamClients: Client[]): void;
             addClients(clients: Client[]): void;
             addListeners(listeners: Client[]): void;
@@ -1917,6 +2309,9 @@ declare module 'prague/merge-tree/mergeTree' {
             textSegment: TextSegment;
             placeholders?: boolean;
     }
+    export interface RemoveRangeInfo {
+            highestBlockRemovingChildren: IMergeBlock;
+    }
     export class MergeTree {
             text: string;
             options: Properties.PropertySet;
@@ -1926,10 +2321,12 @@ declare module 'prague/merge-tree/mergeTree' {
                     incrementalUpdate: boolean;
                     zamboniSegments: boolean;
                     measureWindowTime: boolean;
+                    measureOrdinalTime: boolean;
             };
             static searchChunkSize: number;
             static traceAppend: boolean;
             static traceZRemove: boolean;
+            static traceOrdinals: boolean;
             static traceGatherText: boolean;
             static diagInsertTie: boolean;
             static skipLeftShift: boolean;
@@ -1940,6 +2337,8 @@ declare module 'prague/merge-tree/mergeTree' {
             static theUnfinishedNode: IMergeBlock;
             windowTime: number;
             packTime: number;
+            ordTime: number;
+            maxOrdTime: number;
             root: IMergeBlock;
             blockUpdateMarkers: boolean;
             blockUpdateActions: BlockUpdateActions;
@@ -1947,11 +2346,13 @@ declare module 'prague/merge-tree/mergeTree' {
             pendingSegments: Collections.List<SegmentGroup>;
             segmentsToScour: Collections.Heap<LRUSegment>;
             idToSegment: Properties.MapLike<Segment>;
+            idToLref: Properties.MapLike<LocalReference>;
             clientIdToBranchId: number[];
             localBranchId: number;
             transactionSegmentGroup: SegmentGroup;
             getLongClientId: (id: number) => string;
             constructor(text: string, options?: Properties.PropertySet);
+            blockCloneFromSegments(block: IMergeBlock, segments: Segment[]): void;
             clone(): void;
             blockClone(block: IMergeBlock): MergeBlock;
             segmentClone(segment: Segment): BaseSegment;
@@ -1960,6 +2361,7 @@ declare module 'prague/merge-tree/mergeTree' {
             localNetLength(segment: Segment): number;
             getBranchId(clientId: number): number;
             mapIdToSegment(id: string, segment: Segment): void;
+            mapIdToLref(id: string, lref: LocalReference): void;
             addNode(block: IMergeBlock, node: MergeNode): number;
             reloadFromSegments(segments: Segment[]): void;
             startCollaboration(localClientId: number, minSeq: number, branchId: number): void;
@@ -1972,7 +2374,7 @@ declare module 'prague/merge-tree/mergeTree' {
             getStats(): MergeTreeStats;
             tardisPosition(pos: number, fromSeq: number, toSeq: number, toClientId?: number): number;
             tardisPositionFromClient(pos: number, fromSeq: number, toSeq: number, fromClientId: number, toClientId?: number): number;
-            tardisRange(rangeStart: number, rangeEnd: number, fromSeq: number, toSeq: number, toClientId?: number): IRange[];
+            tardisRange(rangeStart: number, rangeEnd: number, fromSeq: number, toSeq: number, toClientId?: number): Base.IRange[];
             getLength(refSeq: number, clientId: number): number;
             getOffset(node: MergeNode, refSeq: number, clientId: number): number;
             searchFromPos(pos: number, target: RegExp): {
@@ -1994,11 +2396,12 @@ declare module 'prague/merge-tree/mergeTree' {
             setMinSeq(minSeq: number): void;
             commitGlobalMin(): void;
             updateGlobalMinSeq(globalMinSeq: number): void;
-            refPosToLocalPos(pos: number, refSeq: number, clientId: number): number;
-            getStackContext(startPos: number, clientId: number, rangeLabels: string[]): Properties.MapLike<Collections.Stack<Marker>>;
-            localUndo(segment: Segment): void;
+            referencePositionToLocalPosition(refPos: ReferencePosition): number;
+            findOverlappingIntervals(startPos: number, endPos: number, rangeLabels: string[]): ReferencePosition[];
+            getStackContext(startPos: number, clientId: number, rangeLabels: string[]): Properties.MapLike<Collections.Stack<ReferencePosition>>;
+            cherryPickedUndo(undoInfo: IUndoInfo): void;
             findTile(startPos: number, clientId: number, tileLabel: string, preceding?: boolean): {
-                    tile: Marker;
+                    tile: ReferencePosition;
                     pos: number;
             };
             search<TClientData>(pos: number, refSeq: number, clientId: number, actions?: SegmentActions<TClientData>, clientData?: TClientData): Segment;
@@ -2012,10 +2415,20 @@ declare module 'prague/merge-tree/mergeTree' {
                 */
             ackPendingSegment(seq: number): void;
             addToPendingList(segment: Segment, segmentGroup?: SegmentGroup): SegmentGroup;
-            appendSegment(segSpec: ops.IPropertyString): void;
+            appendSegment(segSpec: ops.IPropertyString, seq?: number): void;
             getSegmentFromId(id: string): Segment;
+            getLrefFromId(id: string): LocalReference;
+            /**
+                * Given a position specified relative to a marker id, lookup the marker
+                * and convert the position to a character position.
+                * @param relativePos Id of marker (may be indirect) and whether position is before or after marker.
+                * @param refseq The reference sequence number at which to compute the position.
+                * @param clientId The client id with which to compute the position.
+                */
+            posFromRelativePos(relativePos: IRelativePosition, refseq: number, clientId: number): number;
             insert<T>(pos: number, refSeq: number, clientId: number, seq: number, segData: T, traverse: (block: IMergeBlock, pos: number, refSeq: number, clientId: number, seq: number, segData: T) => IMergeBlock): void;
-            insertMarker(pos: number, refSeq: number, clientId: number, seq: number, behaviors: ops.MarkerBehaviors, props?: Properties.PropertySet): void;
+            insertMarker(pos: number, refSeq: number, clientId: number, seq: number, behaviors: ops.ReferenceType, props?: Properties.PropertySet): void;
+            insertTextMarkerRelative(markerPos: IRelativePosition, refSeq: number, clientId: number, seq: number, text: string, props?: Properties.PropertySet): void;
             insertText(pos: number, refSeq: number, clientId: number, seq: number, text: string, props?: Properties.PropertySet): void;
             blockInsert<T extends Segment>(block: IMergeBlock, pos: number, refSeq: number, clientId: number, seq: number, newSegment: T): MergeBlock;
             splitLeafSegment: (segment: Segment, pos: number) => SegmentChanges;
@@ -2023,12 +2436,17 @@ declare module 'prague/merge-tree/mergeTree' {
             breakTie(pos: number, len: number, seq: number, node: MergeNode, refSeq: number, clientId: number, segType: SegmentType): boolean;
             leftExcursion<TClientData>(node: MergeNode, leafAction: SegmentAction<TClientData>): void;
             rightExcursion<TClientData>(node: MergeNode, leafAction: SegmentAction<TClientData>): void;
+            ordinalIntegrity(): void;
+            nodeOrdinalIntegrity(block: IMergeBlock): void;
+            nodeUpdateOrdinals(block: IMergeBlock): void;
             addOverlappingClient(removalInfo: IRemovalInfo, clientId: number): void;
             annotateRange(props: Properties.PropertySet, start: number, end: number, refSeq: number, clientId: number, seq: number, combiningOp?: ops.ICombiningOp): void;
             markRangeRemoved(start: number, end: number, refSeq: number, clientId: number, seq: number): void;
             removeRange(start: number, end: number, refSeq: number, clientId: number): void;
-            nodeRemoveRange(block: IMergeBlock, start: number, end: number, refSeq: number, clientId: number): void;
+            nodeRemoveRange(block: IMergeBlock, start: number, end: number, refSeq: number, clientId: number, removeInfo: RemoveRangeInfo): void;
             nodeUpdateLengthNewStructure(node: IMergeBlock, recur?: boolean): void;
+            removeLocalReference(segment: BaseSegment, lref: LocalReference): void;
+            addLocalReference(segment: BaseSegment, lref: LocalReference): void;
             blockUpdate(block: IMergeBlock): void;
             blockUpdatePathLengths(block: IMergeBlock, seq: number, clientId: number, newStructure?: boolean): void;
             nodeCompareUpdateLength(node: IMergeBlock, seq: number, clientId: number): void;
@@ -2045,121 +2463,144 @@ declare module 'prague/merge-tree/mergeTree' {
 }
 
 declare module 'prague/merge-tree/ops' {
-    export enum MarkerBehaviors {
-        None = 0,
-        Tile = 1,
-        RangeBegin = 2,
-        RangeEnd = 4,
-        SlideOnRemove = 16,
+    export enum ReferenceType {
+            Simple = 0,
+            Tile = 1,
+            NestBegin = 2,
+            NestEnd = 4,
+            RangeBegin = 16,
+            RangeEnd = 32,
+            SlideOnRemove = 64,
     }
     export interface IMarkerDef {
-        behaviors?: MarkerBehaviors;
+            refType?: ReferenceType;
     }
     export interface IComponentDef {
-        url: string;
+            url: string;
     }
     export const enum MergeTreeDeltaType {
-        INSERT = 0,
-        REMOVE = 1,
-        ANNOTATE = 2,
-        GROUP = 3,
+            INSERT = 0,
+            REMOVE = 1,
+            ANNOTATE = 2,
+            GROUP = 3,
     }
     export interface IMergeTreeDelta {
-        /**
-          * Type of this change.
-          */
-        type: MergeTreeDeltaType;
+            /**
+                * Type of this change.
+                */
+            type: MergeTreeDeltaType;
     }
-    export interface IMarkerPosition {
-        id: string;
+    /**
+        * A segment-relative position.
+        */
+    export interface IRelativePosition {
+            /**
+                * String identifier specifying a segment or reference collection.
+                */
+            id: string;
+            /**
+                * True if the id refers to the segment indirectly.
+                */
+            indirect?: boolean;
+            /**
+                * If true, insert before the specified segment.  If false or not defined,
+                * insert after the specified segment.
+                */
+            before?: boolean;
+            /**
+                * A positive number >= 1.  If before is false, offset is added to the position.
+                * If before is true, offset is subtracted from the position.
+                */
+            offset?: number;
     }
     export interface IMergeTreeInsertMsg extends IMergeTreeDelta {
-        type: MergeTreeDeltaType.INSERT;
-        pos1?: number;
-        markerPos1?: IMarkerPosition;
-        props?: Object;
-        text?: string;
-        marker?: IMarkerDef;
-        component?: IComponentDef;
+            type: MergeTreeDeltaType.INSERT;
+            pos1?: number;
+            relativePos1?: IRelativePosition;
+            props?: Object;
+            text?: string;
+            marker?: IMarkerDef;
     }
     export interface IMergeTreeRemoveMsg extends IMergeTreeDelta {
-        type: MergeTreeDeltaType.REMOVE;
-        pos1?: number;
-        markerPos1?: IMarkerPosition;
-        pos2?: number;
-        markerPos2?: IMarkerPosition;
+            type: MergeTreeDeltaType.REMOVE;
+            pos1?: number;
+            relativePos1?: IRelativePosition;
+            pos2?: number;
+            relativePos2?: IRelativePosition;
     }
     export interface ICombiningOp {
-        name: string;
-        defaultValue?: any;
-        minValue?: any;
-        maxValue?: any;
+            name: string;
+            defaultValue?: any;
+            minValue?: any;
+            maxValue?: any;
     }
     export interface IContingencyCheck {
-        props: Object;
+            props: Object;
     }
     export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
-        type: MergeTreeDeltaType.ANNOTATE;
-        pos1?: number;
-        markerPos1?: IMarkerPosition;
-        pos2?: number;
-        markerPos2?: IMarkerPosition;
-        props: Object;
-        combiningOp?: ICombiningOp;
-        when?: IContingencyCheck;
+            type: MergeTreeDeltaType.ANNOTATE;
+            pos1?: number;
+            markerPos1?: IRelativePosition;
+            pos2?: number;
+            markerPos2?: IRelativePosition;
+            props: Object;
+            combiningOp?: ICombiningOp;
+            when?: IContingencyCheck;
     }
     export interface IMergeTreeGroupMsg extends IMergeTreeDelta {
-        type: MergeTreeDeltaType.GROUP;
-        hasContingentOps?: boolean;
-        ops: IMergeTreeOp[];
+            type: MergeTreeDeltaType.GROUP;
+            hasContingentOps?: boolean;
+            ops: IMergeTreeOp[];
     }
     export type IMergeTreeOp = IMergeTreeInsertMsg | IMergeTreeRemoveMsg | IMergeTreeAnnotateMsg | IMergeTreeGroupMsg;
     export interface IPropertyString {
-        props?: Object;
-        text?: string;
-        marker?: IMarkerDef;
+            props?: Object;
+            text?: string;
+            marker?: IMarkerDef;
     }
     export interface MergeTreeChunk {
-        chunkStartSegmentIndex: number;
-        chunkSegmentCount: number;
-        chunkLengthChars: number;
-        totalLengthChars: number;
-        totalSegmentCount: number;
-        chunkSequenceNumber: number;
-        segmentTexts: IPropertyString[];
+            chunkStartSegmentIndex: number;
+            chunkSegmentCount: number;
+            chunkLengthChars: number;
+            totalLengthChars: number;
+            totalSegmentCount: number;
+            chunkSequenceNumber: number;
+            segmentTexts: IPropertyString[];
     }
 }
 
 declare module 'prague/merge-tree/sharedString' {
     import * as resources from "gitresources";
     import * as api from "prague/api-core";
+    import { IMapView } from "prague/data-types";
+    import { CollaborativeMap } from "prague/map";
     import * as MergeTree from "prague/merge-tree/mergeTree";
     import * as ops from "prague/merge-tree/ops";
     import * as Properties from "prague/merge-tree/properties";
-    export class CollaboritiveStringExtension implements api.IExtension {
-        static Type: string;
-        type: string;
-        load(document: api.IDocument, id: string, sequenceNumber: number, services: api.IDistributedObjectServices, version: resources.ICommit, headerOrigin: string, header: string): api.ICollaborativeObject;
-        create(document: api.IDocument, id: string, options?: Object): api.ICollaborativeObject;
-    }
-    export class SharedString extends api.CollaborativeObject {
+    export class SharedString extends CollaborativeMap {
         id: string;
         client: MergeTree.Client;
         readonly loaded: Promise<void>;
         constructor(document: api.IDocument, id: string, sequenceNumber: number, services?: api.IDistributedObjectServices);
-        load(sequenceNumber: number, header: string, collaborative: boolean, originBranch: string): Promise<void>;
-        insertMarker(pos: number, behaviors: ops.MarkerBehaviors, props?: Properties.PropertySet): void;
+        insertMarker(pos: number, refType: ops.ReferenceType, props?: Properties.PropertySet): void;
         insertText(text: string, pos: number, props?: Properties.PropertySet): void;
         removeText(start: number, end: number): void;
         annotateRangeFromPast(props: Properties.PropertySet, start: number, end: number, fromSeq: number): void;
         transaction(groupOp: ops.IMergeTreeGroupMsg): void;
         annotateRange(props: Properties.PropertySet, start: number, end: number, op?: ops.ICombiningOp): void;
         setLocalMinSeq(lmseq: number): void;
-        snapshot(): api.ITree;
-        transform(message: api.IObjectMessage, toSequenceNumber: number): api.IObjectMessage;
-        protected processCore(message: api.ISequencedObjectMessage): void;
-        protected processMinSequenceNumberChanged(value: number): void;
-        protected attachCore(): void;
+        createRangeReference(start: number, end: number): MergeTree.LocalRangeReference;
+        createPositionReference(pos: number, slideOnRemove?: boolean): MergeTree.LocalReference;
+        localRefToPos(localRef: MergeTree.LocalReference): number;
+        addBookmark(clientId: string, bookmark: any): void;
+        getBookmarks(): IMapView;
+        protected transformContent(message: api.IObjectMessage, toSequenceNumber: number): api.IObjectMessage;
+        protected loadContent(version: resources.ICommit, headerOrigin: string, storage: api.IObjectStorageService): Promise<void>;
+        protected initializeContent(): void;
+        protected snapshotContent(): api.ITree;
+        protected processContent(message: api.ISequencedObjectMessage): void;
+        protected processMinSequenceNumberChangedContent(value: number): void;
+        protected attachContent(): void;
     }
 }
 
@@ -2180,6 +2621,7 @@ declare module 'prague/merge-tree/properties' {
     export function readContingentProperty(name: string, props: PropertySet, contingentProps: ContingentPropertySet): any;
     export function contingentExtend<T>(contingentBase: ContingentPropertySet, base: MapLike<T>, extension: MapLike<T>, combiningOp?: ops.ICombiningOp): MapLike<T>;
     export function extend<T>(base: MapLike<T>, extension: MapLike<T>, combiningOp?: ops.ICombiningOp): MapLike<T>;
+    export function addProperties(oldProps: PropertySet, newProps: PropertySet, op?: ops.ICombiningOp): MapLike<any>;
     export function extendIfUndefined<T>(base: MapLike<T>, extension: MapLike<T>): MapLike<T>;
     /** Create a MapLike with good performance. */
     export function createMap<T>(): MapLike<T>;
@@ -2194,6 +2636,7 @@ declare module 'prague/merge-tree/text' {
 }
 
 declare module 'prague/socket-storage/messages' {
+    import { IAuthenticatedUser } from "prague/core-utils";
     /**
         * Message sent to connect to the given object
         */
@@ -2202,6 +2645,7 @@ declare module 'prague/socket-storage/messages' {
             privateKey: string;
             publicKey: string;
             encrypted: boolean;
+            token?: string;
     }
     /**
         * Message sent to indicate a client has connected to the server
@@ -2209,6 +2653,7 @@ declare module 'prague/socket-storage/messages' {
         * TODO Is the below a connection to the actual Kafka stream?
         */
     export interface IConnected {
+            user: IAuthenticatedUser;
             clientId: string;
             existing: boolean;
             parentBranch: string;
@@ -2252,10 +2697,11 @@ declare module 'prague/socket-storage/deltaStorageService' {
 declare module 'prague/socket-storage/documentService' {
     import * as resources from "gitresources";
     import * as api from "prague/api-core";
+    import { IAuthenticatedUser } from "prague/core-utils";
     import { GitManager } from "prague/git-storage";
-    export function getEmptyHeader(id: string): api.IDocumentHeader;
     export class DocumentResource implements api.IDocumentResource {
             documentId: string;
+            user: IAuthenticatedUser;
             clientId: string;
             existing: boolean;
             version: resources.ICommit;
@@ -2270,7 +2716,7 @@ declare module 'prague/socket-storage/documentService' {
             sequenceNumber: number;
             minimumSequenceNumber: number;
             tree: api.ISnapshotTree;
-            constructor(documentId: string, clientId: string, existing: boolean, version: resources.ICommit, parentBranch: string, deltaConnection: api.IDocumentDeltaConnection, documentStorageService: api.IDocumentStorageService, deltaStorageService: api.IDocumentDeltaStorageService, distributedObjects: api.IDistributedObject[], pendingDeltas: api.ISequencedDocumentMessage[], transformedMessages: api.ISequencedDocumentMessage[], snapshotOriginBranch: string, sequenceNumber: number, minimumSequenceNumber: number, tree: api.ISnapshotTree);
+            constructor(documentId: string, user: IAuthenticatedUser, clientId: string, existing: boolean, version: resources.ICommit, parentBranch: string, deltaConnection: api.IDocumentDeltaConnection, documentStorageService: api.IDocumentStorageService, deltaStorageService: api.IDocumentDeltaStorageService, distributedObjects: api.IDistributedObject[], pendingDeltas: api.ISequencedDocumentMessage[], transformedMessages: api.ISequencedDocumentMessage[], snapshotOriginBranch: string, sequenceNumber: number, minimumSequenceNumber: number, tree: api.ISnapshotTree);
     }
     /**
         * The DocumentService manages the Socket.IO connection and manages routing requests to connected
@@ -2278,7 +2724,7 @@ declare module 'prague/socket-storage/documentService' {
         */
     export class DocumentService implements api.IDocumentService {
             constructor(url: string, deltaStorage: api.IDeltaStorageService, blobStorge: api.IBlobStorageService, gitManager: GitManager);
-            connect(id: string, version: resources.ICommit, connect: boolean, encrypted: boolean): Promise<api.IDocumentResource>;
+            connect(id: string, version: resources.ICommit, connect: boolean, encrypted: boolean, token?: string): Promise<api.IDocumentResource>;
             branch(id: string): Promise<string>;
             /**
                 * Emits a message on the socket
@@ -2288,19 +2734,6 @@ declare module 'prague/socket-storage/documentService' {
                 * Registers the given connection to receive events of the given type
                 */
             registerForEvent(event: string, connection: api.IDocumentDeltaConnection): void;
-    }
-}
-
-declare module 'prague/socket-storage/loadService' {
-    import * as resources from "gitresources";
-    import * as api from "prague/api-core";
-    /**
-      * The LoadService connects to storage and loads a specific version of the document.
-      */
-    export class LoadService implements api.IDocumentService {
-        constructor(url: string, deltaStorage: api.IDeltaStorageService, blobStorge: api.IBlobStorageService);
-        connect(id: string, version: resources.ICommit, connect: boolean, encrypted: boolean): Promise<api.IDocumentResource>;
-        branch(id: string): Promise<string>;
     }
 }
 
@@ -2321,15 +2754,45 @@ declare module 'prague/socket-storage/blobStorageService' {
         */
     export class BlobStorageService implements api.IBlobStorageService {
             constructor(manager: gitStorage.GitManager);
-            getHeader(id: string, version: resources.ICommit): Promise<api.IDocumentHeader>;
+            getSnapshotTree(id: string, version: resources.ICommit): Promise<api.ISnapshotTree>;
             read(sha: string): Promise<string>;
             write(id: string, tree: api.ITree, message: string): Promise<resources.ICommit>;
     }
 }
 
 declare module 'prague/socket-storage/registration' {
-    export function registerAsDefault(deltaUrl: string, blobUrl: string, repository: string): void;
-    export function registerAsLoader(deltaUrl: string, blobUrl: string, repository: string): void;
+    import { IDocumentService } from "prague/api-core";
+    export function createDocumentService(deltaUrl: string, gitUrl: string, owner: string, repository: string, disableCache?: boolean, historianApi?: boolean, credentials?: any): IDocumentService;
+    export function registerAsDefault(deltaUrl: string, gitUrl: string, owner: string, repository: string, disableCache?: boolean, historianApi?: boolean, credentials?: any): void;
+}
+
+declare module 'prague/git-storage' {
+    export * from "prague/git-storage/gitManager";
+}
+
+declare module 'prague/map/definitions' {
+    /**
+      * Description of a map delta operation
+      */
+    export interface IMapOperation {
+        type: string;
+        key?: string;
+        value?: IMapValue;
+    }
+    export enum ValueType {
+        Collaborative = 0,
+        Plain = 1,
+        Counter = 2,
+        Set = 3,
+    }
+    export interface IMapValue {
+        type: string;
+        value: any;
+    }
+    export interface IMapDataCompatibility {
+        data: IMapValue;
+        reject: Promise<any>;
+    }
 }
 
 declare module 'prague/merge-tree/base' {
@@ -2338,7 +2801,7 @@ declare module 'prague/merge-tree/base' {
         data: TData;
     }
     export interface PropertyAction<TKey, TData> {
-        <TAccum>(p: Property<TKey, TData>, accum: TAccum): boolean;
+        <TAccum>(p: Property<TKey, TData>, accum?: TAccum): boolean;
     }
     export interface ConflictAction<TKey, TData> {
         (key: TKey, current: TData, proposed: TData): TData;
@@ -2358,23 +2821,39 @@ declare module 'prague/merge-tree/base' {
     export interface KeyComparer<TKey> {
         (a: TKey, b: TKey): number;
     }
+    /**
+      * A range [start, end)
+      */
+    export interface IRange {
+        start: number;
+        end: number;
+    }
 }
 
-declare module 'prague/git-storage' {
-    export * from "prague/git-storage/gitManager";
+declare module 'prague/merge-tree/index' {
+    import * as Collections from "prague/merge-tree/collections";
+    export { Collections };
+    export * from "prague/merge-tree/extension";
+    export * from "prague/merge-tree/mergeTree";
+    export * from "prague/merge-tree/ops";
+    export * from "prague/merge-tree/sharedString";
+    export * from "prague/merge-tree/properties";
+    export { loadSegments } from "prague/merge-tree/text";
 }
 
 declare module 'prague/git-storage/gitManager' {
     import * as resources from "gitresources";
     import * as api from "prague/api-core";
+    export function buildHierarchy(flatTree: resources.ITree): api.ISnapshotTree;
     export class GitManager {
-            constructor(historian: resources.IHistorian, repository: string);
-            getHeader(id: string, sha: string): Promise<api.IDocumentHeader>;
+            endpoint: string;
+            constructor(historian: resources.IHistorian, endpoint: string, owner: string, repository: string);
+            getHeader(id: string, sha: string): Promise<api.ISnapshotTree>;
             getCommit(sha: string): Promise<resources.ICommit>;
             /**
                 * Reads the object with the given ID. We defer to the client implementation to do the actual read.
                 */
-            getCommits(sha: string, count: number): Promise<resources.ICommit[]>;
+            getCommits(sha: string, count: number): Promise<resources.ICommitDetails[]>;
             /**
                 * Reads the object with the given ID. We defer to the client implementation to do the actual read.
                 */
@@ -2388,12 +2867,13 @@ declare module 'prague/git-storage/gitManager' {
             createTree(files: api.ITree): Promise<resources.ITree>;
             createCommit(commit: resources.ICreateCommitParams): Promise<resources.ICommit>;
             getRef(ref: string): Promise<resources.IRef>;
+            createRef(branch: string, sha: string): Promise<resources.IRef>;
             upsertRef(branch: string, commitSha: string): Promise<resources.IRef>;
             /**
                 * Writes to the object with the given ID
                 */
             write(branch: string, inputTree: api.ITree, message: string): Promise<resources.ICommit>;
     }
-    export function getOrCreateRepository(historian: resources.IHistorian, repository: string): Promise<GitManager>;
+    export function getOrCreateRepository(historian: resources.IHistorian, endpoint: string, owner: string, repository: string): Promise<GitManager>;
 }
 

@@ -4,7 +4,7 @@ import * as winston from "winston";
 import * as agent from "../agent";
 import * as api from "../api-core";
 import * as core from "../core";
-import { ThroughputCounter } from "../core-utils";
+import { IAuthenticatedUser, ThroughputCounter, verifyAuthToken } from "../core-utils";
 import * as socketStorage from "../socket-storage";
 import * as utils from "../utils";
 import * as storage from "./storage";
@@ -20,7 +20,7 @@ export function register(
 
     const throughput = new ThroughputCounter(winston.info);
     const metricLogger = agent.createMetricClient(metricClientConfig);
-    let authenticatedUser: utils.IAuthenticatedUser = null;
+    let authenticatedUser: IAuthenticatedUser = null;
 
     webSocketServer.on("connection", (socket: core.IWebSocket) => {
         const connectionProfiler = winston.startTimer();
@@ -42,7 +42,7 @@ export function register(
             if (!message.token) {
                 return Promise.resolve(null);
             } else {
-                return utils.verifyAuthToken(authEndpoint, message.token);
+                return verifyAuthToken(authEndpoint, message.token);
             }
         }
 
@@ -57,7 +57,7 @@ export function register(
             const authP = checkAuth(message);
             authP.then((user: any) => {
                 if (user !== null) {
-                    authenticatedUser = user as utils.IAuthenticatedUser;
+                    authenticatedUser = user as IAuthenticatedUser;
                     winston.info(`User ${authenticatedUser.user.id} wants to access ${message.id}`);
                 }
                 const profiler = winston.startTimer();
