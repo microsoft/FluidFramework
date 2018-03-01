@@ -15,11 +15,13 @@ COPY .npmrc .
 COPY package-lock.json .
 COPY package.json .
 RUN npm install
-RUN rm -f .npmrc
 
 # And now copy over our actual code and build
 COPY . .
 RUN npm run build
+
+# Remove the npmrc following the build
+RUN rm -f .npmrc
 
 # Remove build tools
 RUN apk del .gyp

@@ -16,9 +16,11 @@ COPY .npmrc .
 COPY package.json .
 COPY package-lock.json .
 RUN npm install
-RUN rm -f .npmrc
 COPY . .
 RUN npm run build
+
+# Remove the npmrc following the build
+RUN rm -f .npmrc
 
 # Expose the port the app runs under
 EXPOSE 3000
