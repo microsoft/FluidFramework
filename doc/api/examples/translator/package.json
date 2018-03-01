@@ -1,0 +1,29 @@
+{
+  "name": "translator",
+  "version": "0.1.0",
+  "description": "Prague example making use of Bing text translation API",
+  "main": "index.js",
+  "scripts": {
+    "build": "npm run tsc && npm run tslint && npm run webpack",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "tsc": "tsc",
+    "tslint": "tslint 'src/**/*.ts'",
+    "webpack": "webpack --config webpack.config.js"
+  },
+  "dependencies": {
+    "@prague/routerlicious": "^0.1.1607",
+    "@types/request": "^2.47.0",
+    "@types/xml2js": "^0.4.2",
+    "async": "^2.6.0",
+    "request": "^2.83.0",
+    "typescript": "^2.6.2",
+    "xhr": "^2.4.1",
+    "xml2js": "^0.4.19"
+  },
+  "devDependencies": {
+    "@types/express": "^4.11.1",
+    "@types/node": "^9.4.6",
+    "tslint": "^5.8.0",
+    "webpack": "^3.10.0"
+  }
+}
