@@ -11,12 +11,12 @@
     "tslint": "tslint 'src/**/*.ts'"
   },
   "dependencies": {
+    "@prague/gitresources": "^0.7.0",
     "body-parser": "^1.17.2",
     "compression": "^1.7.0",
     "cors": "^2.8.4",
     "debug": "^2.6.8",
     "express": "^4.15.3",
-    "gitresources": "https://praguenpm.blob.core.windows.net/packages/gitresources-0.4.0.tgz",
     "morgan": "^1.8.2",
     "nconf": "^0.8.4",
     "nodegit": "^0.20.3",

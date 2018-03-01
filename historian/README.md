@@ -7,9 +7,11 @@ that maintains the versioned snapshots.
 
 For consistency we recommend building and developing within a container
 
+To begin you'll need to connect to the Prague private NPM repository. Instructions can be found [here](../doc)
+
 You can build the production container by running.
 
-`docker build -t historian .`
+`docker build --build-arg NPM_TOKEN=${NPM_TOKEN} -t historian .`
 
 And then mount it for development by running.
 

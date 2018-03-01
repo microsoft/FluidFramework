@@ -6,13 +6,15 @@ Provides a REST API to a GitHub repository. It's API is based off of GitHub's RE
 
 Because nodegit is built as a native module it's simplest to build and run historian from within a Docker container.
 
+To begin you'll need to connect to the Prague private NPM repository. Instructions can be found [here](../doc)
+
 We reuse our production container for this purpose. In development mode this does a double build (once in the
 container build and a second time when mounting your source directory). Future work may want to create a development
 specific container.
 
 You can build the container by running.
 
-`docker build -t gitrest .`
+`docker build --build-arg NPM_TOKEN=${NPM_TOKEN} -t gitrest .`
 
 And then mount it for development by running.
 

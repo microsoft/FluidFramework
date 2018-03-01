@@ -1,5 +1,3 @@
-import * as assert from "assert";
-import * as async from "async";
 import {
     ICommitDetails,
     ICreateBlobParams,
@@ -7,7 +5,9 @@ import {
     ICreateCommitParams,
     ICreateRefParams,
     ICreateTreeParams,
-} from "gitresources";
+} from "@prague/gitresources";
+import * as assert from "assert";
+import * as async from "async";
 import * as lorem from "lorem-ipsum";
 import * as moniker from "moniker";
 import * as request from "supertest";

@@ -4,8 +4,10 @@ RUN apk add --no-cache tini
 
 # Copy over and build the server
 WORKDIR /home/node/server
-COPY package.json /home/node/server
-COPY package-lock.json /home/node/server
+ARG NPM_TOKEN
+COPY .npmrc .
+COPY package.json .
+COPY package-lock.json .
 RUN npm install
 COPY . .
 RUN npm run build

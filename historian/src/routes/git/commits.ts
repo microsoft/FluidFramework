@@ -1,5 +1,5 @@
+import { ICommitHash, ICreateCommitParams } from "@prague/gitresources";
 import { Router } from "express";
-import { ICommitHash, ICreateCommitParams } from "gitresources";
 import * as nconf from "nconf";
 import { StorageProvider } from "../../services";
 import * as utils from "../utils";

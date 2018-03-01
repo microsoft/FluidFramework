@@ -1,5 +1,5 @@
+import { IBlob, ICreateBlobParams, ICreateBlobResponse } from "@prague/gitresources";
 import { Router } from "express";
-import { IBlob, ICreateBlobParams, ICreateBlobResponse } from "gitresources";
 import * as nconf from "nconf";
 import * as utils from "../../utils";
 
