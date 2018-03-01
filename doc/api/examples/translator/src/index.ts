@@ -46,19 +46,28 @@ async function translate(from: string, to: string, text: string): Promise<string
 }
 
 async function run(id: string): Promise<void> {
+    const to = "es";
+
     // Load in the latest and connect to the document
     const collabDoc = await load(id, { blockUpdateMarkers: true });
-
     const rootView = await collabDoc.getRoot().getView();
     const sharedString = rootView.get("text") as SharedString;
 
+    const translationDoc = await load(`${id}-${to}2`, { blockUpdateMarkers: true });
+    const translationRootView = await translationDoc.getRoot().getView();
+    if (!translationRootView.has("text")) {
+        translationRootView.set("text", translationDoc.createString());
+    }
+    const translationString = translationRootView.get("text") as SharedString;
+
     sharedString.on("op", () => {
         const from = "en";
-        const to = "es";
         const text = sharedString.client.getText();
 
         translate(from, to, text).then((translation) => {
             console.log(`${text} => ${translation}`);
+            translationString.removeText(0, translationString.client.getLength() - 1);
+            translationString.insertText(translation, 0);
         });
     });
 }
