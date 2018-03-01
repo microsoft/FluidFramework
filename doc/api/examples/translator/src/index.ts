@@ -1,6 +1,7 @@
 import { load } from "@prague/routerlicious/dist/api";
 import { SharedString } from "@prague/routerlicious/dist/merge-tree";
 import * as socketStorage from "@prague/routerlicious/dist/socket-storage";
+import { diffChars } from "diff";
 import * as request from "request";
 import { parseString } from "xml2js";
 
@@ -45,15 +46,13 @@ async function translate(from: string, to: string, text: string): Promise<string
     });
 }
 
-async function run(id: string): Promise<void> {
-    const to = "es";
-
+async function run(id: string, language: string, translateDocId: string): Promise<void> {
     // Load in the latest and connect to the document
     const collabDoc = await load(id, { blockUpdateMarkers: true });
     const rootView = await collabDoc.getRoot().getView();
     const sharedString = rootView.get("text") as SharedString;
 
-    const translationDoc = await load(`${id}-${to}2`, { blockUpdateMarkers: true });
+    const translationDoc = await load(translateDocId, { blockUpdateMarkers: true });
     const translationRootView = await translationDoc.getRoot().getView();
     if (!translationRootView.has("text")) {
         translationRootView.set("text", translationDoc.createString());
@@ -64,15 +63,32 @@ async function run(id: string): Promise<void> {
         const from = "en";
         const text = sharedString.client.getText();
 
-        translate(from, to, text).then((translation) => {
-            console.log(`${text} => ${translation}`);
-            translationString.removeText(0, translationString.client.getLength() - 1);
-            translationString.insertText(translation, 0);
+        translate(from, language, text).then((translation) => {
+            let cursor = 0;
+            const diff = diffChars(translationString.client.getText(), translation);
+
+            for (const change of diff) {
+                if (change.removed) {
+                    translationString.removeText(cursor, cursor + change.count);
+                } else {
+                    if (change.added) {
+                        translationString.insertText(change.value, cursor);
+                    }
+                    cursor += change.count;
+                }
+            }
         });
     });
 }
 
-const documentId = "test-translation";
-run(documentId).catch((error) => {
+async function start(): Promise<void> {
+    const documentId = process.argv[2] || "test-translation";
+    const language = process.argv[3] || "el";
+    const translatedDocId = process.argv[4] || `${documentId}-${language}`;
+
+    return run(documentId, language, translatedDocId);
+}
+
+start().catch((error) => {
     console.error(error);
 });
