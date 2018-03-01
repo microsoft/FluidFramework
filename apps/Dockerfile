@@ -15,6 +15,7 @@ COPY .npmrc .
 COPY package-lock.json .
 COPY package.json .
 RUN npm install
+RUN rm -f .npmrc
 
 # And now copy over our actual code and build
 COPY . .
