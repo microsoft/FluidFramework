@@ -153,7 +153,7 @@ data:
             "serverUrl": "{{ .Values.alfred.externalUrl }}",
             "url": "{{ .Values.tmz.externalUrl }}",
             "blobStorageUrl": "{{ .Values.historian.externalUrl }}",
-            "scriptUrl": "https://minio.wu2.prague.office-int.com/agents/",
+            "scriptUrl": "{{ .Values.minio.externalUrl }}/agents/",
             "repository": "prague",
             "storageBucket": "snapshots",
             "intervalMSec": 5000,
@@ -209,7 +209,7 @@ data:
             }
         },
         "minio": {
-            "endpoint": "agents-storage-minio-svc",
+            "endpoint": "{{ .Values.minio.endpoint }}",
             "port": 9000,
             "accessKey": "prague",
             "secretKey": "mhioAkNXTwdX4dXWgKgXVtHo",
