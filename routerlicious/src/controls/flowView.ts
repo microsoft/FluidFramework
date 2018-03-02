@@ -1926,6 +1926,25 @@ function renderFlow(layoutContext: ILayoutContext, deferWhole = false): IRenderO
     itemsContext.paragraphLexer = paragraphLexer;
     textErrorRun = undefined;
 
+    function makeAnnotDiv(x: number, y: number, width: number, fontstr: string) {
+        let annotDiv = document.createElement("div");
+        annotDiv.style.font = fontstr;
+        annotDiv.style.fontStyle = "italic";
+        let rect = new ui.Rectangle(x, y, width, 0);
+        rect.conformElementOpenHeight(annotDiv);
+        layoutContext.viewport.div.appendChild(annotDiv);
+        return annotDiv;
+    }
+
+    function renderPGAnnotation(endPGMarker: IParagraphMarker, indentWidth: number, contentWidth: number) {
+        let annotDiv = makeAnnotDiv(indentWidth, layoutContext.viewport.getLineTop(),
+            contentWidth, docContext.fontstr);
+        let text = endPGMarker.properties.translation;
+        annotDiv.innerText = text;
+        let clientRect = annotDiv.getBoundingClientRect();
+        return clientRect.height;
+    }
+
     function renderPG(
         endPGMarker: IParagraphMarker,
         pgStartPos: number,
@@ -2112,7 +2131,14 @@ function renderFlow(layoutContext: ILayoutContext, deferWhole = false): IRenderO
                     }
                 }
                 if (!deferredPGs) {
-                    layoutContext.viewport.vskip(docContext.pgVspace);
+                    if (curPGMarker.properties.translation) {
+                        // layoutContext.viewport.vskip(Math.floor(docContext.pgVspace/2));
+                        let height = renderPGAnnotation(curPGMarker, indentWidth, contentWidth);
+                        layoutContext.viewport.vskip(height);
+                        layoutContext.viewport.vskip(docContext.pgVspace);
+                    } else {
+                        layoutContext.viewport.vskip(docContext.pgVspace);
+                    }
                 }
                 if (lastLineDiv) {
                     lastLineDiv.lineEnd = curPGMarkerPos;
@@ -3269,7 +3295,7 @@ export class FlowView extends ui.Component {
         if (this.cursor.pos === this.cursor.lineDiv().lineEnd) {
             searchPos--;
         }
-        let tileInfo = findTile(this, searchPos, "pg");
+        let tileInfo = findTile(this, searchPos, "pg", false);
         if (tileInfo) {
             let buf = "";
             if (tileInfo.tile.properties) {
@@ -3278,6 +3304,8 @@ export class FlowView extends ui.Component {
                     buf += ` { ${key}: ${tileInfo.tile.properties[key]} }`;
                 }
             }
+            tileInfo.tile.properties.translation =
+                "Do not ask for whom the bell tolls; it tolls for thee! A stitch in time saves nine! You can't tell which way the train went by looking at the tracks!";
             let lc = !!(<IParagraphMarker>tileInfo.tile).listCache;
             console.log(`tile at pos ${tileInfo.pos} with props${buf} and list cache: ${lc}`);
         }
@@ -3402,6 +3430,7 @@ export class FlowView extends ui.Component {
                 break;
             case CharacterCodes.G:
                 this.viewTileProps();
+                this.localQueueRender(this.cursor.pos);
                 break;
             case CharacterCodes.S:
                 this.collabDocument.save();

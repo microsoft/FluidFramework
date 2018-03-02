@@ -2455,6 +2455,11 @@ export class Client {
         return this.mergeTree.getCollabWindow().clientId;
     }
 
+    getTextAndMarkers(label: string) {
+        let segmentWindow = this.mergeTree.getCollabWindow();
+        return this.mergeTree.getTextAndMarkers(segmentWindow.currentSeq, segmentWindow.clientId, label);
+    }
+
     getText(start?: number, end?: number) {
         let segmentWindow = this.mergeTree.getCollabWindow();
         return this.mergeTree.getText(segmentWindow.currentSeq, segmentWindow.clientId, false, start, end);
@@ -2643,6 +2648,10 @@ function glc(mergeTree: MergeTree, id: number) {
 export interface TextAccumulator {
     textSegment: TextSegment;
     placeholders?: boolean;
+    parallelArrays?: boolean;
+    parallelText?: string[];
+    parallelMarkers?: Marker[];
+    parallelMarkerLabel?: string;
 }
 
 interface IReferenceSearchInfo {
@@ -3362,11 +3371,22 @@ export class MergeTree {
                 }
             }
         }
-        else if (accumText.placeholders) {
-            for (let i = 0; i < segment.cachedLength; i++) {
-                accumText.textSegment.text += " ";
+        else {
+            if (accumText.placeholders) {
+                for (let i = 0; i < segment.cachedLength; i++) {
+                    accumText.textSegment.text += " ";
+                }
+            } else if (accumText.parallelArrays) {
+                let marker = <Marker>segment;
+                if (marker.hasTileLabel(accumText.parallelMarkerLabel)) {
+                    accumText.parallelMarkers.push(marker);
+                    accumText.parallelText.push(accumText.textSegment.text);
+                    accumText.textSegment.text = "";
+                }
+
             }
         }
+
         return true;
     }
 
@@ -3387,6 +3407,22 @@ export class MergeTree {
             this.incrementalBlockMap(stack);
         }
         return context.text;
+    }
+
+    getTextAndMarkers(refSeq: number, clientId: number, label: string, start?: number, end?: number) {
+        if (start === undefined) {
+            start = 0;
+        }
+        if (end === undefined) {
+            end = this.blockLength(this.root, refSeq, clientId);
+        }
+        let accum = <TextAccumulator>{ textSegment: new TextSegment(""), parallelMarkerLabel: label, parallelArrays: true, parallelMarkers: [], parallelText: [] };
+
+        if (MergeTree.traceGatherText) {
+            console.log(`get text on cli ${glc(this, this.collabWindow.clientId)} ref cli ${glc(this, clientId)} refSeq ${refSeq}`);
+        }
+        this.mapRange<TextAccumulator>({ leaf: this.gatherText }, refSeq, clientId, accum, start, end);
+        return { paralellText: accum.parallelText, parallelMarkers: accum.parallelMarkers};
     }
 
     getText(refSeq: number, clientId: number, placeholders = false, start?: number, end?: number) {
@@ -3526,7 +3562,7 @@ export class MergeTree {
         return offset + this.getOffset(seg, UniversalSequenceNumber,
             this.collabWindow.clientId);
     }
-    
+
     getStackContext(startPos: number, clientId: number, rangeLabels: string[]) {
         let searchInfo = <IMarkerSearchRangeInfo>{
             mergeTree: this,
