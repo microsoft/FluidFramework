@@ -127,6 +127,7 @@ export function create(
                 const spellchecker = parsedSpellchecking.base === "disabled" ? `disabled` : defaultSpellChecking;
                 const options = {
                     spellchecker,
+                    translationLanguage: "language" in request.query ? request.query.language : "el",
                 };
 
                 response.render(

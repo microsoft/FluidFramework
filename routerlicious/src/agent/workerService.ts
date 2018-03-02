@@ -5,6 +5,7 @@ import { IntelWork } from "./intelWork";
 import { PingWork } from "./pingWork";
 import { SnapshotWork } from "./snapshotWork";
 import { SpellcheckerWork } from "./spellcheckerWork";
+import { TranslationWork } from "./translationWork";
 import { IWork } from "./work";
 
 // Interface for a remote module.
@@ -220,6 +221,9 @@ export class WorkerService implements core.IWorkerService {
                 const spellcheckWork = new SpellcheckerWork(docId, this.config, this.dict, services);
                 this.startTask(docId, workType, spellcheckWork);
                 break;
+            case "translation":
+                const translationWork = new TranslationWork(docId, this.config, services);
+                this.startTask(docId, workType, translationWork);
             case "ping":
                 const pingWork = new PingWork(this.serverUrl);
                 this.startTask(docId, workType, pingWork);
@@ -238,6 +242,9 @@ export class WorkerService implements core.IWorkerService {
                 this.stopTask(docId, workType);
                 break;
             case "spell":
+                this.stopTask(docId, workType);
+                break;
+            case "translation":
                 this.stopTask(docId, workType);
                 break;
             case "ping":

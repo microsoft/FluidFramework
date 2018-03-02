@@ -102,6 +102,7 @@
         "tasks": {
             "spell": "server",
             "intel": "server",
+            "translation": "server",
             "snapshot": "both"
         },
         "workerType": "random",
@@ -146,7 +147,7 @@
         "intervalMSec": 5000,
         "onlyServer": false,
         "permission": {
-            "paparazzi": ["snapshot", "spell", "intel"],
+            "paparazzi": ["snapshot", "spell", "intel", "translation"],
             "canvas": ["ping"],
             "cell": ["ping", "snapshot"],
             "maps": ["ping", "snapshot"],
