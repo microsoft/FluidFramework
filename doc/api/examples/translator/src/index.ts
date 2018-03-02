@@ -1,14 +1,13 @@
 import { load } from "@prague/routerlicious/dist/api";
-import { SharedString } from "@prague/routerlicious/dist/merge-tree";
+import { IMergeTreeOp, MergeTreeDeltaType, SharedString } from "@prague/routerlicious/dist/merge-tree";
 import * as socketStorage from "@prague/routerlicious/dist/socket-storage";
-import { diffChars } from "diff";
 import * as request from "request";
 import { parseString } from "xml2js";
 
 // const routerlicious = "http://localhost:3000";
 // const historian = "http://localhost:3001";
-const routerlicious = "http://praguekube.westus2.cloudapp.azure.com";
-const historian = "http://prague-historian.westus2.cloudapp.azure.com";
+const routerlicious = "https://alfred.wu2-ppe.prague.office-int.com";
+const historian = "https://historian.wu2-ppe.prague.office-int.com";
 const owner = "prague";
 const repository = "prague";
 
@@ -46,47 +45,67 @@ async function translate(from: string, to: string, text: string): Promise<string
     });
 }
 
-async function run(id: string, language: string, translateDocId: string): Promise<void> {
+class Translator {
+    constructor(private sharedString: SharedString, private language: string) {
+    }
+
+    public start() {
+        this.sharedString.on("op", (op) => {
+            // Only translate after the document is actually modified
+            const mergeTreeOp = op.contents as IMergeTreeOp;
+            if (mergeTreeOp.type === MergeTreeDeltaType.INSERT || mergeTreeOp.type === MergeTreeDeltaType.REMOVE) {
+                console.log("Translating!");
+                this.translate().then(
+                    () => {
+                        console.log("...DONE");
+                    }, (error) => {
+                        console.error(error);
+                    });
+            }
+        });
+    }
+
+    private async translate(): Promise<void> {
+        const textAndMarkers = this.sharedString.client.getTextAndMarkers("pg");
+        const numParagraphs = textAndMarkers.paralellText.length;
+
+        const translationsP: Array<Promise<void>> = [];
+        for (let i = 0; i < numParagraphs; i++) {
+            const translateP = this.translateParagraph(
+                this.sharedString,
+                textAndMarkers.paralellText[i],
+                textAndMarkers.parallelMarkers[i],
+                this.language);
+            translationsP.push(translateP);
+        }
+
+        await Promise.all(translationsP);
+    }
+
+    private async translateParagraph(sharedString: SharedString, parallelText, parallelMarker, language: string) {
+        const from = "en";
+        const translation = await translate(from, language, parallelText);
+        const pos = sharedString.client.mergeTree.getOffset(
+            parallelMarker, sharedString.client.getCurrentSeq(), sharedString.client.getClientId());
+        sharedString.annotateRange({ translation }, pos, pos + 1);
+    }
+}
+
+async function run(id: string, language: string): Promise<void> {
     // Load in the latest and connect to the document
     const collabDoc = await load(id, { blockUpdateMarkers: true });
     const rootView = await collabDoc.getRoot().getView();
     const sharedString = rootView.get("text") as SharedString;
 
-    const translationDoc = await load(translateDocId, { blockUpdateMarkers: true });
-    const translationRootView = await translationDoc.getRoot().getView();
-    if (!translationRootView.has("text")) {
-        translationRootView.set("text", translationDoc.createString());
-    }
-    const translationString = translationRootView.get("text") as SharedString;
-
-    sharedString.on("op", () => {
-        const from = "en";
-        const text = sharedString.client.getText();
-
-        translate(from, language, text).then((translation) => {
-            let cursor = 0;
-            const diff = diffChars(translationString.client.getText(), translation);
-
-            for (const change of diff) {
-                if (change.removed) {
-                    translationString.removeText(cursor, cursor + change.count);
-                } else {
-                    if (change.added) {
-                        translationString.insertText(change.value, cursor);
-                    }
-                    cursor += change.count;
-                }
-            }
-        });
-    });
+    const translator = new Translator(sharedString, language);
+    translator.start();
 }
 
 async function start(): Promise<void> {
-    const documentId = process.argv[2] || "test-translation";
-    const language = process.argv[3] || "el";
-    const translatedDocId = process.argv[4] || `${documentId}-${language}`;
+    const documentId = process.argv[2] || "sick-fireman";
+    const language = process.argv[3] || "fr";
 
-    return run(documentId, language, translatedDocId);
+    return run(documentId, language);
 }
 
 start().catch((error) => {

@@ -2119,17 +2119,7 @@ function renderFlow(layoutContext: ILayoutContext, deferWhole = false): IRenderO
             if (currentPos < totalLength) {
                 renderPG(curPGMarker, currentPos, indentWidth, indentSymbol, contentWidth);
                 currentPos = curPGMarkerPos + curPGMarker.cachedLength;
-                if (currentPos >= totalLength) {
-                    break;
-                }
-                segoff = getContainingSegment(flowView, currentPos);
-                if (segoff.segment.getType() === SharedString.SegmentType.Marker) {
-                    let marker = <SharedString.Marker>segoff.segment;
-                    if (marker.hasRangeLabel("box") && (marker.refType & SharedString.ReferenceType.NestEnd)) {
-                        layoutContext.viewport.vskip(layoutContext.docContext.boxVspace);
-                        break;
-                    }
-                }
+
                 if (!deferredPGs) {
                     if (curPGMarker.properties.translation) {
                         // layoutContext.viewport.vskip(Math.floor(docContext.pgVspace/2));
@@ -2142,6 +2132,21 @@ function renderFlow(layoutContext: ILayoutContext, deferWhole = false): IRenderO
                 }
                 if (lastLineDiv) {
                     lastLineDiv.lineEnd = curPGMarkerPos;
+                }
+
+                if (currentPos < totalLength) {
+                    segoff = getContainingSegment(flowView, currentPos);
+                    if (segoff.segment.getType() === SharedString.SegmentType.Marker) {
+                        let marker = <SharedString.Marker>segoff.segment;
+                        if (marker.hasRangeLabel("box") && (marker.refType & SharedString.ReferenceType.NestEnd)) {
+                            layoutContext.viewport.vskip(layoutContext.docContext.boxVspace);
+                            break;
+                        }
+                    }
+                }
+
+                if (currentPos >= totalLength) {
+                    break;
                 }
             } else {
                 break;
