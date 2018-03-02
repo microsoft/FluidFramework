@@ -1,5 +1,5 @@
+import { ICreateRefParams, IPatchRefParams, IRef } from "@prague/gitresources";
 import { Response, Router } from "express";
-import { ICreateRefParams, IPatchRefParams, IRef } from "gitresources";
 import * as nconf from "nconf";
 import * as git from "nodegit";
 import * as utils from "../../utils";

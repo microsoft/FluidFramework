@@ -16,8 +16,8 @@
             "repository": "prague",
             "owner": "prague",
             "endpoints": {
-                "delta": "http://praguekube-ppe.westus2.cloudapp.azure.com",
-                "storage": "http://prague-historian-ppe.westus2.cloudapp.azure.com"
+                "delta": "https://alfred.wu2.prague.office-int.com",
+                "storage": "https://historian.wu2.prague.office-int.com"
             }
         },
         "worker": {
@@ -27,7 +27,7 @@
                     "host": "pkarimov-paidIOT.azure-devices.net",
                     "sharedAccessKeyName": "iothubowner",
                     "sharedAccessKey": "8mvOmNnUklwnuzY+U96V51w+qCq262ZUpSkdw8nTZ18=",
-                    "url": "http://praguekube-ppe.westus2.cloudapp.azure.com/intelligence/resume"
+                    "url": "https://alfred.wu2.prague.office-int.com/intelligence/resume"
                 },
                 "textAnalytics": {
                     "key": "c8b60dc5e49849ce903d7d29a2dce550"
@@ -37,13 +37,13 @@
                     "url": "http://praguepy.westus2.cloudapp.azure.com/"
                 },
                 "spellchecker": {
-                    "url": "http://augmentation.westus2.cloudapp.azure.com/spellchecker/api"
+                    "url": "https://augmentation.wu2.prague.office-int.com/spellchecker/api"
                 }
             },
-            "serverUrl": "http://praguekube-ppe.westus2.cloudapp.azure.com",
-            "url": "http://praguetmz-ppe.westus2.cloudapp.azure.com",
-            "blobStorageUrl": "http://prague-historian-ppe.westus2.cloudapp.azure.com",
-            "scriptUrl": "http://pragueminio.westus2.cloudapp.azure.com:9000/agents/",
+            "serverUrl": "https://alfred.wu2.prague.office-int.com",
+            "url": "https://tmz.wu2.prague.office-int.com",
+            "blobStorageUrl": "https://historian.wu2.prague.office-int.com",
+            "scriptUrl": "https://minio.wu2.prague.office-int.com/agents/",
             "repository": "prague",
             "storageBucket": "snapshots",
             "intervalMSec": 5000,

@@ -34,9 +34,11 @@ async function updateOrCreateKey(key: string, map: types.IMap, container: JQuery
         }
     } else {
         if (key === "set") {
-            keyElement.text(`${key}: ${JSON.stringify(value.entries())}`);
+            const set = value as Map.DistributedSet<number>;
+            keyElement.text(`${key}: ${JSON.stringify(set.entries())}`);
         } else if (key === "counter") {
-            keyElement.text(`${key}: ${value.get()}`);
+            const counter = value as Map.Counter;
+            keyElement.text(`${key}: ${counter.value}`);
         } else {
             keyElement.text(`${key}: ${JSON.stringify(value)}`);
         }

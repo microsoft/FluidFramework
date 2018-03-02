@@ -1,4 +1,4 @@
-import * as git from "gitresources";
+import * as git from "@prague/gitresources";
 import * as _ from "lodash";
 import * as pathApi from "path";
 import * as querystring from "querystring";

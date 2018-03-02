@@ -1,5 +1,5 @@
+import { ICreateRepoParams } from "@prague/gitresources";
 import { Router } from "express";
-import { ICreateRepoParams } from "gitresources";
 import * as nconf from "nconf";
 import * as utils from "../../utils";
 

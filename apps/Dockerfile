@@ -20,6 +20,9 @@ RUN npm install
 COPY . .
 RUN npm run build
 
+# Remove the npmrc following the build
+RUN rm -f .npmrc
+
 # Remove build tools
 RUN apk del .gyp
 

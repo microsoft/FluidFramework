@@ -1,5 +1,5 @@
+import { ICreateTagParams, ITag } from "@prague/gitresources";
 import { Router } from "express";
-import { ICreateTagParams, ITag } from "gitresources";
 import * as nconf from "nconf";
 import * as git from "nodegit";
 import * as utils from "../../utils";

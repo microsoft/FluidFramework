@@ -1,5 +1,5 @@
+import * as resources from "@prague/gitresources";
 import * as fs from "fs";
-import * as resources from "gitresources";
 import * as git from "nodegit";
 import * as path from "path";
 import * as util from "util";
