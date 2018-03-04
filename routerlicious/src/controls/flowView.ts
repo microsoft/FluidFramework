@@ -1,4 +1,4 @@
-// tslint:disable:no-bitwise whitespace
+// tslint:disable:no-bitwise whitespace align
 import performanceNow = require("performance-now");
 import { api, core, MergeTree as SharedString, types } from "../client-api";
 import { findRandomWord } from "../merge-tree-utils";
@@ -2125,15 +2125,11 @@ function renderFlow(layoutContext: ILayoutContext, deferWhole = false): IRenderO
                         // layoutContext.viewport.vskip(Math.floor(docContext.pgVspace/2));
                         let height = renderPGAnnotation(curPGMarker, indentWidth, contentWidth);
                         layoutContext.viewport.vskip(height);
-                        layoutContext.viewport.vskip(docContext.pgVspace);
-                    } else {
-                        layoutContext.viewport.vskip(docContext.pgVspace);
                     }
                 }
                 if (lastLineDiv) {
                     lastLineDiv.lineEnd = curPGMarkerPos;
                 }
-
                 if (currentPos < totalLength) {
                     segoff = getContainingSegment(flowView, currentPos);
                     if (segoff.segment.getType() === SharedString.SegmentType.Marker) {
@@ -2143,10 +2139,11 @@ function renderFlow(layoutContext: ILayoutContext, deferWhole = false): IRenderO
                             break;
                         }
                     }
-                }
-
-                if (currentPos >= totalLength) {
+                } else {
                     break;
+                }
+                if (!deferredPGs) {
+                    layoutContext.viewport.vskip(docContext.pgVspace);
                 }
             } else {
                 break;

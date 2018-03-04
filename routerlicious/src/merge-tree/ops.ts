@@ -31,23 +31,22 @@ export interface IMergeTreeDelta {
     type: MergeTreeDeltaType;
 }
 
-// TODO: when ref collections are in, then change this to be either
-// marker id or { ref collection id, index }
 /**
- * A segment-relative position.
+ * A position specified relative to a segment or shared reference.
  */
 export interface IRelativePosition {
     /**
-     * String identifier specifying a segment or reference collection.
-     */
-    id: string;
-    /**
-     * True if the id refers to the segment indirectly.
+     * True if the position is relative to a shared reference.  Otherwise,
+     * the position is relative to a segment.
      */
     indirect?: boolean;
     /**
-     * If true, insert before the specified segment.  If false or not defined,
-     * insert after the specified segment.
+     * String identifier specifying a segment or shared reference.
+     */
+    id: string;
+    /**
+     * If true, insert before the specified segment or reference.  If false or not defined,
+     * insert after the specified segment or reference.
      */
     before?: boolean;
     /**
