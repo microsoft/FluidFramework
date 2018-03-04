@@ -17,12 +17,20 @@ export class DistributedSet<T> {
         this.internalSet = new Set(value);
     }
 
+    /**
+     * Can be set to register an event listener for when values are added or deleted from the set.
+     */
+    public onAdd = (value: T) => { return; };
+    public onDelete = (value: T) => { return; };
+
     public add(value: T, submitEvent = true): DistributedSet<T> {
         this.internalSet.add(value);
 
         if (submitEvent) {
             this.emitter.emit("add", value);
         }
+
+        this.onAdd(value);
 
         return this;
     }
@@ -33,6 +41,8 @@ export class DistributedSet<T> {
         if (submitEvent) {
             this.emitter.emit("delete", value);
         }
+
+        this.onDelete(value);
 
         return this;
     }
