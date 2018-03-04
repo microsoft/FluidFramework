@@ -19,11 +19,19 @@ export class Counter {
     constructor(private emitter: IValueOpEmitter, private _value: number) {
     }
 
+    /**
+     * Can be set to register an event listener for when the counter is incremented. The callback indicates the
+     * amount the counter was incremented by.
+     */
+    public onIncrement = (value: number) => { return; };
+
     public increment(value: number, submit = true) {
         this._value = this._value + value;
         if (submit) {
             this.emitter.emit("increment", value);
         }
+
+        this.onIncrement(value);
 
         return this;
     }

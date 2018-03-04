@@ -6,37 +6,62 @@ import * as testUtils from "../testUtils";
 
 describe("Routerlicious", () => {
     describe("Map", () => {
-        describe("counter", () => {
+        describe("Counter", () => {
             let testDocument: api.Document;
             let testMap: IMap;
-            let counterWithDefault: Counter;
-            let counterWithValue: Counter;
+            let testCounter: Counter;
 
             beforeEach(async () => {
                 testUtils.registerAsTest("", "", "");
                 testDocument = await api.load("testDocument");
                 testMap = testDocument.createMap();
-                counterWithDefault = testMap.set("defaultCounter", undefined, CounterValueType.Name);
-                counterWithValue = testMap.set("valueCounter", 50, CounterValueType.Name);
+                testCounter = testMap.set("defaultCounter", undefined, CounterValueType.Name);
             });
 
-            it("Can create a counter with default value", async () => {
-                assert.ok(counterWithDefault);
-                assert.equal(counterWithDefault.value, 0);
+            describe(".constructor", () => {
+                it("Should be able to create a counter with default value", async () => {
+                    assert.ok(testCounter);
+                    assert.equal(testCounter.value, 0);
+                });
+
+                it("Should be able to create a counter with predefined value", async () => {
+                    const counterWithValue = testMap.set("defaultCounter", 50, CounterValueType.Name);
+                    assert.ok(counterWithValue);
+                    assert.equal(counterWithValue.value, 50);
+                });
             });
 
-            it("Can create a counter with predefined value", async () => {
-                assert.ok(counterWithValue);
-                assert.equal(counterWithValue.value, 50);
+            describe(".increment", () => {
+                it("Should be able to increment a counter with positive and negative values", async () => {
+                    testCounter.increment(20);
+                    assert.equal(testCounter.value, 20);
+                    testCounter.increment(-40);
+                    assert.equal(testCounter.value, -20);
+                });
             });
 
-            it("Can incrrement and decrement a counter", async () => {
-                counterWithValue.increment(20);
-                assert.equal(counterWithValue.value, 70);
-                counterWithValue.increment(-40);
-                assert.equal(counterWithValue.value, 30);
-            });
+            describe(".increment", () => {
+                it("Should be able to register an onIncrement callback", () => {
+                    const callback = (value: number) => {
+                        return;
+                    };
 
+                    testCounter.onIncrement = callback;
+                    assert.equal(testCounter.onIncrement, callback);
+                });
+
+                it("Should fire onIncrementAt callback after increment", () => {
+                    let fired = false;
+
+                    testCounter.onIncrement = (value: number) => {
+                        fired = true;
+                        assert.equal(value, 10);
+                    };
+
+                    testCounter.increment(10);
+                    assert.ok(fired);
+                });
+            });
         });
     });
 });

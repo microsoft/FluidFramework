@@ -28,6 +28,14 @@ export class DistributedArray<T> {
         this._value = cloneDeep(value);
     }
 
+    /**
+     * Can be set to register an event listener for when a new element is added to the array
+     */
+    public onInsertAt = (index: number, value: T) => { return; };
+
+    /**
+     * Inserts a new element into the array
+     */
     public insertAt(index: number, value: T, submitEvent = true): DistributedArray<T> {
         this._value[index] = value;
 
@@ -35,6 +43,8 @@ export class DistributedArray<T> {
             const params: IInsertAtParams<T> = { index, value };
             this.emitter.emit("insertAt", params);
         }
+
+        this.onInsertAt(index, value);
 
         return this;
     }
