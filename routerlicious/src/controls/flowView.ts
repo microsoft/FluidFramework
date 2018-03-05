@@ -641,33 +641,31 @@ function showPresence(presenceX: number, lineContext: ILineContext, presenceInfo
 }
 
 function showPositionEndOfLine(lineContext: ILineContext, presenceInfo?: ILocalPresenceInfo) {
-    if ((!presenceInfo) || presenceInfo.fresh) {
-        if (lineContext.deferredAttach) {
-            addToRerenderList(lineContext);
+    if (lineContext.deferredAttach) {
+        addToRerenderList(lineContext);
+    } else {
+        if (lineContext.span) {
+            let cursorBounds = lineContext.span.getBoundingClientRect();
+            let lineDivBounds = lineContext.lineDiv.getBoundingClientRect();
+            let cursorX = cursorBounds.width + (cursorBounds.left - lineDivBounds.left);
+            if (!presenceInfo) {
+                lineContext.flowView.cursor.assignToLine(cursorX, lineContext.lineDivHeight, lineContext.lineDiv);
+            } else {
+                showPresence(cursorX, lineContext, presenceInfo);
+            }
         } else {
-            if (lineContext.span) {
-                let cursorBounds = lineContext.span.getBoundingClientRect();
-                let lineDivBounds = lineContext.lineDiv.getBoundingClientRect();
-                let cursorX = cursorBounds.width + (cursorBounds.left - lineDivBounds.left);
+            if (lineContext.lineDiv.indentWidth !== undefined) {
                 if (!presenceInfo) {
-                    lineContext.flowView.cursor.assignToLine(cursorX, lineContext.lineDivHeight, lineContext.lineDiv);
+                    lineContext.flowView.cursor.assignToLine(
+                        lineContext.lineDiv.indentWidth, lineContext.lineDivHeight, lineContext.lineDiv);
                 } else {
-                    showPresence(cursorX, lineContext, presenceInfo);
+                    showPresence(lineContext.lineDiv.indentWidth, lineContext, presenceInfo);
                 }
             } else {
-                if (lineContext.lineDiv.indentWidth !== undefined) {
-                    if (!presenceInfo) {
-                        lineContext.flowView.cursor.assignToLine(
-                            lineContext.lineDiv.indentWidth, lineContext.lineDivHeight, lineContext.lineDiv);
-                    } else {
-                        showPresence(lineContext.lineDiv.indentWidth, lineContext, presenceInfo);
-                    }
+                if (!presenceInfo) {
+                    lineContext.flowView.cursor.assignToLine(0, lineContext.lineDivHeight, lineContext.lineDiv);
                 } else {
-                    if (!presenceInfo) {
-                        lineContext.flowView.cursor.assignToLine(0, lineContext.lineDivHeight, lineContext.lineDiv);
-                    } else {
-                        showPresence(0, lineContext, presenceInfo);
-                    }
+                    showPresence(0, lineContext, presenceInfo);
                 }
             }
         }
@@ -689,30 +687,28 @@ function showPositionInLine(
     cursorPos: number,
     presenceInfo?: ILocalPresenceInfo) {
 
-    if ((!presenceInfo) || presenceInfo.fresh) {
-        if (lineContext.deferredAttach) {
-            addToRerenderList(lineContext);
+    if (lineContext.deferredAttach) {
+        addToRerenderList(lineContext);
+    } else {
+        let posX: number;
+        let lineDivBounds = lineContext.lineDiv.getBoundingClientRect();
+        if (cursorPos > textStartPos) {
+            let preCursorText = text.substring(0, cursorPos - textStartPos);
+            let temp = lineContext.span.innerText;
+            lineContext.span.innerText = preCursorText;
+            let cursorBounds = lineContext.span.getBoundingClientRect();
+            posX = cursorBounds.width + (cursorBounds.left - lineDivBounds.left);
+            // console.log(`cbounds w ${cursorBounds.width} posX ${posX} ldb ${lineDivBounds.left}`);
+            lineContext.span.innerText = temp;
         } else {
-            let posX: number;
-            let lineDivBounds = lineContext.lineDiv.getBoundingClientRect();
-            if (cursorPos > textStartPos) {
-                let preCursorText = text.substring(0, cursorPos - textStartPos);
-                let temp = lineContext.span.innerText;
-                lineContext.span.innerText = preCursorText;
-                let cursorBounds = lineContext.span.getBoundingClientRect();
-                posX = cursorBounds.width + (cursorBounds.left - lineDivBounds.left);
-                // console.log(`cbounds w ${cursorBounds.width} posX ${posX} ldb ${lineDivBounds.left}`);
-                lineContext.span.innerText = temp;
-            } else {
-                let cursorBounds = lineContext.span.getBoundingClientRect();
-                posX = cursorBounds.left - lineDivBounds.left;
-                // console.log(`cbounds whole l ${cursorBounds.left} posX ${posX} ldb ${lineDivBounds.left}`);
-            }
-            if (!presenceInfo) {
-                lineContext.flowView.cursor.assignToLine(posX, lineContext.lineDivHeight, lineContext.lineDiv);
-            } else {
-                showPresence(posX, lineContext, presenceInfo);
-            }
+            let cursorBounds = lineContext.span.getBoundingClientRect();
+            posX = cursorBounds.left - lineDivBounds.left;
+            // console.log(`cbounds whole l ${cursorBounds.left} posX ${posX} ldb ${lineDivBounds.left}`);
+        }
+        if (!presenceInfo) {
+            lineContext.flowView.cursor.assignToLine(posX, lineContext.lineDivHeight, lineContext.lineDiv);
+        } else {
+            showPresence(posX, lineContext, presenceInfo);
         }
     }
 }
@@ -2376,13 +2372,17 @@ export class Cursor {
             if (this.presenceDiv.parentElement) {
                 this.presenceDiv.parentElement.removeChild(this.presenceDiv);
             }
-            this.presenceDiv.style.opacity = "1.0";
             lineDiv.appendChild(this.presenceDiv);
         }
-        if (this.blinkTimer) {
-            clearTimeout(this.blinkTimer);
+        if ((!this.presenceInfo) || (this.presenceInfo.fresh)) {
+            if (this.presenceInfo) {
+                this.presenceDiv.style.opacity = "1.0";
+            }
+            if (this.blinkTimer) {
+                clearTimeout(this.blinkTimer);
+            }
+            this.blinkCursor();
         }
-        this.blinkCursor();
     }
 
     private blinker = () => {
@@ -3405,9 +3405,13 @@ export class FlowView extends ui.Component {
         }
     }
 
+    public findWordUnderCursor() {
+        // let pos = this.cursor.pos;
+    }
+
     public keyCmd(charCode: number) {
         switch (charCode) {
-            case CharacterCodes.U:
+            case CharacterCodes.K:
                 this.historyBack();
                 break;
             case CharacterCodes.J:
@@ -3421,13 +3425,22 @@ export class FlowView extends ui.Component {
                 createTable(this.cursor.pos, this);
                 this.localQueueRender(this.cursor.pos);
                 break;
-            case CharacterCodes.K:
-                this.toggleBlockquote();
-                break;
             case CharacterCodes.L:
                 this.setList();
                 break;
-            case CharacterCodes.B:
+            case CharacterCodes.B: {
+                // this.toggleBold();
+                break;
+            }
+            case CharacterCodes.I: {
+                // this.toggleItalic("italic");
+                break;
+            }
+            case CharacterCodes.U: {
+                // this.toggleUnderline("underline");
+                break;
+            }
+            case CharacterCodes.D:
                 this.setList(1);
                 break;
             case CharacterCodes.G:
