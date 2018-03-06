@@ -4,11 +4,10 @@ import { core, MergeTree, types } from "../client-api";
 import { BaseWork} from "./baseWork";
 import { IWork} from "./work";
 
-// Replace the subscriptionKey string value with your valid subscription key.
 const subscriptionKey = "bd099a1e38724333b253fcff7523f76a";
 
 async function translate(from: string, to: string, text: string): Promise<string> {
-    const params = `from=${from}&to=${to}&text=${encodeURI(text)}`;
+    const params = `from=${from}&to=${to}&text=${encodeURI(text)}&contentType=text/html`;
     const uri = `https://api.microsofttranslator.com/V2/Http.svc/Translate?${params}`;
 
     return new Promise<string>((resolve, reject) => {
