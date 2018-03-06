@@ -6,18 +6,32 @@
     {{$content}}
         <div class="container">
             <h1>Demos</h1>
+
+            <h2>Starter Documents</h2>
+            <ul class="list-unstyled">
+                <li><a href="/templates/list">Document Templates</a></li>
+                <li><a href="/scribe">Scribe</a></li>
+            </ul>
+
+            <h2>Demo Scripts</h2>
+            <ul class="list-unstyled">
+                <li><a href="/democreator">December 2017</a></li>
+                <li><a href="/democreator/retreat">Retreat 2018</a></li>
+            </ul>
+
+            <h2>Data Types</h2>
             <ul class="list-unstyled">
                 <li><a href="/maps/maps">Collaborative Map</a></li>
                 <li><a href="/cell/cell">Collaborative Cell</a></li>
                 <li><a href="/canvas/canvas">Ink Canvas</a></li>
                 <li><a href="/sharedText/string">Shared String</a></li>
-                <li><a href="/templates/list">Document Templates</a></li>
-                <li><a href="/scribe">Scribe</a></li>
+            </ul>
+
+            <h2>Example Apps</h2>
+            <ul class="list-unstyled">
                 <li><a href="/video/video">Collaborative Video</a></li>
                 <li><a href="/youtubeVideo/youtubeVideo">Youtube Video</a></li>
-                <li><a href="/democreator">Demo Creator</a></li>
                 <li><a href="/graph/graph">Graph</a></li>
-                <li><a href="/login">Login</a></li>
             </ul>
         </div>
     {{/content}}
