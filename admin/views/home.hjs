@@ -5,20 +5,11 @@
 
     {{$content}}
         <div class="container">
-            {{#user}}
-                <h5 align="right"><a href="/logout">Logout</a></h5>
-                <h3>Hello, {{ user.displayName }}!</h3>
-                    <br>
-                    <h4><li><a href="/maps">Maps</a></li></h4>
-                    <h4><li><a href="/cells">Cells</a></li></h4>
-            {{/user}}
-            {{^user}}
-                <h3>Login to use the apps</h3>
-                <br>
-                <a href="/login" class="btn btn-social btn-microsoft">
-                    <span class="fa fa-windows"></span> Sign in with @microsoft account
-                </a>
-            {{/user}}
+            <h3>Login to use the apps</h3>
+            <br>
+            <a href="/login" class="btn btn-social btn-microsoft">
+                <span class="fa fa-windows"></span> Sign in with @microsoft account
+            </a>
         </div>
     {{/content}}
 

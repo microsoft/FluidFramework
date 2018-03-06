@@ -1,0 +1,24 @@
+{{<layout}}
+    {{$styles}}
+        <link href="{{#hfurl}}/public/stylesheets/dist/style.css{{/hfurl}}" rel="stylesheet" />
+    {{/styles}}
+
+    {{$content}}
+        <div class="container">
+            {{#user}}
+                <h5 align="right"><a href="/logout">Logout</a></h5>
+                <h3>Hello, <span id="displayname"></span>!</h3>
+                <div id="adminportal"></div>
+            {{/user}}
+        </div>
+    {{/content}}
+
+    {{$scripts}}
+        <script src="{{#hfurl}}/public/scripts/dist/index.js{{/hfurl}}"></script>
+        <script>
+            var userData = {{{ user }}};
+            controller.admin.load(userData);
+        </script>
+    {{/scripts}}
+
+{{/layout}}

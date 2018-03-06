@@ -9,7 +9,18 @@ export function create(config: any): Router {
      * Route to retrieve the home page for the app
      */
     router.get("/", (request, response, next) => {
-        response.render("home", { partials: defaultPartials, title: "Prague Apps", user: request.user });
+        if (request.user === undefined) {
+            response.render("home", { partials: defaultPartials, title: "Login" });
+        } else {
+            response.render(
+                "admin",
+                {
+                    partials: defaultPartials,
+                    title: "Admin Portal",
+                    user: JSON.stringify(request.user),
+                },
+            );
+        }
     });
 
     router.get("/login",
