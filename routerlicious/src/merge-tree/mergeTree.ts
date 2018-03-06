@@ -2652,6 +2652,7 @@ export interface TextAccumulator {
     parallelText?: string[];
     parallelMarkers?: Marker[];
     parallelMarkerLabel?: string;
+    tagsInProgress: string[];
 }
 
 interface IReferenceSearchInfo {
@@ -3356,6 +3357,51 @@ export class MergeTree {
             if (MergeTree.traceGatherText) {
                 console.log(`@cli ${this.getLongClientId(this.collabWindow.clientId)} gather seg seq ${textSegment.seq} rseq ${textSegment.removedSeq} text ${textSegment.text}`);
             }
+            let beginTags = "";
+            let endTags = "";
+            if (accumText.parallelArrays) {
+                // TODO: let clients pass in function to get tag
+                let tags = <string[]>[];
+                let initTags = <string[]>[];
+
+                if (textSegment.properties && (textSegment.properties["font-weight"])) {
+                    tags.push("b");
+                }
+                if (textSegment.properties && (textSegment.properties["text-decoration"])) {
+                    tags.push("u");
+                }
+                let remTags = <string[]>[];
+                if (tags.length > 0) {
+                    for (let tag of tags) {
+                        if (accumText.tagsInProgress.indexOf(tag) < 0) {
+                            beginTags += `<${tag}>`;
+                            initTags.push(tag);
+                        }
+                    }
+                    for (let accumTag of accumText.tagsInProgress) {
+                        if (tags.indexOf(accumTag) < 0) {
+                            endTags += `</${accumTag}>`;
+                            remTags.push(accumTag);
+                        }
+                    }
+                    for (let initTag of initTags.reverse()) {
+                        accumText.tagsInProgress.push(initTag);
+                    }
+                } else {
+                    for (let accumTag of accumText.tagsInProgress) {
+                        endTags += `</${accumTag}>`;
+                        remTags.push(accumTag);
+                    }
+                }
+                for (let remTag of remTags) {
+                    let remdex = accumText.tagsInProgress.indexOf(remTag);
+                    if (remdex >= 0) {
+                        accumText.tagsInProgress.splice(remdex, 1);
+                    }
+                }
+            }
+            accumText.textSegment.text += endTags;
+            accumText.textSegment.text += beginTags;
             if ((start <= 0) && (end >= textSegment.text.length)) {
                 accumText.textSegment.text += textSegment.text;
             }
@@ -3416,13 +3462,16 @@ export class MergeTree {
         if (end === undefined) {
             end = this.blockLength(this.root, refSeq, clientId);
         }
-        let accum = <TextAccumulator>{ textSegment: new TextSegment(""), parallelMarkerLabel: label, parallelArrays: true, parallelMarkers: [], parallelText: [] };
+        let accum = <TextAccumulator>{
+            textSegment: new TextSegment(""), parallelMarkerLabel: label, parallelArrays: true, parallelMarkers: [], parallelText: [],
+            tagsInProgress: []
+        };
 
         if (MergeTree.traceGatherText) {
             console.log(`get text on cli ${glc(this, this.collabWindow.clientId)} ref cli ${glc(this, clientId)} refSeq ${refSeq}`);
         }
         this.mapRange<TextAccumulator>({ leaf: this.gatherText }, refSeq, clientId, accum, start, end);
-        return { paralellText: accum.parallelText, parallelMarkers: accum.parallelMarkers};
+        return { paralellText: accum.parallelText, parallelMarkers: accum.parallelMarkers };
     }
 
     getText(refSeq: number, clientId: number, placeholders = false, start?: number, end?: number) {

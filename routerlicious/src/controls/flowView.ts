@@ -1,4 +1,4 @@
-// tslint:disable:no-bitwise whitespace align
+// tslint:disable:no-bitwise whitespace align switch-default
 import performanceNow = require("performance-now");
 import { api, core, MergeTree as SharedString, types } from "../client-api";
 import { findRandomWord } from "../merge-tree-utils";
@@ -2456,6 +2456,101 @@ interface ISegmentOffset {
     offset: number;
 }
 
+interface IWordRange {
+    wordStart: number;
+    wordEnd: number;
+}
+
+function getCurrentWord(pos: number, mergeTree: SharedString.MergeTree) {
+    let wordStart = -1;
+    let wordEnd = -1;
+
+    function maximalWord(textSegment: SharedString.TextSegment, offset: number) {
+        let segWordStart = offset;
+        let segWordEnd = offset;
+
+        let epos = offset;
+        let nonWord = /\W/;
+        while (epos < textSegment.text.length) {
+            if (nonWord.test(textSegment.text.charAt(epos))) {
+                break;
+            }
+            epos++;
+        }
+        segWordEnd = epos;
+        if (segWordEnd > offset) {
+            let spos = offset - 1;
+            while (spos >= 0) {
+                if (nonWord.test(textSegment.text.charAt(spos))) {
+                    break;
+                }
+                spos--;
+            }
+            segWordStart = spos + 1;
+        }
+        return <IWordRange>{ wordStart: segWordStart, wordEnd: segWordEnd };
+    }
+
+    let expandWordBackward = (segment: SharedString.Segment) => {
+        if (mergeTree.localNetLength(segment)) {
+            switch (segment.getType()) {
+                case SharedString.SegmentType.Marker:
+                    return false;
+                case SharedString.SegmentType.Text:
+                    let textSegment = <SharedString.TextSegment>segment;
+                    let innerOffset = textSegment.text.length - 1;
+                    let maxWord = maximalWord(textSegment, innerOffset);
+                    if (maxWord.wordStart < maxWord.wordEnd) {
+                        wordStart -= (maxWord.wordEnd - maxWord.wordStart);
+                        return (maxWord.wordStart === 0);
+                    } else {
+                        return false;
+                    }
+            }
+        }
+        return true;
+    };
+
+    let expandWordForward = (segment: SharedString.Segment) => {
+        if (mergeTree.localNetLength(segment)) {
+            switch (segment.getType()) {
+                case SharedString.SegmentType.Marker:
+                    return false;
+                case SharedString.SegmentType.Text:
+                    let textSegment = <SharedString.TextSegment>segment;
+                    let innerOffset = 0;
+                    let maxWord = maximalWord(textSegment, innerOffset);
+                    if (maxWord.wordEnd > innerOffset) {
+                        wordEnd += (maxWord.wordEnd - innerOffset);
+                    }
+                    return (maxWord.wordEnd === textSegment.text.length);
+            }
+        }
+        return true;
+    };
+
+    let segoff = mergeTree.getContainingSegment(pos,
+        SharedString.UniversalSequenceNumber, mergeTree.collabWindow.clientId);
+    if (segoff.segment && (segoff.segment.getType() === SharedString.SegmentType.Text)) {
+        let textSegment = <SharedString.TextSegment>segoff.segment;
+        let maxWord = maximalWord(textSegment, segoff.offset);
+        if (maxWord.wordStart < maxWord.wordEnd) {
+            let segStartPos = pos - segoff.offset;
+            wordStart = segStartPos + maxWord.wordStart;
+            wordEnd = segStartPos + maxWord.wordEnd;
+            if (maxWord.wordStart === 0) {
+                mergeTree.leftExcursion(segoff.segment, expandWordBackward);
+            }
+            if (maxWord.wordEnd === textSegment.text.length) {
+                mergeTree.rightExcursion(segoff.segment, expandWordForward);
+            }
+        }
+        if (wordStart >= 0) {
+            return <IWordRange>{ wordStart, wordEnd };
+        }
+    }
+}
+
 function getLocalRefPos(flowView: FlowView, localRef: SharedString.LocalReference) {
     return flowView.client.mergeTree.getOffset(localRef.segment, SharedString.UniversalSequenceNumber,
         flowView.client.getClientId()) + localRef.offset;
@@ -3405,8 +3500,58 @@ export class FlowView extends ui.Component {
         }
     }
 
-    public findWordUnderCursor() {
-        // let pos = this.cursor.pos;
+    public toggleBold() {
+        let propToggle = (textSegment: SharedString.TextSegment, startPos: number, endPos: number) => {
+            if (textSegment.properties && textSegment.properties["font-weight"] &&
+                (textSegment.properties["font-weight"] === "bold")) {
+                this.sharedString.annotateRange({ "font-weight": null }, startPos, endPos);
+            } else {
+                this.sharedString.annotateRange({ "font-weight": "bold" }, startPos, endPos);
+            }
+        };
+        this.toggleCurrentWord(propToggle);
+    }
+
+    public toggleUnderline() {
+        let propToggle = (textSegment: SharedString.TextSegment, startPos: number, endPos: number) => {
+            if (textSegment.properties && textSegment.properties["text-decoration"] &&
+                (textSegment.properties["text-decoration"] === "underline")) {
+                this.sharedString.annotateRange({ "text-decoration": null }, startPos, endPos);
+            } else {
+                this.sharedString.annotateRange({ "text-decoration": "underline" }, startPos, endPos);
+            }
+        };
+        this.toggleCurrentWord(propToggle);
+    }
+
+    public toggleCurrentWord(propToggle: (textSegment: SharedString.TextSegment,
+        startPos: number, endPos: number) => void) {
+        let wordRange = getCurrentWord(this.cursor.pos, this.sharedString.client.mergeTree);
+        if (wordRange) {
+            let mrToggle = (segment: SharedString.Segment, segpos: number,
+                refSeq: number, clientId: number, start: number, end: number) => {
+                if (segment.getType() === SharedString.SegmentType.Text) {
+                    let textSegment = <SharedString.TextSegment>segment;
+                    // TODO: have combining op for css toggle
+                    let startPos = segpos;
+                    if ((start > 0) && (start < textSegment.text.length)) {
+                        startPos += start;
+                    }
+                    let endPos = segpos + textSegment.text.length;
+                    if (end < textSegment.text.length) {
+                        endPos = segpos + end;
+                    }
+                    propToggle(textSegment, startPos, endPos);
+                }
+                return true;
+            };
+            let text = this.sharedString.client.getText(wordRange.wordStart, wordRange.wordEnd);
+            console.log(`Word at cursor: [${wordRange.wordStart},${wordRange.wordEnd}) is ${text}`);
+            this.sharedString.client.mergeTree.mapRange({ leaf: mrToggle }, SharedString.UniversalSequenceNumber,
+                this.sharedString.client.getClientId(), undefined, wordRange.wordStart, wordRange.wordEnd);
+            this.localQueueRender(this.cursor.pos);
+        }
+
     }
 
     public keyCmd(charCode: number) {
@@ -3429,7 +3574,7 @@ export class FlowView extends ui.Component {
                 this.setList();
                 break;
             case CharacterCodes.B: {
-                // this.toggleBold();
+                this.toggleBold();
                 break;
             }
             case CharacterCodes.I: {
@@ -3437,7 +3582,7 @@ export class FlowView extends ui.Component {
                 break;
             }
             case CharacterCodes.U: {
-                // this.toggleUnderline("underline");
+                this.toggleUnderline();
                 break;
             }
             case CharacterCodes.D:
