@@ -1,0 +1,35 @@
+{{<layout}}
+    {{$styles}}
+        <link href="{{#hfurl}}/public/stylesheets/dist/style.css{{/hfurl}}" rel="stylesheet" />
+
+    {{/styles}}
+
+    {{$content}}
+
+        <div class="container">
+
+            <h1>Prague Demos</h1>
+
+            <h3>Competitive Analysis</h3>
+            <ul class="list-unstyled">
+                <li><a href="https://docs.google.com/document/d/1Ed3_Bgmfj4L1tvjjh8geSHNZMbh_X6SaRd1uZGSQSio/edit">Google Docs Pride and Prejudice</a></li>
+            </ul>
+
+            <h3>Routerlicious</h3>
+            <ul class="list-unstyled">
+                <li><a href="/sharedText/{{sharedTextMoniker}}">Pride and Prejudice</a></li>
+            </ul>
+
+            <h3>Intelligent Services</h3>
+            <ul class="list-unstyled">
+                <li><a href="/scribe/demo?language=el&speed=100&text=/public/literature/translate-demo.txt">Scribe</a></li>
+            </ul>
+
+            <h3>Versioning and Branching</h3>
+            <ul class="list-unstyled">
+                <li><a href="/sharedText/{{emptyMoniker}}?template=empty">Starter Document</a></li>
+            </ul>
+        </div>
+
+    {{/content}}
+{{/layout}}

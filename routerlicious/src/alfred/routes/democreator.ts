@@ -11,7 +11,26 @@ export function create(config: Provider): Router {
      */
     router.get("/", (request, response, next) => {
         response.render(
-            "democreator",
+            "demos/dec2017",
+            {
+                canvasMoniker: moniker.choose(),
+                composeMoniker: moniker.choose(),
+                emptyMoniker: moniker.choose(),
+                noComposeMoniker: moniker.choose(),
+                partials: defaultPartials,
+                sharedTextMoniker: moniker.choose(),
+                sharedTextPageInkMoniker: moniker.choose(),
+                title: "Prague Demos",
+                videoMoniker: moniker.choose(),
+            });
+    });
+
+    /**
+     * Loading the demo creator page.
+     */
+    router.get("/retreat", (request, response, next) => {
+        response.render(
+            "demos/retreat",
             {
                 canvasMoniker: moniker.choose(),
                 composeMoniker: moniker.choose(),
