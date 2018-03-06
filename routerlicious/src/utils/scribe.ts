@@ -1,5 +1,5 @@
 import clone = require("lodash/clone");
-import { api, core, MergeTree, utils } from "../client-api";
+import { api, core, MergeTree, types, utils } from "../client-api";
 
 let document: api.Document;
 let sharedString: MergeTree.SharedString;
@@ -226,7 +226,7 @@ async function typeFile(
     const startTime = Date.now();
 
     return new Promise<IScribeMetrics>((resolve, reject) => {
-        let insertPosition = ss.client.getLength();
+        let insertPosition = 0;
         let readPosition = 0;
         let lineNumber = 0;
 
@@ -361,11 +361,7 @@ async function typeFile(
             if (!play) {
                 return true;
             }
-            if (ss.client.getLength() === 0) {
-                // pg marker that will remain at end of text
-                ss.insertMarker(insertPosition, MergeTree.ReferenceType.Tile,
-                    {[MergeTree.reservedTileLabelsKey]: ["pg"]});
-            }
+
             // Start inserting text into the string
             let code = fileText.charCodeAt(readPosition);
             if (code === 13) {
@@ -375,7 +371,7 @@ async function typeFile(
             trackOperation(() => {
                 if (code === 10) {
                     ss.insertMarker(insertPosition++, MergeTree.ReferenceType.Tile,
-                    {[MergeTree.reservedTileLabelsKey]: ["pg"]});
+                        {[MergeTree.reservedTileLabelsKey]: ["pg"]});
                     readPosition++;
                     ++lineNumber;
                     if (lineNumber % saveLineFrequency === 0) {
@@ -416,7 +412,7 @@ async function typeFile(
     });
 }
 
-export async function create(id: string): Promise<void> {
+export async function create(id: string, translateLanguage?: string): Promise<void> {
     // Load the shared string extension we will type into
     document = await api.load(id);
     const root = await document.getRoot().getView();
@@ -424,21 +420,23 @@ export async function create(id: string): Promise<void> {
     root.set("presence", document.createMap());
     sharedString = document.createString() as MergeTree.SharedString;
 
-    /*
-    const segments = MergeTree.loadSegments(" ", 0, true);
-    for (const segment of segments) {
-        if (segment.getType() === MergeTree.SegmentType.Text) {
-            let textSegment = <MergeTree.TextSegment> segment;
-            sharedString.insertText(textSegment.text, sharedString.client.getLength(),
-                textSegment.properties);
-        } else {
-            // assume marker
-            let marker = <MergeTree.Marker> segment;
-            sharedString.insertMarker(sharedString.client.getLength(), marker.behaviors, marker.properties);
-        }
-    }*/
-
+    sharedString.insertMarker(0, MergeTree.ReferenceType.Tile, { [MergeTree.reservedTileLabelsKey]: ["pg"] });
     root.set("text", sharedString);
+
+    if (translateLanguage) {
+        const insights = await document.getRoot().wait<types.IMap>("insights");
+        const insightsView = await insights.getView();
+
+        let textMap: types.IMap;
+        if (insightsView.has(sharedString.id)) {
+            textMap = insightsView.get(sharedString.id);
+        } else {
+            textMap = document.createMap();
+            insightsView.set(sharedString.id, textMap);
+        }
+        textMap.set("translations", translateLanguage);
+    }
+
     return Promise.resolve();
 }
 
@@ -447,16 +445,7 @@ export async function type(
     text: string,
     callback: ScribeMetricsCallback): Promise<IScribeMetrics> {
 
-    // Type the file.
-    return new Promise<IScribeMetrics>((resolve, reject) => {
-        typeFile(document, sharedString, text, intervalTime, callback).then(
-            (metrics) => {
-                resolve(metrics);
-            },
-            (error) => {
-                reject(error);
-            });
-    });
+    return typeFile(document, sharedString, text, intervalTime, callback);
 }
 
 /**

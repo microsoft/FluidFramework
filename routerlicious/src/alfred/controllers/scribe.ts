@@ -85,7 +85,7 @@ function handleFiles(createButton: HTMLButtonElement,
     reader.readAsText(file);
 }
 
-export function initialize(config: any, id: string, template: string) {
+export function initialize(config: any, id: string, template: string, speed: number, language: string) {
     const loadFile = !id;
 
     // Easy access to a couple of page elements
@@ -96,11 +96,18 @@ export function initialize(config: any, id: string, template: string) {
     const createDetails = document.getElementById("create-details") as HTMLElement;
     const typingDetails = document.getElementById("typing-details") as HTMLElement;
     const intervalElement = document.getElementById("interval") as HTMLInputElement;
+    const translationElement = document.getElementById("translation") as HTMLInputElement;
     const documentLink = document.getElementById("document-link") as HTMLAnchorElement;
     const typingProgress = document.getElementById("typing-progress") as HTMLElement;
     const typingProgressBar = typingProgress.getElementsByClassName("progress-bar")[0] as HTMLElement;
     const ackProgress = document.getElementById("ack-progress") as HTMLElement;
     const ackProgressBar = ackProgress.getElementsByClassName("progress-bar")[0] as HTMLElement;
+
+    // Set the speed and translation elements
+    intervalElement.value = speed.toString();
+    if (translationElement) {
+        translationElement.value = language;
+    }
 
     if (loadFile) {
         const inputElement = document.getElementById("file") as HTMLInputElement; // BINGO
@@ -125,8 +132,12 @@ export function initialize(config: any, id: string, template: string) {
             id = sharedTextId.value;
         }
 
+        if (translationElement) {
+            language = translationElement.value;
+        }
+
         intervalTime = Number.parseInt(intervalElement.value);
-        const scribeP =  scribe.create(id);
+        const scribeP = scribe.create(id, language);
 
         scribeP.then(() => {
             // Initialize the scribe link UI

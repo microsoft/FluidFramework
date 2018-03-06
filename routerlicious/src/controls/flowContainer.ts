@@ -264,14 +264,16 @@ export class FlowContainer extends ui.Component {
         }
         if (view.has("TextAnalytics")) {
             const analytics = view.get("TextAnalytics");
-            if (analytics.language) {
-                this.status.add("li", analytics.language);
-            }
-            if (analytics.sentiment) {
-                const sentimentEmoji = analytics.sentiment > 0.7
-                    ? "🙂"
-                    : analytics.sentiment < 0.3 ? "🙁" : "😐";
-                this.status.add("si", sentimentEmoji);
+            if (analytics) {
+                if (analytics.language) {
+                    this.status.add("li", analytics.language);
+                }
+                if (analytics.sentiment) {
+                    const sentimentEmoji = analytics.sentiment > 0.7
+                        ? "🙂"
+                        : analytics.sentiment < 0.3 ? "🙁" : "😐";
+                    this.status.add("si", sentimentEmoji);
+                }
             }
         }
     }

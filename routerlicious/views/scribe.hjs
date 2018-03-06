@@ -20,7 +20,11 @@
                     </div>
                     <div class="form-group">
                         <label for="interval">Typing Interval (ms)</label>
-                        <input type="text" class="form-control" id="interval" value="50">
+                        <input type="text" class="form-control" id="interval">
+                    </div>
+                    <div class="form-group">
+                        <label for="translation">Translation language</label>
+                        <input type="text" class="form-control" id="translation" value="">
                     </div>
                     <div class="form-group">
                         <label for="file">Text</label>
@@ -33,7 +37,7 @@
                 <form id="text-form">
                     <div class="form-group">
                         <label for="interval">Typing Interval (ms)</label>
-                        <input type="text" class="form-control" id="interval" value="50">
+                        <input type="text" class="form-control" id="interval">
                     </div>
                     <button class="btn btn-default hidden" id="create" style="margin-bottom: 10px;">Create</button>
                 </form>
@@ -91,7 +95,12 @@
         <script src="{{#hfurl}}/public/scripts/dist/index.js{{/hfurl}}"></script>
         <script>
             var config = {{{ config }}};
-            controller.scribe.initialize(config, "{{ id }}", "{{ template }}");
+            controller.scribe.initialize(
+                config,
+                "{{ id }}",
+                "{{ template }}",
+                {{ speed }},
+                "{{ language }}");
         </script>
     {{/scripts}}
 {{/layout}}

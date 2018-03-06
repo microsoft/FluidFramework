@@ -103,7 +103,7 @@ class Translator {
         language: string) {
 
         const from = "en";
-        const translation = await translate(from, language, parallelText);
+        const translation = parallelText ? await translate(from, language, parallelText) : "";
         const pos = sharedString.client.mergeTree.getOffset(
             parallelMarker, sharedString.client.getCurrentSeq(), sharedString.client.getClientId());
         sharedString.annotateRange({ translation }, pos, pos + 1);
