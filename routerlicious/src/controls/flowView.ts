@@ -1936,7 +1936,7 @@ function renderFlow(layoutContext: ILayoutContext, deferWhole = false): IRenderO
         let annotDiv = makeAnnotDiv(indentWidth, layoutContext.viewport.getLineTop(),
             contentWidth, docContext.fontstr);
         let text = endPGMarker.properties.translation;
-        annotDiv.innerText = text;
+        annotDiv.innerHTML = text;
         let clientRect = annotDiv.getBoundingClientRect();
         return clientRect.height;
     }
