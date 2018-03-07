@@ -128,6 +128,7 @@ async function loadFull(
 
     getInsights(collabDoc.getRoot(), sharedString.id).then(
         async (insightsMap) => {
+            container.trackInsights(insightsMap);
             const translationLanguage = "translationLanguage";
             if (options[translationLanguage]) {
                 const view = await insightsMap.getView();
