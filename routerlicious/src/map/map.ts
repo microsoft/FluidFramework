@@ -28,7 +28,7 @@ class ContentObjectStorage implements api.IObjectStorageService {
 
 export interface IMapMessageHandler {
     prepare(op: IMapOperation): Promise<any>;
-    process(op: IMapOperation, context: any): void;
+    process(op: IMapOperation, context: any, message?: api.ISequencedObjectMessage): void;
 }
 
 /**
@@ -226,7 +226,7 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
         if (message.type === api.OperationType && message.clientId !== this.document.clientId) {
             const op: IMapOperation = message.contents;
             if (this.messageHandler.has(op.type)) {
-                this.messageHandler.get(op.type).process(op, context);
+                this.messageHandler.get(op.type).process(op, context, message);
                 handled = true;
             }
         }

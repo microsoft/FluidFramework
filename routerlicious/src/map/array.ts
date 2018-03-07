@@ -1,5 +1,6 @@
 import { IValueFactory, IValueOpEmitter, IValueOperation, IValueType } from "../data-types";
 import cloneDeep = require("lodash/cloneDeep");
+import { ISequencedObjectMessage } from "../api-core";
 
 interface IInsertAtParams<T> {
     index: number;
@@ -16,7 +17,11 @@ export class DistributedArrayFactory<T> implements IValueFactory<DistributedArra
     }
 }
 
-export class DistributedArray<T> {
+export interface IMapArray<T> {
+    value: T[];
+}
+
+export class DistributedArray<T> implements IMapArray<T> {
     // tslint:disable-next-line:variable-name
     private _value: T[];
 
@@ -31,20 +36,20 @@ export class DistributedArray<T> {
     /**
      * Can be set to register an event listener for when a new element is added to the array
      */
-    public onInsertAt = (index: number, value: T) => { return; };
+    public onInsertAt = (index: number, value: T, message?: ISequencedObjectMessage) => { return; };
 
     /**
      * Inserts a new element into the array
      */
-    public insertAt(index: number, value: T, submitEvent = true): DistributedArray<T> {
+    public insertAt(index: number, value: T, message?: ISequencedObjectMessage): DistributedArray<T> {
         this._value[index] = value;
 
-        if (submitEvent) {
+        if (!message) {
             const params: IInsertAtParams<T> = { index, value };
             this.emitter.emit("insertAt", params);
         }
 
-        this.onInsertAt(index, value);
+        this.onInsertAt(index, value, message);
 
         return this;
     }
@@ -79,8 +84,8 @@ export class DistributedArrayValueType implements IValueType<DistributedArray<an
                     prepare: async (old, params) => {
                         return;
                     },
-                    process: (old, params: IInsertAtParams<any>, context) => {
-                        old.insertAt(params.index, params.value, false);
+                    process: (old, params: IInsertAtParams<any>, context, message) => {
+                        old.insertAt(params.index, params.value, message);
                         return old;
                     },
                 },

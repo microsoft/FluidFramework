@@ -103,11 +103,11 @@ function makeBookmarks(client: MergeTree.Client, bookmarkCount: number) {
             lref1.refType = ops.ReferenceType.RangeBegin;
             lref1.addProperties({ [MergeTree.reservedRangeLabelsKey]: ["bookmark"] });
             // can do this locally; for shared refs need to use id/index to ref end
-            lref1.cachedEnd = lref2;
+            lref1.pairedRef = lref2;
             lref2.refType = ops.ReferenceType.RangeEnd;
             lref2.addProperties({ [MergeTree.reservedRangeLabelsKey]: ["bookmark"] });
-            client.mergeTree.addLocalReference(baseSegment1, lref1);
-            client.mergeTree.addLocalReference(baseSegment2, lref2);
+            client.mergeTree.addLocalReference(lref1);
+            client.mergeTree.addLocalReference(lref2);
             bookmarks.push(new MergeTree.LocalRangeReference(lref1, lref2));
         } else {
             i--;
@@ -132,7 +132,7 @@ function makeReferences(client: MergeTree.Client, referenceCount: number) {
             if (i & 1) {
                 lref.refType = ops.ReferenceType.SlideOnRemove;
             }
-            client.mergeTree.addLocalReference(baseSegment, lref);
+            client.mergeTree.addLocalReference(lref);
             refs.push(lref);
         } else {
             i--;

@@ -86,7 +86,7 @@ export class LocalRangeReference implements Collections.IRange {
 
 export class LocalReference implements ReferencePosition {
     properties: Properties.PropertySet;
-    cachedEnd?: LocalReference;
+    pairedRef?: LocalReference;
 
     constructor(public segment: BaseSegment, public offset = 0,
         public refType = ops.ReferenceType.Simple) {
@@ -129,7 +129,7 @@ export class LocalReference implements ReferencePosition {
     }
 
     matchEnd(refPos: ReferencePosition) {
-        return (this.cachedEnd) && (refPos === this.cachedEnd);
+        return (this.pairedRef) && (refPos === this.pairedRef);
     }
 
     getId() {
@@ -4497,7 +4497,8 @@ export class MergeTree {
         }
     }
 
-    addLocalReference(segment: BaseSegment, lref: LocalReference) {
+    addLocalReference(lref: LocalReference) {
+        let segment = lref.segment;
         segment.addLocalRef(lref);
         this.blockUpdatePathLengths(segment.parent, TreeMaintainanceSequenceNumber,
             LocalClientId);

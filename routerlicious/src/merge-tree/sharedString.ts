@@ -1,10 +1,11 @@
+// tslint:disable:whitespace align
 import * as assert from "assert";
 import performanceNow = require("performance-now");
 import * as resources from "gitresources";
 import * as api from "../api-core";
 import { Deferred } from "../core-utils";
 import { IMap, IMapView } from "../data-types";
-import { CollaborativeMap, DistributedArray, DistributedArrayValueType, MapExtension } from "../map";
+import { CollaborativeMap, DistributedArray, DistributedArrayValueType, IMapArray, MapExtension } from "../map";
 import { IIntegerRange } from "./base";
 import { CollaboritiveStringExtension } from "./extension";
 import * as MergeTree from "./mergeTree";
@@ -33,11 +34,103 @@ function textsToSegments(texts: ops.IPropertyString[]) {
     return segments;
 }
 
+export interface ISerializedReference {
+    sequenceNumber: number;
+    position: number;
+    refType: ops.ReferenceType;
+    pairedRefId?: string;
+}
+
+export interface IReference {
+    serializedRef?: ISerializedReference;
+    localRef?: MergeTree.LocalReference;
+}
+
+export class Reference implements IReference {
+    public serializedRef: ISerializedReference;
+    public localRef: MergeTree.LocalReference;
+    constructor(public collection: ReferenceCollection, public index: number) {
+    }
+    public toJSON(key: string) {
+        return { serializedRef: this.serializedRef };
+    }
+}
+
+export class Range {
+    public start: Reference;
+    public end: Reference;
+    public local: MergeTree.LocalRangeReference;
+}
+
+export class ReferenceCollection {
+    public refstore: IMapArray<Reference>;
+    /** If mapKey is defined, collection is shared at that key. */
+    constructor(public sharedString: SharedString, public mapKey?: string) {
+        if (mapKey) {
+            // shared string referenceCollections key/map key gets distributed array with filter
+            // TODO: in wrapper func check if key already exists
+            let drefstore = this.sharedString.referenceCollections.set<DistributedArray<Reference>>(
+                mapKey,
+                undefined,
+                DistributedArrayValueType.Name);
+            drefstore.onInsertAt = (index: number, value: IReference,
+                message: api.ISequencedObjectMessage) => {
+                if (!message) {
+                    drefstore.value[index] = <Reference>value;
+                } else if (message.clientId !== sharedString.client.longClientId) {
+                    this.addRemote(index, value, message);
+                }
+            };
+            this.refstore = drefstore;
+        } else {
+            this.refstore = { value: <Reference[]>[] };
+        }
+    }
+
+    // TODO: error cases
+    public add(pos: number, refType=ops.ReferenceType.Simple) {
+        let refs = this.refstore.value;
+        let index = refs.length;
+        let lref = this.sharedString.createPositionReference(pos, refType);
+        if (lref) {
+            let ref = new Reference(this, index);
+            ref.localRef = lref;
+            if (this.mapKey) {
+                let drefstore = <DistributedArray<Reference>>this.refstore;
+                ref.serializedRef = <ISerializedReference>{
+                    refType,
+                    position: pos,
+                    sequenceNumber: this.sharedString.client.getCurrentSeq(),
+                };
+                drefstore.insertAt(index, ref);
+            } else {
+                refs[index] = ref;
+            }
+        }
+    }
+
+    public addRemote(index: number, ref: IReference, message: api.ISequencedObjectMessage) {
+        let lref = this.sharedString.createPositionReference(ref.serializedRef.position,
+            ref.serializedRef.refType, message.referenceSequenceNumber,
+            this.sharedString.client.getOrAddShortClientId(message.clientId));
+        if (lref) {
+            let drefstore = <DistributedArray<Reference>>this.refstore;
+            let completeRef = new Reference(this,index);
+            completeRef.localRef = lref;
+            drefstore.value[index]=completeRef;
+        }
+    }
+}
+
+export class RangeCollection {
+    public refCollection: ReferenceCollection;
+}
+
 export class SharedString extends CollaborativeMap {
     public client: MergeTree.Client;
+    public referenceCollections: IMapView;
     private isLoaded = false;
     private pendingMinSequenceNumber: number = 0;
-    private bookmarks: IMapView;
 
     // Deferred that triggers once the object is loaded
     private loadedDeferred = new Deferred<void>();
@@ -132,38 +225,25 @@ export class SharedString extends CollaborativeMap {
         this.client.mergeTree.updateLocalMinSeq(lmseq);
     }
 
-    public createRangeReference(start: number, end: number) {
-        let startSegoff = this.client.mergeTree.getContainingSegment(start,
-            this.client.getCurrentSeq(), this.client.getClientId());
-        let endSegoff = this.client.mergeTree.getContainingSegment(end,
-            this.client.getCurrentSeq(), this.client.getClientId());
-        if (startSegoff && endSegoff && startSegoff.segment && endSegoff.segment) {
-            let startBaseSegment = <MergeTree.BaseSegment> startSegoff.segment;
-            let endBaseSegment = <MergeTree.BaseSegment> endSegoff.segment;
-
-            let startLref = new MergeTree.LocalReference(startBaseSegment,
-                startSegoff.offset, ops.ReferenceType.RangeBegin);
-            let endLref = new MergeTree.LocalReference(endBaseSegment,
-                endSegoff.offset, ops.ReferenceType.RangeEnd);
-            startLref.cachedEnd = endLref;
-            this.client.mergeTree.addLocalReference(startBaseSegment, startLref);
-            this.client.mergeTree.addLocalReference(endBaseSegment, endLref);
+    public createRangeReference(start: number, end: number, refSeq = this.client.getCurrentSeq(),
+        clientId = this.client.getClientId()) {
+        let startLref = this.createPositionReference(start, ops.ReferenceType.RangeBegin, refSeq, clientId);
+        let endLref = this.createPositionReference(start, ops.ReferenceType.RangeBegin, refSeq, clientId);
+        if (startLref && endLref) {
+            startLref.pairedRef = endLref;
+            endLref.pairedRef = startLref;
             return new MergeTree.LocalRangeReference(startLref, endLref);
         }
     }
 
-    public createPositionReference(pos: number, slideOnRemove = false) {
+    public createPositionReference(pos: number, refType: ops.ReferenceType, refSeq = this.client.getCurrentSeq(),
+        clientId = this.client.getClientId()) {
         let segoff = this.client.mergeTree.getContainingSegment(pos,
-            this.client.getCurrentSeq(), this.client.getClientId());
+            refSeq, this.client.getClientId());
         if (segoff && segoff.segment) {
-            let baseSegment = <MergeTree.BaseSegment> segoff.segment;
-            let refType = ops.ReferenceType.Simple;
-            if (slideOnRemove) {
-                // tslint:disable:no-bitwise
-                refType |= ops.ReferenceType.SlideOnRemove;
-            }
+            let baseSegment = <MergeTree.BaseSegment>segoff.segment;
             let lref = new MergeTree.LocalReference(baseSegment, segoff.offset, refType);
-            this.client.mergeTree.addLocalReference(baseSegment, lref);
+            this.client.mergeTree.addLocalReference(lref);
             return lref;
         }
     }
@@ -177,23 +257,13 @@ export class SharedString extends CollaborativeMap {
         }
     }
 
-    public addBookmark(clientId: string, bookmark: any) {
-        if (!this.bookmarks.has(clientId)) {
-            const clientArray = this.bookmarks.set<DistributedArray<any>>(
-                clientId,
-                undefined,
-                DistributedArrayValueType.Name);
-            clientArray.insertAt(0, bookmark);
-        }
-    }
-
-    public getBookmarks(): IMapView {
-        return this.bookmarks;
+    public getReferenceCollections(): IMapView {
+        return this.referenceCollections;
     }
 
     protected transformContent(message: api.IObjectMessage, toSequenceNumber: number): api.IObjectMessage {
         if (message.contents) {
-            this.client.transform(<api.ISequencedObjectMessage> message, toSequenceNumber);
+            this.client.transform(<api.ISequencedObjectMessage>message, toSequenceNumber);
         }
         message.referenceSequenceNumber = toSequenceNumber;
         return message;
@@ -209,8 +279,8 @@ export class SharedString extends CollaborativeMap {
     }
 
     protected initializeContent() {
-        const bookmarks = this.document.create(MapExtension.Type) as IMap;
-        this.set("bookmarks", bookmarks);
+        const referenceCollections = this.document.create(MapExtension.Type) as IMap;
+        this.set("referenceCollections", referenceCollections);
         this.initialize(0, null, false, this.id, null).catch((error) => {
             console.error(error);
         });
@@ -280,14 +350,16 @@ export class SharedString extends CollaborativeMap {
             chunk = Paparazzo.Snapshot.EmptyChunk;
         }
 
-        // Register the filter callback on the bookmarks
-        let bookmarks = await this.get("bookmarks") as IMap;
-        bookmarks.registerSerializeFilter((key, value: number[], type) => {
+        // Register the filter callback on the reference collections
+        let referenceCollections = await this.get("referenceCollections") as IMap;
+        referenceCollections.registerSerializeFilter((key, value: Reference[], type) => {
             if (type === DistributedArrayValueType.Name) {
-                return value.map((val) => val * 20);
+                return value.map((ref: Reference) => {
+                    // let pos = this.client.mergeTree.referencePositionToLocalPosition(ref.localRef);
+                });
             }
         });
-        this.bookmarks = await bookmarks.getView();
+        this.referenceCollections = await referenceCollections.getView();
 
         // This should happen if we have collab services
         assert.equal(sequenceNumber, chunk.chunkSequenceNumber);

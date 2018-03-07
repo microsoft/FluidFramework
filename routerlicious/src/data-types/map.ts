@@ -1,4 +1,4 @@
-import { ICollaborativeObject } from "../api-core";
+import { ICollaborativeObject, ISequencedObjectMessage } from "../api-core";
 
 export type SerializeFilter = (key: string, serializedValue: any, type: string) => any;
 
@@ -40,7 +40,7 @@ export interface IValueOperation<T> {
     /**
      * Performs the actual processing on the operation
      */
-    process(old: T, params: any, context: any): T;
+    process(old: T, params: any, context: any, message?: ISequencedObjectMessage): T;
 }
 
 /**

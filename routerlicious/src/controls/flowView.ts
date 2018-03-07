@@ -2799,8 +2799,7 @@ export class FlowView extends ui.Component {
             this.client.mergeTree.removeLocalReference(baseSegment, presentPresence.localRef);
             tempXformPos = presentPresence.xformPos;
         }
-        this.client.mergeTree.addLocalReference(localPresenceInfo.localRef.segment,
-            localPresenceInfo.localRef);
+        this.client.mergeTree.addLocalReference(localPresenceInfo.localRef);
         this.presenceVector[localPresenceInfo.clientId] = localPresenceInfo;
         if (localPresenceInfo.xformPos !== tempXformPos) {
             this.presenceQueueRender(localPresenceInfo);
