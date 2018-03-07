@@ -91,6 +91,8 @@ class Translator {
             return;
         }
 
+        console.log(`${Date.now()} - Requesting translation ${this.sharedString.id}`);
+
         // Begin the translation
         this.pendingTranslation = true;
 
@@ -105,6 +107,7 @@ class Translator {
             });
 
             doneP.then(() => {
+                console.log(`${Date.now()} - Complete ${this.sharedString.id}`);
                 this.pendingTranslation = false;
                 if (this.translationRequested) {
                     const lastRequest = this.translationRequested;
