@@ -3,9 +3,8 @@ import performanceNow = require("performance-now");
 import * as request from "request";
 import * as url from "url";
 import * as agent from "../../agent";
-import { api as API, MergeTree as SharedString, socketStorage, types } from "../../client-api";
+import { api as API, map as DistributedMap, MergeTree as SharedString, socketStorage, types } from "../../client-api";
 import { controls, ui } from "../../client-ui";
-// import { map as Map } from "../../client-api";
 
 // first script loaded
 let clockStart = Date.now();
@@ -127,9 +126,20 @@ async function loadFull(
     theFlow = container.flowView;
     host.attach(container);
 
-    getInsights(collabDoc.getRoot(), sharedString.id).then((insightsMap) => {
-        container.trackInsights(insightsMap);
-    });
+    getInsights(collabDoc.getRoot(), sharedString.id).then(
+        async (insightsMap) => {
+            const translationLanguage = "translationLanguage";
+            if (options[translationLanguage]) {
+                const view = await insightsMap.getView();
+
+                if (!view.has("translations")) {
+                    view.set("translations", undefined, DistributedMap.DistributedSetValueType.Name);
+                }
+
+                const translations = view.get<DistributedMap.DistributedSet<string>>("translations");
+                translations.add(options[translationLanguage]);
+            }
+        });
 
     if (sharedString.client.getLength() > 0) {
         theFlow.render(0, true);

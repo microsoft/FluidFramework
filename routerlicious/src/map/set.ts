@@ -47,7 +47,7 @@ export class DistributedSet<T> {
         return this;
     }
 
-    public entries(): any[] {
+    public entries(): T[] {
         return Array.from(this.internalSet.values());
     }
 }

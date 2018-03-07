@@ -1,6 +1,6 @@
 import * as request from "request";
 import { parseString } from "xml2js";
-import { core, MergeTree, types } from "../client-api";
+import { core, map, MergeTree, types } from "../client-api";
 import { BaseWork} from "./baseWork";
 import { IWork} from "./work";
 
@@ -36,7 +36,9 @@ async function translate(from: string, to: string, text: string): Promise<string
 }
 
 class Translator {
-    private language: string;
+    private view: types.IMapView;
+    private pendingTranslation: any;
+    private translationRequested = false;
 
     constructor(
         private insights: types.IMap,
@@ -44,41 +46,76 @@ class Translator {
     }
 
     public async start(): Promise<void> {
-        await this.trackTranslation();
-        this.sharedString.on("op", (op) => {
-            if (!this.language) {
-                return;
-            }
-
-            // Only translate after the document is actually modified
-            const mergeTreeOp = op.contents as MergeTree.IMergeTreeOp;
-            if (mergeTreeOp.type === MergeTree.MergeTreeDeltaType.INSERT ||
-                mergeTreeOp.type === MergeTree.MergeTreeDeltaType.REMOVE) {
-
-                this.translate().catch((error) => {
-                    console.error(error);
-                });
-            }
-        });
-    }
-
-    private async trackTranslation(): Promise<void> {
         await this.insights.wait(this.sharedString.id);
         const typeInsights = await this.insights.get(this.sharedString.id) as types.IMap;
-        const view = await typeInsights.getView();
+        this.view = await typeInsights.getView();
 
-        // Get current value
-        this.language = view.get("translations");
-
-        // Listen for updates
-        typeInsights.on("valueChanged", (params: types.IKeyValueChanged) => {
-            if (params.key === "translations") {
-                this.language = view.get("translations");
+        this.sharedString.on("op", (op) => {
+            if (this.needsTranslation(op)) {
+                this.requestTranslation(op);
             }
         });
     }
 
-    private async translate(): Promise<void> {
+    private needsTranslation(op: any): boolean {
+        // Exit early if there are no target translations
+        const languages = this.view.get("translations") as map.DistributedSet<string>;
+        if (!languages || languages.entries().length === 0) {
+            return false;
+        }
+
+        // The operation must be an insert, remove or annotate
+        const mergeTreeOp = op.contents as MergeTree.IMergeTreeOp;
+        if (mergeTreeOp.type !== MergeTree.MergeTreeDeltaType.INSERT &&
+            mergeTreeOp.type !== MergeTree.MergeTreeDeltaType.REMOVE &&
+            mergeTreeOp.type !== MergeTree.MergeTreeDeltaType.ANNOTATE) {
+            return false;
+        }
+
+        // If an annotation it must be a style property change
+        if (mergeTreeOp.type === MergeTree.MergeTreeDeltaType.ANNOTATE) {
+            const annotateOp = mergeTreeOp as MergeTree.IMergeTreeAnnotateMsg;
+            if (Object.keys(annotateOp.props).findIndex(
+                (key) => key === "font-weight" || key === "text-decoration") === -1) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private requestTranslation(op: any): void {
+        // Exit early if there is a translation in progress but make not of the desired request
+        if (this.pendingTranslation) {
+            this.translationRequested = op;
+            return;
+        }
+
+        // Begin the translation
+        this.pendingTranslation = true;
+
+        // Set a timeout before we perform the translation to collect any extra inbound ops
+        setTimeout(() => {
+            const languages = this.view.get("translations") as map.DistributedSet<string>;
+
+            // Run translation on all other operations
+            const translationsP = Promise.all(languages.entries().map((language) => this.translate(language)));
+            const doneP = translationsP.catch((error) => {
+                console.error(error);
+            });
+
+            doneP.then(() => {
+                this.pendingTranslation = false;
+                if (this.translationRequested) {
+                    const lastRequest = this.translationRequested;
+                    this.translationRequested = undefined;
+                    this.requestTranslation(lastRequest);
+                }
+            });
+        }, 10);
+    }
+
+    private async translate(language: string): Promise<void> {
         const textAndMarkers = this.sharedString.client.getTextAndMarkers("pg");
         const numParagraphs = textAndMarkers.paralellText.length;
 
@@ -88,7 +125,7 @@ class Translator {
                 this.sharedString,
                 textAndMarkers.paralellText[i],
                 textAndMarkers.parallelMarkers[i],
-                this.language);
+                language);
             translationsP.push(translateP);
         }
 
@@ -105,7 +142,11 @@ class Translator {
         const translation = parallelText ? await translate(from, language, parallelText) : "";
         const pos = sharedString.client.mergeTree.getOffset(
             parallelMarker, sharedString.client.getCurrentSeq(), sharedString.client.getClientId());
-        sharedString.annotateRange({ translation }, pos, pos + 1);
+
+        const annotation = {};
+        annotation[`translation-${language}`] = translation;
+
+        sharedString.annotateRange(annotation, pos, pos + 1);
     }
 }
 

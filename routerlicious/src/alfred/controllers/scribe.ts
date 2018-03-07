@@ -132,12 +132,8 @@ export function initialize(config: any, id: string, template: string, speed: num
             id = sharedTextId.value;
         }
 
-        if (translationElement) {
-            language = translationElement.value;
-        }
-
         intervalTime = Number.parseInt(intervalElement.value);
-        const scribeP = scribe.create(id, language);
+        const scribeP = scribe.create(id);
 
         scribeP.then(() => {
             // Initialize the scribe link UI
