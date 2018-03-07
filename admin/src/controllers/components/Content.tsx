@@ -1,8 +1,9 @@
+import { About } from "./About";
+import { Analytics } from "./Analytics";
 import * as React from 'react';
 import { slide as Menu} from 'react-burger-menu';
 import { Route, HashRouter, NavLink } from "react-router-dom";
-import { Hello } from "./Hello";
-import { Mello } from "./Mello";
+import { Tenants } from "./Tenants";
 import { MenuWrap } from "./MenuWrap";
 
 export interface IContentState {
@@ -14,6 +15,7 @@ export interface IContentState {
 export interface IContentProps {
     side: string;
     menus: any;
+    data: any;
 }
 
 export class Content extends React.Component<IContentProps, IContentState> {
@@ -81,9 +83,9 @@ export class Content extends React.Component<IContentProps, IContentState> {
             {this.getMenu()}
             <main id="page-wrap">
                 <div>
-                    <Route exact path="/" component={Hello}/>
-                    <Route path="/analytics" component={Mello}/>
-                    <Route path="/about" component={Hello}/>
+                    <Route exact path="/" component={Tenants}/>
+                    <Route path="/analytics" component={Analytics}/>
+                    <Route path="/about" component={About}/>
                 </div>
             </main>
             </div>

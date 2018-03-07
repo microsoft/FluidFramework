@@ -17,11 +17,31 @@ const menus = {
     reveal: {buttonText: 'Reveal', items: 1}
   };
 
+  const data = {
+      tenants: [
+          {
+              id: "git",
+              key: "secret_key",
+              storage: "https://git",
+          },
+          {
+            id: "github",
+            key: "secret_key_2",
+            storage: "https://github",
+          },
+          {
+            id: "sharepoint",
+            key: "secret_key_3",
+            storage: "https://sharepoint",
+          }
+      ]
+  };
+
 export async function load(user: any) {
     $("document").ready(() => {
         console.log(user.displayName);
         ReactDOM.render(
-            <Content menus={menus} side="left" />,
+            <Content menus={menus} side="left" data={data} />,
             document.getElementById("adminportal")
         );
     });
