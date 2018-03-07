@@ -11,6 +11,7 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: {{ .Values.historian.ingressClass }}
     ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.org/client-max-body-size: "50m"
 spec:
  tls:
  - hosts:
