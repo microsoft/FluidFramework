@@ -40,8 +40,15 @@ class TextAnalyticsIntelligentService implements IIntelligentService {
             const keyPhrasesResultP = this.invokeRequest(keyPhrasesUrl, data);
             const results = await Promise.all([sentimentResultP, keyPhrasesResultP]);
 
-            const sentiment = results[0].documents[0].score;
-            const keyPhrases = results[1].documents[0].keyPhrases;
+            let sentiment;
+            if (!results[0].documents[0]) {
+                console.log(JSON.stringify(results[0].documents[0]));
+                sentiment = 0.5;
+            } else {
+                sentiment = results[0].documents[0].score;
+            }
+
+            const keyPhrases = results[1].documents[0] ? results[1].documents[0].keyPhrases : [];
 
             return {
                 language,
