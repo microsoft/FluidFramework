@@ -7,14 +7,10 @@ import { Tenants } from "./Tenants";
 import { MenuWrap } from "./MenuWrap";
 
 export interface IContentState {
-    currentMenu: string;
-    side: string;
     menuOpen: boolean;
 }
 
 export interface IContentProps {
-    side: string;
-    menus: any;
     data: any;
 }
 
@@ -22,9 +18,7 @@ export class Content extends React.Component<IContentProps, IContentState> {
     constructor (props: IContentProps) {
       super(props);
       this.state = {
-        currentMenu: 'slide',
         menuOpen: false,
-        side: 'left'
       };
     }
 
@@ -45,34 +39,19 @@ export class Content extends React.Component<IContentProps, IContentState> {
       return items;
     }
 
-    // TODO: No need to if else here.
     getMenu() {
-      const items = this.getItems();
-      let jsx;
-
-      if (this.state.side === 'right') {
-        jsx = (
-          <MenuWrap wait={20} side={this.state.side}>
-            <Menu id={this.state.currentMenu} pageWrapId={'page-wrap'} outerContainerId={'outer-container'} right>
-              {items}
-            </Menu>
-          </MenuWrap>
-        );
-      } else {
-        jsx = (
-          <MenuWrap wait={20} side={this.state.side}>
-            <Menu id={this.state.currentMenu}
-                  pageWrapId={'page-wrap'}
-                  outerContainerId={'outer-container'}
-                  isOpen={this.state.menuOpen}
-                  onStateChange={(state) => this.handleMenuStateChange(state)}
-            >
-              {items}
-            </Menu>
-          </MenuWrap>
-        );
-      }
-
+      const jsx = (
+        <MenuWrap wait={20} side={'left'}>
+          <Menu id={'slide'}
+                pageWrapId={'page-wrap'}
+                outerContainerId={'outer-container'}
+                isOpen={this.state.menuOpen}
+                onStateChange={(state) => this.handleMenuStateChange(state)}
+          >
+            {this.getItems()}
+          </Menu>
+        </MenuWrap>
+      );
       return jsx;
     }
 
@@ -83,7 +62,7 @@ export class Content extends React.Component<IContentProps, IContentState> {
             {this.getMenu()}
             <main id="page-wrap">
                 <div>
-                    <Route exact path="/" component={Tenants}/>
+                    <Route exact path={"/"} component={() => <Tenants data={this.props.data.tenants} />}/>
                     <Route path="/analytics" component={Analytics}/>
                     <Route path="/about" component={About}/>
                 </div>
