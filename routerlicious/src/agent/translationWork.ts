@@ -38,7 +38,6 @@ async function translate(from: string, to: string, text: string): Promise<string
 class Translator {
     private view: types.IMapView;
     private pendingTranslation: any;
-    private translationRequested = false;
 
     constructor(
         private insights: types.IMap,
@@ -50,7 +49,7 @@ class Translator {
         const typeInsights = await this.insights.get(this.sharedString.id) as types.IMap;
         this.view = await typeInsights.getView();
 
-        this.sharedString.on("op", (op) => {
+        this.sharedString.on("op", (op: core.ISequencedObjectMessage) => {
             if (this.needsTranslation(op)) {
                 this.requestTranslation(op);
             }
@@ -84,10 +83,9 @@ class Translator {
         return true;
     }
 
-    private requestTranslation(op: any): void {
+    private requestTranslation(op: core.ISequencedObjectMessage): void {
         // Exit early if there is a translation in progress but make not of the desired request
         if (this.pendingTranslation) {
-            this.translationRequested = op;
             return;
         }
 
@@ -98,24 +96,17 @@ class Translator {
 
         // Set a timeout before we perform the translation to collect any extra inbound ops
         setTimeout(() => {
+            // Let new reqeusts start
+            this.pendingTranslation = false;
+
             const languages = this.view.get("translations") as map.DistributedSet<string>;
 
             // Run translation on all other operations
             const translationsP = Promise.all(languages.entries().map((language) => this.translate(language)));
-            const doneP = translationsP.catch((error) => {
+            translationsP.catch((error) => {
                 console.error(error);
             });
-
-            doneP.then(() => {
-                console.log(`${Date.now()} - Complete ${this.sharedString.id}`);
-                this.pendingTranslation = false;
-                if (this.translationRequested) {
-                    const lastRequest = this.translationRequested;
-                    this.translationRequested = undefined;
-                    this.requestTranslation(lastRequest);
-                }
-            });
-        }, 10);
+        }, 30);
     }
 
     private async translate(language: string): Promise<void> {
