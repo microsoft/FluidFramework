@@ -1,5 +1,5 @@
 import clone = require("lodash/clone");
-import { api, core, MergeTree, types, utils } from "../client-api";
+import { api, core, MergeTree, utils } from "../client-api";
 
 let document: api.Document;
 let sharedString: MergeTree.SharedString;
@@ -412,7 +412,7 @@ async function typeFile(
     });
 }
 
-export async function create(id: string, translateLanguage?: string): Promise<void> {
+export async function create(id: string): Promise<void> {
     // Load the shared string extension we will type into
     document = await api.load(id);
     const root = await document.getRoot().getView();
@@ -422,20 +422,6 @@ export async function create(id: string, translateLanguage?: string): Promise<vo
 
     sharedString.insertMarker(0, MergeTree.ReferenceType.Tile, { [MergeTree.reservedTileLabelsKey]: ["pg"] });
     root.set("text", sharedString);
-
-    if (translateLanguage) {
-        const insights = await document.getRoot().wait<types.IMap>("insights");
-        const insightsView = await insights.getView();
-
-        let textMap: types.IMap;
-        if (insightsView.has(sharedString.id)) {
-            textMap = insightsView.get(sharedString.id);
-        } else {
-            textMap = document.createMap();
-            insightsView.set(sharedString.id, textMap);
-        }
-        textMap.set("translations", translateLanguage);
-    }
 
     return Promise.resolve();
 }

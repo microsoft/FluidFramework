@@ -27,8 +27,6 @@ export class FlowContainer extends ui.Component {
 
     private layerCache: { [key: string]: Layer } = {};
     private activeLayers: {[key: string]: IOverlayLayerStatus } = {};
-    private insights: types.IMap;
-    private language: string;
 
     constructor(
         element: HTMLDivElement,
@@ -138,12 +136,6 @@ export class FlowContainer extends ui.Component {
             this.initSpellcheck(value);
         });
 
-        this.status.addOption("translate", "translate", false);
-        this.status.on("translate", (value) => {
-            const translationLanguage = "translationLanguage";
-            this.updateTranslations(value ? this.options[translationLanguage] : undefined);
-        });
-
         // For now only allow one level deep of branching
         this.status.addButton("Versions", `/sharedText/${this.collabDocument.id}/commits`, false);
         if (!this.collabDocument.parentBranch) {
@@ -176,12 +168,7 @@ export class FlowContainer extends ui.Component {
     }
 
     public trackInsights(insights: types.IMap) {
-        this.insights = insights;
         this.updateInsights(insights);
-        // Update translations if the option has been set
-        if (this.language) {
-            this.updateTranslations(this.language);
-        }
         insights.on("valueChanged", () => {
             this.updateInsights(insights);
         });
@@ -238,17 +225,6 @@ export class FlowContainer extends ui.Component {
 
         // Update the position unless we're in the process of drawing the layer
         this.activeLayers[id].layer.setPosition(translated);
-    }
-
-    private updateTranslations(language: string) {
-        this.language = language;
-        if (this.insights) {
-            if (this.language) {
-                this.insights.set("translations", this.language);
-            } else {
-                this.insights.delete("translations");
-            }
-        }
     }
 
     private async updateInsights(insights: types.IMap) {

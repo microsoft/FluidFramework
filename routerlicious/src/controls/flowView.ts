@@ -1476,7 +1476,8 @@ function isInnerBox(boxView: BoxView, layoutInfo: ILayoutContext) {
         (layoutInfo.startingPosStack.box.items.length === (layoutInfo.stackIndex + 1));
 }
 
-function renderBox(boxView: BoxView, layoutInfo: ILayoutContext, defer = false, rightmost = false) {
+function renderBox(
+    boxView: BoxView, layoutInfo: ILayoutContext, targetTranslation: string, defer = false, rightmost = false) {
     let boxRect = new ui.Rectangle(0, 0, boxView.specWidth, 0);
     let boxViewportWidth = boxView.specWidth - (2 * layoutInfo.docContext.boxHMargin);
     let boxViewportRect = new ui.Rectangle(layoutInfo.docContext.boxHMargin, 0,
@@ -1516,7 +1517,7 @@ function renderBox(boxView: BoxView, layoutInfo: ILayoutContext, defer = false, 
         boxLayoutInfo.startPos = getOffset(layoutInfo.flowView, <SharedString.Marker>nextTable);
         boxLayoutInfo.stackIndex = layoutInfo.stackIndex + 1;
     }
-    boxView.renderOutput = renderFlow(boxLayoutInfo, defer);
+    boxView.renderOutput = renderFlow(boxLayoutInfo, targetTranslation, defer);
     if (transferDeferredHeight && (boxView.renderOutput.deferredHeight > 0)) {
         layoutInfo.deferUntilHeight = boxView.renderOutput.deferredHeight;
     }
@@ -1540,7 +1541,13 @@ function setRowBorders(rowDiv: HTMLDivElement, top = false) {
     rowDiv.style.borderBottom = "1px solid black";
 }
 
-function renderTable(table: ITableMarker, docContext: IDocumentContext, layoutInfo: ILayoutContext, defer = false) {
+function renderTable(
+    table: ITableMarker,
+    docContext: IDocumentContext,
+    layoutInfo: ILayoutContext,
+    targetTranslation: string,
+    defer = false) {
+
     let flowView = layoutInfo.flowView;
     let mergeTree = flowView.client.mergeTree;
     let tablePos = mergeTree.getOffset(table, SharedString.UniversalSequenceNumber, flowView.client.getClientId());
@@ -1588,7 +1595,12 @@ function renderTable(table: ITableMarker, docContext: IDocumentContext, layoutIn
             firstRendered = false;
             rowRect.conformElementOpenHeight(rowDiv);
             if (topRow && startBox) {
-                renderBox(startBox, layoutInfo, defer, startBox === rowView.boxes[rowView.boxes.length - 1]);
+                renderBox(
+                    startBox,
+                    layoutInfo,
+                    targetTranslation,
+                    defer,
+                    startBox === rowView.boxes[rowView.boxes.length - 1]);
                 deferredHeight += startBox.renderOutput.deferredHeight;
                 rowHeight = startBox.renderedHeight;
             }
@@ -1597,7 +1609,7 @@ function renderTable(table: ITableMarker, docContext: IDocumentContext, layoutIn
         for (let boxIndex = 0, boxCount = rowView.boxes.length; boxIndex < boxCount; boxIndex++) {
             let box = rowView.boxes[boxIndex];
             if (!topRow || (box !== startBox)) {
-                renderBox(box, layoutInfo, defer, box === rowView.boxes[rowView.boxes.length - 1]);
+                renderBox(box, layoutInfo, targetTranslation, defer, box === rowView.boxes[rowView.boxes.length - 1]);
                 if (rowHeight < box.renderedHeight) {
                     rowHeight = box.renderedHeight;
                 }
@@ -1639,7 +1651,8 @@ function renderTable(table: ITableMarker, docContext: IDocumentContext, layoutIn
     tableView.renderedHeight = tableHeight;
 }
 
-function renderTree(viewportDiv: HTMLDivElement, requestedPosition: number, flowView: FlowView) {
+function renderTree(
+    viewportDiv: HTMLDivElement, requestedPosition: number, flowView: FlowView, targetTranslation: string) {
     let client = flowView.client;
     let docContext = buildDocumentContext(viewportDiv);
     let outerViewportHeight = parseInt(viewportDiv.style.height, 10);
@@ -1668,7 +1681,7 @@ function renderTree(viewportDiv: HTMLDivElement, requestedPosition: number, flow
             layoutContext.startPos = 0;
         }
     }
-    return renderFlow(layoutContext);
+    return renderFlow(layoutContext, targetTranslation);
 }
 
 function tokenToItems(
@@ -1890,7 +1903,7 @@ interface IRenderOutput {
     viewportEndPos: number;
 }
 
-function renderFlow(layoutContext: ILayoutContext, deferWhole = false): IRenderOutput {
+function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, deferWhole = false): IRenderOutput {
     let flowView = layoutContext.flowView;
     let client = flowView.client;
     // TODO: for stable viewports cache the geometry and the divs
@@ -1935,7 +1948,7 @@ function renderFlow(layoutContext: ILayoutContext, deferWhole = false): IRenderO
     function renderPGAnnotation(endPGMarker: IParagraphMarker, indentWidth: number, contentWidth: number) {
         let annotDiv = makeAnnotDiv(indentWidth, layoutContext.viewport.getLineTop(),
             contentWidth, docContext.fontstr);
-        let text = endPGMarker.properties.translation;
+        let text = endPGMarker.properties[targetTranslation];
         annotDiv.innerHTML = text;
         let clientRect = annotDiv.getBoundingClientRect();
         return clientRect.height;
@@ -2037,7 +2050,7 @@ function renderFlow(layoutContext: ILayoutContext, deferWhole = false): IRenderO
             // TODO: branches
             let tableView: TableView;
             if (marker.removedSeq === undefined) {
-                renderTable(marker, docContext, layoutContext, deferredPGs);
+                renderTable(marker, docContext, layoutContext, targetTranslation, deferredPGs);
                 tableView = (<ITableMarker>marker).view;
                 deferredHeight += tableView.deferredHeight;
                 layoutContext.viewport.vskip(layoutContext.docContext.tableVspace);
@@ -2117,7 +2130,7 @@ function renderFlow(layoutContext: ILayoutContext, deferWhole = false): IRenderO
                 currentPos = curPGMarkerPos + curPGMarker.cachedLength;
 
                 if (!deferredPGs) {
-                    if (curPGMarker.properties.translation) {
+                    if (curPGMarker.properties[targetTranslation]) {
                         // layoutContext.viewport.vskip(Math.floor(docContext.pgVspace/2));
                         let height = renderPGAnnotation(curPGMarker, indentWidth, contentWidth);
                         layoutContext.viewport.vskip(height);
@@ -2607,6 +2620,7 @@ export class FlowView extends ui.Component {
     private randWordTimer: any;
     private pendingRender = false;
     private diagCharPort = false;
+    private targetTranslation: string;
 
     constructor(
         element: HTMLDivElement,
@@ -2620,6 +2634,10 @@ export class FlowView extends ui.Component {
         this.client = sharedString.client;
         this.viewportDiv = document.createElement("div");
         this.element.appendChild(this.viewportDiv);
+        const translationLanguage = "translationLanguage";
+        this.targetTranslation = options[translationLanguage]
+            ? `translation-${options[translationLanguage]}`
+            : undefined;
 
         this.statusMessage("li", " ");
         this.statusMessage("si", " ");
@@ -3400,7 +3418,9 @@ export class FlowView extends ui.Component {
                     buf += ` { ${key}: ${tileInfo.tile.properties[key]} }`;
                 }
             }
-            tileInfo.tile.properties.translation =
+
+            const translationLangauge = "translation-en";
+            tileInfo.tile.properties[translationLangauge] =
                 "Do not ask for whom the bell tolls; it tolls for thee! A stitch in time saves nine! You can't tell which way the train went by looking at the tracks!";
             let lc = !!(<IParagraphMarker>tileInfo.tile).listCache;
             console.log(`tile at pos ${tileInfo.pos} with props${buf} and list cache: ${lc}`);
@@ -3708,7 +3728,7 @@ export class FlowView extends ui.Component {
         this.updatePresencePositions();
         clearSubtree(this.viewportDiv);
         // this.viewportDiv.appendChild(this.cursor.editSpan);
-        let renderOutput = renderTree(this.viewportDiv, this.topChar, this);
+        let renderOutput = renderTree(this.viewportDiv, this.topChar, this, this.targetTranslation);
         this.viewportStartPos = renderOutput.viewportStartPos;
         this.viewportEndPos = renderOutput.viewportEndPos;
         if (this.diagCharPort || true) {
