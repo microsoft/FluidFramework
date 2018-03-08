@@ -89,6 +89,7 @@ function addLink(element: HTMLDivElement, link: string) {
     const anchor = document.createElement("a");
     anchor.href = link;
     anchor.innerText = anchor.href;
+    anchor.target = "_blank";
     element.appendChild(anchor);
     element.appendChild(document.createElement("br"));
 }
