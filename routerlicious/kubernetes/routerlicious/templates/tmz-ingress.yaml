@@ -14,6 +14,7 @@ metadata:
     nginx.org/websocket-services: {{ template "tmz.fullname" . }}
     nginx.org/proxy-send-timeout: "7200s"
     nginx.org/proxy-read-timeout: "7200s"
+    nginx.org/client-max-body-size: "500m"
 spec:
   tls:
   - hosts:
