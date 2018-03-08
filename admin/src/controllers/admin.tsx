@@ -9,19 +9,19 @@ import { Content } from "./components/Content";
           list: [
             {
                 key: 0,
-                id: "git",
+                name: "git",
                 encryptKey: "secret_key_0",
                 storage: "https://git",
             },
             {
                 key: 1,
-                id: "github",
+                name: "github",
                 encryptKey: "secret_key_1",
                 storage: "https://github",
             },
             {
                 key: 2,
-                id: "sharepoint",
+                name: "sharepoint",
                 encryptKey: "secret_key_2",
                 storage: "https://sharepoint",
             },

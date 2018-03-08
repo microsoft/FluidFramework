@@ -1,5 +1,5 @@
 import * as React from "react";
-import { EditableTable } from "./Table";
+import { TenantManager } from "./TenantManager";
 
 export interface ITenantsProps {
     data: any;
@@ -24,7 +24,7 @@ export class Tenants extends React.Component<ITenantsProps, ITenantsState> {
         return (
           <div>
             <h2>List of Registered Tenants</h2>
-            <EditableTable data={data}/>
+            <TenantManager data={data}/>
           </div>
         );
     }
