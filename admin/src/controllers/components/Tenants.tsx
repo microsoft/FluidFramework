@@ -1,6 +1,5 @@
 import * as React from "react";
-import ReactTable from "react-table";
-import "react-table/react-table.css";
+import { EditableTable } from "./Table";
 
 export interface ITenantsProps {
     data: any;
@@ -24,31 +23,8 @@ export class Tenants extends React.Component<ITenantsProps, ITenantsState> {
         const data = this.state.data.list;
         return (
           <div>
-            <h4>List of Registered Tenants</h4>
-            <ReactTable
-              data={data}
-              columns={[
-                {
-                    Header: "Id",
-                    accessor: "id"
-                },
-                {
-                    Header: "Key",
-                    accessor: "key"
-                },
-                {
-                    Header: "Storage",
-                    accessor: "storage"
-                },
-              ]}
-              defaultPageSize={5}
-              className="-striped -highlight"
-            />
-            <nav className="add-buttons">
-                <a onClick={this.addTenant}>
-                Add new tenant
-                </a>
-            </nav>
+            <h2>List of Registered Tenants</h2>
+            <EditableTable data={data}/>
           </div>
         );
     }

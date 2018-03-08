@@ -14,6 +14,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
+    "antd": "^3.2.3",
     "body-parser": "^1.18.2",
     "compression": "^1.7.1",
     "concurrently": "^3.5.1",
@@ -35,7 +36,6 @@
     "react-burger-menu": "^2.3.0",
     "react-dom": "^16.2.0",
     "react-router-dom": "^4.2.2",
-    "react-table": "^6.8.0",
     "request": "^2.83.0",
     "serve-favicon": "^2.4.5",
     "split": "^1.0.1",

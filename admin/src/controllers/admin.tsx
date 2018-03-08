@@ -8,19 +8,22 @@ import { Content } from "./components/Content";
       tenants: {
           list: [
             {
+                key: 0,
                 id: "git",
-                key: "secret_key",
+                encryptKey: "secret_key_0",
                 storage: "https://git",
             },
             {
-              id: "github",
-              key: "secret_key_2",
-              storage: "https://github",
+                key: 1,
+                id: "github",
+                encryptKey: "secret_key_1",
+                storage: "https://github",
             },
             {
-              id: "sharepoint",
-              key: "secret_key_3",
-              storage: "https://sharepoint",
+                key: 2,
+                id: "sharepoint",
+                encryptKey: "secret_key_2",
+                storage: "https://sharepoint",
             },
           ]
       },
