@@ -11,13 +11,20 @@ export function create(config: Provider) {
 
     const workerConfig = JSON.stringify(config.get("worker"));
 
-    function handleResponse(response, speed: number = defaultSpeed, id?: string, template?: string) {
+    function handleResponse(
+        response,
+        speed: number = defaultSpeed,
+        languages: string = "",
+        id?: string,
+        template?: string) {
+
         response.render(
             "scribe",
             {
                 config: workerConfig,
                 fileLoad: !id,
                 id,
+                languages,
                 partials: defaultPartials,
                 speed,
                 template,
@@ -38,8 +45,9 @@ export function create(config: Provider) {
     router.get("/demo", (request, response, next) => {
         const speed = Number.parseFloat(request.query.speed) || defaultSpeed;
         const text = request.query.text || defaultTemplate;
+        const languages = request.query.language || "";
 
-        handleResponse(response, speed, moniker.choose(), text);
+        handleResponse(response, speed, languages, moniker.choose(), text);
     });
 
     return router;

@@ -10,7 +10,7 @@
     "tslint": "tslint 'src/**/*.ts'"
   },
   "dependencies": {
-    "@prague/routerlicious": "^0.1.1675",
+    "@prague/routerlicious": "^0.1.1729",
     "@types/request": "^2.47.0",
     "@types/xml2js": "^0.4.2",
     "async": "^2.6.0",

@@ -85,7 +85,15 @@ function handleFiles(createButton: HTMLButtonElement,
     reader.readAsText(file);
 }
 
-export function initialize(config: any, id: string, template: string, speed: number, language: string) {
+function addLink(element: HTMLDivElement, link: string) {
+    const anchor = document.createElement("a");
+    anchor.href = link;
+    anchor.innerText = anchor.href;
+    element.appendChild(anchor);
+    element.appendChild(document.createElement("br"));
+}
+
+export function initialize(config: any, id: string, template: string, speed: number, languages: string) {
     const loadFile = !id;
 
     // Easy access to a couple of page elements
@@ -97,7 +105,6 @@ export function initialize(config: any, id: string, template: string, speed: num
     const typingDetails = document.getElementById("typing-details") as HTMLElement;
     const intervalElement = document.getElementById("interval") as HTMLInputElement;
     const translationElement = document.getElementById("translation") as HTMLInputElement;
-    const documentLink = document.getElementById("document-link") as HTMLAnchorElement;
     const typingProgress = document.getElementById("typing-progress") as HTMLElement;
     const typingProgressBar = typingProgress.getElementsByClassName("progress-bar")[0] as HTMLElement;
     const ackProgress = document.getElementById("ack-progress") as HTMLElement;
@@ -106,7 +113,7 @@ export function initialize(config: any, id: string, template: string, speed: num
     // Set the speed and translation elements
     intervalElement.value = speed.toString();
     if (translationElement) {
-        translationElement.value = language;
+        translationElement.value = languages;
     }
 
     if (loadFile) {
@@ -136,17 +143,21 @@ export function initialize(config: any, id: string, template: string, speed: num
         const scribeP = scribe.create(id);
 
         scribeP.then(() => {
-            // Initialize the scribe link UI
-            documentLink.href = `/sharedText/${id}`;
-            documentLink.innerText = documentLink.href;
+            const linkList = document.getElementById("link-list") as HTMLDivElement;
 
-            const metricsLink = document.getElementById("metrics-link") as HTMLAnchorElement;
-            metricsLink.href = `/canvas/${id}-metrics`;
-            metricsLink.innerText = metricsLink.href;
+            addLink(linkList, `/sharedText/${id}`);
+            addLink(linkList, `/canvas/${id}-metrics`);
+            addLink(linkList, `/maps/${id}`);
 
-            const insightsLink = document.getElementById("insights-link") as HTMLAnchorElement;
-            insightsLink.href = `/maps/${id}`;
-            insightsLink.innerText = insightsLink.href;
+            if (languages) {
+                linkList.appendChild(document.createElement("br"));
+                const translationDiv = document.createElement("div");
+                translationDiv.innerText = "Translations";
+                linkList.appendChild(translationDiv);
+                for (const language of languages.split(",")) {
+                    addLink(linkList, `/sharedText/${id}?language=${language}`);
+                }
+            }
 
             startButton.classList.remove("hidden");
             createDetails.classList.remove("hidden");
