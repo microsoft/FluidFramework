@@ -70,3 +70,7 @@ docker build --build-arg NPM_TOKEN=${NPM_TOKEN} .
 ### Script include
 
 We also publish our API files which can be included in your project with a `<script>` tag. The [sequence](./api/examples/sequence) example shows how to do this. We recommend installing from npm rather than using this approach since it better integrates with a modern JavaScript development environment.
+
+## Build Machine
+
+If you want to add a machine to our build tool. Take a look at the [build instructions](./build-machine.md)
