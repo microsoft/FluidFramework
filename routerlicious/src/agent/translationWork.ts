@@ -1,22 +1,45 @@
 import * as request from "request";
-import { parseString } from "xml2js";
+import { Builder, parseString } from "xml2js";
 import { core, map, MergeTree, types } from "../client-api";
 import { BaseWork} from "./baseWork";
 import { IWork} from "./work";
 
 const subscriptionKey = "bd099a1e38724333b253fcff7523f76a";
 
-async function translate(from: string, to: string, text: string): Promise<string> {
-    const params = `from=${from}&to=${to}&text=${encodeURI(text)}&contentType=text/html`;
-    const uri = `https://api.microsofttranslator.com/V2/Http.svc/Translate?${params}`;
+function createRequestBody(from: string, to: string, texts: string[]): string {
+    const builder = new Builder({ rootName: "TranslateArrayRequest", headless: true });
 
-    return new Promise<string>((resolve, reject) => {
+    const object = {
+        AppId: "",
+        From: from,
+        Options: {
+            ContentType: "text/xml",
+        },
+        Texts: {
+            string: texts,
+        },
+        To: to,
+    };
+
+    return builder.buildObject(object);
+}
+
+async function translate(from: string, to: string, text: string[]): Promise<string[]> {
+    const uri = `https://api.microsofttranslator.com/V2/Http.svc/TranslateArray`;
+
+    const requestBody = createRequestBody(from, to, text).replace(
+        /<string>/g,
+        "<string xmlns=\"http://schemas.microsoft.com/2003/10/Serialization/Arrays\">");
+
+    return new Promise<string[]>((resolve, reject) => {
         request(
             {
+                body: requestBody,
                 headers: {
+                    "Content-Type": "text/xml",
                     "Ocp-Apim-Subscription-Key" : subscriptionKey,
                 },
-                method: "GET",
+                method: "POST",
                 uri,
             },
             (err, resp, body) => {
@@ -27,7 +50,9 @@ async function translate(from: string, to: string, text: string): Promise<string
                         if (parseErr) {
                             reject(parseErr);
                         } else {
-                            resolve(result.string._);
+                            const translations = result.ArrayOfTranslateArrayResponse.TranslateArrayResponse.map(
+                                (value) => value.TranslatedText[0]);
+                            resolve(translations);
                         }
                     });
                 }
@@ -89,7 +114,8 @@ class Translator {
             return;
         }
 
-        console.log(`${Date.now()} - Requesting translation ${this.sharedString.id}`);
+        const start = Date.now();
+        console.log(`${start} - Requesting translation ${this.sharedString.id}`);
 
         // Begin the translation
         this.pendingTranslation = true;
@@ -103,44 +129,34 @@ class Translator {
 
             // Run translation on all other operations
             const translationsP = Promise.all(languages.entries().map((language) => this.translate(language)));
-            translationsP.catch((error) => {
+            const doneP = translationsP.catch((error) => {
                 console.error(error);
+            });
+
+            doneP.then(() => {
+                console.log(`${start} - ${Date.now()} - Done with translation ${this.sharedString.id}`);
             });
         }, 30);
     }
 
     private async translate(language: string): Promise<void> {
-        const textAndMarkers = this.sharedString.client.getTextAndMarkers("pg");
-        const numParagraphs = textAndMarkers.paralellText.length;
-
-        const translationsP: Array<Promise<void>> = [];
-        for (let i = 0; i < numParagraphs; i++) {
-            const translateP = this.translateParagraph(
-                this.sharedString,
-                textAndMarkers.paralellText[i],
-                textAndMarkers.parallelMarkers[i],
-                language);
-            translationsP.push(translateP);
-        }
-
-        await Promise.all(translationsP);
-    }
-
-    private async translateParagraph(
-        sharedString: MergeTree.SharedString,
-        parallelText,
-        parallelMarker,
-        language: string) {
-
         const from = "en";
-        const translation = parallelText ? await translate(from, language, parallelText) : "";
-        const pos = sharedString.client.mergeTree.getOffset(
-            parallelMarker, sharedString.client.getCurrentSeq(), sharedString.client.getClientId());
 
-        const annotation = {};
-        annotation[`translation-${language}`] = translation;
+        const textAndMarkers = this.sharedString.client.getTextAndMarkers("pg");
 
-        sharedString.annotateRange(annotation, pos, pos + 1);
+        const translations = await translate(from, language, textAndMarkers.paralellText);
+        for (let i = 0; i < translations.length; i++) {
+            const translation = translations[i];
+
+            const pos = this.sharedString.client.mergeTree.getOffset(
+                textAndMarkers.parallelMarkers[i],
+                this.sharedString.client.getCurrentSeq(),
+                this.sharedString.client.getClientId());
+
+            const props: any = {};
+            props[`translation-${language}`] = translation;
+            this.sharedString.annotateRange(props, pos, pos + 1);
+        }
     }
 }
 

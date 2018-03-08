@@ -2,12 +2,12 @@ import { load } from "@prague/routerlicious/dist/api";
 import { IMergeTreeOp, MergeTreeDeltaType, SharedString } from "@prague/routerlicious/dist/merge-tree";
 import * as socketStorage from "@prague/routerlicious/dist/socket-storage";
 import * as request from "request";
-import { parseString } from "xml2js";
+import { Builder, parseString } from "xml2js";
 
-// const routerlicious = "http://localhost:3000";
-// const historian = "http://localhost:3001";
-const routerlicious = "https://alfred.wu2-ppe.prague.office-int.com";
-const historian = "https://historian.wu2-ppe.prague.office-int.com";
+const routerlicious = "http://localhost:3000";
+const historian = "http://localhost:3001";
+// const routerlicious = "https://alfred.wu2-ppe.prague.office-int.com";
+// const historian = "https://historian.wu2-ppe.prague.office-int.com";
 const owner = "prague";
 const repository = "prague";
 
@@ -16,17 +16,42 @@ const subscriptionKey = "bd099a1e38724333b253fcff7523f76a";
 
 socketStorage.registerAsDefault(routerlicious, historian, owner, repository);
 
-async function translate(from: string, to: string, text: string): Promise<string> {
-    const params = `from=${from}&to=${to}&text=${encodeURI(text)}`;
-    const uri = `https://api.microsofttranslator.com/V2/Http.svc/Translate?${params}`;
+function createRequestBody(from: string, to: string, texts: string[]): string {
+    const builder = new Builder({ rootName: "TranslateArrayRequest", headless: true });
 
-    return new Promise<string>((resolve, reject) => {
+    const object = {
+        AppId: "",
+        From: from,
+        Options: {
+            ContentType: "text/xml",
+        },
+        Texts: {
+            string: texts,
+        },
+        To: to,
+    };
+
+    return builder.buildObject(object);
+}
+
+async function translate(from: string, to: string, text: string[]): Promise<string[]> {
+    const uri = `https://api.microsofttranslator.com/V2/Http.svc/TranslateArray`;
+
+    const requestBody = createRequestBody(from, to, text).replace(
+        /<string>/g,
+        "<string xmlns=\"http://schemas.microsoft.com/2003/10/Serialization/Arrays\">");
+
+    console.log(requestBody);
+
+    return new Promise<string[]>((resolve, reject) => {
         request(
             {
+                body: requestBody,
                 headers: {
+                    "Content-Type": "text/xml",
                     "Ocp-Apim-Subscription-Key" : subscriptionKey,
                 },
-                method: "GET",
+                method: "POST",
                 uri,
             },
             (err, resp, body) => {
@@ -37,7 +62,10 @@ async function translate(from: string, to: string, text: string): Promise<string
                         if (parseErr) {
                             reject(parseErr);
                         } else {
-                            resolve(result.string._);
+                            console.log(JSON.stringify(result));
+                            const translations = result.ArrayOfTranslateArrayResponse.TranslateArrayResponse.map(
+                                (value) => value.TranslatedText[0]);
+                            resolve(translations);
                         }
                     });
                 }
@@ -66,28 +94,25 @@ class Translator {
     }
 
     private async translate(): Promise<void> {
+        const from = "en";
+
         const textAndMarkers = this.sharedString.client.getTextAndMarkers("pg");
         const numParagraphs = textAndMarkers.paralellText.length;
 
-        const translationsP: Array<Promise<void>> = [];
+        const translations = await translate(from, this.language, textAndMarkers.paralellText);
+        console.log(translations);
         for (let i = 0; i < numParagraphs; i++) {
-            const translateP = this.translateParagraph(
-                this.sharedString,
-                textAndMarkers.paralellText[i],
+            const translation = translations[i];
+
+            const pos = this.sharedString.client.mergeTree.getOffset(
                 textAndMarkers.parallelMarkers[i],
-                this.language);
-            translationsP.push(translateP);
+                this.sharedString.client.getCurrentSeq(),
+                this.sharedString.client.getClientId());
+
+            const props: any = {};
+            props[`translation-${this.language}`] = translation;
+            this.sharedString.annotateRange(props, pos, pos + 1);
         }
-
-        await Promise.all(translationsP);
-    }
-
-    private async translateParagraph(sharedString: SharedString, parallelText, parallelMarker, language: string) {
-        const from = "en";
-        const translation = await translate(from, language, parallelText);
-        const pos = sharedString.client.mergeTree.getOffset(
-            parallelMarker, sharedString.client.getCurrentSeq(), sharedString.client.getClientId());
-        sharedString.annotateRange({ translation }, pos, pos + 1);
     }
 }
 
