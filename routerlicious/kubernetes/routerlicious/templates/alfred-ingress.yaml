@@ -14,7 +14,8 @@ metadata:
     nginx.org/websocket-services: {{ template "alfred.fullname" . }}
     nginx.org/proxy-send-timeout: "7200s"
     nginx.org/proxy-read-timeout: "7200s"
-    nginx.org/client-max-body-size: "500m"
+    nginx.org/client-max-body-size: "100m"
+    ingress.kubernetes.io/proxy-body-size: "100m"
 spec:
   tls:
   - hosts:
