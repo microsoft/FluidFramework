@@ -25,6 +25,8 @@ export interface ICollection<T> {
 
     insertOne(value: T): Promise<any>;
 
+    deleteOne(value: any): Promise<any>;
+
     insertMany(values: T[], ordered: boolean): Promise<void>;
 
     createIndex(index: any, unique: boolean): Promise<void>;

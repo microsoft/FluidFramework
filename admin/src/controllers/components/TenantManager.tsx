@@ -41,7 +41,7 @@ export class TenantManager extends React.Component<ITableProps,ITableState > {
           return (
             this.state.dataSource.length > 1 ?
             (
-              <Popconfirm title="Sure to delete?" onConfirm={() => this.onDelete(record.key)}>
+              <Popconfirm title="Sure to delete?" onConfirm={() => this.onDelete(record._id)}>
                 <a href="#">Delete</a>
               </Popconfirm>
             ) : null
@@ -55,12 +55,17 @@ export class TenantManager extends React.Component<ITableProps,ITableState > {
         modalConfirmLoading: false,
       };
     }
-    onDelete = (key) => {
-      const dataSource = [...this.state.dataSource];
-      this.setState(
-          {
-              dataSource: dataSource.filter(item => item.key !== key)
-          });
+    onDelete = (id) => {
+      console.log(id);
+      utils.deleteTenant("http://localhost:7000/tenants", id).then((res) => {
+        const dataSource = [...this.state.dataSource];
+        this.setState(
+            {
+                dataSource: dataSource.filter(item => item._id !== id)
+            });
+      }, (err) => {
+        console.log(err);
+      });
     }
 
     showModal = () => {

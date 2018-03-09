@@ -23,3 +23,13 @@ export async function addTenant(
     const collection = await db.collection<any>(collectionName);
     return collection.insertOne(tenant);
 }
+
+export async function deleteTenant(
+    mongoManager: dbService.MongoManager,
+    collectionName: string,
+    id: string): Promise<any> {
+
+    const db = await mongoManager.getDatabase();
+    const collection = await db.collection<any>(collectionName);
+    return collection.deleteOne({ _id: new dbService.ObjectId(id)});
+}

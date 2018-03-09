@@ -4,10 +4,14 @@ export function addTenant(url: string, tenantData: any) {
     const data: any = {
         tenant: tenantData,
     };
-    return invokeRequest(url, data);
+    return invokeRequestWithBody(url + "/add", data);
 }
 
-function invokeRequest(service: string, data: any): Promise<any> {
+export function deleteTenant(url: string, tenantId: string) {
+    return invokeRequest(url + "/delete/" + tenantId);
+}
+
+function invokeRequestWithBody(service: string, data: any): Promise<any> {
     return new Promise<any>((resolve, reject) => {
         request.post(
             service,
@@ -19,6 +23,24 @@ function invokeRequest(service: string, data: any): Promise<any> {
                 },
                 json: true,
             },
+            (error, result, body) => {
+                if (error) {
+                    return reject(error);
+                }
+
+                if (result.statusCode !== 200) {
+                    return reject(result);
+                }
+
+                return resolve(body);
+            });
+    });
+}
+
+function invokeRequest(service: string): Promise<any> {
+    return new Promise<any>((resolve, reject) => {
+        request.post(
+            service,
             (error, result, body) => {
                 if (error) {
                     return reject(error);
