@@ -16,7 +16,7 @@ const monikers = [
     "Arif Badakhshi",
 ];
 
-let index = -1;
+let index = 0;
 
 export function choose(): string {
     const moniker = monikers[index];
