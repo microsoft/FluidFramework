@@ -1,5 +1,6 @@
 import { About } from "./About";
 import { Analytics } from "./Analytics";
+import { Logout } from "./Logout";
 import * as React from 'react';
 import { slide as Menu} from 'react-burger-menu';
 import { Route, HashRouter, NavLink } from "react-router-dom";
@@ -12,6 +13,7 @@ export interface IContentState {
 
 export interface IContentProps {
     data: any;
+    user: any;
 }
 
 export class Content extends React.Component<IContentProps, IContentState> {
@@ -61,6 +63,7 @@ export class Content extends React.Component<IContentProps, IContentState> {
             <div id="outer-container" style={{height: '100%'}}>
             {this.getMenu()}
             <main id="page-wrap">
+                <Logout name={this.props.user.displayName}/>
                 <div>
                     <Route exact path={"/"} component={() => <Tenants data={this.props.data.tenants} />}/>
                     <Route path="/analytics" component={Analytics}/>

@@ -31,9 +31,8 @@ import { Content } from "./components/Content";
 
 export async function load(user: any) {
     $("document").ready(() => {
-        console.log(user.displayName);
         ReactDOM.render(
-            <Content data={data} />,
+            <Content data={data} user={user} />,
             document.getElementById("adminportal")
         );
     });

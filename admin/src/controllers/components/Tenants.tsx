@@ -16,14 +16,12 @@ export class Tenants extends React.Component<ITenantsProps, ITenantsState> {
             data: this.props.data,
         };
     }
-    addTenant() {
-        console.log(`Clicked new tenant!`);
-    }
+
     render() {
         const data = this.state.data.list;
         return (
           <div>
-            <h2>List of Registered Tenants</h2>
+            <h2 className="tenant-list-header">List of Registered Tenants</h2>
             <TenantManager data={data}/>
           </div>
         );
