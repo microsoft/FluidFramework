@@ -16,14 +16,14 @@ function createTreeMarkerOps(treeRangeLabel: string,
     beginMarkerPos: MergeLib.IRelativePosition, endMarkerPos: MergeLib.IRelativePosition,
     id: string, nodeType: string, beginMarkerProps?: MergeLib.PropertySet) {
     let endMarkerProps = MergeLib.createMap<any>();
-    endMarkerProps[MergeLib.reservedReferenceIdKey] = "end-" + id;
+    endMarkerProps[MergeLib.reservedMarkerIdKey] = "end-" + id;
     endMarkerProps[MergeLib.reservedRangeLabelsKey] = [treeRangeLabel];
     endMarkerProps[onodeTypeKey] = nodeType;
     
     if (!beginMarkerProps) {
         beginMarkerProps = MergeLib.createMap<any>();
     }
-    beginMarkerProps[MergeLib.reservedReferenceIdKey] = id;
+    beginMarkerProps[MergeLib.reservedMarkerIdKey] = id;
     beginMarkerProps[MergeLib.reservedRangeLabelsKey] = [treeRangeLabel];
     beginMarkerProps[onodeTypeKey] = nodeType;
     return [

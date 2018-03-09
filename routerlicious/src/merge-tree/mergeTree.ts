@@ -14,7 +14,6 @@ export interface ReferencePosition {
     refType: ops.ReferenceType;
     /** True if this reference is a segment. */
     isLeaf(): boolean;
-    getId(): string;
     getSegment(): BaseSegment;
     getOffset(): number;
     addProperties(newProps: Properties.PropertySet, op?: ops.ICombiningOp);
@@ -24,7 +23,6 @@ export interface ReferencePosition {
     hasRangeLabel(label: string);
     getTileLabels();
     getRangeLabels();
-    matchEnd(refPos: ReferencePosition): boolean;
 }
 
 export type RangeStackMap = Properties.MapLike<Collections.Stack<ReferencePosition>>;
@@ -125,16 +123,6 @@ export class LocalReference implements ReferencePosition {
             return this.offset + mergeTree.getOffset(this.segment, refSeq, clientId);
         } else {
             return -1;
-        }
-    }
-
-    matchEnd(refPos: ReferencePosition) {
-        return (this.pairedRef) && (refPos === this.pairedRef);
-    }
-
-    getId() {
-        if (this.properties && this.properties[reservedReferenceIdKey]) {
-            return this.properties[reservedReferenceIdKey];
         }
     }
 
@@ -337,7 +325,7 @@ function applyRangeReference(stack: Collections.Stack<ReferencePosition>, delta:
         // assume delta is end reference
         let top = stack.top();
         // TODO: match end with begin
-        if (top && (top.refType & ops.ReferenceType.NestBegin) && top.matchEnd(delta)) {
+        if (top && (top.refType & ops.ReferenceType.NestBegin)) {
             stack.pop();
         }
         else {
@@ -391,11 +379,6 @@ function addNodeReferences(mergeTree: MergeTree, node: MergeNode,
                             for (let label of lref.getRangeLabels()) {
                                 updateRangeInfo(label, lref);
                             }
-                        }
-                        let lrefId = lref.getId();
-                        // TODO: move this to add/remove lref
-                        if (lrefId) {
-                            mergeTree.mapIdToLref(lrefId, lref);
                         }
                     }
                 }
@@ -637,7 +620,7 @@ export class ExternalSegment extends BaseSegment {
 
 export let reservedTileLabelsKey = "referenceTileLabels";
 export let reservedRangeLabelsKey = "referenceRangeLabels";
-export let reservedReferenceIdKey = "referenceId";
+export let reservedMarkerIdKey = "markerId";
 
 function refHasTileLabels(refPos: ReferencePosition) {
     return (refPos.refType & ops.ReferenceType.Tile) &&
@@ -709,12 +692,6 @@ export class Marker extends BaseSegment implements ReferencePosition {
         return b;
     }
 
-    matchEnd(refPos: ReferencePosition) {
-        let id = "end-" + this.getId();
-        let eid = refPos.getId();
-        return (id === eid);
-    }
-
     getSegment() {
         return this;
     }
@@ -728,8 +705,8 @@ export class Marker extends BaseSegment implements ReferencePosition {
     }
 
     getId() {
-        if (this.properties && this.properties[reservedReferenceIdKey]) {
-            return this.properties[reservedReferenceIdKey];
+        if (this.properties && this.properties[reservedMarkerIdKey]) {
+            return this.properties[reservedMarkerIdKey];
         }
     }
 
@@ -2753,6 +2730,8 @@ export interface RemoveRangeInfo {
     highestBlockRemovingChildren: IMergeBlock;
 }
 
+export type LocalReferenceMapper = (id: string) => LocalReference;
+
 // represents a sequence of text segments
 export class MergeTree {
     // must be an even number   
@@ -2792,12 +2771,12 @@ export class MergeTree {
     // for now assume only markers have ids and so point directly at the Segment 
     // if we need to have pointers to non-markers, we can change to point at local refs
     idToSegment = Properties.createMap<Segment>();
-    idToLref = Properties.createMap<LocalReference>();
     clientIdToBranchId: number[] = [];
     localBranchId = 0;
     transactionSegmentGroup: SegmentGroup;
     // for diagnostics
     getLongClientId: (id: number) => string;
+    idToLref: LocalReferenceMapper;
 
     // TODO: make and use interface describing options
     constructor(public text: string, public options?: Properties.PropertySet) {
@@ -3605,11 +3584,11 @@ export class MergeTree {
         }
     }
 
-    referencePositionToLocalPosition(refPos: ReferencePosition) {
+    referencePositionToLocalPosition(refPos: ReferencePosition,
+        refSeq = UniversalSequenceNumber, clientId = this.collabWindow.clientId) {
         let seg = refPos.getSegment();
         let offset = refPos.getOffset();
-        return offset + this.getOffset(seg, UniversalSequenceNumber,
-            this.collabWindow.clientId);
+        return offset + this.getOffset(seg, refSeq, clientId);
     }
 
     getStackContext(startPos: number, clientId: number, rangeLabels: string[]) {
@@ -3841,8 +3820,14 @@ export class MergeTree {
         return this.idToSegment[id];
     }
 
+    setLrefIdMap(localReferenceMapper: LocalReferenceMapper) {
+        this.idToLref = localReferenceMapper;
+    }
+
     getLrefFromId(id: string) {
-        return this.idToLref[id];
+        if (this.idToLref) {
+            return this.idToLref(id);
+        }
     }
     /**
      * Given a position specified relative to a marker id, lookup the marker 

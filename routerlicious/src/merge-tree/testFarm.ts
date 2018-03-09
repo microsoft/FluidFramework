@@ -1437,7 +1437,7 @@ export class DocumentTree {
                 docNode.id = trid;
                 id = this.ids[docNode.name]++;
                 let props = {
-                    [MergeTree.reservedReferenceIdKey]: trid,
+                    [MergeTree.reservedMarkerIdKey]: trid,
                     [MergeTree.reservedRangeLabelsKey]: [docNode.name],
                 };
                 let behaviors = ops.ReferenceType.NestBegin;
@@ -1456,7 +1456,7 @@ export class DocumentTree {
                 let etrid = "end-" + docNode.name + id.toString();
                 client.insertMarkerLocal(this.pos, ops.ReferenceType.NestEnd,
                     {
-                        [MergeTree.reservedReferenceIdKey]: etrid,
+                        [MergeTree.reservedMarkerIdKey]: etrid,
                         [MergeTree.reservedRangeLabelsKey]: [docNode.name],
                     },
                 );
@@ -1515,7 +1515,7 @@ export class DocumentTree {
                                 errorCount++;
                             }
                             for (let i = 0; i < len; i++) {
-                                let cliMarkerId = cliStack.items[i].getId();
+                                let cliMarkerId = (cliStack.items[i] as MergeTree.Marker).getId();
                                 let treeMarkerId = treeStack.items[i];
                                 if (cliMarkerId !== treeMarkerId) {
                                     errorCount++;

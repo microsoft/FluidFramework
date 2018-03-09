@@ -91,7 +91,7 @@ export class FlowContainer extends ui.Component {
             sharedString.insertMarker(
                 position,
                 MergeTree.ReferenceType.Simple,
-                { [MergeTree.reservedReferenceIdKey]: model.id });
+                { [MergeTree.reservedMarkerIdKey]: model.id });
         });
 
         this.status.on("dry", (value) => {

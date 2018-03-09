@@ -1065,7 +1065,7 @@ function createMarkerOp(
     let props = <SharedString.MapLike<any>>{
     };
     if (id.length > 0) {
-        props[SharedString.reservedReferenceIdKey] = id;
+        props[SharedString.reservedMarkerIdKey] = id;
     }
     if (rangeLabels.length > 0) {
         props[SharedString.reservedRangeLabelsKey] = rangeLabels;
