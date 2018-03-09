@@ -2326,7 +2326,7 @@ export class Cursor {
 
     public makePresenceDiv() {
         this.presenceDiv = document.createElement("div");
-        this.presenceDiv.innerText = this.presenceInfo.key;
+        this.presenceDiv.innerText = this.presenceInfo.key.split(":")[1];
         this.presenceDiv.style.zIndex = "1";
         this.presenceDiv.style.position = "absolute";
         this.presenceDiv.style.color = "white";

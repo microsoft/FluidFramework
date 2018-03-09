@@ -7,6 +7,7 @@ import * as core from "../core";
 import { IAuthenticatedUser, ThroughputCounter, verifyAuthToken } from "../core-utils";
 import * as socketStorage from "../socket-storage";
 import * as utils from "../utils";
+import * as nameMoniker from "./nameMoniker";
 import * as storage from "./storage";
 
 export function register(
@@ -74,7 +75,7 @@ export function register(
                     (documentDetails) => {
                         socket.join(message.id).then(() => {
                             // Create and set a new client ID
-                            const clientId = moniker.choose();
+                            const clientId = `${moniker.choose()}:${nameMoniker.choose()}`;
                             connectionsMap[clientId] = message.id;
 
                             // Broadcast the client connection message

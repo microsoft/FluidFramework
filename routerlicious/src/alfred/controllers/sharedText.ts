@@ -30,6 +30,27 @@ async function getInsights(map: types.IMap, id: string): Promise<types.IMap> {
     return insights.wait<types.IMap>(id);
 }
 
+async function addTranslation(document: API.Document, id: string, language: string): Promise<void> {
+    if (!language) {
+        return;
+    }
+
+    const insights = await document.getRoot().wait<types.IMap>("insights");
+    const insightsView = await insights.getView();
+
+    if (!insightsView.has(id)) {
+        insightsView.set(id, document.createMap());
+    }
+
+    const view = await insightsView.get<types.IMap>(id).getView();
+    if (!view.has("translations")) {
+        view.set("translations", undefined, DistributedMap.DistributedSetValueType.Name);
+    }
+
+    const translations = view.get<DistributedMap.DistributedSet<string>>("translations");
+    translations.add(language);
+}
+
 export async function onLoad(
     id: string,
     version: resources.ICommit,
@@ -126,20 +147,14 @@ async function loadFull(
     theFlow = container.flowView;
     host.attach(container);
 
+    const translationLanguage = "translationLanguage";
+    addTranslation(collabDoc, sharedString.id, options[translationLanguage]).catch((error) => {
+        console.error("Problem adding translation", error);
+    });
+
     getInsights(collabDoc.getRoot(), sharedString.id).then(
-        async (insightsMap) => {
+        (insightsMap) => {
             container.trackInsights(insightsMap);
-            const translationLanguage = "translationLanguage";
-            if (options[translationLanguage]) {
-                const view = await insightsMap.getView();
-
-                if (!view.has("translations")) {
-                    view.set("translations", undefined, DistributedMap.DistributedSetValueType.Name);
-                }
-
-                const translations = view.get<DistributedMap.DistributedSet<string>>("translations");
-                translations.add(options[translationLanguage]);
-            }
         });
 
     if (sharedString.client.getLength() > 0) {
@@ -154,12 +169,6 @@ async function loadFull(
 
     sharedString.loaded.then(() => {
         theFlow.loadFinished(clockStart);
-
-        // sharedString.addBookmark(collabDoc.clientId, 10);
-        // console.log(`Bookmarks`);
-        // sharedString.getBookmarks().forEach((value: Map.DistributedArray<any>, key) => {
-        //     console.log(`${key} => ${JSON.stringify(value.value)}`);
-        // });
     });
 }
 

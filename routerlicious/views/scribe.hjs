@@ -48,12 +48,7 @@
             </form>
 
             <div class="create-details hidden" id="create-details">
-                <p>
-                    <a href="" target="_blank" id="document-link"></a>
-                    <br/>
-                    <a href="" target="_blank" id="metrics-link"></a>
-                    <br />
-                    <a href="" target="_blank" id="insights-link"></a>
+                <p id="link-list">
                 </p>
             </div>
 
@@ -100,7 +95,7 @@
                 "{{ id }}",
                 "{{ template }}",
                 {{ speed }},
-                "{{ language }}");
+                "{{ languages }}");
         </script>
     {{/scripts}}
 {{/layout}}
