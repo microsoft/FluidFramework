@@ -3,6 +3,7 @@ import "antd/lib/button/style/css";
 import "antd/lib/popconfirm/style/css";
 import "antd/lib/table/style/css";
 import * as React from "react";
+import * as utils from "../utils";
 import { TenantCreateModal } from "./TenantCreateModal"
 
 export interface ITableState {
@@ -27,7 +28,7 @@ export class TenantManager extends React.Component<ITableProps,ITableState > {
       },
       {
         title: 'Key',
-        dataIndex: 'encryptKey',
+        dataIndex: 'key',
       },
       {
         title: 'Storage',
@@ -77,20 +78,23 @@ export class TenantManager extends React.Component<ITableProps,ITableState > {
             return;
           }
 
-          // TODO: This is to simulate a DB insertion.
           this.setState({
             modalConfirmLoading: true,
           });
 
-          setTimeout(() => {
+          utils.addTenant("http://localhost:7000/tenants", tenant).then((res) => {
+            console.log(`Added tenant: ${JSON.stringify(res)}`);
             console.log('Received values of form: ', tenant);
             form.resetFields();
             this.setState({
               modalVisible: false,
               modalConfirmLoading: false,
             });
-            this.addNewTenant(tenant);
-          }, 2000);
+            this.addNewTenant(res);
+          }, (err) => {
+            console.log(err);
+          });
+
         });
     }
 
@@ -103,7 +107,7 @@ export class TenantManager extends React.Component<ITableProps,ITableState > {
       const columns = this.columns;
       return (
         <div>
-          <Table bordered dataSource={dataSource} columns={columns} />
+          <Table bordered dataSource={dataSource} columns={columns} rowKey="_id" />
           <nav className="add-buttons">
                 <a onClick={this.showModal}>
                 Add new tenant
@@ -123,9 +127,9 @@ export class TenantManager extends React.Component<ITableProps,ITableState > {
     private addNewTenant(tenant: any) {
         const { count, dataSource } = this.state;
         const newData = {
-          key: count,
+          _id: tenant._id,
           name: tenant.name,
-          encryptKey: tenant.key,
+          key: tenant.key,
           storage: tenant.storage,
         };
         this.setState({

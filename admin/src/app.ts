@@ -176,7 +176,7 @@ export function create(appConfig: any, aadConfig: any) {
     app.use(passport.session());
 
     const routes = appRoutes.create(appConfig);
-    app.use("/maps", routes.maps);
+    app.use("/tenants", routes.tenants);
     app.use("/cells", routes.cells);
     app.use("/", routes.home);
 

@@ -8,6 +8,12 @@
             "timestamp": true,
             "label": "winston"
         },
+        "mongo": {
+            "endpoint": "mongodb://mongodb:27017",
+            "collectionNames": {
+                "tenants": "tenants"
+        }
+    },
         "port": 3000
     },
     "aad": {

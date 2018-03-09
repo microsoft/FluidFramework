@@ -1,8 +1,11 @@
 import { Router } from "express";
 import * as passport from "passport";
+import * as winston from "winston";
+import * as dbService from "../db";
+import * as data from "./dataUtil";
 import { defaultPartials } from "./partials";
 
-export function create(config: any): Router {
+export function create(config: any, mongoManager: dbService.MongoManager, collectionName: string): Router {
     const router: Router = Router();
 
     /**
@@ -12,12 +15,27 @@ export function create(config: any): Router {
         if (request.user === undefined) {
             response.render("home", { partials: defaultPartials, title: "Login" });
         } else {
-            response.render(
-                "admin",
-                {
-                    partials: defaultPartials,
-                    title: "Admin Portal",
-                    user: JSON.stringify(request.user),
+            const tenantsP = data.getTenants(mongoManager, collectionName);
+
+            tenantsP.then(
+                (tenants) => {
+                    response.render(
+                        "admin",
+                        {
+                            data: JSON.stringify({
+                                tenants: {
+                                    list: tenants,
+                                },
+                            }),
+                            partials: defaultPartials,
+                            title: "Admin Portal",
+                            user: JSON.stringify(request.user),
+                        },
+                    );
+                },
+                (error) => {
+                    winston.error(error);
+                    response.status(500).json(error);
                 },
             );
         }

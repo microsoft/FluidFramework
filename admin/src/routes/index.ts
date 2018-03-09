@@ -1,19 +1,26 @@
 import { Router } from "express";
+import * as dbService from "../db";
 import * as cells from "./cells";
 import * as home from "./home";
-import * as maps from "./maps";
+import * as tenants from "./tenants";
 
 export interface IRoutes {
     cells: Router;
     home: Router;
-    maps: Router;
+    tenants: Router;
 }
 
 export function create(config: any): IRoutes {
 
+    // Database connection
+    const mongoUrl = config.mongo.endpoint as string;
+    const mongoFactory = new dbService.MongoDbFactory(mongoUrl);
+    const mongoManager = new dbService.MongoManager(mongoFactory);
+    const collectionName = config.mongo.collectionNames.tenants;
+
     return {
         cells: cells.create(config),
-        home: home.create(config),
-        maps: maps.create(config),
+        home: home.create(config, mongoManager, collectionName),
+        tenants: tenants.create(config, mongoManager, collectionName),
     };
 }

@@ -16,7 +16,8 @@
         <script src="{{#hfurl}}/public/scripts/dist/index.js{{/hfurl}}"></script>
         <script>
             var userData = {{{ user }}};
-            controller.admin.load(userData);
+            var adminData = {{{ data }}};
+            controller.admin.load(userData, adminData);
         </script>
     {{/scripts}}
 
