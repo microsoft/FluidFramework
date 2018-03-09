@@ -1,4 +1,4 @@
-// import * as moniker from "moniker";
+import * as moniker from "moniker";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import * as agent from "../agent";
@@ -75,7 +75,7 @@ export function register(
                     (documentDetails) => {
                         socket.join(message.id).then(() => {
                             // Create and set a new client ID
-                            const clientId = nameMoniker.choose();
+                            const clientId = `${moniker.choose()}:${nameMoniker.choose()}`;
                             connectionsMap[clientId] = message.id;
 
                             // Broadcast the client connection message
