@@ -3,11 +3,10 @@ import * as ReactDOM from "react-dom";
 
 import { Content } from "./components/Content";
 
-export async function load(user: any, adminData: any) {
+export async function load(user: any, adminData: any, endpoints: any) {
     $("document").ready(() => {
-        console.log(adminData);
         ReactDOM.render(
-            <Content data={adminData} user={user} />,
+            <Content data={adminData} user={user} endpoints={endpoints} />,
             document.getElementById("adminportal")
         );
     });

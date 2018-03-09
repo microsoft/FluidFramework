@@ -12,8 +12,11 @@
             "endpoint": "mongodb://mongodb:27017",
             "collectionNames": {
                 "tenants": "tenants"
-        }
-    },
+            }
+        },
+        "endpoints": {
+            "tenants": "http://localhost:7000/tenants"
+        },
         "port": 3000
     },
     "aad": {

@@ -15,6 +15,7 @@ export interface ITableState {
 
 export interface ITableProps {
     data: any[];
+    endpoint: string;
 }
 
 export class TenantManager extends React.Component<ITableProps,ITableState > {
@@ -56,15 +57,14 @@ export class TenantManager extends React.Component<ITableProps,ITableState > {
       };
     }
     onDelete = (id) => {
-      console.log(id);
-      utils.deleteTenant("http://localhost:7000/tenants", id).then((res) => {
+      utils.deleteTenant(this.props.endpoint, id).then((res) => {
         const dataSource = [...this.state.dataSource];
         this.setState(
             {
                 dataSource: dataSource.filter(item => item._id !== id)
             });
       }, (err) => {
-        console.log(err);
+        console.error(err);
       });
     }
 
@@ -87,9 +87,7 @@ export class TenantManager extends React.Component<ITableProps,ITableState > {
             modalConfirmLoading: true,
           });
 
-          utils.addTenant("http://localhost:7000/tenants", tenant).then((res) => {
-            console.log(`Added tenant: ${JSON.stringify(res)}`);
-            console.log('Received values of form: ', tenant);
+          utils.addTenant(this.props.endpoint, tenant).then((res) => {
             form.resetFields();
             this.setState({
               modalVisible: false,
@@ -97,7 +95,7 @@ export class TenantManager extends React.Component<ITableProps,ITableState > {
             });
             this.addNewTenant(res);
           }, (err) => {
-            console.log(err);
+            console.error(err);
           });
 
         });

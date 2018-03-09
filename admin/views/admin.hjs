@@ -17,7 +17,8 @@
         <script>
             var userData = {{{ user }}};
             var adminData = {{{ data }}};
-            controller.admin.load(userData, adminData);
+            var endpoints = {{{ endpoints }}};
+            controller.admin.load(userData, adminData, endpoints);
         </script>
     {{/scripts}}
 

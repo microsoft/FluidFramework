@@ -3,6 +3,7 @@ import { TenantManager } from "./TenantManager";
 
 export interface ITenantsProps {
     data: any;
+    endpoint: string;
 }
 
 export interface ITenantsState {
@@ -22,7 +23,7 @@ export class Tenants extends React.Component<ITenantsProps, ITenantsState> {
         return (
           <div>
             <h2 className="tenant-list-header">List of Registered Tenants</h2>
-            <TenantManager data={data}/>
+            <TenantManager data={data} endpoint={this.props.endpoint}/>
           </div>
         );
     }

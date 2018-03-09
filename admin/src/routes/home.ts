@@ -27,6 +27,7 @@ export function create(config: any, mongoManager: dbService.MongoManager, collec
                                     list: tenants,
                                 },
                             }),
+                            endpoints: JSON.stringify(config.endpoints),
                             partials: defaultPartials,
                             title: "Admin Portal",
                             user: JSON.stringify(request.user),
