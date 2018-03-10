@@ -1,5 +1,4 @@
 import { Popconfirm, Table } from 'antd';
-import "antd/lib/button/style/css";
 import "antd/lib/popconfirm/style/css";
 import "antd/lib/table/style/css";
 import * as React from "react";
