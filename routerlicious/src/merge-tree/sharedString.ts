@@ -1,8 +1,9 @@
-// tslint:disable:whitespace align
+// tslint:disable:whitespace align no-bitwise ordered-imports
 import * as assert from "assert";
 import performanceNow = require("performance-now");
 import * as resources from "gitresources";
 import * as api from "../api-core";
+import * as Collections from "./collections";
 import { Deferred } from "../core-utils";
 import { IMap, IMapView } from "../data-types";
 import { CollaborativeMap, DistributedArray, DistributedArrayValueType, IMapArray, MapExtension } from "../map";
@@ -49,7 +50,7 @@ export interface IReference {
 export class Reference implements IReference {
     public serializedRef: ISerializedReference;
     public localRef: MergeTree.LocalReference;
-    constructor(public collection: ReferenceCollection, public index: number) {
+    constructor(public index: number) {
     }
     public toJSON(key: string) {
         return { serializedRef: this.serializedRef };
@@ -98,27 +99,46 @@ export class ReferenceCollection {
         }
     }
 
+    public makeId(ref: Reference) {
+        return `${this.mapKey}:${ref.index}`;
+    }
+
     // TODO: add property set
     // TODO: error cases
     public add(pos: number, refType = ops.ReferenceType.Simple) {
+        let ref = this.prepare(pos, refType);
+        if (ref) {
+            this.put(ref);
+        }
+    }
+
+    public prepare(pos: number, refType = ops.ReferenceType.Simple) {
         let refs = this.refstore.value;
         let index = refs.length;
         let lref = this.sharedString.createPositionReference(pos, refType);
         // TODO: handle pairing here or in range collection
         if (lref) {
-            let ref = new Reference(this, index);
+            let ref = new Reference(index);
             ref.localRef = lref;
             if (this.mapKey) {
-                let drefstore = <DistributedArray<IReference>>this.refstore;
                 ref.serializedRef = <ISerializedReference>{
                     refType,
                     position: pos,
                     sequenceNumber: this.sharedString.client.getCurrentSeq(),
                 };
-                drefstore.insertAt(index, ref);
-            } else {
-                refs[index] = ref;
             }
+            return ref;
+        }
+    }
+
+    public put(ref: Reference) {
+        let index = ref.index;
+        if (this.mapKey) {
+            let drefstore = <DistributedArray<IReference>>this.refstore;
+            drefstore.insertAt(index, ref);
+        } else {
+            let refs = this.refstore.value;
+            refs[index] = ref;
         }
     }
 
@@ -126,7 +146,7 @@ export class ReferenceCollection {
         let lref = this.sharedString.createPositionReference(ref.serializedRef.position,
             ref.serializedRef.refType, ref.serializedRef.sequenceNumber, clientId);
         if (lref) {
-            let completeRef = new Reference(this, index);
+            let completeRef = new Reference(index);
             completeRef.localRef = lref;
             completeRef.serializedRef = ref.serializedRef;
             // TODO: lookup paired ref in collection and add to lref
@@ -136,7 +156,30 @@ export class ReferenceCollection {
 }
 
 export class RangeCollection {
-    public refCollection: ReferenceCollection;
+    public rangeTree = new Collections.RangeTree<MergeTree.LocalRangeReference>();
+    constructor(public refCollection: ReferenceCollection) {
+    }
+
+    public add(start: number, end: number, refType?: ops.ReferenceType) {
+        refType = refType || ops.ReferenceType.Simple;
+        let startRefType = ops.ReferenceType.RangeBegin | refType;
+        let startRef = this.refCollection.prepare(start, startRefType);
+        if (startRef) {
+            let endRefType = ops.ReferenceType.RangeEnd | refType;
+            let endRef = this.refCollection.prepare(end, endRefType);
+            if (endRef) {
+                startRef.serializedRef.pairedRefId = this.refCollection.makeId(endRef);
+                endRef.serializedRef.pairedRefId = this.refCollection.makeId(startRef);
+                let rangeRef = new MergeTree.LocalRangeReference(startRef.localRef,
+                    endRef.localRef);
+                this.rangeTree.put(rangeRef);
+                // TODO: use group when group switches to begin/end procedural API
+                this.refCollection.put(startRef);
+                this.refCollection.put(endRef);
+                return startRef;
+            }
+        }
+    }
 }
 
 export class SharedString extends CollaborativeMap {
