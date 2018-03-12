@@ -7,6 +7,10 @@ interface IInsertAtParams<T> {
     value: T;
 }
 
+interface IAppendParams<T> {
+    value: T;
+}
+
 export class DistributedArrayFactory<T> implements IValueFactory<DistributedArray<T>> {
     public load(emitter: IValueOpEmitter, raw: any[]): DistributedArray<T> {
         return new DistributedArray<any>(emitter, raw || []);
@@ -38,6 +42,8 @@ export class DistributedArray<T> implements IMapArray<T> {
      */
     public onInsertAt = (index: number, value: T, message?: ISequencedObjectMessage) => { return; };
 
+    public onAppend = (value: T, message?: ISequencedObjectMessage) => { return; };
+
     /**
      * Inserts a new element into the array
      */
@@ -51,6 +57,17 @@ export class DistributedArray<T> implements IMapArray<T> {
 
         this.onInsertAt(index, value, message);
 
+        return this;
+    }
+
+    public append(value: T, message?: ISequencedObjectMessage): DistributedArray<T> {
+        let index = this._value.length;
+        this._value[index] = value;
+        if (!message) {
+            const params: IAppendParams<T> = { value };
+            this.emitter.emit("append", params);
+        }
+        this.onAppend(value, message);
         return this;
     }
 }
@@ -88,6 +105,18 @@ export class DistributedArrayValueType implements IValueType<DistributedArray<an
                         old.insertAt(params.index, params.value, message);
                         return old;
                     },
+                },
+            ], [
+                "append",
+                {
+                    prepare: async (old, params) => {
+                        return;
+                    },
+                    process: (old, params: IAppendParams<any>, context, message) => {
+                        old.append(params.value, message);
+                        return old;
+                    },
+
                 },
             ]]);
     }

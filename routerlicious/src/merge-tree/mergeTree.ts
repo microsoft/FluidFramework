@@ -53,16 +53,16 @@ export interface IHierBlock extends IMergeBlock {
     rangeStacks: RangeStackMap;
 }
 
-export class LocalRangeReference implements Collections.IRange {
+export class LocalInterval implements Collections.IRange {
     constructor(public start: LocalReference,
         public end: LocalReference) {
     }
 
     clone() {
-        return new LocalRangeReference(this.start, this.end);
+        return new LocalInterval(this.start, this.end);
     }
 
-    compare(b: LocalRangeReference) {
+    compare(b: LocalInterval) {
         let startResult = this.start.compare(b.start);
         if (startResult === 0) {
             return (this.end.compare(b.end));
@@ -71,13 +71,13 @@ export class LocalRangeReference implements Collections.IRange {
         }
     }
 
-    overlaps(b: LocalRangeReference) {
+    overlaps(b: LocalInterval) {
         return (this.start.compare(b.end) < 0) &&
             (this.end.compare(b.start) > 0);
     }
 
-    union(b: LocalRangeReference) {
-        return new LocalRangeReference(this.start.min(b.start),
+    union(b: LocalInterval) {
+        return new LocalInterval(this.start.min(b.start),
             this.end.max(b.end));
     }
 }

@@ -9,6 +9,12 @@ export enum ReferenceType {
     SlideOnRemove = 0x40,
 }
 
+export enum IntervalType {
+    Simple = 0x0,
+    Nest =    0x1,
+    SlideOnRemove = 0x2,
+}
+
 export interface IMarkerDef {
     refType?: ReferenceType;
 }
