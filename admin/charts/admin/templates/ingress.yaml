@@ -1,0 +1,22 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: {{ template "fullname" . }}
+  labels:
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
+  annotations:
+    kubernetes.io/ingress.class: "nginx-prod"
+    ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  tls:
+  - hosts:
+    - {{ .Values.service.host }}
+    secretName: {{ .Values.service.sslCert }}
+  rules:
+  - host: {{ .Values.service.host }}
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: {{ template "fullname" . }}
+          servicePort: {{ .Values.service.externalPort }}
