@@ -1,0 +1,7 @@
+[environments]
+  [environments.development]
+    name = "admin"
+    namespace = "default"
+    wait = false
+    watch = false
+    watch_delay = 2
