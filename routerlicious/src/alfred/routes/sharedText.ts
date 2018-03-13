@@ -141,7 +141,7 @@ export function create(
                         pageInk: request.query.pageInk === "true",
                         partials: defaultPartials,
                         template,
-                        title: request.params.id.split(":")[0],
+                        title: request.params.id,
                         version: JSON.stringify(version),
                     });
             },
