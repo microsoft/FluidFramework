@@ -2010,27 +2010,6 @@ export class Client {
         msg.contents = this.transformOp(op, msg, toSequenceNumber);
     }
 
-    checkContingentOps(groupOp: ops.IMergeTreeGroupMsg, msg: API.ISequencedObjectMessage) {
-        for (let memberOp of groupOp.ops) {
-            // TODO: handle cancelling due to out of range or id not found
-            if (memberOp.type === ops.MergeTreeDeltaType.ANNOTATE) {
-                if (memberOp.when) {
-                    let whenClause = memberOp.when;
-                    // for now assume single segment
-                    let segoff = this.mergeTree.getContainingSegment(memberOp.pos1,
-                        msg.referenceSequenceNumber, this.getOrAddShortClientId(msg.clientId));
-                    if (segoff) {
-                        let baseSegment = <BaseSegment>segoff.segment;
-                        if (!Properties.matchProperties(baseSegment.properties, whenClause.props)) {
-                            return false;
-                        }
-                    }
-                }
-            }
-        }
-        return true;
-    }
-
     applyOp(op: ops.IMergeTreeOp, msg: API.ISequencedObjectMessage) {
         let clid = this.getOrAddShortClientId(msg.clientId);
         switch (op.type) {
@@ -2061,14 +2040,8 @@ export class Client {
                     clid, op.combiningOp);
                 break;
             case ops.MergeTreeDeltaType.GROUP: {
-                let go = true;
-                if (op.hasContingentOps) {
-                    go = this.checkContingentOps(op, msg);
-                }
-                if (go) {
-                    for (let memberOp of op.ops) {
-                        this.applyOp(memberOp, msg);
-                    }
+                for (let memberOp of op.ops) {
+                    this.applyOp(memberOp, msg);
                 }
                 break;
             }
@@ -2097,19 +2070,7 @@ export class Client {
             if (msg.clientId === this.longClientId) {
                 let op = <ops.IMergeTreeOp>msg.contents;
                 if (op.type !== ops.MergeTreeDeltaType.ANNOTATE) {
-                    let ack = true;
-                    if (op.type === ops.MergeTreeDeltaType.GROUP) {
-                        if (op.hasContingentOps) {
-                            let cancelled = this.checkContingentOps(op, msg);
-                            if (cancelled) {
-                                ack = false;
-                                // TODO: undo segment group and re-do group op
-                            }
-                        }
-                    }
-                    if (ack) {
-                        this.ackPendingSegment(operationMessage.sequenceNumber);
-                    }
+                    this.ackPendingSegment(operationMessage.sequenceNumber);
                 }
             }
             else {
@@ -2141,7 +2102,6 @@ export class Client {
         }
     }
 
-    // TODO: hold group for ack if contingent
     localTransaction(groupOp: ops.IMergeTreeGroupMsg) {
         this.mergeTree.startGroupOperation();
         for (let op of groupOp.ops) {
