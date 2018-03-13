@@ -11,6 +11,7 @@ To deploy grafana. Run:
 ```bash
 $ kubectl apply -f ./grafana/grafana-deployment.yaml
 $ kubectl apply -f ./grafana/grafana-service.yaml
+$ kubectl apply -f ./grafana/grafana-ingress.yaml
 ```
 
 Dashboard configurations are kept up to date in the "dashboards" folder. In the event of redeployment, use grafana's "import dashboard" option to restore the graphs.
