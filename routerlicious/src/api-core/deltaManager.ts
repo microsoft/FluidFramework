@@ -1,9 +1,83 @@
 import * as assert from "assert";
 import * as queue from "async/queue";
+import { EventEmitter } from "events";
+import extend = require("lodash/extend");
 import { Deferred } from "../core-utils";
 import { debug } from "./debug";
 import * as protocol from "./protocol";
 import * as storage from "./storage";
+
+export interface IDeltaManager {
+    // The queue of inbound delta messages
+    inbound: IDeltaQueue;
+
+    // the queue of outbound delta messages
+    outbound: IDeltaQueue;
+}
+
+export interface IDeltaQueue extends EventEmitter {
+    /**
+     * Flag indicating whether or not the queue was paused
+     */
+    paused: boolean;
+
+    /**
+     * The number of messages remaining in the queue
+     */
+    length: number;
+
+    /**
+     * Pauses processing on the queue
+     */
+    pause();
+
+    /**
+     * Resumes processing on the queue
+     */
+    resume();
+}
+
+class DeltaQueue<T> extends EventEmitter implements IDeltaQueue {
+    private q: async.AsyncQueue<T>;
+
+    public get paused(): boolean {
+        return this.q.paused;
+    }
+
+    public get length(): number {
+        return this.q.length();
+    }
+
+    constructor(worker: async.AsyncWorker<T, void>) {
+        super();
+        this.q = queue<T, void>((task, callback) => {
+            this.emit("pre-op", task);
+            worker(task, (error) => {
+                this.emit("op", task);
+                callback(error);
+            });
+        });
+
+        this.q.error = (error) => {
+            debug(`Queue processing error`, error);
+            this.q.pause();
+        };
+    }
+
+    public push(task: T) {
+        this.q.push(task);
+    }
+
+    public pause() {
+        this.q.pause();
+        this.emit("pause");
+    }
+
+    public resume() {
+        this.q.resume();
+        this.emit("resume");
+    }
+}
 
 /**
  * Interface used to define a strategy for handling incoming delta messages
@@ -21,11 +95,13 @@ export interface IDeltaHandlerStrategy {
     process: (message: protocol.ISequencedDocumentMessage, context: any) => void;
 }
 
+type OutboundMessage = protocol.IDocumentMessage & { _deferred: Deferred<void> };
+
 /**
  * Helper class that manages incoming delta messages. This class ensures that collaborative objects receive delta
  * messages in order regardless of possible network conditions or timings causing out of order delivery.
  */
-export class DeltaManager {
+export class DeltaManager implements IDeltaManager {
     private pending: protocol.ISequencedDocumentMessage[] = [];
     private fetching = false;
 
@@ -43,7 +119,6 @@ export class DeltaManager {
     private heartbeatTimer: any;
 
     // There are three numbers we track
-    // * baseSequenceNumber is the last processed sequence number
     // * lastQueuedSequenceNumber is the last queued sequence number
     // * largestSequenceNumber is the largest seen sequence number
     private lastQueuedSequenceNumber: number;
@@ -52,7 +127,18 @@ export class DeltaManager {
     private pauseDeferred: Deferred<void>;
     private pauseAtOffset: number;
 
-    private q: any;
+    // tslint:disable:variable-name
+    private _inbound: DeltaQueue<protocol.IDocumentMessage>;
+    private _outbound: DeltaQueue<OutboundMessage>;
+    // tslint:enable:variable-name
+
+    public get inbound(): IDeltaQueue {
+        return this._inbound;
+    }
+
+    public get outbound(): IDeltaQueue {
+        return this._outbound;
+    }
 
     public get referenceSequenceNumber(): number {
         return this.baseSequenceNumber;
@@ -74,7 +160,8 @@ export class DeltaManager {
         this.lastQueuedSequenceNumber = this.baseSequenceNumber;
         this.largestSequenceNumber = this.baseSequenceNumber;
 
-        this.q = queue<protocol.ISequencedDocumentMessage, void>((op, callback) => {
+        // Queue for inbound message processing
+        this._inbound = new DeltaQueue<protocol.ISequencedDocumentMessage>((op, callback) => {
             // Handle the op
             this.processMessage(op).then(
                 () => {
@@ -82,22 +169,24 @@ export class DeltaManager {
                         this.pauseDeferred.resolve();
                         this.pauseDeferred = undefined;
                         this.pauseAtOffset = undefined;
-                        this.q.pause();
+                        this._inbound.pause();
                     }
                     callback();
                 },
                 (error) => {
                     callback(error);
                 });
-        }, 1);
+        });
 
-        this.q.error = (error) => {
-            debug(`Queue processing error`, error);
-            this.q.pause();
-        };
+        // Queue for outbound message processing
+        this._outbound = new DeltaQueue<OutboundMessage>((op, callback) => {
+            const submitP = this.deltaConnection.submit(op);
+            op._deferred.resolve(submitP);
+            callback();
+        });
 
         // We start the queue as paused and rely on the client to start it
-        this.q.pause();
+        this._inbound.pause();
 
         // Prime the DeltaManager with the initial set of provided messages
         this.enqueueMessages(pendingMessages);
@@ -116,7 +205,7 @@ export class DeltaManager {
         // If the queue is caught up we can simply pause it and return. Otherwise we need to indicate when in the
         // stream to perform the pause
         if (this.largestSequenceNumber === this.baseSequenceNumber) {
-            this.q.pause();
+            this._inbound.pause();
             return;
         } else {
             this.pauseAtOffset = this.largestSequenceNumber;
@@ -126,7 +215,7 @@ export class DeltaManager {
     }
 
     public start() {
-        this.q.resume();
+        this._inbound.resume();
     }
 
     /**
@@ -147,7 +236,7 @@ export class DeltaManager {
 
         this.readonly = false;
         this.stopSequenceNumberUpdate();
-        return this.deltaConnection.submit(message);
+        return this.submitCore(message);
     }
 
     /**
@@ -165,7 +254,17 @@ export class DeltaManager {
         };
 
         this.readonly = false;
-        this.deltaConnection.submit(message);
+        return this.submitCore(message);
+    }
+
+    /**
+     * Begins to submit a new message to the server
+     */
+    private submitCore(message: protocol.IDocumentMessage): Promise<void> {
+        const deferred = new Deferred<void>();
+        const task = extend(message, { _deferred: deferred });
+        this._outbound.push(task);
+        return deferred.promise;
     }
 
     private enqueueMessages(messages: protocol.ISequencedDocumentMessage[]) {
@@ -176,7 +275,7 @@ export class DeltaManager {
                 this.handleOutOfOrderMessage(message);
             } else {
                 this.lastQueuedSequenceNumber = message.sequenceNumber;
-                this.q.push(message);
+                this._inbound.push(message);
             }
         }
     }
