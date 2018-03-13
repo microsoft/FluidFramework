@@ -75,6 +75,10 @@ export class SharedString extends CollaborativeMap {
         this.submitIfAttached(insertMessage);
     }
 
+    public getText(start?: number, end?: number): string {
+        return this.client.getText(start, end);
+    }
+
     public insertText(text: string, pos: number, props?: Properties.PropertySet) {
         const insertMessage: ops.IMergeTreeInsertMsg = {
             pos1: pos,
