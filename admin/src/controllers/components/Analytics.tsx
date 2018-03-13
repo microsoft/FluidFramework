@@ -6,7 +6,7 @@ export class Analytics extends React.Component<{}, {}> {
         return (
             <div>
                 <h2 className="analytics-header">Analytics Dashboard</h2>
-                <Iframe url="http://prague-grafana.westus2.cloudapp.azure.com/dashboard/db/latency-summary?orgId=1"
+                <Iframe url="https://grafana.wu2.prague.office-int.com/dashboard/db/latency-summary?orgId=1"
                         position="absolute"
                         width="100%"
                         id="grafana"
