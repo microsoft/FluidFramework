@@ -192,7 +192,7 @@ class Speller {
             if (!pgRef) {
                 pgMarker = { tile: undefined, pos: 0 };
             } else {
-                pgMarker = { tile: <MergeTree.Marker> pgRef.tile, pos: pgRef.pos };
+                pgMarker = { tile: <MergeTree.Marker>pgRef.tile, pos: pgRef.pos };
             }
             this.pendingParagraphs.push(pgMarker);
         } else if (delta.type === MergeTree.MergeTreeDeltaType.GROUP) {
@@ -347,54 +347,57 @@ class Speller {
 
         let segoff = this.sharedString.client.mergeTree.getContainingSegment(pos,
             MergeTree.UniversalSequenceNumber, this.sharedString.client.getClientId());
-        if (segoff.offset !== 0) {
-            console.log("expected pos only at segment boundary");
-        }
-        // assumes op has made pos a segment boundary
-        this.sharedString.client.mergeTree.leftExcursion(segoff.segment, gatherReverse);
-        let startPos = pos - words.length;
-        let sentenceStartPos = pos - sentence.length;
+        if (segoff && segoff.segment) {
+            if (segoff.offset !== 0) {
+                console.log("expected pos only at segment boundary");
+            }
+            // assumes op has made pos a segment boundary
+            this.sharedString.client.mergeTree.leftExcursion(segoff.segment, gatherReverse);
+            let startPos = pos - words.length;
+            let sentenceStartPos = pos - sentence.length;
 
-        if (segoff.segment) {
-            wordsFound = false;
-            if (gatherForward(segoff.segment)) {
-                this.sharedString.client.mergeTree.rightExcursion(segoff.segment, gatherForward);
-            }
-            words = words + fwdWords;
-            sentence = sentence + fwdSentence;
-            if (this.verbose) {
-                // tslint:disable-next-line:max-line-length
-                console.log(`found sentence ${sentence} (start ${sentenceStartPos}, end ${sentenceStartPos + sentence.length}) around change`);
-            }
-            // TODO: send this sentence to service for analysis
-            let re = /\b\w+\b/g;
-            let result: RegExpExecArray;
-            do {
-                result = re.exec(words);
-                if (result) {
-                    let start = result.index + startPos;
-                    let end = re.lastIndex + startPos;
-                    let candidate = result[0];
-                    if (this.spellingError(candidate.toLocaleLowerCase())) {
-                        let textErrorInfo = this.makeTextErrorInfo(candidate);
-                        if (this.verbose) {
-                            console.log(`respell (${start}, ${end}): ${textErrorInfo.text}`);
-                            let buf = "alternates: ";
-                            for (let alt of textErrorInfo.alternates) {
-                                buf += ` ${alt.text}:${alt.invDistance}:${alt.val}`;
+            if (segoff.segment) {
+                wordsFound = false;
+                if (gatherForward(segoff.segment)) {
+                    this.sharedString.client.mergeTree.rightExcursion(segoff.segment, gatherForward);
+                }
+                words = words + fwdWords;
+                sentence = sentence + fwdSentence;
+                if (this.verbose) {
+                    // tslint:disable-next-line:max-line-length
+                    console.log(`found sentence ${sentence} (start ${sentenceStartPos}, end ${sentenceStartPos + sentence.length}) around change`);
+                }
+                // TODO: send this sentence to service for analysis
+                let re = /\b\w+\b/g;
+                let result: RegExpExecArray;
+                do {
+                    result = re.exec(words);
+                    if (result) {
+                        let start = result.index + startPos;
+                        let end = re.lastIndex + startPos;
+                        let candidate = result[0];
+                        if (this.spellingError(candidate.toLocaleLowerCase())) {
+                            let textErrorInfo = this.makeTextErrorInfo(candidate);
+                            if (this.verbose) {
+                                console.log(`respell (${start}, ${end}): ${textErrorInfo.text}`);
+                                let buf = "alternates: ";
+                                for (let alt of textErrorInfo.alternates) {
+                                    buf += ` ${alt.text}:${alt.invDistance}:${alt.val}`;
+                                }
+                                console.log(buf);
                             }
-                            console.log(buf);
+                            this.sharedString.annotateRange({ textError: textErrorInfo }, start, end);
+                        } else {
+                            if (this.verbose) {
+                                // tslint:disable:max-line-length
+                                console.log(`spell ok (${start}, ${end}): ${words.substring(result.index, re.lastIndex)}`);
+                            }
+                            this.sharedString.annotateRange({ textError: null }, start, end);
                         }
-                        this.sharedString.annotateRange({ textError: textErrorInfo }, start, end);
-                    } else {
-                        if (this.verbose) {
-                            console.log(`spell ok (${start}, ${end}): ${words.substring(result.index, re.lastIndex)}`);
-                        }
-                        this.sharedString.annotateRange({ textError: null }, start, end);
                     }
                 }
+                while (result);
             }
-            while (result);
         }
     }
 
