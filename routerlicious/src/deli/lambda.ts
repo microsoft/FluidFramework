@@ -90,13 +90,7 @@ export class DeliLambda implements IPartitionLambda {
     public handler(message: utils.kafkaConsumer.IMessage): void {
         // Trace for the message.
         const trace: api.ITrace = { service: "deli", action: "start", timestamp: Date.now()};
-
-        const baseMessage = JSON.parse(message.value.toString()) as core.IMessage;
-        if (baseMessage.type === core.RawOperationType) {
-            this.ticket(message, trace);
-        }
-
-        // TODO need to mark non raw base
+        this.ticket(message, trace);
     }
 
     private ticket(rawMessage: utils.kafkaConsumer.IMessage, trace: api.ITrace): void {
@@ -122,10 +116,26 @@ export class DeliLambda implements IPartitionLambda {
             && message.clientId
             && message.operation.referenceSequenceNumber < this.minimumSequenceNumber) {
 
-            // TODO support nacking of clients
-            // Do not assign a ticket to a message outside the MSN. We will need to NACK clients in this case.
-            // tslint:disable-next-line
-            winston.error(`${message.clientId} sent packet ${message.operation.referenceSequenceNumber} less than MSN of ${this.minimumSequenceNumber}`);
+            // TODO TODO TODO
+            // Need to mark this client ID as nack'ed. Now should I also rev an epoch for the client or just make
+            // them hand me a new ID - which in some ways is just {name}+{epoch}
+
+            // Add in a placeholder for the nack'ed client
+            this.upsertClient(
+                message.clientId,
+                this.minimumSequenceNumber,
+                message.timestamp,
+                true);
+
+            // Send the nack message
+            const nackMessage: core.INackMessage = {
+                documentId: objectMessage.documentId,
+                operation: message.operation,
+                sequenceNumber: this.minimumSequenceNumber,
+                type: core.NackOperationType,
+            };
+
+            this.sendMessage(nackMessage);
 
             return;
         }
@@ -135,7 +145,6 @@ export class DeliLambda implements IPartitionLambda {
 
         let origin: api.IBranchOrigin = undefined;
 
-        // TODO - move this back to the below - for now we don't do the work just want to know it made it!
         if (message.operation.type === api.Integrate) {
             // Branch operation is the original message
             const branchOperation = message.operation.contents as core.ISequencedOperationMessage;
@@ -239,10 +248,10 @@ export class DeliLambda implements IPartitionLambda {
             type: core.SequencedOperationType,
         };
 
-        this.sendSequenced(sequencedMessage);
+        this.sendMessage(sequencedMessage);
     }
 
-    private sendSequenced(message: core.ISequencedOperationMessage) {
+    private sendMessage(message: core.ITicketedMessage) {
         // Checkpoint the current state
         const checkpoint = this.generateCheckpoint();
 

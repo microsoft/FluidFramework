@@ -6,6 +6,8 @@ export const RawOperationType: string = "RawOperation";
 // String identifying the sequenced operation message
 export const SequencedOperationType: string = "SequencedOperation";
 
+export const NackOperationType: string = "Nack";
+
 export const SystemType: string = "System";
 
 /**
@@ -72,6 +74,17 @@ export interface IRawOperationMessage extends IObjectMessage {
 export interface ITicketedMessage extends IMessage {
     // The object the message is intended for
     documentId: string;
+}
+
+/**
+ * Message sent when a raw opeartion is nacked
+ */
+export interface INackMessage extends ITicketedMessage {
+    // The operation that was just nacked
+    operation: api.IDocumentMessage;
+
+    // The sequence number the client needs to catch up to
+    sequenceNumber: number;
 }
 
 /**

@@ -50,11 +50,6 @@ export function register(
         // Note connect is a reserved socket.io word so we use connectDocument to represent the connect request
         socket.on("connectDocument", async (message: socketStorage.IConnect, response) => {
             // Join the room first to ensure the client will start receiving delta updates
-            /**
-             * NOTE: Should there be an extra check to verify that if 'encrypted' is false, the passed keys are empty?
-             * Food for thought: what should the correct behavior be if someone requests an encrypted connection to a
-             * document that mongoDB has marked as unencrypted (or vice-versa)?
-             */
             const authP = checkAuth(message);
             authP.then((user: any) => {
                 if (user !== null) {
