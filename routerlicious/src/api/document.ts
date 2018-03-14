@@ -161,9 +161,20 @@ export class Document extends EventEmitter {
         });
         await Promise.all(objectsLoaded);
 
-        // Process all pending deltas and then resume
-        document._deltaManager.start();
-        await document._deltaManager.flushAndPause();
+        // Process all pending tardis messages
+        await Document.flushAndPause(document, documentConnection.transformedMessages);
+
+        // Notify collab objects of tardis completion
+        const loadComplete = documentConnection.distributedObjects.map(async (distributedObject) => {
+            const object = await document.get(distributedObject.id);
+            return object.loadComplete();
+        });
+        await Promise.all(loadComplete);
+
+        // Process all pending deltas
+        await Document.flushAndPause(document, documentConnection.pendingDeltas);
+
+        // Start the delta manager back up
         document._deltaManager.start();
 
         // If it's a new document we create the root map object - otherwise we wait for it to become available
@@ -177,6 +188,14 @@ export class Document extends EventEmitter {
 
         // And return the new object
         return document;
+    }
+
+    private static async flushAndPause(document: Document, messages: ISequencedDocumentMessage[]): Promise<void> {
+        document._deltaManager.start();
+        if (messages.length > 0) {
+            const sequenceNumber = messages[messages.length - 1].sequenceNumber;
+            await document._deltaManager.flushAndPause(sequenceNumber);
+        }
     }
 
     // Map from the object ID to the collaborative object for it. If the object is not yet attached its service

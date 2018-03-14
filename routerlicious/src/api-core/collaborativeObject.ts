@@ -98,6 +98,8 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
      */
     public abstract transform(message: IObjectMessage, sequenceNumber: number): IObjectMessage;
 
+    public abstract loadComplete(): Promise<void>;
+
     /**
      * Allows the distributed data type to perform custom loading
      */

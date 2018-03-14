@@ -184,9 +184,14 @@ export class SharedString extends CollaborativeMap {
     protected initializeContent() {
         const intervalCollections = this.document.create(MapExtension.Type) as IMap;
         this.set("intervalCollections", intervalCollections);
-        this.initialize(0, null, false, this.id, null).catch((error) => {
-            console.error(error);
-        });
+        // TODO will want to update initialize to operate synchronously
+        this.initialize(0, null, false, this.id, null).then(
+            () => {
+                this.initializeIntervalCollections();
+            },
+            (error) => {
+                console.error(error);
+            });
     }
 
     protected snapshotContent(): api.ITree {
@@ -216,6 +221,11 @@ export class SharedString extends CollaborativeMap {
 
     protected attachContent() {
         this.client.startCollaboration(this.document.clientId, 0);
+    }
+
+    protected loadContentComplete(): Promise<void> {
+        this.initializeIntervalCollections();
+        return Promise.resolve();
     }
 
     private submitIfAttached(message: any) {
@@ -270,12 +280,10 @@ export class SharedString extends CollaborativeMap {
         }
         console.log(`Apply ${this.id} pending - ${performanceNow()}`);
         this.applyPending();
-        this.initializeIntervalCollections();
         console.log(`Load ${this.id} finished - ${performanceNow()}`);
         this.loadFinished(chunk);
     }
 
-    // REVIEW: assumes shared string up to sequence number of snapshot
     private initializeIntervalCollections() {
         for (let key of this.intervalCollections.keys()) {
             let intervalCollection = this.intervalCollections.get<SharedIntervalCollection>(key);

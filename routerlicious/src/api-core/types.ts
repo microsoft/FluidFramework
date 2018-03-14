@@ -63,4 +63,9 @@ export interface ICollaborativeObject {
      * Transforms the given message relative to the provided sequence number
      */
     transform(message: protocol.IObjectMessage, sequenceNumber: number): protocol.IObjectMessage;
+
+    /**
+     * Called during load to indicate the object has been fully loaded
+     */
+    loadComplete(): Promise<void>;
 }

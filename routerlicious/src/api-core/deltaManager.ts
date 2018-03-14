@@ -201,14 +201,14 @@ export class DeltaManager implements IDeltaManager {
      * Flushes all pending tasks and returns a promise for when they are completed. The queue is marked as paused
      * upon return.
      */
-    public flushAndPause(): Promise<void> {
+    public flushAndPause(sequenceNumber = this.largestSequenceNumber): Promise<void> {
         // If the queue is caught up we can simply pause it and return. Otherwise we need to indicate when in the
         // stream to perform the pause
-        if (this.largestSequenceNumber === this.baseSequenceNumber) {
+        if (sequenceNumber <= this.baseSequenceNumber) {
             this._inbound.pause();
             return;
         } else {
-            this.pauseAtOffset = this.largestSequenceNumber;
+            this.pauseAtOffset = sequenceNumber;
             this.pauseDeferred = new Deferred<void>();
             return this.pauseDeferred.promise;
         }

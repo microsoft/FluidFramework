@@ -146,6 +146,10 @@ export class Cell extends api.CollaborativeObject implements ICell {
         return message;
     }
 
+    public async loadComplete(): Promise<void> {
+        return;
+    }
+
     protected async loadCore(
         version: resources.ICommit,
         headerOrigin: string,
