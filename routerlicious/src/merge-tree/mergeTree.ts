@@ -803,6 +803,7 @@ export class TextSegment extends BaseSegment {
             if (localRef.offset < pos) {
                 aRefs.push(localRef);
             } else {
+                localRef.segment = leafSegment;
                 localRef.offset -= pos;
                 bRefs.push(localRef);
             }

@@ -425,14 +425,16 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
 
     nodeGather(node: Node<TKey, TData>, results: Node<TKey, TData>[],
         key: TKey, matcher: IRBMatcher<TKey, TData>) {
-        if (matcher.continueSubtree(node.left, key)) {
-            this.nodeGather(node.left, results, key, matcher);
-        }
-        if (matcher.matchNode(node, key)) {
-            results.push(node);
-        }
-        if (matcher.continueSubtree(node.right, key)) {
-            this.nodeGather(node.right, results, key, matcher);
+        if (node) {
+            if (matcher.continueSubtree(node.left, key)) {
+                this.nodeGather(node.left, results, key, matcher);
+            }
+            if (matcher.matchNode(node, key)) {
+                results.push(node);
+            }
+            if (matcher.continueSubtree(node.right, key)) {
+                this.nodeGather(node.right, results, key, matcher);
+            }
         }
     }
 
@@ -754,16 +756,17 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
 
     keys() {
         let keyList = <TKey[]>[];
-        let actions = <NodeActions<TKey, TData>> {
+        let actions = <NodeActions<TKey, TData>>{
             showStructure: true,
             infix: (node) => {
                 keyList.push(node.key);
+                return true;
             }
         };
         this.walk(actions);
         return keyList;
     }
-    
+
     /**
      * Depth-first traversal with custom action; if action returns
      * false, traversal is halted.
@@ -997,7 +1000,7 @@ export class IntervalTree<T extends IInterval> implements IRBAugmentation<T, Aug
                 // console.log(this.nodeToString(node));
             }
         }
-        return cont;   
+        return cont;
     }
 
     update(node: IntervalNode<T>) {

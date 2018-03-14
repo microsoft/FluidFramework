@@ -13,7 +13,7 @@ import * as MergeTree from "./mergeTree";
 import * as ops from "./ops";
 import * as Properties from "./properties";
 import * as Paparazzo from "./snapshot";
-import { SharedIntervalCollection } from "./intervalCollection";
+import { SharedIntervalCollection, SharedIntervalCollectionValueType } from "./intervalCollection";
 
 function textsToSegments(texts: ops.IPropertyString[]) {
     let segments: MergeTree.Segment[] = [];
@@ -163,6 +163,17 @@ export class SharedString extends CollaborativeMap {
     public getIntervalCollections(): IMapView {
         return this.intervalCollections;
     }
+
+    // TODO: fix race condition on creation by putting type on every operation
+    public getSharedIntervalCollection(label: string) {
+    if (!this.intervalCollections.has(label)) {
+        this.intervalCollections.set<SharedIntervalCollection>(label, undefined,
+            SharedIntervalCollectionValueType.Name);
+    }
+    let sharedCollection = this.intervalCollections.get<SharedIntervalCollection>(label);
+    sharedCollection.initialize(this, label);
+    return sharedCollection;
+}
 
     protected transformContent(message: api.IObjectMessage, toSequenceNumber: number): api.IObjectMessage {
         if (message.contents) {

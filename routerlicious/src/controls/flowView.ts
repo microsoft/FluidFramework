@@ -1,7 +1,8 @@
-// tslint:disable:no-bitwise whitespace align switch-default
+// tslint:disable:no-bitwise whitespace align switch-default no-string-literal
 import performanceNow = require("performance-now");
 import { api, core, MergeTree as SharedString, types } from "../client-api";
 import { findRandomWord } from "../merge-tree-utils";
+import { SharedIntervalCollection } from "../merge-tree/intervalCollection";
 import * as ui from "../ui";
 import { Status } from "./status";
 
@@ -2007,6 +2008,38 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
                 }
                 client.mergeTree.mapRange({ leaf: renderSegmentIntoLine }, SharedString.UniversalSequenceNumber,
                     client.getClientId(), lineContext, lineStart, lineEnd);
+                if (layoutContext.flowView.bookmarks && (lineEnd !== undefined)) {
+                    let bookmarks = layoutContext.flowView.bookmarks.findOverlappingIntervals(lineStart, lineEnd);
+                    if (bookmarks) {
+                        let lineText = client.getText(lineStart, lineEnd);
+                        for (let b of bookmarks) {
+                            let start = b.start.toPosition(client.mergeTree, client.getCurrentSeq(),
+                                client.getClientId());
+                            let end = b.end.toPosition(client.mergeTree, client.getCurrentSeq(),
+                                client.getClientId());
+                            let startX = getTextWidth(lineText.substring(0, start - lineStart), lineFontstr);
+                            let endX = getTextWidth(lineText.substring(0, end - lineStart), lineFontstr);
+                            let bookmarkDiv = document.createElement("div");
+                            let bookmarkRect = new ui.Rectangle(startX, 0, endX - startX, lineDivHeight);
+                            bookmarkRect.conformElement(bookmarkDiv);
+                            contentDiv.appendChild(bookmarkDiv);
+                            bookmarkDiv.style.backgroundColor = "blue";
+                            if (b.properties && b.properties["clid"]) {
+                                let clientId = client.getOrAddShortClientId(b.properties["clid"]);
+                                let bgColor = presenceColors[clientId%presenceColors.length];
+                                bookmarkDiv.style.backgroundColor = bgColor;
+                            }
+                            bookmarkDiv.style.opacity = "0.5";
+                            bookmarkDiv.style.zIndex = "3";
+                            /*
+                            console.log(`line [${lineStart},${lineEnd}) matched interval [${start},${end})`);
+                            if ((lineStart>end)||(lineEnd<=start)) {
+                                console.log("disturbing match");
+                            }
+                            */
+                        }
+                    }
+                }
                 span = lineContext.span;
                 if (lineContext.reRenderList) {
                     if (!layoutContext.reRenderList) {
@@ -2612,6 +2645,7 @@ export class FlowView extends ui.Component {
     public topChar = -1;
     public cursor: Cursor;
     public presenceMap: types.IMap;
+    public bookmarks: SharedIntervalCollection;
     public presenceMapView: types.IMapView;
     public presenceVector: ILocalPresenceInfo[] = [];
     public docRoot: types.IMapView;
@@ -2662,6 +2696,17 @@ export class FlowView extends ui.Component {
         let clock = Date.now();
         this.client.cloneFromSegments();
         console.log(`clone took ${Date.now() - clock}ms`);
+    }
+
+    public createBookmarks(k: number) {
+        let len = this.sharedString.client.getLength();
+        for (let i = 0; i < k; i++) {
+            let pos1 = Math.floor(Math.random() * (len - 1));
+            let intervalLen = Math.floor(Math.random() * Math.min(len - pos1, 20));
+            let props = { clid: this.sharedString.client.longClientId };
+            this.bookmarks.add(pos1, pos1 + intervalLen, SharedString.IntervalType.Simple,
+                props);
+        }
     }
 
     public xUpdateHistoryBubble(x: number) {
@@ -3593,7 +3638,8 @@ export class FlowView extends ui.Component {
                 this.setList();
                 break;
             case CharacterCodes.B: {
-                this.toggleBold();
+                // this.toggleBold();
+                this.createBookmarks(5000);
                 break;
             }
             case CharacterCodes.I: {
@@ -3748,6 +3794,7 @@ export class FlowView extends ui.Component {
     }
 
     public loadFinished(clockStart = 0) {
+        this.bookmarks = this.sharedString.getSharedIntervalCollection("bookmarks");
         this.render(0, true);
         if (clockStart > 0) {
             // tslint:disable-next-line:max-line-length
