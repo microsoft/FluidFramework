@@ -47,11 +47,11 @@ export function create(
     /**
      * Loading of a specific version of shared text.
      */
-    router.get("/:tenantId?/:id/commit", (request, response, next) => {
+    router.get("/:tenantId?/:id/commit", async (request, response, next) => {
         const id = getFullId(request.params.tenantId, request.params.id);
         const disableCache = "disableCache" in request.query;
 
-        const workerConfig = getConfig(config.get("worker"), tenantManager, request.params.tenantId);
+        const workerConfig = await getConfig(config.get("worker"), tenantManager, request.params.tenantId);
         const targetVersionSha = request.query.version;
         const versionP = storage.getVersion(
             tenantManager,
@@ -104,13 +104,13 @@ export function create(
     /**
      * Loading of a specific shared text.
      */
-    router.get("/:tenantId?/:id", (request, response, next) => {
+    router.get("/:tenantId?/:id", async (request, response, next) => {
         const id = getFullId(request.params.tenantId, request.params.id);
 
         const disableCache = "disableCache" in request.query;
         const direct = "direct" in request.query;
 
-        const workerConfig = getConfig(
+        const workerConfig = await getConfig(
             config.get("worker"),
             tenantManager,
             request.params.tenantId,

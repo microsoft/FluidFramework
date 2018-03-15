@@ -16,6 +16,10 @@ export class MongoCollection<T> implements core.ICollection<T> {
         return this.collection.findOne(query);
     }
 
+    public findAll(): Promise<T[]> {
+        return this.collection.find({}).toArray();
+    }
+
     public async update(filter: Object, set: any, addToSet: any): Promise<void> {
         return this.updateCore(filter, set, addToSet, false);
     }

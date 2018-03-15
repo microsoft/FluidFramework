@@ -22,7 +22,7 @@ interface IAgents {
 };
 
 export interface IDocumentServiceFactory {
-    getService(tenantId: string): core.IDocumentService;
+    getService(tenantId: string): Promise<core.IDocumentService>;
 }
 
 /**
@@ -197,16 +197,16 @@ export class WorkerService implements core.IWorkerService {
         }
     }
 
-    private getServiceForDoc(docId: string): core.IDocumentService {
+    private async getServiceForDoc(docId: string): Promise<core.IDocumentService> {
         const slashIndex = docId.indexOf("/");
         const tenantName = slashIndex !== -1 ? docId.slice(0, slashIndex) : "";
 
-        const service = this.serviceFactory.getService(tenantName);
+        const service = await this.serviceFactory.getService(tenantName);
         return service;
     }
 
-    private processDocumentWork(docId: string, workType: string) {
-        const services = this.getServiceForDoc(docId);
+    private async processDocumentWork(docId: string, workType: string) {
+        const services = await this.getServiceForDoc(docId);
 
         switch (workType) {
             case "snapshot":

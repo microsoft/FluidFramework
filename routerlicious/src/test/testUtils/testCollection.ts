@@ -11,6 +11,11 @@ export class TestCollection implements ICollection<any> {
         return this.collection;
     }
 
+    public async findAll(): Promise<any[]> {
+        // TODO - need to actually filter here
+        return this.collection;
+    }
+
     public findOne(query: any): Promise<any> {
         return Promise.resolve(this.findOneInternal(query));
     }

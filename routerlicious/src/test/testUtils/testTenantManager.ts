@@ -30,7 +30,7 @@ export class TestTenant implements ITenant {
 export class TestTenantManager implements ITenantManager {
     private tenant = new TestTenant();
 
-    public getTenant(id: string): ITenant {
-        return this.tenant;
+    public getTenant(id: string): Promise<ITenant> {
+        return Promise.resolve(this.tenant);
     }
 }

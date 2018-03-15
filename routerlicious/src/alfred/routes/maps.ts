@@ -35,11 +35,11 @@ export function create(config: Provider, tenantManager: ITenantManager): Router 
     /**
      * Loading of a specific version of shared text.
      */
-    router.get("/:tenantId?/:id/commit", (request, response, next) => {
+    router.get("/:tenantId?/:id/commit", async (request, response, next) => {
         const id = utils.getFullId(request.params.tenantId, request.params.id);
 
         const targetVersionSha = request.query.version;
-        const workerConfig = utils.getConfig(config.get("worker"), tenantManager, request.params.tenantId);
+        const workerConfig = await utils.getConfig(config.get("worker"), tenantManager, request.params.tenantId);
         const versionsP = storage.getVersion(
             tenantManager,
             request.params.tenantid,
@@ -67,10 +67,10 @@ export function create(config: Provider, tenantManager: ITenantManager): Router 
     /**
      * Loading of a specific collaborative map
      */
-    router.get("/:tenantId?/:id", (request, response, next) => {
+    router.get("/:tenantId?/:id", async (request, response, next) => {
         const id = utils.getFullId(request.params.tenantId, request.params.id);
 
-        const workerConfig = utils.getConfig(config.get("worker"), tenantManager, request.params.tenantId);
+        const workerConfig = await utils.getConfig(config.get("worker"), tenantManager, request.params.tenantId);
         const versionP = storage.getLatestVersion(tenantManager, request.params.tenantId, request.params.id);
 
         versionP.then(
