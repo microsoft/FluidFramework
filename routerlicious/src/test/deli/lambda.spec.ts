@@ -55,56 +55,63 @@ describe("Routerlicious", () => {
 
             describe(".handler", () => {
                 it("Should be able to ticket an incoming message", async () => {
+                    const join = messageFactory.createJoin();
                     const message = messageFactory.create();
+                    await lambda.handler(kafkaMessageFactory.sequenceMessage(join, testId));
                     await lambda.handler(kafkaMessageFactory.sequenceMessage(message, testId));
                     await quiesce();
 
                     const sent = testKafka.getRawMessages();
-                    assert.equal(1, sent.length);
-                    const sequencedMessage = JSON.parse(sent[0].value.toString()) as core.ISequencedOperationMessage;
+                    assert.equal(2, sent.length);
+                    const sequencedMessage = JSON.parse(sent[1].value.toString()) as core.ISequencedOperationMessage;
                     assert.equal(sequencedMessage.documentId, testId);
                     assert.equal(sequencedMessage.type, core.SequencedOperationType);
                     assert.equal(sequencedMessage.operation.clientId, testClientId);
                     assert.equal(
                         sequencedMessage.operation.clientSequenceNumber,
                         message.operation.clientSequenceNumber);
-                    assert.equal(sequencedMessage.operation.sequenceNumber, 1);
+                    assert.equal(sequencedMessage.operation.sequenceNumber, 2);
                 });
 
                 it("Should ticket new clients connecting above msn but less than existing clients", async () => {
                     const secondMessageFactory = new MessageFactory(testId, "test2");
 
                     // Have test client create some existing messages
+                    await lambda.handler(kafkaMessageFactory.sequenceMessage(messageFactory.createJoin(), testId));
                     await lambda.handler(kafkaMessageFactory.sequenceMessage(messageFactory.create(10, 2000), testId));
                     await lambda.handler(kafkaMessageFactory.sequenceMessage(messageFactory.create(20, 2100), testId));
                     await quiesce();
-                    assert.equal(testKafka.getLastMessage().operation.minimumSequenceNumber, 10);
+                    assert.equal(testKafka.getLastMessage().operation.minimumSequenceNumber, 0);
 
                     // And then have a new client go under the latest working set msn but above the published msn
                     await lambda.handler(
-                        kafkaMessageFactory.sequenceMessage(secondMessageFactory.create(15, 2200),
-                        testId));
+                        kafkaMessageFactory.sequenceMessage(secondMessageFactory.createJoin(), testId));
+                    await lambda.handler(
+                        kafkaMessageFactory.sequenceMessage(secondMessageFactory.create(15, 2200), testId));
                     await lambda.handler(kafkaMessageFactory.sequenceMessage(messageFactory.create(22, 2400), testId));
                     await quiesce();
-                    assert.equal(testKafka.getLastMessage().operation.minimumSequenceNumber, 10);
+                    assert.equal(testKafka.getLastMessage().operation.minimumSequenceNumber, 0);
                 });
 
                 it("Should timeout idle clients", async () => {
                     const secondMessageFactory = new MessageFactory(testId, "test2");
-                    await lambda.handler(kafkaMessageFactory.sequenceMessage(messageFactory.create(10, 0), testId));
+                    await lambda.handler(kafkaMessageFactory.sequenceMessage(messageFactory.createJoin(0), testId));
+                    await lambda.handler(kafkaMessageFactory.sequenceMessage(messageFactory.create(10, 1), testId));
+                    await lambda.handler(
+                        kafkaMessageFactory.sequenceMessage(secondMessageFactory.createJoin(2), testId));
                     await lambda.handler(
                         kafkaMessageFactory.sequenceMessage(secondMessageFactory.create(20, 10),
                         testId));
                     await quiesce();
-                    assert.equal(testKafka.getLastMessage().operation.minimumSequenceNumber, 10);
+                    assert.equal(testKafka.getLastMessage().operation.minimumSequenceNumber, 0);
 
                     await lambda.handler(
-                        kafkaMessageFactory.sequenceMessage(secondMessageFactory.create(20, ClientSequenceTimeout),
+                        kafkaMessageFactory.sequenceMessage(secondMessageFactory.create(20, 1 + ClientSequenceTimeout),
                         testId));
                     await lambda.handler(kafkaMessageFactory.sequenceMessage(
                             secondMessageFactory.create(
                                 20,
-                                ClientSequenceTimeout + agent.constants.MinSequenceNumberWindow),
+                                ClientSequenceTimeout + 2 * agent.constants.MinSequenceNumberWindow),
                             testId));
                     await quiesce();
                     assert.equal(testKafka.getLastMessage().operation.minimumSequenceNumber, 20);
@@ -117,46 +124,39 @@ describe("Routerlicious", () => {
 
                     // Create some starter messages
                     await lambda.handler(
-                        kafkaMessageFactory.sequenceMessage(messageFactory.createJoin(timeOffset),
-                        testId));
+                        kafkaMessageFactory.sequenceMessage(messageFactory.createJoin(timeOffset), testId));
                     await quiesce();
                     assert.equal(testKafka.getLastMessage().operation.minimumSequenceNumber, 0);
                     timeOffset += 1;
                     await lambda.handler(
-                        kafkaMessageFactory.sequenceMessage(secondMessageFactory.createJoin(timeOffset),
-                        testId));
+                        kafkaMessageFactory.sequenceMessage(secondMessageFactory.createJoin(timeOffset), testId));
                     await quiesce();
                     timeOffset += 1;
                     await lambda.handler(
-                        kafkaMessageFactory.sequenceMessage(messageFactory.create(10, timeOffset),
-                        testId));
+                        kafkaMessageFactory.sequenceMessage(messageFactory.create(10, timeOffset), testId));
                     await quiesce();
                     timeOffset += agent.constants.MinSequenceNumberWindow;
                     await lambda.handler(
-                        kafkaMessageFactory.sequenceMessage(secondMessageFactory.create(15, timeOffset),
-                        testId));
+                        kafkaMessageFactory.sequenceMessage(secondMessageFactory.create(15, timeOffset), testId));
                     await quiesce();
-                    assert.equal(testKafka.getLastMessage().operation.minimumSequenceNumber, 10);
+                    assert.equal(testKafka.getLastMessage().operation.minimumSequenceNumber, 0);
 
                     // Have the first client leave and the second message queue a message to
                     // force the MSN window to move
                     timeOffset += 1;
                     await lambda.handler(
-                        kafkaMessageFactory.sequenceMessage(messageFactory.createLeave(timeOffset),
-                        testId));
+                        kafkaMessageFactory.sequenceMessage(messageFactory.createLeave(timeOffset), testId));
                     await quiesce();
                     timeOffset += agent.constants.MinSequenceNumberWindow;
                     await lambda.handler(
-                        kafkaMessageFactory.sequenceMessage(secondMessageFactory.create(20, timeOffset),
-                        testId));
+                        kafkaMessageFactory.sequenceMessage(secondMessageFactory.create(20, timeOffset), testId));
                     await quiesce();
                     assert.equal(testKafka.getLastMessage().operation.minimumSequenceNumber, 15);
 
                     // And then have the second client leave
                     timeOffset += agent.constants.MinSequenceNumberWindow;
                     await lambda.handler(
-                        kafkaMessageFactory.sequenceMessage(secondMessageFactory.createLeave(timeOffset),
-                        testId));
+                        kafkaMessageFactory.sequenceMessage(secondMessageFactory.createLeave(timeOffset), testId));
                     await quiesce();
                     assert.equal(testKafka.getLastMessage().operation.minimumSequenceNumber, 20);
 
@@ -164,15 +164,13 @@ describe("Routerlicious", () => {
                     const thirdMessageFactory = new MessageFactory(testId, "test3");
                     timeOffset += 1;
                     await lambda.handler(
-                        kafkaMessageFactory.sequenceMessage(thirdMessageFactory.create(30, timeOffset),
-                        testId));
+                        kafkaMessageFactory.sequenceMessage(thirdMessageFactory.createJoin(timeOffset), testId));
                     await quiesce();
                     timeOffset += agent.constants.MinSequenceNumberWindow;
                     await lambda.handler(
-                        kafkaMessageFactory.sequenceMessage(thirdMessageFactory.create(31, timeOffset),
-                        testId));
+                        kafkaMessageFactory.sequenceMessage(thirdMessageFactory.create(31, timeOffset), testId));
                     await quiesce();
-                    assert.equal(testKafka.getLastMessage().operation.minimumSequenceNumber, 30);
+                    assert.equal(testKafka.getLastMessage().operation.minimumSequenceNumber, 20);
                 });
             });
         });

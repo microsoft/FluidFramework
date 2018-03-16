@@ -8,6 +8,7 @@ export interface IClientSequenceNumber {
     canEvict: boolean;
     clientId: string;
     lastUpdate: number;
+    nack: boolean;
     referenceSequenceNumber: number;
 }
 

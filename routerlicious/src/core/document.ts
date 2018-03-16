@@ -44,6 +44,8 @@ export interface IDocument {
         referenceSequenceNumber: number,
 
         lastUpdate: number,
+
+        nack: boolean,
     }];
 
     branchMap: IRangeTrackerSnapshot;
