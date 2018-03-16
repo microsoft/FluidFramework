@@ -55,6 +55,12 @@ defaultRegistry.register(new mergeTree.CollaboritiveStringExtension());
 defaultRegistry.register(new stream.StreamExtension());
 defaultRegistry.register(new cell.CellExtension());
 
+// Register default map value types
+mapExtension.registerDefaultValueType(new mapExtension.DistributedSetValueType());
+mapExtension.registerDefaultValueType(new mapExtension.DistributedArrayValueType());
+mapExtension.registerDefaultValueType(new mapExtension.CounterValueType());
+mapExtension.registerDefaultValueType(new mergeTree.SharedIntervalCollectionValueType());
+
 export interface IAttachedServices {
     deltaConnection: IDeltaConnection;
     objectStorage: IObjectStorageService;
