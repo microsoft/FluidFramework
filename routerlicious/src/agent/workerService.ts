@@ -201,36 +201,37 @@ export class WorkerService implements core.IWorkerService {
         const slashIndex = docId.indexOf("/");
         const tenantName = slashIndex !== -1 ? docId.slice(0, slashIndex) : "";
 
-        const service = await this.serviceFactory.getService(tenantName);
-        return service;
+        return this.serviceFactory.getService(tenantName);
     }
 
     private async processDocumentWork(docId: string, workType: string) {
-        const services = await this.getServiceForDoc(docId);
-
-        switch (workType) {
-            case "snapshot":
-                const snapshotWork = new SnapshotWork(docId, this.config, services);
-                this.startTask(docId, workType, snapshotWork);
-                break;
-            case "intel":
-                const intelWork = new IntelWork(docId, this.config, services);
-                this.startTask(docId, workType, intelWork);
-                break;
-            case "spell":
-                const spellcheckWork = new SpellcheckerWork(docId, this.config, this.dict, services);
-                this.startTask(docId, workType, spellcheckWork);
-                break;
-            case "translation":
-                const translationWork = new TranslationWork(docId, this.config, services);
-                this.startTask(docId, workType, translationWork);
-            case "ping":
-                const pingWork = new PingWork(this.serverUrl);
-                this.startTask(docId, workType, pingWork);
-                break;
-            default:
-                throw new Error("Unknown work type!");
-        }
+        this.getServiceForDoc(docId).then((services) => {
+            switch (workType) {
+                case "snapshot":
+                    const snapshotWork = new SnapshotWork(docId, this.config, services);
+                    this.startTask(docId, workType, snapshotWork);
+                    break;
+                case "intel":
+                    const intelWork = new IntelWork(docId, this.config, services);
+                    this.startTask(docId, workType, intelWork);
+                    break;
+                case "spell":
+                    const spellcheckWork = new SpellcheckerWork(docId, this.config, this.dict, services);
+                    this.startTask(docId, workType, spellcheckWork);
+                    break;
+                case "translation":
+                    const translationWork = new TranslationWork(docId, this.config, services);
+                    this.startTask(docId, workType, translationWork);
+                case "ping":
+                    const pingWork = new PingWork(this.serverUrl);
+                    this.startTask(docId, workType, pingWork);
+                    break;
+                default:
+                    throw new Error("Unknown work type!");
+            }
+        }, (error) => {
+            console.log(`Error getting service for ${docId}: ${error}`);
+        });
     }
 
     private revokeDocumentWork(docId: string, workType: string) {

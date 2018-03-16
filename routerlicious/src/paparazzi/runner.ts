@@ -18,17 +18,21 @@ class DocumentServiceFactory implements agent.IDocumentServiceFactory {
     }
 
     public async getService(tenantId: string): Promise<IDocumentService> {
-        if (!this.serviceCache.has(tenantId)) {
-            const tenant = await this.tenantManager.getTenant(tenantId);
-            const services = socketStorage.createDocumentService(
-                this.serverUrl,
-                tenant.storage.url,
-                tenant.storage.owner,
-                tenant.storage.repository);
-            this.serviceCache.set(tenantId, services);
+        if (this.serviceCache.has(tenantId)) {
+            return Promise.resolve(this.serviceCache.get(tenantId));
+        } else {
+            this.tenantManager.getTenant(tenantId).then((tenant) => {
+                const services = socketStorage.createDocumentService(
+                    this.serverUrl,
+                    tenant.storage.url,
+                    tenant.storage.owner,
+                    tenant.storage.repository);
+                this.serviceCache.set(tenantId, services);
+                return Promise.resolve(services);
+            }, (err) => {
+                return Promise.reject(err);
+            });
         }
-
-        return this.serviceCache.get(tenantId);
     }
 }
 

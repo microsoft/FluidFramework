@@ -13,7 +13,9 @@ export async function getConfig(
     // Make a copy of the config to avoid destructive modifications to the original
     const updatedConfig = _.cloneDeep(config);
 
-    const tenant = await tenantManager.getTenant(tenantId);
+    const tenant = await tenantManager.getTenant(tenantId).catch((err) => {
+        return Promise.reject(err);
+    });
     updatedConfig.owner = tenant.storage.owner;
     updatedConfig.repository = tenant.storage.repository;
 
