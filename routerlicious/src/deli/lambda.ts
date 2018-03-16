@@ -156,7 +156,6 @@ export class DeliLambda implements IPartitionLambda {
                 }
             } else {
                 if (message.operation.type === api.ClientJoin) {
-                    winston.info(`Inserting ${message.operation.contents}`);
                     this.upsertClient(message.operation.contents, this.minimumSequenceNumber, message.timestamp, true);
                 } else if (message.operation.type === api.ClientLeave) {
                     this.removeClient(message.operation.contents);
