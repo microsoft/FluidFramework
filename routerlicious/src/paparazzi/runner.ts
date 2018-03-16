@@ -17,9 +17,9 @@ class DocumentServiceFactory implements agent.IDocumentServiceFactory {
     constructor(private serverUrl, private tenantManager: ITenantManager) {
     }
 
-    public getService(tenantId: string): IDocumentService {
+    public async getService(tenantId: string): Promise<IDocumentService> {
         if (!this.serviceCache.has(tenantId)) {
-            const tenant = this.tenantManager.getTenant(tenantId);
+            const tenant = await this.tenantManager.getTenant(tenantId);
             const services = socketStorage.createDocumentService(
                 this.serverUrl,
                 tenant.storage.url,

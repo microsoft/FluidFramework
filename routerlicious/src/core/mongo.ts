@@ -15,6 +15,8 @@ export interface ICollection<T> {
 
     findOne(query: any): Promise<T>;
 
+    findAll(): Promise<T[]>;
+
     findOrCreate(query: any, value: T): Promise<{ value: T, existing: boolean }>;
 
     update(filter: any, set: any, addToSet: any): Promise<void>;
