@@ -149,7 +149,10 @@ export class DocumentService implements api.IDocumentService {
         });
 
         // ...and then await all three being resolved
-        const [header, connection, pendingDeltas] = await Promise.all([headerP, connectionP, pendingDeltasP]);
+        const [header, connection, pendingDeltas] = await Promise.all([headerP, connectionP, pendingDeltasP])
+            .catch((err) => {
+                return Promise.reject(err);
+            });
 
         debug(`Connected to ${id} - ${performanceNow()}`);
         let deltaConnection: api.IDocumentDeltaConnection;

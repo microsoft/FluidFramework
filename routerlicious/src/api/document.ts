@@ -136,7 +136,9 @@ export class Document extends EventEmitter {
             version,
             connect,
             options[encryptedProperty],
-            options[tknProperty]);
+            options[tknProperty]).catch((err) => {
+                return Promise.reject(err);
+            });
         const document = new Document(documentConnection, registry, service, options);
 
         // Make a reservation for the root object
