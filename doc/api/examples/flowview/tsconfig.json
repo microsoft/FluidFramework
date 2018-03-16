@@ -4,17 +4,18 @@
         "node_modules"
     ],
     "compilerOptions": {
-        "target": "es6",
+        "target": "es5",
+        "lib": ["es2015", "dom"],
+        "module": "commonjs",
+        "moduleResolution": "node",
         "noImplicitAny": false,
         "noUnusedLocals": true,
-        "moduleResolution": "node",
         "outDir": "dist",
+        "rootDir": "./src",
         "sourceMap": true,
         "inlineSources": true
     },
     "include": [
-        "src/prague.umd.d.ts",
-        "src/prague.d.ts",
-        "src/index.ts"
+        "src/**/*"
     ]
 }
