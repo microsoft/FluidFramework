@@ -1,3 +1,4 @@
+import * as queue from "async/queue";
 import * as request from "request";
 import * as url from "url";
 import { core, MergeTree, socketIoClient as io, socketStorage, utils } from "../client-api";
@@ -21,6 +22,17 @@ interface IAgents {
     names: string[];
 };
 
+// Interface for queueing work
+export interface IWorkQueue {
+    docId: string;
+
+    workType: string;
+
+    response: any;
+
+    clientDetail: socketStorage.IWorker;
+};
+
 export interface IDocumentServiceFactory {
     getService(tenantId: string): Promise<core.IDocumentService>;
 }
@@ -33,6 +45,7 @@ export class WorkerService implements core.IWorkerService {
     private documentMap: { [docId: string]: { [work: string]: IWork} } = {};
     private workTypeMap: { [workType: string]: boolean} = {};
     private dict = new MergeTree.Collections.TST<number>();
+    private workQueue: any;
 
     // List of modules added during the lifetime of this object.
     private runtimeModules: { [name: string]: IModule } = {};
@@ -53,6 +66,16 @@ export class WorkerService implements core.IWorkerService {
         if ("spell" in this.workTypeMap) {
             this.loadDict();
         }
+
+        // async queue to process work one by one.
+        this.workQueue = queue( async (work: IWorkQueue, callback) => {
+            this.processDocumentWork(work.docId, work.workType).then(() => {
+                work.response(null, work.clientDetail);
+                callback();
+            }, (err) => {
+                callback();
+            });
+        }, 1);
 
         // Will need to take in the list of endpoints
     }
@@ -101,10 +124,15 @@ export class WorkerService implements core.IWorkerService {
                         }
                     });
                     // Start working on an object.
-                    this.socket.on("TaskObject", (cId: string, id: string, workType: string, response) => {
-                        console.log(`Received ${workType} work for doc ${id}`);
-                        this.processDocumentWork(id, workType);
-                        response(null, clientDetail);
+                    this.socket.on("TaskObject", async (cId: string, id: string, workType: string, response) => {
+                        this.workQueue.push(
+                            {
+                                docId: id,
+                                workType,
+                                response,
+                                clientDetail,
+                            },
+                        );
                     });
                     // Stop working on an object.
                     this.socket.on("RevokeObject", (cId: string, id: string, workType: string, response) => {
@@ -325,7 +353,9 @@ export class WorkerService implements core.IWorkerService {
             console.log(`Error loading uploaded modules: ${err}`);
             // In case alfred is not ready, try to reconnect a few times.
             if (tryCounter <= 5) {
-                setTimeout(this.loadUploadedModules(agentServer, tryCounter), 10000);
+                setTimeout(() => {
+                    this.loadUploadedModules(agentServer, tryCounter);
+                }, 10000);
             }
         });
     }
