@@ -72,9 +72,9 @@ export class TenantManager implements ITenantManager {
         return tenantId ? this.resolveTenant(tenantId) : Promise.resolve(this.defaultTenant);
     }
 
-    // TODO: This is a complete hack to return any tenant stored in the DB.
-    // If a tenant is found in the DB, we configure a tenant based on its storage endpoint.
-    // Ideally we should just store the storage config in DB and also reject if the tenant is not found.
+    // TODO: This is a complete hack to make the storage endpoint demo work.
+    // If a tenant is found in the DB, we configure a new tenant based on its storage endpoint and cash it.
+    // Ideally we should just store the storage config in DB and look up for every tenant.
     private resolveTenant(tenantId: string): Promise<ITenant> {
         return new Promise<ITenant>((resolve, reject) => {
             if (this.tenants.has(tenantId)) {
@@ -84,6 +84,7 @@ export class TenantManager implements ITenantManager {
                     for (const dbTenant of dbTenants) {
                         if (dbTenant.name === tenantId) {
                             for (const conf of this.config) {
+                                // Tenant found in DB should have a storage endpoint saved in config.
                                 if (dbTenant.storage === conf.name) {
                                     const newConfig = cloneDeep(conf);
                                     newConfig.name = tenantId;
@@ -95,6 +96,7 @@ export class TenantManager implements ITenantManager {
                             }
                         }
                     }
+                    reject("Invaid tenant name");
                 });
             }
         });

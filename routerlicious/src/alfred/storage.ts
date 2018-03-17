@@ -58,7 +58,9 @@ export async function getVersions(
     count: number): Promise<ICommitDetails[]> {
 
     const fullId = getFullId(tenantId, documentId);
-    const tenant = await tenantManager.getTenant(tenantId);
+    const tenant = await tenantManager.getTenant(tenantId).catch((err) => {
+        return Promise.reject(err);
+    });
     const gitManager = tenant.gitManager;
     return await gitManager.getCommits(fullId, count);
 }
@@ -69,7 +71,9 @@ export async function getVersion(
     documentId: string,
     sha: string): Promise<ICommit> {
 
-    const tenant = await tenantManager.getTenant(tenantId);
+    const tenant = await tenantManager.getTenant(tenantId).catch((err) => {
+        return Promise.reject(err);
+    });
     const gitManager = tenant.gitManager;
     return await gitManager.getCommit(sha);
 }
@@ -103,8 +107,10 @@ export async function createFork(
     const fullId = getFullId(tenantId, id);
     const fullName = getFullId(tenantId, name);
 
+    const tenant = await tenantManager.getTenant(tenantId).catch((err) => {
+        return Promise.reject(err);
+    });
     // Load in the latest snapshot
-    const tenant = await tenantManager.getTenant(tenantId);
     const gitManager = tenant.gitManager;
     const head = await gitManager.getRef(id);
     winston.info(JSON.stringify(head));
