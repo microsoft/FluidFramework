@@ -120,7 +120,6 @@ export class DeliLambda implements IPartitionLambda {
                 // Look up the client
                 const node = this.clientNodeMap.get(message.clientId);
                 if (!node || node.value.nack) {
-                    winston.info(`Node is marked nack ${message.clientId}`);
                     const nackMessage: core.INackMessage = {
                         documentId: objectMessage.documentId,
                         operation: message.operation,

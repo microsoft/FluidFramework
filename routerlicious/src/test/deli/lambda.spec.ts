@@ -32,6 +32,20 @@ describe("Routerlicious", () => {
                 await testContext.waitForOffset(kafkaMessageFactory.getHeadOffset(testId));
             }
 
+            async function forceNack(start: number, nackClientFactory: MessageFactory): Promise<number> {
+                // Create the first client and send a message
+                await lambda.handler(kafkaMessageFactory.sequenceMessage(messageFactory.createJoin(start), testId));
+                await lambda.handler(kafkaMessageFactory.sequenceMessage(messageFactory.create(10, start), testId));
+
+                // Create a second client and have it join
+                start += agent.constants.MinSequenceNumberWindow;
+                await lambda.handler(kafkaMessageFactory.sequenceMessage(nackClientFactory.createJoin(start), testId));
+                await lambda.handler(kafkaMessageFactory.sequenceMessage(nackClientFactory.create(5, start), testId));
+                await quiesce();
+
+                return start;
+            }
+
             beforeEach(async () => {
                 const dbFactory = new TestDbFactory(_.cloneDeep({ documents: testData }));
                 const mongoManager = new utils.MongoManager(dbFactory);
@@ -54,6 +68,34 @@ describe("Routerlicious", () => {
             });
 
             describe(".handler", () => {
+                it("Should nack a client that has not sent a join", async () => {
+                    await lambda.handler(kafkaMessageFactory.sequenceMessage(messageFactory.create(10, 2000), testId));
+                    await quiesce();
+
+                    const lastMessage = testKafka.getLastMessage();
+                    assert.equal(lastMessage.type, core.NackOperationType);
+                });
+
+                it("Should nack a client that sends a message under the min sequence number", async () => {
+                    const nackClientFactory = new MessageFactory(testId, "test2");
+                    await forceNack(0, nackClientFactory);
+                    const lastMessage = testKafka.getLastMessage();
+                    assert.equal(lastMessage.type, core.NackOperationType);
+                });
+
+                it("Should nack all future messages from a nacked client", async () => {
+                    const nackClientFactory = new MessageFactory(testId, "test2");
+                    const time = await forceNack(0, nackClientFactory);
+
+                    // Then send a new message - above the MSN - that should also be nacked
+                    await lambda.handler(kafkaMessageFactory.sequenceMessage(
+                        nackClientFactory.create(15, time), testId));
+                    await quiesce();
+
+                    const lastMessage = testKafka.getLastMessage();
+                    assert.equal(lastMessage.type, core.NackOperationType);
+                });
+
                 it("Should be able to ticket an incoming message", async () => {
                     const join = messageFactory.createJoin();
                     const message = messageFactory.create();
