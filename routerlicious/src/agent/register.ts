@@ -2,8 +2,8 @@ import { api, core } from "../client-api";
 import { IDocumentServiceFactory, WorkerService } from "./workerService";
 
 class DefaultDocumentServiceFactory implements IDocumentServiceFactory {
-    public getService(tenantId: string): core.IDocumentService {
-        return api.getDefaultDocumentService();
+    public getService(tenantId: string): Promise<core.IDocumentService> {
+        return Promise.resolve(api.getDefaultDocumentService());
     }
 }
 

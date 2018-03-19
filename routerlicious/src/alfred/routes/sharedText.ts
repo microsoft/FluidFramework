@@ -47,11 +47,11 @@ export function create(
     /**
      * Loading of a specific version of shared text.
      */
-    router.get("/:tenantId?/:id/commit", (request, response, next) => {
+    router.get("/:tenantId?/:id/commit", async (request, response, next) => {
         const id = getFullId(request.params.tenantId, request.params.id);
         const disableCache = "disableCache" in request.query;
 
-        const workerConfig = getConfig(config.get("worker"), tenantManager, request.params.tenantId);
+        const workerConfigP = getConfig(config.get("worker"), tenantManager, request.params.tenantId);
         const targetVersionSha = request.query.version;
         const versionP = storage.getVersion(
             tenantManager,
@@ -59,29 +59,27 @@ export function create(
             request.params.id,
             targetVersionSha);
 
-        versionP.then(
-            (version) => {
-                const options = {
-                    spellchecker: "disabled",
-                };
-                response.render(
-                    "sharedText",
-                    {
-                        config: workerConfig,
-                        disableCache,
-                        id,
-                        loadPartial: true,
-                        options: JSON.stringify(options),
-                        pageInk: request.query.pageInk === "true",
-                        partials: defaultPartials,
-                        template: undefined,
-                        title: request.params.id,
-                        version: JSON.stringify(version),
-                    });
-            },
-            (error) => {
-                response.status(400).json(error);
-            });
+        Promise.all([workerConfigP, versionP]).then((values) => {
+            const options = {
+                spellchecker: "disabled",
+            };
+            response.render(
+                "sharedText",
+                {
+                    config: values[0],
+                    disableCache,
+                    id,
+                    loadPartial: true,
+                    options: JSON.stringify(options),
+                    pageInk: request.query.pageInk === "true",
+                    partials: defaultPartials,
+                    template: undefined,
+                    title: request.params.id,
+                    version: JSON.stringify(values[1]),
+                });
+        }, (error) => {
+            response.status(400).json(error);
+        });
     });
 
     router.post("/:tenantId?/:id/fork", (request, response, next) => {
@@ -104,50 +102,48 @@ export function create(
     /**
      * Loading of a specific shared text.
      */
-    router.get("/:tenantId?/:id", (request, response, next) => {
+    router.get("/:tenantId?/:id", async (request, response, next) => {
         const id = getFullId(request.params.tenantId, request.params.id);
 
         const disableCache = "disableCache" in request.query;
         const direct = "direct" in request.query;
 
-        const workerConfig = getConfig(
+        const workerConfigP = getConfig(
             config.get("worker"),
             tenantManager,
             request.params.tenantId,
             direct);
         const versionP = storage.getLatestVersion(tenantManager, request.params.tenantId, request.params.id);
-        versionP.then(
-            (version) => {
-                const parsedTemplate = path.parse(request.query.template ? request.query.template : defaultTemplate);
-                const template =
-                    parsedTemplate.base !== "empty" ? `/public/literature/${parsedTemplate.base}` : undefined;
+        Promise.all([workerConfigP, versionP]).then((values) => {
+            const parsedTemplate = path.parse(request.query.template ? request.query.template : defaultTemplate);
+            const template =
+                parsedTemplate.base !== "empty" ? `/public/literature/${parsedTemplate.base}` : undefined;
 
-                const parsedSpellchecking =
-                    path.parse(request.query.spellchecking ? request.query.spellchecking : defaultSpellChecking);
-                const spellchecker = parsedSpellchecking.base === "disabled" ? `disabled` : defaultSpellChecking;
-                const options = {
-                    spellchecker,
-                    translationLanguage: "language" in request.query ? request.query.language : undefined,
-                };
+            const parsedSpellchecking =
+                path.parse(request.query.spellchecking ? request.query.spellchecking : defaultSpellChecking);
+            const spellchecker = parsedSpellchecking.base === "disabled" ? `disabled` : defaultSpellChecking;
+            const options = {
+                spellchecker,
+                translationLanguage: "language" in request.query ? request.query.language : undefined,
+            };
 
-                response.render(
-                    "sharedText",
-                    {
-                        config: workerConfig,
-                        disableCache,
-                        id,
-                        loadPartial: false,
-                        options: JSON.stringify(options),
-                        pageInk: request.query.pageInk === "true",
-                        partials: defaultPartials,
-                        template,
-                        title: request.params.id,
-                        version: JSON.stringify(version),
-                    });
-            },
-            (error) => {
+            response.render(
+                "sharedText",
+                {
+                    config: values[0],
+                    disableCache,
+                    id,
+                    loadPartial: false,
+                    options: JSON.stringify(options),
+                    pageInk: request.query.pageInk === "true",
+                    partials: defaultPartials,
+                    template,
+                    title: request.params.id,
+                    version: JSON.stringify(values[1]),
+                });
+            }, (error) => {
                 response.status(400).json(error);
-            });
+        });
     });
 
     return router;

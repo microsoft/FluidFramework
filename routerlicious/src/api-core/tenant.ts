@@ -29,5 +29,5 @@ export interface ITenant {
 }
 
 export interface ITenantManager {
-    getTenant(tenantid: string): ITenant;
+    getTenant(tenantid: string): Promise<ITenant>;
 }

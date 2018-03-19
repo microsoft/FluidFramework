@@ -89,7 +89,78 @@ We make use of continuous integration and deployment via VSTS at https://offnet.
 
 ## Architecture
 
+Below is the original Routerlicious architecture diagram. The current system has slight changes from the diagram but
+largely remains unchanged. Detailed descriptions of the components are contained below as well as callouts
+to areas that have changed from the original picture. We will update the README with a more current diagram soon.
+
 ![Routerlicious architecture diagram](../doc/img/routerlicious-architecture.jpg)
+
+### Microservices
+
+Routerlicious as a whole is a collection of microservices. These microservices are designed to handle a single task and
+have clear input and output characteristics. Many can be run as serverless lambdas and in fact we have our own
+[lambda framework](./src/kafka-service). We chose this path to have greater control over the throughput and latency
+characteristics of our message processing. But could be also be run with Azure Functions, AWS Lambdas, Fission, etc...
+
+#### [Alfred](./src/alfred)
+
+Alfred is the entry point to the system. Clients connect to Alfred to join the operation stream. Joining the stream
+allows them to receive push notifications for new operations, retrieve old operations, as well as create new ones. We
+make use of Redis for push notifications. New operations are placed inside of Apache Kafka for processing.
+
+#### [Deli](./src/deli)
+
+Deli retrieves unsequenced messages from Kafka and then attaches a new sequence number to them. Sequence numbers
+are per-document monotonically increasing numbers. Sequenced messages are placed back into Apache Kafka for processing.
+
+#### [Scriptorium](./src/scriptorium)
+
+Scriptorium retrieves sequenced messages from Kafka. It then broadcasts the new message and writes the message
+to a database for storage. We currently make use of Redis for broadcasting and MongoDB for storage.
+
+#### [Paparazzi](./src/paparazzi)
+
+The logical storage model for documents is an ordered sequence of operations. Rather than requiring clients to replay
+all operations when loading a document we instead periodically create consolidated logs of the operations. These
+consolidated logs, or snapshots, are designed for quick and efficient loading of the document at a particular
+sequence number.
+
+Paparazzi was initially charged with just creating snapshots of documents. But it has since evolved to run
+intelligent agents. Paparazzi agents are designed to be isomorphic - that is they can be run on both the server
+and the client. This enables a connected client join in with a pool of server Paparazzi instances to perform
+snapshotting and intelligence on a document.
+
+Paparazzi instances connect to TMZ to receive instructions on what operations to perform on the document.
+
+#### [TMZ](./src/tmz)
+
+TMZ is in charge of managing a pool of Paparazzi instances. It listens to the same stream of Kafka messages as
+Scriptorium but uses this to understand which documents are active. It then schedules and manages work to be run
+across the pool of Paparazzi instances (snapshot, spell check, entity extraction, etc...).
+
+#### [Historian](../historian)
+
+Historian is in charge of storing document snapshots. It itself is a cached proxy to an underlying
+content-addressable file system represented via the [Git REST API](https://developer.github.com/v3/git/).
+Storage providers that implement this interface are then able to plug into the system as a whole. Currently we have
+support for [GitHub](https://developer.github.com/v3/git/), [Git](../gitrest), and
+[Cobalt](https://offnet.visualstudio.com/officenet/_git/cobalt-netcore).
+
+More details on content-adressable file systems and Git can be found at 
+* https://git-scm.com/book/en/v2/Git-Internals-Plumbing-and-Porcelain
+* http://stefan.saasen.me/articles/git-clone-in-haskell-from-the-bottom-up/
+
+### Picture Errata
+
+* Deli only talks to Kafka
+* Scriptorium should have a line to MongoDB
+* Paparazzi talks to TMZ directly and no longer proxies through a queue
+* Clients can also be Paparazzi and connect directly to TMZ
+* Only a single receive line should be drawn from Redis to Aflred
+* Historian is missing - as well as the underlying storage provider it proxies to.
+  * Clients (including Paparazzi) talk directly to Historian.
+  * Historian makes REST calls to a configured storage provider
+  * Historian caches data via Redis.
 
 ## Distributed data structures
 
