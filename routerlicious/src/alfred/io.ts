@@ -122,7 +122,7 @@ export function register(
                     });
             }, (err) => {
                 winston.info(`Unautherized access to document ${message.id}. ${JSON.stringify(err)}`);
-                return response(`Unautherized access to document ${message.id}. ${JSON.stringify(err)}`, null);
+                return response(err, null);
             });
         });
 
