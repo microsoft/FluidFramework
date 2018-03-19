@@ -4,6 +4,7 @@
     {{/styles}}
 
     {{$content}}
+        <div id="textViews"></div>
     {{/content}}
 
     {{$scripts}}
