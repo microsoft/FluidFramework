@@ -1,6 +1,7 @@
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { ICommit } from "gitresources";
+import { ValueType } from "../map/definitions";
 import { debug } from "./debug";
 import { IDistributedObjectServices, IDocument, IObjectStorageService } from "./document";
 import { ILatencyMessage, IObjectMessage, ISequencedObjectMessage, OperationType } from "./protocol";
@@ -35,6 +36,12 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
         super();
     }
 
+    public toJSON() {
+        return {
+            type: ValueType[ValueType.Collaborative],
+            value: this.id,
+        };
+    }
     /**
      * A collaborative object, after construction, can either be loaded in the case that it is already part of
      * a collaborative document. Or later attached if it is being newly added.

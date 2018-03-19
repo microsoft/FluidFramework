@@ -99,7 +99,7 @@ export class Interval implements Collections.IInterval {
 }
 
 export interface IIntervalCollection {
-    findOverlappingIntervals(interval: Interval): Interval[];
+    findOverlappingIntervals(startPosition: number, endPosition: number): Interval[];
     addInterval(start: number, end: number, intervalType: ops.IntervalType,
         props?: Properties.PropertySet): Interval;
 }
@@ -128,7 +128,7 @@ export function createInterval(label: string, sharedString: SharedString.SharedS
     }
 }
 
-export class LocalIntervalCollection {
+export class LocalIntervalCollection implements IIntervalCollection {
     intervalTree = new Collections.IntervalTree<Interval>();
 
     constructor(public sharedString: SharedString.SharedString, public label: string) {

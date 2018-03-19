@@ -2008,29 +2008,65 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
                 }
                 client.mergeTree.mapRange({ leaf: renderSegmentIntoLine }, SharedString.UniversalSequenceNumber,
                     client.getClientId(), lineContext, lineStart, lineEnd);
-                if (layoutContext.flowView.bookmarks && (lineEnd !== undefined)) {
-                    let bookmarks = layoutContext.flowView.bookmarks.findOverlappingIntervals(lineStart, lineEnd);
+                if (layoutContext.flowView.bookmarks) {
+                    let computedEnd = lineEnd;
+                    if (!computedEnd) {
+                        computedEnd = client.mergeTree.getOffset(endPGMarker, client.getCurrentSeq(),
+                            client.getClientId());
+                    }
+                    let bookmarks = layoutContext.flowView.bookmarks.findOverlappingIntervals(lineStart, computedEnd);
                     if (bookmarks) {
-                        let lineText = client.getText(lineStart, lineEnd);
+                        let lineText = client.getText(lineStart, computedEnd);
                         for (let b of bookmarks) {
                             let start = b.start.toPosition(client.mergeTree, client.getCurrentSeq(),
                                 client.getClientId());
                             let end = b.end.toPosition(client.mergeTree, client.getCurrentSeq(),
                                 client.getClientId());
-                            let startX = getTextWidth(lineText.substring(0, start - lineStart), lineFontstr);
-                            let endX = getTextWidth(lineText.substring(0, end - lineStart), lineFontstr);
+                            let startX: number;
+                            if (start >= lineStart) {
+                                startX = getTextWidth(lineText.substring(0, start - lineStart), lineFontstr);
+                            } else {
+                                startX = 0;
+                            }
+                            let endX: number;
+                            if (end <= computedEnd) {
+                                endX = getTextWidth(lineText.substring(0, end - lineStart), lineFontstr);
+                            } else {
+                                endX = getTextWidth(lineText, lineFontstr);
+                            }
                             let bookmarkDiv = document.createElement("div");
-                            let bookmarkRect = new ui.Rectangle(startX, 0, endX - startX, lineDivHeight);
+                            let bookendDiv1 = document.createElement("div");
+                            let bookendDiv2 = document.createElement("div");
+                            let tenthHeight = Math.max(1, Math.floor(lineDivHeight / 10));
+                            let halfHeight = Math.floor(lineDivHeight >> 1);
+                            let bookmarkRect = new ui.Rectangle(startX, halfHeight - tenthHeight,
+                                endX - startX, 2 * tenthHeight);
                             bookmarkRect.conformElement(bookmarkDiv);
                             contentDiv.appendChild(bookmarkDiv);
+                            new ui.Rectangle(startX, 0, 3, lineDivHeight).conformElement(bookendDiv1);
+                            if (start >= lineStart) {
+                                contentDiv.appendChild(bookendDiv1);
+                            }
+                            new ui.Rectangle(endX - 3, 0, 3, lineDivHeight).conformElement(bookendDiv2);
+                            if (end <= computedEnd) {
+                                contentDiv.appendChild(bookendDiv2);
+                            }
                             bookmarkDiv.style.backgroundColor = "blue";
+                            bookendDiv1.style.backgroundColor = "blue";
+                            bookendDiv2.style.backgroundColor = "blue";
                             if (b.properties && b.properties["clid"]) {
                                 let clientId = client.getOrAddShortClientId(b.properties["clid"]);
-                                let bgColor = presenceColors[clientId%presenceColors.length];
+                                let bgColor = presenceColors[clientId % presenceColors.length];
                                 bookmarkDiv.style.backgroundColor = bgColor;
+                                bookendDiv1.style.backgroundColor = bgColor;
+                                bookendDiv2.style.backgroundColor = bgColor;
                             }
                             bookmarkDiv.style.opacity = "0.5";
                             bookmarkDiv.style.zIndex = "3";
+                            bookendDiv1.style.opacity = "0.5";
+                            bookendDiv1.style.zIndex = "3";
+                            bookendDiv2.style.opacity = "0.5";
+                            bookendDiv2.style.zIndex = "3";
                             /*
                             console.log(`line [${lineStart},${lineEnd}) matched interval [${start},${end})`);
                             if ((lineStart>end)||(lineEnd<=start)) {
@@ -2646,6 +2682,7 @@ export class FlowView extends ui.Component {
     public cursor: Cursor;
     public presenceMap: types.IMap;
     public bookmarks: SharedIntervalCollection;
+    public comments: SharedIntervalCollection;
     public presenceMapView: types.IMapView;
     public presenceVector: ILocalPresenceInfo[] = [];
     public docRoot: types.IMapView;
@@ -2702,7 +2739,7 @@ export class FlowView extends ui.Component {
         let len = this.sharedString.client.getLength();
         for (let i = 0; i < k; i++) {
             let pos1 = Math.floor(Math.random() * (len - 1));
-            let intervalLen = Math.floor(Math.random() * Math.min(len - pos1, 20));
+            let intervalLen = Math.max(1, Math.floor(Math.random() * Math.min(len - pos1, 150)));
             let props = { clid: this.sharedString.client.longClientId };
             this.bookmarks.add(pos1, pos1 + intervalLen, SharedString.IntervalType.Simple,
                 props);
@@ -3795,6 +3832,9 @@ export class FlowView extends ui.Component {
 
     public loadFinished(clockStart = 0) {
         this.bookmarks = this.sharedString.getSharedIntervalCollection("bookmarks");
+        this.comments = this.sharedString.getSharedIntervalCollection("comments");
+        this.comments.add(0, 4, SharedString.IntervalType.Simple,
+            { story: this.sharedString });
         this.render(0, true);
         if (clockStart > 0) {
             // tslint:disable-next-line:max-line-length
