@@ -103,6 +103,11 @@ function displayUserId(parentElement: JQuery, userId: string) {
     parentElement.append(idElement);
 }
 
+function displayError(parentElement: JQuery, error: string) {
+    const idElement = $(`<h2>${error}</h2>`);
+    parentElement.append(idElement);
+}
+
 /**
  * Randomly changes the values in the cell
  */
@@ -116,7 +121,6 @@ function randomizeCell(cell: types.ICell, element1: JQuery, element2: JQuery) {
     }, 3000);
 }
 
-// TODO (auth): No worker service registration for now. We need to change routerlicious API to enable this.
 export async function load(id: string, repository: string, owner: string, endPoints: any, token?: string,
                            workerConfig?: any) {
     prague.socketStorage.registerAsDefault(endPoints.delta, endPoints.storage, owner, repository);
@@ -143,7 +147,7 @@ export async function load(id: string, repository: string, owner: string, endPoi
             // Display the initial value and then listen for updates
             displayCell($("#cellViews"), cell, doc);
         }, (err) => {
-            // TODO (auth): Display an error page here.
+            displayError($("#cellViews"), err.body);
             console.log(err);
         });
     });

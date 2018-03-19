@@ -10,8 +10,8 @@
         },
         "port": 3000,
         "tenantInfo": {
-            "id": "git",
-            "secretKey": "secret_key",
+            "id": "prague",
+            "secretKey": "3fOUxQfNGYy1uB494iV2D71NgZ9wurHi",
             "symmetricKey": "symmetric_key",
             "repository": "prague",
             "owner": "prague",

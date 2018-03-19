@@ -105,6 +105,11 @@ function displayUserId(parentElement: JQuery, userId: string) {
     parentElement.append(idElement);
 }
 
+function displayError(parentElement: JQuery, error: string) {
+    const idElement = $(`<h2>${error}</h2>`);
+    parentElement.append(idElement);
+}
+
 /**
  * Randomly changes the values in the map
  */
@@ -144,7 +149,7 @@ export async function load(id: string, repository: string,  owner: string, endPo
             // Display the initial values and then listen for updates
             displayMap($("#mapViews"), null, root, null, doc);
         }, (err) => {
-            // TODO (auth): Display an error page here.
+            displayError($("#mapViews"), err.body);
             console.log(err);
         });
     });
