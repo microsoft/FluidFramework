@@ -30,7 +30,7 @@ export class Interval implements Collections.IInterval {
     public serialize(client: MergeTree.Client) {
         let startPosition = this.start.toPosition(client.mergeTree,
             client.getCurrentSeq(), client.getClientId());
-        let endPosition = this.start.toPosition(client.mergeTree,
+        let endPosition = this.end.toPosition(client.mergeTree,
             client.getCurrentSeq(), client.getClientId());
         let serializedInterval = <ISerializedInterval>{
             endPosition,
