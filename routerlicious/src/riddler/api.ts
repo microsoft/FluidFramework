@@ -26,16 +26,16 @@ async function verifyToken(token: string, hashKey: string, mongoManager: utils.M
                 if (!tenantKeyMap.has(decoded.tenantid)) {
                     winston.info(`Invalid tenant name`);
                     reject(`Invalid tenant name`);
-                }
-                if (tenantKeyMap.get(decoded.tenantid) !== decoded.secret) {
+                } else if (tenantKeyMap.get(decoded.tenantid) !== decoded.secret) {
                     winston.info(`Wrong secret key`);
                     reject(`Wrong secret key`);
+                } else {
+                    resolve({
+                        permission: decoded.permission,
+                        tenantid: decoded.tenantid,
+                        user: decoded.user,
+                    });
                 }
-                resolve({
-                    permission: decoded.permission,
-                    tenantid: decoded.tenantid,
-                    user: decoded.user,
-                });
             }, (err) => {
                 reject(err);
             });
