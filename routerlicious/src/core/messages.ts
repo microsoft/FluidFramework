@@ -71,20 +71,29 @@ export interface IRawOperationMessage extends IObjectMessage {
     operation: api.IDocumentMessage;
 }
 
+// Need to change this name - it isn't necessarily ticketed
 export interface ITicketedMessage extends IMessage {
     // The object the message is intended for
     documentId: string;
+}
+
+export interface INack {
+    // The operation that was just nacked
+    operation: api.IDocumentMessage;
+
+    // The sequence number the client needs to catch up to
+    sequenceNumber: number;
 }
 
 /**
  * Message sent when a raw opeartion is nacked
  */
 export interface INackMessage extends ITicketedMessage {
-    // The operation that was just nacked
-    operation: api.IDocumentMessage;
+    // The client that is being NACKed
+    clientId: string;
 
-    // The sequence number the client needs to catch up to
-    sequenceNumber: number;
+    // The details of the nack
+    operation: INack;
 }
 
 /**

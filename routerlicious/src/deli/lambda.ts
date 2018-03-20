@@ -121,9 +121,12 @@ export class DeliLambda implements IPartitionLambda {
                 const node = this.clientNodeMap.get(message.clientId);
                 if (!node || node.value.nack) {
                     const nackMessage: core.INackMessage = {
+                        clientId: objectMessage.clientId,
                         documentId: objectMessage.documentId,
-                        operation: message.operation,
-                        sequenceNumber: this.minimumSequenceNumber,
+                        operation: {
+                            operation: message.operation,
+                            sequenceNumber: this.minimumSequenceNumber,
+                        },
                         type: core.NackOperationType,
                     };
 
@@ -143,9 +146,12 @@ export class DeliLambda implements IPartitionLambda {
 
                     // Send the nack message
                     const nackMessage: core.INackMessage = {
+                        clientId: objectMessage.clientId,
                         documentId: objectMessage.documentId,
-                        operation: message.operation,
-                        sequenceNumber: this.minimumSequenceNumber,
+                        operation: {
+                            operation: message.operation,
+                            sequenceNumber: this.minimumSequenceNumber,
+                        },
                         type: core.NackOperationType,
                     };
 
