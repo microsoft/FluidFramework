@@ -1030,6 +1030,45 @@ function getContentPct(pgMarker: IParagraphMarker) {
     }
 }
 
+function buildIntervalTieStyle(b: SharedString.Interval, startX: number, endX: number,
+    lineDivHeight: number, leftInBounds: boolean, rightInBounds: boolean,
+    contentDiv: HTMLDivElement, client: SharedString.Client) {
+    let bookmarkDiv = document.createElement("div");
+    let bookmarkRect: ui.Rectangle;
+    let bookendDiv1 = document.createElement("div");
+    let bookendDiv2 = document.createElement("div");
+    let tenthHeight = Math.max(1, Math.floor(lineDivHeight / 10));
+    let halfHeight = Math.floor(lineDivHeight >> 1);
+    bookmarkRect = new ui.Rectangle(startX, halfHeight - tenthHeight,
+        endX - startX, 2 * tenthHeight);
+    bookmarkRect.conformElement(bookmarkDiv);
+    contentDiv.appendChild(bookmarkDiv);
+    new ui.Rectangle(startX, 0, 3, lineDivHeight).conformElement(bookendDiv1);
+    if (leftInBounds) {
+        contentDiv.appendChild(bookendDiv1);
+    }
+    new ui.Rectangle(endX - 3, 0, 3, lineDivHeight).conformElement(bookendDiv2);
+    if (rightInBounds) {
+        contentDiv.appendChild(bookendDiv2);
+    }
+    bookmarkDiv.style.backgroundColor = "blue";
+    bookendDiv1.style.backgroundColor = "blue";
+    bookendDiv2.style.backgroundColor = "blue";
+    if (b.properties && b.properties["clid"]) {
+        let clientId = client.getOrAddShortClientId(b.properties["clid"]);
+        let bgColor = presenceColors[clientId % presenceColors.length];
+        bookmarkDiv.style.backgroundColor = bgColor;
+        bookendDiv1.style.backgroundColor = bgColor;
+        bookendDiv2.style.backgroundColor = bgColor;
+    }
+    bookmarkDiv.style.opacity = "0.5";
+    bookmarkDiv.style.zIndex = "3";
+    bookendDiv1.style.opacity = "0.5";
+    bookendDiv1.style.zIndex = "3";
+    bookendDiv2.style.opacity = "0.5";
+    bookendDiv2.style.zIndex = "3";
+}
+
 function makeContentDiv(r: ui.Rectangle, lineFontstr) {
     let contentDiv = document.createElement("div");
     contentDiv.style.font = lineFontstr;
@@ -2035,39 +2074,8 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
                             } else {
                                 endX = getTextWidth(lineText, lineFontstr);
                             }
-                            let bookmarkDiv = document.createElement("div");
-                            let bookendDiv1 = document.createElement("div");
-                            let bookendDiv2 = document.createElement("div");
-                            let tenthHeight = Math.max(1, Math.floor(lineDivHeight / 10));
-                            let halfHeight = Math.floor(lineDivHeight >> 1);
-                            let bookmarkRect = new ui.Rectangle(startX, halfHeight - tenthHeight,
-                                endX - startX, 2 * tenthHeight);
-                            bookmarkRect.conformElement(bookmarkDiv);
-                            contentDiv.appendChild(bookmarkDiv);
-                            new ui.Rectangle(startX, 0, 3, lineDivHeight).conformElement(bookendDiv1);
-                            if (start >= lineStart) {
-                                contentDiv.appendChild(bookendDiv1);
-                            }
-                            new ui.Rectangle(endX - 3, 0, 3, lineDivHeight).conformElement(bookendDiv2);
-                            if (end <= computedEnd) {
-                                contentDiv.appendChild(bookendDiv2);
-                            }
-                            bookmarkDiv.style.backgroundColor = "blue";
-                            bookendDiv1.style.backgroundColor = "blue";
-                            bookendDiv2.style.backgroundColor = "blue";
-                            if (b.properties && b.properties["clid"] && b.properties["user"]) {
-                                let clientId = client.getOrAddShortClientId(b.properties["clid"], b.properties["user"]);
-                                let bgColor = presenceColors[clientId % presenceColors.length];
-                                bookmarkDiv.style.backgroundColor = bgColor;
-                                bookendDiv1.style.backgroundColor = bgColor;
-                                bookendDiv2.style.backgroundColor = bgColor;
-                            }
-                            bookmarkDiv.style.opacity = "0.5";
-                            bookmarkDiv.style.zIndex = "3";
-                            bookendDiv1.style.opacity = "0.5";
-                            bookendDiv1.style.zIndex = "3";
-                            bookendDiv2.style.opacity = "0.5";
-                            bookendDiv2.style.zIndex = "3";
+                            buildIntervalTieStyle(b, startX, endX, lineDivHeight,
+                                start >= lineStart, end <= computedEnd, contentDiv, client);
                             /*
                             console.log(`line [${lineStart},${lineEnd}) matched interval [${start},${end})`);
                             if ((lineStart>end)||(lineEnd<=start)) {
@@ -2745,6 +2753,7 @@ export class FlowView extends ui.Component {
             this.bookmarks.add(pos1, pos1 + intervalLen, SharedString.IntervalType.Simple,
                 props);
         }
+        this.localQueueRender(-1);
     }
 
     public xUpdateHistoryBubble(x: number) {
@@ -3845,6 +3854,10 @@ export class FlowView extends ui.Component {
         }
         const presenceMap = this.docRoot.get("presence") as types.IMap;
         this.addPresenceMap(presenceMap);
+        let intervalMap = this.sharedString.intervalCollections.getMap();
+        intervalMap.on("valueChanged", (delta: types.IValueChanged) => {
+            this.queueRender(undefined, true);
+        });
         // this.testWordInfo();
     }
 
@@ -3887,7 +3900,9 @@ export class FlowView extends ui.Component {
     }
 
     public localQueueRender(updatePos: number) {
-        this.updatePGInfo(updatePos);
+        if (updatePos >= 0) {
+            this.updatePGInfo(updatePos);
+        }
         this.pendingRender = true;
         window.requestAnimationFrame(() => {
             this.pendingRender = false;
@@ -3971,8 +3986,8 @@ export class FlowView extends ui.Component {
         }
     }
 
-    private queueRender(msg: core.ISequencedObjectMessage) {
-        if ((!this.pendingRender) && msg && msg.contents) {
+    private queueRender(msg: core.ISequencedObjectMessage, go = false) {
+        if ((!this.pendingRender) && (go || (msg && msg.contents))) {
             this.pendingRender = true;
             window.requestAnimationFrame(() => {
                 this.pendingRender = false;

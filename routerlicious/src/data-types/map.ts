@@ -107,6 +107,10 @@ export interface IMapView {
      * Executes the provided callback function once per each key/value pair
      */
     forEach(callbackFn: (value, key) => void);
+    /**
+     * Get the map viewed by this view.
+     */
+    getMap(): IMap;
 }
 
 /**

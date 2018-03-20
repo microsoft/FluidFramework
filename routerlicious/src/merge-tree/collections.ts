@@ -974,13 +974,27 @@ export class IntervalTree<T extends IInterval> implements IRBAugmentation<T, Aug
     IRBMatcher<T, AugmentedIntervalNode> {
     intervals = new RedBlackTree<T, AugmentedIntervalNode>(intervalComparer, this);
     diag = false;
+    timePut = true;
+    putTime = 0;
+    putCount = 0;
 
+    printTiming() {
+        console.log(`put total = ${this.putTime} avg=${(this.putTime/this.putCount).toFixed(2)}`);
+    }
+    
     remove(x: T) {
         this.intervals.remove(x);
     }
 
     put(x: T) {
-        this.intervals.put(x, { minmax: x.clone() });
+        if (this.timePut) {
+            let clockStart = MergeTree.clock();
+            this.intervals.put(x, { minmax: x.clone() });
+            this.putTime += MergeTree.elapsedMicroseconds(clockStart);
+            this.putCount++;
+        } else {
+            this.intervals.put(x, { minmax: x.clone() });
+        }
     }
 
     // TODO: toString()

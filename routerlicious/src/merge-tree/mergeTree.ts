@@ -1670,7 +1670,7 @@ function segmentGroupReplace(currentSeg: Segment, newSegment: Segment) {
     currentSeg.segmentGroup = undefined;
 }
 
-function clock() {
+export function clock() {
     if (process.hrtime) {
         return process.hrtime();
     } else {
@@ -1678,7 +1678,7 @@ function clock() {
     }
 }
 
-function elapsedMicroseconds(start: [number, number] | number) {
+export function elapsedMicroseconds(start: [number, number] | number) {
     if (process.hrtime) {
         let end: number[] = process.hrtime(start as [number, number]);
         let duration = Math.round((end[0] * 1000000) + (end[1] / 1000));
