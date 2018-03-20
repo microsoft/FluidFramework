@@ -2418,6 +2418,7 @@ export class Client {
 
     startCollaboration(longClientId: string, userInfo: IAuthenticatedUser = null, minSeq = 0, branchId = 0) {
         this.longClientId = longClientId;
+        this.userInfo = userInfo;
         this.addLongClientId(longClientId, userInfo, branchId);
         this.mergeTree.startCollaboration(this.getShortClientId(this.longClientId), minSeq, branchId);
     }

@@ -418,6 +418,7 @@ export async function create(id: string): Promise<void> {
     const root = await document.getRoot().getView();
 
     root.set("presence", document.createMap());
+    root.set("users", document.createMap());
     sharedString = document.createString() as MergeTree.SharedString;
 
     sharedString.insertMarker(0, MergeTree.ReferenceType.Tile, { [MergeTree.reservedTileLabelsKey]: ["pg"] });
