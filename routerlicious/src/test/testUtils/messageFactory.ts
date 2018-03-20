@@ -97,7 +97,7 @@ export class MessageFactory {
             operation,
             timestamp,
             type: RawOperationType,
-            userId: null,
+            user: null,
         };
 
         return objectMessage;
@@ -117,7 +117,7 @@ export class MessageFactory {
             sequenceNumber: this.sequenceNumber++,
             traces: [],
             type: operation.type,
-            userId: null,
+            user: null,
         };
 
         const message: ISequencedOperationMessage = {

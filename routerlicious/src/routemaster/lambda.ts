@@ -95,7 +95,7 @@ export class RouteMasterLambda extends SequencedLambda {
             },
             timestamp: Date.now(),
             type: core.RawOperationType,
-            userId: null,
+            user: null,
         };
 
         return this.producer.send(JSON.stringify(rawMessage), fork);

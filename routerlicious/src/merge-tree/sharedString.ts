@@ -231,7 +231,7 @@ export class SharedString extends CollaborativeMap {
     }
 
     protected attachContent() {
-        this.client.startCollaboration(this.document.clientId, 0);
+        this.client.startCollaboration(this.document.clientId, this.document.getUser(), 0);
     }
 
     protected loadContentComplete(): Promise<void> {
@@ -287,7 +287,7 @@ export class SharedString extends CollaborativeMap {
             console.log(`Start ${this.id} collab - ${performanceNow()}`);
             // TODO currently only assumes two levels of branching
             const branchId = originBranch === this.document.id ? 0 : 1;
-            this.client.startCollaboration(this.document.clientId, sequenceNumber, branchId);
+            this.client.startCollaboration(this.document.clientId, this.document.getUser(), sequenceNumber, branchId);
         }
         console.log(`Apply ${this.id} pending - ${performanceNow()}`);
         this.applyPending();

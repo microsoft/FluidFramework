@@ -845,22 +845,22 @@ export function TestPack(verbose = true) {
             if (startFile) {
                 Text.loadTextFromFile(startFile, clientsB[i].mergeTree, fileSegCount);
             }
-            clientsB[i].startCollaboration(`FredB${i}`, 0, 1);
+            clientsB[i].startCollaboration(`FredB${i}`, null, 0, 1);
         }
         for (let i = 0; i < clientCountB; i++) {
             let clientB = clientsB[i];
-            serverB.getOrAddShortClientId(clientB.longClientId, 1);
+            serverB.getOrAddShortClientId(clientB.longClientId, null, 1);
             for (let j = 0; j < clientCountB; j++) {
                 let otherBClient = clientsB[j];
                 if (otherBClient != clientB) {
-                    otherBClient.getOrAddShortClientId(clientB.longClientId, 1);
+                    otherBClient.getOrAddShortClientId(clientB.longClientId, null, 1);
                 }
             }
         }
         serverA.startCollaboration("theServerA");
         serverA.addClients(clientsA);
         serverA.addListeners([serverB]);
-        serverB.startCollaboration("theServerB", 0, 1);
+        serverB.startCollaboration("theServerB",null, 0, 1);
         serverB.addClients(clientsB);
         serverB.addUpstreamClients(clientsA);
 

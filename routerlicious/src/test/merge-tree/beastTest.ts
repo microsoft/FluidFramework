@@ -1145,7 +1145,7 @@ export function TestPack(verbose = true) {
         let cli = new MergeTree.Client("on the mat.");
         cli.startCollaboration("Fred1");
         for (let cname of clientNames) {
-            cli.addLongClientId(cname);
+            cli.addLongClientId(cname, null);
         }
         cli.insertTextRemote("that ", 0, undefined, 1, 0, 1);
         if (verbose) {
@@ -1202,7 +1202,7 @@ export function TestPack(verbose = true) {
         cli = new MergeTree.Client(" old sock!");
         cli.startCollaboration("Fred2");
         for (let cname of clientNames) {
-            cli.addLongClientId(cname);
+            cli.addLongClientId(cname, null);
         }
         cli.insertTextRemote("abcde", 0, undefined, 1, 0, 2);
         cli.insertTextRemote("yyy", 0, undefined, 2, 0, 1);
@@ -1232,7 +1232,7 @@ export function TestPack(verbose = true) {
         cli = new MergeTree.Client("abcdefgh");
         cli.startCollaboration("Fred3");
         for (let cname of clientNames) {
-            cli.addLongClientId(cname);
+            cli.addLongClientId(cname, null);
         }
         cli.removeSegmentRemote(1, 3, 1, 0, 3);
         if (verbose) {

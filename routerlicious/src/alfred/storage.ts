@@ -222,7 +222,7 @@ async function sendIntegrateStream(
         },
         timestamp: Date.now(),
         type: core.RawOperationType,
-        userId: null,
+        user: null,
     };
     await producer.send(JSON.stringify(integrateMessage), id);
 }
