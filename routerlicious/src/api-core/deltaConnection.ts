@@ -131,6 +131,7 @@ export class DeltaConnection implements IDeltaConnection {
             sequenceNumber: this.sequenceNumber + 1,
             traces: documentMessage.traces,
             type: message.type,
+            user: documentMessage.user,
         };
         return sequencedObjectMessage;
     }

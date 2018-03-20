@@ -1,6 +1,7 @@
 // tslint:disable:no-bitwise whitespace align switch-default no-string-literal
 import performanceNow = require("performance-now");
 import { api, core, MergeTree as SharedString, types } from "../client-api";
+import { IAuthenticatedUser } from "../core-utils";
 import { findRandomWord } from "../merge-tree-utils";
 import { SharedIntervalCollection } from "../merge-tree/intervalCollection";
 import * as ui from "../ui";
@@ -2748,7 +2749,7 @@ export class FlowView extends ui.Component {
         for (let i = 0; i < k; i++) {
             let pos1 = Math.floor(Math.random() * (len - 1));
             let intervalLen = Math.max(1, Math.floor(Math.random() * Math.min(len - pos1, 150)));
-            let props = { clid: this.sharedString.client.longClientId };
+            let props = { clid: this.sharedString.client.longClientId, user: this.sharedString.client.userInfo };
             this.bookmarks.add(pos1, pos1 + intervalLen, SharedString.IntervalType.Simple,
                 props);
         }
@@ -2915,10 +2916,10 @@ export class FlowView extends ui.Component {
         }
     }
 
-    public remotePresenceFromEdit(longClientId: string, refseq: number, oldpos: number, posAdjust = 0) {
+    public remotePresenceFromEdit(longClientId: string, userInfo: IAuthenticatedUser, refseq: number, oldpos: number, posAdjust = 0) {
         let remotePosInfo = <IRemotePresenceInfo>{
-            clientId: this.client.getOrAddShortClientId(longClientId),
-            key: longClientId,
+            clientId: this.client.getOrAddShortClientId(longClientId, userInfo),
+            key: userInfo === null ? longClientId : userInfo.user.id,
             origPos: oldpos + posAdjust,
             refseq,
         };
@@ -2952,8 +2953,10 @@ export class FlowView extends ui.Component {
     public remotePresenceUpdate(delta: types.IValueChanged) {
         if (delta.key !== this.client.longClientId) {
             let remotePresenceInfo = <IRemotePresenceInfo>this.presenceMapView.get(delta.key);
-            remotePresenceInfo.key = delta.key;
+            // TODO (userinfo): This might not be the case.
             remotePresenceInfo.clientId = this.client.getOrAddShortClientId(delta.key);
+            const userInfo = this.client.getUserInfo(remotePresenceInfo.clientId);
+            remotePresenceInfo.key = (userInfo === null) ? delta.key : userInfo.user.id;
             this.remotePresenceToLocal(remotePresenceInfo);
         }
     }
@@ -3944,7 +3947,7 @@ export class FlowView extends ui.Component {
                     adjLength = delta.text.length;
                     this.cursor.pos += delta.text.length;
                 }
-                this.remotePresenceFromEdit(msg.clientId, msg.referenceSequenceNumber, delta.pos1, adjLength);
+                this.remotePresenceFromEdit(msg.clientId, msg.user, msg.referenceSequenceNumber, delta.pos1, adjLength);
                 this.updatePGInfo(delta.pos1);
                 return true;
             case SharedString.MergeTreeDeltaType.REMOVE:
@@ -3953,7 +3956,7 @@ export class FlowView extends ui.Component {
                 } else if (this.cursor.pos >= delta.pos1) {
                     this.cursor.pos = delta.pos1;
                 }
-                this.remotePresenceFromEdit(msg.clientId, msg.referenceSequenceNumber, delta.pos1);
+                this.remotePresenceFromEdit(msg.clientId, msg.user, msg.referenceSequenceNumber, delta.pos1);
                 this.updatePGInfo(delta.pos1);
                 return true;
             case SharedString.MergeTreeDeltaType.GROUP: {

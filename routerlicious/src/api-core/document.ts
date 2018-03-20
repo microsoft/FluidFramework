@@ -1,3 +1,4 @@
+import { IAuthenticatedUser } from "../core-utils";
 import { IEnvelope, ILatencyMessage, IObjectMessage, ISequencedObjectMessage } from "./protocol";
 import { ICollaborativeObject, ICollaborativeObjectSave } from "./types";
 
@@ -49,6 +50,8 @@ export interface IDocument {
     attach(object: ICollaborativeObject): IDistributedObjectServices;
 
     get(id: string): Promise<ICollaborativeObject>;
+
+    getUser(): IAuthenticatedUser;
 
     submitObjectMessage(envelope: IEnvelope);
 
