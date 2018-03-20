@@ -2689,10 +2689,10 @@ export class FlowView extends ui.Component {
     public wheelTicking = false;
     public topChar = -1;
     public cursor: Cursor;
-    public presenceMap: types.IMap;
     public bookmarks: SharedIntervalCollection;
     public comments: SharedIntervalCollection;
     public presenceMapView: types.IMapView;
+    public userMapView: types.IMapView;
     public presenceVector: ILocalPresenceInfo[] = [];
     public docRoot: types.IMapView;
     public curPG: SharedString.Marker;
@@ -2864,13 +2864,22 @@ export class FlowView extends ui.Component {
     }
 
     public addPresenceMap(presenceMap: types.IMap) {
-        this.presenceMap = presenceMap;
         presenceMap.on("valueChanged", (delta: types.IValueChanged) => {
             this.remotePresenceUpdate(delta);
         });
         presenceMap.getView().then((v) => {
             this.presenceMapView = v;
             this.updatePresence();
+        });
+    }
+
+    public addUserMap(userMap: types.IMap) {
+        userMap.on("valueChanged", (delta: types.IValueChanged) => {
+            this.remoteUserUpdate(delta);
+        });
+        userMap.getView().then((v) => {
+            this.userMapView = v;
+            this.updateUser();
         });
     }
 
@@ -2953,7 +2962,7 @@ export class FlowView extends ui.Component {
     public remotePresenceUpdate(delta: types.IValueChanged) {
         if (delta.key !== this.client.longClientId) {
             let remotePresenceInfo = <IRemotePresenceInfo>this.presenceMapView.get(delta.key);
-            // TODO (userinfo): This might not be the case.
+            // For a remote user, client id should already be populated from user map. So passing null is fine.
             remotePresenceInfo.clientId = this.client.getOrAddShortClientId(delta.key);
             const userInfo = this.client.getUserInfo(remotePresenceInfo.clientId);
             remotePresenceInfo.key = (userInfo === null) ? delta.key : userInfo.user.id;
@@ -2969,6 +2978,21 @@ export class FlowView extends ui.Component {
             };
             this.presenceMapView.set(this.client.longClientId, presenceInfo);
         }
+    }
+
+    public updateUser() {
+        this.client.getOrAddShortClientId(this.client.longClientId, this.client.userInfo);
+        if (this.userMapView) {
+            this.userMapView.set(this.client.longClientId, this.client.userInfo);
+        }
+    }
+
+    public remoteUserUpdate(delta: types.IValueChanged) {
+        if (delta.key !== this.client.longClientId) {
+            let remoteUserInfo = <IAuthenticatedUser>this.userMapView.get(delta.key);
+            this.client.getOrAddShortClientId(delta.key, remoteUserInfo);
+        }
+
     }
 
     public statusMessage(key: string, msg: string) {
@@ -3854,6 +3878,8 @@ export class FlowView extends ui.Component {
         }
         const presenceMap = this.docRoot.get("presence") as types.IMap;
         this.addPresenceMap(presenceMap);
+        const userMap = this.docRoot.get("users") as types.IMap;
+        this.addUserMap(userMap);
         let intervalMap = this.sharedString.intervalCollections.getMap();
         intervalMap.on("valueChanged", (delta: types.IValueChanged) => {
             this.queueRender(undefined, true);
