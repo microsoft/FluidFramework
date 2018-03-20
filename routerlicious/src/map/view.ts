@@ -71,6 +71,10 @@ export class MapView implements IMapView {
         return value.localValue;
     }
 
+    public getMap() {
+        return this.map;
+    }
+
     public async wait<T>(key: string): Promise<T> {
         // Return immediately if the value already exists
         if (this.has(key)) {
