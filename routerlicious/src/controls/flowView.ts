@@ -1361,8 +1361,8 @@ function buildIntervalBlockStyle(b: SharedString.Interval, startX: number, endX:
         bookmarkDiv.style.borderBottom = "1px solid gray";
     }
     bookmarkDiv.style.backgroundColor = "blue";
-    if (b.properties && b.properties["clid"]) {
-        let clientId = client.getOrAddShortClientId(b.properties["clid"]);
+    if (b.properties && b.properties["clid"] && b.properties["user"]) {
+        let clientId = client.getOrAddShortClientId(b.properties["clid"], b.properties["user"]);
         let bgColor = presenceColors[clientId % presenceColors.length];
         bookmarkDiv.style.backgroundColor = bgColor;
     }
@@ -3351,13 +3351,15 @@ export class FlowView extends ui.Component {
     }
 
     public addUserMap(userMap: types.IMap) {
-        userMap.on("valueChanged", (delta: types.IValueChanged) => {
-            this.remoteUserUpdate(delta);
-        });
-        userMap.getView().then((v) => {
-            this.userMapView = v;
-            this.updateUser();
-        });
+        if (userMap !== undefined) {
+            userMap.on("valueChanged", (delta: types.IValueChanged) => {
+                this.remoteUserUpdate(delta);
+            });
+            userMap.getView().then((v) => {
+                this.userMapView = v;
+                this.updateUser();
+            });
+        }
     }
 
     public presenceInfoInRange(start: number, end: number) {
