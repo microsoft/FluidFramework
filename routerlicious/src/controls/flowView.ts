@@ -3407,7 +3407,7 @@ export class FlowView extends ui.Component {
     public remotePresenceFromEdit(longClientId: string, userInfo: IAuthenticatedUser, refseq: number, oldpos: number, posAdjust = 0) {
         let remotePosInfo = <IRemotePresenceInfo>{
             clientId: this.client.getOrAddShortClientId(longClientId, userInfo),
-            key: userInfo === null ? longClientId : userInfo.user.id,
+            key: userInfo === null ? longClientId : userInfo.user.name,
             origPos: oldpos + posAdjust,
             refseq,
         };
@@ -3443,7 +3443,7 @@ export class FlowView extends ui.Component {
             let remotePresenceInfo = <IRemotePresenceInfo>this.presenceMapView.get(delta.key);
             remotePresenceInfo.clientId = this.client.getOrAddShortClientId(delta.key, null);
             const userInfo = this.client.getUserInfo(remotePresenceInfo.clientId);
-            remotePresenceInfo.key = (userInfo === null) ? delta.key : userInfo.user.id;
+            remotePresenceInfo.key = (userInfo === null) ? delta.key : userInfo.user.name;
             this.remotePresenceToLocal(remotePresenceInfo);
         }
     }

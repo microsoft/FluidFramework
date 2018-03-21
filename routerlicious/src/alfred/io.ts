@@ -63,7 +63,7 @@ export function register(
             const authP = checkAuth(message);
             authP.then((authedUser: IAuthenticatedUser) => {
                 if (authedUser !== null) {
-                    winston.info(`User ${authedUser.user.id} wants to access ${message.id}`);
+                    winston.info(`User ${authedUser.user.name} wants to access ${message.id}`);
                 }
                 const profiler = winston.startTimer();
                 connectionProfiler.done(`Client has requested to load ${message.id}`);
