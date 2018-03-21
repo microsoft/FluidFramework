@@ -69,7 +69,13 @@ export class TenantManager implements ITenantManager {
     }
 
     public getTenant(tenantId: string): Promise<ITenant> {
-        return tenantId ? this.resolveTenant(tenantId) : Promise.resolve(this.defaultTenant);
+        return new Promise<ITenant>((resolve, reject) => {
+            if (!tenantId) {
+                resolve(this.defaultTenant);
+            } else {
+                return this.resolveTenant(tenantId);
+            }
+        });
     }
 
     // TODO: This is a complete hack to make the storage endpoint demo work.
