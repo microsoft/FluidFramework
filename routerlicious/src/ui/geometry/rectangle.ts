@@ -111,6 +111,12 @@ export class Rectangle {
         elm.style.top = this.y + "px";
     }
 
+    public moveElementToUpperLeft(elm: HTMLElement) {
+        elm.style.position = "absolute";
+        elm.style.left = this.x + "px";
+        elm.style.top = this.y + "px";
+    }
+
     public conformElement(elm: HTMLElement) {
         elm.style.position = "absolute";
         elm.style.left = `${this.x}px`;

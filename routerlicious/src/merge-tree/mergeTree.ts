@@ -2033,10 +2033,42 @@ export class Client {
                 }
                 break;
             case ops.MergeTreeDeltaType.REMOVE:
+                if (op.relativePos1) {
+                    op.pos1 = this.mergeTree.posFromRelativePos(op.relativePos1,
+                        msg.referenceSequenceNumber, clid);
+                    if (op.pos1 < 0) {
+                        // TODO: event when marker id not found
+                        return;
+                    }
+                }
+                if (op.relativePos2) {
+                    op.pos2 = this.mergeTree.posFromRelativePos(op.relativePos2,
+                        msg.referenceSequenceNumber, clid);
+                    if (op.pos2 < 0) {
+                        // TODO: event when marker id not found
+                        return;
+                    }
+                }
                 this.removeSegmentRemote(op.pos1, op.pos2, msg.sequenceNumber, msg.referenceSequenceNumber,
                     clid);
                 break;
             case ops.MergeTreeDeltaType.ANNOTATE:
+                if (op.relativePos1) {
+                    op.pos1 = this.mergeTree.posFromRelativePos(op.relativePos1,
+                        msg.referenceSequenceNumber, clid);
+                    if (op.pos1 < 0) {
+                        // TODO: event when marker id not found
+                        return;
+                    }
+                }
+                if (op.relativePos2) {
+                    op.pos2 = this.mergeTree.posFromRelativePos(op.relativePos2,
+                        msg.referenceSequenceNumber, clid);
+                    if (op.pos2 < 0) {
+                        // TODO: event when marker id not found
+                        return;
+                    }
+                }
                 this.annotateSegmentRemote(op.props, op.pos1, op.pos2, msg.sequenceNumber, msg.referenceSequenceNumber,
                     clid, op.combiningOp);
                 break;
@@ -2109,9 +2141,9 @@ export class Client {
             switch (op.type) {
                 case ops.MergeTreeDeltaType.INSERT:
                     if (op.relativePos1) {
-                        op.pos1 = this.mergeTree.posFromRelativePos(op.relativePos1,
-                            UniversalSequenceNumber, this.getClientId());
+                        op.pos1 = this.mergeTree.posFromRelativePos(op.relativePos1);
                         if (op.pos1 < 0) {
+                            // TODO: raise exception or other error flow
                             break;
                         }
                     }
@@ -2123,9 +2155,37 @@ export class Client {
                     }
                     break;
                 case ops.MergeTreeDeltaType.ANNOTATE:
+                    if (op.relativePos1) {
+                        op.pos1 = this.mergeTree.posFromRelativePos(op.relativePos1);
+                        if (op.pos1 < 0) {
+                            // TODO: raise exception or other error flow
+                            break;
+                        }
+                    }
+                    if (op.relativePos2) {
+                        op.pos2 = this.mergeTree.posFromRelativePos(op.relativePos2);
+                        if (op.pos2 < 0) {
+                            // TODO: raise exception or other error flow
+                            break;
+                        }
+                    }
                     this.annotateSegmentLocal(op.props, op.pos1, op.pos2, op.combiningOp);
                     break;
                 case ops.MergeTreeDeltaType.REMOVE:
+                    if (op.relativePos1) {
+                        op.pos1 = this.mergeTree.posFromRelativePos(op.relativePos1);
+                        if (op.pos1 < 0) {
+                            // TODO: raise exception or other error flow
+                            break;
+                        }
+                    }
+                    if (op.relativePos2) {
+                        op.pos2 = this.mergeTree.posFromRelativePos(op.relativePos2);
+                        if (op.pos2 < 0) {
+                            // TODO: raise exception or other error flow
+                            break;
+                        }
+                    }
                     this.removeSegmentLocal(op.pos1, op.pos2);
                     break;
                 case ops.MergeTreeDeltaType.GROUP:
@@ -3768,36 +3828,23 @@ export class MergeTree {
      * @param refseq The reference sequence number at which to compute the position.
      * @param clientId The client id with which to compute the position.
      */
-    posFromRelativePos(relativePos: IRelativePosition, refseq: number, clientId: number) {
+    posFromRelativePos(relativePos: IRelativePosition, refseq = UniversalSequenceNumber,
+        clientId = this.collabWindow.clientId) {
         let pos = -1;
-        if (relativePos.indirect) {
-            // before property on relativePos not meaningful for indirect ref 
-            let lref = this.getLrefFromId(relativePos.id);
-            if (lref && lref.segment) {
-                pos = this.getOffset(lref.segment, refseq, clientId);
-                if (lref.offset !== 0) {
-                    pos += lref.offset;
-                }
+        let marker = this.getSegmentFromId(relativePos.id);
+        if (marker) {
+            pos = this.getOffset(marker, refseq, clientId);
+            if (!relativePos.before) {
+                pos += marker.cachedLength;
                 if (relativePos.offset !== undefined) {
                     pos += relativePos.offset;
                 }
-            }
-        } else {
-            let marker = this.getSegmentFromId(relativePos.id);
-            if (marker) {
-                pos = this.getOffset(marker, refseq, clientId);
-                if (!relativePos.before) {
-                    pos += marker.cachedLength;
-                    if (relativePos.offset !== undefined) {
-                        pos += relativePos.offset;
-                    }
-                } else {
-                    if (relativePos.offset !== undefined) {
-                        pos -= relativePos.offset;
-                    }
+            } else {
+                if (relativePos.offset !== undefined) {
+                    pos -= relativePos.offset;
                 }
-
             }
+
         }
         return pos;
     }

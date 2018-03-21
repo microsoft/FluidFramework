@@ -1033,6 +1033,11 @@ export class IntervalTree<T extends IInterval> implements IRBAugmentation<T, Aug
     }
 }
 
+export interface TSTResult<T> {
+    key: string;
+    val: T;
+}
+
 export interface TSTNode<T> {
     c: string;
     left?: TSTNode<T>;
@@ -1150,6 +1155,31 @@ export class TST<T> {
         }
         this.collect(x.mid, { text: prefix.text + x.c }, q);
         this.collect(x.right, prefix, q);
+    }
+
+    pairsWithPrefix(text:string) {
+        let q = <TSTResult<T>[]>[];
+        let x = this.nodeGet(this.root, text, 0);
+        if (x === undefined) {
+            return q;
+        }
+        if (x.val !== undefined) {
+            q.push({ key: text, val: x.val});
+        }
+        this.collectPairs(x.mid, { text }, q);
+        return q;
+    }
+
+    collectPairs(x: TSTNode<T>, prefix: TSTPrefix, q: TSTResult<T>[]) {
+        if (x === undefined) {
+            return;
+        }
+        this.collectPairs(x.left, prefix, q);
+        if (x.val !== undefined) {
+            q.push({ key: prefix.text+x.c, val: x.val});
+        }
+        this.collectPairs(x.mid, { text: prefix.text + x.c }, q);
+        this.collectPairs(x.right, prefix, q);
     }
 
     patternCollect(x: TSTNode<T>, prefix: TSTPrefix, d: number, pattern: string, q: string[]) {

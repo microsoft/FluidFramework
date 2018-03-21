@@ -1782,12 +1782,53 @@ function testRangeTree() {
     }
 }
 
+export interface ICmd {
+    description?: string;
+    iconURL?: string;
+    exec?: ()=>void;
+}
+export function tstSimpleCmd() {
+    let tst = new Collections.TST<ICmd>();
+    tst.put("zest", { description: "zesty"});
+    tst.put("nest", { description: "nesty"});
+    tst.put("newt", { description: "nesty"});
+    tst.put("neither", { description: "nesty"});
+    tst.put("restitution", { description: "nesty"});
+    tst.put("restful", { description: "nesty"});
+    tst.put("fish", { description: "nesty"});
+    tst.put("nurf", { description: "nesty"});
+    tst.put("reify", { description: "resty"});
+    tst.put("pert", { description: "pesty"});
+    tst.put("jest", { description: "jesty"});
+    tst.put("jestcuz", { description: "jesty2"});
+    let res = tst.pairsWithPrefix("je");
+    console.log("trying je");
+    for (let pair of res) {
+        console.log(`key: ${pair.key} val: ${pair.val.description}`);
+    }
+    res = tst.pairsWithPrefix("n");
+    console.log("trying n");
+    for (let pair of res) {
+        console.log(`key: ${pair.key} val: ${pair.val.description}`);
+    }
+    res = tst.pairsWithPrefix("ne");
+    console.log("trying ne");
+    for (let pair of res) {
+        console.log(`key: ${pair.key} val: ${pair.val.description}`);
+    }
+}
+
 let rangeTreeTest = false;
 let testPropCopy = false;
 let overlayTree = false;
 let docTree = false;
 let chktst = false;
-let clientServerTest = true;
+let clientServerTest = false;
+let tstTest = true;
+
+if (tstTest) {
+    tstSimpleCmd();
+}
 
 if (rangeTreeTest) {
     testRangeTree();
