@@ -47,8 +47,17 @@ export async function getLatestVersion(
     tenantId: string,
     documentId: string): Promise<ICommitDetails> {
 
-    const commits = await getVersions(tenantManager, tenantId, documentId, 1);
-    return commits.length > 0 ? commits[0] : null;
+    return new Promise<ICommitDetails>((resolve, reject) => {
+        getVersions(tenantManager, tenantId, documentId, 1).then((commits) => {
+            if (commits.length > 0) {
+                resolve(commits[0]);
+            } else {
+                resolve(null);
+            }
+        }, (err) => {
+            reject(err);
+        });
+    });
 }
 
 export async function getVersions(
@@ -58,11 +67,18 @@ export async function getVersions(
     count: number): Promise<ICommitDetails[]> {
 
     const fullId = getFullId(tenantId, documentId);
-    const tenant = await tenantManager.getTenant(tenantId).catch((err) => {
-        return Promise.reject(err);
+    return new Promise<ICommitDetails[]>((resolve, reject) => {
+        tenantManager.getTenant(tenantId).then((tenant) => {
+            const gitManager = tenant.gitManager;
+            gitManager.getCommits(fullId, count).then((commits) => {
+                resolve(commits);
+            }, (err) => {
+                reject(err);
+            });
+        }, (error) => {
+            reject(error);
+        });
     });
-    const gitManager = tenant.gitManager;
-    return await gitManager.getCommits(fullId, count);
 }
 
 export async function getVersion(
@@ -70,12 +86,18 @@ export async function getVersion(
     tenantId: string,
     documentId: string,
     sha: string): Promise<ICommit> {
-
-    const tenant = await tenantManager.getTenant(tenantId).catch((err) => {
-        return Promise.reject(err);
+    return new Promise<ICommit>((resolve, reject) => {
+        tenantManager.getTenant(tenantId).then((tenant) => {
+            const gitManager = tenant.gitManager;
+            gitManager.getCommit(sha).then((commit) => {
+                resolve(commit);
+            }, (err) => {
+                reject(err);
+            });
+        }, (error) => {
+            reject(error);
+        });
     });
-    const gitManager = tenant.gitManager;
-    return await gitManager.getCommit(sha);
 }
 
 /**

@@ -73,7 +73,11 @@ export class TenantManager implements ITenantManager {
             if (!tenantId) {
                 resolve(this.defaultTenant);
             } else {
-                return this.resolveTenant(tenantId);
+                this.resolveTenant(tenantId).then((tenant) => {
+                    resolve(tenant);
+                }, (err) => {
+                    reject(err);
+                });
             }
         });
     }
@@ -86,25 +90,41 @@ export class TenantManager implements ITenantManager {
             if (this.tenants.has(tenantId)) {
                 resolve(this.tenants.get(tenantId));
             } else {
-                this.collection.findAll().then((dbTenants) => {
-                    for (const dbTenant of dbTenants) {
-                        if (dbTenant.name === tenantId) {
-                            for (const conf of this.config) {
-                                // Tenant found in DB should have a storage endpoint saved in config.
-                                if (dbTenant.storage === conf.name) {
-                                    const newConfig = cloneDeep(conf);
-                                    newConfig.name = tenantId;
-                                    Tenant.Load(newConfig).then((tenant) => {
-                                        this.tenants.set(tenant.name, tenant);
-                                        resolve(tenant);
-                                    });
-                                }
-                            }
-                        }
+                this.getTenantsFromDB().then((tenantStorageMap: Map<string, string>) => {
+                    if (tenantStorageMap.has(tenantId)) {
+                        const storageName = tenantStorageMap.get(tenantId);
+                        const newConfig = cloneDeep(this.getTenantConfig(storageName));
+                        newConfig.name = tenantId;
+                        Tenant.Load(newConfig).then((tenant) => {
+                            this.tenants.set(tenant.name, tenant);
+                            resolve(tenant);
+                        });
+                    } else {
+                        reject("Invaid tenant name");
                     }
-                    reject("Invaid tenant name");
+                }, (err) => {
+                    reject(err);
                 });
             }
+        });
+    }
+
+    private getTenantConfig(storageName: string): ITenantConfig {
+        const matchedConfigs = this.config.filter((item) => item.name === storageName);
+        return matchedConfigs[0];
+    }
+
+    private getTenantsFromDB(): Promise<Map<string, string>> {
+        const tenants = new Map<string, string>();
+        return new Promise<Map<string, string>>((resolve, reject) => {
+            this.collection.findAll().then((dbTenants) => {
+                for (const dbTenant of dbTenants) {
+                    tenants.set(dbTenant.name, dbTenant.storage);
+                }
+                resolve(tenants);
+            }, (error) => {
+                reject(error);
+            });
         });
     }
 }
