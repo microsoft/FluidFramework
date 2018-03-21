@@ -62,6 +62,7 @@ export async function onLoad(
             if (!existing) {
                 console.log(`Not existing ${id} - ${performanceNow()}`);
                 root.set("presence", collabDoc.createMap());
+                root.set("users", collabDoc.createMap());
                 const newString = collabDoc.createString() as api.MergeTree.SharedString;
 
                 const starterText = template ? await downloadRawText(template) : " ";

@@ -11,7 +11,7 @@ export function initAuthChecker(tenantConfig: any) {
  */
 export function ensureAuthenticated(req, res, next) {
     if (req.isAuthenticated()) {
-        res.locals.token = tokenManager.getOrCreateToken(req.user.upn);
+        res.locals.token = tokenManager.getOrCreateToken(req.user.upn, req.user.displayName);
         return next();
     }
     res.redirect("/");
