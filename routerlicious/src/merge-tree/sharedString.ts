@@ -3,10 +3,11 @@ import * as assert from "assert";
 import performanceNow = require("performance-now");
 import * as resources from "gitresources";
 import * as api from "../api-core";
+import {Document} from "../api";
 // import * as Collections from "./collections";
 import { Deferred } from "../core-utils";
 import { IMap, IMapView, IValueChanged } from "../data-types";
-import {CollaborativeMap, MapExtension} from "../map";
+import { CollaborativeMap, MapExtension } from "../map";
 import { IIntegerRange } from "./base";
 import { CollaboritiveStringExtension } from "./extension";
 import * as MergeTree from "./mergeTree";
@@ -75,6 +76,9 @@ export class SharedString extends CollaborativeMap {
         this.submitIfAttached(insertMessage);
     }
 
+    public createString() {
+        return (<Document>this.document).createString();
+    }
     public getText(start?: number, end?: number): string {
         return this.client.getText(start, end);
     }
@@ -166,14 +170,14 @@ export class SharedString extends CollaborativeMap {
 
     // TODO: fix race condition on creation by putting type on every operation
     public getSharedIntervalCollection(label: string) {
-    if (!this.intervalCollections.has(label)) {
-        this.intervalCollections.set<SharedIntervalCollection>(label, undefined,
-            SharedIntervalCollectionValueType.Name);
+        if (!this.intervalCollections.has(label)) {
+            this.intervalCollections.set<SharedIntervalCollection>(label, undefined,
+                SharedIntervalCollectionValueType.Name);
+        }
+        let sharedCollection = this.intervalCollections.get<SharedIntervalCollection>(label);
+        sharedCollection.initialize(this, label);
+        return sharedCollection;
     }
-    let sharedCollection = this.intervalCollections.get<SharedIntervalCollection>(label);
-    sharedCollection.initialize(this, label);
-    return sharedCollection;
-}
 
     protected transformContent(message: api.IObjectMessage, toSequenceNumber: number): api.IObjectMessage {
         if (message.contents) {

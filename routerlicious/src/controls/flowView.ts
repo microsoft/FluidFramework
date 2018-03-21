@@ -172,6 +172,18 @@ let commands: ICmd[] = [
     },
     {
         exec: (f) => {
+            f.createComment();
+        },
+        key: "comment",
+    },
+    {
+        exec: (f) => {
+            f.toggleItalic();
+        },
+        key: "italic",
+    },
+    {
+        exec: (f) => {
             f.setList();
         },
         key: "list ... 1.)",
@@ -186,6 +198,7 @@ let commands: ICmd[] = [
         exec: (f) => {
             f.updatePGInfo(f.cursor.pos - 1);
             createTableRelative(f.cursor.pos, f);
+            f.localQueueRender(f.cursor.pos);
         },
         key: "table test",
     },
@@ -514,7 +527,7 @@ export function inputBoxCreate(onsubmit: (s: string) => void,
     function initCursor(y: number) {
         let lineHeight = getTextHeight(elm);
         cursor = new Cursor(elm);
-        cursor.assignToLine(0, lineHeight-y, elm);
+        cursor.assignToLine(0, lineHeight - y, elm);
         // cursor.editSpan.style.top=`${y}px`;
         cursor.scope();
     }
@@ -722,7 +735,7 @@ function getMultiTextWidth(texts: string[], font: string) {
     return sum;
 }
 
-interface IRange {
+export interface IRange {
     start: number;
     end: number;
 }
@@ -1342,7 +1355,7 @@ function getContentPct(pgMarker: IParagraphMarker) {
     }
 }
 
-function buildIntervalBlockStyle(b: SharedString.Interval, startX: number, endX: number,
+function buildIntervalBlockStyle(properties: SharedString.PropertySet, startX: number, endX: number,
     lineDivHeight: number, leftInBounds: boolean, rightInBounds: boolean,
     contentDiv: HTMLDivElement, client: SharedString.Client) {
     let bookmarkDiv = document.createElement("div");
@@ -1360,17 +1373,22 @@ function buildIntervalBlockStyle(b: SharedString.Interval, startX: number, endX:
         bookmarkDiv.style.borderRight = "1px solid gray";
         bookmarkDiv.style.borderBottom = "1px solid gray";
     }
-    bookmarkDiv.style.backgroundColor = "blue";
-    if (b.properties && b.properties["clid"] && b.properties["user"]) {
-        let clientId = client.getOrAddShortClientId(b.properties["clid"], b.properties["user"]);
-        let bgColor = presenceColors[clientId % presenceColors.length];
-        bookmarkDiv.style.backgroundColor = bgColor;
+    bookmarkDiv.style.backgroundColor = "lightgray";
+    if (properties) {
+        if (properties["bgColor"]) {
+            bookmarkDiv.style.backgroundColor = properties["bgColor"];
+        } else if (properties["clid"] || properties["user"]) {
+            let clientId = client.getOrAddShortClientId(properties["clid"],
+                properties["user"]);
+            let bgColor = presenceColors[clientId % presenceColors.length];
+            bookmarkDiv.style.backgroundColor = bgColor;
+        }
     }
-    bookmarkDiv.style.opacity = "0.5";
+    bookmarkDiv.style.opacity = "0.3";
     bookmarkDiv.style.zIndex = "2";
 }
 
-function buildIntervalTieStyle(b: SharedString.Interval, startX: number, endX: number,
+function buildIntervalTieStyle(properties: SharedString.PropertySet, startX: number, endX: number,
     lineDivHeight: number, leftInBounds: boolean, rightInBounds: boolean,
     contentDiv: HTMLDivElement, client: SharedString.Client) {
     let bookmarkDiv = document.createElement("div");
@@ -1391,11 +1409,12 @@ function buildIntervalTieStyle(b: SharedString.Interval, startX: number, endX: n
     if (rightInBounds) {
         contentDiv.appendChild(bookendDiv2);
     }
-    bookmarkDiv.style.backgroundColor = "blue";
-    bookendDiv1.style.backgroundColor = "blue";
-    bookendDiv2.style.backgroundColor = "blue";
-    if (b.properties && b.properties["clid"]) {
-        let clientId = client.getOrAddShortClientId(b.properties["clid"], b.properties["user"]);
+    bookmarkDiv.style.backgroundColor = "lightgray";
+    bookendDiv1.style.backgroundColor = "lightgray";
+    bookendDiv2.style.backgroundColor = "lightgray";
+    if (properties && properties["clid"]) {
+        let clientId = client.getOrAddShortClientId(properties["clid"],
+            properties["user"]);
         let bgColor = presenceColors[clientId % presenceColors.length];
         bookmarkDiv.style.backgroundColor = bgColor;
         bookendDiv1.style.backgroundColor = bgColor;
@@ -1409,46 +1428,65 @@ function buildIntervalTieStyle(b: SharedString.Interval, startX: number, endX: n
     bookendDiv2.style.zIndex = "2";
 }
 
+function showBookmark(properties: SharedString.PropertySet, lineText: string,
+    start: number, end: number, lineStart: number,
+    computedEnd: number, lineFontstr: string, lineDivHeight: number,
+    contentDiv: HTMLDivElement, client: SharedString.Client) {
+    let useTie = false;
+    let startX: number;
+    if (start >= lineStart) {
+        startX = getTextWidth(lineText.substring(0, start - lineStart), lineFontstr);
+    } else {
+        startX = 0;
+    }
+    let endX: number;
+    if (end <= computedEnd) {
+        endX = getTextWidth(lineText.substring(0, end - lineStart), lineFontstr);
+    } else {
+        endX = getTextWidth(lineText, lineFontstr);
+    }
+    if (useTie) {
+        buildIntervalTieStyle(properties, startX, endX, lineDivHeight,
+            start >= lineStart, end <= computedEnd, contentDiv, client);
+    } else {
+        buildIntervalBlockStyle(properties, startX, endX, lineDivHeight,
+            start >= lineStart, end <= computedEnd, contentDiv, client);
+    }
+}
+
 function showBookmarks(flowView: FlowView, lineStart: number, lineEnd: number,
     lineFontstr: string, lineDivHeight: number,
     contentDiv: HTMLDivElement) {
-    if (flowView.bookmarks) {
-        let useTie = false;
+    let sel = flowView.cursor.getSelection();
+    if (flowView.bookmarks || flowView.comments || sel) {
         let client = flowView.client;
         let computedEnd = lineEnd;
         let bookmarks = flowView.bookmarks.findOverlappingIntervals(lineStart, computedEnd);
+        let comments = flowView.comments.findOverlappingIntervals(lineStart, computedEnd);
+        let lineText = client.getText(lineStart, computedEnd);
+        if (sel) {
+            showBookmark(undefined, lineText, sel.start, sel.end, lineStart,
+                computedEnd, lineFontstr, lineDivHeight, contentDiv, client);
+        }
         if (bookmarks) {
-            let lineText = client.getText(lineStart, computedEnd);
             for (let b of bookmarks) {
                 let start = b.start.toPosition(client.mergeTree, client.getCurrentSeq(),
                     client.getClientId());
                 let end = b.end.toPosition(client.mergeTree, client.getCurrentSeq(),
                     client.getClientId());
-                let startX: number;
-                if (start >= lineStart) {
-                    startX = getTextWidth(lineText.substring(0, start - lineStart), lineFontstr);
-                } else {
-                    startX = 0;
-                }
-                let endX: number;
-                if (end <= computedEnd) {
-                    endX = getTextWidth(lineText.substring(0, end - lineStart), lineFontstr);
-                } else {
-                    endX = getTextWidth(lineText, lineFontstr);
-                }
-                if (useTie) {
-                    buildIntervalTieStyle(b, startX, endX, lineDivHeight,
-                        start >= lineStart, end <= computedEnd, contentDiv, client);
-                } else {
-                    buildIntervalBlockStyle(b, startX, endX, lineDivHeight,
-                        start >= lineStart, end <= computedEnd, contentDiv, client);
-                }
-                /*
-                console.log(`line [${lineStart},${lineEnd}) matched interval [${start},${end})`);
-                if ((lineStart>end)||(lineEnd<=start)) {
-                    console.log("disturbing match");
-                }
-                */
+                showBookmark(b.properties, lineText, start, end, lineStart,
+                    computedEnd, lineFontstr, lineDivHeight, contentDiv, client);
+            }
+        }
+        if (comments) {
+            for (let comment of comments) {
+                let start = comment.start.toPosition(client.mergeTree, client.getCurrentSeq(),
+                    client.getClientId());
+                let end = comment.end.toPosition(client.mergeTree, client.getCurrentSeq(),
+                    client.getClientId());
+                comment.addProperties({ bgColor: "gold" });
+                showBookmark(comment.properties, lineText, start, end, lineStart,
+                    computedEnd, lineFontstr, lineDivHeight, contentDiv, client);
             }
         }
     }
@@ -2819,8 +2857,9 @@ export function clearSubtree(elm: HTMLElement) {
     }
 }
 
-let presenceColors = ["darkgreen", "sienna", "olive", "purple"];
+const Nope = -1;
 
+let presenceColors = ["darkgreen", "sienna", "olive", "purple"];
 export class Cursor {
     public off = true;
     public parentSpan: HTMLSpanElement;
@@ -2828,7 +2867,7 @@ export class Cursor {
     public presenceDiv: HTMLDivElement;
     public presenceInfo: ILocalPresenceInfo;
     public presenceInfoUpdated = true;
-
+    public mark = Nope;
     private blinkCount = 0;
     private blinkTimer: any;
     private bgColor = "blue";
@@ -2844,6 +2883,25 @@ export class Cursor {
         this.presenceInfo = presenceInfo;
         this.makePresenceDiv();
         this.show();
+    }
+
+    public tryMark() {
+        if (this.mark === Nope) {
+            this.mark = this.pos;
+        }
+    }
+
+    public clearSelection() {
+        this.mark = Nope;
+    }
+
+    public getSelection() {
+        if (this.mark !== Nope) {
+            return <IRange>{
+                end: Math.max(this.mark, this.pos),
+                start: Math.min(this.mark, this.pos),
+            };
+        }
     }
 
     public hide() {
@@ -3462,7 +3520,7 @@ export class FlowView extends ui.Component {
         this.client.getOrAddShortClientId(this.client.longClientId, this.client.userInfo);
         if (this.userMapView) {
             for (let remoteClientId of this.userMapView.keys()) {
-                this.remoteUserUpdate({ key: remoteClientId});
+                this.remoteUserUpdate({ key: remoteClientId });
             }
             this.userMapView.set(this.client.longClientId, this.client.userInfo);
         }
@@ -3921,6 +3979,11 @@ export class FlowView extends ui.Component {
                         if (this.cursor.pos === this.viewportEndPos) {
                             this.scroll(false, true);
                         }
+                        if (e.shiftKey) {
+                            this.cursor.tryMark();
+                        } else {
+                            this.cursor.clearSelection();
+                        }
                         this.cursorFwd();
                         this.updatePresence();
                         this.cursor.updateView(this);
@@ -3929,6 +3992,11 @@ export class FlowView extends ui.Component {
                     if (this.cursor.pos > FlowView.docStartPosition) {
                         if (this.cursor.pos === this.viewportStartPos) {
                             this.scroll(true, true);
+                        }
+                        if (e.shiftKey) {
+                            this.cursor.tryMark();
+                        } else {
+                            this.cursor.clearSelection();
                         }
                         this.cursorRev();
                         this.updatePresence();
@@ -4140,54 +4208,60 @@ export class FlowView extends ui.Component {
     }
 
     public toggleBold() {
-        let propToggle = (textSegment: SharedString.TextSegment, startPos: number, endPos: number) => {
-            if (textSegment.properties && textSegment.properties["font-weight"] &&
-                (textSegment.properties["font-weight"] === "bold")) {
-                this.sharedString.annotateRange({ "font-weight": null }, startPos, endPos);
-            } else {
-                this.sharedString.annotateRange({ "font-weight": "bold" }, startPos, endPos);
-            }
-        };
-        this.toggleCurrentWord(propToggle);
+        this.toggleWordOrSelection("font-weight", "bold", null);
+    }
+
+    public toggleItalic() {
+        this.toggleWordOrSelection("font-style", "italic", "normal");
     }
 
     public toggleUnderline() {
-        let propToggle = (textSegment: SharedString.TextSegment, startPos: number, endPos: number) => {
-            if (textSegment.properties && textSegment.properties["text-decoration"] &&
-                (textSegment.properties["text-decoration"] === "underline")) {
-                this.sharedString.annotateRange({ "text-decoration": null }, startPos, endPos);
-            } else {
-                this.sharedString.annotateRange({ "text-decoration": "underline" }, startPos, endPos);
-            }
-        };
-        this.toggleCurrentWord(propToggle);
+        this.toggleWordOrSelection("text-decoration", "underline", null);
     }
 
-    public toggleCurrentWord(propToggle: (textSegment: SharedString.TextSegment,
-        startPos: number, endPos: number) => void) {
-        let wordRange = getCurrentWord(this.cursor.pos, this.sharedString.client.mergeTree);
-        if (wordRange) {
-            let mrToggle = (segment: SharedString.Segment, segpos: number,
-                refSeq: number, clientId: number, start: number, end: number) => {
-                if (segment.getType() === SharedString.SegmentType.Text) {
-                    let textSegment = <SharedString.TextSegment>segment;
-                    // TODO: have combining op for css toggle
-                    let startPos = segpos;
-                    if ((start > 0) && (start < textSegment.text.length)) {
-                        startPos += start;
-                    }
-                    let endPos = segpos + textSegment.text.length;
-                    if (end < textSegment.text.length) {
-                        endPos = segpos + end;
-                    }
-                    propToggle(textSegment, startPos, endPos);
+    public toggleWordOrSelection(name: string, valueOn: string, valueOff: string) {
+        let sel = this.cursor.getSelection();
+        if (sel) {
+            this.cursor.clearSelection();
+            this.toggleRange(name, valueOn, valueOff, sel.start, sel.end);
+        } else {
+            let wordRange = getCurrentWord(this.cursor.pos, this.sharedString.client.mergeTree);
+            if (wordRange) {
+                this.toggleRange(name, valueOn, valueOff, wordRange.wordStart, wordRange.wordEnd);
+            }
+        }
+    }
+
+    public toggleRange(name: string, valueOn: string, valueOff: string, start: number, end: number) {
+        let someSet = false;
+        let findPropSet = (segment: SharedString.Segment) => {
+            if (segment.getType() === SharedString.SegmentType.Text) {
+                let textSegment = <SharedString.TextSegment>segment;
+                if (textSegment.properties && textSegment.properties[name] === valueOn) {
+                    someSet = true;
                 }
-                return true;
-            };
-            let text = this.sharedString.client.getText(wordRange.wordStart, wordRange.wordEnd);
-            console.log(`Word at cursor: [${wordRange.wordStart},${wordRange.wordEnd}) is ${text}`);
-            this.sharedString.client.mergeTree.mapRange({ leaf: mrToggle }, SharedString.UniversalSequenceNumber,
-                this.sharedString.client.getClientId(), undefined, wordRange.wordStart, wordRange.wordEnd);
+                return !someSet;
+            }
+        };
+        this.sharedString.client.mergeTree.mapRange({ leaf: findPropSet }, SharedString.UniversalSequenceNumber,
+            this.sharedString.client.getClientId(), undefined, start, end);
+        if (someSet) {
+            this.sharedString.annotateRange({ [name]: valueOff }, start, end);
+        } else {
+            this.sharedString.annotateRange({ [name]: valueOn }, start, end);
+        }
+        this.localQueueRender(this.cursor.pos);
+    }
+
+    public createComment() {
+        let sel = this.cursor.getSelection();
+        if (sel) {
+            let commentStory = this.sharedString.createString();
+            commentStory.insertText("a comment...", 0);
+            commentStory.attach();
+            this.comments.add(sel.start, sel.end, SharedString.IntervalType.Simple,
+                { story: commentStory });
+            this.cursor.clearSelection();
             this.localQueueRender(this.cursor.pos);
         }
     }
@@ -4229,12 +4303,11 @@ export class FlowView extends ui.Component {
                 this.setList();
                 break;
             case CharacterCodes.B: {
-                // this.toggleBold();
-                this.createBookmarks(5000);
+                this.toggleBold();
                 break;
             }
             case CharacterCodes.I: {
-                // this.toggleItalic("italic");
+                this.toggleItalic();
                 break;
             }
             case CharacterCodes.U: {
