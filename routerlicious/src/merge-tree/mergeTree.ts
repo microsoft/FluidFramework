@@ -1851,7 +1851,7 @@ export class Client {
         return clone;
     }
 
-    getOrAddShortClientId(longClientId: string, userInfo: IAuthenticatedUser = null, branchId = 0) {
+    getOrAddShortClientId(longClientId: string, userInfo: IAuthenticatedUser, branchId = 0) {
         if (!this.clientNameToIds.get(longClientId)) {
             this.addLongClientId(longClientId, userInfo, branchId);
         }
