@@ -1395,7 +1395,7 @@ function buildIntervalTieStyle(b: SharedString.Interval, startX: number, endX: n
     bookendDiv1.style.backgroundColor = "blue";
     bookendDiv2.style.backgroundColor = "blue";
     if (b.properties && b.properties["clid"]) {
-        let clientId = client.getOrAddShortClientId(b.properties["clid"]);
+        let clientId = client.getOrAddShortClientId(b.properties["clid"], b.properties["user"]);
         let bgColor = presenceColors[clientId % presenceColors.length];
         bookmarkDiv.style.backgroundColor = bgColor;
         bookendDiv1.style.backgroundColor = bgColor;
@@ -3439,8 +3439,7 @@ export class FlowView extends ui.Component {
     public remotePresenceUpdate(delta: types.IValueChanged) {
         if (delta.key !== this.client.longClientId) {
             let remotePresenceInfo = <IRemotePresenceInfo>this.presenceMapView.get(delta.key);
-            // For a remote user, client id should already be populated from user map. So passing null is fine.
-            remotePresenceInfo.clientId = this.client.getOrAddShortClientId(delta.key);
+            remotePresenceInfo.clientId = this.client.getOrAddShortClientId(delta.key, null);
             const userInfo = this.client.getUserInfo(remotePresenceInfo.clientId);
             remotePresenceInfo.key = (userInfo === null) ? delta.key : userInfo.user.id;
             this.remotePresenceToLocal(remotePresenceInfo);
@@ -3460,6 +3459,9 @@ export class FlowView extends ui.Component {
     public updateUser() {
         this.client.getOrAddShortClientId(this.client.longClientId, this.client.userInfo);
         if (this.userMapView) {
+            for (let remoteClientId of this.userMapView.keys()) {
+                this.remoteUserUpdate({ key: remoteClientId});
+            }
             this.userMapView.set(this.client.longClientId, this.client.userInfo);
         }
     }
@@ -4390,10 +4392,10 @@ export class FlowView extends ui.Component {
             // tslint:disable-next-line:max-line-length
             console.log(`time to edit/impression: ${this.timeToEdit} time to load: ${Date.now() - clockStart}ms len: ${this.sharedString.client.getLength()} - ${performanceNow()}`);
         }
-        const presenceMap = this.docRoot.get("presence") as types.IMap;
-        this.addPresenceMap(presenceMap);
         const userMap = this.docRoot.get("users") as types.IMap;
         this.addUserMap(userMap);
+        const presenceMap = this.docRoot.get("presence") as types.IMap;
+        this.addPresenceMap(presenceMap);
         let intervalMap = this.sharedString.intervalCollections.getMap();
         intervalMap.on("valueChanged", (delta: types.IValueChanged) => {
             this.queueRender(undefined, true);

@@ -870,7 +870,7 @@ export function TestPack(verbose = true) {
             getTextTime += elapsedMicroseconds(clockStart);
             getTextCalls++;
             clockStart = clock();
-            let serverBAText = serverB.mergeTree.getText(serverB.getCurrentSeq(), serverB.getOrAddShortClientId(aClientId));
+            let serverBAText = serverB.mergeTree.getText(serverB.getCurrentSeq(), serverB.getOrAddShortClientId(aClientId, null));
             crossGetTextTime += elapsedMicroseconds(clockStart);
             crossGetTextCalls++;
             if (serverAText != serverBAText) {
