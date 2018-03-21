@@ -234,10 +234,7 @@ export class WorkerService implements core.IWorkerService {
 
     private async processDocumentWork(docId: string, workType: string) {
         this.getServiceForDoc(docId).then((services) => {
-            if (!services) {
-                // Recursive calling if services are not available yet.
-                this.processDocumentWork(docId, workType);
-            } else {
+            if (services) {
                 switch (workType) {
                     case "snapshot":
                         const snapshotWork = new SnapshotWork(docId, this.config, services);
@@ -261,6 +258,8 @@ export class WorkerService implements core.IWorkerService {
                     default:
                         throw new Error("Unknown work type!");
                 }
+            } else {
+                console.log(`No services provide to load document ${docId} for work ${workType}`);
             }
         }, (error) => {
             console.log(`Error getting service for ${docId}: ${error}`);
@@ -290,25 +289,30 @@ export class WorkerService implements core.IWorkerService {
     }
 
     private startTask(docId: string, workType: string, worker: IWork) {
-        if (!(docId in this.documentMap)) {
-            let emptyMap: { [work: string]: IWork } = {};
-            this.documentMap[docId] = emptyMap;
-        }
-        if (!(workType in this.documentMap[docId])) {
-            this.documentMap[docId][workType] = worker;
-            if (workType !== "intel") {
-                worker.start();
-            } else {
-                // register all runtime added modules one by one.
-                const intelWork = this.documentMap[docId][workType] as IntelWork;
-                intelWork.start().then(() => {
-                    // tslint:disable-next-line
-                    for (let name in this.runtimeModules) {
-                        intelWork.registerNewService(this.runtimeModules[name].code);
-                    }
-                }, (err) => {
-                    console.log(`Error starting intel work: ${err}`);
-                });
+        if (worker !== undefined) {
+            if (!(docId in this.documentMap)) {
+                let emptyMap: { [work: string]: IWork } = {};
+                this.documentMap[docId] = emptyMap;
+            }
+            if (!(workType in this.documentMap[docId])) {
+                console.log(`Starting work ${workType} for document ${docId}`);
+                this.documentMap[docId][workType] = worker;
+                if (workType !== "intel") {
+                    worker.start().catch((err) => {
+                        console.log(`Error starting ${workType} for document ${docId}: ${err}`);
+                    });
+                } else {
+                    // register all runtime added modules one by one.
+                    const intelWork = this.documentMap[docId][workType] as IntelWork;
+                    intelWork.start().then(() => {
+                        // tslint:disable-next-line
+                        for (let name in this.runtimeModules) {
+                            intelWork.registerNewService(this.runtimeModules[name].code);
+                        }
+                    }, (err) => {
+                        console.log(`Error starting ${workType} for document ${docId}: ${err}`);
+                    });
+                }
             }
         }
     }
