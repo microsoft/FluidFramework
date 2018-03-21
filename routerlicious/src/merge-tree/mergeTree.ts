@@ -5,6 +5,7 @@ import * as Collections from "./collections";
 import * as ops from "./ops";
 import * as API from "../api-core";
 import { ISequencedObjectMessage } from "../api-core";
+import { IAuthenticatedUser } from "../core-utils";
 import * as Properties from "./properties";
 import * as assert from "assert";
 import { IRelativePosition } from "./index";
@@ -1723,6 +1724,7 @@ export function internedSpaces(n: number) {
 export interface ClientIds {
     clientId: number;
     branchId: number;
+    userInfo: IAuthenticatedUser;
 }
 
 export interface IUndoInfo {
@@ -1748,13 +1750,16 @@ export class Client {
     clientNameToIds = new Collections.RedBlackTree<string, ClientIds>(compareStrings);
     shortClientIdMap = <string[]>[];
     shortClientBranchIdMap = <number[]>[];
+    shortClientUserInfoMap = <IAuthenticatedUser[]>[];
     public longClientId: string;
+    public userInfo: IAuthenticatedUser;
     public undoSegments: IUndoInfo[];
     public redoSegments: IUndoInfo[];
 
     constructor(initText: string, options?: Properties.PropertySet) {
         this.mergeTree = new MergeTree(initText, options);
         this.mergeTree.getLongClientId = id => this.getLongClientId(id);
+        this.mergeTree.getUserInfo = id => this.getUserInfo(id);
         this.mergeTree.clientIdToBranchId = this.shortClientBranchIdMap;
         this.q = Collections.ListMakeHead<API.ISequencedObjectMessage>();
         this.checkQ = Collections.ListMakeHead<string>();
@@ -1846,9 +1851,9 @@ export class Client {
         return clone;
     }
 
-    getOrAddShortClientId(longClientId: string, branchId = 0) {
+    getOrAddShortClientId(longClientId: string, userInfo: IAuthenticatedUser = null, branchId = 0) {
         if (!this.clientNameToIds.get(longClientId)) {
-            this.addLongClientId(longClientId, branchId);
+            this.addLongClientId(longClientId, userInfo, branchId);
         }
         return this.getShortClientId(longClientId);
     }
@@ -1857,22 +1862,33 @@ export class Client {
         return this.clientNameToIds.get(longClientId).data.clientId;
     }
 
-    getLongClientId(clientId: number) {
-        if (clientId >= 0) {
-            return this.shortClientIdMap[clientId];
+    getLongClientId(shortClientId: number) {
+        if (shortClientId >= 0) {
+            return this.shortClientIdMap[shortClientId];
         }
         else {
             return "original";
         }
     }
 
-    addLongClientId(longClientId: string, branchId = 0) {
+    getUserInfo(shortClientId: number) {
+        if (shortClientId >= 0) {
+            return this.shortClientUserInfoMap[shortClientId];
+        }
+        else {
+            return null;
+        }
+    }
+
+    addLongClientId(longClientId: string, userInfo: IAuthenticatedUser, branchId = 0) {
         this.clientNameToIds.put(longClientId, {
             branchId,
-            clientId: this.shortClientIdMap.length
+            clientId: this.shortClientIdMap.length,
+            userInfo,
         });
         this.shortClientIdMap.push(longClientId);
         this.shortClientBranchIdMap.push(branchId);
+        this.shortClientUserInfoMap.push(userInfo);
     }
 
     getBranchId(clientId: number) {
@@ -1884,6 +1900,7 @@ export class Client {
         refSeq: number, objectId: string) {
         return <ISequencedObjectMessage>{
             clientId: this.longClientId,
+            user: this.userInfo,
             minimumSequenceNumber: undefined,
             clientSequenceNumber: this.clientSequenceNumber,
             sequenceNumber: seq,
@@ -1903,6 +1920,7 @@ export class Client {
     makeInsertMsg(text: string, pos: number, seq: number, refSeq: number, objectId: string) {
         return <ISequencedObjectMessage>{
             clientId: this.longClientId,
+            user: this.userInfo,
             sequenceNumber: seq,
             referenceSequenceNumber: refSeq,
             clientSequenceNumber: this.clientSequenceNumber,
@@ -1922,6 +1940,7 @@ export class Client {
     makeRemoveMsg(start: number, end: number, seq: number, refSeq: number, objectId: string) {
         return <ISequencedObjectMessage>{
             clientId: this.longClientId,
+            user: this.userInfo,
             sequenceNumber: seq,
             referenceSequenceNumber: refSeq,
             clientSequenceNumber: this.clientSequenceNumber,
@@ -1941,6 +1960,7 @@ export class Client {
     makeAnnotateMsg(props: Properties.PropertySet, start: number, end: number, seq: number, refSeq: number, objectId: string) {
         return <ISequencedObjectMessage>{
             clientId: this.longClientId,
+            user: this.userInfo,
             sequenceNumber: seq,
             referenceSequenceNumber: refSeq,
             objectId: objectId,
@@ -2012,7 +2032,7 @@ export class Client {
     }
 
     applyOp(op: ops.IMergeTreeOp, msg: API.ISequencedObjectMessage) {
-        let clid = this.getOrAddShortClientId(msg.clientId);
+        let clid = this.getOrAddShortClientId(msg.clientId, msg.user);
         switch (op.type) {
             case ops.MergeTreeDeltaType.INSERT:
                 if (op.relativePos1) {
@@ -2095,7 +2115,7 @@ export class Client {
         // The existance of msg.origin means we are a branch message - and so should be marked as 0
         // The non-existance of msg.origin indicates we are local - and should inherit the collab mode ID
         const branchId = msg.origin ? 0 : this.mergeTree.localBranchId;
-        this.getOrAddShortClientId(msg.clientId, branchId);
+        this.getOrAddShortClientId(msg.clientId, msg.user, branchId);
 
         // Apply if an operation message
         if (msg.type === API.OperationType) {
@@ -2456,9 +2476,10 @@ export class Client {
         return `cli: ${this.getLongClientId(clientId)} refSeq: ${refSeq}: ` + this.mergeTree.getText(refSeq, clientId);
     }
 
-    startCollaboration(longClientId: string, minSeq = 0, branchId = 0) {
+    startCollaboration(longClientId: string, userInfo: IAuthenticatedUser = null, minSeq = 0, branchId = 0) {
         this.longClientId = longClientId;
-        this.addLongClientId(longClientId, branchId);
+        this.userInfo = userInfo;
+        this.addLongClientId(longClientId, userInfo, branchId);
         this.mergeTree.startCollaboration(this.getShortClientId(this.longClientId), minSeq, branchId);
     }
 }
@@ -2475,7 +2496,7 @@ export var clientSeqComparer: Collections.Comparer<ClientSeq> = {
 
 /**
  * Server for tests.  Simulates client communication by directing placing
- * messages in client queues.  
+ * messages in client queues.
  */
 export class TestServer extends Client {
     seq = 1;
@@ -2768,6 +2789,7 @@ export class MergeTree {
     transactionSegmentGroup: SegmentGroup;
     // for diagnostics
     getLongClientId: (id: number) => string;
+    getUserInfo: (id: number) => IAuthenticatedUser;
     idToLref: LocalReferenceMapper;
 
     // TODO: make and use interface describing options

@@ -1,4 +1,5 @@
 import * as api from "../api-core";
+import { IAuthenticatedUser } from "../core-utils";
 
 // String identifying the raw operation message
 export const RawOperationType: string = "RawOperation";
@@ -40,7 +41,7 @@ export interface ISystemMessage extends IMessage {
  */
 export interface IObjectMessage extends IMessage {
     // The user who submitted the message
-    userId: string;
+    user: IAuthenticatedUser;
 
     // The object the message is intended for
     documentId: string;

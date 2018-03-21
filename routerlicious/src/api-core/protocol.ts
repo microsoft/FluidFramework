@@ -1,3 +1,4 @@
+import { IAuthenticatedUser } from "../core-utils";
 import * as storage from "./storage";
 
 // Delta operation application type
@@ -90,6 +91,9 @@ export interface IObjectMessage {
  * Sequenced message for a distributed data type
  */
 export interface ISequencedObjectMessage {
+    // User who sent the message.
+    user: IAuthenticatedUser;
+
     // The sequenced identifier
     sequenceNumber: number;
 
@@ -174,7 +178,7 @@ export interface IDocumentMessage {
  */
 export interface ISequencedDocumentMessage {
     // The user that submitted the delta
-    userId: string;
+    user: IAuthenticatedUser;
 
     // The client ID that submitted the delta
     clientId: string;

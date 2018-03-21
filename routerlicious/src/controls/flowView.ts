@@ -1,6 +1,7 @@
 // tslint:disable:no-bitwise whitespace align switch-default no-string-literal
 import performanceNow = require("performance-now");
 import { api, core, MergeTree as SharedString, types } from "../client-api";
+import { IAuthenticatedUser } from "../core-utils";
 import { findRandomWord } from "../merge-tree-utils";
 import { SharedIntervalCollection } from "../merge-tree/intervalCollection";
 import * as ui from "../ui";
@@ -3158,10 +3159,10 @@ export class FlowView extends ui.Component {
     public wheelTicking = false;
     public topChar = -1;
     public cursor: Cursor;
-    public presenceMap: types.IMap;
     public bookmarks: SharedIntervalCollection;
     public comments: SharedIntervalCollection;
     public presenceMapView: types.IMapView;
+    public userMapView: types.IMapView;
     public presenceVector: ILocalPresenceInfo[] = [];
     public docRoot: types.IMapView;
     public curPG: SharedString.Marker;
@@ -3225,7 +3226,7 @@ export class FlowView extends ui.Component {
         for (let i = 0; i < k; i++) {
             let pos1 = Math.floor(Math.random() * (len - 1));
             let intervalLen = Math.max(1, Math.floor(Math.random() * Math.min(len - pos1, 150)));
-            let props = { clid: this.sharedString.client.longClientId };
+            let props = { clid: this.sharedString.client.longClientId, user: this.sharedString.client.userInfo };
             this.bookmarks.add(pos1, pos1 + intervalLen, SharedString.IntervalType.Simple,
                 props);
         }
@@ -3340,13 +3341,22 @@ export class FlowView extends ui.Component {
     }
 
     public addPresenceMap(presenceMap: types.IMap) {
-        this.presenceMap = presenceMap;
         presenceMap.on("valueChanged", (delta: types.IValueChanged) => {
             this.remotePresenceUpdate(delta);
         });
         presenceMap.getView().then((v) => {
             this.presenceMapView = v;
             this.updatePresence();
+        });
+    }
+
+    public addUserMap(userMap: types.IMap) {
+        userMap.on("valueChanged", (delta: types.IValueChanged) => {
+            this.remoteUserUpdate(delta);
+        });
+        userMap.getView().then((v) => {
+            this.userMapView = v;
+            this.updateUser();
         });
     }
 
@@ -3392,10 +3402,10 @@ export class FlowView extends ui.Component {
         }
     }
 
-    public remotePresenceFromEdit(longClientId: string, refseq: number, oldpos: number, posAdjust = 0) {
+    public remotePresenceFromEdit(longClientId: string, userInfo: IAuthenticatedUser, refseq: number, oldpos: number, posAdjust = 0) {
         let remotePosInfo = <IRemotePresenceInfo>{
-            clientId: this.client.getOrAddShortClientId(longClientId),
-            key: longClientId,
+            clientId: this.client.getOrAddShortClientId(longClientId, userInfo),
+            key: userInfo === null ? longClientId : userInfo.user.id,
             origPos: oldpos + posAdjust,
             refseq,
         };
@@ -3429,8 +3439,10 @@ export class FlowView extends ui.Component {
     public remotePresenceUpdate(delta: types.IValueChanged) {
         if (delta.key !== this.client.longClientId) {
             let remotePresenceInfo = <IRemotePresenceInfo>this.presenceMapView.get(delta.key);
-            remotePresenceInfo.key = delta.key;
+            // For a remote user, client id should already be populated from user map. So passing null is fine.
             remotePresenceInfo.clientId = this.client.getOrAddShortClientId(delta.key);
+            const userInfo = this.client.getUserInfo(remotePresenceInfo.clientId);
+            remotePresenceInfo.key = (userInfo === null) ? delta.key : userInfo.user.id;
             this.remotePresenceToLocal(remotePresenceInfo);
         }
     }
@@ -3443,6 +3455,21 @@ export class FlowView extends ui.Component {
             };
             this.presenceMapView.set(this.client.longClientId, presenceInfo);
         }
+    }
+
+    public updateUser() {
+        this.client.getOrAddShortClientId(this.client.longClientId, this.client.userInfo);
+        if (this.userMapView) {
+            this.userMapView.set(this.client.longClientId, this.client.userInfo);
+        }
+    }
+
+    public remoteUserUpdate(delta: types.IValueChanged) {
+        if (delta.key !== this.client.longClientId) {
+            let remoteUserInfo = <IAuthenticatedUser>this.userMapView.get(delta.key);
+            this.client.getOrAddShortClientId(delta.key, remoteUserInfo);
+        }
+
     }
 
     public statusMessage(key: string, msg: string) {
@@ -4365,6 +4392,8 @@ export class FlowView extends ui.Component {
         }
         const presenceMap = this.docRoot.get("presence") as types.IMap;
         this.addPresenceMap(presenceMap);
+        const userMap = this.docRoot.get("users") as types.IMap;
+        this.addUserMap(userMap);
         let intervalMap = this.sharedString.intervalCollections.getMap();
         intervalMap.on("valueChanged", (delta: types.IValueChanged) => {
             this.queueRender(undefined, true);
@@ -4458,7 +4487,7 @@ export class FlowView extends ui.Component {
                     adjLength = delta.text.length;
                     this.cursor.pos += delta.text.length;
                 }
-                this.remotePresenceFromEdit(msg.clientId, msg.referenceSequenceNumber, delta.pos1, adjLength);
+                this.remotePresenceFromEdit(msg.clientId, msg.user, msg.referenceSequenceNumber, delta.pos1, adjLength);
                 this.updatePGInfo(delta.pos1);
                 return true;
             case SharedString.MergeTreeDeltaType.REMOVE:
@@ -4467,7 +4496,7 @@ export class FlowView extends ui.Component {
                 } else if (this.cursor.pos >= delta.pos1) {
                     this.cursor.pos = delta.pos1;
                 }
-                this.remotePresenceFromEdit(msg.clientId, msg.referenceSequenceNumber, delta.pos1);
+                this.remotePresenceFromEdit(msg.clientId, msg.user, msg.referenceSequenceNumber, delta.pos1);
                 this.updatePGInfo(delta.pos1);
                 return true;
             case SharedString.MergeTreeDeltaType.GROUP: {
