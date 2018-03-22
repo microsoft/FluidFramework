@@ -339,65 +339,65 @@ export const enum RBColor {
     BLACK
 }
 
-export interface Node<TKey, TData> {
+export interface RBNode<TKey, TData> {
     key: TKey;
     data: TData;
-    left: Node<TKey, TData>;
-    right: Node<TKey, TData>;
+    left: RBNode<TKey, TData>;
+    right: RBNode<TKey, TData>;
     color: RBColor;
     size: number;
 }
 
 export interface IRBAugmentation<TKey, TData> {
-    update(node: Node<TKey, TData>);
-    init?(node: Node<TKey, TData>);
+    update(node: RBNode<TKey, TData>);
+    init?(node: RBNode<TKey, TData>);
 }
 
 export interface IRBMatcher<TKey, TData> {
-    continueSubtree(node: Node<TKey, TData>, key: TKey): boolean;
-    matchNode(node: Node<TKey, TData>, key: TKey): boolean;
+    continueSubtree(node: RBNode<TKey, TData>, key: TKey): boolean;
+    matchNode(node: RBNode<TKey, TData>, key: TKey): boolean;
 }
 
 export interface NodeActions<TKey, TData> {
-    infix?(node: Node<TKey, TData>): boolean;
-    pre?(node: Node<TKey, TData>): boolean;
-    post?(node: Node<TKey, TData>): boolean;
+    infix?(node: RBNode<TKey, TData>): boolean;
+    pre?(node: RBNode<TKey, TData>): boolean;
+    post?(node: RBNode<TKey, TData>): boolean;
     showStructure?: boolean;
 }
 
 export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TData> {
-    root: Node<TKey, TData>;
+    root: RBNode<TKey, TData>;
     constructor(public compareKeys: Base.KeyComparer<TKey>, public aug?: IRBAugmentation<TKey, TData>) {
 
     }
 
     makeNode(key: TKey, data: TData, color: RBColor, size: number) {
-        let node = <Node<TKey, TData>>{ key: key, data: data, color: color, size: size };
+        let node = <RBNode<TKey, TData>>{ key: key, data: data, color: color, size: size };
         if (this.aug && this.aug.init) {
             this.aug.init(node);
         }
         return node;
     }
 
-    isRed(node: Node<TKey, TData>) {
+    isRed(node: RBNode<TKey, TData>) {
         return node && (node.color == RBColor.RED);
     }
 
-    nodeSize(node: Node<TKey, TData>) {
+    nodeSize(node: RBNode<TKey, TData>) {
         return node ? node.size : 0;
     }
     size() {
         return this.nodeSize(this.root);
     }
     isEmpty() {
-        return this.root;
+        return !this.root;
     }
     get(key: TKey) {
         if (key !== undefined) {
             return this.nodeGet(this.root, key);
         }
     }
-    nodeGet(node: Node<TKey, TData>, key: TKey) {
+    nodeGet(node: RBNode<TKey, TData>, key: TKey) {
         while (node) {
             let cmp = this.compareKeys(key, node.key);
             if (cmp < 0) {
@@ -416,14 +416,14 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
     }
 
     gather(key: TKey, matcher: IRBMatcher<TKey, TData>) {
-        let results = [] as Node<TKey, TData>[];
+        let results = [] as RBNode<TKey, TData>[];
         if (key !== undefined) {
             this.nodeGather(this.root, results, key, matcher);
         }
         return results;
     }
 
-    nodeGather(node: Node<TKey, TData>, results: Node<TKey, TData>[],
+    nodeGather(node: RBNode<TKey, TData>, results: RBNode<TKey, TData>[],
         key: TKey, matcher: IRBMatcher<TKey, TData>) {
         if (node) {
             if (matcher.continueSubtree(node.left, key)) {
@@ -449,7 +449,7 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
             }
         }
     }
-    nodePut(node: Node<TKey, TData>, key: TKey, data: TData, conflict?: Base.ConflictAction<TKey, TData>) {
+    nodePut(node: RBNode<TKey, TData>, key: TKey, data: TData, conflict?: Base.ConflictAction<TKey, TData>) {
         if (!node) {
             return this.makeNode(key, data, RBColor.RED, 1);
         }
@@ -486,7 +486,7 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
         }
     }
 
-    updateLocal(node: Node<TKey, TData>) {
+    updateLocal(node: RBNode<TKey, TData>) {
         if (this.aug) {
             if (this.isRed(node.left)) {
                 this.aug.update(node.left);
@@ -511,7 +511,7 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
         }
         // TODO: error on empty
     }
-    nodeRemoveMin(node: Node<TKey, TData>) {
+    nodeRemoveMin(node: RBNode<TKey, TData>) {
         if (node.left) {
             if ((!this.isRed(node.left)) && (!this.isRed(node.left.left))) {
                 node = this.moveRedLeft(node);
@@ -536,7 +536,7 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
         // TODO: error on empty
     }
 
-    nodeRemoveMax(node: Node<TKey, TData>) {
+    nodeRemoveMax(node: RBNode<TKey, TData>) {
         if (this.isRed(node.left)) {
             node = this.rotateRight(node);
         }
@@ -569,7 +569,7 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
         // TODO: error on undefined key
     }
 
-    nodeRemove(node: Node<TKey, TData>, key: TKey) {
+    nodeRemove(node: RBNode<TKey, TData>, key: TKey) {
         if (this.compareKeys(key, node.key) < 0) {
             if ((!this.isRed(node.left)) && (!this.isRed(node.left.left))) {
                 node = this.moveRedLeft(node);
@@ -601,7 +601,7 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
     height() {
         return this.nodeHeight(this.root);
     }
-    nodeHeight(node: Node<TKey, TData>) {
+    nodeHeight(node: RBNode<TKey, TData>) {
         if (node === undefined) {
             return -1;
         }
@@ -616,7 +616,7 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
         }
     }
 
-    nodeFloor(node: Node<TKey, TData>, key: TKey) {
+    nodeFloor(node: RBNode<TKey, TData>, key: TKey): RBNode<TKey,TData> {
         if (node) {
             let cmp = this.compareKeys(key, node.key);
             if (cmp == 0) {
@@ -637,6 +637,33 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
         }
     }
 
+    ceil(key: TKey) {
+        if (!this.isEmpty()) {
+            return this.nodeCeil(this.root, key);
+        }
+    }
+
+    nodeCeil(node: RBNode<TKey, TData>, key: TKey): RBNode<TKey,TData> {
+        if (node) {
+            let cmp = this.compareKeys(key, node.key);
+            if (cmp == 0) {
+                return node;
+            }
+            else if (cmp > 0) {
+                return this.nodeCeil(node.right, key);
+            }
+            else {
+                let leftCeil = this.nodeCeil(node.left, key);
+                if (leftCeil) {
+                    return leftCeil;
+                }
+                else {
+                    return node;
+                }
+            }
+        }
+    }
+
     min() {
         if (!this.isEmpty()) {
             return this.nodeMin(this.root);
@@ -644,7 +671,7 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
         // TODO: error on empty
     }
 
-    nodeMin(node: Node<TKey, TData>): Node<TKey, TData> {
+    nodeMin(node: RBNode<TKey, TData>): RBNode<TKey, TData> {
         if (!node.left) {
             return node;
         }
@@ -660,7 +687,7 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
         // TODO: error on empty
     }
 
-    nodeMax(node: Node<TKey, TData>): Node<TKey, TData> {
+    nodeMax(node: RBNode<TKey, TData>): RBNode<TKey, TData> {
         if (!node.right) {
             return node;
         }
@@ -669,7 +696,7 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
         }
     }
 
-    rotateRight(node: Node<TKey, TData>) {
+    rotateRight(node: RBNode<TKey, TData>) {
         let leftChild = node.left;
         node.left = leftChild.right;
         leftChild.right = node;
@@ -684,7 +711,7 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
         return leftChild;
     }
 
-    rotateLeft(node: Node<TKey, TData>) {
+    rotateLeft(node: RBNode<TKey, TData>) {
         let rightChild = node.right;
         node.right = rightChild.left;
         rightChild.left = node;
@@ -703,13 +730,13 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
         return (c == RBColor.BLACK) ? RBColor.RED : RBColor.BLACK;
     }
 
-    flipColors(node: Node<TKey, TData>) {
+    flipColors(node: RBNode<TKey, TData>) {
         node.color = this.oppositeColor(node.color);
         node.left.color = this.oppositeColor(node.left.color);
         node.right.color = this.oppositeColor(node.right.color);
     }
 
-    moveRedLeft(node: Node<TKey, TData>) {
+    moveRedLeft(node: RBNode<TKey, TData>) {
         this.flipColors(node);
         if (this.isRed(node.right.left)) {
             node.right = this.rotateRight(node.right);
@@ -719,7 +746,7 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
         return node;
     }
 
-    moveRedRight(node: Node<TKey, TData>) {
+    moveRedRight(node: RBNode<TKey, TData>) {
         this.flipColors(node);
         if (this.isRed(node.left.left)) {
             node = this.rotateRight(node);
@@ -728,7 +755,7 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
         return node;
     }
 
-    balance(node: Node<TKey, TData>) {
+    balance(node: RBNode<TKey, TData>) {
         if (this.isRed(node.right)) {
             node = this.rotateLeft(node);
         }
@@ -776,7 +803,7 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
         this.nodeWalk(this.root, actions);
     }
 
-    nodeWalk(node: Node<TKey, TData>, actions: NodeActions<TKey, TData>) {
+    nodeWalk(node: RBNode<TKey, TData>, actions: NodeActions<TKey, TData>) {
         let go = true;
         if (node) {
             if (actions.pre) {
@@ -804,7 +831,7 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
         return go;
     }
 
-    nodeMap<TAccum>(node: Node<TKey, TData>, action: Base.PropertyAction<TKey, TData>,
+    nodeMap<TAccum>(node: RBNode<TKey, TData>, action: Base.PropertyAction<TKey, TData>,
         accum?: TAccum, start?: TKey, end?: TKey) {
         if (!node) {
             return true;
@@ -874,7 +901,7 @@ export function integerRangeToString(range: Base.IIntegerRange) {
     return `[${range.start},${range.end})`;
 }
 
-export type IntegerRangeNode = Node<Base.IIntegerRange, AugIntegerRangeNode>;
+export type IntegerRangeNode = RBNode<Base.IIntegerRange, AugIntegerRangeNode>;
 
 // TODO: handle duplicate keys
 
@@ -968,7 +995,7 @@ export interface IInterval {
 export function intervalComparer(a: IInterval, b: IInterval) {
     return a.compare(b);
 }
-export type IntervalNode<T extends IInterval> = Node<T, AugmentedIntervalNode>;
+export type IntervalNode<T extends IInterval> = RBNode<T, AugmentedIntervalNode>;
 
 export class IntervalTree<T extends IInterval> implements IRBAugmentation<T, AugmentedIntervalNode>,
     IRBMatcher<T, AugmentedIntervalNode> {
@@ -979,9 +1006,9 @@ export class IntervalTree<T extends IInterval> implements IRBAugmentation<T, Aug
     putCount = 0;
 
     printTiming() {
-        console.log(`put total = ${this.putTime} avg=${(this.putTime/this.putCount).toFixed(2)}`);
+        console.log(`put total = ${this.putTime} avg=${(this.putTime / this.putCount).toFixed(2)}`);
     }
-    
+
     remove(x: T) {
         this.intervals.remove(x);
     }
@@ -1157,14 +1184,14 @@ export class TST<T> {
         this.collect(x.right, prefix, q);
     }
 
-    pairsWithPrefix(text:string) {
+    pairsWithPrefix(text: string) {
         let q = <TSTResult<T>[]>[];
         let x = this.nodeGet(this.root, text, 0);
         if (x === undefined) {
             return q;
         }
         if (x.val !== undefined) {
-            q.push({ key: text, val: x.val});
+            q.push({ key: text, val: x.val });
         }
         this.collectPairs(x.mid, { text }, q);
         return q;
@@ -1176,7 +1203,7 @@ export class TST<T> {
         }
         this.collectPairs(x.left, prefix, q);
         if (x.val !== undefined) {
-            q.push({ key: prefix.text+x.c, val: x.val});
+            q.push({ key: prefix.text + x.c, val: x.val });
         }
         this.collectPairs(x.mid, { text: prefix.text + x.c }, q);
         this.collectPairs(x.right, prefix, q);

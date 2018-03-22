@@ -3,7 +3,7 @@ import performanceNow = require("performance-now");
 import { api, core, MergeTree as SharedString, types } from "../client-api";
 import { IAuthenticatedUser } from "../core-utils";
 import { findRandomWord } from "../merge-tree-utils";
-import { SharedIntervalCollection } from "../merge-tree/intervalCollection";
+import { Interval, SharedIntervalCollection } from "../merge-tree/intervalCollection";
 import * as ui from "../ui";
 import { Status } from "./status";
 
@@ -149,6 +149,7 @@ interface ITextErrorInfo {
 
 export interface ICmd extends Item {
     exec?: (flowView: FlowView) => void;
+    enabled?: (flowView: FlowView) => boolean;
 }
 
 let commands: ICmd[] = [
@@ -193,6 +194,40 @@ let commands: ICmd[] = [
             f.setList(1);
         },
         key: "list ... \u2022",
+    },
+    {
+        exec: (f) => {
+            f.showAdjacentBookmark();
+        },
+        key: "previous bookmark",
+    },
+    {
+        exec: (f) => {
+            f.showAdjacentBookmark(false);
+        },
+        key: "next bookmark",
+    },
+    {
+        enabled: (f) => {
+            return !f.modes.showBookmarks;
+        },
+        exec: (f) => {
+            f.modes.showBookmarks = true;
+            f.tempBookmarks = undefined;
+            f.localQueueRender(f.cursor.pos);
+        },
+        key: "show bookmarks",
+    },
+    {
+        enabled: (f) => {
+            return f.modes.showBookmarks;
+        },
+        exec: (f) => {
+            f.modes.showBookmarks = false;
+            f.tempBookmarks = undefined;
+            f.localQueueRender(f.cursor.pos);
+        },
+        key: "hide bookmarks",
     },
     {
         exec: (f) => {
@@ -651,7 +686,7 @@ export function searchBoxCreate(boundingElm: HTMLElement,
     }
 
     function init() {
-        container.style.zIndex = "1";
+        container.style.zIndex = "4";
         inputBox = inputBoxCreate((s) => updateText(),
             (s) => updateText());
         inputElm = inputBox.elm;
@@ -1431,8 +1466,7 @@ function buildIntervalTieStyle(properties: SharedString.PropertySet, startX: num
 function showBookmark(properties: SharedString.PropertySet, lineText: string,
     start: number, end: number, lineStart: number,
     computedEnd: number, lineFontstr: string, lineDivHeight: number,
-    contentDiv: HTMLDivElement, client: SharedString.Client) {
-    let useTie = false;
+    contentDiv: HTMLDivElement, client: SharedString.Client, useTie = false) {
     let startX: number;
     if (start >= lineStart) {
         startX = getTextWidth(lineText.substring(0, start - lineStart), lineFontstr);
@@ -1468,14 +1502,26 @@ function showBookmarks(flowView: FlowView, lineStart: number, lineEnd: number,
             showBookmark(undefined, lineText, sel.start, sel.end, lineStart,
                 computedEnd, lineFontstr, lineDivHeight, contentDiv, client);
         }
-        if (bookmarks) {
+        if (flowView.tempBookmarks && (!flowView.modes.showBookmarks)) {
+            for (let b of flowView.tempBookmarks) {
+                if (b.overlapsPos(client.mergeTree, lineStart, lineEnd)) {
+                    let start = b.start.toPosition(client.mergeTree, client.getCurrentSeq(),
+                        client.getClientId());
+                    let end = b.end.toPosition(client.mergeTree, client.getCurrentSeq(),
+                        client.getClientId());
+                    showBookmark(b.properties, lineText, start, end, lineStart,
+                        computedEnd, lineFontstr, lineDivHeight, contentDiv, client, true);
+                }
+            }
+        }
+        if (bookmarks && flowView.modes.showBookmarks) {
             for (let b of bookmarks) {
                 let start = b.start.toPosition(client.mergeTree, client.getCurrentSeq(),
                     client.getClientId());
                 let end = b.end.toPosition(client.mergeTree, client.getCurrentSeq(),
                     client.getClientId());
                 showBookmark(b.properties, lineText, start, end, lineStart,
-                    computedEnd, lineFontstr, lineDivHeight, contentDiv, client);
+                    computedEnd, lineFontstr, lineDivHeight, contentDiv, client, true);
             }
         }
         if (comments) {
@@ -3195,6 +3241,11 @@ function preventD(e: Event) {
     return false;
 }
 
+export interface IFlowViewModes {
+    showBookmarks?: boolean;
+    showComments?: boolean;
+}
+
 export class FlowView extends ui.Component {
     public static docStartPosition = 0;
     public timeToImpression: number;
@@ -3218,12 +3269,14 @@ export class FlowView extends ui.Component {
     public topChar = -1;
     public cursor: Cursor;
     public bookmarks: SharedIntervalCollection;
+    public tempBookmarks: Interval[];
     public comments: SharedIntervalCollection;
     public presenceMapView: types.IMapView;
     public userMapView: types.IMapView;
     public presenceVector: ILocalPresenceInfo[] = [];
     public docRoot: types.IMapView;
     public curPG: SharedString.Marker;
+    public modes = <IFlowViewModes>{ showBookmarks: true, showComments: true };
     private lastVerticalX = -1;
     private randWordTimer: any;
     private pendingRender = false;
@@ -4253,6 +4306,30 @@ export class FlowView extends ui.Component {
         this.localQueueRender(this.cursor.pos);
     }
 
+    public showAdjacentBookmark(before = true) {
+        if (this.bookmarks) {
+            let result: SharedString.Interval;
+            if (before) {
+                result = this.bookmarks.localCollection.previousInterval(this.cursor.pos);
+            } else {
+                result = this.bookmarks.localCollection.nextInterval(this.cursor.pos);
+            }
+            if (result) {
+                let s = result.start.toPosition(this.client.mergeTree,
+                    SharedString.UniversalSequenceNumber, this.client.getClientId());
+                let e = result.end.toPosition(this.client.mergeTree,
+                    SharedString.UniversalSequenceNumber, this.client.getClientId());
+                let descr = "next ";
+                if (before) {
+                    descr = "previous ";
+                }
+                console.log(`${descr} bookmark is [${s},${e})`);
+                this.tempBookmarks = [result];
+                this.localQueueRender(this.cursor.pos);
+            }
+        }
+    }
+
     public createComment() {
         let sel = this.cursor.getSelection();
         if (sel) {
@@ -4292,7 +4369,9 @@ export class FlowView extends ui.Component {
                 this.activeSearchBox = searchBoxCreate(this.viewportDiv, (searchString) => {
                     let prefix = this.activeSearchBox.getSearchString();
                     let items = this.cmdTree.pairsWithPrefix(prefix).map((res) => {
-                        return res.val;
+                        if (!res.val.enabled || res.val.enabled(this)) {
+                            return res.val;
+                        }
                     });
                     this.activeSearchBox.showSelectionList(items);
                     // TODO: consolidate with the cr case
@@ -4460,8 +4539,6 @@ export class FlowView extends ui.Component {
     public loadFinished(clockStart = 0) {
         this.bookmarks = this.sharedString.getSharedIntervalCollection("bookmarks");
         this.comments = this.sharedString.getSharedIntervalCollection("comments");
-        this.comments.add(0, 4, SharedString.IntervalType.Simple,
-            { story: this.sharedString });
         this.render(0, true);
         if (clockStart > 0) {
             // tslint:disable-next-line:max-line-length

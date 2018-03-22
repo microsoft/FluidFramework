@@ -70,22 +70,30 @@ export class Interval implements Collections.IInterval {
             this.checkMergeTree.collabWindow.clientId);
         let bend = b.end.toPosition(this.checkMergeTree, this.checkMergeTree.collabWindow.currentSeq,
             this.checkMergeTree.collabWindow.clientId);
-        let checkResult = ((astart<bend)&&(bstart<aend));
+        let checkResult = ((astart < bend) && (bstart < aend));
         if (checkResult !== result) {
-            console.log(`check mismatch: res ${result} ${this.start.segment===b.end.segment} ${b.start.segment===this.end.segment}`);
+            console.log(`check mismatch: res ${result} ${this.start.segment === b.end.segment} ${b.start.segment === this.end.segment}`);
             console.log(`as ${astart} ae ${aend} bs ${bstart} be ${bend}`);
             console.log(`as ${MergeTree.ordinalToArray(this.start.segment.ordinal)}@${this.start.offset}`);
             console.log(`ae ${MergeTree.ordinalToArray(this.end.segment.ordinal)}@${this.end.offset}`);
             console.log(`bs ${MergeTree.ordinalToArray(b.start.segment.ordinal)}@${b.start.offset}`);
             console.log(`be ${MergeTree.ordinalToArray(b.end.segment.ordinal)}@${b.end.offset}`);
-            console.log(this.checkMergeTree.nodeToString(b.start.segment.parent,""));
+            console.log(this.checkMergeTree.nodeToString(b.start.segment.parent, ""));
         }
 
     }
 
+    overlapsPos(mergeTree: MergeTree.MergeTree, bstart: number, bend: number) {
+        let startPos = this.start.toPosition(mergeTree, MergeTree.UniversalSequenceNumber,
+            mergeTree.collabWindow.clientId);
+        let endPos = this.start.toPosition(mergeTree, MergeTree.UniversalSequenceNumber,
+            mergeTree.collabWindow.clientId);
+        return (endPos>bstart)&&(startPos<bend);
+    }
+
     overlaps(b: Interval) {
         let result = (this.start.compare(b.end) < 0) &&
-            (this.end.compare(b.start) > 0);
+            (this.end.compare(b.start) >= 0);
         if (this.checkMergeTree) {
             this.checkOverlaps(b, result);
         }
@@ -128,8 +136,13 @@ export function createInterval(label: string, sharedString: SharedString.SharedS
     }
 }
 
+export function endIntervalComparer(a: Interval, b: Interval) {
+    return a.end.compare(b.end);
+}
+
 export class LocalIntervalCollection implements IIntervalCollection {
     intervalTree = new Collections.IntervalTree<Interval>();
+    endIntervalTree = new Collections.RedBlackTree<Interval, Interval>(endIntervalComparer);
 
     constructor(public sharedString: SharedString.SharedString, public label: string) {
     }
@@ -139,6 +152,24 @@ export class LocalIntervalCollection implements IIntervalCollection {
             startPosition, endPosition, ops.IntervalType.Simple);
         let overlappingIntervalNodes = this.intervalTree.match(transientInterval);
         return overlappingIntervalNodes.map((node) => node.key);
+    }
+
+    public previousInterval(pos: number) {
+        let transientInterval = createInterval("transient", this.sharedString,
+            pos, pos, ops.IntervalType.Simple);
+        let rbNode = this.endIntervalTree.floor(transientInterval);
+        if (rbNode) {
+            return rbNode.data;
+        }
+    }
+
+    public nextInterval(pos: number) {
+        let transientInterval = createInterval("transient", this.sharedString,
+            pos, pos, ops.IntervalType.Simple);
+        let rbNode = this.endIntervalTree.ceil(transientInterval);
+        if (rbNode) {
+            return rbNode.data;
+        }
     }
 
     public createInterval(start: number, end: number, intervalType: ops.IntervalType) {
@@ -153,6 +184,7 @@ export class LocalIntervalCollection implements IIntervalCollection {
             interval.addProperties(props);
             interval.properties[MergeTree.reservedRangeLabelsKey] = [this.label];
             this.intervalTree.put(interval);
+            this.endIntervalTree.put(interval, interval);
         }
         return interval;
     }
