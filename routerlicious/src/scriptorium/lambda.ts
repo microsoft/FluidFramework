@@ -161,9 +161,7 @@ export class WorkManager extends EventEmitter {
         let maxHead = this.lastOffset;
         let range = new Range();
 
-        winston.info(`Start offset compute ${this.lastOffset}`);
         for (const work of this.work) {
-            winston.info(`${range.tail} => ${range.head}`);
             maxHead = Math.max(maxHead, work.range.head);
             range = Range.union(range, work.range);
         }
@@ -171,7 +169,6 @@ export class WorkManager extends EventEmitter {
         // If all the offsets are empty we take the max of the heads (which will be the largest offset seen). Otherwise
         // it is the smallest tail
         const offset = range.empty ? maxHead : range.tail;
-        winston.info(`Offset is ${offset}`);
         assert.ok(offset >= this.lastOffset);
         if (offset !== this.lastOffset) {
             this.lastOffset = offset;
@@ -181,10 +178,12 @@ export class WorkManager extends EventEmitter {
 }
 
 export class ScriptoriumLambda implements IPartitionLambda {
-    // We maintain two batches of work - one for MongoDB and the other for Socket.IO
+    // We maintain three batches of work - one for MongoDB and the other two for Socket.IO.
+    // One socket.IO group is for sequenced ops and the other for nack'ed messages.
     // By splitting the two we can update each independently and on their own cadence
     private mongoManager: BatchManager<core.ISequencedOperationMessage>;
-    private ioManager: BatchManager<core.INack | api.ISequencedDocumentMessage>;
+    private ioManager: BatchManager<api.ISequencedDocumentMessage>;
+    private nackManager: BatchManager<api.INack>;
     private idleManager: BatchManager<void>;
 
     private workManager = new WorkManager();
@@ -202,7 +201,8 @@ export class ScriptoriumLambda implements IPartitionLambda {
 
         // Create all the batched workers
         this.mongoManager = this.workManager.createBatchedWork((batch) => this.processMongoBatch(batch));
-        this.ioManager = this.workManager.createBatchedWork((batch) => this.processIoBatch(batch));
+        this.ioManager = this.workManager.createBatchedWork((batch) => this.processIoBatch("op", batch));
+        this.nackManager = this.workManager.createBatchedWork((batch) => this.processIoBatch("nack", batch));
         this.idleManager = this.workManager.createBatchedWork<void>(async (batch) => { return; });
 
         this.io.on("error", (error) => {
@@ -226,7 +226,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
             this.ioManager.add(value.documentId, value.operation, message.offset);
         } else if (baseMessage.type === core.NackOperationType) {
             const value = baseMessage as core.INackMessage;
-            this.ioManager.add(`client#${value.clientId}`, value.operation, message.offset);
+            this.nackManager.add(`client#${value.clientId}`, value.operation, message.offset);
         } else {
             // Treat all other messages as an idle batch of work for simplicity
             this.idleManager.add(null, null, message.offset);
@@ -255,7 +255,10 @@ export class ScriptoriumLambda implements IPartitionLambda {
     /**
      * BatchManager callback invoked once a new batch is ready to be processed
      */
-    private async processIoBatch(batch: Batch<core.INack | api.ISequencedDocumentMessage>): Promise<void> {
+    private async processIoBatch(
+        event: string,
+        batch: Batch<api.INack | api.ISequencedDocumentMessage>): Promise<void> {
+
         // Serialize the current batch to Mongo
         await batch.map(async (id, work) => {
             // Add trace to each message before routing.
@@ -266,7 +269,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
                 }
             });
 
-            this.io.to(id).emit("op", id, work);
+            this.io.to(id).emit(event, id, work);
         });
     }
 

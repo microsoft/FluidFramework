@@ -169,6 +169,14 @@ export interface IDocumentMessage {
     traces: ITrace[];
 }
 
+export interface INack {
+    // The operation that was just nacked
+    operation: IDocumentMessage;
+
+    // The sequence number the client needs to catch up to
+    sequenceNumber: number;
+}
+
 /**
  * Sequenced message for a distribute document
  */

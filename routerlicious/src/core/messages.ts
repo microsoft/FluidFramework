@@ -77,14 +77,6 @@ export interface ITicketedMessage extends IMessage {
     documentId: string;
 }
 
-export interface INack {
-    // The operation that was just nacked
-    operation: api.IDocumentMessage;
-
-    // The sequence number the client needs to catch up to
-    sequenceNumber: number;
-}
-
 /**
  * Message sent when a raw opeartion is nacked
  */
@@ -93,7 +85,7 @@ export interface INackMessage extends ITicketedMessage {
     clientId: string;
 
     // The details of the nack
-    operation: INack;
+    operation: api.INack;
 }
 
 /**
