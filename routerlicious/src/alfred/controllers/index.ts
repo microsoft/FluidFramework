@@ -33,3 +33,5 @@ export { ping };
 
 import * as commits from "./commits";
 export { commits };
+
+export * from "./utils";

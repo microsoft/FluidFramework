@@ -26,69 +26,65 @@ export function create(config: Provider, tenantManager: ITenantManager): Router 
                         type: "maps",
                         versions: JSON.stringify(versions),
                     });
-            },
-            (error) => {
-                response.status(400).json(error);
-            });
+        }, (error) => {
+            response.status(400).json(error);
+        });
     });
 
     /**
      * Loading of a specific version of shared text.
      */
-    router.get("/:tenantId?/:id/commit", (request, response, next) => {
+    router.get("/:tenantId?/:id/commit", async (request, response, next) => {
         const id = utils.getFullId(request.params.tenantId, request.params.id);
 
         const targetVersionSha = request.query.version;
-        const workerConfig = utils.getConfig(config.get("worker"), tenantManager, request.params.tenantId);
+        const workerConfigP = utils.getConfig(config.get("worker"), tenantManager, request.params.tenantId);
         const versionsP = storage.getVersion(
             tenantManager,
             request.params.tenantid,
             request.params.id,
             targetVersionSha);
 
-        versionsP.then(
-            (version) => {
-                response.render(
-                    "maps",
-                    {
-                        config: workerConfig,
-                        id,
-                        loadPartial: true,
-                        partials: defaultPartials,
-                        title: request.params.id,
-                        version: JSON.stringify(version),
-                    });
-            },
-            (error) => {
-                response.status(400).json(error);
-            });
+        Promise.all([workerConfigP, versionsP]).then((values) => {
+            response.render(
+                "maps",
+                {
+                    config: values[0],
+                    id,
+                    loadPartial: true,
+                    partials: defaultPartials,
+                    title: request.params.id,
+                    version: JSON.stringify(values[1]),
+                });
+        },
+        (error) => {
+            response.status(400).json(error);
+        });
     });
 
     /**
      * Loading of a specific collaborative map
      */
-    router.get("/:tenantId?/:id", (request, response, next) => {
+    router.get("/:tenantId?/:id", async (request, response, next) => {
         const id = utils.getFullId(request.params.tenantId, request.params.id);
 
-        const workerConfig = utils.getConfig(config.get("worker"), tenantManager, request.params.tenantId);
+        const workerConfigP = utils.getConfig(config.get("worker"), tenantManager, request.params.tenantId);
         const versionP = storage.getLatestVersion(tenantManager, request.params.tenantId, request.params.id);
 
-        versionP.then(
-            (version) => {
-                response.render(
-                    "maps",
-                    {
-                        config: workerConfig,
-                        id,
-                        loadPartial: false,
-                        partials: defaultPartials,
-                        title: request.params.id,
-                        version: JSON.stringify(version),
-                    });
-            },
-            (error) => {
-                response.status(400).json(error);
-            });
+        Promise.all([workerConfigP, versionP]).then((values) => {
+            response.render(
+                "maps",
+                {
+                    config: values[0],
+                    id,
+                    loadPartial: false,
+                    partials: defaultPartials,
+                    title: request.params.id,
+                    version: JSON.stringify(values[1]),
+                });
+        }, (error) => {
+            response.status(400).json(error);
+        });
     });
 
     return router;

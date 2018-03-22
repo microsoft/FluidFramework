@@ -40,7 +40,7 @@ function overlappingInsert(bSeesTheCat = false) {
     console.log(clientA.mergeTree.toString());
     // propagate client A's op to client B
     let referenceSequenceNumber = 0;
-    let bLocalIdForA = clientB.getOrAddShortClientId("A");
+    let bLocalIdForA = clientB.getOrAddShortClientId("A", null);
     clientB.insertTextRemote("cat ", 0, properties, sequenceNumber,
         referenceSequenceNumber, bLocalIdForA);
     console.log(clientB.mergeTree.toString());
@@ -48,7 +48,7 @@ function overlappingInsert(bSeesTheCat = false) {
     // simulate server choosing B's two insert operations as sequence numbers 2 and 3
     clientB.ackPendingSegment(sequenceNumber);
     console.log(clientB.mergeTree.toString());
-    let aLocalIdForB = clientA.getOrAddShortClientId("B");
+    let aLocalIdForB = clientA.getOrAddShortClientId("B", null);
     clientA.insertTextRemote("big ", 0, properties, sequenceNumber,
         referenceSequenceNumber, aLocalIdForB);
     console.log(clientA.mergeTree.toString());

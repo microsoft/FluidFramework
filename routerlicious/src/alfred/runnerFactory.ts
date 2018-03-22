@@ -71,9 +71,11 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
         const mongoFactory = new services.MongoDbFactory(mongoUrl);
         const mongoManager = new utils.MongoManager(mongoFactory);
         const documentsCollectionName = config.get("mongo:collectionNames:documents");
+        const tenantsCollectionName = config.get("mongo:collectionNames:tenants");
+        const tenantConfig = config.get("tenantConfig");
 
         // Tenant configuration
-        const tenantManager = await services.TenantManager.Load(config.get("tenantConfig"));
+        const tenantManager = await services.TenantManager.Load(mongoManager, tenantConfig, tenantsCollectionName);
 
         // This wanst to create stuff
         let port = normalizePort(process.env.PORT || "3000");

@@ -11,6 +11,7 @@ import {
     ICollaborativeObject,
     ICollaborativeObjectSave,
     IDeltaConnection,
+    IDeltaManager,
     IDistributedObject,
     IDistributedObjectServices,
     IDocumentAttributes,
@@ -54,6 +55,12 @@ defaultRegistry.register(new mapExtension.MapExtension());
 defaultRegistry.register(new mergeTree.CollaboritiveStringExtension());
 defaultRegistry.register(new stream.StreamExtension());
 defaultRegistry.register(new cell.CellExtension());
+
+// Register default map value types
+mapExtension.registerDefaultValueType(new mapExtension.DistributedSetValueType());
+mapExtension.registerDefaultValueType(new mapExtension.DistributedArrayValueType());
+mapExtension.registerDefaultValueType(new mapExtension.CounterValueType());
+mapExtension.registerDefaultValueType(new mergeTree.SharedIntervalCollectionValueType());
 
 export interface IAttachedServices {
     deltaConnection: IDeltaConnection;
@@ -136,7 +143,9 @@ export class Document extends EventEmitter {
             version,
             connect,
             options[encryptedProperty],
-            options[tknProperty]);
+            options[tknProperty]).catch((err) => {
+                return Promise.reject(err);
+            });
         const document = new Document(documentConnection, registry, service, options);
 
         // Make a reservation for the root object
@@ -161,10 +170,21 @@ export class Document extends EventEmitter {
         });
         await Promise.all(objectsLoaded);
 
-        // Process all pending deltas and then resume
-        document.deltaManager.start();
-        await document.deltaManager.flushAndPause();
-        document.deltaManager.start();
+        // Process all pending tardis messages
+        await Document.flushAndPause(document, documentConnection.transformedMessages);
+
+        // Notify collab objects of tardis completion
+        const loadComplete = documentConnection.distributedObjects.map(async (distributedObject) => {
+            const object = await document.get(distributedObject.id);
+            return object.loadComplete();
+        });
+        await Promise.all(loadComplete);
+
+        // Process all pending deltas
+        await Document.flushAndPause(document, documentConnection.pendingDeltas);
+
+        // Start the delta manager back up
+        document._deltaManager.start();
 
         // If it's a new document we create the root map object - otherwise we wait for it to become available
         if (!documentConnection.existing) {
@@ -179,13 +199,22 @@ export class Document extends EventEmitter {
         return document;
     }
 
+    private static async flushAndPause(document: Document, messages: ISequencedDocumentMessage[]): Promise<void> {
+        document._deltaManager.start();
+        if (messages.length > 0) {
+            const sequenceNumber = messages[messages.length - 1].sequenceNumber;
+            await document._deltaManager.flushAndPause(sequenceNumber);
+        }
+    }
+
     // Map from the object ID to the collaborative object for it. If the object is not yet attached its service
     // entries will be null
     private distributedObjects: { [key: string]: IDistributedObjectState } = {};
 
     private reservations = new Map<string, Deferred<ICollaborativeObject>>();
 
-    private deltaManager: DeltaManager;
+    // tslint:disable-next-line:variable-name
+    private _deltaManager: DeltaManager;
 
     private lastMinSequenceNumber;
 
@@ -197,6 +226,10 @@ export class Document extends EventEmitter {
 
     public get id(): string {
         return this.document.documentId;
+    }
+
+    public get deltaManager(): IDeltaManager {
+        return this._deltaManager;
     }
 
     /**
@@ -231,7 +264,7 @@ export class Document extends EventEmitter {
             }
             const pendingMessages = document.transformedMessages.concat(document.pendingDeltas);
 
-            this.deltaManager = new DeltaManager(
+            this._deltaManager = new DeltaManager(
                 this.document.minimumSequenceNumber,
                 pendingMessages,
                 this.document.deltaStorageService,
@@ -372,7 +405,7 @@ export class Document extends EventEmitter {
     }
 
     public submitLatencyMessage(message: ILatencyMessage) {
-        this.deltaManager.submitRoundtrip(RoundTrip, message);
+        this._deltaManager.submitRoundtrip(RoundTrip, message);
     }
 
     public branch(): Promise<string> {
@@ -383,11 +416,11 @@ export class Document extends EventEmitter {
      * Called to snapshot the given document
      */
     public async snapshot(tagMessage: string = undefined): Promise<void> {
-        await this.deltaManager.flushAndPause();
+        await this._deltaManager.flushAndPause();
         const root = this.snapshotCore();
-        this.deltaManager.start();
+        this._deltaManager.start();
 
-        const message = `Commit @${this.deltaManager.referenceSequenceNumber}${getOrDefault(tagMessage, "")}`;
+        const message = `Commit @${this._deltaManager.referenceSequenceNumber}${getOrDefault(tagMessage, "")}`;
         await this.document.documentStorageService.write(root, message);
     }
 
@@ -410,11 +443,11 @@ export class Document extends EventEmitter {
         // Transform ops in the window relative to the MSN - the window is all ops between the min sequence number
         // and the current sequence number
         assert.equal(
-            this.deltaManager.referenceSequenceNumber - this.deltaManager.minimumSequenceNumber,
+            this._deltaManager.referenceSequenceNumber - this._deltaManager.minimumSequenceNumber,
             this.messagesSinceMSNChange.length);
         const transformedMessages: ISequencedDocumentMessage[] = [];
         for (const message of this.messagesSinceMSNChange) {
-            transformedMessages.push(this.transform(message, this.deltaManager.minimumSequenceNumber));
+            transformedMessages.push(this.transform(message, this._deltaManager.minimumSequenceNumber));
         }
         entries.push({
             path: ".messages",
@@ -455,13 +488,13 @@ export class Document extends EventEmitter {
             }
         }
 
-        debug(`!!!!     Snapshotting a ${this.deltaManager.referenceSequenceNumber}`);
+        debug(`!!!!     Snapshotting a ${this._deltaManager.referenceSequenceNumber}`);
 
         // Save attributes for the document
         const documentAttributes: IDocumentAttributes = {
             branch: this.id,
-            minimumSequenceNumber: this.deltaManager.minimumSequenceNumber,
-            sequenceNumber: this.deltaManager.referenceSequenceNumber,
+            minimumSequenceNumber: this._deltaManager.minimumSequenceNumber,
+            sequenceNumber: this._deltaManager.referenceSequenceNumber,
         };
         entries.push({
             path: ".attributes",
@@ -502,7 +535,7 @@ export class Document extends EventEmitter {
     }
 
     private submitMessage(type: string, contents: any): Promise<void> {
-        return this.deltaManager.submit(type, contents);
+        return this._deltaManager.submit(type, contents);
     }
 
     private createAttached(id: string, type: string) {

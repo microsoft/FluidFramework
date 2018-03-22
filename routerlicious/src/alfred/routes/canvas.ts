@@ -11,30 +11,29 @@ export function create(config: Provider, tenantManager: ITenantManager): Router 
     /**
      * Loading of a specific collaborative map
      */
-    router.get("/:tenantId?/:id", (request, response, next) => {
+    router.get("/:tenantId?/:id", async (request, response, next) => {
         const id = utils.getFullId(request.params.tenantId, request.params.id);
 
-        const workerConfig = utils.getConfig(config.get("worker"), tenantManager, request.params.tenantId);
+        const workerConfigP = utils.getConfig(config.get("worker"), tenantManager, request.params.tenantId);
         const versionP = storage.getLatestVersion(
             tenantManager,
             request.params.tenantId,
             request.params.id);
 
-        versionP.then(
-            (version) => {
-                response.render(
-                    "canvas",
-                    {
-                        config: workerConfig,
-                        id,
-                        partials: defaultPartials,
-                        title: request.params.id,
-                        version: JSON.stringify(version),
-                    });
-            },
-            (error) => {
-                response.status(400).json(error);
-            });
+        Promise.all([workerConfigP, versionP]).then((values) => {
+            response.render(
+                "canvas",
+                {
+                    config: values[0],
+                    id,
+                    partials: defaultPartials,
+                    title: request.params.id,
+                    version: JSON.stringify(values[1]),
+                });
+        }, (error) => {
+            response.status(400).json(error);
+        });
+
     });
 
     return router;

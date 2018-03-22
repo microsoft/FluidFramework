@@ -176,6 +176,10 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
         this.serializeFilter = filter;
     }
 
+    public async loadComplete(): Promise<void> {
+        return this.loadContentComplete();
+    }
+
     protected async loadCore(
         version: resources.ICommit,
         headerOrigin: string,
@@ -208,6 +212,10 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
 
     protected initializeContent() {
         return;
+    }
+
+    protected loadContentComplete(): Promise<void> {
+        return Promise.resolve();
     }
 
     protected prepareCore(message: api.ISequencedObjectMessage): Promise<any> {

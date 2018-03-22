@@ -425,14 +425,16 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
 
     nodeGather(node: Node<TKey, TData>, results: Node<TKey, TData>[],
         key: TKey, matcher: IRBMatcher<TKey, TData>) {
-        if (matcher.continueSubtree(node.left, key)) {
-            this.nodeGather(node.left, results, key, matcher);
-        }
-        if (matcher.matchNode(node, key)) {
-            results.push(node);
-        }
-        if (matcher.continueSubtree(node.right, key)) {
-            this.nodeGather(node.right, results, key, matcher);
+        if (node) {
+            if (matcher.continueSubtree(node.left, key)) {
+                this.nodeGather(node.left, results, key, matcher);
+            }
+            if (matcher.matchNode(node, key)) {
+                results.push(node);
+            }
+            if (matcher.continueSubtree(node.right, key)) {
+                this.nodeGather(node.right, results, key, matcher);
+            }
         }
     }
 
@@ -752,6 +754,19 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
         this.nodeMap(this.root, action, accum);
     }
 
+    keys() {
+        let keyList = <TKey[]>[];
+        let actions = <NodeActions<TKey, TData>>{
+            showStructure: true,
+            infix: (node) => {
+                keyList.push(node.key);
+                return true;
+            }
+        };
+        this.walk(actions);
+        return keyList;
+    }
+
     /**
      * Depth-first traversal with custom action; if action returns
      * false, traversal is halted.
@@ -824,8 +839,8 @@ export interface AugIntegerRangeNode {
     minmax: Base.IIntegerRange;
 }
 
-export interface AugRangeNode {
-    minmax: IRange;
+export interface AugmentedIntervalNode {
+    minmax: IInterval;
 }
 /**
  * Union of two ranges; assumes for both ranges start <= end.
@@ -943,41 +958,55 @@ export class IntegerRangeTree implements IRBAugmentation<Base.IIntegerRange, Aug
     }
 }
 
-export interface IRange {
-    clone(): IRange;
-    compare(b: IRange): number;
-    overlaps(b: IRange): boolean;
-    union(b: IRange): IRange;
+export interface IInterval {
+    clone(): IInterval;
+    compare(b: IInterval): number;
+    overlaps(b: IInterval): boolean;
+    union(b: IInterval): IInterval;
 }
 
-export function rangeComparer(a: IRange, b: IRange) {
+export function intervalComparer(a: IInterval, b: IInterval) {
     return a.compare(b);
 }
-export type RangeNode<T extends IRange> = Node<T, AugRangeNode>;
+export type IntervalNode<T extends IInterval> = Node<T, AugmentedIntervalNode>;
 
-export class RangeTree<T extends IRange> implements IRBAugmentation<T, AugRangeNode>,
-    IRBMatcher<T, AugRangeNode> {
-    ranges = new RedBlackTree<T, AugRangeNode>(rangeComparer, this);
+export class IntervalTree<T extends IInterval> implements IRBAugmentation<T, AugmentedIntervalNode>,
+    IRBMatcher<T, AugmentedIntervalNode> {
+    intervals = new RedBlackTree<T, AugmentedIntervalNode>(intervalComparer, this);
     diag = false;
+    timePut = true;
+    putTime = 0;
+    putCount = 0;
 
-    remove(r: T) {
-        this.ranges.remove(r);
+    printTiming() {
+        console.log(`put total = ${this.putTime} avg=${(this.putTime/this.putCount).toFixed(2)}`);
+    }
+    
+    remove(x: T) {
+        this.intervals.remove(x);
     }
 
-    put(r: T) {
-        this.ranges.put(r, { minmax: r.clone() });
+    put(x: T) {
+        if (this.timePut) {
+            let clockStart = MergeTree.clock();
+            this.intervals.put(x, { minmax: x.clone() });
+            this.putTime += MergeTree.elapsedMicroseconds(clockStart);
+            this.putCount++;
+        } else {
+            this.intervals.put(x, { minmax: x.clone() });
+        }
     }
 
     // TODO: toString()
-    match(r: T) {
-        return this.ranges.gather(r, this);
+    match(x: T) {
+        return this.intervals.gather(x, this);
     }
 
-    matchNode(node: RangeNode<T>, key: T) {
+    matchNode(node: IntervalNode<T>, key: T) {
         return node && node.key.overlaps(key);
     }
 
-    continueSubtree(node: RangeNode<T>, key: T) {
+    continueSubtree(node: IntervalNode<T>, key: T) {
         let cont = node && node.data.minmax.overlaps(key);
         if (this.diag && (!cont)) {
             if (node) {
@@ -985,10 +1014,10 @@ export class RangeTree<T extends IRange> implements IRBAugmentation<T, AugRangeN
                 // console.log(this.nodeToString(node));
             }
         }
-        return cont;   
+        return cont;
     }
 
-    update(node: RangeNode<T>) {
+    update(node: IntervalNode<T>) {
         if (node.left && node.right) {
             node.data.minmax = node.key.union(
                 node.left.data.minmax.union(node.right.data.minmax));
@@ -1002,6 +1031,11 @@ export class RangeTree<T extends IRange> implements IRBAugmentation<T, AugRangeN
             }
         }
     }
+}
+
+export interface TSTResult<T> {
+    key: string;
+    val: T;
 }
 
 export interface TSTNode<T> {
@@ -1121,6 +1155,31 @@ export class TST<T> {
         }
         this.collect(x.mid, { text: prefix.text + x.c }, q);
         this.collect(x.right, prefix, q);
+    }
+
+    pairsWithPrefix(text:string) {
+        let q = <TSTResult<T>[]>[];
+        let x = this.nodeGet(this.root, text, 0);
+        if (x === undefined) {
+            return q;
+        }
+        if (x.val !== undefined) {
+            q.push({ key: text, val: x.val});
+        }
+        this.collectPairs(x.mid, { text }, q);
+        return q;
+    }
+
+    collectPairs(x: TSTNode<T>, prefix: TSTPrefix, q: TSTResult<T>[]) {
+        if (x === undefined) {
+            return;
+        }
+        this.collectPairs(x.left, prefix, q);
+        if (x.val !== undefined) {
+            q.push({ key: prefix.text+x.c, val: x.val});
+        }
+        this.collectPairs(x.mid, { text: prefix.text + x.c }, q);
+        this.collectPairs(x.right, prefix, q);
     }
 
     patternCollect(x: TSTNode<T>, prefix: TSTPrefix, d: number, pattern: string, q: string[]) {

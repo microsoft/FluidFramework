@@ -3,6 +3,7 @@ import * as jwt from "jsonwebtoken";
 import * as winston from "winston";
 import { IAuthenticatedUser } from "../core-utils";
 import * as utils from "../utils";
+import { refreshTenantsFromDb } from "./tenantManager";
 
 interface IDecodedToken {
     user: any;
@@ -11,32 +12,32 @@ interface IDecodedToken {
     permission: string;
 }
 
-// TODO (mdaumi): This map will be populated from mongo.
-let tenantKeyMap: { [tenandId: string]: string} = {};
-const t1 = "prague";
-const t2 = "linkedin";
-const t3 = "git";
-tenantKeyMap[t1] = "secret_key";
-tenantKeyMap[t2] = "secret_key_2";
-tenantKeyMap[t3] = "secret_key";
-
-async function verifyToken(token: string, hashKey: string): Promise<IAuthenticatedUser> {
+async function verifyToken(token: string, hashKey: string, mongoManager: utils.MongoManager,
+                           collectionName: string ): Promise<IAuthenticatedUser> {
     return new Promise<IAuthenticatedUser>((resolve, reject) => {
         winston.info(`Token to verify: ${token}`);
-        jwt.verify(token, hashKey, (err, decoded: IDecodedToken) => {
-            if (err) {
-                winston.info(`Token verification error: ${JSON.stringify(err)}`);
-                reject(err);
-            }
-            if (tenantKeyMap[decoded.tenantid] !== decoded.secret) {
-                winston.info(`Token verification error: Wrong secret key!`);
-                reject(`Wrong secret key!`);
+        jwt.verify(token, hashKey, (error, decoded: IDecodedToken) => {
+            if (error) {
+                winston.info(`Token verification error: ${JSON.stringify(error)}`);
+                reject(error);
             }
             winston.info(`Decoded token: ${JSON.stringify(decoded)}`);
-            resolve({
-                permission: decoded.permission,
-                tenantid: decoded.tenantid,
-                user: decoded.user,
+            refreshTenantsFromDb(mongoManager, collectionName).then((tenantKeyMap: Map<string, string>) => {
+                if (!tenantKeyMap.has(decoded.tenantid)) {
+                    winston.info(`Invalid tenant name`);
+                    reject(`Invalid tenant name`);
+                } else if (tenantKeyMap.get(decoded.tenantid) !== decoded.secret) {
+                    winston.info(`Wrong secret key`);
+                    reject(`Wrong secret key`);
+                } else {
+                    resolve({
+                        permission: decoded.permission,
+                        tenantid: decoded.tenantid,
+                        user: decoded.user,
+                    });
+                }
+            }, (err) => {
+                reject(err);
             });
         });
     });
@@ -49,7 +50,7 @@ export function create(collectionName: string, mongoManager: utils.MongoManager,
      * Verifies the passed token and matches with DB.
      */
     router.post("/", (request, response, next) => {
-        verifyToken(request.body.token, hashKey).then((data: IAuthenticatedUser) => {
+        verifyToken(request.body.token, hashKey, mongoManager, collectionName).then((data: IAuthenticatedUser) => {
             response.status(200).json(data);
         }, (err) => {
             response.status(500).json(err);

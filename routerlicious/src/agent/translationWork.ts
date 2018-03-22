@@ -174,11 +174,11 @@ export class TranslationWork extends BaseWork implements IWork {
         // Wait for the insights
         await this.document.getRoot().wait("insights");
         const insights = await this.document.getRoot().get("insights") as types.IMap;
-        this.trackEvents(insights);
+        return this.trackEvents(insights);
     }
 
-    private trackEvents(insights: types.IMap) {
-        this.document.on("op", (op: core.ISequencedDocumentMessage, object: core.ICollaborativeObject) => {
+    private trackEvents(insights: types.IMap): Promise<void> {
+        const eventHandler = (op: core.ISequencedDocumentMessage, object: core.ICollaborativeObject) => {
             if (object && object.type === MergeTree.CollaboritiveStringExtension.Type) {
                 if (!this.translationSet.has(object)) {
                     this.translationSet.add(object);
@@ -187,6 +187,9 @@ export class TranslationWork extends BaseWork implements IWork {
                     translator.start();
                 }
             }
-        });
+        };
+        this.operation = eventHandler;
+        this.document.on("op", eventHandler);
+        return Promise.resolve();
     }
 }

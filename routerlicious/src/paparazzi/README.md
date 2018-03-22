@@ -1,9 +1,15 @@
 # Paparazzi
 
-The Paparazzi service takes snapshots of documents and then serializes them to storage. It does so by behaving like
-a read-only client of a given document.
+![Statue of a paparazzo by sculptor Radko Macuha in Bratislava, Slovakia](https://upload.wikimedia.org/wikipedia/commons/1/18/Bratislava_Bronze_Paparazzo.jpg)
 
-The Paparazzi service listens to a message queue to learn about new documents to snapshot. It is up to the service
-to decide how many documents to snapshot at a given time and then when to no longer own snapshotting them. When it
-decides to snapshot the service Paparazzi will connect to the routerlicious service to listen for document updates
-and then apply them as they come in. The policies of the Paparazzi service determine when to snapshot the document.
+The logical storage model for documents is an ordered sequence of operations. Rather than requiring clients to replay
+all operations when loading a document we instead periodically create consolidated logs of the operations. These
+consolidated logs, or snapshots, are designed for quick and efficient loading of the document at a particular
+sequence number.
+
+Paparazzi was initially charged with just creating snapshots of documents. But it has since evolved to run
+intelligent agents. Paparazzi agents are designed to be isomorphic - that is they can be run on both the server
+and the client. This enables a connected client join in with a pool of server Paparazzi instances to perform
+snapshotting and intelligence on a document.
+
+Paparazzi instances connect to TMZ to receive instructions on what operations to perform on the document.

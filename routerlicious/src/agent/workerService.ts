@@ -1,3 +1,4 @@
+import * as queue from "async/queue";
 import * as request from "request";
 import * as url from "url";
 import { core, MergeTree, socketIoClient as io, socketStorage, utils } from "../client-api";
@@ -21,8 +22,19 @@ interface IAgents {
     names: string[];
 };
 
+// Interface for queueing work
+export interface IWorkQueue {
+    docId: string;
+
+    workType: string;
+
+    response: any;
+
+    clientDetail: socketStorage.IWorker;
+};
+
 export interface IDocumentServiceFactory {
-    getService(tenantId: string): core.IDocumentService;
+    getService(tenantId: string): Promise<core.IDocumentService>;
 }
 
 /**
@@ -33,6 +45,7 @@ export class WorkerService implements core.IWorkerService {
     private documentMap: { [docId: string]: { [work: string]: IWork} } = {};
     private workTypeMap: { [workType: string]: boolean} = {};
     private dict = new MergeTree.Collections.TST<number>();
+    private workQueue: any;
 
     // List of modules added during the lifetime of this object.
     private runtimeModules: { [name: string]: IModule } = {};
@@ -53,6 +66,16 @@ export class WorkerService implements core.IWorkerService {
         if ("spell" in this.workTypeMap) {
             this.loadDict();
         }
+
+        // async queue to process work one by one.
+        this.workQueue = queue( async (work: IWorkQueue, callback) => {
+            this.processDocumentWork(work.docId, work.workType).then(() => {
+                work.response(null, work.clientDetail);
+                callback();
+            }, (err) => {
+                callback();
+            });
+        }, 1);
 
         // Will need to take in the list of endpoints
     }
@@ -101,10 +124,15 @@ export class WorkerService implements core.IWorkerService {
                         }
                     });
                     // Start working on an object.
-                    this.socket.on("TaskObject", (cId: string, id: string, workType: string, response) => {
-                        console.log(`Received ${workType} work for doc ${id}`);
-                        this.processDocumentWork(id, workType);
-                        response(null, clientDetail);
+                    this.socket.on("TaskObject", async (cId: string, id: string, workType: string, response) => {
+                        this.workQueue.push(
+                            {
+                                docId: id,
+                                workType,
+                                response,
+                                clientDetail,
+                            },
+                        );
                     });
                     // Stop working on an object.
                     this.socket.on("RevokeObject", (cId: string, id: string, workType: string, response) => {
@@ -197,40 +225,45 @@ export class WorkerService implements core.IWorkerService {
         }
     }
 
-    private getServiceForDoc(docId: string): core.IDocumentService {
+    private async getServiceForDoc(docId: string): Promise<core.IDocumentService> {
         const slashIndex = docId.indexOf("/");
         const tenantName = slashIndex !== -1 ? docId.slice(0, slashIndex) : "";
 
-        const service = this.serviceFactory.getService(tenantName);
-        return service;
+        return this.serviceFactory.getService(tenantName);
     }
 
-    private processDocumentWork(docId: string, workType: string) {
-        const services = this.getServiceForDoc(docId);
-
-        switch (workType) {
-            case "snapshot":
-                const snapshotWork = new SnapshotWork(docId, this.config, services);
-                this.startTask(docId, workType, snapshotWork);
-                break;
-            case "intel":
-                const intelWork = new IntelWork(docId, this.config, services);
-                this.startTask(docId, workType, intelWork);
-                break;
-            case "spell":
-                const spellcheckWork = new SpellcheckerWork(docId, this.config, this.dict, services);
-                this.startTask(docId, workType, spellcheckWork);
-                break;
-            case "translation":
-                const translationWork = new TranslationWork(docId, this.config, services);
-                this.startTask(docId, workType, translationWork);
-            case "ping":
-                const pingWork = new PingWork(this.serverUrl);
-                this.startTask(docId, workType, pingWork);
-                break;
-            default:
-                throw new Error("Unknown work type!");
-        }
+    private async processDocumentWork(docId: string, workType: string) {
+        this.getServiceForDoc(docId).then((services) => {
+            if (services) {
+                switch (workType) {
+                    case "snapshot":
+                        const snapshotWork = new SnapshotWork(docId, this.config, services);
+                        this.startTask(docId, workType, snapshotWork);
+                        break;
+                    case "intel":
+                        const intelWork = new IntelWork(docId, this.config, services);
+                        this.startTask(docId, workType, intelWork);
+                        break;
+                    case "spell":
+                        const spellcheckWork = new SpellcheckerWork(docId, this.config, this.dict, services);
+                        this.startTask(docId, workType, spellcheckWork);
+                        break;
+                    case "translation":
+                        const translationWork = new TranslationWork(docId, this.config, services);
+                        this.startTask(docId, workType, translationWork);
+                    case "ping":
+                        const pingWork = new PingWork(this.serverUrl);
+                        this.startTask(docId, workType, pingWork);
+                        break;
+                    default:
+                        throw new Error("Unknown work type!");
+                }
+            } else {
+                console.log(`No services provide to load document ${docId} for work ${workType}`);
+            }
+        }, (error) => {
+            console.log(`Error getting service for ${docId}: ${error}`);
+        });
     }
 
     private revokeDocumentWork(docId: string, workType: string) {
@@ -256,25 +289,30 @@ export class WorkerService implements core.IWorkerService {
     }
 
     private startTask(docId: string, workType: string, worker: IWork) {
-        if (!(docId in this.documentMap)) {
-            let emptyMap: { [work: string]: IWork } = {};
-            this.documentMap[docId] = emptyMap;
-        }
-        if (!(workType in this.documentMap[docId])) {
-            this.documentMap[docId][workType] = worker;
-            if (workType !== "intel") {
-                worker.start();
-            } else {
-                // register all runtime added modules one by one.
-                const intelWork = this.documentMap[docId][workType] as IntelWork;
-                intelWork.start().then(() => {
-                    // tslint:disable-next-line
-                    for (let name in this.runtimeModules) {
-                        intelWork.registerNewService(this.runtimeModules[name].code);
-                    }
-                }, (err) => {
-                    console.log(`Error starting intel work: ${err}`);
-                });
+        if (worker !== undefined) {
+            if (!(docId in this.documentMap)) {
+                let emptyMap: { [work: string]: IWork } = {};
+                this.documentMap[docId] = emptyMap;
+            }
+            if (!(workType in this.documentMap[docId])) {
+                console.log(`Starting work ${workType} for document ${docId}`);
+                this.documentMap[docId][workType] = worker;
+                if (workType !== "intel") {
+                    worker.start().catch((err) => {
+                        console.log(`Error starting ${workType} for document ${docId}: ${err}`);
+                    });
+                } else {
+                    // register all runtime added modules one by one.
+                    const intelWork = this.documentMap[docId][workType] as IntelWork;
+                    intelWork.start().then(() => {
+                        // tslint:disable-next-line
+                        for (let name in this.runtimeModules) {
+                            intelWork.registerNewService(this.runtimeModules[name].code);
+                        }
+                    }, (err) => {
+                        console.log(`Error starting ${workType} for document ${docId}: ${err}`);
+                    });
+                }
             }
         }
     }
@@ -324,7 +362,9 @@ export class WorkerService implements core.IWorkerService {
             console.log(`Error loading uploaded modules: ${err}`);
             // In case alfred is not ready, try to reconnect a few times.
             if (tryCounter <= 5) {
-                setTimeout(this.loadUploadedModules(agentServer, tryCounter), 10000);
+                setTimeout(() => {
+                    this.loadUploadedModules(agentServer, tryCounter);
+                }, 10000);
             }
         });
     }

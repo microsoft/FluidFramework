@@ -1,10 +1,13 @@
 import * as resources from "gitresources";
 import * as api from "../api-core";
-import { IMap } from "../data-types";
-import { DistributedArrayValueType } from "./array";
-import { CounterValueType } from "./counter";
+import { IMap, IValueType } from "../data-types";
 import { CollaborativeMap } from "./map";
-import { DistributedSetValueType } from "./set";
+
+// register default types
+const defaultValueTypes = new Array<IValueType<any>>();
+export function registerDefaultValueType(type: IValueType<any>) {
+    defaultValueTypes.push(type);
+}
 
 /**
  * The extension that defines the map
@@ -23,7 +26,7 @@ export class MapExtension implements api.IExtension {
         headerOrigin: string): Promise<IMap> {
 
         const map = new CollaborativeMap(id, document, MapExtension.Type);
-        this.registerDefaultValueTypes(map);
+        this.registerValueTypes(map, defaultValueTypes);
         await map.load(sequenceNumber, version, headerOrigin, services);
 
         return map;
@@ -31,15 +34,15 @@ export class MapExtension implements api.IExtension {
 
     public create(document: api.IDocument, id: string): IMap {
         const map = new CollaborativeMap(id, document, MapExtension.Type);
-        this.registerDefaultValueTypes(map);
+        this.registerValueTypes(map, defaultValueTypes);
         map.initializeLocal();
 
         return map;
     }
 
-    private registerDefaultValueTypes(map: CollaborativeMap) {
-        map.registerValueType(new CounterValueType());
-        map.registerValueType(new DistributedSetValueType());
-        map.registerValueType(new DistributedArrayValueType());
+    private registerValueTypes(map: CollaborativeMap, valueTypes: Array<IValueType<any>>) {
+        for (const type of valueTypes) {
+            map.registerValueType(type);
+        }
     }
 }

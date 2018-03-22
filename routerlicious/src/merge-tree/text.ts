@@ -14,11 +14,10 @@ export function loadTextFromFileWithMarkers(filename: string, mergeTree: MergeTr
     return loadText(content, mergeTree, segLimit, true);
 }
 
-export function loadSegments(content: string, segLimit: number, markers = false) {
+export function loadSegments(content: string, segLimit: number, markers: boolean = false, withProps: boolean = true) {
     content = content.replace(/^\uFEFF/, "");
     const seq = MergeTree.UniversalSequenceNumber;
     const cli = MergeTree.LocalClientId;
-    let withProps = true;
 
     let paragraphs = content.split('\r\n');
     for (let i = 0, len = paragraphs.length; i < len; i++) {

@@ -7,6 +7,7 @@ import * as fs from "fs";
 import { findRandomWord } from "../merge-tree-utils";
 import * as Base from "./base";
 import * as Collections from "./collections";
+import { Interval } from "./intervalCollection";
 import * as MergeTree from "./mergeTree";
 import * as ops from "./ops";
 import * as Properties from "./properties";
@@ -75,7 +76,7 @@ export function propertyCopy() {
 function makeBookmarks(client: MergeTree.Client, bookmarkCount: number) {
     let mt = random.engines.mt19937();
     mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
-    let bookmarks = <MergeTree.LocalRangeReference[]>[];
+    let bookmarks = <Interval[]>[];
     let refseq = client.getCurrentSeq();
     let clientId = client.getClientId();
     let len = client.mergeTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.NonCollabClient);
@@ -108,7 +109,7 @@ function makeBookmarks(client: MergeTree.Client, bookmarkCount: number) {
             lref2.addProperties({ [MergeTree.reservedRangeLabelsKey]: ["bookmark"] });
             client.mergeTree.addLocalReference(lref1);
             client.mergeTree.addLocalReference(lref2);
-            bookmarks.push(new MergeTree.LocalRangeReference(lref1, lref2));
+            bookmarks.push(new Interval(lref1, lref2, ops.IntervalType.Simple));
         } else {
             i--;
         }
@@ -215,8 +216,8 @@ export function TestPack(verbose = true) {
         let extractSnap = false;
         let includeMarkers = false;
         let measureBookmarks = true;
-        let bookmarks: MergeTree.LocalRangeReference[];
-        let bookmarkRangeTree = new Collections.RangeTree<MergeTree.LocalRangeReference>();
+        let bookmarks: Interval[];
+        let bookmarkRangeTree = new Collections.IntervalTree<Interval>();
         let testOrdinals = true;
         let ordErrors = 0;
         let ordSuccess = 0;
@@ -555,8 +556,8 @@ export function TestPack(verbose = true) {
                     let len = server.mergeTree.getLength(MergeTree.UniversalSequenceNumber, server.getClientId());
                     let checkPos = <number[]>[];
                     let checkRange = <number[][]>[];
-                    let checkPosRanges = <MergeTree.LocalRangeReference[]>[];
-                    let checkRangeRanges = <MergeTree.LocalRangeReference[]>[];
+                    let checkPosRanges = <Interval[]>[];
+                    let checkRangeRanges = <Interval[]>[];
                     for (let i = 0; i < posChecksPerRound; i++) {
                         checkPos[i] = random.integer(0, len - 2)(mt);
                         let segoff1 = server.mergeTree.getContainingSegment(checkPos[i], MergeTree.UniversalSequenceNumber,
@@ -566,7 +567,7 @@ export function TestPack(verbose = true) {
                         if (segoff1 && segoff1.segment && segoff2 && segoff2.segment) {
                             let lrefPos1 = new MergeTree.LocalReference(<MergeTree.BaseSegment>segoff1.segment, segoff1.offset);
                             let lrefPos2 = new MergeTree.LocalReference(<MergeTree.BaseSegment>segoff2.segment, segoff2.offset);
-                            checkPosRanges[i] = new MergeTree.LocalRangeReference(lrefPos1, lrefPos2);
+                            checkPosRanges[i] = new Interval(lrefPos1, lrefPos2, ops.IntervalType.Simple);
                         } else {
                             i--;
                         }
@@ -586,7 +587,7 @@ export function TestPack(verbose = true) {
                         if (segoff1 && segoff1.segment && segoff2 && segoff2.segment) {
                             let lrefPos1 = new MergeTree.LocalReference(<MergeTree.BaseSegment>segoff1.segment, segoff1.offset);
                             let lrefPos2 = new MergeTree.LocalReference(<MergeTree.BaseSegment>segoff2.segment, segoff2.offset);
-                            checkRangeRanges[i] = new MergeTree.LocalRangeReference(lrefPos1, lrefPos2);
+                            checkRangeRanges[i] = new Interval(lrefPos1, lrefPos2, ops.IntervalType.Simple);
                         } else {
                             i--;
                         }
@@ -844,22 +845,22 @@ export function TestPack(verbose = true) {
             if (startFile) {
                 Text.loadTextFromFile(startFile, clientsB[i].mergeTree, fileSegCount);
             }
-            clientsB[i].startCollaboration(`FredB${i}`, 0, 1);
+            clientsB[i].startCollaboration(`FredB${i}`, null, 0, 1);
         }
         for (let i = 0; i < clientCountB; i++) {
             let clientB = clientsB[i];
-            serverB.getOrAddShortClientId(clientB.longClientId, 1);
+            serverB.getOrAddShortClientId(clientB.longClientId, null, 1);
             for (let j = 0; j < clientCountB; j++) {
                 let otherBClient = clientsB[j];
                 if (otherBClient != clientB) {
-                    otherBClient.getOrAddShortClientId(clientB.longClientId, 1);
+                    otherBClient.getOrAddShortClientId(clientB.longClientId, null, 1);
                 }
             }
         }
         serverA.startCollaboration("theServerA");
         serverA.addClients(clientsA);
         serverA.addListeners([serverB]);
-        serverB.startCollaboration("theServerB", 0, 1);
+        serverB.startCollaboration("theServerB",null, 0, 1);
         serverB.addClients(clientsB);
         serverB.addUpstreamClients(clientsA);
 
@@ -869,7 +870,7 @@ export function TestPack(verbose = true) {
             getTextTime += elapsedMicroseconds(clockStart);
             getTextCalls++;
             clockStart = clock();
-            let serverBAText = serverB.mergeTree.getText(serverB.getCurrentSeq(), serverB.getOrAddShortClientId(aClientId));
+            let serverBAText = serverB.mergeTree.getText(serverB.getCurrentSeq(), serverB.getOrAddShortClientId(aClientId, null));
             crossGetTextTime += elapsedMicroseconds(clockStart);
             crossGetTextCalls++;
             if (serverAText != serverBAText) {
@@ -1781,12 +1782,53 @@ function testRangeTree() {
     }
 }
 
+export interface ICmd {
+    description?: string;
+    iconURL?: string;
+    exec?: ()=>void;
+}
+export function tstSimpleCmd() {
+    let tst = new Collections.TST<ICmd>();
+    tst.put("zest", { description: "zesty"});
+    tst.put("nest", { description: "nesty"});
+    tst.put("newt", { description: "nesty"});
+    tst.put("neither", { description: "nesty"});
+    tst.put("restitution", { description: "nesty"});
+    tst.put("restful", { description: "nesty"});
+    tst.put("fish", { description: "nesty"});
+    tst.put("nurf", { description: "nesty"});
+    tst.put("reify", { description: "resty"});
+    tst.put("pert", { description: "pesty"});
+    tst.put("jest", { description: "jesty"});
+    tst.put("jestcuz", { description: "jesty2"});
+    let res = tst.pairsWithPrefix("je");
+    console.log("trying je");
+    for (let pair of res) {
+        console.log(`key: ${pair.key} val: ${pair.val.description}`);
+    }
+    res = tst.pairsWithPrefix("n");
+    console.log("trying n");
+    for (let pair of res) {
+        console.log(`key: ${pair.key} val: ${pair.val.description}`);
+    }
+    res = tst.pairsWithPrefix("ne");
+    console.log("trying ne");
+    for (let pair of res) {
+        console.log(`key: ${pair.key} val: ${pair.val.description}`);
+    }
+}
+
 let rangeTreeTest = false;
 let testPropCopy = false;
 let overlayTree = false;
 let docTree = false;
 let chktst = false;
-let clientServerTest = true;
+let clientServerTest = false;
+let tstTest = true;
+
+if (tstTest) {
+    tstSimpleCmd();
+}
 
 if (rangeTreeTest) {
     testRangeTree();

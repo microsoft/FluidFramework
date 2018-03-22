@@ -9,6 +9,12 @@ export enum ReferenceType {
     SlideOnRemove = 0x40,
 }
 
+export enum IntervalType {
+    Simple = 0x0,
+    Nest =    0x1,
+    SlideOnRemove = 0x2,
+}
+
 export interface IMarkerDef {
     refType?: ReferenceType;
 }
@@ -32,21 +38,16 @@ export interface IMergeTreeDelta {
 }
 
 /**
- * A position specified relative to a segment or shared reference.
+ * A position specified relative to a segment.
  */
 export interface IRelativePosition {
     /**
-     * True if the position is relative to a shared reference.  Otherwise,
-     * the position is relative to a segment.
-     */
-    indirect?: boolean;
-    /**
-     * String identifier specifying a segment or shared reference.
+     * String identifier specifying a segment.
      */
     id: string;
     /**
-     * If true, insert before the specified segment or reference.  If false or not defined,
-     * insert after the specified segment or reference.
+     * If true, insert before the specified segment.  If false or not defined,
+     * insert after the specified segment.
      */
     before?: boolean;
     /**
@@ -87,9 +88,9 @@ export interface IContingencyCheck {
 export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
     type: MergeTreeDeltaType.ANNOTATE;
     pos1?: number;
-    markerPos1?: IRelativePosition;
+    relativePos1?: IRelativePosition;
     pos2?: number;
-    markerPos2?: IRelativePosition;
+    relativePos2?: IRelativePosition;
     props: Object;
     combiningOp?: ICombiningOp;
     when?: IContingencyCheck;
@@ -97,7 +98,6 @@ export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
 
 export interface IMergeTreeGroupMsg extends IMergeTreeDelta {
     type: MergeTreeDeltaType.GROUP;
-    hasContingentOps?: boolean;
     ops: IMergeTreeOp[];
 }
 

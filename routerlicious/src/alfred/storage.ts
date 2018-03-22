@@ -47,8 +47,17 @@ export async function getLatestVersion(
     tenantId: string,
     documentId: string): Promise<ICommitDetails> {
 
-    const commits = await getVersions(tenantManager, tenantId, documentId, 1);
-    return commits.length > 0 ? commits[0] : null;
+    return new Promise<ICommitDetails>((resolve, reject) => {
+        getVersions(tenantManager, tenantId, documentId, 1).then((commits) => {
+            if (commits.length > 0) {
+                resolve(commits[0]);
+            } else {
+                resolve(null);
+            }
+        }, (err) => {
+            reject(err);
+        });
+    });
 }
 
 export async function getVersions(
@@ -58,8 +67,18 @@ export async function getVersions(
     count: number): Promise<ICommitDetails[]> {
 
     const fullId = getFullId(tenantId, documentId);
-    const gitManager = tenantManager.getTenant(tenantId).gitManager;
-    return await gitManager.getCommits(fullId, count);
+    return new Promise<ICommitDetails[]>((resolve, reject) => {
+        tenantManager.getTenant(tenantId).then((tenant) => {
+            const gitManager = tenant.gitManager;
+            gitManager.getCommits(fullId, count).then((commits) => {
+                resolve(commits);
+            }, (err) => {
+                reject(err);
+            });
+        }, (error) => {
+            reject(error);
+        });
+    });
 }
 
 export async function getVersion(
@@ -67,9 +86,18 @@ export async function getVersion(
     tenantId: string,
     documentId: string,
     sha: string): Promise<ICommit> {
-
-    const gitManager = tenantManager.getTenant(tenantId).gitManager;
-    return await gitManager.getCommit(sha);
+    return new Promise<ICommit>((resolve, reject) => {
+        tenantManager.getTenant(tenantId).then((tenant) => {
+            const gitManager = tenant.gitManager;
+            gitManager.getCommit(sha).then((commit) => {
+                resolve(commit);
+            }, (err) => {
+                reject(err);
+            });
+        }, (error) => {
+            reject(error);
+        });
+    });
 }
 
 /**
@@ -101,8 +129,11 @@ export async function createFork(
     const fullId = getFullId(tenantId, id);
     const fullName = getFullId(tenantId, name);
 
+    const tenant = await tenantManager.getTenant(tenantId).catch((err) => {
+        return Promise.reject(err);
+    });
     // Load in the latest snapshot
-    const gitManager = tenantManager.getTenant(tenantId).gitManager;
+    const gitManager = tenant.gitManager;
     const head = await gitManager.getRef(id);
     winston.info(JSON.stringify(head));
 
@@ -213,7 +244,7 @@ async function sendIntegrateStream(
         },
         timestamp: Date.now(),
         type: core.RawOperationType,
-        userId: null,
+        user: null,
     };
     await producer.send(JSON.stringify(integrateMessage), id);
 }

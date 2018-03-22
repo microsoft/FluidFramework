@@ -7,8 +7,14 @@ import * as core from "../core";
 import { IAuthenticatedUser, ThroughputCounter, verifyAuthToken } from "../core-utils";
 import * as socketStorage from "../socket-storage";
 import * as utils from "../utils";
-import * as nameMoniker from "./nameMoniker";
 import * as storage from "./storage";
+
+interface IDocumentUser {
+
+    docId: string;
+
+    user: IAuthenticatedUser;
+}
 
 export function register(
     webSocketServer: core.IWebSocketServer,
@@ -21,14 +27,13 @@ export function register(
 
     const throughput = new ThroughputCounter(winston.info);
     const metricLogger = agent.createMetricClient(metricClientConfig);
-    let authenticatedUser: IAuthenticatedUser = null;
 
     webSocketServer.on("connection", (socket: core.IWebSocket) => {
         const connectionProfiler = winston.startTimer();
         connectionProfiler.logger.info(`New socket.io connection`);
 
-        // Map from client IDs on this connection to the object ID for them
-        const connectionsMap: { [clientId: string]: string } = {};
+        // Map from client IDs on this connection to the object ID and user info.
+        const connectionsMap: { [clientId: string]: IDocumentUser } = {};
 
         function sendAndTrack(message: core.IRawOperationMessage) {
             throughput.produce();
@@ -51,10 +56,9 @@ export function register(
         socket.on("connectDocument", async (message: socketStorage.IConnect, response) => {
             // Join the room first to ensure the client will start receiving delta updates
             const authP = checkAuth(message);
-            authP.then((user: any) => {
-                if (user !== null) {
-                    authenticatedUser = user as IAuthenticatedUser;
-                    winston.info(`User ${authenticatedUser.user.id} wants to access ${message.id}`);
+            authP.then((authedUser: IAuthenticatedUser) => {
+                if (authedUser !== null) {
+                    winston.info(`User ${authedUser.user.name} wants to access ${message.id}`);
                 }
                 const profiler = winston.startTimer();
                 connectionProfiler.done(`Client has requested to load ${message.id}`);
@@ -70,8 +74,11 @@ export function register(
                     (documentDetails) => {
                         socket.join(message.id).then(() => {
                             // Create and set a new client ID
-                            const clientId = `${moniker.choose()}:${nameMoniker.choose()}`;
-                            connectionsMap[clientId] = message.id;
+                            const clientId = moniker.choose();
+                            connectionsMap[clientId] = {
+                                docId: message.id,
+                                user: authedUser,
+                            };
 
                             socket.join(`client#${clientId}`).then(
                                 () => {
@@ -90,7 +97,7 @@ export function register(
                                         },
                                         timestamp: Date.now(),
                                         type: core.RawOperationType,
-                                        userId: null,
+                                        user: authedUser,
                                     };
                                     sendAndTrack(rawMessage);
 
@@ -106,7 +113,7 @@ export function register(
                                         parentBranch,
                                         privateKey: documentDetails.value.privateKey,
                                         publicKey: documentDetails.value.publicKey,
-                                        user: authenticatedUser,
+                                        user: authedUser,
                                     };
                                     profiler.done(`Loaded ${message.id}`);
                                     response(null, connectedMessage);
@@ -126,7 +133,7 @@ export function register(
                     });
             }, (err) => {
                 winston.info(`Unautherized access to document ${message.id}. ${JSON.stringify(err)}`);
-                return response(`Unautherized access to document ${message.id}. ${JSON.stringify(err)}`, null);
+                return response(err, null);
             });
         });
 
@@ -149,14 +156,14 @@ export function register(
                     continue;
                 }
 
-                const documentId = connectionsMap[clientId];
+                const docUser = connectionsMap[clientId];
                 const rawMessage: core.IRawOperationMessage = {
                     clientId,
-                    documentId,
+                    documentId: docUser.docId,
                     operation: message,
                     timestamp: Date.now(),
                     type: core.RawOperationType,
-                    userId: null,
+                    user: docUser.user,
                 };
 
                 throughput.produce();
@@ -197,10 +204,10 @@ export function register(
             // Send notification messages for all client IDs in the connection map
             // tslint:disable-next-line:forin
             for (const clientId in connectionsMap) {
-                const documentId = connectionsMap[clientId];
+                const docUser = connectionsMap[clientId];
                 const rawMessage: core.IRawOperationMessage = {
                     clientId: null,
-                    documentId,
+                    documentId: docUser.docId,
                     operation: {
                         clientSequenceNumber: -1,
                         contents: clientId,
@@ -212,7 +219,7 @@ export function register(
                     },
                     timestamp: Date.now(),
                     type: core.RawOperationType,
-                    userId: null,
+                    user: docUser.user,
                 };
 
                 sendAndTrack(rawMessage);

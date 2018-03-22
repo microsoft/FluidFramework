@@ -207,7 +207,7 @@ export class DeliLambda implements IPartitionLambda {
                 },
                 timestamp: message.timestamp,
                 type: core.RawOperationType,
-                userId: branchDocumentMessage.userId,
+                user: branchDocumentMessage.user,
             };
 
             // Set origin information for the message
@@ -259,7 +259,7 @@ export class DeliLambda implements IPartitionLambda {
             sequenceNumber,
             traces,
             type: message.operation.type,
-            userId: message.userId,
+            user: message.user,
         };
 
         // tslint:disable-next-line:max-line-length

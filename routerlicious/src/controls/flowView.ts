@@ -1,7 +1,9 @@
-// tslint:disable:no-bitwise whitespace align switch-default
+// tslint:disable:no-bitwise whitespace align switch-default no-string-literal
 import performanceNow = require("performance-now");
 import { api, core, MergeTree as SharedString, types } from "../client-api";
+import { IAuthenticatedUser } from "../core-utils";
 import { findRandomWord } from "../merge-tree-utils";
+import { SharedIntervalCollection } from "../merge-tree/intervalCollection";
 import * as ui from "../ui";
 import { Status } from "./status";
 
@@ -145,6 +147,69 @@ interface ITextErrorInfo {
     color?: string;
 }
 
+export interface ICmd extends Item {
+    exec?: (flowView: FlowView) => void;
+}
+
+let commands: ICmd[] = [
+    {
+        exec: (f) => {
+            f.toggleBlockquote();
+        },
+        key: "blockquote",
+    },
+    {
+        exec: (f) => {
+            f.toggleBold();
+        },
+        key: "bold",
+    },
+    {
+        exec: (f) => {
+            f.createBookmarks(5000);
+        },
+        key: "bookmark test: 5000",
+    },
+    {
+        exec: (f) => {
+            f.createComment();
+        },
+        key: "comment",
+    },
+    {
+        exec: (f) => {
+            f.toggleItalic();
+        },
+        key: "italic",
+    },
+    {
+        exec: (f) => {
+            f.setList();
+        },
+        key: "list ... 1.)",
+    },
+    {
+        exec: (f) => {
+            f.setList(1);
+        },
+        key: "list ... \u2022",
+    },
+    {
+        exec: (f) => {
+            f.updatePGInfo(f.cursor.pos - 1);
+            createTableRelative(f.cursor.pos, f);
+            f.localQueueRender(f.cursor.pos);
+        },
+        key: "table test",
+    },
+    {
+        exec: (f) => {
+            f.toggleUnderline();
+        },
+        key: "underline",
+    },
+];
+
 export interface ISelectionListBox {
     elm: HTMLDivElement;
     show();
@@ -156,6 +221,7 @@ export interface ISelectionListBox {
     selectItem(key: string);
     items(): Item[];
     getSelectedKey(): string;
+    getSelectedItem(): Item;
 }
 
 export function selectionListBoxCreate(
@@ -175,6 +241,7 @@ export function selectionListBoxCreate(
 
     return {
         elm: listContainer,
+        getSelectedItem,
         getSelectedKey,
         hide: () => {
             listContainer.style.visibility = "hidden";
@@ -208,6 +275,12 @@ export function selectionListBoxCreate(
     function getSelectedKey() {
         if (selectionIndex >= 0) {
             return items[selectionIndex].key;
+        }
+    }
+
+    function getSelectedItem() {
+        if (selectionIndex >= 0) {
+            return items[selectionIndex];
         }
     }
 
@@ -355,6 +428,249 @@ export function selectionListBoxCreate(
     }
 }
 
+export interface ISearchBox {
+    showSelectionList(selectionItems: Item[]);
+    dismiss();
+    keydown(e: KeyboardEvent);
+    keypress(e: KeyboardEvent);
+    getSearchString(): string;
+    getSelectedKey(): string;
+    getSelectedItem(): Item;
+    updateText();
+}
+
+export interface IInputBox {
+    elm: HTMLDivElement;
+    setText(text: string);
+    getText(): string;
+    initCursor(y: number);
+    keydown(e: KeyboardEvent);
+    keypress(e: KeyboardEvent);
+}
+
+export function inputBoxCreate(onsubmit: (s: string) => void,
+    onchanged: (s: string) => void) {
+    let elm = document.createElement("div");
+    let span = document.createElement("span");
+    elm.appendChild(span);
+    let cursor: Cursor;
+
+    return <IInputBox>{
+        elm,
+        getText,
+        initCursor,
+        setText,
+        keypress,
+        keydown,
+    };
+
+    function adjustCursorX() {
+        let computedStyle = getComputedStyle(elm);
+        let fontstr = computedStyle.font;
+        let text = span.innerText.substring(0, cursor.pos);
+        let w = Math.round(getTextWidth(text, fontstr));
+        cursor.lateralMove(w);
+    }
+
+    function keydown(e: KeyboardEvent) {
+        switch (e.keyCode) {
+            case KeyCode.leftArrow:
+                if (cursor.pos > 0) {
+                    cursor.pos--;
+                    adjustCursorX();
+                }
+                break;
+            case KeyCode.rightArrow:
+                if (cursor.pos < elm.innerText.length) {
+                    cursor.pos++;
+                    adjustCursorX();
+                }
+                break;
+            case KeyCode.backspace:
+                if (cursor.pos > 0) {
+                    let text = span.innerText;
+                    text = text.substring(0, cursor.pos - 1) +
+                        text.substring(cursor.pos);
+                    span.innerText = text;
+                    cursor.pos--;
+                    adjustCursorX();
+                    onchanged(text);
+                }
+                break;
+            case KeyCode.del:
+                if (cursor.pos < span.innerText.length) {
+                    let text = span.innerText;
+                    text = text.substring(0, cursor.pos) +
+                        text.substring(cursor.pos + 1);
+                    span.innerText = text;
+                    onchanged(text);
+                }
+                break;
+        }
+    }
+
+    function keypress(e: KeyboardEvent) {
+        let text = span.innerText;
+        let code = e.charCode;
+        if (code === CharacterCodes.cr) {
+            onsubmit(text);
+        } else {
+            text = text.substring(0, cursor.pos) +
+                String.fromCharCode(code) + text.substring(cursor.pos);
+            span.innerText = text;
+            cursor.pos++;
+            adjustCursorX();
+            onchanged(text);
+        }
+    }
+
+    function initCursor(y: number) {
+        let lineHeight = getTextHeight(elm);
+        cursor = new Cursor(elm);
+        cursor.assignToLine(0, lineHeight - y, elm);
+        // cursor.editSpan.style.top=`${y}px`;
+        cursor.scope();
+    }
+
+    function setText(text: string) {
+        span.innerText = text;
+    }
+
+    function getText() {
+        return span.innerText;
+    }
+}
+
+export function searchBoxCreate(boundingElm: HTMLElement,
+    searchStringChanged: (searchString: string) => void): ISearchBox {
+    let container = document.createElement("div");
+    let inputElmHeight = 32;
+    let itemHeight = 24;
+    let inputElm: HTMLElement;
+    let inputBox: IInputBox;
+    let selectionListBox: ISelectionListBox;
+
+    init();
+
+    return {
+        getSelectedItem,
+        getSelectedKey,
+        showSelectionList: (items) => selectionListBox.showSelectionList(items),
+        keydown,
+        keypress,
+        dismiss,
+        getSearchString,
+        updateText,
+    };
+
+    function getSelectedKey() {
+        return selectionListBox.getSelectedKey();
+    }
+
+    function getSelectedItem() {
+        return selectionListBox.getSelectedItem();
+    }
+
+    function getSearchString() {
+        return inputBox.getText();
+    }
+
+    function dismiss() {
+        document.body.removeChild(container);
+    }
+
+    function keydown(e: KeyboardEvent) {
+        if (e.keyCode === KeyCode.leftArrow) {
+            textSegKeydown(e);
+        } else if (e.keyCode === KeyCode.upArrow) {
+            selectionListBox.prevItem();
+        } else if (e.keyCode === KeyCode.rightArrow) {
+            textSegKeydown(e);
+        } else if (e.keyCode === KeyCode.downArrow) {
+            selectionListBox.nextItem();
+        } else {
+            textSegKeydown(e);
+        }
+    }
+
+    function textSegKeydown(e: KeyboardEvent) {
+        inputBox.keydown(e);
+    }
+
+    function keypress(e: KeyboardEvent) {
+        if (e.charCode >= 32) {
+            inputBox.keypress(e);
+        }
+    }
+
+    function updateRectangles() {
+        let boundingRect = ui.Rectangle.fromClientRect(boundingElm.getBoundingClientRect());
+        let offsetY = boundingRect.y;
+        boundingRect.width = Math.floor(window.innerWidth / 4);
+        boundingRect.height = Math.floor(window.innerHeight / 3);
+        boundingRect.moveElementToUpperLeft(container);
+        boundingRect.x = 0;
+        boundingRect.y = 0;
+        let inputElmBorderSize = 2;
+        let vertSplit = boundingRect.nipVert(inputElmHeight + inputElmBorderSize);
+        vertSplit[0].height -= inputElmBorderSize;
+        vertSplit[0].conformElement(inputElm);
+        inputElm.style.lineHeight = `${vertSplit[0].height}px`;
+        vertSplit[0].height += inputElmBorderSize;
+        selectionListBox = selectionListBoxCreate(vertSplit[0], container, itemHeight, offsetY);
+    }
+
+    function updateText() {
+        let text = inputBox.getText();
+        if (text.length > 0) {
+            searchStringChanged(text);
+            if (selectionListBox) {
+                let items = selectionListBox.items();
+                if (items) {
+                    showListContainer(selectionListBox.items().length === 0);
+                }
+            }
+        } else {
+            resetInputBox();
+        }
+    }
+
+    function showListContainer(hidden?: boolean) {
+        inputElm.style.fontStyle = "normal";
+        inputElm.style.color = "black";
+        if (!hidden) {
+            selectionListBox.show();
+            inputElm.style.borderBottomStyle = "none";
+        }
+    }
+
+    function resetInputBox() {
+        selectionListBox.hide();
+        inputElm.style.borderBottom = "#e5e5e5 solid 2px";
+        inputElm.style.boxShadow = "0 0 20px blue";
+    }
+
+    function init() {
+        container.style.zIndex = "1";
+        inputBox = inputBoxCreate((s) => updateText(),
+            (s) => updateText());
+        inputElm = inputBox.elm;
+        inputElm.style.fontSize = "18px";
+        inputElm.style.fontFamily = "Segoe UI";
+        inputElm.style.borderTop = "#e5e5e5 solid 2px";
+        inputElm.style.borderLeft = "#e5e5e5 solid 2px";
+        inputElm.style.borderRight = "#e5e5e5 solid 2px";
+        inputElm.style.backgroundColor = "white";
+        inputElm.style.whiteSpace = "pre";
+        updateRectangles();
+        resetInputBox();
+
+        container.appendChild(inputElm);
+        document.body.appendChild(container);
+        inputBox.initCursor(2);
+    }
+}
+
 function elmOffToSegOff(elmOff: IRangeInfo, span: HTMLSpanElement) {
     if ((elmOff.elm !== span) && (elmOff.elm.parentElement !== span)) {
         console.log("did not hit span");
@@ -388,6 +704,15 @@ let underlinePaulStringURL = `url("${baseURI}/public/images/underline-paul.gif")
 let underlinePaulGrammarStringURL = `url("${baseURI}/public/images/underline-paulgrammar.gif") bottom repeat-x`;
 let underlinePaulGoldStringURL = `url("${baseURI}/public/images/underline-gold.gif") bottom repeat-x`;
 
+function getTextHeight(elm: HTMLDivElement) {
+    let computedStyle = getComputedStyle(elm);
+    if (computedStyle.lineHeight) {
+        return parseInt(elm.style.lineHeight, 10);
+    } else {
+        return parseInt(computedStyle.fontSize, 10);
+    }
+}
+
 function getTextWidth(text: string, font: string) {
     // re-use canvas object for better performance
     const canvas = cachedCanvas || (cachedCanvas = document.createElement("canvas"));
@@ -410,7 +735,7 @@ function getMultiTextWidth(texts: string[], font: string) {
     return sum;
 }
 
-interface IRange {
+export interface IRange {
     start: number;
     end: number;
 }
@@ -745,7 +1070,7 @@ function renderSegmentIntoLine(
             showPositionInLine(lineContext, textStartPos, text, lineContext.flowView.cursor.pos);
         }
         let presenceInfo = lineContext.flowView.presenceInfoInRange(textStartPos, textEndPos);
-        if (presenceInfo && (presenceInfo.xformPos !== lineContext.flowView.cursor.pos)) {
+        if (presenceInfo) {
             showPositionInLine(lineContext, textStartPos, text, presenceInfo.xformPos, presenceInfo);
         }
     } else if (segType === SharedString.SegmentType.Marker) {
@@ -824,6 +1149,8 @@ function reRenderLine(lineDiv: ILineDiv, flowView: FlowView) {
         flowView.client.mergeTree.mapRange({ leaf: renderSegmentIntoLine }, SharedString.UniversalSequenceNumber,
             flowView.client.getClientId(), lineContext, lineDiv.linePos, end);
         lineDiv.lineEnd = lineEnd;
+        showBookmarks(flowView, lineDiv.linePos,
+            lineEnd, lineDiv.style.font, lineDivHeight, contentDiv);
     }
 }
 
@@ -1028,6 +1355,143 @@ function getContentPct(pgMarker: IParagraphMarker) {
     }
 }
 
+function buildIntervalBlockStyle(properties: SharedString.PropertySet, startX: number, endX: number,
+    lineDivHeight: number, leftInBounds: boolean, rightInBounds: boolean,
+    contentDiv: HTMLDivElement, client: SharedString.Client) {
+    let bookmarkDiv = document.createElement("div");
+    let bookmarkRect: ui.Rectangle;
+    bookmarkRect = new ui.Rectangle(startX, 0, endX - startX, lineDivHeight);
+    bookmarkRect.conformElement(bookmarkDiv);
+    contentDiv.appendChild(bookmarkDiv);
+    if (leftInBounds) {
+        bookmarkDiv.style.borderTopLeftRadius = "5px";
+        bookmarkDiv.style.borderLeft = "1px solid gray";
+        bookmarkDiv.style.borderTop = "1px solid gray";
+    }
+    if (rightInBounds) {
+        bookmarkDiv.style.borderBottomRightRadius = "5px";
+        bookmarkDiv.style.borderRight = "1px solid gray";
+        bookmarkDiv.style.borderBottom = "1px solid gray";
+    }
+    bookmarkDiv.style.backgroundColor = "lightgray";
+    if (properties) {
+        if (properties["bgColor"]) {
+            bookmarkDiv.style.backgroundColor = properties["bgColor"];
+        } else if (properties["clid"] || properties["user"]) {
+            let clientId = client.getOrAddShortClientId(properties["clid"],
+                properties["user"]);
+            let bgColor = presenceColors[clientId % presenceColors.length];
+            bookmarkDiv.style.backgroundColor = bgColor;
+        }
+    }
+    bookmarkDiv.style.opacity = "0.3";
+    bookmarkDiv.style.zIndex = "2";
+}
+
+function buildIntervalTieStyle(properties: SharedString.PropertySet, startX: number, endX: number,
+    lineDivHeight: number, leftInBounds: boolean, rightInBounds: boolean,
+    contentDiv: HTMLDivElement, client: SharedString.Client) {
+    let bookmarkDiv = document.createElement("div");
+    let bookmarkRect: ui.Rectangle;
+    let bookendDiv1 = document.createElement("div");
+    let bookendDiv2 = document.createElement("div");
+    let tenthHeight = Math.max(1, Math.floor(lineDivHeight / 10));
+    let halfHeight = Math.floor(lineDivHeight >> 1);
+    bookmarkRect = new ui.Rectangle(startX, halfHeight - tenthHeight,
+        endX - startX, 2 * tenthHeight);
+    bookmarkRect.conformElement(bookmarkDiv);
+    contentDiv.appendChild(bookmarkDiv);
+    new ui.Rectangle(startX, 0, 3, lineDivHeight).conformElement(bookendDiv1);
+    if (leftInBounds) {
+        contentDiv.appendChild(bookendDiv1);
+    }
+    new ui.Rectangle(endX - 3, 0, 3, lineDivHeight).conformElement(bookendDiv2);
+    if (rightInBounds) {
+        contentDiv.appendChild(bookendDiv2);
+    }
+    bookmarkDiv.style.backgroundColor = "lightgray";
+    bookendDiv1.style.backgroundColor = "lightgray";
+    bookendDiv2.style.backgroundColor = "lightgray";
+    if (properties && properties["clid"]) {
+        let clientId = client.getOrAddShortClientId(properties["clid"],
+            properties["user"]);
+        let bgColor = presenceColors[clientId % presenceColors.length];
+        bookmarkDiv.style.backgroundColor = bgColor;
+        bookendDiv1.style.backgroundColor = bgColor;
+        bookendDiv2.style.backgroundColor = bgColor;
+    }
+    bookmarkDiv.style.opacity = "0.5";
+    bookmarkDiv.style.zIndex = "2";
+    bookendDiv1.style.opacity = "0.5";
+    bookendDiv1.style.zIndex = "2";
+    bookendDiv2.style.opacity = "0.5";
+    bookendDiv2.style.zIndex = "2";
+}
+
+function showBookmark(properties: SharedString.PropertySet, lineText: string,
+    start: number, end: number, lineStart: number,
+    computedEnd: number, lineFontstr: string, lineDivHeight: number,
+    contentDiv: HTMLDivElement, client: SharedString.Client) {
+    let useTie = false;
+    let startX: number;
+    if (start >= lineStart) {
+        startX = getTextWidth(lineText.substring(0, start - lineStart), lineFontstr);
+    } else {
+        startX = 0;
+    }
+    let endX: number;
+    if (end <= computedEnd) {
+        endX = getTextWidth(lineText.substring(0, end - lineStart), lineFontstr);
+    } else {
+        endX = getTextWidth(lineText, lineFontstr);
+    }
+    if (useTie) {
+        buildIntervalTieStyle(properties, startX, endX, lineDivHeight,
+            start >= lineStart, end <= computedEnd, contentDiv, client);
+    } else {
+        buildIntervalBlockStyle(properties, startX, endX, lineDivHeight,
+            start >= lineStart, end <= computedEnd, contentDiv, client);
+    }
+}
+
+function showBookmarks(flowView: FlowView, lineStart: number, lineEnd: number,
+    lineFontstr: string, lineDivHeight: number,
+    contentDiv: HTMLDivElement) {
+    let sel = flowView.cursor.getSelection();
+    if (flowView.bookmarks || flowView.comments || sel) {
+        let client = flowView.client;
+        let computedEnd = lineEnd;
+        let bookmarks = flowView.bookmarks.findOverlappingIntervals(lineStart, computedEnd);
+        let comments = flowView.comments.findOverlappingIntervals(lineStart, computedEnd);
+        let lineText = client.getText(lineStart, computedEnd);
+        if (sel) {
+            showBookmark(undefined, lineText, sel.start, sel.end, lineStart,
+                computedEnd, lineFontstr, lineDivHeight, contentDiv, client);
+        }
+        if (bookmarks) {
+            for (let b of bookmarks) {
+                let start = b.start.toPosition(client.mergeTree, client.getCurrentSeq(),
+                    client.getClientId());
+                let end = b.end.toPosition(client.mergeTree, client.getCurrentSeq(),
+                    client.getClientId());
+                showBookmark(b.properties, lineText, start, end, lineStart,
+                    computedEnd, lineFontstr, lineDivHeight, contentDiv, client);
+            }
+        }
+        if (comments) {
+            for (let comment of comments) {
+                let start = comment.start.toPosition(client.mergeTree, client.getCurrentSeq(),
+                    client.getClientId());
+                let end = comment.end.toPosition(client.mergeTree, client.getCurrentSeq(),
+                    client.getClientId());
+                comment.addProperties({ bgColor: "gold" });
+                showBookmark(comment.properties, lineText, start, end, lineStart,
+                    computedEnd, lineFontstr, lineDivHeight, contentDiv, client);
+            }
+        }
+    }
+}
+
 function makeContentDiv(r: ui.Rectangle, lineFontstr) {
     let contentDiv = document.createElement("div");
     contentDiv.style.font = lineFontstr;
@@ -1059,8 +1523,32 @@ let tableIdSuffix = 0;
 let boxIdSuffix = 0;
 let rowIdSuffix = 0;
 
+function createRelativeMarkerOp(
+    relativePos1: SharedString.IRelativePosition, id: string,
+    refType: SharedString.ReferenceType, rangeLabels: string[], tileLabels?: string[]) {
+
+    let props = <SharedString.MapLike<any>>{
+    };
+    if (id.length > 0) {
+        props[SharedString.reservedMarkerIdKey] = id;
+    }
+    if (rangeLabels.length > 0) {
+        props[SharedString.reservedRangeLabelsKey] = rangeLabels;
+    }
+    if (tileLabels) {
+        props[SharedString.reservedTileLabelsKey] = tileLabels;
+    }
+    return <SharedString.IMergeTreeInsertMsg>{
+        marker: { refType },
+        relativePos1,
+        props,
+        type: SharedString.MergeTreeDeltaType.INSERT,
+    };
+}
+
 function createMarkerOp(
-    pos1: number, id: string, refType: SharedString.ReferenceType, rangeLabels: string[], tileLabels?: string[]) {
+    pos1: number, id: string,
+    refType: SharedString.ReferenceType, rangeLabels: string[], tileLabels?: string[]) {
 
     let props = <SharedString.MapLike<any>>{
     };
@@ -1094,6 +1582,31 @@ function createMarkerOp(
 }
 */
 let endPrefix = "end-";
+
+function createBoxRelative(opList: SharedString.IMergeTreeOp[], idBase: string,
+    relpos: SharedString.IRelativePosition, word?: string) {
+    let boxId = idBase + `box${boxIdSuffix++}`;
+    let boxEndId = endPrefix + boxId;
+    opList.push(createRelativeMarkerOp(relpos, boxEndId,
+        SharedString.ReferenceType.NestEnd, ["box"]));
+    let boxEndRelPos = <SharedString.IRelativePosition>{
+        before: true,
+        id: boxEndId,
+    };
+    opList.push(createRelativeMarkerOp(boxEndRelPos, boxId,
+        SharedString.ReferenceType.NestBegin, ["box"]));
+    if (word) {
+        let insertStringOp = <SharedString.IMergeTreeInsertMsg>{
+            relativePos1: boxEndRelPos,
+            text: word,
+            type: SharedString.MergeTreeDeltaType.INSERT,
+        };
+        opList.push(insertStringOp);
+    }
+    let pgOp = createRelativeMarkerOp(boxEndRelPos, boxId + "C",
+        SharedString.ReferenceType.Tile, [], ["pg"]);
+    opList.push(pgOp);
+}
 
 function createBox(opList: SharedString.IMergeTreeOp[], idBase: string, pos: number, word?: string) {
     let boxId = idBase + `box${boxIdSuffix++}`;
@@ -1161,6 +1674,56 @@ function createTable(pos: number, flowView: FlowView, nrows = 3, nboxes = 3) {
         SharedString.ReferenceType.NestEnd |
         SharedString.ReferenceType.Tile, ["table"], ["pg"]));
     pos++;
+    let groupOp = <SharedString.IMergeTreeGroupMsg>{
+        ops: opList,
+        type: SharedString.MergeTreeDeltaType.GROUP,
+    };
+    flowView.sharedString.transaction(groupOp);
+}
+
+function createTableRelative(pos: number, flowView: FlowView, nrows = 3, nboxes = 3) {
+    let pgAtStart = true;
+    if (pos > 0) {
+        let segoff = flowView.client.mergeTree.getContainingSegment(pos - 1, SharedString.UniversalSequenceNumber,
+            flowView.client.getClientId());
+        if (segoff.segment.getType() === SharedString.SegmentType.Marker) {
+            let marker = <SharedString.Marker>segoff.segment;
+            if (marker.hasTileLabel("pg")) {
+                pgAtStart = false;
+            }
+        }
+    }
+    let content = ["aardvark", "racoon", "jackelope", "springbok", "tiger", "lion", "eland", "anaconda", "fox"];
+    let idBase = flowView.client.longClientId;
+    idBase += `T${tableIdSuffix++}`;
+    let opList = <SharedString.IMergeTreeInsertMsg[]>[];
+    let endTableId = endPrefix + idBase;
+    opList.push(createMarkerOp(pos, endTableId,
+        SharedString.ReferenceType.NestEnd |
+        SharedString.ReferenceType.Tile, ["table"], ["pg"]));
+    let endTablePos = <SharedString.IRelativePosition>{
+        before: true,
+        id: endTableId,
+    };
+    if (pgAtStart) {
+        // TODO: copy pg properties from pg marker after pos
+        let pgOp = createRelativeMarkerOp(endTablePos, "",
+            SharedString.ReferenceType.Tile, [], ["pg"]);
+        opList.push(pgOp);
+    }
+    opList.push(createRelativeMarkerOp(endTablePos, idBase,
+        SharedString.ReferenceType.NestBegin, ["table"]));
+    for (let row = 0; row < nrows; row++) {
+        let rowId = idBase + `row${rowIdSuffix++}`;
+        opList.push(createRelativeMarkerOp(endTablePos, rowId,
+            SharedString.ReferenceType.NestBegin, ["row"]));
+        pos++;
+        for (let box = 0; box < nboxes; box++) {
+            createBoxRelative(opList, idBase, endTablePos, content[(box + (nboxes * row)) % content.length]);
+        }
+        opList.push(createRelativeMarkerOp(endTablePos, endPrefix + rowId,
+            SharedString.ReferenceType.NestEnd, ["row"]));
+    }
     let groupOp = <SharedString.IMergeTreeGroupMsg>{
         ops: opList,
         type: SharedString.MergeTreeDeltaType.GROUP,
@@ -2007,6 +2570,15 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
                 }
                 client.mergeTree.mapRange({ leaf: renderSegmentIntoLine }, SharedString.UniversalSequenceNumber,
                     client.getClientId(), lineContext, lineStart, lineEnd);
+                if (flowView.bookmarks) {
+                    let computedEnd = lineEnd;
+                    if (!computedEnd) {
+                        computedEnd = client.mergeTree.getOffset(endPGMarker, client.getCurrentSeq(),
+                            client.getClientId());
+                    }
+                    showBookmarks(layoutContext.flowView, lineStart,
+                        computedEnd, lineFontstr, lineDivHeight, contentDiv);
+                }
                 span = lineContext.span;
                 if (lineContext.reRenderList) {
                     if (!layoutContext.reRenderList) {
@@ -2285,8 +2857,9 @@ export function clearSubtree(elm: HTMLElement) {
     }
 }
 
-let presenceColors = ["darkgreen", "sienna", "olive", "purple"];
+const Nope = -1;
 
+let presenceColors = ["darkgreen", "sienna", "olive", "purple"];
 export class Cursor {
     public off = true;
     public parentSpan: HTMLSpanElement;
@@ -2294,7 +2867,7 @@ export class Cursor {
     public presenceDiv: HTMLDivElement;
     public presenceInfo: ILocalPresenceInfo;
     public presenceInfoUpdated = true;
-
+    public mark = Nope;
     private blinkCount = 0;
     private blinkTimer: any;
     private bgColor = "blue";
@@ -2312,6 +2885,25 @@ export class Cursor {
         this.show();
     }
 
+    public tryMark() {
+        if (this.mark === Nope) {
+            this.mark = this.pos;
+        }
+    }
+
+    public clearSelection() {
+        this.mark = Nope;
+    }
+
+    public getSelection() {
+        if (this.mark !== Nope) {
+            return <IRange>{
+                end: Math.max(this.mark, this.pos),
+                start: Math.min(this.mark, this.pos),
+            };
+        }
+    }
+
     public hide() {
         this.editSpan.style.visibility = "hidden";
     }
@@ -2326,7 +2918,7 @@ export class Cursor {
 
     public makePresenceDiv() {
         this.presenceDiv = document.createElement("div");
-        this.presenceDiv.innerText = this.presenceInfo.key.split(":")[1];
+        this.presenceDiv.innerText = this.presenceInfo.key;
         this.presenceDiv.style.zIndex = "1";
         this.presenceDiv.style.position = "absolute";
         this.presenceDiv.style.color = "white";
@@ -2334,12 +2926,14 @@ export class Cursor {
         this.presenceDiv.style.font = "14px Arial";
         this.presenceDiv.style.border = `3px solid ${this.bgColor}`;
         this.presenceDiv.style.borderTopRightRadius = "1em";
+        // go underneath local cursor
+        this.editSpan.style.zIndex = "1";
     }
 
     public makeSpan() {
         this.editSpan = document.createElement("span");
         this.editSpan.innerText = "\uFEFF";
-        this.editSpan.style.zIndex = "1";
+        this.editSpan.style.zIndex = "3";
         this.editSpan.style.position = "absolute";
         this.editSpan.style.left = "0px";
         this.editSpan.style.top = "0px";
@@ -2367,6 +2961,17 @@ export class Cursor {
 
     public rect() {
         return this.editSpan.getBoundingClientRect();
+    }
+
+    public scope() {
+        this.bgColor = "gray";
+        this.editSpan.style.backgroundColor = this.bgColor;
+        this.editSpan.style.zIndex = "4";
+        this.editSpan.style.width = "1px";
+    }
+
+    public lateralMove(x: number) {
+        this.editSpan.style.left = `${x}px`;
     }
 
     public assignToLine(x: number, h: number, lineDiv: HTMLDivElement) {
@@ -2444,6 +3049,7 @@ enum KeyCode {
     upArrow = 38,
     rightArrow = 39,
     downArrow = 40,
+    del = 46,
     letter_a = 65,
     letter_z = 90,
 }
@@ -2611,8 +3217,10 @@ export class FlowView extends ui.Component {
     public wheelTicking = false;
     public topChar = -1;
     public cursor: Cursor;
-    public presenceMap: types.IMap;
+    public bookmarks: SharedIntervalCollection;
+    public comments: SharedIntervalCollection;
     public presenceMapView: types.IMapView;
+    public userMapView: types.IMapView;
     public presenceVector: ILocalPresenceInfo[] = [];
     public docRoot: types.IMapView;
     public curPG: SharedString.Marker;
@@ -2621,6 +3229,8 @@ export class FlowView extends ui.Component {
     private pendingRender = false;
     private diagCharPort = false;
     private targetTranslation: string;
+    private activeSearchBox: ISearchBox;
+    private cmdTree: SharedString.Collections.TST<ICmd>;
 
     constructor(
         element: HTMLDivElement,
@@ -2630,6 +3240,11 @@ export class FlowView extends ui.Component {
         public options: Object = undefined) {
 
         super(element);
+
+        this.cmdTree = new SharedString.Collections.TST<ICmd>();
+        for (let command of commands) {
+            this.cmdTree.put(command.key, command);
+        }
 
         this.client = sharedString.client;
         this.viewportDiv = document.createElement("div");
@@ -2662,6 +3277,18 @@ export class FlowView extends ui.Component {
         let clock = Date.now();
         this.client.cloneFromSegments();
         console.log(`clone took ${Date.now() - clock}ms`);
+    }
+
+    public createBookmarks(k: number) {
+        let len = this.sharedString.client.getLength();
+        for (let i = 0; i < k; i++) {
+            let pos1 = Math.floor(Math.random() * (len - 1));
+            let intervalLen = Math.max(1, Math.floor(Math.random() * Math.min(len - pos1, 150)));
+            let props = { clid: this.sharedString.client.longClientId, user: this.sharedString.client.userInfo };
+            this.bookmarks.add(pos1, pos1 + intervalLen, SharedString.IntervalType.Simple,
+                props);
+        }
+        this.localQueueRender(-1);
     }
 
     public xUpdateHistoryBubble(x: number) {
@@ -2772,7 +3399,6 @@ export class FlowView extends ui.Component {
     }
 
     public addPresenceMap(presenceMap: types.IMap) {
-        this.presenceMap = presenceMap;
         presenceMap.on("valueChanged", (delta: types.IValueChanged) => {
             this.remotePresenceUpdate(delta);
         });
@@ -2780,6 +3406,18 @@ export class FlowView extends ui.Component {
             this.presenceMapView = v;
             this.updatePresence();
         });
+    }
+
+    public addUserMap(userMap: types.IMap) {
+        if (userMap !== undefined) {
+            userMap.on("valueChanged", (delta: types.IValueChanged) => {
+                this.remoteUserUpdate(delta);
+            });
+            userMap.getView().then((v) => {
+                this.userMapView = v;
+                this.updateUser();
+            });
+        }
     }
 
     public presenceInfoInRange(start: number, end: number) {
@@ -2824,10 +3462,10 @@ export class FlowView extends ui.Component {
         }
     }
 
-    public remotePresenceFromEdit(longClientId: string, refseq: number, oldpos: number, posAdjust = 0) {
+    public remotePresenceFromEdit(longClientId: string, userInfo: IAuthenticatedUser, refseq: number, oldpos: number, posAdjust = 0) {
         let remotePosInfo = <IRemotePresenceInfo>{
-            clientId: this.client.getOrAddShortClientId(longClientId),
-            key: longClientId,
+            clientId: this.client.getOrAddShortClientId(longClientId, userInfo),
+            key: userInfo === null ? longClientId : userInfo.user.name,
             origPos: oldpos + posAdjust,
             refseq,
         };
@@ -2861,8 +3499,9 @@ export class FlowView extends ui.Component {
     public remotePresenceUpdate(delta: types.IValueChanged) {
         if (delta.key !== this.client.longClientId) {
             let remotePresenceInfo = <IRemotePresenceInfo>this.presenceMapView.get(delta.key);
-            remotePresenceInfo.key = delta.key;
-            remotePresenceInfo.clientId = this.client.getOrAddShortClientId(delta.key);
+            remotePresenceInfo.clientId = this.client.getOrAddShortClientId(delta.key, null);
+            const userInfo = this.client.getUserInfo(remotePresenceInfo.clientId);
+            remotePresenceInfo.key = (userInfo === null) ? delta.key : userInfo.user.name;
             this.remotePresenceToLocal(remotePresenceInfo);
         }
     }
@@ -2875,6 +3514,24 @@ export class FlowView extends ui.Component {
             };
             this.presenceMapView.set(this.client.longClientId, presenceInfo);
         }
+    }
+
+    public updateUser() {
+        this.client.getOrAddShortClientId(this.client.longClientId, this.client.userInfo);
+        if (this.userMapView) {
+            for (let remoteClientId of this.userMapView.keys()) {
+                this.remoteUserUpdate({ key: remoteClientId });
+            }
+            this.userMapView.set(this.client.longClientId, this.client.userInfo);
+        }
+    }
+
+    public remoteUserUpdate(delta: types.IValueChanged) {
+        if (delta.key !== this.client.longClientId) {
+            let remoteUserInfo = <IAuthenticatedUser>this.userMapView.get(delta.key);
+            this.client.getOrAddShortClientId(delta.key, remoteUserInfo);
+        }
+
     }
 
     public statusMessage(key: string, msg: string) {
@@ -3283,120 +3940,151 @@ export class FlowView extends ui.Component {
         };
 
         let keydownHandler = (e: KeyboardEvent) => {
-            let saveLastVertX = this.lastVerticalX;
-            let specialKey = true;
-            this.lastVerticalX = -1;
-            if (e.ctrlKey && (e.keyCode !== 17)) {
-                this.keyCmd(e.keyCode);
-            } else if (e.keyCode === KeyCode.TAB) {
-                this.handleTAB(e.shiftKey);
-            } else if (e.keyCode === KeyCode.backspace) {
-                this.cursor.pos--;
-                this.sharedString.removeText(this.cursor.pos, this.cursor.pos + 1);
-                this.localQueueRender(this.cursor.pos);
-            } else if (((e.keyCode === KeyCode.pageUp) || (e.keyCode === KeyCode.pageDown)) && (!this.ticking)) {
-                setTimeout(() => {
-                    this.scroll(e.keyCode === KeyCode.pageUp);
-                    this.ticking = false;
-                }, 20);
-                this.ticking = true;
-            } else if (e.keyCode === KeyCode.home) {
-                this.cursor.pos = FlowView.docStartPosition;
-                this.render(FlowView.docStartPosition);
-            } else if (e.keyCode === KeyCode.end) {
-                let halfport = Math.floor(this.viewportCharCount() / 2);
-                let topChar = this.client.getLength() - halfport;
-                this.cursor.pos = topChar;
-                this.updatePresence();
-                this.render(topChar);
-            } else if (e.keyCode === KeyCode.rightArrow) {
-                if (this.cursor.pos < (this.client.getLength() - 1)) {
-                    if (this.cursor.pos === this.viewportEndPos) {
-                        this.scroll(false, true);
-                    }
-                    this.cursorFwd();
-                    this.updatePresence();
-                    this.cursor.updateView(this);
-                }
-            } else if (e.keyCode === KeyCode.leftArrow) {
-                if (this.cursor.pos > FlowView.docStartPosition) {
-                    if (this.cursor.pos === this.viewportStartPos) {
-                        this.scroll(true, true);
-                    }
-                    this.cursorRev();
-                    this.updatePresence();
-                    this.cursor.updateView(this);
-                }
-            } else if ((e.keyCode === KeyCode.upArrow) || (e.keyCode === KeyCode.downArrow)) {
-                this.lastVerticalX = saveLastVertX;
-                let lineCount = 1;
-                if (e.keyCode === KeyCode.upArrow) {
-                    lineCount = -1;
-                }
-                let vpEnd = this.viewportEndPos;
-                let maxPos = this.client.getLength() - 1;
-                if (vpEnd < maxPos) {
-                    if (!this.verticalMove(lineCount)) {
-                        this.scroll(lineCount < 0, true);
-                        if (lineCount > 0) {
-                            while (vpEnd === this.viewportEndPos) {
-                                if (this.cursor.pos > maxPos) {
-                                    this.cursor.pos = maxPos;
-                                    break;
-                                }
-                                this.scroll(lineCount < 0, true);
-                            }
-                        }
-                        this.verticalMove(lineCount);
-                    }
-                    if (this.cursor.pos > maxPos) {
-                        this.cursor.pos = maxPos;
-                    }
-                    this.updatePresence();
-                    this.cursor.updateView(this);
+            if (this.activeSearchBox) {
+                if (e.keyCode === KeyCode.esc) {
+                    this.activeSearchBox.dismiss();
+                    this.activeSearchBox = undefined;
+                } else {
+                    this.activeSearchBox.keydown(e);
                 }
             } else {
-                if (!e.ctrlKey) {
-                    specialKey = false;
+                let saveLastVertX = this.lastVerticalX;
+                let specialKey = true;
+                this.lastVerticalX = -1;
+                if (e.ctrlKey && (e.keyCode !== 17)) {
+                    this.keyCmd(e.keyCode);
+                } else if (e.keyCode === KeyCode.TAB) {
+                    this.handleTAB(e.shiftKey);
+                } else if (e.keyCode === KeyCode.backspace) {
+                    this.cursor.pos--;
+                    this.sharedString.removeText(this.cursor.pos, this.cursor.pos + 1);
+                    this.localQueueRender(this.cursor.pos);
+                } else if (((e.keyCode === KeyCode.pageUp) || (e.keyCode === KeyCode.pageDown)) && (!this.ticking)) {
+                    setTimeout(() => {
+                        this.scroll(e.keyCode === KeyCode.pageUp);
+                        this.ticking = false;
+                    }, 20);
+                    this.ticking = true;
+                } else if (e.keyCode === KeyCode.home) {
+                    this.cursor.pos = FlowView.docStartPosition;
+                    this.render(FlowView.docStartPosition);
+                } else if (e.keyCode === KeyCode.end) {
+                    let halfport = Math.floor(this.viewportCharCount() / 2);
+                    let topChar = this.client.getLength() - halfport;
+                    this.cursor.pos = topChar;
+                    this.updatePresence();
+                    this.render(topChar);
+                } else if (e.keyCode === KeyCode.rightArrow) {
+                    if (this.cursor.pos < (this.client.getLength() - 1)) {
+                        if (this.cursor.pos === this.viewportEndPos) {
+                            this.scroll(false, true);
+                        }
+                        if (e.shiftKey) {
+                            this.cursor.tryMark();
+                        } else {
+                            this.cursor.clearSelection();
+                        }
+                        this.cursorFwd();
+                        this.updatePresence();
+                        this.cursor.updateView(this);
+                    }
+                } else if (e.keyCode === KeyCode.leftArrow) {
+                    if (this.cursor.pos > FlowView.docStartPosition) {
+                        if (this.cursor.pos === this.viewportStartPos) {
+                            this.scroll(true, true);
+                        }
+                        if (e.shiftKey) {
+                            this.cursor.tryMark();
+                        } else {
+                            this.cursor.clearSelection();
+                        }
+                        this.cursorRev();
+                        this.updatePresence();
+                        this.cursor.updateView(this);
+                    }
+                } else if ((e.keyCode === KeyCode.upArrow) || (e.keyCode === KeyCode.downArrow)) {
+                    this.lastVerticalX = saveLastVertX;
+                    let lineCount = 1;
+                    if (e.keyCode === KeyCode.upArrow) {
+                        lineCount = -1;
+                    }
+                    let vpEnd = this.viewportEndPos;
+                    let maxPos = this.client.getLength() - 1;
+                    if (vpEnd < maxPos) {
+                        if (!this.verticalMove(lineCount)) {
+                            this.scroll(lineCount < 0, true);
+                            if (lineCount > 0) {
+                                while (vpEnd === this.viewportEndPos) {
+                                    if (this.cursor.pos > maxPos) {
+                                        this.cursor.pos = maxPos;
+                                        break;
+                                    }
+                                    this.scroll(lineCount < 0, true);
+                                }
+                            }
+                            this.verticalMove(lineCount);
+                        }
+                        if (this.cursor.pos > maxPos) {
+                            this.cursor.pos = maxPos;
+                        }
+                        this.updatePresence();
+                        this.cursor.updateView(this);
+                    }
+                } else {
+                    if (!e.ctrlKey) {
+                        specialKey = false;
+                    }
                 }
-            }
-            if (specialKey) {
-                e.preventDefault();
-                e.returnValue = false;
+                if (specialKey) {
+                    e.preventDefault();
+                    e.returnValue = false;
+                }
             }
         };
 
         let keypressHandler = (e: KeyboardEvent) => {
-            let pos = this.cursor.pos;
-            this.cursor.pos++;
-            let code = e.charCode;
-            if (code === CharacterCodes.cr) {
-                // TODO: other labels; for now assume only list/pg tile labels
-                let curTilePos = findTile(this, pos, "pg", false);
-                let pgMarker = <IParagraphMarker>curTilePos.tile;
-                let pgPos = curTilePos.pos;
-                clearContentCaches(pgMarker);
-                let curProps = pgMarker.properties;
-                let newProps = SharedString.createMap<any>();
-                let newLabels = ["pg"];
-                if (isListTile(pgMarker)) {
-                    newLabels.push("list");
-                    newProps.indentLevel = curProps.indentLevel;
-                    newProps.listKind = curProps.listKind;
+            if (this.activeSearchBox) {
+                if (e.charCode === CharacterCodes.cr) {
+                    let cmd = <ICmd>this.activeSearchBox.getSelectedItem();
+                    if (cmd && cmd.exec) {
+                        cmd.exec(this);
+                    }
+                    this.activeSearchBox.dismiss();
+                    this.activeSearchBox = undefined;
+                } else {
+                    this.activeSearchBox.keypress(e);
                 }
-                newProps[SharedString.reservedTileLabelsKey] = newLabels;
-                // TODO: place in group op
-                // old marker gets new props
-                this.sharedString.annotateRange(newProps, pgPos, pgPos + 1,
-                    { name: "rewrite" });
-                // new marker gets existing props
-                this.sharedString.insertMarker(pos, SharedString.ReferenceType.Tile, curProps);
             } else {
-                this.sharedString.insertText(String.fromCharCode(code), pos);
-                this.updatePGInfo(pos);
+                let pos = this.cursor.pos;
+                this.cursor.pos++;
+                let code = e.charCode;
+                if (code === CharacterCodes.cr) {
+                    // TODO: other labels; for now assume only list/pg tile labels
+                    let curTilePos = findTile(this, pos, "pg", false);
+                    let pgMarker = <IParagraphMarker>curTilePos.tile;
+                    let pgPos = curTilePos.pos;
+                    clearContentCaches(pgMarker);
+                    let curProps = pgMarker.properties;
+                    let newProps = SharedString.createMap<any>();
+                    let newLabels = ["pg"];
+                    if (isListTile(pgMarker)) {
+                        newLabels.push("list");
+                        newProps.indentLevel = curProps.indentLevel;
+                        newProps.listKind = curProps.listKind;
+                    }
+                    newProps[SharedString.reservedTileLabelsKey] = newLabels;
+                    // TODO: place in group op
+                    // old marker gets new props
+                    this.sharedString.annotateRange(newProps, pgPos, pgPos + 1,
+                        { name: "rewrite" });
+                    // new marker gets existing props
+                    this.sharedString.insertMarker(pos, SharedString.ReferenceType.Tile, curProps);
+                } else {
+                    this.sharedString.insertText(String.fromCharCode(code), pos);
+                    this.updatePGInfo(pos);
+                }
+                this.localQueueRender(this.cursor.pos);
             }
-            this.localQueueRender(this.cursor.pos);
-
         };
 
         // Register for keyboard messages
@@ -3520,57 +4208,62 @@ export class FlowView extends ui.Component {
     }
 
     public toggleBold() {
-        let propToggle = (textSegment: SharedString.TextSegment, startPos: number, endPos: number) => {
-            if (textSegment.properties && textSegment.properties["font-weight"] &&
-                (textSegment.properties["font-weight"] === "bold")) {
-                this.sharedString.annotateRange({ "font-weight": null }, startPos, endPos);
-            } else {
-                this.sharedString.annotateRange({ "font-weight": "bold" }, startPos, endPos);
-            }
-        };
-        this.toggleCurrentWord(propToggle);
+        this.toggleWordOrSelection("font-weight", "bold", null);
+    }
+
+    public toggleItalic() {
+        this.toggleWordOrSelection("font-style", "italic", "normal");
     }
 
     public toggleUnderline() {
-        let propToggle = (textSegment: SharedString.TextSegment, startPos: number, endPos: number) => {
-            if (textSegment.properties && textSegment.properties["text-decoration"] &&
-                (textSegment.properties["text-decoration"] === "underline")) {
-                this.sharedString.annotateRange({ "text-decoration": null }, startPos, endPos);
-            } else {
-                this.sharedString.annotateRange({ "text-decoration": "underline" }, startPos, endPos);
-            }
-        };
-        this.toggleCurrentWord(propToggle);
+        this.toggleWordOrSelection("text-decoration", "underline", null);
     }
 
-    public toggleCurrentWord(propToggle: (textSegment: SharedString.TextSegment,
-        startPos: number, endPos: number) => void) {
-        let wordRange = getCurrentWord(this.cursor.pos, this.sharedString.client.mergeTree);
-        if (wordRange) {
-            let mrToggle = (segment: SharedString.Segment, segpos: number,
-                refSeq: number, clientId: number, start: number, end: number) => {
-                if (segment.getType() === SharedString.SegmentType.Text) {
-                    let textSegment = <SharedString.TextSegment>segment;
-                    // TODO: have combining op for css toggle
-                    let startPos = segpos;
-                    if ((start > 0) && (start < textSegment.text.length)) {
-                        startPos += start;
-                    }
-                    let endPos = segpos + textSegment.text.length;
-                    if (end < textSegment.text.length) {
-                        endPos = segpos + end;
-                    }
-                    propToggle(textSegment, startPos, endPos);
+    public toggleWordOrSelection(name: string, valueOn: string, valueOff: string) {
+        let sel = this.cursor.getSelection();
+        if (sel) {
+            this.cursor.clearSelection();
+            this.toggleRange(name, valueOn, valueOff, sel.start, sel.end);
+        } else {
+            let wordRange = getCurrentWord(this.cursor.pos, this.sharedString.client.mergeTree);
+            if (wordRange) {
+                this.toggleRange(name, valueOn, valueOff, wordRange.wordStart, wordRange.wordEnd);
+            }
+        }
+    }
+
+    public toggleRange(name: string, valueOn: string, valueOff: string, start: number, end: number) {
+        let someSet = false;
+        let findPropSet = (segment: SharedString.Segment) => {
+            if (segment.getType() === SharedString.SegmentType.Text) {
+                let textSegment = <SharedString.TextSegment>segment;
+                if (textSegment.properties && textSegment.properties[name] === valueOn) {
+                    someSet = true;
                 }
-                return true;
-            };
-            let text = this.sharedString.client.getText(wordRange.wordStart, wordRange.wordEnd);
-            console.log(`Word at cursor: [${wordRange.wordStart},${wordRange.wordEnd}) is ${text}`);
-            this.sharedString.client.mergeTree.mapRange({ leaf: mrToggle }, SharedString.UniversalSequenceNumber,
-                this.sharedString.client.getClientId(), undefined, wordRange.wordStart, wordRange.wordEnd);
+                return !someSet;
+            }
+        };
+        this.sharedString.client.mergeTree.mapRange({ leaf: findPropSet }, SharedString.UniversalSequenceNumber,
+            this.sharedString.client.getClientId(), undefined, start, end);
+        if (someSet) {
+            this.sharedString.annotateRange({ [name]: valueOff }, start, end);
+        } else {
+            this.sharedString.annotateRange({ [name]: valueOn }, start, end);
+        }
+        this.localQueueRender(this.cursor.pos);
+    }
+
+    public createComment() {
+        let sel = this.cursor.getSelection();
+        if (sel) {
+            let commentStory = this.sharedString.createString();
+            commentStory.insertText("a comment...", 0);
+            commentStory.attach();
+            this.comments.add(sel.start, sel.end, SharedString.IntervalType.Simple,
+                { story: commentStory });
+            this.cursor.clearSelection();
             this.localQueueRender(this.cursor.pos);
         }
-
     }
 
     public keyCmd(charCode: number) {
@@ -3584,11 +4277,28 @@ export class FlowView extends ui.Component {
             case CharacterCodes.Q:
                 this.backToTheFuture();
                 break;
-            case CharacterCodes.R:
+            case CharacterCodes.R: {
+                let useRel = true;
                 this.updatePGInfo(this.cursor.pos - 1);
-                createTable(this.cursor.pos, this);
+                if (useRel) {
+                    createTableRelative(this.cursor.pos, this);
+                } else {
+                    createTable(this.cursor.pos, this);
+                }
                 this.localQueueRender(this.cursor.pos);
                 break;
+            }
+            case CharacterCodes.M: {
+                this.activeSearchBox = searchBoxCreate(this.viewportDiv, (searchString) => {
+                    let prefix = this.activeSearchBox.getSearchString();
+                    let items = this.cmdTree.pairsWithPrefix(prefix).map((res) => {
+                        return res.val;
+                    });
+                    this.activeSearchBox.showSelectionList(items);
+                    // TODO: consolidate with the cr case
+                });
+                break;
+            }
             case CharacterCodes.L:
                 this.setList();
                 break;
@@ -3597,7 +4307,7 @@ export class FlowView extends ui.Component {
                 break;
             }
             case CharacterCodes.I: {
-                // this.toggleItalic("italic");
+                this.toggleItalic();
                 break;
             }
             case CharacterCodes.U: {
@@ -3748,13 +4458,23 @@ export class FlowView extends ui.Component {
     }
 
     public loadFinished(clockStart = 0) {
+        this.bookmarks = this.sharedString.getSharedIntervalCollection("bookmarks");
+        this.comments = this.sharedString.getSharedIntervalCollection("comments");
+        this.comments.add(0, 4, SharedString.IntervalType.Simple,
+            { story: this.sharedString });
         this.render(0, true);
         if (clockStart > 0) {
             // tslint:disable-next-line:max-line-length
             console.log(`time to edit/impression: ${this.timeToEdit} time to load: ${Date.now() - clockStart}ms len: ${this.sharedString.client.getLength()} - ${performanceNow()}`);
         }
+        const userMap = this.docRoot.get("users") as types.IMap;
+        this.addUserMap(userMap);
         const presenceMap = this.docRoot.get("presence") as types.IMap;
         this.addPresenceMap(presenceMap);
+        let intervalMap = this.sharedString.intervalCollections.getMap();
+        intervalMap.on("valueChanged", (delta: types.IValueChanged) => {
+            this.queueRender(undefined, true);
+        });
         // this.testWordInfo();
     }
 
@@ -3797,7 +4517,9 @@ export class FlowView extends ui.Component {
     }
 
     public localQueueRender(updatePos: number) {
-        this.updatePGInfo(updatePos);
+        if (updatePos >= 0) {
+            this.updatePGInfo(updatePos);
+        }
         this.pendingRender = true;
         window.requestAnimationFrame(() => {
             this.pendingRender = false;
@@ -3842,7 +4564,7 @@ export class FlowView extends ui.Component {
                     adjLength = delta.text.length;
                     this.cursor.pos += delta.text.length;
                 }
-                this.remotePresenceFromEdit(msg.clientId, msg.referenceSequenceNumber, delta.pos1, adjLength);
+                this.remotePresenceFromEdit(msg.clientId, msg.user, msg.referenceSequenceNumber, delta.pos1, adjLength);
                 this.updatePGInfo(delta.pos1);
                 return true;
             case SharedString.MergeTreeDeltaType.REMOVE:
@@ -3851,7 +4573,7 @@ export class FlowView extends ui.Component {
                 } else if (this.cursor.pos >= delta.pos1) {
                     this.cursor.pos = delta.pos1;
                 }
-                this.remotePresenceFromEdit(msg.clientId, msg.referenceSequenceNumber, delta.pos1);
+                this.remotePresenceFromEdit(msg.clientId, msg.user, msg.referenceSequenceNumber, delta.pos1);
                 this.updatePGInfo(delta.pos1);
                 return true;
             case SharedString.MergeTreeDeltaType.GROUP: {
@@ -3881,8 +4603,8 @@ export class FlowView extends ui.Component {
         }
     }
 
-    private queueRender(msg: core.ISequencedObjectMessage) {
-        if ((!this.pendingRender) && msg && msg.contents) {
+    private queueRender(msg: core.ISequencedObjectMessage, go = false) {
+        if ((!this.pendingRender) && (go || (msg && msg.contents))) {
             this.pendingRender = true;
             window.requestAnimationFrame(() => {
                 this.pendingRender = false;

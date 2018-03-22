@@ -4,16 +4,18 @@ import { ITenantManager } from "../api-core";
 /**
  * Helper functioin to return tenant specific configuration
  */
-export function getConfig(
+export async function getConfig(
     config: any,
     tenantManager: ITenantManager,
     tenantId: string,
-    direct = false): string {
+    direct = false): Promise<string> {
 
     // Make a copy of the config to avoid destructive modifications to the original
     const updatedConfig = _.cloneDeep(config);
 
-    const tenant = tenantManager.getTenant(tenantId);
+    const tenant = await tenantManager.getTenant(tenantId).catch((err) => {
+        return Promise.reject(err);
+    });
     updatedConfig.owner = tenant.storage.owner;
     updatedConfig.repository = tenant.storage.repository;
 

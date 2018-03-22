@@ -1,11 +1,5 @@
 // tslint:disable
 import * as ops from "./ops";
-import * as Collections from "./collections";
-/**
- * For each contingent property, a list of contingent local changes,
- * in change order.  
- */
-export type ContingentPropertySet = MapLike<Collections.List<any>>;
 
 export interface MapLike<T> {
     [index: string]: T;
@@ -63,41 +57,6 @@ export function matchProperties(a: PropertySet, b: PropertySet) {
     return true;
 }
 
-export function readContingentProperty(name: string, props: PropertySet,
-    contingentProps: ContingentPropertySet) {
-    let contingentPropList = contingentProps[name];
-    if ((contingentPropList !== undefined) && (!contingentPropList.empty())) {
-        return contingentPropList.last();
-    } else {
-        return props[name];
-    }
-}
-
-export function contingentExtend<T>(contingentBase: ContingentPropertySet,
-    base: MapLike<T>, extension: MapLike<T>, combiningOp?: ops.ICombiningOp) {
-    if (extension !== undefined) {
-        if ((typeof extension !== "object")) {
-            console.log(`oh my ${extension}`);
-        }
-        for (let key in extension) {
-            let v = extension[key];
-            // TODO: consider some type constraints on ops
-            let oldProp = readContingentProperty(key, base, contingentBase);
-            let newProp: any;
-            if (combiningOp) {
-                newProp = combine(combiningOp, oldProp, v);
-            } else {
-                newProp = v;
-            }
-            if (contingentBase[key] === undefined) {
-                contingentBase[key] = Collections.ListMakeHead<any>();
-            }
-            contingentBase[key].enqueue(newProp);
-        }
-    }
-    return base;
-}
-
 export function extend<T>(base: MapLike<T>, extension: MapLike<T>, combiningOp?: ops.ICombiningOp) {
     if (extension !== undefined) {
         if ((typeof extension !== "object")) {
@@ -108,7 +67,6 @@ export function extend<T>(base: MapLike<T>, extension: MapLike<T>, combiningOp?:
             if (v === null) {
                 delete base[key];
             } else {
-                // TODO: consider some type constraints on ops
                 if (combiningOp && (combiningOp.name !== "rewrite")) {
                     base[key] = combine(combiningOp, base[key], v);
                 } else {

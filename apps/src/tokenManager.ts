@@ -9,9 +9,9 @@ export class TokenManager {
         this.tokenMap = {};
     }
 
-    public getOrCreateToken(email: string): string {
+    public getOrCreateToken(email: string, name: string): string {
         if (!(email in this.tokenMap)) {
-            this.tokenMap[email] = this.craftToken(email);
+            this.tokenMap[email] = this.craftToken(email, name);
         }
         return this.tokenMap[email];
     }
@@ -20,7 +20,7 @@ export class TokenManager {
         delete this.tokenMap[email];
     }
 
-    private craftToken(email: string): string {
+    private craftToken(email: string, name: string): string {
         return jwt.sign(
             {
                  permission: "read:write",
@@ -29,6 +29,7 @@ export class TokenManager {
                  user: {
                     data: null,
                     id: email,
+                    name,
                 },
             },
             this.symmetricKey,
