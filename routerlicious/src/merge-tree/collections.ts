@@ -358,7 +358,7 @@ export interface IRBMatcher<TKey, TData> {
     matchNode(node: RBNode<TKey, TData>, key: TKey): boolean;
 }
 
-export interface NodeActions<TKey, TData> {
+export interface RBNodeActions<TKey, TData> {
     infix?(node: RBNode<TKey, TData>): boolean;
     pre?(node: RBNode<TKey, TData>): boolean;
     post?(node: RBNode<TKey, TData>): boolean;
@@ -783,7 +783,7 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
 
     keys() {
         let keyList = <TKey[]>[];
-        let actions = <NodeActions<TKey, TData>>{
+        let actions = <RBNodeActions<TKey, TData>>{
             showStructure: true,
             infix: (node) => {
                 keyList.push(node.key);
@@ -799,11 +799,11 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
      * false, traversal is halted.
      * @param action action to apply to each node 
      */
-    walk(actions: NodeActions<TKey, TData>) {
+    walk(actions: RBNodeActions<TKey, TData>) {
         this.nodeWalk(this.root, actions);
     }
 
-    nodeWalk(node: RBNode<TKey, TData>, actions: NodeActions<TKey, TData>) {
+    nodeWalk(node: RBNode<TKey, TData>, actions: RBNodeActions<TKey, TData>) {
         let go = true;
         if (node) {
             if (actions.pre) {
@@ -1022,6 +1022,16 @@ export class IntervalTree<T extends IInterval> implements IRBAugmentation<T, Aug
         } else {
             this.intervals.put(x, { minmax: x.clone() });
         }
+    }
+
+    map(fn: (x:T)=>void) {
+        let actions = <RBNodeActions<T, AugmentedIntervalNode>> {
+            infix: (node) => {
+                fn(node.key);
+            },
+            showStructure: true,
+        };
+        this.intervals.walk(actions);
     }
 
     // TODO: toString()

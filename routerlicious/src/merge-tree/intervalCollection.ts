@@ -88,7 +88,7 @@ export class Interval implements Collections.IInterval {
             mergeTree.collabWindow.clientId);
         let endPos = this.start.toPosition(mergeTree, MergeTree.UniversalSequenceNumber,
             mergeTree.collabWindow.clientId);
-        return (endPos>bstart)&&(startPos<bend);
+        return (endPos > bstart) && (startPos < bend);
     }
 
     overlaps(b: Interval) {
@@ -261,7 +261,7 @@ export class SharedIntervalCollection {
     public sharedString: SharedString.SharedString;
     public label: string;
     public savedSerializedIntervals?: ISerializedInterval[];
-    public onAdd = (value: Interval) => { return; };
+    public onDeserialize = (value: Interval) => { return; };
 
     constructor(private emitter: IValueOpEmitter,
         serializedIntervals: ISerializedInterval[]) {
@@ -287,9 +287,11 @@ export class SharedIntervalCollection {
     }
 
     deserializeInterval(serializedInterval: ISerializedInterval) {
-        return this.localCollection.addInterval(serializedInterval.startPosition,
+        let interval = this.localCollection.addInterval(serializedInterval.startPosition,
             serializedInterval.endPosition, serializedInterval.intervalType,
             serializedInterval.properties);
+        this.onDeserialize(interval);
+        return interval;
     }
 
     serialize() {
@@ -318,8 +320,7 @@ export class SharedIntervalCollection {
         if (interval) {
             if (submitEvent) {
                 this.emitter.emit("add", serializedInterval);
-            }
-            this.onAdd(interval);
+            } 
         }
         return this;
     }

@@ -3,7 +3,7 @@ import * as assert from "assert";
 import performanceNow = require("performance-now");
 import * as resources from "gitresources";
 import * as api from "../api-core";
-import {Document} from "../api";
+import { Document } from "../api";
 // import * as Collections from "./collections";
 import { Deferred } from "../core-utils";
 import { IMap, IMapView, IValueChanged } from "../data-types";
@@ -14,7 +14,7 @@ import * as MergeTree from "./mergeTree";
 import * as ops from "./ops";
 import * as Properties from "./properties";
 import * as Paparazzo from "./snapshot";
-import { SharedIntervalCollection, SharedIntervalCollectionValueType } from "./intervalCollection";
+import { Interval, SharedIntervalCollection, SharedIntervalCollectionValueType } from "./intervalCollection";
 
 function textsToSegments(texts: ops.IPropertyString[]) {
     let segments: MergeTree.Segment[] = [];
@@ -74,6 +74,10 @@ export class SharedString extends CollaborativeMap {
 
         this.client.insertMarkerLocal(pos, refType, props);
         this.submitIfAttached(insertMessage);
+    }
+
+    public getDocument() {
+        return <Document>this.document;
     }
 
     public createString() {
@@ -169,12 +173,15 @@ export class SharedString extends CollaborativeMap {
     }
 
     // TODO: fix race condition on creation by putting type on every operation
-    public getSharedIntervalCollection(label: string) {
+    public getSharedIntervalCollection(label: string, onDeserialize?: (i: Interval) => void) {
         if (!this.intervalCollections.has(label)) {
             this.intervalCollections.set<SharedIntervalCollection>(label, undefined,
                 SharedIntervalCollectionValueType.Name);
         }
         let sharedCollection = this.intervalCollections.get<SharedIntervalCollection>(label);
+        if (onDeserialize) {
+            sharedCollection.onDeserialize = onDeserialize;
+        }
         sharedCollection.initialize(this, label);
         return sharedCollection;
     }
