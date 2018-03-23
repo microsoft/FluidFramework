@@ -210,12 +210,12 @@ exploration (i.e. branching, forking, merging documents).
 To view the git stored snapshots simply run
 
 ```
-git clone ssh://git@localhost:3022/home/git/prague
-cd prague
+git clone ssh://git@localhost:3022/home/git/prague/prague
+cd prague/prague
 git checkout <document id>
 ```
 
-Or `git clone ssh://git@praguegit.westus2.cloudapp.azure.com/home/git/prague` for our production site.
+Or `git clone ssh://git@praguegit.westus2.cloudapp.azure.com/home/git/prague/prague` for our production site.
 
 From there you can use your git repository management tool of choice to inspect the various documents and revisions
 stored in the repository.
