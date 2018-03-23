@@ -179,6 +179,12 @@ let commands: ICmd[] = [
     },
     {
         exec: (f) => {
+            f.showCommentText();
+        },
+        key: "comment text",
+    },
+    {
+        exec: (f) => {
             f.toggleItalic();
         },
         key: "italic",
@@ -217,6 +223,26 @@ let commands: ICmd[] = [
             f.localQueueRender(f.cursor.pos);
         },
         key: "show bookmarks",
+    },
+    {
+        enabled: (f) => {
+            return !f.modes.showCursorLocation;
+        },
+        exec: (f) => {
+            f.modes.showCursorLocation = true;
+            f.cursorLocation();
+        },
+        key: "show cursor location",
+    },
+    {
+        enabled: (f) => {
+            return f.modes.showCursorLocation;
+        },
+        exec: (f) => {
+            f.modes.showCursorLocation = false;
+            f.status.remove("cursor");
+        },
+        key: "hide cursor location",
     },
     {
         enabled: (f) => {
@@ -1150,7 +1176,7 @@ function renderSegmentIntoLine(
 
 function findLineDiv(pos: number, flowView: FlowView, dive = false) {
     return flowView.lineDivSelect((elm) => {
-        if ((elm.linePos <= pos) && (elm.lineEnd >= pos)) {
+        if ((elm.linePos <= pos) && (elm.lineEnd > pos)) {
             return elm;
         }
     }, flowView.viewportDiv, dive);
@@ -1428,6 +1454,7 @@ function buildIntervalBlockStyle(properties: SharedString.PropertySet, startX: n
         bookmarkDiv.style.borderRight = "1px solid gray";
         bookmarkDiv.style.borderBottom = "1px solid gray";
     }
+    bookmarkDiv.style.pointerEvents = "none";
     bookmarkDiv.style.backgroundColor = "lightgray";
     if (properties) {
         if (properties["bgColor"]) {
@@ -1464,6 +1491,8 @@ function buildIntervalTieStyle(properties: SharedString.PropertySet, startX: num
     if (rightInBounds) {
         contentDiv.appendChild(bookendDiv2);
     }
+
+    bookmarkDiv.style.pointerEvents = "none";
     bookmarkDiv.style.backgroundColor = "lightgray";
     bookendDiv1.style.backgroundColor = "lightgray";
     bookendDiv2.style.backgroundColor = "lightgray";
@@ -3012,6 +3041,9 @@ export class Cursor {
     }
 
     public updateView(flowView: FlowView) {
+        if (flowView.modes.showCursorLocation) {
+            flowView.cursorLocation();
+        }
         if (this.getSelection()) {
             flowView.render(flowView.topChar, true);
         } else {
@@ -3268,6 +3300,7 @@ function preventD(e: Event) {
 export interface IFlowViewModes {
     showBookmarks?: boolean;
     showComments?: boolean;
+    showCursorLocation?: boolean;
 }
 
 export class FlowView extends ui.Component {
@@ -3300,7 +3333,11 @@ export class FlowView extends ui.Component {
     public presenceVector: ILocalPresenceInfo[] = [];
     public docRoot: types.IMapView;
     public curPG: SharedString.Marker;
-    public modes = <IFlowViewModes>{ showBookmarks: true, showComments: true };
+    public modes = <IFlowViewModes>{
+        showBookmarks: true,
+        showComments: true,
+        showCursorLocation: true,
+    };
     private lastVerticalX = -1;
     private randWordTimer: any;
     private pendingRender = false;
@@ -3796,6 +3833,9 @@ export class FlowView extends ui.Component {
                         computed += span.offset;
                     }
                     position = span.segPos + computed;
+                    if (position === targetLineDiv.lineEnd) {
+                        position--;
+                    }
                 }
             }
         }
@@ -4371,6 +4411,23 @@ export class FlowView extends ui.Component {
         }
     }
 
+    public cursorLocation() {
+        this.statusMessage("cursor", `Cursor: ${this.cursor.pos} `);
+    }
+
+    public showCommentText() {
+        let overlappingComments = this.comments.findOverlappingIntervals(this.cursor.pos,
+            this.cursor.pos + 1);
+        if (overlappingComments && (overlappingComments.length >= 1)) {
+            let commentInterval = overlappingComments[0];
+            let commentText = commentInterval.properties["story"].client.getText();
+            this.statusMessage("comment", "Comment Text: " + commentText);
+            setTimeout(() => {
+                this.status.remove("comment");
+            }, (10000));
+        }
+    }
+
     public createComment() {
         let sel = this.cursor.getSelection();
         if (sel) {
@@ -4414,330 +4471,331 @@ export class FlowView extends ui.Component {
                     }).filter((cmd) => {
                         return (!cmd.enabled) || cmd.enabled(this);
                     });
-                this.activeSearchBox.showSelectionList(items);
-                // TODO: consolidate with the cr case
-            });
+                    this.activeSearchBox.showSelectionList(items);
+                    // TODO: consolidate with the cr case
+                });
                 break;
-        }
+            }
             case CharacterCodes.L:
-        this.setList();
-        break;
+                this.setList();
+                break;
             case CharacterCodes.B: {
-            this.toggleBold();
-            break;
-        }
+                this.toggleBold();
+                break;
+            }
             case CharacterCodes.I: {
-            this.toggleItalic();
-            break;
-        }
+                this.toggleItalic();
+                break;
+            }
             case CharacterCodes.U: {
-            this.toggleUnderline();
-            break;
-        }
+                this.toggleUnderline();
+                break;
+            }
             case CharacterCodes.D:
-        this.setList(1);
-        break;
+                this.setList(1);
+                break;
             case CharacterCodes.G:
-        this.viewTileProps();
-        this.localQueueRender(this.cursor.pos);
-        break;
+                this.viewTileProps();
+                this.localQueueRender(this.cursor.pos);
+                break;
             case CharacterCodes.S:
-        this.collabDocument.save();
-        break;
+                this.collabDocument.save();
+                break;
             default:
-        console.log(`got command key ${String.fromCharCode(charCode)}`);
-break;
+                console.log(`got command key ${String.fromCharCode(charCode)}`);
+                break;
         }
     }
 
     public testWordInfo() {
-    let text = this.sharedString.client.getText();
-    let nonWhitespace = text.split(/\s+/g);
-    console.log(`non ws count: ${nonWhitespace.length}`);
-    let obj = new Object();
-    for (let nws of nonWhitespace) {
-        if (!obj[nws]) {
-            obj[nws] = 1;
-        } else {
-            obj[nws]++;
+        let text = this.sharedString.client.getText();
+        let nonWhitespace = text.split(/\s+/g);
+        console.log(`non ws count: ${nonWhitespace.length}`);
+        let obj = new Object();
+        for (let nws of nonWhitespace) {
+            if (!obj[nws]) {
+                obj[nws] = 1;
+            } else {
+                obj[nws]++;
+            }
         }
-    }
-    let count = 0;
-    let uniques = <string[]>[];
-    for (let key in obj) {
-        if (obj.hasOwnProperty(key)) {
-            count++;
-            uniques.push(key);
+        let count = 0;
+        let uniques = <string[]>[];
+        for (let key in obj) {
+            if (obj.hasOwnProperty(key)) {
+                count++;
+                uniques.push(key);
+            }
         }
+        console.log(`${count} unique`);
+        let clock = Date.now();
+        getMultiTextWidth(uniques, "18px Times");
+        console.log(`unique pp cost: ${Date.now() - clock}ms`);
     }
-    console.log(`${count} unique`);
-    let clock = Date.now();
-    getMultiTextWidth(uniques, "18px Times");
-    console.log(`unique pp cost: ${Date.now() - clock}ms`);
-}
 
     public preScroll() {
-    if (this.lastVerticalX === -1) {
-        let rect = this.cursor.rect();
-        this.lastVerticalX = rect.left;
+        if (this.lastVerticalX === -1) {
+            let rect = this.cursor.rect();
+            this.lastVerticalX = rect.left;
+        }
     }
-}
 
     public apresScroll(up: boolean) {
-    if ((this.cursor.pos < this.viewportStartPos) ||
-        (this.cursor.pos >= this.viewportEndPos)) {
-        let x = this.getCanonicalX();
-        if (up) {
-            this.setCursorPosFromPixels(this.firstLineDiv(), x);
-        } else {
-            this.setCursorPosFromPixels(this.lastLineDiv(), x);
+        if ((this.cursor.pos < this.viewportStartPos) ||
+            (this.cursor.pos >= this.viewportEndPos)) {
+            let x = this.getCanonicalX();
+            if (up) {
+                this.setCursorPosFromPixels(this.firstLineDiv(), x);
+            } else {
+                this.setCursorPosFromPixels(this.lastLineDiv(), x);
+            }
+            this.updatePresence();
+            this.cursor.updateView(this);
         }
-        this.updatePresence();
-        this.cursor.updateView(this);
     }
-}
 
     public scroll(up: boolean, one = false) {
-    let scrollTo = this.topChar;
-    if (one) {
-        if (up) {
-            let firstLineDiv = this.firstLineDiv();
-            scrollTo = firstLineDiv.linePos - 2;
-            if (scrollTo < 0) {
-                return;
-            }
-        } else {
-            let nextFirstLineDiv = <ILineDiv>this.firstLineDiv().nextElementSibling;
-            if (nextFirstLineDiv) {
-                scrollTo = nextFirstLineDiv.linePos;
+        let scrollTo = this.topChar;
+        if (one) {
+            if (up) {
+                let firstLineDiv = this.firstLineDiv();
+                scrollTo = firstLineDiv.linePos - 2;
+                if (scrollTo < 0) {
+                    return;
+                }
             } else {
+                let nextFirstLineDiv = <ILineDiv>this.firstLineDiv().nextElementSibling;
+                if (nextFirstLineDiv) {
+                    scrollTo = nextFirstLineDiv.linePos;
+                } else {
+                    return;
+                }
+            }
+        } else {
+            let len = this.client.getLength();
+            let halfport = Math.floor(this.viewportCharCount() / 2);
+            if ((up && (this.topChar === 0)) || ((!up) && (this.topChar > (len - halfport)))) {
                 return;
             }
+            if (up) {
+                scrollTo -= halfport;
+            } else {
+                scrollTo += halfport;
+            }
+            if (scrollTo >= len) {
+                scrollTo = len - 1;
+            }
         }
-    } else {
+        this.preScroll();
+        this.render(scrollTo);
+        this.apresScroll(up);
+    }
+
+    public render(topChar?: number, changed = false) {
         let len = this.client.getLength();
-        let halfport = Math.floor(this.viewportCharCount() / 2);
-        if ((up && (this.topChar === 0)) || ((!up) && (this.topChar > (len - halfport)))) {
+        if (len === 0) {
             return;
         }
-        if (up) {
-            scrollTo -= halfport;
-        } else {
-            scrollTo += halfport;
+        if (topChar !== undefined) {
+            if (((this.topChar === topChar) || ((this.topChar === -1) && (topChar < 0)))
+                && (!changed)) {
+                return;
+            }
+            this.topChar = topChar;
+            if (this.topChar < 0) {
+                this.topChar = 0;
+            }
+            if (this.topChar >= len) {
+                this.topChar = len - (this.viewportCharCount() / 2);
+            }
         }
-        if (scrollTo >= len) {
-            scrollTo = len - 1;
-        }
-    }
-    this.preScroll();
-    this.render(scrollTo);
-    this.apresScroll(up);
-}
 
-    public render(topChar ?: number, changed = false) {
-    let len = this.client.getLength();
-    if (len === 0) {
-        return;
-    }
-    if (topChar !== undefined) {
-        if (((this.topChar === topChar) || ((this.topChar === -1) && (topChar < 0)))
-            && (!changed)) {
-            return;
+        let clk = Date.now();
+        // TODO: consider using markers for presence info once splice segments during pg render
+        this.updatePresencePositions();
+        clearSubtree(this.viewportDiv);
+        // this.viewportDiv.appendChild(this.cursor.editSpan);
+        let renderOutput = renderTree(this.viewportDiv, this.topChar, this, this.targetTranslation);
+        this.viewportStartPos = renderOutput.viewportStartPos;
+        this.viewportEndPos = renderOutput.viewportEndPos;
+        if (this.diagCharPort || true) {
+            this.statusMessage("render", `&nbsp ${Date.now() - clk}ms`);
         }
-        this.topChar = topChar;
-        if (this.topChar < 0) {
-            this.topChar = 0;
+        if (this.diagCharPort) {
+            this.statusMessage("diagCharPort",
+                `&nbsp sp: (${this.topChar}) ep: ${this.viewportEndPos} cp: ${this.cursor.pos}`);
         }
-        if (this.topChar >= len) {
-            this.topChar = len - (this.viewportCharCount() / 2);
-        }
-    }
 
-    let clk = Date.now();
-    // TODO: consider using markers for presence info once splice segments during pg render
-    this.updatePresencePositions();
-    clearSubtree(this.viewportDiv);
-    // this.viewportDiv.appendChild(this.cursor.editSpan);
-    let renderOutput = renderTree(this.viewportDiv, this.topChar, this, this.targetTranslation);
-    this.viewportStartPos = renderOutput.viewportStartPos;
-    this.viewportEndPos = renderOutput.viewportEndPos;
-    if (this.diagCharPort || true) {
-        this.statusMessage("render", `&nbsp ${Date.now() - clk}ms`);
+        this.emit("render", {
+            overlayMarkers: renderOutput.overlayMarkers,
+            range: { min: 1, max: this.client.getLength(), value: this.viewportStartPos },
+            viewportEndPos: this.viewportEndPos,
+            viewportStartPos: this.viewportStartPos,
+        });
     }
-    if (this.diagCharPort) {
-        this.statusMessage("diagCharPort",
-            `&nbsp sp: (${this.topChar}) ep: ${this.viewportEndPos} cp: ${this.cursor.pos}`);
-    }
-
-    this.emit("render", {
-        overlayMarkers: renderOutput.overlayMarkers,
-        range: { min: 1, max: this.client.getLength(), value: this.viewportStartPos },
-        viewportEndPos: this.viewportEndPos,
-        viewportStartPos: this.viewportStartPos,
-    });
-}
 
     public loadFinished(clockStart = 0) {
-    this.bookmarks = this.sharedString.getSharedIntervalCollection("bookmarks");
-    let onDeserialize = (interval) => {
-        if (interval.properties && interval.properties["story"]) {
-            let story = interval.properties["story"];
-            if (!story["id"]) {
-                this.sharedString.getDocument().get(story["value"]).then((commentSharedString) => {
-                    interval.properties["story"] = commentSharedString;
-                });
+        this.bookmarks = this.sharedString.getSharedIntervalCollection("bookmarks");
+        let onDeserialize = (interval) => {
+            if (interval.properties && interval.properties["story"]) {
+                let story = interval.properties["story"];
+                if (!story["id"]) {
+                    this.sharedString.getDocument().get(story["value"]).then((commentSharedString) => {
+                        interval.properties["story"] = commentSharedString;
+                    });
+                }
             }
+        };
+        this.comments = this.sharedString.getSharedIntervalCollection("comments", onDeserialize);
+        this.comments.localCollection.map(onDeserialize);
+        this.render(0, true);
+        if (clockStart > 0) {
+            // tslint:disable-next-line:max-line-length
+            console.log(`time to edit/impression: ${this.timeToEdit} time to load: ${Date.now() - clockStart}ms len: ${this.sharedString.client.getLength()} - ${performanceNow()}`);
         }
-    };
-    this.comments = this.sharedString.getSharedIntervalCollection("comments", onDeserialize);
-    this.render(0, true);
-    if (clockStart > 0) {
-        // tslint:disable-next-line:max-line-length
-        console.log(`time to edit/impression: ${this.timeToEdit} time to load: ${Date.now() - clockStart}ms len: ${this.sharedString.client.getLength()} - ${performanceNow()}`);
+        const userMap = this.docRoot.get("users") as types.IMap;
+        this.addUserMap(userMap);
+        const presenceMap = this.docRoot.get("presence") as types.IMap;
+        this.addPresenceMap(presenceMap);
+        let intervalMap = this.sharedString.intervalCollections.getMap();
+        intervalMap.on("valueChanged", (delta: types.IValueChanged) => {
+            this.queueRender(undefined, true);
+        });
+        // this.testWordInfo();
     }
-    const userMap = this.docRoot.get("users") as types.IMap;
-    this.addUserMap(userMap);
-    const presenceMap = this.docRoot.get("presence") as types.IMap;
-    this.addPresenceMap(presenceMap);
-    let intervalMap = this.sharedString.intervalCollections.getMap();
-    intervalMap.on("valueChanged", (delta: types.IValueChanged) => {
-        this.queueRender(undefined, true);
-    });
-    // this.testWordInfo();
-}
 
     public randomWordMove() {
-    let client = this.sharedString.client;
-    let word1 = findRandomWord(client.mergeTree, client.getClientId());
-    if (word1) {
-        let removeStart = word1.pos;
-        let removeEnd = removeStart + word1.text.length;
-        this.sharedString.removeText(removeStart, removeEnd);
-        let word2 = findRandomWord(client.mergeTree, client.getClientId());
-        while (!word2) {
-            word2 = findRandomWord(client.mergeTree, client.getClientId());
+        let client = this.sharedString.client;
+        let word1 = findRandomWord(client.mergeTree, client.getClientId());
+        if (word1) {
+            let removeStart = word1.pos;
+            let removeEnd = removeStart + word1.text.length;
+            this.sharedString.removeText(removeStart, removeEnd);
+            let word2 = findRandomWord(client.mergeTree, client.getClientId());
+            while (!word2) {
+                word2 = findRandomWord(client.mergeTree, client.getClientId());
+            }
+            let pos = word2.pos + word2.text.length;
+            this.sharedString.insertText(word1.text, pos);
         }
-        let pos = word2.pos + word2.text.length;
-        this.sharedString.insertText(word1.text, pos);
     }
-}
 
     public randomWordMoveStart() {
-    this.randWordTimer = setInterval(() => {
-        for (let i = 0; i < 3; i++) {
-            this.randomWordMove();
-        }
-    }, 10);
-}
+        this.randWordTimer = setInterval(() => {
+            for (let i = 0; i < 3; i++) {
+                this.randomWordMove();
+            }
+        }, 10);
+    }
 
     public randomWordMoveEnd() {
-    clearInterval(this.randWordTimer);
-}
+        clearInterval(this.randWordTimer);
+    }
 
     public updatePGInfo(changePos: number) {
-    let tileInfo = findTile(this, changePos, "pg", false);
-    if (tileInfo) {
-        let tile = <IParagraphMarker>tileInfo.tile;
-        clearContentCaches(tile);
-    } else {
-        console.log("did not find pg to clear");
+        let tileInfo = findTile(this, changePos, "pg", false);
+        if (tileInfo) {
+            let tile = <IParagraphMarker>tileInfo.tile;
+            clearContentCaches(tile);
+        } else {
+            console.log("did not find pg to clear");
+        }
     }
-}
 
     public localQueueRender(updatePos: number) {
-    if (updatePos >= 0) {
-        this.updatePGInfo(updatePos);
+        if (updatePos >= 0) {
+            this.updatePGInfo(updatePos);
+        }
+        this.pendingRender = true;
+        window.requestAnimationFrame(() => {
+            this.pendingRender = false;
+            this.render(this.topChar, true);
+        });
     }
-    this.pendingRender = true;
-    window.requestAnimationFrame(() => {
-        this.pendingRender = false;
-        this.render(this.topChar, true);
-    });
-}
 
     public setViewOption(options: Object) {
-    viewOptions = options;
-}
+        viewOptions = options;
+    }
 
     protected resizeCore(bounds: ui.Rectangle) {
-    this.viewportRect = bounds.inner(0.92);
-    ui.Rectangle.conformElementToRect(this.viewportDiv, this.viewportRect);
-    if (this.client.getLength() > 0) {
-        this.render(this.topChar, true);
+        this.viewportRect = bounds.inner(0.92);
+        ui.Rectangle.conformElementToRect(this.viewportDiv, this.viewportRect);
+        if (this.client.getLength() > 0) {
+            this.render(this.topChar, true);
+        }
     }
-}
 
     private increaseIndent(tile: IParagraphMarker, pos: number, decrease = false) {
-    tile.listCache = undefined;
-    if (decrease && tile.properties.indentLevel > 0) {
-        this.sharedString.annotateRange({ indentLevel: -1 },
-            pos, pos + 1, { name: "incr", defaultValue: 1, minValue: 0 });
-    } else if (!decrease) {
-        this.sharedString.annotateRange({ indentLevel: 1 }, pos, pos + 1,
-            { name: "incr", defaultValue: 0 });
+        tile.listCache = undefined;
+        if (decrease && tile.properties.indentLevel > 0) {
+            this.sharedString.annotateRange({ indentLevel: -1 },
+                pos, pos + 1, { name: "incr", defaultValue: 1, minValue: 0 });
+        } else if (!decrease) {
+            this.sharedString.annotateRange({ indentLevel: 1 }, pos, pos + 1,
+                { name: "incr", defaultValue: 0 });
+        }
+        this.localQueueRender(this.cursor.pos);
     }
-    this.localQueueRender(this.cursor.pos);
-}
 
     // TODO: paragraph spanning changes and annotations
     // TODO: generalize this by using transform fwd
     private applyOp(delta: SharedString.IMergeTreeOp, msg: core.ISequencedObjectMessage) {
-    // tslint:disable:switch-default
-    switch (delta.type) {
-        case SharedString.MergeTreeDeltaType.INSERT:
-            let adjLength = 1;
-            if (delta.marker) {
-                this.updatePGInfo(delta.pos1 - 1);
-            } else if (delta.pos1 <= this.cursor.pos) {
-                adjLength = delta.text.length;
-                this.cursor.pos += delta.text.length;
+        // tslint:disable:switch-default
+        switch (delta.type) {
+            case SharedString.MergeTreeDeltaType.INSERT:
+                let adjLength = 1;
+                if (delta.marker) {
+                    this.updatePGInfo(delta.pos1 - 1);
+                } else if (delta.pos1 <= this.cursor.pos) {
+                    adjLength = delta.text.length;
+                    this.cursor.pos += delta.text.length;
+                }
+                this.remotePresenceFromEdit(msg.clientId, msg.user, msg.referenceSequenceNumber, delta.pos1, adjLength);
+                this.updatePGInfo(delta.pos1);
+                return true;
+            case SharedString.MergeTreeDeltaType.REMOVE:
+                if (delta.pos2 <= this.cursor.pos) {
+                    this.cursor.pos -= (delta.pos2 - delta.pos1);
+                } else if (this.cursor.pos >= delta.pos1) {
+                    this.cursor.pos = delta.pos1;
+                }
+                this.remotePresenceFromEdit(msg.clientId, msg.user, msg.referenceSequenceNumber, delta.pos1);
+                this.updatePGInfo(delta.pos1);
+                return true;
+            case SharedString.MergeTreeDeltaType.GROUP: {
+                let opAffectsViewport = false;
+                for (let groupOp of delta.ops) {
+                    opAffectsViewport = opAffectsViewport || this.applyOp(groupOp, msg);
+                }
+                return opAffectsViewport;
             }
-            this.remotePresenceFromEdit(msg.clientId, msg.user, msg.referenceSequenceNumber, delta.pos1, adjLength);
-            this.updatePGInfo(delta.pos1);
-            return true;
-        case SharedString.MergeTreeDeltaType.REMOVE:
-            if (delta.pos2 <= this.cursor.pos) {
-                this.cursor.pos -= (delta.pos2 - delta.pos1);
-            } else if (this.cursor.pos >= delta.pos1) {
-                this.cursor.pos = delta.pos1;
+            case SharedString.MergeTreeDeltaType.ANNOTATE: {
+                return this.posInViewport(delta.pos1) || this.posInViewport(delta.pos2 - 1);
             }
-            this.remotePresenceFromEdit(msg.clientId, msg.user, msg.referenceSequenceNumber, delta.pos1);
-            this.updatePGInfo(delta.pos1);
-            return true;
-        case SharedString.MergeTreeDeltaType.GROUP: {
-            let opAffectsViewport = false;
-            for (let groupOp of delta.ops) {
-                opAffectsViewport = opAffectsViewport || this.applyOp(groupOp, msg);
-            }
-            return opAffectsViewport;
-        }
-        case SharedString.MergeTreeDeltaType.ANNOTATE: {
-            return this.posInViewport(delta.pos1) || this.posInViewport(delta.pos2 - 1);
         }
     }
-}
 
     private posInViewport(pos: number) {
-    return ((this.viewportEndPos > pos) && (pos >= this.viewportStartPos));
-}
+        return ((this.viewportEndPos > pos) && (pos >= this.viewportStartPos));
+    }
 
     private presenceQueueRender(remotePosInfo: ILocalPresenceInfo) {
-    if ((!this.pendingRender) && (this.posInViewport(remotePosInfo.xformPos))) {
-        this.pendingRender = true;
-        window.requestAnimationFrame(() => {
-            this.pendingRender = false;
-            this.render(this.topChar, true);
-        });
+        if ((!this.pendingRender) && (this.posInViewport(remotePosInfo.xformPos))) {
+            this.pendingRender = true;
+            window.requestAnimationFrame(() => {
+                this.pendingRender = false;
+                this.render(this.topChar, true);
+            });
+        }
     }
-}
 
     private queueRender(msg: core.ISequencedObjectMessage, go = false) {
-    if ((!this.pendingRender) && (go || (msg && msg.contents))) {
-        this.pendingRender = true;
-        window.requestAnimationFrame(() => {
-            this.pendingRender = false;
-            this.render(this.topChar, true);
-        });
+        if ((!this.pendingRender) && (go || (msg && msg.contents))) {
+            this.pendingRender = true;
+            window.requestAnimationFrame(() => {
+                this.pendingRender = false;
+                this.render(this.topChar, true);
+            });
+        }
     }
-}
 }

@@ -147,6 +147,10 @@ export class LocalIntervalCollection implements IIntervalCollection {
     constructor(public sharedString: SharedString.SharedString, public label: string) {
     }
 
+    map(fn: (interval:Interval)=>void) {
+        this.intervalTree.map(fn);
+    }
+
     public findOverlappingIntervals(startPosition: number, endPosition: number) {
         let transientInterval = createInterval("transient", this.sharedString,
             startPosition, endPosition, ops.IntervalType.Simple);
