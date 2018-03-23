@@ -106,11 +106,11 @@ export class WorkerService implements core.IWorkerService {
                     this.socket.on("AgentObject", (cId: string, moduleName: string, action: string, response) => {
                         // TODO: Need some rule here to deny a new agent loading.
                         if (action === "add") {
-                            console.log(`Received work to load new module ${moduleName}!`);
+                            console.log(`Received request to load module: ${moduleName}!`);
                             this.loadNewModule( { name: moduleName, code: null } );
                             response(null, clientDetail);
                         } else if (action === "remove") {
-                            console.log(`Received work to unload the module ${moduleName}!`);
+                            console.log(`Received request to unload module: ${moduleName}!`);
                             this.unloadModule( { name: moduleName, code: null } );
                             response(null, clientDetail);
                         }
@@ -199,7 +199,7 @@ export class WorkerService implements core.IWorkerService {
         this.moduleLoader(newModule.name).then((loadedCode) => {
             console.log(`Success loading module ${newModule.name} in worker!`);
 
-            // Update the code.
+            // Update the loaded module code.
             newModule.code = loadedCode;
 
             // Register the module for all active documents.
@@ -207,6 +207,7 @@ export class WorkerService implements core.IWorkerService {
                 for (const workType of Object.keys(this.documentMap[docId])) {
                     if (workType === "intel") {
                         const intelWork = this.documentMap[docId][workType] as IntelWork;
+                        console.log(`Registering new loaded ${newModule.name} to document ${docId}`);
                         intelWork.registerNewService(newModule.code);
                     }
                 }
@@ -307,6 +308,7 @@ export class WorkerService implements core.IWorkerService {
                     intelWork.start().then(() => {
                         // tslint:disable-next-line
                         for (let name in this.runtimeModules) {
+                            console.log(`Registering ${this.runtimeModules[name].name} for document ${docId}`);
                             intelWork.registerNewService(this.runtimeModules[name].code);
                         }
                     }, (err) => {
