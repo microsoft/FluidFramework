@@ -7,15 +7,21 @@ import { Range } from "../core-utils";
 import { IContext, IPartitionLambda } from "../kafka-service/lambdas";
 import * as utils from "../utils";
 
-export class Batch<T> {
+/**
+ * A batch takes in a key type and then a value type that is accumulated against the key. The key type must be
+ * able to be stringified so that we can properly batch work.
+ */
+export class Batch<K, T> {
     private pendingWork = new Map<string, T[]>();
 
-    public add(id: string, work: T) {
-        if (!this.pendingWork.has(id)) {
-            this.pendingWork.set(id, []);
+    public add(id: K, work: T) {
+        const encoded = JSON.stringify(id);
+
+        if (!this.pendingWork.has(encoded)) {
+            this.pendingWork.set(encoded, []);
         }
 
-        this.pendingWork.get(id).push(work);
+        this.pendingWork.get(encoded).push(work);
     }
 
     /**
@@ -28,10 +34,10 @@ export class Batch<T> {
     /**
      * Runs the given async mapping function on the batch
      */
-    public async map(fn: (id: string, work: T[]) => Promise<void>): Promise<void> {
+    public async map(fn: (id: K, work: T[]) => Promise<void>): Promise<void> {
         const processedP = new Array<Promise<void>>();
         for (const [key, value] of this.pendingWork) {
-            const mapP = fn(key, value);
+            const mapP = fn(JSON.parse(key) as K, value);
             processedP.push(mapP);
         }
 
@@ -42,9 +48,9 @@ export class Batch<T> {
 /**
  * Wrapper class to combine a batch with the log offset that maps to it
  */
-class OffsetBatch<T> {
+class OffsetBatch<K, T> {
     public offset: number;
-    public batch = new Batch<T>();
+    public batch = new Batch<K, T>();
 
     public clear() {
         this.offset = undefined;
@@ -62,24 +68,24 @@ class OffsetBatch<T> {
 /**
  * The BatchManager is used to manage async work triggered by messages to a pub/sub log
  */
-export class BatchManager<T> extends EventEmitter {
+export class BatchManager<K, T> extends EventEmitter {
     public static MinRangeValue = Number.NEGATIVE_INFINITY;
 
     public range = new Range(BatchManager.MinRangeValue, BatchManager.MinRangeValue);
 
     // The manager maintains a pending batch of operations as well as a current batch. The current batch is the
     // one that is in the process of being sent. The pending batch is the next batch that will be sent.
-    private pending = new OffsetBatch<T>();
-    private current = new OffsetBatch<T>();
+    private pending = new OffsetBatch<K, T>();
+    private current = new OffsetBatch<K, T>();
 
-    constructor(private sendFn: (batch: Batch<T>) => Promise<void>) {
+    constructor(private sendFn: (batch: Batch<K, T>) => Promise<void>) {
         super();
     }
 
     /**
      * Adds a new value to the batch and updates the log offset
      */
-    public add(id: string, value: T, offset: number) {
+    public add(id: K, value: T, offset: number) {
         this.range.head = offset;
         this.pending.batch.add(id, value);
         this.pending.offset = offset;
@@ -131,7 +137,7 @@ export class BatchManager<T> extends EventEmitter {
 }
 
 export class WorkManager extends EventEmitter {
-    private work = new Array<BatchManager<any>>();
+    private work = new Array<BatchManager<any, any>>();
 
     // Start out at negative infinity. This represents an unknown offset and matches how the range is stored. We
     // won't fire an offset event until this changes
@@ -141,8 +147,8 @@ export class WorkManager extends EventEmitter {
         super();
     }
 
-    public createBatchedWork<T>(processFn: (batch: Batch<T>) => Promise<void>): BatchManager<T> {
-        const batchedWork = new BatchManager<T>(processFn);
+    public createBatchedWork<K, T>(processFn: (batch: Batch<K, T>) => Promise<void>): BatchManager<K, T> {
+        const batchedWork = new BatchManager<K, T>(processFn);
 
         // Listen for error events as well as when a batch is complete - and the offset may have changed
         batchedWork.on("error", (error) => {
@@ -177,14 +183,22 @@ export class WorkManager extends EventEmitter {
     }
 }
 
+/**
+ * Wrapper interface to define a topic, event, and documentId to send to
+ */
+interface IoTarget {
+    documentId: string;
+    event: string;
+    topic: string;
+}
+
 export class ScriptoriumLambda implements IPartitionLambda {
     // We maintain three batches of work - one for MongoDB and the other two for Socket.IO.
     // One socket.IO group is for sequenced ops and the other for nack'ed messages.
     // By splitting the two we can update each independently and on their own cadence
-    private mongoManager: BatchManager<core.ISequencedOperationMessage>;
-    private ioManager: BatchManager<api.ISequencedDocumentMessage>;
-    private nackManager: BatchManager<api.INack>;
-    private idleManager: BatchManager<void>;
+    private mongoManager: BatchManager<string, core.ISequencedOperationMessage>;
+    private ioManager: BatchManager<IoTarget, api.ISequencedDocumentMessage | api.INack>;
+    private idleManager: BatchManager<string, void>;
 
     private workManager = new WorkManager();
 
@@ -201,9 +215,8 @@ export class ScriptoriumLambda implements IPartitionLambda {
 
         // Create all the batched workers
         this.mongoManager = this.workManager.createBatchedWork((batch) => this.processMongoBatch(batch));
-        this.ioManager = this.workManager.createBatchedWork((batch) => this.processIoBatch("op", batch));
-        this.nackManager = this.workManager.createBatchedWork((batch) => this.processIoBatch("nack", batch));
-        this.idleManager = this.workManager.createBatchedWork<void>(async (batch) => { return; });
+        this.ioManager = this.workManager.createBatchedWork((batch) => this.processIoBatch(batch));
+        this.idleManager = this.workManager.createBatchedWork(async (batch) => { return; });
 
         this.io.on("error", (error) => {
             // After an IO error we need to recreate the lambda
@@ -221,12 +234,25 @@ export class ScriptoriumLambda implements IPartitionLambda {
                 value.operation.traces.push( {service: "scriptorium", action: "start", timestamp: Date.now()});
             }
 
-            // Batch up work to more efficiently send to socket.io and mongodb
+            // Batch send to MongoDB
             this.mongoManager.add(value.documentId, value, message.offset);
-            this.ioManager.add(value.documentId, value.operation, message.offset);
+
+            // And to Socket.IO
+            const target: IoTarget = {
+                documentId: value.documentId,
+                event: "op",
+                topic: value.documentId,
+            };
+            this.ioManager.add(target, value.operation, message.offset);
         } else if (baseMessage.type === core.NackOperationType) {
             const value = baseMessage as core.INackMessage;
-            this.nackManager.add(`client#${value.clientId}`, value.operation, message.offset);
+
+            const target: IoTarget = {
+                documentId: value.documentId,
+                event: "nack",
+                topic: `client#${value.clientId}`,
+            };
+            this.ioManager.add(target, value.operation, message.offset);
         } else {
             // Treat all other messages as an idle batch of work for simplicity
             this.idleManager.add(null, null, message.offset);
@@ -236,7 +262,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
     /**
      * BatchManager callback invoked once a new batch is ready to be processed
      */
-    private async processMongoBatch(batch: Batch<core.ISequencedOperationMessage>): Promise<void> {
+    private async processMongoBatch(batch: Batch<string, core.ISequencedOperationMessage>): Promise<void> {
         // Serialize the current batch to Mongo
         await batch.map(async (id, work) => {
             winston.verbose(`Inserting to mongodb ${id}@${work[0].operation.sequenceNumber}:${work.length}`);
@@ -255,10 +281,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
     /**
      * BatchManager callback invoked once a new batch is ready to be processed
      */
-    private async processIoBatch(
-        event: string,
-        batch: Batch<api.INack | api.ISequencedDocumentMessage>): Promise<void> {
-
+    private async processIoBatch(batch: Batch<IoTarget, api.INack | api.ISequencedDocumentMessage>): Promise<void> {
         // Serialize the current batch to Mongo
         await batch.map(async (id, work) => {
             // Add trace to each message before routing.
@@ -269,7 +292,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
                 }
             });
 
-            this.io.to(id).emit(event, id, work);
+            this.io.to(id.topic).emit(id.event, id.documentId, work);
         });
     }
 

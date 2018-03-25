@@ -36,7 +36,7 @@ export class Range {
     }
 
     public set head(head: number) {
-        assert.ok(head > this._head, `${head} > ${this._head}`);
+        assert.ok(head >= this._head, `${head} >= ${this._head}`);
         this._head = head;
     }
 
@@ -45,7 +45,7 @@ export class Range {
     }
 
     public set tail(tail: number) {
-        assert.ok(tail > this._tail && tail <= this._head);
+        assert.ok(tail >= this._tail && tail <= this._head);
         this._tail = tail;
     }
 

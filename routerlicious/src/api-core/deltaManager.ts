@@ -195,6 +195,10 @@ export class DeltaManager implements IDeltaManager {
         this.deltaConnection.on("op", (messages: protocol.ISequencedDocumentMessage[]) => {
             this.enqueueMessages(messages);
         });
+
+        this.deltaConnection.on("nack", (message: protocol.INack[]) => {
+            debug("Got a nack!");
+        });
     }
 
     /**
