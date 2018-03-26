@@ -2357,9 +2357,14 @@ function tokenToItems(
             lfontstr = `${fontSize} Times`;
             divHeight = +fontSize;
         }
+        // this is not complete because can be % or normal etc.
         let lineHeight = leadSegment.properties.lineHeight;
         if (lineHeight !== undefined) {
-            divHeight = +lineHeight;
+            divHeight = Math.floor((+lineHeight)*divHeight);
+        }
+        let fontWeight = leadSegment.properties.fontWeight;
+        if (fontWeight) {
+            lfontstr = fontWeight + " " + lfontstr;
         }
         let fontStyle = leadSegment.properties.fontStyle;
         if (fontStyle) {
@@ -4342,15 +4347,15 @@ export class FlowView extends ui.Component {
     }
 
     public toggleBold() {
-        this.toggleWordOrSelection("font-weight", "bold", null);
+        this.toggleWordOrSelection("fontWeight", "bold", null);
     }
 
     public toggleItalic() {
-        this.toggleWordOrSelection("font-style", "italic", "normal");
+        this.toggleWordOrSelection("fontStyle", "italic", "normal");
     }
 
     public toggleUnderline() {
-        this.toggleWordOrSelection("text-decoration", "underline", null);
+        this.toggleWordOrSelection("textDecoration", "underline", null);
     }
 
     public toggleWordOrSelection(name: string, valueOn: string, valueOff: string) {
