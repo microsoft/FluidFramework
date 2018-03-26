@@ -27,6 +27,7 @@ import {
     ITree,
     ITreeEntry,
     LocalObjectStorageService,
+    NoOp,
     ObjectOperation,
     ObjectStorageService,
     Registry,
@@ -461,7 +462,7 @@ export class Document extends EventEmitter {
         for (const objectId in this.distributedObjects) {
             const object = this.distributedObjects[objectId];
 
-            if (this.shouldSnapshot(object)) {
+            if (!object.object.isLocal()) {
                 const snapshot = object.object.snapshot();
 
                 // Add in the object attributes to the returned tree
@@ -511,33 +512,23 @@ export class Document extends EventEmitter {
     }
 
     /**
-     * Helper function to determine if we should snapshot the given object. We only will snapshot non-local
-     * objects whose time of attach is outside the collaboration window
-     */
-    private shouldSnapshot(object: IDistributedObjectState) {
-        return !object.object.isLocal() &&
-            object.connection.baseMappingIsSet() &&
-            object.connection.baseSequenceNumber === this._deltaManager.minimumSequenceNumber;
-    }
-
-    /**
      * Transforms the given message relative to the provided sequence number
      */
     private transform(message: ISequencedDocumentMessage, sequenceNumber: number): ISequencedDocumentMessage {
-        if (message.referenceSequenceNumber < this._deltaManager.minimumSequenceNumber) {
-            // Allow the distributed data types to perform custom transformations
-            if (message.type === ObjectOperation) {
-                const envelope = message.contents as IEnvelope;
-                const objectDetails = this.distributedObjects[envelope.address];
-                envelope.contents = objectDetails.object.transform(
-                    envelope.contents as IObjectMessage,
-                    objectDetails.connection.transformDocumentSequenceNumber(sequenceNumber));
-            }
-
-            message.referenceSequenceNumber = sequenceNumber;
+        // Allow the distributed data types to perform custom transformations
+        if (message.type === ObjectOperation) {
+            const envelope = message.contents as IEnvelope;
+            const objectDetails = this.distributedObjects[envelope.address];
+            envelope.contents = objectDetails.object.transform(
+                envelope.contents as IObjectMessage,
+                objectDetails.connection.transformDocumentSequenceNumber(
+                    Math.max(message.referenceSequenceNumber, sequenceNumber)));
+        } else if (message.type === AttachObject) {
+            message.type = NoOp;
         }
 
-        message.minimumSequenceNumber = sequenceNumber;
+        message.referenceSequenceNumber = sequenceNumber;
+
         return message;
     }
 

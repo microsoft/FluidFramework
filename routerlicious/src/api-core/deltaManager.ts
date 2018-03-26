@@ -132,6 +132,9 @@ export class DeltaManager implements IDeltaManager {
     private _outbound: DeltaQueue<OutboundMessage>;
     // tslint:enable:variable-name
 
+    // Flag indicating whether the client has been nacked
+    private nacked = false;
+
     public get inbound(): IDeltaQueue {
         return this._inbound;
     }
@@ -194,6 +197,18 @@ export class DeltaManager implements IDeltaManager {
         // listen for new messages
         this.deltaConnection.on("op", (messages: protocol.ISequencedDocumentMessage[]) => {
             this.enqueueMessages(messages);
+        });
+
+        this.deltaConnection.on("nack", (message: protocol.INack[]) => {
+            const targetSequenceNumber = message[0].sequenceNumber;
+            debug(`Connection NACK'ed - target sequence number is ${targetSequenceNumber}`);
+
+            // Mark that we've been nacked
+            this.nacked = true;
+
+            // Stop all outbound sends. We will resume once we have re-established ourselves at the target
+            // sequence number.
+            this._outbound.pause();
         });
     }
 
@@ -261,10 +276,15 @@ export class DeltaManager implements IDeltaManager {
      * Begins to submit a new message to the server
      */
     private submitCore(message: protocol.IDocumentMessage): Promise<void> {
-        const deferred = new Deferred<void>();
-        const task = extend(message, { _deferred: deferred });
-        this._outbound.push(task);
-        return deferred.promise;
+        if (this.nacked) {
+            debug("In nack'ed state - not submitting");
+            return Promise.resolve();
+        } else {
+            const deferred = new Deferred<void>();
+            const task = extend(message, { _deferred: deferred });
+            this._outbound.push(task);
+            return deferred.promise;
+        }
     }
 
     private enqueueMessages(messages: protocol.ISequencedDocumentMessage[]) {

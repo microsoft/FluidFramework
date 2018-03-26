@@ -15,6 +15,7 @@ const SequenceNumberComparer: utils.IComparer<IClientSequenceNumber> = {
         canEvict: true,
         clientId: undefined,
         lastUpdate: -1,
+        nack: false,
         referenceSequenceNumber: -1,
     },
 };
@@ -32,7 +33,7 @@ export class DeliLambda implements IPartitionLambda {
     private logOffset: number;
 
     // Client sequence number mapping
-    private clientNodeMap: { [key: string]: utils.IHeapNode<IClientSequenceNumber> } = {};
+    private clientNodeMap = new Map<string, utils.IHeapNode<IClientSequenceNumber>>();
     private clientSeqNumbers = new utils.Heap<IClientSequenceNumber>(SequenceNumberComparer);
     private minimumSequenceNumber = -1;
     private window: RangeTracker;
@@ -54,7 +55,8 @@ export class DeliLambda implements IPartitionLambda {
                     client.clientId,
                     client.referenceSequenceNumber,
                     client.lastUpdate,
-                    client.canEvict);
+                    client.canEvict,
+                    client.nack);
             }
         }
 
@@ -90,13 +92,7 @@ export class DeliLambda implements IPartitionLambda {
     public handler(message: utils.kafkaConsumer.IMessage): void {
         // Trace for the message.
         const trace: api.ITrace = { service: "deli", action: "start", timestamp: Date.now()};
-
-        const baseMessage = JSON.parse(message.value.toString()) as core.IMessage;
-        if (baseMessage.type === core.RawOperationType) {
-            this.ticket(message, trace);
-        }
-
-        // TODO need to mark non raw base
+        this.ticket(message, trace);
     }
 
     private ticket(rawMessage: utils.kafkaConsumer.IMessage, trace: api.ITrace): void {
@@ -118,16 +114,60 @@ export class DeliLambda implements IPartitionLambda {
         // Update and retrieve the minimum sequence number
         let message = objectMessage as core.IRawOperationMessage;
 
-        if (message.operation.type !== api.Integrate
-            && message.clientId
-            && message.operation.referenceSequenceNumber < this.minimumSequenceNumber) {
+        // Nack handling - only applies to non-integration messages
+        if (message.operation.type !== api.Integrate) {
+            if (message.clientId) {
+                // Look up the client
+                const node = this.clientNodeMap.get(message.clientId);
+                if (!node || node.value.nack) {
+                    const nackMessage: core.INackMessage = {
+                        clientId: objectMessage.clientId,
+                        documentId: objectMessage.documentId,
+                        operation: {
+                            operation: message.operation,
+                            sequenceNumber: this.minimumSequenceNumber,
+                        },
+                        type: core.NackOperationType,
+                    };
 
-            // TODO support nacking of clients
-            // Do not assign a ticket to a message outside the MSN. We will need to NACK clients in this case.
-            // tslint:disable-next-line
-            winston.error(`${message.clientId} sent packet ${message.operation.referenceSequenceNumber} less than MSN of ${this.minimumSequenceNumber}`);
+                    this.sendMessage(nackMessage);
 
-            return;
+                    return;
+                }
+
+                if (message.clientId && message.operation.referenceSequenceNumber < this.minimumSequenceNumber) {
+                    // Add in a placeholder for the nack'ed client to allow them to rejoin at the current MSN
+                    this.upsertClient(
+                        message.clientId,
+                        this.minimumSequenceNumber,
+                        message.timestamp,
+                        true,
+                        true);
+
+                    // Send the nack message
+                    const nackMessage: core.INackMessage = {
+                        clientId: objectMessage.clientId,
+                        documentId: objectMessage.documentId,
+                        operation: {
+                            operation: message.operation,
+                            sequenceNumber: this.minimumSequenceNumber,
+                        },
+                        type: core.NackOperationType,
+                    };
+
+                    this.sendMessage(nackMessage);
+
+                    return;
+                }
+            } else {
+                if (message.operation.type === api.ClientJoin) {
+                    this.upsertClient(message.operation.contents, this.minimumSequenceNumber, message.timestamp, true);
+                } else if (message.operation.type === api.ClientLeave) {
+                    this.removeClient(message.operation.contents);
+                } else if (message.operation.type === api.Fork) {
+                    winston.info(`Fork ${message.documentId} -> ${message.operation.contents.name}`);
+                }
+            }
         }
 
         // Increment and grab the next sequence number
@@ -135,7 +175,6 @@ export class DeliLambda implements IPartitionLambda {
 
         let origin: api.IBranchOrigin = undefined;
 
-        // TODO - move this back to the below - for now we don't do the work just want to know it made it!
         if (message.operation.type === api.Integrate) {
             // Branch operation is the original message
             const branchOperation = message.operation.contents as core.ISequencedOperationMessage;
@@ -194,13 +233,6 @@ export class DeliLambda implements IPartitionLambda {
                     message.operation.referenceSequenceNumber,
                     message.timestamp,
                     true);
-            } else {
-                // The system will notify of clients leaving - in this case we can remove them from the MSN map
-                if (message.operation.type === api.ClientLeave) {
-                    this.removeClient(message.operation.contents);
-                } else if (message.operation.type === api.Fork) {
-                    winston.info(`Fork ${message.documentId} -> ${message.operation.contents.name}`);
-                }
             }
         }
 
@@ -239,10 +271,11 @@ export class DeliLambda implements IPartitionLambda {
             type: core.SequencedOperationType,
         };
 
-        this.sendSequenced(sequencedMessage);
+        this.sendMessage(sequencedMessage);
     }
 
-    private sendSequenced(message: core.ISequencedOperationMessage) {
+    private sendMessage(message: core.ITicketedMessage) {
+        // TODO optimize this to aviod doing per message
         // Checkpoint the current state
         const checkpoint = this.generateCheckpoint();
 
@@ -263,9 +296,14 @@ export class DeliLambda implements IPartitionLambda {
      * Generates a checkpoint of the current ticketing state
      */
     private generateCheckpoint(): ICheckpoint {
+        const clients: IClientSequenceNumber[] = [];
+        for (const [, value] of this.clientNodeMap) {
+            clients.push(_.clone(value.value));
+        }
+
         return {
             branchMap: this.branchMap ? this.branchMap.serialize() : undefined,
-            clients: _.clone(_.values(this.clientNodeMap).map((value) => value.value)),
+            clients,
             logOffset: this.logOffset,
             sequenceNumber : this.sequenceNumber,
         };
@@ -283,51 +321,61 @@ export class DeliLambda implements IPartitionLambda {
         return sequenceNumber !== -1 ? this.branchMap.get(sequenceNumber) : -1;
     }
 
+    /**
+     * Begins tracking or updates an already tracked client.
+     * @param clientId The client identifier
+     * @param referenceSequenceNumber The sequence number the client is at
+     * @param timestamp The time of the operation
+     * @param canEvict Flag indicating whether or not we can evict the client (branch clients cannot be evicted)
+     * @param nack Flag indicating whether we have nacked this client
+     */
     private upsertClient(
         clientId: string,
         referenceSequenceNumber: number,
         timestamp: number,
-        canEvict: boolean) {
+        canEvict: boolean,
+        nack: boolean = false) {
 
         // Add the client ID to our map if this is the first time we've seen it
-        if (!(clientId in this.clientNodeMap)) {
+        if (!this.clientNodeMap.has(clientId)) {
             const newNode = this.clientSeqNumbers.add({
                 canEvict,
                 clientId,
                 lastUpdate: timestamp,
+                nack,
                 referenceSequenceNumber,
             });
-            this.clientNodeMap[clientId] = newNode;
+            this.clientNodeMap.set(clientId, newNode);
         }
 
         // And then update its values
-        this.updateClient(clientId, timestamp, referenceSequenceNumber);
+        this.updateClient(clientId, timestamp, referenceSequenceNumber, nack);
     }
 
     /**
      * Remoes the provided client from the list of tracked clients
      */
     private removeClient(clientId: string) {
-        if (!(clientId in this.clientNodeMap)) {
+        if (!this.clientNodeMap.has(clientId)) {
             // We remove idle clients which may cause us to have already removed this client
             return;
         }
 
         // Remove the client from the list of nodes
-        const details = this.clientNodeMap[clientId];
+        const details = this.clientNodeMap.get(clientId);
         this.clientSeqNumbers.remove(details);
-        delete this.clientNodeMap[clientId];
+        this.clientNodeMap.delete(clientId);
     }
 
     /**
      * Updates the sequence number of the specified client
      */
-    private updateClient(clientId: string, timestamp: number, referenceSequenceNumber: number) {
+    private updateClient(clientId: string, timestamp: number, referenceSequenceNumber: number, nack: boolean) {
         // Lookup the node and then update its value based on the message
-        const heapNode = this.clientNodeMap[clientId];
-
+        const heapNode = this.clientNodeMap.get(clientId);
         heapNode.value.referenceSequenceNumber = referenceSequenceNumber;
         heapNode.value.lastUpdate = timestamp;
+        heapNode.value.nack = nack;
         this.clientSeqNumbers.update(heapNode);
     }
 
@@ -377,9 +425,8 @@ export class DeliLambda implements IPartitionLambda {
                 return client.value.referenceSequenceNumber;
             }
 
-            winston.verbose(`Expiring ${client.value.clientId}`);
             this.clientSeqNumbers.get();
-            delete this.clientNodeMap[client.value.clientId];
+            this.clientNodeMap.delete(client.value.clientId);
         }
 
         // No client sequence number is available
