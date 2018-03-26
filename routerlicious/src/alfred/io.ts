@@ -55,11 +55,6 @@ export function register(
         // Note connect is a reserved socket.io word so we use connectDocument to represent the connect request
         socket.on("connectDocument", async (message: socketStorage.IConnect, response) => {
             // Join the room first to ensure the client will start receiving delta updates
-            /**
-             * NOTE: Should there be an extra check to verify that if 'encrypted' is false, the passed keys are empty?
-             * Food for thought: what should the correct behavior be if someone requests an encrypted connection to a
-             * document that mongoDB has marked as unencrypted (or vice-versa)?
-             */
             const authP = checkAuth(message);
             authP.then((authedUser: IAuthenticatedUser) => {
                 if (authedUser !== null) {
@@ -85,39 +80,47 @@ export function register(
                                 user: authedUser,
                             };
 
-                            // Broadcast the client connection message
-                            const rawMessage: core.IRawOperationMessage = {
-                                clientId: null,
-                                documentId: message.id,
-                                operation: {
-                                    clientSequenceNumber: -1,
-                                    contents: clientId,
-                                    encrypted: false,
-                                    encryptedContents: null,
-                                    referenceSequenceNumber: -1,
-                                    traces: [],
-                                    type: api.ClientJoin,
+                            socket.join(`client#${clientId}`).then(
+                                () => {
+                                    // Broadcast the client connection message
+                                    const rawMessage: core.IRawOperationMessage = {
+                                        clientId: null,
+                                        documentId: message.id,
+                                        operation: {
+                                            clientSequenceNumber: -1,
+                                            contents: clientId,
+                                            encrypted: false,
+                                            encryptedContents: null,
+                                            referenceSequenceNumber: -1,
+                                            traces: [],
+                                            type: api.ClientJoin,
+                                        },
+                                        timestamp: Date.now(),
+                                        type: core.RawOperationType,
+                                        user: authedUser,
+                                    };
+                                    sendAndTrack(rawMessage);
+
+                                    const parentBranch = documentDetails.value.parent
+                                        ? documentDetails.value.parent.id
+                                        : null;
+
+                                    // And return the connection information to the client
+                                    const connectedMessage: socketStorage.IConnected = {
+                                        clientId,
+                                        encrypted: documentDetails.value.privateKey ? true : false,
+                                        existing: documentDetails.existing,
+                                        parentBranch,
+                                        privateKey: documentDetails.value.privateKey,
+                                        publicKey: documentDetails.value.publicKey,
+                                        user: authedUser,
+                                    };
+                                    profiler.done(`Loaded ${message.id}`);
+                                    response(null, connectedMessage);
                                 },
-                                timestamp: Date.now(),
-                                type: core.RawOperationType,
-                                user: authedUser,
-                            };
-                            sendAndTrack(rawMessage);
-
-                            const parentBranch = documentDetails.value.parent ? documentDetails.value.parent.id : null;
-
-                            // And return the connection information to the client
-                            const connectedMessage: socketStorage.IConnected = {
-                                clientId,
-                                encrypted: documentDetails.value.privateKey ? true : false,
-                                existing: documentDetails.existing,
-                                parentBranch,
-                                privateKey: documentDetails.value.privateKey,
-                                publicKey: documentDetails.value.publicKey,
-                                user: authedUser,
-                            };
-                            profiler.done(`Loaded ${message.id}`);
-                            response(null, connectedMessage);
+                                (error) => {
+                                    response(error, null);
+                                });
                         },
                         (error) => {
                             if (error) {

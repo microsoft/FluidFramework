@@ -128,7 +128,7 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
     /**
      * Prepares the given message for processing
      */
-    protected abstract prepareCore(message: ISequencedObjectMessage): Promise<void>;
+    protected abstract prepareCore(message: ISequencedObjectMessage): Promise<any>;
 
     /**
      * Derived classes must override this to do custom processing on a remote message

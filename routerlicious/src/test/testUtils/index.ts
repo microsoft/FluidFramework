@@ -12,3 +12,4 @@ export * from "./testPublisher";
 export * from "./testRegistration";
 export * from "./testTenantManager";
 export * from "./testWebServer";
+export * from "./utils";
