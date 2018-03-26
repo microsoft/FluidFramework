@@ -488,8 +488,6 @@ export class Document extends EventEmitter {
             }
         }
 
-        debug(`!!!!     Snapshotting a ${this._deltaManager.referenceSequenceNumber}`);
-
         // Save attributes for the document
         const documentAttributes: IDocumentAttributes = {
             branch: this.id,
