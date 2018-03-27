@@ -1,4 +1,3 @@
-import * as assert from "assert";
 import * as api from "../api-core";
 import * as core from "../core";
 import { IContext } from "../kafka-service/lambdas";
@@ -13,18 +12,18 @@ export class RouteMasterLambda extends SequencedLambda {
 
     protected async handlerCore(rawMessage: utils.kafkaConsumer.IMessage): Promise<void> {
         const message = JSON.parse(rawMessage.value) as core.ISequencedOperationMessage;
-        assert(message.type === core.SequencedOperationType);
+        if (message.type === core.SequencedOperationType) {
+            // Create the fork first then route any messages. This will make the fork creation the first message
+            // routed to the fork. We only process the fork on the route branch it is defined.
+            if (!message.operation.origin && message.operation.type === api.Fork) {
+                await this.createFork(message);
+            }
 
-        // Create the fork first then route any messages. This will make the fork creation the first message
-        // routed to the fork. We only process the fork on the route branch it is defined.
-        if (!message.operation.origin && message.operation.type === api.Fork) {
-            await this.createFork(message);
+            // Route the fork message to all clients
+            // TODO - routing the message keeps the sequenced messages exact - but should all clients see fork requests
+            // ont he parent?
+            this.routeToForks(message, rawMessage.offset);
         }
-
-        // Route the fork message to all clients
-        // TODO - routing the message keeps the sequenced messages exact - but should all clients see fork requests
-        // ont he parent?
-        this.routeToForks(message, rawMessage.offset);
     }
 
     private async createFork(message: core.ISequencedOperationMessage): Promise<void> {
