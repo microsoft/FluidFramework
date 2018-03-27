@@ -10,7 +10,6 @@ import * as utils from "../utils";
 import * as storage from "./storage";
 
 interface IDocumentUser {
-
     docId: string;
 
     user: IAuthenticatedUser;
@@ -28,6 +27,16 @@ export function register(
     const throughput = new ThroughputCounter(winston.info);
     const metricLogger = agent.createMetricClient(metricClientConfig);
 
+    // Verify if the user is authenticated or not. For now we only verify if the token is present.
+    // TODO (auth): We should verify all connection request.
+    function checkAuth(message: socketStorage.IConnect): Promise<IAuthenticatedUser> {
+        if (!message.token) {
+            return Promise.resolve(null);
+        } else {
+            return verifyAuthToken(authEndpoint, message.token);
+        }
+    }
+
     webSocketServer.on("connection", (socket: core.IWebSocket) => {
         const connectionProfiler = winston.startTimer();
         connectionProfiler.logger.info(`New socket.io connection`);
@@ -42,99 +51,81 @@ export function register(
             return sendP;
         }
 
-        // Verify if the user is authenticated or not. For now we only verify if the token is present.
-        // TODO (auth): We should verify all connection request.
-        function checkAuth(message: socketStorage.IConnect): Promise<any> {
-            if (!message.token) {
-                return Promise.resolve(null);
-            } else {
-                return verifyAuthToken(authEndpoint, message.token);
+        async function connectDocument(message: socketStorage.IConnect): Promise<socketStorage.IConnected> {
+            // Join the room first to ensure the client will start receiving delta updates
+            const authedUser = await checkAuth(message);
+
+            if (authedUser !== null) {
+                winston.info(`User ${authedUser.user.name} wants to access ${message.id}`);
             }
+
+            const profiler = winston.startTimer();
+            connectionProfiler.done(`Client has requested to load ${message.id}`);
+            const documentDetails = await storage.getOrCreateDocument(
+                mongoManager,
+                documentsCollectionName,
+                producer,
+                message.id,
+                message.privateKey,
+                message.publicKey);
+
+            const clientId = moniker.choose();
+            await Promise.all([socket.join(message.id), socket.join(`client#${clientId}`)]);
+
+            // Create and set a new client ID
+            connectionsMap[clientId] = {
+                docId: message.id,
+                user: authedUser,
+            };
+
+            // Broadcast the client connection message
+            const rawMessage: core.IRawOperationMessage = {
+                clientId: null,
+                documentId: message.id,
+                operation: {
+                    clientSequenceNumber: -1,
+                    contents: clientId,
+                    encrypted: false,
+                    encryptedContents: null,
+                    referenceSequenceNumber: -1,
+                    traces: [],
+                    type: api.ClientJoin,
+                },
+                timestamp: Date.now(),
+                type: core.RawOperationType,
+                user: authedUser,
+            };
+            sendAndTrack(rawMessage);
+
+            const parentBranch = documentDetails.value.parent
+                ? documentDetails.value.parent.id
+                : null;
+
+            // And return the connection information to the client
+            const connectedMessage: socketStorage.IConnected = {
+                clientId,
+                encrypted: documentDetails.value.privateKey ? true : false,
+                existing: documentDetails.existing,
+                parentBranch,
+                privateKey: documentDetails.value.privateKey,
+                publicKey: documentDetails.value.publicKey,
+                user: authedUser,
+            };
+            profiler.done(`Loaded ${message.id}`);
+
+            return connectedMessage;
         }
 
         // Note connect is a reserved socket.io word so we use connectDocument to represent the connect request
         socket.on("connectDocument", async (message: socketStorage.IConnect, response) => {
-            // Join the room first to ensure the client will start receiving delta updates
-            const authP = checkAuth(message);
-            authP.then((authedUser: IAuthenticatedUser) => {
-                if (authedUser !== null) {
-                    winston.info(`User ${authedUser.user.name} wants to access ${message.id}`);
-                }
-                const profiler = winston.startTimer();
-                connectionProfiler.done(`Client has requested to load ${message.id}`);
-                const documentDetailsP = storage.getOrCreateDocument(
-                    mongoManager,
-                    documentsCollectionName,
-                    producer,
-                    message.id,
-                    message.privateKey,
-                    message.publicKey);
-
-                documentDetailsP.then(
-                    (documentDetails) => {
-                        socket.join(message.id).then(() => {
-                            // Create and set a new client ID
-                            const clientId = moniker.choose();
-                            connectionsMap[clientId] = {
-                                docId: message.id,
-                                user: authedUser,
-                            };
-
-                            socket.join(`client#${clientId}`).then(
-                                () => {
-                                    // Broadcast the client connection message
-                                    const rawMessage: core.IRawOperationMessage = {
-                                        clientId: null,
-                                        documentId: message.id,
-                                        operation: {
-                                            clientSequenceNumber: -1,
-                                            contents: clientId,
-                                            encrypted: false,
-                                            encryptedContents: null,
-                                            referenceSequenceNumber: -1,
-                                            traces: [],
-                                            type: api.ClientJoin,
-                                        },
-                                        timestamp: Date.now(),
-                                        type: core.RawOperationType,
-                                        user: authedUser,
-                                    };
-                                    sendAndTrack(rawMessage);
-
-                                    const parentBranch = documentDetails.value.parent
-                                        ? documentDetails.value.parent.id
-                                        : null;
-
-                                    // And return the connection information to the client
-                                    const connectedMessage: socketStorage.IConnected = {
-                                        clientId,
-                                        encrypted: documentDetails.value.privateKey ? true : false,
-                                        existing: documentDetails.existing,
-                                        parentBranch,
-                                        privateKey: documentDetails.value.privateKey,
-                                        publicKey: documentDetails.value.publicKey,
-                                        user: authedUser,
-                                    };
-                                    profiler.done(`Loaded ${message.id}`);
-                                    response(null, connectedMessage);
-                                },
-                                (error) => {
-                                    response(error, null);
-                                });
-                        },
-                        (error) => {
-                            if (error) {
-                                return response(error, null);
-                            }
-                        });
-                    }, (error) => {
-                        winston.error("Error fetching", error);
-                        response(error, null);
-                    });
-            }, (err) => {
-                winston.info(`Unautherized access to document ${message.id}. ${JSON.stringify(err)}`);
-                return response(err, null);
-            });
+            connectDocument(message).then(
+                (connectedMessage) => {
+                    response(null, connectedMessage);
+                },
+                (error) => {
+                    winston.info(`connectDocument error`, error);
+                    response(error, null);
+                });
         });
 
         // Message sent when a new operation is submitted to the router
