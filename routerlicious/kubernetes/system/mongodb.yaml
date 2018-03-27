@@ -1,2 +1,3 @@
 persistence:
   storageClass: unmanaged-premium
+  size: 512Gi
