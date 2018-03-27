@@ -3,8 +3,11 @@ kind: ConfigMap
 metadata:
   name: {{ template "fullname" . }}
   labels:
-    draft: {{ default "draft-app" .Values.draft }}
-    chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
+    app: {{ template "name" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    component: "{{ .Values.name }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
 data:
   config.json: |
     {
@@ -25,8 +28,8 @@ data:
                 "repository": "prague",
                 "owner": "prague",
                 "endpoints": {
-                    "delta": "https://alfred.wu2.prague.office-int.com",
-                    "storage": "https://historian.wu2.prague.office-int.com"
+                    "delta": "{{ .Values.endpoints.delta }}",
+                    "storage": "{{ .Values.endpoints.storage }}"
                 }
             },
             "worker": {
@@ -36,23 +39,23 @@ data:
                         "host": "pkarimov-paidIOT.azure-devices.net",
                         "sharedAccessKeyName": "iothubowner",
                         "sharedAccessKey": "8mvOmNnUklwnuzY+U96V51w+qCq262ZUpSkdw8nTZ18=",
-                        "url": "https://alfred.wu2.prague.office-int.com/intelligence/resume"
+                        "url": "{{ .Values.endpoints.resume }}"
                     },
                     "textAnalytics": {
                         "key": "c8b60dc5e49849ce903d7d29a2dce550"
                     },
                     "nativeTextAnalytics": {
                         "enable": false,
-                        "url": "http://praguepy.westus2.cloudapp.azure.com/"
+                        "url": "{{ .Values.endpoints.nativeTextAnalytics }}"
                     },
                     "spellchecker": {
-                        "url": "https://augmentation.wu2.prague.office-int.com/spellchecker/api"
+                        "url": "{{ .Values.endpoints.spellchecker }}"
                     }
                 },
-                "serverUrl": "https://alfred.wu2.prague.office-int.com",
-                "url": "https://tmz.wu2.prague.office-int.com",
-                "blobStorageUrl": "https://historian.wu2.prague.office-int.com",
-                "scriptUrl": "https://minio.wu2.prague.office-int.com/agents/",
+                "serverUrl": "{{ .Values.endpoints.serverUrl }}",
+                "url": "{{ .Values.endpoints.tmzrUrl }}",
+                "blobStorageUrl": "{{ .Values.endpoints.blobStorageUrl }}",
+                "scriptUrl": "{{ .Values.endpoints.scriptUrl }}",
                 "repository": "prague",
                 "storageBucket": "snapshots",
                 "intervalMSec": 5000,
@@ -72,7 +75,7 @@ data:
                 "clientID": "3d642166-9884-4463-8248-78961b8c1300",
                 "responseType": "code id_token",
                 "responseMode": "form_post",
-                "redirectUrl": "https://www.wu2.prague.office-int.com/auth/openid/return",
+                "redirectUrl": "{{ .Values.auth.redirectUrl }}",
                 "allowHttpForRedirectUrl": true,
                 "clientSecret": "IefegJIsumWtD1Of/9AIUWvm6ryR624vgMtKRmcNEsQ=",
                 "validateIssuer": true,
@@ -91,7 +94,7 @@ data:
                 "clockSkew": null
             },
             "resourceURL": "https://graph.windows.net",
-            "destroySessionUrl": "https://login.microsoftonline.com/common/oauth2/logout?post_logout_redirect_uri=https://www.wu2.prague.office-int.com/",
+            "destroySessionUrl": "{{ .Values.auth.destroySessionUrl }}",
             "useMongoDBSessionStore": false,
             "databaseUri": null,
             "mongoDBSessionMaxAge": 14400

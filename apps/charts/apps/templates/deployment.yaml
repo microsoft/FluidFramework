@@ -3,32 +3,37 @@ kind: Deployment
 metadata:
   name: {{ template "fullname" . }}
   labels:
-    draft: {{ default "draft-app" .Values.draft }}
-    chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
+    app: {{ template "name" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    component: "{{ .Values.name }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
 spec:
   replicas: {{ .Values.replicaCount }}
-  selector:
-    matchLabels:
-      app: {{ template "fullname" . }}
-  revisionHistoryLimit: 2
   template:
     metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
       labels:
-        draft: {{ default "draft-app" .Values.draft }}
         app: {{ template "fullname" . }}
+        component: "{{ .Values.name }}"
+        release: {{ .Release.Name }}
     spec:
       containers:
-      - name: {{ .Chart.Name }}
-        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-        imagePullPolicy: {{ .Values.image.pullPolicy }}
+      - name: {{ template "fullname" . }}
+        image: "{{ .Values.image }}"
+        imagePullPolicy: {{ default "" .Values.imagePullPolicy | quote }}
+        command:
+          - 'node'
+          - 'dist/www.js'
         ports:
         - containerPort: {{ .Values.service.internalPort }}
         volumeMounts:
         - name: config
           mountPath: /usr/src/server/config.json
           subPath: config.json
-        resources:
-{{ toYaml .Values.resources | indent 12 }}
+      imagePullSecrets:
+      - name: regsecret
       volumes:
         - name: config
           configMap:
