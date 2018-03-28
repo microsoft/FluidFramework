@@ -64,21 +64,26 @@ export interface IOverlayMarker {
     position: number;
 }
 
-interface IParagraphInfo {
-    breaks: number[];
+export interface IBreakInfo {
+    posInPG: number;
+    startItemIndex: number;
+}
+
+export interface IParagraphInfo {
+    breaks: IBreakInfo[];
     singleLineWidth: number;
 }
 
-interface IParagraphItemInfo {
+export interface IParagraphItemInfo {
     minWidth: number;
     items: ParagraphItem[];
 }
 
-interface IListInfo {
+export interface IListInfo {
     itemCounts: number[];
 }
 
-interface IParagraphMarker extends SharedString.Marker {
+export interface IParagraphMarker extends SharedString.Marker {
     cache?: IParagraphInfo;
     itemCache?: IParagraphItemInfo;
     listHeadCache?: IListHeadInfo;
@@ -90,13 +95,14 @@ function clearContentCaches(pgMarker: IParagraphMarker) {
     pgMarker.itemCache = undefined;
 }
 
-// TODO: indent decoration
 export interface ILineDiv extends HTMLDivElement {
     linePos?: number;
     lineEnd?: number;
     contentWidth?: number;
     indentWidth?: number;
     indentSymbol?: ISymbol;
+    endPGMarker?: IParagraphMarker;
+    breakIndex?: number;
 }
 
 interface IRowDiv extends ILineDiv {
@@ -821,21 +827,23 @@ export interface IRange {
     end: number;
 }
 
-enum ParagraphItemType {
+export enum ParagraphItemType {
     Block,
     Glue,
     Penalty,
 }
 
-interface IParagraphItem {
+export interface IParagraphItem {
     type: ParagraphItemType;
     width: number;
     textSegment: SharedString.TextSegment;
-    // present if not default height
+    pos?: number;
+    // present if not default
     height?: number;
+    fontstr?: string;
 }
 
-interface IPGBlock extends IParagraphItem {
+export interface IPGBlock extends IParagraphItem {
     type: ParagraphItemType.Block;
     text: string;
 }
@@ -854,41 +862,43 @@ function makeGlue(
     return <IPGGlue>{ type: ParagraphItemType.Glue, width, text, textSegment, stretch, shrink };
 }
 
-interface IPGGlue extends IParagraphItem {
+export interface IPGGlue extends IParagraphItem {
     type: ParagraphItemType.Glue;
     text: string;
     stretch: number;
     shrink: number;
 }
 
-interface IPGPenalty extends IParagraphItem {
+export interface IPGPenalty extends IParagraphItem {
     type: ParagraphItemType.Penalty;
     cost: number;
 }
 
-type ParagraphItem = IPGBlock | IPGGlue | IPGPenalty;
+export type ParagraphItem = IPGBlock | IPGGlue | IPGPenalty;
 
 // for now assume uniform line widths
 function breakPGIntoLinesFF(items: ParagraphItem[], lineWidth: number) {
-    let breaks = [0];
+    let breaks = <IBreakInfo[]>[{ posInPG: 0, startItemIndex: 0 }];
     let posInPG = 0;
     let committedItemsWidth = 0;
     let blockRunWidth = 0;
     let blockRunPos = -1;
     let prevIsGlue = true;
-    for (let item of items) {
+    for (let i = 0, len = items.length; i < len; i++) {
+        let item = items[i];
         if (item.type === ParagraphItemType.Block) {
+            item.pos = posInPG;
             if (prevIsGlue) {
                 blockRunPos = posInPG;
                 blockRunWidth = 0;
             }
             if ((committedItemsWidth + item.width) > lineWidth) {
-                breaks.push(blockRunPos);
+                breaks.push({ posInPG: blockRunPos, startItemIndex: i });
                 committedItemsWidth = blockRunWidth;
             }
             posInPG += item.text.length;
             if (committedItemsWidth > lineWidth) {
-                breaks.push(posInPG);
+                breaks.push({ posInPG, startItemIndex: i });
                 committedItemsWidth = 0;
                 blockRunWidth = 0;
                 blockRunPos = posInPG;
@@ -993,7 +1003,7 @@ interface ILineContext {
     reRenderList?: ILineDiv[];
 }
 
-interface IDocumentContext {
+export interface IDocumentContext {
     wordSpacing: number;
     headerFontstr: string;
     headerDivHeight: number;
@@ -1197,7 +1207,7 @@ function decorateLineDiv(lineDiv: ILineDiv, lineFontstr: string, lineDivHeight: 
     lineDiv.appendChild(symbolDiv);
 }
 
-function reRenderLine(lineDiv: ILineDiv, flowView: FlowView) {
+function reRenderLine(lineDiv: ILineDiv, flowView: FlowView, docContext: IDocumentContext) {
     if (lineDiv) {
         let outerViewportBounds = ui.Rectangle.fromClientRect(flowView.viewportDiv.getBoundingClientRect());
         let lineDivBounds = lineDiv.getBoundingClientRect();
@@ -1231,7 +1241,8 @@ function reRenderLine(lineDiv: ILineDiv, flowView: FlowView) {
             flowView.client.getClientId(), lineContext, lineDiv.linePos, end);
         lineDiv.lineEnd = lineEnd;
         showBookmarks(flowView, lineDiv.linePos,
-            lineEnd, lineDiv.style.font, lineDivHeight, contentDiv);
+            lineEnd, lineDiv.style.font, lineDivHeight, lineDiv.breakIndex, docContext,
+            contentDiv, lineDiv.endPGMarker);
     }
 }
 
@@ -1262,7 +1273,7 @@ function getIndentSymbol(pgMarker: IParagraphMarker) {
     return seriesSource[series](pgMarker.listCache.itemCounts[indentLevel]);
 }
 
-interface IListHeadInfo {
+export interface IListHeadInfo {
     series?: number[];
     tile: IParagraphMarker;
 }
@@ -1437,11 +1448,11 @@ function getContentPct(pgMarker: IParagraphMarker) {
 }
 
 function buildIntervalBlockStyle(properties: SharedString.PropertySet, startX: number, endX: number,
-    lineDivHeight: number, leftInBounds: boolean, rightInBounds: boolean,
+    height: number, leftInBounds: boolean, rightInBounds: boolean,
     contentDiv: HTMLDivElement, client: SharedString.Client) {
     let bookmarkDiv = document.createElement("div");
     let bookmarkRect: ui.Rectangle;
-    bookmarkRect = new ui.Rectangle(startX, 0, endX - startX, lineDivHeight);
+    bookmarkRect = new ui.Rectangle(startX, 0, endX - startX, height);
     bookmarkRect.conformElement(bookmarkDiv);
     contentDiv.appendChild(bookmarkDiv);
     if (leftInBounds) {
@@ -1512,44 +1523,90 @@ function buildIntervalTieStyle(properties: SharedString.PropertySet, startX: num
     bookendDiv2.style.zIndex = "2";
 }
 
+function getWidthInLine(endPGMarker: IParagraphMarker, breakIndex: number,
+    defaultFontstr: string, offset: number) {
+    let itemIndex = endPGMarker.cache.breaks[breakIndex].startItemIndex;
+    let w = 0;
+    while (offset > 0) {
+        let item = <IPGBlock>endPGMarker.itemCache.items[itemIndex];
+        if (!item) {
+            break;
+        }
+        if (item.text.length > offset) {
+            let fontstr = item.fontstr || defaultFontstr;
+            let subw = getTextWidth(item.text.substring(0, offset), fontstr);
+            return Math.floor(w + subw);
+        } else {
+            w += item.width;
+        }
+        offset -= item.text.length;
+        itemIndex++;
+    }
+    return Math.round(w);
+}
+
 function showBookmark(properties: SharedString.PropertySet, lineText: string,
-    start: number, end: number, lineStart: number,
-    computedEnd: number, lineFontstr: string, lineDivHeight: number,
-    contentDiv: HTMLDivElement, client: SharedString.Client, useTie = false) {
+    start: number, end: number, lineStart: number, endPGMarker: IParagraphMarker,
+    computedEnd: number, lineFontstr: string, lineDivHeight: number, lineBreakIndex: number,
+    docContext: IDocumentContext, contentDiv: HTMLDivElement, client: SharedString.Client, useTie = false) {
     let startX: number;
+    let height = lineDivHeight;
     if (start >= lineStart) {
-        startX = getTextWidth(lineText.substring(0, start - lineStart), lineFontstr);
+        startX = getWidthInLine(endPGMarker, lineBreakIndex, lineFontstr, start - lineStart);
     } else {
         startX = 0;
     }
     let endX: number;
     if (end <= computedEnd) {
-        endX = getTextWidth(lineText.substring(0, end - lineStart), lineFontstr);
+        endX = getWidthInLine(endPGMarker, lineBreakIndex, lineFontstr, end - lineStart);
     } else {
-        endX = getTextWidth(lineText, lineFontstr);
+        if (lineBreakIndex === (endPGMarker.cache.breaks.length - 1)) {
+            height += docContext.pgVspace;
+        }
+        endX = getWidthInLine(endPGMarker, lineBreakIndex, lineFontstr, computedEnd - lineStart);
     }
     if (useTie) {
         buildIntervalTieStyle(properties, startX, endX, lineDivHeight,
             start >= lineStart, end <= computedEnd, contentDiv, client);
     } else {
-        buildIntervalBlockStyle(properties, startX, endX, lineDivHeight,
+        buildIntervalBlockStyle(properties, startX, endX, height,
             start >= lineStart, end <= computedEnd, contentDiv, client);
     }
 }
 
 function showBookmarks(flowView: FlowView, lineStart: number, lineEnd: number,
-    lineFontstr: string, lineDivHeight: number,
-    contentDiv: HTMLDivElement) {
+    lineFontstr: string, lineDivHeight: number, lineBreakIndex: number,
+    docContext: IDocumentContext, contentDiv: HTMLDivElement, endPGMarker: IParagraphMarker) {
     let sel = flowView.cursor.getSelection();
-    if (flowView.bookmarks || flowView.comments || sel) {
+    let havePresenceSel = false;
+    for (let localPresenceInfo of flowView.presenceVector) {
+        if (localPresenceInfo && (localPresenceInfo.markXformPos !== localPresenceInfo.xformPos)) {
+            havePresenceSel = true;
+            break;
+        }
+    }
+    if (flowView.bookmarks || flowView.comments || sel || havePresenceSel) {
         let client = flowView.client;
         let computedEnd = lineEnd;
         let bookmarks = flowView.bookmarks.findOverlappingIntervals(lineStart, computedEnd);
         let comments = flowView.comments.findOverlappingIntervals(lineStart, computedEnd);
         let lineText = client.getText(lineStart, computedEnd);
         if (sel && ((sel.start < lineEnd) && (sel.end > lineStart))) {
-            showBookmark(undefined, lineText, sel.start, sel.end, lineStart,
-                computedEnd, lineFontstr, lineDivHeight, contentDiv, client);
+            showBookmark(undefined, lineText, sel.start, sel.end, lineStart, endPGMarker,
+                computedEnd, lineFontstr, lineDivHeight, lineBreakIndex, docContext, contentDiv, client);
+        }
+        if (havePresenceSel) {
+            for (let localPresenceInfo of flowView.presenceVector) {
+                if (localPresenceInfo && (localPresenceInfo.markXformPos !== localPresenceInfo.xformPos)) {
+                    let presenceStart = Math.min(localPresenceInfo.markXformPos, localPresenceInfo.xformPos);
+                    let presenceEnd = Math.max(localPresenceInfo.markXformPos, localPresenceInfo.xformPos);
+                    if ((presenceStart < lineEnd) && (presenceEnd > lineStart)) {
+                        showBookmark({ clid: localPresenceInfo.key },
+                            lineText, presenceStart, presenceEnd, lineStart, endPGMarker,
+                            computedEnd, lineFontstr, lineDivHeight, lineBreakIndex, docContext, contentDiv, client);
+                    }
+                }
+            }
         }
         if (flowView.tempBookmarks && (!flowView.modes.showBookmarks)) {
             for (let b of flowView.tempBookmarks) {
@@ -1559,7 +1616,8 @@ function showBookmarks(flowView: FlowView, lineStart: number, lineEnd: number,
                     let end = b.end.toPosition(client.mergeTree, client.getCurrentSeq(),
                         client.getClientId());
                     showBookmark(b.properties, lineText, start, end, lineStart,
-                        computedEnd, lineFontstr, lineDivHeight, contentDiv, client, true);
+                        endPGMarker, computedEnd, lineFontstr, lineDivHeight, lineBreakIndex,
+                        docContext, contentDiv, client, true);
                 }
             }
         }
@@ -1570,7 +1628,8 @@ function showBookmarks(flowView: FlowView, lineStart: number, lineEnd: number,
                 let end = b.end.toPosition(client.mergeTree, client.getCurrentSeq(),
                     client.getClientId());
                 showBookmark(b.properties, lineText, start, end, lineStart,
-                    computedEnd, lineFontstr, lineDivHeight, contentDiv, client, true);
+                    endPGMarker, computedEnd, lineFontstr, lineDivHeight, lineBreakIndex,
+                    docContext, contentDiv, client, true);
             }
         }
         if (comments && flowView.modes.showComments) {
@@ -1581,7 +1640,8 @@ function showBookmarks(flowView: FlowView, lineStart: number, lineEnd: number,
                     client.getClientId());
                 comment.addProperties({ bgColor: "gold" });
                 showBookmark(comment.properties, lineText, start, end, lineStart,
-                    computedEnd, lineFontstr, lineDivHeight, contentDiv, client);
+                    endPGMarker, computedEnd, lineFontstr, lineDivHeight, lineBreakIndex,
+                    docContext, contentDiv, client);
             }
         }
     }
@@ -2301,7 +2361,7 @@ function renderTable(
     }
     if (layoutInfo.reRenderList) {
         for (let lineDiv of layoutInfo.reRenderList) {
-            reRenderLine(lineDiv, flowView);
+            reRenderLine(lineDiv, flowView, docContext);
         }
         layoutInfo.reRenderList = undefined;
     }
@@ -2313,6 +2373,7 @@ function renderTree(
     viewportDiv: HTMLDivElement, requestedPosition: number, flowView: FlowView, targetTranslation: string) {
     let client = flowView.client;
     let docContext = buildDocumentContext(viewportDiv);
+    flowView.lastDocContext = docContext;
     let outerViewportHeight = parseInt(viewportDiv.style.height, 10);
     let outerViewportWidth = parseInt(viewportDiv.style.width, 10);
     let outerViewport = new Viewport(outerViewportHeight, viewportDiv, outerViewportWidth);
@@ -2360,7 +2421,7 @@ function tokenToItems(
         // this is not complete because can be % or normal etc.
         let lineHeight = leadSegment.properties.lineHeight;
         if (lineHeight !== undefined) {
-            divHeight = Math.floor((+lineHeight)*divHeight);
+            divHeight = Math.floor((+lineHeight) * divHeight);
         }
         let fontWeight = leadSegment.properties.fontWeight;
         if (fontWeight) {
@@ -2378,6 +2439,9 @@ function tokenToItems(
     }
     if (type === ParagraphItemType.Block) {
         let block = makeIPGBlock(textWidth, text, leadSegment);
+        if (lfontstr !== docContext.fontstr) {
+            block.fontstr = lfontstr;
+        }
         if (divHeight !== itemsContext.docContext.defaultLineDivHeight) {
             block.height = divHeight;
         }
@@ -2630,10 +2694,10 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
         let span: ISegSpan;
 
         for (let breakIndex = 0, len = pgBreaks.length; breakIndex < len; breakIndex++) {
-            let lineStart = pgBreaks[breakIndex] + pgStartPos;
+            let lineStart = pgBreaks[breakIndex].posInPG + pgStartPos;
             let lineEnd: number;
             if (breakIndex < (len - 1)) {
-                lineEnd = pgBreaks[breakIndex + 1] + pgStartPos;
+                lineEnd = pgBreaks[breakIndex + 1].posInPG + pgStartPos;
             } else {
                 lineEnd = undefined;
             }
@@ -2649,6 +2713,8 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
                 lineDiv = makeLineDiv(new ui.Rectangle(0, layoutContext.viewport.getLineTop(),
                     layoutContext.viewport.currentLineWidth(), lineDivHeight),
                     lineFontstr);
+                lineDiv.endPGMarker = endPGMarker;
+                lineDiv.breakIndex = breakIndex;
                 let contentDiv = lineDiv;
                 if (indentWidth > 0) {
                     contentDiv = makeContentDiv(new ui.Rectangle(indentWidth, 0, contentWidth, lineDivHeight),
@@ -2677,7 +2743,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
                             client.getClientId());
                     }
                     showBookmarks(layoutContext.flowView, lineStart,
-                        computedEnd, lineFontstr, lineDivHeight, contentDiv);
+                        computedEnd, lineFontstr, lineDivHeight, breakIndex, docContext, contentDiv, endPGMarker);
                 }
                 span = lineContext.span;
                 if (lineContext.reRenderList) {
@@ -3041,6 +3107,11 @@ export class Cursor {
         this.show();
     }
 
+    public onLine(pos: number) {
+        let lineDiv = this.lineDiv();
+        return (pos >= lineDiv.linePos) && (pos < lineDiv.lineEnd);
+    }
+
     public lineDiv() {
         return <ILineDiv>this.editSpan.parentElement;
     }
@@ -3054,11 +3125,11 @@ export class Cursor {
         } else {
             let lineDiv = this.lineDiv();
             if (lineDiv && (lineDiv.linePos <= this.pos) && (lineDiv.lineEnd > this.pos)) {
-                reRenderLine(lineDiv, flowView);
+                reRenderLine(lineDiv, flowView, flowView.lastDocContext);
             } else {
                 let foundLineDiv = findLineDiv(this.pos, flowView, true);
                 if (foundLineDiv) {
-                    reRenderLine(foundLineDiv, flowView);
+                    reRenderLine(foundLineDiv, flowView, flowView.lastDocContext);
                 } else {
                     flowView.render(flowView.topChar, true);
                 }
@@ -3163,6 +3234,7 @@ enum KeyCode {
 
 export interface IRemotePresenceInfo {
     origPos: number;
+    origMark: number;
     refseq: number;
     key?: string;
     clientId?: number;
@@ -3170,7 +3242,9 @@ export interface IRemotePresenceInfo {
 
 export interface ILocalPresenceInfo {
     localRef?: SharedString.LocalReference;
+    markLocalRef?: SharedString.LocalReference;
     xformPos?: number;
+    markXformPos?: number;
     clientId: number;
     key?: string;
     cursor?: Cursor;
@@ -3343,6 +3417,7 @@ export class FlowView extends ui.Component {
         showComments: true,
         showCursorLocation: true,
     };
+    public lastDocContext: IDocumentContext;
     private lastVerticalX = -1;
     private randWordTimer: any;
     private pendingRender = false;
@@ -3550,19 +3625,28 @@ export class FlowView extends ui.Component {
         }
     }
 
-    public updatePresencePositions() {
-        for (let i = 0, len = this.presenceVector.length; i < len; i++) {
-            let remotePresenceInfo = this.presenceVector[i];
-            if (remotePresenceInfo) {
-                remotePresenceInfo.xformPos = getLocalRefPos(this, remotePresenceInfo.localRef);
+    public updatePresencePosition(localPresenceInfo: ILocalPresenceInfo) {
+        if (localPresenceInfo) {
+            localPresenceInfo.xformPos = getLocalRefPos(this, localPresenceInfo.localRef);
+            if (localPresenceInfo.markLocalRef) {
+                localPresenceInfo.markXformPos = getLocalRefPos(this, localPresenceInfo.markLocalRef);
+            } else {
+                localPresenceInfo.markXformPos = localPresenceInfo.xformPos;
             }
         }
     }
 
+    public updatePresencePositions() {
+        for (let i = 0, len = this.presenceVector.length; i < len; i++) {
+            this.updatePresencePosition(this.presenceVector[i]);
+        }
+    }
+
     public updatePresenceVector(localPresenceInfo: ILocalPresenceInfo) {
-        localPresenceInfo.xformPos = getLocalRefPos(this, localPresenceInfo.localRef);
+        this.updatePresencePosition(localPresenceInfo);
         let presentPresence = this.presenceVector[localPresenceInfo.clientId];
         let tempXformPos = -1;
+        let tempMarkXformPos = -2;
 
         if (presentPresence) {
             if (presentPresence.cursor) {
@@ -3570,14 +3654,28 @@ export class FlowView extends ui.Component {
                 localPresenceInfo.cursor.presenceInfo = localPresenceInfo;
                 localPresenceInfo.cursor.presenceInfoUpdated = true;
             }
+            if (presentPresence.markLocalRef) {
+                let markBaseSegment = <SharedString.BaseSegment>presentPresence.localRef.segment;
+                this.client.mergeTree.removeLocalReference(markBaseSegment, presentPresence.markLocalRef);
+            }
             let baseSegment = <SharedString.BaseSegment>presentPresence.localRef.segment;
             this.client.mergeTree.removeLocalReference(baseSegment, presentPresence.localRef);
             tempXformPos = presentPresence.xformPos;
+            tempMarkXformPos = presentPresence.markXformPos;
         }
         this.client.mergeTree.addLocalReference(localPresenceInfo.localRef);
+        if (localPresenceInfo.markLocalRef) {
+            this.client.mergeTree.addLocalReference(localPresenceInfo.localRef);
+        }
         this.presenceVector[localPresenceInfo.clientId] = localPresenceInfo;
-        if (localPresenceInfo.xformPos !== tempXformPos) {
-            this.presenceQueueRender(localPresenceInfo);
+        if ((localPresenceInfo.xformPos !== tempXformPos) ||
+            (localPresenceInfo.markXformPos !== tempMarkXformPos)) {
+            let sameLine = localPresenceInfo.cursor &&
+                localPresenceInfo.cursor.onLine(tempXformPos) &&
+                localPresenceInfo.cursor.onLine(tempMarkXformPos) &&
+                localPresenceInfo.cursor.onLine(localPresenceInfo.xformPos) &&
+                localPresenceInfo.cursor.onLine(localPresenceInfo.markXformPos);
+            this.presenceQueueRender(localPresenceInfo, sameLine);
         }
     }
 
@@ -3585,6 +3683,7 @@ export class FlowView extends ui.Component {
         let remotePosInfo = <IRemotePresenceInfo>{
             clientId: this.client.getOrAddShortClientId(longClientId, userInfo),
             key: userInfo === null ? longClientId : userInfo.user.name,
+            origMark: -1,
             origPos: oldpos + posAdjust,
             refseq,
         };
@@ -3594,9 +3693,10 @@ export class FlowView extends ui.Component {
     public remotePresenceToLocal(remotePresenceInfo: IRemotePresenceInfo, posAdjust = 0) {
         let segoff = this.client.mergeTree.getContainingSegment(remotePresenceInfo.origPos,
             remotePresenceInfo.refseq, remotePresenceInfo.clientId);
+
         if (segoff.segment === undefined) {
             if (remotePresenceInfo.origPos === this.client.getLength()) {
-                segoff = this.client.mergeTree.getContainingSegment(remotePresenceInfo.origPos,
+                segoff = this.client.mergeTree.getContainingSegment(remotePresenceInfo.origPos - 1,
                     remotePresenceInfo.refseq, remotePresenceInfo.clientId);
                 if (segoff.segment) {
                     segoff.offset++;
@@ -3611,7 +3711,15 @@ export class FlowView extends ui.Component {
                 localRef: new SharedString.LocalReference(<SharedString.BaseSegment>segoff.segment, segoff.offset,
                     SharedString.ReferenceType.SlideOnRemove),
             };
-
+            if (remotePresenceInfo.origMark >= 0) {
+                let markSegoff = this.client.mergeTree.getContainingSegment(remotePresenceInfo.origMark,
+                    remotePresenceInfo.refseq, remotePresenceInfo.clientId);
+                if (markSegoff.segment) {
+                    localPresenceInfo.markLocalRef =
+                        new SharedString.LocalReference(<SharedString.BaseSegment>markSegoff.segment,
+                            markSegoff.offset, SharedString.ReferenceType.SlideOnRemove);
+                }
+            }
             this.updatePresenceVector(localPresenceInfo);
         }
     }
@@ -3628,6 +3736,7 @@ export class FlowView extends ui.Component {
     public updatePresence() {
         if (this.presenceMapView) {
             let presenceInfo = <IRemotePresenceInfo>{
+                origMark: this.cursor.mark,
                 origPos: this.cursor.pos,
                 refseq: this.client.getCurrentSeq(),
             };
@@ -4008,11 +4117,14 @@ export class FlowView extends ui.Component {
         return this.viewportEndPos - this.viewportStartPos;
     }
 
-    public clearSelection() {
+    public clearSelection(render = true) {
         // TODO: only rerender line if selection on one line
         if (this.cursor.getSelection()) {
             this.cursor.clearSelection();
-            this.localQueueRender(this.cursor.pos);
+            this.updatePresence();
+            if (render) {
+                this.localQueueRender(this.cursor.pos);
+            }
         }
     }
 
@@ -4088,8 +4200,13 @@ export class FlowView extends ui.Component {
                     this.keyCmd(e.keyCode);
                 } else if (e.keyCode === KeyCode.TAB) {
                     this.handleTAB(e.shiftKey);
+                } else if (e.keyCode === KeyCode.esc) {
+                    this.clearSelection();
                 } else if (e.keyCode === KeyCode.backspace) {
                     this.cursor.pos--;
+                    if (this.modes.showCursorLocation) {
+                        this.cursorLocation();
+                    }
                     this.sharedString.removeText(this.cursor.pos, this.cursor.pos + 1);
                     this.localQueueRender(this.cursor.pos);
                 } else if (((e.keyCode === KeyCode.pageUp) || (e.keyCode === KeyCode.pageDown)) && (!this.ticking)) {
@@ -4100,11 +4217,17 @@ export class FlowView extends ui.Component {
                     this.ticking = true;
                 } else if (e.keyCode === KeyCode.home) {
                     this.cursor.pos = FlowView.docStartPosition;
+                    if (this.modes.showCursorLocation) {
+                        this.cursorLocation();
+                    }
                     this.render(FlowView.docStartPosition);
                 } else if (e.keyCode === KeyCode.end) {
                     let halfport = Math.floor(this.viewportCharCount() / 2);
                     let topChar = this.client.getLength() - halfport;
                     this.cursor.pos = topChar;
+                    if (this.modes.showCursorLocation) {
+                        this.cursorLocation();
+                    }
                     this.updatePresence();
                     this.render(topChar);
                 } else if (e.keyCode === KeyCode.rightArrow) {
@@ -4141,6 +4264,11 @@ export class FlowView extends ui.Component {
                     if (e.keyCode === KeyCode.upArrow) {
                         lineCount = -1;
                     }
+                    if (e.shiftKey) {
+                        this.cursor.tryMark();
+                    } else {
+                        this.clearSelection();
+                    }
                     let vpEnd = this.viewportEndPos;
                     let maxPos = this.client.getLength() - 1;
                     if (vpEnd < maxPos) {
@@ -4159,11 +4287,6 @@ export class FlowView extends ui.Component {
                         }
                         if (this.cursor.pos > maxPos) {
                             this.cursor.pos = maxPos;
-                        }
-                        if (e.shiftKey) {
-                            this.cursor.tryMark();
-                        } else {
-                            this.clearSelection();
                         }
                         this.updatePresence();
                         this.cursor.updateView(this);
@@ -4222,6 +4345,9 @@ export class FlowView extends ui.Component {
                     this.updatePGInfo(pos);
                 }
                 this.clearSelection();
+                if (this.modes.showCursorLocation) {
+                    this.cursorLocation();
+                }
                 this.localQueueRender(this.cursor.pos);
             }
         };
@@ -4246,9 +4372,6 @@ export class FlowView extends ui.Component {
                 }
             }
 
-            const translationLangauge = "translation-en";
-            tileInfo.tile.properties[translationLangauge] =
-                "Do not ask for whom the bell tolls; it tolls for thee! A stitch in time saves nine! You can't tell which way the train went by looking at the tracks!";
             let lc = !!(<IParagraphMarker>tileInfo.tile).listCache;
             console.log(`tile at pos ${tileInfo.pos} with props${buf} and list cache: ${lc}`);
         }
@@ -4361,7 +4484,7 @@ export class FlowView extends ui.Component {
     public toggleWordOrSelection(name: string, valueOn: string, valueOff: string) {
         let sel = this.cursor.getSelection();
         if (sel) {
-            this.cursor.clearSelection();
+            this.clearSelection(false);
             this.toggleRange(name, valueOn, valueOff, sel.start, sel.end);
         } else {
             let wordRange = getCurrentWord(this.cursor.pos, this.sharedString.client.mergeTree);
@@ -4758,6 +4881,7 @@ export class FlowView extends ui.Component {
                 this.remotePresenceFromEdit(msg.clientId, msg.user, msg.referenceSequenceNumber, delta.pos1, adjLength);
                 this.updatePGInfo(delta.pos1);
                 return true;
+            // TODO: update pg info for pos2 (remove and annotate)
             case SharedString.MergeTreeDeltaType.REMOVE:
                 if (delta.pos2 <= this.cursor.pos) {
                     this.cursor.pos -= (delta.pos2 - delta.pos1);
@@ -4775,6 +4899,7 @@ export class FlowView extends ui.Component {
                 return opAffectsViewport;
             }
             case SharedString.MergeTreeDeltaType.ANNOTATE: {
+                this.updatePGInfo(delta.pos1);
                 return this.posInViewport(delta.pos1) || this.posInViewport(delta.pos2 - 1);
             }
         }
@@ -4784,13 +4909,19 @@ export class FlowView extends ui.Component {
         return ((this.viewportEndPos > pos) && (pos >= this.viewportStartPos));
     }
 
-    private presenceQueueRender(remotePosInfo: ILocalPresenceInfo) {
-        if ((!this.pendingRender) && (this.posInViewport(remotePosInfo.xformPos))) {
-            this.pendingRender = true;
-            window.requestAnimationFrame(() => {
-                this.pendingRender = false;
-                this.render(this.topChar, true);
-            });
+    private presenceQueueRender(localPresenceInfo: ILocalPresenceInfo, sameLine = false) {
+        if ((!this.pendingRender) &&
+            (this.posInViewport(localPresenceInfo.xformPos) ||
+                (this.posInViewport(localPresenceInfo.markXformPos)))) {
+            if (!sameLine) {
+                this.pendingRender = true;
+                window.requestAnimationFrame(() => {
+                    this.pendingRender = false;
+                    this.render(this.topChar, true);
+                });
+            } else {
+                reRenderLine(localPresenceInfo.cursor.lineDiv(), this, this.lastDocContext);
+            }
         }
     }
 
