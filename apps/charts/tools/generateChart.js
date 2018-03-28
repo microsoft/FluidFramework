@@ -16,7 +16,7 @@ const patch = process.argv[4];
 const chart =
 ` ## Generated from a tool - do not edit directly
 apiVersion: v1
-name: praguetenant
+name: apps
 version: 0.1.${patch}
 description: A Helm chart for apps built on top of routerlicious.
 home: https://github.com/microsoft/prague
@@ -37,7 +37,7 @@ name: apps
 service:
   name: node
   type: NodePort
-  externalPort: 8080
+  externalPort: 80
   internalPort: 3000
   host: www.wu2.prague.office-int.com
   sslCert: wu2-tls-certificate

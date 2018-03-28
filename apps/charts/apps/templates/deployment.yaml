@@ -15,7 +15,7 @@ spec:
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
       labels:
-        app: {{ template "fullname" . }}
+        app: {{ template "name" . }}
         component: "{{ .Values.name }}"
         release: {{ .Release.Name }}
     spec:
@@ -27,7 +27,8 @@ spec:
           - 'node'
           - 'dist/www.js'
         ports:
-        - containerPort: {{ .Values.service.internalPort }}
+        - name: ui
+          containerPort: {{ .Values.service.internalPort }}
         volumeMounts:
         - name: config
           mountPath: /usr/src/server/config.json

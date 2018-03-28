@@ -53,7 +53,7 @@ data:
                     }
                 },
                 "serverUrl": "{{ .Values.endpoints.serverUrl }}",
-                "url": "{{ .Values.endpoints.tmzrUrl }}",
+                "url": "{{ .Values.endpoints.tmzUrl }}",
                 "blobStorageUrl": "{{ .Values.endpoints.blobStorageUrl }}",
                 "scriptUrl": "{{ .Values.endpoints.scriptUrl }}",
                 "repository": "prague",
