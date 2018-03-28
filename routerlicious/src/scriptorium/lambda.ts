@@ -210,6 +210,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
 
         // Listen for offset changes and checkpoint accordingly
         this.workManager.on("offsetChanged", (offset: number) => {
+            winston.verbose(`Checkpointing at ${offset}`);
             context.checkpoint(offset);
         });
 
@@ -292,6 +293,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
                 }
             });
 
+            winston.verbose(`Sending to socket.io ${id.topic}:${id.event}:${id.documentId}@${work.length}`);
             this.io.to(id.topic).emit(id.event, id.documentId, work);
         });
     }
