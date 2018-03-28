@@ -37,7 +37,7 @@ name: apps
 service:
   name: node
   type: NodePort
-  externalPort: 8080
+  externalPort: 80
   internalPort: 3000
   host: www.wu2.prague.office-int.com
   sslCert: wu2-tls-certificate

@@ -12,7 +12,8 @@ spec:
   type: {{ .Values.service.type }}
   ports:
   - port: {{ .Values.service.externalPort }}
-    targetPort: {{ .Values.service.internalPort }}
+    protocol: TCP
+    targetPort: ui
   selector:
     app: {{ template "name" . }}
     component: "{{ .Values.name }}"

@@ -27,7 +27,8 @@ spec:
           - 'node'
           - 'dist/www.js'
         ports:
-        - containerPort: {{ .Values.service.internalPort }}
+        - name: ui
+          containerPort: {{ .Values.service.internalPort }}
         volumeMounts:
         - name: config
           mountPath: /usr/src/server/config.json
