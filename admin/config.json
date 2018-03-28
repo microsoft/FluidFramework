@@ -15,7 +15,7 @@
             }
         },
         "endpoints": {
-            "tenants": "http://localhost:7000/tenants"
+            "tenantsUrl": "http://localhost:7000/tenants"
         },
         "port": 3000
     },
