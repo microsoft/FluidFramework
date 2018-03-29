@@ -1,0 +1,35 @@
+import { Router } from "express";
+import * as moniker from "moniker";
+import { getFullId } from "../utils";
+import { ensureAuthenticated } from "./authCheker";
+import { defaultPartials } from "./partials";
+
+function renderView(request, response, docId: string, config: any) {
+    response.render(
+        "tictactoe",
+        {
+            endpoints: JSON.stringify(config.tenantInfo.endpoints),
+            id: getFullId(config.tenantInfo.id, docId),
+            owner: config.tenantInfo.owner,
+            partials: defaultPartials,
+            repository: config.tenantInfo.repository,
+            title: docId,
+            token: request.query.token,
+        },
+    );
+}
+
+export function create(config: any): Router {
+    const router: Router = Router();
+
+    router.get("/", (request, response, next) => {
+        response.redirect(`/tictactoe/${moniker.choose()}`);
+    });
+
+    router.get("/:id", ensureAuthenticated, (request, response, next) => {
+        request.query.token = response.locals.token;
+        renderView(request, response, request.params.id, config);
+    });
+
+    return router;
+}
