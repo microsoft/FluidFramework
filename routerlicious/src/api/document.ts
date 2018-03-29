@@ -446,6 +446,7 @@ export class Document extends EventEmitter {
             this._deltaManager.referenceSequenceNumber - this._deltaManager.minimumSequenceNumber,
             this.messagesSinceMSNChange.length);
         const transformedMessages: ISequencedDocumentMessage[] = [];
+        debug(`Transforming up to ${this._deltaManager.minimumSequenceNumber}`);
         for (const message of this.messagesSinceMSNChange) {
             transformedMessages.push(this.transform(message, this._deltaManager.minimumSequenceNumber));
         }
@@ -462,7 +463,9 @@ export class Document extends EventEmitter {
         for (const objectId in this.distributedObjects) {
             const object = this.distributedObjects[objectId];
 
-            if (!object.object.isLocal()) {
+            // If the object isn't local - and we have received the sequenced op creating the object (i.e. it has a
+            // base mapping) - then we go ahead and snapshot
+            if (!object.object.isLocal() && object.connection.baseMappingIsSet()) {
                 const snapshot = object.object.snapshot();
 
                 // Add in the object attributes to the returned tree
@@ -611,7 +614,10 @@ export class Document extends EventEmitter {
             // create storage service that wraps the attach data
             const localStorage = new LocalObjectStorageService(attachMessage.snapshot);
             const connection = new DeltaConnection(attachMessage.id, this);
-            connection.setBaseMapping(0, message.sequenceNumber);
+
+            // Document sequence number references <= message.sequenceNumber should map to the object's 0 sequence
+            // number. We cap to the MSN to keep a tighter window and because no references should be below it.
+            connection.setBaseMapping(0, message.minimumSequenceNumber);
 
             const distributedObject: IDistributedObject = {
                 id: attachMessage.id,
@@ -657,7 +663,9 @@ export class Document extends EventEmitter {
             if (message.clientId !== this.document.clientId) {
                 this.fulfillDistributedObject(context.value as ICollaborativeObject, context.services);
             } else {
-                this.distributedObjects[attachMessage.id].connection.setBaseMapping(0, message.sequenceNumber);
+                // Document sequence number references <= message.sequenceNumber should map to the object's 0 sequence
+                // number. We cap to the MSN to keep a tighter window and because no references should be below it.
+                this.distributedObjects[attachMessage.id].connection.setBaseMapping(0, message.minimumSequenceNumber);
             }
             eventArgs.push(this.distributedObjects[attachMessage.id].object);
         }

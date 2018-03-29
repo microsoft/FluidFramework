@@ -42,7 +42,7 @@ export function register(
         connectionProfiler.logger.info(`New socket.io connection`);
 
         // Map from client IDs on this connection to the object ID and user info.
-        const connectionsMap: { [clientId: string]: IDocumentUser } = {};
+        const connectionsMap = new Map<string, IDocumentUser>();
 
         function sendAndTrack(message: core.IRawOperationMessage) {
             throughput.produce();
@@ -73,10 +73,12 @@ export function register(
             await Promise.all([socket.join(message.id), socket.join(`client#${clientId}`)]);
 
             // Create and set a new client ID
-            connectionsMap[clientId] = {
-                docId: message.id,
-                user: authedUser,
-            };
+            connectionsMap.set(
+                clientId,
+                {
+                    docId: message.id,
+                    user: authedUser,
+                });
 
             // Broadcast the client connection message
             const rawMessage: core.IRawOperationMessage = {
@@ -131,9 +133,10 @@ export function register(
         // Message sent when a new operation is submitted to the router
         socket.on("submitOp", (clientId: string, messages: api.IDocumentMessage[], response) => {
             // Verify the user has connected on this object id
-            if (!connectionsMap[clientId]) {
+            if (!connectionsMap.has(clientId)) {
                 return response("Invalid client ID", null);
             }
+
             for (let message of messages) {
                 if (message.type === api.RoundTrip) {
                     // End of tracking. Write traces.
@@ -147,7 +150,7 @@ export function register(
                     continue;
                 }
 
-                const docUser = connectionsMap[clientId];
+                const docUser = connectionsMap.get(clientId);
                 const rawMessage: core.IRawOperationMessage = {
                     clientId,
                     documentId: docUser.docId,
@@ -193,9 +196,7 @@ export function register(
 
         socket.on("disconnect", () => {
             // Send notification messages for all client IDs in the connection map
-            // tslint:disable-next-line:forin
-            for (const clientId in connectionsMap) {
-                const docUser = connectionsMap[clientId];
+            for (const [clientId, docUser] of connectionsMap) {
                 const rawMessage: core.IRawOperationMessage = {
                     clientId: null,
                     documentId: docUser.docId,
