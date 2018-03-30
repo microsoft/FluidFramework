@@ -54,7 +54,7 @@ export class MapView implements IMapView {
         }
     }
 
-    public forEach(callbackFn: (value, key) => void) {
+    public forEach(callbackFn: (value: any, key: any) => void) {
         this.data.forEach((value, key) => {
             callbackFn(value.localValue, key);
         });
