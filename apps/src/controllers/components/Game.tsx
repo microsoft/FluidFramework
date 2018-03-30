@@ -1,12 +1,19 @@
 import * as React from "react";
-import { Board } from "./Board";
+import { Board, IBoardProps } from "./Board";
 
-export class Game extends React.Component<{}, {}> {
+export class Game extends React.Component<IBoardProps, {}> {
+    constructor (props: IBoardProps) {
+        super(props);
+        this.state = {
+          menuOpen: false,
+        };
+    }
+
     render() {
       return (
         <div className="game">
           <div className="game-board">
-            <Board />
+            <Board player={this.props.player} gameMap={this.props.gameMap} gameView={this.props.gameView}/>
           </div>
           <div className="game-info">
             <div>{/* status */}</div>

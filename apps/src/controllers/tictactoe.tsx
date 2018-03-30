@@ -36,14 +36,15 @@ export async function load(id: string, repository: string,  owner: string, endPo
             window["doc"] = doc;
 
             const rootView = await doc.getRoot().getView();
-            let gameView: api.types.IMapView;
+            let gameMap: types.IMap;
+            let gameView: types.IMapView;
             if (rootView.has("game")) {
                 playerId = 2;
-                const gameMap = rootView.get("game") as types.IMap;
+                gameMap = rootView.get("game") as types.IMap;
                 gameView = await gameMap.getView();
             } else {
                 rootView.set("game", doc.createMap());
-                const gameMap = rootView.get("game") as types.IMap;
+                gameMap = rootView.get("game") as types.IMap;
                 gameView = await gameMap.getView();
             }
 
@@ -58,6 +59,7 @@ export async function load(id: string, repository: string,  owner: string, endPo
             } else {
                 const counter = gameView.set<Map.Counter>("counter", undefined, Map.CounterValueType.Name);
                 counter.increment(1);
+                gameView.set("next", playerId);
             }
 
             if (!canJoin) {
@@ -65,12 +67,15 @@ export async function load(id: string, repository: string,  owner: string, endPo
                 displayError($("#tictactoeViews"), "No more players allowed");
             } else {
                 console.log(`${playerId} can join the game!`);
+                const player = {
+                    id: playerId,
+                    name: doc.getUser().user.name,
+                };
                 ReactDOM.render(
-                    <Game />,
+                    <Game player={player} gameMap={gameMap} gameView={gameView}/>,
                     document.getElementById("tictactoeViews")
                 );
             }
-            console.log(doc.getUser());
 
         }, (err) => {
             displayError($("#tictactoeViews"), JSON.stringify(err));

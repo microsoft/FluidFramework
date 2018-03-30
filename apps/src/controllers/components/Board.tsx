@@ -1,4 +1,8 @@
+import { api } from "@prague/routerlicious";
 import * as React from "react";
+
+import prague = api;
+import types = prague.types;
 
 export interface IBoardState {
     squares: any[];
@@ -6,7 +10,9 @@ export interface IBoardState {
 }
 
 export interface IBoardProps {
-
+    player: any;
+    gameMap: types.IMap;
+    gameView: types.IMapView;
 }
 
 export interface ISquareProps {
@@ -17,6 +23,7 @@ export interface ISquareProps {
 export class Board extends React.Component<IBoardProps, IBoardState> {
     constructor(props: IBoardProps) {
       super(props);
+      console.log(this.props.player);
       this.state = {
         squares: Array(9).fill(null),
         xIsNext: true,
