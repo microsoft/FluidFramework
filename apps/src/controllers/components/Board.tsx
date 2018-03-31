@@ -25,7 +25,6 @@ export interface ISquareProps {
 export class Board extends React.Component<IBoardProps, IBoardState> {
     constructor(props: IBoardProps) {
       super(props);
-      console.log(this.props.player);
       this.setGameState(true);
       this.listenToUpdate();
     }
@@ -88,7 +87,9 @@ export class Board extends React.Component<IBoardProps, IBoardState> {
 
     private listenToUpdate() {
         this.props.gameMap.on("valueChanged", (delta: types.IValueChanged) => {
+          if (delta.key !== "restart") {
             this.setGameState(false);
+          }
         });
     }
 
@@ -148,6 +149,7 @@ export class Board extends React.Component<IBoardProps, IBoardState> {
         for (let i = 0; i < lines.length; i++) {
           const [a, b, c] = lines[i];
           if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
+            this.props.gameView.set("restart", true);
             return squares[a] === 'X' ? 1 : 2;
           }
         }
@@ -156,6 +158,7 @@ export class Board extends React.Component<IBoardProps, IBoardState> {
                 return null;
             }
         }
+        this.props.gameView.set("restart", true);
         return 3;
     }
 
