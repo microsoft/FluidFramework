@@ -28,12 +28,11 @@ function displayError(parentElement: JQuery, error: string) {
 export async function load(id: string, repository: string,  owner: string, endPoints: any, token?: string) {
     $("document").ready(() => {
         prague.socketStorage.registerAsDefault(endPoints.delta, endPoints.storage, owner, repository);
-        console.log(`Document id is: ${id}`);
-        let playerId = 1;
-
         loadDocument(id, token).then(async (doc) => {
             // tslint:disable-next-line
             window["doc"] = doc;
+            const playerName = doc.getUser().user.name;
+            let playerId: Number;
 
             const rootView = await doc.getRoot().getView();
             let gameMap: types.IMap;
@@ -42,10 +41,13 @@ export async function load(id: string, repository: string,  owner: string, endPo
                 playerId = 2;
                 gameMap = rootView.get("game") as types.IMap;
                 gameView = await gameMap.getView();
+                gameView.set("pl2", playerName);
             } else {
+                playerId = 1;
                 rootView.set("game", doc.createMap());
                 gameMap = rootView.get("game") as types.IMap;
                 gameView = await gameMap.getView();
+                gameView.set("pl1", playerName);
             }
 
             let canJoin : boolean = true;
