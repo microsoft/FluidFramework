@@ -8,6 +8,7 @@ export interface IBoardState {
     squares: any[];
     iAmNext: boolean;
     winner: any;
+    nPlayers: number;
 }
 
 export interface IBoardProps {
@@ -49,13 +50,18 @@ export class Board extends React.Component<IBoardProps, IBoardState> {
 
     render() {
       const winner = this.state.winner;
+      const nPlayers = this.state.nPlayers;
       let status;
-      if (winner) {
-        status = (winner === 3) ? 'Match drawn!' : 'Winner: ' + this.getPlayerNameFromId(winner);
+      if (nPlayers < 2) {
+        status = 'Waiting for other player to join...';
       } else {
-        const otherPlayerName = this.getPlayerNameFromId(this.getOtherPlayerId(this.props.player.id));
-        const nextMoveStatus = this.state.iAmNext ? "Your move. Go Ahead!" : ("Next move: " + otherPlayerName);
-        status = nextMoveStatus;
+        if (winner) {
+          status = (winner === 3) ? 'Match drawn!' : 'Winner: ' + this.getPlayerNameFromId(winner);
+        } else {
+          const otherPlayerName = this.getPlayerNameFromId(this.getOtherPlayerId(this.props.player.id));
+          const nextMoveStatus = this.state.iAmNext ? "Your move. Go Ahead!" : ("Next move: " + otherPlayerName);
+          status = nextMoveStatus;
+        }
       }
 
       return (
@@ -102,18 +108,22 @@ export class Board extends React.Component<IBoardProps, IBoardState> {
         }
         const iAmNext = ((stateView.get("next") as number) === this.props.player.id) ? true : false;
         const winner = stateView.has("winner") ? stateView.get("winner") as number : null;
+        const playerCounter = stateView.get("counter") as api.map.Counter;
+        const nPlayers = playerCounter.value;
 
         if (initial) {
             this.state = {
-                squares: squares,
-                iAmNext: iAmNext,
-                winner: winner,
+                squares,
+                iAmNext,
+                winner,
+                nPlayers
             };
         } else {
             this.setState({
-                squares: squares,
-                iAmNext: iAmNext,
-                winner: winner,
+                squares,
+                iAmNext,
+                winner,
+                nPlayers
             });
         }
         if (!winner) {
