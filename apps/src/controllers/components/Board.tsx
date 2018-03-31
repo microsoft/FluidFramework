@@ -51,7 +51,7 @@ export class Board extends React.Component<IBoardProps, IBoardState> {
       const winner = this.state.winner;
       let status;
       if (winner) {
-        status = 'Winner: ' + this.getPlayerNameFromId(winner);
+        status = (winner === 3) ? 'Match drawn!' : 'Winner: ' + this.getPlayerNameFromId(winner);
       } else {
         const otherPlayerName = this.getPlayerNameFromId(this.getOtherPlayerId(this.props.player.id));
         const nextMoveStatus = this.state.iAmNext ? "Your move. Go Ahead!" : ("Next move: " + otherPlayerName);
@@ -85,37 +85,6 @@ export class Board extends React.Component<IBoardProps, IBoardState> {
             this.setGameState(false);
         });
     }
-
-    /*
-    private handleWinner(key: string) {
-        const stateView = this.props.gameView;
-        const winnerId = stateView.get(key) as number;
-        this.setState({
-            squares: this.state.squares,
-            iAmNext: this.state.iAmNext,
-            winner: winnerId,
-        });
-    }
-
-    private handleBoardUpdate(key: string) {
-        const stateView = this.props.gameView;
-        const parsed = parseInt(key, 10);
-        const squares = this.state.squares.slice();
-        if (!isNaN(parsed)) {
-            const cellValue = stateView.get(key) as Number;
-            squares[parsed] = (cellValue === 1) ? 'X' : 'O';
-        }
-        const iAmNext = ((stateView.get("next") as number) === this.props.player.id) ? true : false;
-        const winner = this.calculateWinner(squares);
-        this.setState({
-            squares: squares,
-            iAmNext: iAmNext,
-            winner: winner,
-        });
-        if (winner) {
-            stateView.set("winner", winner);
-        }
-    }*/
 
     private setGameState(initial: boolean) {
         console.log(`Setting game state!`);
@@ -172,7 +141,12 @@ export class Board extends React.Component<IBoardProps, IBoardState> {
             return squares[a] === 'X' ? 1 : 2;
           }
         }
-        return null;
+        for (const cell of squares) {
+            if (!cell) {
+                return null;
+            }
+        }
+        return 3;
     }
 
     private getPlayerNameFromId(pid: number): string {
