@@ -2,6 +2,7 @@ import { api } from "@prague/routerlicious";
 import * as React from "react";
 import { Board, IBoardProps } from "./Board";
 import { Control } from "./Control";
+import { Logout } from "./Logout";
 
 import prague = api;
 import types = prague.types;
@@ -22,12 +23,15 @@ export class Game extends React.Component<IBoardProps, IGameState> {
     render() {
       let className = "game-info" + (!this.state.retsartVivisble ? " restart-hidden" : "");
       return (
-        <div className="game">
-          <div className="game-board">
-            <Board player={this.props.player} gameMap={this.props.gameMap} gameView={this.props.gameView}/>
+        <div>
+          <Logout name={this.props.player.name}/>
+          <div className="game">
+            <div className="game-board">
+              <Board player={this.props.player} gameMap={this.props.gameMap} gameView={this.props.gameView}/>
+            </div>
           </div>
           <div className={className} onClick={() => this.handleRestart()}>
-            <Control restartText="Restart"/>
+              <Control restartText="Restart"/>
           </div>
         </div>
       );
