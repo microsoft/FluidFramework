@@ -31,7 +31,7 @@ export class Game extends React.Component<IBoardProps, IGameState> {
             </div>
           </div>
           <div className={className} onClick={() => this.handleRestart()}>
-              <Control restartText="Restart"/>
+              <Control restartText="Play Again!"/>
           </div>
         </div>
       );

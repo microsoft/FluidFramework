@@ -10,8 +10,8 @@ export class Control extends React.Component<IContentProps, {}> {
     }
     render() {
         return (
-            <div>
-                <span className="restart-text">{this.props.restartText}</span>
+            <div className="restart-container">
+                <span className="restart-text">{this.props.restartText} <i className="fa fa-undo restart-icon" /></span>
             </div>
         );
     }
