@@ -199,8 +199,6 @@ export class DeliLambda implements IPartitionLambda {
                 operation: {
                     clientSequenceNumber: branchDocumentMessage.sequenceNumber,
                     contents: branchDocumentMessage.contents,
-                    encrypted: branchDocumentMessage.encrypted,
-                    encryptedContents: branchDocumentMessage.encryptedContents,
                     referenceSequenceNumber: transformedRefSeqNumber,
                     traces: message.operation.traces,
                     type: branchDocumentMessage.type,
@@ -251,8 +249,6 @@ export class DeliLambda implements IPartitionLambda {
             clientId: message.clientId,
             clientSequenceNumber: message.operation.clientSequenceNumber,
             contents: message.operation.contents,
-            encrypted: message.operation.encrypted,
-            encryptedContents: message.operation.encryptedContents,
             minimumSequenceNumber: this.minimumSequenceNumber,
             origin,
             referenceSequenceNumber: message.operation.referenceSequenceNumber,

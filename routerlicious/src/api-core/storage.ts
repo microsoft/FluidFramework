@@ -142,21 +142,6 @@ export interface IDocumentDeltaConnection {
     documentId: string;
 
     /**
-     * Flag indicating whether connection is encrypted
-     */
-    encrypted: boolean;
-
-    /**
-     * Private key for decrypting deltas from the server
-     */
-    privateKey: string;
-
-    /**
-     * Public key for sending deltas to the server
-     */
-    publicKey: string;
-
-    /**
      * Subscribe to events emitted by the document
      */
     on(event: string, listener: Function): this;

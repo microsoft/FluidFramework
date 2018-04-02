@@ -163,12 +163,6 @@ export interface IDocumentMessage {
     // The contents of the message
     contents: any;
 
-    // Flag indicating whether encryption is active
-    encrypted: boolean;
-
-    // The encrypted version of the contents of the message
-    encryptedContents: string;
-
     // Traces related to the packet.
     traces: ITrace[];
 }
@@ -208,12 +202,6 @@ export interface ISequencedDocumentMessage {
 
     // The contents of the message
     contents: any;
-
-    // Flag indicating whether encryption is active
-    encrypted: boolean;
-
-    // The encrypted version of the contents of the message
-    encryptedContents: string;
 
     // Origin branch information for the message. Can be marked undefined if the current
     // message is also the origin.

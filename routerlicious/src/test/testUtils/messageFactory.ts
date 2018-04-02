@@ -48,8 +48,6 @@ export class MessageFactory {
         const operation: api.IDocumentMessage = {
             clientSequenceNumber: this.clientSequenceNumber++,
             contents: null,
-            encrypted: false,
-            encryptedContents: null,
             referenceSequenceNumber,
             traces: [],
             type: api.NoOp,
@@ -66,8 +64,6 @@ export class MessageFactory {
         const operation: api.IDocumentMessage = {
             clientSequenceNumber: -1,
             contents: this.clientId,
-            encrypted: false,
-            encryptedContents: null,
             referenceSequenceNumber: -1,
             traces: [],
             type: api.ClientJoin,
@@ -80,8 +76,6 @@ export class MessageFactory {
         const operation: api.IDocumentMessage = {
             clientSequenceNumber: -1,
             contents: this.clientId,
-            encrypted: false,
-            encryptedContents: null,
             referenceSequenceNumber: -1,
             traces: [],
             type: api.ClientLeave,
@@ -109,8 +103,6 @@ export class MessageFactory {
             clientId: this.clientId,
             clientSequenceNumber: operation.clientSequenceNumber,
             contents: operation.contents,
-            encrypted: operation.encrypted,
-            encryptedContents: operation.encryptedContents,
             minimumSequenceNumber: 0,
             origin: undefined,
             referenceSequenceNumber: operation.referenceSequenceNumber,

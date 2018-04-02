@@ -87,8 +87,6 @@ export function register(
                 operation: {
                     clientSequenceNumber: -1,
                     contents: clientId,
-                    encrypted: false,
-                    encryptedContents: null,
                     referenceSequenceNumber: -1,
                     traces: [],
                     type: api.ClientJoin,
@@ -197,14 +195,14 @@ export function register(
         socket.on("disconnect", () => {
             // Send notification messages for all client IDs in the connection map
             for (const [clientId, docUser] of connectionsMap) {
+                winston.info(`Disconnect of ${clientId}`);
+
                 const rawMessage: core.IRawOperationMessage = {
                     clientId: null,
                     documentId: docUser.docId,
                     operation: {
                         clientSequenceNumber: -1,
                         contents: clientId,
-                        encrypted: false,
-                        encryptedContents: null,
                         referenceSequenceNumber: -1,
                         traces: [],
                         type: api.ClientLeave,

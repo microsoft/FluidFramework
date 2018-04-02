@@ -47,7 +47,7 @@ export class SocketIoWebServerFactory implements core.IWebServerFactory {
         const server = http.createServer(requestListener);
         const httpServer = new HttpServer(server);
 
-        const socketIoServer = !this.redisConfig ? socketIo.create(this.redisConfig, server) : null;
+        const socketIoServer = socketIo.create(this.redisConfig, server);
 
         return new WebServer(httpServer, socketIoServer);
     }
