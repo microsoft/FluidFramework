@@ -2637,12 +2637,10 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
     // TODO: cache all this pre-amble in style blocks; override with pg properties
     let docContext = layoutContext.docContext;
     let viewportStartPos = -1;
-    let lastLineDiv = undefined;
 
     function makeLineDiv(r: ui.Rectangle, lineFontstr) {
         let lineDiv = makeContentDiv(r, lineFontstr);
         layoutContext.viewport.div.appendChild(lineDiv);
-        lastLineDiv = lineDiv;
         return lineDiv;
     }
 
@@ -2762,15 +2760,16 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
 
             if (layoutContext.viewport.remainingHeight() < docContext.defaultLineDivHeight) {
                 // no more room for lines
-                // TODO: record end viewport char
                 break;
             }
         }
+        return lineDiv.lineEnd;
     }
 
     let fetchLog = false;
     let segoff: ISegmentOffset;
     let totalLength = client.getLength();
+    let viewportEndPos = currentPos;
     // TODO: use end of doc marker
     do {
         if (!segoff) {
@@ -2863,8 +2862,10 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
             }
             paragraphLexer.reset();
             // TODO: more accurate end of document reasoning
+
             if (currentPos < totalLength) {
-                renderPG(curPGMarker, currentPos, indentWidth, indentSymbol, contentWidth);
+                let lineEnd = renderPG(curPGMarker, currentPos, indentWidth, indentSymbol, contentWidth);
+                viewportEndPos = lineEnd;
                 currentPos = curPGMarkerPos + curPGMarker.cachedLength;
 
                 if (!deferredPGs) {
@@ -2873,9 +2874,6 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
                         let height = renderPGAnnotation(curPGMarker, indentWidth, contentWidth);
                         layoutContext.viewport.vskip(height);
                     }
-                }
-                if (lastLineDiv) {
-                    lastLineDiv.lineEnd = curPGMarkerPos;
                 }
                 if (currentPos < totalLength) {
                     segoff = getContainingSegment(flowView, currentPos);
@@ -2899,7 +2897,6 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
     } while (layoutContext.viewport.remainingHeight() >= docContext.defaultLineDivHeight);
 
     // Find overlay annotations
-    const viewportEndPos = currentPos;
 
     const overlayMarkers: IOverlayMarker[] = [];
     client.mergeTree.mapRange(
@@ -4853,9 +4850,11 @@ export class FlowView extends ui.Component {
 
     protected resizeCore(bounds: ui.Rectangle) {
         this.viewportRect = bounds.inner(0.92);
-        ui.Rectangle.conformElementToRect(this.viewportDiv, this.viewportRect);
-        if (this.client.getLength() > 0) {
-            this.render(this.topChar, true);
+        if (this.viewportRect.height >= 0) {
+            ui.Rectangle.conformElementToRect(this.viewportDiv, this.viewportRect);
+            if (this.client.getLength() > 0) {
+                this.render(this.topChar, true);
+            }
         }
     }
 
