@@ -3054,6 +3054,10 @@ export class Cursor {
         }
     }
 
+    public emptySelection() {
+        return this.mark===this.pos;
+    }
+
     public clearSelection() {
         this.mark = Nope;
     }
@@ -4132,8 +4136,51 @@ export class FlowView extends ui.Component {
         this.element.onmousemove = preventD;
         this.element.onmouseup = preventD;
         this.element.onselectstart = preventD;
+        let prevX = Nope;
+        let prevY = Nope;
+
+        let moveCursor = (e: MouseEvent) => {
+            if (e.button === 0) {
+                prevX = e.clientX;
+                prevY = e.clientY;
+                let span = <ISegSpan>e.target;
+                let segspan: ISegSpan;
+                if (span.seg) {
+                    segspan = span;
+                } else {
+                    segspan = <ISegSpan>span.parentElement;
+                }
+                if (segspan && segspan.seg) {
+                    this.clickSpan(e.clientX, e.clientY, segspan);
+                }
+            }
+        };
+
+        let mousemove = (e: MouseEvent) => {
+            if ((prevX !== e.clientX) || (prevY !== e.clientY)) {
+                moveCursor(e);
+            }
+            if (e.button === 0) {
+                e.preventDefault();
+                e.returnValue = false;
+                return false;
+            }
+        };
 
         this.element.onmousedown = (e) => {
+            moveCursor(e);
+            if (!e.shiftKey) {
+                this.clearSelection();
+                this.cursor.tryMark();
+            }
+            this.element.onmousemove = mousemove;
+            e.preventDefault();
+            e.returnValue = false;
+            return false;
+        };
+
+        this.element.onmouseup = (e) => {
+            this.element.onmousemove = undefined;
             if (e.button === 0) {
                 let span = <ISegSpan>e.target;
                 let segspan: ISegSpan;
@@ -4143,10 +4190,10 @@ export class FlowView extends ui.Component {
                     segspan = <ISegSpan>span.parentElement;
                 }
                 if (segspan && segspan.seg) {
-                    if (!e.shiftKey) {
+                    this.clickSpan(e.clientX, e.clientY, segspan);
+                    if (this.cursor.emptySelection()) {
                         this.clearSelection();
                     }
-                    this.clickSpan(e.clientX, e.clientY, segspan);
                 }
                 e.preventDefault();
                 e.returnValue = false;

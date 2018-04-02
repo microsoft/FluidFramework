@@ -120,9 +120,7 @@ async function loadFull(
             root.set("pageInk", collabDoc.createStream());
         }
     }
-
     const sharedString = root.get("text") as SharedString.SharedString;
-
     console.log(`Shared string ready - ${performanceNow()}`);
     console.log(window.navigator.userAgent);
     console.log(`id is ${id}`);
