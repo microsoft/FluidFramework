@@ -3960,7 +3960,7 @@ export class FlowView extends ui.Component {
     // TODO: handle symbol div
     public setCursorPosFromPixels(targetLineDiv: ILineDiv, x: number) {
         const position = this.getPosFromPixels(targetLineDiv, x);
-        if (position) {
+        if (position !== undefined) {
             this.cursor.pos = position;
             return true;
         } else {
@@ -4269,21 +4269,27 @@ export class FlowView extends ui.Component {
                     } else {
                         this.clearSelection();
                     }
-                    let vpEnd = this.viewportEndPos;
                     let maxPos = this.client.getLength() - 1;
-                    if (vpEnd < maxPos) {
+                    if (this.viewportEndPos > maxPos) {
+                        this.viewportEndPos = maxPos;
+                    }
+                    let vpEnd = this.viewportEndPos;
+                    if ((this.cursor.pos < maxPos) || (lineCount < 0)) {
                         if (!this.verticalMove(lineCount)) {
-                            this.scroll(lineCount < 0, true);
-                            if (lineCount > 0) {
-                                while (vpEnd === this.viewportEndPos) {
-                                    if (this.cursor.pos > maxPos) {
-                                        this.cursor.pos = maxPos;
-                                        break;
+                            if (((this.viewportStartPos > 0) && (lineCount < 0)) ||
+                                ((this.viewportEndPos < maxPos) && (lineCount > 0))) {
+                                this.scroll(lineCount < 0, true);
+                                if (lineCount > 0) {
+                                    while (vpEnd === this.viewportEndPos) {
+                                        if (this.cursor.pos > maxPos) {
+                                            this.cursor.pos = maxPos;
+                                            break;
+                                        }
+                                        this.scroll(lineCount < 0, true);
                                     }
-                                    this.scroll(lineCount < 0, true);
                                 }
+                                this.verticalMove(lineCount);
                             }
-                            this.verticalMove(lineCount);
                         }
                         if (this.cursor.pos > maxPos) {
                             this.cursor.pos = maxPos;
