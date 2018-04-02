@@ -25,13 +25,15 @@ export class Game extends React.Component<IBoardProps, IGameState> {
       return (
         <div>
           <Logout name={this.props.player.name}/>
-          <div className="game">
-            <div className="game-board">
-              <Board player={this.props.player} gameMap={this.props.gameMap} gameView={this.props.gameView}/>
+          <div className="game-control">
+            <div className="game">
+              <div className="game-board">
+                <Board player={this.props.player} gameMap={this.props.gameMap} gameView={this.props.gameView}/>
+              </div>
             </div>
-          </div>
-          <div className={className} onClick={() => this.handleRestart()}>
+            <div className={className} onClick={() => this.handleRestart()}>
               <Control restartText="Play Again!"/>
+            </div>
           </div>
         </div>
       );
