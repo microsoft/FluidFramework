@@ -30,7 +30,7 @@ export class Board extends React.Component<IBoardProps, IBoardState> {
     }
 
     handleClick(i: number) {
-      if (this.state.winner || !this.state.iAmNext || this.state.squares[i]) {
+      if (this.state.winner || !this.state.iAmNext || this.state.squares[i] || this.state.nPlayers < 2) {
         return;
       }
       const playerId = this.props.player.id;
@@ -131,6 +131,7 @@ export class Board extends React.Component<IBoardProps, IBoardState> {
             const winner = this.calculateWinner(squares);
             if (winner) {
                 stateView.set("winner", winner);
+                this.updateStat(winner);
             }
         }
     }
@@ -160,6 +161,20 @@ export class Board extends React.Component<IBoardProps, IBoardState> {
         }
         this.props.gameView.set("restart", true);
         return 3;
+    }
+
+    private updateStat(winner: number) {
+      const winnerName = (winner === 3) ? "drawn" : (winner === 1 ? "pl1won" : "pl2won");
+      this.updateWinCounter(winnerName);
+    }
+
+    private updateWinCounter(winnerKey: string) {
+      const stateView = this.props.gameView;
+      if (!stateView.has(winnerKey)) {
+        stateView.set(winnerKey, 0);
+      }
+      const oldValue = stateView.get(winnerKey) as number;
+      stateView.set(winnerKey, oldValue + 1);
     }
 
     private getPlayerNameFromId(pid: number): string {
