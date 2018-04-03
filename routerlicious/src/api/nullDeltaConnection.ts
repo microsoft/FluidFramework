@@ -9,7 +9,7 @@ export class NullDeltaConnection implements api.IDocumentDeltaConnection {
     public encrypted: boolean = false;
     public privateKey: string = null;
     public publicKey: string = null;
-    public existing: boolean = false;
+    public existing: boolean = true;
     public user: IAuthenticatedUser = null;
 
     constructor(public documentId: string, public parentBranch: string) {
