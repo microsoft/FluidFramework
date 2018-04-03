@@ -87,6 +87,31 @@ export class SharedString extends CollaborativeMap {
         return this.client.getText(start, end);
     }
 
+    public paste(register: string, pos: number) {
+        const insertMessage: ops.IMergeTreeInsertMsg = {
+            pos1: pos,
+            register,
+            type: ops.MergeTreeDeltaType.INSERT,
+        };
+
+        pos = this.client.pasteLocal(register, pos);
+        this.submitIfAttached(insertMessage);
+        return pos;
+    }
+
+    public copy(register: string, start: number, end: number) {
+        const insertMessage: ops.IMergeTreeInsertMsg = {
+            pos1: start,
+            pos2: end,
+            register,
+            type: ops.MergeTreeDeltaType.INSERT,
+        };
+
+        this.client.copy(start, end, register, this.client.getCurrentSeq(),
+            this.client.getClientId(), this.client.longClientId);
+        this.submitIfAttached(insertMessage);
+    }
+
     public insertText(text: string, pos: number, props?: Properties.PropertySet) {
         const insertMessage: ops.IMergeTreeInsertMsg = {
             pos1: pos,
@@ -97,6 +122,34 @@ export class SharedString extends CollaborativeMap {
 
         this.client.insertTextLocal(text, pos, props);
         this.submitIfAttached(insertMessage);
+    }
+
+    public replaceText(text: string, start: number, end: number, props?: Properties.PropertySet) {
+        const insertMessage: ops.IMergeTreeInsertMsg = {
+            pos1: start,
+            pos2: end,
+            props,
+            type: ops.MergeTreeDeltaType.INSERT,
+            text,
+        };
+        this.client.mergeTree.startGroupOperation();
+        this.client.removeSegmentLocal(start,end);
+        this.client.insertTextLocal(text, start, props);
+        this.client.mergeTree.endGroupOperation();
+        this.submitIfAttached(insertMessage);
+    }
+
+    public cut(register: string, start: number, end: number) {
+        const removeMessage: ops.IMergeTreeRemoveMsg = {
+            pos1: start,
+            pos2: end,
+            register,
+            type: ops.MergeTreeDeltaType.REMOVE,
+        };
+        this.client.copy(start, end, register, this.client.getCurrentSeq(),
+            this.client.getClientId(), this.client.longClientId);
+        this.client.removeSegmentLocal(start, end);
+        this.submitIfAttached(removeMessage);
     }
 
     public removeText(start: number, end: number) {

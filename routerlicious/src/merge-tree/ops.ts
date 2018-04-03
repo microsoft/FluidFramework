@@ -64,6 +64,9 @@ export interface IMergeTreeInsertMsg extends IMergeTreeDelta {
     props?: Object;
     text?: string;
     marker?: IMarkerDef;
+    register?: string;
+    pos2?: number;
+    relativePos2?: IRelativePosition;
 }
 
 export interface IMergeTreeRemoveMsg extends IMergeTreeDelta {
@@ -72,6 +75,7 @@ export interface IMergeTreeRemoveMsg extends IMergeTreeDelta {
     relativePos1?: IRelativePosition;
     pos2?: number;
     relativePos2?: IRelativePosition;
+    register?: string;
 }
 
 export interface ICombiningOp {

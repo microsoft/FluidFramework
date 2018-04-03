@@ -830,8 +830,14 @@ export class TextSegment extends BaseSegment {
         }
     }
 
-    clone() {
-        let b = TextSegment.make(this.text, this.properties, this.seq, this.clientId);
+    clone(start = 0, end?: number) {
+        let text = this.text;
+        if (end === undefined) {
+            text = text.substring(start);
+        } else {
+            text = text.substring(start, end);
+        }
+        let b = TextSegment.make(text, this.properties, this.seq, this.clientId);
         this.cloneInto(b);
         return b;
     }
@@ -1733,6 +1739,41 @@ export interface IUndoInfo {
     op: ops.MergeTreeDeltaType;
 }
 
+export class RegisterCollection {
+    clientCollections: Properties.MapLike<Properties.MapLike<Segment[]>> =
+        Properties.createMap();
+    set(clientId: string, id: string, segments: Segment[]) {
+        if (!this.clientCollections[clientId]) {
+            this.clientCollections[clientId] = Properties.createMap();
+        }
+        this.clientCollections[clientId][id] = segments;
+    }
+
+    get(clientId: string, id: string) {
+        let clientCollection = this.clientCollections[clientId];
+        if (clientCollection) {
+            return clientCollection[id];
+        }
+    }
+
+    getLength(clientId: string, id: string) {
+        let segs = this.get(clientId, id);
+        let len = 0;
+        if (segs) {
+            for (let seg of segs) {
+                len += seg.cachedLength;
+            }
+        }
+        return len;
+    }
+
+    removeClient(clientId: string) {
+        this.clientCollections[clientId] = undefined;
+    }
+
+    // TODO: snapshot
+}
+
 export class Client {
     mergeTree: MergeTree;
     accumTime = 0;
@@ -1751,6 +1792,7 @@ export class Client {
     shortClientIdMap = <string[]>[];
     shortClientBranchIdMap = <number[]>[];
     shortClientUserInfoMap = <IAuthenticatedUser[]>[];
+    registerCollection = new RegisterCollection();
     public longClientId: string;
     public userInfo: IAuthenticatedUser;
     public undoSegments: IUndoInfo[];
@@ -2031,6 +2073,55 @@ export class Client {
         msg.contents = this.transformOp(op, msg, toSequenceNumber);
     }
 
+    copy(start: number, end: number, registerId: string, refSeq: number, clientId: number,
+        longClientId: string) {
+        let segs = this.mergeTree.cloneSegments(refSeq, clientId, start, end);
+        this.registerCollection.set(longClientId, registerId, segs);
+    }
+
+    pasteLocal(register: string, pos: number) {
+        let segs = this.registerCollection.get(this.longClientId, register);
+        if (segs) {
+            this.mergeTree.startGroupOperation();
+            // TODO: build tree from segs and insert all at once
+            for (let seg of segs) {
+                if (seg.getType() === SegmentType.Text) {
+                    let textSegment = <TextSegment>seg;
+                    this.insertTextLocal(textSegment.text, pos, textSegment.properties);
+                    pos += textSegment.cachedLength;
+                } else {
+                    let marker = <Marker>seg;
+                    this.insertMarkerLocal(pos, marker.refType, marker.properties);
+                    pos += marker.cachedLength;
+                }
+            }
+            this.mergeTree.endGroupOperation();
+        }
+        return pos;
+    }
+
+    pasteRemote(pos: number, registerId: string, seq: number, refSeq: number, clientId: number,
+        longClientId) {
+        let segs = this.registerCollection.get(longClientId, registerId);
+        if (segs) {
+            // TODO: build tree from segs and insert all at once
+            for (let seg of segs) {
+                if (seg.getType() === SegmentType.Text) {
+                    let textSegment = <TextSegment>seg;
+                    this.insertTextRemote(textSegment.text,
+                        pos, textSegment.properties, seq, refSeq, clientId);
+                    pos += textSegment.cachedLength;
+                } else {
+                    let marker = <Marker>seg;
+                    this.insertMarkerRemote({ refType: marker.refType }, pos,
+                        marker.properties, seq, refSeq, clientId);
+                    pos += marker.cachedLength;
+                }
+            }
+        }
+        // TODO: error reporting
+    }
+
     applyOp(op: ops.IMergeTreeOp, msg: API.ISequencedObjectMessage) {
         let clid = this.getOrAddShortClientId(msg.clientId, msg.user);
         switch (op.type) {
@@ -2044,12 +2135,26 @@ export class Client {
                     }
                 }
                 if (op.text !== undefined) {
+                    if (op.pos2 !== undefined) {
+                        // replace
+                        this.removeSegmentRemote(op.pos1, op.pos2, msg.sequenceNumber, msg.referenceSequenceNumber, clid);
+                    }
                     this.insertTextRemote(op.text, op.pos1, op.props as Properties.PropertySet, msg.sequenceNumber, msg.referenceSequenceNumber,
                         clid);
-                }
-                else {
+                } else if (op.marker !== undefined) {
                     this.insertMarkerRemote(op.marker, op.pos1, op.props as Properties.PropertySet, msg.sequenceNumber, msg.referenceSequenceNumber,
                         clid);
+                } else if (op.register !== undefined) {
+                    // TODO: relative addressing
+                    if (op.pos2 !== undefined) {
+                        // copy
+                        this.copy(op.pos1, op.pos2, op.register, msg.referenceSequenceNumber, clid,
+                            msg.clientId);
+                    } else {
+                        // paste
+                        this.pasteRemote(op.pos1, op.register, msg.sequenceNumber, msg.referenceSequenceNumber,
+                            clid, msg.clientId);
+                    }
                 }
                 break;
             case ops.MergeTreeDeltaType.REMOVE:
@@ -2068,6 +2173,11 @@ export class Client {
                         // TODO: event when marker id not found
                         return;
                     }
+                }
+                if (op.register) {
+                    // cut 
+                    this.copy(op.pos1, op.pos2, op.register, msg.referenceSequenceNumber,
+                        clid, msg.clientId);
                 }
                 this.removeSegmentRemote(op.pos1, op.pos2, msg.sequenceNumber, msg.referenceSequenceNumber,
                     clid);
@@ -2633,6 +2743,10 @@ function glc(mergeTree: MergeTree, id: number) {
     else {
         return id.toString();
     }
+}
+
+export interface SegmentAccumulator {
+    segments: Segment[];
 }
 
 export interface TextAccumulator {
@@ -3343,6 +3457,24 @@ export class MergeTree {
         return true;
     }
 
+    gatherSegment = (segment: Segment, pos: number, refSeq: number, clientId: number, start: number,
+        end: number, accumSegments: SegmentAccumulator) => {
+        if (start < 0) {
+            start = 0;
+        }
+        if (end > segment.cachedLength) {
+            end = segment.cachedLength;
+        }
+        if (segment.getType() === SegmentType.Text) {
+            let textSegment = <TextSegment>segment;
+            accumSegments.segments.push(textSegment.clone(start, end));
+        } else {
+            let marker = <Marker>segment;
+            accumSegments.segments.push(marker.clone());
+        }
+        return true;
+    }
+
     gatherText = (segment: Segment, pos: number, refSeq: number, clientId: number, start: number,
         end: number, accumText: TextAccumulator) => {
         if (segment.getType() == SegmentType.Text) {
@@ -3465,6 +3597,17 @@ export class MergeTree {
         }
         this.mapRange<TextAccumulator>({ leaf: this.gatherText }, refSeq, clientId, accum, start, end);
         return { paralellText: accum.parallelText, parallelMarkers: accum.parallelMarkers };
+    }
+
+    cloneSegments(refSeq: number, clientId: number, start = 0, end?: number) {
+        if (end === undefined) {
+            end = this.blockLength(this.root, refSeq, clientId);
+        }
+        let accum = <SegmentAccumulator>{
+            segments: <Segment[]>[]
+        };
+        this.mapRange<SegmentAccumulator>({ leaf: this.gatherSegment }, refSeq, clientId, accum, start, end);
+        return accum.segments;
     }
 
     getText(refSeq: number, clientId: number, placeholders = false, start?: number, end?: number) {

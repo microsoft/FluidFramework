@@ -1467,6 +1467,7 @@ function buildIntervalBlockStyle(properties: SharedString.PropertySet, startX: n
     }
     bookmarkDiv.style.pointerEvents = "none";
     bookmarkDiv.style.backgroundColor = "lightgray";
+    bookmarkDiv.style.opacity = "0.3";
     if (properties) {
         if (properties["bgColor"]) {
             bookmarkDiv.style.backgroundColor = properties["bgColor"];
@@ -1475,9 +1476,9 @@ function buildIntervalBlockStyle(properties: SharedString.PropertySet, startX: n
                 properties["user"]);
             let bgColor = presenceColors[clientId % presenceColors.length];
             bookmarkDiv.style.backgroundColor = bgColor;
+            bookmarkDiv.style.opacity = "0.08";
         }
     }
-    bookmarkDiv.style.opacity = "0.3";
     bookmarkDiv.style.zIndex = "2";
 }
 
@@ -3055,7 +3056,7 @@ export class Cursor {
     }
 
     public emptySelection() {
-        return this.mark===this.pos;
+        return this.mark === this.pos;
     }
 
     public clearSelection() {
@@ -4138,6 +4139,7 @@ export class FlowView extends ui.Component {
         this.element.onselectstart = preventD;
         let prevX = Nope;
         let prevY = Nope;
+        let freshDown = false;
 
         let moveCursor = (e: MouseEvent) => {
             if (e.button === 0) {
@@ -4157,10 +4159,14 @@ export class FlowView extends ui.Component {
         };
 
         let mousemove = (e: MouseEvent) => {
-            if ((prevX !== e.clientX) || (prevY !== e.clientY)) {
-                moveCursor(e);
-            }
             if (e.button === 0) {
+                if ((prevX !== e.clientX) || (prevY !== e.clientY)) {
+                    if (freshDown) {
+                        this.cursor.tryMark();
+                        freshDown = false;
+                    }
+                    moveCursor(e);
+                }
                 e.preventDefault();
                 e.returnValue = false;
                 return false;
@@ -4168,12 +4174,14 @@ export class FlowView extends ui.Component {
         };
 
         this.element.onmousedown = (e) => {
-            moveCursor(e);
-            if (!e.shiftKey) {
-                this.clearSelection();
-                this.cursor.tryMark();
+            if (e.button === 0) {
+                freshDown = true;
+                moveCursor(e);
+                if (!e.shiftKey) {
+                    this.clearSelection();
+                }
+                this.element.onmousemove = mousemove;
             }
-            this.element.onmousemove = mousemove;
             e.preventDefault();
             e.returnValue = false;
             return false;
@@ -4182,6 +4190,7 @@ export class FlowView extends ui.Component {
         this.element.onmouseup = (e) => {
             this.element.onmousemove = undefined;
             if (e.button === 0) {
+                freshDown = false;
                 let span = <ISegSpan>e.target;
                 let segspan: ISegSpan;
                 if (span.seg) {
@@ -4619,8 +4628,52 @@ export class FlowView extends ui.Component {
         }
     }
 
+    public copy() {
+        let sel = this.cursor.getSelection();
+        if (sel) {
+            this.sharedString.copy("clipboard", sel.start, sel.end);
+            this.clearSelection();
+        }
+    }
+
+    public cut() {
+        let sel = this.cursor.getSelection();
+        if (sel) {
+            let len = sel.end - sel.start;
+            this.sharedString.cut("clipboard", sel.start, sel.end);
+            if (this.cursor.pos === sel.end) {
+                this.cursor.pos -= len;
+            }
+            this.clearSelection();
+            if (this.modes.showCursorLocation) {
+                this.cursorLocation();
+            }
+            this.updatePresence();
+        }
+    }
+
+    public paste() {
+        this.updatePGInfo(this.cursor.pos);
+        this.cursor.pos = this.sharedString.paste("clipboard", this.cursor.pos);
+        this.updatePGInfo(this.cursor.pos);
+        this.updatePresence();
+        if (this.modes.showCursorLocation) {
+            this.cursorLocation();
+        }
+        this.localQueueRender(this.cursor.pos);
+    }
+
     public keyCmd(charCode: number) {
         switch (charCode) {
+            case CharacterCodes.C:
+                this.copy();
+                break;
+            case CharacterCodes.X:
+                this.cut();
+                break;
+            case CharacterCodes.V:
+                this.paste();
+                break;
             case CharacterCodes.K:
                 this.historyBack();
                 break;
@@ -4927,11 +4980,28 @@ export class FlowView extends ui.Component {
                 if (delta.marker) {
                     this.updatePGInfo(delta.pos1 - 1);
                 } else if (delta.pos1 <= this.cursor.pos) {
-                    adjLength = delta.text.length;
-                    this.cursor.pos += delta.text.length;
+                    if (delta.text) {
+                        // insert text
+                        adjLength = delta.text.length;
+                        if (delta.pos2 !== undefined) {
+                            // replace range
+                            let remLen = delta.pos2 - delta.pos1;
+                            adjLength -= remLen;
+                        }
+                        this.cursor.pos += adjLength;
+                    } else if (delta.register) {
+                        // paste
+                        let len = this.sharedString.client.registerCollection.getLength(msg.clientId,
+                            delta.register);
+                        this.cursor.pos += len;
+                        adjLength = len;
+                    }
                 }
                 this.remotePresenceFromEdit(msg.clientId, msg.user, msg.referenceSequenceNumber, delta.pos1, adjLength);
                 this.updatePGInfo(delta.pos1);
+                if (adjLength > 1) {
+                    this.updatePGInfo(delta.pos1 + adjLength);
+                }
                 return true;
             // TODO: update pg info for pos2 (remove and annotate)
             case SharedString.MergeTreeDeltaType.REMOVE:
