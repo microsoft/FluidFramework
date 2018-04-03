@@ -62,10 +62,8 @@ export class Board extends React.Component<IBoardProps, IBoardState> {
           status = nextMoveStatus;
         }
       }
-
       return (
         <div>
-          <div className="side-div">
             <div className="status">{status}</div>
             <div className="board-row">
               {this.renderSquare(0)}
@@ -82,9 +80,6 @@ export class Board extends React.Component<IBoardProps, IBoardState> {
               {this.renderSquare(7)}
               {this.renderSquare(8)}
             </div>
-          </div>
-          <div className="side-div">
-          </div>
         </div>
       );
     }
