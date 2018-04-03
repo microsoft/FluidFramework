@@ -93,7 +93,6 @@ export class Board extends React.Component<IBoardProps, IBoardState> {
     }
 
     private setGameState(initial: boolean) {
-        console.log(`Setting game state!`);
         const stateView = this.props.gameView;
         const squares = Array(9).fill(null);
         for (let cell of stateView.keys()) {

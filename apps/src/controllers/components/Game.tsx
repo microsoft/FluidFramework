@@ -23,7 +23,7 @@ export class Game extends React.Component<IBoardProps, IGameState> {
     constructor (props: IBoardProps) {
         super(props);
         this.setInitialState();
-        this.listenForRestart();
+        this.listenForUpdate();
     }
 
     render() {
@@ -52,6 +52,8 @@ export class Game extends React.Component<IBoardProps, IGameState> {
       );
     }
 
+    // For player 1, 'gamePointVisible' and 'player2' will be updated from map update. Just set them to default.
+    // For player 2, 'gamePointVisible' is true and 'player2' is already in map. Just get the values.
     private setInitialState() {
       if (this.props.player.id === 1) {
         this.state = {
@@ -83,46 +85,34 @@ export class Game extends React.Component<IBoardProps, IGameState> {
       gameState.delete("winner");
     }
 
-    private listenForRestart() {
+    private listenForUpdate() {
       const stateView = this.props.gameView;
       this.props.gameMap.on("valueChanged", (delta: types.IValueChanged) => {
+        // Handles game restart.
         if (delta.key === "restart") {
           const value = stateView.get(delta.key) as boolean;
           if (value) {
-            console.log("Restart now!");
             this.setState({
               restartVisible: true,
             });
           } else {
-            console.log("Restarted the game!");
             this.setState({
               restartVisible: false,
             });
           }
-        } else if (delta.key === "counter") {
+        } else if (delta.key === "counter") { // Handles player point visibility.
           const playerCounter = stateView.get("counter") as api.map.Counter;
-          const pointVisible = playerCounter.value < 2 ? false : true;
           this.setState({
-            restartVisible: this.state.restartVisible,
-            gamePointVisible: pointVisible,
+            gamePointVisible: playerCounter.value >= 2,
           });
-        } else if (delta.key === "pl1" || delta.key === "pl2") {
-          if (delta.key === "pl1") {
-            this.setState({
-              player1: {
-                playerName: stateView.get("pl1") as string,
-                point: 0,
-              }
-            });
-          } else if (delta.key === "pl2") {
+        } else if (delta.key === "pl2") { // For player 1, set player 2 from map update.
             this.setState({
               player2: {
                 playerName: stateView.get("pl2") as string,
                 point: 0,
               }
             });
-          }
-        } else if (delta.key === "pl1won" || delta.key === "pl2won") {
+        } else if (delta.key === "pl1won" || delta.key === "pl2won") { // Update win counter for both players.
           if (delta.key === "pl1won") {
             this.setState({
               player1: {
