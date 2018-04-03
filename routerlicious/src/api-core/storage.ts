@@ -244,7 +244,6 @@ export interface IDocumentService {
         id: string,
         version: resources.ICommit,
         connect: boolean,
-        encrypted: boolean,
         token?: string): Promise<IDocumentResource>;
 
     /**

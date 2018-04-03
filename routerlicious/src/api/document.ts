@@ -136,16 +136,18 @@ export class Document extends EventEmitter {
         debug(`Document loading ${id} - ${performanceNow()}`);
 
         // Connect to the document
-        const encryptedProperty = "encrypted";
         const tknProperty = "token";
+
+        // I think I want to split off this connect
+
         const documentConnection = await service.connect(
             id,
             version,
             connect,
-            options[encryptedProperty],
             options[tknProperty]).catch((err) => {
                 return Promise.reject(err);
             });
+
         const document = new Document(documentConnection, registry, service, options);
 
         // Make a reservation for the root object

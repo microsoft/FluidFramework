@@ -242,8 +242,6 @@ export class DeltaManager implements IDeltaManager {
         const message: protocol.IDocumentMessage = {
             clientSequenceNumber: this.clientSequenceNumber++,
             contents,
-            encrypted: this.deltaConnection.encrypted,
-            encryptedContents: null,
             referenceSequenceNumber: this.baseSequenceNumber,
             traces,
             type,
@@ -261,8 +259,6 @@ export class DeltaManager implements IDeltaManager {
         const message: protocol.IDocumentMessage = {
             clientSequenceNumber: -1,
             contents: null,
-            encrypted: this.deltaConnection.encrypted,
-            encryptedContents: null,
             referenceSequenceNumber: -1,
             traces: contents.traces,
             type,

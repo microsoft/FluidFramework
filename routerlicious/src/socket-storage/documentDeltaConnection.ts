@@ -24,10 +24,7 @@ export class DocumentDeltaConnection implements api.IDocumentDeltaConnection {
     constructor(
         private service: DocumentService,
         public documentId: string,
-        public clientId: string,
-        public encrypted: boolean,
-        public privateKey: string,
-        public publicKey: string) {
+        public clientId: string) {
 
         this.submitManager = new BatchManager<IPendingSend>((submitType, work) => {
             this.service.emit(submitType, this.clientId, work.map((message) => message.message), (error) => {

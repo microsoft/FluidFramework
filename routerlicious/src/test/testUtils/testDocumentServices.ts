@@ -41,8 +41,7 @@ export class TestDocumentService implements api.IDocumentService {
     public connect(
         id: string,
         version: git.ICommit,
-        connect: boolean,
-        encrypted: boolean): Promise<api.IDocumentResource> {
+        connect: boolean): Promise<api.IDocumentResource> {
 
         const clientId = "Fill me in!";
         const existing = false;

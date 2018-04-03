@@ -11,11 +11,7 @@ export class TestDocumentService implements api.IDocumentService {
         private blobStorge: api.IBlobStorageService) {
     }
 
-    public async connect(
-        id: string,
-        version: resources.ICommit,
-        connect: boolean,
-        encrypted: boolean): Promise<api.IDocumentResource> {
+    public async connect(id: string, version: resources.ICommit, connect: boolean): Promise<api.IDocumentResource> {
         const deltaConnection = new TestDocumentDeltaConnection(
             this,
             id,

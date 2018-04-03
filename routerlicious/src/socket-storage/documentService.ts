@@ -154,19 +154,18 @@ export class DocumentService implements api.IDocumentService {
                 return Promise.reject(err);
             });
 
+// HERE
         debug(`Connected to ${id} - ${performanceNow()}`);
         let deltaConnection: api.IDocumentDeltaConnection;
         if (connect) {
             deltaConnection = new DocumentDeltaConnection(
                 this,
                 id,
-                connection.clientId,
-                encrypted,
-                connection.privateKey,
-                connection.publicKey);
+                connection.clientId);
         } else {
             deltaConnection = new NullDeltaConnection(id);
         }
+// HERE
         const deltaStorage = new DocumentDeltaStorageService(id, this.deltaStorage);
         const documentStorage = new DocumentStorageService(id, version, this.blobStorge);
 
