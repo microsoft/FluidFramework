@@ -176,40 +176,44 @@ export class Document extends EventEmitter {
             return Promise.reject("Document service not provided to load call");
         }
 
-        debug(`Document loading ${id} - ${performanceNow()}`);
-        debug(`Connecting to ${id} - ${performanceNow()}`);
-
         // Connect to the document
         if (!connect && !version) {
             return Promise.reject("Must specify a version if connect is set to false");
         }
 
+        debug(`Document loading ${id} - ${performanceNow()}`);
+
         const token = options.token;
-        const storage = await service.connectToStorage(id, token);
-        const deltaStorage = await service.connectToDeltaStorage(id, token);
+        const storageP = service.connectToStorage(id, token);
+        const deltaStorageP = service.connectToDeltaStorage(id, token);
 
         // If a version is specified we will load it directly - otherwise will query historian for the latest
         // version and then load it
         if (version === undefined) {
-            const versions = await storage.getVersions(id, 1);
+            const versions = await storageP.then((storage) => storage.getVersions(id, 1));
             version = versions.length > 0 ? versions[1] : null;
         }
 
-        // Kick off three async operations to load the document state
+        // Kick off async operations to load the document state
         // ...get the header which provides access to the 'first page' of the document
-        const headerP = this.getHeader(id, storage, version);
+        const headerP = storageP.then((storage) => this.getHeader(id, storage, version));
 
         // ...load in all deltas later than the sequence number specified in the header
         const pendingDeltasP = headerP.then((header) => {
-            return connect ? deltaStorage.get(header ? header.attributes.sequenceNumber : 0) : [];
+            return connect
+                ? deltaStorageP.then((deltaStorage) => deltaStorage.get(header ? header.attributes.sequenceNumber : 0))
+                : [];
         });
 
-        const [header, pendingDeltas] = await Promise.all([headerP, pendingDeltasP]);
+        let connectionP: Promise<IDocumentDeltaConnection>;
+        if (connect) {
+            connectionP = service.connectToDeltaStream(id, token);
+        } else {
+            connectionP = headerP.then((header) => new NullDeltaConnection(id, header.attributes.branch));
+        }
 
-        const connection = await (connect
-            ? service.connectToDeltaStream(id, token)
-            : new NullDeltaConnection(id, header.attributes.branch));
-
+        const [header, pendingDeltas, connection, deltaStorage, storage] =
+            await Promise.all([headerP, pendingDeltasP, connectionP, deltaStorageP, storageP]);
         debug(`Connected to ${id} - ${performanceNow()}`);
 
         const document = new Document(
