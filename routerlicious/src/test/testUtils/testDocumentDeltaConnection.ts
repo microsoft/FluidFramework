@@ -1,15 +1,14 @@
 import * as api from "../../api-core";
-import { TestDocumentService} from "./";
+import { IAuthenticatedUser } from "../../core-utils";
 
 export class TestDocumentDeltaConnection implements api.IDocumentDeltaConnection {
 
     constructor(
-        public service: TestDocumentService,
         public documentId: string,
         public clientId: string,
-        public encrypted: boolean,
-        public privateKey: string,
-        public publicKey: string) {
+        public existing: boolean,
+        public parentBranch: string,
+        public user: IAuthenticatedUser) {
     }
 
     /**

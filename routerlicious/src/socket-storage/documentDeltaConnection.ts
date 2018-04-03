@@ -1,7 +1,8 @@
 import { EventEmitter } from "events";
 import * as api from "../api-core";
-import { BatchManager, Deferred } from "../core-utils";
+import { BatchManager, Deferred, IAuthenticatedUser } from "../core-utils";
 import { DocumentService } from "./documentService";
+import * as messages from "./messages";
 
 /**
  * A pending message the batch manager is holding on to
@@ -21,13 +22,29 @@ export class DocumentDeltaConnection implements api.IDocumentDeltaConnection {
     private emitter = new EventEmitter();
     private submitManager: BatchManager<IPendingSend>;
 
+    public get clientId(): string {
+        return this.details.clientId;
+    }
+
+    public get existing(): boolean {
+        return this.details.existing;
+    }
+
+    public get parentBranch(): string {
+        return this.details.parentBranch;
+    }
+
+    public get user(): IAuthenticatedUser {
+        return this.details.user;
+    }
+
     constructor(
         private service: DocumentService,
         public documentId: string,
-        public clientId: string) {
+        public details: messages.IConnected) {
 
         this.submitManager = new BatchManager<IPendingSend>((submitType, work) => {
-            this.service.emit(submitType, this.clientId, work.map((message) => message.message), (error) => {
+            this.service.emit(submitType, this.details.clientId, work.map((message) => message.message), (error) => {
                 if (error) {
                     work.forEach((message) => message.deferred.reject(error));
                 } else {

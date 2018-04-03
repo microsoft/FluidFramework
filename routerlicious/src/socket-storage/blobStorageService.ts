@@ -6,27 +6,16 @@ import * as gitStorage from "../git-storage";
  * Document access to underlying storage
  */
 export class DocumentStorageService implements api.IDocumentStorageService  {
-    constructor(private id: string, version: resources.ICommit, private storage: api.IBlobStorageService) {
+    constructor(private id: string, private manager: gitStorage.GitManager) {
     }
 
-    public read(sha: string): Promise<string> {
-        return this.storage.read(sha);
+    public getSnapshotTree(version: resources.ICommit): Promise<api.ISnapshotTree> {
+        return this.manager.getHeader(this.id, version ? version.sha : null);
     }
 
-    public write(tree: api.ITree, message: string): Promise<resources.ICommit> {
-        return this.storage.write(this.id, tree, message);
-    }
-}
-
-/**
- * Client side access to object storage.
- */
-export class BlobStorageService implements api.IBlobStorageService {
-    constructor(private manager: gitStorage.GitManager) {
-    }
-
-    public getSnapshotTree(id: string, version: resources.ICommit): Promise<api.ISnapshotTree> {
-        return this.manager.getHeader(id, version ? version.sha : null);
+    public async getVersions(sha: string, count: number): Promise<resources.ICommit[]> {
+        const commits = await this.manager.getCommits(sha, count);
+        return commits.map((commit) => this.translateCommit(commit));
     }
 
     public async read(sha: string): Promise<string> {
@@ -34,7 +23,19 @@ export class BlobStorageService implements api.IBlobStorageService {
         return value.content;
     }
 
-    public write(id: string, tree: api.ITree, message: string): Promise<resources.ICommit> {
-        return this.manager.write(id, tree, message);
+    public write(tree: api.ITree, message: string): Promise<resources.ICommit> {
+        return this.manager.write(this.id, tree, message);
+    }
+
+    private translateCommit(details: resources.ICommitDetails): resources.ICommit {
+        return {
+            author: details.commit.author,
+            committer: details.commit.committer,
+            message: details.commit.message,
+            parents: details.parents,
+            sha: details.sha,
+            tree: details.commit.tree,
+            url: details.commit.url,
+        };
     }
 }

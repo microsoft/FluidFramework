@@ -15,14 +15,8 @@ export function createDocumentService(
 
     const historian = new Historian(gitUrl, historianApi, disableCache, credentials);
     const gitManager = new GitManager(historian, gitUrl, owner, repository);
-    const blobStorage = new socketStorage.BlobStorageService(gitManager);
     const deltaStorage = new socketStorage.DeltaStorageService(deltaUrl);
-
-    const service = new socketStorage.DocumentService(
-        deltaUrl,
-        deltaStorage,
-        blobStorage,
-        gitManager);
+    const service = new socketStorage.DocumentService(deltaUrl, deltaStorage, gitManager);
 
     return service;
 }

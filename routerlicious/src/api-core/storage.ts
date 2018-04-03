@@ -76,31 +76,6 @@ export interface IBlob {
 }
 
 /**
- * Interface to provide access to snapshots saved for a collaborative object
- */
-export interface IDocumentStorageService {
-    /**
-     * Reads the object with the given ID
-     */
-    read(path: string): Promise<string>;
-
-    /**
-     * Writes to the object with the given ID
-     */
-    write(root: ITree, message: string): Promise<resources.ICommit>;
-}
-
-/**
- * Interface to provide access to stored deltas for a collaborative object
- */
-export interface IDocumentDeltaStorageService {
-    /**
-     * Retrieves all the delta operations within the inclusive sequence number range
-     */
-    get(from?: number, to?: number): Promise<ISequencedDocumentMessage[]>;
-}
-
-/**
  * Interface to provide access to stored deltas for a collaborative object
  */
 export interface IDeltaStorageService {
@@ -130,6 +105,42 @@ export interface IDistributedObject {
     sequenceNumber: number;
 }
 
+/**
+ * Interface to provide access to snapshots saved for a collaborative object
+ */
+export interface IDocumentStorageService {
+    /**
+     * Returns the snapshot tree.
+     */
+    getSnapshotTree(version: resources.ICommit): Promise<ISnapshotTree>;
+
+    /**
+     * Retrives all versions of the document starting at the specified sha - or null if from the head
+     */
+    getVersions(sha: string, count: number): Promise<resources.ICommit[]>;
+
+    /**
+     * Reads the object with the given ID
+     */
+    read(path: string): Promise<string>;
+
+    /**
+     * Writes to the object with the given ID
+     */
+    write(root: ITree, message: string): Promise<resources.ICommit>;
+}
+
+/**
+ * Interface to provide access to stored deltas for a collaborative object
+ */
+export interface IDocumentDeltaStorageService {
+    /**
+     * Retrieves all the delta operations within the inclusive sequence number range
+     */
+    get(from?: number, to?: number): Promise<ISequencedDocumentMessage[]>;
+}
+
+// TODO inherit from EventEmitter
 export interface IDocumentDeltaConnection {
     /**
      * ClientID for the connection
@@ -140,6 +151,21 @@ export interface IDocumentDeltaConnection {
      * DocumentId for the connection
      */
     documentId: string;
+
+    /**
+     * Whether the connection was made to a new or existing document
+     */
+    existing: boolean;
+
+    /**
+     * The parent branch for the document
+     */
+    parentBranch: string;
+
+    /**
+     * The identity of the logged-in user
+     */
+    user: IAuthenticatedUser;
 
     /**
      * Subscribe to events emitted by the document
@@ -157,114 +183,24 @@ export interface IDocumentDeltaConnection {
     dispatchEvent(name: string, ...args: any[]);
 }
 
-export interface IDocumentResource {
-    /**
-     * User connecting to the document.
-     */
-    user: IAuthenticatedUser;
-
-    /**
-     * Client identifier for this session
-     */
-    clientId: string;
-
-    /**
-     * Document identifier
-     */
-    documentId: string;
-
-    /**
-     * Whether or not the document existed prior to connection
-     */
-    existing: boolean;
-
-    /**
-     * The latest snapshot version of the document at the time of connect. Or null if no snapshots have been taken.
-     */
-    version: resources.ICommit;
-
-    /**
-     * Connection to receive delta notification
-     */
-    deltaConnection: IDocumentDeltaConnection;
-
+export interface IDocumentService {
     /**
      * Access to storage associated with the document
      */
-    documentStorageService: IDocumentStorageService;
+    connectToStorage(id: string, token: string): Promise<IDocumentStorageService>;
 
     /**
      * Access to delta storage associated with the document
      */
-    deltaStorageService: IDocumentDeltaStorageService;
+    connectToDeltaStorage(id: string, token: string): Promise<IDocumentDeltaStorageService>;
 
     /**
-     * Distributed objects contained within the document
+     * Subscribes to the document delta stream
      */
-    distributedObjects: IDistributedObject[];
-
-    /**
-     * Messages whose values are between the msn and sequenceNumber
-     */
-    transformedMessages: ISequencedDocumentMessage[];
-
-    /**
-     * Pending deltas that have not yet been included in a snapshot
-     */
-    pendingDeltas: ISequencedDocumentMessage[];
-
-    /**
-     * Branch identifier where snapshots originated
-     */
-    snapshotOriginBranch: string;
-
-    /**
-     * The smallest sequence number that can be used as a reference sequence number
-     */
-    minimumSequenceNumber: number;
-
-    /**
-     * The sequence number represented by this version of the document
-     */
-    sequenceNumber: number;
-
-    /**
-     * Directory information for objects contained in the snapshot
-     */
-    tree: ISnapshotTree;
-
-    /**
-     * Parent branch
-     */
-    parentBranch: string;
-}
-
-export interface IDocumentService {
-    connect(
-        id: string,
-        version: resources.ICommit,
-        connect: boolean,
-        token?: string): Promise<IDocumentResource>;
+    connectToDeltaStream(id: string, token: string): Promise<IDocumentDeltaConnection>;
 
     /**
      * Creates a branch of the document with the given ID. Returns the new ID.
      */
-    branch(id: string): Promise<string>;
-}
-
-export interface IBlobStorageService {
-    /**
-     * Returns the snapshot tree.
-     */
-    getSnapshotTree(id: string, version: resources.ICommit): Promise<ISnapshotTree>;
-
-    /**
-     * Reads the blob content.
-     */
-    read(sha: string): Promise<string>;
-
-    /**
-     * Writes the content to blob storage.
-     */
-    write(id: string, tree: ITree, message: string): Promise<resources.ICommit>;
+    branch(id: string, token: string): Promise<string>;
 }
