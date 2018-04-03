@@ -12,6 +12,7 @@ export interface IGameState {
   gamePointVisible: boolean;
   player1: IScore;
   player2: IScore;
+  draw: number;
 }
 
 export interface IScore {
@@ -28,9 +29,10 @@ export class Game extends React.Component<IBoardProps, IGameState> {
 
     render() {
       let restartClassName = "game-info" + (!this.state.restartVisible ? " restart-hidden" : "");
-      let pointsClassName = "side-div game-points" + (!this.state.gamePointVisible ? " gamepoints-hidden" : "");
+      let pointsClassName = "side-div game-points" + ((!this.state.restartVisible || !this.state.gamePointVisible) ? " gamepoints-hidden" : "");
       const player1Point = (this.state.player1) ? (this.state.player1.playerName + ": " + this.state.player1.point) : "";
       const player2Point = (this.state.player2) ? (this.state.player2.playerName + ": " + this.state.player2.point) : "";
+      const drawMatches = "Drawn: " + this.state.draw;
       return (
         <div>
           <Logout name={this.props.player.name}/>
@@ -40,8 +42,11 @@ export class Game extends React.Component<IBoardProps, IGameState> {
                 <Board player={this.props.player} gameMap={this.props.gameMap} gameView={this.props.gameView}/>
               </div>
               <div className={pointsClassName}>
-                <span className="game-points-text">{player1Point}</span>
-                <span className="game-points-text">{player2Point}</span>
+                <div className="point-wrapper">
+                  <span className="game-points-text">{player1Point}</span>
+                  <span className="game-points-text">{player2Point}</span>
+                  <span className="game-points-text">{drawMatches}</span>
+                </div>
               </div>
             </div>
             <div className={restartClassName} onClick={() => this.handleRestart()}>
@@ -61,6 +66,7 @@ export class Game extends React.Component<IBoardProps, IGameState> {
           gamePointVisible: false,
           player1: { playerName: this.props.player.name, point: 0 },
           player2: null,
+          draw: 0,
         };
       } else if (this.props.player.id === 2) {
         this.state = {
@@ -68,6 +74,7 @@ export class Game extends React.Component<IBoardProps, IGameState> {
           gamePointVisible: true,
           player1: { playerName: this.props.gameView.get("pl1"), point: 0 },
           player2: { playerName: this.props.player.name, point: 0 },
+          draw: 0,
         };
       }
     }
@@ -112,7 +119,7 @@ export class Game extends React.Component<IBoardProps, IGameState> {
                 point: 0,
               }
             });
-        } else if (delta.key === "pl1won" || delta.key === "pl2won") { // Update win counter for both players.
+        } else if (delta.key === "pl1won" || delta.key === "pl2won" || delta.key === "drawn") { // Update win counter for both players.
           if (delta.key === "pl1won") {
             this.setState({
               player1: {
@@ -126,6 +133,10 @@ export class Game extends React.Component<IBoardProps, IGameState> {
                 playerName: this.state.player2.playerName,
                 point: stateView.get("pl2won") as number,
               }
+            });
+          } else if (delta.key === "drawn") {
+            this.setState({
+              draw: stateView.get("drawn") as number,
             });
           }
         }
