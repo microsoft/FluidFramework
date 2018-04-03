@@ -38,10 +38,7 @@ describe("Routerlicious", () => {
 
                 function connectToServer(id: string, socket: TestWebSocket): Promise<socketStorage.IConnected> {
                     const connectMessage: socketStorage.IConnect = {
-                        encrypted: false,
                         id,
-                        privateKey: null,
-                        publicKey: null,
                     };
 
                     const deferred = new Deferred<socketStorage.IConnected>();
@@ -82,7 +79,6 @@ describe("Routerlicious", () => {
                         const connectMessage = await connectToServer(testId, socket);
                         assert.ok(connectMessage.clientId);
                         assert.equal(connectMessage.existing, false);
-                        assert.equal(connectMessage.encrypted, false);
 
                         // Verify a connection message was sent
                         const message = deliKafka.getLastMessage();

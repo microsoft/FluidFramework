@@ -65,9 +65,7 @@ export function register(
                 mongoManager,
                 documentsCollectionName,
                 producer,
-                message.id,
-                message.privateKey,
-                message.publicKey);
+                message.id);
 
             const clientId = moniker.choose();
             await Promise.all([socket.join(message.id), socket.join(`client#${clientId}`)]);
@@ -87,8 +85,6 @@ export function register(
                 operation: {
                     clientSequenceNumber: -1,
                     contents: clientId,
-                    encrypted: false,
-                    encryptedContents: null,
                     referenceSequenceNumber: -1,
                     traces: [],
                     type: api.ClientJoin,
@@ -106,11 +102,8 @@ export function register(
             // And return the connection information to the client
             const connectedMessage: socketStorage.IConnected = {
                 clientId,
-                encrypted: documentDetails.value.privateKey ? true : false,
                 existing: documentDetails.existing,
                 parentBranch,
-                privateKey: documentDetails.value.privateKey,
-                publicKey: documentDetails.value.publicKey,
                 user: authedUser,
             };
             profiler.done(`Loaded ${message.id}`);
@@ -197,14 +190,14 @@ export function register(
         socket.on("disconnect", () => {
             // Send notification messages for all client IDs in the connection map
             for (const [clientId, docUser] of connectionsMap) {
+                winston.info(`Disconnect of ${clientId}`);
+
                 const rawMessage: core.IRawOperationMessage = {
                     clientId: null,
                     documentId: docUser.docId,
                     operation: {
                         clientSequenceNumber: -1,
                         contents: clientId,
-                        encrypted: false,
-                        encryptedContents: null,
                         referenceSequenceNumber: -1,
                         traces: [],
                         type: api.ClientLeave,

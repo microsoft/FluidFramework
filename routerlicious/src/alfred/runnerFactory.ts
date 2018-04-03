@@ -26,7 +26,6 @@ function normalizePort(val) {
 
 export class AlfredResources implements utils.IResources {
     public webServerFactory: core.IWebServerFactory;
-    public webServerFactory2: core.IWebServerFactory;
 
     constructor(
         public config: Provider,
@@ -40,10 +39,7 @@ export class AlfredResources implements utils.IResources {
         public metricClientConfig: any,
         public authEndpoint: string) {
 
-        // Remove (mdaumi): Call just one library.
-        this.webServerFactory = webSocketLibrary === "socket.io"
-            ? new services.SocketIoWebServerFactory(this.redisConfig)
-            : new services.WsWebServerFactory();
+        this.webServerFactory = new services.SocketIoWebServerFactory(this.redisConfig);
     }
 
     public async dispose(): Promise<void> {

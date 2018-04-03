@@ -27,17 +27,13 @@ export async function getOrCreateDocument(
     mongoManager: utils.MongoManager,
     documentsCollectionName: string,
     producer: utils.kafkaProducer.IProducer,
-    id: string,
-    privateKey: string,
-    publicKey: string): Promise<{existing: boolean, value: core.IDocument }> {
+    id: string): Promise<{existing: boolean, value: core.IDocument }> {
 
     const getOrCreateP = getOrCreateObject(
         mongoManager,
         documentsCollectionName,
         producer,
-        id,
-        privateKey,
-        publicKey);
+        id);
 
     return getOrCreateP;
 }
@@ -188,9 +184,7 @@ async function getOrCreateObject(
     mongoManager: utils.MongoManager,
     documentsCollectionName: string,
     producer: utils.kafkaProducer.IProducer,
-    id: string,
-    privateKey: string,
-    publicKey: string): Promise<{ existing: boolean, value: core.IDocument }> {
+    id: string): Promise<{ existing: boolean, value: core.IDocument }> {
 
     const db = await mongoManager.getDatabase();
     const collection = db.collection<core.IDocument>(documentsCollectionName);
@@ -206,8 +200,6 @@ async function getOrCreateObject(
             forks: [],
             logOffset: undefined,
             parent: null,
-            privateKey,
-            publicKey,
             sequenceNumber: StartingSequenceNumber,
         });
 
@@ -236,8 +228,6 @@ async function sendIntegrateStream(
         operation: {
             clientSequenceNumber: -1,
             contents,
-            encrypted: false,
-            encryptedContents: null,
             referenceSequenceNumber: -1,
             traces: [],
             type: api.Fork,

@@ -2,7 +2,6 @@ import * as http from "http";
 import * as util from "util";
 import * as core from "../core";
 import * as socketIo from "./socketIoServer";
-import * as ws from "./wsServer";
 
 export type RequestListener = (request: http.IncomingMessage, response: http.ServerResponse) => void;
 
@@ -51,22 +50,5 @@ export class SocketIoWebServerFactory implements core.IWebServerFactory {
         const socketIoServer = socketIo.create(this.redisConfig, server);
 
         return new WebServer(httpServer, socketIoServer);
-    }
-}
-
-export class WsWebServerFactory implements core.IWebServerFactory {
-    constructor() {
-        //
-    }
-
-    public create(requestListener: RequestListener): core.IWebServer {
-        // Create the base HTTP server and register the provided request listener
-        const server = http.createServer(requestListener);
-        const httpServer = new HttpServer(server);
-        // httpServer.listen(3000);
-
-        const wsServer = ws.create(server);
-
-        return new WebServer(httpServer, wsServer);
     }
 }

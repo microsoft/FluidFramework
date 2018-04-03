@@ -8,9 +8,8 @@ export function registerAsTest(deltaUrl: string, blobUrl: string, repository: st
 }
 
 export function getTestService(deltaUrl: string, blobUrl: string, repository: string): apiCore.IDocumentService {
-    const blobStorage = new testUtils.TestBlobStorageService();
     const deltaStorage = new testUtils.TestDeltaStorageService();
-    const service = new testUtils.TestDocumentService(deltaUrl, deltaStorage, blobStorage);
+    const service = new testUtils.TestDocumentService(deltaStorage);
 
     return service;
 }

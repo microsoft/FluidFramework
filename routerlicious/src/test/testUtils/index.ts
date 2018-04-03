@@ -1,5 +1,4 @@
 export * from "./messageFactory";
-export * from "./testBlobStorage";
 export * from "./testCollection";
 export * from "./testContext";
 export * from "./testDeltaStorageService";

@@ -86,8 +86,6 @@ export class RouteMasterLambda extends SequencedLambda {
             operation: {
                 clientSequenceNumber: -1,
                 contents: message,
-                encrypted: false,
-                encryptedContents: null,
                 referenceSequenceNumber: -1,
                 traces: [],
                 type: api.Integrate,
