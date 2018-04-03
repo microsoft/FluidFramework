@@ -94,7 +94,7 @@ export interface IMapView {
     delete(key: string): void;
 
     /**
-     * Retreives all the keys contained within the map
+     * Retrieves all the keys contained within the map
      */
     keys(): IterableIterator<string>;
 

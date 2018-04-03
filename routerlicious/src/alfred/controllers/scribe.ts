@@ -141,7 +141,7 @@ export function initialize(config: any, id: string, template: string, speed: num
         }
 
         intervalTime = Number.parseInt(intervalElement.value);
-        const scribeP = scribe.create(id);
+        const scribeP = scribe.create(id, text);
 
         scribeP.then(() => {
             const linkList = document.getElementById("link-list") as HTMLDivElement;

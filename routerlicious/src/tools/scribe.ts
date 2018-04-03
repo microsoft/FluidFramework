@@ -16,7 +16,7 @@ commander
     .option("-r, --repository [repo]", "git repository", "prague")
     .option("-f, --file [file]", "input file", path.join(__dirname, "../../public/literature/resume.txt"))
     .option("-p, --progress [pbar]", "show progress bar")
-    .option("-w, --write [pbar]", "write to specific path", "./latest-scribe.json")
+    .option("-w, --write [write]", "write to specific path", "./latest-scribe.json")
     .arguments("<id>")
     .action((id: string) => {
         sharedStringId = id;
@@ -38,7 +38,9 @@ fs.readFile(commander.file, "utf8", async (error, data: string) => {
 
     let bar: ProgressBar;
 
+    let debug = false;
     if (commander.progress) {
+        debug = true;
         // Start typing and register to update the UI
         bar = new ProgressBar(
             // tslint:disable-next-line:max-line-length
@@ -49,8 +51,7 @@ fs.readFile(commander.file, "utf8", async (error, data: string) => {
                 total: data.length,
             });
     }
-
-    await scribe.create(sharedStringId);
+    await scribe.create(sharedStringId, data, debug);
     scribe.togglePlay();
 
     const typeP = scribe.type(

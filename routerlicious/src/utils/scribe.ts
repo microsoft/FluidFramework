@@ -1,5 +1,5 @@
 import clone = require("lodash/clone");
-import { api, core, MergeTree, utils } from "../client-api";
+import { api, core, MergeTree, types, utils } from "../client-api";
 
 let document: api.Document;
 let sharedString: MergeTree.SharedString;
@@ -412,7 +412,52 @@ async function typeFile(
     });
 }
 
-export async function create(id: string): Promise<void> {
+function setParagraphs(chunks: string[]) {
+    for (let p = 0; p < chunks.length; p++) {
+        let props = {
+            [MergeTree.reservedMarkerIdKey]: ["p-" + p],
+            [MergeTree.reservedTileLabelsKey]: ["pg"],
+        };
+        sharedString.insertMarker(p, MergeTree.ReferenceType.Tile, props);
+        p++;
+    }
+
+    // Insert final pg marker. All text must be before a pg marker or it won't display!
+    let props = {
+        [MergeTree.reservedMarkerIdKey]: ["p-final"],
+        [MergeTree.reservedTileLabelsKey]: ["pg"],
+    };
+    sharedString.insertMarker(chunks.length, MergeTree.ReferenceType.Tile, props);
+}
+
+function getParagraphs() {
+    document.getRoot().getView()
+        .then((root) => {
+            (root.get("chunks").getView() as Promise<types.IMapView>)
+                .then((chunksMap) => {
+                    for (let key of chunksMap.keys()) {
+                        console.log(key + ": " + chunksMap.get(key));
+                    }
+                });
+        })
+        .catch((error) => console.log("No Chunks: " + error));
+}
+
+async function setChunkMap(chunks: string[]) {
+    let p = 0;
+    const root = await document.getRoot().getView();
+    let chunkMap = root.get("chunks") as types.IMapView;
+
+    for (let chunk of chunks) {
+        let pid = "p-" + p;
+
+        chunkMap.set(pid, chunk);
+
+        p++;
+    }
+}
+
+export async function create(id: string, text: string, debug = false): Promise<void> {
     // Load the shared string extension we will type into
     document = await api.load(id);
     const root = await document.getRoot().getView();
@@ -423,6 +468,15 @@ export async function create(id: string): Promise<void> {
 
     sharedString.insertMarker(0, MergeTree.ReferenceType.Tile, { [MergeTree.reservedTileLabelsKey]: ["pg"] });
     root.set("text", sharedString);
+
+    await root.set("chunks", document.createMap());
+
+    let chunks = normalizeText(text).split("\n");
+    setParagraphs(chunks);
+    await setChunkMap(chunks);
+    if (debug) {
+        getParagraphs();
+    }
 
     return Promise.resolve();
 }
