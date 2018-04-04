@@ -1,9 +1,13 @@
 // import * as supertest from "supertest";
 import { EventEmitter } from "events";
+import * as moniker from "moniker";
 import * as core from "../../core";
 
 export class TestWebSocket implements core.IWebSocket {
     private events = new EventEmitter();
+
+    constructor(public id: string) {
+    }
 
     public on(event: string, listener: (...args: any[]) => void) {
         this.events.on(event, listener);
@@ -30,7 +34,7 @@ export class TestWebSocketServer implements core.IWebSocketServer {
     }
 
     public createConnection(): TestWebSocket {
-        const socket = new TestWebSocket();
+        const socket = new TestWebSocket(moniker.choose());
         this.events.emit("connection", socket);
         return socket;
     }

@@ -7,6 +7,7 @@ export interface IWebServerFactory {
 }
 
 export interface IWebSocket {
+    id: string;
 
     on(event: string, listener: (...args: any[]) => void);
 
@@ -33,11 +34,9 @@ export interface IWebServer {
 }
 
 export interface IWebSocketServer {
-
     on(event: string, listener: (...args: any[]) => void);
 
     close(): Promise<void>;
-
 }
 
 export interface IHttpServer {

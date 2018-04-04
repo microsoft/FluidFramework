@@ -17,7 +17,6 @@ export class SocketIoRedisPublisher implements core.IPublisher {
     private redisClient: redis.RedisClient;
     private io: any;
     private events = new EventEmitter();
-    private topics: { [topic: string]: SocketIoRedisTopic } = {};
 
     constructor(port: number, host: string) {
         this.redisClient = redis.createClient(port, host);
@@ -33,11 +32,9 @@ export class SocketIoRedisPublisher implements core.IPublisher {
     }
 
     public to(topic: string): core.ITopic {
-        if (!(topic in this.topics)) {
-            this.topics[topic] = new SocketIoRedisTopic(this.io.to(topic));
-        }
-
-        return this.topics[topic];
+        // NOTE - socket.io-emitter maintains local state during an emit request so we cannot cache the result of
+        // doing a to, etc...
+        return new SocketIoRedisTopic(this.io.to(topic));
     }
 
     public close(): Promise<void> {
