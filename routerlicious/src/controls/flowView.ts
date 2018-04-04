@@ -1815,12 +1815,17 @@ function createTable(pos: number, flowView: FlowView, nrows = 3, nboxes = 3) {
         SharedString.ReferenceType.NestBegin, ["table"]));
     pos++;
     for (let row = 0; row < nrows; row++) {
+        let popBox = false;
         let rowId = idBase + `row${rowIdSuffix++}`;
         opList.push(createMarkerOp(pos, rowId,
             SharedString.ReferenceType.NestBegin, ["row"]));
         pos++;
         for (let box = 0; box < nboxes; box++) {
-            pos = createBox(opList, idBase, pos, content[(box + (nboxes * row)) % content.length]);
+            if (popBox) {
+                pos = createBox(opList, idBase, pos, content[(box + (nboxes * row)) % content.length]);
+            } else {
+                pos = createBox(opList, idBase, pos);
+            }
         }
         opList.push(createMarkerOp(pos, endPrefix + rowId,
             SharedString.ReferenceType.NestEnd, ["row"]));
@@ -1874,8 +1879,13 @@ function createTableRelative(pos: number, flowView: FlowView, nrows = 3, nboxes 
         opList.push(createRelativeMarkerOp(endTablePos, rowId,
             SharedString.ReferenceType.NestBegin, ["row"]));
         pos++;
+        let popBox = false;
         for (let box = 0; box < nboxes; box++) {
-            createBoxRelative(opList, idBase, endTablePos, content[(box + (nboxes * row)) % content.length]);
+            if (popBox) {
+                createBoxRelative(opList, idBase, endTablePos, content[(box + (nboxes * row)) % content.length]);
+            } else {
+                createBoxRelative(opList, idBase, endTablePos);
+            }
         }
         opList.push(createRelativeMarkerOp(endTablePos, endPrefix + rowId,
             SharedString.ReferenceType.NestEnd, ["row"]));
