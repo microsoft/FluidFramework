@@ -24,19 +24,4 @@ export class TestDocumentDeltaConnection implements api.IDocumentDeltaConnection
     public submit(message: api.IDocumentMessage): Promise<void> {
         return Promise.resolve();
     }
-
-    /**
-     * Updates the reference sequence number on the given connection to the provided value
-     */
-    public updateReferenceSequenceNumber(objectId: string, sequenceNumber: number): Promise<void> {
-        return Promise.resolve();
-    }
-
-    /**
-     * Dispatches the given event to any registered listeners.
-     * This is an internal method.
-     */
-    public dispatchEvent(name: string, ...args: any[]) {
-        // Dispatch events here.
-    }
 }

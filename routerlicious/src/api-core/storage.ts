@@ -176,11 +176,6 @@ export interface IDocumentDeltaConnection {
      * Submit a new message to the server
      */
     submit(message: IDocumentMessage): Promise<void>;
-
-    /**
-     * Dispatches the given event to any registered listeners.
-     */
-    dispatchEvent(name: string, ...args: any[]);
 }
 
 export interface IDocumentService {

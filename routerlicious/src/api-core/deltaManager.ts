@@ -1,6 +1,7 @@
 import * as assert from "assert";
 import * as queue from "async/queue";
 import { EventEmitter } from "events";
+import cloneDeep = require("lodash/cloneDeep");
 import extend = require("lodash/extend");
 import { Deferred } from "../core-utils";
 import { debug } from "./debug";
@@ -195,11 +196,11 @@ export class DeltaManager implements IDeltaManager {
         this.enqueueMessages(pendingMessages);
 
         // listen for new messages
-        this.deltaConnection.on("op", (messages: protocol.ISequencedDocumentMessage[]) => {
-            this.enqueueMessages(messages);
+        this.deltaConnection.on("op", (documentId: string, messages: protocol.ISequencedDocumentMessage[]) => {
+            this.enqueueMessages(cloneDeep(messages));
         });
 
-        this.deltaConnection.on("nack", (message: protocol.INack[]) => {
+        this.deltaConnection.on("nack", (documentId: string, message: protocol.INack[]) => {
             const targetSequenceNumber = message[0].sequenceNumber;
             debug(`Connection NACK'ed - target sequence number is ${targetSequenceNumber}`);
 
@@ -209,6 +210,15 @@ export class DeltaManager implements IDeltaManager {
             // Stop all outbound sends. We will resume once we have re-established ourselves at the target
             // sequence number.
             this._outbound.pause();
+        });
+
+        this.deltaConnection.on("disconnect", (reason) => {
+            debug(`Disconnected`, reason);
+        });
+
+        // Listen for socket.io latency messages
+        this.deltaConnection.on("pong", (latency: number) => {
+            debug(`PONG ${latency}`);
         });
     }
 
