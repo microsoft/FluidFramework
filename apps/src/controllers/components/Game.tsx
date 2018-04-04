@@ -81,7 +81,6 @@ export class Game extends React.Component<IBoardProps, IGameState> {
 
     private handleRestart() {
       const gameState = this.props.gameView;
-      gameState.set("restart", false);
       for (const key of gameState.keys()) {
         const parsed = parseInt(key, 10);
         if (!isNaN(parsed)) {
@@ -90,6 +89,7 @@ export class Game extends React.Component<IBoardProps, IGameState> {
       }
       gameState.set("next", this.props.player.id);
       gameState.delete("winner");
+      gameState.set("restart", false);
     }
 
     private listenForUpdate() {
