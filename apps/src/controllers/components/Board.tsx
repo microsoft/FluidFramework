@@ -1,9 +1,7 @@
 import { api } from "@prague/routerlicious";
 import { cloneDeep } from "lodash";
 import * as React from "react";
-import Slider from 'rc-slider';
-
-import 'rc-slider/assets/index.css';
+import { History } from "./History";
 
 import prague = api;
 import types = prague.types;
@@ -90,9 +88,11 @@ export class Board extends React.Component<IBoardProps, IBoardState> {
               {this.renderSquare(7)}
               {this.renderSquare(8)}
             </div>
-            <div className={historyClassName}>
-              <Slider dots step={1} defaultValue={sliderMax} min={0} max={sliderMax} onAfterChange={(value: number) => this.log(value)} dotStyle={{ borderColor: 'orange' }} activeDotStyle={{ borderColor: 'yellow' }} />
-            </div>
+            {this.state.historyMode &&
+              <div className={historyClassName}>
+                <History min={0} max={sliderMax} value={sliderMax} onSliderChange={(value) => this.log(value)} />
+              </div>
+            }
         </div>
       );
     }
