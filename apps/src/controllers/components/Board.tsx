@@ -67,9 +67,7 @@ export class Board extends React.Component<IBoardProps, IBoardState> {
           status = nextMoveStatus;
         }
       }
-      const historyClassName = this.state.historyMode ? "history-slider" : "history-slider history-hidden";
       const sliderMax = this.history.length - 1;
-      console.log(`Slied max: ${sliderMax}`);
       return (
         <div>
             <div className="status">{status}</div>
@@ -89,7 +87,7 @@ export class Board extends React.Component<IBoardProps, IBoardState> {
               {this.renderSquare(8)}
             </div>
             {this.state.historyMode &&
-              <div className={historyClassName}>
+              <div className="history-slider">
                 <History min={0} max={sliderMax} value={sliderMax} onSliderChange={(value) => this.log(value)} />
               </div>
             }
@@ -101,10 +99,8 @@ export class Board extends React.Component<IBoardProps, IBoardState> {
         this.props.gameMap.on("valueChanged", (delta: types.IValueChanged) => {
           if (delta.key === "restart") {
             const value = this.props.gameView.get(delta.key) as boolean;
-            console.log(`Restart request`);
-            console.log(value);
             if (!value) {
-              console.log(`Resetting history!`);
+              console.log(`Resetting history mode!`);
               this.setState({
                 historyMode: false
               });
@@ -123,7 +119,6 @@ export class Board extends React.Component<IBoardProps, IBoardState> {
     }
 
     private setGameState(initial: boolean) {
-        console.log(`Setting game state!`);
         const stateView = this.props.gameView;
         const squares = Array(9).fill(null);
         for (let cell of stateView.keys()) {
@@ -219,8 +214,6 @@ export class Board extends React.Component<IBoardProps, IBoardState> {
     }
 
     private log(index: number) {
-      console.log(index);
-      console.log(this.history[index].squares);
       this.setState(this.history[index]);
     }
 
@@ -244,7 +237,6 @@ export class Board extends React.Component<IBoardProps, IBoardState> {
         }
         this.history.push(state);
       }
-      console.log(`Current history size: ${this.history.length}`);
       this.setState({});
     }
 }

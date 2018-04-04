@@ -18,14 +18,14 @@ export interface IHistoryState {
 export class History extends React.Component<IHistoryProps, IHistoryState> {
     constructor(props: IHistoryProps) {
         super(props);
-        console.log(`Max: ${this.props.max}. Min: ${this.props.min}. Value: ${this.props.max}`)
+        // Because of the async nature, this is rendered before all the states are arrived. So adding 1 to adjust it.
         this.state = {
             value: this.props.max + 1
         }
     }
     render() {
         return (
-            <Slider dots step={1} value={this.state.value} defaultValue={this.props.max} min={this.props.min} max={this.props.max} onChange={(value: number) => {this.setState({value}); this.props.onSliderChange(value);} } dotStyle={{ borderColor: 'orange' }} activeDotStyle={{ borderColor: 'yellow' }} />
+            <Slider dots step={1} value={this.state.value} min={this.props.min} max={this.props.max} onChange={(value: number) => {this.setState({value}); this.props.onSliderChange(value);} } dotStyle={{ borderColor: 'orange' }} activeDotStyle={{ borderColor: 'yellow' }} />
         );
     }
 }
