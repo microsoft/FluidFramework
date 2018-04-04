@@ -1,5 +1,7 @@
 import { api } from "@prague/routerlicious";
+import { cloneDeep } from "lodash";
 import * as React from "react";
+import { History } from "./History";
 
 import prague = api;
 import types = prague.types;
@@ -9,6 +11,7 @@ export interface IBoardState {
     iAmNext: boolean;
     winner: any;
     nPlayers: number;
+    historyMode: boolean;
 }
 
 export interface IBoardProps {
@@ -23,6 +26,8 @@ export interface ISquareProps {
 }
 
 export class Board extends React.Component<IBoardProps, IBoardState> {
+
+    private history: IBoardState[] = [];
     constructor(props: IBoardProps) {
       super(props);
       this.setGameState(true);
@@ -30,7 +35,7 @@ export class Board extends React.Component<IBoardProps, IBoardState> {
     }
 
     handleClick(i: number) {
-      if (this.state.winner || !this.state.iAmNext || this.state.squares[i] || this.state.nPlayers < 2) {
+      if (this.state.winner || !this.state.iAmNext || this.state.squares[i] || this.state.nPlayers < 2 || this.state.historyMode) {
         return;
       }
       const playerId = this.props.player.id;
@@ -62,6 +67,7 @@ export class Board extends React.Component<IBoardProps, IBoardState> {
           status = nextMoveStatus;
         }
       }
+      const sliderMax = this.history.length - 1;
       return (
         <div>
             <div className="status">{status}</div>
@@ -80,13 +86,33 @@ export class Board extends React.Component<IBoardProps, IBoardState> {
               {this.renderSquare(7)}
               {this.renderSquare(8)}
             </div>
+            {this.state.historyMode &&
+              <div className="history-slider">
+                <History min={0} max={sliderMax} value={sliderMax} onSliderChange={(value) => this.log(value)} />
+              </div>
+            }
         </div>
       );
     }
 
     private listenToUpdate() {
         this.props.gameMap.on("valueChanged", (delta: types.IValueChanged) => {
-          if (delta.key !== "restart") {
+          if (delta.key === "restart") {
+            const value = this.props.gameView.get(delta.key) as boolean;
+            if (!value) {
+              console.log(`Resetting history mode!`);
+              this.setState({
+                historyMode: false
+              });
+              this.history = [];
+              this.setGameState(false);
+            } else {
+              console.log(`Setting history mode!`);
+              this.setState({
+                historyMode: true
+              });
+            }
+          } else {
             this.setGameState(false);
           }
         });
@@ -115,14 +141,18 @@ export class Board extends React.Component<IBoardProps, IBoardState> {
                 squares,
                 iAmNext,
                 winner,
-                nPlayers
+                nPlayers,
+                historyMode: false,
             };
+            this.addToHistory();
         } else {
             this.setState({
                 squares,
                 iAmNext,
                 winner,
-                nPlayers
+                nPlayers,
+            }, () => {
+              this.addToHistory();
             });
         }
         if (!winner) {
@@ -181,6 +211,33 @@ export class Board extends React.Component<IBoardProps, IBoardState> {
 
     private getOtherPlayerId(selfId: number): number {
         return selfId === 1 ? 2 : 1;
+    }
+
+    private log(index: number) {
+      this.setState(this.history[index]);
+    }
+
+    private compareBoard(pBoard: any[], cBoard: any[]) {
+      for (let i = 0; i < 9; ++i) {
+        if (pBoard[i] !== cBoard[i]) {
+          return false;
+        }
+      }
+      return true;
+    }
+    private addToHistory() {
+      const state = cloneDeep(this.state);
+      state.historyMode = true;
+      if (this.history.length === 0) {
+        this.history.push(state);
+      } else {
+        const lastBoard = this.history[this.history.length - 1];
+        if ((lastBoard.iAmNext === state.iAmNext) || this.compareBoard(lastBoard.squares, state.squares)) {
+          return;
+        }
+        this.history.push(state);
+      }
+      this.setState({});
     }
 }
 

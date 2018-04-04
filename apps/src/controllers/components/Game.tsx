@@ -28,8 +28,6 @@ export class Game extends React.Component<IBoardProps, IGameState> {
     }
 
     render() {
-      let restartClassName = "game-info" + (!this.state.restartVisible ? " restart-hidden" : "");
-      let pointsClassName = "side-div game-points" + ((!this.state.restartVisible || !this.state.gamePointVisible) ? " gamepoints-hidden" : "");
       const player1Point = (this.state.player1) ? (this.state.player1.playerName + ": " + this.state.player1.point) : "";
       const player2Point = (this.state.player2) ? (this.state.player2.playerName + ": " + this.state.player2.point) : "";
       const drawMatches = "Drawn: " + this.state.draw;
@@ -41,17 +39,21 @@ export class Game extends React.Component<IBoardProps, IGameState> {
               <div className="game-board side-div">
                 <Board player={this.props.player} gameMap={this.props.gameMap} gameView={this.props.gameView}/>
               </div>
-              <div className={pointsClassName}>
-                <div className="point-wrapper">
-                  <span className="game-points-text">{player1Point}</span>
-                  <span className="game-points-text">{player2Point}</span>
-                  <span className="game-points-text">{drawMatches}</span>
+              {this.state.restartVisible && this.state.gamePointVisible  &&
+                <div className="side-div game-points">
+                  <div className="point-wrapper">
+                    <span className="game-points-text">{player1Point}</span>
+                    <span className="game-points-text">{player2Point}</span>
+                    <span className="game-points-text">{drawMatches}</span>
+                  </div>
                 </div>
+              }
+            </div>
+            {this.state.restartVisible &&
+              <div className="game-info" onClick={() => this.handleRestart()}>
+                <Control restartText="Play Again!"/>
               </div>
-            </div>
-            <div className={restartClassName} onClick={() => this.handleRestart()}>
-              <Control restartText="Play Again!"/>
-            </div>
+            }
           </div>
         </div>
       );
@@ -81,7 +83,6 @@ export class Game extends React.Component<IBoardProps, IGameState> {
 
     private handleRestart() {
       const gameState = this.props.gameView;
-      gameState.set("restart", false);
       for (const key of gameState.keys()) {
         const parsed = parseInt(key, 10);
         if (!isNaN(parsed)) {
@@ -90,6 +91,7 @@ export class Game extends React.Component<IBoardProps, IGameState> {
       }
       gameState.set("next", this.props.player.id);
       gameState.delete("winner");
+      gameState.set("restart", false);
     }
 
     private listenForUpdate() {
