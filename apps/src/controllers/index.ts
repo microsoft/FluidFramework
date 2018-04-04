@@ -6,3 +6,6 @@ export { cells };
 
 import * as sharedText from "./sharedText";
 export { sharedText };
+
+import * as tictactoe from "./tictactoe";
+export { tictactoe };

@@ -201,3 +201,123 @@ body
     height:1200px;
     overflow:auto;
 }
+
+// Tic Tac Toe styles
+.board-row:after {
+    clear: both;
+    content: "";
+    display: table;
+}
+
+.status {
+    margin-bottom: 16px;
+    font-size: 18px;
+}
+
+.square {
+    background: #fff;
+    border: 1px solid #999;
+    float: left;
+    font-size: 60px;
+    font-weight: bold;
+    line-height: 34px;
+    height: 100px;
+    margin-right: -1px;
+    margin-top: -1px;
+    padding: 0;
+    text-align: center;
+    width: 100px;
+}
+
+.square:focus {
+    outline: none;
+}
+
+.kbd-navigation .square:focus {
+    background: #ddd;
+}
+
+.game-control {
+    padding: 100px;
+}
+
+.game {
+    display: flex;
+    flex-direction: row;
+    font: 14px "Century Gothic", Futura, sans-serif;
+    margin: 20px;
+    margin-bottom: 30px;
+    ol, ul {
+        padding-left: 30px;
+    }
+}
+
+.side-div {
+    display: inline-block;
+}
+
+.game-info {
+    margin-left: 20px;
+}
+
+.game-points {
+    font-size: 18px;
+    padding-left: 24px;
+    padding-top: 140px;
+}
+
+.point-wrapper {
+    background-color: #d9edf7;
+    -moz-border-radius: 10px 10px 10px 10px;
+    padding: 10px;
+    border: 1px solid;
+    border-radius: 10px 10px 10px 10px;
+}
+
+.game-points-text {
+    display: block;
+    padding-bottom: 5px;
+}
+
+.restart-container {
+    cursor: pointer;
+}
+
+.restart-text {
+    color: #515096;
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 28px;
+    background-color: #f9f6f6;
+    padding: 10px;
+    border: solid 1px;
+    border-radius: 10px 10px 10px 10px;
+    margin-left: 45px;
+    -moz-border-radius: 10px 10px 10px 10px;
+}
+
+.restart-hidden {
+    visibility: hidden;
+}
+
+.gamepoints-hidden {
+    visibility: hidden;
+}
+
+.logout-icon {
+    color: #726c6c;
+}
+
+.logout-button {
+    position: absolute;
+    right: 36px;
+    top: 36px;
+}
+
+.logout-text {
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 20px;
+}
+
+.logout-icon {
+    color: #726c6c;
+}
