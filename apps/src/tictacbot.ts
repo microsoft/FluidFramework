@@ -23,11 +23,15 @@ function startPlaying(gameMap: types.IMap, gameView: types.IMapView, playerId: n
                 return;
             }
 
+            console.log(`Parsed Key: ${parsedKey}`);
             if (gameView.has("restart")) {
                 const restartMode = gameView.get("restart") as boolean;
+                console.log(`RestartMode: ${restartMode}`);
                 if (restartMode) {
                     return;
                 }
+            } else {
+                console.log(`No restart`);
             }
             const occupied = [];
             for (const cell of gameView.keys()) {
