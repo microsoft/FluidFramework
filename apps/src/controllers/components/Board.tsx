@@ -1,4 +1,5 @@
 import { api } from "@prague/routerlicious";
+import { cloneDeep } from "lodash";
 import * as React from "react";
 import Slider from 'rc-slider';
 
@@ -220,7 +221,6 @@ export class Board extends React.Component<IBoardProps, IBoardState> {
     private log(index: number) {
       console.log(index);
       console.log(this.history[index].squares);
-      this.history[index].historyMode = true;
       this.setState(this.history[index]);
     }
 
@@ -233,12 +233,13 @@ export class Board extends React.Component<IBoardProps, IBoardState> {
       return true;
     }
     private addToHistory() {
-      const state = this.state;
+      const state = cloneDeep(this.state);
+      state.historyMode = true;
       if (this.history.length === 0) {
         this.history.push(state);
       } else {
         const lastBoard = this.history[this.history.length - 1];
-        if (this.compareBoard(lastBoard.squares, state.squares)) {
+        if ((lastBoard.iAmNext === state.iAmNext) || this.compareBoard(lastBoard.squares, state.squares)) {
           return;
         }
         this.history.push(state);
