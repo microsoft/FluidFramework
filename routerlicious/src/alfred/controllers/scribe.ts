@@ -1,6 +1,7 @@
 import * as request from "request";
 import * as url from "url";
 import { socketStorage } from "../../client-api";
+import { IScribeMetrics } from "../../utils/author";
 import * as scribe from "../../utils/scribe";
 
 // Text represents the loaded file text
@@ -36,7 +37,7 @@ function resetProgressBar(progressBar: HTMLElement) {
     progressBar.classList.add("active");
 }
 
-function updateMetrics(metrics: scribe.IScribeMetrics, ackProgressBar: HTMLElement, typingProgressBar: HTMLElement) {
+function updateMetrics(metrics: IScribeMetrics, ackProgressBar: HTMLElement, typingProgressBar: HTMLElement) {
     updateProgressBar(ackProgressBar, metrics.ackProgress);
     updateProgressBar(typingProgressBar, metrics.typingProgress);
 
@@ -183,6 +184,8 @@ export function initialize(config: any, id: string, template: string, speed: num
             const typeP = scribe.type(
                 intervalTime,
                 text,
+                1,
+                1,
                 (metrics) => updateMetrics(metrics, ackProgressBar, typingProgressBar));
 
             // Output the total time once typing is finished

@@ -15,8 +15,10 @@ commander
     .option("-o, --owner [owner]", "git owner", "prague")
     .option("-r, --repository [repo]", "git repository", "prague")
     .option("-f, --file [file]", "input file", path.join(__dirname, "../../public/literature/resume.txt"))
-    .option("-p, --progress [pbar]", "show progress bar")
+    .option("-b, --progress [pbar]", "show progress bar")
     .option("-w, --write [write]", "write to specific path", "./latest-scribe.json")
+    .option("-p, --processes [processes]", "processes to write with", 1)
+    .option("-a, --authors [authors]", "Total authors to write with", 1)
     .arguments("<id>")
     .action((id: string) => {
         sharedStringId = id;
@@ -57,6 +59,8 @@ fs.readFile(commander.file, "utf8", async (error, data: string) => {
     const typeP = scribe.type(
         commander.interval,
         data,
+        commander.authors,
+        commander.processes,
         (metrics) => {
             if (commander.progress) {
                 bar.update(metrics.ackProgress, {
