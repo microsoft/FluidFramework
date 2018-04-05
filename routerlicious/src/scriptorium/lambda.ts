@@ -293,7 +293,6 @@ export class ScriptoriumLambda implements IPartitionLambda {
                 }
             });
 
-            winston.verbose(`Sending to socket.io ${id.topic}:${id.event}:${id.documentId}@${work.length}`);
             this.io.to(id.topic).emit(id.event, id.documentId, work);
         });
     }

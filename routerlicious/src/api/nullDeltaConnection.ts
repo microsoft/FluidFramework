@@ -22,8 +22,4 @@ export class NullDeltaConnection implements api.IDocumentDeltaConnection {
     public submit(message: api.IDocumentMessage): Promise<void> {
         return Promise.resolve();
     }
-
-    public dispatchEvent(name: string, ...args: any[]) {
-        return;
-    }
 }

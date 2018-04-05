@@ -13,6 +13,10 @@ const socketJoin = util.promisify(
     });
 
 class SocketIoSocket implements core.IWebSocket {
+    public get id(): string {
+        return this.socket.id;
+    }
+
     constructor(private socket: SocketIO.Socket) {
     }
 
