@@ -23,16 +23,13 @@ function startPlaying(gameMap: types.IMap, gameView: types.IMapView, playerId: n
                 return;
             }
 
-            console.log(`Parsed Key: ${parsedKey}`);
             if (gameView.has("restart")) {
                 const restartMode = gameView.get("restart") as boolean;
-                console.log(`RestartMode: ${restartMode}`);
                 if (restartMode) {
                     return;
                 }
-            } else {
-                console.log(`No restart`);
             }
+
             const occupied = [];
             for (const cell of gameView.keys()) {
                 const parsed = parseInt(cell, 10);
@@ -51,8 +48,11 @@ function startPlaying(gameMap: types.IMap, gameView: types.IMapView, playerId: n
             if (nextMoveIndex === -1) {
                 console.log(`Game over!`);
             } else {
-                gameView.set("next", 1);
-                gameView.set(nextMoveIndex.toString(), playerId);
+                // Delay for two seconds to simulate human player.
+                setTimeout(() => {
+                    gameView.set("next", 1);
+                    gameView.set(nextMoveIndex.toString(), playerId);
+                }, 1000);
             }
         }
     });
@@ -96,5 +96,5 @@ export function start(id: string, repository: string,  owner: string, endPoints:
         }, (err) => {
             console.log(err);
         });
-    }, 5000);
+    }, 3500);
 }
