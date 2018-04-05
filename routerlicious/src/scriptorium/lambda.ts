@@ -119,7 +119,7 @@ export class BatchManager<K, T> extends EventEmitter {
         const processedP = this.sendFn(this.current.batch);
 
         // Once processed update the log offset and then begin the next batch
-        processedP.then(
+        const doneP = processedP.then(
             () => {
                 // Processing was successful. Update the tail of the offset...
                 this.range.tail = this.current.offset;
@@ -128,11 +128,12 @@ export class BatchManager<K, T> extends EventEmitter {
                 // And then clear the processed batch and start on pending.
                 this.current.clear();
                 this.sendPending();
-            },
-            (error) => {
-                // Notify of the error
-                this.emit("error", error);
             });
+
+        doneP.catch((error) => {
+            // Notify of the error
+            this.emit("error", error);
+        });
     }
 }
 
@@ -285,6 +286,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
     private async processIoBatch(batch: Batch<IoTarget, api.INack | api.ISequencedDocumentMessage>): Promise<void> {
         // Serialize the current batch to Mongo
         await batch.map(async (id, work) => {
+            winston.verbose(`Broadcasting to socket.io ${id.documentId}@${id.topic}@${id.event}:${work.length}`);
             // Add trace to each message before routing.
             work.map((value) => {
                 const valueAsSequenced = value as api.ISequencedDocumentMessage;
@@ -294,6 +296,11 @@ export class ScriptoriumLambda implements IPartitionLambda {
             });
 
             this.io.to(id.topic).emit(id.event, id.documentId, work);
+        });
+
+        // resolve the send promise on the next turn
+        await new Promise((resolve, reject) => {
+            setImmediate(() => resolve());
         });
     }
 
