@@ -24,13 +24,15 @@ export function create(config: any): Router {
     const router: Router = Router();
 
     router.get("/", (request, response, next) => {
-        response.redirect(`/tictactoe/${moniker.choose()}`);
+        const queryParam = request.query.player ? `?player=${request.query.player}` : "";
+        response.redirect(`/tictactoe/${moniker.choose()}${queryParam}`);
     });
 
     router.get("/:id", ensureAuthenticated, (request, response, next) => {
         request.query.token = response.locals.token;
         const docId = getFullId(config.tenantInfo.id, request.params.id);
         renderView(request, response, docId, config);
+        // Start a bot for single players.
         if (request.query.player === "single") {
             bot.start(docId, config.tenantInfo.repository, config.tenantInfo.owner, config.tenantInfo.endpoints);
         }

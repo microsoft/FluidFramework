@@ -1,4 +1,5 @@
 import { api } from "@prague/routerlicious";
+import { getNextSpot, ICell } from "./minimax";
 
 import prague = api;
 import types = prague.types;
@@ -30,40 +31,43 @@ function startPlaying(gameMap: types.IMap, gameView: types.IMapView, playerId: n
                 }
             }
 
-            const occupied = [];
+            const occupied: ICell[] = [];
             for (const cell of gameView.keys()) {
                 const parsed = parseInt(cell, 10);
                 if (isNaN(parsed)) {
                     continue;
                 }
-                occupied.push(parsed);
+                occupied.push({
+                    index: parsed,
+                    player: gameView.get(cell) as number,
+                });
             }
-            let nextMoveIndex = -1;
-            for (let i = 0; i < 9; ++i) {
-                if (occupied.indexOf(i) === -1) {
-                    nextMoveIndex = i;
-                    break;
-                }
-            }
-            if (nextMoveIndex === -1) {
+            if (occupied.length >= 9) {
                 console.log(`Game over!`);
+                return;
+            }
+            const nextMoveIndex = getNextSpot(occupied);
+
+            if (nextMoveIndex === -1) {
+                console.log(`No valid spot found!`);
+                return;
             } else {
-                // Delay for two seconds to simulate human player.
                 setTimeout(() => {
                     gameView.set("next", 1);
                     gameView.set(nextMoveIndex.toString(), playerId);
-                }, 1000);
+                }, 500);
             }
         }
     });
 }
 
+// A stateless function that joins a document and starts listening to messages.
 export function start(id: string, repository: string,  owner: string, endPoints: any) {
     prague.socketStorage.registerAsDefault(endPoints.delta, endPoints.storage, owner, repository);
     setTimeout(() => {
-        console.log(`Bot started after 5 seconds!`);
+        console.log(`Robot started after 3 seconds!`);
         loadDocument(id).then(async (doc) => {
-            const playerName = "Bot";
+            const playerName = "Robot";
             const playerId = 2;
 
             const rootView = await doc.getRoot().getView();
@@ -96,5 +100,5 @@ export function start(id: string, repository: string,  owner: string, endPoints:
         }, (err) => {
             console.log(err);
         });
-    }, 3500);
+    }, 3000);
 }
