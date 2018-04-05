@@ -12,7 +12,8 @@
                     <h4><li><a href="/maps">Maps</a></li></h4>
                     <h4><li><a href="/cells">Cells</a></li></h4>
                     <h4><li><a href="/sharedText">Shared String</a></li></h4>
-                    <h4><li><a href="/tictactoe">Tic Tac Toe</a></li></h4>
+                    <h4><li><a href="/tictactoe">Tic Tac Toe (Multiplayer)</a></li></h4>
+                    <h4><li><a href="/tictactoe?player=single">Tic Tac Toe (Single Player)</a></li></h4>
                 </h4>
             {{/user}}
             {{^user}}
