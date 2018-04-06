@@ -1,16 +1,9 @@
+import * as queue from "async/queue";
 import clone = require("lodash/clone");
 import { api, core, MergeTree, utils } from "../client-api";
+import { IMap } from "../data-types";
 
 let play: boolean = false;
-
-interface IChartData {
-    minimum: number[];
-    maximum: number[];
-    mean: number[];
-    stdDev: number[];
-    label: string[];
-    index: number;
-}
 
 const saveLineFrequency = 5;
 
@@ -20,6 +13,15 @@ const ChartSamples = 10;
 
 function padTime(value: number) {
     return `0${value}`.slice(-2);
+}
+
+interface IChartData {
+    minimum: number[];
+    maximum: number[];
+    mean: number[];
+    stdDev: number[];
+    label: string[];
+    index: number;
 }
 
 /**
@@ -194,13 +196,60 @@ function combine(first: number[], second: number[], combine: (a, b) => number): 
     return result;
 }
 
-/**
- * Types the given file into the shared string - starting at the end of the string
- */
 export async function typeFile(
     doc: api.Document,
     ss: MergeTree.SharedString,
     fileText: string,
+    intervalTime: number,
+    writers: number,
+    callback: ScribeMetricsCallback): Promise<IScribeMetrics> {
+
+        let metricsArray: IScribeMetrics[] = [];
+        let q: any;
+
+        if (writers === 1) {
+            console.log("Single File");
+            return typeChunk(doc, ss, "p-0", fileText, intervalTime, callback);
+        } else {
+            console.log("Multi-Author");
+            return (doc.getRoot().get("chunks") as Promise<IMap>)
+                .then((chunkMap) => {
+                    return chunkMap.getView();
+                })
+                .then((chunkView) => {
+                    return new Promise((resolve, reject) => {
+                        // tslint:disable-next-line:variable-name
+                        q = queue((chunkKey, _callback) => {
+                            let chunk = chunkView.get(chunkKey);
+                            typeChunk(doc, ss, chunkKey, chunk, intervalTime, _callback);
+                        }, writers);
+
+                        for (let chunkKey of chunkView.keys()) {
+                            q.push(chunkKey, (metrics: IScribeMetrics) => {
+                                metricsArray.push(metrics);
+                            });
+                        }
+                        q.drain = () => {
+                            resolve(metricsArray[0]);
+                        };
+                    });
+                })
+                .catch((error) => {
+                    console.error("No Chunk Map: " + error);
+                    return null;
+                });
+
+        }
+}
+
+/**
+ * Types the given file into the shared string - starting at the end of the string
+ */
+export async function typeChunk(
+    doc: api.Document,
+    ss: MergeTree.SharedString,
+    chunkKey: string,
+    chunk: string,
     intervalTime: number,
     callback: ScribeMetricsCallback): Promise<IScribeMetrics> {
 
@@ -231,14 +280,13 @@ export async function typeFile(
     const startTime = Date.now();
 
     return new Promise<IScribeMetrics>((resolve, reject) => {
-        let insertPosition = 0;
         let readPosition = 0;
         let lineNumber = 0;
 
         const histogramRange = 5;
         const histogram = new utils.Histogram(histogramRange);
 
-        fileText = normalizeText(fileText);
+        chunk = normalizeText(chunk);
         const metrics: IScribeMetrics = {
             ackProgress: undefined,
             ackRate: undefined,
@@ -248,7 +296,7 @@ export async function typeFile(
             latencyStdDev: undefined,
             pingAverage: undefined,
             pingMaximum: undefined,
-            textLength: fileText.length,
+            textLength: chunk.length,
             time: 0,
             typingInterval: intervalTime,
             typingProgress: undefined,
@@ -329,7 +377,7 @@ export async function typeFile(
                 // We need a better way of hearing when our messages have been received and processed.
                 // For now I just assume we are the only writer and wait to receive a message with a client
                 // sequence number greater than the number of submitted operations.
-                if (message.clientSequenceNumber >= fileText.length) {
+                if (message.clientSequenceNumber >= chunk.length) {
                     const endTime = Date.now();
                     clearInterval(metricsInterval);
                     metrics.time = endTime - startTime;
@@ -337,7 +385,7 @@ export async function typeFile(
                 }
 
                 // Notify of change in metrics
-                metrics.ackProgress = message.clientSequenceNumber / fileText.length;
+                metrics.ackProgress = message.clientSequenceNumber / chunk.length;
 
                 callback(clone(metrics));
             }
@@ -360,22 +408,33 @@ export async function typeFile(
 
         function type(): boolean {
             // Stop typing once we reach the end
-            if (readPosition === fileText.length) {
+            if (readPosition === chunk.length) {
                 return false;
             }
             if (!play) {
                 return true;
             }
+            let pos: number;
+            let relPosit: MergeTree.IRelativePosition = {
+                before: true,
+                id: chunkKey,
+                offset: 0,
+            };
+
+            pos = ss.client.mergeTree.posFromRelativePos(relPosit);
 
             // Start inserting text into the string
-            let code = fileText.charCodeAt(readPosition);
+            let code = chunk.charCodeAt(readPosition);
             if (code === 13) {
                 readPosition++;
-                code = fileText.charCodeAt(readPosition);
+                code = chunk.charCodeAt(readPosition);
             }
+
             trackOperation(() => {
+                let char = chunk.charAt(readPosition);
+
                 if (code === 10) {
-                    ss.insertMarker(insertPosition++, MergeTree.ReferenceType.Tile,
+                    ss.insertMarker(pos, MergeTree.ReferenceType.Tile,
                         {[MergeTree.reservedTileLabelsKey]: ["pg"]});
                     readPosition++;
                     ++lineNumber;
@@ -383,12 +442,12 @@ export async function typeFile(
                         doc.save(`Line ${lineNumber}`);
                     }
                 } else {
-                    ss.insertText(fileText.charAt(readPosition++), insertPosition++);
+                    ss.insertText(char, pos);
+                    readPosition++;
                 }
             });
 
-            metrics.typingProgress = readPosition / fileText.length;
-            callback(metrics);
+            metrics.typingProgress = readPosition / chunk.length;
 
             return true;
         }

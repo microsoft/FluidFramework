@@ -4029,6 +4029,12 @@ export class MergeTree {
     insertMarker(pos: number, refSeq: number, clientId: number, seq: number,
         behaviors: ops.ReferenceType, props?: Properties.PropertySet) {
         let marker = Marker.make(behaviors, props, seq, clientId);
+
+        let markerId = marker.getId();
+        if (markerId) {
+            this.mapIdToSegment(markerId, marker);
+        }
+
         this.insert(pos, refSeq, clientId, seq, marker, (block, pos, refSeq, clientId, seq, marker) =>
             this.blockInsert(block, pos, refSeq, clientId, seq, marker));
     }

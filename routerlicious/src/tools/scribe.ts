@@ -53,14 +53,15 @@ fs.readFile(commander.file, "utf8", async (error, data: string) => {
                 total: data.length,
             });
     }
+
     await scribe.create(sharedStringId, data, debug);
     scribe.togglePlay();
 
     const typeP = scribe.type(
         commander.interval,
         data,
-        commander.authors,
-        commander.processes,
+        Number(commander.authors),
+        Number(commander.processes),
         (metrics) => {
             if (commander.progress) {
                 bar.update(metrics.ackProgress, {
