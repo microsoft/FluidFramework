@@ -4,7 +4,6 @@ import * as resources from "gitresources";
 import * as uuid from "uuid/v4";
 import performanceNow = require("performance-now");
 import {
-    AttachObject,
     DeltaConnection,
     DeltaManager,
     IAttachMessage,
@@ -31,7 +30,6 @@ import {
     ITreeEntry,
     LocalObjectStorageService,
     NoOp,
-    ObjectOperation,
     ObjectStorageService,
     Registry,
     RoundTrip,
@@ -39,6 +37,7 @@ import {
     SaveOperation,
     TreeEntry,
 } from "../api-core";
+import * as api from "../api-core";
 import * as cell from "../cell";
 import { Deferred, getOrDefault } from "../core-utils";
 import { ICell, IMap, IStream } from "../data-types";
@@ -458,7 +457,7 @@ export class Document extends EventEmitter {
             snapshot,
             type: object.type,
         };
-        this.submitMessage(AttachObject, message);
+        this.submitMessage(api.AttachObject, message);
 
         // Store a reference to the object in our list of objects and then get the services
         // used to attach it to the stream
@@ -523,7 +522,7 @@ export class Document extends EventEmitter {
     }
 
     public submitObjectMessage(envelope: IEnvelope): Promise<void> {
-        return this.submitMessage(ObjectOperation, envelope);
+        return this.submitMessage(api.ObjectOperation, envelope);
     }
 
     public submitSaveMessage(message: ICollaborativeObjectSave): Promise<void> {
@@ -645,14 +644,14 @@ export class Document extends EventEmitter {
      */
     private transform(message: ISequencedDocumentMessage, sequenceNumber: number): ISequencedDocumentMessage {
         // Allow the distributed data types to perform custom transformations
-        if (message.type === ObjectOperation) {
+        if (message.type === api.ObjectOperation) {
             const envelope = message.contents as IEnvelope;
             const objectDetails = this.distributedObjects[envelope.address];
             envelope.contents = objectDetails.object.transform(
                 envelope.contents as IObjectMessage,
                 objectDetails.connection.transformDocumentSequenceNumber(
                     Math.max(message.referenceSequenceNumber, sequenceNumber)));
-        } else if (message.type === AttachObject) {
+        } else if (message.type === api.AttachObject) {
             message.type = NoOp;
         }
 
@@ -730,11 +729,11 @@ export class Document extends EventEmitter {
     }
 
     private async prepareRemoteMessage(message: ISequencedDocumentMessage): Promise<any> {
-        if (message.type === ObjectOperation) {
+        if (message.type === api.ObjectOperation) {
             const envelope = message.contents as IEnvelope;
             const objectDetails = this.distributedObjects[envelope.address];
             return objectDetails.connection.prepare(message);
-        } else if (message.type === AttachObject && message.clientId !== this.connection.clientId) {
+        } else if (message.type === api.AttachObject && message.clientId !== this.connection.clientId) {
             const attachMessage = message.contents as IAttachMessage;
 
             // create storage service that wraps the attach data
@@ -775,25 +774,44 @@ export class Document extends EventEmitter {
         this.messagesSinceMSNChange.push(message);
 
         const eventArgs: any[] = [message];
-        if (message.type === ObjectOperation) {
-            const envelope = message.contents as IEnvelope;
-            const objectDetails = this.distributedObjects[envelope.address];
+        switch (message.type) {
+            case api.ObjectOperation:
+                const envelope = message.contents as IEnvelope;
+                const objectDetails = this.distributedObjects[envelope.address];
 
-            objectDetails.connection.process(message, context);
-            eventArgs.push(objectDetails.object);
-        } else if (message.type === AttachObject) {
-            const attachMessage = message.contents as IAttachMessage;
+                objectDetails.connection.process(message, context);
+                eventArgs.push(objectDetails.object);
+                break;
 
-            // If a non-local operation then go and create the object - otherwise mark it as officially
-            // attached.
-            if (message.clientId !== this.connection.clientId) {
-                this.fulfillDistributedObject(context.value as ICollaborativeObject, context.services);
-            } else {
-                // Document sequence number references <= message.sequenceNumber should map to the object's 0 sequence
-                // number. We cap to the MSN to keep a tighter window and because no references should be below it.
-                this.distributedObjects[attachMessage.id].connection.setBaseMapping(0, message.minimumSequenceNumber);
-            }
-            eventArgs.push(this.distributedObjects[attachMessage.id].object);
+            case api.AttachObject:
+                const attachMessage = message.contents as IAttachMessage;
+
+                // If a non-local operation then go and create the object - otherwise mark it as officially
+                // attached.
+                if (message.clientId !== this.connection.clientId) {
+                    this.fulfillDistributedObject(context.value as ICollaborativeObject, context.services);
+                } else {
+                    // Document sequence number references <= message.sequenceNumber should map to the object's 0
+                    // sequence number. We cap to the MSN to keep a tighter window and because no references should be
+                    // below it.
+                    this.distributedObjects[attachMessage.id].connection.setBaseMapping(
+                        0,
+                        message.minimumSequenceNumber);
+                }
+                eventArgs.push(this.distributedObjects[attachMessage.id].object);
+                break;
+
+            case api.ClientJoin:
+                // TODO can check for myself here...
+                debug(`Client join ${message.contents}`);
+                break;
+
+            case api.ClientLeave:
+                debug(`Client leave ${message.contents}`);
+                break;
+
+            default:
+                break;
         }
 
         if (minSequenceNumberChanged) {
