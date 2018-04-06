@@ -86,7 +86,15 @@ export class BatchManager<K, T> extends EventEmitter {
      * Adds a new value to the batch and updates the log offset
      */
     public add(id: K, value: T, offset: number) {
+        // Track whether we are transitioning from empty to not-empty. In that case we adjust
+        // the tail of the range to be one less than the offset. This is the lowest offset we could
+        // checkpoint at since it does not include the new batch of work.
+        const wasEmpty = this.range.empty;
         this.range.head = offset;
+        if (wasEmpty) {
+            this.range.tail = offset - 1;
+        }
+
         this.pending.batch.add(id, value);
         this.pending.offset = offset;
         this.requestSend();
@@ -296,11 +304,6 @@ export class ScriptoriumLambda implements IPartitionLambda {
             });
 
             this.io.to(id.topic).emit(id.event, id.documentId, work);
-        });
-
-        // resolve the send promise on the next turn
-        await new Promise((resolve, reject) => {
-            setImmediate(() => resolve());
         });
     }
 
