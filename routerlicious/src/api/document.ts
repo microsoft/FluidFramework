@@ -810,6 +810,11 @@ export class Document extends EventEmitter {
             case api.ClientJoin:
                 this.clients.add(message.contents);
                 this.emit("clientJoin", message.contents);
+
+                if (message.contents === this.clientId) {
+                    debug(`Fully joined the document@ ${message.minimumSequenceNumber}`);
+                }
+
                 break;
 
             case api.ClientLeave:

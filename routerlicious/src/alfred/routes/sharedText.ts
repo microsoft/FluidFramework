@@ -67,9 +67,9 @@ export function create(
                 "sharedText",
                 {
                     config: values[0],
+                    connect: false,
                     disableCache,
                     id,
-                    loadPartial: true,
                     options: JSON.stringify(options),
                     pageInk: request.query.pageInk === "true",
                     partials: defaultPartials,
@@ -131,9 +131,9 @@ export function create(
                 "sharedText",
                 {
                     config: values[0],
+                    connect: true,
                     disableCache,
                     id,
-                    loadPartial: false,
                     options: JSON.stringify(options),
                     pageInk: request.query.pageInk === "true",
                     partials: defaultPartials,

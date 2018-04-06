@@ -12,16 +12,16 @@
             var config = {{{ config }}};
             var version = {{{ version }}};
             var options = {{{ options }}};
-            var loadPartial = {{{ loadPartial }}};
+            var connect = {{{ connect }}};
             console.log(`Starting load at - ${performance.now()}`);
-            controller.sharedText.onLoad(
+            controller.sharedText.load(
                 "{{ id }}",
                 version,
                 {{ pageInk }},
                 {{ disableCache }},
                 config,
                 "{{ template }}",
-                loadPartial,
+                connect,
                 options);
         </script>
     {{/scripts}}

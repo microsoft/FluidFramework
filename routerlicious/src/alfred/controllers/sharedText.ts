@@ -51,29 +51,30 @@ async function addTranslation(document: API.Document, id: string, language: stri
     translations.add(language);
 }
 
-export async function onLoad(
+export async function load(
     id: string,
     version: resources.ICommit,
     pageInk: boolean,
     disableCache: boolean,
     config: any,
     template: string,
-    loadPartial: boolean,
+    connect: boolean,
     options: Object) {
 
     console.log(`Load Option: ${JSON.stringify(options)}`);
-    loadPartial
-        ? loadCommit(id, version, pageInk, config, options)
-        : loadFull(id, version, pageInk, disableCache, config, template, options);
+    loadDocument(id, version, pageInk, disableCache, config, template, connect, options).catch((error) => {
+        console.error(error);
+    });
 }
 
-async function loadFull(
+async function loadDocument(
     id: string,
     version: resources.ICommit,
     pageInk: boolean,
     disableCache: boolean,
     config: any,
     template: string,
+    connect: boolean,
     options: Object) {
 
     const host = new ui.BrowserContainerHost();
@@ -87,10 +88,19 @@ async function loadFull(
         config.historianApi,
         config.credentials);
     console.log(`collabDoc loading ${id} - ${performanceNow()}`);
-    const collabDoc = await API.load(id, { blockUpdateMarkers: true }, version);
+    const collabDoc = await API.load(id, { blockUpdateMarkers: true }, version, connect);
     console.log(`collabDoc loaded ${id} - ${performanceNow()}`);
     const root = await collabDoc.getRoot().getView();
     console.log(`Getting root ${id} - ${performanceNow()}`);
+
+    collabDoc.on("clientJoin", (name) => {
+        console.log(`${name} joined`);
+        console.log(`${Array.from(collabDoc.getClients())}`);
+    });
+    collabDoc.on("clientLeave", (name) => {
+        console.log(`${name} left`);
+        console.log(`${Array.from(collabDoc.getClients())}`);
+    });
 
     // If a text element already exists load it directly - otherwise load in pride + prejudice
     const existing = root.has("text");
@@ -120,6 +130,7 @@ async function loadFull(
             root.set("pageInk", collabDoc.createStream());
         }
     }
+
     const sharedString = root.get("text") as SharedString.SharedString;
     console.log(`Shared string ready - ${performanceNow()}`);
     console.log(window.navigator.userAgent);
@@ -165,67 +176,6 @@ async function loadFull(
 
     // Bootstrap worker service.
     agent.registerWorker(config, "sharedText");
-
-    sharedString.loaded.then(() => {
-        theFlow.loadFinished(clockStart);
-    });
-}
-
-async function loadCommit(
-    id: string,
-    version: resources.ICommit,
-    pageInk: boolean,
-    config: any,
-    options: Object) {
-    console.log(`Load document ${id} upto commit ${JSON.stringify(version)}.`);
-
-    const host = new ui.BrowserContainerHost();
-
-    socketStorage.registerAsDefault(
-        document.location.origin,
-        config.blobStorageUrl,
-        config.owner,
-        config.repository);
-    console.log(`collabDoc loading ${id} - ${performanceNow()}`);
-    const collabDoc = await API.load(id, { blockUpdateMarkers: true }, version, false);
-    console.log(`collabDoc loaded ${id} - ${performanceNow()}`);
-    const root = await collabDoc.getRoot().getView();
-    console.log(`Getting root ${id} - ${performanceNow()}`);
-
-    const sharedString = root.get("text") as SharedString.SharedString;
-    console.log(`Shared string ready - ${performanceNow()}`);
-    console.log(window.navigator.userAgent);
-    console.log(`id is ${id}`);
-    console.log(`Partial load fired - ${performanceNow()}`);
-
-    // Higher plane ink
-    const inkPlane = root.get("ink");
-
-    // Bindy for insights
-    const image = new controls.Image(
-        document.createElement("div"),
-        url.resolve(document.baseURI, "/public/images/bindy.svg"));
-
-    const containerDiv = document.createElement("div");
-    const container = new controls.FlowContainer(
-        containerDiv,
-        collabDoc,
-        sharedString,
-        inkPlane,
-        image,
-        root.get("pageInk") as types.IStream,
-        options);
-    theFlow = container.flowView;
-    host.attach(container);
-
-    getInsights(collabDoc.getRoot(), sharedString.id);
-
-    if (sharedString.client.getLength() > 0) {
-        theFlow.render(0, true);
-    }
-    theFlow.timeToEdit = theFlow.timeToImpression = Date.now() - clockStart;
-
-    theFlow.setEdit(root);
 
     sharedString.loaded.then(() => {
         theFlow.loadFinished(clockStart);
