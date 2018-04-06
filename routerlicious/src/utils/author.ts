@@ -56,7 +56,7 @@ export interface IScribeMetrics {
     ackRate: number;
     typingRate: number;
 
-    // The progress of typing and reciving ack for messages in the range [0,1]
+    // The progress of typing and receiving ack for messages in the range [0,1]
     typingProgress: number;
     ackProgress: number;
 
@@ -209,7 +209,7 @@ export async function typeFile(
 
         if (writers === 1) {
             console.log("Single File");
-            return typeChunk(doc, ss, "p-0", fileText, intervalTime, callback);
+            return typeChunk(doc, ss, "p-0", fileText, intervalTime, callback, callback);
         } else {
             console.log("Multi-Author");
             return (doc.getRoot().get("chunks") as Promise<IMap>)
@@ -219,9 +219,15 @@ export async function typeFile(
                 .then((chunkView) => {
                     return new Promise((resolve, reject) => {
                         // tslint:disable-next-line:variable-name
-                        q = queue((chunkKey, _callback) => {
+                        q = queue(async (chunkKey, _callback) => {
                             let chunk = chunkView.get(chunkKey);
-                            typeChunk(doc, ss, chunkKey, chunk, intervalTime, _callback);
+                            let newDoc = await api.load(doc.id);
+                            const root = await newDoc.getRoot();
+
+                            console.log("ClientId: " + newDoc.clientId);
+                            const newSs = (await root.get("text")) as MergeTree.SharedString;
+
+                            typeChunk(newDoc, newSs, chunkKey, chunk, intervalTime, callback, _callback);
                         }, writers);
 
                         for (let chunkKey of chunkView.keys()) {
@@ -235,7 +241,7 @@ export async function typeFile(
                     });
                 })
                 .catch((error) => {
-                    console.error("No Chunk Map: " + error);
+                    console.log("No Chunk Map: " + error);
                     return null;
                 });
 
@@ -251,7 +257,8 @@ export async function typeChunk(
     chunkKey: string,
     chunk: string,
     intervalTime: number,
-    callback: ScribeMetricsCallback): Promise<IScribeMetrics> {
+    callback: ScribeMetricsCallback,
+    queueCallback: ScribeMetricsCallback): Promise<IScribeMetrics> {
 
     // And also load a canvas document where we will place the metrics
     const metricsDoc = await api.load(`${doc.id}-metrics`);
@@ -409,6 +416,7 @@ export async function typeChunk(
         function type(): boolean {
             // Stop typing once we reach the end
             if (readPosition === chunk.length) {
+                queueCallback(metrics);
                 return false;
             }
             if (!play) {
