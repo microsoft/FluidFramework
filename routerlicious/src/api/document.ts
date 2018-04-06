@@ -332,12 +332,14 @@ export class Document extends EventEmitter {
 
     private reservations = new Map<string, Deferred<ICollaborativeObject>>();
 
-    // tslint:disable-next-line:variable-name
+    // tslint:disable:variable-name
     private _deltaManager: DeltaManager;
+    // tslint:enable:variable-name
 
     private lastMinSequenceNumber;
 
-    private messagesSinceMSNChange: ISequencedDocumentMessage[] = [];
+    private messagesSinceMSNChange = new Array<ISequencedDocumentMessage>();
+    private clients = new Set<string>();
 
     public get clientId(): string {
         return this.connection.clientId;
@@ -554,6 +556,10 @@ export class Document extends EventEmitter {
      */
     public getUser(): any {
         return this.connection.user;
+    }
+
+    public getClients(): Set<string> {
+        return new Set<string>(this.clients);
     }
 
     private snapshotCore(): ITree {
@@ -802,12 +808,13 @@ export class Document extends EventEmitter {
                 break;
 
             case api.ClientJoin:
-                // TODO can check for myself here...
-                debug(`Client join ${message.contents}`);
+                this.clients.add(message.contents);
+                this.emit("clientJoin", message.contents);
                 break;
 
             case api.ClientLeave:
-                debug(`Client leave ${message.contents}`);
+                this.clients.delete(message.contents);
+                this.emit("clientLeave", message.contents);
                 break;
 
             default:
