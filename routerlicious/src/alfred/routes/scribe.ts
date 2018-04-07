@@ -4,6 +4,7 @@ import { Provider } from "nconf";
 import { defaultPartials } from "./partials";
 
 const defaultSpeed = 50;
+const defaultAuthors = 1;
 const defaultTemplate = "/public/literature/resume.txt";
 
 export function create(config: Provider) {
@@ -14,6 +15,7 @@ export function create(config: Provider) {
     function handleResponse(
         response,
         speed: number = defaultSpeed,
+        authors: number = defaultAuthors,
         languages: string = "",
         id?: string,
         template?: string) {
@@ -21,6 +23,7 @@ export function create(config: Provider) {
         response.render(
             "scribe",
             {
+                authors,
                 config: workerConfig,
                 fileLoad: !id,
                 id,
@@ -44,10 +47,11 @@ export function create(config: Provider) {
      */
     router.get("/demo", (request, response, next) => {
         const speed = Number.parseFloat(request.query.speed) || defaultSpeed;
+        const authors = Number.parseFloat(request.query.authors) || defaultAuthors;
         const text = request.query.text || defaultTemplate;
         const languages = request.query.language || "";
 
-        handleResponse(response, speed, languages, moniker.choose(), text);
+        handleResponse(response, speed, authors, languages, moniker.choose(), text);
     });
 
     return router;
