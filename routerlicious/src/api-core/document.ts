@@ -1,6 +1,6 @@
 import { IAuthenticatedUser } from "../core-utils";
 import { IEnvelope, ILatencyMessage, IObjectMessage, ISequencedObjectMessage } from "./protocol";
-import { ICollaborativeObject, ICollaborativeObjectSave } from "./types";
+import { ICollaborativeObject } from "./types";
 
 export interface IObjectStorageService {
     /**
@@ -57,6 +57,4 @@ export interface IDocument {
 
     // TODO Should I hide this internally on the message - doesn't seem to be a primary object
     submitLatencyMessage(message: ILatencyMessage);
-
-    submitSaveMessage(message: ICollaborativeObjectSave);
 }
