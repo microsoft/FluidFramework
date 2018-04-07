@@ -43,7 +43,7 @@ function updateMetrics(metrics: IScribeMetrics, ackProgressBar: HTMLElement, typ
         updateProgressBar(ackProgressBar, metrics.ackProgress);
         updateProgressBar(typingProgressBar, metrics.typingProgress);
     }
- 
+
     if (metrics.ackRate) {
         document.getElementById("ack-rate").innerText =
             `Ack rate: ${(metrics.ackRate).toFixed(2)} characters/second`;
