@@ -24,4 +24,8 @@ export class TestDocumentDeltaConnection implements api.IDocumentDeltaConnection
     public submit(message: api.IDocumentMessage): Promise<void> {
         return Promise.resolve();
     }
+
+    public disconnect() {
+        return;
+    }
 }

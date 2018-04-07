@@ -10,7 +10,6 @@ import {
     ICollaborativeObject,
     ICollaborativeObjectSave,
     IDeltaConnection,
-    IDeltaManager,
     IDistributedObject,
     IDistributedObjectServices,
     IDocumentAttributes,
@@ -219,6 +218,7 @@ export class Document extends EventEmitter {
             token,
             header);
         await document.connect(token);
+        document.deltaManager.outbound.resume();
 
         // Make a reservation for the root object
         document.reserveDistributedObject("root");
@@ -259,7 +259,7 @@ export class Document extends EventEmitter {
         document._deltaManager.start();
 
         // If it's a new document we create the root map object - otherwise we wait for it to become available
-        if (!document._deltaManager.connection.existing) {
+        if (!document.connectDetails.existing) {
             document.createAttached("root", mapExtension.MapExtension.Type);
         } else {
             await document.get("root");
@@ -334,15 +334,17 @@ export class Document extends EventEmitter {
     private messagesSinceMSNChange = new Array<ISequencedDocumentMessage>();
     private clients = new Set<string>();
 
+    private connectDetails: api.IConnectionDetails;
+
     public get clientId(): string {
-        return this._deltaManager.connection.clientId;
+        return this.connectDetails.clientId;
     }
 
     public get id(): string {
         return this._id;
     }
 
-    public get deltaManager(): IDeltaManager {
+    public get deltaManager(): api.IDeltaManager {
         return this._deltaManager;
     }
 
@@ -350,14 +352,14 @@ export class Document extends EventEmitter {
      * Flag indicating whether the document already existed at the time of load
      */
     public get existing(): boolean {
-        return this._deltaManager.connection.existing;
+        return this.connectDetails.existing;
     }
 
     /**
      * Returns the parent branch for this document
      */
     public get parentBranch(): string {
-        return this._deltaManager.connection.parentBranch;
+        return this.connectDetails.parentBranch;
     }
 
     /**
@@ -394,6 +396,13 @@ export class Document extends EventEmitter {
                 this.service,
                 connect,
                 {
+                    disconnect: (message: string) => {
+                        debug(`Disconnected`, message);
+                    },
+                    nack: (target: number) => {
+                        // If I have to rejoin then this doesn't matter?
+                        debug(`Connection NACK'ed - target sequence number is ${target}`);
+                    },
                     prepare: async (message) => {
                         return this.prepareRemoteMessage(message);
                     },
@@ -548,23 +557,23 @@ export class Document extends EventEmitter {
      * Returns the user id connected to the document.
      */
     public getUser(): any {
-        return this._deltaManager.connection.user;
+        return this.connectDetails.user;
     }
 
     public getClients(): Set<string> {
         return new Set<string>(this.clients);
     }
 
-    private connect(token: string): Promise<void> {
-        return this._deltaManager.connect(token);
+    private async connect(token: string): Promise<void> {
+        this.connectDetails = await this._deltaManager.connect(token);
     }
 
     private snapshotCore(): ITree {
         const entries: ITreeEntry[] = [];
 
         // TODO: support for branch snapshots. For now simply no-op when a branch snapshot is requested
-        if (this._deltaManager.connection.parentBranch) {
-            debug(`Skipping snapshot due to being branch of ${this._deltaManager.connection.parentBranch}`);
+        if (this.connectDetails.parentBranch) {
+            debug(`Skipping snapshot due to being branch of ${this.connectDetails.parentBranch}`);
             return;
         }
 
@@ -736,7 +745,7 @@ export class Document extends EventEmitter {
             const envelope = message.contents as IEnvelope;
             const objectDetails = this.distributedObjects[envelope.address];
             return objectDetails.connection.prepare(message);
-        } else if (message.type === api.AttachObject && message.clientId !== this._deltaManager.connection.clientId) {
+        } else if (message.type === api.AttachObject && message.clientId !== this.connectDetails.clientId) {
             const attachMessage = message.contents as IAttachMessage;
 
             // create storage service that wraps the attach data
@@ -791,7 +800,7 @@ export class Document extends EventEmitter {
 
                 // If a non-local operation then go and create the object - otherwise mark it as officially
                 // attached.
-                if (message.clientId !== this._deltaManager.connection.clientId) {
+                if (message.clientId !== this.connectDetails.clientId) {
                     this.fulfillDistributedObject(context.value as ICollaborativeObject, context.services);
                 } else {
                     // Document sequence number references <= message.sequenceNumber should map to the object's 0

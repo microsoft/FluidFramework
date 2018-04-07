@@ -19,6 +19,10 @@ export class TestDocumentDeltaConnection implements api.IDocumentDeltaConnection
     public submit(message: api.IDocumentMessage): Promise<void> {
         throw new Error("Method not implemented.");
     }
+
+    public disconnect() {
+        return;
+    }
 }
 
 export class TestDocumentStorageService implements api.IDocumentStorageService {

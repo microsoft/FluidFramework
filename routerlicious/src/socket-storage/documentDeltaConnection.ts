@@ -114,4 +114,8 @@ export class DocumentDeltaConnection implements api.IDocumentDeltaConnection {
         this.submitManager.add("submitOp", { deferred, message } );
         return deferred.promise;
     }
+
+    public disconnect() {
+        this.socket.disconnect();
+    }
 }
