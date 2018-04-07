@@ -191,6 +191,12 @@ let commands: ICmd[] = [
     },
     {
         exec: (f) => {
+            f.setFont("consolas","18px");
+        },
+        key: "consolas font",
+    },
+    {
+        exec: (f) => {
             f.toggleItalic();
         },
         key: "italic",
@@ -2424,9 +2430,13 @@ function tokenToItems(
         divHeight = docContext.headerDivHeight;
     }
     if (leadSegment.properties) {
+        let fontFamily = "Times";
+        if (leadSegment.properties.fontFamily) {
+            fontFamily = leadSegment.properties.fontFamily;
+        }
         let fontSize = leadSegment.properties.fontSize;
         if (fontSize !== undefined) {
-            lfontstr = `${fontSize} Times`;
+            lfontstr = `${fontSize} ${fontFamily}`;
             divHeight = +fontSize;
         }
         // this is not complete because can be % or normal etc.
@@ -4548,6 +4558,21 @@ export class FlowView extends ui.Component {
 
     public toggleUnderline() {
         this.toggleWordOrSelection("textDecoration", "underline", null);
+    }
+
+    public setFont(family: string, size = "18px") {
+        let sel = this.cursor.getSelection();
+        if (sel) {
+            this.clearSelection(false);
+            this.sharedString.annotateRange({ fontFamily: family, fontSize: size }, sel.start, sel.end);
+        } else {
+            let wordRange = getCurrentWord(this.cursor.pos, this.sharedString.client.mergeTree);
+            if (wordRange) {
+                this.sharedString.annotateRange({ font: family, fontSize: size }, wordRange.wordStart, wordRange.wordEnd);
+            }
+        }
+        this.updatePGInfo(this.cursor.pos);
+        this.localQueueRender(this.cursor.pos);
     }
 
     public toggleWordOrSelection(name: string, valueOn: string, valueOff: string) {
