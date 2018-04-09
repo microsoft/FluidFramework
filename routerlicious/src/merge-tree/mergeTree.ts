@@ -3363,22 +3363,27 @@ export class MergeTree {
         }
     }
 
+    tardisRangeFromClient(rangeStart: number, rangeEnd: number, fromSeq: number, toSeq: number, fromClientId: number, 
+        toClientId = NonCollabClient) {
+            let ranges = <Base.IIntegerRange[]>[];
+            let recordRange = (segment: Segment, pos: number, refSeq: number, clientId: number, segStart: number,
+                segEnd: number) => {
+                let offset = this.getOffset(segment, toSeq, toClientId);
+                if (segStart < 0) {
+                    segStart = 0;
+                }
+                if (segEnd > segment.cachedLength) {
+                    segEnd = segment.cachedLength;
+                }
+                ranges.push({ start: offset + segStart, end: offset + segEnd });
+                return true;
+            }
+            this.mapRange({ leaf: recordRange }, fromSeq, fromClientId, undefined, rangeStart, rangeEnd);
+            return ranges;
+    }
+
     tardisRange(rangeStart: number, rangeEnd: number, fromSeq: number, toSeq: number, toClientId = NonCollabClient) {
-        let ranges = <Base.IIntegerRange[]>[];
-        let recordRange = (segment: Segment, pos: number, refSeq: number, clientId: number, segStart: number,
-            segEnd: number) => {
-            let offset = this.getOffset(segment, toSeq, toClientId);
-            if (segStart < 0) {
-                segStart = 0;
-            }
-            if (segEnd > segment.cachedLength) {
-                segEnd = segment.cachedLength;
-            }
-            ranges.push({ start: offset + segStart, end: offset + segEnd });
-            return true;
-        }
-        this.mapRange({ leaf: recordRange }, fromSeq, NonCollabClient, undefined, rangeStart, rangeEnd);
-        return ranges;
+        return this.tardisRangeFromClient(rangeStart, rangeEnd, fromSeq, toSeq, NonCollabClient, toClientId);
     }
 
     getLength(refSeq: number, clientId: number) {
