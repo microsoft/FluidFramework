@@ -37,6 +37,11 @@ export class DocumentDeltaConnection implements api.IDocumentDeltaConnection {
         };
 
         const connection = await new Promise<messages.IConnected>((resolve, reject) => {
+            // Listen for connection issues
+            socket.on("connect_error", (error) => {
+                reject(error);
+            });
+
             socket.emit(
                 "connectDocument",
                 connectMessage,

@@ -330,10 +330,9 @@ export class Document extends EventEmitter {
     // tslint:enable:variable-name
 
     private lastMinSequenceNumber;
-
     private messagesSinceMSNChange = new Array<ISequencedDocumentMessage>();
     private clients = new Set<string>();
-
+    private connecting: Deferred<void>;
     private connectDetails: api.IConnectionDetails;
 
     public get clientId(): string {
@@ -398,10 +397,12 @@ export class Document extends EventEmitter {
                 {
                     disconnect: (message: string) => {
                         debug(`Disconnected`, message);
+                        this.connect(this.token);
                     },
                     nack: (target: number) => {
                         // If I have to rejoin then this doesn't matter?
                         debug(`Connection NACK'ed - target sequence number is ${target}`);
+                        this.connect(this.token);
                     },
                     prepare: async (message) => {
                         return this.prepareRemoteMessage(message);
@@ -565,7 +566,28 @@ export class Document extends EventEmitter {
     }
 
     private async connect(token: string): Promise<void> {
-        this.connectDetails = await this._deltaManager.connect(token);
+        if (this.connecting) {
+            return this.connecting.promise;
+        }
+
+        this.connecting = new Deferred<void>();
+        this.connectCore(token);
+
+        return this.connecting.promise;
+    }
+
+    private async connectCore(token: string) {
+        this._deltaManager.connect(token).then(
+            (details) => {
+                this.connectDetails = details;
+                this.connecting.resolve();
+                this.connecting = null;
+            },
+            (error) => {
+                const reconnectDelay = 1000;
+                debug(`Connection failed - trying again in ${reconnectDelay}ms`, error);
+                setTimeout(() => this.connectCore(token), reconnectDelay);
+            });
     }
 
     private snapshotCore(): ITree {
