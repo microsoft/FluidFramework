@@ -1,4 +1,4 @@
-import { Modal, Form, Input, Radio } from 'antd';
+import { Modal, Form, Icon, Input, Radio } from 'antd';
 import { FormComponentProps } from 'antd/lib/form';
 import * as React from "react";
 import "antd/lib/modal/style/css";
@@ -67,12 +67,39 @@ export class CreateTenantModal extends React.Component<ITenantCreateProps, ITena
             )}
           </FormItem>
           {this.state.githubSelected &&
-            <FormItem label="Something">
-              {getFieldDecorator('something', {
-                rules: [{ required: true, message: 'Please input encryption key for the tenant!' }],
+            <FormItem label="Repository">
+              {getFieldDecorator('repository', {
+                rules: [{ required: true, message: 'Please input github repository name!' }],
               })(
                 <Input />
               )}
+            </FormItem>
+          }
+          {this.state.githubSelected &&
+            <FormItem label="Owner">
+            {getFieldDecorator('owner', {
+              rules: [{ required: true, message: 'Please input repository owner name!' }],
+            })(
+              <Input />
+            )}
+            </FormItem>
+          }
+          {this.state.githubSelected &&
+            <FormItem label="Username">
+            {getFieldDecorator('username', {
+              rules: [{ required: true, message: 'Please input github username!' }],
+            })(
+              <Input prefix={<Icon type="user" style={{ color: 'rgba(0,0,0,.25)' }} />} placeholder="Username" />
+            )}
+            </FormItem>
+          }
+          {this.state.githubSelected &&
+            <FormItem label="Password">
+            {getFieldDecorator('password', {
+              rules: [{ required: true, message: 'Please input github personal access token!' }],
+            })(
+              <Input prefix={<Icon type="lock" style={{ color: 'rgba(0,0,0,.25)' }} />} type="password" placeholder="Password" />
+            )}
             </FormItem>
           }
         </Form>
