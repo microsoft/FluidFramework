@@ -177,8 +177,9 @@ export class SharedString extends CollaborativeMap {
     }
 
     public transaction(groupOp: ops.IMergeTreeGroupMsg) {
-        this.client.localTransaction(groupOp);
+        let segmentGroup = this.client.localTransaction(groupOp);
         this.submitIfAttached(groupOp);
+        return segmentGroup;
     }
 
     public annotateRange(props: Properties.PropertySet, start: number, end: number, op?: ops.ICombiningOp) {

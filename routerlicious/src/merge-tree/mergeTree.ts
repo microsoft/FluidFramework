@@ -2265,8 +2265,8 @@ export class Client {
         }
     }
 
-    localTransaction(groupOp: ops.IMergeTreeGroupMsg) {
-        this.mergeTree.startGroupOperation();
+    localTransaction(groupOp: ops.IMergeTreeGroupMsg, segmentGroup?: SegmentGroup) {
+        segmentGroup = this.mergeTree.startGroupOperation(segmentGroup);
         for (let op of groupOp.ops) {
             switch (op.type) {
                 case ops.MergeTreeDeltaType.INSERT:
@@ -2324,6 +2324,7 @@ export class Client {
             }
         }
         this.mergeTree.endGroupOperation();
+        return segmentGroup;
     }
 
     annotateSegmentLocal(props: Properties.PropertySet, start: number, end: number, op: ops.ICombiningOp) {
@@ -2980,11 +2981,16 @@ export class MergeTree {
         return b;
     }
 
-    startGroupOperation() {
+    startGroupOperation(liveSegmentGroup?: SegmentGroup) {
         // TODO: assert undefined
         if (this.collabWindow.collaborating) {
-            this.transactionSegmentGroup = <SegmentGroup>{ segments: [] };
-            this.pendingSegments.enqueue(this.transactionSegmentGroup);
+            if (liveSegmentGroup) {
+                this.transactionSegmentGroup = liveSegmentGroup;
+            } else {
+                this.transactionSegmentGroup = <SegmentGroup>{ segments: [] };
+                this.pendingSegments.enqueue(this.transactionSegmentGroup);
+            }
+            return this.transactionSegmentGroup;
         }
     }
 

@@ -191,9 +191,33 @@ let commands: ICmd[] = [
     },
     {
         exec: (f) => {
-            f.setFont("consolas","18px");
+            f.setFont("courier new", "18px");
         },
-        key: "consolas font",
+        key: "Courier font",
+    },
+    {
+        exec: (f) => {
+            f.setFont("tahoma", "18px");
+        },
+        key: "Tahoma font",
+    },
+    {
+        exec: (f) => {
+            f.setFont("georgia", "18px");
+        },
+        key: "Georgia font",
+    },
+    {
+        exec: (f) => {
+            f.setFont("sans-serif", "18px");
+        },
+        key: "sans font",
+    },
+    {
+        exec: (f) => {
+            f.setFont("cursive", "18px");
+        },
+        key: "cursive font",
     },
     {
         exec: (f) => {
@@ -806,13 +830,25 @@ function getTextHeight(elm: HTMLDivElement) {
     }
 }
 
+let textWidthCache = new Map<string, Map<string, number>>();
+
 function getTextWidth(text: string, font: string) {
-    // re-use canvas object for better performance
-    const canvas = cachedCanvas || (cachedCanvas = document.createElement("canvas"));
-    const context = canvas.getContext("2d");
-    context.font = font;
-    const metrics = context.measureText(text);
-    return metrics.width;
+    let fontMap = textWidthCache.get(font);
+    let w: number;
+    if (!fontMap) {
+        fontMap = new Map<string, number>();
+    } else {
+        w = fontMap.get(text);
+    }
+    if (w === undefined) {
+        const canvas = cachedCanvas || (cachedCanvas = document.createElement("canvas"));
+        const context = canvas.getContext("2d");
+        context.font = font;
+        const metrics = context.measureText(text);
+        w = metrics.width;
+        fontMap.set(text, w);
+    }
+    return w;
 }
 
 function getMultiTextWidth(texts: string[], font: string) {
@@ -1684,13 +1720,18 @@ interface IRowMarker extends SharedString.Marker {
 let tableIdSuffix = 0;
 let boxIdSuffix = 0;
 let rowIdSuffix = 0;
+// let columnIdSuffix = 0;
 
 function createRelativeMarkerOp(
     relativePos1: SharedString.IRelativePosition, id: string,
-    refType: SharedString.ReferenceType, rangeLabels: string[], tileLabels?: string[]) {
+    refType: SharedString.ReferenceType, rangeLabels: string[],
+    tileLabels?: string[], props?: SharedString.PropertySet) {
 
-    let props = <SharedString.MapLike<any>>{
-    };
+    if (!props) {
+        props = <SharedString.MapLike<any>>{
+        };
+    }
+
     if (id.length > 0) {
         props[SharedString.reservedMarkerIdKey] = id;
     }
@@ -1731,40 +1772,23 @@ function createMarkerOp(
     };
 }
 
-// linear search for now (can stash column index on box but then need to invalidate)
-/*function insertColumn(table: TableView, box: BoxView) {
-    for (let columnIndex = 0, colCount = table.columns.length; columnIndex < colCount; columnIndex++) {
-        let column = table.columns[columnIndex];
-        for (let colBox of column.boxes) {
-            if (colBox === box) {
-                table.insertColumnRight(box, columnIndex);
-            }
-        }
-    }
-}
-*/
 let endPrefix = "end-";
 
 function createBoxRelative(opList: SharedString.IMergeTreeOp[], idBase: string,
-    relpos: SharedString.IRelativePosition, word?: string) {
-    let boxId = idBase + `box${boxIdSuffix++}`;
+    relpos: SharedString.IRelativePosition, boxId?: string,
+    extraProperties?: SharedString.PropertySet) {
+    if (!boxId) {
+        boxId = idBase + `box${boxIdSuffix++}`;
+    }
     let boxEndId = endPrefix + boxId;
     opList.push(createRelativeMarkerOp(relpos, boxEndId,
-        SharedString.ReferenceType.NestEnd, ["box"]));
+        SharedString.ReferenceType.NestEnd, ["box"], undefined, extraProperties));
     let boxEndRelPos = <SharedString.IRelativePosition>{
         before: true,
         id: boxEndId,
     };
     opList.push(createRelativeMarkerOp(boxEndRelPos, boxId,
-        SharedString.ReferenceType.NestBegin, ["box"]));
-    if (word) {
-        let insertStringOp = <SharedString.IMergeTreeInsertMsg>{
-            relativePos1: boxEndRelPos,
-            text: word,
-            type: SharedString.MergeTreeDeltaType.INSERT,
-        };
-        opList.push(insertStringOp);
-    }
+        SharedString.ReferenceType.NestBegin, ["box"], undefined, extraProperties));
     let pgOp = createRelativeMarkerOp(boxEndRelPos, boxId + "C",
         SharedString.ReferenceType.Tile, [], ["pg"]);
     opList.push(pgOp);
@@ -1793,7 +1817,73 @@ function createBox(opList: SharedString.IMergeTreeOp[], idBase: string, pos: num
     pos++;
     return pos;
 }
+/*
 
+function createColumnCellOp(flowView: FlowView, rowView: RowView, prevBoxView: BoxView, colId: string,
+    extraProperties?: SharedString.PropertySet) {
+    let opList = <SharedString.IMergeTreeInsertMsg[]>[];
+    let rowId = rowView.rowMarker.getId();
+    let boxId = rowId + "X" + colId;
+    createBoxRelative(opList, undefined, { id: prevBoxView.endMarker.getId() }, boxId,
+        extraProperties);
+    let groupOp = <SharedString.IMergeTreeGroupMsg>{
+        ops: opList,
+        type: SharedString.MergeTreeDeltaType.GROUP,
+    };
+    return groupOp;
+}
+
+const newColumnProp = "newColumnId";
+function insertColumnCellForRow(flowView: FlowView, rowView: RowView,
+    columnOffset: number, colId: string, segmentGroup: SharedString.SegmentGroup, shared = false) {
+    if (columnOffset < rowView.boxes.length) {
+        let prevBoxView = rowView.boxes[columnOffset];
+        let groupOp = createColumnCellOp(flowView, rowView, prevBoxView, colId);
+        flowView.sharedString.client.localTransaction(groupOp, segmentGroup);
+    }
+    // REVIEW: place cell at end of row even if not enough boxes preceding
+}
+function finishInsertedColumn(op: SharedString.IMergeTreeInsertMsg, flowView: FlowView) {
+    // TODO: error checking
+    let cellId = op.props[SharedString.reservedMarkerIdKey];
+    let cellMarker = <IBoxMarker>flowView.client.mergeTree.getSegmentFromId(cellId);
+    let cellPos = getOffset(flowView, cellMarker);
+    let cellPosStack =
+        flowView.client.mergeTree.getStackContext(cellPos, flowView.client.getClientId(), ["table", "box", "row"]);
+    let docContext = buildDocumentContext(flowView.viewportDiv);
+    let tableMarker = <SharedString.Marker>cellPosStack["table"].top();
+    let tableMarkerPos = getOffset(flowView, tableMarker);
+    let rowMarker = <IRowMarker>cellPosStack["row"].top();
+    let tableView = parseTable(tableMarker, tableMarkerPos, docContext, flowView);
+    let enclosingRowView = rowMarker.view;
+    let colId = cellMarker.properties[newColumnProp];
+    for (let rowView of tableView.rows) {
+        if (rowView!==enclosingRowView) {
+
+        }
+    }
+}
+
+function insertColumn(flowView: FlowView, prevBoxView: BoxView, rowView: RowView,
+    tableView: TableView) {
+    let columnOffset = 0;
+    while (columnOffset < rowView.boxes.length) {
+        if (rowView.boxes[columnOffset] === prevBoxView) {
+            break;
+        }
+        columnOffset++;
+    }
+    let colId = `${flowView.client.longClientId}Col${columnIdSuffix++}`;
+    let groupOp = createColumnCellOp(flowView, rowView, prevBoxView, colId,
+        { [newColumnProp]: colId });
+    let segmentGroup = flowView.sharedString.transaction(groupOp);
+    // fill box into other rows
+    for (let otherRowView of tableView.rows) {
+        insertColumnCellForRow(flowView, otherRowView, columnOffset, colId,
+            segmentGroup);
+    }
+}
+*/
 function createTable(pos: number, flowView: FlowView, nrows = 3, nboxes = 3) {
     let pgAtStart = true;
     if (pos > 0) {
@@ -1860,7 +1950,6 @@ function createTableRelative(pos: number, flowView: FlowView, nrows = 3, nboxes 
             }
         }
     }
-    let content = ["aardvark", "racoon", "jackelope", "springbok", "tiger", "lion", "eland", "anaconda", "fox"];
     let idBase = flowView.client.longClientId;
     idBase += `T${tableIdSuffix++}`;
     let opList = <SharedString.IMergeTreeInsertMsg[]>[];
@@ -1885,13 +1974,8 @@ function createTableRelative(pos: number, flowView: FlowView, nrows = 3, nboxes 
         opList.push(createRelativeMarkerOp(endTablePos, rowId,
             SharedString.ReferenceType.NestBegin, ["row"]));
         pos++;
-        let popBox = false;
         for (let box = 0; box < nboxes; box++) {
-            if (popBox) {
-                createBoxRelative(opList, idBase, endTablePos, content[(box + (nboxes * row)) % content.length]);
-            } else {
-                createBoxRelative(opList, idBase, endTablePos);
-            }
+            createBoxRelative(opList, idBase, endTablePos);
         }
         opList.push(createRelativeMarkerOp(endTablePos, endPrefix + rowId,
             SharedString.ReferenceType.NestEnd, ["row"]));
@@ -2286,7 +2370,10 @@ function renderTable(
     let flowView = layoutInfo.flowView;
     let mergeTree = flowView.client.mergeTree;
     let tablePos = mergeTree.getOffset(table, SharedString.UniversalSequenceNumber, flowView.client.getClientId());
-    let tableView = parseTable(table, tablePos, docContext, flowView);
+    let tableView = table.view;
+    if (!tableView) {
+        tableView = parseTable(table, tablePos, docContext, flowView);
+    }
     // let docContext = buildDocumentContext(viewportDiv);
     let viewportWidth = parseInt(layoutInfo.viewport.div.style.width, 10);
 
@@ -3459,7 +3546,7 @@ export class FlowView extends ui.Component {
 
         this.cmdTree = new SharedString.Collections.TST<ICmd>();
         for (let command of commands) {
-            this.cmdTree.put(command.key, command);
+            this.cmdTree.put(command.key.toLowerCase(), command);
         }
 
         this.client = sharedString.client;
@@ -4731,7 +4818,7 @@ export class FlowView extends ui.Component {
             }
             case CharacterCodes.M: {
                 this.activeSearchBox = searchBoxCreate(this.viewportDiv, (searchString) => {
-                    let prefix = this.activeSearchBox.getSearchString();
+                    let prefix = this.activeSearchBox.getSearchString().toLowerCase();
                     let items = this.cmdTree.pairsWithPrefix(prefix).map((res) => {
                         return res.val;
                     }).filter((cmd) => {
