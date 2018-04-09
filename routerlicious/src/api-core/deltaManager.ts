@@ -2,7 +2,6 @@ import * as assert from "assert";
 import * as queue from "async/queue";
 import { EventEmitter } from "events";
 import cloneDeep = require("lodash/cloneDeep");
-import extend = require("lodash/extend");
 import { Deferred, IAuthenticatedUser } from "../core-utils";
 import { debug } from "./debug";
 import * as protocol from "./protocol";
@@ -113,8 +112,6 @@ export interface IDeltaHandlerStrategy {
     nack: (target: number) => void;
 }
 
-type OutboundMessage = protocol.IDocumentMessage & { _deferred: Deferred<void> };
-
 class DeltaConnection extends EventEmitter {
     public static async Connect(id: string, token: string, service: storage.IDocumentService) {
         const connection = await service.connectToDeltaStream(id, token);
@@ -141,7 +138,7 @@ class DeltaConnection extends EventEmitter {
     private _details: IConnectionDetails;
     private _nacked = false;
     private _connected = true;
-    private _outbound: DeltaQueue<OutboundMessage>;
+    private _outbound: DeltaQueue<protocol.IDocumentMessage>;
     // tslint:enable:variable-name
 
     private constructor(private connection: storage.IDocumentDeltaConnection) {
@@ -179,9 +176,8 @@ class DeltaConnection extends EventEmitter {
         });
 
         // Queue for outbound message processing
-        this._outbound = new DeltaQueue<OutboundMessage>((op, callback) => {
-            const submitP = connection.submit(op);
-            op._deferred.resolve(submitP);
+        this._outbound = new DeltaQueue<protocol.IDocumentMessage>((op, callback) => {
+            connection.submit(op);
             callback();
         });
 
@@ -197,18 +193,8 @@ class DeltaConnection extends EventEmitter {
         this.removeAllListeners();
     }
 
-    public submit(message: protocol.IDocumentMessage): Promise<void> {
-        // TODO need to verify this logic...
-
-        if (this.nacked) {
-            debug("In nack'ed state - not submitting");
-            return Promise.resolve();
-        } else {
-            const deferred = new Deferred<void>();
-            const task = extend(message, { _deferred: deferred });
-            this._outbound.push(task);
-            return deferred.promise;
-        }
+    public submit(message: protocol.IDocumentMessage): void {
+        this._outbound.push(message);
     }
 }
 
@@ -327,7 +313,7 @@ export class DeltaManager implements IDeltaManager {
     /**
      * Submits a new delta operation
      */
-    public submit(type: string, contents: any): Promise<void> {
+    public submit(type: string, contents: any): void {
         // Start adding trace for the op.
         const traces: protocol.ITrace[] = [ { service: "client", action: "start", timestamp: Date.now()}];
         const message: protocol.IDocumentMessage = {
@@ -340,7 +326,7 @@ export class DeltaManager implements IDeltaManager {
 
         this.readonly = false;
         this.stopSequenceNumberUpdate();
-        return this.submitCore(message);
+        this.connection.submit(message);
     }
 
     /**
@@ -356,7 +342,7 @@ export class DeltaManager implements IDeltaManager {
         };
 
         this.readonly = false;
-        return this.submitCore(message);
+        this.connection.submit(message);
     }
 
     public async connect(token: string): Promise<IConnectionDetails> {
@@ -380,13 +366,6 @@ export class DeltaManager implements IDeltaManager {
         });
 
         return this.connection.details;
-    }
-
-    /**
-     * Begins to submit a new message to the server
-     */
-    private submitCore(message: protocol.IDocumentMessage): Promise<void> {
-        return this.connection.submit(message);
     }
 
     private enqueueMessages(messages: protocol.ISequencedDocumentMessage[]) {

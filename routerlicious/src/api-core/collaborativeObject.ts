@@ -156,17 +156,7 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
 
         // Store the message for when it is ACKed and then submit to the server if connected
         this.localOps.push(message);
-
-        this.services.deltaConnection.submit(message).then(
-            () => {
-                // Message acked by socketio. Store timestamp locally.
-                this.pingMap[message.clientSequenceNumber] = Date.now();
-            },
-            (error) => {
-                // TODO need reconnection logic upon loss of connection
-                debug(`Lost connection to server: ${JSON.stringify(error)}`);
-                this.emit("error", error);
-            });
+        this.services.deltaConnection.submit(message);
     }
 
     private attachDeltaHandler() {

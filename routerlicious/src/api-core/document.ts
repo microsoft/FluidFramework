@@ -30,7 +30,7 @@ export interface IDeltaConnection {
     /**
      * Send new messages to the server
      */
-    submit(message: IObjectMessage): Promise<void>;
+    submit(message: IObjectMessage): void;
 
     /**
      * Attaches a message handler to the delta connection

@@ -175,7 +175,7 @@ export interface IDocumentDeltaConnection {
     /**
      * Submit a new message to the server
      */
-    submit(message: IDocumentMessage): Promise<void>;
+    submit(message: IDocumentMessage): void;
 
     /**
      * Disconnects the given delta connection

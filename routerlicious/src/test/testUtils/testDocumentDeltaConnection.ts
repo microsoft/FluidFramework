@@ -21,8 +21,8 @@ export class TestDocumentDeltaConnection implements api.IDocumentDeltaConnection
     /**
      * Submits a new delta operation to the server
      */
-    public submit(message: api.IDocumentMessage): Promise<void> {
-        return Promise.resolve();
+    public submit(message: api.IDocumentMessage): void {
+        return;
     }
 
     public disconnect() {

@@ -399,14 +399,17 @@ export class Document extends EventEmitter {
                         debug(`Disconnected`, message);
                         this.connect(this.token);
                     },
+
                     nack: (target: number) => {
                         // If I have to rejoin then this doesn't matter?
                         debug(`Connection NACK'ed - target sequence number is ${target}`);
                         this.connect(this.token);
                     },
+
                     prepare: async (message) => {
                         return this.prepareRemoteMessage(message);
                     },
+
                     process: (message, context) => {
                         this.processRemoteMessage(message, context);
                     },
@@ -530,8 +533,8 @@ export class Document extends EventEmitter {
         throw new Error("Not yet implemented");
     }
 
-    public submitObjectMessage(envelope: IEnvelope): Promise<void> {
-        return this.submitMessage(api.ObjectOperation, envelope);
+    public submitObjectMessage(envelope: IEnvelope): void {
+        this.submitMessage(api.ObjectOperation, envelope);
     }
 
     public submitLatencyMessage(message: ILatencyMessage) {
@@ -694,8 +697,8 @@ export class Document extends EventEmitter {
         return message;
     }
 
-    private submitMessage(type: string, contents: any): Promise<void> {
-        return this._deltaManager.submit(type, contents);
+    private submitMessage(type: string, contents: any): void {
+        this._deltaManager.submit(type, contents);
     }
 
     private createAttached(id: string, type: string) {
