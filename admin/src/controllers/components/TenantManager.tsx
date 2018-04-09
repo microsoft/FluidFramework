@@ -1,9 +1,9 @@
-import { Popconfirm, Table } from 'antd';
+import { Form, Popconfirm, Table } from 'antd';
 import "antd/lib/popconfirm/style/css";
 import "antd/lib/table/style/css";
 import * as React from "react";
 import * as utils from "../utils";
-import { TenantCreateModal } from "./TenantCreateModal"
+import { CreateTenantModal } from "./TenantCreateModal"
 
 export interface ITableState {
     dataSource: any[];
@@ -86,6 +86,8 @@ export class TenantManager extends React.Component<ITableProps,ITableState > {
             modalConfirmLoading: true,
           });
 
+          console.log(tenant);
+
           utils.addTenant(this.props.endpoint, tenant).then((res) => {
             form.resetFields();
             this.setState({
@@ -107,6 +109,7 @@ export class TenantManager extends React.Component<ITableProps,ITableState > {
     render() {
       const { dataSource } = this.state;
       const columns = this.columns;
+      const TenantCreateModal = Form.create()(CreateTenantModal);
       return (
         <div>
           <Table bordered dataSource={dataSource} columns={columns} rowKey="_id" />
@@ -121,6 +124,7 @@ export class TenantManager extends React.Component<ITableProps,ITableState > {
             onCancel={this.handleCancel}
             onCreate={this.handleCreate}
             confirmLoading={this.state.modalConfirmLoading}
+            githubSelected={false}
           />
         </div>
       );

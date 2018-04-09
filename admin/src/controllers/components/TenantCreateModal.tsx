@@ -8,16 +8,28 @@ import "antd/lib/radio/style/css";
 
 const FormItem = Form.Item;
 
-export interface TenantCreateProps extends FormComponentProps {
+export interface ITenantCreateProps extends FormComponentProps {
   confirmLoading: boolean;
   visible: boolean;
   onCancel: () => void;
   onCreate: () => void;
+  githubSelected: false;
 }
 
-export const TenantCreateModal = Form.create()(
-  (props: TenantCreateProps) => {
-    const { confirmLoading, visible, onCancel, onCreate, form } = props;
+export interface ITenantCreateState {
+  githubSelected: boolean;
+}
+
+export class CreateTenantModal extends React.Component<ITenantCreateProps, ITenantCreateState> {
+  constructor(props: ITenantCreateProps) {
+    super(props);
+    this.state = {
+      githubSelected: this.props.githubSelected,
+    }
+  }
+
+  render() {
+    const { confirmLoading, visible, onCancel, onCreate, form } = this.props;
     const { getFieldDecorator } = form;
     return (
       <Modal
@@ -47,15 +59,30 @@ export const TenantCreateModal = Form.create()(
             {getFieldDecorator('storage', {
               initialValue: 'git',
             })(
-              <Radio.Group>
+              <Radio.Group onChange={(e) => {this.onStorageChange(e)}}>
                 <Radio value="git">git</Radio>
                 <Radio value="github">github</Radio>
                 <Radio value="cobalt">cobalt</Radio>
               </Radio.Group>
             )}
           </FormItem>
+          {this.state.githubSelected &&
+            <FormItem label="Something">
+              {getFieldDecorator('something', {
+                rules: [{ required: true, message: 'Please input encryption key for the tenant!' }],
+              })(
+                <Input />
+              )}
+            </FormItem>
+          }
         </Form>
       </Modal>
     );
   }
-);
+
+  private onStorageChange(e) {
+    this.setState({
+      githubSelected: e.target.value === "github",
+    });
+  }
+}
