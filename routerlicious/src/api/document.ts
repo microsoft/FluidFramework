@@ -45,6 +45,7 @@ import * as stream from "../stream";
 import { debug } from "./debug";
 
 const rootMapId = "root";
+const MaxReconnectDelay = 32000;
 
 // Registered services to use when loading a document
 let defaultDocumentService: IDocumentService;
@@ -150,6 +151,23 @@ async function readAndParse<T>(storage: IDocumentStorageService, sha: string): P
     return JSON.parse(decoded);
 }
 
+enum ConnectionState {
+    /**
+     * The document is no longer connected to the delta server
+     */
+    Disconnected,
+
+    /**
+     * The document has an inbound connection but is still pending for outbound deltas
+     */
+    Pending,
+
+    /**
+     * The document is fully connected
+     */
+    Connected,
+}
+
 /**
  * A document is a collection of collaborative types.
  */
@@ -217,7 +235,7 @@ export class Document extends EventEmitter {
             options,
             token,
             header);
-        await document.connect(token);
+        await document.connect(token, "Document loading");
         document.deltaManager.outbound.resume();
 
         // Make a reservation for the root object
@@ -334,6 +352,7 @@ export class Document extends EventEmitter {
     private clients = new Set<string>();
     private connecting: Deferred<void>;
     private connectDetails: api.IConnectionDetails;
+    private connectionState = ConnectionState.Disconnected;
 
     public get clientId(): string {
         return this.connectDetails.clientId;
@@ -396,14 +415,12 @@ export class Document extends EventEmitter {
                 connect,
                 {
                     disconnect: (message: string) => {
-                        debug(`Disconnected`, message);
-                        this.connect(this.token);
+                        this.connect(this.token, `Disconnected ${message}`);
                     },
 
                     nack: (target: number) => {
                         // If I have to rejoin then this doesn't matter?
-                        debug(`Connection NACK'ed - target sequence number is ${target}`);
-                        this.connect(this.token);
+                        this.connect(this.token, `Connection NACK'ed - target sequence number is ${target}`);
                     },
 
                     prepare: async (message) => {
@@ -568,29 +585,41 @@ export class Document extends EventEmitter {
         return new Set<string>(this.clients);
     }
 
-    private async connect(token: string): Promise<void> {
+    private async connect(token: string, reason: string): Promise<void> {
         if (this.connecting) {
             return this.connecting.promise;
         }
 
+        const reconnectDelay = 1000;
         this.connecting = new Deferred<void>();
-        this.connectCore(token);
+        this.connectCore(token, reason, reconnectDelay);
 
         return this.connecting.promise;
     }
 
-    private async connectCore(token: string) {
+    private async connectCore(token: string, reason: string, delay: number) {
+        // Place back into a disconnected state while making the connection
+        this.setConnectionState(ConnectionState.Disconnected, reason);
+
+        // Begin to connect to the document
         this._deltaManager.connect(token).then(
             (details) => {
+                this.setConnectionState(ConnectionState.Pending, "Connected on Socket.IO channel");
                 this.connectDetails = details;
                 this.connecting.resolve();
                 this.connecting = null;
             },
             (error) => {
-                const reconnectDelay = 1000;
-                debug(`Connection failed - trying again in ${reconnectDelay}ms`, error);
-                setTimeout(() => this.connectCore(token), reconnectDelay);
+                delay = Math.min(delay, MaxReconnectDelay);
+                reason = `Connection failed - trying again in ${delay}ms`;
+                debug(reason, error);
+                setTimeout(() => this.connectCore(token, reason, delay * 2), delay);
             });
+    }
+
+    private setConnectionState(value: ConnectionState, reason: string) {
+        debug(`Changing from ${ConnectionState[this.connectionState]} to ${ConnectionState[value]}`, reason);
+        this.connectionState = value;
     }
 
     private snapshotCore(): ITree {
@@ -840,11 +869,13 @@ export class Document extends EventEmitter {
 
             case api.ClientJoin:
                 this.clients.add(message.contents);
-                this.emit("clientJoin", message.contents);
-
                 if (message.contents === this.clientId) {
-                    debug(`Fully joined the document@ ${message.minimumSequenceNumber}`);
+                    this.setConnectionState(
+                        ConnectionState.Connected,
+                        `Fully joined the document@ ${message.minimumSequenceNumber}`);
                 }
+
+                this.emit("clientJoin", message.contents);
 
                 break;
 

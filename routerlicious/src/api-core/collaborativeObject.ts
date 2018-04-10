@@ -157,6 +157,7 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
         // Store the message for when it is ACKed and then submit to the server if connected
         this.localOps.push(message);
         this.services.deltaConnection.submit(message);
+        this.pingMap[message.clientSequenceNumber] = Date.now();
     }
 
     private attachDeltaHandler() {
