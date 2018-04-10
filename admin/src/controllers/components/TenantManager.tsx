@@ -87,7 +87,6 @@ export class TenantManager extends React.Component<ITableProps,ITableState > {
           });
 
           console.log(tenant);
-
           utils.addTenant(this.props.endpoint, tenant).then((res) => {
             form.resetFields();
             this.setState({
@@ -125,6 +124,7 @@ export class TenantManager extends React.Component<ITableProps,ITableState > {
             onCreate={this.handleCreate}
             confirmLoading={this.state.modalConfirmLoading}
             githubSelected={false}
+            endpoint={this.props.endpoint}
           />
         </div>
       );

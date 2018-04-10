@@ -1,1 +1,1 @@
-export * from "./addTenant";
+export * from "./tenants";
