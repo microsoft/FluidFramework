@@ -34,8 +34,8 @@ data:
                 {
                     "name": "git",
                     "storage": {
-                        "url": "{{ .Values.historianUrl }}",
-                        "publicUrl": "{{ .Values.historianUrl }}",
+                        "url": "{{ .Values.endpoints.historianUrl }}",
+                        "publicUrl": "{{ .Values.endpoints.historianUrl }}",
                         "owner": "prague",
                         "repository": "prague"
                     },
@@ -44,8 +44,8 @@ data:
                 {
                     "name": "github",
                     "storage": {
-                        "url": "{{ .Values.historianUrl }}/github",
-                        "publicUrl": "{{ .Values.historianUrl }}/github",
+                        "url": "{{ .Values.endpoints.historianUrl }}/github",
+                        "publicUrl": "{{ .Values.endpoints.historianUrl }}/github",
                         "owner": "kurtb",
                         "repository": "praguedocs",
                         "direct": "https://api.github.com",
@@ -58,8 +58,8 @@ data:
                 {
                     "name": "cobalt",
                     "storage": {
-                        "url": "{{ .Values.historianUrl }}/cobalt",
-                        "publicUrl": "{{ .Values.historianUrl }}/cobalt",
+                        "url": "{{ .Values.endpoints.historianUrl }}/cobalt",
+                        "publicUrl": "{{ .Values.endpoints.historianUrl }}/cobalt",
                         "owner": "prague",
                         "repository": "prague"
                     }
