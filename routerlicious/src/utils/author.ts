@@ -1,7 +1,7 @@
 import * as queue from "async/queue";
 import clone = require("lodash/clone");
 import { api, core, MergeTree, utils } from "../client-api";
-import { IMap } from "../data-types";
+import { ICell, IMap } from "../data-types";
 
 let play: boolean = false;
 
@@ -10,6 +10,9 @@ const saveLineFrequency = 5;
 const RunningCalculationDelay = 10000;
 
 const ChartSamples = 10;
+
+let histogramData: ICell;
+let performanceData: ICell;
 
 function padTime(value: number) {
     return `0${value}`.slice(-2);
@@ -196,6 +199,33 @@ function combine(first: number[], second: number[], combine: (a, b) => number): 
     return result;
 }
 
+async function setMetrics(doc: api.Document) {
+
+    // And also load a canvas document where we will place the metrics
+    const metricsDoc = await api.load(`${doc.id}-metrics`);
+    const root = await metricsDoc.getRoot().getView();
+
+    const components = metricsDoc.createMap();
+    root.set("components", components);
+
+    // Create the two chart windows
+    const performanceChart = metricsDoc.createMap();
+    components.set("performance", performanceChart);
+    performanceChart.set("type", "chart");
+    performanceData = metricsDoc.createCell();
+    performanceChart.set("size", { width: 760, height: 480 });
+    performanceChart.set("position", { x: 10, y: 10 });
+    performanceChart.set("data", performanceData);
+
+    const histogramChart = metricsDoc.createMap();
+    components.set("histogram", histogramChart);
+    histogramData = metricsDoc.createCell();
+    histogramChart.set("type", "chart");
+    histogramChart.set("size", { width: 760, height: 480 });
+    histogramChart.set("position", { x: 790, y: 10 });
+    histogramChart.set("data", histogramData);
+}
+
 export async function typeFile(
     doc: api.Document,
     ss: MergeTree.SharedString,
@@ -206,6 +236,8 @@ export async function typeFile(
 
         let metricsArray: IScribeMetrics[] = [];
         let q: any;
+
+        await setMetrics(doc);
 
         if (writers === 1) {
             console.log("Single File");
@@ -259,30 +291,6 @@ export async function typeChunk(
     intervalTime: number,
     callback: ScribeMetricsCallback,
     queueCallback: ScribeMetricsCallback): Promise<IScribeMetrics> {
-
-    // And also load a canvas document where we will place the metrics
-    const metricsDoc = await api.load(`${doc.id}-metrics`);
-    const root = await metricsDoc.getRoot().getView();
-
-    const components = metricsDoc.createMap();
-    root.set("components", components);
-
-    // Create the two chart windows
-    const performanceChart = metricsDoc.createMap();
-    components.set("performance", performanceChart);
-    performanceChart.set("type", "chart");
-    const performanceData = metricsDoc.createCell();
-    performanceChart.set("size", { width: 760, height: 480 });
-    performanceChart.set("position", { x: 10, y: 10 });
-    performanceChart.set("data", performanceData);
-
-    const histogramChart = metricsDoc.createMap();
-    components.set("histogram", histogramChart);
-    const histogramData = metricsDoc.createCell();
-    histogramChart.set("type", "chart");
-    histogramChart.set("size", { width: 760, height: 480 });
-    histogramChart.set("position", { x: 790, y: 10 });
-    histogramChart.set("data", histogramData);
 
     const startTime = Date.now();
 
