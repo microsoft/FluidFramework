@@ -26,7 +26,8 @@
                     "publicUrl": "http://localhost:3001",
                     "owner": "prague",
                     "repository": "prague"
-                }
+                },
+                "isDefault": true
             },
             {
                 "name": "github",

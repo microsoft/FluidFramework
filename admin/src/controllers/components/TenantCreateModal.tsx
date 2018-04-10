@@ -51,7 +51,7 @@ export class CreateTenantModal extends React.Component<ITenantCreateProps, ITena
               rules: [
                 { required: true, message: 'Please input tenant name' },
                 { required: true, message: 'Name should be at least 4 characters', min: 4 },
-                { required: true, message: 'Tenant name already exists', validator: this.validateTenantName},
+                { required: true, message: 'Tenant name already exists', transform: (value: string) => value.toLowerCase(), validator: this.validateTenantName},
               ],
             })(
               <Input />

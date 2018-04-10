@@ -37,7 +37,7 @@ export class TenantManager extends React.Component<ITableProps,ITableState > {
       },
       {
         title: 'Storage',
-        dataIndex: 'storage',
+        dataIndex: 'storage.name',
       },
       {
         title: 'Operation',
@@ -88,18 +88,21 @@ export class TenantManager extends React.Component<ITableProps,ITableState > {
             modalConfirmLoading: true,
           });
 
-          console.log(tenant);
-          utils.addTenant(this.props.endpoint, tenant).then((res) => {
-            form.resetFields();
-            this.setState({
-              modalVisible: false,
-              modalConfirmLoading: false,
+          const newTenant = utils.generateTenant(tenant, this.props.tenantConfig);
+          if (newTenant === null) {
+            console.log(`No valid tenant can be generated!`);
+          } else {
+            utils.addTenant(this.props.endpoint, newTenant).then((res) => {
+              form.resetFields();
+              this.setState({
+                modalVisible: false,
+                modalConfirmLoading: false,
+              });
+              this.addNewTenant(res);
+            }, (err) => {
+              console.error(err);
             });
-            this.addNewTenant(res);
-          }, (err) => {
-            console.error(err);
-          });
-
+          }
         });
     }
 

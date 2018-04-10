@@ -38,7 +38,8 @@ data:
                         "publicUrl": "{{ .Values.historianUrl }}",
                         "owner": "prague",
                         "repository": "prague"
-                    }
+                    },
+                    "isDefault": true
                 },
                 {
                     "name": "github",
