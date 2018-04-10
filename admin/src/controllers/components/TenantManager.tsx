@@ -24,9 +24,6 @@ export class TenantManager extends React.Component<ITableProps,ITableState > {
     constructor(props: ITableProps) {
       super(props);
 
-      console.log(this.props.endpoint);
-      console.log(this.props.tenantConfig);
-
       this.columns = [{
         title: 'Name',
         dataIndex: 'name',
