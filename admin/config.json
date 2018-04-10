@@ -34,12 +34,12 @@
                 "storage": {
                     "url": "http://historian:3000/github",
                     "publicUrl": "http://localhost:3001/github",
-                    "owner": "kurtb",
-                    "repository": "praguedocs",
+                    "owner": "",
+                    "repository": "",
                     "direct": "https://api.github.com",
                     "credentials": {
-                        "user": "praguegit",
-                        "password": "8d043006d0a2704d4dd9972f848f1982026672a1"
+                        "user": "",
+                        "password": ""
                     }
                 }
             },
