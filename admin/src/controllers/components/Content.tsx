@@ -15,6 +15,7 @@ export interface IContentProps {
     data: any;
     user: any;
     endpoints: any;
+    tenantConfig: any;
 }
 
 export class Content extends React.Component<IContentProps, IContentState> {
@@ -66,7 +67,7 @@ export class Content extends React.Component<IContentProps, IContentState> {
             <main id="page-wrap">
                 <Logout name={this.props.user.displayName}/>
                 <div>
-                    <Route exact path={"/"} component={() => <Tenants data={this.props.data.tenants} endpoint={this.props.endpoints.tenantsUrl} />}/>
+                    <Route exact path={"/"} component={() => <Tenants data={this.props.data.tenants} endpoint={this.props.endpoints.tenantsUrl} tenantConfig={this.props.tenantConfig} />}/>
                     <Route path="/analytics" component={Analytics}/>
                     <Route path="/about" component={About}/>
                 </div>

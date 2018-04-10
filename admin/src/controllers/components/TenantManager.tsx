@@ -15,6 +15,7 @@ export interface ITableState {
 export interface ITableProps {
     data: any[];
     endpoint: string;
+    tenantConfig: any;
 }
 
 export class TenantManager extends React.Component<ITableProps,ITableState > {
@@ -22,6 +23,10 @@ export class TenantManager extends React.Component<ITableProps,ITableState > {
     form: any;
     constructor(props: ITableProps) {
       super(props);
+
+      console.log(this.props.endpoint);
+      console.log(this.props.tenantConfig);
+
       this.columns = [{
         title: 'Name',
         dataIndex: 'name',
@@ -39,12 +44,9 @@ export class TenantManager extends React.Component<ITableProps,ITableState > {
         dataIndex: 'operation',
         render: (text, record) => {
           return (
-            this.state.dataSource.length > 1 ?
-            (
-              <Popconfirm title="Sure to delete?" onConfirm={() => this.onDelete(record._id)}>
-                <a href="#">Delete</a>
-              </Popconfirm>
-            ) : null
+            <Popconfirm title="Sure to delete?" onConfirm={() => this.onDelete(record._id)}>
+              <a href="#">Delete</a>
+            </Popconfirm>
           );
         },
       }];
