@@ -4,6 +4,7 @@ import * as resources from "gitresources";
 import * as uuid from "uuid/v4";
 import performanceNow = require("performance-now");
 import {
+    ConnectionState,
     DeltaConnection,
     DeltaManager,
     IAttachMessage,
@@ -151,23 +152,6 @@ async function readAndParse<T>(storage: IDocumentStorageService, sha: string): P
     return JSON.parse(decoded);
 }
 
-enum ConnectionState {
-    /**
-     * The document is no longer connected to the delta server
-     */
-    Disconnected,
-
-    /**
-     * The document has an inbound connection but is still pending for outbound deltas
-     */
-    Pending,
-
-    /**
-     * The document is fully connected
-     */
-    Connected,
-}
-
 /**
  * A document is a collection of collaborative types.
  */
@@ -235,8 +219,9 @@ export class Document extends EventEmitter {
             options,
             token,
             header);
+
+        // TODO I can probably defer the connect and do it concurrent w/ the loads
         await document.connect(token, "Document loading");
-        document.deltaManager.outbound.resume();
 
         // Make a reservation for the root object
         document.reserveDistributedObject("root");
@@ -339,7 +324,7 @@ export class Document extends EventEmitter {
 
     // Map from the object ID to the collaborative object for it. If the object is not yet attached its service
     // entries will be null
-    private distributedObjects: { [key: string]: IDistributedObjectState } = {};
+    private distributedObjects = new Map<string, IDistributedObjectState>();
 
     private reservations = new Map<string, Deferred<ICollaborativeObject>>();
 
@@ -491,7 +476,7 @@ export class Document extends EventEmitter {
         // Store a reference to the object in our list of objects and then get the services
         // used to attach it to the stream
         const services = this.getObjectServices(object.id);
-        const entry = this.distributedObjects[object.id];
+        const entry = this.distributedObjects.get(object.id);
         assert.equal(entry.object, object);
         entry.connection = services.deltaConnection;
         entry.storage = services.objectStorage;
@@ -532,7 +517,7 @@ export class Document extends EventEmitter {
      * Retrieves the root collaborative object that the document is based on
      */
     public getRoot(): IMap {
-        return this.distributedObjects[rootMapId].object as IMap;
+        return this.distributedObjects.get(rootMapId).object as IMap;
     }
 
     /**
@@ -604,7 +589,7 @@ export class Document extends EventEmitter {
         // Begin to connect to the document
         this._deltaManager.connect(token).then(
             (details) => {
-                this.setConnectionState(ConnectionState.Pending, "Connected on Socket.IO channel");
+                this.setConnectionState(ConnectionState.Connecting, "Connected on Socket.IO channel", details.clientId);
                 this.connectDetails = details;
                 this.connecting.resolve();
                 this.connecting = null;
@@ -617,9 +602,34 @@ export class Document extends EventEmitter {
             });
     }
 
-    private setConnectionState(value: ConnectionState, reason: string) {
+    private setConnectionState(value: ConnectionState.Disconnected, reason: string);
+    private setConnectionState(value: ConnectionState.Connecting, reason: string, clientId: string);
+    private setConnectionState(value: ConnectionState.Connected, reason: string, clientId: string);
+    private setConnectionState(value: ConnectionState, reason: string, context?: string) {
+        if (this.connectionState === value) {
+            // Already in the desired state - exit early
+            return;
+        }
+
         debug(`Changing from ${ConnectionState[this.connectionState]} to ${ConnectionState[value]}`, reason);
         this.connectionState = value;
+
+        // Notify client objects of the change
+        for (const [, object] of this.distributedObjects) {
+            switch (value) {
+                case ConnectionState.Disconnected:
+                    object.connection.setConnectionState(value, reason);
+                    break;
+                case ConnectionState.Connecting:
+                    object.connection.setConnectionState(value, context);
+                    break;
+                case ConnectionState.Connected:
+                    object.connection.setConnectionState(value, context);
+                    break;
+                default:
+                    break;
+            }
+        }
     }
 
     private snapshotCore(): ITree {
@@ -650,10 +660,7 @@ export class Document extends EventEmitter {
             },
         });
 
-        // tslint:disable-next-line:forin
-        for (const objectId in this.distributedObjects) {
-            const object = this.distributedObjects[objectId];
-
+        for (const [objectId, object] of this.distributedObjects) {
             // If the object isn't local - and we have received the sequenced op creating the object (i.e. it has a
             // base mapping) - then we go ahead and snapshot
             if (!object.object.isLocal() && object.connection.baseMappingIsSet()) {
@@ -712,7 +719,7 @@ export class Document extends EventEmitter {
         // Allow the distributed data types to perform custom transformations
         if (message.type === api.ObjectOperation) {
             const envelope = message.contents as IEnvelope;
-            const objectDetails = this.distributedObjects[envelope.address];
+            const objectDetails = this.distributedObjects.get(envelope.address);
             envelope.contents = objectDetails.object.transform(
                 envelope.contents as IObjectMessage,
                 objectDetails.connection.transformDocumentSequenceNumber(
@@ -749,11 +756,13 @@ export class Document extends EventEmitter {
         const id = object.id;
         assert(this.reservations.has(id));
 
-        this.distributedObjects[object.id] = {
-            connection: services ? services.deltaConnection : null,
-            object,
-            storage: services ? services.objectStorage : null,
-        };
+        this.distributedObjects.set(
+            object.id,
+            {
+                connection: services ? services.deltaConnection : null,
+                object,
+                storage: services ? services.objectStorage : null,
+            });
 
         this.reservations.get(id).resolve(object);
     }
@@ -797,7 +806,7 @@ export class Document extends EventEmitter {
     private async prepareRemoteMessage(message: ISequencedDocumentMessage): Promise<any> {
         if (message.type === api.ObjectOperation) {
             const envelope = message.contents as IEnvelope;
-            const objectDetails = this.distributedObjects[envelope.address];
+            const objectDetails = this.distributedObjects.get(envelope.address);
             return objectDetails.connection.prepare(message);
         } else if (message.type === api.AttachObject && message.clientId !== this.connectDetails.clientId) {
             const attachMessage = message.contents as IAttachMessage;
@@ -843,7 +852,7 @@ export class Document extends EventEmitter {
         switch (message.type) {
             case api.ObjectOperation:
                 const envelope = message.contents as IEnvelope;
-                const objectDetails = this.distributedObjects[envelope.address];
+                const objectDetails = this.distributedObjects.get(envelope.address);
 
                 objectDetails.connection.process(message, context);
                 eventArgs.push(objectDetails.object);
@@ -860,11 +869,11 @@ export class Document extends EventEmitter {
                     // Document sequence number references <= message.sequenceNumber should map to the object's 0
                     // sequence number. We cap to the MSN to keep a tighter window and because no references should be
                     // below it.
-                    this.distributedObjects[attachMessage.id].connection.setBaseMapping(
+                    this.distributedObjects.get(attachMessage.id).connection.setBaseMapping(
                         0,
                         message.minimumSequenceNumber);
                 }
-                eventArgs.push(this.distributedObjects[attachMessage.id].object);
+                eventArgs.push(this.distributedObjects.get(attachMessage.id).object);
                 break;
 
             case api.ClientJoin:
@@ -872,7 +881,8 @@ export class Document extends EventEmitter {
                 if (message.contents === this.clientId) {
                     this.setConnectionState(
                         ConnectionState.Connected,
-                        `Fully joined the document@ ${message.minimumSequenceNumber}`);
+                        `Fully joined the document@ ${message.minimumSequenceNumber}`,
+                        this.connectDetails.clientId);
                 }
 
                 this.emit("clientJoin", message.contents);
@@ -898,9 +908,7 @@ export class Document extends EventEmitter {
             }
             this.messagesSinceMSNChange = this.messagesSinceMSNChange.slice(index);
 
-            // tslint:disable-next-line:forin
-            for (const objectId in this.distributedObjects) {
-                const object = this.distributedObjects[objectId];
+            for (const [, object] of this.distributedObjects) {
                 if (!object.object.isLocal() && object.connection.baseMappingIsSet()) {
                     object.connection.updateMinSequenceNumber(message.minimumSequenceNumber);
                 }

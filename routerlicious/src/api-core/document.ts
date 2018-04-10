@@ -15,12 +15,34 @@ export interface IDistributedObjectServices {
     objectStorage: IObjectStorageService;
 }
 
+export enum ConnectionState {
+    /**
+     * The document is no longer connected to the delta server
+     */
+    Disconnected,
+
+    /**
+     * The document has an inbound connection but is still pending for outbound deltas
+     */
+    Connecting,
+
+    /**
+     * The document is fully connected
+     */
+    Connected,
+}
+
 export interface IDeltaHandler {
     prepare: (message: ISequencedObjectMessage) => Promise<any>;
 
     process: (message: ISequencedObjectMessage, context: any) => void;
 
     minSequenceNumberChanged: (value: number) => void;
+
+    /**
+     * State change events to indicate changes to the delta connection
+     */
+    setConnectionState(state: ConnectionState, context?: any): void;
 }
 
 /**

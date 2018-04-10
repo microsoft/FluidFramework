@@ -1,6 +1,6 @@
 import * as assert from "assert";
 import { RangeTracker } from "../core-utils";
-import { IDeltaConnection, IDeltaHandler, IDocument } from "./document";
+import { ConnectionState, IDeltaConnection, IDeltaHandler, IDocument } from "./document";
 import { IEnvelope, IObjectMessage, ISequencedDocumentMessage, ISequencedObjectMessage } from "./protocol";
 
 export interface IMessageContext {
@@ -46,6 +46,13 @@ export class DeltaConnection implements IDeltaConnection {
     public attach(handler: IDeltaHandler) {
         assert(!this.handler);
         this.handler = handler;
+    }
+
+    public setConnectionState(state: ConnectionState.Disconnected, reason: string): void;
+    public setConnectionState(state: ConnectionState.Connecting, clientId: string): void;
+    public setConnectionState(state: ConnectionState.Connected, clientId: string): void;
+    public setConnectionState(state: ConnectionState, context: string) {
+        this.handler.setConnectionState(state as any, context);
     }
 
     /**

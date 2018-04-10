@@ -172,7 +172,7 @@ class DeltaConnection extends EventEmitter {
 
         // Listen for socket.io latency messages
         connection.on("pong", (latency: number) => {
-            debug(`PONG ${this.details.clientId} ${latency}`);
+            // debug(`PONG ${this.details.clientId} ${latency}`);
         });
 
         // Queue for outbound message processing
@@ -180,8 +180,6 @@ class DeltaConnection extends EventEmitter {
             connection.submit(op);
             callback();
         });
-
-        this._outbound.pause();
     }
 
     /**

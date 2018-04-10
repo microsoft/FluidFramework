@@ -82,6 +82,15 @@ export class Stream extends CollaborativeMap implements IStream {
         }
     }
 
+    protected onConnectContent(pending: api.IObjectMessage[]) {
+        // Stream can resend messages under new client id
+        for (const message of pending) {
+            this.submitLocalMessage(message.contents);
+        }
+
+        return;
+    }
+
     private initialize(data: ISnapshot) {
         this.inkSnapshot = Snapshot.Clone(data);
     }
