@@ -1,9 +1,9 @@
-import { Popconfirm, Table } from 'antd';
+import { Form, Popconfirm, Table } from 'antd';
 import "antd/lib/popconfirm/style/css";
 import "antd/lib/table/style/css";
 import * as React from "react";
 import * as utils from "../utils";
-import { TenantCreateModal } from "./TenantCreateModal"
+import { CreateTenantModal } from "./TenantCreateModal"
 
 export interface ITableState {
     dataSource: any[];
@@ -15,6 +15,7 @@ export interface ITableState {
 export interface ITableProps {
     data: any[];
     endpoint: string;
+    tenantConfig: any;
 }
 
 export class TenantManager extends React.Component<ITableProps,ITableState > {
@@ -22,6 +23,7 @@ export class TenantManager extends React.Component<ITableProps,ITableState > {
     form: any;
     constructor(props: ITableProps) {
       super(props);
+
       this.columns = [{
         title: 'Name',
         dataIndex: 'name',
@@ -32,19 +34,16 @@ export class TenantManager extends React.Component<ITableProps,ITableState > {
       },
       {
         title: 'Storage',
-        dataIndex: 'storage',
+        dataIndex: 'storage.name',
       },
       {
         title: 'Operation',
         dataIndex: 'operation',
         render: (text, record) => {
           return (
-            this.state.dataSource.length > 1 ?
-            (
-              <Popconfirm title="Sure to delete?" onConfirm={() => this.onDelete(record._id)}>
-                <a href="#">Delete</a>
-              </Popconfirm>
-            ) : null
+            <Popconfirm title="Sure to delete?" onConfirm={() => this.onDelete(record._id)}>
+              <a href="#">Delete</a>
+            </Popconfirm>
           );
         },
       }];
@@ -86,17 +85,21 @@ export class TenantManager extends React.Component<ITableProps,ITableState > {
             modalConfirmLoading: true,
           });
 
-          utils.addTenant(this.props.endpoint, tenant).then((res) => {
-            form.resetFields();
-            this.setState({
-              modalVisible: false,
-              modalConfirmLoading: false,
+          const newTenant = utils.generateTenant(tenant, this.props.tenantConfig);
+          if (newTenant === null) {
+            console.log(`No valid tenant can be generated!`);
+          } else {
+            utils.addTenant(this.props.endpoint, newTenant).then((res) => {
+              form.resetFields();
+              this.setState({
+                modalVisible: false,
+                modalConfirmLoading: false,
+              });
+              this.addNewTenant(res);
+            }, (err) => {
+              console.error(err);
             });
-            this.addNewTenant(res);
-          }, (err) => {
-            console.error(err);
-          });
-
+          }
         });
     }
 
@@ -107,6 +110,7 @@ export class TenantManager extends React.Component<ITableProps,ITableState > {
     render() {
       const { dataSource } = this.state;
       const columns = this.columns;
+      const TenantCreateModal = Form.create()(CreateTenantModal);
       return (
         <div>
           <Table bordered dataSource={dataSource} columns={columns} rowKey="_id" />
@@ -121,6 +125,8 @@ export class TenantManager extends React.Component<ITableProps,ITableState > {
             onCancel={this.handleCancel}
             onCreate={this.handleCreate}
             confirmLoading={this.state.modalConfirmLoading}
+            githubSelected={false}
+            endpoint={this.props.endpoint}
           />
         </div>
       );

@@ -33,3 +33,13 @@ export async function deleteTenant(
     const collection = await db.collection<any>(collectionName);
     return collection.deleteOne({ _id: new dbService.ObjectId(id)});
 }
+
+export async function findTenant(
+    mongoManager: dbService.MongoManager,
+    collectionName: string,
+    name: string): Promise<any> {
+
+    const db = await mongoManager.getDatabase();
+    const collection = await db.collection<any>(collectionName);
+    return collection.findOne({ name });
+}

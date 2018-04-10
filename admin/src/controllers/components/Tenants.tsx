@@ -4,6 +4,7 @@ import { TenantManager } from "./TenantManager";
 export interface ITenantsProps {
     data: any;
     endpoint: string;
+    tenantConfig: any;
 }
 
 export interface ITenantsState {
@@ -23,7 +24,7 @@ export class Tenants extends React.Component<ITenantsProps, ITenantsState> {
         return (
           <div>
             <h2 className="tenant-list-header">List of Registered Tenants</h2>
-            <TenantManager data={data} endpoint={this.props.endpoint}/>
+            <TenantManager data={data} endpoint={this.props.endpoint} tenantConfig={this.props.tenantConfig}/>
           </div>
         );
     }
