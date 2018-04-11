@@ -7,7 +7,7 @@ let play: boolean = false;
 
 const saveLineFrequency = 5;
 
-const RunningCalculationDelay = 10000;
+const RunningCalculationDelay = 5000;
 
 const ChartSamples = 10;
 
@@ -73,6 +73,7 @@ export interface IScribeMetrics {
 }
 
 export declare type ScribeMetricsCallback = (metrics: IScribeMetrics) => void;
+export declare type QueueCallback = (metrics: IScribeMetrics, doc: api.Document, ss: MergeTree.SharedString) => void;
 
 /**
  * Initializes empty chart data
@@ -244,6 +245,14 @@ export async function typeFile(
             return typeChunk(doc, ss, "p-0", fileText, intervalTime, callback, callback);
         } else {
             console.log("Multi-Author");
+
+            let docList: api.Document[] = [doc];
+            let ssList: MergeTree.SharedString[] = [ss];
+            for (let i = 1; i < writers; i++ ) {
+                docList.push(await api.load(doc.id));
+                ssList.push(await docList[i].getRoot().get("text") as MergeTree.SharedString);
+            }
+
             return (doc.getRoot().get("chunks") as Promise<IMap>)
                 .then((chunkMap) => {
                     return chunkMap.getView();
@@ -253,17 +262,19 @@ export async function typeFile(
                         // tslint:disable-next-line:variable-name
                         q = queue(async (chunkKey, _callback) => {
                             let chunk = chunkView.get(chunkKey);
-                            let newDoc = await api.load(doc.id);
-                            const root = await newDoc.getRoot();
+                            let newDoc = docList.shift();
+                            const newSs = ssList.shift();
 
-                            console.log("ClientId: " + newDoc.clientId);
-                            const newSs = (await root.get("text")) as MergeTree.SharedString;
-
-                            typeChunk(newDoc, newSs, chunkKey, chunk, intervalTime, callback, _callback);
+                            typeChunk(newDoc, newSs, chunkKey, chunk, intervalTime, callback, _callback).then;
                         }, writers);
 
                         for (let chunkKey of chunkView.keys()) {
-                            q.push(chunkKey, (metrics: IScribeMetrics) => {
+                            q.push(chunkKey, (
+                                    metrics: IScribeMetrics,
+                                    document: api.Document,
+                                    sharedString: MergeTree.SharedString) => {
+                                docList.push(document);
+                                ssList.push(sharedString);
                                 metricsArray.push(metrics);
                             });
                         }
@@ -276,7 +287,6 @@ export async function typeFile(
                     console.log("No Chunk Map: " + error);
                     return null;
                 });
-
         }
 }
 
@@ -290,7 +300,7 @@ export async function typeChunk(
     chunk: string,
     intervalTime: number,
     callback: ScribeMetricsCallback,
-    queueCallback: ScribeMetricsCallback): Promise<IScribeMetrics> {
+    queueCallback: QueueCallback): Promise<IScribeMetrics> {
 
     const startTime = Date.now();
 
@@ -301,7 +311,6 @@ export async function typeChunk(
         const histogramRange = 5;
         const histogram = new utils.Histogram(histogramRange);
 
-        chunk = normalizeText(chunk);
         const metrics: IScribeMetrics = {
             ackProgress: undefined,
             ackRate: undefined,
@@ -424,7 +433,7 @@ export async function typeChunk(
         function type(): boolean {
             // Stop typing once we reach the end
             if (readPosition === chunk.length) {
-                queueCallback(metrics);
+                queueCallback(metrics, doc, ss);
                 return false;
             }
             if (!play) {
