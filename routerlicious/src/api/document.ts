@@ -338,6 +338,7 @@ export class Document extends EventEmitter {
     private connecting: Deferred<void>;
     private connectDetails: api.IConnectionDetails;
     private connectionState = ConnectionState.Disconnected;
+    private pendingAttach = new Map<string, IAttachMessage>();
 
     public get clientId(): string {
         return this.connectDetails.clientId;
@@ -471,6 +472,7 @@ export class Document extends EventEmitter {
             snapshot,
             type: object.type,
         };
+        this.pendingAttach.set(object.id, message);
         this.submitMessage(api.AttachObject, message);
 
         // Store a reference to the object in our list of objects and then get the services
@@ -614,20 +616,29 @@ export class Document extends EventEmitter {
         debug(`Changing from ${ConnectionState[this.connectionState]} to ${ConnectionState[value]}`, reason);
         this.connectionState = value;
 
-        // Notify client objects of the change
+        // Resend all pending attach messages prior to notifying clients
+        if (this.connectionState === ConnectionState.Connected) {
+            for (const [, message] of this.pendingAttach) {
+                this.submitMessage(api.AttachObject, message);
+            }
+        }
+
+        // Notify connected client objects of the change
         for (const [, object] of this.distributedObjects) {
-            switch (value) {
-                case ConnectionState.Disconnected:
-                    object.connection.setConnectionState(value, reason);
-                    break;
-                case ConnectionState.Connecting:
-                    object.connection.setConnectionState(value, context);
-                    break;
-                case ConnectionState.Connected:
-                    object.connection.setConnectionState(value, context);
-                    break;
-                default:
-                    break;
+            if (object.connection) {
+                switch (value) {
+                    case ConnectionState.Disconnected:
+                        object.connection.setConnectionState(value, reason);
+                        break;
+                    case ConnectionState.Connecting:
+                        object.connection.setConnectionState(value, context);
+                        break;
+                    case ConnectionState.Connected:
+                        object.connection.setConnectionState(value, context);
+                        break;
+                    default:
+                        break;
+                }
             }
         }
     }
@@ -734,7 +745,10 @@ export class Document extends EventEmitter {
     }
 
     private submitMessage(type: string, contents: any): void {
-        this._deltaManager.submit(type, contents);
+        // TODO better way to control access
+        if (this.connectionState === ConnectionState.Connected) {
+            this._deltaManager.submit(type, contents);
+        }
     }
 
     private createAttached(id: string, type: string) {
@@ -866,6 +880,9 @@ export class Document extends EventEmitter {
                 if (message.clientId !== this.connectDetails.clientId) {
                     this.fulfillDistributedObject(context.value as ICollaborativeObject, context.services);
                 } else {
+                    assert(this.pendingAttach.has(attachMessage.id));
+                    this.pendingAttach.delete(attachMessage.id);
+
                     // Document sequence number references <= message.sequenceNumber should map to the object's 0
                     // sequence number. We cap to the MSN to keep a tighter window and because no references should be
                     // below it.
