@@ -7,12 +7,16 @@ let play: boolean = false;
 
 const saveLineFrequency = 5;
 
-const RunningCalculationDelay = 5000;
-
 const ChartSamples = 10;
 
 let histogramData: ICell;
 let performanceData: ICell;
+let metrics: IScribeMetrics;
+
+const ackCounter = new utils.RateCounter();
+const latencyCounter = new utils.RateCounter();
+const pingCounter = new utils.RateCounter();
+const typingCounter = new utils.RateCounter();
 
 function padTime(value: number) {
     return `0${value}`.slice(-2);
@@ -70,6 +74,7 @@ export interface IScribeMetrics {
     pingMaximum: number;
 
     typingInterval: number;
+    writers: number;
 }
 
 export declare type ScribeMetricsCallback = (metrics: IScribeMetrics) => void;
@@ -233,16 +238,42 @@ export async function typeFile(
     fileText: string,
     intervalTime: number,
     writers: number,
-    callback: ScribeMetricsCallback): Promise<IScribeMetrics> {
+    scribeCallback: ScribeMetricsCallback): Promise<IScribeMetrics> {
 
         let metricsArray: IScribeMetrics[] = [];
         let q: any;
+
+        metrics = {
+            ackProgress: undefined,
+            ackRate: undefined,
+            latencyAverage: undefined,
+            latencyMaximum: undefined,
+            latencyMinimum: undefined,
+            latencyStdDev: undefined,
+            pingAverage: undefined,
+            pingMaximum: undefined,
+            textLength: fileText.length,
+            time: 0,
+            typingInterval: intervalTime,
+            typingProgress: undefined,
+            typingRate: undefined,
+            writers,
+        };
 
         await setMetrics(doc);
 
         if (writers === 1) {
             console.log("Single File");
-            return typeChunk(doc, ss, "p-0", fileText, intervalTime, callback, callback);
+            let startTime = Date.now();
+            typingCounter.reset();
+            ackCounter.reset();
+            latencyCounter.reset();
+            pingCounter.reset();
+            return typeChunk(doc, ss, "p-0", fileText, intervalTime, scribeCallback, scribeCallback)
+                .then((metric) => {
+                    metric.time = Date.now() - startTime;
+                    return metric;
+                });
         } else {
             console.log("Multi-Author");
 
@@ -258,27 +289,38 @@ export async function typeFile(
                     return chunkMap.getView();
                 })
                 .then((chunkView) => {
+                    let totalKeys = 0;
+                    let curKey = 0;
+                    let startTime = Date.now();
+                    typingCounter.reset();
+                    ackCounter.reset();
+                    latencyCounter.reset();
+                    pingCounter.reset();
+
                     return new Promise((resolve, reject) => {
-                        // tslint:disable-next-line:variable-name
-                        q = queue(async (chunkKey, _callback) => {
+                        q = queue(async (chunkKey, queueCallback) => {
                             let chunk = chunkView.get(chunkKey);
                             let newDoc = docList.shift();
                             const newSs = ssList.shift();
-
-                            typeChunk(newDoc, newSs, chunkKey, chunk, intervalTime, callback, _callback).then;
+                            curKey++;
+                            metrics.typingProgress = curKey / totalKeys;
+                            typeChunk(newDoc, newSs, chunkKey, chunk, intervalTime, scribeCallback, queueCallback).then;
                         }, writers);
 
                         for (let chunkKey of chunkView.keys()) {
+                            totalKeys++;
                             q.push(chunkKey, (
-                                    metrics: IScribeMetrics,
+                                    metric: IScribeMetrics,
                                     document: api.Document,
                                     sharedString: MergeTree.SharedString) => {
                                 docList.push(document);
                                 ssList.push(sharedString);
-                                metricsArray.push(metrics);
+                                metricsArray.push(metric);
                             });
                         }
                         q.drain = () => {
+                            let now = Date.now();
+                            metrics.time = now - startTime;
                             resolve(metricsArray[0]);
                         };
                     });
@@ -299,10 +341,8 @@ export async function typeChunk(
     chunkKey: string,
     chunk: string,
     intervalTime: number,
-    callback: ScribeMetricsCallback,
+    scribeCallback: ScribeMetricsCallback,
     queueCallback: QueueCallback): Promise<IScribeMetrics> {
-
-    const startTime = Date.now();
 
     return new Promise<IScribeMetrics>((resolve, reject) => {
         let readPosition = 0;
@@ -311,31 +351,9 @@ export async function typeChunk(
         const histogramRange = 5;
         const histogram = new utils.Histogram(histogramRange);
 
-        const metrics: IScribeMetrics = {
-            ackProgress: undefined,
-            ackRate: undefined,
-            latencyAverage: undefined,
-            latencyMaximum: undefined,
-            latencyMinimum: undefined,
-            latencyStdDev: undefined,
-            pingAverage: undefined,
-            pingMaximum: undefined,
-            textLength: chunk.length,
-            time: 0,
-            typingInterval: intervalTime,
-            typingProgress: undefined,
-            typingRate: undefined,
-        };
-
         // Trigger a new sample after a second has elapsed
         const samplingRate = 1000;
 
-        const ackCounter = new utils.RateCounter();
-        ackCounter.reset();
-        const latencyCounter = new utils.RateCounter();
-        latencyCounter.reset();
-        const pingCounter = new utils.RateCounter();
-        pingCounter.reset();
         const messageStart: number[] = [];
 
         let mean = 0;
@@ -362,17 +380,19 @@ export async function typeChunk(
         }, 1000);
 
         ss.on("op", (message: core.ISequencedObjectMessage) => {
-            if (message.clientSequenceNumber && message.clientId === doc.clientId) {
+            if (message.clientSequenceNumber &&
+                message.clientSequenceNumber > 10 &&
+                message.clientId === doc.clientId) {
 
                 ackCounter.increment(1);
+                // Wait for at least one cycle
                 if (ackCounter.elapsed() > samplingRate) {
                     const rate = ackCounter.getRate() * 1000;
                     metrics.ackRate = rate;
-                    ackCounter.reset();
                 }
 
                 // Wait for a bit prior to starting the running calculation
-                if (Date.now() - startTime > RunningCalculationDelay) {
+                if (messageStart.length > 25) {
                     const roundTrip = Date.now() - messageStart.pop();
                     latencyCounter.increment(roundTrip);
 
@@ -398,34 +418,13 @@ export async function typeChunk(
                     mean = metrics.latencyAverage;
                 }
 
-                // We need a better way of hearing when our messages have been received and processed.
-                // For now I just assume we are the only writer and wait to receive a message with a client
-                // sequence number greater than the number of submitted operations.
-                if (message.clientSequenceNumber >= chunk.length) {
-                    const endTime = Date.now();
-                    clearInterval(metricsInterval);
-                    metrics.time = endTime - startTime;
-                    resolve(metrics);
-                }
-
-                // Notify of change in metrics
-                metrics.ackProgress = message.clientSequenceNumber / chunk.length;
-
-                callback(clone(metrics));
+                scribeCallback(clone(metrics));
             }
         });
-
-        const typingCounter = new utils.RateCounter();
-        typingCounter.reset();
 
         // Helper method to wrap a string operation with metric tracking for it
         function trackOperation(fn: () => void) {
             typingCounter.increment(1);
-            if (typingCounter.elapsed() > samplingRate) {
-                const rate = typingCounter.getRate() * 1000;
-                metrics.typingRate = rate;
-                typingCounter.reset();
-            }
             fn();
             messageStart.push(Date.now());
         }
@@ -433,6 +432,11 @@ export async function typeChunk(
         function type(): boolean {
             // Stop typing once we reach the end
             if (readPosition === chunk.length) {
+                const rate = typingCounter.getRate() * 1000;
+                metrics.typingRate = rate;
+
+                clearInterval(metricsInterval);
+                resolve(metrics);
                 queueCallback(metrics, doc, ss);
                 return false;
             }
@@ -466,13 +470,12 @@ export async function typeChunk(
                     if (lineNumber % saveLineFrequency === 0) {
                         doc.save(`Line ${lineNumber}`);
                     }
+                    metrics.typingProgress = readPosition / chunk.length;
                 } else {
                     ss.insertText(char, pos);
                     readPosition++;
                 }
             });
-
-            metrics.typingProgress = readPosition / chunk.length;
 
             return true;
         }
