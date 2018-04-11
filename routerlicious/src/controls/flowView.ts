@@ -321,6 +321,12 @@ let commands: ICmd[] = [
     },
     {
         exec: (f) => {
+            f.insertColumn();
+        },
+        key: "insert column",
+    },
+    {
+        exec: (f) => {
             f.toggleUnderline();
         },
         key: "underline",
@@ -1720,7 +1726,7 @@ interface IRowMarker extends SharedString.Marker {
 let tableIdSuffix = 0;
 let boxIdSuffix = 0;
 let rowIdSuffix = 0;
-// let columnIdSuffix = 0;
+let columnIdSuffix = 0;
 
 function createRelativeMarkerOp(
     relativePos1: SharedString.IRelativePosition, id: string,
@@ -1781,14 +1787,22 @@ function createBoxRelative(opList: SharedString.IMergeTreeOp[], idBase: string,
         boxId = idBase + `box${boxIdSuffix++}`;
     }
     let boxEndId = endPrefix + boxId;
+    let endExtraProperties: Object;
+    if (extraProperties) {
+        endExtraProperties = SharedString.extend(SharedString.createMap(), extraProperties);
+    }
     opList.push(createRelativeMarkerOp(relpos, boxEndId,
-        SharedString.ReferenceType.NestEnd, ["box"], undefined, extraProperties));
+        SharedString.ReferenceType.NestEnd, ["box"], undefined, endExtraProperties));
     let boxEndRelPos = <SharedString.IRelativePosition>{
         before: true,
         id: boxEndId,
     };
+    let startExtraProperties: Object;
+    if (extraProperties) {
+        startExtraProperties = SharedString.extend(SharedString.createMap(), extraProperties);
+    }
     opList.push(createRelativeMarkerOp(boxEndRelPos, boxId,
-        SharedString.ReferenceType.NestBegin, ["box"], undefined, extraProperties));
+        SharedString.ReferenceType.NestBegin, ["box"], undefined, startExtraProperties));
     let pgOp = createRelativeMarkerOp(boxEndRelPos, boxId + "C",
         SharedString.ReferenceType.Tile, [], ["pg"]);
     opList.push(pgOp);
@@ -1817,7 +1831,6 @@ function createBox(opList: SharedString.IMergeTreeOp[], idBase: string, pos: num
     pos++;
     return pos;
 }
-/*
 
 function createColumnCellOp(flowView: FlowView, rowView: RowView, prevBoxView: BoxView, colId: string,
     extraProperties?: SharedString.PropertySet) {
@@ -1830,7 +1843,36 @@ function createColumnCellOp(flowView: FlowView, rowView: RowView, prevBoxView: B
         ops: opList,
         type: SharedString.MergeTreeDeltaType.GROUP,
     };
+    if (extraProperties) {
+        groupOp.intent = <SharedString.IIntentSpec>{
+            name: "insertColumn",
+            params: {
+                cellId: boxId,
+            },
+        };
+    }
     return groupOp;
+}
+
+export interface IContentModel {
+    exec(op: SharedString.IMergeTreeGroupMsg, msg: core.ISequencedObjectMessage);
+}
+
+function contentModelCreate(flowView: FlowView): IContentModel {
+    function insertColumn(op: SharedString.IMergeTreeGroupMsg, msg: core.ISequencedObjectMessage) {
+        finishInsertedColumn(op.intent.params["cellId"], msg, flowView);
+    }
+
+    function exec(op: SharedString.IMergeTreeGroupMsg, msg: core.ISequencedObjectMessage) {
+        switch (op.intent.name) {
+            case "insertColumn":
+                insertColumn(op, msg);
+                break;
+        }
+    }
+    return {
+        exec,
+    };
 }
 
 const newColumnProp = "newColumnId";
@@ -1843,9 +1885,10 @@ function insertColumnCellForRow(flowView: FlowView, rowView: RowView,
     }
     // REVIEW: place cell at end of row even if not enough boxes preceding
 }
-function finishInsertedColumn(op: SharedString.IMergeTreeInsertMsg, flowView: FlowView) {
+
+function finishInsertedColumn(cellId: string, msg: core.ISequencedObjectMessage,
+    flowView: FlowView) {
     // TODO: error checking
-    let cellId = op.props[SharedString.reservedMarkerIdKey];
     let cellMarker = <IBoxMarker>flowView.client.mergeTree.getSegmentFromId(cellId);
     let cellPos = getOffset(flowView, cellMarker);
     let cellPosStack =
@@ -1856,12 +1899,32 @@ function finishInsertedColumn(op: SharedString.IMergeTreeInsertMsg, flowView: Fl
     let rowMarker = <IRowMarker>cellPosStack["row"].top();
     let tableView = parseTable(tableMarker, tableMarkerPos, docContext, flowView);
     let enclosingRowView = rowMarker.view;
-    let colId = cellMarker.properties[newColumnProp];
-    for (let rowView of tableView.rows) {
-        if (rowView!==enclosingRowView) {
-
+    let columnOffset = 0;
+    for (; columnOffset < enclosingRowView.boxes.length; columnOffset++) {
+        if (enclosingRowView.boxes[columnOffset] === cellMarker.view) {
+            break;
         }
     }
+    columnOffset--;
+    let colId = cellMarker.properties[newColumnProp];
+    for (let rowView of tableView.rows) {
+        if (rowView !== enclosingRowView) {
+            if (rowView.boxes.length > columnOffset) {
+                let prevBoxView = rowView.boxes[columnOffset];
+                let groupOp = createColumnCellOp(flowView, rowView, prevBoxView, colId);
+                if ((rowView.rowMarker.seq === SharedString.UnassignedSequenceNumber) &&
+                    (rowView.rowMarker.segmentGroup)) {
+                    flowView.sharedString.client.localTransaction(groupOp, rowView.rowMarker.segmentGroup);
+                } else {
+                    flowView.sharedString.client.setLocalSequenceNumber(msg.sequenceNumber);
+                    flowView.sharedString.client.localTransaction(groupOp);
+                    flowView.sharedString.client.resetLocalSequenceNumber();
+                }
+            }
+        }
+        // REVIEW: place cell at end of row even if not enough boxes preceding
+    }
+    parseTable(tableMarker, tableMarkerPos, docContext, flowView);
 }
 
 function insertColumn(flowView: FlowView, prevBoxView: BoxView, rowView: RowView,
@@ -1879,11 +1942,15 @@ function insertColumn(flowView: FlowView, prevBoxView: BoxView, rowView: RowView
     let segmentGroup = flowView.sharedString.transaction(groupOp);
     // fill box into other rows
     for (let otherRowView of tableView.rows) {
-        insertColumnCellForRow(flowView, otherRowView, columnOffset, colId,
-            segmentGroup);
+        if (otherRowView !== rowView) {
+            insertColumnCellForRow(flowView, otherRowView, columnOffset, colId,
+                segmentGroup);
+        }
     }
+    // flush cache
+    tableView.tableMarker.view = undefined;
 }
-*/
+
 function createTable(pos: number, flowView: FlowView, nrows = 3, nboxes = 3) {
     let pgAtStart = true;
     if (pos > 0) {
@@ -2053,31 +2120,6 @@ class TableView {
         }
     }
 
-    /*
-        public insertColumnRight(requestingBox: BoxView, columnIndex: number, flowView: FlowView) {
-            let column = this.columns[columnIndex];
-            let opList = <SharedString.IMergeTreeOp[]>[];
-            let client = flowView.client;
-            let mergeTree = client.mergeTree;
-            let tablePos = mergeTree.getOffset(this.tableMarker, SharedString.UniversalSequenceNumber,
-                client.getClientId());
-            let horizVersion = this.tableMarker.properties["horizVersion"];
-            let versionIncr = <SharedString.IMergeTreeAnnotateMsg>{
-                combiningOp: { name: "incr", defaultValue: 0 },
-                pos1: tablePos,
-                pos2: tablePos + 1,
-                props: { horizVersion: 1 },
-                type: SharedString.MergeTreeDeltaType.ANNOTATE,
-                when: { props: { horizVersion } },
-            };
-            opList.push(versionIncr);
-            let idBase = this.tableMarker.getId();
-            for (let rowIndex = 0, len = column.boxes.length; rowIndex < len; rowIndex++) {
-                let box = column.boxes[rowIndex];
-                opList.push(<SharedString.Inser)
-            }
-        }
-    */
     public updateWidth(w: number) {
         this.width = w;
         let proportionalWidthPerColumn = Math.floor(this.width / this.columns.length);
@@ -3527,6 +3569,7 @@ export class FlowView extends ui.Component {
         showCursorLocation: true,
     };
     public lastDocContext: IDocumentContext;
+    public contentModel: IContentModel;
     private lastVerticalX = -1;
     private randWordTimer: any;
     private pendingRender = false;
@@ -3549,6 +3592,7 @@ export class FlowView extends ui.Component {
             this.cmdTree.put(command.key.toLowerCase(), command);
         }
 
+        this.contentModel = contentModelCreate(this);
         this.client = sharedString.client;
         this.viewportDiv = document.createElement("div");
         this.element.appendChild(this.viewportDiv);
@@ -4785,6 +4829,23 @@ export class FlowView extends ui.Component {
         this.localQueueRender(this.cursor.pos);
     }
 
+    public insertColumn() {
+        let stack =
+            this.sharedString.client.mergeTree.getStackContext(this.cursor.pos,
+                this.sharedString.client.getClientId(), ["table", "box", "row"]);
+        if (stack.table && (!stack.table.empty())) {
+            let tableMarker = <ITableMarker>stack.table.top();
+            let rowMarker = <IRowMarker>stack.row.top();
+            let boxMarker = <IBoxMarker>stack.box.top();
+            if (!tableMarker.view) {
+                let tableMarkerPos = getOffset(this, tableMarker);
+                parseTable(tableMarker, tableMarkerPos, this.lastDocContext, this);
+            }
+            insertColumn(this, boxMarker.view, rowMarker.view, tableMarker.view);
+            this.localQueueRender(this.cursor.pos);
+        }
+    }
+
     public keyCmd(charCode: number) {
         switch (charCode) {
             case CharacterCodes.C:
@@ -5139,6 +5200,10 @@ export class FlowView extends ui.Component {
                 let opAffectsViewport = false;
                 for (let groupOp of delta.ops) {
                     opAffectsViewport = opAffectsViewport || this.applyOp(groupOp, msg);
+                }
+                if (delta.intent) {
+                    opAffectsViewport = true;
+                    this.contentModel.exec(delta, msg);
                 }
                 return opAffectsViewport;
             }

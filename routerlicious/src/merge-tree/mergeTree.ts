@@ -1793,6 +1793,7 @@ export class Client {
     shortClientBranchIdMap = <number[]>[];
     shortClientUserInfoMap = <IAuthenticatedUser[]>[];
     registerCollection = new RegisterCollection();
+    localSequenceNumber = UnassignedSequenceNumber;
     public longClientId: string;
     public userInfo: IAuthenticatedUser;
     public undoSegments: IUndoInfo[];
@@ -1805,6 +1806,14 @@ export class Client {
         this.mergeTree.clientIdToBranchId = this.shortClientBranchIdMap;
         this.q = Collections.ListMakeHead<API.ISequencedObjectMessage>();
         this.checkQ = Collections.ListMakeHead<string>();
+    }
+
+    setLocalSequenceNumber(seq: number) {
+        this.localSequenceNumber = seq;
+    }
+
+    resetLocalSequenceNumber() {
+        this.localSequenceNumber = UnassignedSequenceNumber;
     }
 
     undoSingleSequenceNumber(undoSegments: IUndoInfo[], redoSegments: IUndoInfo[]) {
@@ -2258,7 +2267,7 @@ export class Client {
     getLocalSequenceNumber() {
         let segWindow = this.mergeTree.getCollabWindow();
         if (segWindow.collaborating) {
-            return UnassignedSequenceNumber;
+            return this.localSequenceNumber;
         }
         else {
             return UniversalSequenceNumber;

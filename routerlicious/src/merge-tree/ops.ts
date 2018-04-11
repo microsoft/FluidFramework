@@ -95,8 +95,14 @@ export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
     combiningOp?: ICombiningOp;
 }
 
+export interface IIntentSpec {
+    name: string;
+    params: Object;
+}
+
 export interface IMergeTreeGroupMsg extends IMergeTreeDelta {
     type: MergeTreeDeltaType.GROUP;
+    intent: IIntentSpec;
     ops: IMergeTreeOp[];
 }
 
