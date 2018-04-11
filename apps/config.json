@@ -11,7 +11,7 @@
         "port": 3000,
         "tenantInfo": {
             "id": "prague",
-            "secretKey": "3fOUxQfNGYy1uB494iV2D71NgZ9wurHi",
+            "secretKey": "0ddca6469e340715ac5be556910680e1",
             "symmetricKey": "symmetric_key",
             "repository": "prague",
             "owner": "prague",

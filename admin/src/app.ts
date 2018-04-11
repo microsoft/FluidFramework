@@ -177,7 +177,6 @@ export function create(appConfig: any, aadConfig: any) {
 
     const routes = appRoutes.create(appConfig);
     app.use("/tenants", routes.tenants);
-    app.use("/cells", routes.cells);
     app.use("/", routes.home);
 
     // catch 404 and forward to error handler

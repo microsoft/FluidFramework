@@ -43,9 +43,9 @@ async function setChunkMap(chunks: string[]) {
 
     for (let chunk of chunks) {
         let chunkKey = "p-" + c;
-
-        chunkMap.set(chunkKey, chunk);
-
+        if (chunk !== "" ) {
+            chunkMap.set(chunkKey, chunk);
+        }
         c++;
     }
 }

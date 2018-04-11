@@ -1,4 +1,3 @@
-import cloneDeep = require("lodash/cloneDeep");
 import { ITenant, ITenantConfig, ITenantManager, ITenantStorage } from "../api-core";
 import { ICollection } from "../core";
 import { getOrCreateRepository, GitManager } from "../git-storage";
@@ -53,7 +52,7 @@ export class TenantManager implements ITenantManager {
         const tenantsCollection = await db.collection<any>(tenantsCollectionName);
 
         // Initialize the tenant manager
-        const manager = new TenantManager(tenants, tenantsCollection, config);
+        const manager = new TenantManager(tenants, tenantsCollection);
 
         return manager;
     }
@@ -61,7 +60,7 @@ export class TenantManager implements ITenantManager {
     private tenants = new Map<string, Tenant>();
     private defaultTenant: Tenant;
 
-    private constructor(tenants: Tenant[], private collection: ICollection<any>, private config: ITenantConfig[]) {
+    private constructor(tenants: Tenant[], private collection: ICollection<any>) {
         for (const tenant of tenants) {
             this.tenants.set(tenant.name, tenant);
             this.defaultTenant = tenant.isDefault() ? tenant : this.defaultTenant;
@@ -82,25 +81,19 @@ export class TenantManager implements ITenantManager {
         });
     }
 
-    // TODO: This is a complete hack to make the storage endpoint demo work.
-    // If a tenant is found in the DB, we configure a new tenant based on its storage endpoint and cash it.
-    // Ideally we should just store the storage config in DB and look up for every tenant.
     private resolveTenant(tenantId: string): Promise<ITenant> {
         return new Promise<ITenant>((resolve, reject) => {
             if (this.tenants.has(tenantId)) {
                 resolve(this.tenants.get(tenantId));
             } else {
-                this.getTenantsFromDB().then((tenantStorageMap: Map<string, string>) => {
-                    if (tenantStorageMap.has(tenantId)) {
-                        const storageName = tenantStorageMap.get(tenantId);
-                        const newConfig = cloneDeep(this.getTenantConfig(storageName));
-                        newConfig.name = tenantId;
-                        Tenant.Load(newConfig).then((tenant) => {
+                this.findTenantFromDB(tenantId).then((tenantConfig) => {
+                    if (tenantConfig === null) {
+                        reject("Invaid tenant name");
+                    } else {
+                        Tenant.Load(tenantConfig).then((tenant) => {
                             this.tenants.set(tenant.name, tenant);
                             resolve(tenant);
                         });
-                    } else {
-                        reject("Invaid tenant name");
                     }
                 }, (err) => {
                     reject(err);
@@ -109,19 +102,14 @@ export class TenantManager implements ITenantManager {
         });
     }
 
-    private getTenantConfig(storageName: string): ITenantConfig {
-        const matchedConfigs = this.config.filter((item) => item.name === storageName);
-        return matchedConfigs[0];
-    }
-
-    private getTenantsFromDB(): Promise<Map<string, string>> {
-        const tenants = new Map<string, string>();
-        return new Promise<Map<string, string>>((resolve, reject) => {
-            this.collection.findAll().then((dbTenants) => {
-                for (const dbTenant of dbTenants) {
-                    tenants.set(dbTenant.name, dbTenant.storage);
+    private findTenantFromDB(name: string): Promise<ITenantConfig> {
+        return new Promise<ITenantConfig>((resolve, reject) => {
+            this.collection.findOne({ name }).then((tenant) => {
+                if (tenant === null) {
+                    resolve(null);
+                } else {
+                    resolve(tenant.storage as ITenantConfig);
                 }
-                resolve(tenants);
             }, (error) => {
                 reject(error);
             });

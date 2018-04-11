@@ -56,6 +56,7 @@ ingress:
 endpoints:
   mongodb: mongodb://honorary-chimp-mongodb:27017
   tenantsUrl: https://admin.wu2.prague.office-int.com/tenants
+  historianUrl: https://historian.wu2.prague.office-int.com
 
 auth:
   redirectUrl: https://admin.wu2.prague.office-int.com/auth/openid/return

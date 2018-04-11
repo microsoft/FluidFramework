@@ -1,15 +1,18 @@
 import * as queue from "async/queue";
 import clone = require("lodash/clone");
 import { api, core, MergeTree, utils } from "../client-api";
-import { IMap } from "../data-types";
+import { ICell, IMap } from "../data-types";
 
 let play: boolean = false;
 
 const saveLineFrequency = 5;
 
-const RunningCalculationDelay = 10000;
+const RunningCalculationDelay = 5000;
 
 const ChartSamples = 10;
+
+let histogramData: ICell;
+let performanceData: ICell;
 
 function padTime(value: number) {
     return `0${value}`.slice(-2);
@@ -70,6 +73,7 @@ export interface IScribeMetrics {
 }
 
 export declare type ScribeMetricsCallback = (metrics: IScribeMetrics) => void;
+export declare type QueueCallback = (metrics: IScribeMetrics, doc: api.Document, ss: MergeTree.SharedString) => void;
 
 /**
  * Initializes empty chart data
@@ -196,6 +200,33 @@ function combine(first: number[], second: number[], combine: (a, b) => number): 
     return result;
 }
 
+async function setMetrics(doc: api.Document) {
+
+    // And also load a canvas document where we will place the metrics
+    const metricsDoc = await api.load(`${doc.id}-metrics`);
+    const root = await metricsDoc.getRoot().getView();
+
+    const components = metricsDoc.createMap();
+    root.set("components", components);
+
+    // Create the two chart windows
+    const performanceChart = metricsDoc.createMap();
+    components.set("performance", performanceChart);
+    performanceChart.set("type", "chart");
+    performanceData = metricsDoc.createCell();
+    performanceChart.set("size", { width: 760, height: 480 });
+    performanceChart.set("position", { x: 10, y: 10 });
+    performanceChart.set("data", performanceData);
+
+    const histogramChart = metricsDoc.createMap();
+    components.set("histogram", histogramChart);
+    histogramData = metricsDoc.createCell();
+    histogramChart.set("type", "chart");
+    histogramChart.set("size", { width: 760, height: 480 });
+    histogramChart.set("position", { x: 790, y: 10 });
+    histogramChart.set("data", histogramData);
+}
+
 export async function typeFile(
     doc: api.Document,
     ss: MergeTree.SharedString,
@@ -207,11 +238,21 @@ export async function typeFile(
         let metricsArray: IScribeMetrics[] = [];
         let q: any;
 
+        await setMetrics(doc);
+
         if (writers === 1) {
             console.log("Single File");
             return typeChunk(doc, ss, "p-0", fileText, intervalTime, callback, callback);
         } else {
             console.log("Multi-Author");
+
+            let docList: api.Document[] = [doc];
+            let ssList: MergeTree.SharedString[] = [ss];
+            for (let i = 1; i < writers; i++ ) {
+                docList.push(await api.load(doc.id));
+                ssList.push(await docList[i].getRoot().get("text") as MergeTree.SharedString);
+            }
+
             return (doc.getRoot().get("chunks") as Promise<IMap>)
                 .then((chunkMap) => {
                     return chunkMap.getView();
@@ -221,17 +262,19 @@ export async function typeFile(
                         // tslint:disable-next-line:variable-name
                         q = queue(async (chunkKey, _callback) => {
                             let chunk = chunkView.get(chunkKey);
-                            let newDoc = await api.load(doc.id);
-                            const root = await newDoc.getRoot();
+                            let newDoc = docList.shift();
+                            const newSs = ssList.shift();
 
-                            console.log("ClientId: " + newDoc.clientId);
-                            const newSs = (await root.get("text")) as MergeTree.SharedString;
-
-                            typeChunk(newDoc, newSs, chunkKey, chunk, intervalTime, callback, _callback);
+                            typeChunk(newDoc, newSs, chunkKey, chunk, intervalTime, callback, _callback).then;
                         }, writers);
 
                         for (let chunkKey of chunkView.keys()) {
-                            q.push(chunkKey, (metrics: IScribeMetrics) => {
+                            q.push(chunkKey, (
+                                    metrics: IScribeMetrics,
+                                    document: api.Document,
+                                    sharedString: MergeTree.SharedString) => {
+                                docList.push(document);
+                                ssList.push(sharedString);
                                 metricsArray.push(metrics);
                             });
                         }
@@ -244,7 +287,6 @@ export async function typeFile(
                     console.log("No Chunk Map: " + error);
                     return null;
                 });
-
         }
 }
 
@@ -258,31 +300,7 @@ export async function typeChunk(
     chunk: string,
     intervalTime: number,
     callback: ScribeMetricsCallback,
-    queueCallback: ScribeMetricsCallback): Promise<IScribeMetrics> {
-
-    // And also load a canvas document where we will place the metrics
-    const metricsDoc = await api.load(`${doc.id}-metrics`);
-    const root = await metricsDoc.getRoot().getView();
-
-    const components = metricsDoc.createMap();
-    root.set("components", components);
-
-    // Create the two chart windows
-    const performanceChart = metricsDoc.createMap();
-    components.set("performance", performanceChart);
-    performanceChart.set("type", "chart");
-    const performanceData = metricsDoc.createCell();
-    performanceChart.set("size", { width: 760, height: 480 });
-    performanceChart.set("position", { x: 10, y: 10 });
-    performanceChart.set("data", performanceData);
-
-    const histogramChart = metricsDoc.createMap();
-    components.set("histogram", histogramChart);
-    const histogramData = metricsDoc.createCell();
-    histogramChart.set("type", "chart");
-    histogramChart.set("size", { width: 760, height: 480 });
-    histogramChart.set("position", { x: 790, y: 10 });
-    histogramChart.set("data", histogramData);
+    queueCallback: QueueCallback): Promise<IScribeMetrics> {
 
     const startTime = Date.now();
 
@@ -293,7 +311,6 @@ export async function typeChunk(
         const histogramRange = 5;
         const histogram = new utils.Histogram(histogramRange);
 
-        chunk = normalizeText(chunk);
         const metrics: IScribeMetrics = {
             ackProgress: undefined,
             ackRate: undefined,
@@ -416,7 +433,7 @@ export async function typeChunk(
         function type(): boolean {
             // Stop typing once we reach the end
             if (readPosition === chunk.length) {
-                queueCallback(metrics);
+                queueCallback(metrics, doc, ss);
                 return false;
             }
             if (!play) {
