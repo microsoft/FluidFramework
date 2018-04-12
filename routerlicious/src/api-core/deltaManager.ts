@@ -254,7 +254,6 @@ export class DeltaManager implements IDeltaManager {
         pendingMessages: protocol.ISequencedDocumentMessage[],
         private deltaStorage: storage.IDocumentDeltaStorageService,
         private service: storage.IDocumentService,
-        connect: boolean,
         private handler: IDeltaHandlerStrategy) {
 
         // The MSN starts at the base the manager is initialized to

@@ -44,6 +44,7 @@ import * as mapExtension from "../map";
 import * as mergeTree from "../merge-tree";
 import * as stream from "../stream";
 import { debug } from "./debug";
+import { NullDeltaConnection } from "./nullDeltaConnection";
 
 const rootMapId = "root";
 const MaxReconnectDelay = 32000;
@@ -152,6 +153,27 @@ async function readAndParse<T>(storage: IDocumentStorageService, sha: string): P
     return JSON.parse(decoded);
 }
 
+class NullServices implements api.IDocumentService {
+    constructor(private service: api.IDocumentService, private parentBranch: string) {
+    }
+
+    public connectToStorage(id: string, token: string): Promise<IDocumentStorageService> {
+        return this.service.connectToStorage(id, token);
+    }
+
+    public connectToDeltaStorage(id: string, token: string): Promise<IDocumentDeltaStorageService> {
+        return this.service.connectToDeltaStorage(id, token);
+    }
+
+    public connectToDeltaStream(id: string, token: string): Promise<api.IDocumentDeltaConnection> {
+        return Promise.resolve(new NullDeltaConnection(id, this.parentBranch));
+    }
+
+    public branch(id: string, token: string): Promise<string> {
+        return this.service.branch(id, token);
+    }
+}
+
 /**
  * A document is a collection of collaborative types.
  */
@@ -207,6 +229,7 @@ export class Document extends EventEmitter {
             await Promise.all([headerP, pendingDeltasP, deltaStorageP, storageP]);
         debug(`Connected to ${id} - ${performanceNow()}`);
 
+        const documentServices = connect ? service : new NullServices(service, header.attributes.branch);
         const document = new Document(
             id,
             version,
@@ -214,8 +237,7 @@ export class Document extends EventEmitter {
             storage,
             pendingDeltas,
             registry,
-            connect,
-            service,
+            documentServices,
             options,
             token,
             header);
@@ -377,7 +399,6 @@ export class Document extends EventEmitter {
         private storageService: IDocumentStorageService,
         pendingDeltas: ISequencedDocumentMessage[],
         private registry: Registry,
-        connect: boolean,
         private service: IDocumentService,
         private opts: Object,
         private token: string,
@@ -386,38 +407,35 @@ export class Document extends EventEmitter {
         super();
 
         this.lastMinSequenceNumber = this.header.attributes.minimumSequenceNumber;
-        if (connect) {
-            if (this.header.attributes.branch !== this.id) {
-                setParentBranch(header.transformedMessages, this.header.attributes.branch);
-            }
-            const pendingMessages = header.transformedMessages.concat(pendingDeltas);
-
-            this._deltaManager = new DeltaManager(
-                this.id,
-                header.attributes.minimumSequenceNumber,
-                pendingMessages,
-                this.deltaStorage,
-                this.service,
-                connect,
-                {
-                    disconnect: (message: string) => {
-                        this.connect(this.token, `Disconnected ${message}`);
-                    },
-
-                    nack: (target: number) => {
-                        // If I have to rejoin then this doesn't matter?
-                        this.connect(this.token, `Connection NACK'ed - target sequence number is ${target}`);
-                    },
-
-                    prepare: async (message) => {
-                        return this.prepareRemoteMessage(message);
-                    },
-
-                    process: (message, context) => {
-                        this.processRemoteMessage(message, context);
-                    },
-                });
+        if (this.header.attributes.branch !== this.id) {
+            setParentBranch(header.transformedMessages, this.header.attributes.branch);
         }
+        const pendingMessages = header.transformedMessages.concat(pendingDeltas);
+
+        this._deltaManager = new DeltaManager(
+            this.id,
+            header.attributes.minimumSequenceNumber,
+            pendingMessages,
+            this.deltaStorage,
+            this.service,
+            {
+                disconnect: (message: string) => {
+                    this.connect(this.token, `Disconnected ${message}`);
+                },
+
+                nack: (target: number) => {
+                    // If I have to rejoin then this doesn't matter?
+                    this.connect(this.token, `Connection NACK'ed - target sequence number is ${target}`);
+                },
+
+                prepare: async (message) => {
+                    return this.prepareRemoteMessage(message);
+                },
+
+                process: (message, context) => {
+                    this.processRemoteMessage(message, context);
+                },
+            });
     }
 
     public get options(): Object {
