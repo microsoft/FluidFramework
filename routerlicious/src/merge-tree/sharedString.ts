@@ -133,7 +133,7 @@ export class SharedString extends CollaborativeMap {
             text,
         };
         this.client.mergeTree.startGroupOperation();
-        this.client.removeSegmentLocal(start,end);
+        this.client.removeSegmentLocal(start, end);
         this.client.insertTextLocal(text, start, props);
         this.client.mergeTree.endGroupOperation();
         this.submitIfAttached(insertMessage);
@@ -238,6 +238,45 @@ export class SharedString extends CollaborativeMap {
         }
         sharedCollection.initialize(this, label);
         return sharedCollection;
+    }
+
+    public sendNACKed() {
+        let orderedSegments = <MergeTree.Segment[]>[];
+        while (!this.client.mergeTree.pendingSegments.empty()) {
+            let NACKedSegmentGroup = this.client.mergeTree.pendingSegments.dequeue();
+            for (let segment of NACKedSegmentGroup.segments) {
+                orderedSegments.push(segment);
+            }
+        }
+
+        orderedSegments.sort((a, b) => {
+            if (a === b) {
+                return 0;
+            } else if (a.ordinal < b.ordinal) {
+                return -1;
+            } else {
+                return 1;
+            }
+        });
+
+        let segmentGroup = <MergeTree.SegmentGroup>{
+            segments: orderedSegments,
+        };
+        let opList = <ops.IMergeTreeOp[]>[];
+        let prevSeg: MergeTree.Segment;
+        for (let segment of orderedSegments) {
+            if (prevSeg !== segment) {
+                segment.segmentGroup = segmentGroup;
+                this.client.segmentToOps(segment, opList);
+                prevSeg = segment;
+            }
+        }
+        let groupOp = <ops.IMergeTreeGroupMsg>{
+            ops: opList,
+            type: ops.MergeTreeDeltaType.GROUP,
+        };
+        this.client.mergeTree.pendingSegments.enqueue(segmentGroup);
+        this.submitIfAttached(groupOp);
     }
 
     protected transformContent(message: api.IObjectMessage, toSequenceNumber: number): api.IObjectMessage {

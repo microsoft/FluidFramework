@@ -2044,6 +2044,42 @@ export class Client {
         this.checkQ.enqueue(this.getText());
     }
 
+    segmentToOps(segment: Segment, opList: ops.IMergeTreeOp[]) {
+        // TODO: branches
+        if (segment.seq === UnassignedSequenceNumber) {
+            let pos = this.mergeTree.getOffset(segment, this.getCurrentSeq(),
+                this.getClientId());
+            let baseSegment = <BaseSegment>segment;
+            let insertOp = <ops.IMergeTreeInsertMsg>{
+                pos1: pos,
+                type: ops.MergeTreeDeltaType.INSERT,
+            };
+            if (segment.getType() === SegmentType.Text) {
+                let textSegment = <TextSegment>segment;
+                insertOp.text = textSegment.text;
+            } else {
+                // assume marker
+                let marker = <Marker>segment;
+                insertOp.marker = { refType: marker.refType };
+            }
+            if (baseSegment.properties) {
+                insertOp.props = baseSegment.properties;
+            }
+            opList.push(insertOp);
+        }
+         
+        if (segment.removedSeq === UnassignedSequenceNumber) {
+            let start = this.mergeTree.getOffset(segment, this.getCurrentSeq(),
+                this.getClientId());
+            let removeOp = <ops.IMergeTreeRemoveMsg>{
+                pos1: start,
+                pos2: start + segment.cachedLength,
+                type: ops.MergeTreeDeltaType.REMOVE,
+            };
+            opList.push(removeOp);
+        }
+    }
+
     transformOp(op: ops.IMergeTreeOp, msg: API.ISequencedObjectMessage, toSequenceNumber: number) {
         if ((op.type == ops.MergeTreeDeltaType.ANNOTATE) ||
             (op.type == ops.MergeTreeDeltaType.REMOVE)) {
@@ -3372,23 +3408,23 @@ export class MergeTree {
         }
     }
 
-    tardisRangeFromClient(rangeStart: number, rangeEnd: number, fromSeq: number, toSeq: number, fromClientId: number, 
+    tardisRangeFromClient(rangeStart: number, rangeEnd: number, fromSeq: number, toSeq: number, fromClientId: number,
         toClientId = NonCollabClient) {
-            let ranges = <Base.IIntegerRange[]>[];
-            let recordRange = (segment: Segment, pos: number, refSeq: number, clientId: number, segStart: number,
-                segEnd: number) => {
-                let offset = this.getOffset(segment, toSeq, toClientId);
-                if (segStart < 0) {
-                    segStart = 0;
-                }
-                if (segEnd > segment.cachedLength) {
-                    segEnd = segment.cachedLength;
-                }
-                ranges.push({ start: offset + segStart, end: offset + segEnd });
-                return true;
+        let ranges = <Base.IIntegerRange[]>[];
+        let recordRange = (segment: Segment, pos: number, refSeq: number, clientId: number, segStart: number,
+            segEnd: number) => {
+            let offset = this.getOffset(segment, toSeq, toClientId);
+            if (segStart < 0) {
+                segStart = 0;
             }
-            this.mapRange({ leaf: recordRange }, fromSeq, fromClientId, undefined, rangeStart, rangeEnd);
-            return ranges;
+            if (segEnd > segment.cachedLength) {
+                segEnd = segment.cachedLength;
+            }
+            ranges.push({ start: offset + segStart, end: offset + segEnd });
+            return true;
+        }
+        this.mapRange({ leaf: recordRange }, fromSeq, fromClientId, undefined, rangeStart, rangeEnd);
+        return ranges;
     }
 
     tardisRange(rangeStart: number, rangeEnd: number, fromSeq: number, toSeq: number, toClientId = NonCollabClient) {
