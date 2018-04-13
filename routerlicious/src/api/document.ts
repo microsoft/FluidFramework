@@ -242,9 +242,6 @@ export class Document extends EventEmitter {
             token,
             header);
 
-        // TODO I can probably defer the connect and do it concurrent w/ the loads
-        await document.connect(token, "Document loading");
-
         // Make a reservation for the root object
         document.reserveDistributedObject("root");
 
@@ -265,6 +262,10 @@ export class Document extends EventEmitter {
                 header.attributes.branch);
             document.fulfillDistributedObject(value, services);
         });
+
+        // Begin connection to the document once we have began to load all documents. This will make sure to send
+        // them the onDisconnect and onConnected messages
+        const connectP = document.connect(token, "Document loading");
         await Promise.all(objectsLoaded);
 
         // Process all pending tardis messages
@@ -282,6 +283,11 @@ export class Document extends EventEmitter {
 
         // Start the delta manager back up
         document._deltaManager.start();
+
+        // TODO remove this check once we are fully rejoining
+        if (connect) {
+            await connectP;
+        }
 
         // If it's a new document we create the root map object - otherwise we wait for it to become available
         if (!document.connectDetails.existing) {
@@ -363,7 +369,7 @@ export class Document extends EventEmitter {
     private pendingAttach = new Map<string, IAttachMessage>();
 
     public get clientId(): string {
-        return this.connectDetails.clientId;
+        return this.connectDetails ? this.connectDetails.clientId : "disconnected";
     }
 
     public get id(): string {
@@ -378,14 +384,14 @@ export class Document extends EventEmitter {
      * Flag indicating whether the document already existed at the time of load
      */
     public get existing(): boolean {
-        return this.connectDetails.existing;
+        return this.connectDetails ? this.connectDetails.existing : null;
     }
 
     /**
      * Returns the parent branch for this document
      */
     public get parentBranch(): string {
-        return this.connectDetails.parentBranch;
+        return this.connectDetails ? this.connectDetails.parentBranch : null;
     }
 
     /**
@@ -583,7 +589,7 @@ export class Document extends EventEmitter {
      * Returns the user id connected to the document.
      */
     public getUser(): any {
-        return this.connectDetails.user;
+        return this.connectDetails ? this.connectDetails.user : null;
     }
 
     public getClients(): Set<string> {
@@ -611,8 +617,6 @@ export class Document extends EventEmitter {
             (details) => {
                 this.setConnectionState(ConnectionState.Connecting, "Connected on Socket.IO channel", details.clientId);
                 this.connectDetails = details;
-                this.connecting.resolve();
-                this.connecting = null;
             },
             (error) => {
                 delay = Math.min(delay, MaxReconnectDelay);
@@ -659,14 +663,23 @@ export class Document extends EventEmitter {
                 }
             }
         }
+
+        // Resolve any pending connection promise
+        if (value === ConnectionState.Connected) {
+            this.connecting.resolve();
+            this.connecting = null;
+        } else if (value === ConnectionState.Disconnected && this.connecting) {
+            this.connecting.reject(reason);
+            this.connecting = null;
+        }
     }
 
     private snapshotCore(): ITree {
         const entries: ITreeEntry[] = [];
 
         // TODO: support for branch snapshots. For now simply no-op when a branch snapshot is requested
-        if (this.connectDetails.parentBranch) {
-            debug(`Skipping snapshot due to being branch of ${this.connectDetails.parentBranch}`);
+        if (this.parentBranch) {
+            debug(`Skipping snapshot due to being branch of ${this.parentBranch}`);
             return;
         }
 
@@ -840,7 +853,7 @@ export class Document extends EventEmitter {
             const envelope = message.contents as IEnvelope;
             const objectDetails = this.distributedObjects.get(envelope.address);
             return objectDetails.connection.prepare(message);
-        } else if (message.type === api.AttachObject && message.clientId !== this.connectDetails.clientId) {
+        } else if (message.type === api.AttachObject && message.clientId !== this.clientId) {
             const attachMessage = message.contents as IAttachMessage;
 
             // create storage service that wraps the attach data
@@ -895,7 +908,7 @@ export class Document extends EventEmitter {
 
                 // If a non-local operation then go and create the object - otherwise mark it as officially
                 // attached.
-                if (message.clientId !== this.connectDetails.clientId) {
+                if (message.clientId !== this.clientId) {
                     this.fulfillDistributedObject(context.value as ICollaborativeObject, context.services);
                 } else {
                     assert(this.pendingAttach.has(attachMessage.id));
@@ -917,7 +930,7 @@ export class Document extends EventEmitter {
                     this.setConnectionState(
                         ConnectionState.Connected,
                         `Fully joined the document@ ${message.minimumSequenceNumber}`,
-                        this.connectDetails.clientId);
+                        this.clientId);
                 }
 
                 this.emit("clientJoin", message.contents);

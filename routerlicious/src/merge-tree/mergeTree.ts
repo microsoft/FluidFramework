@@ -2595,10 +2595,11 @@ export class Client {
 
     updateCollaboration(longClientId: string) {
         const oldClientId = this.longClientId;
+        let oldData = this.clientNameToIds.get(oldClientId).data;
 
         this.longClientId = longClientId;
-        this.clientNameToIds.put(longClientId, this.clientNameToIds.get(oldClientId).data);
-        this.shortClientIdMap[0] = longClientId;
+        this.clientNameToIds.put(longClientId, oldData);
+        this.shortClientIdMap[oldData.clientId] = longClientId;
     }
 }
 

@@ -306,11 +306,7 @@ export class SharedString extends CollaborativeMap {
     protected onConnectContent(pending: api.IObjectMessage[]) {
         // Update merge tree collaboration information with new client ID
         this.client.updateCollaboration(this.document.clientId);
-
-        // TODO walk the merge tree and create ops for all pending segments
-        for (const message of pending) {
-            this.submitLocalMessage(message.contents);
-        }
+        // this.sendNackStuf();
 
         return;
     }
