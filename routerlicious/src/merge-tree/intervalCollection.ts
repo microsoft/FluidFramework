@@ -119,6 +119,9 @@ export function createInterval(label: string, sharedString: SharedString.SharedS
     if (intervalType === ops.IntervalType.Nest) {
         beginRefType = ops.ReferenceType.NestBegin;
         endRefType = ops.ReferenceType.NestEnd;
+    } else if (intervalType === ops.IntervalType.Transient) {
+        beginRefType = ops.ReferenceType.Transient;
+        endRefType = ops.ReferenceType.Transient;
     }
     let startLref = sharedString.createPositionReference(start, beginRefType);
     let endLref = sharedString.createPositionReference(end, endRefType);
@@ -130,6 +133,7 @@ export function createInterval(label: string, sharedString: SharedString.SharedS
         };
         startLref.addProperties(rangeProp);
         endLref.addProperties(rangeProp);
+
         let ival = new Interval(startLref, endLref, intervalType, rangeProp);
         // ival.checkMergeTree = sharedString.client.mergeTree;
         return ival;
@@ -147,20 +151,24 @@ export class LocalIntervalCollection implements IIntervalCollection {
     constructor(public sharedString: SharedString.SharedString, public label: string) {
     }
 
-    map(fn: (interval:Interval)=>void) {
+    map(fn: (interval: Interval) => void) {
         this.intervalTree.map(fn);
     }
 
     public findOverlappingIntervals(startPosition: number, endPosition: number) {
-        let transientInterval = createInterval("transient", this.sharedString,
-            startPosition, endPosition, ops.IntervalType.Simple);
-        let overlappingIntervalNodes = this.intervalTree.match(transientInterval);
-        return overlappingIntervalNodes.map((node) => node.key);
+        if (!this.intervalTree.intervals.isEmpty()) {
+            let transientInterval = createInterval("transient", this.sharedString,
+                startPosition, endPosition, ops.IntervalType.Transient);
+            let overlappingIntervalNodes = this.intervalTree.match(transientInterval);
+            return overlappingIntervalNodes.map((node) => node.key);
+        } else {
+            return [];
+        }
     }
 
     public previousInterval(pos: number) {
         let transientInterval = createInterval("transient", this.sharedString,
-            pos, pos, ops.IntervalType.Simple);
+            pos, pos, ops.IntervalType.Transient);
         let rbNode = this.endIntervalTree.floor(transientInterval);
         if (rbNode) {
             return rbNode.data;
@@ -169,7 +177,7 @@ export class LocalIntervalCollection implements IIntervalCollection {
 
     public nextInterval(pos: number) {
         let transientInterval = createInterval("transient", this.sharedString,
-            pos, pos, ops.IntervalType.Simple);
+            pos, pos, ops.IntervalType.Transient);
         let rbNode = this.endIntervalTree.ceil(transientInterval);
         if (rbNode) {
             return rbNode.data;
@@ -324,7 +332,7 @@ export class SharedIntervalCollection {
         if (interval) {
             if (submitEvent) {
                 this.emitter.emit("add", serializedInterval);
-            } 
+            }
         }
         return this;
     }

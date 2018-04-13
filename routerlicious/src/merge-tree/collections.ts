@@ -1001,7 +1001,7 @@ export class IntervalTree<T extends IInterval> implements IRBAugmentation<T, Aug
     IRBMatcher<T, AugmentedIntervalNode> {
     intervals = new RedBlackTree<T, AugmentedIntervalNode>(intervalComparer, this);
     diag = false;
-    timePut = true;
+    timePut = false;
     putTime = 0;
     putCount = 0;
 

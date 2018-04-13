@@ -208,7 +208,9 @@ export class SharedString extends CollaborativeMap {
         if (segoff && segoff.segment) {
             let baseSegment = <MergeTree.BaseSegment>segoff.segment;
             let lref = new MergeTree.LocalReference(baseSegment, segoff.offset, refType);
-            this.client.mergeTree.addLocalReference(lref);
+            if (refType!==ops.ReferenceType.Transient) {
+                this.client.mergeTree.addLocalReference(lref);
+            }
             return lref;
         }
     }
