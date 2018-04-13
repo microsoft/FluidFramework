@@ -2638,6 +2638,15 @@ export class Client {
         this.addLongClientId(longClientId, userInfo, branchId);
         this.mergeTree.startCollaboration(this.getShortClientId(this.longClientId), minSeq, branchId);
     }
+
+    updateCollaboration(longClientId: string) {
+        const oldClientId = this.longClientId;
+        let oldData = this.clientNameToIds.get(oldClientId).data;
+
+        this.longClientId = longClientId;
+        this.clientNameToIds.put(longClientId, oldData);
+        this.shortClientIdMap[oldData.clientId] = longClientId;
+    }
 }
 
 export interface ClientSeq {

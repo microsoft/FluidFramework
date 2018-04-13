@@ -6,9 +6,9 @@ let averageLatency = 0.0;
 
 const pingInterval = 20;
 
-const socket = io(document.location.origin, { transports: ["websocket"] });
-
 export function load() {
+    const socket = io(document.location.origin, { transports: ["websocket"] });
+
     setInterval(() => {
         const pingMessage: core.IPingMessage = {
             acked: false,

@@ -28,7 +28,7 @@ export class RateLimiter {
         const completeP = this.action().catch((error) => {
             // TODO we will just log errors for now. Will want a better strategy later on (replay, wait).
             if (error) {
-                console.error(error);
+                console.error("Rate limit error", error);
             }
         });
 

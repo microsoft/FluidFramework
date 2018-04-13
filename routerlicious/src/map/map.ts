@@ -1,6 +1,7 @@
 import * as resources from "gitresources";
 import * as api from "../api-core";
 import { IMap, IMapView, IValueType, SerializeFilter } from "../data-types";
+import { debug } from "./debug";
 import { IMapOperation } from "./definitions";
 import { MapExtension } from "./extension";
 import { MapView } from "./view";
@@ -180,6 +181,34 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
         return this.loadContentComplete();
     }
 
+    protected onDisconnect() {
+        debug(`Map ${this.id} is now disconnected`);
+        this.onDisconnectContent();
+    }
+
+    protected onConnect(pending: api.IObjectMessage[]) {
+        debug(`Map ${this.id} is now connected`);
+
+        // Filter the nonAck and pending mesages into a map set and a content set.
+        const mapMessages: api.IObjectMessage[] = [];
+        const contentMessages: api.IObjectMessage[] = [];
+        for (const message of pending) {
+            if (this.isMapMessage(message)) {
+                mapMessages.push(message);
+            } else {
+                contentMessages.push(message);
+            }
+        }
+
+        // Deal with the map messages - for the map it's always last one wins so we just resend
+        for (const message of mapMessages) {
+            this.submitLocalMessage(message.contents);
+        }
+
+        // Allow content to catch up
+        this.onConnectContent(contentMessages);
+    }
+
     protected async loadCore(
         version: resources.ICommit,
         headerOrigin: string,
@@ -271,6 +300,24 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
     }
 
     /**
+     * Message sent to notify derived content of disconnection
+     */
+    protected onDisconnectContent() {
+        return;
+    }
+
+    /**
+     * Message sent upon reconnecting to the delta stream
+     */
+    protected onConnectContent(pending: api.IObjectMessage[]) {
+        for (const message of pending) {
+            this.submitLocalMessage(message.contents);
+        }
+
+        return;
+    }
+
+    /**
      * Snapshots the content
      */
     protected snapshotContent(): api.ITree {
@@ -289,5 +336,10 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
      */
     protected transformContent(message: api.IObjectMessage, sequenceNumber: number): api.IObjectMessage {
         return message;
+    }
+
+    private isMapMessage(message: api.IObjectMessage): boolean {
+        const type = message.contents.type;
+        return this.messageHandler.has(type);
     }
 }

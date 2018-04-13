@@ -1,6 +1,6 @@
 import { IAuthenticatedUser } from "../core-utils";
 import { IEnvelope, ILatencyMessage, IObjectMessage, ISequencedObjectMessage } from "./protocol";
-import { ICollaborativeObject, ICollaborativeObjectSave } from "./types";
+import { ICollaborativeObject } from "./types";
 
 export interface IObjectStorageService {
     /**
@@ -15,22 +15,48 @@ export interface IDistributedObjectServices {
     objectStorage: IObjectStorageService;
 }
 
+export enum ConnectionState {
+    /**
+     * The document is no longer connected to the delta server
+     */
+    Disconnected,
+
+    /**
+     * The document has an inbound connection but is still pending for outbound deltas
+     */
+    Connecting,
+
+    /**
+     * The document is fully connected
+     */
+    Connected,
+}
+
 export interface IDeltaHandler {
     prepare: (message: ISequencedObjectMessage) => Promise<any>;
 
     process: (message: ISequencedObjectMessage, context: any) => void;
 
     minSequenceNumberChanged: (value: number) => void;
+
+    /**
+     * State change events to indicate changes to the delta connection
+     */
+    setConnectionState(state: ConnectionState, context?: any): void;
 }
 
 /**
  * Interface to represent a connection to a delta notification stream.
  */
 export interface IDeltaConnection {
+    clientId: string;
+
+    state: ConnectionState;
+
     /**
      * Send new messages to the server
      */
-    submit(message: IObjectMessage): Promise<void>;
+    submit(message: IObjectMessage): void;
 
     /**
      * Attaches a message handler to the delta connection
@@ -57,6 +83,4 @@ export interface IDocument {
 
     // TODO Should I hide this internally on the message - doesn't seem to be a primary object
     submitLatencyMessage(message: ILatencyMessage);
-
-    submitSaveMessage(message: ICollaborativeObjectSave);
 }

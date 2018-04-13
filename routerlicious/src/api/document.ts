@@ -4,18 +4,16 @@ import * as resources from "gitresources";
 import * as uuid from "uuid/v4";
 import performanceNow = require("performance-now");
 import {
-    AttachObject,
+    ConnectionState,
     DeltaConnection,
     DeltaManager,
     IAttachMessage,
     ICollaborativeObject,
     ICollaborativeObjectSave,
     IDeltaConnection,
-    IDeltaManager,
     IDistributedObject,
     IDistributedObjectServices,
     IDocumentAttributes,
-    IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
     IDocumentService,
     IDocumentStorageService,
@@ -31,7 +29,6 @@ import {
     ITreeEntry,
     LocalObjectStorageService,
     NoOp,
-    ObjectOperation,
     ObjectStorageService,
     Registry,
     RoundTrip,
@@ -39,6 +36,7 @@ import {
     SaveOperation,
     TreeEntry,
 } from "../api-core";
+import * as api from "../api-core";
 import * as cell from "../cell";
 import { Deferred, getOrDefault } from "../core-utils";
 import { ICell, IMap, IStream } from "../data-types";
@@ -49,6 +47,7 @@ import { debug } from "./debug";
 import { NullDeltaConnection } from "./nullDeltaConnection";
 
 const rootMapId = "root";
+const MaxReconnectDelay = 32000;
 
 // Registered services to use when loading a document
 let defaultDocumentService: IDocumentService;
@@ -154,6 +153,27 @@ async function readAndParse<T>(storage: IDocumentStorageService, sha: string): P
     return JSON.parse(decoded);
 }
 
+class NullServices implements api.IDocumentService {
+    constructor(private service: api.IDocumentService, private parentBranch: string) {
+    }
+
+    public connectToStorage(id: string, token: string): Promise<IDocumentStorageService> {
+        return this.service.connectToStorage(id, token);
+    }
+
+    public connectToDeltaStorage(id: string, token: string): Promise<IDocumentDeltaStorageService> {
+        return this.service.connectToDeltaStorage(id, token);
+    }
+
+    public connectToDeltaStream(id: string, token: string): Promise<api.IDocumentDeltaConnection> {
+        return Promise.resolve(new NullDeltaConnection(id, this.parentBranch));
+    }
+
+    public branch(id: string, token: string): Promise<string> {
+        return this.service.branch(id, token);
+    }
+}
+
 /**
  * A document is a collection of collaborative types.
  */
@@ -205,28 +225,23 @@ export class Document extends EventEmitter {
                 : [];
         });
 
-        let connectionP: Promise<IDocumentDeltaConnection>;
-        if (connect) {
-            connectionP = service.connectToDeltaStream(id, token);
-        } else {
-            connectionP = headerP.then((header) => new NullDeltaConnection(id, header.attributes.branch));
-        }
-
-        const [header, pendingDeltas, connection, deltaStorage, storage] =
-            await Promise.all([headerP, pendingDeltasP, connectionP, deltaStorageP, storageP]);
+        const [header, pendingDeltas, deltaStorage, storage] =
+            await Promise.all([headerP, pendingDeltasP, deltaStorageP, storageP]);
         debug(`Connected to ${id} - ${performanceNow()}`);
 
+        const documentServices = connect ? service : new NullServices(service, header.attributes.branch);
         const document = new Document(
+            id,
             version,
-            connection,
             deltaStorage,
             storage,
             pendingDeltas,
             registry,
-            service,
+            documentServices,
             options,
             token,
             header);
+        await document.connect(token, "Document loading");
 
         // Make a reservation for the root object
         document.reserveDistributedObject("root");
@@ -248,6 +263,9 @@ export class Document extends EventEmitter {
                 header.attributes.branch);
             document.fulfillDistributedObject(value, services);
         });
+
+        // Begin connection to the document once we have began to load all documents. This will make sure to send
+        // them the onDisconnect and onConnected messages
         await Promise.all(objectsLoaded);
 
         // Process all pending tardis messages
@@ -267,7 +285,7 @@ export class Document extends EventEmitter {
         document._deltaManager.start();
 
         // If it's a new document we create the root map object - otherwise we wait for it to become available
-        if (!connection.existing) {
+        if (!document.connectDetails.existing) {
             document.createAttached("root", mapExtension.MapExtension.Type);
         } else {
             await document.get("root");
@@ -329,26 +347,31 @@ export class Document extends EventEmitter {
 
     // Map from the object ID to the collaborative object for it. If the object is not yet attached its service
     // entries will be null
-    private distributedObjects: { [key: string]: IDistributedObjectState } = {};
+    private distributedObjects = new Map<string, IDistributedObjectState>();
 
     private reservations = new Map<string, Deferred<ICollaborativeObject>>();
 
-    // tslint:disable-next-line:variable-name
+    // tslint:disable:variable-name
     private _deltaManager: DeltaManager;
+    // tslint:enable:variable-name
 
     private lastMinSequenceNumber;
-
-    private messagesSinceMSNChange: ISequencedDocumentMessage[] = [];
+    private messagesSinceMSNChange = new Array<ISequencedDocumentMessage>();
+    private clients = new Set<string>();
+    private connecting: Deferred<void>;
+    private connectDetails: api.IConnectionDetails;
+    private connectionState = ConnectionState.Disconnected;
+    private pendingAttach = new Map<string, IAttachMessage>();
 
     public get clientId(): string {
-        return this.connection.clientId;
+        return this.connectDetails ? this.connectDetails.clientId : "disconnected";
     }
 
     public get id(): string {
-        return this.connection.documentId;
+        return this._id;
     }
 
-    public get deltaManager(): IDeltaManager {
+    public get deltaManager(): api.IDeltaManager {
         return this._deltaManager;
     }
 
@@ -356,22 +379,23 @@ export class Document extends EventEmitter {
      * Flag indicating whether the document already existed at the time of load
      */
     public get existing(): boolean {
-        return this.connection.existing;
+        return this.connectDetails ? this.connectDetails.existing : null;
     }
 
     /**
      * Returns the parent branch for this document
      */
     public get parentBranch(): string {
-        return this.connection.parentBranch;
+        return this.connectDetails ? this.connectDetails.parentBranch : null;
     }
 
     /**
      * Constructs a new document from the provided details
      */
     private constructor(
+        // tslint:disable-next-line:variable-name
+        private _id: string,
         private version: resources.ICommit,
-        private connection: IDocumentDeltaConnection,
         private deltaStorage: IDocumentDeltaStorageService,
         private storageService: IDocumentStorageService,
         pendingDeltas: ISequencedDocumentMessage[],
@@ -384,26 +408,35 @@ export class Document extends EventEmitter {
         super();
 
         this.lastMinSequenceNumber = this.header.attributes.minimumSequenceNumber;
-        if (this.connection !== null) {
-            if (this.header.attributes.branch !== this.id) {
-                setParentBranch(header.transformedMessages, this.header.attributes.branch);
-            }
-            const pendingMessages = header.transformedMessages.concat(pendingDeltas);
-
-            this._deltaManager = new DeltaManager(
-                header.attributes.minimumSequenceNumber,
-                pendingMessages,
-                this.deltaStorage,
-                this.connection,
-                {
-                    prepare: async (message) => {
-                        return this.prepareRemoteMessage(message);
-                    },
-                    process: (message, context) => {
-                        this.processRemoteMessage(message, context);
-                    },
-                });
+        if (this.header.attributes.branch !== this.id) {
+            setParentBranch(header.transformedMessages, this.header.attributes.branch);
         }
+        const pendingMessages = header.transformedMessages.concat(pendingDeltas);
+
+        this._deltaManager = new DeltaManager(
+            this.id,
+            header.attributes.minimumSequenceNumber,
+            pendingMessages,
+            this.deltaStorage,
+            this.service,
+            {
+                disconnect: (message: string) => {
+                    this.connect(this.token, `Disconnected ${message}`);
+                },
+
+                nack: (target: number) => {
+                    // If I have to rejoin then this doesn't matter?
+                    this.connect(this.token, `Connection NACK'ed - target sequence number is ${target}`);
+                },
+
+                prepare: async (message) => {
+                    return this.prepareRemoteMessage(message);
+                },
+
+                process: (message, context) => {
+                    this.processRemoteMessage(message, context);
+                },
+            });
     }
 
     public get options(): Object {
@@ -458,12 +491,13 @@ export class Document extends EventEmitter {
             snapshot,
             type: object.type,
         };
-        this.submitMessage(AttachObject, message);
+        this.pendingAttach.set(object.id, message);
+        this.submitMessage(api.AttachObject, message);
 
         // Store a reference to the object in our list of objects and then get the services
         // used to attach it to the stream
         const services = this.getObjectServices(object.id);
-        const entry = this.distributedObjects[object.id];
+        const entry = this.distributedObjects.get(object.id);
         assert.equal(entry.object, object);
         entry.connection = services.deltaConnection;
         entry.storage = services.objectStorage;
@@ -504,15 +538,15 @@ export class Document extends EventEmitter {
      * Retrieves the root collaborative object that the document is based on
      */
     public getRoot(): IMap {
-        return this.distributedObjects[rootMapId].object as IMap;
+        return this.distributedObjects.get(rootMapId).object as IMap;
     }
 
     /**
      * Saves the document by performing a snapshot.
      */
     public save(tag: string = null) {
-        const saveMessage: ICollaborativeObjectSave = { type: SAVE, message: tag};
-        this.submitSaveMessage(saveMessage);
+        const message: ICollaborativeObjectSave = { type: SAVE, message: tag};
+        this.submitMessage(SaveOperation, message);
     }
 
     /**
@@ -522,12 +556,8 @@ export class Document extends EventEmitter {
         throw new Error("Not yet implemented");
     }
 
-    public submitObjectMessage(envelope: IEnvelope): Promise<void> {
-        return this.submitMessage(ObjectOperation, envelope);
-    }
-
-    public submitSaveMessage(message: ICollaborativeObjectSave): Promise<void> {
-        return this.submitMessage(SaveOperation, message);
+    public submitObjectMessage(envelope: IEnvelope): void {
+        this.submitMessage(api.ObjectOperation, envelope);
     }
 
     public submitLatencyMessage(message: ILatencyMessage) {
@@ -554,15 +584,90 @@ export class Document extends EventEmitter {
      * Returns the user id connected to the document.
      */
     public getUser(): any {
-        return this.connection.user;
+        return this.connectDetails ? this.connectDetails.user : null;
+    }
+
+    public getClients(): Set<string> {
+        return new Set<string>(this.clients);
+    }
+
+    private async connect(token: string, reason: string): Promise<void> {
+        if (this.connecting) {
+            return this.connecting.promise;
+        }
+
+        const reconnectDelay = 1000;
+        this.connecting = new Deferred<void>();
+        this.connectCore(token, reason, reconnectDelay);
+
+        return this.connecting.promise;
+    }
+
+    private async connectCore(token: string, reason: string, delay: number) {
+        // Place back into a disconnected state while making the connection
+        this.setConnectionState(ConnectionState.Disconnected, reason);
+
+        // Begin to connect to the document
+        this._deltaManager.connect(token).then(
+            (details) => {
+                this.setConnectionState(ConnectionState.Connecting, "Connected on Socket.IO channel", details.clientId);
+                this.connectDetails = details;
+                this.connecting.resolve();
+                this.connecting = null;
+            },
+            (error) => {
+                delay = Math.min(delay, MaxReconnectDelay);
+                reason = `Connection failed - trying again in ${delay}ms`;
+                debug(reason, error);
+                setTimeout(() => this.connectCore(token, reason, delay * 2), delay);
+            });
+    }
+
+    private setConnectionState(value: ConnectionState.Disconnected, reason: string);
+    private setConnectionState(value: ConnectionState.Connecting, reason: string, clientId: string);
+    private setConnectionState(value: ConnectionState.Connected, reason: string, clientId: string);
+    private setConnectionState(value: ConnectionState, reason: string, context?: string) {
+        if (this.connectionState === value) {
+            // Already in the desired state - exit early
+            return;
+        }
+
+        debug(`Changing from ${ConnectionState[this.connectionState]} to ${ConnectionState[value]}`, reason);
+        this.connectionState = value;
+
+        // Resend all pending attach messages prior to notifying clients
+        if (this.connectionState === ConnectionState.Connected) {
+            for (const [, message] of this.pendingAttach) {
+                this.submitMessage(api.AttachObject, message);
+            }
+        }
+
+        // Notify connected client objects of the change
+        for (const [, object] of this.distributedObjects) {
+            if (object.connection) {
+                switch (value) {
+                    case ConnectionState.Disconnected:
+                        object.connection.setConnectionState(value, reason);
+                        break;
+                    case ConnectionState.Connecting:
+                        object.connection.setConnectionState(value, context);
+                        break;
+                    case ConnectionState.Connected:
+                        object.connection.setConnectionState(value, context);
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
     }
 
     private snapshotCore(): ITree {
         const entries: ITreeEntry[] = [];
 
         // TODO: support for branch snapshots. For now simply no-op when a branch snapshot is requested
-        if (this.connection.parentBranch) {
-            debug(`Skipping snapshot due to being branch of ${this.connection.parentBranch}`);
+        if (this.parentBranch) {
+            debug(`Skipping snapshot due to being branch of ${this.parentBranch}`);
             return;
         }
 
@@ -585,10 +690,7 @@ export class Document extends EventEmitter {
             },
         });
 
-        // tslint:disable-next-line:forin
-        for (const objectId in this.distributedObjects) {
-            const object = this.distributedObjects[objectId];
-
+        for (const [objectId, object] of this.distributedObjects) {
             // If the object isn't local - and we have received the sequenced op creating the object (i.e. it has a
             // base mapping) - then we go ahead and snapshot
             if (!object.object.isLocal() && object.connection.baseMappingIsSet()) {
@@ -645,14 +747,14 @@ export class Document extends EventEmitter {
      */
     private transform(message: ISequencedDocumentMessage, sequenceNumber: number): ISequencedDocumentMessage {
         // Allow the distributed data types to perform custom transformations
-        if (message.type === ObjectOperation) {
+        if (message.type === api.ObjectOperation) {
             const envelope = message.contents as IEnvelope;
-            const objectDetails = this.distributedObjects[envelope.address];
+            const objectDetails = this.distributedObjects.get(envelope.address);
             envelope.contents = objectDetails.object.transform(
                 envelope.contents as IObjectMessage,
                 objectDetails.connection.transformDocumentSequenceNumber(
                     Math.max(message.referenceSequenceNumber, sequenceNumber)));
-        } else if (message.type === AttachObject) {
+        } else if (message.type === api.AttachObject) {
             message.type = NoOp;
         }
 
@@ -661,8 +763,11 @@ export class Document extends EventEmitter {
         return message;
     }
 
-    private submitMessage(type: string, contents: any): Promise<void> {
-        return this._deltaManager.submit(type, contents);
+    private submitMessage(type: string, contents: any): void {
+        // TODO better way to control access
+        if (this.connectionState === ConnectionState.Connected) {
+            this._deltaManager.submit(type, contents);
+        }
     }
 
     private createAttached(id: string, type: string) {
@@ -684,11 +789,13 @@ export class Document extends EventEmitter {
         const id = object.id;
         assert(this.reservations.has(id));
 
-        this.distributedObjects[object.id] = {
-            connection: services ? services.deltaConnection : null,
-            object,
-            storage: services ? services.objectStorage : null,
-        };
+        this.distributedObjects.set(
+            object.id,
+            {
+                connection: services ? services.deltaConnection : null,
+                object,
+                storage: services ? services.objectStorage : null,
+            });
 
         this.reservations.get(id).resolve(object);
     }
@@ -720,7 +827,7 @@ export class Document extends EventEmitter {
             ? this.header.tree.trees[id]
             : null;
 
-        const deltaConnection = new DeltaConnection(id, this);
+        const deltaConnection = new DeltaConnection(id, this, this.clientId, this.connectionState);
         const objectStorage = new ObjectStorageService(tree, this.storageService);
 
         return {
@@ -730,16 +837,16 @@ export class Document extends EventEmitter {
     }
 
     private async prepareRemoteMessage(message: ISequencedDocumentMessage): Promise<any> {
-        if (message.type === ObjectOperation) {
+        if (message.type === api.ObjectOperation) {
             const envelope = message.contents as IEnvelope;
-            const objectDetails = this.distributedObjects[envelope.address];
+            const objectDetails = this.distributedObjects.get(envelope.address);
             return objectDetails.connection.prepare(message);
-        } else if (message.type === AttachObject && message.clientId !== this.connection.clientId) {
+        } else if (message.type === api.AttachObject && message.clientId !== this.clientId) {
             const attachMessage = message.contents as IAttachMessage;
 
             // create storage service that wraps the attach data
             const localStorage = new LocalObjectStorageService(attachMessage.snapshot);
-            const connection = new DeltaConnection(attachMessage.id, this);
+            const connection = new DeltaConnection(attachMessage.id, this, this.clientId, this.connectionState);
 
             // Document sequence number references <= message.sequenceNumber should map to the object's 0 sequence
             // number. We cap to the MSN to keep a tighter window and because no references should be below it.
@@ -775,25 +882,56 @@ export class Document extends EventEmitter {
         this.messagesSinceMSNChange.push(message);
 
         const eventArgs: any[] = [message];
-        if (message.type === ObjectOperation) {
-            const envelope = message.contents as IEnvelope;
-            const objectDetails = this.distributedObjects[envelope.address];
+        switch (message.type) {
+            case api.ObjectOperation:
+                const envelope = message.contents as IEnvelope;
+                const objectDetails = this.distributedObjects.get(envelope.address);
 
-            objectDetails.connection.process(message, context);
-            eventArgs.push(objectDetails.object);
-        } else if (message.type === AttachObject) {
-            const attachMessage = message.contents as IAttachMessage;
+                objectDetails.connection.process(message, context);
+                eventArgs.push(objectDetails.object);
+                break;
 
-            // If a non-local operation then go and create the object - otherwise mark it as officially
-            // attached.
-            if (message.clientId !== this.connection.clientId) {
-                this.fulfillDistributedObject(context.value as ICollaborativeObject, context.services);
-            } else {
-                // Document sequence number references <= message.sequenceNumber should map to the object's 0 sequence
-                // number. We cap to the MSN to keep a tighter window and because no references should be below it.
-                this.distributedObjects[attachMessage.id].connection.setBaseMapping(0, message.minimumSequenceNumber);
-            }
-            eventArgs.push(this.distributedObjects[attachMessage.id].object);
+            case api.AttachObject:
+                const attachMessage = message.contents as IAttachMessage;
+
+                // If a non-local operation then go and create the object - otherwise mark it as officially
+                // attached.
+                if (message.clientId !== this.clientId) {
+                    this.fulfillDistributedObject(context.value as ICollaborativeObject, context.services);
+                } else {
+                    assert(this.pendingAttach.has(attachMessage.id));
+                    this.pendingAttach.delete(attachMessage.id);
+
+                    // Document sequence number references <= message.sequenceNumber should map to the object's 0
+                    // sequence number. We cap to the MSN to keep a tighter window and because no references should be
+                    // below it.
+                    this.distributedObjects.get(attachMessage.id).connection.setBaseMapping(
+                        0,
+                        message.minimumSequenceNumber);
+                }
+                eventArgs.push(this.distributedObjects.get(attachMessage.id).object);
+                break;
+
+            case api.ClientJoin:
+                this.clients.add(message.contents);
+                if (message.contents === this.clientId) {
+                    this.setConnectionState(
+                        ConnectionState.Connected,
+                        `Fully joined the document@ ${message.minimumSequenceNumber}`,
+                        this.clientId);
+                }
+
+                this.emit("clientJoin", message.contents);
+
+                break;
+
+            case api.ClientLeave:
+                this.clients.delete(message.contents);
+                this.emit("clientLeave", message.contents);
+                break;
+
+            default:
+                break;
         }
 
         if (minSequenceNumberChanged) {
@@ -806,9 +944,7 @@ export class Document extends EventEmitter {
             }
             this.messagesSinceMSNChange = this.messagesSinceMSNChange.slice(index);
 
-            // tslint:disable-next-line:forin
-            for (const objectId in this.distributedObjects) {
-                const object = this.distributedObjects[objectId];
+            for (const [, object] of this.distributedObjects) {
                 if (!object.object.isLocal() && object.connection.baseMappingIsSet()) {
                     object.connection.updateMinSequenceNumber(message.minimumSequenceNumber);
                 }

@@ -1,6 +1,6 @@
 import * as assert from "assert";
 import { RangeTracker } from "../core-utils";
-import { IDeltaConnection, IDeltaHandler, IDocument } from "./document";
+import { ConnectionState, IDeltaConnection, IDeltaHandler, IDocument } from "./document";
 import { IEnvelope, IObjectMessage, ISequencedDocumentMessage, ISequencedObjectMessage } from "./protocol";
 
 export interface IMessageContext {
@@ -16,6 +16,14 @@ export class DeltaConnection implements IDeltaConnection {
     private minSequenceNumber: number;
     private handler: IDeltaHandler;
 
+    public get clientId(): string {
+        return this._clientId;
+    }
+
+    public get state(): ConnectionState {
+        return this._state;
+    }
+
     public get minimumSequenceNumber(): number {
         return this.minSequenceNumber;
     }
@@ -28,8 +36,14 @@ export class DeltaConnection implements IDeltaConnection {
         return this.rangeTracker.base;
     }
 
-    constructor(public objectId: string, private document: IDocument) {
+    // tslint:disable:variable-name
+    constructor(
+        public objectId: string,
+        private document: IDocument,
+        private _clientId: string,
+        private _state: ConnectionState) {
     }
+    // tslint:enable:variable-name
 
     /**
      * Sets the base mapping from a local sequence number to the document sequence number that matches it
@@ -46,6 +60,15 @@ export class DeltaConnection implements IDeltaConnection {
     public attach(handler: IDeltaHandler) {
         assert(!this.handler);
         this.handler = handler;
+    }
+
+    public setConnectionState(state: ConnectionState.Disconnected, reason: string): void;
+    public setConnectionState(state: ConnectionState.Connecting, clientId: string): void;
+    public setConnectionState(state: ConnectionState.Connected, clientId: string): void;
+    public setConnectionState(state: ConnectionState, context: string) {
+        this._state = state;
+        this._clientId = state !== ConnectionState.Disconnected ? context : null;
+        this.handler.setConnectionState(state as any, context);
     }
 
     /**

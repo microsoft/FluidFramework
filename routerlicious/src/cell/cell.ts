@@ -2,6 +2,7 @@ import * as resources from "gitresources";
 import hasIn = require("lodash/hasIn");
 import * as api from "../api-core";
 import { ICell } from "../data-types";
+import { debug } from "./debug";
 import { CellExtension } from "./extension";
 
 /**
@@ -170,6 +171,18 @@ export class Cell extends api.CollaborativeObject implements ICell {
     }
 
     protected attachCore() {
+        return;
+    }
+
+    protected onDisconnect() {
+        debug(`Cell ${this.id} is now disconnected`);
+    }
+
+    protected onConnect(pending: api.IObjectMessage[]) {
+        for (const message of pending) {
+            this.submitLocalMessage(message.contents);
+        }
+
         return;
     }
 

@@ -307,7 +307,7 @@ export class SharedString extends CollaborativeMap {
                 this.initializeIntervalCollections();
             },
             (error) => {
-                console.error(error);
+                console.error("initializeContent", error);
             });
     }
 
@@ -343,6 +343,14 @@ export class SharedString extends CollaborativeMap {
     protected loadContentComplete(): Promise<void> {
         this.initializeIntervalCollections();
         return Promise.resolve();
+    }
+
+    protected onConnectContent(pending: api.IObjectMessage[]) {
+        // Update merge tree collaboration information with new client ID and then resend pending ops
+        this.client.updateCollaboration(this.document.clientId);
+        this.sendNACKed();
+
+        return;
     }
 
     private submitIfAttached(message: any) {

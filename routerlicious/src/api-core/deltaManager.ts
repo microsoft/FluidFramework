@@ -2,8 +2,7 @@ import * as assert from "assert";
 import * as queue from "async/queue";
 import { EventEmitter } from "events";
 import cloneDeep = require("lodash/cloneDeep");
-import extend = require("lodash/extend");
-import { Deferred } from "../core-utils";
+import { Deferred, IAuthenticatedUser } from "../core-utils";
 import { debug } from "./debug";
 import * as protocol from "./protocol";
 import * as storage from "./storage";
@@ -36,6 +35,13 @@ export interface IDeltaQueue extends EventEmitter {
      * Resumes processing on the queue
      */
     resume();
+}
+
+export interface IConnectionDetails {
+    clientId: string;
+    existing: boolean;
+    parentBranch: string;
+    user: IAuthenticatedUser;
 }
 
 class DeltaQueue<T> extends EventEmitter implements IDeltaQueue {
@@ -94,9 +100,101 @@ export interface IDeltaHandlerStrategy {
      * Processes the message. The return value from prepare is passed in the context parameter.
      */
     process: (message: protocol.ISequencedDocumentMessage, context: any) => void;
+
+    /**
+     * Called when the connection to the manager is dropped
+     */
+    disconnect: (message: string) => void;
+
+    /**
+     * Called when the connection has been nacked
+     */
+    nack: (target: number) => void;
 }
 
-type OutboundMessage = protocol.IDocumentMessage & { _deferred: Deferred<void> };
+class DeltaConnection extends EventEmitter {
+    public static async Connect(id: string, token: string, service: storage.IDocumentService) {
+        const connection = await service.connectToDeltaStream(id, token);
+        return new DeltaConnection(connection);
+    }
+
+    public get details(): IConnectionDetails {
+        return this._details;
+    }
+
+    public get nacked(): boolean {
+        return this._nacked;
+    }
+
+    public get connected(): boolean {
+        return this._connected;
+    }
+
+    public get outbound(): IDeltaQueue {
+        return this._outbound;
+    }
+
+    // tslint:disable:variable-name
+    private _details: IConnectionDetails;
+    private _nacked = false;
+    private _connected = true;
+    private _outbound: DeltaQueue<protocol.IDocumentMessage>;
+    // tslint:enable:variable-name
+
+    private constructor(private connection: storage.IDocumentDeltaConnection) {
+        super();
+
+        this._details = {
+            clientId: connection.clientId,
+            existing: connection.existing,
+            parentBranch: connection.parentBranch,
+            user: connection.user,
+        };
+
+        // listen for new messages
+        connection.on("op", (documentId: string, messages: protocol.ISequencedDocumentMessage[]) => {
+            this.emit("op", documentId, messages);
+        });
+
+        connection.on("nack", (documentId: string, message: protocol.INack[]) => {
+            // Mark nacked and also pause any outbound communication
+            this._nacked = true;
+            this._outbound.pause();
+
+            const target = message[0].sequenceNumber;
+            this.emit("nack", target);
+        });
+
+        connection.on("disconnect", (reason) => {
+            this._connected = false;
+            this.emit("disconnect", reason);
+        });
+
+        // Listen for socket.io latency messages
+        connection.on("pong", (latency: number) => {
+            // debug(`PONG ${this.details.clientId} ${latency}`);
+        });
+
+        // Queue for outbound message processing
+        this._outbound = new DeltaQueue<protocol.IDocumentMessage>((op, callback) => {
+            connection.submit(op);
+            callback();
+        });
+    }
+
+    /**
+     * Closes the delta connection. This disconnects the socket and clears any listeners
+     */
+    public close() {
+        this._connected = false;
+        this.connection.disconnect();
+        this.removeAllListeners();
+    }
+
+    public submit(message: protocol.IDocumentMessage): void {
+        this._outbound.push(message);
+    }
+}
 
 /**
  * Helper class that manages incoming delta messages. This class ensures that collaborative objects receive delta
@@ -130,18 +228,16 @@ export class DeltaManager implements IDeltaManager {
 
     // tslint:disable:variable-name
     private _inbound: DeltaQueue<protocol.IDocumentMessage>;
-    private _outbound: DeltaQueue<OutboundMessage>;
     // tslint:enable:variable-name
 
-    // Flag indicating whether the client has been nacked
-    private nacked = false;
+    private connection: DeltaConnection;
 
     public get inbound(): IDeltaQueue {
         return this._inbound;
     }
 
     public get outbound(): IDeltaQueue {
-        return this._outbound;
+        return this.connection.outbound;
     }
 
     public get referenceSequenceNumber(): number {
@@ -153,10 +249,11 @@ export class DeltaManager implements IDeltaManager {
     }
 
     constructor(
+        private id: string,
         private baseSequenceNumber: number,
         pendingMessages: protocol.ISequencedDocumentMessage[],
         private deltaStorage: storage.IDocumentDeltaStorageService,
-        private deltaConnection: storage.IDocumentDeltaConnection,
+        private service: storage.IDocumentService,
         private handler: IDeltaHandlerStrategy) {
 
         // The MSN starts at the base the manager is initialized to
@@ -182,44 +279,11 @@ export class DeltaManager implements IDeltaManager {
                 });
         });
 
-        // Queue for outbound message processing
-        this._outbound = new DeltaQueue<OutboundMessage>((op, callback) => {
-            const submitP = this.deltaConnection.submit(op);
-            op._deferred.resolve(submitP);
-            callback();
-        });
-
-        // We start the queue as paused and rely on the client to start it
+        // Both queues start
         this._inbound.pause();
 
         // Prime the DeltaManager with the initial set of provided messages
         this.enqueueMessages(pendingMessages);
-
-        // listen for new messages
-        this.deltaConnection.on("op", (documentId: string, messages: protocol.ISequencedDocumentMessage[]) => {
-            this.enqueueMessages(cloneDeep(messages));
-        });
-
-        this.deltaConnection.on("nack", (documentId: string, message: protocol.INack[]) => {
-            const targetSequenceNumber = message[0].sequenceNumber;
-            debug(`Connection NACK'ed - target sequence number is ${targetSequenceNumber}`);
-
-            // Mark that we've been nacked
-            this.nacked = true;
-
-            // Stop all outbound sends. We will resume once we have re-established ourselves at the target
-            // sequence number.
-            this._outbound.pause();
-        });
-
-        this.deltaConnection.on("disconnect", (reason) => {
-            debug(`Disconnected`, reason);
-        });
-
-        // Listen for socket.io latency messages
-        this.deltaConnection.on("pong", (latency: number) => {
-            debug(`PONG ${latency}`);
-        });
     }
 
     /**
@@ -246,7 +310,7 @@ export class DeltaManager implements IDeltaManager {
     /**
      * Submits a new delta operation
      */
-    public submit(type: string, contents: any): Promise<void> {
+    public submit(type: string, contents: any): void {
         // Start adding trace for the op.
         const traces: protocol.ITrace[] = [ { service: "client", action: "start", timestamp: Date.now()}];
         const message: protocol.IDocumentMessage = {
@@ -259,7 +323,7 @@ export class DeltaManager implements IDeltaManager {
 
         this.readonly = false;
         this.stopSequenceNumberUpdate();
-        return this.submitCore(message);
+        this.connection.submit(message);
     }
 
     /**
@@ -275,22 +339,30 @@ export class DeltaManager implements IDeltaManager {
         };
 
         this.readonly = false;
-        return this.submitCore(message);
+        this.connection.submit(message);
     }
 
-    /**
-     * Begins to submit a new message to the server
-     */
-    private submitCore(message: protocol.IDocumentMessage): Promise<void> {
-        if (this.nacked) {
-            debug("In nack'ed state - not submitting");
-            return Promise.resolve();
-        } else {
-            const deferred = new Deferred<void>();
-            const task = extend(message, { _deferred: deferred });
-            this._outbound.push(task);
-            return deferred.promise;
+    public async connect(token: string): Promise<IConnectionDetails> {
+        // Free up and clear any previous connection
+        if (this.connection) {
+            this.connection.close();
+            this.connection = null;
         }
+
+        this.connection = await DeltaConnection.Connect(this.id, token, this.service);
+        this.connection.on("op", (documentId: string, messages: protocol.ISequencedDocumentMessage[]) => {
+            this.enqueueMessages(cloneDeep(messages));
+        });
+
+        this.connection.on("nack", (target: number) => {
+            this.handler.nack(target);
+        });
+
+        this.connection.on("disconnect", (reason) => {
+            this.handler.disconnect(reason);
+        });
+
+        return this.connection.details;
     }
 
     private enqueueMessages(messages: protocol.ISequencedDocumentMessage[]) {

@@ -1,18 +1,8 @@
 import { EventEmitter } from "events";
 import * as api from "../api-core";
-import { BatchManager, Deferred, IAuthenticatedUser } from "../core-utils";
+import { BatchManager, IAuthenticatedUser } from "../core-utils";
+import { debug } from "./debug";
 import * as messages from "./messages";
-
-/**
- * A pending message the batch manager is holding on to
- */
-interface IPendingSend {
-    // The deferred is used to resolve a promise once the message is sent
-    deferred: Deferred<any>;
-
-    // The message to send
-    message: any;
-}
 
 /**
  * Represents a connection to a stream of delta updates
@@ -37,6 +27,11 @@ export class DocumentDeltaConnection implements api.IDocumentDeltaConnection {
         };
 
         const connection = await new Promise<messages.IConnected>((resolve, reject) => {
+            // Listen for connection issues
+            socket.on("connect_error", (error) => {
+                reject(error);
+            });
+
             socket.emit(
                 "connectDocument",
                 connectMessage,
@@ -55,7 +50,7 @@ export class DocumentDeltaConnection implements api.IDocumentDeltaConnection {
     }
 
     private emitter = new EventEmitter();
-    private submitManager: BatchManager<IPendingSend>;
+    private submitManager: BatchManager<api.IDocumentMessage>;
 
     public get clientId(): string {
         return this.details.clientId;
@@ -78,14 +73,16 @@ export class DocumentDeltaConnection implements api.IDocumentDeltaConnection {
         public documentId: string,
         public details: messages.IConnected) {
 
-        this.submitManager = new BatchManager<IPendingSend>((submitType, work) => {
-            this.socket.emit(submitType, this.details.clientId, work.map((message) => message.message), (error) => {
-                if (error) {
-                    work.forEach((message) => message.deferred.reject(error));
-                } else {
-                    work.forEach((message) => message.deferred.resolve());
-                }
-            });
+        this.submitManager = new BatchManager<api.IDocumentMessage>((submitType, work) => {
+            this.socket.emit(
+                submitType,
+                this.details.clientId,
+                work,
+                (error) => {
+                    if (error) {
+                        debug("Emit error", error);
+                    }
+                });
         });
     }
 
@@ -109,9 +106,11 @@ export class DocumentDeltaConnection implements api.IDocumentDeltaConnection {
     /**
      * Submits a new delta operation to the server
      */
-    public submit(message: api.IDocumentMessage): Promise<void> {
-        const deferred = new Deferred<any>();
-        this.submitManager.add("submitOp", { deferred, message } );
-        return deferred.promise;
+    public submit(message: api.IDocumentMessage): void {
+        this.submitManager.add("submitOp", message);
+    }
+
+    public disconnect() {
+        this.socket.disconnect();
     }
 }

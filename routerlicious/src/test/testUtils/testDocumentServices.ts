@@ -16,8 +16,12 @@ export class TestDocumentDeltaConnection implements api.IDocumentDeltaConnection
         throw new Error("Method not implemented.");
     }
 
-    public submit(message: api.IDocumentMessage): Promise<void> {
+    public submit(message: api.IDocumentMessage): void {
         throw new Error("Method not implemented.");
+    }
+
+    public disconnect() {
+        return;
     }
 }
 

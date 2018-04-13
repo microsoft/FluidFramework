@@ -4,10 +4,6 @@ services:
         build: .
         ports:
             - "3000:3000"
-        depends_on:
-            - redis
-            - mongodb
-            - kafka-rest
         command: node dist/alfred/www.js
         environment:
             - DEBUG=routerlicious:*
@@ -15,10 +11,6 @@ services:
         restart: always
     deli:
         build: .
-        depends_on:
-            - redis
-            - mongodb
-            - kafka-rest
         command: node dist/kafka-service/index.js deli ../document-router/index.js
         environment:
             - worker__intelligence__resume__url=http://alfred:3000/intelligence/resume
@@ -28,10 +20,6 @@ services:
         restart: always
     scriptorium:
         build: .
-        depends_on:
-            - redis
-            - mongodb
-            - kafka-rest
         command: node dist/kafka-service/index.js scriptorium ../scriptorium/index.js
         environment:
             - DEBUG=routerlicious:*
@@ -41,10 +29,6 @@ services:
         build: .
         ports:
             - "4000:4000"
-        depends_on:
-            - redis
-            - mongodb
-            - kafka-rest
         command: node dist/kafka-service/index.js tmz ../tmz/index.js
         environment:
             - DEBUG=routerlicious:*
@@ -60,8 +44,6 @@ services:
         restart: always
     paparazzi:
         build: .
-        depends_on:
-            - alfred
         command: node dist/paparazzi/index.js
         environment:
             - DEBUG=routerlicious:*
@@ -72,8 +54,6 @@ services:
         build: .
         ports:
             - "5000:5000"
-        depends_on:
-            - mongodb
         command: node dist/riddler/www.js
         environment:
             - DEBUG=routerlicious:*
@@ -111,8 +91,6 @@ services:
             - "2181:2181"
     kafka:
         image: wurstmeister/kafka:latest
-        depends_on:
-            - zookeeper
         ports:
             - "9092:9092"
         environment:
@@ -121,20 +99,6 @@ services:
             KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'false'
             KAFKA_CREATE_TOPICS: "deltas:8:1,rawdeltas:8:1"
             KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-    kafka-rest:
-        image: confluentinc/cp-kafka-rest:latest
-        depends_on:
-            - zookeeper
-            - kafka
-        ports:
-            - "8082:8082"
-        logging:
-            driver: none
-        environment:
-            KAFKA_REST_ZOOKEEPER_CONNECT: 'zookeeper:2181'
-            KAFKA_REST_LISTENERS: http://kafka-rest:8082
-            KAFKA_REST_HOST_NAME: kafka-rest
-            KAFKA_REST_CONSUMER_REQUEST_TIMEOUT_MS: 1
     redis:
         image: "redis:alpine"
     mongodb:

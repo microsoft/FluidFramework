@@ -3,7 +3,7 @@ import { EventEmitter } from "events";
 import { ICommit } from "gitresources";
 import { ValueType } from "../map/definitions";
 import { debug } from "./debug";
-import { IDistributedObjectServices, IDocument, IObjectStorageService } from "./document";
+import { ConnectionState, IDistributedObjectServices, IDocument, IObjectStorageService } from "./document";
 import { ILatencyMessage, IObjectMessage, ISequencedObjectMessage, OperationType } from "./protocol";
 import { ITree } from "./storage";
 import { ICollaborativeObject } from "./types";
@@ -15,10 +15,11 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
     // Private fields exposed via getters
     // tslint:disable:variable-name
     private _sequenceNumber: number;
+    private _state = ConnectionState.Disconnected;
     // tslint:enable:variable-name
 
     // Locally applied operations not yet ACK'd by the server
-    private localOps: IObjectMessage[] = [];
+    private pendingOps: IObjectMessage[] = [];
 
     private services: IDistributedObjectServices;
 
@@ -32,6 +33,10 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
         return this._sequenceNumber;
     }
 
+    public get state(): ConnectionState {
+        return this._state;
+    }
+
     constructor(public id: string, protected document: IDocument, public type: string) {
         super();
     }
@@ -42,6 +47,7 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
             value: this.id,
         };
     }
+
     /**
      * A collaborative object, after construction, can either be loaded in the case that it is already part of
      * a collaborative document. Or later attached if it is being newly added.
@@ -141,6 +147,16 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
     protected abstract processMinSequenceNumberChanged(value: number);
 
     /**
+     * Called when the object has disconnected from the delta stream
+     */
+    protected abstract onDisconnect();
+
+    /**
+     * Called when the object has fully connected to the delta stream
+     */
+    protected abstract onConnect(pending: IObjectMessage[]);
+
+    /**
      * Processes a message by the local client
      */
     protected submitLocalMessage(contents: any): void {
@@ -155,18 +171,15 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
         };
 
         // Store the message for when it is ACKed and then submit to the server if connected
-        this.localOps.push(message);
+        this.pendingOps.push(message);
+        this.pingMap[message.clientSequenceNumber] = Date.now();
 
-        this.services.deltaConnection.submit(message).then(
-            () => {
-                // Message acked by socketio. Store timestamp locally.
-                this.pingMap[message.clientSequenceNumber] = Date.now();
-            },
-            (error) => {
-                // TODO need reconnection logic upon loss of connection
-                debug(`Lost connection to server: ${JSON.stringify(error)}`);
-                this.emit("error", error);
-            });
+        // Send if we are connected - otherwise just add to the sent list
+        if (this.state === ConnectionState.Connected) {
+            this.services.deltaConnection.submit(message);
+        } else {
+            debug(`${this.id} Not fully connected - adding to pending list`, contents);
+        }
     }
 
     private attachDeltaHandler() {
@@ -180,11 +193,62 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
             process: (message, context) => {
                 this.process(message, context);
             },
+            setConnectionState: (state: ConnectionState, context?: any) => {
+                this.setConnectionState(state, context);
+            },
         });
+
+        // Trigger initial state
+        this.setConnectionState(this.services.deltaConnection.state, this.services.deltaConnection.clientId);
     }
 
     private async prepare(message: ISequencedObjectMessage): Promise<any> {
         return this.prepareCore(message);
+    }
+
+    private setConnectionState(state: ConnectionState, context?: any) {
+        // Should I change the state at the end? So that we *can't* send new stuff before we send old?
+        this._state = state;
+
+        switch (state) {
+            case ConnectionState.Disconnected:
+                // Things that are true now...
+                // - if we had a connection we can no longer send messages over it
+                // - if we had outbound messages some may or may not be ACK'd. Won't know until next message
+                //
+                // - nack could get a new msn - but might as well do it in the join?
+                this.onDisconnect();
+                break;
+
+            case ConnectionState.Connecting:
+                // Things that are now true...
+                // - we will begin to receive inbound messages
+                // - we know what our new client id is.
+                // - still not safe to send messages
+
+                // While connecting we are still ticking off the previous messages
+                debug(`${this.id} is now connecting`);
+                break;
+
+            case ConnectionState.Connected:
+                // tslint:disable-next-line:max-line-length
+                debug(`${this.id} had ${this.pendingOps.length} pending ops`);
+
+                // Extract all un-ack'd payload operation
+                const pendingOps = this.pendingOps;
+                this.pendingOps = [];
+                this.clientSequenceNumber = 0;
+
+                // And now we are fully connected
+                // - we have a client ID
+                // - we are caught up enough to attempt to send messages
+                this.onConnect(pendingOps);
+                break;
+
+            default:
+                assert.ok(false, `Unknown ConnectionState ${state}`);
+                break;
+        }
     }
 
     /**
@@ -198,9 +262,9 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
         if (message.type === OperationType && message.clientId === this.document.clientId) {
             // One of our messages was sequenced. We can remove it from the local message list. Given these arrive
             // in order we only need to check the beginning of the local list.
-            if (this.localOps.length > 0 &&
-                this.localOps[0].clientSequenceNumber === message.clientSequenceNumber) {
-                this.localOps.shift();
+            if (this.pendingOps.length > 0 &&
+                this.pendingOps[0].clientSequenceNumber === message.clientSequenceNumber) {
+                this.pendingOps.shift();
             } else {
                 debug(`Duplicate ack received ${message.clientSequenceNumber}`);
             }
