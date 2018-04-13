@@ -36,13 +36,8 @@ async function addTranslation(document: API.Document, id: string, language: stri
     }
 
     const insights = await document.getRoot().wait<types.IMap>("insights");
-    const insightsView = await insights.getView();
+    const view = await (await insights.wait<types.IMap>(id)).getView();
 
-    if (!insightsView.has(id)) {
-        insightsView.set(id, document.createMap());
-    }
-
-    const view = await insightsView.get<types.IMap>(id).getView();
     if (!view.has("translations")) {
         view.set("translations", undefined, DistributedMap.DistributedSetValueType.Name);
     }

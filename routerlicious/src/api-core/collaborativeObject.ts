@@ -197,6 +197,9 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
                 this.setConnectionState(state, context);
             },
         });
+
+        // Trigger initial state
+        this.setConnectionState(this.services.deltaConnection.state, this.services.deltaConnection.clientId);
     }
 
     private async prepare(message: ISequencedObjectMessage): Promise<any> {

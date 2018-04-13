@@ -49,6 +49,10 @@ export interface IDeltaHandler {
  * Interface to represent a connection to a delta notification stream.
  */
 export interface IDeltaConnection {
+    clientId: string;
+
+    state: ConnectionState;
+
     /**
      * Send new messages to the server
      */

@@ -827,7 +827,7 @@ export class Document extends EventEmitter {
             ? this.header.tree.trees[id]
             : null;
 
-        const deltaConnection = new DeltaConnection(id, this);
+        const deltaConnection = new DeltaConnection(id, this, this.clientId, this.connectionState);
         const objectStorage = new ObjectStorageService(tree, this.storageService);
 
         return {
@@ -846,7 +846,7 @@ export class Document extends EventEmitter {
 
             // create storage service that wraps the attach data
             const localStorage = new LocalObjectStorageService(attachMessage.snapshot);
-            const connection = new DeltaConnection(attachMessage.id, this);
+            const connection = new DeltaConnection(attachMessage.id, this, this.clientId, this.connectionState);
 
             // Document sequence number references <= message.sequenceNumber should map to the object's 0 sequence
             // number. We cap to the MSN to keep a tighter window and because no references should be below it.

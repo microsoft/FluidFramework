@@ -305,7 +305,7 @@ export class SharedString extends CollaborativeMap {
                 this.initializeIntervalCollections();
             },
             (error) => {
-                console.error(error);
+                console.error("initializeContent", error);
             });
     }
 

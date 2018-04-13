@@ -35,7 +35,7 @@ export class PartitionPump {
         this.recieverP = this.client.createReceiver(this.consumerGroup, this.partitionId, options)
             .then((receiver) => {
                 receiver.on("errorReceived", (error) => {
-                    console.log(error);
+                    console.log("PartitionPumpError", error);
                     this.eventProcessor.error(this.context, error);
                 });
 
