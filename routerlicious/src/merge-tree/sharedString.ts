@@ -344,9 +344,9 @@ export class SharedString extends CollaborativeMap {
     }
 
     protected onConnectContent(pending: api.IObjectMessage[]) {
-        // Update merge tree collaboration information with new client ID
+        // Update merge tree collaboration information with new client ID and then resend pending ops
         this.client.updateCollaboration(this.document.clientId);
-        // this.sendNackStuf();
+        this.sendNACKed();
 
         return;
     }

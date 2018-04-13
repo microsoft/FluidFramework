@@ -241,6 +241,7 @@ export class Document extends EventEmitter {
             options,
             token,
             header);
+        await document.connect(token, "Document loading");
 
         // Make a reservation for the root object
         document.reserveDistributedObject("root");
@@ -265,7 +266,6 @@ export class Document extends EventEmitter {
 
         // Begin connection to the document once we have began to load all documents. This will make sure to send
         // them the onDisconnect and onConnected messages
-        const connectP = document.connect(token, "Document loading");
         await Promise.all(objectsLoaded);
 
         // Process all pending tardis messages
@@ -283,11 +283,6 @@ export class Document extends EventEmitter {
 
         // Start the delta manager back up
         document._deltaManager.start();
-
-        // TODO remove this check once we are fully rejoining
-        if (connect) {
-            await connectP;
-        }
 
         // If it's a new document we create the root map object - otherwise we wait for it to become available
         if (!document.connectDetails.existing) {
@@ -617,6 +612,8 @@ export class Document extends EventEmitter {
             (details) => {
                 this.setConnectionState(ConnectionState.Connecting, "Connected on Socket.IO channel", details.clientId);
                 this.connectDetails = details;
+                this.connecting.resolve();
+                this.connecting = null;
             },
             (error) => {
                 delay = Math.min(delay, MaxReconnectDelay);
@@ -662,15 +659,6 @@ export class Document extends EventEmitter {
                         break;
                 }
             }
-        }
-
-        // Resolve any pending connection promise
-        if (value === ConnectionState.Connected) {
-            this.connecting.resolve();
-            this.connecting = null;
-        } else if (value === ConnectionState.Disconnected && this.connecting) {
-            this.connecting.reject(reason);
-            this.connecting = null;
         }
     }
 
