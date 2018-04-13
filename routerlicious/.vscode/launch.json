@@ -58,7 +58,7 @@
             "sourceMaps": true,
             "outFiles": [ "${workspaceRoot}/dist/**/*.js" ],
             "protocol": "inspector",
-            "program": "${workspaceRoot}/dist/merge-tree/beastTest.js"
+            "program": "${workspaceRoot}/dist/test/merge-tree/beastTest.js"
         },
         {
             "type": "node",

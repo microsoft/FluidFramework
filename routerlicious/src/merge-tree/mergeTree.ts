@@ -3403,7 +3403,7 @@ export class MergeTree {
 
     tardisPositionFromClient(pos: number, fromSeq: number, toSeq: number, fromClientId: number,
         toClientId = NonCollabClient) {
-        if (((fromSeq < toSeq)||(toClientId===this.collabWindow.clientId)) && pos < this.getLength(fromSeq, fromClientId)) {
+        if (((fromSeq < toSeq) || (toClientId === this.collabWindow.clientId)) && pos < this.getLength(fromSeq, fromClientId)) {
             if ((toSeq <= this.collabWindow.currentSeq) && (fromSeq >= this.collabWindow.minSeq)) {
                 let segoff = this.getContainingSegment(pos, fromSeq, fromClientId);
                 let toPos = this.getOffset(segoff.segment, toSeq, toClientId);
@@ -3422,14 +3422,16 @@ export class MergeTree {
         let ranges = <Base.IIntegerRange[]>[];
         let recordRange = (segment: Segment, pos: number, refSeq: number, clientId: number, segStart: number,
             segEnd: number) => {
-            let offset = this.getOffset(segment, toSeq, toClientId);
-            if (segStart < 0) {
-                segStart = 0;
+            if (this.nodeLength(segment, toSeq, toClientId) > 0) {
+                let offset = this.getOffset(segment, toSeq, toClientId);
+                if (segStart < 0) {
+                    segStart = 0;
+                }
+                if (segEnd > segment.cachedLength) {
+                    segEnd = segment.cachedLength;
+                }
+                ranges.push({ start: offset + segStart, end: offset + segEnd });
             }
-            if (segEnd > segment.cachedLength) {
-                segEnd = segment.cachedLength;
-            }
-            ranges.push({ start: offset + segStart, end: offset + segEnd });
             return true;
         }
         this.mapRange({ leaf: recordRange }, fromSeq, fromClientId, undefined, rangeStart, rangeEnd);

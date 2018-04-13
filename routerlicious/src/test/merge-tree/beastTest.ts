@@ -1298,6 +1298,25 @@ export function TestPack(verbose = true) {
                 }
             }
         }
+        cli.removeSegmentLocal(3,5);
+        fwdRanges = cli.mergeTree.tardisRangeFromClient(3,6,9,10,2,0);
+        if (verbose) {
+            console.log(cli.mergeTree.toString());
+            console.log(`fwd range 3 6 on cli 2 refseq 9 => cli 0 local`);
+            for (let r of fwdRanges) {
+                console.log(`fwd range (${r.start}, ${r.end})`);
+            }
+        }
+        cli.removeSegmentRemote(3,6,10,9,2);
+        cli.ackPendingSegment(11);
+        if (verbose) {
+            console.log(cli.mergeTree.toString());
+            for (let clientId = 0; clientId < 4; clientId++) {
+                for (let refSeq = 0; refSeq < 12; refSeq++) {
+                    console.log(cli.relText(clientId, refSeq));
+                }
+            }
+        }
     }
     return {
         firstTest: firstTest,
@@ -1694,7 +1713,7 @@ if (testTST) {
 describe("Routerlicious", () => {
     describe("merge-tree", () => {
         it("firstTest", () => {
-            const testPack = TestPack(false);
+            const testPack = TestPack(true);
             testPack.firstTest();
         });
 
