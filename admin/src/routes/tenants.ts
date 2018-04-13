@@ -23,5 +23,13 @@ export function create(config: any, mongoManager: dbService.MongoManager, collec
         });
     });
 
+    router.get("/:tenantId", async (request, response, next) => {
+        data.findTenant(mongoManager, collectionName, request.params.tenantId).then((result) => {
+            response.status(200).json(result);
+        }, (error) => {
+            response.status(500).json(error);
+        });
+    });
+
     return router;
 }

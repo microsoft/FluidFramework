@@ -85,10 +85,6 @@ export interface ICombiningOp {
     maxValue?: any;
 }
 
-export interface IContingencyCheck {
-    props: Object;
-}
-
 export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
     type: MergeTreeDeltaType.ANNOTATE;
     pos1?: number;
@@ -97,11 +93,16 @@ export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
     relativePos2?: IRelativePosition;
     props: Object;
     combiningOp?: ICombiningOp;
-    when?: IContingencyCheck;
+}
+
+export interface IIntentSpec {
+    name: string;
+    params: Object;
 }
 
 export interface IMergeTreeGroupMsg extends IMergeTreeDelta {
     type: MergeTreeDeltaType.GROUP;
+    intent: IIntentSpec;
     ops: IMergeTreeOp[];
 }
 

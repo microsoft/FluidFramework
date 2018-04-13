@@ -23,6 +23,10 @@
                         <input type="text" class="form-control" id="interval">
                     </div>
                     <div class="form-group">
+                        <label for="authors">Number of Authors</label>
+                        <input type="text" class="form-control" id="authors">
+                    </div>
+                    <div class="form-group">
                         <label for="translation">Translation language</label>
                         <input type="text" class="form-control" id="translation" value="">
                     </div>
@@ -38,6 +42,10 @@
                     <div class="form-group">
                         <label for="interval">Typing Interval (ms)</label>
                         <input type="text" class="form-control" id="interval">
+                    </div>
+                    <div class="form-group">
+                        <label for="authors">Number of Authors</label>
+                        <input type="text" class="form-control" id="authors">
                     </div>
                     <button class="btn btn-default hidden" id="create" style="margin-bottom: 10px;">Create</button>
                 </form>
@@ -94,7 +102,8 @@
                 config,
                 "{{ id }}",
                 "{{ template }}",
-                {{ speed }},
+                "{{ speed }}",
+                "{{ authors }}",
                 "{{ languages }}");
         </script>
     {{/scripts}}

@@ -53,45 +53,54 @@ fs.readFile(commander.file, "utf8", async (error, data: string) => {
                 total: data.length,
             });
     }
+
     await scribe.create(sharedStringId, data, debug);
     scribe.togglePlay();
 
-    const typeP = scribe.type(
-        commander.interval,
-        data,
-        commander.authors,
-        commander.processes,
-        (metrics) => {
-            if (commander.progress) {
-                bar.update(metrics.ackProgress, {
-                    ackRate: (metrics.ackRate ? metrics.ackRate : 0).toFixed(2),
-                    latency: (metrics.latencyAverage ? metrics.latencyAverage : 0).toFixed(2),
-                    stdDev: (metrics.latencyStdDev ? metrics.latencyStdDev : 0).toFixed(2),
-                    typingRate: (metrics.typingRate ? metrics.typingRate : 0).toFixed(2),
-                });
-            } else if (metrics.ackProgress * 100 % 1 <= .003) {
-                console.log(Math.round(metrics.ackProgress * 100) + "% Completed");
-            }
-        });
-
-    // Output the total time once typing is finished
-    typeP.then(
-        (metrics) => {
-            const metricString = JSON.stringify(metrics);
-            ensurePath(commander.write);
-            // write to file so output isn't affected by downstream stdout
-            fs.writeFile(commander.write, metricString, (err) => {
-                if (err) {
-                    console.log(err);
-                    process.exit(1);
+    setTimeout(() => {
+        let lastReported = 0;
+        const typeP = scribe.type(
+            commander.interval,
+            data,
+            Number(commander.authors),
+            Number(commander.processes),
+            (metrics) => {
+                if (commander.progress) {
+                    bar.update(metrics.ackProgress, {
+                        ackRate: (metrics.ackRate ? metrics.ackRate : 0).toFixed(2),
+                        latency: (metrics.latencyAverage ? metrics.latencyAverage : 0).toFixed(2),
+                        stdDev: (metrics.latencyStdDev ? metrics.latencyStdDev : 0).toFixed(2),
+                        typingRate: (metrics.typingRate ? metrics.typingRate : 0).toFixed(2),
+                    });
+                } else {
+                    let progress = Math.round(metrics.typingProgress * 100);
+                    if (progress > lastReported) {
+                        console.log(progress + "% Completed");
+                        lastReported = progress;
+                    }
                 }
-                process.exit(0);
+          });
+
+        // Output the total time once typing is finished
+        typeP.then(
+            (metrics) => {
+                const metricString = JSON.stringify(metrics);
+                ensurePath(commander.write);
+                // write to file so output isn't affected by downstream stdout
+                fs.writeFile(commander.write, metricString, (err) => {
+                    if (err) {
+                        console.log(err);
+                        process.exit(1);
+                    }
+                    process.exit(0);
+                });
+            },
+            (typingError) => {
+                console.error(error);
+                process.exit(1);
             });
-        },
-        (typingError) => {
-            console.error(error);
-            process.exit(1);
-        });
+    }, 1000);
+
 });
 
 function ensurePath(filePath: string) {

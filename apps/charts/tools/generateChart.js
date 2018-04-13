@@ -42,6 +42,8 @@ service:
   host: www.wu2.prague.office-int.com
   sslCert: wu2-tls-certificate
 
+secretKey: 0ddca6469e340715ac5be556910680e1
+
 resources:
   limits:
     cpu: 1024m

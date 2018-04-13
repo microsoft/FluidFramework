@@ -7,6 +7,7 @@ import * as scribe from "../../utils/scribe";
 // Text represents the loaded file text
 let text: string;
 let intervalTime: number;
+let authorCount: number;
 let initialRun: boolean = true;
 
 function downloadRawText(textUrl: string): Promise<string> {
@@ -38,8 +39,10 @@ function resetProgressBar(progressBar: HTMLElement) {
 }
 
 function updateMetrics(metrics: IScribeMetrics, ackProgressBar: HTMLElement, typingProgressBar: HTMLElement) {
-    updateProgressBar(ackProgressBar, metrics.ackProgress);
-    updateProgressBar(typingProgressBar, metrics.typingProgress);
+    if (authorCount === 1) {
+        updateProgressBar(ackProgressBar, metrics.ackProgress);
+        updateProgressBar(typingProgressBar, metrics.typingProgress);
+    }
 
     if (metrics.ackRate) {
         document.getElementById("ack-rate").innerText =
@@ -95,7 +98,13 @@ function addLink(element: HTMLDivElement, link: string) {
     element.appendChild(document.createElement("br"));
 }
 
-export function initialize(config: any, id: string, template: string, speed: number, languages: string) {
+export function initialize(
+    config: any,
+    id: string,
+    template: string,
+    speed: number,
+    authors: number,
+    languages: string) {
     const loadFile = !id;
 
     // Easy access to a couple of page elements
@@ -107,6 +116,7 @@ export function initialize(config: any, id: string, template: string, speed: num
     const typingDetails = document.getElementById("typing-details") as HTMLElement;
     const intervalElement = document.getElementById("interval") as HTMLInputElement;
     const translationElement = document.getElementById("translation") as HTMLInputElement;
+    const authorElement = document.getElementById("authors") as HTMLInputElement;
     const typingProgress = document.getElementById("typing-progress") as HTMLElement;
     const typingProgressBar = typingProgress.getElementsByClassName("progress-bar")[0] as HTMLElement;
     const ackProgress = document.getElementById("ack-progress") as HTMLElement;
@@ -114,6 +124,7 @@ export function initialize(config: any, id: string, template: string, speed: num
 
     // Set the speed and translation elements
     intervalElement.value = speed.toString();
+    authorElement.value = authors.toString();
     if (translationElement) {
         translationElement.value = languages;
     }
@@ -142,6 +153,7 @@ export function initialize(config: any, id: string, template: string, speed: num
         }
 
         intervalTime = Number.parseInt(intervalElement.value);
+        authorCount = Number.parseInt(authorElement.value);
         const scribeP = scribe.create(id, text);
 
         scribeP.then(() => {
@@ -176,15 +188,20 @@ export function initialize(config: any, id: string, template: string, speed: num
 
         if (initialRun) {
             // Initialize the scribe progress UI.
-            resetProgressBar(ackProgressBar);
-            resetProgressBar(typingProgressBar);
+            if (authorCount === 1 ) {
+                resetProgressBar(ackProgressBar);
+                resetProgressBar(typingProgressBar);
+            } else {
+                ackProgress.classList.add("hidden");
+                typingProgress.classList.add("hidden");
+            }
             typingDetails.classList.remove("hidden");
 
             // Start typing and register to update the UI
             const typeP = scribe.type(
                 intervalTime,
                 text,
-                1,
+                authorCount,
                 1,
                 (metrics) => updateMetrics(metrics, ackProgressBar, typingProgressBar));
 

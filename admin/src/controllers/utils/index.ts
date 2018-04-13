@@ -1,1 +1,2 @@
-export * from "./addTenant";
+export * from "./tenantFetcher";
+export * from "./tenantGenerator";

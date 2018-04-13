@@ -1793,6 +1793,7 @@ export class Client {
     shortClientBranchIdMap = <number[]>[];
     shortClientUserInfoMap = <IAuthenticatedUser[]>[];
     registerCollection = new RegisterCollection();
+    localSequenceNumber = UnassignedSequenceNumber;
     public longClientId: string;
     public userInfo: IAuthenticatedUser;
     public undoSegments: IUndoInfo[];
@@ -1805,6 +1806,14 @@ export class Client {
         this.mergeTree.clientIdToBranchId = this.shortClientBranchIdMap;
         this.q = Collections.ListMakeHead<API.ISequencedObjectMessage>();
         this.checkQ = Collections.ListMakeHead<string>();
+    }
+
+    setLocalSequenceNumber(seq: number) {
+        this.localSequenceNumber = seq;
+    }
+
+    resetLocalSequenceNumber() {
+        this.localSequenceNumber = UnassignedSequenceNumber;
     }
 
     undoSingleSequenceNumber(undoSegments: IUndoInfo[], redoSegments: IUndoInfo[]) {
@@ -2035,6 +2044,42 @@ export class Client {
         this.checkQ.enqueue(this.getText());
     }
 
+    segmentToOps(segment: Segment, opList: ops.IMergeTreeOp[]) {
+        // TODO: branches
+        if (segment.seq === UnassignedSequenceNumber) {
+            let pos = this.mergeTree.getOffset(segment, this.getCurrentSeq(),
+                this.getClientId());
+            let baseSegment = <BaseSegment>segment;
+            let insertOp = <ops.IMergeTreeInsertMsg>{
+                pos1: pos,
+                type: ops.MergeTreeDeltaType.INSERT,
+            };
+            if (segment.getType() === SegmentType.Text) {
+                let textSegment = <TextSegment>segment;
+                insertOp.text = textSegment.text;
+            } else {
+                // assume marker
+                let marker = <Marker>segment;
+                insertOp.marker = { refType: marker.refType };
+            }
+            if (baseSegment.properties) {
+                insertOp.props = baseSegment.properties;
+            }
+            opList.push(insertOp);
+        }
+         
+        if (segment.removedSeq === UnassignedSequenceNumber) {
+            let start = this.mergeTree.getOffset(segment, this.getCurrentSeq(),
+                this.getClientId());
+            let removeOp = <ops.IMergeTreeRemoveMsg>{
+                pos1: start,
+                pos2: start + segment.cachedLength,
+                type: ops.MergeTreeDeltaType.REMOVE,
+            };
+            opList.push(removeOp);
+        }
+    }
+
     transformOp(op: ops.IMergeTreeOp, msg: API.ISequencedObjectMessage, toSequenceNumber: number) {
         if ((op.type == ops.MergeTreeDeltaType.ANNOTATE) ||
             (op.type == ops.MergeTreeDeltaType.REMOVE)) {
@@ -2258,15 +2303,15 @@ export class Client {
     getLocalSequenceNumber() {
         let segWindow = this.mergeTree.getCollabWindow();
         if (segWindow.collaborating) {
-            return UnassignedSequenceNumber;
+            return this.localSequenceNumber;
         }
         else {
             return UniversalSequenceNumber;
         }
     }
 
-    localTransaction(groupOp: ops.IMergeTreeGroupMsg) {
-        this.mergeTree.startGroupOperation();
+    localTransaction(groupOp: ops.IMergeTreeGroupMsg, segmentGroup?: SegmentGroup) {
+        segmentGroup = this.mergeTree.startGroupOperation(segmentGroup);
         for (let op of groupOp.ops) {
             switch (op.type) {
                 case ops.MergeTreeDeltaType.INSERT:
@@ -2324,6 +2369,7 @@ export class Client {
             }
         }
         this.mergeTree.endGroupOperation();
+        return segmentGroup;
     }
 
     annotateSegmentLocal(props: Properties.PropertySet, start: number, end: number, op: ops.ICombiningOp) {
@@ -2989,11 +3035,16 @@ export class MergeTree {
         return b;
     }
 
-    startGroupOperation() {
+    startGroupOperation(liveSegmentGroup?: SegmentGroup) {
         // TODO: assert undefined
         if (this.collabWindow.collaborating) {
-            this.transactionSegmentGroup = <SegmentGroup>{ segments: [] };
-            this.pendingSegments.enqueue(this.transactionSegmentGroup);
+            if (liveSegmentGroup) {
+                this.transactionSegmentGroup = liveSegmentGroup;
+            } else {
+                this.transactionSegmentGroup = <SegmentGroup>{ segments: [] };
+                this.pendingSegments.enqueue(this.transactionSegmentGroup);
+            }
+            return this.transactionSegmentGroup;
         }
     }
 
@@ -3366,7 +3417,8 @@ export class MergeTree {
         }
     }
 
-    tardisRange(rangeStart: number, rangeEnd: number, fromSeq: number, toSeq: number, toClientId = NonCollabClient) {
+    tardisRangeFromClient(rangeStart: number, rangeEnd: number, fromSeq: number, toSeq: number, fromClientId: number,
+        toClientId = NonCollabClient) {
         let ranges = <Base.IIntegerRange[]>[];
         let recordRange = (segment: Segment, pos: number, refSeq: number, clientId: number, segStart: number,
             segEnd: number) => {
@@ -3380,8 +3432,12 @@ export class MergeTree {
             ranges.push({ start: offset + segStart, end: offset + segEnd });
             return true;
         }
-        this.mapRange({ leaf: recordRange }, fromSeq, NonCollabClient, undefined, rangeStart, rangeEnd);
+        this.mapRange({ leaf: recordRange }, fromSeq, fromClientId, undefined, rangeStart, rangeEnd);
         return ranges;
+    }
+
+    tardisRange(rangeStart: number, rangeEnd: number, fromSeq: number, toSeq: number, toClientId = NonCollabClient) {
+        return this.tardisRangeFromClient(rangeStart, rangeEnd, fromSeq, toSeq, NonCollabClient, toClientId);
     }
 
     getLength(refSeq: number, clientId: number) {
@@ -4038,6 +4094,12 @@ export class MergeTree {
     insertMarker(pos: number, refSeq: number, clientId: number, seq: number,
         behaviors: ops.ReferenceType, props?: Properties.PropertySet) {
         let marker = Marker.make(behaviors, props, seq, clientId);
+
+        let markerId = marker.getId();
+        if (markerId) {
+            this.mapIdToSegment(markerId, marker);
+        }
+
         this.insert(pos, refSeq, clientId, seq, marker, (block, pos, refSeq, clientId, seq, marker) =>
             this.blockInsert(block, pos, refSeq, clientId, seq, marker));
     }

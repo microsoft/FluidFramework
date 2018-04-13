@@ -46,6 +46,8 @@
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
     "tsc": "tsc",
     "tslint": "tslint 'src/**/*.ts'",
+    "stop": "docker-compose down",
+    "stop:full": "docker-compose down && docker volume prune --force",
     "beast": "npm test -- --beast --grep beastTest",
     "perf:deli:debug": "nodemon --exitcrash --inspect=0.0.0.0:5858 dist/perf/deli.js -w dist",
     "pretest:perf:deli": "docker-compose -f docker-compose.test.deli.yml down --remove-orphans",

@@ -17,7 +17,42 @@
         "endpoints": {
             "tenantsUrl": "http://localhost:7000/tenants"
         },
-        "port": 3000
+        "port": 3000,
+        "tenantConfig": [
+            {
+                "name": "git",
+                "storage": {
+                    "url": "http://historian:3000",
+                    "publicUrl": "http://localhost:3001",
+                    "owner": "prague",
+                    "repository": "prague"
+                },
+                "isDefault": true
+            },
+            {
+                "name": "github",
+                "storage": {
+                    "url": "http://historian:3000/github",
+                    "publicUrl": "http://localhost:3001/github",
+                    "owner": "",
+                    "repository": "",
+                    "direct": "https://api.github.com",
+                    "credentials": {
+                        "user": "",
+                        "password": ""
+                    }
+                }
+            },
+            {
+                "name": "cobalt",
+                "storage": {
+                    "url": "http://historian:3000/cobalt",
+                    "publicUrl": "http://localhost:3001/cobalt",
+                    "owner": "prague",
+                    "repository": "prague"
+                }
+            }
+        ]
     },
     "aad": {
         "creds": {

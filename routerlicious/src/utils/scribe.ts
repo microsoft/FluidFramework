@@ -7,13 +7,12 @@ let document: api.Document;
 let sharedString: MergeTree.SharedString;
 
 function setParagraphs(chunks: string[]) {
-    for (let p = 0; p < chunks.length; p++) {
+    for (let c = 0; c < chunks.length; c++) {
         let props = {
-            [MergeTree.reservedMarkerIdKey]: ["p-" + p],
+            [MergeTree.reservedMarkerIdKey]: ["p-" + c],
             [MergeTree.reservedTileLabelsKey]: ["pg"],
         };
-        sharedString.insertMarker(p, MergeTree.ReferenceType.Tile, props);
-        p++;
+        sharedString.insertMarker(c, MergeTree.ReferenceType.Tile, props);
     }
 
     // Insert final pg marker. All text must be before a pg marker or it won't display!
@@ -38,16 +37,16 @@ function getParagraphs() {
 }
 
 async function setChunkMap(chunks: string[]) {
-    let p = 0;
+    let c = 0;
     const root = await document.getRoot().getView();
     let chunkMap = root.get("chunks") as types.IMapView;
 
     for (let chunk of chunks) {
-        let pid = "p-" + p;
-
-        chunkMap.set(pid, chunk);
-
-        p++;
+        let chunkKey = "p-" + c;
+        if (chunk !== "" ) {
+            chunkMap.set(chunkKey, chunk);
+        }
+        c++;
     }
 }
 
@@ -56,8 +55,8 @@ async function conductor(text, intervalTime, writers, processes, callback ): Pro
     let docId = "";
     let chunks = author.normalizeText(text).split("\n");
 
-    if (writers === 1 && processes === 1) {
-        return author.typeFile(document, sharedString, text, intervalTime, callback);
+    if (processes === 1) {
+        return await author.typeFile(document, sharedString, text, intervalTime, writers, callback);
     }
 
     let interval = setInterval(() => {
@@ -78,7 +77,8 @@ export async function create(id: string, text: string, debug = false): Promise<v
     root.set("users", document.createMap());
     sharedString = document.createString() as MergeTree.SharedString;
 
-    sharedString.insertMarker(0, MergeTree.ReferenceType.Tile, { [MergeTree.reservedTileLabelsKey]: ["pg"] });
+    // p-start might break something
+    sharedString.insertMarker(0, MergeTree.ReferenceType.Tile, {[MergeTree.reservedTileLabelsKey]: ["pg"] });
     root.set("text", sharedString);
 
     await root.set("chunks", document.createMap());
