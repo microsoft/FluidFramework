@@ -2067,7 +2067,7 @@ export class Client {
             }
             opList.push(insertOp);
         }
-         
+
         if (segment.removedSeq === UnassignedSequenceNumber) {
             let start = this.mergeTree.getOffset(segment, this.getCurrentSeq(),
                 this.getClientId());
@@ -3403,7 +3403,7 @@ export class MergeTree {
 
     tardisPositionFromClient(pos: number, fromSeq: number, toSeq: number, fromClientId: number,
         toClientId = NonCollabClient) {
-        if (fromSeq < toSeq && pos < this.getLength(fromSeq, fromClientId)) {
+        if (((fromSeq < toSeq)||(toClientId===this.collabWindow.clientId)) && pos < this.getLength(fromSeq, fromClientId)) {
             if ((toSeq <= this.collabWindow.currentSeq) && (fromSeq >= this.collabWindow.minSeq)) {
                 let segoff = this.getContainingSegment(pos, fromSeq, fromClientId);
                 let toPos = this.getOffset(segoff.segment, toSeq, toClientId);
