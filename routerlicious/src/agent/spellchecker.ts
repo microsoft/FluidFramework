@@ -249,7 +249,7 @@ class Speller {
             }
             for (let start of Object.keys(this.offsetMap)) {
                 const queryString = this.sharedString.client.mergeTree.getText(MergeTree.UniversalSequenceNumber,
-                    this.sharedString.client.getClientId(), false, Number(start), this.offsetMap[start]);
+                    this.sharedString.client.getClientId(), "", Number(start), this.offsetMap[start]);
                 this.enqueNewQuery(intelligence, queryString, Number(start));
             }
             this.offsetMap = {};

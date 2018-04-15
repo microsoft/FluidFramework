@@ -25,6 +25,9 @@ export { graph };
 import * as MergeTree from "../merge-tree";
 export { MergeTree };
 
+import {CharacterCodes, Paragraph, Table}  from "../text";
+export { CharacterCodes, Paragraph, Table };
+
 import * as socketStorage from "../socket-storage";
 export { socketStorage };
 

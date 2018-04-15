@@ -1794,6 +1794,7 @@ export class Client {
     shortClientUserInfoMap = <IAuthenticatedUser[]>[];
     registerCollection = new RegisterCollection();
     localSequenceNumber = UnassignedSequenceNumber;
+    tempCli = -1;
     public longClientId: string;
     public userInfo: IAuthenticatedUser;
     public undoSegments: IUndoInfo[];
@@ -1808,12 +1809,14 @@ export class Client {
         this.checkQ = Collections.ListMakeHead<string>();
     }
 
-    setLocalSequenceNumber(seq: number) {
+    setLocalSequenceNumberCli(seq: number, cli: number) {
         this.localSequenceNumber = seq;
+        this.tempCli = cli;
     }
 
-    resetLocalSequenceNumber() {
+    resetLocalSequenceNumberCli() {
         this.localSequenceNumber = UnassignedSequenceNumber;
+        this.tempCli = -1;
     }
 
     undoSingleSequenceNumber(undoSegments: IUndoInfo[], redoSegments: IUndoInfo[]) {
@@ -2377,7 +2380,7 @@ export class Client {
         let clientId = segWindow.clientId;
         let refSeq = segWindow.currentSeq;
         let seq = this.getLocalSequenceNumber();
-
+        
         let clockStart;
         if (this.measureOps) {
             clockStart = clock();
@@ -2481,6 +2484,9 @@ export class Client {
         let clientId = segWindow.clientId;
         let refSeq = segWindow.currentSeq;
         let seq = this.getLocalSequenceNumber();
+        if (this.tempCli>=0) {
+            clientId = this.tempCli;
+        }
         let clockStart;
         if (this.measureOps) {
             clockStart = clock();
@@ -2502,6 +2508,9 @@ export class Client {
         let clientId = segWindow.clientId;
         let refSeq = segWindow.currentSeq;
         let seq = this.getLocalSequenceNumber();
+        if (this.tempCli>=0) {
+            clientId = this.tempCli;
+        }
         let clockStart;
         if (this.measureOps) {
             clockStart = clock();
@@ -2562,7 +2571,7 @@ export class Client {
             clockStart = clock();
         }
 
-        this.mergeTree.ackPendingSegment(seq);
+        this.mergeTree.ackPendingSegment(seq, this.verboseOps);
         this.mergeTree.getCollabWindow().currentSeq = seq;
 
         if (this.measureOps) {
@@ -2607,7 +2616,7 @@ export class Client {
 
     getText(start?: number, end?: number) {
         let segmentWindow = this.mergeTree.getCollabWindow();
-        return this.mergeTree.getText(segmentWindow.currentSeq, segmentWindow.clientId, false, start, end);
+        return this.mergeTree.getText(segmentWindow.currentSeq, segmentWindow.clientId, "", start, end);
     }
 
     /**
@@ -2615,12 +2624,17 @@ export class Client {
      */
     getTextWithPlaceholders() {
         let segmentWindow = this.mergeTree.getCollabWindow();
-        return this.mergeTree.getText(segmentWindow.currentSeq, segmentWindow.clientId, true);
+        return this.mergeTree.getText(segmentWindow.currentSeq, segmentWindow.clientId, " ");
     }
 
     getTextRangeWithPlaceholders(start: number, end: number) {
         let segmentWindow = this.mergeTree.getCollabWindow();
-        return this.mergeTree.getText(segmentWindow.currentSeq, segmentWindow.clientId, true, start, end);
+        return this.mergeTree.getText(segmentWindow.currentSeq, segmentWindow.clientId, " ", start, end);
+    }
+
+    getTextRangeWithMarkers(start: number, end: number) {
+        let segmentWindow = this.mergeTree.getCollabWindow();
+        return this.mergeTree.getText(segmentWindow.currentSeq, segmentWindow.clientId, "*", start, end);
     }
 
     getLength() {
@@ -2806,7 +2820,7 @@ export interface SegmentAccumulator {
 
 export interface TextAccumulator {
     textSegment: TextSegment;
-    placeholders?: boolean;
+    placeholder?: string;
     parallelArrays?: boolean;
     parallelText?: string[];
     parallelMarkers?: Marker[];
@@ -3474,7 +3488,7 @@ export class MergeTree {
             if (end > this.root.cachedLength) {
                 end = this.root.cachedLength;
             }
-            chunk += this.getText(UniversalSequenceNumber, this.collabWindow.clientId, false, start, end);
+            chunk += this.getText(UniversalSequenceNumber, this.collabWindow.clientId, "", start, end);
             let result = chunk.match(target);
             if (result !== null) {
                 return { text: result[0], pos: result.index };
@@ -3485,43 +3499,6 @@ export class MergeTree {
             }
             end += MergeTree.searchChunkSize;
         }
-    }
-
-    ogatherText = (segment: Segment, pos: number, refSeq: number, clientId: number, start: number,
-        end: number, accumText: TextAccumulator) => {
-        if (segment.getType() == SegmentType.Text) {
-            let textSegment = <TextSegment>segment;
-            if ((textSegment.removedSeq === undefined) || (textSegment.removedSeq == UnassignedSequenceNumber) || (textSegment.removedSeq > refSeq)) {
-                if (MergeTree.traceGatherText) {
-                    console.log(`@cli ${this.getLongClientId(this.collabWindow.clientId)} gather seg seq ${textSegment.seq} rseq ${textSegment.removedSeq} text ${textSegment.text}`);
-                }
-                if ((start <= 0) && (end >= textSegment.text.length)) {
-                    accumText.textSegment.text += textSegment.text;
-                }
-                else {
-                    if (start < 0) {
-                        start = 0;
-                    }
-                    if (end >= textSegment.text.length) {
-                        accumText.textSegment.text += textSegment.text.substring(start);
-                    }
-                    else {
-                        accumText.textSegment.text += textSegment.text.substring(start, end);
-                    }
-                }
-            }
-            else {
-                if (MergeTree.traceGatherText) {
-                    console.log(`ignore seg seq ${textSegment.seq} rseq ${textSegment.removedSeq} text ${textSegment.text}`);
-                }
-            }
-        }
-        else if (accumText.placeholders) {
-            for (let i = 0; i < segment.cachedLength; i++) {
-                accumText.textSegment.text += " ";
-            }
-        }
-        return true;
     }
 
     gatherSegment = (segment: Segment, pos: number, refSeq: number, clientId: number, start: number,
@@ -3610,9 +3587,14 @@ export class MergeTree {
             }
         }
         else {
-            if (accumText.placeholders) {
-                for (let i = 0; i < segment.cachedLength; i++) {
-                    accumText.textSegment.text += " ";
+            if (accumText.placeholder && (accumText.placeholder.length > 0)) {
+                if (accumText.placeholder === "*") {
+                    let marker = <Marker>segment;
+                    accumText.textSegment.text += `/${marker.toString()}/`; 
+                } else {
+                    for (let i = 0; i < segment.cachedLength; i++) {
+                        accumText.textSegment.text += accumText.placeholder;
+                    }
                 }
             } else if (accumText.parallelArrays) {
                 let marker = <Marker>segment;
@@ -3677,14 +3659,14 @@ export class MergeTree {
         return accum.segments;
     }
 
-    getText(refSeq: number, clientId: number, placeholders = false, start?: number, end?: number) {
+    getText(refSeq: number, clientId: number, placeholder = "", start?: number, end?: number) {
         if (start === undefined) {
             start = 0;
         }
         if (end === undefined) {
             end = this.blockLength(this.root, refSeq, clientId);
         }
-        let accum = <TextAccumulator>{ textSegment: new TextSegment(""), placeholders };
+        let accum = <TextAccumulator>{ textSegment: new TextSegment(""), placeholder };
 
         if (MergeTree.traceGatherText) {
             console.log(`get text on cli ${glc(this, this.collabWindow.clientId)} ref cli ${glc(this, clientId)} refSeq ${refSeq}`);
@@ -3972,12 +3954,15 @@ export class MergeTree {
      * Assign sequence number to existing segment; update partial lengths to reflect the change
      * @param seq sequence number given by server to pending segment
      */
-    ackPendingSegment(seq: number) {
+    ackPendingSegment(seq: number, verboseOps = false) {
         let pendingSegmentGroup = this.pendingSegments.dequeue();
         let nodesToUpdate = <IMergeBlock[]>[];
         let clientId: number;
         let overwrite = false;
         if (pendingSegmentGroup !== undefined) {
+            if (verboseOps) {
+                console.log(`segment group has ${pendingSegmentGroup.segments.length} segments`);
+            }
             pendingSegmentGroup.segments.map((pendingSegment) => {
                 if (pendingSegment.seq === UnassignedSequenceNumber) {
                     pendingSegment.seq = seq;

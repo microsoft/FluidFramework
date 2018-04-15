@@ -1992,9 +1992,9 @@ let testPropCopy = false;
 let overlayTree = false;
 let docTree = false;
 let chktst = false;
-let clientServerTest = false;
+let clientServerTest = true;
 let tstTest = false;
-let firstTest = true;
+let firstTest = false;
 
 if (firstTest) {
     let testPack = TestPack(true);
