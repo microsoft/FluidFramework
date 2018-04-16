@@ -38,7 +38,7 @@ import {
 } from "../api-core";
 import * as api from "../api-core";
 import * as cell from "../cell";
-import { Deferred, getOrDefault } from "../core-utils";
+import { Deferred } from "../core-utils";
 import { ICell, IMap, IStream } from "../data-types";
 import * as mapExtension from "../map";
 import * as mergeTree from "../merge-tree";
@@ -571,12 +571,9 @@ export class Document extends EventEmitter {
     /**
      * Called to snapshot the given document
      */
-    public async snapshot(tagMessage: string = undefined): Promise<void> {
-        await this._deltaManager.flushAndPause();
+    public async snapshot(tagMessage: string = ""): Promise<void> {
         const root = this.snapshotCore();
-        this._deltaManager.start();
-
-        const message = `Commit @${this._deltaManager.referenceSequenceNumber}${getOrDefault(tagMessage, "")}`;
+        const message = `Commit @${this._deltaManager.referenceSequenceNumber}${tagMessage}`;
         await this.storageService.write(root, message);
     }
 

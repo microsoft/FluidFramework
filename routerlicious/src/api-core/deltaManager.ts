@@ -4,38 +4,9 @@ import { EventEmitter } from "events";
 import cloneDeep = require("lodash/cloneDeep");
 import { Deferred, IAuthenticatedUser } from "../core-utils";
 import { debug } from "./debug";
+import { IDeltaManager, IDeltaQueue } from "./document";
 import * as protocol from "./protocol";
 import * as storage from "./storage";
-
-export interface IDeltaManager {
-    // The queue of inbound delta messages
-    inbound: IDeltaQueue;
-
-    // the queue of outbound delta messages
-    outbound: IDeltaQueue;
-}
-
-export interface IDeltaQueue extends EventEmitter {
-    /**
-     * Flag indicating whether or not the queue was paused
-     */
-    paused: boolean;
-
-    /**
-     * The number of messages remaining in the queue
-     */
-    length: number;
-
-    /**
-     * Pauses processing on the queue
-     */
-    pause();
-
-    /**
-     * Resumes processing on the queue
-     */
-    resume();
-}
 
 export interface IConnectionDetails {
     clientId: string;

@@ -1,7 +1,6 @@
 import * as assert from "assert";
 import * as _ from "lodash";
 import * as winston from "winston";
-import * as agent from "../agent";
 import * as api from "../api-core";
 import * as core from "../core";
 import { RangeTracker, ThroughputCounter } from "../core-utils";
@@ -36,7 +35,6 @@ export class DeliLambda implements IPartitionLambda {
     private clientNodeMap = new Map<string, utils.IHeapNode<IClientSequenceNumber>>();
     private clientSeqNumbers = new utils.Heap<IClientSequenceNumber>(SequenceNumberComparer);
     private minimumSequenceNumber = -1;
-    private window: RangeTracker;
     private branchMap: RangeTracker;
     private checkpointContext: CheckpointContext;
 
@@ -375,46 +373,10 @@ export class DeliLambda implements IPartitionLambda {
         this.clientSeqNumbers.update(heapNode);
     }
 
-    private getMinimumSequenceNumber(timestamp: number): number {
-        const MinSequenceNumberWindow = agent.constants.MinSequenceNumberWindow;
-
-        // Get the sequence number as tracked by the clients
-        let msn = this.getClientMinimumSequenceNumber(timestamp);
-
-        // If no client MSN fall back to existing values
-        msn = msn === -1 ? (this.window ? this.window.secondaryHead : 0) : msn;
-
-        // Create the window if it doesn't yet exist
-        if (!this.window) {
-            this.window = new RangeTracker(timestamp - MinSequenceNumberWindow, msn);
-        }
-
-        // And retrieve the window relative MSN
-        // To account for clock skew we always insert later than the last packet
-        // TODO see if Kafka can compute the timestamp - or find some other way to go about this
-        timestamp = Math.max(timestamp, this.window.primaryHead);
-
-        // Below is a temporary workaround before we add nack support.
-        // The client tracked  MSN is not guaranteed to monotonically increase since a new client may connect that
-        // has a reference sequence number greater than the lagged min but less than existing clients.
-        // The range code assumes we only add monotonically increasing values. So we force this by making sure
-        // we add values greater than the last value. The ideal with the time lag is take a minimum value within
-        // the time range. But this is a bit more code than the below. And we plan on removing it anyway. The time
-        // lag should avoid any issues from setting the min too high as well.
-        if (msn < this.window.secondaryHead) {
-            msn = this.window.secondaryHead;
-        }
-        this.window.add(timestamp, msn);
-        this.window.updateBase(timestamp - MinSequenceNumberWindow);
-        const windowStamp = this.window.get(timestamp - MinSequenceNumberWindow);
-
-        return windowStamp;
-    }
-
     /**
      * Retrieves the minimum sequence number. A timestamp is provided to expire old clients.
      */
-    private getClientMinimumSequenceNumber(timestamp: number): number {
+    private getMinimumSequenceNumber(timestamp: number): number {
         while (this.clientSeqNumbers.count() > 0) {
             const client = this.clientSeqNumbers.peek();
             if (!client.value.canEvict || timestamp - client.value.lastUpdate < this.clientTimeout) {

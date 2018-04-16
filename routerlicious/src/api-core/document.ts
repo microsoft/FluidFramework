@@ -1,6 +1,37 @@
+import { EventEmitter } from "events";
 import { IAuthenticatedUser } from "../core-utils";
 import { IEnvelope, ILatencyMessage, IObjectMessage, ISequencedObjectMessage } from "./protocol";
 import { ICollaborativeObject } from "./types";
+
+export interface IDeltaManager {
+    // The queue of inbound delta messages
+    inbound: IDeltaQueue;
+
+    // the queue of outbound delta messages
+    outbound: IDeltaQueue;
+}
+
+export interface IDeltaQueue extends EventEmitter {
+    /**
+     * Flag indicating whether or not the queue was paused
+     */
+    paused: boolean;
+
+    /**
+     * The number of messages remaining in the queue
+     */
+    length: number;
+
+    /**
+     * Pauses processing on the queue
+     */
+    pause();
+
+    /**
+     * Resumes processing on the queue
+     */
+    resume();
+}
 
 export interface IObjectStorageService {
     /**
@@ -69,6 +100,8 @@ export interface IDocument {
 
     clientId: string;
 
+    deltaManager: IDeltaManager;
+
     options: Object;
 
     create(type: string, id?: string): ICollaborativeObject;
@@ -78,6 +111,8 @@ export interface IDocument {
     get(id: string): Promise<ICollaborativeObject>;
 
     getUser(): IAuthenticatedUser;
+
+    snapshot(message: string): Promise<void>;
 
     submitObjectMessage(envelope: IEnvelope);
 
