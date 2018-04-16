@@ -3,6 +3,7 @@ export * from "./testCollection";
 export * from "./testContext";
 export * from "./testDeltaStorageService";
 export * from "./testDocumentDeltaConnection";
+export * from "./testDocument";
 export * from "./testDocumentLambda";
 export * from "./testDocumentService";
 export * from "./testHistorian";

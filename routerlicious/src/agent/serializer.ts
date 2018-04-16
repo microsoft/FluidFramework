@@ -1,11 +1,6 @@
 import * as assert from "assert";
 import { SaveOperation } from "../api-core";
-import { api, core } from "../client-api";
-
-// Consider idle 5s of no activity. And snapshot if a minute has gone by with no snapshot.
-const IdleDetectionTime = 5000;
-const MaxTimeWithoutSnapshot = IdleDetectionTime * 12;
-const SnapshotRetryTime = 1000;
+import { core } from "../client-api";
 
 /**
  * Wrapper interface holding snapshot details for a given op
@@ -25,14 +20,18 @@ interface IOpSnapshotDetails {
  * Mananges snapshot creation for a distributed document
  */
 export class Serializer {
-    private lastSnapshotTime: number = -1;
+    // Use the current time on initialization since we will be loading off a snapshot
+    private lastSnapshotTime: number = Date.now();
     private idleTimer = null;
     private lastOp: core.ISequencedDocumentMessage = null;
-    private lastSnapshotOp: core.ISequencedDocumentMessage = null;
     private lastOpSnapshotDetails: IOpSnapshotDetails = null;
     private snapshotting = false;
 
-    constructor(private document: api.Document) {
+    constructor(
+        private document: core.IDocument,
+        private idleTime: number,
+        private maxTimeWithoutSnapshot: number,
+        private retryTime: number) {
     }
 
     public run(op: core.ISequencedDocumentMessage) {
@@ -64,7 +63,6 @@ export class Serializer {
             () => {
                 // On succes note the last op and time of the snapshot. Skip on error to cause us to
                 // attempt the snapshot again.
-                this.lastSnapshotOp = this.lastOp;
                 this.lastSnapshotTime = Date.now();
                 return true;
             },
@@ -77,7 +75,7 @@ export class Serializer {
         // message flow. Otherwise attempt the snapshot again
         snapshotP.then((success) => {
             if (!success && required) {
-                setTimeout(() => this.snapshot(message, required), SnapshotRetryTime);
+                setTimeout(() => this.snapshot(message, required), this.retryTime);
             } else {
                 this.document.deltaManager.inbound.resume();
                 this.snapshotting = false;
@@ -88,9 +86,8 @@ export class Serializer {
     private getOpSnapshotDetails(op: core.ISequencedDocumentMessage): IOpSnapshotDetails {
         if (op.type === SaveOperation) {
             // Forced snapshot.
-            const saveMessage = op.contents.message === null ? "" : `: ${op.contents.message}`;
             return {
-                message: `;${op.clientId}${saveMessage}`,
+                message: `;${op.clientId}: ${op.contents.message}`,
                 required: true,
                 shouldSnapshot: true,
             };
@@ -100,7 +97,7 @@ export class Serializer {
             return {
                 message: "",
                 required: false,
-                shouldSnapshot: timeSinceLastSnapshot > MaxTimeWithoutSnapshot,
+                shouldSnapshot: timeSinceLastSnapshot > this.maxTimeWithoutSnapshot,
             };
         }
     }
@@ -118,11 +115,9 @@ export class Serializer {
         assert(!this.idleTimer);
         this.idleTimer = setTimeout(
             () => {
-                if (!this.lastSnapshotOp || this.lastSnapshotOp.sequenceNumber !== this.lastOp.sequenceNumber) {
-                    console.log("Snapshotting due to being idle");
-                    this.snapshot(this.lastOpSnapshotDetails.message, this.lastOpSnapshotDetails.required);
-                }
+                console.log("Snapshotting due to being idle");
+                this.snapshot(this.lastOpSnapshotDetails.message, this.lastOpSnapshotDetails.required);
             },
-            IdleDetectionTime);
+            this.idleTime);
     }
 }
