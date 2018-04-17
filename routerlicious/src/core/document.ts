@@ -29,10 +29,6 @@ export interface IDocument {
         minimumSequenceNumber: number;
     };
 
-    publicKey?: string;
-
-    privateKey?: string;
-
     // TODO package up the below under some kind of deli object
     // Deli specific information - we might want to consolidate this into a field to separate it
     clients: [{

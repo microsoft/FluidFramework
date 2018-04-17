@@ -115,25 +115,17 @@ export class DeliLambda implements IPartitionLambda {
         // Update and retrieve the minimum sequence number
         let message = objectMessage as core.IRawOperationMessage;
 
+        if (this.isDuplicate(message)) {
+            return;
+        }
+
         // Nack handling - only applies to non-integration messages
         if (message.operation.type !== api.Integrate) {
             if (message.clientId) {
+                // Get the node for the clientID - NACK if non-existent
                 const node = this.clientNodeMap.get(message.clientId);
-
-                // Verify that the client is in the window and has not already been NACKed
                 if (!node || node.value.nack) {
-                    const nackMessage: core.INackMessage = {
-                        clientId: objectMessage.clientId,
-                        documentId: objectMessage.documentId,
-                        operation: {
-                            operation: message.operation,
-                            sequenceNumber: this.minimumSequenceNumber,
-                        },
-                        type: core.NackOperationType,
-                    };
-
-                    this.sendMessage(nackMessage);
-
+                    this.sendNack(message);
                     return;
                 }
 
@@ -149,29 +141,8 @@ export class DeliLambda implements IPartitionLambda {
                         true);
 
                     // Send the nack message
-                    const nackMessage: core.INackMessage = {
-                        clientId: objectMessage.clientId,
-                        documentId: objectMessage.documentId,
-                        operation: {
-                            operation: message.operation,
-                            sequenceNumber: this.minimumSequenceNumber,
-                        },
-                        type: core.NackOperationType,
-                    };
+                    this.sendNack(message);
 
-                    this.sendMessage(nackMessage);
-
-                    return;
-                }
-
-                // And perform duplicate detection on client IDs
-                // Check that we have an increasing CID
-                // for back compat ignore the 0 message
-                if (message.operation.clientSequenceNumber &&
-                    (node.value.clientSequenceNumber + 1 !== message.operation.clientSequenceNumber)) {
-
-                    // tslint:disable-next-line:max-line-length
-                    winston.info(`Duplicate ${node.value.clientId}:${node.value.clientSequenceNumber} !== ${message.operation.clientSequenceNumber}`);
                     return;
                 }
             } else {
@@ -298,6 +269,37 @@ export class DeliLambda implements IPartitionLambda {
         this.sendMessage(sequencedMessage);
     }
 
+    private isDuplicate(message: core.IRawOperationMessage): boolean {
+        if (message.operation.type !== api.Integrate && !message.clientId) {
+            return false;
+        }
+
+        let clientId: string;
+        let clientSequenceNumber: number;
+        if (message.operation.type === api.Integrate) {
+            clientId = getBranchClientId(message.operation.contents.documentId);
+            clientSequenceNumber = message.operation.contents.operation.sequenceNumber;
+        } else {
+            clientId = message.clientId;
+            clientSequenceNumber = message.operation.clientSequenceNumber;
+        }
+
+        const node = this.clientNodeMap.get(clientId);
+        if (!node) {
+            return false;
+        }
+
+        // Perform duplicate detection on client IDs - Check that we have an increasing CID
+        // For back compat ignore the 0/undefined message
+        if (clientSequenceNumber && (node.value.clientSequenceNumber + 1 !== clientSequenceNumber)) {
+            // tslint:disable-next-line:max-line-length
+            winston.info(`Duplicate ${node.value.clientId}:${node.value.clientSequenceNumber} !== ${clientSequenceNumber}`);
+            return true;
+        }
+
+        return false;
+    }
+
     private sendMessage(message: core.ITicketedMessage) {
         // TODO optimize this to aviod doing per message
         // Checkpoint the current state
@@ -314,6 +316,20 @@ export class DeliLambda implements IPartitionLambda {
                 // TODO issue with Kafka - need to propagate the issue somehow
                 winston.error("Could not send message", error);
             });
+    }
+
+    private sendNack(message: core.IRawOperationMessage) {
+        const nackMessage: core.INackMessage = {
+            clientId: message.clientId,
+            documentId: message.documentId,
+            operation: {
+                operation: message.operation,
+                sequenceNumber: this.minimumSequenceNumber,
+            },
+            type: core.NackOperationType,
+        };
+
+        this.sendMessage(nackMessage);
     }
 
     /**

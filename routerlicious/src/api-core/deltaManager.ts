@@ -379,7 +379,7 @@ export class DeltaManager implements IDeltaManager {
             return;
         }
 
-        debug(`Received out of order message ${message.sequenceNumber} ${this.lastQueuedSequenceNumber}`);
+        debug(`${this.id} out of order message ${message.sequenceNumber} ${this.lastQueuedSequenceNumber}`);
         this.pending.push(message);
         this.fetchMissingDeltas(this.lastQueuedSequenceNumber, message.sequenceNumber);
     }

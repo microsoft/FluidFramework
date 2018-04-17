@@ -572,6 +572,12 @@ export class Document extends EventEmitter {
      * Called to snapshot the given document
      */
     public async snapshot(tagMessage: string = ""): Promise<void> {
+        // TODO: support for branch snapshots. For now simply no-op when a branch snapshot is requested
+        if (this.parentBranch) {
+            debug(`Skipping snapshot due to being branch of ${this.parentBranch}`);
+            return;
+        }
+
         const root = this.snapshotCore();
         // tslint:disable-next-line:max-line-length
         const message = `Commit @${this._deltaManager.referenceSequenceNumber}:${this._deltaManager.minimumSequenceNumber} ${tagMessage}`;
@@ -662,12 +668,6 @@ export class Document extends EventEmitter {
 
     private snapshotCore(): ITree {
         const entries: ITreeEntry[] = [];
-
-        // TODO: support for branch snapshots. For now simply no-op when a branch snapshot is requested
-        if (this.parentBranch) {
-            debug(`Skipping snapshot due to being branch of ${this.parentBranch}`);
-            return;
-        }
 
         // Transform ops in the window relative to the MSN - the window is all ops between the min sequence number
         // and the current sequence number
