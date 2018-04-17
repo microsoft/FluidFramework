@@ -573,7 +573,8 @@ export class Document extends EventEmitter {
      */
     public async snapshot(tagMessage: string = ""): Promise<void> {
         const root = this.snapshotCore();
-        const message = `Commit @${this._deltaManager.referenceSequenceNumber}${tagMessage}`;
+        // tslint:disable-next-line:max-line-length
+        const message = `Commit @${this._deltaManager.referenceSequenceNumber}:${this._deltaManager.minimumSequenceNumber} ${tagMessage}`;
         await this.storageService.write(root, message);
     }
 

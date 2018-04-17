@@ -13,6 +13,7 @@ const SequenceNumberComparer: utils.IComparer<IClientSequenceNumber> = {
     min: {
         canEvict: true,
         clientId: undefined,
+        clientSequenceNumber: 0,
         lastUpdate: -1,
         nack: false,
         referenceSequenceNumber: -1,
@@ -51,6 +52,7 @@ export class DeliLambda implements IPartitionLambda {
             for (const client of dbObject.clients) {
                 this.upsertClient(
                     client.clientId,
+                    client.clientSequenceNumber,
                     client.referenceSequenceNumber,
                     client.lastUpdate,
                     client.canEvict,
@@ -75,6 +77,7 @@ export class DeliLambda implements IPartitionLambda {
                 // Add in the client representing the parent
                 this.upsertClient(
                     getBranchClientId(dbObject.parent.id),
+                    dbObject.parent.sequenceNumber,
                     dbObject.parent.minimumSequenceNumber,
                     dbObject.createTime,
                     false);
@@ -115,8 +118,9 @@ export class DeliLambda implements IPartitionLambda {
         // Nack handling - only applies to non-integration messages
         if (message.operation.type !== api.Integrate) {
             if (message.clientId) {
-                // Look up the client
                 const node = this.clientNodeMap.get(message.clientId);
+
+                // Verify that the client is in the window and has not already been NACKed
                 if (!node || node.value.nack) {
                     const nackMessage: core.INackMessage = {
                         clientId: objectMessage.clientId,
@@ -133,10 +137,12 @@ export class DeliLambda implements IPartitionLambda {
                     return;
                 }
 
+                // Verify that the message is within the current window
                 if (message.clientId && message.operation.referenceSequenceNumber < this.minimumSequenceNumber) {
                     // Add in a placeholder for the nack'ed client to allow them to rejoin at the current MSN
                     this.upsertClient(
                         message.clientId,
+                        message.operation.clientSequenceNumber,
                         this.minimumSequenceNumber,
                         message.timestamp,
                         true,
@@ -157,9 +163,25 @@ export class DeliLambda implements IPartitionLambda {
 
                     return;
                 }
+
+                // And perform duplicate detection on client IDs
+                // Check that we have an increasing CID
+                // for back compat ignore the 0 message
+                if (message.operation.clientSequenceNumber &&
+                    (node.value.clientSequenceNumber + 1 !== message.operation.clientSequenceNumber)) {
+
+                    // tslint:disable-next-line:max-line-length
+                    winston.info(`Duplicate ${node.value.clientId}:${node.value.clientSequenceNumber} !== ${message.operation.clientSequenceNumber}`);
+                    return;
+                }
             } else {
                 if (message.operation.type === api.ClientJoin) {
-                    this.upsertClient(message.operation.contents, this.minimumSequenceNumber, message.timestamp, true);
+                    this.upsertClient(
+                        message.operation.contents,
+                        0,
+                        this.minimumSequenceNumber,
+                        message.timestamp,
+                        true);
                 } else if (message.operation.type === api.ClientLeave) {
                     this.removeClient(message.operation.contents);
                 } else if (message.operation.type === api.Fork) {
@@ -216,7 +238,12 @@ export class DeliLambda implements IPartitionLambda {
             message = transformed;
 
             // Update the entry for the branch client
-            this.upsertClient(branchClientId, transformedMinSeqNumber, message.timestamp, false);
+            this.upsertClient(
+                branchClientId,
+                branchDocumentMessage.sequenceNumber,
+                transformedMinSeqNumber,
+                message.timestamp,
+                false);
         } else {
             if (message.clientId) {
                 // We checked earlier for the below case
@@ -226,6 +253,7 @@ export class DeliLambda implements IPartitionLambda {
 
                 this.upsertClient(
                     message.clientId,
+                    message.operation.clientSequenceNumber,
                     message.operation.referenceSequenceNumber,
                     message.timestamp,
                     true);
@@ -327,6 +355,7 @@ export class DeliLambda implements IPartitionLambda {
      */
     private upsertClient(
         clientId: string,
+        clientSequenceNumber: number,
         referenceSequenceNumber: number,
         timestamp: number,
         canEvict: boolean,
@@ -337,6 +366,7 @@ export class DeliLambda implements IPartitionLambda {
             const newNode = this.clientSeqNumbers.add({
                 canEvict,
                 clientId,
+                clientSequenceNumber,
                 lastUpdate: timestamp,
                 nack,
                 referenceSequenceNumber,
@@ -345,7 +375,7 @@ export class DeliLambda implements IPartitionLambda {
         }
 
         // And then update its values
-        this.updateClient(clientId, timestamp, referenceSequenceNumber, nack);
+        this.updateClient(clientId, timestamp, clientSequenceNumber, referenceSequenceNumber, nack);
     }
 
     /**
@@ -366,10 +396,17 @@ export class DeliLambda implements IPartitionLambda {
     /**
      * Updates the sequence number of the specified client
      */
-    private updateClient(clientId: string, timestamp: number, referenceSequenceNumber: number, nack: boolean) {
+    private updateClient(
+        clientId: string,
+        timestamp: number,
+        clientSequenceNumber: number,
+        referenceSequenceNumber: number,
+        nack: boolean) {
+
         // Lookup the node and then update its value based on the message
         const heapNode = this.clientNodeMap.get(clientId);
         heapNode.value.referenceSequenceNumber = referenceSequenceNumber;
+        heapNode.value.clientSequenceNumber = clientSequenceNumber;
         heapNode.value.lastUpdate = timestamp;
         heapNode.value.nack = nack;
         this.clientSeqNumbers.update(heapNode);

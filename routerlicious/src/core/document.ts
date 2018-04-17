@@ -41,6 +41,8 @@ export interface IDocument {
 
         clientId: string,
 
+        clientSequenceNumber: number,
+
         referenceSequenceNumber: number,
 
         lastUpdate: number,
