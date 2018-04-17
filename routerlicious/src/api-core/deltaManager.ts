@@ -321,6 +321,8 @@ export class DeltaManager implements IDeltaManager {
         }
 
         this.connection = await DeltaConnection.Connect(this.id, token, this.service);
+        this.clientSequenceNumber = 0;
+
         this.connection.on("op", (documentId: string, messages: protocol.ISequencedDocumentMessage[]) => {
             this.enqueueMessages(cloneDeep(messages));
         });
