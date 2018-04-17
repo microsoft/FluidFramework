@@ -284,8 +284,9 @@ export class DeliLambda implements IPartitionLambda {
             clientSequenceNumber = message.operation.clientSequenceNumber;
         }
 
+        // TODO second check is to maintain back compat - can remove after deployment
         const node = this.clientNodeMap.get(clientId);
-        if (!node) {
+        if (!node || (node.value.clientSequenceNumber === undefined)) {
             return false;
         }
 
