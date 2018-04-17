@@ -34,7 +34,7 @@ export class DeliLambda implements IPartitionLambda {
     // Client sequence number mapping
     private clientNodeMap = new Map<string, utils.IHeapNode<IClientSequenceNumber>>();
     private clientSeqNumbers = new utils.Heap<IClientSequenceNumber>(SequenceNumberComparer);
-    private minimumSequenceNumber = -1;
+    private minimumSequenceNumber = 0;
     private branchMap: RangeTracker;
     private checkpointContext: CheckpointContext;
 
@@ -232,8 +232,10 @@ export class DeliLambda implements IPartitionLambda {
             }
         }
 
-        // Store the previous minimum sequene number we returned and then update it
-        this.minimumSequenceNumber = this.getMinimumSequenceNumber(objectMessage.timestamp);
+        // Store the previous minimum sequene number we returned and then update it. If there are no clients
+        // then set the MSN to the next SN.
+        const msn = this.getMinimumSequenceNumber(objectMessage.timestamp);
+        this.minimumSequenceNumber = msn === -1 ? sequenceNumber : msn;
 
         // Add traces
         let traces = message.operation.traces;
@@ -387,7 +389,7 @@ export class DeliLambda implements IPartitionLambda {
             this.clientNodeMap.delete(client.value.clientId);
         }
 
-        // No client sequence number is available
+        // No clients are in the window
         return -1;
     }
 }
