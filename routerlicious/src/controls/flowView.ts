@@ -26,7 +26,7 @@ export interface ILineDiv extends HTMLDivElement {
 }
 
 interface IRowDiv extends ILineDiv {
-    rowView: Table.RowModel;
+    rowView: Table.Row;
 }
 
 function findRowParent(lineDiv: ILineDiv) {
@@ -266,6 +266,12 @@ let commands: ICmd[] = [
             f.insertColumn();
         },
         key: "insert column",
+    },
+    {
+        exec: (f) => {
+            f.insertRow();
+        },
+        key: "insert row",
     },
     {
         exec: (f) => {
@@ -1307,7 +1313,7 @@ function isInnerCell(cellView: ICellView, layoutInfo: ILayoutContext) {
         (layoutInfo.startingPosStack.cell.items.length === (layoutInfo.stackIndex + 1));
 }
 
-interface ICellView extends Table.CellModel {
+interface ICellView extends Table.Cell {
     viewport: Viewport;
     renderOutput: IRenderOutput;
 }
@@ -1397,7 +1403,7 @@ function renderTable(
     let tableWidth = Math.floor(tableView.contentPct * viewportWidth);
     tableView.updateWidth(tableWidth);
     let tableIndent = Math.floor(tableView.indentPct * viewportWidth);
-    let startRow: Table.RowModel;
+    let startRow: Table.Row;
     let startCell: ICellView;
 
     if (layoutInfo.startingPosStack) {
@@ -1889,7 +1895,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
             ((<SharedString.Marker>segoff.segment).hasRangeLabel("table"))) {
             let marker = <SharedString.Marker>segoff.segment;
             // TODO: branches
-            let tableView: Table.TableModel;
+            let tableView: Table.Table;
             if (marker.removedSeq === undefined) {
                 renderTable(marker, docContext, layoutContext, targetTranslation, deferredPGs);
                 tableView = (<Table.ITableMarker>marker).view;
@@ -3189,7 +3195,7 @@ export class FlowView extends ui.Component {
             if (rowDiv && rowDiv.rowView) {
                 let rowView = rowDiv.rowView;
                 let tableView = rowView.table;
-                let targetRow: Table.RowModel;
+                let targetRow: Table.Row;
                 if (up) {
                     targetRow = tableView.findPrecedingRow(rowView);
                 } else {
@@ -3589,7 +3595,7 @@ export class FlowView extends ui.Component {
                 let tableView = tableMarker.view;
                 if (cursorContext.cell && (!cursorContext.cell.empty())) {
                     let cell = <Table.ICellMarker>cursorContext.cell.top();
-                    let toCell: Table.CellModel;
+                    let toCell: Table.Cell;
                     if (shift) {
                         toCell = tableView.prevcell(cell.view);
                     } else {
@@ -3782,6 +3788,22 @@ export class FlowView extends ui.Component {
             this.cursorLocation();
         }
         this.localQueueRender(this.cursor.pos);
+    }
+
+    public insertRow() {
+        let stack =
+            this.sharedString.client.mergeTree.getStackContext(this.cursor.pos,
+                this.sharedString.client.getClientId(), ["table", "cell", "row"]);
+        if (stack.table && (!stack.table.empty())) {
+            let tableMarker = <Table.ITableMarker>stack.table.top();
+            let rowMarker = <Table.IRowMarker>stack.row.top();
+            if (!tableMarker.view) {
+                let tableMarkerPos = getOffset(this, tableMarker);
+                Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
+            }
+            Table.insertRow(this.sharedString, rowMarker.view, tableMarker.view);
+            this.localQueueRender(this.cursor.pos);
+        }
     }
 
     public insertColumn() {
@@ -4151,7 +4173,7 @@ export class FlowView extends ui.Component {
                 for (let groupOp of delta.ops) {
                     opAffectsViewport = opAffectsViewport || this.applyOp(groupOp, msg);
                 }
-                if (delta.intent) {
+                if (delta.macroOp) {
                     opAffectsViewport = true;
                     this.contentModel.exec(delta, msg);
                 }

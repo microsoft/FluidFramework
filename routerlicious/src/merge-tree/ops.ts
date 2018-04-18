@@ -104,7 +104,7 @@ export interface IIntentSpec {
 
 export interface IMergeTreeGroupMsg extends IMergeTreeDelta {
     type: MergeTreeDeltaType.GROUP;
-    intent: IIntentSpec;
+    macroOp: IIntentSpec;
     ops: IMergeTreeOp[];
 }
 
