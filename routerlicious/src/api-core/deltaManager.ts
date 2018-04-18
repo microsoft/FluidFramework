@@ -285,7 +285,7 @@ export class DeltaManager implements IDeltaManager {
         // Start adding trace for the op.
         const traces: protocol.ITrace[] = [ { service: "client", action: "start", timestamp: Date.now()}];
         const message: protocol.IDocumentMessage = {
-            clientSequenceNumber: this.clientSequenceNumber++,
+            clientSequenceNumber: ++this.clientSequenceNumber,
             contents,
             referenceSequenceNumber: this.baseSequenceNumber,
             traces,
@@ -321,6 +321,8 @@ export class DeltaManager implements IDeltaManager {
         }
 
         this.connection = await DeltaConnection.Connect(this.id, token, this.service);
+        this.clientSequenceNumber = 0;
+
         this.connection.on("op", (documentId: string, messages: protocol.ISequencedDocumentMessage[]) => {
             this.enqueueMessages(cloneDeep(messages));
         });
@@ -379,7 +381,7 @@ export class DeltaManager implements IDeltaManager {
             return;
         }
 
-        debug(`Received out of order message ${message.sequenceNumber} ${this.lastQueuedSequenceNumber}`);
+        debug(`${this.id} out of order message ${message.sequenceNumber} ${this.lastQueuedSequenceNumber}`);
         this.pending.push(message);
         this.fetchMissingDeltas(this.lastQueuedSequenceNumber, message.sequenceNumber);
     }

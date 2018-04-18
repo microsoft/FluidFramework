@@ -13,6 +13,7 @@ const SequenceNumberComparer: utils.IComparer<IClientSequenceNumber> = {
     min: {
         canEvict: true,
         clientId: undefined,
+        clientSequenceNumber: 0,
         lastUpdate: -1,
         nack: false,
         referenceSequenceNumber: -1,
@@ -51,6 +52,7 @@ export class DeliLambda implements IPartitionLambda {
             for (const client of dbObject.clients) {
                 this.upsertClient(
                     client.clientId,
+                    client.clientSequenceNumber,
                     client.referenceSequenceNumber,
                     client.lastUpdate,
                     client.canEvict,
@@ -75,6 +77,7 @@ export class DeliLambda implements IPartitionLambda {
                 // Add in the client representing the parent
                 this.upsertClient(
                     getBranchClientId(dbObject.parent.id),
+                    dbObject.parent.sequenceNumber,
                     dbObject.parent.minimumSequenceNumber,
                     dbObject.createTime,
                     false);
@@ -112,54 +115,44 @@ export class DeliLambda implements IPartitionLambda {
         // Update and retrieve the minimum sequence number
         let message = objectMessage as core.IRawOperationMessage;
 
+        if (this.isDuplicate(message)) {
+            return;
+        }
+
         // Nack handling - only applies to non-integration messages
         if (message.operation.type !== api.Integrate) {
             if (message.clientId) {
-                // Look up the client
+                // Get the node for the clientID - NACK if non-existent
                 const node = this.clientNodeMap.get(message.clientId);
                 if (!node || node.value.nack) {
-                    const nackMessage: core.INackMessage = {
-                        clientId: objectMessage.clientId,
-                        documentId: objectMessage.documentId,
-                        operation: {
-                            operation: message.operation,
-                            sequenceNumber: this.minimumSequenceNumber,
-                        },
-                        type: core.NackOperationType,
-                    };
-
-                    this.sendMessage(nackMessage);
-
+                    this.sendNack(message);
                     return;
                 }
 
+                // Verify that the message is within the current window
                 if (message.clientId && message.operation.referenceSequenceNumber < this.minimumSequenceNumber) {
                     // Add in a placeholder for the nack'ed client to allow them to rejoin at the current MSN
                     this.upsertClient(
                         message.clientId,
+                        message.operation.clientSequenceNumber,
                         this.minimumSequenceNumber,
                         message.timestamp,
                         true,
                         true);
 
                     // Send the nack message
-                    const nackMessage: core.INackMessage = {
-                        clientId: objectMessage.clientId,
-                        documentId: objectMessage.documentId,
-                        operation: {
-                            operation: message.operation,
-                            sequenceNumber: this.minimumSequenceNumber,
-                        },
-                        type: core.NackOperationType,
-                    };
-
-                    this.sendMessage(nackMessage);
+                    this.sendNack(message);
 
                     return;
                 }
             } else {
                 if (message.operation.type === api.ClientJoin) {
-                    this.upsertClient(message.operation.contents, this.minimumSequenceNumber, message.timestamp, true);
+                    this.upsertClient(
+                        message.operation.contents,
+                        0,
+                        this.minimumSequenceNumber,
+                        message.timestamp,
+                        true);
                 } else if (message.operation.type === api.ClientLeave) {
                     this.removeClient(message.operation.contents);
                 } else if (message.operation.type === api.Fork) {
@@ -216,7 +209,12 @@ export class DeliLambda implements IPartitionLambda {
             message = transformed;
 
             // Update the entry for the branch client
-            this.upsertClient(branchClientId, transformedMinSeqNumber, message.timestamp, false);
+            this.upsertClient(
+                branchClientId,
+                branchDocumentMessage.sequenceNumber,
+                transformedMinSeqNumber,
+                message.timestamp,
+                false);
         } else {
             if (message.clientId) {
                 // We checked earlier for the below case
@@ -226,6 +224,7 @@ export class DeliLambda implements IPartitionLambda {
 
                 this.upsertClient(
                     message.clientId,
+                    message.operation.clientSequenceNumber,
                     message.operation.referenceSequenceNumber,
                     message.timestamp,
                     true);
@@ -270,6 +269,38 @@ export class DeliLambda implements IPartitionLambda {
         this.sendMessage(sequencedMessage);
     }
 
+    private isDuplicate(message: core.IRawOperationMessage): boolean {
+        if (message.operation.type !== api.Integrate && !message.clientId) {
+            return false;
+        }
+
+        let clientId: string;
+        let clientSequenceNumber: number;
+        if (message.operation.type === api.Integrate) {
+            clientId = getBranchClientId(message.operation.contents.documentId);
+            clientSequenceNumber = message.operation.contents.operation.sequenceNumber;
+        } else {
+            clientId = message.clientId;
+            clientSequenceNumber = message.operation.clientSequenceNumber;
+        }
+
+        // TODO second check is to maintain back compat - can remove after deployment
+        const node = this.clientNodeMap.get(clientId);
+        if (!node || (node.value.clientSequenceNumber === undefined)) {
+            return false;
+        }
+
+        // Perform duplicate detection on client IDs - Check that we have an increasing CID
+        // For back compat ignore the 0/undefined message
+        if (clientSequenceNumber && (node.value.clientSequenceNumber + 1 !== clientSequenceNumber)) {
+            // tslint:disable-next-line:max-line-length
+            winston.info(`Duplicate ${node.value.clientId}:${node.value.clientSequenceNumber} !== ${clientSequenceNumber}`);
+            return true;
+        }
+
+        return false;
+    }
+
     private sendMessage(message: core.ITicketedMessage) {
         // TODO optimize this to aviod doing per message
         // Checkpoint the current state
@@ -286,6 +317,20 @@ export class DeliLambda implements IPartitionLambda {
                 // TODO issue with Kafka - need to propagate the issue somehow
                 winston.error("Could not send message", error);
             });
+    }
+
+    private sendNack(message: core.IRawOperationMessage) {
+        const nackMessage: core.INackMessage = {
+            clientId: message.clientId,
+            documentId: message.documentId,
+            operation: {
+                operation: message.operation,
+                sequenceNumber: this.minimumSequenceNumber,
+            },
+            type: core.NackOperationType,
+        };
+
+        this.sendMessage(nackMessage);
     }
 
     /**
@@ -327,6 +372,7 @@ export class DeliLambda implements IPartitionLambda {
      */
     private upsertClient(
         clientId: string,
+        clientSequenceNumber: number,
         referenceSequenceNumber: number,
         timestamp: number,
         canEvict: boolean,
@@ -337,6 +383,7 @@ export class DeliLambda implements IPartitionLambda {
             const newNode = this.clientSeqNumbers.add({
                 canEvict,
                 clientId,
+                clientSequenceNumber,
                 lastUpdate: timestamp,
                 nack,
                 referenceSequenceNumber,
@@ -345,7 +392,7 @@ export class DeliLambda implements IPartitionLambda {
         }
 
         // And then update its values
-        this.updateClient(clientId, timestamp, referenceSequenceNumber, nack);
+        this.updateClient(clientId, timestamp, clientSequenceNumber, referenceSequenceNumber, nack);
     }
 
     /**
@@ -366,10 +413,17 @@ export class DeliLambda implements IPartitionLambda {
     /**
      * Updates the sequence number of the specified client
      */
-    private updateClient(clientId: string, timestamp: number, referenceSequenceNumber: number, nack: boolean) {
+    private updateClient(
+        clientId: string,
+        timestamp: number,
+        clientSequenceNumber: number,
+        referenceSequenceNumber: number,
+        nack: boolean) {
+
         // Lookup the node and then update its value based on the message
         const heapNode = this.clientNodeMap.get(clientId);
         heapNode.value.referenceSequenceNumber = referenceSequenceNumber;
+        heapNode.value.clientSequenceNumber = clientSequenceNumber;
         heapNode.value.lastUpdate = timestamp;
         heapNode.value.nack = nack;
         this.clientSeqNumbers.update(heapNode);
