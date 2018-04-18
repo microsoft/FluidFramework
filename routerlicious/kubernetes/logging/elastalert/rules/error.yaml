@@ -2,23 +2,21 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: elastalert-error
-data:    
+data:
   error.yaml: |
     name: Error Alert!
     type: frequency
-    aggregation:
-      hours: 1
     index: logstash-*
+    include: ["kubernetes.container_name", "kubernetes.pod_name", "level", "log", "message"]
     num_events: 1
     timeframe:
         minutes: 1
-    filter: 
+    filter:
     - term:
         level: "error"
     alert:
-    - "email"
+    - "ms_teams"
     - "debug"
-    email:
-    - mdaumi@microsoft.com
-    - kurtb@microsoft.com
-    - steveluc@microsoft.com
+    ms_teams_webhook_url:
+    - "https://outlook.office.com/webhook/9ce27575-2f82-4689-abdb-bcff07e8063b@72f988bf-86f1-41af-91ab-2d7cd011db47/IncomingWebhook/f293b936dc4b4e4f8d0d57da073b6c8f/85f100f8-6a0d-4217-91ed-0aa3e1e19909"
+    ms_teams_alert_summary: "Error"

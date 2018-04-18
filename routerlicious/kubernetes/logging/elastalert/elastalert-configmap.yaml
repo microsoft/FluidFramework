@@ -6,7 +6,7 @@ data:
   elastalert_config.yaml: |
     rules_folder: /opt/rules
     run_every:
-      minutes: 10 
+      minutes: 5
     buffer_time:
       minutes: 2
     es_host: elasticsearch
@@ -14,7 +14,7 @@ data:
     writeback_index: elastalert_status
     alert_time_limit:
       days: 1
-    # SMTP config
+    # SMTP config. Not used anymore
     smtp_host: smtp-mail.outlook.com
     smtp_port: 587
     smtp_auth_file: /opt/config/smtp_auth.yaml
