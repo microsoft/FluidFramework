@@ -4,38 +4,9 @@ import { EventEmitter } from "events";
 import cloneDeep = require("lodash/cloneDeep");
 import { Deferred, IAuthenticatedUser } from "../core-utils";
 import { debug } from "./debug";
+import { IDeltaManager, IDeltaQueue } from "./document";
 import * as protocol from "./protocol";
 import * as storage from "./storage";
-
-export interface IDeltaManager {
-    // The queue of inbound delta messages
-    inbound: IDeltaQueue;
-
-    // the queue of outbound delta messages
-    outbound: IDeltaQueue;
-}
-
-export interface IDeltaQueue extends EventEmitter {
-    /**
-     * Flag indicating whether or not the queue was paused
-     */
-    paused: boolean;
-
-    /**
-     * The number of messages remaining in the queue
-     */
-    length: number;
-
-    /**
-     * Pauses processing on the queue
-     */
-    pause();
-
-    /**
-     * Resumes processing on the queue
-     */
-    resume();
-}
 
 export interface IConnectionDetails {
     clientId: string;
@@ -314,7 +285,7 @@ export class DeltaManager implements IDeltaManager {
         // Start adding trace for the op.
         const traces: protocol.ITrace[] = [ { service: "client", action: "start", timestamp: Date.now()}];
         const message: protocol.IDocumentMessage = {
-            clientSequenceNumber: this.clientSequenceNumber++,
+            clientSequenceNumber: ++this.clientSequenceNumber,
             contents,
             referenceSequenceNumber: this.baseSequenceNumber,
             traces,
@@ -350,6 +321,8 @@ export class DeltaManager implements IDeltaManager {
         }
 
         this.connection = await DeltaConnection.Connect(this.id, token, this.service);
+        this.clientSequenceNumber = 0;
+
         this.connection.on("op", (documentId: string, messages: protocol.ISequencedDocumentMessage[]) => {
             this.enqueueMessages(cloneDeep(messages));
         });
@@ -408,7 +381,7 @@ export class DeltaManager implements IDeltaManager {
             return;
         }
 
-        debug(`Received out of order message ${message.sequenceNumber} ${this.lastQueuedSequenceNumber}`);
+        debug(`${this.id} out of order message ${message.sequenceNumber} ${this.lastQueuedSequenceNumber}`);
         this.pending.push(message);
         this.fetchMissingDeltas(this.lastQueuedSequenceNumber, message.sequenceNumber);
     }

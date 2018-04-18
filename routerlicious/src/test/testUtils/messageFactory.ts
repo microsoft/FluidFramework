@@ -97,6 +97,39 @@ export class MessageFactory {
         return objectMessage;
     }
 
+    public createSave(): ISequencedOperationMessage {
+        const operation: api.IDocumentMessage = {
+            clientSequenceNumber: this.clientSequenceNumber++,
+            contents: {
+                message: "Test Save",
+            },
+            referenceSequenceNumber: 0,
+            traces: [],
+            type: api.SaveOperation,
+        };
+
+        let sequencedOperation: api.ISequencedDocumentMessage = {
+            clientId: this.clientId,
+            clientSequenceNumber: operation.clientSequenceNumber,
+            contents: operation.contents,
+            minimumSequenceNumber: 0,
+            origin: undefined,
+            referenceSequenceNumber: operation.referenceSequenceNumber,
+            sequenceNumber: this.sequenceNumber++,
+            traces: [],
+            type: operation.type,
+            user: null,
+        };
+
+        const message: ISequencedOperationMessage = {
+            documentId: this.documentId,
+            operation: sequencedOperation,
+            type: SequencedOperationType,
+        };
+
+        return message;
+    }
+
     public createSequencedOperation(): ISequencedOperationMessage {
         const operation = this.createDocumentMessage(0);
         let sequencedOperation: api.ISequencedDocumentMessage = {

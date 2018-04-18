@@ -10,6 +10,7 @@ export interface IClientSequenceNumber {
     lastUpdate: number;
     nack: boolean;
     referenceSequenceNumber: number;
+    clientSequenceNumber: number;
 }
 
 export interface ICheckpoint {
