@@ -59,7 +59,7 @@ exports.myHandler = function(event, context, callback) {
  
 For stream based event sources (like Kafka/Kinesis) AWS will send you a batch of messages. But within the batch you’re expected to be stateless. So need to make connections to dependent databases, load context, process the batch, and then write the results. It’s possible the container running your lambda will be reused, and give you the possibility to reuse connections, but its not guaranteed. This simplifies their model. But for us adds extra work we could skip given we expect to have the partitions be long lived. Plus since our processing is all deterministic we can begin to process new batches while we wait for database saves, etc… of the old batch to finish.
  
-So to decrease latency and increase throughput our model calls the lambda handler as quickly as it possibly can. The handler doesn’t indicate message completion to us. Instead we make use of an IContext, provided to the factory when creating a new IPartiitionLambda, to allow the lambda to signal message completion.
+So to decrease latency and increase throughput our model calls the lambda handler as quickly as it possibly can. The handler doesn’t indicate message completion to us. Instead we make use of an IContext, provided to the factory when creating a new IPartitionLambda, to allow the lambda to signal message completion.
 
 ```typescript
 export interface IContext {

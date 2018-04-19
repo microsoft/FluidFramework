@@ -34,7 +34,7 @@ export class Histogram {
  */
 export class ThroughputCounter {
     private produceCounter = new RateCounter();
-    private acknolwedgeCounter = new RateCounter();
+    private acknowlwedgeCounter = new RateCounter();
     private interval;
 
     constructor(
@@ -48,8 +48,8 @@ export class ThroughputCounter {
         this.ensureTracking();
     }
 
-    public acknolwedge(count: number = 1) {
-        this.acknolwedgeCounter.increment(count);
+    public acknowlwedge(count: number = 1) {
+        this.acknowlwedgeCounter.increment(count);
         this.ensureTracking();
     }
 
@@ -60,23 +60,23 @@ export class ThroughputCounter {
 
         // Reset both counters when starting the interval
         this.produceCounter.reset();
-        this.acknolwedgeCounter.reset();
+        this.acknowlwedgeCounter.reset();
 
         // Kick off the interval
         this.interval = setInterval(() => {
             const produce = 1000 * this.produceCounter.getValue() / this.produceCounter.elapsed();
-            const ack = 1000 * this.acknolwedgeCounter.getValue() / this.acknolwedgeCounter.elapsed();
+            const ack = 1000 * this.acknowlwedgeCounter.getValue() / this.acknowlwedgeCounter.elapsed();
 
             this.log(`${this.prefix}Produce@ ${produce.toFixed(2)} msg/s - Ack@ ${ack.toFixed(2)} msg/s`);
 
             // If there was no activity within the interval disable it
-            if (this.produceCounter.getValue() === 0 && this.acknolwedgeCounter.getValue() === 0) {
+            if (this.produceCounter.getValue() === 0 && this.acknowlwedgeCounter.getValue() === 0) {
                 clearInterval(this.interval);
                 this.interval = undefined;
             }
 
             this.produceCounter.reset();
-            this.acknolwedgeCounter.reset();
+            this.acknowlwedgeCounter.reset();
         }, this.intervalTime);
     }
 }
