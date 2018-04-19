@@ -1,4 +1,4 @@
-import { IAuthenticatedUser } from "../core-utils";
+import { IAuthenticatedUser } from "../api-core";
 
 /**
  * Message sent to connect to the given object

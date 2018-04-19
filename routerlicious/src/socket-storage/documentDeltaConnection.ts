@@ -1,6 +1,6 @@
 import { EventEmitter } from "events";
 import * as api from "../api-core";
-import { BatchManager, IAuthenticatedUser } from "../core-utils";
+import { BatchManager } from "../core-utils";
 import { debug } from "./debug";
 import * as messages from "./messages";
 
@@ -64,7 +64,7 @@ export class DocumentDeltaConnection implements api.IDocumentDeltaConnection {
         return this.details.parentBranch;
     }
 
-    public get user(): IAuthenticatedUser {
+    public get user(): api.IAuthenticatedUser {
         return this.details.user;
     }
 

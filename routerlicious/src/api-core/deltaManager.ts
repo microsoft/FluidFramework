@@ -2,7 +2,7 @@ import * as assert from "assert";
 import * as queue from "async/queue";
 import { EventEmitter } from "events";
 import cloneDeep = require("lodash/cloneDeep");
-import { Deferred, IAuthenticatedUser } from "../core-utils";
+import { Deferred } from "../core-utils";
 import { debug } from "./debug";
 import { IDeltaManager, IDeltaQueue } from "./document";
 import * as protocol from "./protocol";
@@ -12,7 +12,7 @@ export interface IConnectionDetails {
     clientId: string;
     existing: boolean;
     parentBranch: string;
-    user: IAuthenticatedUser;
+    user: protocol.IAuthenticatedUser;
 }
 
 class DeltaQueue<T> extends EventEmitter implements IDeltaQueue {

@@ -587,7 +587,7 @@ export class Document extends EventEmitter {
     /**
      * Returns the user id connected to the document.
      */
-    public getUser(): any {
+    public getUser(): api.IAuthenticatedUser {
         return this.connectDetails ? this.connectDetails.user : null;
     }
 

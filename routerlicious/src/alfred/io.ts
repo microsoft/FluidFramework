@@ -1,10 +1,11 @@
 import * as moniker from "moniker";
 import { Provider } from "nconf";
+import * as request from "request";
 import * as winston from "winston";
 import * as agent from "../agent";
 import * as api from "../api-core";
 import * as core from "../core";
-import { IAuthenticatedUser, ThroughputCounter, verifyAuthToken } from "../core-utils";
+import { ThroughputCounter } from "../core-utils";
 import * as socketStorage from "../socket-storage";
 import * as utils from "../utils";
 import * as storage from "./storage";
@@ -12,7 +13,33 @@ import * as storage from "./storage";
 interface IDocumentUser {
     docId: string;
 
-    user: IAuthenticatedUser;
+    user: api.IAuthenticatedUser;
+}
+
+async function verifyAuthToken(service: string, token: any): Promise<api.IAuthenticatedUser> {
+    return new Promise<api.IAuthenticatedUser>((resolve, reject) => {
+        request.post(
+            service,
+            {
+                body: token,
+                headers: {
+                    "Accept": "application/json",
+                    "Content-Type": "application/json",
+                },
+                json: true,
+            },
+            (error, result, body) => {
+                if (error) {
+                    return reject(error);
+                }
+
+                if (result.statusCode !== 200) {
+                    return reject(result);
+                }
+
+                return resolve(body);
+            });
+    });
 }
 
 export function register(
@@ -26,16 +53,6 @@ export function register(
 
     const throughput = new ThroughputCounter(winston.info);
     const metricLogger = agent.createMetricClient(metricClientConfig);
-
-    // Verify if the user is authenticated or not. For now we only verify if the token is present.
-    // TODO (auth): We should verify all connection request.
-    function checkAuth(message: socketStorage.IConnect): Promise<IAuthenticatedUser> {
-        if (!message.token) {
-            return Promise.resolve(null);
-        } else {
-            return verifyAuthToken(authEndpoint, message.token);
-        }
-    }
 
     webSocketServer.on("connection", (socket: core.IWebSocket) => {
         const connectionProfiler = winston.startTimer();
@@ -52,12 +69,7 @@ export function register(
         }
 
         async function connectDocument(message: socketStorage.IConnect): Promise<socketStorage.IConnected> {
-            // Join the room first to ensure the client will start receiving delta updates
-            const authedUser = await checkAuth(message);
-
-            if (authedUser !== null) {
-                winston.info(`User ${authedUser.user.name} wants to access ${message.id}`);
-            }
+            const authedUser = await verifyAuthToken(authEndpoint, message.token);
 
             const profiler = winston.startTimer();
             connectionProfiler.done(`Client has requested to load ${message.id}`);

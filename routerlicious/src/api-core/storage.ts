@@ -1,6 +1,5 @@
 import * as resources from "gitresources";
-import { IAuthenticatedUser } from "../core-utils";
-import { IDocumentMessage, ISequencedDocumentMessage } from "./protocol";
+import { IAuthenticatedUser, IDocumentMessage, ISequencedDocumentMessage } from "./protocol";
 
 export interface IDocumentAttributes {
     /**

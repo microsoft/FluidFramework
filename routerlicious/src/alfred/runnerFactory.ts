@@ -5,25 +5,6 @@ import * as services from "../services";
 import * as utils from "../utils";
 import { AlfredRunner } from "./runner";
 
-/**
- * Normalize a port into a number, string, or false.
- */
-function normalizePort(val) {
-    let normalizedPort = parseInt(val, 10);
-
-    if (isNaN(normalizedPort)) {
-        // named pipe
-        return val;
-    }
-
-    if (normalizedPort >= 0) {
-        // port number
-        return normalizedPort;
-    }
-
-    return false;
-}
-
 export class AlfredResources implements utils.IResources {
     public webServerFactory: core.IWebServerFactory;
 
@@ -74,7 +55,7 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
         const tenantManager = await services.TenantManager.Load(mongoManager, tenantConfig, tenantsCollectionName);
 
         // This wanst to create stuff
-        let port = normalizePort(process.env.PORT || "3000");
+        let port = utils.normalizePort(process.env.PORT || "3000");
 
         return new AlfredResources(
             config,

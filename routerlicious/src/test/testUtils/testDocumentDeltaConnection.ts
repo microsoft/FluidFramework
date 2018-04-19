@@ -1,5 +1,4 @@
 import * as api from "../../api-core";
-import { IAuthenticatedUser } from "../../core-utils";
 
 export class TestDocumentDeltaConnection implements api.IDocumentDeltaConnection {
 
@@ -8,7 +7,7 @@ export class TestDocumentDeltaConnection implements api.IDocumentDeltaConnection
         public clientId: string,
         public existing: boolean,
         public parentBranch: string,
-        public user: IAuthenticatedUser) {
+        public user: api.IAuthenticatedUser) {
     }
 
     /**

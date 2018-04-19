@@ -1,7 +1,7 @@
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import * as core from "../../api-core";
-import { Deferred, IAuthenticatedUser } from "../../core-utils";
+import { Deferred } from "../../core-utils";
 
 export class TestDeltaQueue extends EventEmitter implements core.IDeltaQueue {
     public paused: boolean;
@@ -52,7 +52,7 @@ export class TestDocument implements core.IDocument {
         throw new Error("Method not implemented.");
     }
 
-    public getUser(): IAuthenticatedUser {
+    public getUser(): core.IAuthenticatedUser {
         throw new Error("Method not implemented.");
     }
 
