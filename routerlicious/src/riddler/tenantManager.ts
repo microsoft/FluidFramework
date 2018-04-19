@@ -1,9 +1,5 @@
+import { ITenantConfig } from "../api-core";
 import * as utils from "../utils";
-
-export interface ITenant {
-    name: string;
-    key: string;
-}
 
 export async function refreshTenantsFromDb(
     mongoManager: utils.MongoManager,
@@ -19,9 +15,9 @@ export async function refreshTenantsFromDb(
     return tenants;
 }
 
-async function getTenants(mongoManager: utils.MongoManager, collectionName: string): Promise<ITenant[]> {
+async function getTenants(mongoManager: utils.MongoManager, collectionName: string): Promise<ITenantConfig[]> {
     const db = await mongoManager.getDatabase();
-    const collection = db.collection<ITenant>(collectionName);
+    const collection = db.collection<ITenantConfig>(collectionName);
     const tenants = await collection.findAll();
 
     return tenants;
