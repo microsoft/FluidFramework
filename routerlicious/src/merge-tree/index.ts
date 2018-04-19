@@ -1,10 +1,7 @@
-import * as Collections from "./collections";
-export { Collections };
-
-export * from "./extension";
-export * from "./intervalCollection";
 export * from "./mergeTree";
 export * from "./ops";
-export * from "./sharedString";
 export * from "./properties";
+export * from "./snapshot";
+export * from "./collections";
+export * from "./base";
 export { loadSegments } from "./text";

@@ -25,6 +25,9 @@ export { graph };
 import * as MergeTree from "../merge-tree";
 export { MergeTree };
 
+import * as SharedString from "../shared-string";
+export { SharedString };
+
 import {CharacterCodes, Paragraph, Table}  from "../text";
 export { CharacterCodes, Paragraph, Table };
 

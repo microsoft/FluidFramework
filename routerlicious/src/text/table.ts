@@ -1,7 +1,7 @@
 // tslint:disable
 import * as core from "../api-core";
 import * as MergeTree from "../merge-tree";
-import { SharedString } from "../merge-tree";
+import { SharedString } from "../shared-string";
 import * as Paragraph from "./paragraph";
 
 export interface ITableMarker extends MergeTree.Marker {
@@ -99,10 +99,19 @@ function createCellRelative(opList: MergeTree.IMergeTreeOp[], idBase: string,
     }
     opList.push(createRelativeMarkerOpOptLocal(relpos, local, cellEndId,
         MergeTree.ReferenceType.NestEnd, ["cell"], undefined, endExtraProperties));
-    let cellEndRelPos = <MergeTree.IRelativePosition>{
-        before: true,
-        id: cellEndId,
-    };
+    let cellEndRelPos: MergeTree.IRelativePosition;
+    if (local) {
+        cellEndRelPos = <MergeTree.IRelativePosition>{
+            before: true,
+            localId: cellEndId,
+        };
+    }
+    else {
+        cellEndRelPos = <MergeTree.IRelativePosition>{
+            before: true,
+            id: cellEndId,
+        };
+    }
     let startExtraProperties: Object;
     if (extraProperties) {
         startExtraProperties = MergeTree.extend(MergeTree.createMap(), extraProperties);
@@ -157,34 +166,6 @@ function createColumnCellOp(sharedString: SharedString, row: Row, prevCell: Cell
     return groupOp;
 }
 
-export interface IContentModel {
-    exec(op: MergeTree.IMergeTreeGroupMsg, msg: core.ISequencedObjectMessage);
-}
-
-export function contentModelCreate(sharedString: SharedString): IContentModel {
-    function insertColumn(op: MergeTree.IMergeTreeGroupMsg, msg: core.ISequencedObjectMessage) {
-        finishInsertedColumn(op.macroOp.params["cellId"], msg, sharedString);
-    }
-
-    function insertRow(op: MergeTree.IMergeTreeGroupMsg, msg: core.ISequencedObjectMessage) {
-        finishInsertedRow(op.macroOp.params["rowId"], op.macroOp.params["prevRowId"], msg, sharedString);
-    }
-
-    function exec(op: MergeTree.IMergeTreeGroupMsg, msg: core.ISequencedObjectMessage) {
-        switch (op.macroOp.name) {
-            case "insertColumn":
-                insertColumn(op, msg);
-                break;
-            case "insertRow":
-                insertRow(op, msg);
-                break;
-        }
-    }
-    return {
-        exec,
-    };
-}
-
 const newColumnProp = "newColumnId";
 function insertColumnCellForRow(sharedString: SharedString, rowView: Row,
     columnOffset: number, colId: string, segmentGroup: MergeTree.SegmentGroup, shared = false) {
@@ -196,7 +177,7 @@ function insertColumnCellForRow(sharedString: SharedString, rowView: Row,
     // REVIEW: place cell at end of row even if not enough cells preceding
 }
 
-function finishInsertedRow(rowId: string, prevRowId: string, msg: core.ISequencedObjectMessage,
+export function finishInsertedRow(rowId: string, prevRowId: string, msg: core.ISequencedObjectMessage,
     sharedString: SharedString) {
     let rowMarker = <IRowMarker>sharedString.client.mergeTree.getSegmentFromId(rowId);
     let prevRowMarker = <IRowMarker>sharedString.client.mergeTree.getSegmentFromId(prevRowId);
@@ -234,7 +215,7 @@ function finishInsertedRow(rowId: string, prevRowId: string, msg: core.ISequence
     tableMarker.view = undefined;
 }
 
-function finishInsertedColumn(cellId: string, msg: core.ISequencedObjectMessage,
+export function finishInsertedColumn(cellId: string, msg: core.ISequencedObjectMessage,
     sharedString: SharedString) {
     // TODO: error checking
     let cellMarker = <ICellMarker>sharedString.client.mergeTree.getSegmentFromId(cellId);

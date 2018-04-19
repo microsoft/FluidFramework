@@ -1,5 +1,6 @@
-import { api, core, MergeTree, types } from "../client-api";
+import { api, core, types } from "../client-api";
 import * as intelligence from "../intelligence";
+import { CollaboritiveStringExtension, SharedString } from "../shared-string";
 import { RateLimiter } from "./rateLimiter";
 
 // 5s wait time between intelligent service calls
@@ -23,9 +24,9 @@ export class IntelligentServicesManager {
 
     public process(object: core.ICollaborativeObject) {
         // TODO expose way for intelligent services to express their supported document types
-        if (object.type === MergeTree.CollaboritiveStringExtension.Type) {
+        if (object.type === CollaboritiveStringExtension.Type) {
             if (!this.intelInvoked) {
-                const sharedString = object as MergeTree.SharedString;
+                const sharedString = object as SharedString;
 
                 // And then run plugin insights rate limited
                 this.rateLimiter = new RateLimiter(

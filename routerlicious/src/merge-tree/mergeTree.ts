@@ -2392,7 +2392,7 @@ export class Client {
         let clientId = segWindow.clientId;
         let refSeq = segWindow.currentSeq;
         let seq = this.getLocalSequenceNumber();
-        
+
         let clockStart;
         if (this.measureOps) {
             clockStart = clock();
@@ -2496,7 +2496,7 @@ export class Client {
         let clientId = segWindow.clientId;
         let refSeq = segWindow.currentSeq;
         let seq = this.getLocalSequenceNumber();
-        if (this.tempCli>=0) {
+        if (this.tempCli >= 0) {
             clientId = this.tempCli;
         }
         let clockStart;
@@ -2520,7 +2520,7 @@ export class Client {
         let clientId = segWindow.clientId;
         let refSeq = segWindow.currentSeq;
         let seq = this.getLocalSequenceNumber();
-        if (this.tempCli>=0) {
+        if (this.tempCli >= 0) {
             clientId = this.tempCli;
         }
         let clockStart;
@@ -2544,7 +2544,7 @@ export class Client {
         if (this.measureOps) {
             clockStart = clock();
         }
-        
+
         this.mergeTree.insertMarker(pos, refSeq, clientId, seq, marker.refType, props);
         this.mergeTree.getCollabWindow().currentSeq = seq;
 
@@ -2980,7 +2980,7 @@ export class MergeTree {
     // if we need to have pointers to non-markers, we can change to point at local refs
     idToSegment = Properties.createMap<Segment>();
     localIdToSegment = Properties.createMap<Segment>();
-    
+
     clientIdToBranchId: number[] = [];
     localBranchId = 0;
     transactionSegmentGroup: SegmentGroup;
@@ -3603,7 +3603,7 @@ export class MergeTree {
             if (accumText.placeholder && (accumText.placeholder.length > 0)) {
                 if (accumText.placeholder === "*") {
                     let marker = <Marker>segment;
-                    accumText.textSegment.text += `/${marker.toString()}/`; 
+                    accumText.textSegment.text += `\n${marker.toString()}`;
                 } else {
                     for (let i = 0; i < segment.cachedLength; i++) {
                         accumText.textSegment.text += accumText.placeholder;
@@ -4056,7 +4056,12 @@ export class MergeTree {
     posFromRelativePos(relativePos: IRelativePosition, refseq = UniversalSequenceNumber,
         clientId = this.collabWindow.clientId) {
         let pos = -1;
-        let marker = this.getSegmentFromId(relativePos.id);
+        let marker: Marker;
+        if (relativePos.id) {
+            marker = <Marker>this.getSegmentFromId(relativePos.id);
+        } else {
+            marker = <Marker>this.getSegmentFromLocalId(relativePos.localId);
+        }
         if (marker) {
             pos = this.getOffset(marker, refseq, clientId);
             if (!relativePos.before) {

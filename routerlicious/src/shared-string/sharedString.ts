@@ -3,32 +3,29 @@ import * as assert from "assert";
 import performanceNow = require("performance-now");
 import * as resources from "gitresources";
 import * as api from "../api-core";
-import { Document } from "../api";
-// import * as Collections from "./collections";
 import { Deferred } from "../core-utils";
 import { IMap, IMapView, IValueChanged } from "../data-types";
 import { CollaborativeMap, MapExtension } from "../map";
-import { IIntegerRange } from "./base";
+import * as MergeTree from "../merge-tree";
 import { CollaboritiveStringExtension } from "./extension";
-import * as MergeTree from "./mergeTree";
-import * as ops from "./ops";
-import * as Properties from "./properties";
-import * as Paparazzo from "./snapshot";
-import { Interval, SharedIntervalCollection, SharedIntervalCollectionValueType } from "./intervalCollection";
+import {
+    Interval, SharedIntervalCollection,
+    SharedIntervalCollectionValueType,
+} from "./intervalCollection";
 
-function textsToSegments(texts: ops.IPropertyString[]) {
+function textsToSegments(texts: MergeTree.IPropertyString[]) {
     let segments: MergeTree.Segment[] = [];
     for (let ptext of texts) {
         let segment: MergeTree.Segment;
         if (ptext.text !== undefined) {
-            segment = MergeTree.TextSegment.make(ptext.text, ptext.props as Properties.PropertySet,
+            segment = MergeTree.TextSegment.make(ptext.text, ptext.props as MergeTree.PropertySet,
                 MergeTree.UniversalSequenceNumber,
                 MergeTree.LocalClientId);
         } else {
             // for now assume marker
             segment = MergeTree.Marker.make(
                 ptext.marker.refType,
-                ptext.props as Properties.PropertySet,
+                ptext.props as MergeTree.PropertySet,
                 MergeTree.UniversalSequenceNumber,
                 MergeTree.LocalClientId);
         }
@@ -62,36 +59,33 @@ export class SharedString extends CollaborativeMap {
 
     public insertMarker(
         pos: number,
-        refType: ops.ReferenceType,
-        props?: Properties.PropertySet) {
+        refType: MergeTree.ReferenceType,
+        props?: MergeTree.PropertySet) {
 
-        const insertMessage: ops.IMergeTreeInsertMsg = {
+        const insertMessage: MergeTree.IMergeTreeInsertMsg = {
             marker: { refType },
             pos1: pos,
             props,
-            type: ops.MergeTreeDeltaType.INSERT,
+            type: MergeTree.MergeTreeDeltaType.INSERT,
         };
 
         this.client.insertMarkerLocal(pos, refType, props);
         this.submitIfAttached(insertMessage);
     }
 
-    public getDocument() {
-        return <Document>this.document;
+    public getDocument(): api.IDocument {
+        return <api.IDocument>this.document;
     }
 
-    public createString() {
-        return (<Document>this.document).createString();
-    }
     public getText(start?: number, end?: number): string {
         return this.client.getText(start, end);
     }
 
     public paste(register: string, pos: number) {
-        const insertMessage: ops.IMergeTreeInsertMsg = {
+        const insertMessage: MergeTree.IMergeTreeInsertMsg = {
             pos1: pos,
             register,
-            type: ops.MergeTreeDeltaType.INSERT,
+            type: MergeTree.MergeTreeDeltaType.INSERT,
         };
 
         pos = this.client.pasteLocal(register, pos);
@@ -100,11 +94,11 @@ export class SharedString extends CollaborativeMap {
     }
 
     public copy(register: string, start: number, end: number) {
-        const insertMessage: ops.IMergeTreeInsertMsg = {
+        const insertMessage: MergeTree.IMergeTreeInsertMsg = {
             pos1: start,
             pos2: end,
             register,
-            type: ops.MergeTreeDeltaType.INSERT,
+            type: MergeTree.MergeTreeDeltaType.INSERT,
         };
 
         this.client.copy(start, end, register, this.client.getCurrentSeq(),
@@ -112,11 +106,11 @@ export class SharedString extends CollaborativeMap {
         this.submitIfAttached(insertMessage);
     }
 
-    public insertText(text: string, pos: number, props?: Properties.PropertySet) {
-        const insertMessage: ops.IMergeTreeInsertMsg = {
+    public insertText(text: string, pos: number, props?: MergeTree.PropertySet) {
+        const insertMessage: MergeTree.IMergeTreeInsertMsg = {
             pos1: pos,
             props,
-            type: ops.MergeTreeDeltaType.INSERT,
+            type: MergeTree.MergeTreeDeltaType.INSERT,
             text,
         };
 
@@ -124,12 +118,12 @@ export class SharedString extends CollaborativeMap {
         this.submitIfAttached(insertMessage);
     }
 
-    public replaceText(text: string, start: number, end: number, props?: Properties.PropertySet) {
-        const insertMessage: ops.IMergeTreeInsertMsg = {
+    public replaceText(text: string, start: number, end: number, props?: MergeTree.PropertySet) {
+        const insertMessage: MergeTree.IMergeTreeInsertMsg = {
             pos1: start,
             pos2: end,
             props,
-            type: ops.MergeTreeDeltaType.INSERT,
+            type: MergeTree.MergeTreeDeltaType.INSERT,
             text,
         };
         this.client.mergeTree.startGroupOperation();
@@ -140,11 +134,11 @@ export class SharedString extends CollaborativeMap {
     }
 
     public cut(register: string, start: number, end: number) {
-        const removeMessage: ops.IMergeTreeRemoveMsg = {
+        const removeMessage: MergeTree.IMergeTreeRemoveMsg = {
             pos1: start,
             pos2: end,
             register,
-            type: ops.MergeTreeDeltaType.REMOVE,
+            type: MergeTree.MergeTreeDeltaType.REMOVE,
         };
         this.client.copy(start, end, register, this.client.getCurrentSeq(),
             this.client.getClientId(), this.client.longClientId);
@@ -153,10 +147,10 @@ export class SharedString extends CollaborativeMap {
     }
 
     public removeText(start: number, end: number) {
-        const removeMessage: ops.IMergeTreeRemoveMsg = {
+        const removeMessage: MergeTree.IMergeTreeRemoveMsg = {
             pos1: start,
             pos2: end,
-            type: ops.MergeTreeDeltaType.REMOVE,
+            type: MergeTree.MergeTreeDeltaType.REMOVE,
         };
 
         this.client.removeSegmentLocal(start, end);
@@ -164,30 +158,30 @@ export class SharedString extends CollaborativeMap {
     }
 
     public annotateRangeFromPast(
-        props: Properties.PropertySet,
+        props: MergeTree.PropertySet,
         start: number,
         end: number,
         fromSeq: number) {
 
         let ranges = this.client.mergeTree.tardisRange(start, end, fromSeq, this.client.getCurrentSeq(),
             this.client.getClientId());
-        ranges.map((range: IIntegerRange) => {
+        ranges.map((range: MergeTree.IIntegerRange) => {
             this.annotateRange(props, range.start, range.end);
         });
     }
 
-    public transaction(groupOp: ops.IMergeTreeGroupMsg) {
+    public transaction(groupOp: MergeTree.IMergeTreeGroupMsg): MergeTree.SegmentGroup {
         let segmentGroup = this.client.localTransaction(groupOp);
         this.submitIfAttached(groupOp);
         return segmentGroup;
     }
 
-    public annotateRange(props: Properties.PropertySet, start: number, end: number, op?: ops.ICombiningOp) {
-        let annotateMessage: ops.IMergeTreeAnnotateMsg = {
+    public annotateRange(props: MergeTree.PropertySet, start: number, end: number, op?: MergeTree.ICombiningOp) {
+        let annotateMessage: MergeTree.IMergeTreeAnnotateMsg = {
             pos1: start,
             pos2: end,
             props,
-            type: ops.MergeTreeDeltaType.ANNOTATE,
+            type: MergeTree.MergeTreeDeltaType.ANNOTATE,
         };
 
         if (op) {
@@ -201,14 +195,14 @@ export class SharedString extends CollaborativeMap {
         this.client.mergeTree.updateLocalMinSeq(lmseq);
     }
 
-    public createPositionReference(pos: number, refType: ops.ReferenceType, refSeq = this.client.getCurrentSeq(),
-        clientId = this.client.getClientId()) {
+    public createPositionReference(pos: number, refType: MergeTree.ReferenceType, refSeq = this.client.getCurrentSeq(),
+        clientId = this.client.getClientId()): MergeTree.LocalReference {
         let segoff = this.client.mergeTree.getContainingSegment(pos,
             refSeq, this.client.getClientId());
         if (segoff && segoff.segment) {
             let baseSegment = <MergeTree.BaseSegment>segoff.segment;
             let lref = new MergeTree.LocalReference(baseSegment, segoff.offset, refType);
-            if (refType!==ops.ReferenceType.Transient) {
+            if (refType!==MergeTree.ReferenceType.Transient) {
                 this.client.mergeTree.addLocalReference(lref);
             }
             return lref;
@@ -264,7 +258,7 @@ export class SharedString extends CollaborativeMap {
         let segmentGroup = <MergeTree.SegmentGroup>{
             segments: orderedSegments,
         };
-        let opList = <ops.IMergeTreeOp[]>[];
+        let opList = <MergeTree.IMergeTreeOp[]>[];
         let prevSeg: MergeTree.Segment;
         for (let segment of orderedSegments) {
             if (prevSeg !== segment) {
@@ -273,9 +267,9 @@ export class SharedString extends CollaborativeMap {
                 prevSeg = segment;
             }
         }
-        let groupOp = <ops.IMergeTreeGroupMsg>{
+        let groupOp = <MergeTree.IMergeTreeGroupMsg>{
             ops: opList,
-            type: ops.MergeTreeDeltaType.GROUP,
+            type: MergeTree.MergeTreeDeltaType.GROUP,
         };
         this.client.mergeTree.pendingSegments.enqueue(segmentGroup);
         this.submitIfAttached(groupOp);
@@ -313,7 +307,7 @@ export class SharedString extends CollaborativeMap {
 
     protected snapshotContent(): api.ITree {
         this.client.mergeTree.commitGlobalMin();
-        let snap = new Paparazzo.Snapshot(this.client.mergeTree);
+        let snap = new MergeTree.Snapshot(this.client.mergeTree);
         snap.extractSync();
         return snap.emit();
     }
@@ -370,22 +364,22 @@ export class SharedString extends CollaborativeMap {
         originBranch: string,
         services: api.IObjectStorageService) {
 
-        let chunk: ops.MergeTreeChunk;
+        let chunk: MergeTree.MergeTreeChunk;
 
         console.log(`Async load ${this.id} - ${performanceNow()}`);
 
         if (header) {
-            chunk = Paparazzo.Snapshot.processChunk(header);
+            chunk = MergeTree.Snapshot.processChunk(header);
             let segs = textsToSegments(chunk.segmentTexts);
             this.client.mergeTree.reloadFromSegments(segs);
             console.log(`Loading ${this.id} body - ${performanceNow()}`);
-            chunk = await Paparazzo.Snapshot.loadChunk(services, "body");
+            chunk = await MergeTree.Snapshot.loadChunk(services, "body");
             console.log(`Loaded ${this.id} body - ${performanceNow()}`);
             for (let segSpec of chunk.segmentTexts) {
                 this.client.mergeTree.appendSegment(segSpec);
             }
         } else {
-            chunk = Paparazzo.Snapshot.EmptyChunk;
+            chunk = MergeTree.Snapshot.EmptyChunk;
         }
 
         // Register the filter callback on the reference collections
@@ -416,7 +410,7 @@ export class SharedString extends CollaborativeMap {
         }
     }
 
-    private loadFinished(chunk: ops.MergeTreeChunk) {
+    private loadFinished(chunk: MergeTree.MergeTreeChunk) {
         this.isLoaded = true;
         this.loadedDeferred.resolve();
         this.emit("loadFinished", chunk, true);

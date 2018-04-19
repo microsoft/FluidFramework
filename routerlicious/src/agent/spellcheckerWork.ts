@@ -1,18 +1,19 @@
 import { core, MergeTree } from "../client-api";
 import * as intelligence from "../intelligence";
+import { CollaboritiveStringExtension, SharedString } from "../shared-string";
 import { BaseWork} from "./baseWork";
 import { Spellcheker } from "./spellchecker";
 import { IWork} from "./work";
 
 export class SpellcheckerWork extends BaseWork implements IWork {
 
-    private dict = new MergeTree.Collections.TST<number>();
+    private dict = new MergeTree.TST<number>();
     private spellcheckInvoked: boolean = false;
 
     constructor(
         docId: string,
         config: any,
-        dictionary: MergeTree.Collections.TST<number>,
+        dictionary: MergeTree.TST<number>,
         private service: core.IDocumentService) {
 
         super(docId, config);
@@ -34,9 +35,9 @@ export class SpellcheckerWork extends BaseWork implements IWork {
     }
 
     private spellCheck(object: core.ICollaborativeObject) {
-        if (object.type === MergeTree.CollaboritiveStringExtension.Type && !this.spellcheckInvoked) {
+        if (object.type === CollaboritiveStringExtension.Type && !this.spellcheckInvoked) {
             this.spellcheckInvoked = true;
-            const sharedString = object as MergeTree.SharedString;
+            const sharedString = object as SharedString;
             // Enable spell checking for the document
             // TODO will want to configure this as a pluggable insight
             const spellcheckerClient = intelligence.spellcheckerService.factory.create(

@@ -44,9 +44,13 @@ export interface IMergeTreeDelta {
  */
 export interface IRelativePosition {
     /**
+     * Local string identifier specifying a segment (for local operations).
+     */
+    localId?: string;
+    /**
      * String identifier specifying a segment.
      */
-    id: string;
+    id?: string;
     /**
      * If true, insert before the specified segment.  If false or not defined,
      * insert after the specified segment.

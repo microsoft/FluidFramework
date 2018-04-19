@@ -41,7 +41,8 @@ import * as cell from "../cell";
 import { Deferred } from "../core-utils";
 import { ICell, IMap, IStream } from "../data-types";
 import * as mapExtension from "../map";
-import * as mergeTree from "../merge-tree";
+import { CollaboritiveStringExtension, SharedIntervalCollectionValueType, SharedString } from "../shared-string";
+
 import * as stream from "../stream";
 import { debug } from "./debug";
 import { NullDeltaConnection } from "./nullDeltaConnection";
@@ -56,7 +57,7 @@ let defaultDocumentService: IDocumentService;
 export const defaultRegistry = new Registry();
 export const defaultDocumentOptions = Object.create(null);
 defaultRegistry.register(new mapExtension.MapExtension());
-defaultRegistry.register(new mergeTree.CollaboritiveStringExtension());
+defaultRegistry.register(new CollaboritiveStringExtension());
 defaultRegistry.register(new stream.StreamExtension());
 defaultRegistry.register(new cell.CellExtension());
 
@@ -64,7 +65,7 @@ defaultRegistry.register(new cell.CellExtension());
 mapExtension.registerDefaultValueType(new mapExtension.DistributedSetValueType());
 mapExtension.registerDefaultValueType(new mapExtension.DistributedArrayValueType());
 mapExtension.registerDefaultValueType(new mapExtension.CounterValueType());
-mapExtension.registerDefaultValueType(new mergeTree.SharedIntervalCollectionValueType());
+mapExtension.registerDefaultValueType(new SharedIntervalCollectionValueType());
 
 export interface IAttachedServices {
     deltaConnection: IDeltaConnection;
@@ -523,8 +524,8 @@ export class Document extends EventEmitter {
     /**
      * Creates a new collaborative string
      */
-    public createString(): mergeTree.SharedString {
-        return this.create(mergeTree.CollaboritiveStringExtension.Type) as mergeTree.SharedString;
+    public createString(): SharedString {
+        return this.create(CollaboritiveStringExtension.Type) as SharedString;
     }
 
     /**

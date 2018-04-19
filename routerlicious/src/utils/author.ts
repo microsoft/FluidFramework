@@ -2,6 +2,7 @@ import * as queue from "async/queue";
 import clone = require("lodash/clone");
 import { api, core, MergeTree, utils } from "../client-api";
 import { ICell, IMap } from "../data-types";
+import { SharedString } from "../shared-string";
 import Counter = utils.RateCounter;
 
 let play: boolean = false;
@@ -41,7 +42,7 @@ export interface IAuthor {
     metrics: IScribeMetrics;
 
     doc: api.Document;
-    ss: MergeTree.SharedString;
+    ss: SharedString;
 }
 
 /**
@@ -247,7 +248,7 @@ async function setMetrics(doc: api.Document) {
 
 export async function typeFile(
     doc: api.Document,
-    ss: MergeTree.SharedString,
+    ss: SharedString,
     fileText: string,
     intervalTime: number,
     writers: number,
@@ -303,18 +304,18 @@ export async function typeFile(
         };
         let authors: IAuthor[] = [author];
         let docList: api.Document[] = [doc];
-        let ssList: MergeTree.SharedString[] = [ss];
+        let ssList: SharedString[] = [ss];
 
         for (let i = 1; i < writers; i++ ) {
             docList.push(await api.load(doc.id));
-            ssList.push(await docList[i].getRoot().get("text") as MergeTree.SharedString);
+            ssList.push(await docList[i].getRoot().get("text") as SharedString);
             author = {
                 ackCounter: new Counter(),
                 doc: await api.load(doc.id),
                 latencyCounter: new Counter(),
                 metrics: clone(m),
                 pingCounter: new Counter(),
-                ss: await docList[i].getRoot().get("text") as MergeTree.SharedString,
+                ss: await docList[i].getRoot().get("text") as SharedString,
                 typingCounter: new Counter(),
             };
             authors.push(author);

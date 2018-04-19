@@ -3,8 +3,9 @@ import performanceNow = require("performance-now");
 import * as request from "request";
 import * as url from "url";
 import * as agent from "../../agent";
-import { api as API, map as DistributedMap, MergeTree as SharedString, socketStorage, types } from "../../client-api";
+import { api as API, map as DistributedMap,  MergeTree, socketStorage, types } from "../../client-api";
 import { controls, ui } from "../../client-ui";
+import { SharedString } from "../../shared-string";
 
 // first script loaded
 let clockStart = Date.now();
@@ -103,18 +104,18 @@ async function loadDocument(
         console.log(`Not existing ${id} - ${performanceNow()}`);
         root.set("presence", collabDoc.createMap());
         root.set("users", collabDoc.createMap());
-        const newString = collabDoc.createString() as SharedString.SharedString;
+        const newString = collabDoc.createString() as SharedString;
 
         const starterText = template ? await downloadRawText(template) : " ";
-        const segments = SharedString.loadSegments(starterText, 0, true);
+        const segments = MergeTree.loadSegments(starterText, 0, true);
         for (const segment of segments) {
-            if (segment.getType() === SharedString.SegmentType.Text) {
-                let textSegment = <SharedString.TextSegment> segment;
+            if (segment.getType() === MergeTree.SegmentType.Text) {
+                let textSegment = <MergeTree.TextSegment> segment;
                 newString.insertText(textSegment.text, newString.client.getLength(),
                     textSegment.properties);
             } else {
                 // assume marker
-                let marker = <SharedString.Marker> segment;
+                let marker = <MergeTree.Marker> segment;
                 newString.insertMarker(newString.client.getLength(), marker.refType, marker.properties);
             }
         }
@@ -126,7 +127,7 @@ async function loadDocument(
         }
     }
 
-    const sharedString = root.get("text") as SharedString.SharedString;
+    const sharedString = root.get("text") as SharedString;
     console.log(`Shared string ready - ${performanceNow()}`);
     console.log(window.navigator.userAgent);
     console.log(`id is ${id}`);

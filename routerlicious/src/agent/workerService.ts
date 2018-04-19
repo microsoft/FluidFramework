@@ -44,7 +44,7 @@ export class WorkerService implements core.IWorkerService {
     private socket;
     private documentMap: { [docId: string]: { [work: string]: IWork} } = {};
     private workTypeMap: { [workType: string]: boolean} = {};
-    private dict = new MergeTree.Collections.TST<number>();
+    private dict = new MergeTree.TST<number>();
     private workQueue: any;
 
     // List of modules added during the lifetime of this object.

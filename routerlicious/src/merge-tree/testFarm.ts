@@ -7,7 +7,7 @@ import * as fs from "fs";
 import { findRandomWord } from "../merge-tree-utils";
 import * as Base from "./base";
 import * as Collections from "./collections";
-import { Interval } from "./intervalCollection";
+import { Interval } from "../shared-string";
 import * as MergeTree from "./mergeTree";
 import * as ops from "./ops";
 import * as Properties from "./properties";

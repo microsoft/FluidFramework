@@ -1,12 +1,13 @@
 // tslint:disable:no-bitwise whitespace align switch-default no-string-literal
 import performanceNow = require("performance-now");
 import {
-    api, CharacterCodes, core, MergeTree as SharedString,
+    api, CharacterCodes, core, MergeTree,
     Paragraph, Table, types,
 } from "../client-api";
+import { contentModelCreate, IContentModel } from "../content-model";
 import { IAuthenticatedUser } from "../core-utils";
 import { findRandomWord } from "../merge-tree-utils";
-import { Interval, SharedIntervalCollection } from "../merge-tree/intervalCollection";
+import { Interval, SharedIntervalCollection, SharedString } from "../shared-string";
 import * as ui from "../ui";
 import { Status } from "./status";
 
@@ -40,7 +41,7 @@ function findRowParent(lineDiv: ILineDiv) {
 }
 
 interface ISegSpan extends HTMLSpanElement {
-    seg: SharedString.TextSegment;
+    seg: MergeTree.TextSegment;
     segPos?: number;
     offset?: number;
     clipOffset?: number;
@@ -75,7 +76,7 @@ function altsToItems(alts: Alt[]) {
     return alts.map((v) => ({ key: v.text }));
 }
 
-type Alt = SharedString.Collections.ProxString<number>;
+type Alt = MergeTree.ProxString<number>;
 // TODO: mechanism for intelligent services to publish interfaces like this
 interface ITextErrorInfo {
     text: string;
@@ -974,28 +975,28 @@ function showPositionInLine(
     }
 }
 
-function endRenderSegments(marker: SharedString.Marker) {
+function endRenderSegments(marker: MergeTree.Marker) {
     return (marker.hasTileLabel("pg") ||
         ((marker.hasRangeLabel("cell") &&
-            (marker.refType & SharedString.ReferenceType.NestEnd))));
+            (marker.refType & MergeTree.ReferenceType.NestEnd))));
 }
 
 function renderSegmentIntoLine(
-    segment: SharedString.Segment, segpos: number, refSeq: number,
+    segment: MergeTree.Segment, segpos: number, refSeq: number,
     clientId: number, start: number, end: number, lineContext: ILineContext) {
     if (lineContext.lineDiv.linePos === undefined) {
         lineContext.lineDiv.linePos = segpos + start;
         lineContext.lineDiv.lineEnd = lineContext.lineDiv.linePos;
     }
     let segType = segment.getType();
-    if (segType === SharedString.SegmentType.Text) {
+    if (segType === MergeTree.SegmentType.Text) {
         if (start < 0) {
             start = 0;
         }
         if (end > segment.cachedLength) {
             end = segment.cachedLength;
         }
-        let textSegment = <SharedString.TextSegment>segment;
+        let textSegment = <MergeTree.TextSegment>segment;
         let text = textSegment.text.substring(start, end);
         let textStartPos = segpos + start;
         let textEndPos = segpos + end;
@@ -1009,8 +1010,8 @@ function renderSegmentIntoLine(
         if (presenceInfo) {
             showPositionInLine(lineContext, textStartPos, text, presenceInfo.xformPos, presenceInfo);
         }
-    } else if (segType === SharedString.SegmentType.Marker) {
-        let marker = <SharedString.Marker>segment;
+    } else if (segType === MergeTree.SegmentType.Marker) {
+        let marker = <MergeTree.Marker>segment;
         // console.log(`marker pos: ${segpos}`);
         if (endRenderSegments(marker)) {
             if (lineContext.flowView.cursor.pos === segpos) {
@@ -1082,7 +1083,7 @@ function reRenderLine(lineDiv: ILineDiv, flowView: FlowView, docContext: IDocume
         if (end === lineDiv.linePos) {
             end++;
         }
-        flowView.client.mergeTree.mapRange({ leaf: renderSegmentIntoLine }, SharedString.UniversalSequenceNumber,
+        flowView.client.mergeTree.mapRange({ leaf: renderSegmentIntoLine }, MergeTree.UniversalSequenceNumber,
             flowView.client.getClientId(), lineContext, lineDiv.linePos, end);
         lineDiv.lineEnd = lineEnd;
         showBookmarks(flowView, lineDiv.linePos,
@@ -1091,9 +1092,9 @@ function reRenderLine(lineDiv: ILineDiv, flowView: FlowView, docContext: IDocume
     }
 }
 
-function buildIntervalBlockStyle(properties: SharedString.PropertySet, startX: number, endX: number,
+function buildIntervalBlockStyle(properties: MergeTree.PropertySet, startX: number, endX: number,
     height: number, leftInBounds: boolean, rightInBounds: boolean,
-    contentDiv: HTMLDivElement, client: SharedString.Client) {
+    contentDiv: HTMLDivElement, client: MergeTree.Client) {
     let bookmarkDiv = document.createElement("div");
     let bookmarkRect: ui.Rectangle;
     bookmarkRect = new ui.Rectangle(startX, 0, endX - startX, height);
@@ -1126,9 +1127,9 @@ function buildIntervalBlockStyle(properties: SharedString.PropertySet, startX: n
     bookmarkDiv.style.zIndex = "2";
 }
 
-function buildIntervalTieStyle(properties: SharedString.PropertySet, startX: number, endX: number,
+function buildIntervalTieStyle(properties: MergeTree.PropertySet, startX: number, endX: number,
     lineDivHeight: number, leftInBounds: boolean, rightInBounds: boolean,
-    contentDiv: HTMLDivElement, client: SharedString.Client) {
+    contentDiv: HTMLDivElement, client: MergeTree.Client) {
     let bookmarkDiv = document.createElement("div");
     let bookmarkRect: ui.Rectangle;
     let bookendDiv1 = document.createElement("div");
@@ -1190,10 +1191,10 @@ function getWidthInLine(endPGMarker: Paragraph.IParagraphMarker, breakIndex: num
     return Math.round(w);
 }
 
-function showBookmark(properties: SharedString.PropertySet, lineText: string,
+function showBookmark(properties: MergeTree.PropertySet, lineText: string,
     start: number, end: number, lineStart: number, endPGMarker: Paragraph.IParagraphMarker,
     computedEnd: number, lineFontstr: string, lineDivHeight: number, lineBreakIndex: number,
-    docContext: IDocumentContext, contentDiv: HTMLDivElement, client: SharedString.Client, useTie = false) {
+    docContext: IDocumentContext, contentDiv: HTMLDivElement, client: MergeTree.Client, useTie = false) {
     let startX: number;
     let height = lineDivHeight;
     if (start >= lineStart) {
@@ -1352,11 +1353,11 @@ function layoutCell(
     };
     // TODO: deferred height calculation for starting in middle of box
     if (isInnerCell(cellView, layoutInfo)) {
-        let boxPos = mergeTree.getOffset(cellView.marker, SharedString.UniversalSequenceNumber, client.getClientId());
+        let boxPos = mergeTree.getOffset(cellView.marker, MergeTree.UniversalSequenceNumber, client.getClientId());
         cellLayoutInfo.startPos = boxPos + cellView.marker.cachedLength;
     } else {
         let nextTable = layoutInfo.startingPosStack.table.items[layoutInfo.stackIndex + 1];
-        cellLayoutInfo.startPos = getOffset(layoutInfo.flowView, <SharedString.Marker>nextTable);
+        cellLayoutInfo.startPos = getOffset(layoutInfo.flowView, <MergeTree.Marker>nextTable);
         cellLayoutInfo.stackIndex = layoutInfo.stackIndex + 1;
     }
     cellView.renderOutput = renderFlow(cellLayoutInfo, targetTranslation, defer);
@@ -1392,7 +1393,7 @@ function renderTable(
 
     let flowView = layoutInfo.flowView;
     let mergeTree = flowView.client.mergeTree;
-    let tablePos = mergeTree.getOffset(table, SharedString.UniversalSequenceNumber, flowView.client.getClientId());
+    let tablePos = mergeTree.getOffset(table, MergeTree.UniversalSequenceNumber, flowView.client.getClientId());
     let tableView = table.view;
     if (!tableView) {
         tableView = Table.parseTable(table, tablePos, flowView.sharedString, makeFontInfo(docContext));
@@ -1544,8 +1545,8 @@ function renderTree(
     };
     if (startingPosStack.table && (!startingPosStack.table.empty())) {
         let outerTable = startingPosStack.table.items[0];
-        let outerTablePos = flowView.client.mergeTree.getOffset(<SharedString.Marker>outerTable,
-            SharedString.UniversalSequenceNumber, flowView.client.getClientId());
+        let outerTablePos = flowView.client.mergeTree.getOffset(<MergeTree.Marker>outerTable,
+            MergeTree.UniversalSequenceNumber, flowView.client.getClientId());
         layoutContext.startPos = outerTablePos;
         layoutContext.stackIndex = 0;
         layoutContext.startingPosStack = startingPosStack;
@@ -1561,7 +1562,7 @@ function renderTree(
 }
 
 function gatherOverlayLayer(
-    segment: SharedString.Segment,
+    segment: MergeTree.Segment,
     segpos: number,
     refSeq: number,
     clientId: number,
@@ -1569,9 +1570,9 @@ function gatherOverlayLayer(
     end: number,
     context: IOverlayMarker[]) {
 
-    if (segment.getType() === SharedString.SegmentType.Marker) {
-        let marker = <SharedString.Marker>segment;
-        if (marker.refType === SharedString.ReferenceType.Simple) {
+    if (segment.getType() === MergeTree.SegmentType.Marker) {
+        let marker = <MergeTree.Marker>segment;
+        if (marker.refType === MergeTree.ReferenceType.Simple) {
             context.push({ id: marker.getId(), position: segpos });
         }
     }
@@ -1703,10 +1704,10 @@ interface ILayoutContext {
     docContext: IDocumentContext;
     requestedPosition?: number;
     startPos: number;
-    endMarker?: SharedString.Marker;
+    endMarker?: MergeTree.Marker;
     flowView: FlowView;
     stackIndex?: number;
-    startingPosStack?: SharedString.RangeStackMap;
+    startingPosStack?: MergeTree.RangeStackMap;
 }
 
 interface IRenderOutput {
@@ -1842,7 +1843,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
                 if (viewportStartPos < 0) {
                     viewportStartPos = lineStart;
                 }
-                client.mergeTree.mapRange({ leaf: renderSegmentIntoLine }, SharedString.UniversalSequenceNumber,
+                client.mergeTree.mapRange({ leaf: renderSegmentIntoLine }, MergeTree.UniversalSequenceNumber,
                     client.getClientId(), lineContext, lineStart, lineEnd);
                 if (flowView.bookmarks) {
                     let computedEnd = lineEnd;
@@ -1891,9 +1892,9 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
         if (!segoff.segment) {
             break;
         }
-        if ((segoff.segment.getType() === SharedString.SegmentType.Marker) &&
-            ((<SharedString.Marker>segoff.segment).hasRangeLabel("table"))) {
-            let marker = <SharedString.Marker>segoff.segment;
+        if ((segoff.segment.getType() === MergeTree.SegmentType.Marker) &&
+            ((<MergeTree.Marker>segoff.segment).hasRangeLabel("table"))) {
+            let marker = <MergeTree.Marker>segoff.segment;
             // TODO: branches
             let tableView: Table.Table;
             if (marker.removedSeq === undefined) {
@@ -1910,7 +1911,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
             segoff = undefined;
             // TODO: if reached end of viewport, get pos ranges
         } else {
-            if (segoff.segment.getType() === SharedString.SegmentType.Marker) {
+            if (segoff.segment.getType() === MergeTree.SegmentType.Marker) {
                 // empty paragraph
                 curPGMarker = <Paragraph.IParagraphMarker>segoff.segment;
                 if (fetchLog) {
@@ -1962,7 +1963,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
             if ((!curPGMarker.cache) || (curPGMarker.cache.singleLineWidth !== contentWidth)) {
                 if (!curPGMarker.itemCache) {
                     itemsContext.itemInfo = { items: [], minWidth: 0 };
-                    client.mergeTree.mapRange({ leaf: Paragraph.segmentToItems }, SharedString.UniversalSequenceNumber,
+                    client.mergeTree.mapRange({ leaf: Paragraph.segmentToItems }, MergeTree.UniversalSequenceNumber,
                         client.getClientId(), itemsContext, currentPos, curPGMarkerPos + 1);
                     curPGMarker.itemCache = itemsContext.itemInfo;
                 } else {
@@ -1988,9 +1989,9 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
                 }
                 if (currentPos < totalLength) {
                     segoff = getContainingSegment(flowView, currentPos);
-                    if (segoff.segment.getType() === SharedString.SegmentType.Marker) {
-                        let marker = <SharedString.Marker>segoff.segment;
-                        if (marker.hasRangeLabel("cell") && (marker.refType & SharedString.ReferenceType.NestEnd)) {
+                    if (segoff.segment.getType() === MergeTree.SegmentType.Marker) {
+                        let marker = <MergeTree.Marker>segoff.segment;
+                        if (marker.hasRangeLabel("cell") && (marker.refType & MergeTree.ReferenceType.NestEnd)) {
                             layoutContext.viewport.vskip(layoutContext.docContext.cellVspace);
                             break;
                         }
@@ -2012,7 +2013,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
     const overlayMarkers: IOverlayMarker[] = [];
     client.mergeTree.mapRange(
         { leaf: gatherOverlayLayer },
-        SharedString.UniversalSequenceNumber,
+        MergeTree.UniversalSequenceNumber,
         client.getClientId(),
         overlayMarkers,
         viewportStartPos,
@@ -2027,7 +2028,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
 }
 
 function makeSegSpan(
-    context: FlowView, segText: string, textSegment: SharedString.TextSegment, offsetFromSegpos: number,
+    context: FlowView, segText: string, textSegment: MergeTree.TextSegment, offsetFromSegpos: number,
     segpos: number) {
     let span = <ISegSpan>document.createElement("span");
     span.innerText = segText;
@@ -2353,8 +2354,8 @@ export interface IRemotePresenceInfo {
 }
 
 export interface ILocalPresenceInfo {
-    localRef?: SharedString.LocalReference;
-    markLocalRef?: SharedString.LocalReference;
+    localRef?: MergeTree.LocalReference;
+    markLocalRef?: MergeTree.LocalReference;
     xformPos?: number;
     markXformPos?: number;
     clientId: number;
@@ -2364,7 +2365,7 @@ export interface ILocalPresenceInfo {
 }
 
 interface ISegmentOffset {
-    segment: SharedString.Segment;
+    segment: MergeTree.Segment;
     offset: number;
 }
 
@@ -2373,11 +2374,11 @@ interface IWordRange {
     wordEnd: number;
 }
 
-function getCurrentWord(pos: number, mergeTree: SharedString.MergeTree) {
+function getCurrentWord(pos: number, mergeTree: MergeTree.MergeTree) {
     let wordStart = -1;
     let wordEnd = -1;
 
-    function maximalWord(textSegment: SharedString.TextSegment, offset: number) {
+    function maximalWord(textSegment: MergeTree.TextSegment, offset: number) {
         let segWordStart = offset;
         let segWordEnd = offset;
 
@@ -2403,13 +2404,13 @@ function getCurrentWord(pos: number, mergeTree: SharedString.MergeTree) {
         return <IWordRange>{ wordStart: segWordStart, wordEnd: segWordEnd };
     }
 
-    let expandWordBackward = (segment: SharedString.Segment) => {
+    let expandWordBackward = (segment: MergeTree.Segment) => {
         if (mergeTree.localNetLength(segment)) {
             switch (segment.getType()) {
-                case SharedString.SegmentType.Marker:
+                case MergeTree.SegmentType.Marker:
                     return false;
-                case SharedString.SegmentType.Text:
-                    let textSegment = <SharedString.TextSegment>segment;
+                case MergeTree.SegmentType.Text:
+                    let textSegment = <MergeTree.TextSegment>segment;
                     let innerOffset = textSegment.text.length - 1;
                     let maxWord = maximalWord(textSegment, innerOffset);
                     if (maxWord.wordStart < maxWord.wordEnd) {
@@ -2423,13 +2424,13 @@ function getCurrentWord(pos: number, mergeTree: SharedString.MergeTree) {
         return true;
     };
 
-    let expandWordForward = (segment: SharedString.Segment) => {
+    let expandWordForward = (segment: MergeTree.Segment) => {
         if (mergeTree.localNetLength(segment)) {
             switch (segment.getType()) {
-                case SharedString.SegmentType.Marker:
+                case MergeTree.SegmentType.Marker:
                     return false;
-                case SharedString.SegmentType.Text:
-                    let textSegment = <SharedString.TextSegment>segment;
+                case MergeTree.SegmentType.Text:
+                    let textSegment = <MergeTree.TextSegment>segment;
                     let innerOffset = 0;
                     let maxWord = maximalWord(textSegment, innerOffset);
                     if (maxWord.wordEnd > innerOffset) {
@@ -2442,9 +2443,9 @@ function getCurrentWord(pos: number, mergeTree: SharedString.MergeTree) {
     };
 
     let segoff = mergeTree.getContainingSegment(pos,
-        SharedString.UniversalSequenceNumber, mergeTree.collabWindow.clientId);
-    if (segoff.segment && (segoff.segment.getType() === SharedString.SegmentType.Text)) {
-        let textSegment = <SharedString.TextSegment>segoff.segment;
+        MergeTree.UniversalSequenceNumber, mergeTree.collabWindow.clientId);
+    if (segoff.segment && (segoff.segment.getType() === MergeTree.SegmentType.Text)) {
+        let textSegment = <MergeTree.TextSegment>segoff.segment;
         let maxWord = maximalWord(textSegment, segoff.offset);
         if (maxWord.wordStart < maxWord.wordEnd) {
             let segStartPos = pos - segoff.offset;
@@ -2463,13 +2464,13 @@ function getCurrentWord(pos: number, mergeTree: SharedString.MergeTree) {
     }
 }
 
-function getLocalRefPos(flowView: FlowView, localRef: SharedString.LocalReference) {
-    return flowView.client.mergeTree.getOffset(localRef.segment, SharedString.UniversalSequenceNumber,
+function getLocalRefPos(flowView: FlowView, localRef: MergeTree.LocalReference) {
+    return flowView.client.mergeTree.getOffset(localRef.segment, MergeTree.UniversalSequenceNumber,
         flowView.client.getClientId()) + localRef.offset;
 }
 
 function getContainingSegment(flowView: FlowView, pos: number): ISegmentOffset {
-    return flowView.client.mergeTree.getContainingSegment(pos, SharedString.UniversalSequenceNumber,
+    return flowView.client.mergeTree.getContainingSegment(pos, MergeTree.UniversalSequenceNumber,
         flowView.client.getClientId());
 }
 
@@ -2477,8 +2478,8 @@ function findTile(flowView: FlowView, startPos: number, tileType: string, preced
     return flowView.client.mergeTree.findTile(startPos, flowView.client.getClientId(), tileType, preceding);
 }
 
-function getOffset(flowView: FlowView, segment: SharedString.Segment) {
-    return flowView.client.mergeTree.getOffset(segment, SharedString.UniversalSequenceNumber,
+function getOffset(flowView: FlowView, segment: MergeTree.Segment) {
+    return flowView.client.mergeTree.getOffset(segment, MergeTree.UniversalSequenceNumber,
         flowView.client.getClientId());
 }
 
@@ -2500,18 +2501,18 @@ export class FlowView extends ui.Component {
     public timeToLoad: number;
     public timeToEdit: number;
     public timeToCollab: number;
-    public prevTopSegment: SharedString.TextSegment;
+    public prevTopSegment: MergeTree.TextSegment;
     public viewportStartPos: number;
     public viewportEndPos: number;
     public cursorSpan: HTMLSpanElement;
     public viewportDiv: HTMLDivElement;
     public viewportRect: ui.Rectangle;
-    public client: SharedString.Client;
-    public historyClient: SharedString.Client;
+    public client: MergeTree.Client;
+    public historyClient: MergeTree.Client;
     public historyWidget: HTMLDivElement;
     public historyBubble: HTMLDivElement;
     public historyVersion: HTMLSpanElement;
-    public savedClient: SharedString.Client;
+    public savedClient: MergeTree.Client;
     public ticking = false;
     public wheelTicking = false;
     public topChar = -1;
@@ -2523,37 +2524,37 @@ export class FlowView extends ui.Component {
     public userMapView: types.IMapView;
     public presenceVector: ILocalPresenceInfo[] = [];
     public docRoot: types.IMapView;
-    public curPG: SharedString.Marker;
+    public curPG: MergeTree.Marker;
     public modes = <IFlowViewModes>{
         showBookmarks: true,
         showComments: true,
         showCursorLocation: true,
     };
     public lastDocContext: IDocumentContext;
-    public contentModel: Table.IContentModel;
+    public contentModel: IContentModel;
     private lastVerticalX = -1;
     private randWordTimer: any;
     private pendingRender = false;
     private diagCharPort = false;
     private targetTranslation: string;
     private activeSearchBox: ISearchBox;
-    private cmdTree: SharedString.Collections.TST<ICmd>;
+    private cmdTree: MergeTree.TST<ICmd>;
 
     constructor(
         element: HTMLDivElement,
         public collabDocument: api.Document,
-        public sharedString: SharedString.SharedString,
+        public sharedString: SharedString,
         public status: Status,
         public options: Object = undefined) {
 
         super(element);
 
-        this.cmdTree = new SharedString.Collections.TST<ICmd>();
+        this.cmdTree = new MergeTree.TST<ICmd>();
         for (let command of commands) {
             this.cmdTree.put(command.key.toLowerCase(), command);
         }
 
-        this.contentModel = Table.contentModelCreate(this.sharedString);
+        this.contentModel = contentModelCreate(this.sharedString);
         this.client = sharedString.client;
         this.viewportDiv = document.createElement("div");
         this.element.appendChild(this.viewportDiv);
@@ -2566,7 +2567,7 @@ export class FlowView extends ui.Component {
         this.statusMessage("si", " ");
         sharedString.on("op", (msg: core.ISequencedObjectMessage) => {
             if (msg.clientId !== this.client.longClientId) {
-                let delta = <SharedString.IMergeTreeOp>msg.contents;
+                let delta = <MergeTree.IMergeTreeOp>msg.contents;
                 if (this.applyOp(delta, msg)) {
                     this.queueRender(msg);
                 }
@@ -2593,7 +2594,7 @@ export class FlowView extends ui.Component {
             let pos1 = Math.floor(Math.random() * (len - 1));
             let intervalLen = Math.max(1, Math.floor(Math.random() * Math.min(len - pos1, 150)));
             let props = { clid: this.sharedString.client.longClientId, user: this.sharedString.client.userInfo };
-            this.bookmarks.add(pos1, pos1 + intervalLen, SharedString.IntervalType.Simple,
+            this.bookmarks.add(pos1, pos1 + intervalLen, MergeTree.IntervalType.Simple,
                 props);
         }
         this.localQueueRender(-1);
@@ -2769,10 +2770,10 @@ export class FlowView extends ui.Component {
                 localPresenceInfo.cursor.presenceInfoUpdated = true;
             }
             if (presentPresence.markLocalRef) {
-                let markBaseSegment = <SharedString.BaseSegment>presentPresence.localRef.segment;
+                let markBaseSegment = <MergeTree.BaseSegment>presentPresence.localRef.segment;
                 this.client.mergeTree.removeLocalReference(markBaseSegment, presentPresence.markLocalRef);
             }
-            let baseSegment = <SharedString.BaseSegment>presentPresence.localRef.segment;
+            let baseSegment = <MergeTree.BaseSegment>presentPresence.localRef.segment;
             this.client.mergeTree.removeLocalReference(baseSegment, presentPresence.localRef);
             tempXformPos = presentPresence.xformPos;
             tempMarkXformPos = presentPresence.markXformPos;
@@ -2822,16 +2823,16 @@ export class FlowView extends ui.Component {
                 clientId: remotePresenceInfo.clientId,
                 fresh: true,
                 key: remotePresenceInfo.key,
-                localRef: new SharedString.LocalReference(<SharedString.BaseSegment>segoff.segment, segoff.offset,
-                    SharedString.ReferenceType.SlideOnRemove),
+                localRef: new MergeTree.LocalReference(<MergeTree.BaseSegment>segoff.segment, segoff.offset,
+                    MergeTree.ReferenceType.SlideOnRemove),
             };
             if (remotePresenceInfo.origMark >= 0) {
                 let markSegoff = this.client.mergeTree.getContainingSegment(remotePresenceInfo.origMark,
                     remotePresenceInfo.refseq, remotePresenceInfo.clientId);
                 if (markSegoff.segment) {
                     localPresenceInfo.markLocalRef =
-                        new SharedString.LocalReference(<SharedString.BaseSegment>markSegoff.segment,
-                            markSegoff.offset, SharedString.ReferenceType.SlideOnRemove);
+                        new MergeTree.LocalReference(<MergeTree.BaseSegment>markSegoff.segment,
+                            markSegoff.offset, MergeTree.ReferenceType.SlideOnRemove);
                 }
             }
             this.updatePresenceVector(localPresenceInfo);
@@ -3012,7 +3013,7 @@ export class FlowView extends ui.Component {
             this.cursor.pos = span.segPos + computed;
             let tilePos = findTile(this, this.cursor.pos, "pg", false);
             if (tilePos) {
-                this.curPG = <SharedString.Marker>tilePos.tile;
+                this.curPG = <MergeTree.Marker>tilePos.tile;
             }
             this.updatePresence();
             this.cursor.updateView(this);
@@ -3098,12 +3099,12 @@ export class FlowView extends ui.Component {
         if (this.cursor.pos > FlowView.docStartPosition) {
             this.cursor.pos--;
             let segoff = getContainingSegment(this, this.cursor.pos);
-            if (segoff.segment.getType() !== SharedString.SegmentType.Text) {
+            if (segoff.segment.getType() !== MergeTree.SegmentType.Text) {
                 // REVIEW: assume marker for now (could be external later)
-                let marker = <SharedString.Marker>segoff.segment;
-                if ((marker.refType & SharedString.ReferenceType.Tile) &&
+                let marker = <MergeTree.Marker>segoff.segment;
+                if ((marker.refType & MergeTree.ReferenceType.Tile) &&
                     (marker.hasTileLabel("pg"))) {
-                    if (marker.hasRangeLabel("table") && (marker.refType & SharedString.ReferenceType.NestEnd)) {
+                    if (marker.hasRangeLabel("table") && (marker.refType & MergeTree.ReferenceType.NestEnd)) {
                         this.cursorRev();
                     }
                 } else {
@@ -3117,19 +3118,19 @@ export class FlowView extends ui.Component {
         if (this.cursor.pos < (this.client.getLength() - 1)) {
             this.cursor.pos++;
 
-            let segoff = this.client.mergeTree.getContainingSegment(this.cursor.pos, SharedString.UniversalSequenceNumber,
+            let segoff = this.client.mergeTree.getContainingSegment(this.cursor.pos, MergeTree.UniversalSequenceNumber,
                 this.client.getClientId());
-            if (segoff.segment.getType() !== SharedString.SegmentType.Text) {
+            if (segoff.segment.getType() !== MergeTree.SegmentType.Text) {
                 // REVIEW: assume marker for now
-                let marker = <SharedString.Marker>segoff.segment;
-                if ((marker.refType & SharedString.ReferenceType.Tile) &&
+                let marker = <MergeTree.Marker>segoff.segment;
+                if ((marker.refType & MergeTree.ReferenceType.Tile) &&
                     (marker.hasTileLabel("pg"))) {
-                    if (marker.hasRangeLabel("table") && (marker.refType & SharedString.ReferenceType.NestEnd)) {
+                    if (marker.hasRangeLabel("table") && (marker.refType & MergeTree.ReferenceType.NestEnd)) {
                         this.cursorFwd();
                     } else {
                         return;
                     }
-                } else if (marker.refType & SharedString.ReferenceType.NestBegin) {
+                } else if (marker.refType & MergeTree.ReferenceType.NestBegin) {
                     if (marker.hasRangeLabel("table")) {
                         this.cursor.pos += 3;
                     } else if (marker.hasRangeLabel("row")) {
@@ -3139,7 +3140,7 @@ export class FlowView extends ui.Component {
                     } else {
                         this.cursorFwd();
                     }
-                } else if (marker.refType & SharedString.ReferenceType.NestEnd) {
+                } else if (marker.refType & MergeTree.ReferenceType.NestEnd) {
                     if (marker.hasRangeLabel("row")) {
                         this.cursorFwd();
                     } else if (marker.hasRangeLabel("table")) {
@@ -3497,20 +3498,20 @@ export class FlowView extends ui.Component {
                     let pgPos = curTilePos.pos;
                     Paragraph.clearContentCaches(pgMarker);
                     let curProps = pgMarker.properties;
-                    let newProps = SharedString.createMap<any>();
+                    let newProps = MergeTree.createMap<any>();
                     let newLabels = ["pg"];
                     if (Paragraph.isListTile(pgMarker)) {
                         newLabels.push("list");
                         newProps.indentLevel = curProps.indentLevel;
                         newProps.listKind = curProps.listKind;
                     }
-                    newProps[SharedString.reservedTileLabelsKey] = newLabels;
+                    newProps[MergeTree.reservedTileLabelsKey] = newLabels;
                     // TODO: place in group op
                     // old marker gets new props
                     this.sharedString.annotateRange(newProps, pgPos, pgPos + 1,
                         { name: "rewrite" });
                     // new marker gets existing props
-                    this.sharedString.insertMarker(pos, SharedString.ReferenceType.Tile, curProps);
+                    this.sharedString.insertMarker(pos, MergeTree.ReferenceType.Tile, curProps);
                 } else {
                     this.sharedString.insertText(String.fromCharCode(code), pos);
                     this.updatePGInfo(pos);
@@ -3557,12 +3558,12 @@ export class FlowView extends ui.Component {
             if (tile.hasTileLabel("list")) {
                 listStatus = true;
             }
-            let curLabels = <string[]>tile.properties[SharedString.reservedTileLabelsKey];
+            let curLabels = <string[]>tile.properties[MergeTree.reservedTileLabelsKey];
 
             if (listStatus) {
                 let remainingLabels = curLabels.filter((l) => l !== "list");
                 this.sharedString.annotateRange({
-                    [SharedString.reservedTileLabelsKey]: remainingLabels,
+                    [MergeTree.reservedTileLabelsKey]: remainingLabels,
                     series: null,
                 }, tileInfo.pos, tileInfo.pos + 1);
             } else {
@@ -3573,7 +3574,7 @@ export class FlowView extends ui.Component {
                     indentLevel = tile.properties.indentLevel;
                 }
                 this.sharedString.annotateRange({
-                    [SharedString.reservedTileLabelsKey]: augLabels,
+                    [MergeTree.reservedTileLabelsKey]: augLabels,
                     indentLevel,
                     listKind,
                 }, tileInfo.pos, tileInfo.pos + 1);
@@ -3603,16 +3604,16 @@ export class FlowView extends ui.Component {
                     }
                     if (toCell) {
                         let offset = this.client.mergeTree.getOffset(toCell.marker,
-                            SharedString.UniversalSequenceNumber, this.client.getClientId());
+                            MergeTree.UniversalSequenceNumber, this.client.getClientId());
                         this.cursor.pos = offset + 1;
                     } else {
                         if (shift) {
                             let offset = this.client.mergeTree.getOffset(tableView.tableMarker,
-                                SharedString.UniversalSequenceNumber, this.client.getClientId());
+                                MergeTree.UniversalSequenceNumber, this.client.getClientId());
                             this.cursor.pos = offset - 1;
                         } else {
                             let endOffset = this.client.mergeTree.getOffset(tableView.endTableMarker,
-                                SharedString.UniversalSequenceNumber, this.client.getClientId());
+                                MergeTree.UniversalSequenceNumber, this.client.getClientId());
                             this.cursor.pos = endOffset + 1;
                         }
                     }
@@ -3682,16 +3683,16 @@ export class FlowView extends ui.Component {
 
     public toggleRange(name: string, valueOn: string, valueOff: string, start: number, end: number) {
         let someSet = false;
-        let findPropSet = (segment: SharedString.Segment) => {
-            if (segment.getType() === SharedString.SegmentType.Text) {
-                let textSegment = <SharedString.TextSegment>segment;
+        let findPropSet = (segment: MergeTree.Segment) => {
+            if (segment.getType() === MergeTree.SegmentType.Text) {
+                let textSegment = <MergeTree.TextSegment>segment;
                 if (textSegment.properties && textSegment.properties[name] === valueOn) {
                     someSet = true;
                 }
                 return !someSet;
             }
         };
-        this.sharedString.client.mergeTree.mapRange({ leaf: findPropSet }, SharedString.UniversalSequenceNumber,
+        this.sharedString.client.mergeTree.mapRange({ leaf: findPropSet }, MergeTree.UniversalSequenceNumber,
             this.sharedString.client.getClientId(), undefined, start, end);
         if (someSet) {
             this.sharedString.annotateRange({ [name]: valueOff }, start, end);
@@ -3703,7 +3704,7 @@ export class FlowView extends ui.Component {
 
     public showAdjacentBookmark(before = true) {
         if (this.bookmarks) {
-            let result: SharedString.Interval;
+            let result: Interval;
             if (before) {
                 result = this.bookmarks.localCollection.previousInterval(this.cursor.pos);
             } else {
@@ -3711,9 +3712,9 @@ export class FlowView extends ui.Component {
             }
             if (result) {
                 let s = result.start.toPosition(this.client.mergeTree,
-                    SharedString.UniversalSequenceNumber, this.client.getClientId());
+                    MergeTree.UniversalSequenceNumber, this.client.getClientId());
                 let e = result.end.toPosition(this.client.mergeTree,
-                    SharedString.UniversalSequenceNumber, this.client.getClientId());
+                    MergeTree.UniversalSequenceNumber, this.client.getClientId());
                 let descr = "next ";
                 if (before) {
                     descr = "previous ";
@@ -3745,10 +3746,10 @@ export class FlowView extends ui.Component {
     public createComment() {
         let sel = this.cursor.getSelection();
         if (sel) {
-            let commentStory = this.sharedString.createString();
+            let commentStory = this.collabDocument.createString();
             commentStory.insertText("a comment...", 0);
             commentStory.attach();
-            this.comments.add(sel.start, sel.end, SharedString.IntervalType.Simple,
+            this.comments.add(sel.start, sel.end, MergeTree.IntervalType.Simple,
                 { story: commentStory });
             this.cursor.clearSelection();
             this.localQueueRender(this.cursor.pos);
@@ -4127,10 +4128,10 @@ export class FlowView extends ui.Component {
 
     // TODO: paragraph spanning changes and annotations
     // TODO: generalize this by using transform fwd
-    private applyOp(delta: SharedString.IMergeTreeOp, msg: core.ISequencedObjectMessage) {
+    private applyOp(delta: MergeTree.IMergeTreeOp, msg: core.ISequencedObjectMessage) {
         // tslint:disable:switch-default
         switch (delta.type) {
-            case SharedString.MergeTreeDeltaType.INSERT:
+            case MergeTree.MergeTreeDeltaType.INSERT:
                 let adjLength = 1;
                 if (delta.marker) {
                     this.updatePGInfo(delta.pos1 - 1);
@@ -4159,7 +4160,7 @@ export class FlowView extends ui.Component {
                 }
                 return true;
             // TODO: update pg info for pos2 (remove and annotate)
-            case SharedString.MergeTreeDeltaType.REMOVE:
+            case MergeTree.MergeTreeDeltaType.REMOVE:
                 if (delta.pos2 <= this.cursor.pos) {
                     this.cursor.pos -= (delta.pos2 - delta.pos1);
                 } else if (this.cursor.pos >= delta.pos1) {
@@ -4168,7 +4169,7 @@ export class FlowView extends ui.Component {
                 this.remotePresenceFromEdit(msg.clientId, msg.user, msg.referenceSequenceNumber, delta.pos1);
                 this.updatePGInfo(delta.pos1);
                 return true;
-            case SharedString.MergeTreeDeltaType.GROUP: {
+            case MergeTree.MergeTreeDeltaType.GROUP: {
                 let opAffectsViewport = false;
                 for (let groupOp of delta.ops) {
                     opAffectsViewport = opAffectsViewport || this.applyOp(groupOp, msg);
@@ -4179,7 +4180,7 @@ export class FlowView extends ui.Component {
                 }
                 return opAffectsViewport;
             }
-            case SharedString.MergeTreeDeltaType.ANNOTATE: {
+            case MergeTree.MergeTreeDeltaType.ANNOTATE: {
                 this.updatePGInfo(delta.pos1);
                 return this.posInViewport(delta.pos1) || this.posInViewport(delta.pos2 - 1);
             }
