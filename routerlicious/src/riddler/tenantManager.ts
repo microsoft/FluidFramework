@@ -1,32 +1,28 @@
-import * as winston from "winston";
 import * as utils from "../utils";
 
-export function refreshTenantsFromDb(mongoManager: utils.MongoManager, collectionName: string):
-    Promise<Map<string, string>> {
-        const tenants = new Map<string, string>();
-        return new Promise<Map<string, string>>((resolve, reject) => {
-            const dbTenantsP = getTenants(mongoManager, collectionName);
-            dbTenantsP.then((dbTenants) => {
-                for (const dbTenant of dbTenants) {
-                    tenants.set(dbTenant.name, dbTenant.key);
-                }
-                resolve(tenants);
-            }, (error) => {
-                winston.error(`Error reading ${collectionName} from mongo`);
-                reject(error);
-            });
-        });
+export interface ITenant {
+    name: string;
+    key: string;
 }
 
-function getTenants(
+export async function refreshTenantsFromDb(
     mongoManager: utils.MongoManager,
-    collectionName: string): Promise<any> {
+    collectionName: string): Promise<Map<string, string>> {
 
-    const tenantsP = mongoManager.getDatabase().then(async (db) => {
-        const collection = await db.collection<any>(collectionName);
-        const dbTenants = await collection.findAll();
+    const tenants = new Map<string, string>();
+    const dbTenants = await getTenants(mongoManager, collectionName);
 
-        return dbTenants;
-    });
-    return tenantsP;
+    for (const dbTenant of dbTenants) {
+        tenants.set(dbTenant.name, dbTenant.key);
+    }
+
+    return tenants;
+}
+
+async function getTenants(mongoManager: utils.MongoManager, collectionName: string): Promise<ITenant[]> {
+    const db = await mongoManager.getDatabase();
+    const collection = db.collection<ITenant>(collectionName);
+    const tenants = await collection.findAll();
+
+    return tenants;
 }

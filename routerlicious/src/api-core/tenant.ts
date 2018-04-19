@@ -18,6 +18,7 @@ export interface ITenantStorage {
 
 export interface ITenantConfig {
     name: string;
+    key: string;
     storage: ITenantStorage;
     isDefault?: boolean;
 }

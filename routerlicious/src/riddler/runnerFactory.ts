@@ -3,32 +3,11 @@ import * as services from "../services";
 import * as utils from "../utils";
 import { RiddlerRunner } from "./runner";
 
-/**
- * Normalize a port into a number, string, or false.
- */
-function normalizePort(val) {
-    let normalizedPort = parseInt(val, 10);
-
-    if (isNaN(normalizedPort)) {
-        // named pipe
-        return val;
-    }
-
-    if (normalizedPort >= 0) {
-        // port number
-        return normalizedPort;
-    }
-
-    return false;
-}
-
 export class RiddlerResources implements utils.IResources {
-
     constructor(
         public tenantsCollectionName: string ,
         public mongoManager: utils.MongoManager,
-        public port: any,
-        public hashKey: string) {
+        public port: any) {
     }
 
     public async dispose(): Promise<void> {
@@ -43,11 +22,10 @@ export class RiddlerResourcesFactory implements utils.IResourcesFactory<RiddlerR
         const mongoFactory = new services.MongoDbFactory(mongoUrl);
         const mongoManager = new utils.MongoManager(mongoFactory);
         const tenantsCollectionName = config.get("mongo:collectionNames:tenants");
-        const hashKey = config.get("riddler:key");
 
-        let port = normalizePort(config.get("riddler:port") || "5000");
+        let port = utils.normalizePort(process.env.PORT || "5000");
 
-        return new RiddlerResources(tenantsCollectionName, mongoManager, port, hashKey);
+        return new RiddlerResources(tenantsCollectionName, mongoManager, port);
     }
 }
 
@@ -56,7 +34,6 @@ export class RiddlerRunnerFactory implements utils.IRunnerFactory<RiddlerResourc
         return new RiddlerRunner(
             resources.tenantsCollectionName,
             resources.port,
-            resources.mongoManager,
-            resources.hashKey);
+            resources.mongoManager);
     }
 }

@@ -40,8 +40,11 @@ export class Tenant implements ITenant {
  * Manages a collection of tenants
  */
 export class TenantManager implements ITenantManager {
-    public static async Load(mongoManager: utils.MongoManager, config: ITenantConfig[],
-                             tenantsCollectionName: string): Promise<TenantManager> {
+    public static async Load(
+        mongoManager: utils.MongoManager,
+        config: ITenantConfig[],
+        tenantsCollectionName: string): Promise<TenantManager> {
+
         const tenantsP = new Array<Promise<Tenant>>();
         for (const tenant of config) {
             const tenantP = Tenant.Load(tenant);
@@ -49,7 +52,7 @@ export class TenantManager implements ITenantManager {
         }
         const tenants = await Promise.all(tenantsP);
         const db = await mongoManager.getDatabase();
-        const tenantsCollection = await db.collection<any>(tenantsCollectionName);
+        const tenantsCollection = await db.collection<ITenantConfig>(tenantsCollectionName);
 
         // Initialize the tenant manager
         const manager = new TenantManager(tenants, tenantsCollection);
@@ -60,59 +63,28 @@ export class TenantManager implements ITenantManager {
     private tenants = new Map<string, Tenant>();
     private defaultTenant: Tenant;
 
-    private constructor(tenants: Tenant[], private collection: ICollection<any>) {
+    private constructor(tenants: Tenant[], private collection: ICollection<ITenantConfig>) {
         for (const tenant of tenants) {
             this.tenants.set(tenant.name, tenant);
             this.defaultTenant = tenant.isDefault() ? tenant : this.defaultTenant;
         }
     }
 
-    public getTenant(tenantId: string): Promise<ITenant> {
-        return new Promise<ITenant>((resolve, reject) => {
-            if (!tenantId) {
-                resolve(this.defaultTenant);
-            } else {
-                this.resolveTenant(tenantId).then((tenant) => {
-                    resolve(tenant);
-                }, (err) => {
-                    reject(err);
-                });
-            }
-        });
-    }
+    public async getTenant(tenantId: string): Promise<ITenant> {
+        if (!tenantId) {
+            return this.defaultTenant;
+        }
 
-    private resolveTenant(tenantId: string): Promise<ITenant> {
-        return new Promise<ITenant>((resolve, reject) => {
-            if (this.tenants.has(tenantId)) {
-                resolve(this.tenants.get(tenantId));
-            } else {
-                this.findTenantFromDB(tenantId).then((tenantConfig) => {
-                    if (tenantConfig === null) {
-                        reject("Invaid tenant name");
-                    } else {
-                        Tenant.Load(tenantConfig).then((tenant) => {
-                            this.tenants.set(tenant.name, tenant);
-                            resolve(tenant);
-                        });
-                    }
-                }, (err) => {
-                    reject(err);
-                });
+        if (!this.tenants.has(tenantId)) {
+            const config = await this.collection.findOne({ name });
+            if (!config) {
+                return Promise.reject("Invaid tenant name");
             }
-        });
-    }
 
-    private findTenantFromDB(name: string): Promise<ITenantConfig> {
-        return new Promise<ITenantConfig>((resolve, reject) => {
-            this.collection.findOne({ name }).then((tenant) => {
-                if (tenant === null) {
-                    resolve(null);
-                } else {
-                    resolve(tenant.storage as ITenantConfig);
-                }
-            }, (error) => {
-                reject(error);
-            });
-        });
+            const tenant = await Tenant.Load(config);
+            this.tenants.set(tenant.name, tenant);
+        }
+
+        return this.tenants.get(tenantId);
     }
 }
