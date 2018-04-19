@@ -4,19 +4,21 @@ metadata:
   name: elastalert-error
 data:
   error.yaml: |
-    name: Error Alert!
-    type: frequency
+    name: Error
+    type: any
     index: logstash-*
-    include: ["kubernetes.container_name", "kubernetes.pod_name", "level", "log", "message"]
-    num_events: 1
-    timeframe:
-        minutes: 1
+    include: ["kubernetes.container_name", "kubernetes.pod_name", "level", "log", "message", "stack"]
     filter:
     - term:
         level: "error"
     alert:
-    - "ms_teams"
-    - "debug"
-    ms_teams_webhook_url:
-    - "https://outlook.office.com/webhook/9ce27575-2f82-4689-abdb-bcff07e8063b@72f988bf-86f1-41af-91ab-2d7cd011db47/IncomingWebhook/f293b936dc4b4e4f8d0d57da073b6c8f/85f100f8-6a0d-4217-91ed-0aa3e1e19909"
-    ms_teams_alert_summary: "Error"
+    - "post"
+    http_post_url: "http://52.229.54.166:9000/api/2/store/?sentry_version=7&sentry_key=d1b6fd861c464d9e81c006252676844e&sentry_secret=59b2191319c54ddda559c84df481014c&sentry_client=elastalert"
+    http_post_payload:
+        timestamp: timestamp
+        logger: kubernetes.pod_name
+        culprit: kubernetes.container_name
+        tags: name
+        level: level
+        message: message
+        errors: stack
