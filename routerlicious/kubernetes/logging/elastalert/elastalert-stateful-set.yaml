@@ -13,7 +13,7 @@ spec:
       terminationGracePeriodSeconds: 10
       containers:
       - name: elastalert
-        image: ivankrizsan/elastalert:latest
+        image: jertel/elastalert-docker:0.1.29
         env:
           - name: "ELASTICSEARCH_HOST"
             value: "elasticsearch"
