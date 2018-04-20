@@ -1,14 +1,11 @@
 import { api } from "@prague/routerlicious";
-
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-
-import { Game } from "./components/Game";
+import { TicTacToe } from "./components/tictactoe/Game";
 
 import prague = api;
 import types = prague.types;
 import Map = api.map;
-
 
 async function loadDocument(id: string, token?: string): Promise<prague.api.Document> {
     console.log("Loading in root document...");
@@ -32,7 +29,7 @@ export async function load(id: string, repository: string,  owner: string, endPo
             // tslint:disable-next-line
             window["doc"] = doc;
             const playerName = doc.getUser().user.name;
-            let playerId: Number;
+            let playerId: number;
 
             const rootView = await doc.getRoot().getView();
             let gameMap: types.IMap;
@@ -50,7 +47,8 @@ export async function load(id: string, repository: string,  owner: string, endPo
                 gameView.set("pl1", playerName);
             }
 
-            let canJoin : boolean = true;
+            let canJoin: boolean = true;
+
             if (gameView.has("counter")) {
                 const counter = gameView.get("counter") as api.map.Counter;
                 if (counter.value === 2) {
@@ -74,8 +72,8 @@ export async function load(id: string, repository: string,  owner: string, endPo
                     name: doc.getUser().user.name,
                 };
                 ReactDOM.render(
-                    <Game player={player} gameMap={gameMap} gameView={gameView}/>,
-                    document.getElementById("tictactoeViews")
+                    <TicTacToe player={player} gameMap={gameMap} gameView={gameView}/>,
+                    document.getElementById("tictactoeViews"),
                 );
             }
 
