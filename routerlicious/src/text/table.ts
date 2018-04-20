@@ -156,7 +156,7 @@ function createColumnCellOp(sharedString: SharedString, row: Row, prevCell: Cell
         type: MergeTree.MergeTreeDeltaType.GROUP,
     };
     if (extraProperties) {
-        groupOp.macroOp = <MergeTree.IIntentSpec>{
+        groupOp.macroOp = <MergeTree.IMacroOpSpec>{
             name: "insertColumn",
             params: {
                 cellId,

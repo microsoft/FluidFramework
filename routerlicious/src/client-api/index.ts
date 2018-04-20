@@ -1,6 +1,3 @@
-import * as api from "../api";
-export { api };
-
 import * as core from "../api-core";
 export { core };
 
@@ -33,6 +30,9 @@ export { CharacterCodes, Paragraph, Table };
 
 import * as socketStorage from "../socket-storage";
 export { socketStorage };
+
+import * as api from "../api";
+export { api };
 
 // Experimenting with the below model. The modules below will be bundled within client-api but are of use
 // to dependencies of client-api (like the UI code). So exposing access so they can import the bundled version.
