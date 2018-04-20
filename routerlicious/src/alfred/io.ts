@@ -1,6 +1,5 @@
 import * as moniker from "moniker";
 import { Provider } from "nconf";
-import * as request from "request";
 import * as winston from "winston";
 import * as agent from "../agent";
 import * as api from "../api-core";
@@ -16,32 +15,6 @@ interface IDocumentUser {
     user: api.IAuthenticatedUser;
 }
 
-async function verifyAuthToken(service: string, token: any): Promise<api.IAuthenticatedUser> {
-    return new Promise<api.IAuthenticatedUser>((resolve, reject) => {
-        request.post(
-            service,
-            {
-                body: token,
-                headers: {
-                    "Accept": "application/json",
-                    "Content-Type": "application/json",
-                },
-                json: true,
-            },
-            (error, result, body) => {
-                if (error) {
-                    return reject(error);
-                }
-
-                if (result.statusCode !== 200) {
-                    return reject(result);
-                }
-
-                return resolve(body);
-            });
-    });
-}
-
 export function register(
     webSocketServer: core.IWebSocketServer,
     config: Provider,
@@ -49,7 +22,8 @@ export function register(
     producer: utils.kafkaProducer.IProducer,
     documentsCollectionName: string,
     metricClientConfig: any,
-    authEndpoint: string) {
+    tenantManager: api.ITenantManager,
+    defaultTenant: string) {
 
     const throughput = new ThroughputCounter(winston.info);
     const metricLogger = agent.createMetricClient(metricClientConfig);
@@ -69,7 +43,11 @@ export function register(
         }
 
         async function connectDocument(message: socketStorage.IConnect): Promise<socketStorage.IConnected> {
-            const authedUser = await verifyAuthToken(authEndpoint, message.token);
+            // TODO if no token - sign a token against the default tenant with default claims
+            const token = message.token
+                ? message.token
+                : utils.generateToken(tenantManager, defaultTenant);
+            const authedUser = await verifyAuthToken(tenantManager, token);
 
             const profiler = winston.startTimer();
             connectionProfiler.done(`Client has requested to load ${message.id}`);

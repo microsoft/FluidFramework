@@ -1,3 +1,4 @@
+import * as request from "request";
 import { ITenant, ITenantConfig, ITenantManager, ITenantStorage } from "../api-core";
 import { ICollection } from "../core";
 import { getOrCreateRepository, GitManager } from "../git-storage";
@@ -32,56 +33,40 @@ export class Tenant implements ITenant {
     }
 }
 
+async function verifyAuthToken(service: string, token: any): Promise<api.IAuthenticatedUser> {
+    return new Promise<api.IAuthenticatedUser>((resolve, reject) => {
+        request.post(
+            service,
+            {
+                body: token,
+                headers: {
+                    "Accept": "application/json",
+                    "Content-Type": "application/json",
+                },
+                json: true,
+            },
+            (error, result, body) => {
+                if (error) {
+                    return reject(error);
+                }
+
+                if (result.statusCode !== 200) {
+                    return reject(result);
+                }
+
+                return resolve(body);
+            });
+    });
+}
+
 /**
  * Manages a collection of tenants
  */
 export class TenantManager implements ITenantManager {
-    public static async Load(
-        mongoManager: utils.MongoManager,
-        config: ITenantConfig[],
-        tenantsCollectionName: string): Promise<TenantManager> {
-
-        const tenantsP = new Array<Promise<Tenant>>();
-        for (const tenant of config) {
-            const tenantP = Tenant.Load(tenant);
-            tenantsP.push(tenantP);
-        }
-        const tenants = await Promise.all(tenantsP);
-        const db = await mongoManager.getDatabase();
-        const tenantsCollection = await db.collection<ITenantConfig>(tenantsCollectionName);
-
-        // Initialize the tenant manager
-        const manager = new TenantManager(tenants, tenantsCollection);
-
-        return manager;
-    }
-
-    private tenants = new Map<string, Tenant>();
-    private defaultTenant: Tenant;
-
-    private constructor(tenants: Tenant[], private collection: ICollection<ITenantConfig>) {
-
-        for (const tenant of tenants) {
-            this.tenants.set(tenant.id, tenant);
-        }
-        this.defaultTenant = tenants[0]
+    constructor(private endpoint: string) {
     }
 
     public async getTenant(tenantId: string): Promise<ITenant> {
-        if (!tenantId) {
-            return this.defaultTenant;
-        }
-
-        if (!this.tenants.has(tenantId)) {
-            const config = await this.collection.findOne({ name });
-            if (!config) {
-                return Promise.reject("Invaid tenant name");
-            }
-
-            const tenant = await Tenant.Load(config);
-            this.tenants.set(tenant.id, tenant);
-        }
-
-        return this.tenants.get(tenantId);
+        
     }
 }

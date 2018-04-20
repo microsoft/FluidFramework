@@ -14,11 +14,11 @@ export class AlfredResources implements utils.IResources {
         public redisConfig: any,
         public webSocketLibrary: string,
         public tenantManager: ITenantManager,
+        public appTenants: string[],
         public mongoManager: utils.MongoManager,
         public port: any,
         public documentsCollectionName: string,
-        public metricClientConfig: any,
-        public authEndpoint: string) {
+        public metricClientConfig: any) {
 
         this.webServerFactory = new services.SocketIoWebServerFactory(this.redisConfig);
     }
@@ -48,11 +48,12 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
         const mongoFactory = new services.MongoDbFactory(mongoUrl);
         const mongoManager = new utils.MongoManager(mongoFactory);
         const documentsCollectionName = config.get("mongo:collectionNames:documents");
-        const tenantsCollectionName = config.get("mongo:collectionNames:tenants");
-        const tenantConfig = config.get("tenantConfig");
 
-        // Tenant configuration
-        const tenantManager = await services.TenantManager.Load(mongoManager, tenantConfig, tenantsCollectionName);
+        // Manager to query riddler for tenant information
+        const tenantManager = new services.TenantManager(authEndpoint);
+
+        // Tenants attached to the apps this service exposes
+        const appTenants = config.get("alfred:tenants") as string[];
 
         // This wanst to create stuff
         let port = utils.normalizePort(process.env.PORT || "3000");
@@ -63,11 +64,11 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             redisConfig,
             webSocketLibrary,
             tenantManager,
+            appTenants,
             mongoManager,
             port,
             documentsCollectionName,
-            metricClientConfig,
-            authEndpoint);
+            metricClientConfig);
     }
 }
 
@@ -78,10 +79,10 @@ export class AlfredRunnerFactory implements utils.IRunnerFactory<AlfredResources
             resources.config,
             resources.port,
             resources.tenantManager,
+            resources.appTenants,
             resources.mongoManager,
             resources.producer,
             resources.documentsCollectionName,
-            resources.metricClientConfig,
-            resources.authEndpoint);
+            resources.metricClientConfig);
     }
 }

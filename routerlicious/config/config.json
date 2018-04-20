@@ -27,7 +27,8 @@
         "topic": "rawdeltas",
         "bucket": "snapshots",
         "restJsonSize": "50mb",
-        "webSocketLib": "socket.io"
+        "webSocketLib": "socket.io",
+        "tenants": ["git", "github", "cobalt"]
     },
     "deli": {
         "topics": {

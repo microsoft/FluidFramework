@@ -60,6 +60,7 @@ const stream = split().on("data", (message) => {
 export function create(
     config: Provider,
     tenantManager: ITenantManager,
+    appTenants: string[],
     mongoManager: utils.MongoManager,
     producer: utils.kafkaProducer.IProducer) {
 

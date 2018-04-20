@@ -8,7 +8,7 @@ export interface IConnect {
     id: string;
 
     // authorization token
-    token?: string;
+    token: string;
 }
 
 /**
