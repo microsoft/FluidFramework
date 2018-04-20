@@ -101,14 +101,14 @@ export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
     combiningOp?: ICombiningOp;
 }
 
-export interface IIntentSpec {
+export interface IMacroOpSpec {
     name: string;
     params: Object;
 }
 
 export interface IMergeTreeGroupMsg extends IMergeTreeDelta {
     type: MergeTreeDeltaType.GROUP;
-    macroOp: IIntentSpec;
+    macroOp: IMacroOpSpec;
     ops: IMergeTreeOp[];
 }
 

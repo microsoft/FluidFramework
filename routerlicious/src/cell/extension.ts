@@ -6,7 +6,7 @@ import { Cell } from "./cell";
 /**
  * The extension that defines the map
  */
-export class CellExtension implements api.IExtension {
+export class CellExtension implements api.ICollaborativeObjectExtension {
     public static Type = "https://graph.microsoft.com/types/cell";
 
     public type: string = CellExtension.Type;

@@ -4,7 +4,6 @@ import {
     api, CharacterCodes, core, MergeTree,
     Paragraph, Table, types,
 } from "../client-api";
-import { contentModelCreate, IContentModel } from "../content-model";
 import { IAuthenticatedUser } from "../core-utils";
 import { findRandomWord } from "../merge-tree-utils";
 import { Interval, SharedIntervalCollection, SharedString } from "../shared-string";
@@ -2531,7 +2530,6 @@ export class FlowView extends ui.Component {
         showCursorLocation: true,
     };
     public lastDocContext: IDocumentContext;
-    public contentModel: IContentModel;
     private lastVerticalX = -1;
     private randWordTimer: any;
     private pendingRender = false;
@@ -2554,7 +2552,6 @@ export class FlowView extends ui.Component {
             this.cmdTree.put(command.key.toLowerCase(), command);
         }
 
-        this.contentModel = contentModelCreate(this.sharedString);
         this.client = sharedString.client;
         this.viewportDiv = document.createElement("div");
         this.element.appendChild(this.viewportDiv);
@@ -4173,10 +4170,6 @@ export class FlowView extends ui.Component {
                 let opAffectsViewport = false;
                 for (let groupOp of delta.ops) {
                     opAffectsViewport = opAffectsViewport || this.applyOp(groupOp, msg);
-                }
-                if (delta.macroOp) {
-                    opAffectsViewport = true;
-                    this.contentModel.exec(delta, msg);
                 }
                 return opAffectsViewport;
             }

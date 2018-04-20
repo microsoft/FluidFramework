@@ -2,7 +2,7 @@ import * as resources from "gitresources";
 import * as api from "../api-core";
 import { Stream } from "./stream";
 
-export class StreamExtension implements api.IExtension {
+export class StreamExtension implements api.ICollaborativeObjectExtension {
     public static Type = "https://graph.microsoft.com/types/stream";
 
     public type = StreamExtension.Type;

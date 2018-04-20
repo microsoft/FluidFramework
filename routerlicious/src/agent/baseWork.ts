@@ -11,7 +11,8 @@ export class BaseWork {
     }
 
     public loadDocument(options: Object, service: core.IDocumentService): Promise<void> {
-        const documentP = api.load(this.id, options, null, true, api.defaultRegistry, service);
+        const documentP = api.load(this.id, options, null, true, api.defaultRegistry,
+            api.defaultContentModelRegistry, service);
         return new Promise<void>((resolve, reject) => {
             documentP.then(async (doc) => {
                 console.log(`Loaded document ${this.id}`);
