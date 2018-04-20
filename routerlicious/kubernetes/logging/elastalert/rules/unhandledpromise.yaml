@@ -7,19 +7,16 @@ data:
     name: Unhandled Promise
     type: any
     index: logstash-*
-    include: ["kubernetes.container_name", "kubernetes.pod_name", "level", "log", "message", "stack"]
     filter:
     - query:
         query_string:
           query: "*UnhandledPromiseRejection*"
     alert:
     - "post"
-    http_post_url: "http://52.229.54.166:9000/api/2/store/?sentry_version=7&sentry_key=d1b6fd861c464d9e81c006252676844e&sentry_secret=59b2191319c54ddda559c84df481014c&sentry_client=elastalert"
+    http_post_url: "https://sentry.wu2.prague.office-int.com/api/2/store/?sentry_version=7&sentry_key=7235bc222189462ca65fa1a38591f96b&sentry_secret=74acc3b4610f47a38a50d1bcbfcd6655&sentry_client=elastalert"
     http_post_payload:
         timestamp: timestamp
         logger: kubernetes.pod_name
-        culprit: kubernetes.container_name
-        tags: name
         level: level
         message: message
-        errors: stack
+        extra: stack

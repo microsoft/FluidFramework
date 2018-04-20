@@ -6,9 +6,9 @@ data:
   elastalert_config.yaml: |
     rules_folder: /opt/rules
     run_every:
-      minutes: 5
+      minutes: 1
     buffer_time:
-      minutes: 2
+      minutes: 15
     es_host: elasticsearch
     es_port: 9200
     writeback_index: elastalert_status
