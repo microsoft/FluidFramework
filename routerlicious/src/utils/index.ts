@@ -1,4 +1,5 @@
 export * from "./conversion";
+export * from "./dockerNames";
 export * from "./file";
 export * from "./heap";
 export * from "./logger";

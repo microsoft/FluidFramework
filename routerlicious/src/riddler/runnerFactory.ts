@@ -1,8 +1,8 @@
 import { Provider } from "nconf";
-import { ITenantConfig } from "../api-core";
 import * as services from "../services";
 import * as utils from "../utils";
 import { RiddlerRunner } from "./runner";
+import { ITenantDocument } from "./tenantManager";
 
 export class RiddlerResources implements utils.IResources {
     constructor(
@@ -24,11 +24,11 @@ export class RiddlerResourcesFactory implements utils.IResourcesFactory<RiddlerR
         const mongoManager = new utils.MongoManager(mongoFactory);
         const tenantsCollectionName = config.get("mongo:collectionNames:tenants");
 
-        // Load default tenants
+        // Load configs for default tenants
         const db = await mongoManager.getDatabase();
-        const collection = db.collection<ITenantConfig>(tenantsCollectionName);
-        const tenants = config.get("tenantConfig") as ITenantConfig[];
-        const upsertP = tenants.map((tenant) => collection.upsert({ name: tenant.name }, tenant, null));
+        const collection = db.collection<ITenantDocument>(tenantsCollectionName);
+        const tenants = config.get("tenantConfig");
+        const upsertP = tenants.map((tenant) => collection.findOrCreate({ _id: tenant._id }, tenant));
         await upsertP;
 
         let port = utils.normalizePort(process.env.PORT || "5000");

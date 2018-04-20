@@ -2,7 +2,7 @@ import * as _ from "lodash";
 import { ITenantManager } from "../api-core";
 
 /**
- * Helper functioin to return tenant specific configuration
+ * Helper function to return tenant specific configuration
  */
 export async function getConfig(
     config: any,
@@ -24,7 +24,7 @@ export async function getConfig(
         updatedConfig.blobStorageUrl = tenant.storage.direct;
         updatedConfig.historianApi = false;
     } else {
-        updatedConfig.blobStorageUrl = tenant.storage.publicUrl;
+        updatedConfig.blobStorageUrl = tenant.storage.url;
         updatedConfig.historianApi = true;
     }
 

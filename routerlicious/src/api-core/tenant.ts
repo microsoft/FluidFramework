@@ -1,26 +1,32 @@
 import { GitManager } from "../git-storage";
 
 export interface ITenantStorage {
+    // Historian backed URL to the storage provider
     url: string;
-    publicUrl: string;
+
+    // Direct access URL to the storage provider
+    direct: string;
+
+    // Storage provider owner
     owner: string;
+
+    // Storage provider repository
     repository: string;
 
-    /**
-     * (optional) Direct access to storage historian is providing cached access to
-     */
-    direct?: string;
-    credentials?: {
-        user: string,
-        password: string,
+    // Access credentials to the storage provider
+    credentials: {
+        // User accessing the storage provider
+        user: string;
+
+        // Password for the storage provider
+        password: string;
     };
 }
 
 export interface ITenantConfig {
-    name: string;
-    key: string;
+    id: string;
+
     storage: ITenantStorage;
-    isDefault?: boolean;
 }
 
 export interface ITenant {
