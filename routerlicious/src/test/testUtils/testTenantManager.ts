@@ -19,8 +19,9 @@ export class TestTenant implements ITenant {
 
     public get storage(): ITenantStorage {
         return {
+            credentials: null,
+            direct: null,
             owner: this.owner,
-            publicUrl: this.url,
             repository: this.repository,
             url: this.url,
         };

@@ -16,8 +16,8 @@ export class Tenant implements ITenant {
         return new Tenant(config, gitManager);
     }
 
-    public get name(): string {
-        return this.config.name;
+    public get id(): string {
+        return this.config.id;
     }
 
     public get gitManager(): GitManager {
@@ -29,10 +29,6 @@ export class Tenant implements ITenant {
     }
 
     private constructor(private config: ITenantConfig, private manager: GitManager) {
-    }
-
-    public isDefault(): boolean {
-        return this.config.isDefault === true;
     }
 }
 
@@ -64,10 +60,11 @@ export class TenantManager implements ITenantManager {
     private defaultTenant: Tenant;
 
     private constructor(tenants: Tenant[], private collection: ICollection<ITenantConfig>) {
+
         for (const tenant of tenants) {
-            this.tenants.set(tenant.name, tenant);
-            this.defaultTenant = tenant.isDefault() ? tenant : this.defaultTenant;
+            this.tenants.set(tenant.id, tenant);
         }
+        this.defaultTenant = tenants[0]
     }
 
     public async getTenant(tenantId: string): Promise<ITenant> {
@@ -82,7 +79,7 @@ export class TenantManager implements ITenantManager {
             }
 
             const tenant = await Tenant.Load(config);
-            this.tenants.set(tenant.name, tenant);
+            this.tenants.set(tenant.id, tenant);
         }
 
         return this.tenants.get(tenantId);
