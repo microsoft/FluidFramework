@@ -4,6 +4,9 @@ import { IAuthenticatedUser } from "../api-core";
  * Message sent to connect to the given object
  */
 export interface IConnect {
+    // The tenant ID for the document
+    tenantId: string;
+
     // The document that is being connected to
     id: string;
 

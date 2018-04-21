@@ -31,6 +31,10 @@ export class TestTenant implements ITenant {
 export class TestTenantManager implements ITenantManager {
     private tenant = new TestTenant();
 
+    public verifyToken(token: string): Promise<void> {
+        return Promise.resolve();
+    }
+
     public getTenant(id: string): Promise<ITenant> {
         return Promise.resolve(this.tenant);
     }

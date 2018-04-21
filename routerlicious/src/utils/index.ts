@@ -1,3 +1,4 @@
+export * from "./auth";
 export * from "./conversion";
 export * from "./dockerNames";
 export * from "./file";

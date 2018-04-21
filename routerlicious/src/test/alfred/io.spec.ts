@@ -7,7 +7,14 @@ import * as core from "../../core";
 import { Deferred } from "../../core-utils";
 import * as socketStorage from "../../socket-storage";
 import { MongoManager } from "../../utils";
-import { MessageFactory, TestDbFactory, TestKafka, TestWebSocket, TestWebSocketServer } from "../testUtils";
+import {
+    MessageFactory,
+    TestDbFactory,
+    TestKafka,
+    TestTenantManager,
+    TestWebSocket,
+    TestWebSocketServer,
+} from "../testUtils";
 
 const defaultConfig = nconf.file(path.join(__dirname, "../../../config.test.json")).use("memory");
 
@@ -18,12 +25,12 @@ describe("Routerlicious", () => {
                 const testId = "test";
                 let webSocketServer: TestWebSocketServer;
                 let deliKafka: TestKafka;
+                let testTenantManager: TestTenantManager;
 
                 beforeEach(() => {
                     const documentsCollectionName = "test";
                     const metricClientConfig = {};
                     const testData: { [key: string]: any[] } = {};
-                    const endPoint: string = "";
 
                     const testDbFactory = new TestDbFactory(testData);
                     const mongoManager = new MongoManager(testDbFactory);
@@ -32,13 +39,22 @@ describe("Routerlicious", () => {
 
                     webSocketServer = new TestWebSocketServer();
 
-                    io.register(webSocketServer, defaultConfig, mongoManager, producer,
-                                documentsCollectionName, metricClientConfig, endPoint);
+                    io.register(
+                        webSocketServer,
+                        defaultConfig,
+                        mongoManager,
+                        producer,
+                        documentsCollectionName,
+                        metricClientConfig,
+                        testTenantManager,
+                        "test");
                 });
 
                 function connectToServer(id: string, socket: TestWebSocket): Promise<socketStorage.IConnected> {
                     const connectMessage: socketStorage.IConnect = {
                         id,
+                        tenantId: null,
+                        token: null,
                     };
 
                     const deferred = new Deferred<socketStorage.IConnected>();

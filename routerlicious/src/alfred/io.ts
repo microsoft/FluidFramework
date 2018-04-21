@@ -1,3 +1,4 @@
+import * as jwt from "jsonwebtoken";
 import * as moniker from "moniker";
 import { Provider } from "nconf";
 import * as winston from "winston";
@@ -43,13 +44,28 @@ export function register(
         }
 
         async function connectDocument(message: socketStorage.IConnect): Promise<socketStorage.IConnected> {
-            // TODO if no token - sign a token against the default tenant with default claims
+            const profiler = winston.startTimer();
+
+            // For backwards compatibility fill in tenant and token if they don't exist
+            message.tenantId = message.tenantId ? message.tenantId : defaultTenant;
             const token = message.token
                 ? message.token
-                : utils.generateToken(tenantManager, defaultTenant);
-            const authedUser = await verifyAuthToken(tenantManager, token);
+                : utils.generateToken(tenantManager, defaultTenant, socket.id);
 
-            const profiler = winston.startTimer();
+            // Validate token signature and claims
+            const claims = jwt.decode(token) as utils.ITokenClaims;
+            if (claims.documentId !== message.id || claims.tenantId !== message.tenantId) {
+                return Promise.reject("Invalid claims");
+            }
+            await tenantManager.verifyToken(claims.tenantId, token);
+
+            // Craft the user details
+            const authedUser: api.IAuthenticatedUser = {
+                permission: claims.permission,
+                tenantid: claims.tenantId,
+                user: claims.user,
+            };
+
             connectionProfiler.done(`Client has requested to load ${message.id}`);
             const documentDetails = await storage.getOrCreateDocument(
                 mongoManager,
