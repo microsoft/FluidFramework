@@ -47,7 +47,7 @@ describe("Routerlicious", () => {
                         documentsCollectionName,
                         metricClientConfig,
                         testTenantManager,
-                        "test");
+                        { id: "test", key: "test" });
                 });
 
                 function connectToServer(id: string, socket: TestWebSocket): Promise<socketStorage.IConnected> {

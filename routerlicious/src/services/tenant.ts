@@ -39,7 +39,15 @@ export class TenantManager implements api.ITenantManager {
     }
 
     public async getTenant(tenantId: string): Promise<api.ITenant> {
-        const details = await request.get(`${this.endpoint}/api/tenants/${tenantId}`) as api.ITenantConfig;
+        const details = await request.get(
+            `${this.endpoint}/api/tenants/${tenantId}`,
+            {
+                headers: {
+                    "Accept": "application/json",
+                    "Content-Type": "application/json",
+                },
+                json: true,
+            }) as api.ITenantConfig;
         const tenant = await Tenant.Load(details);
 
         return tenant;
@@ -47,7 +55,7 @@ export class TenantManager implements api.ITenantManager {
 
     public async verifyToken(tenantId: string, token: string): Promise<void> {
         await request.post(
-            `${this.endpoint}/tenants/${tenantId}/validate`,
+            `${this.endpoint}/api/tenants/${tenantId}/validate`,
             {
                 body: {
                     token,

@@ -1,5 +1,4 @@
 import * as jwt from "jsonwebtoken";
-import * as api from "../api-core";
 import * as utils from "../utils";
 
 // Find a home for this
@@ -13,7 +12,7 @@ export interface ITokenClaims {
 /**
  * Generates a JWT token to authorize routerlicious
  */
-export function generateToken(tenantManager: api.ITenantManager, tenantId: string, documentId: string): string {
+export function generateToken(tenantId: string, documentId: string, key: string): string {
     const user = utils.getRandomName();
     const claims: ITokenClaims = {
         documentId,
@@ -21,7 +20,6 @@ export function generateToken(tenantManager: api.ITenantManager, tenantId: strin
         tenantId,
         user,
     };
-    const key = null;
 
     return jwt.sign(claims, key);
 }

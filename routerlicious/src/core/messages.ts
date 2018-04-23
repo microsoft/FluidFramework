@@ -44,6 +44,9 @@ export interface IObjectMessage extends IMessage {
     // The user who submitted the message
     user: api.IAuthenticatedUser;
 
+    // The tenant the message is intended for
+    tenantId: string;
+
     // The object the message is intended for
     documentId: string;
 
@@ -73,6 +76,9 @@ export interface IRawOperationMessage extends IObjectMessage {
 
 // Need to change this name - it isn't necessarily ticketed
 export interface ITicketedMessage extends IMessage {
+    // The tenant the message is intended for
+    tenantId: string;
+
     // The object the message is intended for
     documentId: string;
 }

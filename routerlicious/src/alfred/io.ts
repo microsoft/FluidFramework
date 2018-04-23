@@ -9,9 +9,12 @@ import { ThroughputCounter } from "../core-utils";
 import * as socketStorage from "../socket-storage";
 import * as utils from "../utils";
 import * as storage from "./storage";
+import { IAlfredTenant } from "./tenant";
 
 interface IDocumentUser {
-    docId: string;
+    tenantId: string;
+
+    documentId: string;
 
     user: api.IAuthenticatedUser;
 }
@@ -24,7 +27,7 @@ export function register(
     documentsCollectionName: string,
     metricClientConfig: any,
     tenantManager: api.ITenantManager,
-    defaultTenant: string) {
+    defaultTenant: IAlfredTenant) {
 
     const throughput = new ThroughputCounter(winston.info);
     const metricLogger = agent.createMetricClient(metricClientConfig);
@@ -46,11 +49,12 @@ export function register(
         async function connectDocument(message: socketStorage.IConnect): Promise<socketStorage.IConnected> {
             const profiler = winston.startTimer();
 
+            // TODO I may need to keep the default tenant ID empty
             // For backwards compatibility fill in tenant and token if they don't exist
-            message.tenantId = message.tenantId ? message.tenantId : defaultTenant;
+            message.tenantId = message.tenantId ? message.tenantId : defaultTenant.id;
             const token = message.token
                 ? message.token
-                : utils.generateToken(tenantManager, defaultTenant, socket.id);
+                : utils.generateToken(defaultTenant.id, message.id, defaultTenant.key);
 
             // Validate token signature and claims
             const claims = jwt.decode(token) as utils.ITokenClaims;
@@ -80,7 +84,8 @@ export function register(
             connectionsMap.set(
                 clientId,
                 {
-                    docId: message.id,
+                    documentId: message.id,
+                    tenantId: message.tenantId,
                     user: authedUser,
                 });
 
@@ -95,6 +100,7 @@ export function register(
                     traces: [],
                     type: api.ClientJoin,
                 },
+                tenantId: message.tenantId,
                 timestamp: Date.now(),
                 type: core.RawOperationType,
                 user: authedUser,
@@ -152,8 +158,9 @@ export function register(
                 const docUser = connectionsMap.get(clientId);
                 const rawMessage: core.IRawOperationMessage = {
                     clientId,
-                    documentId: docUser.docId,
+                    documentId: docUser.documentId,
                     operation: message,
+                    tenantId: docUser.tenantId,
                     timestamp: Date.now(),
                     type: core.RawOperationType,
                     user: docUser.user,
@@ -200,7 +207,7 @@ export function register(
 
                 const rawMessage: core.IRawOperationMessage = {
                     clientId: null,
-                    documentId: docUser.docId,
+                    documentId: docUser.documentId,
                     operation: {
                         clientSequenceNumber: -1,
                         contents: clientId,
@@ -208,6 +215,7 @@ export function register(
                         traces: [],
                         type: api.ClientLeave,
                     },
+                    tenantId: docUser.tenantId,
                     timestamp: Date.now(),
                     type: core.RawOperationType,
                     user: docUser.user,

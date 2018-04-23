@@ -125,9 +125,8 @@ export async function createFork(
     const fullId = getFullId(tenantId, id);
     const fullName = getFullId(tenantId, name);
 
-    const tenant = await tenantManager.getTenant(tenantId).catch((err) => {
-        return Promise.reject(err);
-    });
+    const tenant = await tenantManager.getTenant(tenantId);
+
     // Load in the latest snapshot
     const gitManager = tenant.gitManager;
     const head = await gitManager.getRef(id);

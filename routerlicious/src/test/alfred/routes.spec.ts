@@ -25,7 +25,7 @@ describe("Routerlicious", () => {
                 const alfred = app.create(
                     defaultConfig,
                     testTenantManager,
-                    ["git"],
+                    [{ id: "git", key: "git" }],
                     mongoManager,
                     testKafka.createProducer());
                 testServer = supertest(alfred);

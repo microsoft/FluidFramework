@@ -6,6 +6,7 @@ import { Deferred } from "../core-utils";
 import * as utils from "../utils";
 import * as app from "./app";
 import * as io from "./io";
+import { IAlfredTenant } from "./tenant";
 
 export class AlfredRunner implements utils.IRunner {
     private server: core.IWebServer;
@@ -16,7 +17,7 @@ export class AlfredRunner implements utils.IRunner {
         private config: Provider,
         private port: string | number,
         private tenantManager: ITenantManager,
-        private appTenants: string[],
+        private appTenants: IAlfredTenant[],
         private mongoManager: utils.MongoManager,
         private producer: utils.kafkaProducer.IProducer,
         private documentsCollectionName: string,

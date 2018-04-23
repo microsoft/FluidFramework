@@ -194,6 +194,7 @@ export class DeliLambda implements IPartitionLambda {
                     traces: message.operation.traces,
                     type: branchDocumentMessage.type,
                 },
+                tenantId: message.tenantId,
                 timestamp: message.timestamp,
                 type: core.RawOperationType,
                 user: branchDocumentMessage.user,

@@ -26,9 +26,7 @@
         "kafkaClientId": "alfred",
         "topic": "rawdeltas",
         "bucket": "snapshots",
-        "restJsonSize": "50mb",
-        "webSocketLib": "socket.io",
-        "tenants": ["git", "github", "cobalt"]
+        "restJsonSize": "50mb"
     },
     "deli": {
         "topics": {
@@ -46,7 +44,7 @@
         }
     },
     "auth": {
-        "endpoint": "http://riddler:5000/api"
+        "endpoint": "http://riddler:5000"
     },
     "routemaster": {
         "topics": {

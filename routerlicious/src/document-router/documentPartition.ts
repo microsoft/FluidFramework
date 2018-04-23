@@ -11,9 +11,16 @@ export class DocumentPartition {
     private lambdaP: Promise<IPartitionLambda>;
     private corrupt = false;
 
-    constructor(factory: IPartitionLambdaFactory, config: Provider, id: string, public context: DocumentContext) {
+    constructor(
+        factory: IPartitionLambdaFactory,
+        config: Provider,
+        tenantId: string,
+        documentId: string,
+        public context: DocumentContext) {
+
         const clonedConfig = _.cloneDeep((config as any).get());
-        clonedConfig.documentId = id;
+        clonedConfig.tenantId = tenantId;
+        clonedConfig.documentId = documentId;
         const documentConfig = new Provider({}).defaults(clonedConfig).use("memory");
 
         // Create the lambda to handle the document messages

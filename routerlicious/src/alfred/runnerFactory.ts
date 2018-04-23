@@ -4,6 +4,7 @@ import * as core from "../core";
 import * as services from "../services";
 import * as utils from "../utils";
 import { AlfredRunner } from "./runner";
+import { IAlfredTenant } from "./tenant";
 
 export class AlfredResources implements utils.IResources {
     public webServerFactory: core.IWebServerFactory;
@@ -14,7 +15,7 @@ export class AlfredResources implements utils.IResources {
         public redisConfig: any,
         public webSocketLibrary: string,
         public tenantManager: ITenantManager,
-        public appTenants: string[],
+        public appTenants: IAlfredTenant[],
         public mongoManager: utils.MongoManager,
         public port: any,
         public documentsCollectionName: string,
@@ -53,7 +54,7 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
         const tenantManager = new services.TenantManager(authEndpoint);
 
         // Tenants attached to the apps this service exposes
-        const appTenants = config.get("alfred:tenants") as string[];
+        const appTenants = (config.get("tenantConfig") as any[]).map((tenant) => ({ id: tenant._id, key: tenant.key }));
 
         // This wanst to create stuff
         let port = utils.normalizePort(process.env.PORT || "3000");

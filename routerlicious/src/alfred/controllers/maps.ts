@@ -8,9 +8,7 @@ import { Counter, DistributedSet } from "../../map";
 
 async function loadDocument(id: string, version: resources.ICommit, token?: string): Promise<api.Document> {
     console.log("Loading in root document...");
-    const document = await api.load(id, { encrypted: false, token }, version).catch((err) => {
-        return Promise.reject(err);
-    });
+    const document = await api.load(id, { encrypted: false, token }, version);
 
     console.log("Document loaded");
     return document;
