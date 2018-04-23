@@ -2,17 +2,17 @@ import { Router } from "express";
 import { Provider } from "nconf";
 import * as api from "../../../api-core";
 import * as utils from "../../../utils";
-import { getFullId } from "../../utils";
 
 export function getDeltas(
     mongoManager: utils.MongoManager,
     collectionName: string,
+    tenantId: string,
     documentId: string,
     from?: number,
     to?: number): Promise<api.ISequencedDocumentMessage[]> {
 
     // Create an optional filter to restrict the delta range
-    const query: any = { documentId };
+    const query: any = { documentId, tenantId };
     if (from !== undefined || to !== undefined) {
         query["operation.sequenceNumber"] = {};
 
@@ -52,10 +52,14 @@ export function create(config: Provider, mongoManager: utils.MongoManager): Rout
         const from = stringToSequenceNumber(request.query.from);
         const to = stringToSequenceNumber(request.query.to);
 
-        const id = getFullId(request.params.tenantId, request.params.id);
-
         // Query for the deltas and return a filtered version of just the operations field
-        const deltasP = getDeltas(mongoManager, deltasCollectionName, id, from, to);
+        const deltasP = getDeltas(
+            mongoManager,
+            deltasCollectionName,
+            request.params.tenantId,
+            request.params.id,
+            from,
+            to);
 
         deltasP.then(
             (deltas) => {

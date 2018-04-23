@@ -5,6 +5,7 @@ describe("Routerlicious", () => {
     describe("Deli", () => {
         describe("CheckpointContext", () => {
             const testId = "test";
+            const testTenant = "test";
             let testCheckpointContext: CheckpointContext;
             let testCollection: testUtils.TestCollection;
             let testContext: testUtils.TestContext;
@@ -21,7 +22,7 @@ describe("Routerlicious", () => {
             beforeEach(() => {
                 testContext = new testUtils.TestContext();
                 testCollection = new testUtils.TestCollection([{ _id: testId }]);
-                testCheckpointContext = new CheckpointContext(testId, testCollection, testContext);
+                testCheckpointContext = new CheckpointContext(testTenant, testId, testCollection, testContext);
             });
 
             describe(".checkpoint", () => {

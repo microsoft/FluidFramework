@@ -75,6 +75,7 @@ export function register(
                 mongoManager,
                 documentsCollectionName,
                 producer,
+                message.tenantId,
                 message.id);
 
             const clientId = moniker.choose();
@@ -108,7 +109,7 @@ export function register(
             sendAndTrack(rawMessage);
 
             const parentBranch = documentDetails.value.parent
-                ? documentDetails.value.parent.id
+                ? documentDetails.value.parent.documentId
                 : null;
 
             // And return the connection information to the client

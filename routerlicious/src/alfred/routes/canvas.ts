@@ -12,8 +12,6 @@ export function create(config: Provider, tenantManager: ITenantManager): Router 
      * Loading of a specific collaborative map
      */
     router.get("/:tenantId?/:id", async (request, response, next) => {
-        const id = utils.getFullId(request.params.tenantId, request.params.id);
-
         const workerConfigP = utils.getConfig(config.get("worker"), tenantManager, request.params.tenantId);
         const versionP = storage.getLatestVersion(
             tenantManager,
@@ -25,8 +23,9 @@ export function create(config: Provider, tenantManager: ITenantManager): Router 
                 "canvas",
                 {
                     config: values[0],
-                    id,
+                    documentId: request.params.id,
                     partials: defaultPartials,
+                    tenantId: request.params.tenantId,
                     title: request.params.id,
                     version: JSON.stringify(values[1]),
                 });

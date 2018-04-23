@@ -4,7 +4,7 @@ import * as path from "path";
 import { ITenantManager } from "../../api-core";
 import * as utils from "../../utils";
 import * as storage from "../storage";
-import { getConfig, getFullId } from "../utils";
+import { getConfig } from "../utils";
 import { defaultPartials } from "./partials";
 
 const defaultTemplate = "pp.txt";
@@ -25,16 +25,15 @@ export function create(
      * Loads count number of latest commits.
      */
     router.get("/:tenantId?/:id/commits", (request, response, next) => {
-        const id = getFullId(request.params.tenantId, request.params.id);
-
         const versionsP = storage.getVersions(tenantManager, request.params.tenantId, request.params.id, 30);
         versionsP.then(
             (versions) => {
                 response.render(
                     "commits",
                     {
-                        id,
+                        documentId: request.params.id,
                         partials: defaultPartials,
+                        tenantId: request.params.tenantId,
                         type: "sharedText",
                         versions: JSON.stringify(versions),
                     });
@@ -48,7 +47,6 @@ export function create(
      * Loading of a specific version of shared text.
      */
     router.get("/:tenantId?/:id/commit", async (request, response, next) => {
-        const id = getFullId(request.params.tenantId, request.params.id);
         const disableCache = "disableCache" in request.query;
 
         const workerConfigP = getConfig(config.get("worker"), tenantManager, request.params.tenantId);
@@ -69,11 +67,12 @@ export function create(
                     config: values[0],
                     connect: false,
                     disableCache,
-                    id,
+                    documentId: request.params.id,
                     options: JSON.stringify(options),
                     pageInk: request.query.pageInk === "true",
                     partials: defaultPartials,
                     template: undefined,
+                    tenantId: request.params.tenantId,
                     title: request.params.id,
                     version: JSON.stringify(values[1]),
                 });
@@ -103,8 +102,6 @@ export function create(
      * Loading of a specific shared text.
      */
     router.get("/:tenantId?/:id", async (request, response, next) => {
-        const id = getFullId(request.params.tenantId, request.params.id);
-
         const disableCache = "disableCache" in request.query;
         const direct = "direct" in request.query;
 
@@ -133,11 +130,12 @@ export function create(
                     config: values[0],
                     connect: true,
                     disableCache,
-                    id,
+                    documentId: request.params.id,
                     options: JSON.stringify(options),
                     pageInk: request.query.pageInk === "true",
                     partials: defaultPartials,
                     template,
+                    tenantId: request.params.tenantId,
                     title: request.params.id,
                     version: JSON.stringify(values[1]),
                 });

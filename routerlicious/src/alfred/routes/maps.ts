@@ -13,7 +13,6 @@ export function create(config: Provider, tenantManager: ITenantManager): Router 
      * Loads count number of latest commits.
      */
     router.get("/:tenantId?/:id/commits", (request, response, next) => {
-        const id = utils.getFullId(request.params.tenantId, request.params.id);
         const versionsP = storage.getVersions(tenantManager, request.params.tenantId, request.params.id, 30);
 
         versionsP.then(
@@ -21,8 +20,9 @@ export function create(config: Provider, tenantManager: ITenantManager): Router 
                 response.render(
                     "commits",
                     {
-                        id,
+                        documentId: request.params.id,
                         partials: defaultPartials,
+                        tenantId: request.params.tenantId,
                         type: "maps",
                         versions: JSON.stringify(versions),
                     });
@@ -35,8 +35,6 @@ export function create(config: Provider, tenantManager: ITenantManager): Router 
      * Loading of a specific version of shared text.
      */
     router.get("/:tenantId?/:id/commit", async (request, response, next) => {
-        const id = utils.getFullId(request.params.tenantId, request.params.id);
-
         const targetVersionSha = request.query.version;
         const workerConfigP = utils.getConfig(config.get("worker"), tenantManager, request.params.tenantId);
         const versionsP = storage.getVersion(
@@ -50,9 +48,10 @@ export function create(config: Provider, tenantManager: ITenantManager): Router 
                 "maps",
                 {
                     config: values[0],
-                    id,
+                    documentId: request.params.id,
                     loadPartial: true,
                     partials: defaultPartials,
+                    tenantId: request.params.tenantId,
                     title: request.params.id,
                     version: JSON.stringify(values[1]),
                 });
@@ -66,8 +65,6 @@ export function create(config: Provider, tenantManager: ITenantManager): Router 
      * Loading of a specific collaborative map
      */
     router.get("/:tenantId?/:id", async (request, response, next) => {
-        const id = utils.getFullId(request.params.tenantId, request.params.id);
-
         const workerConfigP = utils.getConfig(config.get("worker"), tenantManager, request.params.tenantId);
         const versionP = storage.getLatestVersion(tenantManager, request.params.tenantId, request.params.id);
 
@@ -76,9 +73,10 @@ export function create(config: Provider, tenantManager: ITenantManager): Router 
                 "maps",
                 {
                     config: values[0],
-                    id,
+                    documentId: request.params.id,
                     loadPartial: false,
                     partials: defaultPartials,
+                    tenantId: request.params.tenantId,
                     title: request.params.id,
                     version: JSON.stringify(values[1]),
                 });

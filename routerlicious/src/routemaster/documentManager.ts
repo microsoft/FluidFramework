@@ -21,7 +21,7 @@ export class DocumentManager {
         const forks = document.forks || [];
         const filtered = forks
             .filter((value) => value.sequenceNumber !== undefined)
-            .map((value) => value.id);
+            .map((value) => value.documentId);
         this.activeForks = new Set(filtered);
     }
 
@@ -41,8 +41,9 @@ export class DocumentManager {
         // the sequence number is identical
         await this.collection.update(
             {
-                "_id": this.document._id,
+                "documentId": this.document.documentId,
                 "forks.id": id,
+                "tenantId": this.document.tenantId,
             },
             {
                 "forks.$.sequenceNumber": sequenceNumber,
@@ -57,11 +58,12 @@ export class DocumentManager {
 
         const pollDeltas = () => {
             const query = {
-                "documentId": this.document._id,
+                "documentId": this.document.documentId,
                 "operation.sequenceNumber": {
                     $gt: from,
                     $lt: to,
                 },
+                "tenantId": this.document.tenantId,
             };
 
             const deltasP = this.deltas.find(query, { "operation.sequenceNumber": 1 });

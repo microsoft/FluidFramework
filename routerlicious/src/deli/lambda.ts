@@ -41,7 +41,7 @@ export class DeliLambda implements IPartitionLambda {
 
     constructor(
         context: IContext,
-        private tenantId: string,
+        tenantId: string,
         private documentId: string,
         dbObject: core.IDocument,
         collection: core.ICollection<core.IDocument>,
