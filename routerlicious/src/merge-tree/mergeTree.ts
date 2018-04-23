@@ -241,6 +241,7 @@ export interface MergeTreeStats {
 
 export interface SegmentGroup {
     segments: Segment[];
+    onAck?(seq: number);
 }
 
 export interface OverlapClient {
@@ -769,7 +770,13 @@ export class Marker extends BaseSegment implements ReferencePosition {
                 lbuf += rangeLabel;
             }
         }
-        return `M ${bbuf}: ${lbuf}`;
+        let pbuf="";
+        if (this.properties) {
+            if (this.properties["moribund"]) {
+                pbuf += " moribund"
+            }
+        }
+        return `M ${bbuf}: ${lbuf} ${pbuf}`;
     }
 
     getType() {
@@ -2934,6 +2941,16 @@ function tileShift(node: MergeNode, segpos: number, refSeq: number, clientId: nu
     return true;
 }
 
+export interface MinListener {
+    minRequired: number;
+    onMinGE?(minSeq: number);
+}
+
+let minListenerComparer = <Collections.Comparer<MinListener>>{
+    min: { minRequired: Number.MIN_VALUE },
+    compare: (a, b) => a.minRequired - b.minRequired,
+}
+
 export interface RemoveRangeInfo {
     highestBlockRemovingChildren: IMergeBlock;
 }
@@ -2984,6 +3001,7 @@ export class MergeTree {
     clientIdToBranchId: number[] = [];
     localBranchId = 0;
     transactionSegmentGroup: SegmentGroup;
+    minSeqListeners: Collections.Heap<MinListener>;
     // for diagnostics
     getLongClientId: (id: number) => string;
     getUserInfo: (id: number) => IAuthenticatedUser;
@@ -3777,11 +3795,26 @@ export class MergeTree {
         this.setMinSeq(Math.min(this.collabWindow.globalMinSeq, localMinSeq));
     }
 
+    addMinSeqListener(minRequired: number, onMinGE: (minSeq:number)=>void ) {
+        if (!this.minSeqListeners) {
+            this.minSeqListeners = new Collections.Heap<MinListener>([],
+                minListenerComparer);
+        }
+        this.minSeqListeners.add({ minRequired, onMinGE });
+    }
+
     setMinSeq(minSeq: number) {
         if (minSeq > this.collabWindow.minSeq) {
             this.collabWindow.minSeq = minSeq;
             if (MergeTree.options.zamboniSegments) {
                 this.zamboniSegments();
+            }
+            if (this.minSeqListeners) {
+                while ((this.minSeqListeners.count()>0) && 
+                    (this.minSeqListeners.peek().minRequired<=minSeq)) {
+                    let minListener = this.minSeqListeners.get();
+                    minListener.onMinGE(minSeq);
+                }
             }
         }
     }

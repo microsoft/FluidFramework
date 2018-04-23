@@ -275,6 +275,12 @@ let commands: ICmd[] = [
     },
     {
         exec: (f) => {
+            f.deleteRow();
+        },
+        key: "delete row",
+    },
+    {
+        exec: (f) => {
             f.toggleUnderline();
         },
         key: "underline",
@@ -1430,7 +1436,8 @@ function renderTable(
         if (startRow === rowView) {
             foundStartRow = true;
         }
-        let renderRow = (!defer) && (deferredHeight >= layoutInfo.deferUntilHeight) && foundStartRow;
+        let renderRow = (!defer) && (deferredHeight >= layoutInfo.deferUntilHeight) &&
+        foundStartRow && (!Table.rowIsMoribund(rowView.rowMarker));
         let rowDiv: IRowDiv;
         if (renderRow) {
             let rowRect = new ui.Rectangle(tableIndent, layoutInfo.viewport.getLineTop(), tableWidth, 0);
@@ -3362,7 +3369,7 @@ export class FlowView extends ui.Component {
                 if (e.ctrlKey && (e.keyCode !== 17)) {
                     this.keyCmd(e.keyCode);
                 } else if (e.keyCode === KeyCode.TAB) {
-                    this.handleTAB(e.shiftKey);
+                    this.onTAB(e.shiftKey);
                 } else if (e.keyCode === KeyCode.esc) {
                     this.clearSelection();
                 } else if (e.keyCode === KeyCode.backspace) {
@@ -3582,7 +3589,7 @@ export class FlowView extends ui.Component {
     }
 
     // TODO: tab stops in non-list, non-table paragraphs
-    public handleTAB(shift = false) {
+    public onTAB(shift = false) {
         let searchPos = this.cursor.pos;
         let tileInfo = findTile(this, searchPos, "pg", false);
         if (tileInfo) {
@@ -3786,6 +3793,22 @@ export class FlowView extends ui.Component {
             this.cursorLocation();
         }
         this.localQueueRender(this.cursor.pos);
+    }
+
+    public deleteRow() {
+        let stack =
+            this.sharedString.client.mergeTree.getStackContext(this.cursor.pos,
+                this.sharedString.client.getClientId(), ["table", "cell", "row"]);
+        if (stack.table && (!stack.table.empty())) {
+            let tableMarker = <Table.ITableMarker>stack.table.top();
+            let rowMarker = <Table.IRowMarker>stack.row.top();
+            if (!tableMarker.view) {
+                let tableMarkerPos = getOffset(this, tableMarker);
+                Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
+            }
+            Table.deleteRow(this.sharedString, rowMarker.view, tableMarker.view);
+            this.localQueueRender(this.cursor.pos);
+        }
     }
 
     public insertRow() {
