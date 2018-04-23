@@ -3,10 +3,11 @@ import { Router } from "express";
 import { Provider } from "nconf";
 import { ITenantManager } from "../../api-core";
 import * as storage from "../storage";
+import { IAlfredTenant } from "../tenant";
 import * as utils from "../utils";
 import { defaultPartials } from "./partials";
 
-export function create(config: Provider, tenantManager: ITenantManager): Router {
+export function create(config: Provider, tenantManager: ITenantManager, appTenants: IAlfredTenant[]): Router {
     const router: Router = Router();
 
     /**
@@ -42,6 +43,7 @@ export function create(config: Provider, tenantManager: ITenantManager): Router 
             request.params.tenantid,
             request.params.id,
             targetVersionSha);
+        const token = utils.getToken(request.params.tenantId, request.params.id, appTenants);
 
         Promise.all([workerConfigP, versionsP]).then((values) => {
             response.render(
@@ -53,6 +55,7 @@ export function create(config: Provider, tenantManager: ITenantManager): Router 
                     partials: defaultPartials,
                     tenantId: request.params.tenantId,
                     title: request.params.id,
+                    token,
                     version: JSON.stringify(values[1]),
                 });
         },
@@ -67,6 +70,7 @@ export function create(config: Provider, tenantManager: ITenantManager): Router 
     router.get("/:tenantId?/:id", async (request, response, next) => {
         const workerConfigP = utils.getConfig(config.get("worker"), tenantManager, request.params.tenantId);
         const versionP = storage.getLatestVersion(tenantManager, request.params.tenantId, request.params.id);
+        const token = utils.getToken(request.params.tenantId, request.params.id, appTenants);
 
         Promise.all([workerConfigP, versionP]).then((values) => {
             response.render(
@@ -78,6 +82,7 @@ export function create(config: Provider, tenantManager: ITenantManager): Router 
                     partials: defaultPartials,
                     tenantId: request.params.tenantId,
                     title: request.params.id,
+                    token,
                     version: JSON.stringify(values[1]),
                 });
         }, (error) => {
