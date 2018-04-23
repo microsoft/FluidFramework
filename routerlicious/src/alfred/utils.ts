@@ -1,5 +1,7 @@
 import * as _ from "lodash";
 import { ITenantManager } from "../api-core";
+import * as utils from "../utils";
+import { IAlfredTenant } from "./tenant";
 
 /**
  * Helper function to return tenant specific configuration
@@ -27,4 +29,14 @@ export async function getConfig(
     }
 
     return JSON.stringify(updatedConfig);
+}
+
+export function getToken(tenantId: string, documentId: string, tenants: IAlfredTenant[]): string {
+    for (const tenant of tenants) {
+        if (tenantId === tenant.id) {
+            return utils.generateToken(tenantId, documentId, tenant.key);
+        }
+    }
+
+    throw new Error("Invalid tenant");
 }

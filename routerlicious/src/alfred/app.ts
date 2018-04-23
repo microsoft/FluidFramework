@@ -101,7 +101,7 @@ export function create(
     app.use(passport.session());
 
     // bind routes
-    const routes = alfredRoutes.create(config, tenantManager, mongoManager, producer);
+    const routes = alfredRoutes.create(config, tenantManager, mongoManager, producer, appTenants);
     app.use(routes.api);
     app.use("/templates", routes.templates);
     app.use("/maps", routes.maps);

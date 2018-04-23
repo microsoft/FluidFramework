@@ -2,6 +2,7 @@ import { Router } from "express";
 import { Provider } from "nconf";
 import { ITenantManager } from "../../api-core";
 import * as utils from "../../utils";
+import { IAlfredTenant } from "../tenant";
 import * as agent from "./agent";
 import * as api from "./api";
 import * as canvas from "./canvas";
@@ -41,7 +42,8 @@ export function create(
     config: Provider,
     tenantManager: ITenantManager,
     mongoManager: utils.MongoManager,
-    producer: utils.kafkaProducer.IProducer) {
+    producer: utils.kafkaProducer.IProducer,
+    appTenants: IAlfredTenant[]) {
 
     return {
         agent: agent.create(config),
@@ -56,7 +58,7 @@ export function create(
         maps: maps.create(config, tenantManager),
         ping: ping.create(),
         scribe: scribe.create(config),
-        sharedText: sharedText.create(config, tenantManager, mongoManager, producer),
+        sharedText: sharedText.create(config, tenantManager, mongoManager, producer, appTenants),
         templates: templates.create(config),
         video: video.create(config, tenantManager),
         youtubeVideo: youtubeVideo.create(config, tenantManager),

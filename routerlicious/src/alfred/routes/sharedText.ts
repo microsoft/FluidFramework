@@ -4,7 +4,8 @@ import * as path from "path";
 import { ITenantManager } from "../../api-core";
 import * as utils from "../../utils";
 import * as storage from "../storage";
-import { getConfig } from "../utils";
+import { IAlfredTenant } from "../tenant";
+import { getConfig, getToken } from "../utils";
 import { defaultPartials } from "./partials";
 
 const defaultTemplate = "pp.txt";
@@ -16,7 +17,8 @@ export function create(
     config: Provider,
     tenantManager: ITenantManager,
     mongoManager: utils.MongoManager,
-    producer: utils.kafkaProducer.IProducer): Router {
+    producer: utils.kafkaProducer.IProducer,
+    appTenants: IAlfredTenant[]): Router {
 
     const router: Router = Router();
     const documentsCollectionName = config.get("mongo:collectionNames:documents");
@@ -48,6 +50,7 @@ export function create(
      */
     router.get("/:tenantId?/:id/commit", async (request, response, next) => {
         const disableCache = "disableCache" in request.query;
+        const token = getToken(request.params.tenantId, request.params.id, appTenants);
 
         const workerConfigP = getConfig(config.get("worker"), tenantManager, request.params.tenantId);
         const targetVersionSha = request.query.version;
@@ -73,6 +76,7 @@ export function create(
                     partials: defaultPartials,
                     template: undefined,
                     tenantId: request.params.tenantId,
+                    token,
                     title: request.params.id,
                     version: JSON.stringify(values[1]),
                 });
@@ -104,6 +108,7 @@ export function create(
     router.get("/:tenantId?/:id", async (request, response, next) => {
         const disableCache = "disableCache" in request.query;
         const direct = "direct" in request.query;
+        const token = getToken(request.params.tenantId, request.params.id, appTenants);
 
         const workerConfigP = getConfig(
             config.get("worker"),
@@ -136,6 +141,7 @@ export function create(
                     partials: defaultPartials,
                     template,
                     tenantId: request.params.tenantId,
+                    token,
                     title: request.params.id,
                     version: JSON.stringify(values[1]),
                 });
