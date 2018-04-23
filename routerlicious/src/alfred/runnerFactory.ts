@@ -50,6 +50,16 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
         const mongoManager = new utils.MongoManager(mongoFactory);
         const documentsCollectionName = config.get("mongo:collectionNames:documents");
 
+        // create the index on the documents collection
+        const db = await mongoManager.getDatabase();
+        const collection = db.collection<any>(documentsCollectionName);
+        await collection.createIndex(
+            {
+                documentId: 1,
+                tenantId: 1,
+            },
+            true);
+
         // Manager to query riddler for tenant information
         const tenantManager = new services.TenantManager(authEndpoint);
 

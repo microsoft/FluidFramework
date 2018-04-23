@@ -4,7 +4,6 @@ import * as winston from "winston";
 import * as api from "../api-core";
 import * as core from "../core";
 import * as utils from "../utils";
-import { getFullId } from "./utils";
 
 const StartingSequenceNumber = 0;
 
@@ -17,23 +16,24 @@ export async function getDocument(
     tenantId: string,
     documentId: string): Promise<any> {
 
-    const id = getFullId(tenantId, documentId);
     const db = await mongoManager.getDatabase();
     const collection = db.collection<any>(documentsCollectionName);
-    return collection.findOne({ _id: id });
+    return collection.findOne({ documentId, tenantId });
 }
 
 export async function getOrCreateDocument(
     mongoManager: utils.MongoManager,
     documentsCollectionName: string,
     producer: utils.kafkaProducer.IProducer,
-    id: string): Promise<{existing: boolean, value: core.IDocument }> {
+    tenantId: string,
+    documentId: string): Promise<{existing: boolean, value: core.IDocument }> {
 
     const getOrCreateP = getOrCreateObject(
         mongoManager,
         documentsCollectionName,
         producer,
-        id);
+        tenantId,
+        documentId);
 
     return getOrCreateP;
 }
@@ -62,11 +62,10 @@ export async function getVersions(
     documentId: string,
     count: number): Promise<ICommitDetails[]> {
 
-    const fullId = getFullId(tenantId, documentId);
     return new Promise<ICommitDetails[]>((resolve, reject) => {
         tenantManager.getTenant(tenantId).then((tenant) => {
             const gitManager = tenant.gitManager;
-            gitManager.getCommits(fullId, count).then((commits) => {
+            gitManager.getCommits(documentId, count).then((commits) => {
                 resolve(commits);
             }, (err) => {
                 reject(err);
@@ -105,10 +104,9 @@ export async function getForks(
     tenantId: string,
     documentId: string): Promise<string[]> {
 
-    const id = getFullId(tenantId, documentId);
     const db = await mongoManager.getDatabase();
     const collection = db.collection<any>(documentsCollectionName);
-    const document = await collection.findOne({ _id: id });
+    const document = await collection.findOne({ documentId, tenantId });
 
     return document.forks || [];
 }
@@ -122,9 +120,6 @@ export async function createFork(
     id: string): Promise<string> {
 
     const name = moniker.choose();
-    const fullId = getFullId(tenantId, id);
-    const fullName = getFullId(tenantId, name);
-
     const tenant = await tenantManager.getTenant(tenantId);
 
     // Load in the latest snapshot
@@ -157,24 +152,40 @@ export async function createFork(
     // Insert the fork entry and update the parent to prep storage for both objects
     const insertFork = collection.insertOne(
         {
-            _id: fullName,
             branchMap: undefined,
             clients: undefined,
             createTime: Date.now(),
+            documentId: name,
             forks: [],
             logOffset: undefined,
             parent: {
-                id: fullId,
+                documentId: id,
                 minimumSequenceNumber,
                 sequenceNumber,
+                tenantId,
             },
             sequenceNumber,
+            tenantId,
         });
-    const updateParent = await collection.update({ _id: fullId }, null, { forks: { id: fullName } });
+    const updateParent = await collection.update(
+        {
+            documentId: id,
+            tenantId,
+        },
+        null,
+        {
+            forks: { documentId: name, tenantId },
+        });
     await Promise.all([insertFork, updateParent]);
 
     // Notify the parent branch of the fork and the desire to integrate changes
-    await sendIntegrateStream(id, sequenceNumber, minimumSequenceNumber, fullName, producer);
+    await sendIntegrateStream(
+        tenantId,
+        id,
+        sequenceNumber,
+        minimumSequenceNumber,
+        name,
+        producer);
 
     return name;
 }
@@ -183,16 +194,18 @@ async function getOrCreateObject(
     mongoManager: utils.MongoManager,
     documentsCollectionName: string,
     producer: utils.kafkaProducer.IProducer,
-    id: string): Promise<{ existing: boolean, value: core.IDocument }> {
+    tenantId: string,
+    documentId: string): Promise<{ existing: boolean, value: core.IDocument }> {
 
     const db = await mongoManager.getDatabase();
     const collection = db.collection<core.IDocument>(documentsCollectionName);
     const result = await collection.findOrCreate(
         {
-            _id: id,
+            documentId,
+            tenantId,
         },
         {
-            _id: id,
+            documentId,
             branchMap: undefined,
             clients: undefined,
             createTime: Date.now(),
@@ -200,6 +213,7 @@ async function getOrCreateObject(
             logOffset: undefined,
             parent: null,
             sequenceNumber: StartingSequenceNumber,
+            tenantId,
         });
 
     return result;
@@ -209,6 +223,7 @@ async function getOrCreateObject(
  * Sends a stream integration message which will forward messages after sequenceNumber from id to name.
  */
 async function sendIntegrateStream(
+    tenantId: string,
     id: string,
     sequenceNumber: number,
     minSequenceNumber: number,
@@ -217,8 +232,9 @@ async function sendIntegrateStream(
 
     const contents: core.IForkOperation = {
         minSequenceNumber,
-        name,
+        documentId: name,
         sequenceNumber,
+        tenantId,
     };
 
     const integrateMessage: core.IRawOperationMessage = {
@@ -231,6 +247,7 @@ async function sendIntegrateStream(
             traces: [],
             type: api.Fork,
         },
+        tenantId,
         timestamp: Date.now(),
         type: core.RawOperationType,
         user: null,

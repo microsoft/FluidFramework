@@ -41,6 +41,7 @@ export class DeliLambda implements IPartitionLambda {
 
     constructor(
         context: IContext,
+        private tenantId: string,
         private documentId: string,
         dbObject: core.IDocument,
         collection: core.ICollection<core.IDocument>,
@@ -76,7 +77,7 @@ export class DeliLambda implements IPartitionLambda {
 
                 // Add in the client representing the parent
                 this.upsertClient(
-                    getBranchClientId(dbObject.parent.id),
+                    getBranchClientId(dbObject.parent.documentId),
                     dbObject.parent.sequenceNumber,
                     dbObject.parent.minimumSequenceNumber,
                     dbObject.createTime,
@@ -87,7 +88,7 @@ export class DeliLambda implements IPartitionLambda {
         // Initialize counting context
         this.sequenceNumber = dbObject.sequenceNumber;
         this.logOffset = dbObject.logOffset;
-        this.checkpointContext = new CheckpointContext(documentId, collection, context);
+        this.checkpointContext = new CheckpointContext(tenantId, documentId, collection, context);
     }
 
     public handler(message: utils.kafkaConsumer.IMessage): void {
@@ -264,6 +265,7 @@ export class DeliLambda implements IPartitionLambda {
         const sequencedMessage: core.ISequencedOperationMessage = {
             documentId: objectMessage.documentId,
             operation: outputMessage,
+            tenantId: objectMessage.tenantId,
             type: core.SequencedOperationType,
         };
 
@@ -328,6 +330,7 @@ export class DeliLambda implements IPartitionLambda {
                 operation: message.operation,
                 sequenceNumber: this.minimumSequenceNumber,
             },
+            tenantId: message.tenantId,
             type: core.NackOperationType,
         };
 
