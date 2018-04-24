@@ -12,7 +12,8 @@
         <script>
             var config = {{{ config }}};
             var version = {{{ version }}};
-            controller.youtubeVideo.initialize("{{ id }}", version, config);
+            var token = "{{ token }}";
+            controller.youtubeVideo.initialize("{{ documentId }}", version, token, config);
         </script>
     {{/scripts}}
 {{/layout}}

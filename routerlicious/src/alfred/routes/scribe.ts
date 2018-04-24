@@ -19,9 +19,9 @@ export function create(config: Provider, appTenants: IAlfredTenant[]) {
         speed: number = defaultSpeed,
         authors: number = defaultAuthors,
         languages: string = "",
-        tenantId = appTenants[0].id,
         id?: string,
-        template?: string) {
+        template?: string,
+        tenantId = appTenants[0].id) {
 
         const token = utils.getToken(tenantId, id, appTenants);
 

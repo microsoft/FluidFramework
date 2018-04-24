@@ -14,7 +14,8 @@
         <script>
             var config = {{{ config }}};
             var version = {{{ version }}};
-            controller.cell.load("{{ id }}", version, config);
+            var token = "{{ token }}";
+            controller.cell.load("{{ documentId }}", version, token, config);
         </script>
     {{/scripts}}
 {{/layout}}
