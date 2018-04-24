@@ -13,12 +13,14 @@ export function create(config: Provider, tenantManager: ITenantManager, appTenan
      * Loading of a specific collaborative map
      */
     router.get("/:tenantId?/:id", async (request, response, next) => {
-        const workerConfigP = utils.getConfig(config.get("worker"), tenantManager, request.params.tenantId);
+        const tenantId = request.params.tenantId || appTenants[0].id;
+
+        const workerConfigP = utils.getConfig(config.get("worker"), tenantManager, tenantId);
         const versionP = storage.getLatestVersion(
             tenantManager,
-            request.params.tenantId,
+            tenantId,
             request.params.id);
-        const token = utils.getToken(request.params.tenantId, request.params.id, appTenants);
+        const token = utils.getToken(tenantId, request.params.id, appTenants);
 
         Promise.all([workerConfigP, versionP]).then((values) => {
             response.render(
@@ -27,7 +29,7 @@ export function create(config: Provider, tenantManager: ITenantManager, appTenan
                     config: values[0],
                     documentId: request.params.id,
                     partials: defaultPartials,
-                    tenantId: request.params.tenantId,
+                    tenantId,
                     title: request.params.id,
                     token,
                     version: JSON.stringify(values[1]),

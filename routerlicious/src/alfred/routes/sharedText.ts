@@ -27,7 +27,9 @@ export function create(
      * Loads count number of latest commits.
      */
     router.get("/:tenantId?/:id/commits", (request, response, next) => {
-        const versionsP = storage.getVersions(tenantManager, request.params.tenantId, request.params.id, 30);
+        const tenantId = request.params.tenantId || appTenants[0].id;
+
+        const versionsP = storage.getVersions(tenantManager, tenantId, request.params.id, 30);
         versionsP.then(
             (versions) => {
                 response.render(
@@ -35,7 +37,7 @@ export function create(
                     {
                         documentId: request.params.id,
                         partials: defaultPartials,
-                        tenantId: request.params.tenantId,
+                        tenantId,
                         type: "sharedText",
                         versions: JSON.stringify(versions),
                     });
@@ -49,14 +51,16 @@ export function create(
      * Loading of a specific version of shared text.
      */
     router.get("/:tenantId?/:id/commit", async (request, response, next) => {
-        const disableCache = "disableCache" in request.query;
-        const token = getToken(request.params.tenantId, request.params.id, appTenants);
+        const tenantId = request.params.tenantId || appTenants[0].id;
 
-        const workerConfigP = getConfig(config.get("worker"), tenantManager, request.params.tenantId);
+        const disableCache = "disableCache" in request.query;
+        const token = getToken(tenantId, request.params.id, appTenants);
+
+        const workerConfigP = getConfig(config.get("worker"), tenantManager, tenantId);
         const targetVersionSha = request.query.version;
         const versionP = storage.getVersion(
             tenantManager,
-            request.params.tenantId,
+            tenantId,
             request.params.id,
             targetVersionSha);
 
@@ -75,7 +79,7 @@ export function create(
                     pageInk: request.query.pageInk === "true",
                     partials: defaultPartials,
                     template: undefined,
-                    tenantId: request.params.tenantId,
+                    tenantId,
                     token,
                     title: request.params.id,
                     version: JSON.stringify(values[1]),
@@ -86,12 +90,14 @@ export function create(
     });
 
     router.post("/:tenantId?/:id/fork", (request, response, next) => {
+        const tenantId = request.params.tenantId || appTenants[0].id;
+
         const forkP = storage.createFork(
             producer,
             tenantManager,
             mongoManager,
             documentsCollectionName,
-            request.params.tenantId,
+            tenantId,
             request.params.id);
         forkP.then(
             (fork) => {
@@ -109,7 +115,7 @@ export function create(
         const disableCache = "disableCache" in request.query;
         const direct = "direct" in request.query;
 
-        const tenantId = request.params.tenantId ? request.params.tenantId : appTenants[0].id;
+        const tenantId = request.params.tenantId || appTenants[0].id;
         const token = getToken(tenantId, request.params.id, appTenants);
 
         const workerConfigP = getConfig(

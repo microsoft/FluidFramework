@@ -21,7 +21,7 @@ describe("Routerlicious", () => {
 
             beforeEach(() => {
                 testContext = new testUtils.TestContext();
-                testCollection = new testUtils.TestCollection([{ _id: testId }]);
+                testCollection = new testUtils.TestCollection([{ documentId: testId, tenantId: testTenant }]);
                 testCheckpointContext = new CheckpointContext(testTenant, testId, testCollection, testContext);
             });
 

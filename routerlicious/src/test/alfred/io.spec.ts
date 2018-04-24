@@ -36,6 +36,7 @@ describe("Routerlicious", () => {
                     const mongoManager = new MongoManager(testDbFactory);
                     deliKafka = new TestKafka();
                     const producer = deliKafka.createProducer();
+                    testTenantManager = new TestTenantManager();
 
                     webSocketServer = new TestWebSocketServer();
 
@@ -104,8 +105,7 @@ describe("Routerlicious", () => {
                         assert.equal(message.operation.contents, connectMessage.clientId);
                     });
 
-                    it(
-                        "Should connect to and set existing flag to true when connecting to an existing document",
+                    it("Should connect to and set existing flag to true when connecting to an existing document",
                         async () => {
                             const firstSocket = webSocketServer.createConnection();
                             const firstConnectMessage = await connectToServer(testId, firstSocket);
