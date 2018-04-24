@@ -108,14 +108,16 @@ export function create(
     router.get("/:tenantId?/:id", async (request, response, next) => {
         const disableCache = "disableCache" in request.query;
         const direct = "direct" in request.query;
-        const token = getToken(request.params.tenantId, request.params.id, appTenants);
+
+        const tenantId = request.params.tenantId ? request.params.tenantId : appTenants[0].id;
+        const token = getToken(tenantId, request.params.id, appTenants);
 
         const workerConfigP = getConfig(
             config.get("worker"),
             tenantManager,
-            request.params.tenantId,
+            tenantId,
             direct);
-        const versionP = storage.getLatestVersion(tenantManager, request.params.tenantId, request.params.id);
+        const versionP = storage.getLatestVersion(tenantManager, tenantId, request.params.id);
         Promise.all([workerConfigP, versionP]).then((values) => {
             const parsedTemplate = path.parse(request.query.template ? request.query.template : defaultTemplate);
             const template =
@@ -140,7 +142,7 @@ export function create(
                     pageInk: request.query.pageInk === "true",
                     partials: defaultPartials,
                     template,
-                    tenantId: request.params.tenantId,
+                    tenantId,
                     token,
                     title: request.params.id,
                     version: JSON.stringify(values[1]),
