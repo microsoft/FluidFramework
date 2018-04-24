@@ -79,7 +79,8 @@ export function register(
                 message.id);
 
             const clientId = moniker.choose();
-            await Promise.all([socket.join(message.id), socket.join(`client#${clientId}`)]);
+            await Promise.all(
+                [socket.join(`${claims.tenantId}/${claims.documentId}`), socket.join(`client#${clientId}`)]);
 
             // Create and set a new client ID
             connectionsMap.set(

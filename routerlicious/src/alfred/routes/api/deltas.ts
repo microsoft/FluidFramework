@@ -2,6 +2,7 @@ import { Router } from "express";
 import { Provider } from "nconf";
 import * as api from "../../../api-core";
 import * as utils from "../../../utils";
+import { IAlfredTenant } from "../../tenant";
 
 export function getDeltas(
     mongoManager: utils.MongoManager,
@@ -36,7 +37,7 @@ export function getDeltas(
     return deltasP;
 }
 
-export function create(config: Provider, mongoManager: utils.MongoManager): Router {
+export function create(config: Provider, mongoManager: utils.MongoManager, appTenants: IAlfredTenant[]): Router {
     const deltasCollectionName = config.get("mongo:collectionNames:deltas");
     const router: Router = Router();
 
@@ -51,12 +52,13 @@ export function create(config: Provider, mongoManager: utils.MongoManager): Rout
     router.get("/:tenantId?/:id", (request, response, next) => {
         const from = stringToSequenceNumber(request.query.from);
         const to = stringToSequenceNumber(request.query.to);
+        const tenantId = request.params.tenantId || appTenants[0].id;
 
         // Query for the deltas and return a filtered version of just the operations field
         const deltasP = getDeltas(
             mongoManager,
             deltasCollectionName,
-            request.params.tenantId,
+            tenantId,
             request.params.id,
             from,
             to);

@@ -264,7 +264,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
                 documentId: value.documentId,
                 event: "op",
                 tenantId: value.tenantId,
-                topic: value.documentId,
+                topic: `${value.tenantId}/${value.documentId}`,
             };
             this.ioManager.add(target, value.operation, message.offset);
         } else if (baseMessage.type === core.NackOperationType) {
