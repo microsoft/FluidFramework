@@ -158,6 +158,7 @@
     "jquery": "^3.2.1",
     "jsonwebtoken": "^8.1.1",
     "kafka-node": "^2.3.0",
+    "node-rdkafka": "^2.3.2",
     "lodash": "^4.17.4",
     "minio": "^3.2.2",
     "mkdirp": "^0.5.1",

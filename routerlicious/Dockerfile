@@ -29,7 +29,7 @@ RUN mkdir nyc
 RUN chown node: nyc
 
 # Don't run as root user
-USER node
+# USER node
 
 # Node wasn't designed to be run as PID 1. Tini is a tiny init wrapper. You can also set --init on docker later than
 # 1.13 but Kubernetes is at 1.12 so we prefer tini for now.
