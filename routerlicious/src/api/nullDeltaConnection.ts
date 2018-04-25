@@ -1,5 +1,4 @@
 import * as api from "../api-core";
-import { IAuthenticatedUser } from "../core-utils";
 
 /**
  * Delta connection used when not connected to the server (i.e. loading an old version)
@@ -10,7 +9,7 @@ export class NullDeltaConnection implements api.IDocumentDeltaConnection {
     public privateKey: string = null;
     public publicKey: string = null;
     public existing: boolean = true;
-    public user: IAuthenticatedUser = null;
+    public user: api.IAuthenticatedUser = null;
 
     constructor(public documentId: string, public parentBranch: string) {
     }

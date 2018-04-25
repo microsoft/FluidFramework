@@ -1,11 +1,10 @@
-import { ITenant, ITenantConfig, ITenantManager, ITenantStorage } from "../api-core";
-import { ICollection } from "../core";
+import * as request from "request-promise-native";
+import * as api from "../api-core";
 import { getOrCreateRepository, GitManager } from "../git-storage";
 import * as clientServices from "../services-client";
-import * as utils from "../utils";
 
-export class Tenant implements ITenant {
-    public static async Load(config: ITenantConfig): Promise<Tenant> {
+export class Tenant implements api.ITenant {
+    public static async Load(config: api.ITenantConfig): Promise<Tenant> {
         const historian = new clientServices.Historian(config.storage.url, true, false);
         const gitManager = await getOrCreateRepository(
             historian,
@@ -16,103 +15,69 @@ export class Tenant implements ITenant {
         return new Tenant(config, gitManager);
     }
 
-    public get name(): string {
-        return this.config.name;
+    public get id(): string {
+        return this.config.id;
     }
 
     public get gitManager(): GitManager {
         return this.manager;
     }
 
-    public get storage(): ITenantStorage {
+    public get storage(): api.ITenantStorage {
         return this.config.storage;
     }
 
-    private constructor(private config: ITenantConfig, private manager: GitManager) {
-    }
-
-    public isDefault(): boolean {
-        return this.config.isDefault === true;
+    private constructor(private config: api.ITenantConfig, private manager: GitManager) {
     }
 }
 
 /**
  * Manages a collection of tenants
  */
-export class TenantManager implements ITenantManager {
-    public static async Load(mongoManager: utils.MongoManager, config: ITenantConfig[],
-                             tenantsCollectionName: string): Promise<TenantManager> {
-        const tenantsP = new Array<Promise<Tenant>>();
-        for (const tenant of config) {
-            const tenantP = Tenant.Load(tenant);
-            tenantsP.push(tenantP);
-        }
-        const tenants = await Promise.all(tenantsP);
-        const db = await mongoManager.getDatabase();
-        const tenantsCollection = await db.collection<any>(tenantsCollectionName);
-
-        // Initialize the tenant manager
-        const manager = new TenantManager(tenants, tenantsCollection);
-
-        return manager;
+export class TenantManager implements api.ITenantManager {
+    constructor(private endpoint: string) {
     }
 
-    private tenants = new Map<string, Tenant>();
-    private defaultTenant: Tenant;
+    public async getTenant(tenantId: string): Promise<api.ITenant> {
+        const details = await request.get(
+            `${this.endpoint}/api/tenants/${tenantId}`,
+            {
+                headers: {
+                    "Accept": "application/json",
+                    "Content-Type": "application/json",
+                },
+                json: true,
+            }) as api.ITenantConfig;
+        const tenant = await Tenant.Load(details);
 
-    private constructor(tenants: Tenant[], private collection: ICollection<any>) {
-        for (const tenant of tenants) {
-            this.tenants.set(tenant.name, tenant);
-            this.defaultTenant = tenant.isDefault() ? tenant : this.defaultTenant;
-        }
+        return tenant;
     }
 
-    public getTenant(tenantId: string): Promise<ITenant> {
-        return new Promise<ITenant>((resolve, reject) => {
-            if (!tenantId) {
-                resolve(this.defaultTenant);
-            } else {
-                this.resolveTenant(tenantId).then((tenant) => {
-                    resolve(tenant);
-                }, (err) => {
-                    reject(err);
-                });
-            }
-        });
-    }
-
-    private resolveTenant(tenantId: string): Promise<ITenant> {
-        return new Promise<ITenant>((resolve, reject) => {
-            if (this.tenants.has(tenantId)) {
-                resolve(this.tenants.get(tenantId));
-            } else {
-                this.findTenantFromDB(tenantId).then((tenantConfig) => {
-                    if (tenantConfig === null) {
-                        reject("Invaid tenant name");
-                    } else {
-                        Tenant.Load(tenantConfig).then((tenant) => {
-                            this.tenants.set(tenant.name, tenant);
-                            resolve(tenant);
-                        });
-                    }
-                }, (err) => {
-                    reject(err);
-                });
-            }
-        });
-    }
-
-    private findTenantFromDB(name: string): Promise<ITenantConfig> {
-        return new Promise<ITenantConfig>((resolve, reject) => {
-            this.collection.findOne({ name }).then((tenant) => {
-                if (tenant === null) {
-                    resolve(null);
-                } else {
-                    resolve(tenant.storage as ITenantConfig);
-                }
-            }, (error) => {
-                reject(error);
+    public async verifyToken(tenantId: string, token: string): Promise<void> {
+        await request.post(
+            `${this.endpoint}/api/tenants/${tenantId}/validate`,
+            {
+                body: {
+                    token,
+                },
+                headers: {
+                    "Accept": "application/json",
+                    "Content-Type": "application/json",
+                },
+                json: true,
             });
-        });
+    }
+
+    public async getKey(tenantId: string): Promise<string> {
+        const key = await request.get(
+            `${this.endpoint}/api/tenants/${tenantId}/key`,
+            {
+                headers: {
+                    "Accept": "application/json",
+                    "Content-Type": "application/json",
+                },
+                json: true,
+            }) as string;
+        return key;
     }
 }

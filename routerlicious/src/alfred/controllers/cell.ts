@@ -3,9 +3,9 @@ import * as $ from "jquery";
 import * as agent from "../../agent";
 import { api, socketStorage, types } from "../../client-api";
 
-async function loadDocument(id: string, version: resources.ICommit): Promise<api.Document> {
+async function loadDocument(id: string, version: resources.ICommit, token: string): Promise<api.Document> {
     console.log("Loading in root document...");
-    const document = await api.load(id, { encrypted: false }, version);
+    const document = await api.load(id, { encrypted: false, token }, version);
 
     console.log("Document loaded");
     return document;
@@ -107,13 +107,13 @@ function randomizeCell(cell: types.ICell, element1: JQuery, element2: JQuery) {
     }, 3000);
 }
 
-export async function load(id: string, version: resources.ICommit, config: any) {
+export async function load(id: string, version: resources.ICommit, token: string, config: any) {
     socketStorage.registerAsDefault(document.location.origin, config.blobStorageUrl, config.owner, config.repository);
 
     // Bootstrap worker service.
     agent.registerWorker(config, "cell");
 
-    const doc = await loadDocument(id, version);
+    const doc = await loadDocument(id, version, token);
     const root = doc.getRoot();
 
     let cell: types.ICell;

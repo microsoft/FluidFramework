@@ -12,7 +12,8 @@
         <script>
             var config = {{{ config }}};
             var version = {{{ version }}};
-            controller.video.initialize("{{ id }}", version, config);
+            var token = "{{ token }}";
+            controller.video.initialize("{{ documentId }}", version, token, config);
         </script>
     {{/scripts}}
 {{/layout}}

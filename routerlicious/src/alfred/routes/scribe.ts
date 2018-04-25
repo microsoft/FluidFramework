@@ -1,13 +1,15 @@
 import { Router } from "express";
 import * as moniker from "moniker";
 import { Provider } from "nconf";
+import { IAlfredTenant } from "../tenant";
+import * as utils from "../utils";
 import { defaultPartials } from "./partials";
 
 const defaultSpeed = 50;
 const defaultAuthors = 1;
 const defaultTemplate = "/public/literature/resume.txt";
 
-export function create(config: Provider) {
+export function create(config: Provider, appTenants: IAlfredTenant[]) {
     const router: Router = Router();
 
     const workerConfig = JSON.stringify(config.get("worker"));
@@ -18,7 +20,10 @@ export function create(config: Provider) {
         authors: number = defaultAuthors,
         languages: string = "",
         id?: string,
-        template?: string) {
+        template?: string,
+        tenantId = appTenants[0].id) {
+
+        const token = utils.getToken(tenantId, id, appTenants);
 
         response.render(
             "scribe",
@@ -31,6 +36,7 @@ export function create(config: Provider) {
                 partials: defaultPartials,
                 speed,
                 template,
+                token,
                 title: "Scribe",
             });
     }

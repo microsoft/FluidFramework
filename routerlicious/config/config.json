@@ -26,8 +26,7 @@
         "kafkaClientId": "alfred",
         "topic": "rawdeltas",
         "bucket": "snapshots",
-        "restJsonSize": "50mb",
-        "webSocketLib": "socket.io"
+        "restJsonSize": "50mb"
     },
     "deli": {
         "topics": {
@@ -45,7 +44,7 @@
         }
     },
     "auth": {
-        "endpoint": "http://riddler:5000/api"
+        "endpoint": "http://riddler:5000"
     },
     "routemaster": {
         "topics": {
@@ -109,10 +108,6 @@
         "workerAckTimeMSec": 250,
         "onlyServer": false
     },
-    "riddler": {
-        "port": 5000,
-        "key": "symmetric_key"
-    },
     "redis": {
         "host": "redis",
         "port": 6379
@@ -156,20 +151,20 @@
     },
     "tenantConfig": [
         {
-            "name": "git",
+            "_id": "git",
+            "key": "43cfc3fbf04a97c0921fd23ff10f9e4b",
             "storage": {
                 "url": "http://historian:3000",
-                "publicUrl": "http://localhost:3001",
                 "owner": "prague",
                 "repository": "prague"
             },
             "isDefault": true
         },
         {
-            "name": "github",
+            "_id": "github",
+            "key": "0bea3f87c186991a69245a29dc3f61d2",
             "storage": {
                 "url": "http://historian:3000/github",
-                "publicUrl": "http://localhost:3001/github",
                 "owner": "kurtb",
                 "repository": "praguedocs",
                 "direct": "https://api.github.com",
@@ -180,10 +175,10 @@
             }
         },
         {
-            "name": "cobalt",
+            "_id": "cobalt",
+            "key": "0e3c439e9ba63d85936c7e7e9c79478c",
             "storage": {
                 "url": "http://historian:3000/cobalt",
-                "publicUrl": "http://localhost:3001/cobalt",
                 "owner": "prague",
                 "repository": "prague"
             }

@@ -1,4 +1,3 @@
-import { IAuthenticatedUser } from "../core-utils";
 import * as storage from "./storage";
 
 // Delta operation application type
@@ -30,6 +29,12 @@ export const Integrate = "integrate";
 
 // Message to indicate successful round trip.
 export const RoundTrip = "tripComplete";
+
+export interface IAuthenticatedUser {
+    user: any;
+    tenantid: string;
+    permission: string;
+}
 
 /**
  * An envelope wraps the contents with the intended target

@@ -13,7 +13,8 @@
         <script>
             var config = {{{ config }}};
             var version = {{{ version }}};
-            controller.canvas.initialize("{{ id }}", version, config);
+            var token = "{{ token }}";
+            controller.canvas.initialize("{{ documentId }}", version, token, config);
         </script>
     {{/scripts}}
 {{/layout}}

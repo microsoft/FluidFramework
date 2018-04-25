@@ -14,6 +14,7 @@ import * as winston from "winston";
 import { ITenantManager } from "../api-core";
 import * as utils from "../utils";
 import * as alfredRoutes from "./routes";
+import { IAlfredTenant } from "./tenant";
 
 // Base endpoint to expose static files at
 const staticFilesEndpoint = "/public";
@@ -60,6 +61,7 @@ const stream = split().on("data", (message) => {
 export function create(
     config: Provider,
     tenantManager: ITenantManager,
+    appTenants: IAlfredTenant[],
     mongoManager: utils.MongoManager,
     producer: utils.kafkaProducer.IProducer) {
 
@@ -99,7 +101,7 @@ export function create(
     app.use(passport.session());
 
     // bind routes
-    const routes = alfredRoutes.create(config, tenantManager, mongoManager, producer);
+    const routes = alfredRoutes.create(config, tenantManager, mongoManager, producer, appTenants);
     app.use(routes.api);
     app.use("/templates", routes.templates);
     app.use("/maps", routes.maps);

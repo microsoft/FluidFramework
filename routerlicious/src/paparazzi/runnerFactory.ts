@@ -1,6 +1,6 @@
 import { Provider } from "nconf";
 import { ITenantManager } from "../api-core";
-import { MongoDbFactory, TenantManager  } from "../services";
+import { TenantManager  } from "../services";
 import * as utils from "../utils";
 import { PaparazziRunner } from "./runner";
 
@@ -24,12 +24,8 @@ export class PaparazziResourcesFactory implements utils.IResourcesFactory<Papara
         const workerConfig = config.get("worker");
 
         // Database connection
-        const mongoUrl = config.get("mongo:endpoint") as string;
-        const mongoFactory = new MongoDbFactory(mongoUrl);
-        const mongoManager = new utils.MongoManager(mongoFactory);
-        const tenantsCollectionName = config.get("mongo:collectionNames:tenants");
-        const tenantConfig = config.get("tenantConfig");
-        const tenantManager = await TenantManager.Load(mongoManager, tenantConfig, tenantsCollectionName);
+        const authEndpoint = config.get("auth:endpoint");
+        const tenantManager = new TenantManager(authEndpoint);
 
         return new PaparazziResources(
             alfredUrl,

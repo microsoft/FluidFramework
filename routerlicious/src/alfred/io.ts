@@ -1,18 +1,22 @@
+import * as jwt from "jsonwebtoken";
 import * as moniker from "moniker";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import * as agent from "../agent";
 import * as api from "../api-core";
 import * as core from "../core";
-import { IAuthenticatedUser, ThroughputCounter, verifyAuthToken } from "../core-utils";
+import { ThroughputCounter } from "../core-utils";
 import * as socketStorage from "../socket-storage";
 import * as utils from "../utils";
 import * as storage from "./storage";
+import { IAlfredTenant } from "./tenant";
 
 interface IDocumentUser {
-    docId: string;
+    tenantId: string;
 
-    user: IAuthenticatedUser;
+    documentId: string;
+
+    user: api.IAuthenticatedUser;
 }
 
 export function register(
@@ -22,20 +26,11 @@ export function register(
     producer: utils.kafkaProducer.IProducer,
     documentsCollectionName: string,
     metricClientConfig: any,
-    authEndpoint: string) {
+    tenantManager: api.ITenantManager,
+    defaultTenant: IAlfredTenant) {
 
     const throughput = new ThroughputCounter(winston.info);
     const metricLogger = agent.createMetricClient(metricClientConfig);
-
-    // Verify if the user is authenticated or not. For now we only verify if the token is present.
-    // TODO (auth): We should verify all connection request.
-    function checkAuth(message: socketStorage.IConnect): Promise<IAuthenticatedUser> {
-        if (!message.token) {
-            return Promise.resolve(null);
-        } else {
-            return verifyAuthToken(authEndpoint, message.token);
-        }
-    }
 
     webSocketServer.on("connection", (socket: core.IWebSocket) => {
         const connectionProfiler = winston.startTimer();
@@ -52,29 +47,47 @@ export function register(
         }
 
         async function connectDocument(message: socketStorage.IConnect): Promise<socketStorage.IConnected> {
-            // Join the room first to ensure the client will start receiving delta updates
-            const authedUser = await checkAuth(message);
-
-            if (authedUser !== null) {
-                winston.info(`User ${authedUser.user.name} wants to access ${message.id}`);
-            }
-
             const profiler = winston.startTimer();
+
+            // TODO I may need to keep the default tenant ID empty
+            // For backwards compatibility fill in tenant and token if they don't exist
+            message.tenantId = message.tenantId ? message.tenantId : defaultTenant.id;
+            const token = message.token
+                ? message.token
+                : utils.generateToken(defaultTenant.id, message.id, defaultTenant.key);
+
+            // Validate token signature and claims
+            const claims = jwt.decode(token) as utils.ITokenClaims;
+            if (claims.documentId !== message.id || claims.tenantId !== message.tenantId) {
+                return Promise.reject("Invalid claims");
+            }
+            await tenantManager.verifyToken(claims.tenantId, token);
+
+            // Craft the user details
+            const authedUser: api.IAuthenticatedUser = {
+                permission: claims.permission,
+                tenantid: claims.tenantId,
+                user: claims.user,
+            };
+
             connectionProfiler.done(`Client has requested to load ${message.id}`);
             const documentDetails = await storage.getOrCreateDocument(
                 mongoManager,
                 documentsCollectionName,
                 producer,
+                message.tenantId,
                 message.id);
 
             const clientId = moniker.choose();
-            await Promise.all([socket.join(message.id), socket.join(`client#${clientId}`)]);
+            await Promise.all(
+                [socket.join(`${claims.tenantId}/${claims.documentId}`), socket.join(`client#${clientId}`)]);
 
             // Create and set a new client ID
             connectionsMap.set(
                 clientId,
                 {
-                    docId: message.id,
+                    documentId: message.id,
+                    tenantId: message.tenantId,
                     user: authedUser,
                 });
 
@@ -89,6 +102,7 @@ export function register(
                     traces: [],
                     type: api.ClientJoin,
                 },
+                tenantId: message.tenantId,
                 timestamp: Date.now(),
                 type: core.RawOperationType,
                 user: authedUser,
@@ -96,7 +110,7 @@ export function register(
             sendAndTrack(rawMessage);
 
             const parentBranch = documentDetails.value.parent
-                ? documentDetails.value.parent.id
+                ? documentDetails.value.parent.documentId
                 : null;
 
             // And return the connection information to the client
@@ -146,8 +160,9 @@ export function register(
                 const docUser = connectionsMap.get(clientId);
                 const rawMessage: core.IRawOperationMessage = {
                     clientId,
-                    documentId: docUser.docId,
+                    documentId: docUser.documentId,
                     operation: message,
+                    tenantId: docUser.tenantId,
                     timestamp: Date.now(),
                     type: core.RawOperationType,
                     user: docUser.user,
@@ -194,7 +209,7 @@ export function register(
 
                 const rawMessage: core.IRawOperationMessage = {
                     clientId: null,
-                    documentId: docUser.docId,
+                    documentId: docUser.documentId,
                     operation: {
                         clientSequenceNumber: -1,
                         contents: clientId,
@@ -202,6 +217,7 @@ export function register(
                         traces: [],
                         type: api.ClientLeave,
                     },
+                    tenantId: docUser.tenantId,
                     timestamp: Date.now(),
                     type: core.RawOperationType,
                     user: docUser.user,

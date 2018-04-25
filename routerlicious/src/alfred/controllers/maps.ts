@@ -8,9 +8,7 @@ import { Counter, DistributedSet } from "../../map";
 
 async function loadDocument(id: string, version: resources.ICommit, token?: string): Promise<api.Document> {
     console.log("Loading in root document...");
-    const document = await api.load(id, { encrypted: false, token }, version).catch((err) => {
-        return Promise.reject(err);
-    });
+    const document = await api.load(id, { encrypted: false, token }, version);
 
     console.log("Document loaded");
     return document;
@@ -118,7 +116,13 @@ async function randomizeMap(map: types.IMap) {
     }, 1000);
 }
 
-export async function load(id: string, version: resources.ICommit, config: any, loadPartial: boolean, token?: string) {
+export async function load(
+    id: string,
+    version: resources.ICommit,
+    token: string,
+    config: any,
+    loadPartial: boolean) {
+
     loadPartial ? loadCommit(id, version, config) : loadFull(id, version, config, token);
 }
 
