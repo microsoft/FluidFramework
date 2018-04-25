@@ -4,7 +4,6 @@ import {
     api, CharacterCodes, core, MergeTree,
     Paragraph, Table, types,
 } from "../client-api";
-import { IAuthenticatedUser } from "../core-utils";
 import { findRandomWord } from "../merge-tree-utils";
 import { Interval, SharedIntervalCollection, SharedString } from "../shared-string";
 import * as ui from "../ui";
@@ -2881,7 +2880,7 @@ export class FlowView extends ui.Component {
         }
     }
 
-    public remotePresenceFromEdit(longClientId: string, userInfo: IAuthenticatedUser, refseq: number, oldpos: number, posAdjust = 0) {
+    public remotePresenceFromEdit(longClientId: string, userInfo: core.IAuthenticatedUser, refseq: number, oldpos: number, posAdjust = 0) {
         let remotePosInfo = <IRemotePresenceInfo>{
             clientId: this.client.getOrAddShortClientId(longClientId, userInfo),
             key: userInfo === null ? longClientId : userInfo.user.name,
@@ -2958,7 +2957,7 @@ export class FlowView extends ui.Component {
 
     public remoteUserUpdate(delta: types.IValueChanged) {
         if (delta.key !== this.client.longClientId) {
-            let remoteUserInfo = <IAuthenticatedUser>this.userMapView.get(delta.key);
+            let remoteUserInfo = <core.IAuthenticatedUser>this.userMapView.get(delta.key);
             this.client.getOrAddShortClientId(delta.key, remoteUserInfo);
         }
 

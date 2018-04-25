@@ -1,11 +1,17 @@
 import * as request from "request";
 import * as url from "url";
 import * as winston from "winston";
+import { ITenantManager } from "../api-core";
 import { Deferred } from "../core-utils";
 import * as socketStorage from "../socket-storage";
 import * as utils from "../utils";
 import * as messages from "./messages";
 import * as workerFactory from "./workerFactory";
+
+interface IDocumentHandle {
+    tenantId: string;
+    documentId: string;
+}
 
 export class TmzRunner implements utils.IRunner {
     private deferred = new Deferred<void>();
@@ -23,9 +29,10 @@ export class TmzRunner implements utils.IRunner {
         schedulerType: string,
         private onlyServer: boolean,
         private checkerTimeout: number,
-        private tasks: any) {
+        private tasks: any,
+        tenantManager: ITenantManager) {
 
-        this.foreman = workerFactory.create(schedulerType);
+        this.foreman = workerFactory.create(schedulerType, tenantManager);
     }
 
     public start(): Promise<void> {
@@ -67,7 +74,7 @@ export class TmzRunner implements utils.IRunner {
                     this.foreman.getManager().addWorker(newWorker);
                     // Process all pending tasks once the first worker joins.
                     if (!this.workerJoined) {
-                        let workIds = Array.from(this.pendingWork);
+                        let workIds = Array.from(this.pendingWork).map((work) => JSON.parse(work) as IDocumentHandle);
                         await this.processDocuments(workIds);
                         this.pendingWork.clear();
                         this.workerJoined = true;
@@ -116,37 +123,48 @@ export class TmzRunner implements utils.IRunner {
         return this.deferred.promise;
     }
 
-    public async trackDocument(id: string): Promise<void> {
+    public async trackDocument(tenantId: string, documentId: string): Promise<void> {
+        const document: IDocumentHandle = { documentId, tenantId };
+
         // Check if already requested. Update the Timestamp in the process.
-        if (this.foreman.getManager().updateDocumentIfFound(id)) {
+        if (this.foreman.getManager().updateDocumentIfFound(tenantId, documentId)) {
             return;
         }
 
         // No worker joined yet. Store document to process later.
         if (!this.workerJoined) {
-            this.pendingWork.add(id);
+            this.pendingWork.add(JSON.stringify(document));
             return;
         }
 
-        winston.info(`Requesting work for ${id}`);
-        await this.processDocuments([id]);
+        winston.info(`Requesting work for ${tenantId}/${documentId}`);
+        await this.processDocuments([document]);
     }
 
     // Request subscribers to pick up the work for a new/expired document.
-    private async processDocuments(ids: string[]) {
+    private async processDocuments(ids: IDocumentHandle[]) {
+        function fullId(tenantId: string, documentId: string) {
+            return `${tenantId}/${documentId}`;
+        }
+
         let workToDo: messages.IDocumentWork[] = [];
         for (let docId of ids) {
-            if (docId in this.pendingAssignedMap) {
+            const fullDocId = fullId(docId.tenantId, docId.documentId);
+            if (fullDocId in this.pendingAssignedMap) {
                 continue;
             }
-            this.pendingAssignedMap[docId] = true;
+            this.pendingAssignedMap[fullDocId] = true;
             // tslint:disable-next-line:forin
             for (let task in this.tasks) {
                 let work: messages.IWork = {
                     workType: task,
                     workerType: this.tasks[task],
                 };
-                workToDo.push({docId, work});
+                workToDo.push({
+                    documentId: docId.documentId,
+                    tenantId: docId.tenantId,
+                    work,
+                });
             }
         }
         try {
@@ -155,8 +173,9 @@ export class TmzRunner implements utils.IRunner {
             } else {
                 await Promise.all(this.foreman.assignWork(workToDo));
                 workToDo.map((work) => {
-                    if (work.docId in this.pendingAssignedMap) {
-                        delete this.pendingAssignedMap[work.docId];
+                    const fullDocId = fullId(work.tenantId, work.documentId);
+                    if (fullDocId in this.pendingAssignedMap) {
+                        delete this.pendingAssignedMap[fullDocId];
                     }
                 });
                 return Promise.resolve();

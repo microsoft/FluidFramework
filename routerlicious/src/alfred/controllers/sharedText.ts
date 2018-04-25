@@ -50,6 +50,7 @@ async function addTranslation(document: API.Document, id: string, language: stri
 export async function load(
     id: string,
     version: resources.ICommit,
+    token: string,
     pageInk: boolean,
     disableCache: boolean,
     config: any,
@@ -58,7 +59,7 @@ export async function load(
     options: Object) {
 
     console.log(`Load Option: ${JSON.stringify(options)}`);
-    loadDocument(id, version, pageInk, disableCache, config, template, connect, options).catch((error) => {
+    loadDocument(id, version, token, pageInk, disableCache, config, template, connect, options).catch((error) => {
         console.error(error);
     });
 }
@@ -66,6 +67,7 @@ export async function load(
 async function loadDocument(
     id: string,
     version: resources.ICommit,
+    token: string,
     pageInk: boolean,
     disableCache: boolean,
     config: any,
@@ -84,7 +86,7 @@ async function loadDocument(
         config.historianApi,
         config.credentials);
     console.log(`collabDoc loading ${id} - ${performanceNow()}`);
-    const collabDoc = await API.load(id, { blockUpdateMarkers: true }, version, connect);
+    const collabDoc = await API.load(id, { blockUpdateMarkers: true, token }, version, connect);
     console.log(`collabDoc loaded ${id} - ${performanceNow()}`);
     const root = await collabDoc.getRoot().getView();
     console.log(`Getting root ${id} - ${performanceNow()}`);

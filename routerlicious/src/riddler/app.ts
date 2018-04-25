@@ -4,10 +4,7 @@ import { Express } from "express";
 import * as utils from "../utils";
 import * as api from "./api";
 
-export function create(
-    collectionName: string,
-    mongoManager: utils.MongoManager,
-    hashKey: string) {
+export function create(collectionName: string, mongoManager: utils.MongoManager) {
 
     // Express app configuration
     const app: Express = express();
@@ -20,7 +17,7 @@ export function create(
 
     app.use(bodyParser.json());
     app.use(bodyParser.urlencoded({ extended: false }));
-    app.use("/api", api.create(collectionName, mongoManager, hashKey));
+    app.use("/api", api.create(collectionName, mongoManager));
 
     // catch 404 and forward to error handler
     app.use((req, res, next) => {

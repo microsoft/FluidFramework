@@ -4,25 +4,7 @@ import * as core from "../core";
 import * as services from "../services";
 import * as utils from "../utils";
 import { AlfredRunner } from "./runner";
-
-/**
- * Normalize a port into a number, string, or false.
- */
-function normalizePort(val) {
-    let normalizedPort = parseInt(val, 10);
-
-    if (isNaN(normalizedPort)) {
-        // named pipe
-        return val;
-    }
-
-    if (normalizedPort >= 0) {
-        // port number
-        return normalizedPort;
-    }
-
-    return false;
-}
+import { IAlfredTenant } from "./tenant";
 
 export class AlfredResources implements utils.IResources {
     public webServerFactory: core.IWebServerFactory;
@@ -33,11 +15,11 @@ export class AlfredResources implements utils.IResources {
         public redisConfig: any,
         public webSocketLibrary: string,
         public tenantManager: ITenantManager,
+        public appTenants: IAlfredTenant[],
         public mongoManager: utils.MongoManager,
         public port: any,
         public documentsCollectionName: string,
-        public metricClientConfig: any,
-        public authEndpoint: string) {
+        public metricClientConfig: any) {
 
         this.webServerFactory = new services.SocketIoWebServerFactory(this.redisConfig);
     }
@@ -67,14 +49,25 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
         const mongoFactory = new services.MongoDbFactory(mongoUrl);
         const mongoManager = new utils.MongoManager(mongoFactory);
         const documentsCollectionName = config.get("mongo:collectionNames:documents");
-        const tenantsCollectionName = config.get("mongo:collectionNames:tenants");
-        const tenantConfig = config.get("tenantConfig");
 
-        // Tenant configuration
-        const tenantManager = await services.TenantManager.Load(mongoManager, tenantConfig, tenantsCollectionName);
+        // create the index on the documents collection
+        const db = await mongoManager.getDatabase();
+        const collection = db.collection<any>(documentsCollectionName);
+        await collection.createIndex(
+            {
+                documentId: 1,
+                tenantId: 1,
+            },
+            true);
+
+        // Manager to query riddler for tenant information
+        const tenantManager = new services.TenantManager(authEndpoint);
+
+        // Tenants attached to the apps this service exposes
+        const appTenants = (config.get("tenantConfig") as any[]).map((tenant) => ({ id: tenant._id, key: tenant.key }));
 
         // This wanst to create stuff
-        let port = normalizePort(process.env.PORT || "3000");
+        let port = utils.normalizePort(process.env.PORT || "3000");
 
         return new AlfredResources(
             config,
@@ -82,11 +75,11 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             redisConfig,
             webSocketLibrary,
             tenantManager,
+            appTenants,
             mongoManager,
             port,
             documentsCollectionName,
-            metricClientConfig,
-            authEndpoint);
+            metricClientConfig);
     }
 }
 
@@ -97,10 +90,10 @@ export class AlfredRunnerFactory implements utils.IRunnerFactory<AlfredResources
             resources.config,
             resources.port,
             resources.tenantManager,
+            resources.appTenants,
             resources.mongoManager,
             resources.producer,
             resources.documentsCollectionName,
-            resources.metricClientConfig,
-            resources.authEndpoint);
+            resources.metricClientConfig);
     }
 }

@@ -6,6 +6,7 @@ import { Deferred } from "../core-utils";
 import * as utils from "../utils";
 import * as app from "./app";
 import * as io from "./io";
+import { IAlfredTenant } from "./tenant";
 
 export class AlfredRunner implements utils.IRunner {
     private server: core.IWebServer;
@@ -16,18 +17,23 @@ export class AlfredRunner implements utils.IRunner {
         private config: Provider,
         private port: string | number,
         private tenantManager: ITenantManager,
+        private appTenants: IAlfredTenant[],
         private mongoManager: utils.MongoManager,
         private producer: utils.kafkaProducer.IProducer,
         private documentsCollectionName: string,
-        private metricClientConfig: any,
-        private authEndpoint: string) {
+        private metricClientConfig: any) {
     }
 
     public start(): Promise<void> {
         this.runningDeferred = new Deferred<void>();
 
         // Create the HTTP server and attach alfred to it
-        const alfred = app.create(this.config, this.tenantManager, this.mongoManager, this.producer);
+        const alfred = app.create(
+            this.config,
+            this.tenantManager,
+            this.appTenants,
+            this.mongoManager,
+            this.producer);
         alfred.set("port", this.port);
 
         this.server = this.serverFactory.create(alfred);
@@ -42,7 +48,8 @@ export class AlfredRunner implements utils.IRunner {
             this.producer,
             this.documentsCollectionName,
             this.metricClientConfig,
-            this.authEndpoint);
+            this.tenantManager,
+            this.appTenants[0]);
 
         // Listen on provided port, on all network interfaces.
         httpServer.listen(this.port);

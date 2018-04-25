@@ -24,7 +24,11 @@ export class CheckpointContext {
     private pendingUpdateP: Promise<void>;
     private pendingCheckpoint: ICheckpoint;
 
-    constructor(private id: string, private collection: core.ICollection<core.IDocument>, private context: IContext) {
+    constructor(
+        private tenantId: string,
+        private id: string,
+        private collection: core.ICollection<core.IDocument>,
+        private context: IContext) {
     }
 
     public checkpoint(checkpoint: ICheckpoint) {
@@ -57,7 +61,8 @@ export class CheckpointContext {
     private checkpointCore(checkpoint: ICheckpoint) {
         const updateP = this.collection.update(
             {
-                _id: this.id,
+                documentId: this.id,
+                tenantId: this.tenantId,
             },
             checkpoint,
             null);

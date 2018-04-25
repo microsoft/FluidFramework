@@ -14,8 +14,10 @@ export class RouteMasterLambdaFactory implements IPartitionLambdaFactory {
     }
 
     public async create(config: Provider, context: IContext): Promise<IPartitionLambda> {
-        const id = config.get("documentId");
-        const documentDetails = await DocumentManager.Create(id, this.collection, this.deltas);
+        const documentId = config.get("documentId");
+        const tenantId = config.get("tenantId");
+
+        const documentDetails = await DocumentManager.Create(tenantId, documentId, this.collection, this.deltas);
 
         return new RouteMasterLambda(documentDetails, this.producer, context);
     }

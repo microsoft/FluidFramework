@@ -2,6 +2,7 @@ import { Router } from "express";
 import { Provider } from "nconf";
 import { ITenantManager } from "../../api-core";
 import * as utils from "../../utils";
+import { IAlfredTenant } from "../tenant";
 import * as agent from "./agent";
 import * as api from "./api";
 import * as canvas from "./canvas";
@@ -41,24 +42,25 @@ export function create(
     config: Provider,
     tenantManager: ITenantManager,
     mongoManager: utils.MongoManager,
-    producer: utils.kafkaProducer.IProducer) {
+    producer: utils.kafkaProducer.IProducer,
+    appTenants: IAlfredTenant[]) {
 
     return {
         agent: agent.create(config),
-        api: api.create(config, tenantManager, mongoManager, producer),
-        canvas: canvas.create(config, tenantManager),
-        cell: cell.create(config, tenantManager),
+        api: api.create(config, tenantManager, mongoManager, producer, appTenants),
+        canvas: canvas.create(config, tenantManager, appTenants),
+        cell: cell.create(config, tenantManager, appTenants),
         demoCreator: demoCreator.create(config),
-        graph: graph.create(config, tenantManager),
+        graph: graph.create(config, tenantManager, appTenants),
         home: home.create(config),
         intelligence: intelligence.create(config),
         login: login.create(config),
-        maps: maps.create(config, tenantManager),
+        maps: maps.create(config, tenantManager, appTenants),
         ping: ping.create(),
-        scribe: scribe.create(config),
-        sharedText: sharedText.create(config, tenantManager, mongoManager, producer),
+        scribe: scribe.create(config, appTenants),
+        sharedText: sharedText.create(config, tenantManager, mongoManager, producer, appTenants),
         templates: templates.create(config),
-        video: video.create(config, tenantManager),
-        youtubeVideo: youtubeVideo.create(config, tenantManager),
+        video: video.create(config, tenantManager, appTenants),
+        youtubeVideo: youtubeVideo.create(config, tenantManager, appTenants),
     };
 }

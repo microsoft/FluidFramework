@@ -15,9 +15,11 @@ export async function create(config: Provider): Promise<IPartitionLambdaFactory>
 
     const db = await mongoManager.getDatabase();
     const collection = db.collection(deltasCollectionName);
-    await collection.createIndex({
+    await collection.createIndex(
+        {
             "documentId": 1,
             "operation.sequenceNumber": 1,
+            "tenantId": 1,
         },
         true);
 

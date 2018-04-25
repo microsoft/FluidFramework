@@ -41,7 +41,7 @@ export class MessageFactory {
     private clientSequenceNumber = 0;
     private sequenceNumber = 0;
 
-    constructor(private documentId, private clientId) {
+    constructor(private documentId, private clientId, private tenantId = "test") {
     }
 
     public createDocumentMessage(referenceSequenceNumber = 0): api.IDocumentMessage {
@@ -89,6 +89,7 @@ export class MessageFactory {
             clientId,
             documentId: this.documentId,
             operation,
+            tenantId: this.tenantId,
             timestamp,
             type: RawOperationType,
             user: null,
@@ -124,6 +125,7 @@ export class MessageFactory {
         const message: ISequencedOperationMessage = {
             documentId: this.documentId,
             operation: sequencedOperation,
+            tenantId: this.tenantId,
             type: SequencedOperationType,
         };
 
@@ -148,6 +150,7 @@ export class MessageFactory {
         const message: ISequencedOperationMessage = {
             documentId: this.documentId,
             operation: sequencedOperation,
+            tenantId: this.tenantId,
             type: SequencedOperationType,
         };
 

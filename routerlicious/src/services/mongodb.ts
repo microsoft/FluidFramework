@@ -28,8 +28,9 @@ export class MongoCollection<T> implements core.ICollection<T> {
         return this.updateCore(filter, set, addToSet, true);
     }
 
-    public async insertOne(value: T): Promise<void> {
-        await this.collection.insertOne(value);
+    public async insertOne(value: T): Promise<any> {
+        const result = await this.collection.insertOne(value);
+        return result.insertedId;
     }
 
     public async insertMany(values: T[], ordered: boolean): Promise<void> {

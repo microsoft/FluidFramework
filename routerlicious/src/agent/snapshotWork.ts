@@ -9,12 +9,12 @@ const MaxTimeWithoutSnapshot = IdleDetectionTime * 12;
 const SnapshotRetryTime = 1000;
 
 export class SnapshotWork extends BaseWork implements IWork {
-    constructor(docId: string, config: any, private service: core.IDocumentService) {
+    constructor(docId: string, private token: string, config: any, private service: core.IDocumentService) {
         super(docId, config);
     }
 
     public async start(): Promise<void> {
-        await this.loadDocument({ encrypted: undefined, localMinSeq: 0 }, this.service);
+        await this.loadDocument({ encrypted: undefined, localMinSeq: 0, token: this.token }, this.service);
         const serializer = new Serializer(this.document, IdleDetectionTime, MaxTimeWithoutSnapshot, SnapshotRetryTime);
         const eventHandler = (op: core.ISequencedDocumentMessage) => {
             serializer.run(op);

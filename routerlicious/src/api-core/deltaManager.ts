@@ -2,7 +2,7 @@ import * as assert from "assert";
 import * as queue from "async/queue";
 import { EventEmitter } from "events";
 import cloneDeep = require("lodash/cloneDeep");
-import { Deferred, IAuthenticatedUser } from "../core-utils";
+import { Deferred } from "../core-utils";
 import { debug } from "./debug";
 import { IDeltaManager, IDeltaQueue } from "./document";
 import * as protocol from "./protocol";
@@ -12,7 +12,7 @@ export interface IConnectionDetails {
     clientId: string;
     existing: boolean;
     parentBranch: string;
-    user: IAuthenticatedUser;
+    user: protocol.IAuthenticatedUser;
 }
 
 class DeltaQueue<T> extends EventEmitter implements IDeltaQueue {
@@ -84,8 +84,8 @@ export interface IDeltaHandlerStrategy {
 }
 
 class DeltaConnection extends EventEmitter {
-    public static async Connect(id: string, token: string, service: storage.IDocumentService) {
-        const connection = await service.connectToDeltaStream(id, token);
+    public static async Connect(tenantId: string, id: string, token: string, service: storage.IDocumentService) {
+        const connection = await service.connectToDeltaStream(tenantId, id, token);
         return new DeltaConnection(connection);
     }
 
@@ -220,6 +220,7 @@ export class DeltaManager implements IDeltaManager {
     }
 
     constructor(
+        private tenantId: string,
         private id: string,
         private baseSequenceNumber: number,
         pendingMessages: protocol.ISequencedDocumentMessage[],
@@ -320,7 +321,7 @@ export class DeltaManager implements IDeltaManager {
             this.connection = null;
         }
 
-        this.connection = await DeltaConnection.Connect(this.id, token, this.service);
+        this.connection = await DeltaConnection.Connect(this.tenantId, this.id, token, this.service);
         this.clientSequenceNumber = 0;
 
         this.connection.on("op", (documentId: string, messages: protocol.ISequencedDocumentMessage[]) => {

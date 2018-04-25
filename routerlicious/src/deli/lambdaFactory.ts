@@ -16,14 +16,22 @@ export class DeliLambdaFactory implements IPartitionLambdaFactory {
 
     public async create(config: Provider, context: IContext): Promise<IPartitionLambda> {
         const documentId = config.get("documentId");
+        const tenantId = config.get("tenantId");
 
         // Lookup the last sequence number stored
-        const dbObject = await this.collection.findOne({ _id: documentId });
+        const dbObject = await this.collection.findOne({ documentId, tenantId });
         if (!dbObject) {
             return Promise.reject("Object does not exist - cannot sequence");
         }
 
-        return new DeliLambda(context, documentId, dbObject, this.collection, this.producer, ClientSequenceTimeout);
+        return new DeliLambda(
+            context,
+            tenantId,
+            documentId,
+            dbObject,
+            this.collection,
+            this.producer,
+            ClientSequenceTimeout);
     }
 
     public async dispose(): Promise<void> {

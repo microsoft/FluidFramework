@@ -1,11 +1,10 @@
 import * as git from "gitresources";
 import * as api from "../../api-core";
-import { IAuthenticatedUser } from "../../core-utils";
 
 export class TestDocumentDeltaConnection implements api.IDocumentDeltaConnection {
     public existing: boolean;
     public parentBranch: string;
-    public user: IAuthenticatedUser;
+    public user: api.IAuthenticatedUser;
     public clientId: string;
     public documentId: string;
     public encrypted: boolean;
