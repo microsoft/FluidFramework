@@ -8,7 +8,7 @@ import * as utils from "../utils";
 import * as messages from "./messages";
 import * as workerFactory from "./workerFactory";
 
-interface IThing {
+interface IDocumentHandle {
     tenantId: string;
     documentId: string;
 }
@@ -74,7 +74,7 @@ export class TmzRunner implements utils.IRunner {
                     this.foreman.getManager().addWorker(newWorker);
                     // Process all pending tasks once the first worker joins.
                     if (!this.workerJoined) {
-                        let workIds = Array.from(this.pendingWork).map((work) => JSON.parse(work) as IThing);
+                        let workIds = Array.from(this.pendingWork).map((work) => JSON.parse(work) as IDocumentHandle);
                         await this.processDocuments(workIds);
                         this.pendingWork.clear();
                         this.workerJoined = true;
@@ -124,7 +124,7 @@ export class TmzRunner implements utils.IRunner {
     }
 
     public async trackDocument(tenantId: string, documentId: string): Promise<void> {
-        const document: IThing = { documentId, tenantId };
+        const document: IDocumentHandle = { documentId, tenantId };
 
         // Check if already requested. Update the Timestamp in the process.
         if (this.foreman.getManager().updateDocumentIfFound(tenantId, documentId)) {
@@ -142,7 +142,7 @@ export class TmzRunner implements utils.IRunner {
     }
 
     // Request subscribers to pick up the work for a new/expired document.
-    private async processDocuments(ids: IThing[]) {
+    private async processDocuments(ids: IDocumentHandle[]) {
         function fullId(tenantId: string, documentId: string) {
             return `${tenantId}/${documentId}`;
         }
