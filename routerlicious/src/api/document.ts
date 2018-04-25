@@ -1,6 +1,7 @@
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import * as resources from "gitresources";
+import * as jwt from "jsonwebtoken";
 import * as uuid from "uuid/v4";
 import performanceNow = require("performance-now");
 import {
@@ -157,20 +158,20 @@ class NullServices implements api.IDocumentService {
     constructor(private service: api.IDocumentService, private parentBranch: string) {
     }
 
-    public connectToStorage(id: string, token: string): Promise<IDocumentStorageService> {
-        return this.service.connectToStorage(id, token);
+    public connectToStorage(tenantId: string, id: string, token: string): Promise<IDocumentStorageService> {
+        return this.service.connectToStorage(tenantId, id, token);
     }
 
-    public connectToDeltaStorage(id: string, token: string): Promise<IDocumentDeltaStorageService> {
-        return this.service.connectToDeltaStorage(id, token);
+    public connectToDeltaStorage(tenantId: string, id: string, token: string): Promise<IDocumentDeltaStorageService> {
+        return this.service.connectToDeltaStorage(tenantId, id, token);
     }
 
-    public connectToDeltaStream(id: string, token: string): Promise<api.IDocumentDeltaConnection> {
+    public connectToDeltaStream(tenantId: string, id: string, token: string): Promise<api.IDocumentDeltaConnection> {
         return Promise.resolve(new NullDeltaConnection(id, this.parentBranch));
     }
 
-    public branch(id: string, token: string): Promise<string> {
-        return this.service.branch(id, token);
+    public branch(tenantId: string, id: string, token: string): Promise<string> {
+        return this.service.branch(tenantId, id, token);
     }
 }
 
@@ -204,8 +205,10 @@ export class Document extends EventEmitter {
         debug(`Document loading ${id} - ${performanceNow()}`);
 
         const token = options.token;
-        const storageP = service.connectToStorage(id, token);
-        const deltaStorageP = service.connectToDeltaStorage(id, token);
+        // TODO can remove default tenant once we require the token
+        const tenantId = token ? (jwt.decode(token) as any).tenantId : "git";
+        const storageP = service.connectToStorage(tenantId, id, token);
+        const deltaStorageP = service.connectToDeltaStorage(tenantId, id, token);
 
         // If a version is specified we will load it directly - otherwise will query historian for the latest
         // version and then load it
@@ -231,6 +234,7 @@ export class Document extends EventEmitter {
 
         const documentServices = connect ? service : new NullServices(service, header.attributes.branch);
         const document = new Document(
+            tenantId,
             id,
             version,
             deltaStorage,
@@ -393,6 +397,7 @@ export class Document extends EventEmitter {
      * Constructs a new document from the provided details
      */
     private constructor(
+        private tenantId: string,
         // tslint:disable-next-line:variable-name
         private _id: string,
         private version: resources.ICommit,
@@ -414,6 +419,7 @@ export class Document extends EventEmitter {
         const pendingMessages = header.transformedMessages.concat(pendingDeltas);
 
         this._deltaManager = new DeltaManager(
+            tenantId,
             this.id,
             header.attributes.minimumSequenceNumber,
             pendingMessages,
@@ -565,7 +571,7 @@ export class Document extends EventEmitter {
     }
 
     public branch(): Promise<string> {
-        return this.service.branch(this.id, this.token);
+        return this.service.branch(this.tenantId, this.id, this.token);
     }
 
     /**

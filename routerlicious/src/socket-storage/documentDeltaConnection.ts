@@ -9,6 +9,7 @@ import * as messages from "./messages";
  */
 export class DocumentDeltaConnection implements api.IDocumentDeltaConnection {
     public static async Create(
+        tenantId: string,
         id: string,
         token: string,
         io: SocketIOClientStatic,
@@ -21,13 +22,9 @@ export class DocumentDeltaConnection implements api.IDocumentDeltaConnection {
                 transports: ["websocket"],
             });
 
-        const indexSplit = id.indexOf("/");
-        const tenantId = indexSplit === -1 ? null : id.substr(0, indexSplit);
-        const documentId = indexSplit === -1 ? id : id.substr(indexSplit + 1);
-
         const connectMessage: messages.IConnect = {
             tenantId,
-            id: documentId,
+            id,
             token,  // token is going to indicate tenant level information, etc...
         };
 

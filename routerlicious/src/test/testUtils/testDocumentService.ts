@@ -38,19 +38,26 @@ export class TestDocumentService implements api.IDocumentService {
     constructor(private deltaStorage: api.IDeltaStorageService) {
     }
 
-    public async connectToStorage(id: string, token: string): Promise<api.IDocumentStorageService> {
+    public async connectToStorage(tenantId: string, id: string, token: string): Promise<api.IDocumentStorageService> {
         return new TestDocumentStorageService();
     }
 
-    public async connectToDeltaStorage(id: string, token: string): Promise<api.IDocumentDeltaStorageService> {
-        return new DocumentDeltaStorageService(id, this.deltaStorage);
+    public async connectToDeltaStorage(
+        tenantId: string,
+        id: string,
+        token: string): Promise<api.IDocumentDeltaStorageService> {
+        return new DocumentDeltaStorageService(tenantId, id, this.deltaStorage);
     }
 
-    public async connectToDeltaStream(id: string, token: string): Promise<api.IDocumentDeltaConnection> {
+    public async connectToDeltaStream(
+        tenantId: string,
+        id: string,
+        token: string): Promise<api.IDocumentDeltaConnection> {
+
         return new TestDocumentDeltaConnection(id, "test-client", false, "", null);
     }
 
-    public branch(id: string, token: string): Promise<string> {
+    public branch(tenantId: string, id: string, token: string): Promise<string> {
         return Promise.reject("Not implemented");
     }
 }
