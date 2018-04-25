@@ -740,6 +740,11 @@ export class Marker extends BaseSegment implements ReferencePosition {
         let id = this.getId();
         if (id) {
             bbuf += ` (${id}) `;
+        } else {
+            let localId=this.getLocalId();
+            if (localId) {
+                bbuf+=` (LOC ${id}) `;
+            }
         }
         if (this.hasTileLabels()) {
             lbuf += "tile -- ";

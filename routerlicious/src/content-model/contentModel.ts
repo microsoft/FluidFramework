@@ -18,6 +18,14 @@ export function sharedStringModel(): core.IContentModelExtension {
         Table.finishDeletedRow(op.macroOp.params["rowId"], msg, sharedString);
     }
 
+    function deleteCellShiftLeft(op: MergeTree.IMergeTreeGroupMsg, msg: core.ISequencedObjectMessage, sharedString: SharedString) {
+        Table.finishDeletedCell(op.macroOp.params["cellPos"], msg, sharedString);
+    }
+
+    function deleteColumn(op: MergeTree.IMergeTreeGroupMsg, msg: core.ISequencedObjectMessage, sharedString: SharedString) {
+        Table.finishDeletedColumn(op.macroOp.params["cellPos"], op.macroOp.params["rowId"], msg, sharedString);
+    }
+
     function exec(message: core.ISequencedObjectMessage, instance: ICollaborativeObject) {
         if (message.type === core.OperationType) {
             let op = <MergeTree.IMergeTreeOp>message.contents;
@@ -31,6 +39,12 @@ export function sharedStringModel(): core.IContentModelExtension {
                         break;
                     case "deleteRow":
                         deleteRow(op, message, <SharedString>instance);
+                        break;
+                    case "deleteCellShiftLeft":
+                        deleteCellShiftLeft(op, message, <SharedString>instance);
+                        break;
+                    case "deleteColumn":
+                        deleteColumn(op, message, <SharedString>instance);
                         break;
                 }
             }

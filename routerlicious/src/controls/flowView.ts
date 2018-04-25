@@ -275,9 +275,41 @@ let commands: ICmd[] = [
     },
     {
         exec: (f) => {
+            f.insertRow();
+            f.insertColumn();
+        },
+        key: "insert row then col",
+    },
+    {
+        exec: (f) => {
+            f.crazyTable(40);
+        },
+        key: "crazy table",
+    },
+    {
+        exec: (f) => {
+            f.insertColumn();
+            f.insertRow();
+        },
+        key: "insert col then row",
+    },
+    {
+        exec: (f) => {
             f.deleteRow();
         },
         key: "delete row",
+    },
+    {
+        exec: (f) => {
+            f.deleteCellShiftLeft();
+        },
+        key: "delete cell shift left",
+    },
+    {
+        exec: (f) => {
+            f.deleteColumn();
+        },
+        key: "delete column",
     },
     {
         exec: (f) => {
@@ -1322,10 +1354,35 @@ function isInnerCell(cellView: ICellView, layoutInfo: ILayoutContext) {
 interface ICellView extends Table.Cell {
     viewport: Viewport;
     renderOutput: IRenderOutput;
+    borderRect: HTMLElement;
+    svgElm: HTMLElement;
+}
+
+let svgNS = "http://www.w3.org/2000/svg";
+
+function createSVGWrapper(w: number, h: number) {
+    let svg = <HTMLElement>document.createElementNS(svgNS, "svg");
+    svg.style.zIndex = "-1";
+    svg.setAttribute("width", w.toString());
+    svg.setAttribute("height", h.toString());
+    return svg;
+}
+
+function createSVGRect(r: ui.Rectangle) {
+    let rect = <HTMLElement>document.createElementNS(svgNS, "rect");
+    rect.setAttribute("x", r.x.toString());
+    rect.setAttribute("y", r.y.toString());
+    rect.setAttribute("width", r.width.toString());
+    rect.setAttribute("height", r.height.toString());
+    rect.setAttribute("stroke", "blue");
+    rect.setAttribute("stroke-width", "1px");
+    rect.setAttribute("fill", "none");
+    return rect;
 }
 
 function layoutCell(
-    cellView: ICellView, layoutInfo: ILayoutContext, targetTranslation: string, defer = false, rightmost = false) {
+    cellView: ICellView, layoutInfo: ILayoutContext, targetTranslation: string, defer = false,
+    leftmost = false, top = false) {
     let cellRect = new ui.Rectangle(0, 0, cellView.specWidth, 0);
     let cellViewportWidth = cellView.specWidth - (2 * layoutInfo.docContext.cellHMargin);
     let cellViewportRect = new ui.Rectangle(layoutInfo.docContext.cellHMargin, 0,
@@ -1333,9 +1390,6 @@ function layoutCell(
     let cellDiv = document.createElement("div");
     cellView.div = cellDiv;
     cellRect.conformElementOpenHeight(cellDiv);
-    if (!rightmost) {
-        cellDiv.style.borderRight = "1px solid black";
-    }
     let client = layoutInfo.flowView.client;
     let mergeTree = client.mergeTree;
     let transferDeferredHeight = false;
@@ -1370,6 +1424,10 @@ function layoutCell(
         layoutInfo.deferUntilHeight = cellView.renderOutput.deferredHeight;
     }
     cellView.renderedHeight = cellLayoutInfo.viewport.getLineTop();
+    cellView.svgElm = createSVGWrapper(cellRect.width, cellView.renderedHeight);
+    cellView.borderRect = createSVGRect(new ui.Rectangle(0, 0, cellRect.width, cellView.renderedHeight));
+    cellView.svgElm.appendChild(cellView.borderRect);
+    cellView.div.appendChild(cellView.svgElm);
     if (cellLayoutInfo.reRenderList) {
         if (!layoutInfo.reRenderList) {
             layoutInfo.reRenderList = [];
@@ -1378,15 +1436,6 @@ function layoutCell(
             layoutInfo.reRenderList.push(lineDiv);
         }
     }
-}
-
-function setRowBorders(rowDiv: HTMLDivElement, top = false) {
-    rowDiv.style.borderLeft = "1px solid black";
-    rowDiv.style.borderRight = "1px solid black";
-    if (top) {
-        rowDiv.style.borderTop = "1px solid black";
-    }
-    rowDiv.style.borderBottom = "1px solid black";
 }
 
 function renderTable(
@@ -1428,23 +1477,25 @@ function renderTable(
     let foundStartRow = (startRow === undefined);
     let tableHeight = 0;
     let deferredHeight = 0;
-    let topRow = (layoutInfo.startingPosStack !== undefined) && (layoutInfo.stackIndex === 0);
     let firstRendered = true;
+    let prevRenderedRow: Table.Row;
+    let prevCellCount;
+    let topRow = (layoutInfo.startingPosStack !== undefined) && (layoutInfo.stackIndex === 0);
     for (let rowIndex = 0, rowCount = tableView.rows.length; rowIndex < rowCount; rowIndex++) {
+        let cellCount = 0;
         let rowView = tableView.rows[rowIndex];
         let rowHeight = 0;
         if (startRow === rowView) {
             foundStartRow = true;
         }
         let renderRow = (!defer) && (deferredHeight >= layoutInfo.deferUntilHeight) &&
-        foundStartRow && (!Table.rowIsMoribund(rowView.rowMarker));
+            foundStartRow && (!Table.rowIsMoribund(rowView.rowMarker));
         let rowDiv: IRowDiv;
         if (renderRow) {
-            let rowRect = new ui.Rectangle(tableIndent, layoutInfo.viewport.getLineTop(), tableWidth, 0);
+            let y = layoutInfo.viewport.getLineTop();
+            let rowRect = new ui.Rectangle(tableIndent, y, tableWidth, 0);
             rowDiv = <IRowDiv>document.createElement("div");
             rowDiv.rowView = rowView;
-            setRowBorders(rowDiv, firstRendered);
-            firstRendered = false;
             rowRect.conformElementOpenHeight(rowDiv);
             if (topRow && startCell) {
                 layoutCell(
@@ -1452,17 +1503,27 @@ function renderTable(
                     layoutInfo,
                     targetTranslation,
                     defer,
-                    startCell === rowView.cells[rowView.cells.length - 1]);
+                    startCell === rowView.cells[0],
+                    firstRendered);
                 deferredHeight += startCell.renderOutput.deferredHeight;
                 rowHeight = startCell.renderedHeight;
+                cellCount++;
             }
         }
         let cellX = 0;
-        for (let cellIndex = 0, cellCount = rowView.cells.length; cellIndex < cellCount; cellIndex++) {
+        for (let cellIndex = 0, cellsLen = rowView.cells.length; cellIndex < cellsLen; cellIndex++) {
             let cell = <ICellView>rowView.cells[cellIndex];
-            if (!topRow || (cell !== startCell)) {
+            if ((!topRow || (cell !== startCell)) && (!Table.cellIsMoribund(cell.marker))) {
+                let noCellAbove = false;
+                if (prevRenderedRow) {
+                    if (prevCellCount <= cellIndex) {
+                        noCellAbove = true;
+                    }
+                }
                 layoutCell(cell, layoutInfo, targetTranslation, defer,
-                    cell === rowView.cells[rowView.cells.length - 1]);
+                    cell === rowView.cells[0],
+                    firstRendered || noCellAbove);
+                cellCount++;
                 if (rowHeight < cell.renderedHeight) {
                     rowHeight = cell.renderedHeight;
                 }
@@ -1473,20 +1534,42 @@ function renderTable(
                     cell.div.style.left = `${cellX}px`;
                     rowDiv.appendChild(cell.div);
                 }
-                cellX += cell.specWidth;
+                cellX += (cell.specWidth - 1);
             }
         }
+        firstRendered = false;
         if (renderRow) {
             let heightVal = `${rowHeight}px`;
-            for (let cellIndex = 0, cellCount = rowView.cells.length; cellIndex < cellCount; cellIndex++) {
-                let cell = rowView.cells[cellIndex];
-                cell.div.style.height = heightVal;
+            let adjustRowWidth = 0;
+            for (let cellIndex = 0, cellsLen = rowView.cells.length; cellIndex < cellsLen; cellIndex++) {
+                let cell = <ICellView>rowView.cells[cellIndex];
+                if (cell.div) {
+                    cell.div.style.height = heightVal;
+                    cell.svgElm.setAttribute("height", heightVal);
+                    cell.borderRect.setAttribute("height", heightVal);
+                } else {
+                    adjustRowWidth += tableView.columns[cellIndex].width;
+                }
             }
-            tableHeight += rowHeight;
-            layoutInfo.viewport.commitLineDiv(rowDiv, rowHeight);
+            if (rowView.cells.length < tableView.columns.length) {
+                for (let columnIndex = rowView.cells.length; columnIndex < tableView.columns.length; columnIndex++) {
+                    adjustRowWidth += tableView.columns[columnIndex].width;
+                }
+            }
+            let heightAdjust = 0;
+            if (!firstRendered) {
+                heightAdjust = 1;
+            }
+            tableHeight += (rowHeight - heightAdjust);
+            layoutInfo.viewport.commitLineDiv(rowDiv, rowHeight - heightAdjust);
             rowDiv.style.height = heightVal;
+            if (adjustRowWidth) {
+                rowDiv.style.width = `${tableWidth - adjustRowWidth}px`;
+            }
             rowDiv.linePos = rowView.pos;
             rowDiv.lineEnd = rowView.endPos;
+            prevRenderedRow = rowView;
+            prevCellCount = cellCount;
             layoutInfo.viewport.div.appendChild(rowDiv);
         }
         if (topRow) {
@@ -1505,31 +1588,31 @@ function renderTable(
 }
 
 function showCell(pos: number, flowView: FlowView) {
-    let client= flowView.client;
+    let client = flowView.client;
     let startingPosStack =
         flowView.client.mergeTree.getStackContext(pos, client.getClientId(), ["cell"]);
     if (startingPosStack.cell && (!startingPosStack.cell.empty())) {
         let cellMarker = <Table.ICellMarker>startingPosStack.cell.top();
         let start = getOffset(flowView, cellMarker);
         let endMarker = cellMarker.view.endMarker;
-        let end = getOffset(flowView, endMarker)+1;
+        let end = getOffset(flowView, endMarker) + 1;
         // tslint:disable:max-line-length
         console.log(`cell ${cellMarker.getId()} seq ${cellMarker.seq} clid ${cellMarker.clientId} at [${start},${end})`);
-        console.log(`cell contents: ${flowView.client.getTextRangeWithMarkers(start,end)}`);
+        console.log(`cell contents: ${flowView.client.getTextRangeWithMarkers(start, end)}`);
     }
 }
 
 function showTable(pos: number, flowView: FlowView) {
-    let client= flowView.client;
+    let client = flowView.client;
     let startingPosStack =
         flowView.client.mergeTree.getStackContext(pos, client.getClientId(), ["table"]);
     if (startingPosStack.table && (!startingPosStack.table.empty())) {
         let tableMarker = <Table.ITableMarker>startingPosStack.table.top();
         let start = getOffset(flowView, tableMarker);
         let endMarker = tableMarker.view.endTableMarker;
-        let end = getOffset(flowView, endMarker)+1;
+        let end = getOffset(flowView, endMarker) + 1;
         console.log(`table ${tableMarker.getId()} at [${start},${end})`);
-        console.log(`table contents: ${flowView.client.getTextRangeWithMarkers(start,end)}`);
+        console.log(`table contents: ${flowView.client.getTextRangeWithMarkers(start, end)}`);
     }
 }
 
@@ -2962,11 +3045,13 @@ export class FlowView extends ui.Component {
             oldRowDiv = rowDiv;
             lineDiv = undefined;
             for (let cell of rowDiv.rowView.cells) {
-                let innerDiv = this.lineDivSelect(fn, (cell as ICellView).viewport.div, true, rev);
-                if (innerDiv) {
-                    lineDiv = innerDiv;
-                    rowDiv = <IRowDiv>innerDiv;
-                    break;
+                if (cell.div) {
+                    let innerDiv = this.lineDivSelect(fn, (cell as ICellView).viewport.div, true, rev);
+                    if (innerDiv) {
+                        lineDiv = innerDiv;
+                        rowDiv = <IRowDiv>innerDiv;
+                        break;
+                    }
                 }
             }
         }
@@ -3111,6 +3196,23 @@ export class FlowView extends ui.Component {
                     if (marker.hasRangeLabel("table") && (marker.refType & MergeTree.ReferenceType.NestEnd)) {
                         this.cursorRev();
                     }
+                } else if ((marker.refType === MergeTree.ReferenceType.NestEnd) && (marker.hasRangeLabel("cell"))) {
+                    let cellMarker = <Table.ICellMarker>marker;
+                    let endId = cellMarker.getId();
+                    let beginMarker: Table.ICellMarker;
+                    if (endId) {
+                        let id = Table.idFromEndId(endId);
+                        beginMarker = <Table.ICellMarker>this.sharedString.client.mergeTree.getSegmentFromId(id);
+                    } else {
+                        endId = cellMarker.getLocalId();
+                        let localId = Table.idFromEndId(endId);
+                        beginMarker = <Table.ICellMarker>this.sharedString.client.mergeTree.getSegmentFromLocalId(localId);
+                    }
+                    if (beginMarker && Table.cellIsMoribund(beginMarker)) {
+                        this.tryMoveCell(this.cursor.pos, true);
+                    } else {
+                        this.cursorRev();
+                    }
                 } else {
                     this.cursorRev();
                 }
@@ -3140,7 +3242,11 @@ export class FlowView extends ui.Component {
                     } else if (marker.hasRangeLabel("row")) {
                         this.cursor.pos += 2;
                     } else if (marker.hasRangeLabel("cell")) {
-                        this.cursor.pos += 1;
+                        if (Table.cellIsMoribund(marker)) {
+                            this.tryMoveCell(this.cursor.pos);
+                        } else {
+                            this.cursor.pos += 1;
+                        }
                     } else {
                         this.cursorFwd();
                     }
@@ -3588,43 +3694,50 @@ export class FlowView extends ui.Component {
         }
     }
 
+    public tryMoveCell(pos: number, shift = false) {
+        let cursorContext =
+            this.client.mergeTree.getStackContext(pos, this.client.getClientId(), ["table", "cell", "row"]);
+        if (cursorContext.table && (!cursorContext.table.empty())) {
+            let tableMarker = <Table.ITableMarker>cursorContext.table.top();
+            let tableView = tableMarker.view;
+            if (cursorContext.cell && (!cursorContext.cell.empty())) {
+                let cell = <Table.ICellMarker>cursorContext.cell.top();
+                let toCell: Table.Cell;
+                if (shift) {
+                    toCell = tableView.prevcell(cell.view);
+                } else {
+                    toCell = tableView.nextcell(cell.view);
+                }
+                if (toCell) {
+                    let offset = this.client.mergeTree.getOffset(toCell.marker,
+                        MergeTree.UniversalSequenceNumber, this.client.getClientId());
+                    this.cursor.pos = offset + 1;
+                } else {
+                    if (shift) {
+                        let offset = this.client.mergeTree.getOffset(tableView.tableMarker,
+                            MergeTree.UniversalSequenceNumber, this.client.getClientId());
+                        this.cursor.pos = offset - 1;
+                    } else {
+                        let endOffset = this.client.mergeTree.getOffset(tableView.endTableMarker,
+                            MergeTree.UniversalSequenceNumber, this.client.getClientId());
+                        this.cursor.pos = endOffset + 1;
+                    }
+                }
+                this.updatePresence();
+                this.cursor.updateView(this);
+            }
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     // TODO: tab stops in non-list, non-table paragraphs
     public onTAB(shift = false) {
         let searchPos = this.cursor.pos;
         let tileInfo = findTile(this, searchPos, "pg", false);
         if (tileInfo) {
-            let cursorContext =
-                this.client.mergeTree.getStackContext(tileInfo.pos, this.client.getClientId(), ["table", "cell", "row"]);
-            if (cursorContext.table && (!cursorContext.table.empty())) {
-                let tableMarker = <Table.ITableMarker>cursorContext.table.top();
-                let tableView = tableMarker.view;
-                if (cursorContext.cell && (!cursorContext.cell.empty())) {
-                    let cell = <Table.ICellMarker>cursorContext.cell.top();
-                    let toCell: Table.Cell;
-                    if (shift) {
-                        toCell = tableView.prevcell(cell.view);
-                    } else {
-                        toCell = tableView.nextcell(cell.view);
-                    }
-                    if (toCell) {
-                        let offset = this.client.mergeTree.getOffset(toCell.marker,
-                            MergeTree.UniversalSequenceNumber, this.client.getClientId());
-                        this.cursor.pos = offset + 1;
-                    } else {
-                        if (shift) {
-                            let offset = this.client.mergeTree.getOffset(tableView.tableMarker,
-                                MergeTree.UniversalSequenceNumber, this.client.getClientId());
-                            this.cursor.pos = offset - 1;
-                        } else {
-                            let endOffset = this.client.mergeTree.getOffset(tableView.endTableMarker,
-                                MergeTree.UniversalSequenceNumber, this.client.getClientId());
-                            this.cursor.pos = endOffset + 1;
-                        }
-                    }
-                    this.updatePresence();
-                    this.cursor.updateView(this);
-                }
-            } else {
+            if (!this.tryMoveCell(tileInfo.pos, shift)) {
                 let tile = <Paragraph.IParagraphMarker>tileInfo.tile;
                 this.increaseIndent(tile, tileInfo.pos, shift);
             }
@@ -3811,6 +3924,39 @@ export class FlowView extends ui.Component {
         }
     }
 
+    public deleteCellShiftLeft() {
+        let stack =
+            this.sharedString.client.mergeTree.getStackContext(this.cursor.pos,
+                this.sharedString.client.getClientId(), ["table", "cell", "row"]);
+        if (stack.table && (!stack.table.empty())) {
+            let tableMarker = <Table.ITableMarker>stack.table.top();
+            let cellMarker = <Table.ICellMarker>stack.cell.top();
+            if (!tableMarker.view) {
+                let tableMarkerPos = getOffset(this, tableMarker);
+                Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
+            }
+            Table.deleteCellShiftLeft(this.sharedString, cellMarker.view, tableMarker.view);
+            this.localQueueRender(this.cursor.pos);
+        }
+    }
+
+    public deleteColumn() {
+        let stack =
+            this.sharedString.client.mergeTree.getStackContext(this.cursor.pos,
+                this.sharedString.client.getClientId(), ["table", "cell", "row"]);
+        if (stack.table && (!stack.table.empty())) {
+            let tableMarker = <Table.ITableMarker>stack.table.top();
+            let rowMarker = <Table.IRowMarker>stack.row.top();
+            let cellMarker = <Table.ICellMarker>stack.cell.top();
+            if (!tableMarker.view) {
+                let tableMarkerPos = getOffset(this, tableMarker);
+                Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
+            }
+            Table.deleteColumn(this.sharedString, cellMarker.view, rowMarker.view, tableMarker.view);
+            this.localQueueRender(this.cursor.pos);
+        }
+    }
+
     public insertRow() {
         let stack =
             this.sharedString.client.mergeTree.getStackContext(this.cursor.pos,
@@ -3824,6 +3970,100 @@ export class FlowView extends ui.Component {
             }
             Table.insertRow(this.sharedString, rowMarker.view, tableMarker.view);
             this.localQueueRender(this.cursor.pos);
+        }
+    }
+
+    public randomCell(table: Table.Table) {
+        let cellCount = 0;
+        for (let row of table.rows) {
+            if (!Table.rowIsMoribund(row.rowMarker)) {
+                for (let cell of row.cells) {
+                    if (!Table.cellIsMoribund(cell.marker)) {
+                        cellCount++;
+                    }
+                }
+            }
+        }
+        if (cellCount > 0) {
+            let randIndex = Math.round(Math.random() * cellCount);
+            cellCount = 0;
+            for (let row of table.rows) {
+                if (!Table.rowIsMoribund(row.rowMarker)) {
+                    for (let cell of row.cells) {
+                        if (!Table.cellIsMoribund(cell.marker)) {
+                            if (cellCount === randIndex) {
+                                return cell;
+                            }
+                            cellCount++;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    public crazyTable(k: number) {
+        let count = 0;
+        let rowCount = 0;
+        let columnCount = 0;
+        let stack =
+            this.sharedString.client.mergeTree.getStackContext(this.cursor.pos,
+                this.sharedString.client.getClientId(), ["table", "cell", "row"]);
+        if (stack.table && (!stack.table.empty())) {
+            let tableMarker = <Table.ITableMarker>stack.table.top();
+            let randomTableOp = () => {
+                count++;
+                if (!tableMarker.view) {
+                    let tableMarkerPos = getOffset(this, tableMarker);
+                    Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
+                }
+                let randCell = this.randomCell(tableMarker.view);
+                if (randCell) {
+                    let pos = getOffset(this, randCell.marker);
+                    this.cursor.pos = pos;
+                    this.cursor.updateView(this);
+                    let hit = false;
+                    if (rowCount < 6) {
+                        let chance = Math.round(Math.random() * 10);
+                        if (chance >= 5) {
+                            this.insertRow();
+                            rowCount++;
+                            hit = true;
+                        }
+                    }
+                    if ((columnCount < 6) && (!hit)) {
+                        let chance = Math.round(Math.random() * 10);
+                        if (chance >= 5) {
+                            this.insertColumn();
+                            columnCount++;
+                            hit = true;
+                        }
+                    }
+                    if ((rowCount > 4) && (!hit)) {
+                        let chance = Math.round(Math.random() * 10);
+                        if (chance >= 5) {
+                            this.deleteRow();
+                            rowCount--;
+                            hit = true;
+                        }
+                    }
+                    /*                    if ((columnCount > 8) && (!hit)) {
+                                            let chance = Math.round(Math.random() * 10);
+                                            if (chance >= 3) {
+                                                this.deleteColumn();
+                                                columnCount--;
+                                                hit = true;
+                                            }
+                                        }
+                                        */
+                } else {
+                    return;
+                }
+                if (count < k) {
+                    setTimeout(randomTableOp, 200);
+                }
+            };
+            setTimeout(randomTableOp, 200);
         }
     }
 
