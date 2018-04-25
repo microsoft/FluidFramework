@@ -536,6 +536,10 @@ export abstract class BaseSegment extends MergeNode implements Segment {
         this.properties = Properties.addProperties(this.properties, newProps, op);
     }
 
+    hasProperty(key: string) {
+        return this.properties && (this.properties[key]!==undefined);
+    }
+
     isLeaf() {
         return true;
     }
@@ -743,7 +747,7 @@ export class Marker extends BaseSegment implements ReferencePosition {
         } else {
             let localId=this.getLocalId();
             if (localId) {
-                bbuf+=` (LOC ${id}) `;
+                bbuf+=` (LOC ${localId}) `;
             }
         }
         if (this.hasTileLabels()) {
@@ -777,9 +781,7 @@ export class Marker extends BaseSegment implements ReferencePosition {
         }
         let pbuf="";
         if (this.properties) {
-            if (this.properties["moribund"]) {
-                pbuf += " moribund"
-            }
+                pbuf += JSON.stringify(this.properties);
         }
         return `M ${bbuf}: ${lbuf} ${pbuf}`;
     }
@@ -4553,11 +4555,10 @@ export class MergeTree {
         this.mapRange({ leaf: annotateSegment }, refSeq, clientId, undefined, start, end);
     }
 
-    markRangeRemoved(start: number, end: number, refSeq: number, clientId: number, seq: number) {
+    markRangeRemoved(start: number, end: number, refSeq: number, clientId: number, seq: number, overwrite = false) {
         this.ensureIntervalBoundary(start, refSeq, clientId);
         this.ensureIntervalBoundary(end, refSeq, clientId);
         let segmentGroup: SegmentGroup;
-        let overwrite = false;
         let savedLocalRefs = <LocalReference[][]>[];
         let markRemoved = (segment: Segment, pos: number, start: number, end: number) => {
             let branchId = this.getBranchId(clientId);

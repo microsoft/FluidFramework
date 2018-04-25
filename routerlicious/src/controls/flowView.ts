@@ -1448,7 +1448,7 @@ function renderTable(
     let flowView = layoutInfo.flowView;
     let mergeTree = flowView.client.mergeTree;
     let tablePos = mergeTree.getOffset(table, MergeTree.UniversalSequenceNumber, flowView.client.getClientId());
-    let tableView = table.view;
+    let tableView = table.table;
     if (!tableView) {
         tableView = Table.parseTable(table, tablePos, flowView.sharedString, makeFontInfo(docContext));
     }
@@ -1465,12 +1465,12 @@ function renderTable(
         if (layoutInfo.startingPosStack.row &&
             (layoutInfo.startingPosStack.row.items.length > layoutInfo.stackIndex)) {
             let startRowMarker = <Table.IRowMarker>layoutInfo.startingPosStack.row.items[layoutInfo.stackIndex];
-            startRow = startRowMarker.view;
+            startRow = startRowMarker.row;
         }
         if (layoutInfo.startingPosStack.cell &&
             (layoutInfo.startingPosStack.cell.items.length > layoutInfo.stackIndex)) {
             let startCellMarker = <Table.ICellMarker>layoutInfo.startingPosStack.cell.items[layoutInfo.stackIndex];
-            startCell = <ICellView>startCellMarker.view;
+            startCell = <ICellView>startCellMarker.cell;
         }
     }
 
@@ -1594,7 +1594,7 @@ function showCell(pos: number, flowView: FlowView) {
     if (startingPosStack.cell && (!startingPosStack.cell.empty())) {
         let cellMarker = <Table.ICellMarker>startingPosStack.cell.top();
         let start = getOffset(flowView, cellMarker);
-        let endMarker = cellMarker.view.endMarker;
+        let endMarker = cellMarker.cell.endMarker;
         let end = getOffset(flowView, endMarker) + 1;
         // tslint:disable:max-line-length
         console.log(`cell ${cellMarker.getId()} seq ${cellMarker.seq} clid ${cellMarker.clientId} at [${start},${end})`);
@@ -1609,7 +1609,7 @@ function showTable(pos: number, flowView: FlowView) {
     if (startingPosStack.table && (!startingPosStack.table.empty())) {
         let tableMarker = <Table.ITableMarker>startingPosStack.table.top();
         let start = getOffset(flowView, tableMarker);
-        let endMarker = tableMarker.view.endTableMarker;
+        let endMarker = tableMarker.table.endTableMarker;
         let end = getOffset(flowView, endMarker) + 1;
         console.log(`table ${tableMarker.getId()} at [${start},${end})`);
         console.log(`table contents: ${flowView.client.getTextRangeWithMarkers(start, end)}`);
@@ -1988,7 +1988,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
             let tableView: Table.Table;
             if (marker.removedSeq === undefined) {
                 renderTable(marker, docContext, layoutContext, targetTranslation, deferredPGs);
-                tableView = (<Table.ITableMarker>marker).view;
+                tableView = (<Table.ITableMarker>marker).table;
                 deferredHeight += tableView.deferredHeight;
                 layoutContext.viewport.vskip(layoutContext.docContext.tableVspace);
             } else {
@@ -3699,14 +3699,14 @@ export class FlowView extends ui.Component {
             this.client.mergeTree.getStackContext(pos, this.client.getClientId(), ["table", "cell", "row"]);
         if (cursorContext.table && (!cursorContext.table.empty())) {
             let tableMarker = <Table.ITableMarker>cursorContext.table.top();
-            let tableView = tableMarker.view;
+            let tableView = tableMarker.table;
             if (cursorContext.cell && (!cursorContext.cell.empty())) {
                 let cell = <Table.ICellMarker>cursorContext.cell.top();
                 let toCell: Table.Cell;
                 if (shift) {
-                    toCell = tableView.prevcell(cell.view);
+                    toCell = tableView.prevcell(cell.cell);
                 } else {
-                    toCell = tableView.nextcell(cell.view);
+                    toCell = tableView.nextcell(cell.cell);
                 }
                 if (toCell) {
                     let offset = this.client.mergeTree.getOffset(toCell.marker,
@@ -3915,11 +3915,11 @@ export class FlowView extends ui.Component {
         if (stack.table && (!stack.table.empty())) {
             let tableMarker = <Table.ITableMarker>stack.table.top();
             let rowMarker = <Table.IRowMarker>stack.row.top();
-            if (!tableMarker.view) {
+            if (!tableMarker.table) {
                 let tableMarkerPos = getOffset(this, tableMarker);
                 Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
             }
-            Table.deleteRow(this.sharedString, rowMarker.view, tableMarker.view);
+            Table.deleteRow(this.sharedString, rowMarker.row, tableMarker.table);
             this.localQueueRender(this.cursor.pos);
         }
     }
@@ -3931,11 +3931,11 @@ export class FlowView extends ui.Component {
         if (stack.table && (!stack.table.empty())) {
             let tableMarker = <Table.ITableMarker>stack.table.top();
             let cellMarker = <Table.ICellMarker>stack.cell.top();
-            if (!tableMarker.view) {
+            if (!tableMarker.table) {
                 let tableMarkerPos = getOffset(this, tableMarker);
                 Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
             }
-            Table.deleteCellShiftLeft(this.sharedString, cellMarker.view, tableMarker.view);
+            Table.deleteCellShiftLeft(this.sharedString, cellMarker.cell, tableMarker.table);
             this.localQueueRender(this.cursor.pos);
         }
     }
@@ -3948,11 +3948,11 @@ export class FlowView extends ui.Component {
             let tableMarker = <Table.ITableMarker>stack.table.top();
             let rowMarker = <Table.IRowMarker>stack.row.top();
             let cellMarker = <Table.ICellMarker>stack.cell.top();
-            if (!tableMarker.view) {
+            if (!tableMarker.table) {
                 let tableMarkerPos = getOffset(this, tableMarker);
                 Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
             }
-            Table.deleteColumn(this.sharedString, cellMarker.view, rowMarker.view, tableMarker.view);
+            Table.deleteColumn(this.sharedString, cellMarker.cell, rowMarker.row, tableMarker.table);
             this.localQueueRender(this.cursor.pos);
         }
     }
@@ -3964,11 +3964,11 @@ export class FlowView extends ui.Component {
         if (stack.table && (!stack.table.empty())) {
             let tableMarker = <Table.ITableMarker>stack.table.top();
             let rowMarker = <Table.IRowMarker>stack.row.top();
-            if (!tableMarker.view) {
+            if (!tableMarker.table) {
                 let tableMarkerPos = getOffset(this, tableMarker);
                 Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
             }
-            Table.insertRow(this.sharedString, rowMarker.view, tableMarker.view);
+            Table.insertRow(this.sharedString, rowMarker.row, tableMarker.table);
             this.localQueueRender(this.cursor.pos);
         }
     }
@@ -4013,17 +4013,17 @@ export class FlowView extends ui.Component {
             let tableMarker = <Table.ITableMarker>stack.table.top();
             let randomTableOp = () => {
                 count++;
-                if (!tableMarker.view) {
+                if (!tableMarker.table) {
                     let tableMarkerPos = getOffset(this, tableMarker);
                     Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
                 }
-                let randCell = this.randomCell(tableMarker.view);
+                let randCell = this.randomCell(tableMarker.table);
                 if (randCell) {
                     let pos = getOffset(this, randCell.marker);
                     this.cursor.pos = pos;
                     this.cursor.updateView(this);
                     let hit = false;
-                    if (rowCount < 6) {
+                    if (rowCount < 8) {
                         let chance = Math.round(Math.random() * 10);
                         if (chance >= 5) {
                             this.insertRow();
@@ -4031,7 +4031,7 @@ export class FlowView extends ui.Component {
                             hit = true;
                         }
                     }
-                    if ((columnCount < 6) && (!hit)) {
+                    if ((columnCount < 8) && (!hit)) {
                         let chance = Math.round(Math.random() * 10);
                         if (chance >= 5) {
                             this.insertColumn();
@@ -4039,7 +4039,7 @@ export class FlowView extends ui.Component {
                             hit = true;
                         }
                     }
-                    if ((rowCount > 4) && (!hit)) {
+ /*                   if ((rowCount > 4) && (!hit)) {
                         let chance = Math.round(Math.random() * 10);
                         if (chance >= 5) {
                             this.deleteRow();
@@ -4047,15 +4047,15 @@ export class FlowView extends ui.Component {
                             hit = true;
                         }
                     }
-                    /*                    if ((columnCount > 8) && (!hit)) {
-                                            let chance = Math.round(Math.random() * 10);
-                                            if (chance >= 3) {
-                                                this.deleteColumn();
-                                                columnCount--;
-                                                hit = true;
-                                            }
-                                        }
-                                        */
+                   if ((columnCount > 4) && (!hit)) {
+                        let chance = Math.round(Math.random() * 10);
+                        if (chance >= 5) {
+                            this.deleteColumn();
+                            columnCount--;
+                            hit = true;
+                        }
+                    }
+                    */
                 } else {
                     return;
                 }
@@ -4075,11 +4075,11 @@ export class FlowView extends ui.Component {
             let tableMarker = <Table.ITableMarker>stack.table.top();
             let rowMarker = <Table.IRowMarker>stack.row.top();
             let cellMarker = <Table.ICellMarker>stack.cell.top();
-            if (!tableMarker.view) {
+            if (!tableMarker.table) {
                 let tableMarkerPos = getOffset(this, tableMarker);
                 Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
             }
-            Table.insertColumn(this.sharedString, cellMarker.view, rowMarker.view, tableMarker.view);
+            Table.insertColumn(this.sharedString, cellMarker.cell, rowMarker.row, tableMarker.table);
             this.localQueueRender(this.cursor.pos);
         }
     }
