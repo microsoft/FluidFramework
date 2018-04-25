@@ -24,7 +24,11 @@ interface IAgents {
 
 // Interface for queueing work
 export interface IWorkQueue {
-    docId: string;
+    token: string;
+
+    tenantId: string;
+
+    documentId: string;
 
     workType: string;
 
@@ -69,7 +73,7 @@ export class WorkerService implements core.IWorkerService {
 
         // async queue to process work one by one.
         this.workQueue = queue( async (work: IWorkQueue, callback) => {
-            this.processDocumentWork(work.docId, work.workType).then(() => {
+            this.processDocumentWork(work.tenantId, work.documentId, work.token, work.workType).then(() => {
                 work.response(null, work.clientDetail);
                 callback();
             }, (err) => {
@@ -116,27 +120,40 @@ export class WorkerService implements core.IWorkerService {
                         }
                     });
                     // Check whether worker is ready to work.
-                    this.socket.on("ReadyObject", (cId: string, id: string, workType: string, response) => {
-                        if (workType in this.workTypeMap) {
-                            response(null, clientDetail);
-                        } else {
-                            response(`${clientId} not allowed to run ${workType}`, null);
-                        }
-                    });
+                    this.socket.on(
+                        "ReadyObject",
+                        (cId: string, tenantId: string, documentId: string, workType: string, response) => {
+                            if (workType in this.workTypeMap) {
+                                response(null, clientDetail);
+                            } else {
+                                response(`${clientId} not allowed to run ${workType}`, null);
+                            }
+                        });
+
                     // Start working on an object.
-                    this.socket.on("TaskObject", async (cId: string, id: string, workType: string, response) => {
-                        this.workQueue.push(
-                            {
-                                docId: id,
-                                workType,
-                                response,
+                    this.socket.on(
+                        "TaskObject",
+                        (cId: string,
+                         tenantId: string,
+                         documentId: string,
+                         token: string,
+                         workType: string,
+                         response) => {
+                            const work: IWorkQueue = {
                                 clientDetail,
-                            },
-                        );
-                    });
+                                documentId,
+                                response,
+                                tenantId,
+                                token,
+                                workType,
+                            };
+                            this.workQueue.push(work);
+                        });
                     // Stop working on an object.
-                    this.socket.on("RevokeObject", (cId: string, id: string, workType: string, response) => {
-                        this.revokeDocumentWork(id, workType);
+                    this.socket.on(
+                        "RevokeObject",
+                        (cId: string, tenantId: string, documentId: string, workType: string, response) => {
+                        this.revokeDocumentWork(tenantId, documentId, workType);
                         response(null, clientDetail);
                     });
                     // Periodically sends heartbeat to manager.
@@ -226,102 +243,104 @@ export class WorkerService implements core.IWorkerService {
         }
     }
 
-    private async getServiceForDoc(docId: string): Promise<core.IDocumentService> {
-        const slashIndex = docId.indexOf("/");
-        const tenantName = slashIndex !== -1 ? docId.slice(0, slashIndex) : "";
-
-        return this.serviceFactory.getService(tenantName);
-    }
-
-    private async processDocumentWork(docId: string, workType: string) {
-        this.getServiceForDoc(docId).then((services) => {
-            if (services) {
-                switch (workType) {
-                    case "snapshot":
-                        const snapshotWork = new SnapshotWork(docId, this.config, services);
-                        this.startTask(docId, workType, snapshotWork);
-                        break;
-                    case "intel":
-                        const intelWork = new IntelWork(docId, this.config, services);
-                        this.startTask(docId, workType, intelWork);
-                        break;
-                    case "spell":
-                        const spellcheckWork = new SpellcheckerWork(docId, this.config, this.dict, services);
-                        this.startTask(docId, workType, spellcheckWork);
-                        break;
-                    case "translation":
-                        const translationWork = new TranslationWork(docId, this.config, services);
-                        this.startTask(docId, workType, translationWork);
-                    case "ping":
-                        const pingWork = new PingWork(this.serverUrl);
-                        this.startTask(docId, workType, pingWork);
-                        break;
-                    default:
-                        throw new Error("Unknown work type!");
-                }
-            } else {
-                console.log(`No services provide to load document ${docId} for work ${workType}`);
+    private async processDocumentWork(tenantId: string, documentId: string, token: string, workType: string) {
+        this.serviceFactory.getService(tenantId).then((services) => {
+            switch (workType) {
+                case "snapshot":
+                    const snapshotWork = new SnapshotWork(documentId, token, this.config, services);
+                    this.startTask(tenantId, documentId, workType, snapshotWork);
+                    break;
+                case "intel":
+                    const intelWork = new IntelWork(documentId, token, this.config, services);
+                    this.startTask(tenantId, documentId, workType, intelWork);
+                    break;
+                case "spell":
+                    const spellcheckWork = new SpellcheckerWork(
+                        documentId,
+                        token,
+                        this.config,
+                        this.dict,
+                        services);
+                    this.startTask(tenantId, documentId, workType, spellcheckWork);
+                    break;
+                case "translation":
+                    const translationWork = new TranslationWork(documentId, token, this.config, services);
+                    this.startTask(tenantId, documentId, workType, translationWork);
+                case "ping":
+                    const pingWork = new PingWork(this.serverUrl);
+                    this.startTask(tenantId, documentId, workType, pingWork);
+                    break;
+                default:
+                    throw new Error("Unknown work type!");
             }
         }, (error) => {
-            console.log(`Error getting service for ${docId}: ${error}`);
+            console.log(`Error getting service for ${tenantId}/${documentId}: ${error}`);
         });
     }
 
-    private revokeDocumentWork(docId: string, workType: string) {
+    private revokeDocumentWork(tenantId: string, documentId: string, workType: string) {
         switch (workType) {
             case "snapshot":
-                this.stopTask(docId, workType);
+                this.stopTask(tenantId, documentId, workType);
                 break;
             case "intel":
-                this.stopTask(docId, workType);
+                this.stopTask(tenantId, documentId, workType);
                 break;
             case "spell":
-                this.stopTask(docId, workType);
+                this.stopTask(tenantId, documentId, workType);
                 break;
             case "translation":
-                this.stopTask(docId, workType);
+                this.stopTask(tenantId, documentId, workType);
                 break;
             case "ping":
-                this.stopTask(docId, workType);
+                this.stopTask(tenantId, documentId, workType);
                 break;
             default:
                 throw new Error("Unknown work type!");
         }
     }
 
-    private startTask(docId: string, workType: string, worker: IWork) {
+    private getFullId(tenantId: string, documentId: string): string {
+        return `${tenantId}/${documentId}`;
+    }
+
+    private startTask(tenantId: string, documentId: string, workType: string, worker: IWork) {
+        const fullId = this.getFullId(tenantId, documentId);
+
         if (worker !== undefined) {
-            if (!(docId in this.documentMap)) {
+            if (!(fullId in this.documentMap)) {
                 let emptyMap: { [work: string]: IWork } = {};
-                this.documentMap[docId] = emptyMap;
+                this.documentMap[fullId] = emptyMap;
             }
-            if (!(workType in this.documentMap[docId])) {
-                console.log(`Starting work ${workType} for document ${docId}`);
-                this.documentMap[docId][workType] = worker;
+            if (!(workType in this.documentMap[fullId])) {
+                console.log(`Starting work ${workType} for document ${fullId}`);
+                this.documentMap[fullId][workType] = worker;
                 if (workType !== "intel") {
                     worker.start().catch((err) => {
-                        console.log(`Error starting ${workType} for document ${docId}: ${err}`);
+                        console.log(`Error starting ${workType} for document ${fullId}: ${err}`);
                     });
                 } else {
                     // register all runtime added modules one by one.
-                    const intelWork = this.documentMap[docId][workType] as IntelWork;
+                    const intelWork = this.documentMap[fullId][workType] as IntelWork;
                     intelWork.start().then(() => {
                         // tslint:disable-next-line
                         for (let name in this.runtimeModules) {
-                            console.log(`Registering ${this.runtimeModules[name].name} for document ${docId}`);
+                            console.log(`Registering ${this.runtimeModules[name].name} for document ${fullId}`);
                             intelWork.registerNewService(this.runtimeModules[name].code);
                         }
                     }, (err) => {
-                        console.log(`Error starting ${workType} for document ${docId}: ${err}`);
+                        console.log(`Error starting ${workType} for document ${fullId}: ${err}`);
                     });
                 }
             }
         }
     }
 
-    private stopTask(docId: string, workType: string) {
-        if (docId in this.documentMap) {
-            const taskMap = this.documentMap[docId];
+    private stopTask(tenantId: string, documentId: string, workType: string) {
+        const fullId = this.getFullId(tenantId, documentId);
+
+        if (fullId in this.documentMap) {
+            const taskMap = this.documentMap[fullId];
             const task = taskMap[workType];
             if (task !== undefined) {
                 task.stop();

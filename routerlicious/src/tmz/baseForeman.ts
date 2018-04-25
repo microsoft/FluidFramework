@@ -13,8 +13,10 @@ export class BaseForeman {
     protected ackTimeout: number;
 
     constructor() {
-        this.manager = new StateManager(nconf.get("tmz:timeoutMSec:worker"), nconf.get("tmz:timeoutMSec:document"),
-                                        nconf.get("tmz:tasks"));
+        this.manager = new StateManager(
+            nconf.get("tmz:timeoutMSec:worker"),
+            nconf.get("tmz:timeoutMSec:document"),
+            nconf.get("tmz:tasks"));
         this.ackTimeout = nconf.get("tmz:workerAckTimeMSec");
     }
 
@@ -27,7 +29,12 @@ export class BaseForeman {
         const revokedPromises = [];
         for (let doc of docs) {
             for (let worker of doc.workers) {
-                revokedPromises.push(this.revokeOne(doc.docId, worker[1], worker[0]));
+                revokedPromises.push(
+                    this.revokeOne(
+                        doc.tenantId,
+                        doc.documentId,
+                        worker.workType,
+                        worker.detail));
             }
         }
         return revokedPromises;
@@ -48,12 +55,12 @@ export class BaseForeman {
         }
     }
 
-    private revokeOne(id: string, workType: string, worker: IWorkerDetail): Promise<void> {
+    private revokeOne(tenantId: string, documentId: string, workType: string, worker: IWorkerDetail): Promise<void> {
         return new Promise<any>((resolve, reject) => {
-            worker.socket.emit("RevokeObject", worker.worker.clientId, id, workType,
+            worker.socket.emit("RevokeObject", worker.worker.clientId, tenantId, documentId, workType,
                 (error, ack: socketStorage.IWorker) => {
                     if (ack) {
-                        this.manager.revokeWork(worker, id, workType);
+                        this.manager.revokeWork(worker, tenantId, documentId, workType);
                         resolve();
                     } else {
                         winston.error(error);

@@ -1,63 +1,98 @@
-import * as _ from "lodash";
-import { IDocumentState, IDocumentWork, IWork, IWorkerDetail, IWorkerState } from "./messages";
+import { IDocumentState, IDocumentWork, IWork, IWorkerDetail } from "./messages";
+
+/**
+ * State of a worker.
+ */
+interface IWorkerState {
+    worker: IWorkerDetail;
+
+    documents: Array<{tenantId: string, documentId: string, workType: string }>;
+
+    activeTS: number;
+}
 
 export class StateManager {
-    private workerToDocumentMap: { [workerId: string]: IWorkerState} = {};
-    private documentToWorkerMap: { [docId: string]: IDocumentState} = {};
+    private workerToDocumentMap = new Map<string, IWorkerState>();
+    private documentToWorkerMap = new Map<string, IDocumentState>();
 
     constructor(private workerTimeout: number, private documentTimeout: number, private tasks: any) {
     }
 
     public addWorker(worker: IWorkerDetail) {
-        this.workerToDocumentMap[worker.socket.id] = { worker, documents: [], activeTS: Date.now() };
+        this.workerToDocumentMap.set(
+            worker.socket.id,
+            {
+                activeTS: Date.now(),
+                documents: [],
+                worker,
+            });
     }
 
     public removeWorker(worker: IWorkerDetail) {
         // Remove all documents worker associated with the worker first.
-        this.workerToDocumentMap[worker.socket.id].documents.map((document) => {
-            this.removeWorkerFromDocument(document[0], document[1]);
+        this.workerToDocumentMap.get(worker.socket.id).documents.map((document) => {
+            this.removeWorkerFromDocument(
+                document.tenantId,
+                document.documentId,
+                document.workType);
         });
+
         // Delete the worker now.
-        delete this.workerToDocumentMap[worker.socket.id];
+        this.workerToDocumentMap.delete(worker.socket.id);
     }
 
-    public assignWork(worker: IWorkerDetail, docId: string, workType: string) {
-        this.workerToDocumentMap[worker.socket.id].documents.push([docId, workType]);
-        if (!(docId in this.documentToWorkerMap)) {
-            this.addDocument(docId);
+    public assignWork(worker: IWorkerDetail, tenantId: string, documentId: string, workType: string) {
+        const fullId = this.getFullId(tenantId, documentId);
+        this.workerToDocumentMap.get(worker.socket.id).documents.push(
+            {
+                documentId,
+                tenantId,
+                workType,
+            });
+        if (!this.documentToWorkerMap.has(fullId)) {
+            this.addDocument(tenantId, documentId);
         }
-        this.documentToWorkerMap[docId].workers.push([worker, workType]);
+        this.documentToWorkerMap.get(fullId).workers.push({ detail: worker, workType });
     }
 
-    public revokeWork(worker: IWorkerDetail, docId: string, workType: string) {
-        let docIndex = this.workerToDocumentMap[worker.socket.id].documents.indexOf([docId, workType], 0);
-        if (docIndex > -1) {
-            this.workerToDocumentMap[worker.socket.id].documents.splice(docIndex, 1);
+    public revokeWork(worker: IWorkerDetail, tenantId: string, documentId: string, workType: string) {
+        let docIndex = this.workerToDocumentMap.get(worker.socket.id).documents.findIndex(
+            (element) => {
+                return element.documentId === documentId &&
+                    element.tenantId === tenantId &&
+                    element.workType === workType;
+            });
+
+        if (docIndex !== -1) {
+            this.workerToDocumentMap.get(worker.socket.id).documents.splice(docIndex, 1);
         }
-        if (docId in this.documentToWorkerMap) {
-            delete this.documentToWorkerMap[docId];
+
+        const fullId = this.getFullId(tenantId, documentId);
+        if (this.documentToWorkerMap.has(fullId)) {
+            this.documentToWorkerMap.delete(fullId);
         }
     }
 
     public refreshWorker(worker: IWorkerDetail) {
-        if (!(worker.socket.id in this.workerToDocumentMap)) {
+        if (!this.workerToDocumentMap.has(worker.socket.id)) {
             this.addWorker(worker);
         } else {
-            this.workerToDocumentMap[worker.socket.id].activeTS = Date.now();
+            this.workerToDocumentMap.get(worker.socket.id).activeTS = Date.now();
         }
     }
 
     public getWorker(workerId: string): IWorkerDetail {
-        if (!(workerId in this.workerToDocumentMap)) {
+        if (!this.workerToDocumentMap.has(workerId)) {
             return;
         }
-        return this.workerToDocumentMap[workerId].worker;
+
+        return this.workerToDocumentMap.get(workerId).worker;
     }
 
     public getActiveWorkers(): IWorkerDetail[] {
-        return _.values(this.workerToDocumentMap)
-                .filter((workerState) => { return (Date.now() - workerState.activeTS) <= this.workerTimeout; })
-                .map((workerState) => workerState.worker);
+        return Array.from(this.workerToDocumentMap.values())
+            .filter((workerState) => { return (Date.now() - workerState.activeTS) <= this.workerTimeout; })
+            .map((workerState) => workerState.worker);
     }
 
     public getActiveServerWorkers(): IWorkerDetail[] {
@@ -81,53 +116,67 @@ export class StateManager {
 
     public getDocuments(worker: IWorkerDetail): IDocumentWork[] {
         const returnedWorks: IDocumentWork[] = [];
-        const workerState = this.workerToDocumentMap[worker.socket.id];
+        const workerState = this.workerToDocumentMap.get(worker.socket.id);
         for (let document of workerState.documents) {
             const work: IWork = { workType: document[1], workerType: this.tasks[document[1]] };
-            returnedWorks.push({docId: document[0], work});
+            returnedWorks.push({
+                documentId: document.documentId,
+                tenantId: document.tenantId,
+                work,
+            });
         }
+
         return returnedWorks;
     }
 
     public getExpiredDocuments(): IDocumentState[] {
-        return _.values(this.documentToWorkerMap)
-                .filter((document) => {
-                    return (Date.now() - document.activeTS) > this.documentTimeout;
-                });
+        return Array.from(this.documentToWorkerMap.values())
+            .filter((document) => (Date.now() - document.activeTS) > this.documentTimeout);
     }
 
-    public updateDocumentIfFound(id: string): boolean {
-        if (id in this.documentToWorkerMap) {
-            this.documentToWorkerMap[id].activeTS = Date.now();
+    public updateDocumentIfFound(tenantId: string, documentId: string): boolean {
+        const fullId = this.getFullId(tenantId, documentId);
+        if (this.documentToWorkerMap.has(fullId)) {
+            this.documentToWorkerMap.get(fullId).activeTS = Date.now();
             return true;
         }
         return false;
     }
 
-    private addDocument(docId: string) {
-        this.documentToWorkerMap[docId] = {docId, workers: [], activeTS: Date.now() };
+    private addDocument(tenantId: string, documentId: string) {
+        const fullId = this.getFullId(tenantId, documentId);
+        this.documentToWorkerMap.set(
+            fullId,
+            {
+                activeTS: Date.now(),
+                documentId,
+                tenantId,
+                workers: [],
+            });
     }
 
-    private removeWorkerFromDocument(docId: string, workType: string) {
-        let documentState = this.documentToWorkerMap[docId];
+    private removeWorkerFromDocument(tenantId: string, documentId: string, workType: string) {
+        const fullId = this.getFullId(tenantId, documentId);
+
+        let documentState = this.documentToWorkerMap.get(fullId);
         let workerIndex: number = -1;
-        if (documentState !== undefined) {
+        if (documentState) {
             for (let i = 0; i < documentState.workers.length; i++) {
-                if (workType === documentState.workers[i][1]) {
+                if (workType === documentState.workers[i].workType) {
                     workerIndex = i;
                     break;
                 }
             }
         }
+
         if (workerIndex !== -1) {
-            this.documentToWorkerMap[docId].workers.splice(workerIndex, 1);
+            documentState.workers.splice(workerIndex, 1);
         }
     }
 
     private getExpiredWorkers(): IWorkerDetail[] {
         const expiredWorkers: IWorkerDetail[] = [];
-        for (let worker of _.keys(this.workerToDocumentMap)) {
-            const workerState = this.workerToDocumentMap[worker];
+        for (const [, workerState] of this.workerToDocumentMap) {
             if (Date.now() - workerState.activeTS > this.workerTimeout) {
                 expiredWorkers.push(workerState.worker);
             }
@@ -135,4 +184,7 @@ export class StateManager {
         return expiredWorkers;
     }
 
+    private getFullId(tenantId: string, documentId: string) {
+        return `${tenantId}/${documentId}`;
+    }
 }

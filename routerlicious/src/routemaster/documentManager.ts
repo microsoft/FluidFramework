@@ -3,11 +3,12 @@ import { Deferred } from "../core-utils";
 
 export class DocumentManager {
     public static async Create(
-        id: string,
+        tenantId: string,
+        documentId: string,
         collection: core.ICollection<core.IDocument>,
         deltas: core.ICollection<core.ISequencedOperationMessage>): Promise<DocumentManager> {
 
-        const document = await collection.findOne({ _id: id });
+        const document = await collection.findOne({ documentId, tenantId });
         return new DocumentManager(document, collection, deltas);
     }
 

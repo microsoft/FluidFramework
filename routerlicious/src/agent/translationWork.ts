@@ -164,12 +164,12 @@ export class TranslationWork extends BaseWork implements IWork {
     private translationSet = new Set();
     private translators = new Map<string, core.ICollaborativeObject>();
 
-    constructor(docId: string, config: any, private service: core.IDocumentService) {
+    constructor(docId: string, private token: string, config: any, private service: core.IDocumentService) {
         super(docId, config);
     }
 
     public async start(): Promise<void> {
-        await this.loadDocument({ encrypted: undefined, localMinSeq: 0 }, this.service);
+        await this.loadDocument({ encrypted: undefined, localMinSeq: 0, token: this.token }, this.service);
 
         // Wait for the insights
         await this.document.getRoot().wait("insights");

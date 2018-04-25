@@ -38,4 +38,8 @@ export class TestTenantManager implements ITenantManager {
     public getTenant(id: string): Promise<ITenant> {
         return Promise.resolve(this.tenant);
     }
+
+    public getKey(tenantId: string): Promise<string> {
+        return Promise.resolve("test");
+    }
 }

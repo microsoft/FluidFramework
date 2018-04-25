@@ -67,4 +67,17 @@ export class TenantManager implements api.ITenantManager {
                 json: true,
             });
     }
+
+    public async getKey(tenantId: string): Promise<string> {
+        const key = await request.get(
+            `${this.endpoint}/api/tenants/${tenantId}/key`,
+            {
+                headers: {
+                    "Accept": "application/json",
+                    "Content-Type": "application/json",
+                },
+                json: true,
+            }) as string;
+        return key;
+    }
 }

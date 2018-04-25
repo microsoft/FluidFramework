@@ -24,7 +24,8 @@ export async function getConfig(
         updatedConfig.blobStorageUrl = tenant.storage.direct;
         updatedConfig.historianApi = false;
     } else {
-        updatedConfig.blobStorageUrl = tenant.storage.url;
+        const url = tenant.storage.url;
+        updatedConfig.blobStorageUrl = url.replace("historian:3000", "localhost:3001");;
         updatedConfig.historianApi = true;
     }
 

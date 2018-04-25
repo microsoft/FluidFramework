@@ -17,8 +17,8 @@ export class TmzLambda extends SequencedLambda {
     protected async handlerCore(message: utils.kafkaConsumer.IMessage): Promise<void> {
         const baseMessage = JSON.parse(message.value.toString()) as core.IMessage;
         if (baseMessage.type === core.SequencedOperationType) {
-            const documentId = (baseMessage as core.ISequencedOperationMessage).documentId;
-            await this.runner.trackDocument(documentId);
+            const sequencedMessage = baseMessage as core.ISequencedOperationMessage;
+            await this.runner.trackDocument(sequencedMessage.tenantId, sequencedMessage.documentId);
         }
 
         this.context.checkpoint(message.offset);

@@ -11,6 +11,7 @@ export class SpellcheckerWork extends BaseWork implements IWork {
 
     constructor(
         docId: string,
+        private token: string,
         config: any,
         dictionary: MergeTree.Collections.TST<number>,
         private service: core.IDocumentService) {
@@ -20,7 +21,9 @@ export class SpellcheckerWork extends BaseWork implements IWork {
     }
 
     public async start(): Promise<void> {
-        await this.loadDocument({ blockUpdateMarkers: true, localMinSeq: 0, encrypted: undefined }, this.service);
+        await this.loadDocument(
+            { blockUpdateMarkers: true, localMinSeq: 0, encrypted: undefined, token: this.token },
+            this.service);
         const eventHandler = (op: core.ISequencedDocumentMessage, object: core.ICollaborativeObject) => {
             if (op.type === core.ObjectOperation) {
                 this.spellCheck(object);
