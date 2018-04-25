@@ -1,4 +1,5 @@
 import { EventEmitter } from "events";
+import { IContentModelExtension } from "./extension";
 import { IAuthenticatedUser, IEnvelope, ILatencyMessage, IObjectMessage, ISequencedObjectMessage } from "./protocol";
 import { ICollaborativeObject } from "./types";
 
@@ -108,6 +109,8 @@ export interface IDocument {
     attach(object: ICollaborativeObject): IDistributedObjectServices;
 
     get(id: string): Promise<ICollaborativeObject>;
+
+    getContentModel(type: string): IContentModelExtension;
 
     getUser(): IAuthenticatedUser;
 

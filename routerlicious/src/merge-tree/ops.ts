@@ -44,9 +44,13 @@ export interface IMergeTreeDelta {
  */
 export interface IRelativePosition {
     /**
+     * Local string identifier specifying a segment (for local operations).
+     */
+    localId?: string;
+    /**
      * String identifier specifying a segment.
      */
-    id: string;
+    id?: string;
     /**
      * If true, insert before the specified segment.  If false or not defined,
      * insert after the specified segment.
@@ -97,14 +101,14 @@ export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
     combiningOp?: ICombiningOp;
 }
 
-export interface IIntentSpec {
+export interface IMacroOpSpec {
     name: string;
     params: Object;
 }
 
 export interface IMergeTreeGroupMsg extends IMergeTreeDelta {
     type: MergeTreeDeltaType.GROUP;
-    intent: IIntentSpec;
+    macroOp: IMacroOpSpec;
     ops: IMergeTreeOp[];
 }
 

@@ -12,7 +12,7 @@ export function registerDefaultValueType(type: IValueType<any>) {
 /**
  * The extension that defines the map
  */
-export class MapExtension implements api.IExtension {
+export class MapExtension implements api.ICollaborativeObjectExtension {
     public static Type = "https://graph.microsoft.com/types/map";
 
     public type: string = MapExtension.Type;

@@ -1,14 +1,18 @@
 import * as resources from "gitresources";
 import { IDistributedObjectServices, IDocument } from "./document";
+import { ISequencedObjectMessage } from "./protocol";
 import * as types from "./types";
 
+export interface IExtension {
+    /**
+     * String representing the type of the extension.
+     */
+    type: string;
+}
 /**
  * Definitions of a collaborative extensions. Extensions follow a common model but enable custom behavior.
  */
-export interface IExtension {
-    // String representing the type of the extension
-    type: string;
-
+export interface ICollaborativeObjectExtension extends IExtension {
     /**
      * Loads the given distributed object. This call is only ever invoked internally as the only thing
      * that is ever directly loaded is the document itself. Load will then only be called on documents that
@@ -42,19 +46,23 @@ export interface IExtension {
     create(document: IDocument, id: string): types.ICollaborativeObject;
 }
 
+export interface IContentModelExtension extends IExtension {
+    exec(message: ISequencedObjectMessage, instance: types.ICollaborativeObject);
+}
+
 /**
  * Class that contains a collection of collaboration extensions
  */
-export class Registry {
-    public extensions: IExtension[] = [];
+export class Registry<TExtension extends IExtension> {
+    public extensions: TExtension[] = [];
 
-    private extensionsMap: { [key: string]: IExtension } = {};
+    private extensionsMap: { [key: string]: TExtension } = {};
 
     /**
      * Registers a new extension
      * @param extension The extension to register
      */
-    public register(extension: IExtension) {
+    public register(extension: TExtension) {
         this.extensions.push(extension);
         this.extensionsMap[extension.type] = extension;
     }
@@ -63,7 +71,7 @@ export class Registry {
      * Retrieves the extension with the given id
      * @param id ID for the extension to retrieve
      */
-    public getExtension(type: string): IExtension {
+    public getExtension(type: string): TExtension {
         if (!(type in this.extensionsMap)) {
             throw new Error("Extension not found");
         }

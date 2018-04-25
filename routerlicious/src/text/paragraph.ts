@@ -1,6 +1,7 @@
 // tslint:disable
 import * as MergeTree from "../merge-tree";
 import { CharacterCodes } from "./characterCodes";
+import { SharedString } from "../shared-string";
 
 export interface IBreakInfo {
     posInPG: number;
@@ -231,7 +232,7 @@ export interface ITilePos {
 }
 
 function getPrecedingTile(
-    sharedString: MergeTree.SharedString, tile: MergeTree.Marker, tilePos: number, label: string,
+    sharedString: SharedString, tile: MergeTree.Marker, tilePos: number, label: string,
     filter: (candidate: MergeTree.Marker) => boolean, precedingTileCache?: ITilePos[]) {
     if (precedingTileCache) {
         for (let i = precedingTileCache.length - 1; i >= 0; i--) {
@@ -337,7 +338,7 @@ function convertToListHead(tile: IParagraphMarker) {
 let maxListDistance = 400;
 
 export function getListCacheInfo(
-    sharedString: MergeTree.SharedString, tile: IParagraphMarker, tilePos: number, precedingTileCache?: ITilePos[]) {
+    sharedString: SharedString, tile: IParagraphMarker, tilePos: number, precedingTileCache?: ITilePos[]) {
 
     if (isListTile(tile)) {
         if (tile.listCache === undefined) {

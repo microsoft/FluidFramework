@@ -1,4 +1,5 @@
 import { api, MergeTree, types } from "../client-api";
+import { SharedString } from "../shared-string";
 import * as ui from "../ui";
 import { debug } from "./debug";
 import { DockPanel } from "./dockPanel";
@@ -15,7 +16,7 @@ interface IOverlayLayerStatus {
     layer: Layer;
     active: boolean;
     cursorOffset: ui.IPoint;
-}
+};
 
 export class FlowContainer extends ui.Component {
     public status: Status;
@@ -31,7 +32,7 @@ export class FlowContainer extends ui.Component {
     constructor(
         element: HTMLDivElement,
         private collabDocument: api.Document,
-        sharedString: MergeTree.SharedString,
+        sharedString: SharedString,
         private overlayMap: types.IMap,
         private image: Image,
         ink: types.IStream,

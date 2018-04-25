@@ -1,7 +1,7 @@
 // tslint:disable
 
 import * as Base from "./base";
-import { MergeTree } from "../client-api/index";
+import * as MergeTree from "./mergeTree";
 
 export class Stack<T> {
     items: T[] = [];

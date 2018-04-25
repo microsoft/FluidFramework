@@ -25,7 +25,7 @@ export async function getConfig(
         updatedConfig.historianApi = false;
     } else {
         const url = tenant.storage.url;
-        updatedConfig.blobStorageUrl = url.replace("historian:3000", "localhost:3001");;
+        updatedConfig.blobStorageUrl = url.replace("historian:3000", "localhost:3001");
         updatedConfig.historianApi = true;
     }
 

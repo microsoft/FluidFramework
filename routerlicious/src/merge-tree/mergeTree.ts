@@ -240,6 +240,7 @@ export interface MergeTreeStats {
 
 export interface SegmentGroup {
     segments: Segment[];
+    onAck?(seq: number);
 }
 
 export interface OverlapClient {
@@ -323,9 +324,14 @@ function addNodeReferences(mergeTree: MergeTree, node: MergeNode,
             if (segment.getType() == SegmentType.Marker) {
                 let marker = <Marker>node;
                 let markerId = marker.getId();
-                // TODO: move this to insert/remove marker
+                // also in insertMarker but need for reload segs case
+                // can add option for this only from reload segs
                 if (markerId) {
                     mergeTree.mapIdToSegment(markerId, marker);
+                }
+                let markerLocalId = marker.getLocalId();
+                if (markerLocalId) {
+                    mergeTree.mapLocalIdToSegment(markerLocalId, marker);
                 }
                 if (marker.refType & ops.ReferenceType.Tile) {
                     addTile(marker, rightmostTiles);
@@ -592,6 +598,7 @@ export class ExternalSegment extends BaseSegment {
 export let reservedTileLabelsKey = "referenceTileLabels";
 export let reservedRangeLabelsKey = "referenceRangeLabels";
 export let reservedMarkerIdKey = "markerId";
+export let reservedMarkerLocalIdKey = "markerLocalId";
 
 function refHasTileLabels(refPos: ReferencePosition) {
     return (refPos.refType & ops.ReferenceType.Tile) &&
@@ -681,6 +688,12 @@ export class Marker extends BaseSegment implements ReferencePosition {
         }
     }
 
+    getLocalId() {
+        if (this.properties && this.properties[reservedMarkerLocalIdKey]) {
+            return this.properties[reservedMarkerLocalIdKey];
+        }
+    }
+
     hasTileLabels() {
         return refHasTileLabels(this);
     }
@@ -756,7 +769,13 @@ export class Marker extends BaseSegment implements ReferencePosition {
                 lbuf += rangeLabel;
             }
         }
-        return `M ${bbuf}: ${lbuf}`;
+        let pbuf="";
+        if (this.properties) {
+            if (this.properties["moribund"]) {
+                pbuf += " moribund"
+            }
+        }
+        return `M ${bbuf}: ${lbuf} ${pbuf}`;
     }
 
     getType() {
@@ -2379,7 +2398,7 @@ export class Client {
         let clientId = segWindow.clientId;
         let refSeq = segWindow.currentSeq;
         let seq = this.getLocalSequenceNumber();
-        
+
         let clockStart;
         if (this.measureOps) {
             clockStart = clock();
@@ -2483,7 +2502,7 @@ export class Client {
         let clientId = segWindow.clientId;
         let refSeq = segWindow.currentSeq;
         let seq = this.getLocalSequenceNumber();
-        if (this.tempCli>=0) {
+        if (this.tempCli >= 0) {
             clientId = this.tempCli;
         }
         let clockStart;
@@ -2507,7 +2526,7 @@ export class Client {
         let clientId = segWindow.clientId;
         let refSeq = segWindow.currentSeq;
         let seq = this.getLocalSequenceNumber();
-        if (this.tempCli>=0) {
+        if (this.tempCli >= 0) {
             clientId = this.tempCli;
         }
         let clockStart;
@@ -2921,6 +2940,16 @@ function tileShift(node: MergeNode, segpos: number, refSeq: number, clientId: nu
     return true;
 }
 
+export interface MinListener {
+    minRequired: number;
+    onMinGE?(minSeq: number);
+}
+
+let minListenerComparer = <Collections.Comparer<MinListener>>{
+    min: { minRequired: Number.MIN_VALUE },
+    compare: (a, b) => a.minRequired - b.minRequired,
+}
+
 export interface RemoveRangeInfo {
     highestBlockRemovingChildren: IMergeBlock;
 }
@@ -2966,13 +2995,15 @@ export class MergeTree {
     // for now assume only markers have ids and so point directly at the Segment 
     // if we need to have pointers to non-markers, we can change to point at local refs
     idToSegment = Properties.createMap<Segment>();
+    localIdToSegment = Properties.createMap<Segment>();
+
     clientIdToBranchId: number[] = [];
     localBranchId = 0;
     transactionSegmentGroup: SegmentGroup;
+    minSeqListeners: Collections.Heap<MinListener>;
     // for diagnostics
     getLongClientId: (id: number) => string;
     getUserInfo: (id: number) => IAuthenticatedUser;
-    idToLref: LocalReferenceMapper;
 
     // TODO: make and use interface describing options
     constructor(public text: string, public options?: Properties.PropertySet) {
@@ -3095,8 +3126,8 @@ export class MergeTree {
         this.idToSegment[id] = segment;
     }
 
-    mapIdToLref(id: string, lref: LocalReference) {
-        this.idToLref[id] = lref;
+    mapLocalIdToSegment(id: string, segment: Segment) {
+        this.localIdToSegment[id] = segment;
     }
 
     addNode(block: IMergeBlock, node: MergeNode) {
@@ -3589,7 +3620,7 @@ export class MergeTree {
             if (accumText.placeholder && (accumText.placeholder.length > 0)) {
                 if (accumText.placeholder === "*") {
                     let marker = <Marker>segment;
-                    accumText.textSegment.text += `/${marker.toString()}/`; 
+                    accumText.textSegment.text += `\n${marker.toString()}`;
                 } else {
                     for (let i = 0; i < segment.cachedLength; i++) {
                         accumText.textSegment.text += accumText.placeholder;
@@ -3763,11 +3794,26 @@ export class MergeTree {
         this.setMinSeq(Math.min(this.collabWindow.globalMinSeq, localMinSeq));
     }
 
+    addMinSeqListener(minRequired: number, onMinGE: (minSeq:number)=>void ) {
+        if (!this.minSeqListeners) {
+            this.minSeqListeners = new Collections.Heap<MinListener>([],
+                minListenerComparer);
+        }
+        this.minSeqListeners.add({ minRequired, onMinGE });
+    }
+
     setMinSeq(minSeq: number) {
         if (minSeq > this.collabWindow.minSeq) {
             this.collabWindow.minSeq = minSeq;
             if (MergeTree.options.zamboniSegments) {
                 this.zamboniSegments();
+            }
+            if (this.minSeqListeners) {
+                while ((this.minSeqListeners.count()>0) && 
+                    (this.minSeqListeners.peek().minRequired<=minSeq)) {
+                    let minListener = this.minSeqListeners.get();
+                    minListener.onMinGE(minSeq);
+                }
             }
         }
     }
@@ -4028,15 +4074,10 @@ export class MergeTree {
         return this.idToSegment[id];
     }
 
-    setLrefIdMap(localReferenceMapper: LocalReferenceMapper) {
-        this.idToLref = localReferenceMapper;
+    getSegmentFromLocalId(id: string) {
+        return this.localIdToSegment[id];
     }
 
-    getLrefFromId(id: string) {
-        if (this.idToLref) {
-            return this.idToLref(id);
-        }
-    }
     /**
      * Given a position specified relative to a marker id, lookup the marker 
      * and convert the position to a character position.
@@ -4047,7 +4088,12 @@ export class MergeTree {
     posFromRelativePos(relativePos: IRelativePosition, refseq = UniversalSequenceNumber,
         clientId = this.collabWindow.clientId) {
         let pos = -1;
-        let marker = this.getSegmentFromId(relativePos.id);
+        let marker: Marker;
+        if (relativePos.id) {
+            marker = <Marker>this.getSegmentFromId(relativePos.id);
+        } else {
+            marker = <Marker>this.getSegmentFromLocalId(relativePos.localId);
+        }
         if (marker) {
             pos = this.getOffset(marker, refseq, clientId);
             if (!relativePos.before) {
@@ -4078,12 +4124,16 @@ export class MergeTree {
     }
 
     insertMarker(pos: number, refSeq: number, clientId: number, seq: number,
-        behaviors: ops.ReferenceType, props?: Properties.PropertySet) {
+        behaviors: ops.ReferenceType, props?: Properties.PropertySet, localId?: string) {
         let marker = Marker.make(behaviors, props, seq, clientId);
 
         let markerId = marker.getId();
         if (markerId) {
             this.mapIdToSegment(markerId, marker);
+        }
+        let markerLocalId = marker.getLocalId();
+        if (markerLocalId) {
+            this.mapLocalIdToSegment(markerLocalId, marker);
         }
 
         this.insert(pos, refSeq, clientId, seq, marker, (block, pos, refSeq, clientId, seq, marker) =>

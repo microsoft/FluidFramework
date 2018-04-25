@@ -1,7 +1,7 @@
 import { api } from "@prague/routerlicious";
 import { cloneDeep } from "lodash";
 import * as React from "react";
-import { History } from "./History";
+import { History } from "../History";
 
 import prague = api;
 import types = prague.types;
@@ -34,33 +34,15 @@ export class Board extends React.Component<IBoardProps, IBoardState> {
       this.listenToUpdate();
     }
 
-    handleClick(i: number) {
-      if (this.state.winner || !this.state.iAmNext || this.state.squares[i] || this.state.nPlayers < 2 || this.state.historyMode) {
-        return;
-      }
-      const playerId = this.props.player.id;
-      this.props.gameView.set(i.toString(), playerId);
-      this.props.gameView.set("next", playerId === 1 ? 2 : 1);
-    }
-
-    renderSquare(i: number) {
-      return (
-        <Square
-          value={this.state.squares[i]}
-          onClick={() => this.handleClick(i)}
-        />
-      );
-    }
-
-    render() {
+    public render() {
       const winner = this.state.winner;
       const nPlayers = this.state.nPlayers;
       let status;
       if (nPlayers < 2) {
-        status = 'Waiting for other player to join...';
+        status = "Waiting for other player to join...";
       } else {
         if (winner) {
-          status = (winner === 3) ? 'Match drawn!' : 'Winner: ' + this.getPlayerNameFromId(winner);
+          status = (winner === 3) ? "Match drawn!" : "Winner: " + this.getPlayerNameFromId(winner);
         } else {
           const otherPlayerName = this.getPlayerNameFromId(this.getOtherPlayerId(this.props.player.id));
           const nextMoveStatus = this.state.iAmNext ? "Your move. Go Ahead!" : ("Next move: " + otherPlayerName);
@@ -95,6 +77,28 @@ export class Board extends React.Component<IBoardProps, IBoardState> {
       );
     }
 
+    private handleClick(i: number) {
+      if (this.state.winner     ||
+        !this.state.iAmNext     ||
+        this.state.squares[i]   ||
+        this.state.nPlayers < 2 ||
+        this.state.historyMode) {
+        return;
+      }
+      const playerId = this.props.player.id;
+      this.props.gameView.set(i.toString(), playerId);
+      this.props.gameView.set("next", playerId === 1 ? 2 : 1);
+    }
+
+    private renderSquare(i: number) {
+      return (
+        <Square
+          value={this.state.squares[i]}
+          onClick={() => this.handleClick(i)}
+        />
+      );
+    }
+
     private listenToUpdate() {
         this.props.gameMap.on("valueChanged", (delta: types.IValueChanged) => {
           if (delta.key === "restart") {
@@ -102,14 +106,14 @@ export class Board extends React.Component<IBoardProps, IBoardState> {
             if (!value) {
               console.log(`Resetting history mode!`);
               this.setState({
-                historyMode: false
+                historyMode: false,
               });
               this.history = [];
               this.setGameState(false);
             } else {
               console.log(`Setting history mode!`);
               this.setState({
-                historyMode: true
+                historyMode: true,
               });
             }
           } else {
@@ -121,14 +125,16 @@ export class Board extends React.Component<IBoardProps, IBoardState> {
     private setGameState(initial: boolean) {
         const stateView = this.props.gameView;
         const squares = Array(9).fill(null);
-        for (let cell of stateView.keys()) {
+        for (const cell of stateView.keys()) {
             const parsed = parseInt(cell, 10);
-            if (isNaN(parsed)) continue;
-            const cellValue = stateView.get(cell) as Number;
+            if (isNaN(parsed)) {
+              continue;
+            }
+            const cellValue = stateView.get(cell) as number;
             if (cellValue === 1) {
-                squares[parsed] = 'X';
+                squares[parsed] = "X";
             } else {
-                squares[parsed] = 'O';
+                squares[parsed] = "O";
             }
         }
         const iAmNext = ((stateView.get("next") as number) === this.props.player.id) ? true : false;
@@ -175,11 +181,12 @@ export class Board extends React.Component<IBoardProps, IBoardState> {
           [0, 4, 8],
           [2, 4, 6],
         ];
-        for (let i = 0; i < lines.length; i++) {
-          const [a, b, c] = lines[i];
+
+        for (const line of lines) {
+          const [a, b, c] = line;
           if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
             this.props.gameView.set("restart", true);
-            return squares[a] === 'X' ? 1 : 2;
+            return squares[a] === "X" ? 1 : 2;
           }
         }
         for (const cell of squares) {
@@ -225,6 +232,7 @@ export class Board extends React.Component<IBoardProps, IBoardState> {
       }
       return true;
     }
+
     private addToHistory() {
       const state = cloneDeep(this.state);
       state.historyMode = true;
@@ -241,10 +249,10 @@ export class Board extends React.Component<IBoardProps, IBoardState> {
     }
 }
 
-  function Square(props: ISquareProps) {
+function Square(props: ISquareProps) {
     return (
       <button className="square" onClick={props.onClick}>
         {props.value}
       </button>
     );
-  }
+}

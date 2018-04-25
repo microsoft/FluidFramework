@@ -42,7 +42,7 @@ export function register(
         function sendAndTrack(message: core.IRawOperationMessage) {
             throughput.produce();
             const sendP = producer.send(JSON.stringify(message), message.documentId);
-            sendP.catch((error) => { return; }).then(() => throughput.acknolwedge());
+            sendP.catch((error) => { return; }).then(() => throughput.acknowlwedge());
             return sendP;
         }
 

@@ -3,6 +3,7 @@ import * as queue from "async/queue";
 import clone = require("lodash/clone");
 import { core, MergeTree } from "../client-api";
 import { IIntelligentService } from "../intelligence";
+import { SharedString } from "../shared-string";
 
 interface ISpellQuery {
     // Request text to spellcheck.
@@ -25,7 +26,7 @@ interface IPgMarker {
     pos: number;
 }
 
-function compareProxStrings(a: MergeTree.Collections.ProxString<number>, b: MergeTree.Collections.ProxString<number>) {
+function compareProxStrings(a: MergeTree.ProxString<number>, b: MergeTree.ProxString<number>) {
     let ascore = ((a.invDistance * 200) * a.val) + a.val;
     let bscore = ((b.invDistance * 200) * b.val) + b.val;
     return bscore - ascore;
@@ -45,8 +46,8 @@ class Speller {
     private typingQueue: any;
 
     constructor(
-        public sharedString: MergeTree.SharedString,
-        private dict: MergeTree.Collections.TST<number>,
+        public sharedString: SharedString,
+        private dict: MergeTree.TST<number>,
         private intelligence: IIntelligentService) {
         this.initializeSpellerQueue();
     }
@@ -529,8 +530,8 @@ class Speller {
 
 export class Spellcheker {
     constructor(
-        private root: MergeTree.SharedString,
-        private dict: MergeTree.Collections.TST<number>,
+        private root: SharedString,
+        private dict: MergeTree.TST<number>,
         private intelligence: IIntelligentService) {
     }
 

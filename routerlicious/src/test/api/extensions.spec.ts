@@ -5,10 +5,10 @@ import * as map from "../../map";
 describe("Routerlicious", () => {
     describe("Api", () => {
         describe("Extensions", () => {
-            let registry: api.Registry;
+            let registry: api.Registry<api.ICollaborativeObjectExtension>;
 
             beforeEach(() => {
-                registry = new api.Registry();
+                registry = new api.Registry<api.ICollaborativeObjectExtension>();
             });
 
             it("Can create an extension registry", () => {

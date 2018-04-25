@@ -179,7 +179,8 @@ export function create(appConfig: any, aadConfig: any) {
     app.use("/maps", routes.maps);
     app.use("/cells", routes.cells);
     app.use("/sharedText", routes.sharedText);
-    app.use("/tictactoe", routes.tittactoe);
+    app.use("/tictactoe", routes.tictactoe);
+    app.use("/snake", routes.snake);
     app.use("/", routes.home);
 
     // catch 404 and forward to error handler

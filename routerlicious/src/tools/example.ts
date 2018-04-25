@@ -1,5 +1,5 @@
 import * as api from "../api";
-import * as mergeTree from "../merge-tree";
+import { SharedString } from "../shared-string";
 import * as socketStorage from "../socket-storage";
 
 interface IAttachedObject {
@@ -35,7 +35,7 @@ async function run(id: string): Promise<void> {
     }
 
     // Load the text string and listen for updates
-    const text = rootView.get("text") as mergeTree.SharedString;
+    const text = rootView.get("text") as SharedString;
 
     const attached = {
         getText: () => {

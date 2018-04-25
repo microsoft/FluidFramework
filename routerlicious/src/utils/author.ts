@@ -2,6 +2,8 @@ import * as queue from "async/queue";
 import clone = require("lodash/clone");
 import { api, core, MergeTree, utils } from "../client-api";
 import { ICell, IMap } from "../data-types";
+import { SharedString } from "../shared-string";
+import Counter = utils.RateCounter;
 
 let play: boolean = false;
 
@@ -13,10 +15,10 @@ let histogramData: ICell;
 let performanceData: ICell;
 let metrics: IScribeMetrics;
 
-const ackCounter = new utils.RateCounter();
-const latencyCounter = new utils.RateCounter();
-const pingCounter = new utils.RateCounter();
-const typingCounter = new utils.RateCounter();
+const ackCounter = new Counter();
+const latencyCounter = new Counter();
+const pingCounter = new Counter();
+const typingCounter = new Counter();
 
 function padTime(value: number) {
     return `0${value}`.slice(-2);
@@ -29,6 +31,18 @@ interface IChartData {
     stdDev: number[];
     label: string[];
     index: number;
+}
+
+export interface IAuthor {
+    ackCounter: Counter;
+    latencyCounter: Counter;
+    typingCounter: Counter;
+    pingCounter: Counter;
+
+    metrics: IScribeMetrics;
+
+    doc: api.Document;
+    ss: SharedString;
 }
 
 /**
@@ -78,7 +92,7 @@ export interface IScribeMetrics {
 }
 
 export declare type ScribeMetricsCallback = (metrics: IScribeMetrics) => void;
-export declare type QueueCallback = (metrics: IScribeMetrics, doc: api.Document, ss: MergeTree.SharedString) => void;
+export declare type QueueCallback = (metrics: IScribeMetrics, author: IAuthor) => void;
 
 /**
  * Initializes empty chart data
@@ -234,7 +248,7 @@ async function setMetrics(doc: api.Document) {
 
 export async function typeFile(
     doc: api.Document,
-    ss: MergeTree.SharedString,
+    ss: SharedString,
     fileText: string,
     intervalTime: number,
     writers: number,
@@ -262,28 +276,63 @@ export async function typeFile(
 
         await setMetrics(doc);
 
+        let m: IScribeMetrics = {
+            ackProgress: undefined,
+                ackRate: undefined,
+                latencyAverage: undefined,
+                latencyMaximum: undefined,
+                latencyMinimum: undefined,
+                latencyStdDev: undefined,
+                pingAverage: undefined,
+                pingMaximum: undefined,
+                textLength: fileText.length,
+                time: 0,
+                typingInterval: intervalTime,
+                typingProgress: undefined,
+                typingRate: undefined,
+                writers,
+        };
+
+        let author: IAuthor = {
+            ackCounter: new Counter(),
+            doc,
+            latencyCounter: new Counter(),
+            metrics: clone(m),
+            pingCounter: new Counter(),
+            ss,
+            typingCounter: new Counter(),
+        };
+        let authors: IAuthor[] = [author];
+        let docList: api.Document[] = [doc];
+        let ssList: SharedString[] = [ss];
+
+        for (let i = 1; i < writers; i++ ) {
+            docList.push(await api.load(doc.id));
+            ssList.push(await docList[i].getRoot().get("text") as SharedString);
+            author = {
+                ackCounter: new Counter(),
+                doc: await api.load(doc.id),
+                latencyCounter: new Counter(),
+                metrics: clone(m),
+                pingCounter: new Counter(),
+                ss: await docList[i].getRoot().get("text") as SharedString,
+                typingCounter: new Counter(),
+            };
+            authors.push(author);
+        }
+
         if (writers === 1) {
-            console.log("Single File");
             let startTime = Date.now();
             typingCounter.reset();
             ackCounter.reset();
             latencyCounter.reset();
             pingCounter.reset();
-            return typeChunk(doc, ss, "p-0", fileText, intervalTime, scribeCallback, scribeCallback)
+            return typeChunk(authors[0], "p-0", fileText, intervalTime, scribeCallback, scribeCallback)
                 .then((metric) => {
                     metric.time = Date.now() - startTime;
                     return metric;
                 });
         } else {
-            console.log("Multi-Author");
-
-            let docList: api.Document[] = [doc];
-            let ssList: MergeTree.SharedString[] = [ss];
-            for (let i = 1; i < writers; i++ ) {
-                docList.push(await api.load(doc.id));
-                ssList.push(await docList[i].getRoot().get("text") as MergeTree.SharedString);
-            }
-
             return (doc.getRoot().get("chunks") as Promise<IMap>)
                 .then((chunkMap) => {
                     return chunkMap.getView();
@@ -300,21 +349,18 @@ export async function typeFile(
                     return new Promise((resolve, reject) => {
                         q = queue(async (chunkKey, queueCallback) => {
                             let chunk = chunkView.get(chunkKey);
-                            let newDoc = docList.shift();
-                            const newSs = ssList.shift();
+                            let a = authors.shift();
                             curKey++;
                             metrics.typingProgress = curKey / totalKeys;
-                            typeChunk(newDoc, newSs, chunkKey, chunk, intervalTime, scribeCallback, queueCallback).then;
+                            typeChunk(a, chunkKey, chunk, intervalTime, scribeCallback, queueCallback).then;
                         }, writers);
 
                         for (let chunkKey of chunkView.keys()) {
                             totalKeys++;
                             q.push(chunkKey, (
                                     metric: IScribeMetrics,
-                                    document: api.Document,
-                                    sharedString: MergeTree.SharedString) => {
-                                docList.push(document);
-                                ssList.push(sharedString);
+                                    a: IAuthor) => {
+                                authors.push(a);
                                 metricsArray.push(metric);
                             });
                         }
@@ -336,8 +382,7 @@ export async function typeFile(
  * Types the given file into the shared string - starting at the end of the string
  */
 export async function typeChunk(
-    doc: api.Document,
-    ss: MergeTree.SharedString,
+    a: IAuthor,
     chunkKey: string,
     chunk: string,
     intervalTime: number,
@@ -379,10 +424,10 @@ export async function typeChunk(
             }
         }, 1000);
 
-        ss.on("op", (message: core.ISequencedObjectMessage) => {
+        a.ss.on("op", (message: core.ISequencedObjectMessage) => {
             if (message.clientSequenceNumber &&
                 message.clientSequenceNumber > 10 &&
-                message.clientId === doc.clientId) {
+                message.clientId === a.doc.clientId) {
 
                 ackCounter.increment(1);
                 // Wait for at least one cycle
@@ -437,7 +482,7 @@ export async function typeChunk(
 
                 clearInterval(metricsInterval);
                 resolve(metrics);
-                queueCallback(metrics, doc, ss);
+                queueCallback(metrics, a);
                 return false;
             }
             if (!play) {
@@ -450,7 +495,7 @@ export async function typeChunk(
                 offset: 0,
             };
 
-            pos = ss.client.mergeTree.posFromRelativePos(relPosit);
+            pos = a.ss.client.mergeTree.posFromRelativePos(relPosit);
 
             // Start inserting text into the string
             let code = chunk.charCodeAt(readPosition);
@@ -463,16 +508,16 @@ export async function typeChunk(
                 let char = chunk.charAt(readPosition);
 
                 if (code === 10) {
-                    ss.insertMarker(pos, MergeTree.ReferenceType.Tile,
+                    a.ss.insertMarker(pos, MergeTree.ReferenceType.Tile,
                         {[MergeTree.reservedTileLabelsKey]: ["pg"]});
                     readPosition++;
                     ++lineNumber;
                     if (lineNumber % saveLineFrequency === 0) {
-                        doc.save(`Line ${lineNumber}`);
+                        a.doc.save(`Line ${lineNumber}`);
                     }
                     metrics.typingProgress = readPosition / chunk.length;
                 } else {
-                    ss.insertText(char, pos);
+                    a.ss.insertText(char, pos);
                     readPosition++;
                 }
             });

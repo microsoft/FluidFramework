@@ -2,7 +2,7 @@ import * as resources from "gitresources";
 import * as api from "../api-core";
 import { SharedString } from "./sharedString";
 
-export class CollaboritiveStringExtension implements api.IExtension {
+export class CollaboritiveStringExtension implements api.ICollaborativeObjectExtension {
     public static Type = "https://graph.microsoft.com/types/mergeTree";
 
     public type: string = CollaboritiveStringExtension.Type;

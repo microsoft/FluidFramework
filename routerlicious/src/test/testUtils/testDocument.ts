@@ -56,6 +56,10 @@ export class TestDocument implements core.IDocument {
         throw new Error("Method not implemented.");
     }
 
+    public getContentModel(): core.IContentModelExtension {
+        throw new Error("Method not implemented.");
+    }
+
     public snapshot(message: string): Promise<void> {
         this.snapshotRequests++;
         return this.snapshotCore(message);

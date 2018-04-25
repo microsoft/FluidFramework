@@ -313,7 +313,7 @@ export class DeliLambda implements IPartitionLambda {
         this.throughput.produce();
         this.producer.send(JSON.stringify(message), message.documentId).then(
             (result) => {
-                this.throughput.acknolwedge();
+                this.throughput.acknowlwedge();
                 this.checkpointContext.checkpoint(checkpoint);
             },
             (error) => {

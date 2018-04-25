@@ -9,3 +9,6 @@ export { sharedText };
 
 import * as tictactoe from "./tictactoe";
 export { tictactoe };
+
+import * as snake from "./snake";
+export { snake };
