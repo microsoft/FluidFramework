@@ -21,7 +21,7 @@ export class DeliLambdaFactory implements IPartitionLambdaFactory {
         // Lookup the last sequence number stored
         const dbObject = await this.collection.findOne({ documentId, tenantId });
         if (!dbObject) {
-            return Promise.reject("Object does not exist - cannot sequence");
+            return Promise.reject(`${tenantId}/${documentId} does not exist - cannot sequence`);
         }
 
         return new DeliLambda(
