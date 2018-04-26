@@ -1819,7 +1819,6 @@ export class Client {
     shortClientUserInfoMap = <IAuthenticatedUser[]>[];
     registerCollection = new RegisterCollection();
     localSequenceNumber = UnassignedSequenceNumber;
-    tempCli = -1;
     public longClientId: string;
     public userInfo: IAuthenticatedUser;
     public undoSegments: IUndoInfo[];
@@ -1834,14 +1833,12 @@ export class Client {
         this.checkQ = Collections.ListMakeHead<string>();
     }
 
-    setLocalSequenceNumberCli(seq: number, cli: number) {
+    setLocalSequenceNumber(seq: number) {
         this.localSequenceNumber = seq;
-        this.tempCli = cli;
     }
 
-    resetLocalSequenceNumberCli() {
+    resetLocalSequenceNumber() {
         this.localSequenceNumber = UnassignedSequenceNumber;
-        this.tempCli = -1;
     }
 
     undoSingleSequenceNumber(undoSegments: IUndoInfo[], redoSegments: IUndoInfo[]) {
@@ -2509,9 +2506,6 @@ export class Client {
         let clientId = segWindow.clientId;
         let refSeq = segWindow.currentSeq;
         let seq = this.getLocalSequenceNumber();
-        if (this.tempCli >= 0) {
-            clientId = this.tempCli;
-        }
         let clockStart;
         if (this.measureOps) {
             clockStart = clock();
@@ -2533,9 +2527,6 @@ export class Client {
         let clientId = segWindow.clientId;
         let refSeq = segWindow.currentSeq;
         let seq = this.getLocalSequenceNumber();
-        if (this.tempCli >= 0) {
-            clientId = this.tempCli;
-        }
         let clockStart;
         if (this.measureOps) {
             clockStart = clock();

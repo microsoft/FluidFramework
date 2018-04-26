@@ -90,6 +90,18 @@ export interface ICmd extends Item {
 let commands: ICmd[] = [
     {
         exec: (f) => {
+            f.copyFormat();
+        },
+        key: "copy format",
+    },
+    {
+        exec: (f) => {
+            f.paintFormat();
+        },
+        key: "paint format",
+    },
+    {
+        exec: (f) => {
             f.toggleBlockquote();
         },
         key: "blockquote",
@@ -120,6 +132,24 @@ let commands: ICmd[] = [
     },
     {
         exec: (f) => {
+            f.setColor("red");
+        },
+        key: "red",
+    },
+    {
+        exec: (f) => {
+            f.setColor("green");
+        },
+        key: "green",
+    },
+    {
+        exec: (f) => {
+            f.setColor("gold");
+        },
+        key: "gold",
+    },
+    {
+        exec: (f) => {
             f.setFont("courier new", "18px");
         },
         key: "Courier font",
@@ -129,6 +159,18 @@ let commands: ICmd[] = [
             f.setFont("tahoma", "18px");
         },
         key: "Tahoma font",
+    },
+    {
+        exec: (f) => {
+            f.setPGProps({ header: true });
+        },
+        key: "Heading 2",
+    },
+    {
+        exec: (f) => {
+            f.setPGProps({ header: null });
+        },
+        key: "Normal",
     },
     {
         exec: (f) => {
@@ -891,6 +933,7 @@ interface ILineContext {
     span: ISegSpan;
     deferredAttach?: boolean;
     reRenderList?: ILineDiv[];
+    pgMarker: Paragraph.IParagraphMarker;
 }
 
 export interface IDocumentContext {
@@ -1017,6 +1060,8 @@ function endRenderSegments(marker: MergeTree.Marker) {
             (marker.refType & MergeTree.ReferenceType.NestEnd))));
 }
 
+const wordHeadingColor = "rgb(47, 84, 150)";
+
 function renderSegmentIntoLine(
     segment: MergeTree.Segment, segpos: number, refSeq: number,
     clientId: number, start: number, end: number, lineContext: ILineContext) {
@@ -1037,6 +1082,9 @@ function renderSegmentIntoLine(
         let textStartPos = segpos + start;
         let textEndPos = segpos + end;
         lineContext.span = makeSegSpan(lineContext.flowView, text, textSegment, start, segpos);
+        if ((lineContext.lineDiv.endPGMarker) && (lineContext.lineDiv.endPGMarker.properties.header)) {
+            lineContext.span.style.color = wordHeadingColor;
+        }
         lineContext.contentDiv.appendChild(lineContext.span);
         lineContext.lineDiv.lineEnd += text.length;
         if ((lineContext.flowView.cursor.pos >= textStartPos) && (lineContext.flowView.cursor.pos <= textEndPos)) {
@@ -1373,7 +1421,7 @@ function createSVGRect(r: ui.Rectangle) {
     rect.setAttribute("y", r.y.toString());
     rect.setAttribute("width", r.width.toString());
     rect.setAttribute("height", r.height.toString());
-    rect.setAttribute("stroke", "blue");
+    rect.setAttribute("stroke", "darkgrey");
     rect.setAttribute("stroke-width", "1px");
     rect.setAttribute("fill", "none");
     return rect;
@@ -1926,7 +1974,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
                 }
                 let lineContext = <ILineContext>{
                     contentDiv, deferredAttach: layoutContext.deferredAttach, flowView: layoutContext.flowView,
-                    lineDiv, lineDivHeight, span,
+                    lineDiv, lineDivHeight, pgMarker: endPGMarker, span,
                 };
                 if (viewportStartPos < 0) {
                     viewportStartPos = lineStart;
@@ -2626,6 +2674,7 @@ export class FlowView extends ui.Component {
     private targetTranslation: string;
     private activeSearchBox: ISearchBox;
     private cmdTree: MergeTree.TST<ICmd>;
+    private formatRegister: MergeTree.PropertySet;
 
     constructor(
         element: HTMLDivElement,
@@ -3769,19 +3818,43 @@ export class FlowView extends ui.Component {
         this.toggleWordOrSelection("textDecoration", "underline", null);
     }
 
-    public setFont(family: string, size = "18px") {
+    public copyFormat() {
+        let segoff = getContainingSegment(this, this.cursor.pos);
+        if (segoff.segment && (segoff.segment.getType() === MergeTree.SegmentType.Text)) {
+            let textSegment = <MergeTree.TextSegment>segoff.segment;
+            this.formatRegister = MergeTree.extend(MergeTree.createMap(), textSegment.properties);
+        }
+    }
+
+    public setProps(props: MergeTree.PropertySet, updatePG = true) {
         let sel = this.cursor.getSelection();
         if (sel) {
             this.clearSelection(false);
-            this.sharedString.annotateRange({ fontFamily: family, fontSize: size }, sel.start, sel.end);
+            this.sharedString.annotateRange(props, sel.start, sel.end);
         } else {
             let wordRange = getCurrentWord(this.cursor.pos, this.sharedString.client.mergeTree);
             if (wordRange) {
-                this.sharedString.annotateRange({ font: family, fontSize: size }, wordRange.wordStart, wordRange.wordEnd);
+                this.sharedString.annotateRange(props, wordRange.wordStart, wordRange.wordEnd);
             }
         }
-        this.updatePGInfo(this.cursor.pos);
+        if (updatePG) {
+            this.updatePGInfo(this.cursor.pos);
+        }
         this.localQueueRender(this.cursor.pos);
+    }
+
+    public paintFormat() {
+        if (this.formatRegister) {
+            this.setProps(this.formatRegister);
+        }
+    }
+
+    public setFont(family: string, size = "18px") {
+        this.setProps({ fontFamily: family, fontSize: size });
+    }
+
+    public setColor(color: string) {
+        this.setProps({ color }, false);
     }
 
     public toggleWordOrSelection(name: string, valueOn: string, valueOff: string) {
@@ -4038,7 +4111,7 @@ export class FlowView extends ui.Component {
                             hit = true;
                         }
                     }
- /*                   if ((rowCount > 4) && (!hit)) {
+/*                    if ((rowCount > 4) && (!hit)) {
                         let chance = Math.round(Math.random() * 10);
                         if (chance >= 5) {
                             this.deleteRow();
@@ -4046,7 +4119,7 @@ export class FlowView extends ui.Component {
                             hit = true;
                         }
                     }
-                   if ((columnCount > 4) && (!hit)) {
+*/                    if ((columnCount > 4) && (!hit)) {
                         let chance = Math.round(Math.random() * 10);
                         if (chance >= 5) {
                             this.deleteColumn();
@@ -4054,7 +4127,6 @@ export class FlowView extends ui.Component {
                             hit = true;
                         }
                     }
-                    */
                 } else {
                     return;
                 }
@@ -4081,6 +4153,17 @@ export class FlowView extends ui.Component {
             Table.insertColumn(this.sharedString, cellMarker.cell, rowMarker.row, tableMarker.table);
             this.localQueueRender(this.cursor.pos);
         }
+    }
+
+    public setPGProps(props: MergeTree.PropertySet) {
+        let tileInfo = findTile(this, this.cursor.pos, "pg", false);
+        if (tileInfo) {
+            let pgMarker = <Paragraph.IParagraphMarker>tileInfo.tile;
+            this.sharedString.annotateRange(props, tileInfo.pos,
+                pgMarker.cachedLength + tileInfo.pos);
+            Paragraph.clearContentCaches(pgMarker);
+        }
+        this.localQueueRender(this.cursor.pos);
     }
 
     public keyCmd(charCode: number) {
