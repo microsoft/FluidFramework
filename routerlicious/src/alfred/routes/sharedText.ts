@@ -2,6 +2,7 @@ import { Router } from "express";
 import { Provider } from "nconf";
 import * as path from "path";
 import { ITenantManager } from "../../api-core";
+// import { kafkaBlizzardTest } from "../../tools/kafkaBlizzardTest";
 import * as utils from "../../utils";
 import * as storage from "../storage";
 import { getConfig, getFullId } from "../utils";
@@ -97,6 +98,10 @@ export function create(
             (error) => {
                 response.status(400).json(error);
             });
+    });
+
+    router.get("/blizzard", (request, response, next) => {
+        // kafkaBlizzardTest();
     });
 
     /**
