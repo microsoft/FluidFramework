@@ -5,10 +5,8 @@ import "antd/lib/modal/style/css";
 import "antd/lib/form/style/css";
 import "antd/lib/input/style/css";
 import "antd/lib/radio/style/css";
-import { findTenant } from "../utils";
 
 const FormItem = Form.Item;
-let endpoint: string = null;
 
 export interface ITenantCreateProps extends FormComponentProps {
   confirmLoading: boolean;
@@ -29,8 +27,6 @@ export class CreateTenantModal extends React.Component<ITenantCreateProps, ITena
     this.state = {
       githubSelected: this.props.githubSelected,
     }
-    // Not ideal but a quick alternative of creating a new component.
-    endpoint = this.props.endpoint;
   }
 
   render() {
@@ -51,7 +47,6 @@ export class CreateTenantModal extends React.Component<ITenantCreateProps, ITena
               rules: [
                 { required: true, message: 'Please input tenant name' },
                 { required: true, message: 'Name should be at least 4 characters', min: 4 },
-                { required: true, message: 'Tenant name already exists', transform: (value: string) => value.toLowerCase(), validator: this.validateTenantName},
               ],
             })(
               <Input />
@@ -115,20 +110,4 @@ export class CreateTenantModal extends React.Component<ITenantCreateProps, ITena
     });
   }
 
-  private validateTenantName(rule: any, value: string, callback: any) {
-    // Don't look up for values with smaller length since the min length propery will apply.
-    if (value.length <  4) {
-      callback();
-    } else {
-      findTenant(endpoint, value).then((data) => {
-        if (data != null) {
-          callback([new Error(rule.message)]);
-        } else {
-          callback();
-        }
-      }, (err) => {
-        callback([new Error("Error accessing MongoDB. Try again!")]);
-      });
-    }
-  }
 }

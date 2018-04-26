@@ -1,6 +1,6 @@
 import * as moniker from "moniker";
 import * as core from "../db";
-import { ITenantConfig, RiddlerManager} from "./riddlerManager";
+import { ITenantStorage, RiddlerManager} from "./riddlerManager";
 
 /**
  * User -> Orgs mapping document
@@ -41,7 +41,7 @@ export interface ITenant {
     key: string;
 
     // Tenant storage
-    storage: any;
+    storage: ITenantStorage;
 }
 
 export class TenantManager {
@@ -64,12 +64,14 @@ export class TenantManager {
             await this.createEmptyTenantListForOrg(orgId);
         }
 
-        const dbTenant = await this.riddlerManager.addTenant();
-        await this.riddlerManager.updateTenantStorage(dbTenant.id, storage);
+        const newTenant = await this.riddlerManager.addTenant();
+        const key = newTenant.key;
+        await this.riddlerManager.updateTenantStorage(newTenant.id, storage);
+        const dbTenant = await this.riddlerManager.getTenant(newTenant.id);
 
-        await this.addNewTenantForOrg(orgId, dbTenant.id);
+        await this.addNewTenantForOrg(orgId, newTenant.id);
 
-        const tenant = await this.addToTenantDB(dbTenant, name, storage);
+        const tenant = await this.addToTenantDB(dbTenant.id, key, name, dbTenant.storage);
         return tenant;
     }
 
@@ -78,12 +80,11 @@ export class TenantManager {
      */
     public async getTenantsforUser(userId: string): Promise<ITenant[]> {
         const orgId = await this.getOrgIdForUser(userId);
-        if (orgId === null) { return null; }
+        if (orgId === null) { return []; }
         const tenantIds = await this.getTenantIdsForOrg(orgId);
-        if (tenantIds === null) { return null; }
+        if (tenantIds === null) { return []; }
         const tenants = this.getTenants(tenantIds);
         return tenants;
-
     }
 
     /**
@@ -125,13 +126,13 @@ export class TenantManager {
         await collection.update({ _id: orgId }, { tenantIds: existingTenants }, null);
     }
 
-    private async addToTenantDB(tenant: ITenantConfig & {key: string; }, name: string, storage: any): Promise<ITenant> {
+    private async addToTenantDB(id: string, key: string, name: string, storage: ITenantStorage): Promise<ITenant> {
         const db = await this.mongoManager.getDatabase();
         const collection = db.collection<ITenant>(this.tenantCollection);
         const newTenant: ITenant = {
-            _id: tenant.id,
+            _id: id,
             deleted: false,
-            key: tenant.key,
+            key,
             name,
             storage,
         };
@@ -158,9 +159,10 @@ export class TenantManager {
     private async getTenants(tenantIds: string[]): Promise<ITenant[]> {
         const db = await this.mongoManager.getDatabase();
         const collection = db.collection<ITenant>(this.tenantCollection);
-
-        const idObjects = tenantIds.map((id) => new core.ObjectId(id));
-        const found = await collection.find({_id: {$in: idObjects}}, {});
+        const found = await collection.find(
+            { $and: [{_id: {$in: tenantIds}}, {deleted: false}]},
+            {},
+        );
         return found;
     }
 

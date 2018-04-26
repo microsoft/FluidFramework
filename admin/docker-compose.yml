@@ -7,5 +7,9 @@ services:
         command: node dist/www.js
         volumes:
             - .:/usr/src/server
-    mongodb:
-        image: "mongo:3.4.3"
+        networks:
+            - routerlicious_default
+
+networks:
+    routerlicious_default:
+        external: true

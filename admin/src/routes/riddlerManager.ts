@@ -59,7 +59,7 @@ export class RiddlerManager {
                     "Content-Type": "application/json",
                 },
                 json: true,
-            }) as Promise<ITenantConfig & {key: string; }>;
+            }) as ITenantConfig & {key: string; };
         return tenant;
     }
 
