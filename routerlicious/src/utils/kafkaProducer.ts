@@ -263,10 +263,9 @@ class KafkaNodeProducer extends Producer implements IProducer {
             // We make use of a refreshMetadata call to validate the given topics exist
             client.refreshMetadata(
                 topics,
-                (error, data) => {
+                (error) => {
                     if (error) {
-                        debug(error);
-                        return reject();
+                        return reject(error);
                     }
 
                     return resolve();
@@ -276,6 +275,7 @@ class KafkaNodeProducer extends Producer implements IProducer {
 }
 
 export function create(type: string, endPoint: string, clientId: string, topic: string): IProducer {
-    return type === "kafka-rest" ? new KafkaRestProducer(endPoint, topic)
-                                 : new KafkaNodeProducer(endPoint, clientId, topic);
+    return type === "kafka-rest"
+        ? new KafkaRestProducer(endPoint, topic)
+        : new KafkaNodeProducer(endPoint, clientId, topic);
 }

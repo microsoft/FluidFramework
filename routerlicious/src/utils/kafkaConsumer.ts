@@ -191,14 +191,55 @@ class KafkaNodeConsumer implements IConsumer {
         return new Promise<any>((resolve, reject) => {
             this.ensureTopics(this.client, [this.topic]).then(
                 () => {
+                    debug("###############################################");
+                    debug("###############################################");
+                    debug(`new HighLevelConsumer(${this.topic}, ${this.autoCommit}, ${groupId}`);
+                    debug("###############################################");
+                    debug("###############################################");
                     this.instance = new kafkaNode.HighLevelConsumer(this.client, [{topic: this.topic}], <any> {
                         autoCommit: this.autoCommit,
                         fetchMaxBytes: 1024 * 1024,
                         fetchMinBytes: 1,
                         fromOffset: true,
                         groupId,
-                        id: groupId,
                         maxTickMessages: 100000,
+                    });
+
+                    this.instance.on("rebalancing", () => {
+                        debug("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+                        debug("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+                        debug("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+                        debug("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+                        debug("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+                        debug("");
+                        debug(`Rebalancing ${(this.instance as any).id}`);
+                        debug(JSON.stringify((<any> this.instance).getTopicPayloads()));
+                        debug("");
+                        debug("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+                        debug("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+                        debug("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+                        debug("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+                        debug("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+                        debug("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+                    });
+
+                    this.instance.on("rebalanced", () => {
+                        debug("***********************************************");
+                        debug("***********************************************");
+                        debug("***********************************************");
+                        debug("***********************************************");
+                        debug("***********************************************");
+                        debug("***********************************************");
+                        debug("");
+                        debug("Rebalanced");
+                        debug(JSON.stringify((<any> this.instance).getTopicPayloads()));
+                        debug("");
+                        debug("***********************************************");
+                        debug("***********************************************");
+                        debug("***********************************************");
+                        debug("***********************************************");
+                        debug("***********************************************");
+                        debug("***********************************************");
                     });
 
                     this.instance.on("message", (message: any) => {
@@ -225,10 +266,9 @@ class KafkaNodeConsumer implements IConsumer {
             // We make use of a refreshMetadata call to validate the given topics exist
             client.refreshMetadata(
                 topics,
-                (error, data) => {
+                (error) => {
                     if (error) {
-                        debug(error);
-                        return reject();
+                        return reject(error);
                     }
                     return resolve();
                 });
@@ -241,11 +281,7 @@ class KafkaNodeConsumer implements IConsumer {
     private handleError(error: any) {
         // Close the client if it exists
         if (this.client) {
-            this.client.close((closeError) => {
-                if (closeError) {
-                    debug(closeError);
-                }
-            });
+            this.client.close();
             this.client = undefined;
         }
 
