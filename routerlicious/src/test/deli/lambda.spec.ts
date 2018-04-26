@@ -11,9 +11,10 @@ import { KafkaMessageFactory, MessageFactory, TestContext, TestDbFactory, TestKa
 describe("Routerlicious", () => {
     describe("Deli", () => {
         describe("Lambda", () => {
+            const testTenantId = "test";
             const testId = "test";
             const testClientId = "quiet-rat";
-            const testData = [{ _id: testId, sequenceNumber: 0, logOffset: undefined }];
+            const testData = [{ documentId: testId, tenantId: testTenantId, sequenceNumber: 0, logOffset: undefined }];
 
             let testCollection: core.ICollection<any>;
             let testKafka: TestKafka;
@@ -59,7 +60,8 @@ describe("Routerlicious", () => {
                 factory = new DeliLambdaFactory(mongoManager, testCollection, testProducer);
 
                 testContext = new TestContext();
-                const config = (new nconf.Provider({})).defaults({ documentId: testId }).use("memory");
+                const config = (new nconf.Provider({})).defaults({ documentId: testId, tenantId: testTenantId })
+                    .use("memory");
                 lambda = await factory.create(config, testContext);
             });
 

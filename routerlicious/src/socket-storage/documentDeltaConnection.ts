@@ -1,6 +1,6 @@
 import { EventEmitter } from "events";
 import * as api from "../api-core";
-import { BatchManager, IAuthenticatedUser } from "../core-utils";
+import { BatchManager } from "../core-utils";
 import { debug } from "./debug";
 import * as messages from "./messages";
 
@@ -9,6 +9,7 @@ import * as messages from "./messages";
  */
 export class DocumentDeltaConnection implements api.IDocumentDeltaConnection {
     public static async Create(
+        tenantId: string,
         id: string,
         token: string,
         io: SocketIOClientStatic,
@@ -22,6 +23,7 @@ export class DocumentDeltaConnection implements api.IDocumentDeltaConnection {
             });
 
         const connectMessage: messages.IConnect = {
+            tenantId,
             id,
             token,  // token is going to indicate tenant level information, etc...
         };
@@ -64,7 +66,7 @@ export class DocumentDeltaConnection implements api.IDocumentDeltaConnection {
         return this.details.parentBranch;
     }
 
-    public get user(): IAuthenticatedUser {
+    public get user(): api.IAuthenticatedUser {
         return this.details.user;
     }
 

@@ -19,8 +19,9 @@ export class TestTenant implements ITenant {
 
     public get storage(): ITenantStorage {
         return {
+            credentials: null,
+            direct: null,
             owner: this.owner,
-            publicUrl: this.url,
             repository: this.repository,
             url: this.url,
         };
@@ -30,7 +31,15 @@ export class TestTenant implements ITenant {
 export class TestTenantManager implements ITenantManager {
     private tenant = new TestTenant();
 
+    public verifyToken(token: string): Promise<void> {
+        return Promise.resolve();
+    }
+
     public getTenant(id: string): Promise<ITenant> {
         return Promise.resolve(this.tenant);
+    }
+
+    public getKey(tenantId: string): Promise<string> {
+        return Promise.resolve("test");
     }
 }

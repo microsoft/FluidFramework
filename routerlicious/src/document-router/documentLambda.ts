@@ -30,20 +30,24 @@ export class DocumentLambda implements IPartitionLambda {
 
         const sequencedMessage = message as core.ISequencedOperationMessage;
 
+        // Create the routing key from tenantId + documentId
+        const routingKey = `${sequencedMessage.tenantId}/${sequencedMessage.documentId}`;
+
         // Create or update the DocumentPartition
         let document: DocumentPartition;
-        if (!this.documents.has(sequencedMessage.documentId)) {
+        if (!this.documents.has(routingKey)) {
             // Create a new context and begin tracking it
             const documentContext = this.contextManager.createContext(kafkaMessage.offset);
 
             document = new DocumentPartition(
                 this.factory,
                 this.config,
+                sequencedMessage.tenantId,
                 sequencedMessage.documentId,
                 documentContext);
-            this.documents.set(sequencedMessage.documentId, document);
+            this.documents.set(routingKey, document);
         } else {
-            document = this.documents.get(sequencedMessage.documentId);
+            document = this.documents.get(routingKey);
             // setHead assumes it will always receive increasing offsets. So we need to split the creation case
             // from the update case.
             document.context.setHead(kafkaMessage.offset);

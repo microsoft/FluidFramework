@@ -11,7 +11,7 @@ async function loadDocument(id: string, version: resources.ICommit): Promise<api
     return document;
 }
 
-export async function initialize(id: string, version: resources.ICommit, config: any) {
+export async function initialize(id: string, version: resources.ICommit, token: string, config: any) {
     const host = new ui.BrowserContainerHost();
 
     socketStorage.registerAsDefault(document.location.origin, config.blobStorageUrl, config.owner, config.repository);

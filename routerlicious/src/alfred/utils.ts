@@ -1,8 +1,10 @@
 import * as _ from "lodash";
 import { ITenantManager } from "../api-core";
+import * as utils from "../utils";
+import { IAlfredTenant } from "./tenant";
 
 /**
- * Helper functioin to return tenant specific configuration
+ * Helper function to return tenant specific configuration
  */
 export async function getConfig(
     config: any,
@@ -13,9 +15,7 @@ export async function getConfig(
     // Make a copy of the config to avoid destructive modifications to the original
     const updatedConfig = _.cloneDeep(config);
 
-    const tenant = await tenantManager.getTenant(tenantId).catch((err) => {
-        return Promise.reject(err);
-    });
+    const tenant = await tenantManager.getTenant(tenantId);
     updatedConfig.owner = tenant.storage.owner;
     updatedConfig.repository = tenant.storage.repository;
 
@@ -24,16 +24,20 @@ export async function getConfig(
         updatedConfig.blobStorageUrl = tenant.storage.direct;
         updatedConfig.historianApi = false;
     } else {
-        updatedConfig.blobStorageUrl = tenant.storage.publicUrl;
+        const url = tenant.storage.url;
+        updatedConfig.blobStorageUrl = url.replace("historian:3000", "localhost:3001");
         updatedConfig.historianApi = true;
     }
 
     return JSON.stringify(updatedConfig);
 }
 
-/**
- * Helper function to return the composite identifier that combines a tenant id and a document id
- */
-export function getFullId(tenantId: string, documentId: string): string {
-    return tenantId ? `${tenantId}/${documentId}` : documentId;
+export function getToken(tenantId: string, documentId: string, tenants: IAlfredTenant[]): string {
+    for (const tenant of tenants) {
+        if (tenantId === tenant.id) {
+            return utils.generateToken(tenantId, documentId, tenant.key);
+        }
+    }
+
+    throw new Error("Invalid tenant");
 }

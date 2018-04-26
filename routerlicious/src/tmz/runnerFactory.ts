@@ -4,6 +4,8 @@ import * as redis from "redis";
 import * as socketIo from "socket.io";
 import * as socketIoRedis from "socket.io-redis";
 import * as util from "util";
+import { ITenantManager } from "../api-core";
+import * as services from "../services";
 import * as utils from "../utils";
 import { createUploader } from "./agentUploader";
 import { IAgentUploader } from "./messages";
@@ -20,7 +22,8 @@ export class TmzResources implements utils.IResources {
         public schedulerType: string,
         public onlyServer: boolean,
         public checkerTimeout: number,
-        public tasks: any) {
+        public tasks: any,
+        public tenantManager: ITenantManager) {
     }
 
     public async dispose(): Promise<void> {
@@ -66,8 +69,21 @@ export class TmzResourcesFactory implements utils.IResourcesFactory<TmzResources
 
         let uploader = createUploader("minio", minioConfig);
 
-        // tslint:disable-next-line
-        return new TmzResources(io, alfredUrl, pub, sub, port, uploader, schedulerType, onlyServer, checkerTimeout, tasks);
+        const authEndpoint = config.get("auth:endpoint");
+        const tenantManager = new services.TenantManager(authEndpoint);
+
+        return new TmzResources(
+            io,
+            alfredUrl,
+            pub,
+            sub,
+            port,
+            uploader,
+            schedulerType,
+            onlyServer,
+            checkerTimeout,
+            tasks,
+            tenantManager);
     }
 }
 
@@ -81,6 +97,7 @@ export class TmzRunnerFactory implements utils.IRunnerFactory<TmzResources> {
             resources.schedulerType,
             resources.onlyServer,
             resources.checkerTimeout,
-            resources.tasks);
+            resources.tasks,
+            resources.tenantManager);
     }
 }

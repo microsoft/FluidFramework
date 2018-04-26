@@ -1,7 +1,6 @@
 import { EventEmitter } from "events";
-import { IAuthenticatedUser } from "../core-utils";
 import { IContentModelExtension } from "./extension";
-import { IEnvelope, ILatencyMessage, IObjectMessage, ISequencedObjectMessage } from "./protocol";
+import { IAuthenticatedUser, IEnvelope, ILatencyMessage, IObjectMessage, ISequencedObjectMessage } from "./protocol";
 import { ICollaborativeObject } from "./types";
 
 export interface IDeltaManager {

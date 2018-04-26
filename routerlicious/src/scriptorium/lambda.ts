@@ -197,15 +197,21 @@ export class WorkManager extends EventEmitter {
  */
 interface IoTarget {
     documentId: string;
+    tenantId: string;
     event: string;
     topic: string;
 }
+
+interface IMongoTarget {
+    documentId: string;
+    tenantId: string;
+};
 
 export class ScriptoriumLambda implements IPartitionLambda {
     // We maintain three batches of work - one for MongoDB and the other two for Socket.IO.
     // One socket.IO group is for sequenced ops and the other for nack'ed messages.
     // By splitting the two we can update each independently and on their own cadence
-    private mongoManager: BatchManager<string, core.ISequencedOperationMessage>;
+    private mongoManager: BatchManager<IMongoTarget, core.ISequencedOperationMessage>;
     private ioManager: BatchManager<IoTarget, api.ISequencedDocumentMessage | api.INack>;
     private idleManager: BatchManager<string, void>;
 
@@ -245,13 +251,20 @@ export class ScriptoriumLambda implements IPartitionLambda {
             }
 
             // Batch send to MongoDB
-            this.mongoManager.add(value.documentId, value, message.offset);
+            this.mongoManager.add(
+                {
+                    documentId: value.documentId,
+                    tenantId: value.tenantId,
+                },
+                value,
+                message.offset);
 
             // And to Socket.IO
             const target: IoTarget = {
                 documentId: value.documentId,
                 event: "op",
-                topic: value.documentId,
+                tenantId: value.tenantId,
+                topic: `${value.tenantId}/${value.documentId}`,
             };
             this.ioManager.add(target, value.operation, message.offset);
         } else if (baseMessage.type === core.NackOperationType) {
@@ -260,6 +273,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
             const target: IoTarget = {
                 documentId: value.documentId,
                 event: "nack",
+                tenantId: value.tenantId,
                 topic: `client#${value.clientId}`,
             };
             this.ioManager.add(target, value.operation, message.offset);
@@ -272,7 +286,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
     /**
      * BatchManager callback invoked once a new batch is ready to be processed
      */
-    private async processMongoBatch(batch: Batch<string, core.ISequencedOperationMessage>): Promise<void> {
+    private async processMongoBatch(batch: Batch<IMongoTarget, core.ISequencedOperationMessage>): Promise<void> {
         // Serialize the current batch to Mongo
         await batch.map(async (id, work) => {
             winston.verbose(`Inserting to mongodb ${id}@${work[0].operation.sequenceNumber}:${work.length}`);

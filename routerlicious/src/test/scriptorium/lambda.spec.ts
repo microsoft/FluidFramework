@@ -6,6 +6,7 @@ import { IEvent, KafkaMessageFactory, MessageFactory, TestCollection, TestContex
 describe("Routerlicious", () => {
     describe("Scriptorium", () => {
         describe("Lambda", () => {
+            const testTenantId = "test";
             const testDocumentId = "test";
             const testClientId = "test";
 
@@ -17,7 +18,7 @@ describe("Routerlicious", () => {
             let lambda: IPartitionLambda;
 
             beforeEach(() => {
-                messageFactory = new MessageFactory(testDocumentId, testClientId);
+                messageFactory = new MessageFactory(testDocumentId, testClientId, testTenantId);
                 kafkaMessageFactory = new KafkaMessageFactory();
 
                 testCollection = new TestCollection([]);
@@ -58,7 +59,7 @@ describe("Routerlicious", () => {
                     console.log(kafkaMessageFactory.getHeadOffset(testDocumentId));
                     assert.equal(
                         numMessages,
-                        countOps(testPublisher.to(testDocumentId).getEvents("op")));
+                        countOps(testPublisher.to(`${testTenantId}/${testDocumentId}`).getEvents("op")));
                 });
             });
         });

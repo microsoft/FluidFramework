@@ -38,8 +38,7 @@ data:
             "kafkaClientId": "{{ template "alfred.fullname" . }}",
             "topic": "{{ .Values.kafka.topics.rawdeltas }}",
             "bucket": "snapshots",
-            "restJsonSize": "50mb",
-            "webSocketLib": "socket.io"
+            "restJsonSize": "50mb"
         },
         "deli": {
             "topics": {
@@ -57,7 +56,7 @@ data:
             }
         },
         "auth": {
-            "endpoint": "http://{{ template "riddler.fullname" . }}/api"
+            "endpoint": "http://{{ template "riddler.fullname" . }}"
         },
         "routemaster": {
             "topics": {
@@ -169,20 +168,20 @@ data:
         },
         "tenantConfig": [
             {
-                "name": "git",
+                "_id": "git",
+                "key": "43cfc3fbf04a97c0921fd23ff10f9e4b",
                 "storage": {
                     "url": "{{ .Values.historian.externalUrl }}",
-                    "publicUrl": "{{ .Values.historian.externalUrl }}",
                     "owner": "prague",
                     "repository": "prague"
                 },
                 "isDefault": true
             },
             {
-                "name": "github",
+                "_id": "github",
+                "key": "0bea3f87c186991a69245a29dc3f61d2",
                 "storage": {
                     "url": "{{ .Values.historian.externalUrl }}/github",
-                    "publicUrl": "{{ .Values.historian.externalUrl }}/github",
                     "owner": "kurtb",
                     "repository": "praguedocs",
                     "direct": "https://api.github.com",
@@ -193,10 +192,10 @@ data:
                 }
             },
             {
-                "name": "cobalt",
+                "_id": "cobalt",
+                "key": "0e3c439e9ba63d85936c7e7e9c79478c",
                 "storage": {
                     "url": "{{ .Values.historian.externalUrl }}/cobalt",
-                    "publicUrl": "{{ .Values.historian.externalUrl }}/cobalt",
                     "owner": "prague",
                     "repository": "prague"
                 }

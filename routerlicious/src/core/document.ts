@@ -2,7 +2,10 @@ import { IRangeTrackerSnapshot } from "../core-utils";
 
 export interface IFork {
     // The id of the fork
-    id: string;
+    documentId: string;
+
+    // Tenant for the fork
+    tenantId: string;
 
     // The sequence number where the fork originated
     sequenceNumber: number;
@@ -12,9 +15,11 @@ export interface IFork {
 }
 
 export interface IDocument {
-    _id: string;
-
     createTime: number;
+
+    documentId: string;
+
+    tenantId: string;
 
     forks: IFork[];
 
@@ -22,9 +27,11 @@ export interface IDocument {
      * Parent references the point from which the document was branched
      */
     parent: {
-        id: string,
+        documentId: string,
 
         sequenceNumber: number,
+
+        tenantId: string;
 
         minimumSequenceNumber: number;
     };

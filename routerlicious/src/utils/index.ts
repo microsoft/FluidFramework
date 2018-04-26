@@ -1,8 +1,11 @@
+export * from "./auth";
 export * from "./conversion";
+export * from "./dockerNames";
 export * from "./file";
 export * from "./heap";
 export * from "./logger";
 export * from "./mongo";
+export * from "./port";
 export * from "./response";
 export * from "./runner";
 

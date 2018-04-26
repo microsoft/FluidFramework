@@ -17,7 +17,8 @@
         <script>
             var config = {{{ config }}};
             var version = {{{ version }}};
-            controller.graph.initialize("{{ id }}", version, config);
+            var token = "{{ token }}";
+            controller.graph.initialize("{{ documentId }}", version, token, config);
         </script>
     {{/scripts}}
 {{/layout}}

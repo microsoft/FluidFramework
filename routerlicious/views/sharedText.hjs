@@ -13,10 +13,12 @@
             var version = {{{ version }}};
             var options = {{{ options }}};
             var connect = {{{ connect }}};
+            var token = "{{ token }}";
             console.log(`Starting load at - ${performance.now()}`);
             controller.sharedText.load(
-                "{{ id }}",
+                "{{ documentId }}",
                 version,
+                token,
                 {{ pageInk }},
                 {{ disableCache }},
                 config,

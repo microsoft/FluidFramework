@@ -23,7 +23,7 @@ export interface ICollection<T> {
 
     upsert(filter: any, set: any, addToSet: any): Promise<void>;
 
-    insertOne(value: T): Promise<void>;
+    insertOne(value: T): Promise<any>;
 
     insertMany(values: T[], ordered: boolean): Promise<void>;
 

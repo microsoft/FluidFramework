@@ -28,7 +28,7 @@ export class RouteMasterLambda extends SequencedLambda {
 
     private async createFork(message: core.ISequencedOperationMessage): Promise<void> {
         const contents = message.operation.contents as core.IForkOperation;
-        const forkId = contents.name;
+        const forkId = contents.documentId;
         const forkSequenceNumber = message.operation.sequenceNumber;
 
         // If the fork is already active return early - retry logic could have caused a second fork message to be
@@ -90,6 +90,7 @@ export class RouteMasterLambda extends SequencedLambda {
                 traces: [],
                 type: api.Integrate,
             },
+            tenantId: message.tenantId,
             timestamp: Date.now(),
             type: core.RawOperationType,
             user: null,

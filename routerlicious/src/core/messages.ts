@@ -1,5 +1,4 @@
 import * as api from "../api-core";
-import { IAuthenticatedUser } from "../core-utils";
 
 // String identifying the raw operation message
 export const RawOperationType: string = "RawOperation";
@@ -43,7 +42,10 @@ export interface ISystemMessage extends IMessage {
  */
 export interface IObjectMessage extends IMessage {
     // The user who submitted the message
-    user: IAuthenticatedUser;
+    user: api.IAuthenticatedUser;
+
+    // The tenant the message is intended for
+    tenantId: string;
 
     // The object the message is intended for
     documentId: string;
@@ -74,6 +76,9 @@ export interface IRawOperationMessage extends IObjectMessage {
 
 // Need to change this name - it isn't necessarily ticketed
 export interface ITicketedMessage extends IMessage {
+    // The tenant the message is intended for
+    tenantId: string;
+
     // The object the message is intended for
     documentId: string;
 }
@@ -101,9 +106,12 @@ export interface IForkOperation {
     // The minimum sequence number for the fork
     minSequenceNumber: number;
 
-    // The name of the target branch
-    name: string;
-
     // The ID of messages after which we want to integrate
     sequenceNumber: number;
+
+    // The name of the target branch
+    documentId: string;
+
+    // The name of the target tenant
+    tenantId: string;
 }

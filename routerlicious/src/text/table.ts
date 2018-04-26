@@ -6,15 +6,15 @@ import * as Paragraph from "./paragraph";
 import { MergeTreeDeltaType } from "../merge-tree";
 
 export interface ITableMarker extends MergeTree.Marker {
-    view?: Table;
-}
-
-export interface ICellMarker extends MergeTree.Marker {
-    view?: Cell;
+    table?: Table;
 }
 
 export interface IRowMarker extends MergeTree.Marker {
-    view?: Row;
+    row?: Row;
+}
+
+export interface ICellMarker extends MergeTree.Marker {
+    cell?: Cell;
 }
 
 let tableIdSuffix = 0;
@@ -120,6 +120,10 @@ function createMarkerOp(
 }
 
 let endPrefix = "end-";
+
+export function idFromEndId(endId: string) {
+    return endId.substring(endPrefix.length);
+}
 
 function createCell(opList: MergeTree.IMergeTreeOp[], idBase: string,
     pos: number, local: boolean, cellId?: string,
@@ -250,8 +254,11 @@ export function finishInsertedRow(rowId: string, prevRowId: string, msg: core.IS
     let tableMarker = <ITableMarker>rowPosStack["table"].top();
     let tableMarkerPos = getOffset(sharedString, tableMarker);
     parseTable(tableMarker, tableMarkerPos, sharedString);
+    if (traceOps) {
+        console.log(`finish insert row id: ${rowId} prev id: ${prevRowId} seq: ${msg.sequenceNumber}`);
+    }
     let endRowId = endPrefix + rowId;
-    let prevRow = prevRowMarker.view;
+    let prevRow = prevRowMarker.row;
     for (let prevCell of prevRow.cells) {
         let localCellId = `cellId${localCellIdSuffix++}`;
         let groupOp = createRowCellOp(sharedString, endRowId, localCellId);
@@ -273,7 +280,7 @@ export function finishInsertedRow(rowId: string, prevRowId: string, msg: core.IS
     }
 
     // flush cache
-    tableMarker.view = undefined;
+    tableMarker.table = undefined;
 }
 
 export function finishInsertedColumn(cellId: string, msg: core.ISequencedObjectMessage,
@@ -287,10 +294,13 @@ export function finishInsertedColumn(cellId: string, msg: core.ISequencedObjectM
     let tableMarkerPos = getOffset(sharedString, tableMarker);
     let rowMarker = <IRowMarker>cellPosStack["row"].top();
     let tableView = parseTable(tableMarker, tableMarkerPos, sharedString);
-    let enclosingRowView = rowMarker.view;
+    let enclosingRowView = rowMarker.row;
     let columnOffset = 0;
+    if (traceOps) {
+        console.log(`finish insert col cell id: ${cellId} seq: ${msg.sequenceNumber}`);
+    }
     for (; columnOffset < enclosingRowView.cells.length; columnOffset++) {
-        if (enclosingRowView.cells[columnOffset] === cellMarker.view) {
+        if (enclosingRowView.cells[columnOffset] === cellMarker.cell) {
             break;
         }
     }
@@ -319,8 +329,9 @@ export function finishInsertedColumn(cellId: string, msg: core.ISequencedObjectM
         // REVIEW: place cell at end of row even if not enough cells preceding
     }
     // clear cache
-    tableMarker.view = undefined;
+    tableMarker.table = undefined;
 }
+let traceOps = true;
 
 export function insertColumn(sharedString: SharedString, prevCell: Cell, row: Row,
     table: Table) {
@@ -332,6 +343,9 @@ export function insertColumn(sharedString: SharedString, prevCell: Cell, row: Ro
         columnOffset++;
     }
     let colId = `${sharedString.client.longClientId}Col${columnIdSuffix++}`;
+    if (traceOps) {
+        console.log(`insert col prev ${prevCell.marker.toString()} id: ${colId}`);
+    }
     let groupOp = createColumnCellOp(sharedString, row, prevCell, colId,
         { [newColumnProp]: colId });
     let segmentGroup = sharedString.transaction(groupOp);
@@ -343,7 +357,7 @@ export function insertColumn(sharedString: SharedString, prevCell: Cell, row: Ro
         }
     }
     // flush cache
-    table.tableMarker.view = undefined;
+    table.tableMarker.table = undefined;
 }
 
 export function insertRowCellForColumn(sharedString: SharedString,
@@ -353,30 +367,124 @@ export function insertRowCellForColumn(sharedString: SharedString,
     sharedString.client.localTransaction(groupOp, segmentGroup);
 }
 
-export function moribundToGone(sharedString: SharedString, rowMarker: IRowMarker, tableMarker: ITableMarker,
+export function moribundToGoneRow(sharedString: SharedString, rowMarker: IRowMarker, tableMarker: ITableMarker,
     seq: number, origClientId: number) {
     console.log(`perm removing row ${rowMarker.getId()}`);
-    if (!tableMarker.view) {
-        let tableMarkerPos = getOffset(sharedString, tableMarker);
-        parseTable(tableMarker, tableMarkerPos, sharedString);
+    let physicalRemove = false;
+    if (physicalRemove) {
+        if (!tableMarker.table) {
+            let tableMarkerPos = getOffset(sharedString, tableMarker);
+            parseTable(tableMarker, tableMarkerPos, sharedString);
+        }
+        let start = getOffset(sharedString, rowMarker);
+        let row = rowMarker.row;
+        let end = getOffset(sharedString, row.endRowMarker) + row.endRowMarker.cachedLength;
+        let tempSegmentGroup = <MergeTree.SegmentGroup>{ segments: [] };
+        sharedString.client.mergeTree.markRangeRemoved(start, end, MergeTree.UniversalSequenceNumber,
+            sharedString.client.getClientId(), seq, true);
+        for (let segment of tempSegmentGroup.segments) {
+            segment.clientId = origClientId;
+            segment.segmentGroup = undefined;
+        }
+        tableMarker.table = undefined;
     }
-    let start = getOffset(sharedString, rowMarker);
-    let row = rowMarker.view;
-    let end = getOffset(sharedString, row.endRowMarker) + row.endRowMarker.cachedLength;
-    let tempSegmentGroup = <MergeTree.SegmentGroup>{ segments: [] };
-    sharedString.client.mergeTree.markRangeRemoved(start, end, MergeTree.UniversalSequenceNumber,
-        sharedString.client.getClientId(), seq);
-    for (let segment of tempSegmentGroup.segments) {
-        segment.clientId = origClientId;
-        segment.segmentGroup = undefined;
+}
+
+export function moribundToGoneCell(sharedString: SharedString, cellMarker: ICellMarker, tableMarker: ITableMarker,
+    seq: number, origClientId: number) {
+    let physicalRemove = false;
+    if (physicalRemove) {
+        if (!tableMarker.table) {
+            let tableMarkerPos = getOffset(sharedString, tableMarker);
+            parseTable(tableMarker, tableMarkerPos, sharedString);
+        }
+        let start = getOffset(sharedString, cellMarker);
+        let cell = cellMarker.cell;
+        let end = getOffset(sharedString, cell.endMarker) + cell.endMarker.cachedLength;
+        let tempSegmentGroup = <MergeTree.SegmentGroup>{ segments: [] };
+        sharedString.client.mergeTree.markRangeRemoved(start, end, MergeTree.UniversalSequenceNumber,
+            sharedString.client.getClientId(), seq, true);
+        for (let segment of tempSegmentGroup.segments) {
+            segment.clientId = origClientId;
+            segment.segmentGroup = undefined;
+        }
+        tableMarker.table = undefined;
     }
-    tableMarker.view = undefined;
+}
+
+export function finishDeletedCell(cellPosRemote: number, msg: core.ISequencedObjectMessage,
+    sharedString: SharedString) {
+    // msg op marked cell moribund
+    let clid = sharedString.client.getShortClientId(msg.clientId);
+    let cellPos = sharedString.client.mergeTree.tardisPositionFromClient(cellPosRemote, msg.referenceSequenceNumber,
+        sharedString.client.getCurrentSeq(), clid, sharedString.client.getClientId());
+    let cellPosStack =
+        sharedString.client.mergeTree.getStackContext(cellPos, sharedString.client.getClientId(), ["table", "row", "cell"]);
+    let tableMarker = <ITableMarker>cellPosStack["table"].top();
+    let cellMarker = <ICellMarker>cellPosStack["cell"].top();
+    let tableMarkerPos = getOffset(sharedString, tableMarker);
+    parseTable(tableMarker, tableMarkerPos, sharedString);
+    sharedString.client.mergeTree.addMinSeqListener(msg.sequenceNumber, (minSeq) => {
+        moribundToGoneCell(sharedString, cellMarker, tableMarker, msg.sequenceNumber, clid);
+    });
+}
+
+export function finishDeletedColumn(cellPosRemote: number, rowId: string, msg: core.ISequencedObjectMessage,
+    sharedString: SharedString) {
+
+    // msg op marked cell moribund
+    let clid = sharedString.client.getShortClientId(msg.clientId);
+    let cellPos = sharedString.client.mergeTree.tardisPositionFromClient(cellPosRemote, msg.referenceSequenceNumber,
+        sharedString.client.getCurrentSeq(), clid, sharedString.client.getClientId());
+    let cellPosStack =
+        sharedString.client.mergeTree.getStackContext(cellPos, sharedString.client.getClientId(), ["table", "row", "cell"]);
+    let tableMarker = <ITableMarker>cellPosStack["table"].top();
+    let cellMarker = <ICellMarker>cellPosStack["cell"].top();
+    if (traceOps) {
+        console.log(`finish delete column from cell ${cellMarker.toString()}`);
+    }
+    let tableMarkerPos = getOffset(sharedString, tableMarker);
+    parseTable(tableMarker, tableMarkerPos, sharedString);
+    let table = tableMarker.table;
+    let moribundCellMarkers = [cellMarker];
+    let rowMarker = <IRowMarker>sharedString.client.mergeTree.getSegmentFromId(rowId);
+    let row = rowMarker.row;
+    cellMarker.addProperties({ moribundSeq: msg.sequenceNumber });
+    let columnOffset = cellMarker.cell.columnOffset;
+    for (let otherRow of table.rows) {
+        if (otherRow !== row) {
+            if (columnOffset < otherRow.cells.length) {
+                let otherCell = otherRow.cells[columnOffset];
+                if (otherCell && !(otherCell.marker.hasProperty("moribundSeq"))) {
+                    otherCell.marker.addProperties({
+                        moribund: true, wholeColumn: true,
+                        moribundSeq: msg.sequenceNumber
+                    });
+                    moribundCellMarkers.push(otherCell.marker);
+                }
+            }
+        }
+    }
+    sharedString.client.mergeTree.addMinSeqListener(msg.sequenceNumber, (minSeq) => {
+        for (let moribundCellMarker of moribundCellMarkers) {
+            moribundToGoneCell(sharedString, moribundCellMarker, tableMarker, msg.sequenceNumber, clid);
+        }
+    });
+    tableMarker.table = undefined;
 }
 
 export function finishDeletedRow(rowId: string, msg: core.ISequencedObjectMessage,
     sharedString: SharedString) {
     // msg op marked row moribund
+    if (traceOps) {
+        console.log(`finish delete row ${rowId} seq: ${msg.sequenceNumber}`);
+    }
     let rowMarker = <IRowMarker>sharedString.client.mergeTree.getSegmentFromId(rowId);
+    if (rowMarker.properties.moribundSeq) {
+        console.log(`overlapping delete of ${rowId}`);
+        return;
+    }
+    rowMarker.addProperties({ moribundSeq: msg.sequenceNumber });
     let rowPos = getOffset(sharedString, rowMarker);
     let rowPosStack =
         sharedString.client.mergeTree.getStackContext(rowPos, sharedString.client.getClientId(), ["table", "row"]);
@@ -385,11 +493,109 @@ export function finishDeletedRow(rowId: string, msg: core.ISequencedObjectMessag
     parseTable(tableMarker, tableMarkerPos, sharedString);
     sharedString.client.mergeTree.addMinSeqListener(msg.sequenceNumber, (minSeq) => {
         let clid = sharedString.client.getShortClientId(msg.clientId);
-        moribundToGone(sharedString, rowMarker, tableMarker, msg.sequenceNumber, clid);
+        moribundToGoneRow(sharedString, rowMarker, tableMarker, msg.sequenceNumber, clid);
     });
+    tableMarker.table = undefined;
 }
 
+function findColumnOffset(row: Row, cell: Cell) {
+    for (let i = 0, len = row.cells.length; i < len; i++) {
+        if (row.cells[i] === cell) {
+            return i;
+        }
+    }
+}
+
+export function deleteColumn(sharedString: SharedString, cell: Cell, row: Row,
+    table: Table) {
+    if (traceOps) {
+        console.log(`delete column from cell ${cell.marker.toString()}`);
+    }
+    let cellPos = getOffset(sharedString, cell.marker);
+    let annotOp = <MergeTree.IMergeTreeAnnotateMsg>{
+        pos1: cellPos,
+        pos2: cellPos + cell.marker.cachedLength,
+        props: { moribund: true, wholeColumn: true },
+        type: MergeTreeDeltaType.ANNOTATE,
+    };
+    let opList = [annotOp];
+    let groupOp = <MergeTree.IMergeTreeGroupMsg>{
+        macroOp: {
+            name: "deleteColumn",
+            params: {
+                cellPos: cellPos,
+                rowId: row.rowMarker.getId(),
+            }
+        },
+        ops: opList,
+        type: MergeTree.MergeTreeDeltaType.GROUP,
+    };
+    let segmentGroup = sharedString.transaction(groupOp);
+    cell.marker.addProperties({ moribundSeq: MergeTree.UnassignedSequenceNumber });
+    let moribundCellMarkers = <ICellMarker[]>[];
+    let columnOffset = findColumnOffset(row, cell);
+    for (let otherRow of table.rows) {
+        if (otherRow !== row) {
+            if (columnOffset < otherRow.cells.length) {
+                let otherCell = otherRow.cells[columnOffset];
+                if (otherCell) {
+                    otherCell.marker.addProperties({
+                        moribund: true,
+                        wholeColumn: true, moribundSeq: MergeTree.UnassignedSequenceNumber
+                    });
+                    moribundCellMarkers.push(otherCell.marker);
+                }
+            }
+        } else {
+            moribundCellMarkers.push(cell.marker);
+        }
+    }
+    segmentGroup.onAck = (seq) => {
+        sharedString.client.mergeTree.addMinSeqListener(seq, (minSeq) => {
+            for (let cellMarker of moribundCellMarkers)
+                moribundToGoneCell(sharedString, cellMarker, table.tableMarker,
+                    seq, sharedString.client.getClientId());
+        });
+    };
+    table.tableMarker.table = undefined;
+}
+
+export function deleteCellShiftLeft(sharedString: SharedString, cell: Cell,
+    table: Table) {
+    let cellPos = getOffset(sharedString, cell.marker);
+    let annotOp = <MergeTree.IMergeTreeAnnotateMsg>{
+        pos1: cellPos,
+        pos2: cellPos + cell.marker.cachedLength,
+        props: { moribund: true },
+        type: MergeTreeDeltaType.ANNOTATE,
+    };
+    let opList = [annotOp];
+    let groupOp = <MergeTree.IMergeTreeGroupMsg>{
+        macroOp: {
+            name: "deleteCellShiftLeft",
+            params: {
+                cellPos: cellPos,
+            }
+        },
+        ops: opList,
+        type: MergeTree.MergeTreeDeltaType.GROUP,
+    };
+    let segmentGroup = sharedString.transaction(groupOp);
+    cell.marker.addProperties({ moribundSeq: MergeTree.UnassignedSequenceNumber });
+    segmentGroup.onAck = (seq) => {
+        sharedString.client.mergeTree.addMinSeqListener(seq, (minSeq) => {
+            moribundToGoneCell(sharedString, cell.marker, table.tableMarker,
+                seq, sharedString.client.getClientId());
+        });
+    };
+    table.tableMarker.table = undefined;
+}
+
+
 export function deleteRow(sharedString: SharedString, row: Row, table: Table) {
+    if (traceOps) {
+        console.log(`delete row ${row.rowMarker.getId()}`);
+    }
     let rowPos = getOffset(sharedString, row.rowMarker);
     let annotOp = <MergeTree.IMergeTreeAnnotateMsg>{
         pos1: rowPos,
@@ -409,16 +615,21 @@ export function deleteRow(sharedString: SharedString, row: Row, table: Table) {
         type: MergeTree.MergeTreeDeltaType.GROUP,
     };
     let segmentGroup = sharedString.transaction(groupOp);
+    row.rowMarker.addProperties({ moribundSeq: MergeTree.UnassignedSequenceNumber });
     segmentGroup.onAck = (seq) => {
         sharedString.client.mergeTree.addMinSeqListener(seq, (minSeq) => {
-            moribundToGone(sharedString, row.rowMarker, table.tableMarker,
+            moribundToGoneRow(sharedString, row.rowMarker, table.tableMarker,
                 seq, sharedString.client.getClientId());
         });
     };
+    table.tableMarker.table = undefined;
 }
 
 export function insertRow(sharedString: SharedString, prevRow: Row, table: Table) {
     let rowId = `${sharedString.client.longClientId}Row${rowIdSuffix++}`;
+    if (traceOps) {
+        console.log(`insert row id: ${rowId} prev: ${prevRow.rowMarker.getId()}`);
+    }
     let opList = <MergeTree.IMergeTreeOp[]>[];
     createEmptyRowAfter(opList, sharedString, prevRow, rowId);
     let groupOp = <MergeTree.IMergeTreeGroupMsg>{
@@ -438,7 +649,7 @@ export function insertRow(sharedString: SharedString, prevRow: Row, table: Table
         insertRowCellForColumn(sharedString, endRowId, segmentGroup);
     }
     // flush cache
-    table.tableMarker.view = undefined;
+    table.tableMarker.table = undefined;
 }
 
 export function createTableRelative(pos: number, sharedString: SharedString, nrows = 3, ncells = 3) {
@@ -497,7 +708,7 @@ export class Table {
     public indentPct = 0.0;
     public contentPct = 1.0;
     public rows = <Row[]>[];
-    public columns = <ColumnView[]>[];
+    public columns = <Column[]>[];
     constructor(public tableMarker: ITableMarker, public endTableMarker: ITableMarker) {
     }
 
@@ -507,7 +718,7 @@ export class Table {
             let row = this.rows[rowIndex];
             for (let cellIndex = 0, cellCount = row.cells.length; cellIndex < cellCount; cellIndex++) {
                 let rowcell = row.cells[cellIndex];
-                if (retNext) {
+                if (retNext && (!cellIsMoribund(rowcell.marker))) {
                     return rowcell;
                 }
                 if (rowcell === cell) {
@@ -523,7 +734,7 @@ export class Table {
             let row = this.rows[rowIndex];
             for (let cellIndex = row.cells.length - 1; cellIndex >= 0; cellIndex--) {
                 let rowcell = row.cells[cellIndex];
-                if (retPrev) {
+                if (retPrev && (!cellIsMoribund(rowcell.marker))) {
                     return rowcell;
                 }
                 if (rowcell === cell) {
@@ -533,11 +744,11 @@ export class Table {
         }
     }
 
-    public findPrecedingRow(rowView: Row) {
+    public findPrecedingRow(startRow: Row) {
         let prevRow: Row;
         for (let rowIndex = 0, rowCount = this.rows.length; rowIndex < rowCount; rowIndex++) {
             let row = this.rows[rowIndex];
-            if (row === rowView) {
+            if (row === startRow) {
                 return prevRow;
             }
             if (!rowIsMoribund(row.rowMarker)) {
@@ -546,11 +757,11 @@ export class Table {
         }
     }
 
-    public findNextRow(rowView: Row) {
+    public findNextRow(startRow: Row) {
         let nextRow: Row;
         for (let rowIndex = this.rows.length - 1; rowIndex >= 0; rowIndex--) {
             let row = this.rows[rowIndex];
-            if (row === rowView) {
+            if (row === startRow) {
                 return nextRow;
             }
             if (!rowIsMoribund(row.rowMarker)) {
@@ -561,7 +772,14 @@ export class Table {
 
     public updateWidth(w: number) {
         this.width = w;
-        let proportionalWidthPerColumn = Math.floor(this.width / this.columns.length);
+        let liveColumnCount = 0;
+        for (let i = 0, len = this.columns.length; i < len; i++) {
+            let col = this.columns[i];
+            if (!col.moribund) {
+                liveColumnCount++;
+            }
+        }
+        let proportionalWidthPerColumn = Math.floor(this.width / liveColumnCount);
         // assume remaining width positive for now
         // assume uniform number of columns in rows for now (later update each row separately)
         let abscondedWidth = 0;
@@ -569,30 +787,35 @@ export class Table {
         for (let i = 0, len = this.columns.length; i < len; i++) {
             let col = this.columns[i];
             // TODO: borders
-            if (col.minContentWidth > proportionalWidthPerColumn) {
-                col.width = col.minContentWidth;
-                abscondedWidth += col.width;
-                proportionalWidthPerColumn = Math.floor((this.width - abscondedWidth) / (len - i));
-            } else {
-                col.width = proportionalWidthPerColumn;
-            }
-            totalWidth += col.width;
-            if (i === (len - 1)) {
-                if (totalWidth < this.width) {
-                    col.width += (this.width - totalWidth);
+            if (!col.moribund) {
+                if (col.minContentWidth > proportionalWidthPerColumn) {
+                    col.width = col.minContentWidth;
+                    abscondedWidth += col.width;
+                    proportionalWidthPerColumn = Math.floor((this.width - abscondedWidth) / (len - i));
+                } else {
+                    col.width = proportionalWidthPerColumn;
                 }
-            }
-            for (let cell of col.cells) {
-                cell.specWidth = col.width;
+                totalWidth += col.width;
+                if (i === (len - 1)) {
+                    if (totalWidth < this.width) {
+                        col.width += (this.width - totalWidth);
+                    }
+                }
+                for (let cell of col.cells) {
+                    if (cell) {
+                        cell.specWidth = col.width;
+                    }
+                }
             }
         }
     }
 }
 
-export class ColumnView {
+export class Column {
     public minContentWidth = 0;
     public width = 0;
     public cells = <Cell[]>[];
+    public moribund = false;
     constructor(public columnIndex: number) {
     }
 }
@@ -608,16 +831,19 @@ export class Row {
 
     }
 
+    // TODO: move to view layer
     public findClosestCell(x: number) {
         let bestcell: Cell;
         let bestDistance = -1;
         for (let cell of this.cells) {
-            let bounds = cell.div.getBoundingClientRect();
-            let center = bounds.left + (bounds.width / 2);
-            let distance = Math.abs(center - x);
-            if ((distance < bestDistance) || (bestDistance < 0)) {
-                bestcell = cell;
-                bestDistance = distance;
+            if (cell.div) {
+                let bounds = cell.div.getBoundingClientRect();
+                let center = bounds.left + (bounds.width / 2);
+                let distance = Math.abs(center - x);
+                if ((distance < bestDistance) || (bestDistance < 0)) {
+                    bestcell = cell;
+                    bestDistance = distance;
+                }
             }
         }
         return bestcell;
@@ -629,6 +855,8 @@ export class Cell {
     public specWidth = 0;
     public renderedHeight: number;
     public div: HTMLDivElement;
+    public columnOffset: number;
+
     constructor(public marker: ICellMarker, public endMarker: ICellMarker) {
     }
 }
@@ -636,23 +864,27 @@ export class Cell {
 function getEndCellMarker(mergeTree: MergeTree.MergeTree, cellMarker: ICellMarker) {
     let localId = cellMarker.getLocalId();
     if (localId) {
-        return <ICellMarker>mergeTree.getSegmentFromLocalId("end-" + localId);
+        return <ICellMarker>mergeTree.getSegmentFromLocalId(endPrefix + localId);
     } else {
         let gloId = cellMarker.getId();
         if (gloId) {
-            return <ICellMarker>mergeTree.getSegmentFromId("end-" + gloId);
+            return <ICellMarker>mergeTree.getSegmentFromId(endPrefix + gloId);
         }
     }
 }
 
-function parseCell(cellStartPos: number, sharedString: SharedString, fontInfo?: Paragraph.IFontInfo) {
+function parseCell(cellStartPos: number, sharedString: SharedString, columnOffset: number, fontInfo?: Paragraph.IFontInfo) {
     let mergeTree = sharedString.client.mergeTree;
     let cellMarkerSegOff = mergeTree.getContainingSegment(cellStartPos, MergeTree.UniversalSequenceNumber,
         sharedString.client.getClientId());
     let cellMarker = <ICellMarker>cellMarkerSegOff.segment;
     let endCellMarker = getEndCellMarker(mergeTree, cellMarker);
+    if (!endCellMarker) {
+        console.log(`ut-oh: no end for ${cellMarker.toString()}`);
+    }
     let endCellPos = getOffset(sharedString, endCellMarker);
-    cellMarker.view = new Cell(cellMarker, endCellMarker);
+    cellMarker.cell = new Cell(cellMarker, endCellMarker);
+    cellMarker.cell.columnOffset = columnOffset;
     let nextPos = cellStartPos + cellMarker.cachedLength;
     while (nextPos < endCellPos) {
         let segoff = mergeTree.getContainingSegment(nextPos, MergeTree.UniversalSequenceNumber,
@@ -664,10 +896,10 @@ function parseCell(cellStartPos: number, sharedString: SharedString, fontInfo?: 
             if (marker.hasRangeLabel("table")) {
                 let tableMarker = <ITableMarker>marker;
                 parseTable(tableMarker, nextPos, sharedString, fontInfo);
-                if (tableMarker.view.minContentWidth > cellMarker.view.minContentWidth) {
-                    cellMarker.view.minContentWidth = tableMarker.view.minContentWidth;
+                if (tableMarker.table.minContentWidth > cellMarker.cell.minContentWidth) {
+                    cellMarker.cell.minContentWidth = tableMarker.table.minContentWidth;
                 }
-                let endTableMarker = tableMarker.view.endTableMarker;
+                let endTableMarker = tableMarker.table.endTableMarker;
                 nextPos = mergeTree.getOffset(
                     endTableMarker, MergeTree.UniversalSequenceNumber, sharedString.client.getClientId());
                 nextPos += endTableMarker.cachedLength;
@@ -697,8 +929,8 @@ function parseCell(cellStartPos: number, sharedString: SharedString, fontInfo?: 
             }
             nextPos = tilePos.pos + 1;
             if (pgMarker.itemCache) {
-                if (pgMarker.itemCache.minWidth > cellMarker.view.minContentWidth) {
-                    cellMarker.view.minContentWidth = pgMarker.itemCache.minWidth;
+                if (pgMarker.itemCache.minWidth > cellMarker.cell.minContentWidth) {
+                    cellMarker.cell.minContentWidth = pgMarker.itemCache.minWidth;
                 }
             }
         }
@@ -713,17 +945,21 @@ function parseRow(rowStartPos: number, sharedString: SharedString, fontInfo?: Pa
         sharedString.client.getClientId());
     let rowMarker = <IRowMarker>rowMarkerSegOff.segment;
     let id = rowMarker.getId();
-    let endId = "end-" + id;
+    let endId = endPrefix + id;
     let endRowMarker = <MergeTree.Marker>mergeTree.getSegmentFromId(endId);
     let endRowPos = getOffset(sharedString, endRowMarker);
-    rowMarker.view = new Row(rowMarker, endRowMarker);
+    rowMarker.row = new Row(rowMarker, endRowMarker);
     let nextPos = rowStartPos + rowMarker.cachedLength;
+    let columnOffset = 0;
     while (nextPos < endRowPos) {
-        let cellMarker = parseCell(nextPos, sharedString, fontInfo);
-        rowMarker.view.minContentWidth += cellMarker.view.minContentWidth;
-        rowMarker.view.cells.push(cellMarker.view);
-        let endcellPos = getOffset(sharedString, cellMarker.view.endMarker);
-        nextPos = endcellPos + cellMarker.view.endMarker.cachedLength;
+        let cellMarker = parseCell(nextPos, sharedString, columnOffset, fontInfo);
+        if (!cellIsMoribund(cellMarker)) {
+            rowMarker.row.minContentWidth += cellMarker.cell.minContentWidth;
+            rowMarker.row.cells.push(cellMarker.cell);
+        }
+        let endcellPos = getOffset(sharedString, cellMarker.cell.endMarker);
+        nextPos = endcellPos + cellMarker.cell.endMarker.cachedLength;
+        columnOffset++;
     }
     return rowMarker;
 }
@@ -733,41 +969,50 @@ export function parseTable(
 
     let mergeTree = sharedString.client.mergeTree;
     let id = tableMarker.getId();
-    let endId = "end-" + id;
+    let endId = endPrefix + id;
     let endTableMarker = <MergeTree.Marker>mergeTree.getSegmentFromId(endId);
     let endTablePos = getOffset(sharedString, endTableMarker);
     let tableView = new Table(tableMarker, endTableMarker);
-    tableMarker.view = tableView;
+    tableMarker.table = tableView;
     let nextPos = tableMarkerPos + tableMarker.cachedLength;
     let rowIndex = 0;
     while (nextPos < endTablePos) {
         let rowMarker = parseRow(nextPos, sharedString, fontInfo);
-        let rowView = rowMarker.view;
+        let rowView = rowMarker.row;
         rowView.table = tableView;
         rowView.pos = nextPos;
-        for (let i = 0, len = rowView.cells.length; i < len; i++) {
-            let cell = rowView.cells[i];
-            if (!tableView.columns[i]) {
-                tableView.columns[i] = new ColumnView(i);
+        if (!rowIsMoribund(rowMarker)) {
+            for (let i = 0, len = rowView.cells.length; i < len; i++) {
+                let cell = rowView.cells[i];
+                if (!tableView.columns[i]) {
+                    tableView.columns[i] = new Column(i);
+                }
+                let columnView = tableView.columns[i];
+                columnView.cells[rowIndex] = cell;
+                if (cell.minContentWidth > columnView.minContentWidth) {
+                    columnView.minContentWidth = cell.minContentWidth;
+                }
+                if (cellIsMoribund(cell.marker) && (cell.marker.properties.wholeColumn)) {
+                    columnView.moribund = true;
+                }
             }
-            let columnView = tableView.columns[i];
-            columnView.cells[rowIndex] = cell;
-            if (cell.minContentWidth > columnView.minContentWidth) {
-                columnView.minContentWidth = cell.minContentWidth;
-            }
-        }
 
-        if (rowMarker.view.minContentWidth > tableView.minContentWidth) {
-            tableView.minContentWidth = rowMarker.view.minContentWidth;
+            if (rowMarker.row.minContentWidth > tableView.minContentWidth) {
+                tableView.minContentWidth = rowMarker.row.minContentWidth;
+            }
+            tableView.rows[rowIndex++] = rowView;
         }
-        let endRowPos = getOffset(sharedString, rowMarker.view.endRowMarker);
-        tableView.rows[rowIndex++] = rowView;
+        let endRowPos = getOffset(sharedString, rowMarker.row.endRowMarker);
         rowView.endPos = endRowPos;
-        nextPos = endRowPos + rowMarker.view.endRowMarker.cachedLength;
+        nextPos = endRowPos + rowMarker.row.endRowMarker.cachedLength;
     }
     return tableView;
 }
 
 export function rowIsMoribund(rowMarker: IRowMarker) {
     return rowMarker.properties && rowMarker.properties["moribund"];
+}
+
+export function cellIsMoribund(cellMarker: ICellMarker) {
+    return cellMarker.properties && cellMarker.properties["moribund"];
 }

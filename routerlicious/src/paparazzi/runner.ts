@@ -12,29 +12,18 @@ import * as utils from "../utils";
 // TODO can likely consolidate the runner and the worker service
 
 class DocumentServiceFactory implements agent.IDocumentServiceFactory {
-    private serviceCache = new Map<string, IDocumentService>();
-
     constructor(private serverUrl, private tenantManager: ITenantManager) {
     }
 
     public async getService(tenantId: string): Promise<IDocumentService> {
-        return new Promise<IDocumentService>((resolve, reject) => {
-            if (this.serviceCache.has(tenantId)) {
-                resolve(this.serviceCache.get(tenantId));
-            } else {
-                this.tenantManager.getTenant(tenantId).then((tenant) => {
-                    const services = socketStorage.createDocumentService(
-                        this.serverUrl,
-                        tenant.storage.url,
-                        tenant.storage.owner,
-                        tenant.storage.repository);
-                    this.serviceCache.set(tenantId, services);
-                    resolve(services);
-                }, (err) => {
-                    reject(err);
-                });
-            }
-        });
+        const details = await this.tenantManager.getTenant(tenantId);
+        const services = socketStorage.createDocumentService(
+            this.serverUrl,
+            details.storage.url,
+            details.storage.owner,
+            details.storage.repository);
+
+        return services;
     }
 }
 
