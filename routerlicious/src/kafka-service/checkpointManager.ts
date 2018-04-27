@@ -1,5 +1,4 @@
 import * as assert from "assert";
-import * as winston from "winston";
 import { Deferred } from "../core-utils";
 import * as utils from "../utils";
 
@@ -51,7 +50,6 @@ export class CheckpointManager {
 
         // Finally begin checkpointing the offsets.
         this.checkpointing = true;
-        winston.info(`Checkpointing ${this.id} @ ${offset}`);
         const commitP = this.consumer.commitOffset([{ offset, partition: this.id }]);
         return commitP.then(
             () => {

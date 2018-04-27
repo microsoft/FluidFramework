@@ -18,6 +18,10 @@ export class KafkaRunner implements utils.IRunner {
     public start(): Promise<void> {
         this.deferred = new Deferred<void>();
 
+        process.on("warning", (msg) => {
+            console.trace("Warning", msg);
+        });
+
         this.partitionManager = new PartitionManager(this.factory, this.consumer, this.config);
         this.partitionManager.on("error", (error, restart) => {
             this.deferred.reject(error);

@@ -55,16 +55,15 @@ export class PartitionManager extends EventEmitter {
     }
 
     private process(message: utils.IMessage) {
-        const messageTag = `${message.topic}:${message.partition}@${message.offset}`;
-        winston.info(`${messageTag}`);
-
         if (this.isRebalancing) {
-            winston.info(`Ignoring ${messageTag} due to pending rebalance`);
+            winston.info(`Ignoring ${message.topic}:${message.partition}@${message.offset} due to pending rebalance`);
             return;
         }
 
         if (!this.partitions.has(message.partition)) {
-            this.emit("error", `Received message for untracked partition ${messageTag}`);
+            this.emit(
+                "error",
+                `Received message for untracked partition ${message.topic}:${message.partition}@${message.offset}`);
             return;
         }
 
