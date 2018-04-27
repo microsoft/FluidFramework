@@ -18,7 +18,7 @@ describe("Routerlicious", () => {
 
             let testCollection: core.ICollection<any>;
             let testKafka: TestKafka;
-            let testProducer: utils.kafkaProducer.IProducer;
+            let testProducer: utils.IProducer;
             let testContext: TestContext;
             let factory: DeliLambdaFactory;
             let lambda: IPartitionLambda;

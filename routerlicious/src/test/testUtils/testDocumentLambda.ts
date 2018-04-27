@@ -1,4 +1,5 @@
 import * as assert from "assert";
+import { EventEmitter } from "events";
 import { Provider } from "nconf";
 import * as core from "../../core";
 import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "../../kafka-service/lambdas";
@@ -16,7 +17,7 @@ export class TestLambda implements IPartitionLambda {
         assert(this.documentId);
     }
 
-    public handler(message: utils.kafkaConsumer.IMessage): void {
+    public handler(message: utils.IMessage): void {
         this.handleCalls++;
         const sequencedMessage = JSON.parse(message.value) as core.ISequencedOperationMessage;
         assert.equal(this.documentId, sequencedMessage.documentId);
@@ -30,6 +31,10 @@ export class TestLambda implements IPartitionLambda {
         }
     }
 
+    public close() {
+        return;
+    }
+
     public setThrowExceptionInHandler(value: boolean) {
         this.throwHandler = value;
     }
@@ -39,10 +44,14 @@ export class TestLambda implements IPartitionLambda {
     }
 }
 
-export class TestLambdaFactory implements IPartitionLambdaFactory {
+export class TestLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
     public lambdas: TestLambda[] = [];
     public disposed = false;
     private failCreatelambda = false;
+
+    constructor() {
+        super();
+    }
 
     public async create(config: Provider, context: IContext): Promise<IPartitionLambda> {
         if (this.failCreatelambda) {

@@ -1,3 +1,4 @@
+import { EventEmitter } from "events";
 import * as nconf from "nconf";
 import * as utils from "../utils";
 
@@ -15,13 +16,22 @@ export interface IContext {
 }
 
 export interface IPartitionLambda {
-    handler(message: utils.kafkaConsumer.IMessage): void;
+    /**
+     * Processes an incoming message
+     */
+    handler(message: utils.IMessage): void;
+
+    /**
+     * Closes the lambda. After being called handler will no longer be invoked and the lambda is expected to cancel
+     * any deferred work.
+     */
+    close(): void;
 }
 
 /**
  * Factory for creating lambda related objects
  */
-export interface IPartitionLambdaFactory {
+export interface IPartitionLambdaFactory extends EventEmitter {
     /**
      * Constructs a new lambda
      */

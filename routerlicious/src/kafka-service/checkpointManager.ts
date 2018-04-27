@@ -4,12 +4,13 @@ import * as utils from "../utils";
 
 export class CheckpointManager {
     private checkpointing = false;
+    private closed = false;
     private commitedOffset: number;
     private lastOffset: number;
     private pendingCheckpoint: Deferred<void>;
     private error: any;
 
-    constructor(private id: number, private consumer: utils.kafkaConsumer.IConsumer) {
+    constructor(private id: number, private consumer: utils.IConsumer) {
     }
 
     /**
@@ -18,6 +19,11 @@ export class CheckpointManager {
     public async checkpoint(offset: number) {
         // checkpoint calls should always be of increasing or equal value
         assert(this.lastOffset === undefined || offset >= this.lastOffset);
+
+        // Exit early if the manager has been closed
+        if (this.closed) {
+            return;
+        }
 
         // No recovery once entering an error state
         if (this.error) {
@@ -74,5 +80,12 @@ export class CheckpointManager {
      */
     public async flush(): Promise<void> {
         return this.checkpoint(this.lastOffset);
+    }
+
+    /**
+     * Closes the checkpoint manager - this will stop it from performing any future checkpoints
+     */
+    public close(): void {
+        this.closed = true;
     }
 }

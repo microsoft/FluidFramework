@@ -19,7 +19,7 @@ export class AlfredRunner implements utils.IRunner {
         private tenantManager: ITenantManager,
         private appTenants: IAlfredTenant[],
         private mongoManager: utils.MongoManager,
-        private producer: utils.kafkaProducer.IProducer,
+        private producer: utils.IProducer,
         private documentsCollectionName: string,
         private metricClientConfig: any) {
     }

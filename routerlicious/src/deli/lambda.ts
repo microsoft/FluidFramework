@@ -45,7 +45,7 @@ export class DeliLambda implements IPartitionLambda {
         private documentId: string,
         dbObject: core.IDocument,
         collection: core.ICollection<core.IDocument>,
-        private producer: utils.kafkaProducer.IProducer,
+        private producer: utils.IProducer,
         private clientTimeout: number) {
 
         // Instantiate existing clients
@@ -91,13 +91,17 @@ export class DeliLambda implements IPartitionLambda {
         this.checkpointContext = new CheckpointContext(tenantId, documentId, collection, context);
     }
 
-    public handler(message: utils.kafkaConsumer.IMessage): void {
+    public handler(message: utils.IMessage): void {
         // Trace for the message.
         const trace: api.ITrace = { service: "deli", action: "start", timestamp: Date.now()};
         this.ticket(message, trace);
     }
 
-    private ticket(rawMessage: utils.kafkaConsumer.IMessage, trace: api.ITrace): void {
+    public close() {
+        this.checkpointContext.close();
+    }
+
+    private ticket(rawMessage: utils.IMessage, trace: api.ITrace): void {
         // In cases where we are reprocessing messages we have already checkpointed exit early
         if (rawMessage.offset < this.logOffset) {
             return;
