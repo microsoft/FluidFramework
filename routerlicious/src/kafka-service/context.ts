@@ -3,6 +3,8 @@ import { CheckpointManager } from "./checkpointManager";
 import { IContext } from "./lambdas";
 
 export class Context extends EventEmitter implements IContext {
+    private closed = false;
+
     constructor(private checkpointManager: CheckpointManager) {
         super();
     }
@@ -11,6 +13,10 @@ export class Context extends EventEmitter implements IContext {
      * Updates the checkpoint for the partition
      */
     public checkpoint(offset: number) {
+        if (this.closed) {
+            return;
+        }
+
         this.checkpointManager.checkpoint(offset).catch((error) => {
             // Close context on error. Once the checkpointManager enters an error state it will stay there.
             // We will look to restart on checkpointing given it likely indicates a Kafka connection issue.
@@ -24,5 +30,12 @@ export class Context extends EventEmitter implements IContext {
      */
     public error(error: any, restart: boolean) {
         this.emit("error", error, restart);
+    }
+
+    /**
+     * Closes the context
+     */
+    public close(): void {
+        this.closed = true;
     }
 }

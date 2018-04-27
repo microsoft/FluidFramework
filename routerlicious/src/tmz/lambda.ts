@@ -14,7 +14,7 @@ export class TmzLambda extends SequencedLambda {
         });
     }
 
-    protected async handlerCore(message: utils.kafkaConsumer.IMessage): Promise<void> {
+    protected async handlerCore(message: utils.IMessage): Promise<void> {
         const baseMessage = JSON.parse(message.value.toString()) as core.IMessage;
         if (baseMessage.type === core.SequencedOperationType) {
             const sequencedMessage = baseMessage as core.ISequencedOperationMessage;

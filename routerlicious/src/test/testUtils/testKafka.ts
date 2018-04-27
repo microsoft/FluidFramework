@@ -4,7 +4,7 @@ import * as core from "../../core";
 import * as utils from "../../utils";
 import { TestContext } from "./testContext";
 
-export class TestConsumer implements utils.kafkaConsumer.IConsumer {
+export class TestConsumer implements utils.IConsumer {
     private emitter = new EventEmitter();
     private pausedQueue: string[] = null;
     private failOnCommit = false;
@@ -81,9 +81,14 @@ export class TestConsumer implements utils.kafkaConsumer.IConsumer {
             this.emitter.emit("data", message);
         }
     }
+
+    public rebalance() {
+        this.emitter.emit("rebalancing");
+        this.emitter.emit("rebalanced", [{ topic: this.topic, offset: 0, partition: 0 }]);
+    }
 }
 
-export class TestProducer implements utils.kafkaProducer.IProducer {
+export class TestProducer implements utils.IProducer {
     constructor(private kafka: TestKafka) {
     }
 
@@ -101,7 +106,7 @@ export class TestProducer implements utils.kafkaProducer.IProducer {
  * Test Kafka implementation. Allows for the creation of a joined producer/consumer pair.
  */
 export class TestKafka {
-    private messages: utils.kafkaConsumer.IMessage[] = [];
+    private messages: utils.IMessage[] = [];
     private offset = 0;
     private consumers: TestConsumer[] = [];
 
@@ -116,13 +121,13 @@ export class TestKafka {
         return consumer;
     }
 
-    public getRawMessages(): utils.kafkaConsumer.IMessage[] {
+    public getRawMessages(): utils.IMessage[] {
         return this.messages;
     }
 
     public addMessage(message: string, topic: string) {
         const offset = this.offset++;
-        const storedMessage: utils.kafkaConsumer.IMessage = {
+        const storedMessage: utils.IMessage = {
             highWaterOffset: offset,
             key: null,
             offset,

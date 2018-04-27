@@ -180,9 +180,9 @@ export class MapView implements IMapView {
         return JSON.stringify(serialized);
     }
 
-    public setCore(key: string, value: ILocalViewElement) {
+    public setCore(key: string, value: ILocalViewElement, op: api.ISequencedObjectMessage = null) {
         this.data.set(key, value);
-        this.map.emit("valueChanged", { key });
+        this.map.emit("valueChanged", { key }, op === null, op);
     }
 
     public async prepareSetCore(key: string, value: IMapValue): Promise<ILocalViewElement> {
@@ -190,14 +190,14 @@ export class MapView implements IMapView {
         return translation;
     }
 
-    public clearCore() {
+    public clearCore(op: api.ISequencedObjectMessage = null) {
         this.data.clear();
-        this.map.emit("clear");
+        this.map.emit("clear", op === null, op);
     }
 
-    public deleteCore(key: string) {
+    public deleteCore(key: string, op: api.ISequencedObjectMessage = null) {
         this.data.delete(key);
-        this.map.emit("valueChanged", { key });
+        this.map.emit("valueChanged", { key }, op === null, op);
     }
 
     public registerValueType<T>(type: IValueType<T>): IMapMessageHandler {
@@ -219,11 +219,11 @@ export class MapView implements IMapView {
                 return handler.prepare(old, op.value.value);
             },
 
-            process: (op, context) => {
+            process: (op, context, message) => {
                 const handler = getOpHandler(op);
                 const old = this.get(op.key);
                 handler.process(old, op.value.value, context);
-                this.map.emit("valueChanged", { key: op.key });
+                this.map.emit("valueChanged", { key: op.key }, false, message);
             },
         };
     }

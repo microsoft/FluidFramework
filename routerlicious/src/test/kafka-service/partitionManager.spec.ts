@@ -23,9 +23,11 @@ describe("kafka-service", () => {
 
         describe(".process", () => {
             it("Should be able to stop after processing messages", async () => {
+                testConsumer.rebalance();
+
                 let messageCount = 10;
                 for (let i = 0; i < messageCount; i++) {
-                    testManager.process(kafkaMessageFactory.sequenceMessage({}, "test"));
+                    testConsumer.emit(kafkaMessageFactory.sequenceMessage({}, "test"));
                 }
 
                 await testManager.stop();
@@ -35,6 +37,8 @@ describe("kafka-service", () => {
 
             it("Should emit an error event if a partition encounters an error", async () => {
                 testFactory.setThrowHandler(true);
+                testConsumer.rebalance();
+
                 const errorP = new Promise<void>((resolve, reject) => {
                     testManager.on("error", (error, restart) => {
                         assert(error);
@@ -43,7 +47,7 @@ describe("kafka-service", () => {
                     });
                 });
 
-                testManager.process(kafkaMessageFactory.sequenceMessage({}, "test"));
+                testConsumer.emit(kafkaMessageFactory.sequenceMessage({}, "test"));
                 await errorP;
             });
         });

@@ -78,6 +78,8 @@ export class BatchManager<K, T> extends EventEmitter {
     private pending = new OffsetBatch<K, T>();
     private current = new OffsetBatch<K, T>();
 
+    private closed = false;
+
     constructor(private sendFn: (batch: Batch<K, T>) => Promise<void>) {
         super();
     }
@@ -100,6 +102,10 @@ export class BatchManager<K, T> extends EventEmitter {
         this.requestSend();
     }
 
+    public close() {
+        this.closed = true;
+    }
+
     /**
      * Requests a send of the current batch
      */
@@ -113,6 +119,11 @@ export class BatchManager<K, T> extends EventEmitter {
     }
 
     private sendPending() {
+        // Exit early if closed
+        if (this.closed) {
+            return;
+        }
+
         // If pending is empty return early - there is no work to do
         if (this.pending.isEmpty()) {
             return;
@@ -170,6 +181,12 @@ export class WorkManager extends EventEmitter {
 
         this.work.push(batchedWork);
         return batchedWork;
+    }
+
+    public close() {
+        for (const work of this.work) {
+            work.close();
+        }
     }
 
     private updateOffset() {
@@ -233,14 +250,9 @@ export class ScriptoriumLambda implements IPartitionLambda {
         this.mongoManager = this.workManager.createBatchedWork((batch) => this.processMongoBatch(batch));
         this.ioManager = this.workManager.createBatchedWork((batch) => this.processIoBatch(batch));
         this.idleManager = this.workManager.createBatchedWork(async (batch) => { return; });
-
-        this.io.on("error", (error) => {
-            // After an IO error we need to recreate the lambda
-            this.context.error(error, true);
-        });
     }
 
-    public handler(message: utils.kafkaConsumer.IMessage): void {
+    public handler(message: utils.IMessage): void {
         const baseMessage = JSON.parse(message.value.toString()) as core.IMessage;
         if (baseMessage.type === core.SequencedOperationType) {
             const value = baseMessage as core.ISequencedOperationMessage;
@@ -281,6 +293,10 @@ export class ScriptoriumLambda implements IPartitionLambda {
             // Treat all other messages as an idle batch of work for simplicity
             this.idleManager.add(null, null, message.offset);
         }
+    }
+
+    public close() {
+        this.workManager.close();
     }
 
     /**

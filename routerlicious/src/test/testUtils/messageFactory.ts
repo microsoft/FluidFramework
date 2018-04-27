@@ -12,11 +12,11 @@ export class KafkaMessageFactory {
         }
     }
 
-    public sequenceMessage(value: any, key: string): utils.kafkaConsumer.IMessage {
+    public sequenceMessage(value: any, key: string): utils.IMessage {
         const partition = this.getPartition(key);
         const offset = this.offsets[partition]++;
 
-        const kafkaMessage: utils.kafkaConsumer.IMessage = {
+        const kafkaMessage: utils.IMessage = {
             highWaterOffset: offset,
             key,
             offset,

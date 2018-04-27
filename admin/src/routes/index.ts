@@ -1,11 +1,11 @@
 import { Router } from "express";
 import * as dbService from "../db";
+import * as api from "./api";
 import * as home from "./home";
-import * as tenants from "./tenants";
 
 export interface IRoutes {
     home: Router;
-    tenants: Router;
+    api: Router;
 }
 
 export function create(config: any): IRoutes {
@@ -14,10 +14,12 @@ export function create(config: any): IRoutes {
     const mongoUrl = config.mongo.endpoint as string;
     const mongoFactory = new dbService.MongoDbFactory(mongoUrl);
     const mongoManager = new dbService.MongoManager(mongoFactory);
-    const collectionName = config.mongo.collectionNames.tenants;
+    const tenantCollectionName = config.mongo.collectionNames.tenants;
+    const userCollectionName = config.mongo.collectionNames.users;
+    const orgCollectionName = config.mongo.collectionNames.orgs;
 
     return {
-        home: home.create(config, mongoManager, collectionName),
-        tenants: tenants.create(config, mongoManager, collectionName),
+        api: api.create(config, mongoManager, userCollectionName, orgCollectionName, tenantCollectionName),
+        home: home.create(config, mongoManager, userCollectionName, orgCollectionName, tenantCollectionName),
     };
 }

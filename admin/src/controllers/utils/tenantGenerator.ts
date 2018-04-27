@@ -1,8 +1,5 @@
-import * as crypto from "crypto";
-
-export interface ITenant {
+export interface ITenantInput {
     name: string;
-    key: string;
     storage: any;
 }
 
@@ -22,7 +19,7 @@ function updateGithubTenant(tenant: any, tenantConfig: any) {
     tenantConfig.storage.credentials.password = tenant.password;
 }
 
-export function generateTenant(tenant: any, tenantConfigs: any): ITenant {
+export function generateTenant(tenant: any, tenantConfigs: any): ITenantInput {
     const tenantConfig = findMatchingStorageTenant(tenant.storage, tenantConfigs as any[]);
     if (tenantConfig === null) {
         return null;
@@ -31,8 +28,7 @@ export function generateTenant(tenant: any, tenantConfigs: any): ITenant {
             updateGithubTenant(tenant, tenantConfig);
         }
         return {
-            key: crypto.randomBytes(16).toString("hex"),
-            name: tenant.name.toLowerCase(),
+            name: tenant.name,
             storage: tenantConfig,
         };
     }

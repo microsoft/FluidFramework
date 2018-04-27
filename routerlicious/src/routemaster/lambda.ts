@@ -6,11 +6,11 @@ import * as utils from "../utils";
 import { DocumentManager } from "./documentManager";
 
 export class RouteMasterLambda extends SequencedLambda {
-    constructor(private document: DocumentManager, private producer: utils.kafkaProducer.IProducer, context: IContext) {
+    constructor(private document: DocumentManager, private producer: utils.IProducer, context: IContext) {
         super(context);
     }
 
-    protected async handlerCore(rawMessage: utils.kafkaConsumer.IMessage): Promise<void> {
+    protected async handlerCore(rawMessage: utils.IMessage): Promise<void> {
         const message = JSON.parse(rawMessage.value) as core.ISequencedOperationMessage;
         if (message.type === core.SequencedOperationType) {
             // Create the fork first then route any messages. This will make the fork creation the first message

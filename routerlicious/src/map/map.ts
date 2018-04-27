@@ -29,7 +29,7 @@ class ContentObjectStorage implements api.IObjectStorageService {
 
 export interface IMapMessageHandler {
     prepare(op: IMapOperation): Promise<any>;
-    process(op: IMapOperation, context: any, message?: api.ISequencedObjectMessage): void;
+    process(op: IMapOperation, context: any, message: api.ISequencedObjectMessage): void;
 }
 
 /**
@@ -58,19 +58,19 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
             "clear",
             {
                 prepare: defaultPrepare,
-                process: (op, context) => this.view.clearCore(),
+                process: (op, context, message) => this.view.clearCore(message),
             });
         this.messageHandler.set(
             "delete",
             {
                 prepare: defaultPrepare,
-                process: (op, context) => this.view.deleteCore(op.key),
+                process: (op, context, message) => this.view.deleteCore(op.key, message),
             });
         this.messageHandler.set(
             "set",
             {
                 prepare: (op) => this.view.prepareSetCore(op.key, op.value),
-                process: (op, context) => this.view.setCore(op.key, context),
+                process: (op, context, message) => this.view.setCore(op.key, context, message),
             });
 
         this.view = new MapView(
@@ -271,8 +271,6 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
         if (!handled) {
             this.processContent(message, context);
         }
-
-        this.emit("op", message);
     }
 
     protected attachCore() {

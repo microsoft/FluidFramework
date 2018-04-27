@@ -1765,7 +1765,6 @@ export function internedSpaces(n: number) {
 export interface ClientIds {
     clientId: number;
     branchId: number;
-    userInfo: IAuthenticatedUser;
 }
 
 export interface IUndoInfo {
@@ -1938,9 +1937,9 @@ export class Client {
         return clone;
     }
 
-    getOrAddShortClientId(longClientId: string, userInfo: IAuthenticatedUser, branchId = 0) {
+    getOrAddShortClientId(longClientId: string, branchId = 0) {
         if (!this.clientNameToIds.get(longClientId)) {
-            this.addLongClientId(longClientId, userInfo, branchId);
+            this.addLongClientId(longClientId, branchId);
         }
         return this.getShortClientId(longClientId);
     }
@@ -1967,15 +1966,13 @@ export class Client {
         }
     }
 
-    addLongClientId(longClientId: string, userInfo: IAuthenticatedUser, branchId = 0) {
+    addLongClientId(longClientId: string, branchId = 0) {
         this.clientNameToIds.put(longClientId, {
             branchId,
             clientId: this.shortClientIdMap.length,
-            userInfo,
         });
         this.shortClientIdMap.push(longClientId);
         this.shortClientBranchIdMap.push(branchId);
-        this.shortClientUserInfoMap.push(userInfo);
     }
 
     getBranchId(clientId: number) {
@@ -2204,7 +2201,7 @@ export class Client {
     }
 
     applyOp(op: ops.IMergeTreeOp, msg: API.ISequencedObjectMessage) {
-        let clid = this.getOrAddShortClientId(msg.clientId, msg.user);
+        let clid = this.getOrAddShortClientId(msg.clientId);
         switch (op.type) {
             case ops.MergeTreeDeltaType.INSERT:
                 if (op.relativePos1) {
@@ -2306,7 +2303,7 @@ export class Client {
         // The existance of msg.origin means we are a branch message - and so should be marked as 0
         // The non-existance of msg.origin indicates we are local - and should inherit the collab mode ID
         const branchId = msg.origin ? 0 : this.mergeTree.localBranchId;
-        this.getOrAddShortClientId(msg.clientId, msg.user, branchId);
+        this.getOrAddShortClientId(msg.clientId, branchId);
 
         // Apply if an operation message
         if (msg.type === API.OperationType) {
@@ -2745,7 +2742,7 @@ export class Client {
     startCollaboration(longClientId: string, userInfo: IAuthenticatedUser = null, minSeq = 0, branchId = 0) {
         this.longClientId = longClientId;
         this.userInfo = userInfo;
-        this.addLongClientId(longClientId, userInfo, branchId);
+        this.addLongClientId(longClientId, branchId);
         this.mergeTree.startCollaboration(this.getShortClientId(this.longClientId), minSeq, branchId);
     }
 

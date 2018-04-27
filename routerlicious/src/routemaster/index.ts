@@ -21,7 +21,7 @@ export async function create(config: Provider): Promise<IPartitionLambdaFactory>
     const client = await mongoManager.getDatabase();
     const collection = await client.collection(documentsCollectionName);
     const deltas = await client.collection(deltasCollectionName);
-    const producer = utils.kafkaProducer.create(kafkaLibrary, kafkaEndpoint, kafkaClientId, sendTopic);
+    const producer = utils.createProducer(kafkaLibrary, kafkaEndpoint, kafkaClientId, sendTopic);
 
     return new RouteMasterLambdaFactory(mongoManager, collection, deltas, producer);
 }

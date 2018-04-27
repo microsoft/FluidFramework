@@ -623,14 +623,40 @@ const right = [
 ];
 // tslint:enable:max-line-length
 
+const prague = [
+    "lucco",
+    "berglund",
+    "aumi",
+    "broner",
+];
+
+// Docker names + Prague names
+const surnames = right.concat(prague);
+
 // GetRandomName generates a random name from the list of adjectives and surnames in this package
 // formatted as "adjective_surname". For example 'focused_turing'. If retry is non-zero, a random
 // integer between 0 and 10 will be added to the end of the name, e.g `focused_turing3`
-export function getRandomName(retry = false): string {
-    const name = `${left[Math.floor(Math.random() * left.length)]}_${right[Math.floor(Math.random() * right.length)]}`;
-    if (name === "boring_wozniak") /* Steve Wozniak is not boring */ {
-        return getRandomName(retry);
+//
+// For Prague we allow you to specify the character connecting the adjective and surname as well as whether
+// to capitalize these fields
+export function getRandomName(connector = " ", capitalize = true, retry = false): string {
+    const adjective = getRandomString(left);
+    const surname = getRandomString(surnames);
+
+    /* Steve Wozniak is not boring */
+    if (adjective === "boring" && surname === "wozniak") {
+        return getRandomName(connector, capitalize, retry);
     }
 
+    const name = `${processString(adjective, capitalize)}${connector}${processString(surname, capitalize)}`;
+
     return retry ? `${name}${Math.floor(Math.random() * 10)}` : name;
+}
+
+function getRandomString(values: string[]) {
+    return values[Math.floor(Math.random() * values.length)];
+}
+
+function processString(value: string, capitalize: boolean): string {
+    return capitalize ? `${value.charAt(0).toUpperCase()}${value.substr(1)}` : value;
 }

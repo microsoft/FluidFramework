@@ -24,7 +24,7 @@ export async function getDocument(
 export async function getOrCreateDocument(
     mongoManager: utils.MongoManager,
     documentsCollectionName: string,
-    producer: utils.kafkaProducer.IProducer,
+    producer: utils.IProducer,
     tenantId: string,
     documentId: string): Promise<{existing: boolean, value: core.IDocument }> {
 
@@ -112,7 +112,7 @@ export async function getForks(
 }
 
 export async function createFork(
-    producer: utils.kafkaProducer.IProducer,
+    producer: utils.IProducer,
     tenantManager: api.ITenantManager,
     mongoManager: utils.MongoManager,
     documentsCollectionName: string,
@@ -193,7 +193,7 @@ export async function createFork(
 async function getOrCreateObject(
     mongoManager: utils.MongoManager,
     documentsCollectionName: string,
-    producer: utils.kafkaProducer.IProducer,
+    producer: utils.IProducer,
     tenantId: string,
     documentId: string): Promise<{ existing: boolean, value: core.IDocument }> {
 
@@ -228,7 +228,7 @@ async function sendIntegrateStream(
     sequenceNumber: number,
     minSequenceNumber: number,
     name: string,
-    producer: utils.kafkaProducer.IProducer): Promise<void> {
+    producer: utils.IProducer): Promise<void> {
 
     const contents: core.IForkOperation = {
         minSequenceNumber,

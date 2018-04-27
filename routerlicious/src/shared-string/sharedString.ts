@@ -335,13 +335,15 @@ export class SharedString extends CollaborativeMap {
         return snap.emit();
     }
 
-    protected processContent(message: api.ISequencedObjectMessage) {
-        if (!this.isLoaded) {
-            this.client.enqueueMsg(message);
-            return;
-        }
+    protected prepareContent(): Promise<void> {
+        return this.loadedDeferred.promise;
+    }
 
-        this.applyMessage(message);
+    protected processContent(message: api.ISequencedObjectMessage) {
+        this.client.applyMsg(message);
+        if (this.contentModel) {
+            this.applyContentModel(message);
+        }
     }
 
     protected processMinSequenceNumberChangedContent(value: number) {
@@ -420,8 +422,7 @@ export class SharedString extends CollaborativeMap {
             const branchId = originBranch === this.document.id ? 0 : 1;
             this.client.startCollaboration(this.document.clientId, this.document.getUser(), sequenceNumber, branchId);
         }
-        console.log(`Apply ${this.id} pending - ${performanceNow()}`);
-        this.applyPending();
+
         console.log(`Load ${this.id} finished - ${performanceNow()}`);
         this.loadFinished(chunk);
     }
@@ -437,13 +438,6 @@ export class SharedString extends CollaborativeMap {
         this.isLoaded = true;
         this.loadedDeferred.resolve();
         this.emit("loadFinished", chunk, true);
-    }
-
-    private applyPending() {
-        while (this.client.hasMessages()) {
-            const message = this.client.dequeueMsg();
-            this.applyMessage(message);
-        }
 
         // Update the MSN if larger than the set value
         if (this.pendingMinSequenceNumber > this.client.mergeTree.getCollabWindow().minSeq) {
@@ -458,14 +452,6 @@ export class SharedString extends CollaborativeMap {
             if ((delta.type === MergeTree.MergeTreeDeltaType.GROUP) && (delta.macroOp)) {
                 this.contentModel.exec(message, this);
             }
-        }
-    }
-
-    private applyMessage(message: api.ISequencedObjectMessage) {
-        this.emit("pre-op", message);
-        this.client.applyMsg(message);
-        if (this.contentModel) {
-            this.applyContentModel(message);
         }
     }
 }

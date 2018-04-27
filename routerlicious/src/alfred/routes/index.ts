@@ -42,7 +42,7 @@ export function create(
     config: Provider,
     tenantManager: ITenantManager,
     mongoManager: utils.MongoManager,
-    producer: utils.kafkaProducer.IProducer,
+    producer: utils.IProducer,
     appTenants: IAlfredTenant[]) {
 
     return {

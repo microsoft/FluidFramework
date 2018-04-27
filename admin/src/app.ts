@@ -176,7 +176,7 @@ export function create(appConfig: any, aadConfig: any) {
     app.use(passport.session());
 
     const routes = appRoutes.create(appConfig);
-    app.use("/tenants", routes.tenants);
+    app.use("/api", routes.api);
     app.use("/", routes.home);
 
     // catch 404 and forward to error handler

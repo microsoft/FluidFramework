@@ -1,3 +1,4 @@
+import { EventEmitter } from "events";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import * as api from "../api";
@@ -69,12 +70,16 @@ class ServiceGraphLambda implements IPartitionLambda {
         });
     }
 
-    public handler(message: utils.kafkaConsumer.IMessage): void {
+    public handler(message: utils.IMessage): void {
         this.handleCore(message);
         this.context.checkpoint(message.offset);
     }
 
-    private handleCore(message: utils.kafkaConsumer.IMessage) {
+    public close() {
+        return;
+    }
+
+    private handleCore(message: utils.IMessage) {
         const baseMessage = JSON.parse(message.value) as core.IMessage;
         if (baseMessage.type !== core.SystemType) {
             return;
@@ -96,7 +101,11 @@ class ServiceGraphLambda implements IPartitionLambda {
     }
 }
 
-export class ServiceGraphLambdaFactory implements IPartitionLambdaFactory {
+export class ServiceGraphLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
+    constructor() {
+        super();
+    }
+
     public async create(config: Provider, context: IContext): Promise<IPartitionLambda> {
         const alfred = config.get("paparazzi:alfred");
 

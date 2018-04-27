@@ -23,12 +23,15 @@ data:
             "mongo": {
                 "endpoint": "{{ .Values.endpoints.mongodb }}",
                 "collectionNames": {
-                    "tenants": "tenants"
+                    "tenants": "tenantCollection",
+                    "users": "userCollection",
+                    "orgs": "orgCollection"
                 }
             },
             "endpoints": {
                 "tenantsUrl": "{{ .Values.endpoints.tenantsUrl }}"
             },
+            "riddlerUrl": "{{ .Values.endpoints.riddlerUrl }}",
             "port": 3000,
             "tenantConfig": [
                 {
