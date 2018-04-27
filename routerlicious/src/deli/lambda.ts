@@ -97,6 +97,10 @@ export class DeliLambda implements IPartitionLambda {
         this.ticket(message, trace);
     }
 
+    public close() {
+        this.checkpointContext.close();
+    }
+
     private ticket(rawMessage: utils.IMessage, trace: api.ITrace): void {
         // In cases where we are reprocessing messages we have already checkpointed exit early
         if (rawMessage.offset < this.logOffset) {

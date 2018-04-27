@@ -74,6 +74,10 @@ class ServiceGraphLambda implements IPartitionLambda {
         this.context.checkpoint(message.offset);
     }
 
+    public close() {
+        return;
+    }
+
     private handleCore(message: utils.IMessage) {
         const baseMessage = JSON.parse(message.value) as core.IMessage;
         if (baseMessage.type !== core.SystemType) {

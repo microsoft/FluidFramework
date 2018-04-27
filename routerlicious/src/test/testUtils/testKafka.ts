@@ -81,6 +81,11 @@ export class TestConsumer implements utils.IConsumer {
             this.emitter.emit("data", message);
         }
     }
+
+    public rebalance() {
+        this.emitter.emit("rebalancing");
+        this.emitter.emit("rebalanced", [{ topic: this.topic, offset: 0, partition: 0 }]);
+    }
 }
 
 export class TestProducer implements utils.IProducer {

@@ -55,10 +55,30 @@ export class Partition extends EventEmitter {
         this.q.push(rawMessage);
     }
 
+    public close(): void {
+        // Stop any pending message processing
+        this.q.kill();
+
+        // Close checkpoint related classes
+        this.checkpointManager.close();
+        this.context.close();
+
+        // Notify the lambda (should it be resolved) of the close
+        this.lambdaP.then(
+            (lambda) => {
+                lambda.close();
+            },
+            (error) => {
+                // lambda never existed - no need to close
+            });
+
+        return;
+    }
+
     /**
      * Stops processing on the partition
      */
-    public async stop(): Promise<void> {
+    public async drain(): Promise<void> {
         // Drain the queue of any pending operations
         const drainedP = new Promise<void>((resolve, reject) => {
             // If not entries in the queue we can exit immediatley

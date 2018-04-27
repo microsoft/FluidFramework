@@ -20,6 +20,10 @@ export class TestLambda implements IPartitionLambda {
         this.context.checkpoint(message.offset);
     }
 
+    public close(): void {
+        return;
+    }
+
     public error(error: string, restart: boolean) {
         this.context.error(error, restart);
     }

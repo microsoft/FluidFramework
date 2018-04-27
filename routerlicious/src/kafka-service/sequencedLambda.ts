@@ -28,6 +28,10 @@ export abstract class SequencedLambda implements IPartitionLambda {
         this.q.push(message);
     }
 
+    public close() {
+        this.q.kill();
+    }
+
     /**
      * Derived classes override this method to do per message processing. The sequenced lambda will only move on
      * to the next message once the returned promise is resolved.

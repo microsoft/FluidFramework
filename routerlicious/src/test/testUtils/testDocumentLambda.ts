@@ -30,6 +30,10 @@ export class TestLambda implements IPartitionLambda {
         }
     }
 
+    public close() {
+        return;
+    }
+
     public setThrowExceptionInHandler(value: boolean) {
         this.throwHandler = value;
     }

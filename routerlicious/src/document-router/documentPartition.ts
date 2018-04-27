@@ -57,4 +57,17 @@ export class DocumentPartition {
     public process(message: utils.IMessage) {
         this.q.push(message);
     }
+
+    public close() {
+        // Stop any future processing
+        this.q.kill();
+
+        this.lambdaP.then(
+            (lambda) => {
+                lambda.close();
+            },
+            (error) => {
+                // Lambda was never created - ignoring
+            });
+    }
 }

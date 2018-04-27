@@ -78,6 +78,8 @@ export class BatchManager<K, T> extends EventEmitter {
     private pending = new OffsetBatch<K, T>();
     private current = new OffsetBatch<K, T>();
 
+    private closed = false;
+
     constructor(private sendFn: (batch: Batch<K, T>) => Promise<void>) {
         super();
     }
@@ -100,6 +102,10 @@ export class BatchManager<K, T> extends EventEmitter {
         this.requestSend();
     }
 
+    public close() {
+        this.closed = true;
+    }
+
     /**
      * Requests a send of the current batch
      */
@@ -113,6 +119,11 @@ export class BatchManager<K, T> extends EventEmitter {
     }
 
     private sendPending() {
+        // Exit early if closed
+        if (this.closed) {
+            return;
+        }
+
         // If pending is empty return early - there is no work to do
         if (this.pending.isEmpty()) {
             return;
@@ -170,6 +181,12 @@ export class WorkManager extends EventEmitter {
 
         this.work.push(batchedWork);
         return batchedWork;
+    }
+
+    public close() {
+        for (const work of this.work) {
+            work.close();
+        }
     }
 
     private updateOffset() {
@@ -281,6 +298,10 @@ export class ScriptoriumLambda implements IPartitionLambda {
             // Treat all other messages as an idle batch of work for simplicity
             this.idleManager.add(null, null, message.offset);
         }
+    }
+
+    public close() {
+        this.workManager.close();
     }
 
     /**

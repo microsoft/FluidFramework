@@ -22,6 +22,13 @@ export class DocumentLambda implements IPartitionLambda {
         this.contextManager.setTail(message.offset);
     }
 
+    public close() {
+        this.contextManager.close();
+        for (const [, partition] of this.documents) {
+            partition.close();
+        }
+    }
+
     private handlerCore(kafkaMessage: utils.IMessage): void {
         const message = JSON.parse(kafkaMessage.value) as core.IMessage;
         if (!("documentId" in message)) {

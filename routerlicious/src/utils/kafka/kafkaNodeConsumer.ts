@@ -20,6 +20,10 @@ export class KafkaNodeConsumer implements IConsumer {
     }
 
     public commitOffset(commitRequest: any[]): Promise<void> {
+        if (commitRequest[0].offset % 50 !== 0) {
+            return Promise.resolve();
+        }
+
         commitRequest.forEach((commit) => commit.topic = this.topic);
         return new Promise<any>((resolve, reject) => {
             this.offset.commit(this.groupId, commitRequest, (err, data) => {
@@ -98,6 +102,7 @@ export class KafkaNodeConsumer implements IConsumer {
     private getPartitions(rawPartitions: any[]): IPartition[] {
         return rawPartitions.map((partition) => {
             return {
+                offset: parseInt(partition.offset, 10),
                 partition: parseInt(partition.partition, 10),
                 topic: partition.topic,
             };

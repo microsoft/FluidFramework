@@ -11,49 +11,99 @@ import { Partition } from "./partition";
  */
 export class PartitionManager extends EventEmitter {
     private partitions = new Map<number, Partition>();
+    // Start rebalancing until we receive the first rebalanced message
+    private isRebalancing = true;
 
     constructor(
         private factory: IPartitionLambdaFactory,
         private consumer: utils.IConsumer,
         private config: Provider) {
         super();
+
+        // Place new Kafka messages into our processing queue
+        this.consumer.on("data", (message) => {
+            this.process(message);
+        });
+
+        this.consumer.on("rebalancing", (partitions) => {
+            this.rebalancing(partitions);
+        });
+
+        this.consumer.on("rebalanced", (partitions) => {
+            this.rebalanced(partitions);
+        });
+
+        // On any Kafka errors immediately stop processing
+        this.consumer.on("error", (error) => {
+            this.emit("error", error);
+        });
     }
 
     public async stop(): Promise<void> {
-        // And then wait for each partition to fully process all messages
+        // Drain all pending messages from the partitions
         const partitionsStoppedP: Array<Promise<void>> = [];
         for (const [, partition] of this.partitions) {
-            const stopP = partition.stop();
+            const stopP = partition.drain();
             partitionsStoppedP.push(stopP);
         }
         await Promise.all(partitionsStoppedP);
+
+        // Then stop them all
+        for (const [, partition] of this.partitions) {
+            partition.close();
+        }
     }
 
-    public process(message: utils.IMessage) {
-        winston.verbose(`${message.topic}:${message.partition}@${message.offset}`);
+    private process(message: utils.IMessage) {
+        const messageTag = `${message.topic}:${message.partition}@${message.offset}`;
+        winston.info(`${messageTag}`);
 
-        // Create the partition if this is the first message we've seen
+        if (this.isRebalancing) {
+            winston.info(`Ignoring ${messageTag} due to pending rebalance`);
+            return;
+        }
+
         if (!this.partitions.has(message.partition)) {
+            this.emit("error", `Received message for untracked partition ${messageTag}`);
+            return;
+        }
+
+        const partition = this.partitions.get(message.partition);
+        partition.process(message);
+    }
+
+    private rebalancing(partitions: utils.IPartition[]) {
+        winston.info("rebalancing", partitions);
+        this.isRebalancing = true;
+
+        for (const [id, partition] of this.partitions) {
+            winston.info(`Stopping partition ${id} due to rebalancing`);
+            partition.close();
+        }
+    }
+
+    private rebalanced(partitions: utils.IPartition[]) {
+        this.isRebalancing = false;
+
+        this.partitions = new Map<number, Partition>();
+        for (const partition of partitions) {
+            winston.info(`Creating ${partition.topic}:${partition.partition}@${partition.offset} due to rebalance`);
+
             const newPartition = new Partition(
-                message.partition,
+                partition.partition,
                 this.factory,
                 this.consumer,
                 this.config);
 
             // Listen for error events to know when the partition has stopped processing due to an error
             newPartition.on("error", (error, restart) => {
-                // For simplicity we will close the entire manager whenever any partition closes. A close primarily
-                // indicates that there was an error and this likely affects all partitions being managed (i.e.
-                // database write failed, connection issue, etc...).
-                // In the case that the restart flag is false and there was an error we will eventually need a way
-                // to signify that a partition is 'poisoned'.
+                // For simplicity we will close the entire manager whenever any partition errors. In the case that the
+                // restart flag is false and there was an error we will eventually need a way to signify that a
+                // partition is 'poisoned'.
                 this.emit("error", error, true);
             });
 
-            this.partitions.set(message.partition, newPartition);
+            this.partitions.set(partition.partition, newPartition);
         }
-
-        const partition = this.partitions.get(message.partition);
-        partition.process(message);
     }
 }

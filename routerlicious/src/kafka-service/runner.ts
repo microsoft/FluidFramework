@@ -10,28 +10,17 @@ export class KafkaRunner implements utils.IRunner {
     private partitionManager: PartitionManager;
 
     constructor(
-        factory: IPartitionLambdaFactory,
+        private factory: IPartitionLambdaFactory,
         private consumer: utils.IConsumer,
-        config: Provider) {
-
-        this.partitionManager = new PartitionManager(factory, consumer, config);
-        this.partitionManager.on("error", (error, restart) => {
-            this.deferred.reject(error);
-        });
+        private config: Provider) {
     }
 
     public start(): Promise<void> {
         this.deferred = new Deferred<void>();
 
-        // Place new Kafka messages into our processing queue
-        this.consumer.on("data", (message) => {
-            this.partitionManager.process(message);
-        });
-
-        // On any Kafka errors immediately stop processing
-        this.consumer.on("error", (err) => {
-            this.consumer.close();
-            this.deferred.reject(err);
+        this.partitionManager = new PartitionManager(this.factory, this.consumer, this.config);
+        this.partitionManager.on("error", (error, restart) => {
+            this.deferred.reject(error);
         });
 
         return this.deferred.promise;

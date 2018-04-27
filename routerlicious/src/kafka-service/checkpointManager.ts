@@ -1,9 +1,11 @@
 import * as assert from "assert";
+import * as winston from "winston";
 import { Deferred } from "../core-utils";
 import * as utils from "../utils";
 
 export class CheckpointManager {
     private checkpointing = false;
+    private closed = false;
     private commitedOffset: number;
     private lastOffset: number;
     private pendingCheckpoint: Deferred<void>;
@@ -18,6 +20,11 @@ export class CheckpointManager {
     public async checkpoint(offset: number) {
         // checkpoint calls should always be of increasing or equal value
         assert(this.lastOffset === undefined || offset >= this.lastOffset);
+
+        // Exit early if the manager has been closed
+        if (this.closed) {
+            return;
+        }
 
         // No recovery once entering an error state
         if (this.error) {
@@ -44,6 +51,7 @@ export class CheckpointManager {
 
         // Finally begin checkpointing the offsets.
         this.checkpointing = true;
+        winston.info(`Checkpointing ${this.id} @ ${offset}`);
         const commitP = this.consumer.commitOffset([{ offset, partition: this.id }]);
         return commitP.then(
             () => {
@@ -74,5 +82,12 @@ export class CheckpointManager {
      */
     public async flush(): Promise<void> {
         return this.checkpoint(this.lastOffset);
+    }
+
+    /**
+     * Closes the checkpoint manager - this will stop it from performing any future checkpoints
+     */
+    public close(): void {
+        this.closed = true;
     }
 }

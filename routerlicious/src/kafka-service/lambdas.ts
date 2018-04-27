@@ -15,7 +15,16 @@ export interface IContext {
 }
 
 export interface IPartitionLambda {
+    /**
+     * Processes an incoming message
+     */
     handler(message: utils.IMessage): void;
+
+    /**
+     * Closes the lambda. After being called handler will no longer be invoked and the lambda is expected to cancel
+     * any deferred work.
+     */
+    close(): void;
 }
 
 /**

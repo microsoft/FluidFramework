@@ -9,6 +9,8 @@ export class DocumentContext extends EventEmitter implements IContext {
     private tailInternal: number;
     private headInternal: number;
 
+    private closed = false;
+
     constructor(head: number) {
         super();
 
@@ -54,6 +56,10 @@ export class DocumentContext extends EventEmitter implements IContext {
         // Assert offset is between the current tail and head
         assert(offset > this.tail && offset <= this.head);
 
+        if (this.closed) {
+            return;
+        }
+
         // Update the tail and broadcast the checkpoint
         this.tailInternal = offset;
         this.emit("checkpoint", this);
@@ -61,5 +67,9 @@ export class DocumentContext extends EventEmitter implements IContext {
 
     public error(error: any, restart: boolean) {
         this.emit("error", error, restart);
+    }
+
+    public close() {
+        this.closed = true;
     }
 }

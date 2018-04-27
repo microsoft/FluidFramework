@@ -12,6 +12,7 @@ export interface IMessage {
 export interface IPartition {
     topic: string;
     partition: number;
+    offset: number;
 }
 
 export interface IConsumer {

@@ -23,6 +23,7 @@ export interface ICheckpoint {
 export class CheckpointContext {
     private pendingUpdateP: Promise<void>;
     private pendingCheckpoint: ICheckpoint;
+    private closed = false;
 
     constructor(
         private tenantId: string,
@@ -32,6 +33,11 @@ export class CheckpointContext {
     }
 
     public checkpoint(checkpoint: ICheckpoint) {
+        // Exit early if already closed
+        if (this.closed) {
+            return;
+        }
+
         // Check if a checkpoint is in progress - if so store the pending checkpoint
         if (this.pendingUpdateP) {
             this.pendingCheckpoint = checkpoint;
@@ -56,6 +62,10 @@ export class CheckpointContext {
                 // TODO flag context as error
                 winston.error("Error writing checkpoint to MongoDB", error);
             });
+    }
+
+    public close() {
+        this.closed = true;
     }
 
     private checkpointCore(checkpoint: ICheckpoint) {
