@@ -28,7 +28,7 @@ export function generateTenant(tenant: any, tenantConfigs: any): ITenantInput {
             updateGithubTenant(tenant, tenantConfig);
         }
         return {
-            name: tenant.name.toLowerCase(),
+            name: tenant.name,
             storage: tenantConfig,
         };
     }
