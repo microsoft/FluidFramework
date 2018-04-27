@@ -42,7 +42,8 @@ service:
   host: www.wu2.prague.office-int.com
   sslCert: wu2-tls-certificate
 
-secretKey: 0ddca6469e340715ac5be556910680e1
+tenantId: Distracted Bose
+secretKey: 3e7ceb4d70b937a572afbdd8f170a24f
 
 resources:
   limits:

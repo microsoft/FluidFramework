@@ -1,25 +1,35 @@
-import { TokenManager } from "../tokenManager";
+import * as jwt from "jsonwebtoken";
 
-let tokenManager: TokenManager;
-
-export function initAuthChecker(tenantConfig: any) {
-    tokenManager = new TokenManager(tenantConfig.id, tenantConfig.secretKey, tenantConfig.symmetricKey);
+export interface ITokenClaims {
+    documentId: string;
+    permission: string;
+    tenantId: string;
+    user: string;
 }
 
 /**
  * Middleware to check authentication and passing token.
  */
-export function ensureAuthenticated(req, res, next) {
-    if (req.isAuthenticated()) {
-        res.locals.token = tokenManager.getOrCreateToken(req.user.upn, req.user.displayName);
-        return next();
-    }
-    res.redirect("/");
-}
+export function ensureAuthenticated(tenantId: string, signingKey: string) {
+    return (req, res, next) => {
+        if (req.isAuthenticated()) {
+            res.locals.token = generateToken(req, tenantId, signingKey);
+            return next();
+        }
+        res.redirect("/");
+    };
+  }
 
 /**
- * Clears a token.
+ * Generates a JWT token to authorize against routerlicious.
  */
-export function clearToken(email: string) {
-    tokenManager.clearToken(email);
+export function generateToken(request: any, tenantId: string, signingKey: string): string {
+    const claims: ITokenClaims = {
+        documentId: request.params.id,
+        permission: "read:write",
+        tenantId,
+        user: request.user.displayName,
+    };
+
+    return jwt.sign(claims, signingKey);
 }

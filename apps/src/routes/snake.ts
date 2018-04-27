@@ -27,7 +27,8 @@ export function create(config: any): Router {
         response.redirect(`/snake/${moniker.choose()}${queryParam}`);
     });
 
-    router.get("/:id", ensureAuthenticated, (request, response, next) => {
+    router.get("/:id", ensureAuthenticated(config.tenantInfo.id, config.tenantInfo.secretKey),
+               (request, response, next) => {
         request.query.token = response.locals.token;
         const docId = getFullId(config.tenantInfo.id, request.params.id);
         renderView(request, response, docId, config);
