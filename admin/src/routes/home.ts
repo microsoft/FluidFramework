@@ -1,12 +1,15 @@
 import { Router } from "express";
 import * as passport from "passport";
 import * as winston from "winston";
-import * as dbService from "../db";
-import * as data from "./dataUtil";
+import * as core from "../db";
 import { defaultPartials } from "./partials";
+import { TenantManager } from "./tenantManager";
 
-export function create(config: any, mongoManager: dbService.MongoManager, collectionName: string): Router {
+export function create(config: any, mongoManager: core.MongoManager, userCollectionName: string,
+                       orgCollectionName: string, tenantCollectionName: string): Router {
     const router: Router = Router();
+    const manager = new TenantManager(mongoManager, userCollectionName, orgCollectionName,
+                                      tenantCollectionName, config.riddlerUrl);
 
     /**
      * Route to retrieve the home page for the app
@@ -15,7 +18,7 @@ export function create(config: any, mongoManager: dbService.MongoManager, collec
         if (request.user === undefined) {
             response.render("home", { partials: defaultPartials, title: "Login" });
         } else {
-            const tenantsP = data.getTenants(mongoManager, collectionName);
+            const tenantsP = manager.getTenantsforUser(request.user.oid);
 
             tenantsP.then(
                 (tenants) => {

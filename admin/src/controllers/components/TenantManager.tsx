@@ -4,12 +4,15 @@ import "antd/lib/table/style/css";
 import * as React from "react";
 import * as utils from "../utils";
 import { CreateTenantModal } from "./TenantCreateModal"
+import { TenantInfoModal } from "./TenantInfoModal"
 
 export interface ITableState {
     dataSource: any[];
     count: number;
     modalVisible: boolean;
     modalConfirmLoading: boolean;
+    infoVisible: boolean;
+    currentInfo: any;
 }
 
 export interface ITableProps {
@@ -29,10 +32,6 @@ export class TenantManager extends React.Component<ITableProps,ITableState > {
         dataIndex: 'name',
       },
       {
-        title: 'Key',
-        dataIndex: 'key',
-      },
-      {
         title: 'Storage',
         dataIndex: 'storage.name',
       },
@@ -41,9 +40,13 @@ export class TenantManager extends React.Component<ITableProps,ITableState > {
         dataIndex: 'operation',
         render: (text, record) => {
           return (
-            <Popconfirm title="Sure to delete?" onConfirm={() => this.onDelete(record._id)}>
-              <a href="#">Delete</a>
-            </Popconfirm>
+            <div>
+              <a onClick={() => this.showInfo(record)}>View</a>
+              <Popconfirm title="Sure to delete?" onConfirm={() => this.onDelete(record._id)}>
+              <span> | </span>
+              <a>Delete</a>
+              </Popconfirm>
+            </div>
           );
         },
       }];
@@ -52,6 +55,8 @@ export class TenantManager extends React.Component<ITableProps,ITableState > {
         count: this.props.data.length,
         modalVisible: false,
         modalConfirmLoading: false,
+        infoVisible: false,
+        currentInfo: null,
       };
     }
     onDelete = (id) => {
@@ -68,6 +73,14 @@ export class TenantManager extends React.Component<ITableProps,ITableState > {
 
     showModal = () => {
         this.setState({ modalVisible: true });
+    }
+
+    showInfo = (record: any) => {
+      this.setState({ infoVisible: true, currentInfo: record });
+    }
+
+    hideInfo = () => {
+      this.setState({ infoVisible: false });
     }
 
     handleCancel = () => {
@@ -127,6 +140,11 @@ export class TenantManager extends React.Component<ITableProps,ITableState > {
             confirmLoading={this.state.modalConfirmLoading}
             githubSelected={false}
             endpoint={this.props.endpoint}
+          />
+          <TenantInfoModal
+            visible={this.state.infoVisible}
+            onOk={this.hideInfo}
+            record={this.state.currentInfo}
           />
         </div>
       );
