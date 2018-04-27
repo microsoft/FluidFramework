@@ -1,3 +1,4 @@
+import { EventEmitter } from "events";
 import { Provider } from "nconf";
 import * as core from "../core";
 import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "../kafka-service/lambdas";
@@ -5,12 +6,13 @@ import * as utils from "../utils";
 import { DocumentManager } from "./documentManager";
 import { RouteMasterLambda } from "./lambda";
 
-export class RouteMasterLambdaFactory implements IPartitionLambdaFactory {
+export class RouteMasterLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
     constructor(
         private mongoManager: utils.MongoManager,
         private collection: core.ICollection<any>,
         private deltas: core.ICollection<any>,
         private producer: utils.IProducer) {
+        super();
     }
 
     public async create(config: Provider, context: IContext): Promise<IPartitionLambda> {

@@ -250,11 +250,6 @@ export class ScriptoriumLambda implements IPartitionLambda {
         this.mongoManager = this.workManager.createBatchedWork((batch) => this.processMongoBatch(batch));
         this.ioManager = this.workManager.createBatchedWork((batch) => this.processIoBatch(batch));
         this.idleManager = this.workManager.createBatchedWork(async (batch) => { return; });
-
-        this.io.on("error", (error) => {
-            // After an IO error we need to recreate the lambda
-            this.context.error(error, true);
-        });
     }
 
     public handler(message: utils.IMessage): void {

@@ -1,3 +1,4 @@
+import { EventEmitter } from "events";
 import * as nconf from "nconf";
 import * as utils from "../utils";
 
@@ -30,7 +31,7 @@ export interface IPartitionLambda {
 /**
  * Factory for creating lambda related objects
  */
-export interface IPartitionLambdaFactory {
+export interface IPartitionLambdaFactory extends EventEmitter {
     /**
      * Constructs a new lambda
      */

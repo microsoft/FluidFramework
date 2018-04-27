@@ -22,6 +22,10 @@ export class KafkaRunner implements utils.IRunner {
             console.trace("Warning", msg);
         });
 
+        this.factory.on("error", (error) => {
+            this.deferred.reject(error);
+        });
+
         this.partitionManager = new PartitionManager(this.factory, this.consumer, this.config);
         this.partitionManager.on("error", (error, restart) => {
             this.deferred.reject(error);

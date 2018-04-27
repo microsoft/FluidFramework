@@ -1,4 +1,5 @@
 import * as assert from "assert";
+import { EventEmitter } from "events";
 import { Provider } from "nconf";
 import * as core from "../../core";
 import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "../../kafka-service/lambdas";
@@ -43,10 +44,14 @@ export class TestLambda implements IPartitionLambda {
     }
 }
 
-export class TestLambdaFactory implements IPartitionLambdaFactory {
+export class TestLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
     public lambdas: TestLambda[] = [];
     public disposed = false;
     private failCreatelambda = false;
+
+    constructor() {
+        super();
+    }
 
     public async create(config: Provider, context: IContext): Promise<IPartitionLambda> {
         if (this.failCreatelambda) {

@@ -1,3 +1,4 @@
+import { EventEmitter } from "events";
 import { Provider } from "nconf";
 import * as core from "../core";
 import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "../kafka-service/lambdas";
@@ -7,11 +8,12 @@ import { DeliLambda } from "./lambda";
 // We expire clients after 5 minutes of no activity
 export const ClientSequenceTimeout = 5 * 60 * 1000;
 
-export class DeliLambdaFactory implements IPartitionLambdaFactory {
+export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
     constructor(
         private mongoManager: utils.MongoManager,
         private collection: core.ICollection<core.IDocument>,
         private producer: utils.IProducer) {
+        super();
     }
 
     public async create(config: Provider, context: IContext): Promise<IPartitionLambda> {
