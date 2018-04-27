@@ -14,7 +14,7 @@ export class PartitionManager extends EventEmitter {
 
     constructor(
         private factory: IPartitionLambdaFactory,
-        private consumer: utils.kafkaConsumer.IConsumer,
+        private consumer: utils.IConsumer,
         private config: Provider) {
         super();
     }
@@ -29,7 +29,7 @@ export class PartitionManager extends EventEmitter {
         await Promise.all(partitionsStoppedP);
     }
 
-    public process(message: utils.kafkaConsumer.IMessage) {
+    public process(message: utils.IMessage) {
         winston.verbose(`${message.topic}:${message.partition}@${message.offset}`);
 
         // Create the partition if this is the first message we've seen

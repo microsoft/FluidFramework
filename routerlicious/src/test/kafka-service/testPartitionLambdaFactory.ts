@@ -9,7 +9,7 @@ export class TestLambda implements IPartitionLambda {
     constructor(private factory: TestPartitionLambdaFactory, private throwHandler: boolean, private context: IContext) {
     }
 
-    public handler(message: utils.kafkaConsumer.IMessage): void {
+    public handler(message: utils.IMessage): void {
         if (this.throwHandler) {
             throw "Requested failure";
         }

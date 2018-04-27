@@ -11,7 +11,7 @@ export class DeliLambdaFactory implements IPartitionLambdaFactory {
     constructor(
         private mongoManager: utils.MongoManager,
         private collection: core.ICollection<core.IDocument>,
-        private producer: utils.kafkaProducer.IProducer) {
+        private producer: utils.IProducer) {
     }
 
     public async create(config: Provider, context: IContext): Promise<IPartitionLambda> {

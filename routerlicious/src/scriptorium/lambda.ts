@@ -240,7 +240,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
         });
     }
 
-    public handler(message: utils.kafkaConsumer.IMessage): void {
+    public handler(message: utils.IMessage): void {
         const baseMessage = JSON.parse(message.value.toString()) as core.IMessage;
         if (baseMessage.type === core.SequencedOperationType) {
             const value = baseMessage as core.ISequencedOperationMessage;

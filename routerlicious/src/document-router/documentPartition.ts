@@ -7,7 +7,7 @@ import * as utils from "../utils";
 import { DocumentContext } from "./documentContext";
 
 export class DocumentPartition {
-    private q: AsyncQueue<utils.kafkaConsumer.IMessage>;
+    private q: AsyncQueue<utils.IMessage>;
     private lambdaP: Promise<IPartitionLambda>;
     private corrupt = false;
 
@@ -31,7 +31,7 @@ export class DocumentPartition {
             this.q.kill();
         });
 
-        this.q = queue((message: utils.kafkaConsumer.IMessage, callback) => {
+        this.q = queue((message: utils.IMessage, callback) => {
             winston.verbose(`${message.topic}:${message.partition}@${message.offset}`);
             this.lambdaP.then((lambda) => {
                 try {
@@ -54,7 +54,7 @@ export class DocumentPartition {
         }, 1);
     }
 
-    public process(message: utils.kafkaConsumer.IMessage) {
+    public process(message: utils.IMessage) {
         this.q.push(message);
     }
 }

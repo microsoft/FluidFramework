@@ -16,7 +16,7 @@ export class TestLambda implements IPartitionLambda {
         assert(this.documentId);
     }
 
-    public handler(message: utils.kafkaConsumer.IMessage): void {
+    public handler(message: utils.IMessage): void {
         this.handleCalls++;
         const sequencedMessage = JSON.parse(message.value) as core.ISequencedOperationMessage;
         assert.equal(this.documentId, sequencedMessage.documentId);

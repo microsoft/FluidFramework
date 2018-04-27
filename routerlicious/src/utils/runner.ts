@@ -79,7 +79,7 @@ export async function run<T extends IResources>(
 
 export async function runTracked<T extends IResources>(
     config: nconf.Provider,
-    producer: utils.kafkaProducer.IProducer,
+    producer: utils.IProducer,
     group: string,
     resourceFactory: IResourcesFactory<T>,
     runnerFactory: IRunnerFactory<T>): Promise<void> {
@@ -131,7 +131,7 @@ export function runService<T extends IResources>(
     const sendTopic = config.get("system:topics:send");
     const kafkaClientId = moniker.choose();
 
-    const producer = utils.kafkaProducer.create(
+    const producer = utils.createProducer(
         kafkaConfig.name,
         kafkaConfig.endpoint,
         kafkaClientId,

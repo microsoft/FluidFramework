@@ -12,7 +12,7 @@ import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "./lambdas";
  * overall partition offset.
  */
 export class Partition extends EventEmitter {
-    private q: AsyncQueue<utils.kafkaConsumer.IMessage>;
+    private q: AsyncQueue<utils.IMessage>;
     private lambdaP: Promise<IPartitionLambda>;
     private checkpointManager: CheckpointManager;
     private context: Context;
@@ -20,7 +20,7 @@ export class Partition extends EventEmitter {
     constructor(
         id: number,
         factory: IPartitionLambdaFactory,
-        consumer: utils.kafkaConsumer.IConsumer,
+        consumer: utils.IConsumer,
         config: Provider) {
         super();
 
@@ -36,7 +36,7 @@ export class Partition extends EventEmitter {
         });
 
         // Create the incoming message queue
-        this.q = queue((message: utils.kafkaConsumer.IMessage, callback) => {
+        this.q = queue((message: utils.IMessage, callback) => {
             this.processCore(message, this.context).then(
                 () => {
                     callback();
@@ -51,7 +51,7 @@ export class Partition extends EventEmitter {
         };
     }
 
-    public process(rawMessage: utils.kafkaConsumer.IMessage) {
+    public process(rawMessage: utils.IMessage) {
         this.q.push(rawMessage);
     }
 
@@ -80,7 +80,7 @@ export class Partition extends EventEmitter {
         await this.checkpointManager.flush();
     }
 
-    private async processCore(message: utils.kafkaConsumer.IMessage, context: IContext): Promise<void> {
+    private async processCore(message: utils.IMessage, context: IContext): Promise<void> {
         winston.verbose(`${message.topic}:${message.partition}@${message.offset}`);
         const lambda = await this.lambdaP;
         lambda.handler(message);

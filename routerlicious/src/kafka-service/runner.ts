@@ -11,7 +11,7 @@ export class KafkaRunner implements utils.IRunner {
 
     constructor(
         factory: IPartitionLambdaFactory,
-        private consumer: utils.kafkaConsumer.IConsumer,
+        private consumer: utils.IConsumer,
         config: Provider) {
 
         this.partitionManager = new PartitionManager(factory, consumer, config);

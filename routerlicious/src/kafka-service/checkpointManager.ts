@@ -9,7 +9,7 @@ export class CheckpointManager {
     private pendingCheckpoint: Deferred<void>;
     private error: any;
 
-    constructor(private id: number, private consumer: utils.kafkaConsumer.IConsumer) {
+    constructor(private id: number, private consumer: utils.IConsumer) {
     }
 
     /**

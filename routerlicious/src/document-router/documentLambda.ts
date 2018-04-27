@@ -16,13 +16,13 @@ export class DocumentLambda implements IPartitionLambda {
         });
     }
 
-    public handler(message: utils.kafkaConsumer.IMessage): void {
+    public handler(message: utils.IMessage): void {
         this.contextManager.setHead(message.offset);
         this.handlerCore(message);
         this.contextManager.setTail(message.offset);
     }
 
-    private handlerCore(kafkaMessage: utils.kafkaConsumer.IMessage): void {
+    private handlerCore(kafkaMessage: utils.IMessage): void {
         const message = JSON.parse(kafkaMessage.value) as core.IMessage;
         if (!("documentId" in message)) {
             return;

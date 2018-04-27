@@ -63,7 +63,7 @@ export function create(
     tenantManager: ITenantManager,
     appTenants: IAlfredTenant[],
     mongoManager: utils.MongoManager,
-    producer: utils.kafkaProducer.IProducer) {
+    producer: utils.IProducer) {
 
     // Maximum REST request size
     const requestSize = config.get("alfred:restJsonSize");

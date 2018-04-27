@@ -6,10 +6,10 @@ import { IContext, IPartitionLambda } from "./lambdas";
  * A sequenced lambda processes incoming messages one at a time based on a promise returned by the message handler.
  */
 export abstract class SequencedLambda implements IPartitionLambda {
-    private q: AsyncQueue<utils.kafkaConsumer.IMessage>;
+    private q: AsyncQueue<utils.IMessage>;
 
     constructor(protected context: IContext) {
-        this.q = queue((message: utils.kafkaConsumer.IMessage, callback) => {
+        this.q = queue((message: utils.IMessage, callback) => {
             this.handlerCore(message).then(
                 () => {
                     callback();
@@ -24,7 +24,7 @@ export abstract class SequencedLambda implements IPartitionLambda {
         };
     }
 
-    public handler(message: utils.kafkaConsumer.IMessage): void {
+    public handler(message: utils.IMessage): void {
         this.q.push(message);
     }
 
@@ -32,5 +32,5 @@ export abstract class SequencedLambda implements IPartitionLambda {
      * Derived classes override this method to do per message processing. The sequenced lambda will only move on
      * to the next message once the returned promise is resolved.
      */
-    protected abstract handlerCore(message: utils.kafkaConsumer.IMessage): Promise<void>;
+    protected abstract handlerCore(message: utils.IMessage): Promise<void>;
 }

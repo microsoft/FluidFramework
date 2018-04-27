@@ -10,7 +10,7 @@ export class RouteMasterLambdaFactory implements IPartitionLambdaFactory {
         private mongoManager: utils.MongoManager,
         private collection: core.ICollection<any>,
         private deltas: core.ICollection<any>,
-        private producer: utils.kafkaProducer.IProducer) {
+        private producer: utils.IProducer) {
     }
 
     public async create(config: Provider, context: IContext): Promise<IPartitionLambda> {

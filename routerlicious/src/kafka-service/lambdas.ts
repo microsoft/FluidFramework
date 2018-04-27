@@ -15,7 +15,7 @@ export interface IContext {
 }
 
 export interface IPartitionLambda {
-    handler(message: utils.kafkaConsumer.IMessage): void;
+    handler(message: utils.IMessage): void;
 }
 
 /**

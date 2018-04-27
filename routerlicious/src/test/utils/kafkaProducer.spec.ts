@@ -1,14 +1,15 @@
 import * as assert from "assert";
-import { kafkaProducer } from "../../utils";
+import { IPendingMessage } from "../../utils";
+import { Producer } from "../../utils/kafka/producer";
 
-class TestProducer extends kafkaProducer.Producer {
+class TestProducer extends Producer {
     public sentSizes: number[] = [];
 
     public close(): Promise<void> {
         return Promise.resolve();
     }
 
-    protected sendCore(key: string, messages: kafkaProducer.IPendingMessage[]) {
+    protected sendCore(key: string, messages: IPendingMessage[]) {
         this.sentSizes.push(messages.length);
     }
 

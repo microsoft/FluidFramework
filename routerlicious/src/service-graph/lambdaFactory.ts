@@ -69,12 +69,12 @@ class ServiceGraphLambda implements IPartitionLambda {
         });
     }
 
-    public handler(message: utils.kafkaConsumer.IMessage): void {
+    public handler(message: utils.IMessage): void {
         this.handleCore(message);
         this.context.checkpoint(message.offset);
     }
 
-    private handleCore(message: utils.kafkaConsumer.IMessage) {
+    private handleCore(message: utils.IMessage) {
         const baseMessage = JSON.parse(message.value) as core.IMessage;
         if (baseMessage.type !== core.SystemType) {
             return;
