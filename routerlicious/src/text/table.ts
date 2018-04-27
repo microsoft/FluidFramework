@@ -1042,3 +1042,38 @@ export function rowIsMoribund(rowMarker: IRowMarker) {
 export function cellIsMoribund(cellMarker: ICellMarker) {
     return cellMarker.properties && cellMarker.properties["moribund"];
 }
+
+// QTable
+
+export function createQTableRelative(pos: number, sharedString: SharedString, nrows = 3, ncells = 3) {
+    let pgAtStart = true;
+    if (pos > 0) {
+        let segoff = sharedString.client.mergeTree.getContainingSegment(pos - 1, MergeTree.UniversalSequenceNumber,
+            sharedString.client.getClientId());
+        if (segoff.segment.getType() === MergeTree.SegmentType.Marker) {
+            let marker = <MergeTree.Marker>segoff.segment;
+            if (marker.hasTileLabel("pg")) {
+                pgAtStart = false;
+            }
+        }
+    }
+    let idBase = sharedString.client.longClientId;
+    idBase += `T${tableIdSuffix++}`;
+    let opList = <MergeTree.IMergeTreeInsertMsg[]>[];
+    let endTableId = endPrefix + idBase;
+    opList.push(createMarkerOp(pos, endTableId,
+        MergeTree.ReferenceType.NestEnd |
+        MergeTree.ReferenceType.Tile, ["table"], ["pg"]));
+    let endTablePos = <MergeTree.IRelativePosition>{
+        before: true,
+        id: endTableId,
+    };
+    if (pgAtStart) {
+        // TODO: copy pg properties from pg marker after pos
+        let pgOp = createRelativeMarkerOp(endTablePos, "",
+            MergeTree.ReferenceType.Tile, [], ["pg"]);
+        opList.push(pgOp);
+    }
+    opList.push(createRelativeMarkerOp(endTablePos, idBase,
+        MergeTree.ReferenceType.NestBegin, ["table"]));
+}

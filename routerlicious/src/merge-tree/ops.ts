@@ -21,6 +21,13 @@ export interface IMarkerDef {
     refType?: ReferenceType;
 }
 
+export interface IPairedMarkerDef {
+    refType?: ReferenceType;
+    props?: Object;
+    pos1?: number;
+    relativePos1?: IRelativePosition;
+}
+
 export interface IComponentDef {
     url: string;
 }
@@ -44,7 +51,7 @@ export interface IMergeTreeDelta {
  */
 export interface IRelativePosition {
     /**
-     * Local string identifier specifying a segment (for local operations).
+     * Obsolescent: Local string identifier specifying a segment (for local operations).
      */
     localId?: string;
     /**
@@ -70,6 +77,7 @@ export interface IMergeTreeInsertMsg extends IMergeTreeDelta {
     props?: Object;
     text?: string;
     marker?: IMarkerDef;
+    pairedMarker?: IPairedMarkerDef;
     register?: string;
     pos2?: number;
     relativePos2?: IRelativePosition;

@@ -333,6 +333,10 @@ function addNodeReferences(mergeTree: MergeTree, node: MergeNode,
                 if (markerLocalId) {
                     mergeTree.mapLocalIdToSegment(markerLocalId, marker);
                 }
+                if (marker.properties && marker.properties[reservedMarkerNestIdKey]) {
+                    let nestId = marker.properties[reservedMarkerNestIdKey];
+                    mergeTree.addMarkerToNest(nestId, marker);
+                }
                 if (marker.refType & ops.ReferenceType.Tile) {
                     addTile(marker, rightmostTiles);
                     addTileIfNotPresent(marker, leftmostTiles);
@@ -536,7 +540,7 @@ export abstract class BaseSegment extends MergeNode implements Segment {
     }
 
     hasProperty(key: string) {
-        return this.properties && (this.properties[key]!==undefined);
+        return this.properties && (this.properties[key] !== undefined);
     }
 
     isLeaf() {
@@ -603,6 +607,7 @@ export let reservedTileLabelsKey = "referenceTileLabels";
 export let reservedRangeLabelsKey = "referenceRangeLabels";
 export let reservedMarkerIdKey = "markerId";
 export let reservedMarkerLocalIdKey = "markerLocalId";
+export let reservedMarkerNestIdKey = "markerNestId";
 
 function refHasTileLabels(refPos: ReferencePosition) {
     return (refPos.refType & ops.ReferenceType.Tile) &&
@@ -654,6 +659,7 @@ function refGetRangeLabels(refPos: ReferencePosition) {
 }
 
 export class Marker extends BaseSegment implements ReferencePosition {
+    nestBuddy: Marker;
     public static make(refType: ops.ReferenceType, props?: Properties.PropertySet,
         seq?: number, clientId?: number) {
         let marker = new Marker(refType, seq, clientId);
@@ -666,6 +672,10 @@ export class Marker extends BaseSegment implements ReferencePosition {
     constructor(public refType: ops.ReferenceType, seq?: number, clientId?: number) {
         super(seq, clientId);
         this.cachedLength = 1;
+    }
+
+    setNestId(nestId: number) {
+        this.addProperties({ [reservedMarkerNestIdKey]: nestId });
     }
 
     clone() {
@@ -744,9 +754,9 @@ export class Marker extends BaseSegment implements ReferencePosition {
         if (id) {
             bbuf += ` (${id}) `;
         } else {
-            let localId=this.getLocalId();
+            let localId = this.getLocalId();
             if (localId) {
-                bbuf+=` (LOC ${localId}) `;
+                bbuf += ` (LOC ${localId}) `;
             }
         }
         if (this.hasTileLabels()) {
@@ -778,9 +788,9 @@ export class Marker extends BaseSegment implements ReferencePosition {
                 lbuf += rangeLabel;
             }
         }
-        let pbuf="";
+        let pbuf = "";
         if (this.properties) {
-                pbuf += JSON.stringify(this.properties);
+            pbuf += JSON.stringify(this.properties);
         }
         return `M ${bbuf}: ${lbuf} ${pbuf}`;
     }
@@ -1812,6 +1822,7 @@ export class Client {
     measureOps = false;
     q: Collections.List<API.ISequencedObjectMessage>;
     checkQ: Collections.List<string>;
+    nestCount = 0;
     clientSequenceNumber = 1;
     clientNameToIds = new Collections.RedBlackTree<string, ClientIds>(compareStrings);
     shortClientIdMap = <string[]>[];
@@ -2348,8 +2359,12 @@ export class Client {
                         }
                     }
                     if (op.marker) {
-                        this.insertMarkerLocal(op.pos1, op.marker.refType,
-                            op.props);
+                        if (op.pairedMarker) {
+                            this.insertNestLocal(op.pos1, op.marker.refType, op.props, op.pairedMarker);
+                        } else {
+                            this.insertMarkerLocal(op.pos1, op.marker.refType,
+                                op.props);
+                        }
                     } else {
                         this.insertTextLocal(op.text, op.pos1, op.props);
                     }
@@ -2522,6 +2537,42 @@ export class Client {
         }
     }
 
+    insertNestLocal(pos: number, behaviors: ops.ReferenceType, 
+        props: Properties.PropertySet, pairedMarker: ops.IPairedMarkerDef) {
+        let segWindow = this.mergeTree.getCollabWindow();
+        let clientId = segWindow.clientId;
+        let refSeq = segWindow.currentSeq;
+        let seq = this.getLocalSequenceNumber();
+        let clockStart;
+        if (this.measureOps) {
+            clockStart = clock();
+        }
+        if (pairedMarker.relativePos1) {
+            pairedMarker.pos1 = this.mergeTree.posFromRelativePos(pairedMarker.relativePos1);
+            if (pairedMarker.pos1 < 0) {
+                // TODO: raise exception or other error flow
+                return;
+            }
+        }
+
+        let beginNest = this.mergeTree.insertMarker(pos, refSeq, clientId, seq, behaviors, props);
+        let endNest = this.mergeTree.insertMarker(pairedMarker.pos1, refSeq, clientId, seq, pairedMarker.refType,
+            pairedMarker.props);
+        let nestId = this.nestCount++;
+        beginNest.nestBuddy = endNest;
+        endNest.nestBuddy = beginNest;
+        beginNest.setNestId(nestId);
+        endNest.setNestId(nestId);
+    
+        if (this.measureOps) {
+            this.localTime += elapsedMicroseconds(clockStart);
+            this.localOps++;
+        }
+        if (this.verboseOps) {
+            console.log(`insert local marke pos ${pos} cli ${this.getLongClientId(clientId)} ref seq ${refSeq}`);
+        }
+    }
+
     insertMarkerLocal(pos: number, behaviors: ops.ReferenceType, props?: Properties.PropertySet) {
         let segWindow = this.mergeTree.getCollabWindow();
         let clientId = segWindow.clientId;
@@ -2542,6 +2593,35 @@ export class Client {
             console.log(`insert local marke pos ${pos} cli ${this.getLongClientId(clientId)} ref seq ${refSeq}`);
         }
     }
+
+    insertNestRemote(marker: ops.IMarkerDef, pairedMarker: ops.IPairedMarkerDef, pos: number, props: Properties.PropertySet,
+        seq: number, refSeq: number, clientId: number) {
+        let clockStart;
+        if (this.measureOps) {
+            clockStart = clock();
+        }
+
+        let beginNest = this.mergeTree.insertMarker(pos, refSeq, clientId, seq, marker.refType, props);
+        let endNest = this.mergeTree.insertMarker(pairedMarker.pos1, refSeq, clientId, seq, pairedMarker.refType,
+            pairedMarker.props);
+        let nestId = this.nestCount++;
+        beginNest.nestBuddy = endNest;
+        endNest.nestBuddy = beginNest;
+        beginNest.setNestId(nestId);
+        endNest.setNestId(nestId);
+
+        this.mergeTree.getCollabWindow().currentSeq = seq;
+
+        if (this.measureOps) {
+            this.accumTime += elapsedMicroseconds(clockStart);
+            this.accumOps++;
+            this.accumWindow += (this.getCurrentSeq() - this.mergeTree.getCollabWindow().minSeq);
+        }
+        if (this.verboseOps) {
+            console.log(`@cli ${this.getLongClientId(this.mergeTree.getCollabWindow().clientId)} ${marker.toString()} seq ${seq} insert remote pos ${pos} refseq ${refSeq} cli ${clientId}`);
+        }
+    }
+
 
     insertMarkerRemote(marker: ops.IMarkerDef, pos: number, props: Properties.PropertySet, seq: number, refSeq: number, clientId: number) {
         let clockStart;
@@ -2994,7 +3074,7 @@ export class MergeTree {
     // if we need to have pointers to non-markers, we can change to point at local refs
     idToSegment = Properties.createMap<Segment>();
     localIdToSegment = Properties.createMap<Segment>();
-
+    nestIdToMarkerPair = <Marker[][]>[];
     clientIdToBranchId: number[] = [];
     localBranchId = 0;
     transactionSegmentGroup: SegmentGroup;
@@ -3027,6 +3107,17 @@ export class MergeTree {
         }
         block.ordinal = "";
         return block;
+    }
+
+    addMarkerToNest(nestId: number, nestMarker: Marker) {
+        let markers = this.nestIdToMarkerPair[nestId];
+        if (!markers) {
+            markers = [nestMarker];
+        } else {
+            markers.push(nestMarker);
+            nestMarker.nestBuddy = markers[0];
+            markers[0].nestBuddy = nestMarker;
+        }
     }
 
     private initialTextNode(text: string) {
@@ -3792,7 +3883,7 @@ export class MergeTree {
         this.setMinSeq(Math.min(this.collabWindow.globalMinSeq, localMinSeq));
     }
 
-    addMinSeqListener(minRequired: number, onMinGE: (minSeq:number)=>void ) {
+    addMinSeqListener(minRequired: number, onMinGE: (minSeq: number) => void) {
         if (!this.minSeqListeners) {
             this.minSeqListeners = new Collections.Heap<MinListener>([],
                 minListenerComparer);
@@ -3807,8 +3898,8 @@ export class MergeTree {
                 this.zamboniSegments();
             }
             if (this.minSeqListeners) {
-                while ((this.minSeqListeners.count()>0) && 
-                    (this.minSeqListeners.peek().minRequired<=minSeq)) {
+                while ((this.minSeqListeners.count() > 0) &&
+                    (this.minSeqListeners.peek().minRequired <= minSeq)) {
                     let minListener = this.minSeqListeners.get();
                     minListener.onMinGE(minSeq);
                 }
@@ -4136,6 +4227,7 @@ export class MergeTree {
 
         this.insert(pos, refSeq, clientId, seq, marker, (block, pos, refSeq, clientId, seq, marker) =>
             this.blockInsert(block, pos, refSeq, clientId, seq, marker));
+        return marker;
     }
 
     insertTextMarkerRelative(markerPos: IRelativePosition, refSeq: number, clientId: number, seq: number,
