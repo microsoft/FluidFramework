@@ -2,7 +2,7 @@ import { EventEmitter } from "events";
 import * as kafkaNode from "kafka-node";
 import * as util from "util";
 import { debug } from "../debug";
-import { IConsumer } from "./definitions";
+import { IConsumer, IPartition } from "./definitions";
 
 export class KafkaNodeConsumer implements IConsumer {
     private client: kafkaNode.Client;
@@ -57,11 +57,6 @@ export class KafkaNodeConsumer implements IConsumer {
         return new Promise<any>((resolve, reject) => {
             this.ensureTopics(this.client, [this.topic]).then(
                 () => {
-                    debug("###############################################");
-                    debug("###############################################");
-                    debug(`new HighLevelConsumer(${this.topic}, ${this.autoCommit}, ${groupId}`);
-                    debug("###############################################");
-                    debug("###############################################");
                     this.instance = new kafkaNode.HighLevelConsumer(this.client, [{topic: this.topic}], <any> {
                         autoCommit: this.autoCommit,
                         fetchMaxBytes: 1024 * 1024,
@@ -72,40 +67,13 @@ export class KafkaNodeConsumer implements IConsumer {
                     });
 
                     this.instance.on("rebalancing", () => {
-                        debug("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-                        debug("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-                        debug("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-                        debug("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-                        debug("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-                        debug("");
-                        debug(`Rebalancing ${(this.instance as any).id}`);
-                        debug(JSON.stringify((<any> this.instance).getTopicPayloads()));
-                        debug("");
-                        debug("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-                        debug("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-                        debug("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-                        debug("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-                        debug("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-                        debug("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+                        const payloads = (<any> this.instance).getTopicPayloads();
+                        this.events.emit("rebalancing", this.getPartitions(payloads));
                     });
 
                     this.instance.on("rebalanced", () => {
-                        debug("***********************************************");
-                        debug("***********************************************");
-                        debug("***********************************************");
-                        debug("***********************************************");
-                        debug("***********************************************");
-                        debug("***********************************************");
-                        debug("");
-                        debug("Rebalanced");
-                        debug(JSON.stringify((<any> this.instance).getTopicPayloads()));
-                        debug("");
-                        debug("***********************************************");
-                        debug("***********************************************");
-                        debug("***********************************************");
-                        debug("***********************************************");
-                        debug("***********************************************");
-                        debug("***********************************************");
+                        const payloads = (<any> this.instance).getTopicPayloads();
+                        this.events.emit("rebalanced", this.getPartitions(payloads));
                     });
 
                     this.instance.on("message", (message: any) => {
@@ -124,6 +92,15 @@ export class KafkaNodeConsumer implements IConsumer {
                 }, (error) => {
                     this.handleError(error);
                 });
+        });
+    }
+
+    private getPartitions(rawPartitions: any[]): IPartition[] {
+        return rawPartitions.map((partition) => {
+            return {
+                partition: parseInt(partition.partition, 10),
+                topic: partition.topic,
+            };
         });
     }
 

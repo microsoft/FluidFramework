@@ -9,6 +9,11 @@ export interface IMessage {
     key: string;
 }
 
+export interface IPartition {
+    topic: string;
+    partition: number;
+}
+
 export interface IConsumer {
     groupId: string;
 
@@ -23,6 +28,8 @@ export interface IConsumer {
      * Event Handler.
      */
     on(event: "data", listener: (message: IMessage) => void): this;
+    on(event: "rebalancing", listener: (partitions: IPartition[]) => void): this;
+    on(event: "rebalanced", listener: (partitions: IPartition[]) => void): this;
     on(event: string, listener: Function): this;
 
     /**
