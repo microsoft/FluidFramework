@@ -9,9 +9,11 @@
   },
   "author": "",
   "dependencies": {
+    "kafka-node": "^2.6.1",
     "node-rdkafka": "^2.3.2"
   },
   "devDependencies": {
+    "@types/kafka-node": "^2.0.6",
     "@types/node": "^8.10.10",
     "typescript": "^2.8.3"
   }

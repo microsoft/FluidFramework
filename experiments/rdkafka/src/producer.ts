@@ -42,13 +42,13 @@ producer.connect(null, (error, data) => {
 async function sendBatch(from: number, to: number): Promise<void> {
   for (;from < to; from++) {
     var value = new Buffer(`value-${from}`);
-    var key = `key-${from}`;
+    var key = `test`;
 
     try {
       producer.produce(topicName, partition, value, key);
     } catch (error) {
       if (Kafka.CODES.ERRORS.ERR__QUEUE_FULL === error.code) {
-        // console.log(`Outbound full - waiting to send`);
+        console.log(`Outbound full - waiting to send`);
         return new Promise<void>((resolve, reject) => {
           setTimeout(
             () => {
@@ -78,14 +78,14 @@ function sendBatches(currentBatch, totalBatches, messagesPerBatch, resolve, reje
     },
     (error) => {
       reject(error);
-    });
+    }); 
 }
 
 async function runWriteTest() {
   const start = Date.now();
 
   const totalMessages =    1000000;
-  const messagesPerBatch =     100;
+  const messagesPerBatch =    1000;
   const totalBatches = totalMessages / messagesPerBatch;
   assert.equal(totalBatches * messagesPerBatch, totalMessages, "total messages should be divisible by batch size");
 
@@ -93,15 +93,18 @@ async function runWriteTest() {
 
   let counter = 0;
   producer.on('delivery-report', function(err, report) {
+    if (err) {
+      console.error(err);      
+    }
     counter++;
     if (counter === totalMessages) {
       done.resolve();
     }
 
-    if (counter % messagesPerBatch === 0) {
-      // console.log(`Batch ${counter / messagesPerBatch} complete`);
-      // console.log(`Send count === ${sendCount}`);
-    }
+    // if (counter % messagesPerBatch === 0) {
+    //   console.log(`Batch ${counter / messagesPerBatch} complete`);
+    //   console.log(`Send count === ${sendCount}`);
+    // }
   });
   
   await new Promise((resolve, reject) => {
