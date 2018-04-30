@@ -68,7 +68,7 @@ serviceGraph:
 
 riddler:
   name: riddler
-  replicas: 1
+  replicas: 2
 
 historian:
   externalUrl: https://historian.wu2.prague.office-int.com
@@ -78,7 +78,7 @@ zookeeper:
   url: left-numbat-zookeeper:2181
 
 mongodb:
-  url: mongodb://honorary-chimp-mongodb:27017
+  url: mongodb://quieting-guppy-mongodb:27017
 
 redis:
   url: winsome-wombat-redis

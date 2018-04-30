@@ -83,6 +83,6 @@ Redis - lumpy-condor
 Historian - terrific-otter
 
 Prod
-Mongo - honorary-chimp
+Mongo - quieting-guppy
 Redis - winsome-wombat
 Historian - smelly-wolf
