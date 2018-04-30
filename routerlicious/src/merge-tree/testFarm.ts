@@ -849,11 +849,11 @@ export function TestPack(verbose = true) {
         }
         for (let i = 0; i < clientCountB; i++) {
             let clientB = clientsB[i];
-            serverB.getOrAddShortClientId(clientB.longClientId, null, 1);
+            serverB.getOrAddShortClientId(clientB.longClientId, 1);
             for (let j = 0; j < clientCountB; j++) {
                 let otherBClient = clientsB[j];
                 if (otherBClient != clientB) {
-                    otherBClient.getOrAddShortClientId(clientB.longClientId, null, 1);
+                    otherBClient.getOrAddShortClientId(clientB.longClientId, 1);
                 }
             }
         }

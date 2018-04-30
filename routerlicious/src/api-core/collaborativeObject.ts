@@ -259,7 +259,8 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
         assert.equal(this.sequenceNumber + 1, message.sequenceNumber);
         this._sequenceNumber = message.sequenceNumber;
 
-        if (message.type === OperationType && message.clientId === this.document.clientId) {
+        const local = message.clientId === this.document.clientId;
+        if (message.type === OperationType && local) {
             // One of our messages was sequenced. We can remove it from the local message list. Given these arrive
             // in order we only need to check the beginning of the local list.
             if (this.pendingOps.length > 0 &&
@@ -282,7 +283,9 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
             this.submitLatencyMessage(message);
         }
 
+        this.emit("pre-op", message, local, message);
         this.processCore(message, context);
+        this.emit("op", message, local, message);
     }
 
     /**

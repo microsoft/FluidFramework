@@ -21,6 +21,8 @@ export class DocumentContextManager extends EventEmitter {
     // Offset represents the last offset checkpointed
     private checkpointOffset = LastCheckpointedOffset;
 
+    private closed = false;
+
     constructor(private partitionContext: IContext) {
         super();
     }
@@ -48,7 +50,19 @@ export class DocumentContextManager extends EventEmitter {
         this.updateCheckpoint();
     }
 
+    public close() {
+        this.closed = true;
+
+        for (const context of this.contexts) {
+            context.close();
+        }
+    }
+
     private updateCheckpoint() {
+        if (this.closed) {
+            return;
+        }
+
         // Set the starting offset at the tail. Contexts can then lower that offset based on their positions.
         let offset = this.tail;
         this.contexts.forEach((context) => {

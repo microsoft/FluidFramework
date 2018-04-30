@@ -11,7 +11,7 @@ export class AlfredResources implements utils.IResources {
 
     constructor(
         public config: Provider,
-        public producer: utils.kafkaProducer.IProducer,
+        public producer: utils.IProducer,
         public redisConfig: any,
         public webSocketLibrary: string,
         public tenantManager: ITenantManager,
@@ -39,7 +39,7 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
         const kafkaClientId = config.get("alfred:kafkaClientId");
         const topic = config.get("alfred:topic");
         const metricClientConfig = config.get("metric");
-        const producer = utils.kafkaProducer.create(kafkaLibrary, kafkaEndpoint, kafkaClientId, topic);
+        const producer = utils.createProducer(kafkaLibrary, kafkaEndpoint, kafkaClientId, topic);
         const redisConfig = config.get("redis");
         const webSocketLibrary = config.get("alfred:webSocketLib");
         const authEndpoint = config.get("auth:endpoint");

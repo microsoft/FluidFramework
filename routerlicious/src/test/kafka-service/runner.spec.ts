@@ -24,6 +24,7 @@ describe("kafka-service", () => {
         describe(".start", () => {
             it("Should be able to stop after processing messages", async () => {
                 const startP = testRunner.start();
+                testConsumer.rebalance();
 
                 let messageCount = 10;
                 for (let i = 0; i < messageCount; i++) {
@@ -49,6 +50,7 @@ describe("kafka-service", () => {
 
             it("Should resolve start promise on kafka error ", async () => {
                 const startP = testRunner.start();
+                testConsumer.rebalance();
 
                 testProducer.send("{}", "test");
                 testConsumer.emitError("Test error");
@@ -58,8 +60,9 @@ describe("kafka-service", () => {
 
             it("Should resolve start promise on lambda error ", async () => {
                 const startP = testRunner.start();
-
                 testFactory.setThrowHandler(true);
+                testConsumer.rebalance();
+
                 testProducer.send("{}", "test");
 
                 await verifyRejection(startP);

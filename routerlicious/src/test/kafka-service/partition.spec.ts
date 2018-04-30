@@ -46,7 +46,8 @@ describe("kafka-service", () => {
         describe(".stop", () => {
             it("Should stop message processing", async () => {
                 const testPartition = new Partition(0, testFactory, testConsumer, testConfig);
-                await testPartition.stop();
+                await testPartition.drain();
+                testPartition.close();
             });
 
             it("Should process all pending messages prior to stopping", async () => {
@@ -55,7 +56,8 @@ describe("kafka-service", () => {
                 for (let i = 0; i < messageCount; i++) {
                     testPartition.process(kafkaMessageFactory.sequenceMessage({}, "test"));
                 }
-                await testPartition.stop();
+                await testPartition.drain();
+                testPartition.close();
 
                 assert.equal(messageCount, testFactory.handleCount);
             });

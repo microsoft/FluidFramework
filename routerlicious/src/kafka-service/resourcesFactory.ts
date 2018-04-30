@@ -6,7 +6,7 @@ import { IPartitionLambdaFactory } from "./lambdas";
 export interface IKafkaResources extends utils.IResources {
     lambdaFactory: IPartitionLambdaFactory;
 
-    consumer: utils.kafkaConsumer.IConsumer;
+    consumer: utils.IConsumer;
 
     config: Provider;
 }
@@ -14,7 +14,7 @@ export interface IKafkaResources extends utils.IResources {
 export class KafkaResources implements IKafkaResources {
     constructor(
         public lambdaFactory: IPartitionLambdaFactory,
-        public consumer: utils.kafkaConsumer.IConsumer,
+        public consumer: utils.IConsumer,
         public config: Provider) {
     }
 
@@ -43,7 +43,7 @@ export class KafkaResourcesFactory implements utils.IResourcesFactory<KafkaResou
         const receiveTopic = streamConfig.topic;
 
         const clientId = moniker.choose();
-        let consumer = utils.kafkaConsumer.create(kafkaLibrary, kafkaEndpoint, clientId, groupId, receiveTopic, false);
+        let consumer = utils.createConsumer(kafkaLibrary, kafkaEndpoint, clientId, groupId, receiveTopic, false);
 
         return new KafkaResources(
             lambdaFactory,

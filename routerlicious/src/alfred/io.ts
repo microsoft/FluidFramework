@@ -23,7 +23,7 @@ export function register(
     webSocketServer: core.IWebSocketServer,
     config: Provider,
     mongoManager: utils.MongoManager,
-    producer: utils.kafkaProducer.IProducer,
+    producer: utils.IProducer,
     documentsCollectionName: string,
     metricClientConfig: any,
     tenantManager: api.ITenantManager,

@@ -13,7 +13,7 @@ async function mockTree(repository: git.Repository, entries: number) {
             oid,
             parseInt("100644", 8));
     }
-    builder.write();
+    await builder.write();
 }
 
 describe("Treebuilder", () => {

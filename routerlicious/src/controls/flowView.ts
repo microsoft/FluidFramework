@@ -90,6 +90,18 @@ export interface ICmd extends Item {
 let commands: ICmd[] = [
     {
         exec: (f) => {
+            f.copyFormat();
+        },
+        key: "copy format",
+    },
+    {
+        exec: (f) => {
+            f.paintFormat();
+        },
+        key: "paint format",
+    },
+    {
+        exec: (f) => {
             f.toggleBlockquote();
         },
         key: "blockquote",
@@ -120,6 +132,24 @@ let commands: ICmd[] = [
     },
     {
         exec: (f) => {
+            f.setColor("red");
+        },
+        key: "red",
+    },
+    {
+        exec: (f) => {
+            f.setColor("green");
+        },
+        key: "green",
+    },
+    {
+        exec: (f) => {
+            f.setColor("gold");
+        },
+        key: "gold",
+    },
+    {
+        exec: (f) => {
             f.setFont("courier new", "18px");
         },
         key: "Courier font",
@@ -129,6 +159,18 @@ let commands: ICmd[] = [
             f.setFont("tahoma", "18px");
         },
         key: "Tahoma font",
+    },
+    {
+        exec: (f) => {
+            f.setPGProps({ header: true });
+        },
+        key: "Heading 2",
+    },
+    {
+        exec: (f) => {
+            f.setPGProps({ header: null });
+        },
+        key: "Normal",
     },
     {
         exec: (f) => {
@@ -891,6 +933,7 @@ interface ILineContext {
     span: ISegSpan;
     deferredAttach?: boolean;
     reRenderList?: ILineDiv[];
+    pgMarker: Paragraph.IParagraphMarker;
 }
 
 export interface IDocumentContext {
@@ -1017,6 +1060,8 @@ function endRenderSegments(marker: MergeTree.Marker) {
             (marker.refType & MergeTree.ReferenceType.NestEnd))));
 }
 
+const wordHeadingColor = "rgb(47, 84, 150)";
+
 function renderSegmentIntoLine(
     segment: MergeTree.Segment, segpos: number, refSeq: number,
     clientId: number, start: number, end: number, lineContext: ILineContext) {
@@ -1037,6 +1082,9 @@ function renderSegmentIntoLine(
         let textStartPos = segpos + start;
         let textEndPos = segpos + end;
         lineContext.span = makeSegSpan(lineContext.flowView, text, textSegment, start, segpos);
+        if ((lineContext.lineDiv.endPGMarker) && (lineContext.lineDiv.endPGMarker.properties.header)) {
+            lineContext.span.style.color = wordHeadingColor;
+        }
         lineContext.contentDiv.appendChild(lineContext.span);
         lineContext.lineDiv.lineEnd += text.length;
         if ((lineContext.flowView.cursor.pos >= textStartPos) && (lineContext.flowView.cursor.pos <= textEndPos)) {
@@ -1152,9 +1200,8 @@ function buildIntervalBlockStyle(properties: MergeTree.PropertySet, startX: numb
     if (properties) {
         if (properties["bgColor"]) {
             bookmarkDiv.style.backgroundColor = properties["bgColor"];
-        } else if (properties["clid"] || properties["user"]) {
-            let clientId = client.getOrAddShortClientId(properties["clid"],
-                properties["user"]);
+        } else if (properties["clid"]) {
+            let clientId = client.getOrAddShortClientId(properties["clid"]);
             let bgColor = presenceColors[clientId % presenceColors.length];
             bookmarkDiv.style.backgroundColor = bgColor;
             bookmarkDiv.style.opacity = "0.08";
@@ -1190,8 +1237,7 @@ function buildIntervalTieStyle(properties: MergeTree.PropertySet, startX: number
     bookendDiv1.style.backgroundColor = "lightgray";
     bookendDiv2.style.backgroundColor = "lightgray";
     if (properties && properties["clid"]) {
-        let clientId = client.getOrAddShortClientId(properties["clid"],
-            properties["user"]);
+        let clientId = client.getOrAddShortClientId(properties["clid"]);
         let bgColor = presenceColors[clientId % presenceColors.length];
         bookmarkDiv.style.backgroundColor = bgColor;
         bookendDiv1.style.backgroundColor = bgColor;
@@ -1283,7 +1329,7 @@ function showBookmarks(flowView: FlowView, lineStart: number, lineEnd: number,
                     let presenceStart = Math.min(localPresenceInfo.markXformPos, localPresenceInfo.xformPos);
                     let presenceEnd = Math.max(localPresenceInfo.markXformPos, localPresenceInfo.xformPos);
                     if ((presenceStart < lineEnd) && (presenceEnd > lineStart)) {
-                        showBookmark({ clid: localPresenceInfo.key },
+                        showBookmark({ clid: flowView.client.getLongClientId(localPresenceInfo.clientId) },
                             lineText, presenceStart, presenceEnd, lineStart, endPGMarker,
                             computedEnd, lineFontstr, lineDivHeight, lineBreakIndex, docContext, contentDiv, client);
                     }
@@ -1373,7 +1419,7 @@ function createSVGRect(r: ui.Rectangle) {
     rect.setAttribute("y", r.y.toString());
     rect.setAttribute("width", r.width.toString());
     rect.setAttribute("height", r.height.toString());
-    rect.setAttribute("stroke", "blue");
+    rect.setAttribute("stroke", "darkgrey");
     rect.setAttribute("stroke-width", "1px");
     rect.setAttribute("fill", "none");
     return rect;
@@ -1926,7 +1972,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
                 }
                 let lineContext = <ILineContext>{
                     contentDiv, deferredAttach: layoutContext.deferredAttach, flowView: layoutContext.flowView,
-                    lineDiv, lineDivHeight, span,
+                    lineDiv, lineDivHeight, pgMarker: endPGMarker, span,
                 };
                 if (viewportStartPos < 0) {
                     viewportStartPos = lineStart;
@@ -2285,7 +2331,8 @@ export class Cursor {
 
     public makePresenceDiv() {
         this.presenceDiv = document.createElement("div");
-        this.presenceDiv.innerText = this.presenceInfo.key;
+        // TODO callback to go from UID to display information
+        this.presenceDiv.innerText = this.getUserDisplayString(this.presenceInfo.user);
         this.presenceDiv.style.zIndex = "1";
         this.presenceDiv.style.position = "absolute";
         this.presenceDiv.style.color = "white";
@@ -2414,6 +2461,13 @@ export class Cursor {
         this.off = true;
         this.blinkTimer = setTimeout(this.blinker, 20);
     }
+
+    private getUserDisplayString(user: core.IAuthenticatedUser): string {
+        // TODO - callback to client code to provide mapping from user -> display
+        // this would allow a user ID to be put on the wire which can then be mapped
+        // back to an email, name, etc...
+        return user.user;
+    }
 }
 
 enum KeyCode {
@@ -2437,8 +2491,6 @@ export interface IRemotePresenceInfo {
     origPos: number;
     origMark: number;
     refseq: number;
-    key?: string;
-    clientId?: number;
 }
 
 export interface ILocalPresenceInfo {
@@ -2447,7 +2499,7 @@ export interface ILocalPresenceInfo {
     xformPos?: number;
     markXformPos?: number;
     clientId: number;
-    key?: string;
+    user: core.IAuthenticatedUser;
     cursor?: Cursor;
     fresh: boolean;
 }
@@ -2609,7 +2661,6 @@ export class FlowView extends ui.Component {
     public tempBookmarks: Interval[];
     public comments: SharedIntervalCollection;
     public presenceMapView: types.IMapView;
-    public userMapView: types.IMapView;
     public presenceVector: ILocalPresenceInfo[] = [];
     public docRoot: types.IMapView;
     public curPG: MergeTree.Marker;
@@ -2626,6 +2677,7 @@ export class FlowView extends ui.Component {
     private targetTranslation: string;
     private activeSearchBox: ISearchBox;
     private cmdTree: MergeTree.TST<ICmd>;
+    private formatRegister: MergeTree.PropertySet;
 
     constructor(
         element: HTMLDivElement,
@@ -2651,12 +2703,14 @@ export class FlowView extends ui.Component {
 
         this.statusMessage("li", " ");
         this.statusMessage("si", " ");
-        sharedString.on("op", (msg: core.ISequencedObjectMessage) => {
-            if (msg.clientId !== this.client.longClientId) {
-                let delta = <MergeTree.IMergeTreeOp>msg.contents;
-                if (this.applyOp(delta, msg)) {
-                    this.queueRender(msg);
-                }
+        sharedString.on("op", (msg: core.ISequencedObjectMessage, local: boolean) => {
+            if (local) {
+                return;
+            }
+
+            const delta = <MergeTree.IMergeTreeOp>msg.contents;
+            if (this.applyOp(delta, msg)) {
+                this.queueRender(msg);
             }
         });
 
@@ -2794,25 +2848,14 @@ export class FlowView extends ui.Component {
     }
 
     public addPresenceMap(presenceMap: types.IMap) {
-        presenceMap.on("valueChanged", (delta: types.IValueChanged) => {
-            this.remotePresenceUpdate(delta);
+        presenceMap.on("valueChanged", (delta: types.IValueChanged, local: boolean, op: core.ISequencedObjectMessage) => {
+            this.remotePresenceUpdate(delta, local, op);
         });
+
         presenceMap.getView().then((v) => {
             this.presenceMapView = v;
             this.updatePresence();
         });
-    }
-
-    public addUserMap(userMap: types.IMap) {
-        if (userMap !== undefined) {
-            userMap.on("valueChanged", (delta: types.IValueChanged) => {
-                this.remoteUserUpdate(delta);
-            });
-            userMap.getView().then((v) => {
-                this.userMapView = v;
-                this.updateUser();
-            });
-        }
     }
 
     public presenceInfoInRange(start: number, end: number) {
@@ -2878,89 +2921,6 @@ export class FlowView extends ui.Component {
                 localPresenceInfo.cursor.onLine(localPresenceInfo.markXformPos);
             this.presenceQueueRender(localPresenceInfo, sameLine);
         }
-    }
-
-    public remotePresenceFromEdit(longClientId: string, userInfo: core.IAuthenticatedUser, refseq: number, oldpos: number, posAdjust = 0) {
-        let remotePosInfo = <IRemotePresenceInfo>{
-            clientId: this.client.getOrAddShortClientId(longClientId, userInfo),
-            key: userInfo === null ? longClientId : userInfo.user.name,
-            origMark: -1,
-            origPos: oldpos + posAdjust,
-            refseq,
-        };
-        this.remotePresenceToLocal(remotePosInfo, posAdjust);
-    }
-
-    public remotePresenceToLocal(remotePresenceInfo: IRemotePresenceInfo, posAdjust = 0) {
-        let segoff = this.client.mergeTree.getContainingSegment(remotePresenceInfo.origPos,
-            remotePresenceInfo.refseq, remotePresenceInfo.clientId);
-
-        if (segoff.segment === undefined) {
-            if (remotePresenceInfo.origPos === this.client.getLength()) {
-                segoff = this.client.mergeTree.getContainingSegment(remotePresenceInfo.origPos - 1,
-                    remotePresenceInfo.refseq, remotePresenceInfo.clientId);
-                if (segoff.segment) {
-                    segoff.offset++;
-                }
-            }
-        }
-        if (segoff.segment) {
-            let localPresenceInfo = <ILocalPresenceInfo>{
-                clientId: remotePresenceInfo.clientId,
-                fresh: true,
-                key: remotePresenceInfo.key,
-                localRef: new MergeTree.LocalReference(<MergeTree.BaseSegment>segoff.segment, segoff.offset,
-                    MergeTree.ReferenceType.SlideOnRemove),
-            };
-            if (remotePresenceInfo.origMark >= 0) {
-                let markSegoff = this.client.mergeTree.getContainingSegment(remotePresenceInfo.origMark,
-                    remotePresenceInfo.refseq, remotePresenceInfo.clientId);
-                if (markSegoff.segment) {
-                    localPresenceInfo.markLocalRef =
-                        new MergeTree.LocalReference(<MergeTree.BaseSegment>markSegoff.segment,
-                            markSegoff.offset, MergeTree.ReferenceType.SlideOnRemove);
-                }
-            }
-            this.updatePresenceVector(localPresenceInfo);
-        }
-    }
-    public remotePresenceUpdate(delta: types.IValueChanged) {
-        if (delta.key !== this.client.longClientId) {
-            let remotePresenceInfo = <IRemotePresenceInfo>this.presenceMapView.get(delta.key);
-            remotePresenceInfo.clientId = this.client.getOrAddShortClientId(delta.key, null);
-            const userInfo = this.client.getUserInfo(remotePresenceInfo.clientId);
-            remotePresenceInfo.key = (userInfo === null) ? delta.key : userInfo.user.name;
-            this.remotePresenceToLocal(remotePresenceInfo);
-        }
-    }
-
-    public updatePresence() {
-        if (this.presenceMapView) {
-            let presenceInfo = <IRemotePresenceInfo>{
-                origMark: this.cursor.mark,
-                origPos: this.cursor.pos,
-                refseq: this.client.getCurrentSeq(),
-            };
-            this.presenceMapView.set(this.client.longClientId, presenceInfo);
-        }
-    }
-
-    public updateUser() {
-        this.client.getOrAddShortClientId(this.client.longClientId, this.client.userInfo);
-        if (this.userMapView) {
-            for (let remoteClientId of this.userMapView.keys()) {
-                this.remoteUserUpdate({ key: remoteClientId });
-            }
-            this.userMapView.set(this.client.longClientId, this.client.userInfo);
-        }
-    }
-
-    public remoteUserUpdate(delta: types.IValueChanged) {
-        if (delta.key !== this.client.longClientId) {
-            let remoteUserInfo = <core.IAuthenticatedUser>this.userMapView.get(delta.key);
-            this.client.getOrAddShortClientId(delta.key, remoteUserInfo);
-        }
-
     }
 
     public statusMessage(key: string, msg: string) {
@@ -3769,19 +3729,43 @@ export class FlowView extends ui.Component {
         this.toggleWordOrSelection("textDecoration", "underline", null);
     }
 
-    public setFont(family: string, size = "18px") {
+    public copyFormat() {
+        let segoff = getContainingSegment(this, this.cursor.pos);
+        if (segoff.segment && (segoff.segment.getType() === MergeTree.SegmentType.Text)) {
+            let textSegment = <MergeTree.TextSegment>segoff.segment;
+            this.formatRegister = MergeTree.extend(MergeTree.createMap(), textSegment.properties);
+        }
+    }
+
+    public setProps(props: MergeTree.PropertySet, updatePG = true) {
         let sel = this.cursor.getSelection();
         if (sel) {
             this.clearSelection(false);
-            this.sharedString.annotateRange({ fontFamily: family, fontSize: size }, sel.start, sel.end);
+            this.sharedString.annotateRange(props, sel.start, sel.end);
         } else {
             let wordRange = getCurrentWord(this.cursor.pos, this.sharedString.client.mergeTree);
             if (wordRange) {
-                this.sharedString.annotateRange({ font: family, fontSize: size }, wordRange.wordStart, wordRange.wordEnd);
+                this.sharedString.annotateRange(props, wordRange.wordStart, wordRange.wordEnd);
             }
         }
-        this.updatePGInfo(this.cursor.pos);
+        if (updatePG) {
+            this.updatePGInfo(this.cursor.pos);
+        }
         this.localQueueRender(this.cursor.pos);
+    }
+
+    public paintFormat() {
+        if (this.formatRegister) {
+            this.setProps(this.formatRegister);
+        }
+    }
+
+    public setFont(family: string, size = "18px") {
+        this.setProps({ fontFamily: family, fontSize: size });
+    }
+
+    public setColor(color: string) {
+        this.setProps({ color }, false);
     }
 
     public toggleWordOrSelection(name: string, valueOn: string, valueOff: string) {
@@ -4038,7 +4022,7 @@ export class FlowView extends ui.Component {
                             hit = true;
                         }
                     }
- /*                   if ((rowCount > 4) && (!hit)) {
+/*                    if ((rowCount > 4) && (!hit)) {
                         let chance = Math.round(Math.random() * 10);
                         if (chance >= 5) {
                             this.deleteRow();
@@ -4046,7 +4030,7 @@ export class FlowView extends ui.Component {
                             hit = true;
                         }
                     }
-                   if ((columnCount > 4) && (!hit)) {
+*/                    if ((columnCount > 4) && (!hit)) {
                         let chance = Math.round(Math.random() * 10);
                         if (chance >= 5) {
                             this.deleteColumn();
@@ -4054,7 +4038,6 @@ export class FlowView extends ui.Component {
                             hit = true;
                         }
                     }
-                    */
                 } else {
                     return;
                 }
@@ -4081,6 +4064,17 @@ export class FlowView extends ui.Component {
             Table.insertColumn(this.sharedString, cellMarker.cell, rowMarker.row, tableMarker.table);
             this.localQueueRender(this.cursor.pos);
         }
+    }
+
+    public setPGProps(props: MergeTree.PropertySet) {
+        let tileInfo = findTile(this, this.cursor.pos, "pg", false);
+        if (tileInfo) {
+            let pgMarker = <Paragraph.IParagraphMarker>tileInfo.tile;
+            this.sharedString.annotateRange(props, tileInfo.pos,
+                pgMarker.cachedLength + tileInfo.pos);
+            Paragraph.clearContentCaches(pgMarker);
+        }
+        this.localQueueRender(this.cursor.pos);
     }
 
     public keyCmd(charCode: number) {
@@ -4299,8 +4293,6 @@ export class FlowView extends ui.Component {
             // tslint:disable-next-line:max-line-length
             console.log(`time to edit/impression: ${this.timeToEdit} time to load: ${Date.now() - clockStart}ms len: ${this.sharedString.client.getLength()} - ${performanceNow()}`);
         }
-        const userMap = this.docRoot.get("users") as types.IMap;
-        this.addUserMap(userMap);
         const presenceMap = this.docRoot.get("presence") as types.IMap;
         this.addPresenceMap(presenceMap);
         let intervalMap = this.sharedString.intervalCollections.getMap();
@@ -4370,6 +4362,80 @@ export class FlowView extends ui.Component {
             if (this.client.getLength() > 0) {
                 this.render(this.topChar, true);
             }
+        }
+    }
+
+    private remotePresenceUpdate(delta: types.IValueChanged, local: boolean, op: core.ISequencedObjectMessage) {
+        if (local) {
+            return;
+        }
+
+        let remotePresenceInfo = this.presenceMapView.get(delta.key) as IRemotePresenceInfo;
+
+        this.remotePresenceToLocal(delta.key, op.user, remotePresenceInfo);
+    }
+
+    private remotePresenceFromEdit(
+        longClientId: string,
+        userInfo: core.IAuthenticatedUser,
+        refseq: number,
+        oldpos: number,
+        posAdjust = 0) {
+
+        let remotePosInfo: IRemotePresenceInfo = {
+            origMark: -1,
+            origPos: oldpos + posAdjust,
+            refseq,
+        };
+
+        this.remotePresenceToLocal(longClientId, userInfo, remotePosInfo);
+    }
+
+    private remotePresenceToLocal(longClientId: string, user: core.IAuthenticatedUser, remotePresenceInfo: IRemotePresenceInfo, posAdjust = 0) {
+        const clientId = this.client.getOrAddShortClientId(longClientId);
+
+        let segoff = this.client.mergeTree.getContainingSegment(remotePresenceInfo.origPos,
+            remotePresenceInfo.refseq, clientId);
+
+        if (segoff.segment === undefined) {
+            if (remotePresenceInfo.origPos === this.client.getLength()) {
+                segoff = this.client.mergeTree.getContainingSegment(remotePresenceInfo.origPos - 1,
+                    remotePresenceInfo.refseq, clientId);
+                if (segoff.segment) {
+                    segoff.offset++;
+                }
+            }
+        }
+        if (segoff.segment) {
+            let localPresenceInfo = <ILocalPresenceInfo>{
+                clientId,
+                fresh: true,
+                user,
+                localRef: new MergeTree.LocalReference(<MergeTree.BaseSegment>segoff.segment, segoff.offset,
+                    MergeTree.ReferenceType.SlideOnRemove),
+            };
+            if (remotePresenceInfo.origMark >= 0) {
+                let markSegoff = this.client.mergeTree.getContainingSegment(remotePresenceInfo.origMark,
+                    remotePresenceInfo.refseq, clientId);
+                if (markSegoff.segment) {
+                    localPresenceInfo.markLocalRef =
+                        new MergeTree.LocalReference(<MergeTree.BaseSegment>markSegoff.segment,
+                            markSegoff.offset, MergeTree.ReferenceType.SlideOnRemove);
+                }
+            }
+            this.updatePresenceVector(localPresenceInfo);
+        }
+    }
+
+    private updatePresence() {
+        if (this.presenceMapView) {
+            const presenceInfo: IRemotePresenceInfo = {
+                origMark: this.cursor.mark,
+                origPos: this.cursor.pos,
+                refseq: this.client.getCurrentSeq(),
+            };
+
+            this.presenceMapView.set(this.collabDocument.clientId, presenceInfo);
         }
     }
 

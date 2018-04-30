@@ -41,15 +41,15 @@ alfred:
 
 deli:
   name: deli
-  replicas: 1
+  replicas: 8
 
 scriptorium:
   name: scriptorium
-  replicas: 1
+  replicas: 8
 
 routemaster:
   name: routemaster
-  replicas: 1
+  replicas: 8
 
 tmz:
   name: tmz

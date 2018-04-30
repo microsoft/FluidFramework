@@ -5,8 +5,8 @@ import { MessageFactory, TestDocument } from "../testUtils";
 describe("Routerlicious", () => {
     describe("Agent", () => {
         describe("Serializer", () => {
-            const idleTime = 2;
-            const maxTimeWithoutSnapshot = 10;
+            const idleTime = 10;
+            const maxTimeWithoutSnapshot = 20;
             const retryTime = 1;
             const documentId = "test-document";
             const clientId = "test-client";

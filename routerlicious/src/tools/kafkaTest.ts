@@ -42,7 +42,7 @@ async function getKafkaNodeOffset(): Promise<number> {
 
 async function runKafkaNodeProducerTest(startOffset: number) {
     let client = new kafkaNode.Client(endpoint, clientId);
-    let producer = new kafkaNode.Producer(client, {partionerType: 3});
+    let producer = new kafkaNode.Producer(client, { partitionerType: 3});
 
     let deferred: Deferred<number> = new Deferred();
 
@@ -69,7 +69,7 @@ async function runKafkaNodeProducerTest(startOffset: number) {
                             if (responseCtr === commander.messages) {
                                 let totalTime = Date.now() - start;
                                 client.close();
-                                producer.close((error) => {
+                                producer.close(() => {
                                     deferred.resolve(totalTime);
                                 });
                             }

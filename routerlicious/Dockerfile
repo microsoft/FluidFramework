@@ -1,4 +1,4 @@
-FROM node:8.9.3-alpine
+FROM node:8.11.1-alpine
 
 # Blizzard Kafka dependencies
 RUN apk --no-cache add \

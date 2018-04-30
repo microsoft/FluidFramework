@@ -4,10 +4,10 @@ import * as nconf from "nconf";
 import * as git from "nodegit";
 import * as utils from "../../utils";
 
-function tagToITag(tag: git.Tag): ITag {
+async function tagToITag(tag: git.Tag): Promise<ITag> {
     // TODO there's a bug in the nodegit d.ts file that thinks name and email and properties and not methods
     const tagger = tag.tagger() as any;
-    const target = tag.target();
+    const target = await tag.target();
 
     return {
         message: tag.message(),

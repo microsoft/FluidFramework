@@ -3,7 +3,7 @@ import * as core from "../api-core";
 import * as MergeTree from "../merge-tree";
 import { SharedString } from "../shared-string";
 import * as Paragraph from "./paragraph";
-import { MergeTreeDeltaType } from "../merge-tree";
+import { MergeTreeDeltaType, IMergeTreeGroupMsg } from "../merge-tree";
 
 export interface ITableMarker extends MergeTree.Marker {
     table?: Table;
@@ -33,6 +33,21 @@ function createRelativeMarkerOp(relativePos1: MergeTree.IRelativePosition,
     tileLabels?: string[], props?: MergeTree.PropertySet) {
     return createRelativeMarkerOpOptLocal(relativePos1, false, id, refType,
         rangeLabels, tileLabels, props);
+}
+
+function createBubbleNest(relativePos1: MergeTree.IRelativePosition, props?: MergeTree.PropertySet) {
+    return <MergeTree.IMergeTreeInsertMsg>{
+        marker: { refType: MergeTree.ReferenceType.NestBegin },
+        pairedMarker: {
+            props: MergeTree.extend(MergeTree.createMap, props),
+            refType: MergeTree.ReferenceType.NestEnd,
+            relativePos1,
+        },
+        relativePos1,
+        props,
+        type: MergeTree.MergeTreeDeltaType.INSERT,
+    };
+
 }
 
 function createRelativeMarkerOpOptLocal(
@@ -204,6 +219,18 @@ function createRowCellOp(sharedString: SharedString, endRowId: string,
     return groupOp;
 }
 
+function createFirstColumnCellOp(sharedString: SharedString, row: Row, colId: string) {
+    let opList = <MergeTree.IMergeTreeInsertMsg[]>[];
+    let rowId = row.rowMarker.getId();
+    let cellId = rowId + "X" + colId;
+    createCellRelative(opList, undefined, { id: rowId }, false, cellId);
+    let groupOp = <MergeTree.IMergeTreeGroupMsg>{
+        ops: opList,
+        type: MergeTree.MergeTreeDeltaType.GROUP,
+    };
+    return groupOp;
+}
+
 function createColumnCellOp(sharedString: SharedString, row: Row, prevCell: Cell, colId: string,
     extraProperties?: MergeTree.PropertySet) {
     let opList = <MergeTree.IMergeTreeInsertMsg[]>[];
@@ -235,9 +262,9 @@ function createColumnCellOp(sharedString: SharedString, row: Row, prevCell: Cell
 
 const newColumnProp = "newColumnId";
 function insertColumnCellForRow(sharedString: SharedString, rowView: Row,
-    columnOffset: number, colId: string, segmentGroup: MergeTree.SegmentGroup, shared = false) {
-    if (columnOffset < rowView.cells.length) {
-        let prevcellView = rowView.cells[columnOffset];
+    liveColumnOffset: number, colId: string, segmentGroup: MergeTree.SegmentGroup, shared = false) {
+    if (liveColumnOffset < rowView.cells.length) {
+        let prevcellView = rowView.cells[liveColumnOffset];
         let groupOp = createColumnCellOp(sharedString, rowView, prevcellView, colId);
         sharedString.client.localTransaction(groupOp, segmentGroup);
     }
@@ -270,12 +297,20 @@ export function finishInsertedRow(rowId: string, prevRowId: string, msg: core.IS
         } else {
             let tempSegmentGroup = <MergeTree.SegmentGroup>{ segments: [] };
             let clid = sharedString.client.getShortClientId(msg.clientId);
-            sharedString.client.setLocalSequenceNumberCli(msg.sequenceNumber, clid);
+            sharedString.client.setLocalSequenceNumber(msg.sequenceNumber);
             sharedString.client.localTransaction(groupOp, tempSegmentGroup);
+            let updateBlock: MergeTree.IMergeBlock;
             for (let segment of tempSegmentGroup.segments) {
                 segment.segmentGroup = undefined;
+                segment.clientId = clid;
+                // TODO: coalesce parent blocks
+                if (segment.parent !== updateBlock) {
+                    sharedString.client.mergeTree.blockUpdatePathLengths(segment.parent,
+                        msg.sequenceNumber, clid, true);
+                }
+                updateBlock = segment.parent;
             }
-            sharedString.client.resetLocalSequenceNumberCli();
+            sharedString.client.resetLocalSequenceNumber();
         }
     }
 
@@ -295,34 +330,41 @@ export function finishInsertedColumn(cellId: string, msg: core.ISequencedObjectM
     let rowMarker = <IRowMarker>cellPosStack["row"].top();
     let tableView = parseTable(tableMarker, tableMarkerPos, sharedString);
     let enclosingRowView = rowMarker.row;
-    let columnOffset = 0;
     if (traceOps) {
         console.log(`finish insert col cell id: ${cellId} seq: ${msg.sequenceNumber}`);
     }
-    for (; columnOffset < enclosingRowView.cells.length; columnOffset++) {
-        if (enclosingRowView.cells[columnOffset] === cellMarker.cell) {
-            break;
-        }
-    }
-    columnOffset--;
     let colId = cellMarker.properties[newColumnProp];
+    let prevLiveColumnOffset = cellMarker.cell.liveColumnOffset - 1;
     for (let rowView of tableView.rows) {
         if (rowView !== enclosingRowView) {
-            if (rowView.cells.length > columnOffset) {
-                let prevcellView = rowView.cells[columnOffset];
-                let groupOp = createColumnCellOp(sharedString, rowView, prevcellView, colId);
+            if (rowView.cells.length > prevLiveColumnOffset) {
+                let groupOp: IMergeTreeGroupMsg;
+                if (prevLiveColumnOffset >= 0) {
+                    let prevcellView = rowView.cells[prevLiveColumnOffset];
+                    groupOp = createColumnCellOp(sharedString, rowView, prevcellView, colId);
+                } else {
+                    groupOp = createFirstColumnCellOp(sharedString, rowView, colId);
+                }
                 if ((rowView.rowMarker.seq === MergeTree.UnassignedSequenceNumber) &&
                     (rowView.rowMarker.segmentGroup)) {
                     sharedString.client.localTransaction(groupOp, rowView.rowMarker.segmentGroup);
                 } else {
                     let tempSegmentGroup = <MergeTree.SegmentGroup>{ segments: [] };
                     let clid = sharedString.client.getShortClientId(msg.clientId);
-                    sharedString.client.setLocalSequenceNumberCli(msg.sequenceNumber, clid);
+                    sharedString.client.setLocalSequenceNumber(msg.sequenceNumber);
+                    let updateBlock: MergeTree.IMergeBlock;
                     for (let segment of tempSegmentGroup.segments) {
                         segment.segmentGroup = undefined;
+                        segment.clientId = clid;
+                        // TODO: coalesce parent blocks
+                        if (segment.parent !== updateBlock) {
+                            sharedString.client.mergeTree.blockUpdatePathLengths(segment.parent,
+                                msg.sequenceNumber, clid, true);
+                        }
+                        updateBlock = segment.parent;
                     }
                     sharedString.client.localTransaction(groupOp, tempSegmentGroup);
-                    sharedString.client.resetLocalSequenceNumberCli();
+                    sharedString.client.resetLocalSequenceNumber();
                 }
             }
         }
@@ -335,13 +377,7 @@ let traceOps = true;
 
 export function insertColumn(sharedString: SharedString, prevCell: Cell, row: Row,
     table: Table) {
-    let columnOffset = 0;
-    while (columnOffset < row.cells.length) {
-        if (row.cells[columnOffset] === prevCell) {
-            break;
-        }
-        columnOffset++;
-    }
+    let liveColumnOffset = prevCell.liveColumnOffset;
     let colId = `${sharedString.client.longClientId}Col${columnIdSuffix++}`;
     if (traceOps) {
         console.log(`insert col prev ${prevCell.marker.toString()} id: ${colId}`);
@@ -352,7 +388,7 @@ export function insertColumn(sharedString: SharedString, prevCell: Cell, row: Ro
     // fill cell into other rows
     for (let otherRowView of table.rows) {
         if (otherRowView !== row) {
-            insertColumnCellForRow(sharedString, otherRowView, columnOffset, colId,
+            insertColumnCellForRow(sharedString, otherRowView, liveColumnOffset, colId,
                 segmentGroup);
         }
     }
@@ -450,11 +486,14 @@ export function finishDeletedColumn(cellPosRemote: number, rowId: string, msg: c
     let rowMarker = <IRowMarker>sharedString.client.mergeTree.getSegmentFromId(rowId);
     let row = rowMarker.row;
     cellMarker.addProperties({ moribundSeq: msg.sequenceNumber });
-    let columnOffset = cellMarker.cell.columnOffset;
+    let liveColumnOffset = 0;
+    if (cellMarker.cell.prevLive) {
+        liveColumnOffset = cellMarker.cell.prevLive.liveColumnOffset + 1;
+    }
     for (let otherRow of table.rows) {
         if (otherRow !== row) {
-            if (columnOffset < otherRow.cells.length) {
-                let otherCell = otherRow.cells[columnOffset];
+            if (liveColumnOffset < otherRow.cells.length) {
+                let otherCell = otherRow.cells[liveColumnOffset];
                 if (otherCell && !(otherCell.marker.hasProperty("moribundSeq"))) {
                     otherCell.marker.addProperties({
                         moribund: true, wholeColumn: true,
@@ -498,14 +537,6 @@ export function finishDeletedRow(rowId: string, msg: core.ISequencedObjectMessag
     tableMarker.table = undefined;
 }
 
-function findColumnOffset(row: Row, cell: Cell) {
-    for (let i = 0, len = row.cells.length; i < len; i++) {
-        if (row.cells[i] === cell) {
-            return i;
-        }
-    }
-}
-
 export function deleteColumn(sharedString: SharedString, cell: Cell, row: Row,
     table: Table) {
     if (traceOps) {
@@ -533,11 +564,14 @@ export function deleteColumn(sharedString: SharedString, cell: Cell, row: Row,
     let segmentGroup = sharedString.transaction(groupOp);
     cell.marker.addProperties({ moribundSeq: MergeTree.UnassignedSequenceNumber });
     let moribundCellMarkers = <ICellMarker[]>[];
-    let columnOffset = findColumnOffset(row, cell);
+    let liveColumnOffset = 0;
+    if (cell.prevLive) {
+        liveColumnOffset = cell.prevLive.liveColumnOffset + 1;
+    }
     for (let otherRow of table.rows) {
         if (otherRow !== row) {
-            if (columnOffset < otherRow.cells.length) {
-                let otherCell = otherRow.cells[columnOffset];
+            if (liveColumnOffset < otherRow.cells.length) {
+                let otherCell = otherRow.cells[liveColumnOffset];
                 if (otherCell) {
                     otherCell.marker.addProperties({
                         moribund: true,
@@ -856,6 +890,8 @@ export class Cell {
     public renderedHeight: number;
     public div: HTMLDivElement;
     public columnOffset: number;
+    public liveColumnOffset: number;
+    public prevLive: Cell;
 
     constructor(public marker: ICellMarker, public endMarker: ICellMarker) {
     }
@@ -951,11 +987,16 @@ function parseRow(rowStartPos: number, sharedString: SharedString, fontInfo?: Pa
     rowMarker.row = new Row(rowMarker, endRowMarker);
     let nextPos = rowStartPos + rowMarker.cachedLength;
     let columnOffset = 0;
+    let liveColumnCount = 0;
+    let prevLive: Cell;
     while (nextPos < endRowPos) {
         let cellMarker = parseCell(nextPos, sharedString, columnOffset, fontInfo);
         if (!cellIsMoribund(cellMarker)) {
             rowMarker.row.minContentWidth += cellMarker.cell.minContentWidth;
             rowMarker.row.cells.push(cellMarker.cell);
+            cellMarker.cell.liveColumnOffset = liveColumnCount++;
+            cellMarker.cell.prevLive = prevLive;
+            prevLive = cellMarker.cell;
         }
         let endcellPos = getOffset(sharedString, cellMarker.cell.endMarker);
         nextPos = endcellPos + cellMarker.cell.endMarker.cachedLength;
@@ -1015,4 +1056,330 @@ export function rowIsMoribund(rowMarker: IRowMarker) {
 
 export function cellIsMoribund(cellMarker: ICellMarker) {
     return cellMarker.properties && cellMarker.properties["moribund"];
+}
+
+// QTable
+
+let qTableMarkerType = "qTableMarkerType";
+let qTableRow = "qTableRow";
+let qTableColumn = "qTableCol";
+
+export function createQTable(pos: number, sharedString: SharedString, nrows = 3, ncolumns = 3) {
+    let pgAtStart = true;
+    if (pos > 0) {
+        let segoff = sharedString.client.mergeTree.getContainingSegment(pos - 1, MergeTree.UniversalSequenceNumber,
+            sharedString.client.getClientId());
+        if (segoff.segment.getType() === MergeTree.SegmentType.Marker) {
+            let marker = <MergeTree.Marker>segoff.segment;
+            if (marker.hasTileLabel("pg")) {
+                pgAtStart = false;
+            }
+        }
+    }
+    let idBase = sharedString.client.longClientId;
+    idBase += `T${tableIdSuffix++}`;
+    let opList = <MergeTree.IMergeTreeInsertMsg[]>[];
+    let endTableId = endPrefix + idBase;
+    // end-T
+    opList.push(createMarkerOp(pos, endTableId,
+        MergeTree.ReferenceType.NestEnd |
+        MergeTree.ReferenceType.Tile, ["table"], ["pg"]));
+    let endTablePos = <MergeTree.IRelativePosition>{
+        before: true,
+        id: endTableId,
+    };
+    // [pg] end-T
+    if (pgAtStart) {
+        // TODO: copy pg properties from pg marker after pos
+        let pgOp = createRelativeMarkerOp(endTablePos, "",
+            MergeTree.ReferenceType.Tile, [], ["pg"]);
+        opList.push(pgOp);
+    }
+    // [pg] T end-T
+    opList.push(createRelativeMarkerOp(endTablePos, idBase,
+        MergeTree.ReferenceType.NestBegin, ["table"]));
+    // [pg] T rows end-T
+    let rowProps = { [qTableMarkerType]: "row" };
+    let rowIds = <string[]>[];
+    for (let i = 0; i < nrows; i++) {
+        rowIds[i] = `${idBase}R${rowIdSuffix++}`;
+        opList.push(createRelativeMarkerOp(endTablePos, rowIds[i],
+            MergeTree.ReferenceType.Simple, [], undefined, rowProps));
+    }
+    // [pg] T rows columns end-T    
+    let colProps = { [qTableMarkerType]: "column" };
+    let colIds = <string[]>[];
+    for (let i = 0; i < ncolumns; i++) {
+        colIds[i] = `${idBase}C${columnIdSuffix++}`;
+        opList.push(createRelativeMarkerOp(endTablePos, colIds[i],
+            MergeTree.ReferenceType.Simple, [], undefined, colProps));
+    }
+    // [pg] T rows columns CC end-T
+    opList.push(createRelativeMarkerOp(endTablePos, `${idBase}Content`,
+        MergeTree.ReferenceType.NestBegin, ["content"]));
+    // [pg] T rows columns TC bubbles (each rc pair) end-T
+    for (let r = 0; r < nrows; r++) {
+        for (let c = 0; c < ncolumns; c++) {
+            let props = {
+                [qTableMarkerType]: "bubble",
+                [qTableRow]: rowIds[r],
+                [qTableColumn]: colIds[c],
+            };
+            opList.push(createBubbleNest(endTablePos, props));
+        }
+    }
+    // [pg] T rows columns TC bubbles (each rc pair) end-TC end-T
+    opList.push(createRelativeMarkerOp(endTablePos, `${endPrefix}${idBase}Content`,
+        MergeTree.ReferenceType.NestEnd, ["content"]));
+}
+
+export class QGap {
+    constructor(public gapMarker: IQGapMarker) {
+        gapMarker.gap = this;
+    }
+}
+
+export class QTable {
+    rcMap = new Map<string, QCell>();
+    rMap = new Map<string, QRow>();
+    cMap = new Map<string, QColumn>();
+    rows = <QRow[]>[];
+    columns = <QColumn[]>[];
+    constructor(public tableMarker: IQTableMarker) {
+        tableMarker.table=this;
+    }
+    addBubble(bubble: QContentBubble) {
+        let rowId = bubble.bubbleMarker.properties[qTableRow];
+        let columnId = bubble.bubbleMarker.properties[qTableColumn];
+        let cellId = rowId + "X" + columnId;
+        let cell = this.rcMap.get(cellId);
+        cell.addBubble(bubble);
+    }
+
+    addGap(gap: QGap) {
+        let rowId = gap.gapMarker.properties[qTableRow];
+        let columnId = gap.gapMarker.properties[qTableColumn];
+        let cellId = rowId + "X" + columnId;
+        let cell = this.rcMap.get(cellId);
+        cell.skip=true;
+    }
+
+    addCells() {
+        for (let row of this.rows) {
+            let rowId = row.rowMarker.getId();
+            for (let column of this.columns) {
+                let columnId = column.columnMarker.getId();
+                let cellId = rowId + "X" + columnId;
+                let cell = new QCell(row, column);
+                this.rcMap.set(cellId, cell);
+                row.cells.push(cell);
+                column.cells.push(cell);
+            }
+        }
+    }
+}
+
+export class QRow {
+    cells = <QCell[]>[];
+    constructor(public rowMarker: IQRowMarker) {
+        rowMarker.row = this;
+    }
+}
+
+export class QColumn {
+    cells = <QCell[]>[];
+    constructor(public columnMarker: IQColumnMarker) {
+        columnMarker.column = this;
+    }
+}
+
+export class QContentBubble {
+    constructor(public bubbleMarker: IQBubbleMarker) {
+        bubbleMarker.bubble = this;
+    }
+}
+
+export class QCell {
+    skip = false;
+    bubbles:MergeTree.List<QContentBubble> = MergeTree.ListMakeHead<QContentBubble>();
+    constructor(public row: QRow, public column: QColumn) {
+    }
+    addBubble(bubble: QContentBubble) {
+        this.bubbles.add(bubble);
+    }
+}
+
+export interface IQGapMarker extends MergeTree.Marker {
+    gap?: QGap;
+}
+
+export interface IQBubbleMarker extends MergeTree.Marker {
+    bubble?: QContentBubble;
+}
+
+export interface IQTableMarker extends MergeTree.Marker {
+    table?: QTable;
+}
+
+export interface IQRowMarker extends MergeTree.Marker {
+    row?: QRow;
+}
+
+export interface IQColumnMarker extends MergeTree.Marker {
+    column?: QColumn;
+}
+
+export interface IContentBubbleMarker extends MergeTree.Marker {
+    contentBubble?: QContentBubble;
+}
+
+enum QTableParseState {
+    Start,
+    Structure,
+    Rows,
+    Columns,
+    Gaps,
+    Content,
+    Bubble,
+    ContentEnd
+}
+
+export function parseQTable(
+    tableMarker: IQTableMarker, tableMarkerPos: number, sharedString: SharedString, fontInfo?: Paragraph.IFontInfo) {
+    let mergeTree = sharedString.client.mergeTree;
+    let id = tableMarker.getId();
+    let endId = endPrefix + id;
+    let endTableMarker = <MergeTree.Marker>mergeTree.getSegmentFromId(endId);
+    let rowMarkers = <IQRowMarker[]>[];
+    let columnMarkers = <IQColumnMarker[]>[];
+    let state = QTableParseState.Start;
+    let table = new QTable(tableMarker);
+    tableMarker.table = table;
+    let rowCount = 0;
+    let columnCount = 0;
+
+    function parseSegment(segment: MergeTree.Segment) {
+        if (segment === endTableMarker) {
+            if (state !== QTableParseState.ContentEnd) {
+                console.log(`table parse error: unexpected end of table in state ${QTableParseState[state]}`);
+            }
+            return false;
+        } else {
+            if (segment.getType() === MergeTree.SegmentType.Marker) {
+                let marker = <MergeTree.Marker>segment;
+                if (marker.refType === MergeTree.ReferenceType.Simple) {
+                    switch (marker.properties[qTableMarkerType]) {
+                        case "row":
+                            switch (state) {
+                                case QTableParseState.Structure:
+                                    state = QTableParseState.Rows;
+                                case QTableParseState.Rows:
+                                    let rowMarker = <IQRowMarker>marker;
+                                    rowMarker.row = new QRow(rowMarker);
+                                    table.rows[rowCount++] = rowMarker.row;
+                                    rowMarkers.push(marker);
+                                    break;
+                                default:
+                                    console.log("table parse error: unexpected row");
+                                    break;
+                            }
+                        case "column":
+                            if (state === QTableParseState.Rows) {
+                                state = QTableParseState.Columns;
+                            }
+                            if (state === QTableParseState.Columns) {
+                                let columnMarker = <IQColumnMarker>marker;
+                                columnMarker.column = new QColumn(columnMarker);
+                                table.columns[columnCount++] = columnMarker.column;
+                                columnMarkers.push(marker);
+                            } else {
+                                console.log("table parse error: unexpected column");
+                            }
+                            break;
+                        case "gap":
+                            if (state === QTableParseState.Columns) {
+                                state = QTableParseState.Gaps;
+                                table.addCells();
+                            }
+                            if (state === QTableParseState.Gaps) {
+                                table.addGap(new QGap(marker));
+                            } else {
+                                console.log(`unexpected gap marker ${marker.toString()} in state ${QTableParseState[state]}`);
+                            }
+                            break;
+                        default:
+                            console.log(`unexpected marker ${marker.toString()} in state ${QTableParseState[state]}`);
+                            break;
+                    }
+                } else if (marker.refType === MergeTree.ReferenceType.NestBegin) {
+                    switch (marker.getRangeLabels()[0]) {
+                        case "table":
+                            switch (state) {
+                                case QTableParseState.Start:
+                                    state = QTableParseState.Structure;
+                                    break;
+                                case QTableParseState.Content:
+                                    // TODO: nested table
+                                    break;
+                                default:
+                                    console.log(`table parse error: unexpected table begin in state ${QTableParseState[state]}`);
+                                    break;
+                            }
+                            break;
+                        case "bubble":
+                            if (state === QTableParseState.Content) {
+                                state = QTableParseState.Bubble;
+                                let bubble = new QContentBubble(marker);
+                                table.addBubble(bubble);
+                            } else {
+                                console.log(`table parse error: unexpected bubble start in state ${QTableParseState[state]}`);
+                            }
+                            break;
+                        case "content":
+                            if (state === QTableParseState.Columns) {
+                                table.addCells();
+                                state = QTableParseState.Gaps;
+                            }
+                            if (state === QTableParseState.Gaps) {
+                                state = QTableParseState.Content;
+                            } else {
+                                console.log(`table parse error: unexpected content start in state ${QTableParseState[state]}`);
+                            }
+                            break;
+                        default:
+                            if (state !== QTableParseState.Bubble) {
+                                console.log(`table parse error: unexpected nest start marker in state ${QTableParseState[state]}`);
+                            }
+                            break;
+                    }
+                } else if (marker.refType === MergeTree.ReferenceType.NestEnd) {
+                    switch (marker.getRangeLabels()[0]) {
+                        case "bubble":
+                            if (state === QTableParseState.Bubble) {
+                                state = QTableParseState.Content;
+                            } else {
+                                console.log(`table parse error: unexpected bubble end in state ${QTableParseState[state]}`);
+                            }
+                            break;
+                        case "content":
+                            if (state === QTableParseState.Content) {
+                                state = QTableParseState.ContentEnd;
+                            } else {
+                                console.log(`table parse error: unexpected content end in state ${QTableParseState[state]}`);
+                            }
+                            break;
+                        default:
+                            if (state !== QTableParseState.Bubble) {
+                                console.log(`table parse error: unexpected nest end marker in state ${QTableParseState[state]}`);
+                            }
+                            break;
+                    }
+                }
+            }
+            return true;
+        }
+    }
+    sharedString.client.mergeTree.mapRange({ leaf: parseSegment }, MergeTree.UniversalSequenceNumber,
+        sharedString.client.getClientId(), undefined, tableMarkerPos);
+
 }

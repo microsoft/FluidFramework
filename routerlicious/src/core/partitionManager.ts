@@ -19,7 +19,7 @@ export class PartitionManager {
     private lastCheckpointTimestamp: number = 0;
 
     constructor(
-        private consumer: utils.kafkaConsumer.IConsumer,
+        private consumer: utils.IConsumer,
         private batchSize: number,
         private checkPointInterval: number) {
     }
