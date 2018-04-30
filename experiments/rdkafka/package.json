@@ -1,0 +1,20 @@
+{
+  "name": "prague-rdkafka",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "dependencies": {
+    "kafka-node": "^2.6.1",
+    "node-rdkafka": "^2.3.2"
+  },
+  "devDependencies": {
+    "@types/kafka-node": "^2.0.6",
+    "@types/node": "^8.10.10",
+    "typescript": "^2.8.3"
+  }
+}

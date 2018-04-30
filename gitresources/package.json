@@ -1,6 +1,6 @@
 {
   "name": "@prague/gitresources",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "Git resource definitions",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -11,7 +11,7 @@
   },
   "dependencies": {},
   "devDependencies": {
-    "tslint": "^5.6.0",
-    "typescript": "^2.4.2"
+    "tslint": "^5.9.1",
+    "typescript": "^2.8.3"
   }
 }
