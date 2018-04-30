@@ -20,7 +20,7 @@ libcrypto isn't accessible for some reason... Do these steps:
 */
 
 export function kafkaBlizzardTest() {
-  let endpoint = "zookeeper:2181"; // Must be run internally to use this endpoint
+  let endpoint = "kafka:9092"; // "zookeeper:2181"; // Must be run internally to use this endpoint
   let clientId = "samsTestClient";
   let topic = "testtopic"; // Has to be registered
 
@@ -28,9 +28,9 @@ export function kafkaBlizzardTest() {
   // GlobalConf, Topic Conf
   let producer = new kafkaBlizard.Producer({
       "client.id": clientId,
-      "default_topic_conf": topic,
+      "debug": "all",
       "dr_cb": (data) => {
-        console.log("In DR_MSG_CB");
+        console.log("In DR_CB");
       },
       "dr_msg_cb": (data) => {
         console.log("In DR_MSG_CB");
@@ -42,7 +42,28 @@ export function kafkaBlizzardTest() {
 
   console.log("Hello5");
 
-  producer.connect();
+  producer.connect({
+    "metadata.broker.list": endpoint,
+    "topic": topic,
+  }, (err, data) => {
+    console.log("connect callback");
+    if (data === undefined) {
+      console.log("Data-Undefined: " + data);
+    }
+    if (data === null) {
+      console.log("Data-null: " + data);
+    }
+    if (err === undefined) {
+      console.log("err-Undefined: " + err);
+    }
+    if (err === null) {
+      console.log("err-null: " + err);
+    }
+    console.log(err || data);
+
+    // tslint:disable-next-line:no-string-literal
+    console.log("isConnected: " + producer["_isConnected"]);
+  });
 
   producer.setPollInterval(100); // Maybe I should reset producer to this?
 
@@ -50,48 +71,24 @@ export function kafkaBlizzardTest() {
 
   console.log(0);
 
-  let stream = kafkaBlizard.Producer.createWriteStream({
-    "client.id": clientId,
-    "dr_cb": true, // delivery reports
-    "metadata.broker.list": endpoint,
-  }, {}, {
-    topic,
-  });
-
-  let queuedSuccess = stream.write(new Buffer("Awesome message"));
-
-  if (queuedSuccess) {
-    console.log("We queued our message!");
-  } else {
-    // Note that this only tells us if the stream"s queue is full,
-    // it does NOT tell us if the message got to Kafka!  See below...
-    console.log("Too many messages in our queue already");
-  }
-
-  stream.on("error", (err) => {
-    // Here"s where we"ll know if something went wrong sending to Kafka
-    console.error("Error in our kafka stream");
-    console.error(err);
-  });
-
   // Wait for the ready event before proceeding
-  producer.on("ready", () => {
-      console.log("IN Ready");
+  producer.on("ready", (arg) => {
+      console.log("IN Ready: " + JSON.stringify(arg));
       try {
         console.log(1);
 
-        let t = producer.Topic(topic, {
-          "request.required.acks": 1,
-        });
+        // let t = producer.Topic(topic, {
+        //   "request.required.acks": 1,
+        // });
 
-        let succ = producer.produce({
-          message: new Buffer("Test Message"),
-          topic: t,
-        }, (err, data) => {
-          console.log(err);
-          console.log(data);
-        });
-        console.log("Succ1 : " + succ);
+        // let succ = producer.produce({
+        //   message: new Buffer("Test Message"),
+        //   topic: t,
+        // }, (err, data) => {
+        //   console.log(err);
+        //   console.log(data);
+        // });
+        // console.log("Succ1 : " + succ);
         console.log(2);
 
         console.log(producer);
@@ -107,7 +104,7 @@ export function kafkaBlizzardTest() {
           // Message to send. Must be a buffer
           new Buffer("Awesome message"),
           // for keyed messages, we also specify the key - note that this field is optional
-          "Stormwind",
+          // "Stormwind",
           // you can send a timestamp here. If your broker version supports it,
           // it will get added. Otherwise, we default to 0
           // Date.now(),
@@ -131,32 +128,16 @@ export function kafkaBlizzardTest() {
       console.log(error);
     });
 
-  // producer.on("ready", (arg) => {
-  //     console.log("producer ready." + JSON.stringify(arg));
-
-  //     for (let i = 0; i < maxMessages; i++) {
-  //       let value = new Buffer("value-" + i);
-  //       let key = "key-" + i;
-  //       // if partition is set to -1, librdkafka will use the default partitioner
-  //       let partition = -1;
-  //       producer.produce(topic, partition, value, key);
-  //     }
-
-  //     // need to keep polling for a while to ensure the delivery reports are received
-  //     let pollLoop = setInterval(() => {
-  //         producer.poll();
-  //         if (counter === maxMessages) {
-  //           clearInterval(pollLoop);
-  //           producer.disconnect();
-  //         }
-  //       }, 1000);
-
-  //   });
+  // logging debug messages, if debug is enabled
+  producer.on("event.log", (log) => {
+    // console.log(log);
+  });
 
   producer.on("delivery-report", (err, report) => {
       // Report of delivery statistics here:
       //
-      console.log(report);
+      console.log("delivery-report: " + JSON.stringify(report));
+      console.log(err || report);
     });
 
   producer.on("disconnected", (arg) => {
