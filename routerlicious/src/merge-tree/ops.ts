@@ -19,13 +19,7 @@ export enum IntervalType {
 
 export interface IMarkerDef {
     refType?: ReferenceType;
-}
-
-export interface IPairedMarkerDef {
-    refType?: ReferenceType;
-    props?: Object;
-    pos1?: number;
-    relativePos1?: IRelativePosition;
+    pairId?: number;
 }
 
 export interface IComponentDef {
@@ -77,7 +71,6 @@ export interface IMergeTreeInsertMsg extends IMergeTreeDelta {
     props?: Object;
     text?: string;
     marker?: IMarkerDef;
-    pairedMarker?: IPairedMarkerDef;
     register?: string;
     pos2?: number;
     relativePos2?: IRelativePosition;

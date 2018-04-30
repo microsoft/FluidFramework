@@ -13,7 +13,6 @@ import {
     SharedIntervalCollectionValueType,
 } from "./intervalCollection";
 import { IContentModelExtension } from "../api-core";
-import { IRelativePosition } from "../merge-tree";
 
 function textsToSegments(texts: MergeTree.IPropertyString[]) {
     let segments: MergeTree.Segment[] = [];
@@ -60,39 +59,20 @@ export class SharedString extends CollaborativeMap {
         this.contentModel = document.getContentModel("shared-string");
     }
 
-    public insertNestRelative(beginNestRelPos: IRelativePosition, endNestRelPos: IRelativePosition,
-     beginNestProps?: MergeTree.PropertySet, endNestProps?: MergeTree.PropertySet) {
-        let pairedMarkerDef =  <MergeTree.IPairedMarkerDef>{
-            props: endNestProps,
-            refType: MergeTree.ReferenceType.NestEnd,
-            relativePos1: endNestRelPos,
-        };
-        const insertMessage: MergeTree.IMergeTreeInsertMsg = {
-            marker: { refType: MergeTree.ReferenceType.NestBegin },
-            pairedMarker: pairedMarkerDef,
-            props: beginNestProps,
-            relativePos1: beginNestRelPos,
-            type: MergeTree.MergeTreeDeltaType.INSERT,
-        };
-        let pos = this.client.mergeTree.posFromRelativePos(beginNestRelPos);
-        this.client.insertNestLocal(pos, MergeTree.ReferenceType.NestBegin,
-            beginNestProps, pairedMarkerDef);
-        this.submitIfAttached(insertMessage);
-    }
-
     public insertMarker(
         pos: number,
         refType: MergeTree.ReferenceType,
-        props?: MergeTree.PropertySet) {
+        props?: MergeTree.PropertySet,
+        pairId?: number) {
 
         const insertMessage: MergeTree.IMergeTreeInsertMsg = {
-            marker: { refType },
+            marker: { pairId, refType },
             pos1: pos,
             props,
             type: MergeTree.MergeTreeDeltaType.INSERT,
         };
 
-        this.client.insertMarkerLocal(pos, refType, props);
+        this.client.insertMarkerLocal(pos, refType, props, pairId);
         this.submitIfAttached(insertMessage);
     }
 
