@@ -1,5 +1,6 @@
 import { load } from "@prague/routerlicious/dist/api";
-import { IMergeTreeOp, MergeTreeDeltaType, SharedString } from "@prague/routerlicious/dist/merge-tree";
+import { IMergeTreeOp, MergeTreeDeltaType } from "@prague/routerlicious/dist/merge-tree";
+import { SharedString } from "@prague/routerlicious/dist/shared-string";
 import * as socketStorage from "@prague/routerlicious/dist/socket-storage";
 import * as request from "request";
 import { Builder, parseString } from "xml2js";

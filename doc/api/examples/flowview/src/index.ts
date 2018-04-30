@@ -3,8 +3,8 @@ import { api as prague, ui as pragueUi } from "@prague/routerlicious";
 // For local development
 // const routerlicious = "http://localhost:3000";
 // const historian = "http://localhost:3001";
-const routerlicious = "http://praguekube.westus2.cloudapp.azure.com";
-const historian = "http://prague-historian.westus2.cloudapp.azure.com";
+const routerlicious = "https://alfred.wu2-ppe.prague.office-int.com";
+const historian = "https://historian.wu2-ppe.prague.office-int.com";
 const owner = "prague";
 const repository = "prague";
 
@@ -23,7 +23,7 @@ async function run(id: string): Promise<void> {
 
     // Add in the text string if it doesn't yet exist
     if (!rootView.has("text")) {
-        const newString = collabDoc.createString() as prague.MergeTree.SharedString;
+        const newString = collabDoc.createString() as prague.SharedString.SharedString;
         const starterText = " ";
         const segments = prague.MergeTree.loadSegments(starterText, 0, true);
         for (const segment of segments) {
@@ -50,7 +50,7 @@ async function run(id: string): Promise<void> {
 
     const image = new pragueUi.controls.Image(
         document.createElement("div"),
-        "http://praguekube.westus2.cloudapp.azure.com/public/images/bindy.svg");
+        "https://alfred.wu2.prague.office-int.com/public/images/bindy.svg");
 
     const textElement = document.getElementById("text") as HTMLDivElement;
     const container = new pragueUi.controls.FlowContainer(
@@ -77,7 +77,7 @@ async function run(id: string): Promise<void> {
     });
 }
 
-const documentId = "test-flowview-es5-0";
+const documentId = "test-flowview-04292018-3";
 run(documentId).catch((error) => {
     console.error(error);
 });

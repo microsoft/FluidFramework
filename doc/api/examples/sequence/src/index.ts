@@ -1,8 +1,8 @@
 // For local development
 // const routerlicious = "http://localhost:3000";
 // const historian = "http://localhost:3001";
-const routerlicious = "http://praguekube.westus2.cloudapp.azure.com";
-const historian = "http://prague-historian.westus2.cloudapp.azure.com";
+const routerlicious = "https://alfred.wu2-ppe.prague.office-int.com";
+const historian = "https://historian.wu2-ppe.prague.office-int.com";
 const owner = "prague";
 const repository = "prague";
 
@@ -47,7 +47,7 @@ async function run(id: string): Promise<void> {
     };
 }
 
-const documentId = "test-document-0228";
+const documentId = "test-sequence-0429-1";
 run(documentId).catch((error) => {
     console.error(error);
 })
