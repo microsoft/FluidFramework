@@ -4,23 +4,23 @@
   "description": "Prague API sequence sample",
   "main": "index.js",
   "dependencies": {
-    "@prague/routerlicious": "^0.1.1801",
+    "@prague/gitresources": "^0.7.0",
+    "@prague/routerlicious": "^0.1.2215",
     "babel-polyfill": "^6.26.0"
   },
   "devDependencies": {
     "@types/debug": "0.0.30",
-    "@types/jquery": "^3.2.15",
-    "@types/node": "^8.0.47",
-    "@types/socket.io-client": "^1.4.31",
+    "@types/jquery": "^3.3.1",
+    "@types/node": "^8.10.10",
+    "@types/socket.io-client": "^1.4.32",
     "babel-cli": "^6.26.0",
-    "babel-core": "^6.26.0",
+    "babel-core": "^6.26.3",
     "babel-loader": "^7.1.4",
     "babel-preset-env": "^1.6.1",
-    "gitresources": "https://praguenpm.blob.core.windows.net/packages/gitresources-0.2.0.tgz",
     "tslint": "^5.9.1",
-    "typescript": "^2.5.3",
-    "webpack": "^4.1.1",
-    "webpack-cli": "^2.0.12"
+    "typescript": "^2.8.3",
+    "webpack": "^4.6.0",
+    "webpack-cli": "^2.0.15"
   },
   "scripts": {
     "build": "npm run tsc && npm run tslint && npm run webpack",

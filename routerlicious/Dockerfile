@@ -1,4 +1,4 @@
-FROM node:8.9.3-alpine
+FROM node:8.11.1-alpine
 
 # node-gyp dependencies
 RUN apk add --no-cache --virtual .gyp python make g++

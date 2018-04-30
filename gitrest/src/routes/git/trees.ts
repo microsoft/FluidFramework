@@ -20,7 +20,7 @@ export async function createTree(
         builder.insert(node.path, git.Oid.fromString(node.sha), parseInt(node.mode, 8));
     }
 
-    const id = builder.write();
+    const id = await builder.write();
     return getTreeInternal(repository, id.tostrS());
 }
 
