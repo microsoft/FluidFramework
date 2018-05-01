@@ -22,6 +22,7 @@ commander
     .option("-c, --consumer [consumer]", "Fetch messages")
     .option("-s, --startOffset [startOffset]", "Start consumer at this offset", parseFloat, 1)
     .option("-l, --latency [latency]", "Measure Latency")
+    .option("-w, --wait [wait]", "Wait between messages", parseFloat, 20)
     .parse(process.argv);
 
     console.log("Version: " + commander.implementation +
@@ -180,7 +181,7 @@ async function kafkaBlizzardLatencyTest(startOffset: number, messages: number) {
     
 
     producer.on("ready", (arg) => {
-
+        let wait = commander.wait as number;
         productionInterval = setInterval(() => {
             producer.produce(
                 topic,
@@ -191,7 +192,7 @@ async function kafkaBlizzardLatencyTest(startOffset: number, messages: number) {
             if (messagesSent === messages) {
                 clearInterval(productionInterval);
             }
-        }, 10);
+        }, wait);
     });
 
     consumer.on("ready", (arg) => {
