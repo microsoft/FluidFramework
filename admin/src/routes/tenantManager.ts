@@ -67,7 +67,7 @@ export class TenantManager {
 
         const newTenant = await this.riddlerManager.addTenant();
         const key = newTenant.key;
-        await this.riddlerManager.updateTenantStorage(newTenant.id, storage);
+        await this.riddlerManager.updateTenantStorage(newTenant.id, storage.storage);
         await this.createRepoForTenant(newTenant.id, storage.name);
         const dbTenant = await this.riddlerManager.getTenant(newTenant.id);
 

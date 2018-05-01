@@ -102,7 +102,7 @@ export class TenantManager extends React.Component<ITableProps,ITableState > {
           if (newTenant === null) {
             console.log(`No valid tenant can be generated!`);
           } else {
-            utils.addTenant(this.props.endpoint, newTenant.storage).then((res) => {
+            utils.addTenant(this.props.endpoint, newTenant).then((res) => {
               form.resetFields();
               this.setState({
                 modalVisible: false,
