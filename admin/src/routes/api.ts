@@ -6,7 +6,7 @@ export function create(config: any, mongoManager: core.MongoManager, userCollect
                        orgCollectionName: string, tenantCollectionName: string): Router {
     const router: Router = Router();
     const manager = new TenantManager(mongoManager, userCollectionName, orgCollectionName,
-                                      tenantCollectionName, config.riddlerUrl);
+                                      tenantCollectionName, config.riddlerUrl, config.gitUrl, config.cobaltUrl);
 
     function returnResponse<T>(resultP: Promise<T>, response: Response) {
         resultP.then(
