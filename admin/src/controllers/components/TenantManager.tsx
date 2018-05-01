@@ -33,7 +33,7 @@ export class TenantManager extends React.Component<ITableProps,ITableState > {
       },
       {
         title: 'Storage',
-        dataIndex: 'storage.name',
+        dataIndex: 'provider',
       },
       {
         title: 'Operation',
@@ -156,6 +156,7 @@ export class TenantManager extends React.Component<ITableProps,ITableState > {
           _id: tenant._id,
           name: tenant.name,
           key: tenant.key,
+          provider: tenant.provider,
           storage: tenant.storage,
         };
         this.setState({
