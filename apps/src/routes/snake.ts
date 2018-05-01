@@ -1,6 +1,5 @@
 import { Router } from "express";
 import * as moniker from "moniker";
-import { getFullId } from "../utils";
 import { ensureAuthenticated } from "./authCheker";
 import { defaultPartials } from "./partials";
 
@@ -27,9 +26,10 @@ export function create(config: any): Router {
         response.redirect(`/snake/${moniker.choose()}${queryParam}`);
     });
 
-    router.get("/:id", ensureAuthenticated, (request, response, next) => {
+    router.get("/:id", ensureAuthenticated(config.tenantInfo.id, config.tenantInfo.secretKey),
+               (request, response, next) => {
         request.query.token = response.locals.token;
-        const docId = getFullId(config.tenantInfo.id, request.params.id);
+        const docId = request.params.id;
         renderView(request, response, docId, config);
         // Start a bot for single players.
         if (request.query.player === "single") {

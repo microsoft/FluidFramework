@@ -63,7 +63,7 @@ export async function onLoad(
                 console.log(`Not existing ${id} - ${performanceNow()}`);
                 root.set("presence", collabDoc.createMap());
                 root.set("users", collabDoc.createMap());
-                const newString = collabDoc.createString() as api.MergeTree.SharedString;
+                const newString = collabDoc.createString();
 
                 const starterText = template ? await downloadRawText(template) : " ";
                 const segments = api.MergeTree.loadSegments(starterText, 0, true);
@@ -87,7 +87,7 @@ export async function onLoad(
                 }
             }
 
-            const sharedString = root.get("text") as api.MergeTree.SharedString;
+            const sharedString = root.get("text");
             console.log(`Shared string ready - ${performanceNow()}`);
             console.log(window.navigator.userAgent);
             console.log(`id is ${id}`);
@@ -133,7 +133,7 @@ export async function onLoad(
                 theFlow.loadFinished(clockStart);
                 console.log(collabDoc.getUser());
                 const tokenPart = token ? `${token.substring(0, 50)}...` : null;
-                $("#doctoken").text(`(id: ${collabDoc.getUser().user.id}, token: ${tokenPart})`);
+                $("#doctoken").text(`(id: ${collabDoc.getUser().user}, token: ${tokenPart})`);
             });
         }, (err) => {
             displayError($("#textViews"), err.body);

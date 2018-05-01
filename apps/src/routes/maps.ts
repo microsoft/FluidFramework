@@ -1,6 +1,5 @@
 import { Router } from "express";
 import * as moniker from "moniker";
-import { getFullId } from "../utils";
 import { ensureAuthenticated } from "./authCheker";
 import { defaultPartials } from "./partials";
 
@@ -9,7 +8,7 @@ function renderView(request, response, docId: string, config: any) {
         "maps",
         {
             endpoints: JSON.stringify(config.tenantInfo.endpoints),
-            id: getFullId(config.tenantInfo.id, docId),
+            id: docId,
             owner: config.tenantInfo.owner,
             partials: defaultPartials,
             repository: config.tenantInfo.repository,
@@ -27,7 +26,8 @@ export function create(config: any): Router {
         response.redirect(`/maps/${moniker.choose()}`);
     });
 
-    router.get("/:id", ensureAuthenticated, (request, response, next) => {
+    router.get("/:id", ensureAuthenticated(config.tenantInfo.id, config.tenantInfo.secretKey),
+               (request, response, next) => {
         request.query.token = response.locals.token;
         renderView(request, response, request.params.id, config);
     });
