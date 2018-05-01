@@ -313,7 +313,7 @@ export class WorkerService implements core.IWorkerService {
                 this.documentMap[fullId] = emptyMap;
             }
             if (!(workType in this.documentMap[fullId])) {
-                console.log(`Starting work ${workType} for document ${fullId}`);
+                console.log(`Starting work ${workType} for tenant ${tenantId} : document ${fullId}`);
                 this.documentMap[fullId][workType] = worker;
                 if (workType !== "intel") {
                     worker.start().catch((err) => {
