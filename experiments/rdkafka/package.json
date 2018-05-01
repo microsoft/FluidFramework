@@ -5,6 +5,8 @@
   "main": "index.js",
   "scripts": {
     "build": "tsc",
+    "dckr:build": "docker build . -t kafkatest",
+    "dckr:start": "docker run --rm -it --network=routerlicious_default kafkatest /bin/sh",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",

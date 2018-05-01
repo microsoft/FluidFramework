@@ -21,6 +21,7 @@ commander
     .option("-p, --progress [progress]", "show progress")
     .option("-c, --consumer [consumer]", "Fetch messages")
     .option("-s, --startOffset [startOffset]", "Start consumer at this offset", parseFloat, 1)
+    .option("-l, --latency [latency]", "Measure Latency")
     .parse(process.argv);
 
     console.log("Version: " + commander.implementation +
@@ -141,6 +142,79 @@ async function runKafkaNodeConsumerTest(expectedTotal: number, startOffset: numb
     return deferred.promise;
 }
 
+async function kafkaBlizzardLatencyTest(startOffset: number, messages: number) {
+
+    let messagesSent = 0;
+    let messagesReceived = 0;
+
+    let totalLatency = 0;
+    let producer = new kafkaBlizzard.Producer({
+        "client.id": clientId,
+        "debug": "all",
+        "dr_cb": (data) => { 
+            // console.log("In report callback: " + JSON.stringify(data));
+            messagesSent++;
+        },
+        "metadata.broker.list": kafkaEndpoint,
+    }, {});
+
+    let consumer = new kafkaBlizzard.KafkaConsumer({
+        "enable.auto.commit": true,
+        'group.id': 'node-rdkafka-consumer-flow-example', // Group is a requirement
+        "metadata.broker.list": kafkaEndpoint,
+    },
+    {
+      'auto.offset.reset': 'earliest',    
+    });
+
+    producer.connect({
+        "metadata.broker.list": kafkaEndpoint,
+        "topic": topic,
+      }, (err, data) => {
+        producer.setPollInterval(100);
+      });
+    
+
+    producer.on("ready", (arg) => {
+        for (let i = 0; i < messages; i++) {
+            producer.produce(
+                topic,
+                0,
+                new Buffer(Date.now().toString()),
+            );
+        }
+        console.log("Done sending");
+    });
+
+    consumer.on("ready", (arg) => {
+        consumer.assign([{
+            topic: topic,
+            partition: partition,
+            offset: startOffset, // assign consumer to read from an offset
+        }]);
+        consumer.consume();
+    });
+
+    consumer.on("data", (data) => {
+        let now = Date.now();
+        messagesReceived++;
+        console.log("Data. Buffer. : " + data.value);
+        console.log("latency: " + (now - data.value));
+        totalLatency += (now - data.value);
+        console.log("Data. String. : " + (data.value as Buffer).toString());
+    });
+
+    consumer.connect();
+
+    setInterval(() => {
+        console.log("messagesSent: " + messagesSent);
+        console.log("messagesReceived: " + messagesReceived);
+        console.log("totalLatency: " + totalLatency);
+        console.log("AvgLatency: " + (totalLatency/ messagesReceived));
+    }, 5000);
+
+}
+
 async function kafkaBlizzardProducerTest(startOffset) {
 
     let deferred: Deferred<number> = new Deferred();
@@ -230,7 +304,7 @@ async function runKafkaBlizzardConsumerTest(expectedTotal: number, startOffset: 
         consumer.assign([{
             topic: topic,
             partition: partition,
-            offset: startOffset, // assign consumer to read from a relative offset
+            offset: startOffset, // assign consumer to read from an offset
         }]);
         consumer.consume();
         startTime = Date.now();
@@ -240,6 +314,7 @@ async function runKafkaBlizzardConsumerTest(expectedTotal: number, startOffset: 
         messageCount++;
         if (commander.progress && messageCount % (commander.messages / 10) === 0) {
             console.log(messageCount * 100 / commander.messages + "% Received");
+            console.log(data);
         }
         if (messageCount === expectedTotal) {
             endTime = Date.now();
@@ -290,13 +365,14 @@ function getOffsetFromSend(result): number {
 }
 
 async function kafkaNodeRunner() {
+    let startOffset = await getKafkaNodeOffset();
 
     if (commander.offset) {
-        let startOffset = await getKafkaNodeOffset();
         console.log("Offset: " + startOffset);
+    } else if (commander.latency) {
+        kafkaBlizzardLatencyTest(startOffset, commander.messages);
     } else {
         console.log("-------Producer-------");
-        let startOffset = await getKafkaNodeOffset();
         let endOffset = 0;
         let totalProducerTime = 0;
         let totalConsumerTime = 0;
