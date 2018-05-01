@@ -12,7 +12,6 @@ import {
     ICollaborativeObject,
     ICollaborativeObjectExtension,
     ICollaborativeObjectSave,
-    IContentModelExtension,
     IDeltaConnection,
     IDistributedObject,
     IDistributedObjectServices,
@@ -40,7 +39,6 @@ import {
 } from "../api-core";
 import * as api from "../api-core";
 import * as cell from "../cell";
-import { sharedStringModel } from "../content-model";
 import { Deferred } from "../core-utils";
 import { ICell, IMap, IStream } from "../data-types";
 import * as mapExtension from "../map";
@@ -61,13 +59,11 @@ let defaultDocumentService: IDocumentService;
 
 // The default registry for collaborative object types
 export const defaultRegistry = new Registry<ICollaborativeObjectExtension>();
-export const defaultContentModelRegistry = new Registry<IContentModelExtension>();
 export const defaultDocumentOptions = Object.create(null);
 defaultRegistry.register(new mapExtension.MapExtension());
 defaultRegistry.register(new CollaboritiveStringExtension());
 defaultRegistry.register(new stream.StreamExtension());
 defaultRegistry.register(new cell.CellExtension());
-defaultContentModelRegistry.register(sharedStringModel());
 // Register default map value types
 mapExtension.registerDefaultValueType(new mapExtension.DistributedSetValueType());
 mapExtension.registerDefaultValueType(new mapExtension.DistributedArrayValueType());
@@ -189,7 +185,6 @@ export class Document extends EventEmitter {
     public static async Load(
         id: string,
         registry: Registry<ICollaborativeObjectExtension>,
-        contentRegistry: Registry<IContentModelExtension>,
         service: IDocumentService,
         options: any,
         version: resources.ICommit,
@@ -249,7 +244,6 @@ export class Document extends EventEmitter {
             storage,
             pendingDeltas,
             registry,
-            contentRegistry,
             documentServices,
             options,
             token,
@@ -414,7 +408,6 @@ export class Document extends EventEmitter {
         private storageService: IDocumentStorageService,
         pendingDeltas: ISequencedDocumentMessage[],
         private registry: Registry<ICollaborativeObjectExtension>,
-        private contentRegistry: Registry<IContentModelExtension>,
         private service: IDocumentService,
         private opts: Object,
         private token: string,
@@ -488,14 +481,6 @@ export class Document extends EventEmitter {
             : Promise.reject("Object does not exist");
     }
 
-    /**
-     * Get a registered content model.  A content model adds additional
-     * post-processing to a collaborative object operation.
-     * @param type Name of content model extension.
-     */
-    public getContentModel(type: string): IContentModelExtension {
-        return this.contentRegistry.getExtension(type);
-    }
     /**
      * Attaches the given object to the document which also makes it available to collaborators. The object is
      * expected to immediately submit delta messages for itself once being attached.
@@ -986,8 +971,7 @@ export async function load(
     version: resources.ICommit = null,
     connect = true,
     registry: Registry<ICollaborativeObjectExtension> = defaultRegistry,
-    contentRegistry: Registry<IContentModelExtension> = defaultContentModelRegistry,
     service: IDocumentService = defaultDocumentService): Promise<Document> {
 
-    return Document.Load(id, registry, contentRegistry, service, options, version, connect);
+    return Document.Load(id, registry, service, options, version, connect);
 }

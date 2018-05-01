@@ -12,7 +12,6 @@ import {
     Interval, SharedIntervalCollection,
     SharedIntervalCollectionValueType,
 } from "./intervalCollection";
-import { IContentModelExtension } from "../api-core";
 
 function textsToSegments(texts: MergeTree.IPropertyString[]) {
     let segments: MergeTree.Segment[] = [];
@@ -38,7 +37,6 @@ function textsToSegments(texts: MergeTree.IPropertyString[]) {
 export class SharedString extends CollaborativeMap {
     public client: MergeTree.Client;
     public intervalCollections: IMapView;
-    private contentModel: IContentModelExtension;
     private isLoaded = false;
     private pendingMinSequenceNumber: number = 0;
     // Deferred that triggers once the object is loaded
@@ -56,7 +54,6 @@ export class SharedString extends CollaborativeMap {
 
         super(id, document, CollaboritiveStringExtension.Type);
         this.client = new MergeTree.Client("", document.options);
-        this.contentModel = document.getContentModel("shared-string");
     }
 
     public insertMarker(
@@ -321,9 +318,6 @@ export class SharedString extends CollaborativeMap {
 
     protected processContent(message: api.ISequencedObjectMessage) {
         this.client.applyMsg(message);
-        if (this.contentModel) {
-            this.applyContentModel(message);
-        }
     }
 
     protected processMinSequenceNumberChangedContent(value: number) {
@@ -425,13 +419,4 @@ export class SharedString extends CollaborativeMap {
         }
     }
 
-    private applyContentModel(message: api.ISequencedObjectMessage) {
-        if ((message.type === api.OperationType) &&
-            (message.clientId !== this.document.clientId)) {
-            let delta = <MergeTree.IMergeTreeOp>message.contents;
-            if ((delta.type === MergeTree.MergeTreeDeltaType.GROUP) && (delta.macroOp)) {
-                this.contentModel.exec(message, this);
-            }
-        }
-    }
 }

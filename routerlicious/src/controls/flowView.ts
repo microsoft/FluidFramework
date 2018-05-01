@@ -1593,12 +1593,12 @@ function renderTable(
                     cell.svgElm.setAttribute("height", heightVal);
                     cell.borderRect.setAttribute("height", heightVal);
                 } else {
-                    adjustRowWidth += tableView.columns[cellIndex].width;
+                    adjustRowWidth += tableView.logicalColumns[cellIndex].width;
                 }
             }
-            if (rowView.cells.length < tableView.columns.length) {
-                for (let columnIndex = rowView.cells.length; columnIndex < tableView.columns.length; columnIndex++) {
-                    adjustRowWidth += tableView.columns[columnIndex].width;
+            if (rowView.cells.length < tableView.logicalColumns.length) {
+                for (let col = rowView.cells.length;col < tableView.logicalColumns.length; col++) {
+                    adjustRowWidth += tableView.logicalColumns[col].width;
                 }
             }
             let heightAdjust = 0;
