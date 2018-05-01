@@ -143,7 +143,7 @@ export async function load(id: string, repository: string,  owner: string, endPo
             const root = doc.getRoot();
 
             // Display the user id.
-            displayUserId($("#mapViews"), doc.getUser().user.id);
+            displayUserId($("#mapViews"), doc.getUser().user);
             console.log(doc.getUser());
 
             // Display the initial values and then listen for updates

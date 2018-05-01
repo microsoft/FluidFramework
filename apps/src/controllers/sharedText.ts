@@ -133,7 +133,7 @@ export async function onLoad(
                 theFlow.loadFinished(clockStart);
                 console.log(collabDoc.getUser());
                 const tokenPart = token ? `${token.substring(0, 50)}...` : null;
-                $("#doctoken").text(`(id: ${collabDoc.getUser().user.id}, token: ${tokenPart})`);
+                $("#doctoken").text(`(id: ${collabDoc.getUser().user}, token: ${tokenPart})`);
             });
         }, (err) => {
             displayError($("#textViews"), err.body);

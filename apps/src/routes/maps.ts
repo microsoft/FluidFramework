@@ -1,6 +1,5 @@
 import { Router } from "express";
 import * as moniker from "moniker";
-import { getFullId } from "../utils";
 import { ensureAuthenticated } from "./authCheker";
 import { defaultPartials } from "./partials";
 
@@ -9,7 +8,7 @@ function renderView(request, response, docId: string, config: any) {
         "maps",
         {
             endpoints: JSON.stringify(config.tenantInfo.endpoints),
-            id: getFullId(config.tenantInfo.id, docId),
+            id: docId,
             owner: config.tenantInfo.owner,
             partials: defaultPartials,
             repository: config.tenantInfo.repository,
