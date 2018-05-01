@@ -17,6 +17,7 @@ class DocumentServiceFactory implements agent.IDocumentServiceFactory {
 
     public async getService(tenantId: string): Promise<IDocumentService> {
         const details = await this.tenantManager.getTenant(tenantId);
+        console.log(`Tenant config in paparazzi: ${JSON.stringify(details.storage)}`);
         const services = socketStorage.createDocumentService(
             this.serverUrl,
             details.storage.url,
