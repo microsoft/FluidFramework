@@ -42,8 +42,8 @@ service:
   host: www.wu2.prague.office-int.com
   sslCert: wu2-tls-certificate
 
-tenantId: Distracted Bose
-secretKey: 3e7ceb4d70b937a572afbdd8f170a24f
+tenantId: loving-jones
+secretKey: 1dc089ccce64800a8d24a1b671248b5b
 
 resources:
   limits:

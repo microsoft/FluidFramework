@@ -10,8 +10,8 @@
         },
         "port": 3000,
         "tenantInfo": {
-            "id": "Distracted Bose",
-            "secretKey": "3e7ceb4d70b937a572afbdd8f170a24f",
+            "id": "loving-jones",
+            "secretKey": "1dc089ccce64800a8d24a1b671248b5b",
             "repository": "prague",
             "owner": "prague",
             "endpoints": {
