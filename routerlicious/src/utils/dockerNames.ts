@@ -639,7 +639,7 @@ const surnames = right.concat(prague);
 //
 // For Prague we allow you to specify the character connecting the adjective and surname as well as whether
 // to capitalize these fields
-export function getRandomName(connector = " ", capitalize = true, retry = false): string {
+export function getRandomName(connector = "_", capitalize = false, retry = false): string {
     const adjective = getRandomString(left);
     const surname = getRandomString(surnames);
 

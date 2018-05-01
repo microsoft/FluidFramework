@@ -13,7 +13,7 @@ export interface ITokenClaims {
  * Generates a JWT token to authorize routerlicious
  */
 export function generateToken(tenantId: string, documentId: string, key: string): string {
-    const user = utils.getRandomName();
+    const user = utils.getRandomName(" ", true);
     const claims: ITokenClaims = {
         documentId,
         permission: "read:write",

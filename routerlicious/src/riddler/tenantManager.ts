@@ -84,7 +84,7 @@ export class TenantManager {
 
         const key = crypto.randomBytes(16).toString("hex");
         const id = await collection.insertOne({
-            _id: utils.getRandomName(),
+            _id: utils.getRandomName("-"),
             key,
             storage: null,
         });
