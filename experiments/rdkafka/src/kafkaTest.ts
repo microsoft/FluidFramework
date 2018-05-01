@@ -152,7 +152,7 @@ async function kafkaBlizzardLatencyTest(startOffset: number, messages: number) {
         "client.id": clientId,
         "debug": "all",
         "dr_cb": (data) => { 
-            // console.log("In report callback: " + JSON.stringify(data));
+            console.log("dr_cb_" + messagesSent + ": " + Date.now());
             messagesSent++;
         },
         "metadata.broker.list": kafkaEndpoint,
@@ -171,22 +171,34 @@ async function kafkaBlizzardLatencyTest(startOffset: number, messages: number) {
         "metadata.broker.list": kafkaEndpoint,
         "topic": topic,
       }, (err, data) => {
-        producer.setPollInterval(100);
+        producer.setPollInterval(10000); // How does poll time impact latency?
       });
     
 
     producer.on("ready", (arg) => {
+
+        let sendQueue = new queue((i, cb) => {
+            setImmediate(() => {
+                console.log()
+                producer.produce(
+                        topic,
+                        0,
+                        new Buffer("message"),
+                    );
+                });
+            cb();
+            }, 1);
+
         for (let i = 0; i < messages; i++) {
-            producer.produce(
-                topic,
-                0,
-                new Buffer(Date.now().toString()),
-            );
+            sendQueue.push(i, () => { 
+                console.log("Queue_CB_" + i + ": " + Date.now())
+                return undefined; 
+            });
         }
-        console.log("Done sending");
     });
 
     consumer.on("ready", (arg) => {
+        console.log("consumerReady: " + Date.now());
         consumer.assign([{
             topic: topic,
             partition: partition,
@@ -198,20 +210,21 @@ async function kafkaBlizzardLatencyTest(startOffset: number, messages: number) {
     consumer.on("data", (data) => {
         let now = Date.now();
         messagesReceived++;
-        console.log("Data. Buffer. : " + data.value);
-        console.log("latency: " + (now - data.value));
-        totalLatency += (now - data.value);
-        console.log("Data. String. : " + (data.value as Buffer).toString());
+        console.log("Sent Time " + data.timestamp);
+        console.log("Received Time: " + now);
+        console.log("Latency: " + (now - data.timestamp));
+        totalLatency += (now - data.timestamp);
     });
 
     consumer.connect();
 
     setInterval(() => {
+        console.log("--------Interval--------");
         console.log("messagesSent: " + messagesSent);
         console.log("messagesReceived: " + messagesReceived);
         console.log("totalLatency: " + totalLatency);
         console.log("AvgLatency: " + (totalLatency/ messagesReceived));
-    }, 5000);
+    }, 30000);
 
 }
 
