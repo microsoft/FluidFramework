@@ -1,6 +1,6 @@
 import * as resources from "gitresources";
 import * as api from "../api-core";
-import { IMap, IMapView, IValueType, SerializeFilter } from "../data-types";
+import { IMap, IMapView, IValueChanged, IValueOperation, IValueType, SerializeFilter } from "../data-types";
 import { debug } from "./debug";
 import { IMapOperation } from "./definitions";
 import { MapExtension } from "./extension";
@@ -27,9 +27,9 @@ class ContentObjectStorage implements api.IObjectStorageService {
     }
 }
 
-export interface IMapMessageHandler {
-    prepare(op: IMapOperation): Promise<any>;
-    process(op: IMapOperation, context: any, message: api.ISequencedObjectMessage): void;
+interface IMapMessageHandler {
+    prepare(op: IMapOperation, local: boolean, message: api.ISequencedObjectMessage): Promise<any>;
+    process(op: IMapOperation, context: any, local: boolean, message: api.ISequencedObjectMessage): void;
 }
 
 /**
@@ -39,6 +39,7 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
     private messageHandler: Map<string, IMapMessageHandler>;
     private view: MapView;
     private serializeFilter: SerializeFilter;
+    private valueTypes = new Map<string, IValueType<any>>();
 
     /**
      * Constructs a new collaborative map. If the object is non-local an id and service interfaces will
@@ -50,7 +51,7 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
         type = MapExtension.Type) {
 
         super(id, document, type);
-        const defaultPrepare = (op: IMapOperation) => Promise.resolve();
+        const defaultPrepare = (op: IMapOperation, local: boolean) => Promise.resolve();
         this.serializeFilter = (key, value, valueType) => value;
 
         this.messageHandler = new Map<string, IMapMessageHandler>();
@@ -58,19 +59,39 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
             "clear",
             {
                 prepare: defaultPrepare,
-                process: (op, context, message) => this.view.clearCore(message),
+                process: (op, context, local, message) => {
+                    if (local) {
+                        return;
+                    }
+
+                    this.view.clearCore(local, message);
+                },
             });
         this.messageHandler.set(
             "delete",
             {
                 prepare: defaultPrepare,
-                process: (op, context, message) => this.view.deleteCore(op.key, message),
+                process: (op, context, local, message) => {
+                    if (local) {
+                        return;
+                    }
+
+                    return this.view.deleteCore(op.key, local, message);
+                },
             });
         this.messageHandler.set(
             "set",
             {
-                prepare: (op) => this.view.prepareSetCore(op.key, op.value),
-                process: (op, context, message) => this.view.setCore(op.key, context, message),
+                prepare: (op, local) => {
+                    return local ? null : this.view.prepareSetCore(op.key, op.value);
+                },
+                process: (op, context, local, message) => {
+                    if (local) {
+                        return;
+                    }
+
+                    this.view.setCore(op.key, context, local, message);
+                },
             });
 
         this.view = new MapView(
@@ -169,8 +190,41 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
      * Registers a new value type on the map
      */
     public registerValueType<T>(type: IValueType<T>) {
-        const handler = this.view.registerValueType<T>(type);
-        this.messageHandler.set(type.name, handler);
+        this.valueTypes.set(type.name, type);
+
+        function getOpHandler(op: IMapOperation): IValueOperation<T> {
+            const handler = type.ops.get(op.value.type);
+            if (!handler) {
+                throw new Error("Unknown type message");
+            }
+
+            return handler;
+        }
+
+        const valueTypeMessageHandler: IMapMessageHandler = {
+            prepare: async (op, local, message) => {
+                const handler = getOpHandler(op);
+                const value = this.view.get(op.key);
+                return handler.prepare(value, op.value.value, local, message);
+            },
+
+            process: (op, context, local, message) => {
+                const handler = getOpHandler(op);
+                const value = this.view.get(op.key);
+                handler.process(value, op.value.value, context, local, message);
+                this.emit("valueChanged", { key: op.key }, local, message);
+            },
+        };
+
+        this.messageHandler.set(type.name, valueTypeMessageHandler);
+    }
+
+    public hasValueType(type: string): boolean {
+        return this.valueTypes.has(type);
+    }
+
+    public getValueType(type: string) {
+        return this.valueTypes.get(type);
     }
 
     public registerSerializeFilter(filter: SerializeFilter) {
@@ -183,7 +237,9 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
 
     public on(event: "pre-op", listener: (op: api.ISequencedObjectMessage, local: boolean) => void): this;
     public on(event: "op", listener: (op: api.ISequencedObjectMessage, local: boolean) => void): this;
-    public on(event: "valueChanged", listener: (...args: any[]) => void): this;
+    public on(
+        event: "valueChanged",
+        listener: (changed: IValueChanged, local: boolean, op: api.ISequencedObjectMessage) => void): this;
     public on(event: string | symbol, listener: (...args: any[]) => void): this {
         return super.on(event, listener);
     }
@@ -235,7 +291,6 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
     }
 
     protected processMinSequenceNumberChanged(value: number) {
-        // TODO need our own concept of the zamboni here
         this.processMinSequenceNumberChangedContent(value);
     }
 
@@ -255,10 +310,11 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
     }
 
     protected prepareCore(message: api.ISequencedObjectMessage): Promise<any> {
-        if (message.type === api.OperationType && message.clientId !== this.document.clientId) {
+        if (message.type === api.OperationType) {
+            const local = message.clientId === this.document.clientId;
             const op: IMapOperation = message.contents;
             if (this.messageHandler.has(op.type)) {
-                return this.messageHandler.get(op.type).prepare(op);
+                return this.messageHandler.get(op.type).prepare(op, local, message);
             }
         }
 
@@ -267,10 +323,11 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
 
     protected processCore(message: api.ISequencedObjectMessage, context: any) {
         let handled = false;
-        if (message.type === api.OperationType && message.clientId !== this.document.clientId) {
+        if (message.type === api.OperationType) {
+            const local = message.clientId === this.document.clientId;
             const op: IMapOperation = message.contents;
             if (this.messageHandler.has(op.type)) {
-                this.messageHandler.get(op.type).process(op, context, message);
+                this.messageHandler.get(op.type).process(op, context, local, message);
                 handled = true;
             }
         }

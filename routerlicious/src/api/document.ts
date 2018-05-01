@@ -70,7 +70,6 @@ defaultRegistry.register(new cell.CellExtension());
 defaultContentModelRegistry.register(sharedStringModel());
 // Register default map value types
 mapExtension.registerDefaultValueType(new mapExtension.DistributedSetValueType());
-mapExtension.registerDefaultValueType(new mapExtension.DistributedArrayValueType());
 mapExtension.registerDefaultValueType(new mapExtension.CounterValueType());
 mapExtension.registerDefaultValueType(new SharedIntervalCollectionValueType());
 
