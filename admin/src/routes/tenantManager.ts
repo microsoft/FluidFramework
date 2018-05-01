@@ -35,6 +35,9 @@ export interface ITenant {
     // Friendly name for the tenant.
     name: string;
 
+    // Storage provider name.
+    provider: string;
+
     // Deleted flag.
     deleted: boolean;
 
@@ -73,7 +76,7 @@ export class TenantManager {
 
         await this.addNewTenantForOrg(orgId, newTenant.id);
 
-        const tenant = await this.addToTenantDB(dbTenant.id, key, name, dbTenant.storage);
+        const tenant = await this.addToTenantDB(dbTenant.id, key, name, storage.name, dbTenant.storage);
         return tenant;
     }
 
@@ -150,7 +153,8 @@ export class TenantManager {
         await collection.update({ _id: orgId }, { tenantIds: existingTenants }, null);
     }
 
-    private async addToTenantDB(id: string, key: string, name: string, storage: ITenantStorage): Promise<ITenant> {
+    private async addToTenantDB(id: string, key: string, name: string, provider: string,
+                                storage: ITenantStorage): Promise<ITenant> {
         const db = await this.mongoManager.getDatabase();
         const collection = db.collection<ITenant>(this.tenantCollection);
         const newTenant: ITenant = {
@@ -158,6 +162,7 @@ export class TenantManager {
             deleted: false,
             key,
             name,
+            provider,
             storage,
         };
         await collection.insertOne(newTenant);
