@@ -78,24 +78,32 @@ export class DistributedSetValueType implements IValueType<DistributedSet<any>> 
             [[
                 "add",
                 {
-                    prepare: async (old, params) => {
+                    prepare: async (value, params, local, op) => {
                         return;
                     },
-                    process: (old, params, context) => {
-                        old.add(params, false);
-                        return old;
+                    process: (value, params, context, local, op) => {
+                        // Local ops were applied when the message was created
+                        if (local) {
+                            return;
+                        }
+
+                        value.add(params, false);
                     },
                 },
             ],
             [
                 "delete",
                 {
-                    prepare: async (old, params) => {
+                    prepare: async (value, params, local, op) => {
                         return;
                     },
-                    process: (old, params, context) => {
-                        old.delete(params, false);
-                        return old;
+                    process: (value, params, context, local, op) => {
+                        // Local ops were applied when the message was created
+                        if (local) {
+                            return;
+                        }
+
+                        value.delete(params, false);
                     },
                 },
             ]]);

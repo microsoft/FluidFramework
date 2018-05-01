@@ -242,24 +242,22 @@ export class SharedIntervalCollectionValueType implements IValueType<SharedInter
             [[
                 "add",
                 {
-                    prepare: async (old, params) => {
+                    prepare: async (value, params, local, op) => {
                         return;
                     },
-                    process: (old, params, context) => {
-                        old.addSerialized(params, false);
-                        return old;
+                    process: (value, params, context, local, op) => {
+                        value.addSerialized(params, false);
                     },
                 },
             ],
             [
                 "remove",
                 {
-                    prepare: async (old, params) => {
+                    prepare: async (value, params, local, op) => {
                         return;
                     },
-                    process: (old, params, context) => {
-                        old.remove(params, false);
-                        return old;
+                    process: (value, params, context, local, op) => {
+                        value.remove(params, false);
                     },
                 },
             ]]);

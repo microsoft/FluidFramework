@@ -35,12 +35,12 @@ export interface IValueOperation<T> {
     /**
      * Allows the handler to prepare for the operation
      */
-    prepare(old: T, params: any): Promise<any>;
+    prepare(value: T, params: any, local: boolean, message: ISequencedObjectMessage): Promise<any>;
 
     /**
      * Performs the actual processing on the operation
      */
-    process(old: T, params: any, context: any, message?: ISequencedObjectMessage): T;
+    process(value: T, params: any, context: any, local: boolean, message: ISequencedObjectMessage);
 }
 
 /**
