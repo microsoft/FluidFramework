@@ -60,7 +60,7 @@ services:
             - NODE_ENV=development
         restart: always
     historian:
-        image: prague.azurecr.io/historian:1582
+        image: prague.azurecr.io/historian:2238
         ports:
             - "3001:3000"
         environment:
@@ -71,7 +71,7 @@ services:
         image: prague.azurecr.io/cobalt:1544
         restart: always
     gitrest:
-        image: prague.azurecr.io/gitrest:1316
+        image: prague.azurecr.io/gitrest:2239
         environment:
             - DEBUG=routerlicious:*
             - NODE_ENV=development

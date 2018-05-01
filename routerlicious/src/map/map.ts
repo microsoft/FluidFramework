@@ -181,6 +181,13 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
         return this.loadContentComplete();
     }
 
+    public on(event: "pre-op", listener: (op: api.ISequencedObjectMessage, local: boolean) => void): this;
+    public on(event: "op", listener: (op: api.ISequencedObjectMessage, local: boolean) => void): this;
+    public on(event: "valueChanged", listener: (...args: any[]) => void): this;
+    public on(event: string | symbol, listener: (...args: any[]) => void): this {
+        return super.on(event, listener);
+    }
+
     protected onDisconnect() {
         debug(`Map ${this.id} is now disconnected`);
         this.onDisconnectContent();

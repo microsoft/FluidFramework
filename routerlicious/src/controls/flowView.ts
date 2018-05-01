@@ -2703,7 +2703,7 @@ export class FlowView extends ui.Component {
 
         this.statusMessage("li", " ");
         this.statusMessage("si", " ");
-        sharedString.on("op", (msg: core.ISequencedObjectMessage, local: boolean) => {
+        sharedString.on("op", (msg, local) => {
             if (local) {
                 return;
             }
