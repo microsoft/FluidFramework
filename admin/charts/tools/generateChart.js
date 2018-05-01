@@ -58,6 +58,8 @@ endpoints:
   tenantsUrl: https://admin.wu2.prague.office-int.com
   historianUrl: https://historian.wu2.prague.office-int.com
   riddlerUrl: http://pesky-platypus-riddler
+  gitUrl: http://smelly-wolf-gitrest
+  cobaltUrl: http://smelly-wolf-cobalt
 
 auth:
   redirectUrl: https://admin.wu2.prague.office-int.com/auth/openid/return
