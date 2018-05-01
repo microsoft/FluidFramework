@@ -1,19 +1,5 @@
 FROM node:8.11.1-alpine
 
-# Blizzard Kafka dependencies
-RUN apk --no-cache add \
-      bash \
-      g++ \
-      ca-certificates \
-      lz4-dev \
-      musl-dev \
-      cyrus-sasl-dev \
-      openssl-dev \
-      make \
-      python
-
-RUN apk add --no-cache --virtual .build-deps gcc zlib-dev libc-dev bsd-compat-headers py-setuptools bash
-
 # node-gyp dependencies
 RUN apk add --no-cache --virtual .gyp python make g++
 
@@ -23,19 +9,17 @@ RUN apk add --no-cache tini python make g++
 # Copy over and build the server
 WORKDIR /usr/src/server
 
-COPY . .
-
 # Copy over the package and package-lock and install prior to the other code to optimize Docker's file system cache on rebuilds
+COPY package-lock.json .
+COPY package.json .
 RUN npm install
 
-RUN rm ./node_modules/node-rdkafka/index.d.ts
-
 # And now copy over our actual code and build
+COPY . .
 RUN npm run build:full
 
 # Remove build tools
 RUN apk del .gyp
-RUN apk del .build-deps
 
 # Expose the port the app runs under
 EXPOSE 3000

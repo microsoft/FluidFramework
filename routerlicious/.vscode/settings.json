@@ -1,6 +1,3 @@
 {
-    "git.ignoreLimitWarning": true,
-    "cSpell.words": [
-        "testtopic"
-    ]
+    "git.ignoreLimitWarning": true
 }
