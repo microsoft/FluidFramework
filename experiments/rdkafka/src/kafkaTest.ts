@@ -1,7 +1,6 @@
 import * as queue from "async/queue";
 import * as commander from "commander";
 import * as kafkaNode from "kafka-node";
-// import * as kafkablizzard from "node-rdkafka";
 import { Deferred } from "./deferred";
 
 var kafkaBlizzard = require("node-rdkafka");
@@ -148,8 +147,6 @@ async function kafkaBlizzardProducerTest(startOffset) {
 
     let messageBuffers: Buffer[][] = createMessageBuffers();
 
-    // https://github.com/edenhill/librdkafka/blob/master/CONFIGURATION.md
-    // GlobalConf, Topic Conf
     let producer = new kafkaBlizzard.Producer({
         "client.id": clientId,
         "debug": "all",
