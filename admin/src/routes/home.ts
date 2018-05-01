@@ -16,7 +16,7 @@ export function create(config: any, mongoManager: core.MongoManager, userCollect
      */
     router.get("/", (request, response, next) => {
         if (request.user === undefined) {
-            response.render("home", { partials: defaultPartials, title: "Login" });
+            response.redirect("/login");
         } else {
             const tenantsP = manager.getTenantsforUser(request.user.oid);
 
