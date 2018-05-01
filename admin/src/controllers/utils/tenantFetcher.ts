@@ -14,7 +14,6 @@ export async function addTenant(url: string, tenant: any): Promise<any> {
             },
             json: true,
         });
-    console.log(newTenant);
     return newTenant;
 }
 

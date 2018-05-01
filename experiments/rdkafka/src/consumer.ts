@@ -73,3 +73,8 @@ consumer.on('disconnected', function(arg) {
 
 //starting the consumer
 consumer.connect();
+
+setTimeout(() => {
+  console.log("disconnect");
+  consumer.disconnect();
+}, 5000);

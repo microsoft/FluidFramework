@@ -32,6 +32,8 @@ data:
                 "tenantsUrl": "{{ .Values.endpoints.tenantsUrl }}"
             },
             "riddlerUrl": "{{ .Values.endpoints.riddlerUrl }}",
+            "gitUrl": "{{ .Values.endpoints.gitUrl }}",
+            "cobaltUrl": "{{ .Values.endpoints.cobaltUrl }}",
             "port": 3000,
             "tenantConfig": [
                 {

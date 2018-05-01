@@ -11,8 +11,7 @@ export class Logout extends React.Component<ILogoutProps, {}> {
     render() {
         return (
             <div className="logout-button">
-                <span className="logout-text">{this.props.name} <a href="/logout"><i className="fa fa-fw fa-power-off logout-icon" /></a>
-                </span>
+                <span className="logout-text">{this.props.name}</span>
             </div>
         );
     }

@@ -48,7 +48,7 @@ export async function load(id: string, repository: string,  owner: string, endPo
         loadDocument(id, token).then(async (doc: api.Document) => {
             // tslint:disable-next-line
             window["doc"] = doc;
-            const playerName = doc.getUser().user.name;
+            const playerName = doc.getUser().user;
             let playerId: number;
             // Set up Collaborative Types and Player Numbers
             const rootView = await doc.getRoot().getView();

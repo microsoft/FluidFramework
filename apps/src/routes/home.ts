@@ -1,6 +1,5 @@
 import { Router } from "express";
 import * as passport from "passport";
-import { clearToken } from "./authCheker";
 import { defaultPartials } from "./partials";
 
 export function create(config: any): Router {
@@ -20,8 +19,6 @@ export function create(config: any): Router {
     });
 
     router.get("/logout", (request, response) => {
-     // Clears the token first.
-      clearToken(request.user.upn);
       request.logout();
       response.redirect("/");
     });

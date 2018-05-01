@@ -141,7 +141,7 @@ export async function load(id: string, repository: string, owner: string, endPoi
             }
 
             // Display the user id.
-            displayUserId($("#cellViews"), doc.getUser().user.id);
+            displayUserId($("#cellViews"), doc.getUser().user);
             console.log(doc.getUser());
 
             // Display the initial value and then listen for updates

@@ -14,7 +14,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "@prague/routerlicious": "^0.1.2057",
+    "@prague/routerlicious": "^0.1.2202",
     "body-parser": "^1.18.2",
     "compression": "^1.7.1",
     "concurrently": "^3.5.1",

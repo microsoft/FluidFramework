@@ -9,14 +9,14 @@ export function create(config: any, mongoManager: core.MongoManager, userCollect
                        orgCollectionName: string, tenantCollectionName: string): Router {
     const router: Router = Router();
     const manager = new TenantManager(mongoManager, userCollectionName, orgCollectionName,
-                                      tenantCollectionName, config.riddlerUrl);
+                                      tenantCollectionName, config.riddlerUrl, config.gitUrl, config.cobaltUrl);
 
     /**
      * Route to retrieve the home page for the app
      */
     router.get("/", (request, response, next) => {
         if (request.user === undefined) {
-            response.render("home", { partials: defaultPartials, title: "Login" });
+            response.redirect("/login");
         } else {
             const tenantsP = manager.getTenantsforUser(request.user.oid);
 

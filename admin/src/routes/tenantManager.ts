@@ -1,4 +1,5 @@
 import * as moniker from "moniker";
+import * as request from "request-promise-native";
 import * as core from "../db";
 import { ITenantStorage, RiddlerManager} from "./riddlerManager";
 
@@ -50,7 +51,7 @@ export class TenantManager {
 
     constructor(private mongoManager: core.MongoManager, private userOrgCollection: string,
                 private orgTenantCollection: string, private tenantCollection: string,
-                private riddlerEndpoint: string) {
+                private riddlerEndpoint: string, private gitrestEndpoint: string, private cobaltEndpoint: string) {
                     this.riddlerManager = new RiddlerManager(this.riddlerEndpoint);
     }
 
@@ -66,7 +67,8 @@ export class TenantManager {
 
         const newTenant = await this.riddlerManager.addTenant();
         const key = newTenant.key;
-        await this.riddlerManager.updateTenantStorage(newTenant.id, storage);
+        await this.riddlerManager.updateTenantStorage(newTenant.id, storage.storage);
+        await this.createRepoForTenant(newTenant.id, storage.name);
         const dbTenant = await this.riddlerManager.getTenant(newTenant.id);
 
         await this.addNewTenantForOrg(orgId, newTenant.id);
@@ -96,6 +98,28 @@ export class TenantManager {
         const collection = db.collection<ITenant>(this.tenantCollection);
         await collection.update({ _id: tenantId }, { deleted: true }, null);
         return tenantId;
+    }
+
+    /**
+     * Creates a repository for each tenant inside the target storage provier.
+     * For github provider, tenants are responsible for creating the repo manually.
+     */
+    private async createRepoForTenant(tenantId: string, providerName: string) {
+        if (providerName !== "github") {
+            const storageEndpoint = (providerName === "git") ? this.gitrestEndpoint : this.cobaltEndpoint;
+            await request.post(
+                `${storageEndpoint}/prague/repos`,
+                {
+                    body: {
+                        name: tenantId,
+                    },
+                    headers: {
+                        "Accept": "application/json",
+                        "Content-Type": "application/json",
+                    },
+                    json: true,
+                });
+        }
     }
 
     private async createOrgIdForUser(userId: string): Promise<string> {

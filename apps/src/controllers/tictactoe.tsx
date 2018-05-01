@@ -28,7 +28,7 @@ export async function load(id: string, repository: string,  owner: string, endPo
         loadDocument(id, token).then(async (doc) => {
             // tslint:disable-next-line
             window["doc"] = doc;
-            const playerName = doc.getUser().user.name;
+            const playerName = doc.getUser().user;
             let playerId: number;
 
             const rootView = await doc.getRoot().getView();
@@ -69,7 +69,7 @@ export async function load(id: string, repository: string,  owner: string, endPo
                 console.log(`${playerId} can join the game!`);
                 const player = {
                     id: playerId,
-                    name: doc.getUser().user.name,
+                    name: doc.getUser().user,
                 };
                 ReactDOM.render(
                     <TicTacToe player={player} gameMap={gameMap} gameView={gameView}/>,
