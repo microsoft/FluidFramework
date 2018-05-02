@@ -31,7 +31,7 @@ export class TenantInfoModal extends React.Component<ITenantInfoProps, {}> {
             >
               <p><b>Id:</b> {id}</p>
               <p><b>Key:</b> {key}</p>
-              <a href="https://github.com/Microsoft/Prague/blob/master/apps/INSTRUCTION.md" target="_blank">Learn more</a>
+              <a href="https://github.com/Microsoft/Prague/blob/master/admin/INSTRUCTION.md" target="_blank">Getting started with Prague API</a>
             </Modal>
           </div>
         );

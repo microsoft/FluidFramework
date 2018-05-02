@@ -143,6 +143,68 @@ async function runKafkaNodeConsumerTest(expectedTotal: number, startOffset: numb
     return deferred.promise;
 }
 
+async function kafkaNodeLatencyTest(startOffset: number, messages: number) {
+    let messagesSent = 0;
+    let messagesReceived = 0;
+    let totalLatency = 0;
+    let productionInterval: NodeJS.Timer;
+
+    let client = new kafkaNode.Client(endpoint, clientId);
+
+    let producer = new kafkaNode.Producer(client, { partitionerType: 3});
+
+    let fetchOptions: kafkaNode.OffsetFetchRequest = {
+        offset: startOffset,
+        partition: 0,
+        topic,
+    };
+
+    let consumerOptions: kafkaNode.ConsumerOptions = {
+        autoCommit: false,
+        fromOffset: (startOffset !== 0),
+    };
+
+    let consumer = new kafkaNode.Consumer(client, [fetchOptions], consumerOptions);
+
+    consumer.on("message", (message) => {
+        messagesReceived++;
+        totalLatency += (Date.now() - parseFloat(message.value as string));
+    });
+
+    producer.on("ready", () => {
+        console.log("Producer ready");
+        let wait = commander.wait as number;
+        productionInterval = setInterval(() => {
+            producer.send([{
+                attributes: 0,
+                messages: [Date.now()],
+                partition,
+                topic,
+                } as kafkaNode.ProduceRequest],
+                (err, result) => {
+
+            });
+            messagesSent++;
+            if (messagesSent === messages) {
+                clearInterval(productionInterval);
+            }
+        }, wait);
+    });
+
+    let int = setInterval(() => {
+        console.log("MessagesSent: " + messagesSent);
+        console.log("MessagesReceived: " + messagesReceived);
+        console.log("latency: " + (totalLatency / messagesReceived));
+        if (messagesSent >= messages && messages <= messagesReceived ) {
+            client.close();
+            consumer.close(false, () => {
+                clearInterval(int);
+            });
+            producer.close();
+        }
+    }, 5000);
+}
+
 async function kafkaBlizzardLatencyTest(startOffset: number, messages: number) {
 
     let messagesSent = 0;
@@ -241,10 +303,6 @@ async function kafkaBlizzardProducerTest(startOffset) {
         "client.id": clientId,
         "debug": "all",
         "dr_cb": (data) => { 
-            // console.log("In report callback: " + JSON.stringify(data));
-        },
-        "dr_msg_cb": (data) => {
-            console.log("In DR_MSG_CB");
         },
         "metadata.broker.list": kafkaEndpoint,
     }, {});
@@ -386,7 +444,20 @@ async function kafkaNodeRunner() {
     if (commander.offset) {
         console.log("Offset: " + startOffset);
     } else if (commander.latency) {
-        kafkaBlizzardLatencyTest(startOffset, commander.messages);
+        switch (commander.implementation) {
+            case("kafka-node"): {
+                kafkaNodeLatencyTest(startOffset, commander.messages);
+                break;
+            }
+            case ("node-rdkafka"): {
+                kafkaBlizzardLatencyTest(startOffset, commander.messages);
+                break;
+            }
+            default: {
+                console.log("Implementation \'" + commander.implementation + "\' is not yet implemented");
+                break;
+            }
+        }
     } else {
         console.log("-------Producer-------");
         let endOffset = 0;

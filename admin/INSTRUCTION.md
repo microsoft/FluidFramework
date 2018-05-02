@@ -7,7 +7,7 @@ The first step is to create a tenant. A tenant is representative of a team/org u
 Once a tenant is created, click view, copy the **tenant id** and generated **secret key** for the next step.
 
 ## Crafting and passing authentication token
-Next step is to create a json object, sign it with the generate secret key, and pass to Prague api load call. Prague api verifies the token using the secret key. Once the token is verified, user gets access to the document.
+Next step is to create a json object, sign it with the generate secret key, and pass the signed token to Prague api load call. Prague api verifies the token using the secret key. Once the token is verified, user gets access to the document.
 
 Prague uses [jsonwebtoken](https://www.npmjs.com/package/jsonwebtoken) library for verifying the token. Below is an example of a token creation:
 
@@ -19,7 +19,7 @@ Prague uses [jsonwebtoken](https://www.npmjs.com/package/jsonwebtoken) library f
             tenantId: <tenant_id>, // required.
             permission: "read:write", // use "read:write" for now
             user: {
-                id: <unique_user_id>, // use oid provided by AAD auth
+                id: <unique_user_id>, // required. use oid provided by AAD auth.
             },
         }, secret_key);
 ```
@@ -27,7 +27,7 @@ Prague uses [jsonwebtoken](https://www.npmjs.com/package/jsonwebtoken) library f
 ### Passing auth token
 To use the token, just add a token field to api load call.
 ```javascript
-prague.api.load(id, { encrypted: false, token: <crafted_token> }).then((document) => {
+prague.api.load(id, { encrypted: false, token: <signed_token> }).then((document) => {
     // document.getUser() will return an object with verified user information.
 }, (error) => {
     // Invalid token error
