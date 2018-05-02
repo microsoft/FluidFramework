@@ -175,7 +175,7 @@ export function insertColumn(sharedString: SharedString, prevCell: Cell, row: Ro
         marker: <MergeTree.IMarkerDef>{
             refType: MergeTree.ReferenceType.Simple,
         },
-        props: { columnId },
+        props: { columnId, [MergeTree.reservedMarkerIdKey]:columnId },
         relativePos1: { id: prevColumnId },
         type: MergeTreeDeltaType.INSERT,
     };
@@ -195,7 +195,7 @@ export function insertColumn(sharedString: SharedString, prevCell: Cell, row: Ro
 
 export function insertRowCellForColumn(sharedString: SharedString, opList: MergeTree.IMergeTreeOp[], prevCell: Cell,
     idbase: string, endRowId: string) {
-    createRowCellOp(opList, sharedString, idbase, endRowId);
+    createRowCellOp(opList, sharedString, idbase, endRowId, prevCell.columnId);
 }
 
 // TODO: non-grid
@@ -205,21 +205,15 @@ export function deleteColumn(sharedString: SharedString, cell: Cell, row: Row,
     if (traceOps) {
         console.log(`delete column from cell ${cell.marker.toString()}`);
     }
-    let cellPos = getOffset(sharedString, cell.marker);
     let columnId = cell.columnId;
     let opList = <MergeTree.IMergeTreeOp[]>[];
-    const removeColMarkerOp = <MergeTree.IMergeTreeRemoveMsg>{
-        relativePos1: { id: columnId, before: true },
-        relativePos2: { id: columnId },
-        type: MergeTreeDeltaType.REMOVE,
-    };
-    opList.push(removeColMarkerOp);
     for (let row of table.rows) {
         for (let cell of row.cells) {
             if (cell.columnId === columnId) {
+                let id = cell.marker.getId();
                 let annotOp = <MergeTree.IMergeTreeAnnotateMsg>{
-                    pos1: cellPos,
-                    pos2: cellPos + cell.marker.cachedLength,
+                    relativePos1: { id, before: true},
+                    relativePos2: { id },
                     props: { moribund: true },
                     type: MergeTreeDeltaType.ANNOTATE,
                 };
@@ -227,6 +221,12 @@ export function deleteColumn(sharedString: SharedString, cell: Cell, row: Row,
             }
         }
     }
+    const removeColMarkerOp = <MergeTree.IMergeTreeRemoveMsg>{
+        relativePos1: { id: columnId, before: true },
+        relativePos2: { id: columnId },
+        type: MergeTreeDeltaType.REMOVE,
+    };
+    opList.push(removeColMarkerOp);
     let groupOp = <MergeTree.IMergeTreeGroupMsg>{
         ops: opList,
         type: MergeTree.MergeTreeDeltaType.GROUP,
@@ -298,7 +298,7 @@ export function insertRow(sharedString: SharedString, prevRow: Row, table: Table
 }
 
 // Table Column* (Row (Cell EndCell)* EndRow)* EndTable
-export function createTableRelative(pos: number, sharedString: SharedString, nrows = 3, ncells = 3) {
+export function createTable(pos: number, sharedString: SharedString, nrows = 3, ncells = 3) {
     let pgAtStart = true;
     if (pos > 0) {
         let segoff = sharedString.client.mergeTree.getContainingSegment(pos - 1, MergeTree.UniversalSequenceNumber,
@@ -344,12 +344,13 @@ export function createTableRelative(pos: number, sharedString: SharedString, nro
         opList.push(createRelativeMarkerOp(endTablePos, endPrefix + rowId,
             MergeTree.ReferenceType.NestEnd, ["row"]));
     }
-    for (let columnId of columnIds) {
+    for (let i=columnIds.length-1;i>=0;i--) {
+        let columnId = columnIds[i];
         const insertColMarkerOp = <MergeTree.IMergeTreeInsertMsg>{
             marker: <MergeTree.IMarkerDef>{
                 refType: MergeTree.ReferenceType.Simple,
             },
-            props: { columnId },
+            props: { columnId, [MergeTree.reservedMarkerIdKey]:columnId },
             relativePos1: { id: tableId },
             type: MergeTreeDeltaType.INSERT,
         };
@@ -552,6 +553,7 @@ function parseCell(cellStartPos: number, sharedString: SharedString, columnOffse
     }
     let endCellPos = getOffset(sharedString, endCellMarker);
     cellMarker.cell = new Cell(cellMarker, endCellMarker);
+    cellMarker.cell.columnId = cellMarker.properties["columnId"];
     let nextPos = cellStartPos + cellMarker.cachedLength;
     while (nextPos < endCellPos) {
         let segoff = mergeTree.getContainingSegment(nextPos, MergeTree.UniversalSequenceNumber,

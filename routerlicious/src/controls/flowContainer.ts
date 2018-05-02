@@ -27,7 +27,7 @@ export class FlowContainer extends ui.Component {
     private overlayCanvas: OverlayCanvas;
 
     private layerCache: { [key: string]: Layer } = {};
-    private activeLayers: {[key: string]: IOverlayLayerStatus } = {};
+    private activeLayers: { [key: string]: IOverlayLayerStatus } = {};
 
     constructor(
         element: HTMLDivElement,
@@ -74,7 +74,7 @@ export class FlowContainer extends ui.Component {
         overlayCanvasDiv.classList.add("overlay-canvas");
         this.overlayCanvas = new OverlayCanvas(collabDocument, overlayCanvasDiv, layerPanelDiv);
 
-        this.overlayCanvas.on("ink", (layer: InkLayer, model: types.IStream, start: ui.IPoint) =>  {
+        this.overlayCanvas.on("ink", (layer: InkLayer, model: types.IStream, start: ui.IPoint) => {
             this.overlayCanvas.enableInkHitTest(false);
             const position = this.flowView.getNearestPosition(start);
             this.overlayCanvas.enableInkHitTest(true);
@@ -92,7 +92,10 @@ export class FlowContainer extends ui.Component {
             sharedString.insertMarker(
                 position,
                 MergeTree.ReferenceType.Simple,
-                { [MergeTree.reservedMarkerIdKey]: model.id });
+                {
+                    [MergeTree.reservedMarkerIdKey]: model.id,
+                    [MergeTree.reservedMarkerSimpleTypeKey]: "inkOverlay",
+                });
         });
 
         this.status.on("dry", (value) => {

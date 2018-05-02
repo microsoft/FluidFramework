@@ -297,7 +297,7 @@ let commands: ICmd[] = [
     {
         exec: (f) => {
             f.updatePGInfo(f.cursor.pos - 1);
-            Table.createTableRelative(f.cursor.pos, f.sharedString);
+            Table.createTable(f.cursor.pos, f.sharedString);
             f.localQueueRender(f.cursor.pos);
         },
         key: "table test",
@@ -1706,7 +1706,8 @@ function gatherOverlayLayer(
 
     if (segment.getType() === MergeTree.SegmentType.Marker) {
         let marker = <MergeTree.Marker>segment;
-        if (marker.refType === MergeTree.ReferenceType.Simple) {
+        if ((marker.refType === MergeTree.ReferenceType.Simple) &&
+            (marker.hasSimpleType("inkOverlay"))) {
             context.push({ id: marker.getId(), position: segpos });
         }
     }
@@ -4022,7 +4023,7 @@ export class FlowView extends ui.Component {
                             hit = true;
                         }
                     }
-/*                    if ((rowCount > 4) && (!hit)) {
+                    if ((rowCount > 4) && (!hit)) {
                         let chance = Math.round(Math.random() * 10);
                         if (chance >= 5) {
                             this.deleteRow();
@@ -4030,7 +4031,7 @@ export class FlowView extends ui.Component {
                             hit = true;
                         }
                     }
-*/                    if ((columnCount > 4) && (!hit)) {
+                    if ((columnCount > 4) && (!hit)) {
                         let chance = Math.round(Math.random() * 10);
                         if (chance >= 5) {
                             this.deleteColumn();
@@ -4099,7 +4100,7 @@ export class FlowView extends ui.Component {
                 break;
             case CharacterCodes.R: {
                 this.updatePGInfo(this.cursor.pos - 1);
-                Table.createTableRelative(this.cursor.pos, this.sharedString);
+                Table.createTable(this.cursor.pos, this.sharedString);
                 this.localQueueRender(this.cursor.pos);
                 break;
             }
@@ -4332,7 +4333,7 @@ export class FlowView extends ui.Component {
 
     public updateTableInfo(changePos: number) {
         let stack =
-            this.sharedString.client.mergeTree.getStackContext(this.cursor.pos,
+            this.sharedString.client.mergeTree.getStackContext(changePos,
                 this.sharedString.client.getClientId(), ["table"]);
         if (stack.table && (!stack.table.empty())) {
             let tableMarker = <Table.ITableMarker>stack.table.top();
@@ -4347,6 +4348,10 @@ export class FlowView extends ui.Component {
             Paragraph.clearContentCaches(tile);
         } else {
             console.log("did not find pg to clear");
+        }
+        let markers = this.client.getModifiedMarkersForOp();
+        if (markers.length>0) {
+            this.updateTableInfo(changePos);
         }
     }
 

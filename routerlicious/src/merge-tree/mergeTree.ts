@@ -168,6 +168,10 @@ export interface Segment extends IMergeNode, IRemovalInfo {
     removeRange(start: number, end: number): boolean;
 }
 
+export interface IMarkerModifiedAction {
+    (marker: Marker): void;
+}
+
 export interface SegmentAction<TClientData> {
     (segment: Segment, pos: number, refSeq: number, clientId: number, start: number,
         end: number, accum?: TClientData): boolean;
@@ -608,6 +612,7 @@ export let reservedRangeLabelsKey = "referenceRangeLabels";
 export let reservedMarkerIdKey = "markerId";
 export let reservedMarkerLocalIdKey = "markerLocalId";
 export let reservedMarkerNestIdKey = "markerNestId";
+export let reservedMarkerSimpleTypeKey = "markerSimpleType";
 
 function refHasTileLabels(refPos: ReferencePosition) {
     return (refPos.refType & ops.ReferenceType.Tile) &&
@@ -690,6 +695,11 @@ export class Marker extends BaseSegment implements ReferencePosition {
 
     getOffset() {
         return 0;
+    }
+
+    hasSimpleType(simpleTypeName: string) {
+        return this.hasProperty(reservedMarkerSimpleTypeKey) &&
+            this.properties[reservedMarkerSimpleTypeKey] === simpleTypeName;
     }
 
     getProperties() {
@@ -1828,6 +1838,7 @@ export class Client {
     shortClientUserInfoMap = <IAuthenticatedUser[]>[];
     registerCollection = new RegisterCollection();
     localSequenceNumber = UnassignedSequenceNumber;
+    opMarkersModified = <Marker[]>[];
     public longClientId: string;
     public userInfo: IAuthenticatedUser;
     public undoSegments: IUndoInfo[];
@@ -1837,9 +1848,18 @@ export class Client {
         this.mergeTree = new MergeTree(initText, options);
         this.mergeTree.getLongClientId = id => this.getLongClientId(id);
         this.mergeTree.getUserInfo = id => this.getUserInfo(id);
+        this.mergeTree.markerModifiedHandler = marker => this.markerModified(marker);
         this.mergeTree.clientIdToBranchId = this.shortClientBranchIdMap;
         this.q = Collections.ListMakeHead<API.ISequencedObjectMessage>();
         this.checkQ = Collections.ListMakeHead<string>();
+    }
+
+    resetModifiedMarkers() {
+        this.opMarkersModified = [];
+    }
+
+    markerModified(marker: Marker) {
+        this.opMarkersModified.push(marker);
     }
 
     setLocalSequenceNumber(seq: number) {
@@ -2288,7 +2308,12 @@ export class Client {
         }
     }
 
+    getModifiedMarkersForOp() {
+        return this.opMarkersModified;
+    }
+
     coreApplyMsg(msg: API.ISequencedObjectMessage) {
+        this.resetModifiedMarkers();
         this.applyOp(<ops.IMergeTreeOp>msg.contents, msg);
     }
 
@@ -2409,6 +2434,7 @@ export class Client {
         let clientId = segWindow.clientId;
         let refSeq = segWindow.currentSeq;
         let seq = this.getLocalSequenceNumber();
+        this.resetModifiedMarkers();
 
         let clockStart;
         if (this.measureOps) {
@@ -2451,6 +2477,7 @@ export class Client {
         let clientId = segWindow.clientId;
         let refSeq = segWindow.currentSeq;
         let seq = this.getLocalSequenceNumber();
+        this.resetModifiedMarkers();
 
         let clockStart;
         if (this.measureOps) {
@@ -2492,6 +2519,8 @@ export class Client {
         let clientId = segWindow.clientId;
         let refSeq = segWindow.currentSeq;
         let seq = this.getLocalSequenceNumber();
+        this.resetModifiedMarkers();
+        
         let clockStart;
         if (this.measureOps) {
             clockStart = clock();
@@ -2513,6 +2542,8 @@ export class Client {
         let clientId = segWindow.clientId;
         let refSeq = segWindow.currentSeq;
         let seq = this.getLocalSequenceNumber();
+        this.resetModifiedMarkers();
+        
         let clockStart;
         if (this.measureOps) {
             clockStart = clock();
@@ -2534,6 +2565,7 @@ export class Client {
         let clientId = segWindow.clientId;
         let refSeq = segWindow.currentSeq;
         let seq = this.getLocalSequenceNumber();
+        this.resetModifiedMarkers();
         let clockStart;
         if (this.measureOps) {
             clockStart = clock();
@@ -2556,7 +2588,7 @@ export class Client {
             clockStart = clock();
         }
 
-        this.mergeTree.insertMarker(pos, refSeq, clientId, seq, marker.refType, props,undefined,marker.pairId);
+        this.mergeTree.insertMarker(pos, refSeq, clientId, seq, marker.refType, props, undefined, marker.pairId);
         this.mergeTree.getCollabWindow().currentSeq = seq;
 
         if (this.measureOps) {
@@ -3008,6 +3040,7 @@ export class MergeTree {
     nestCount = 0;
     clientIdToBranchId: number[] = [];
     localBranchId = 0;
+    markerModifiedHandler: IMarkerModifiedAction;
     transactionSegmentGroup: SegmentGroup;
     minSeqListeners: Collections.Heap<MinListener>;
     // for diagnostics
@@ -3044,13 +3077,13 @@ export class MergeTree {
         // TODO: verify ref type 
         let storedMarker = this.tempNestIdToMarker[pairId];
         if (!storedMarker) {
-            storedMarker=nestMarker;
+            storedMarker = nestMarker;
         } else {
             nestMarker.nestBuddy = storedMarker;
             storedMarker.nestBuddy = nestMarker;
             let permNestId = this.nestCount++;
-            nestMarker.addProperties({ [reservedMarkerNestIdKey]:permNestId});
-            storedMarker.addProperties({ [reservedMarkerNestIdKey]:permNestId});
+            nestMarker.addProperties({ [reservedMarkerNestIdKey]: permNestId });
+            storedMarker.addProperties({ [reservedMarkerNestIdKey]: permNestId });
         }
     }
 
@@ -4169,11 +4202,15 @@ export class MergeTree {
         if (markerLocalId) {
             this.mapLocalIdToSegment(markerLocalId, marker);
         }
-        if (pairId!==undefined) {
+        if (pairId !== undefined) {
             this.addMarkerToTempPair(pairId, marker);
         }
         this.insert(pos, refSeq, clientId, seq, marker, (block, pos, refSeq, clientId, seq, marker) =>
             this.blockInsert(block, pos, refSeq, clientId, seq, marker));
+        // report segment if client interested
+        if (this.markerModifiedHandler && (seq!==UnassignedSequenceNumber)) {
+            this.markerModifiedHandler(marker);
+        }
         return marker;
     }
 
@@ -4578,6 +4615,9 @@ export class MergeTree {
             if ((segType == SegmentType.Marker) || (segType == SegmentType.Text)) {
                 let baseSeg = <BaseSegment>segment;
                 baseSeg.addProperties(props, combiningOp);
+                if (this.markerModifiedHandler && (segType === SegmentType.Marker) && (seq!==UnassignedSequenceNumber)) {
+                    this.markerModifiedHandler(<Marker>segment);
+                }
             }
             return true;
         }
@@ -4627,6 +4667,10 @@ export class MergeTree {
             }
             // save segment so can assign removed sequence number when acked by server
             if (this.collabWindow.collaborating) {
+                // report segment if client interested
+                if (this.markerModifiedHandler && (segment.getType() === SegmentType.Marker) && (seq!==UnassignedSequenceNumber)) {
+                    this.markerModifiedHandler(<Marker>segment);
+                }
                 // use removal information 
                 let removalInfo = this.getRemovalInfo(this.localBranchId, segBranchId, segment);
                 if ((removalInfo.removedSeq === UnassignedSequenceNumber) && (clientId === this.collabWindow.clientId)) {
