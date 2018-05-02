@@ -42,8 +42,8 @@ service:
   host: www.wu2.prague.office-int.com
   sslCert: wu2-tls-certificate
 
-tenantId: loving-jones
-secretKey: 1dc089ccce64800a8d24a1b671248b5b
+tenantId: trusting-haibt
+secretKey: 95f734db4295cd7fda4e6bf92d7a0852
 
 resources:
   limits:
