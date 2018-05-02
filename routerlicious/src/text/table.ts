@@ -640,7 +640,7 @@ export function parseColumns(sharedString: SharedString, pos: number, table: Tab
         nextPos = segpos;
         if (segment.getType() === MergeTree.SegmentType.Marker) {
             let marker = <IColumnMarker>segment;
-            if (marker.columnId) {
+            if (marker.hasProperty("columnId")) {
                 table.addGridColumn(marker);
                 return true;
             }
