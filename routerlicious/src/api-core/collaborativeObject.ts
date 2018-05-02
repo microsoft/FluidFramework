@@ -60,10 +60,9 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
 
         this._sequenceNumber = sequenceNumber;
         this.services = services;
-        const value = this.loadCore(version, headerOrigin, services.objectStorage);
-        this.attachDeltaHandler();
 
-        return value;
+        await this.loadCore(version, headerOrigin, services.objectStorage);
+        this.attachDeltaHandler();
     }
 
     /**

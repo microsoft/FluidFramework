@@ -169,4 +169,11 @@ export interface IMap extends ICollaborativeObject {
      * This is a very advanced feature and should be used with extreme caution.
      */
     registerSerializeFilter(filter: SerializeFilter);
+
+    on(event: "pre-op", listener: (op: ISequencedObjectMessage, local: boolean) => void): this;
+    on(event: "op", listener: (op: ISequencedObjectMessage, local: boolean) => void): this;
+    on(
+        event: "valueChanged",
+        listener: (changed: IValueChanged, local: boolean, op: ISequencedObjectMessage) => void): this;
+    on(event: string | symbol, listener: (...args: any[]) => void): this;
 }
