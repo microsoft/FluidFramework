@@ -1597,7 +1597,7 @@ function renderTable(
                 }
             }
             if (rowView.cells.length < tableView.logicalColumns.length) {
-                for (let col = rowView.cells.length;col < tableView.logicalColumns.length; col++) {
+                for (let col = rowView.cells.length; col < tableView.logicalColumns.length; col++) {
                     adjustRowWidth += tableView.logicalColumns[col].width;
                 }
             }
@@ -4328,6 +4328,16 @@ export class FlowView extends ui.Component {
 
     public randomWordMoveEnd() {
         clearInterval(this.randWordTimer);
+    }
+
+    public updateTableInfo(changePos: number) {
+        let stack =
+            this.sharedString.client.mergeTree.getStackContext(this.cursor.pos,
+                this.sharedString.client.getClientId(), ["table"]);
+        if (stack.table && (!stack.table.empty())) {
+            let tableMarker = <Table.ITableMarker>stack.table.top();
+            tableMarker.table = undefined;
+        }
     }
 
     public updatePGInfo(changePos: number) {
