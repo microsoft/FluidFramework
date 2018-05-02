@@ -2,29 +2,26 @@
 This document provides instruction for creating a prague tenant and authenticate to the api using json web token.
 
 ## Creating a tenant
-The first step is to create a tenant. A tenant is representative of a team/org using Prague API. Navigate to https://admin.wu2.prague.office-int.com/ and add a new tenant with an unique name and one of the three storage endpoints. Selecting 'github' as a storage endpoint would require more info such as github repository, username, and credential.
+The first step is to create a tenant. A tenant is representative of a team/org using Prague API. Navigate to https://admin.wu2.prague.office-int.com/ and add a new tenant with one of the three storage endpoints. Selecting 'github' as a storage endpoint would require more info such as github repository, username, and credential.
 
-Once a tenant is created, copy the tenant name and generated secret key for the next step.
+Once a tenant is created, click view, copy the **tenant id** and generated **secret key** for the next step.
 
 ## Crafting and passing authentication token
-Next step is to craft a token for prague api load call. Prague api decodes the passed token using a common symmetric key shared with all tenants (for now just use "symmetric_key") and verifies the provided 'tenantid' and 'secret'. Once the token is verified, user gets access to the document.
+Next step is to create a json object, sign it with the generate secret key, and pass to Prague api load call. Prague api verifies the token using the secret key. Once the token is verified, user gets access to the document.
 
-Prague uses [jsonwebtoken](https://www.npmjs.com/package/jsonwebtoken) library for verifying the token. Tenants are also required to use the same library. Below is an example of a token creation:
+Prague uses [jsonwebtoken](https://www.npmjs.com/package/jsonwebtoken) library for verifying the token. Below is an example of a token creation:
 
 ```javascript
     import * as jwt from "jsonwebtoken";
     const token = jwt.sign(
         {
-            tenantid: <tenant_id>, // required
-            secret: <generated_secret_key>, // required.
-            permission: "read:write", // optional.
+            documentId: <document_id>, // required
+            tenantId: <tenant_id>, // required.
+            permission: "read:write", // use "read:write" for now
             user: {
-                    name: username, // required
-                    id: email_address, // optional
-                    data: {}, // optinoal
+                id: <unique_user_id>, // use oid provided by AAD auth
             },
-        },
-        "symmetric_key");
+        }, secret_key);
 ```
 
 ### Passing auth token
@@ -36,8 +33,3 @@ prague.api.load(id, { encrypted: false, token: <crafted_token> }).then((document
     // Invalid token error
 });
 ```
-
-## Creating a tenant
-We require each tenant to use the following https api endpoints. http endpoints will be deprecated soon.
-* Delta endpoint: https://alfred.wu2.prague.office-int.com
-* Storage endpoint: https://historian.wu2.prague.office-int.com
