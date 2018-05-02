@@ -167,9 +167,7 @@ async function kafkaNodeLatencyTest(startOffset: number, messages: number) {
     let consumer = new kafkaNode.Consumer(client, [fetchOptions], consumerOptions);
 
     consumer.on("message", (message) => {
-        // console.log("In Consumer");
         messagesReceived++;
-        // console.log(message);
         totalLatency += (Date.now() - parseFloat(message.value as string));
     });
 
@@ -305,10 +303,6 @@ async function kafkaBlizzardProducerTest(startOffset) {
         "client.id": clientId,
         "debug": "all",
         "dr_cb": (data) => { 
-            // console.log("In report callback: " + JSON.stringify(data));
-        },
-        "dr_msg_cb": (data) => {
-            console.log("In DR_MSG_CB");
         },
         "metadata.broker.list": kafkaEndpoint,
     }, {});
