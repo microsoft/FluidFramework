@@ -60,10 +60,9 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
 
         this._sequenceNumber = sequenceNumber;
         this.services = services;
-        const value = this.loadCore(version, headerOrigin, services.objectStorage);
-        this.attachDeltaHandler();
 
-        return value;
+        await this.loadCore(version, headerOrigin, services.objectStorage);
+        this.attachDeltaHandler();
     }
 
     /**
@@ -98,6 +97,13 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
      */
     public isLocal(): boolean {
         return !this.services;
+    }
+
+    public on(event: "pre-op", listener: (op: ISequencedObjectMessage, local: boolean) => void): this;
+    public on(event: "op", listener: (op: ISequencedObjectMessage, local: boolean) => void): this;
+    public on(event: string | symbol, listener: (...args: any[]) => void): this;
+    public on(event: string | symbol, listener: (...args: any[]) => void): this {
+        return super.on(event, listener);
     }
 
     /**
@@ -283,9 +289,9 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
             this.submitLatencyMessage(message);
         }
 
-        this.emit("pre-op", message, local, message);
+        this.emit("pre-op", message, local);
         this.processCore(message, context);
-        this.emit("op", message, local, message);
+        this.emit("op", message, local);
     }
 
     /**

@@ -1,4 +1,3 @@
-export * from "./array";
 export * from "./counter";
 export * from "./extension";
 export * from "./map";

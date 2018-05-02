@@ -1,8 +1,8 @@
 import hasIn = require("lodash/hasIn");
 import * as api from "../api-core";
-import { IMapView, IValueOpEmitter, IValueType, SerializeFilter } from "../data-types";
+import { IMapView, IValueOpEmitter, SerializeFilter } from "../data-types";
 import { IMapOperation, IMapValue, ValueType } from "./definitions";
-import { CollaborativeMap, IMapMessageHandler } from "./map";
+import { CollaborativeMap } from "./map";
 
 class ValueOpEmitter implements IValueOpEmitter {
     constructor(private type: string, private key: string, private map: CollaborativeMap) {
@@ -19,7 +19,7 @@ class ValueOpEmitter implements IValueOpEmitter {
         };
 
         this.map.submitMapMessage(op);
-        this.map.emit("valueChanged", { key: this.key });
+        this.map.emit("valueChanged", { key: this.key }, true, null);
     }
 }
 
@@ -33,7 +33,6 @@ export interface ILocalViewElement {
 
 export class MapView implements IMapView {
     private data = new Map<string, ILocalViewElement>();
-    private valueTypes = new Map<string, IValueType<any>>();
 
     constructor(private map: CollaborativeMap, private document: api.IDocument, id: string) {
     }
@@ -109,7 +108,7 @@ export class MapView implements IMapView {
     public set<T = any>(key: string, value: any, type?: string): T {
         let operationValue: IMapValue;
         if (type) {
-            const valueType = this.valueTypes.get(type);
+            const valueType = this.map.getValueType(type);
             if (!valueType) {
                 throw new Error("Unknown value type specified");
             }
@@ -138,7 +137,9 @@ export class MapView implements IMapView {
             {
                 localType: operationValue.type,
                 localValue: value,
-            });
+            },
+            true,
+            null);
         this.map.submitMapMessage(op);
 
         return value;
@@ -150,7 +151,7 @@ export class MapView implements IMapView {
             type: "delete",
         };
 
-        this.deleteCore(op.key);
+        this.deleteCore(op.key, true, null);
         this.map.submitMapMessage(op);
     }
 
@@ -163,7 +164,7 @@ export class MapView implements IMapView {
             type: "clear",
         };
 
-        this.clearCore();
+        this.clearCore(true, null);
         this.map.submitMapMessage(op);
     }
 
@@ -180,9 +181,9 @@ export class MapView implements IMapView {
         return JSON.stringify(serialized);
     }
 
-    public setCore(key: string, value: ILocalViewElement, op: api.ISequencedObjectMessage = null) {
+    public setCore(key: string, value: ILocalViewElement, local: boolean, op: api.ISequencedObjectMessage) {
         this.data.set(key, value);
-        this.map.emit("valueChanged", { key }, op === null, op);
+        this.map.emit("valueChanged", { key }, local, op);
     }
 
     public async prepareSetCore(key: string, value: IMapValue): Promise<ILocalViewElement> {
@@ -190,42 +191,14 @@ export class MapView implements IMapView {
         return translation;
     }
 
-    public clearCore(op: api.ISequencedObjectMessage = null) {
+    public clearCore(local: boolean, op: api.ISequencedObjectMessage) {
         this.data.clear();
-        this.map.emit("clear", op === null, op);
+        this.map.emit("clear", local, op);
     }
 
-    public deleteCore(key: string, op: api.ISequencedObjectMessage = null) {
+    public deleteCore(key: string, local: boolean, op: api.ISequencedObjectMessage) {
         this.data.delete(key);
-        this.map.emit("valueChanged", { key }, op === null, op);
-    }
-
-    public registerValueType<T>(type: IValueType<T>): IMapMessageHandler {
-        this.valueTypes.set(type.name, type);
-
-        function getOpHandler(op: IMapOperation) {
-            const handler = type.ops.get(op.value.type);
-            if (!handler) {
-                throw new Error("Unknown type message");
-            }
-
-            return handler;
-        }
-
-        return {
-            prepare: async (op) => {
-                const handler = getOpHandler(op);
-                const old = this.get(op.key);
-                return handler.prepare(old, op.value.value);
-            },
-
-            process: (op, context, message) => {
-                const handler = getOpHandler(op);
-                const old = this.get(op.key);
-                handler.process(old, op.value.value, context);
-                this.map.emit("valueChanged", { key: op.key }, false, message);
-            },
-        };
+        this.map.emit("valueChanged", { key }, local, op);
     }
 
     private async fill(key: string, remote: IMapValue): Promise<ILocalViewElement> {
@@ -235,8 +208,8 @@ export class MapView implements IMapView {
             translatedValue = distributedObject;
         } else if (remote.type === ValueType[ValueType.Plain]) {
             translatedValue = remote.value;
-        } else if (this.valueTypes.has(remote.type)) {
-            const valueType = this.valueTypes.get(remote.type);
+        } else if (this.map.hasValueType(remote.type)) {
+            const valueType = this.map.getValueType(remote.type);
             translatedValue = valueType.factory.load(new ValueOpEmitter(remote.type, key, this.map), remote.value);
         } else {
             return Promise.reject("Unknown value type");
@@ -264,8 +237,8 @@ export class MapView implements IMapView {
                 type: ValueType[ValueType.Collaborative],
                 value: distributedObject.id,
             };
-        } else if (this.valueTypes.has(local.localType)) {
-            const valueType = this.valueTypes.get(local.localType);
+        } else if (this.map.hasValueType(local.localType)) {
+            const valueType = this.map.getValueType(local.localType);
             return {
                 type: local.localType,
                 value: valueType.factory.store(local.localValue),
