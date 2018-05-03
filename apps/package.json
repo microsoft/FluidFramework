@@ -5,6 +5,8 @@
   "main": "dist/www.js",
   "scripts": {
     "build": "concurrently \"npm run tslint\" \"npm run tsc && npm run webpack\" \"npm run less\"",
+    "dckr:build": "docker build --build-arg NPM_TOKEN=$(echo $NPM_TOKEN) -t apps .",
+    "dckr:start": "docker run -p 7000:3000 apps",
     "webpack": "webpack --config webpack.config.js",
     "tsc": "tsc",
     "tslint": "tslint 'src/**/*.ts'",
