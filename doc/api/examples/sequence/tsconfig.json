@@ -13,8 +13,6 @@
         "inlineSources": true
     },
     "include": [
-        "src/prague.umd.d.ts",
-        "src/prague.d.ts",
         "src/index.ts"
     ]
 }

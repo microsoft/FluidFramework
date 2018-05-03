@@ -5,12 +5,14 @@
   "main": "index.js",
   "dependencies": {
     "@prague/gitresources": "^0.7.0",
-    "@prague/routerlicious": "^0.1.2215",
-    "babel-polyfill": "^6.26.0"
+    "@prague/routerlicious": "^0.1.2293",
+    "babel-polyfill": "^6.26.0",
+    "jsonwebtoken": "^8.2.1"
   },
   "devDependencies": {
     "@types/debug": "0.0.30",
     "@types/jquery": "^3.3.1",
+    "@types/jsonwebtoken": "^7.2.7",
     "@types/node": "^8.10.10",
     "@types/socket.io-client": "^1.4.32",
     "babel-cli": "^6.26.0",

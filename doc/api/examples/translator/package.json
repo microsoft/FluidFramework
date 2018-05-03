@@ -10,11 +10,12 @@
     "tslint": "tslint 'src/**/*.ts'"
   },
   "dependencies": {
-    "@prague/routerlicious": "^0.1.2215",
+    "@prague/routerlicious": "^0.1.2293",
     "@types/request": "^2.47.0",
     "@types/xml2js": "^0.4.2",
     "async": "^2.6.0",
     "diff": "^3.5.0",
+    "jsonwebtoken": "^8.2.1",
     "request": "^2.85.0",
     "typescript": "^2.8.3",
     "xml2js": "^0.4.19"
@@ -22,6 +23,7 @@
   "devDependencies": {
     "@types/diff": "^3.5.1",
     "@types/express": "^4.11.1",
+    "@types/jsonwebtoken": "^7.2.7",
     "@types/node": "^9.6.7",
     "tslint": "^5.9.1"
   }

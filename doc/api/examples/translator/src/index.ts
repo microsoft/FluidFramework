@@ -2,20 +2,25 @@ import { load } from "@prague/routerlicious/dist/api";
 import { IMergeTreeOp, MergeTreeDeltaType } from "@prague/routerlicious/dist/merge-tree";
 import { SharedString } from "@prague/routerlicious/dist/shared-string";
 import * as socketStorage from "@prague/routerlicious/dist/socket-storage";
+import * as jwt from "jsonwebtoken";
 import * as request from "request";
 import { Builder, parseString } from "xml2js";
 
-const routerlicious = "http://localhost:3000";
-const historian = "http://localhost:3001";
-// const routerlicious = "https://alfred.wu2-ppe.prague.office-int.com";
-// const historian = "https://historian.wu2-ppe.prague.office-int.com";
+// For local development
+// const routerlicious = "http://localhost:3000";
+// const historian = "http://localhost:3001";
+// const tenantId = "git";
+// const secret = "43cfc3fbf04a97c0921fd23ff10f9e4b";
+const routerlicious = "https://alfred.wu2.prague.office-int.com";
+const historian = "https://historian.wu2.prague.office-int.com";
+const tenantId = "jolly-agnesi";
+const secret = "29b90e6eaee0fc50fb508bbb81eef641";
 const owner = "prague";
-const repository = "prague";
 
 // Replace the subscriptionKey string value with your valid subscription key.
 const subscriptionKey = "bd099a1e38724333b253fcff7523f76a";
 
-socketStorage.registerAsDefault(routerlicious, historian, owner, repository);
+socketStorage.registerAsDefault(routerlicious, historian, owner, tenantId);
 
 function createRequestBody(from: string, to: string, texts: string[]): string {
     const builder = new Builder({ rootName: "TranslateArrayRequest", headless: true });
@@ -118,8 +123,19 @@ class Translator {
 }
 
 async function run(id: string, language: string): Promise<void> {
+    const token = jwt.sign(
+        {
+            documentId: id,
+            permission: "read:write", // use "read:write" for now
+            tenantId,
+            user: {
+                id: "test",
+            },
+        },
+        secret);
+
     // Load in the latest and connect to the document
-    const collabDoc = await load(id, { blockUpdateMarkers: true });
+    const collabDoc = await load(id, { blockUpdateMarkers: true, token });
     const rootView = await collabDoc.getRoot().getView();
     const sharedString = rootView.get("text") as SharedString;
 

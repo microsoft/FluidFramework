@@ -1,17 +1,36 @@
+import { api as prague } from "@prague/routerlicious";
+import * as jwt from "jsonwebtoken";
+
 // For local development
 // const routerlicious = "http://localhost:3000";
 // const historian = "http://localhost:3001";
-const routerlicious = "https://alfred.wu2-ppe.prague.office-int.com";
-const historian = "https://historian.wu2-ppe.prague.office-int.com";
+// const tenantId = "git";
+// const secret = "43cfc3fbf04a97c0921fd23ff10f9e4b";
+const routerlicious = "https://alfred.wu2.prague.office-int.com";
+const historian = "https://historian.wu2.prague.office-int.com";
+const tenantId = "jolly-agnesi";
+const secret = "29b90e6eaee0fc50fb508bbb81eef641";
 const owner = "prague";
-const repository = "prague";
+
+const documentId = "test-sequence-0502-1";
 
 // Register endpoint connection
-prague.socketStorage.registerAsDefault(routerlicious, historian, owner, repository);
+prague.socketStorage.registerAsDefault(routerlicious, historian, owner, tenantId);
 
 async function run(id: string): Promise<void> {
+    const token = jwt.sign(
+        {
+            documentId,
+            permission: "read:write", // use "read:write" for now
+            tenantId,
+            user: {
+                id: "test",
+            },
+        },
+        secret);
+
     // Load in the latest and connect to the document
-    const collabDoc = await prague.api.load(id, { blockUpdateMarkers: true });
+    const collabDoc = await prague.api.load(id, { blockUpdateMarkers: true, token });
 
     const rootView = await collabDoc.getRoot().getView();
     console.log("Keys");
@@ -38,8 +57,10 @@ async function run(id: string): Promise<void> {
 
     const insertElement = document.getElementById("insertForm") as HTMLFormElement;
     insertElement.onsubmit = (event) => {
-        const insertText = insertElement.elements["insertText"].value;
-        const insertPosition = parseInt(insertElement.elements["insertLocation"].value);
+        const insertText = (insertElement.elements.namedItem("insertText") as HTMLInputElement).value;
+        const insertPosition = parseInt(
+            (insertElement.elements.namedItem("insertLocation") as HTMLInputElement).value,
+            10);
 
         text.insertText(insertText, insertPosition);
 
@@ -47,7 +68,6 @@ async function run(id: string): Promise<void> {
     };
 }
 
-const documentId = "test-sequence-0429-1";
 run(documentId).catch((error) => {
     console.error(error);
-})
+});
