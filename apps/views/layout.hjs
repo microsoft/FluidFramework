@@ -20,5 +20,6 @@
     <script src="//ajax.aspnetcdn.com/ajax/bootstrap/3.3.7/bootstrap.min.js"></script>
     <script src="//cdn.bootcss.com/react/15.4.1/react.js"></script>
     <script src="//cdn.bootcss.com/react/15.4.1/react-dom.js"></script>
+    {{$scripts}}{{/scripts}}
 </body>
 </html>
