@@ -1,13 +1,14 @@
 import { Router } from "express";
 import * as nconf from "nconf";
-import { StorageProvider } from "../../services";
+import { ICache } from "../../services";
 import * as utils from "../utils";
 
-export function create(store: nconf.Provider, provider: StorageProvider): Router {
+export function create(store: nconf.Provider, cache: ICache): Router {
     const router: Router = Router();
 
-    router.post(provider.translatePath("/repos/:owner?/:repo/git/blobs"), (request, response, next) => {
+    router.post("/repos/:owner?/:repo/git/blobs", (request, response, next) => {
         const blobP = provider.gitService.createBlob(request.params.owner, request.params.repo, request.body);
+
         utils.handleResponse(
             blobP,
             response,
@@ -18,7 +19,7 @@ export function create(store: nconf.Provider, provider: StorageProvider): Router
     /**
      * Retrieves the given blob from the repository
      */
-    router.get(provider.translatePath("/repos/:owner?/:repo/git/blobs/:sha"), (request, response, next) => {
+    router.get("/repos/:owner?/:repo/git/blobs/:sha", (request, response, next) => {
         const useCache = !("disableCache" in request.query);
 
         const blobP = provider.gitService.getBlob(

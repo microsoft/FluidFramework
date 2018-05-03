@@ -7,33 +7,6 @@
         "timestamp": true
     },
     "requestSizeLimit": "1gb",
-    "storageProviders": [
-        {
-            "type": "git",
-            "url": "http://gitrest:3000",
-            "name": "git",
-            "isDefault": true,
-            "defaultOwner": "prague"
-        },
-        {
-            "type": "cobalt",
-            "url": "http://cobalt",
-            "name": "cobalt",
-            "isDefault": false,
-            "defaultOwner": "prague"
-        },
-        {
-            "type": "git",
-            "url": "https://api.github.com",
-            "credentials": {
-                "user": "praguegit",
-                "password": "8d043006d0a2704d4dd9972f848f1982026672a1"
-            },
-            "name": "github",
-            "isDefault": false,
-            "defaultOwner": "kurtb"
-        }
-    ],
     "redis": {
         "host": "redis",
         "port": 6379
