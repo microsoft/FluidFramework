@@ -8,19 +8,18 @@ import { Builder, parseString } from "xml2js";
 
 // For local development
 // const routerlicious = "http://localhost:3000";
-// const historian = "http://localhost:3001";
+// const historian = "http://localhost:3001/prague/prague";
 // const tenantId = "git";
 // const secret = "43cfc3fbf04a97c0921fd23ff10f9e4b";
 const routerlicious = "https://alfred.wu2.prague.office-int.com";
-const historian = "https://historian.wu2.prague.office-int.com";
+const historian = "https://historian.wu2.prague.office-int.com/prague/jolly-agnesi";
 const tenantId = "jolly-agnesi";
 const secret = "29b90e6eaee0fc50fb508bbb81eef641";
-const owner = "prague";
 
 // Replace the subscriptionKey string value with your valid subscription key.
 const subscriptionKey = "bd099a1e38724333b253fcff7523f76a";
 
-socketStorage.registerAsDefault(routerlicious, historian, owner, tenantId);
+socketStorage.registerAsDefault(routerlicious, historian);
 
 function createRequestBody(from: string, to: string, texts: string[]): string {
     const builder = new Builder({ rootName: "TranslateArrayRequest", headless: true });

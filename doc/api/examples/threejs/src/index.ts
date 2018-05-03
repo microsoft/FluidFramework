@@ -5,18 +5,17 @@ import * as THREE from "three";
 
 // For local development
 // const routerlicious = "http://localhost:3000";
-// const historian = "http://localhost:3001";
+// const historian = "http://localhost:3001/prague/prague";
 // const tenantId = "git";
 // const secret = "43cfc3fbf04a97c0921fd23ff10f9e4b";
 const routerlicious = "https://alfred.wu2.prague.office-int.com";
-const historian = "https://historian.wu2.prague.office-int.com";
+const historian = "https://historian.wu2.prague.office-int.com/prague/jolly-agnesi";
 const tenantId = "jolly-agnesi";
 const secret = "29b90e6eaee0fc50fb508bbb81eef641";
-const owner = "prague";
 
 const documentId = "test-threejs-0502-1";
 
-socketStorage.registerAsDefault(routerlicious, historian, owner, tenantId);
+socketStorage.registerAsDefault(routerlicious, historian);
 
 async function run(id: string): Promise<void> {
     const token = jwt.sign(
