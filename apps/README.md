@@ -10,7 +10,7 @@ When a signed token is present in api.load call, routerlicious verifies the toke
             secret: <secret_key>,     // required
             tenantid: <tenant_id>,    // required
             user: {
-                    data: null,     // optinoal
+                    data: null,     // optional
                     id: email,      // required
             },
         },

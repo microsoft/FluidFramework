@@ -42,6 +42,10 @@ module.exports = {
         }
     ]
   },
+  externals: {
+    'react': 'React', // Case matters here 
+    'react-dom' : 'ReactDOM' // Case matters here 
+   },
 
   // TODO: Try to figure out a better solution for this.
   // Basically some leaf dependencies can't be resolved, just treat them as empty for now because they aren't relied on
