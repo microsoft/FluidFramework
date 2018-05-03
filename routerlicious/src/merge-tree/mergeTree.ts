@@ -539,8 +539,8 @@ export abstract class BaseSegment extends MergeNode implements Segment {
         }
     }
 
-    addProperties(newProps: Properties.PropertySet, op?: ops.ICombiningOp) {
-        this.properties = Properties.addProperties(this.properties, newProps, op);
+    addProperties(newProps: Properties.PropertySet, op?: ops.ICombiningOp, seq?: number) {
+        this.properties = Properties.addProperties(this.properties, newProps, op, seq);
     }
 
     hasProperty(key: string) {
@@ -1818,6 +1818,11 @@ export class RegisterCollection {
     // TODO: snapshot
 }
 
+export interface IConsensusInfo {
+    marker: Marker;
+    callback: (m:Marker)=>void;
+}
+
 export class Client {
     mergeTree: MergeTree;
     accumTime = 0;
@@ -1839,6 +1844,7 @@ export class Client {
     registerCollection = new RegisterCollection();
     localSequenceNumber = UnassignedSequenceNumber;
     opMarkersModified = <Marker[]>[];
+    pendingConsensus = new Map<string, IConsensusInfo>();
     public longClientId: string;
     public userInfo: IAuthenticatedUser;
     public undoSegments: IUndoInfo[];
@@ -2336,6 +2342,10 @@ export class Client {
                 let op = <ops.IMergeTreeOp>msg.contents;
                 if (op.type !== ops.MergeTreeDeltaType.ANNOTATE) {
                     this.ackPendingSegment(operationMessage.sequenceNumber);
+                } else {
+                    if (op.combiningOp && (op.combiningOp.name==="consensus")) {
+                        this.updateConsensusProperty(op, operationMessage);
+                    }
                 }
             }
             else {
@@ -2429,6 +2439,54 @@ export class Client {
         return segmentGroup;
     }
 
+    updateConsensusProperty(op: ops.IMergeTreeAnnotateMsg, msg: ISequencedObjectMessage) {
+        let markerId = op.relativePos1.id;
+        let consensusInfo = this.pendingConsensus.get(markerId);
+        if (consensusInfo) {
+            consensusInfo.marker.addProperties(op.props, op.combiningOp, msg.sequenceNumber);
+        }
+        this.mergeTree.addMinSeqListener(msg.sequenceNumber, (minSeq)=> consensusInfo.callback(consensusInfo.marker));
+    }
+    
+    // marker must have an id
+    annotateMarkerNotifyConsensus(marker: Marker, props: Properties.PropertySet, callback: (m: Marker) => void) {
+        let combiningOp = <ops.ICombiningOp> {
+            name: "consensus"
+        };
+        let consensusInfo = <IConsensusInfo> {
+            callback,
+            marker,
+        };
+        let id = marker.getId();
+        this.pendingConsensus.set(id, consensusInfo);
+        this.annotateMarker(props, marker, combiningOp);
+    }
+
+    annotateMarker(props: Properties.PropertySet, marker: Marker, op: ops.ICombiningOp) {
+        let segWindow = this.mergeTree.getCollabWindow();
+        let clientId = segWindow.clientId;
+        let refSeq = segWindow.currentSeq;
+        let seq = this.getLocalSequenceNumber();
+        this.resetModifiedMarkers();
+
+        let clockStart;
+        if (this.measureOps) {
+            clockStart = clock();
+        }
+
+        let start = this.mergeTree.getOffset(marker, UniversalSequenceNumber, this.getClientId());
+        this.mergeTree.annotateRange(props, start, start + marker.cachedLength, refSeq, clientId, seq, op);
+
+        if (this.measureOps) {
+            this.localTime += elapsedMicroseconds(clockStart);
+            this.localOps++;
+        }
+        if (this.verboseOps) {
+            console.log(`annotate local cli ${this.getLongClientId(clientId)} ref seq ${refSeq}`);
+        }
+    }
+
+
     annotateSegmentLocal(props: Properties.PropertySet, start: number, end: number, op: ops.ICombiningOp) {
         let segWindow = this.mergeTree.getCollabWindow();
         let clientId = segWindow.clientId;
@@ -2520,7 +2578,7 @@ export class Client {
         let refSeq = segWindow.currentSeq;
         let seq = this.getLocalSequenceNumber();
         this.resetModifiedMarkers();
-        
+
         let clockStart;
         if (this.measureOps) {
             clockStart = clock();
@@ -2543,7 +2601,7 @@ export class Client {
         let refSeq = segWindow.currentSeq;
         let seq = this.getLocalSequenceNumber();
         this.resetModifiedMarkers();
-        
+
         let clockStart;
         if (this.measureOps) {
             clockStart = clock();
@@ -4208,7 +4266,7 @@ export class MergeTree {
         this.insert(pos, refSeq, clientId, seq, marker, (block, pos, refSeq, clientId, seq, marker) =>
             this.blockInsert(block, pos, refSeq, clientId, seq, marker));
         // report segment if client interested
-        if (this.markerModifiedHandler && (seq!==UnassignedSequenceNumber)) {
+        if (this.markerModifiedHandler && (seq !== UnassignedSequenceNumber)) {
             this.markerModifiedHandler(marker);
         }
         return marker;
@@ -4614,8 +4672,8 @@ export class MergeTree {
             let segType = segment.getType();
             if ((segType == SegmentType.Marker) || (segType == SegmentType.Text)) {
                 let baseSeg = <BaseSegment>segment;
-                baseSeg.addProperties(props, combiningOp);
-                if (this.markerModifiedHandler && (segType === SegmentType.Marker) && (seq!==UnassignedSequenceNumber)) {
+                baseSeg.addProperties(props, combiningOp, seq);
+                if (this.markerModifiedHandler && (segType === SegmentType.Marker) && (seq !== UnassignedSequenceNumber)) {
                     this.markerModifiedHandler(<Marker>segment);
                 }
             }
@@ -4668,7 +4726,7 @@ export class MergeTree {
             // save segment so can assign removed sequence number when acked by server
             if (this.collabWindow.collaborating) {
                 // report segment if client interested
-                if (this.markerModifiedHandler && (segment.getType() === SegmentType.Marker) && (seq!==UnassignedSequenceNumber)) {
+                if (this.markerModifiedHandler && (segment.getType() === SegmentType.Marker) && (seq !== UnassignedSequenceNumber)) {
                     this.markerModifiedHandler(<Marker>segment);
                 }
                 // use removal information 

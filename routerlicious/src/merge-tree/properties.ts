@@ -12,7 +12,12 @@ export type PropertySet = MapLike<any>;
 
 // assume these are created with Object.create(null)
 
-export function combine(combiningInfo: ops.ICombiningOp, currentValue: any, newValue: any) {
+export interface IConsensusValue {
+    seq: number;
+    value: any;
+}
+
+export function combine(combiningInfo: ops.ICombiningOp, currentValue: any, newValue: any, seq?: number) {
     if (currentValue === undefined) {
         currentValue = combiningInfo.defaultValue;
     }
@@ -23,6 +28,19 @@ export function combine(combiningInfo: ops.ICombiningOp, currentValue: any, newV
             if (combiningInfo.minValue) {
                 if (currentValue < combiningInfo.minValue) {
                     currentValue = combiningInfo.minValue;
+                }
+            }
+            break;
+        case "consensus":
+            if (currentValue === undefined) {
+                currentValue = <IConsensusValue>{
+                    value: newValue,
+                    seq
+                };
+            } else {
+                let cv = <IConsensusValue>currentValue;
+                if (cv.seq===-1) {
+                    cv.seq = seq;
                 }
             }
             break;
@@ -57,7 +75,7 @@ export function matchProperties(a: PropertySet, b: PropertySet) {
     return true;
 }
 
-export function extend<T>(base: MapLike<T>, extension: MapLike<T>, combiningOp?: ops.ICombiningOp) {
+export function extend<T>(base: MapLike<T>, extension: MapLike<T>, combiningOp?: ops.ICombiningOp, seq?: number) {
     if (extension !== undefined) {
         if ((typeof extension !== "object")) {
             console.log(`oh my ${extension}`);
@@ -68,7 +86,7 @@ export function extend<T>(base: MapLike<T>, extension: MapLike<T>, combiningOp?:
                 delete base[key];
             } else {
                 if (combiningOp && (combiningOp.name !== "rewrite")) {
-                    base[key] = combine(combiningOp, base[key], v);
+                    base[key] = combine(combiningOp, base[key], v, seq);
                 } else {
                     base[key] = v;
                 }
@@ -78,11 +96,11 @@ export function extend<T>(base: MapLike<T>, extension: MapLike<T>, combiningOp?:
     return base;
 }
 
-export function addProperties(oldProps: PropertySet, newProps: PropertySet, op?: ops.ICombiningOp) {
+export function addProperties(oldProps: PropertySet, newProps: PropertySet, op?: ops.ICombiningOp, seq?: number) {
     if ((!oldProps) || (op && (op.name === "rewrite"))) {
         oldProps = createMap<any>();
     }
-    extend(oldProps, newProps, op);
+    extend(oldProps, newProps, op, seq);
     return oldProps;
 }
 

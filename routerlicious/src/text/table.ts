@@ -210,6 +210,10 @@ export function deleteColumn(sharedString: SharedString, cell: Cell, row: Row,
     for (let row of table.rows) {
         for (let cell of row.cells) {
             if (cell.columnId === columnId) {
+                let clientId = sharedString.client.longClientId;
+                sharedString.client.annotateMarkerNotifyConsensus(cell.marker, {moribund: clientId }, (m) => {
+                    sharedString.removeNest(cell.marker,cell.endMarker);
+                });
                 let id = cell.marker.getId();
                 let annotOp = <MergeTree.IMergeTreeAnnotateMsg>{
                     relativePos1: { id, before: true},
