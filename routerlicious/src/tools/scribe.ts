@@ -11,9 +11,7 @@ commander
     .version("0.0.1")
     .option("-i, --interval [interval]", "typing interval", parseFloat, 5)
     .option("-s, --server [server]", "server url", "http://localhost:3000")
-    .option("-t, --storage [server]", "storage server url", "http://localhost:3001")
-    .option("-o, --owner [owner]", "git owner", "prague")
-    .option("-r, --repository [repo]", "git repository", "prague")
+    .option("-t, --storage [server]", "storage server url", "http://localhost:3001/prague/prague")
     .option("-f, --file [file]", "input file", path.join(__dirname, "../../public/literature/resume.txt"))
     .option("-b, --progress [pbar]", "show progress bar")
     .option("-w, --write [write]", "write to specific path", "./latest-scribe.json")
@@ -30,7 +28,7 @@ if (!sharedStringId) {
 }
 
 // Mark socket storage as our default provider
-socketStorage.registerAsDefault(commander.server, commander.storage, commander.owner, commander.repository);
+socketStorage.registerAsDefault(commander.server, commander.storage);
 
 fs.readFile(commander.file, "utf8", async (error, data: string) => {
     if (error) {

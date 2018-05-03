@@ -21,10 +21,10 @@ export async function getConfig(
 
     if (direct) {
         updatedConfig.credentials = tenant.storage.credentials;
-        updatedConfig.blobStorageUrl = tenant.storage.direct;
+        updatedConfig.blobStorageUrl = `${tenant.storage.direct}/${tenant.storage.owner}/${tenant.storage.repository}`;
         updatedConfig.historianApi = false;
     } else {
-        const url = tenant.storage.url;
+        const url = `${tenant.storage.url}/${tenant.storage.owner}/${tenant.storage.repository}`;
         updatedConfig.blobStorageUrl = url.replace("historian:3000", "localhost:3001");
         updatedConfig.historianApi = true;
     }

@@ -17,7 +17,7 @@ ui.throttle("resize", "throttled-resize");
 export async function initialize(id: string, version: resources.ICommit, token: string, config: any) {
     const host = new ui.BrowserContainerHost();
 
-    socketStorage.registerAsDefault(document.location.origin, config.blobStorageUrl, config.owner, config.repository);
+    socketStorage.registerAsDefault(document.location.origin, config.blobStorageUrl);
 
     // Bootstrap worker service.
     agent.registerWorker(config, "maps");

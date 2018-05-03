@@ -1,6 +1,7 @@
 import { Router } from "express";
 import * as moniker from "moniker";
 import { Provider } from "nconf";
+import { ITenantManager } from "../../api-core";
 import { IAlfredTenant } from "../tenant";
 import * as utils from "../utils";
 import { defaultPartials } from "./partials";
@@ -9,10 +10,8 @@ const defaultSpeed = 50;
 const defaultAuthors = 1;
 const defaultTemplate = "/public/literature/resume.txt";
 
-export function create(config: Provider, appTenants: IAlfredTenant[]) {
+export function create(config: Provider, tenantManager: ITenantManager, appTenants: IAlfredTenant[]) {
     const router: Router = Router();
-
-    const workerConfig = JSON.stringify(config.get("worker"));
 
     function handleResponse(
         response,
@@ -23,21 +22,27 @@ export function create(config: Provider, appTenants: IAlfredTenant[]) {
         template?: string,
         tenantId = appTenants[0].id) {
 
-        const token = utils.getToken(tenantId, id, appTenants);
-
-        response.render(
-            "scribe",
-            {
-                authors,
-                config: workerConfig,
-                fileLoad: !id,
-                id,
-                languages,
-                partials: defaultPartials,
-                speed,
-                template,
-                token,
-                title: "Scribe",
+        const workerConfigP = utils.getConfig(config.get("worker"), tenantManager, tenantId);
+        workerConfigP.then(
+            (workerConfig) => {
+                const token = utils.getToken(tenantId, id, appTenants);
+                response.render(
+                    "scribe",
+                    {
+                        authors,
+                        config: workerConfig,
+                        fileLoad: !id,
+                        id,
+                        languages,
+                        partials: defaultPartials,
+                        speed,
+                        template,
+                        token,
+                        title: "Scribe",
+                    });
+            },
+            (error) => {
+                response.status(400).json(error);
             });
     }
 

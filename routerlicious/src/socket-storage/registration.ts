@@ -1,3 +1,4 @@
+import * as URL from "url-parse";
 import * as socketStorage from ".";
 import * as api from "../api";
 import { IDocumentService } from "../api-core";
@@ -7,13 +8,21 @@ import { Historian } from "../services-client";
 export function createDocumentService(
     deltaUrl: string,
     gitUrl: string,
-    owner: string,
-    repository: string,
     disableCache = false,
     historianApi = true,
     credentials?): IDocumentService {
 
-    const historian = new Historian(gitUrl, historianApi, disableCache, credentials);
+    const parsed = URL(gitUrl);
+
+    // Parse the owner and repository from the git URL
+    const components = parsed.pathname.split("/").filter((component) => component);
+    if (components.length !== 2) {
+        throw new Error(`Invalid Git URL: ${gitUrl}`);
+    }
+    const owner = components[0];
+    const repository = components[1];
+
+    const historian = new Historian(parsed.origin, historianApi, disableCache, credentials);
     const gitManager = new GitManager(historian, gitUrl, owner, repository);
     const deltaStorage = new socketStorage.DeltaStorageService(deltaUrl);
     const service = new socketStorage.DocumentService(deltaUrl, deltaStorage, gitManager);
@@ -24,8 +33,6 @@ export function createDocumentService(
 export function registerAsDefault(
     deltaUrl: string,
     gitUrl: string,
-    owner: string,
-    repository: string,
     disableCache = false,
     historianApi = true,
     credentials?) {
@@ -33,8 +40,6 @@ export function registerAsDefault(
     const service = createDocumentService(
         deltaUrl,
         gitUrl,
-        owner,
-        repository,
         disableCache,
         historianApi,
         credentials);

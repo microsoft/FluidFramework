@@ -80,8 +80,6 @@ async function loadDocument(
     socketStorage.registerAsDefault(
         document.location.origin,
         config.blobStorageUrl,
-        config.owner,
-        config.repository,
         disableCache,
         config.historianApi,
         config.credentials);

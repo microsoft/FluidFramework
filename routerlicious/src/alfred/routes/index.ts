@@ -57,7 +57,7 @@ export function create(
         login: login.create(config),
         maps: maps.create(config, tenantManager, appTenants),
         ping: ping.create(),
-        scribe: scribe.create(config, appTenants),
+        scribe: scribe.create(config, tenantManager, appTenants),
         sharedText: sharedText.create(config, tenantManager, mongoManager, producer, appTenants),
         templates: templates.create(config),
         video: video.create(config, tenantManager, appTenants),
