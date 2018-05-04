@@ -1,10 +1,20 @@
 import * as bodyParser from "body-parser";
 import * as express from "express";
 import { Express } from "express";
+import * as morgan from "morgan";
+import split = require("split");
+import * as winston from "winston";
 import * as utils from "../utils";
 import * as api from "./api";
 
-export function create(collectionName: string, mongoManager: utils.MongoManager) {
+/**
+ * Basic stream logging interface for libraries that require a stream to pipe output to (re: Morgan)
+ */
+const stream = split().on("data", (message) => {
+    winston.info(message);
+});
+
+export function create(collectionName: string, mongoManager: utils.MongoManager, loggerFormat: string) {
 
     // Express app configuration
     const app: Express = express();
@@ -15,6 +25,7 @@ export function create(collectionName: string, mongoManager: utils.MongoManager)
     // View engine setup.
     app.set("view engine", "hjs");
 
+    app.use(morgan(loggerFormat, { stream }));
     app.use(bodyParser.json());
     app.use(bodyParser.urlencoded({ extended: false }));
     app.use("/api", api.create(collectionName, mongoManager));

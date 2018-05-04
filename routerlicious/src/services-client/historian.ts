@@ -212,8 +212,6 @@ export class Historian implements IHistorian {
             options.headers.Authorization = this.authorization;
         }
 
-        options.headers["User-Agent"] = "Historian";
-
         // Append cache param if requested
         if (this.disableCache && this.historianApi) {
             options.url = `${options.url}?disableCache`;
