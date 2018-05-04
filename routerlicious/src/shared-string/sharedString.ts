@@ -190,6 +190,20 @@ export class SharedString extends CollaborativeMap {
         return segmentGroup;
     }
 
+    public annotateMarkerNotifyConsensus(marker: MergeTree.Marker, props: MergeTree.PropertySet,
+        callback: (m: MergeTree.Marker) => void) {
+        let id = marker.getId();
+        let annotateMessage: MergeTree.IMergeTreeAnnotateMsg = {
+            combiningOp: { name: "consensus"},
+            relativePos1: { id, before: true },
+            relativePos2: { id },
+            props,
+            type: MergeTree.MergeTreeDeltaType.ANNOTATE,
+        };
+        this.client.annotateMarkerNotifyConsensus(marker, props, callback);
+        this.submitIfAttached(annotateMessage);
+    }
+
     public annotateMarker(props: MergeTree.PropertySet, marker: MergeTree.Marker, op?: MergeTree.ICombiningOp) {
         let id = marker.getId();
         let annotateMessage: MergeTree.IMergeTreeAnnotateMsg = {
