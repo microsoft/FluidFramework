@@ -96,7 +96,7 @@ export class Historian implements git.IHistorian {
     public getRepo(owner: string, repo: string): Promise<any> {
         console.log(`Historian Get Repo: ${this.endpoint} ${owner}/${repo}`);
         return this.get(`/repos/${this.getRepoPath(owner, repo)}`)
-            .catch((error) => error === 400 ? null : Promise.resolve(error));
+            .catch((error) => error === 400 ? null : Promise.reject(error));
     }
 
     public createTag(owner: string, repo: string, tag: git.ICreateTagParams): Promise<git.ITag> {
@@ -192,6 +192,8 @@ export class Historian implements git.IHistorian {
         if (this.authorization) {
             options.headers.Authorization = this.authorization;
         }
+
+        options.headers["User-Agent"] = "Historian";
 
         // Append cache param if requested
         if (this.disableCache && this.historianApi) {
