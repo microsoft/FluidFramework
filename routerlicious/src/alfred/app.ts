@@ -1,12 +1,16 @@
 import * as bodyParser from "body-parser";
+import * as cookieParser from "cookie-parser";
 import * as compression from "compression";
+import * as connectRedis from "connect-redis";
 import * as express from "express";
 import { Express } from "express";
+import * as expressSession from "express-session";
 import * as fs from "fs";
 import * as morgan from "morgan";
 import { Provider } from "nconf";
 import * as passport from "passport";
 import * as path from "path";
+import * as redis from "redis";
 import * as favicon from "serve-favicon";
 import split = require("split");
 import * as expiry from "static-expiry";
@@ -15,6 +19,8 @@ import { ITenantManager } from "../api-core";
 import * as utils from "../utils";
 import * as alfredRoutes from "./routes";
 import { IAlfredTenant } from "./tenant";
+
+const passportOpenIdConnect = require("passport-openidconnect");
 
 // Base endpoint to expose static files at
 const staticFilesEndpoint = "/public";
@@ -65,11 +71,53 @@ export function create(
     mongoManager: utils.MongoManager,
     producer: utils.IProducer) {
 
+    // Create a redis session store.
+    const redisStore = connectRedis(expressSession);
+    const redisHost = config.get("redis:host");
+    const redisPort = config.get("redis:port");
+    const redisPass = config.get("redis:pass");
+    const options: any = { auth_pass: redisPass };
+    if (config.get("redis:tls")) {
+        options.tls = {
+            servername: redisHost,
+        };
+    }
+    const redisClient = redis.createClient(redisPort, redisHost, options);
+    const sessionStore = new redisStore({ client: redisClient });
+
     // Maximum REST request size
     const requestSize = config.get("alfred:restJsonSize");
 
     // Static cache to help map from full to minified files
     const staticMinCache: { [key: string]: string } = {};
+
+    const microsoftConfiguration = config.get("login:microsoft");
+    passport.use(
+        new passportOpenIdConnect.Strategy({
+                authorizationURL: "https://login.microsoftonline.com/organizations/oauth2/v2.0/authorize",
+                callbackURL: "/auth/callback",
+                clientID: microsoftConfiguration.clientId,
+                clientSecret: microsoftConfiguration.secret,
+                issuer: "https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47/v2.0",
+                passReqToCallback: true,
+                skipUserProfile: true,
+                tokenURL: "https://login.microsoftonline.com/organizations/oauth2/v2.0/token",
+            },
+            (token, tokenSecret, profile, cb) => {
+                return cb(null, profile);
+            }
+        )
+    );
+
+    // Right now we simply pass through the entire stored user object to the session storage for that user.
+    // Ideally we should just serialize the oid and retrieve user info back from DB on deserialization.
+    passport.serializeUser((user: any, done) => {
+        done(null, user);
+    });
+
+    passport.deserializeUser((user: any, done) => {
+        done(null, user);
+    });
 
     // Express app configuration
     let app: Express = express();
@@ -85,8 +133,19 @@ export function create(
     app.use(favicon(path.join(__dirname, "../../public", "favicon.ico")));
     // TODO we probably want to switch morgan to use the common format in prod
     app.use(morgan(config.get("logger:morganFormat"), { stream }));
+
+    app.use(cookieParser());
     app.use(bodyParser.json({ limit: requestSize }));
     app.use(bodyParser.urlencoded({ limit: requestSize, extended: false }));
+    app.use(expressSession({
+        resave: true,
+        saveUninitialized: true,
+        secret: "bAq0XuQWqoAZzaAkQT5EXPCHBkeIEZqi",
+        store: sessionStore,
+    }));
+
+    app.use(passport.initialize());
+    app.use(passport.session());
 
     app.use(staticFilesEndpoint, expiry(app, { dir: path.join(__dirname, "../../public") }));
     app.locals.hfurl = () => (value: string) => {
@@ -97,8 +156,16 @@ export function create(
             app.get("env") === "production");
     };
     app.use(staticFilesEndpoint, express.static(path.join(__dirname, "../../public")));
-    app.use(passport.initialize());
-    app.use(passport.session());
+
+    // The below is to check to make sure the session is available (redis could have gone down for instance) and if
+    // not return an error
+    app.use((request, response, next) => {
+        if (!request.session) {
+            return next(new Error("Session not available"));
+        } else {
+            next();     // otherwise continue
+        }
+    });
 
     // bind routes
     const routes = alfredRoutes.create(config, tenantManager, mongoManager, producer, appTenants);
@@ -114,7 +181,6 @@ export function create(
     app.use("/video", routes.video);
     app.use("/youtubeVideo", routes.youtubeVideo);
     app.use("/graph", routes.graph);
-    app.use("/login", routes.login);
     app.use("/ping", routes.ping);
     app.use("/agent", routes.agent);
     app.use(routes.home);
