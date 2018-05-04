@@ -1,11 +1,9 @@
 import { Provider } from "nconf";
-import * as winston from "winston";
+import { getOrCreateRepository } from "../git-storage";
 import * as services from "../services";
 import * as utils from "../utils";
 import { RiddlerRunner } from "./runner";
 import { ITenantDocument } from "./tenantManager";
-import { Historian } from "../services-client";
-import { ICreateRepoParams } from "gitresources";
 
 export class RiddlerResources implements utils.IResources {
     constructor(
@@ -33,15 +31,11 @@ export class RiddlerResourcesFactory implements utils.IResourcesFactory<RiddlerR
         const tenants = config.get("tenantConfig") as any[];
         const upsertP = tenants.map(async (tenant) => {
             await collection.upsert({ _id: tenant._id }, tenant, null);
-            const mgr = new Historian(tenant.storage.url, false, false, tenant.storage.credentials);
-            const repo = await mgr.getRepo(tenant.storage.owner, tenant.storage.repository);
-            if (!repo) {
-                winston.info(
-                    `Creating repo ${tenant.storage.url}/${tenant.storage.owner}/${tenant.storage.repository}`);
-                const createParams: ICreateRepoParams = {
-                    name: tenant.storage.repository,
-                };
-                await mgr.createRepo(tenant.storage.owner, createParams);
+
+            // Skip creating anything with credentials - we assume this is external to us and something we can't
+            // or don't want to automatically create (i.e. GitHub)
+            if (!tenant.storage.credentials) {
+                await getOrCreateRepository(tenant.storage.url, tenant.storage.owner, tenant.storage.repository);
             }
         });
         await Promise.all(upsertP);

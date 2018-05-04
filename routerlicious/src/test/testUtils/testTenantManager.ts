@@ -10,7 +10,7 @@ export class TestTenant implements ITenant {
 
     constructor() {
         const testHistorian = new TestHistorian();
-        this.manager = new GitManager(testHistorian, this.url, this.owner, this.repository);
+        this.manager = new GitManager(testHistorian);
     }
 
     public get gitManager(): GitManager {

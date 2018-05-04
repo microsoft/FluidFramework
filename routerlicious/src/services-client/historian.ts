@@ -13,13 +13,47 @@ function endsWith(value: string, endings: string[]): boolean {
 }
 
 /**
+ * Interface to a generic Git provider
+ */
+export interface IGitService {
+    getBlob(sha: string): Promise<git.IBlob>;
+    createBlob(blob: git.ICreateBlobParams): Promise<git.ICreateBlobResponse>;
+    getContent(path: string, ref: string): Promise<any>;
+    getCommits(sha: string, count: number): Promise<git.ICommitDetails[]>;
+    getCommit(sha: string): Promise<git.ICommit>;
+    createCommit(commit: git.ICreateCommitParams): Promise<git.ICommit>;
+    getRefs(): Promise<git.IRef[]>;
+    getRef(ref: string): Promise<git.IRef>;
+    createRef(params: git.ICreateRefParams): Promise<git.IRef>;
+    updateRef(ref: string, params: git.IPatchRefParams): Promise<git.IRef>;
+    deleteRef(ref: string): Promise<void>;
+    createTag(tag: git.ICreateTagParams): Promise<git.ITag>;
+    getTag(tag: string): Promise<git.ITag>;
+    createTree(tree: git.ICreateTreeParams): Promise<git.ITree>;
+    getTree(sha: string, recursive: boolean): Promise<git.ITree>;
+}
+/**
+ * The Historian extends the git service by providing access to document header information stored in
+ * the repository
+ */
+export interface IHistorian extends IGitService {
+    endpoint: string;
+
+    /**
+     * Retrieves the header for the given document
+     */
+    getHeader(sha: string): Promise<git.IHeader>;
+
+}
+
+/**
  * Implementation of the IHistorian interface that calls out to a REST interface
  */
-export class Historian implements git.IHistorian {
+export class Historian implements IHistorian {
     private authorization: string;
 
     constructor(
-        private endpoint: string,
+        public endpoint: string,
         private historianApi: boolean,
         private disableCache: boolean,
         credentials?) {
@@ -30,102 +64,91 @@ export class Historian implements git.IHistorian {
         }
     }
 
-    public getHeader(owner: string, repo: string, sha: string): Promise<any> {
+    public getHeader(sha: string): Promise<any> {
         if (this.historianApi) {
-            return this.get(`/repos/${this.getRepoPath(owner, repo)}/headers/${encodeURIComponent(sha)}`);
+            return this.get(`/headers/${encodeURIComponent(sha)}`);
         } else {
-            return this.getHeaderDirect(owner, repo, sha);
+            return this.getHeaderDirect(sha);
         }
     }
 
-    public getBlob(owner: string, repo: string, sha: string): Promise<git.IBlob> {
-        return this.get<git.IBlob>(`/repos/${this.getRepoPath(owner, repo)}/git/blobs/${encodeURIComponent(sha)}`);
+    public getBlob(sha: string): Promise<git.IBlob> {
+        return this.get<git.IBlob>(`/git/blobs/${encodeURIComponent(sha)}`);
     }
 
-    public createBlob(owner: string, repo: string, blob: git.ICreateBlobParams): Promise<git.ICreateBlobResponse> {
-        return this.post<git.ICreateBlobResponse>(`/repos/${this.getRepoPath(owner, repo)}/git/blobs`, blob);
+    public createBlob(blob: git.ICreateBlobParams): Promise<git.ICreateBlobResponse> {
+        return this.post<git.ICreateBlobResponse>(`/git/blobs`, blob);
     }
 
-    public getContent(owner: string, repo: string, path: string, ref: string): Promise<any> {
+    public getContent(path: string, ref: string): Promise<any> {
         const query = querystring.stringify({ ref });
-        return this.get(`/repos/${this.getRepoPath(owner, repo)}/contents/${path}?${query}`);
+        return this.get(`/contents/${path}?${query}`);
     }
 
-    public getCommits(owner: string, repo: string, sha: string, count: number): Promise<git.ICommitDetails[]> {
+    public getCommits(sha: string, count: number): Promise<git.ICommitDetails[]> {
         const query = querystring.stringify({
             count,
             sha,
         });
-        return this.get<git.ICommitDetails[]>(`/repos/${this.getRepoPath(owner, repo)}/commits?${query}`)
+        return this.get<git.ICommitDetails[]>(`/commits?${query}`)
             .catch((error) => error === 400 ? [] as git.ICommitDetails[] : Promise.reject<git.ICommitDetails[]>(error));
     }
 
-    public getCommit(owner: string, repo: string, sha: string): Promise<git.ICommit> {
-        return this.get<git.ICommit>(`/repos/${this.getRepoPath(owner, repo)}/git/commits/${encodeURIComponent(sha)}`);
+    public getCommit(sha: string): Promise<git.ICommit> {
+        return this.get<git.ICommit>(`/git/commits/${encodeURIComponent(sha)}`);
     }
 
-    public createCommit(owner: string, repo: string, commit: git.ICreateCommitParams): Promise<git.ICommit> {
-        return this.post<git.ICommit>(`/repos/${this.getRepoPath(owner, repo)}/git/commits`, commit);
+    public createCommit(commit: git.ICreateCommitParams): Promise<git.ICommit> {
+        return this.post<git.ICommit>(`/git/commits`, commit);
     }
 
-    public getRefs(owner: string, repo: string): Promise<git.IRef[]> {
-        return this.get(`/repos/${this.getRepoPath(owner, repo)}/git/refs`);
+    public getRefs(): Promise<git.IRef[]> {
+        return this.get(`/git/refs`);
     }
 
-    public getRef(owner: string, repo: string, ref: string): Promise<git.IRef> {
-        return this.get(`/repos/${this.getRepoPath(owner, repo)}/git/refs/${ref}`);
+    public getRef(ref: string): Promise<git.IRef> {
+        return this.get(`/git/refs/${ref}`);
     }
 
-    public createRef(owner: string, repo: string, params: git.ICreateRefParams): Promise<git.IRef> {
-        return this.post(`/repos/${this.getRepoPath(owner, repo)}/git/refs`, params);
+    public createRef(params: git.ICreateRefParams): Promise<git.IRef> {
+        return this.post(`/git/refs`, params);
     }
 
-    public updateRef(owner: string, repo: string, ref: string, params: git.IPatchRefParams): Promise<git.IRef> {
-        return this.patch(`/repos/${this.getRepoPath(owner, repo)}/git/refs/${ref}`, params);
+    public updateRef(ref: string, params: git.IPatchRefParams): Promise<git.IRef> {
+        return this.patch(`/git/refs/${ref}`, params);
     }
 
-    public async deleteRef(owner: string, repo: string, ref: string): Promise<void> {
-        await this.delete(`/repos/${this.getRepoPath(owner, repo)}/git/refs/${ref}`);
+    public async deleteRef(ref: string): Promise<void> {
+        await this.delete(`/git/refs/${ref}`);
     }
 
-    public createRepo(owner: string, repo: git.ICreateRepoParams): Promise<any> {
-        console.log(`Historian Create Repo: ${this.endpoint} ${owner}/${repo.name}`);
-        return this.post(`/${owner}/repos`, repo);
+    public createTag(tag: git.ICreateTagParams): Promise<git.ITag> {
+        return this.post(`/git/tags`, tag);
     }
 
-    public getRepo(owner: string, repo: string): Promise<any> {
-        console.log(`Historian Get Repo: ${this.endpoint} ${owner}/${repo}`);
-        return this.get(`/repos/${this.getRepoPath(owner, repo)}`)
-            .catch((error) => error === 400 ? null : Promise.reject(error));
+    public getTag(tag: string): Promise<git.ITag> {
+        return this.get(`/git/tags/${tag}`);
     }
 
-    public createTag(owner: string, repo: string, tag: git.ICreateTagParams): Promise<git.ITag> {
-        return this.post(`/repos/${this.getRepoPath(owner, repo)}/git/tags`, tag);
+    public createTree(tree: git.ICreateTreeParams): Promise<git.ITree> {
+        return this.post<git.ITree>(`/git/trees`, tree);
     }
 
-    public getTag(owner: string, repo: string, tag: string): Promise<git.ITag> {
-        return this.get(`/repos/${this.getRepoPath(owner, repo)}/git/tags/${tag}`);
-    }
-
-    public createTree(owner: string, repo: string, tree: git.ICreateTreeParams): Promise<git.ITree> {
-        return this.post<git.ITree>(`/repos/${this.getRepoPath(owner, repo)}/git/trees`, tree);
-    }
-
-    public getTree(owner: string, repo: string, sha: string, recursive: boolean): Promise<git.ITree> {
+    public getTree(sha: string, recursive: boolean): Promise<git.ITree> {
         const query = querystring.stringify({ recursive: recursive ? 1 : 0 });
         return this.get<git.ITree>(
-            `/repos/${this.getRepoPath(owner, repo)}/git/trees/${encodeURIComponent(sha)}?${query}`);
+            `/git/trees/${encodeURIComponent(sha)}?${query}`);
     }
 
-    private async getHeaderDirect(owner: string, repo: string, sha: string): Promise<git.IHeader> {
-        const tree = await this.getTree(owner, repo, sha, true) as any;
+    private async getHeaderDirect(sha: string): Promise<git.IHeader> {
+        const tree = await this.getTree(sha, true) as any;
 
         const includeBlobs = [".attributes", ".messages", "header"];
 
         const blobsP: Array<Promise<git.IBlob>> = [];
         for (const entry of tree.tree) {
             if (entry.type === "blob" && endsWith(entry.path, includeBlobs)) {
-                const blobP = this.getBlob(owner, repo, entry.sha);
+                const blobP = this.getBlob(entry.sha);
                 blobsP.push(blobP);
             }
         }
@@ -135,10 +158,6 @@ export class Historian implements git.IHistorian {
             blobs,
             tree,
         };
-    }
-
-    private getRepoPath(owner: string, repo: string): string {
-        return `${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`;
     }
 
     private get<T>(url: string): Promise<T> {

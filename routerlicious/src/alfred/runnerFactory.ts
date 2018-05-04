@@ -61,7 +61,7 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             true);
 
         // Manager to query riddler for tenant information
-        const tenantManager = new services.TenantManager(authEndpoint);
+        const tenantManager = new services.TenantManager(authEndpoint, config.get("worker:blobStorageUrl"));
 
         // Tenants attached to the apps this service exposes
         const appTenants = (config.get("tenantConfig") as any[]).map((tenant) => ({ id: tenant._id, key: tenant.key }));
