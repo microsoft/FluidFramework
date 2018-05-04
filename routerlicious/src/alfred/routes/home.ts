@@ -15,22 +15,26 @@ export function create(config: Provider): Router {
         response.render("home", { partials: defaultPartials, title: "Routerlicious" });
     });
 
-    router.get("/login",
-    passport.authenticate("openidconnect", {
-        scope: [
-            "profile",
-            "email",
-        ],
-    }));
+    /**
+     * App login routes
+     */
+    router.get(
+        "/login",
+        passport.authenticate("openidconnect", {
+            scope: [
+                "profile",
+                "email",
+            ],
+        },
+    ));
 
     router.get(
         "/auth/callback",
         passport.authenticate("openidconnect", {
             failureRedirect: "/login",
-        }),
-        (request, response, next) => {
-            response.redirect("/");
-        });
+            successRedirect: "/",
+        },
+    ));
 
     return router;
 }

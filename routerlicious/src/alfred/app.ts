@@ -1,7 +1,7 @@
 import * as bodyParser from "body-parser";
-import * as cookieParser from "cookie-parser";
 import * as compression from "compression";
 import * as connectRedis from "connect-redis";
+import * as cookieParser from "cookie-parser";
 import * as express from "express";
 import { Express } from "express";
 import * as expressSession from "express-session";
@@ -105,8 +105,8 @@ export function create(
             },
             (token, tokenSecret, profile, cb) => {
                 return cb(null, profile);
-            }
-        )
+            },
+        ),
     );
 
     // Right now we simply pass through the entire stored user object to the session storage for that user.
@@ -176,6 +176,7 @@ export function create(
     app.use("/sharedText", routes.sharedText);
     app.use("/cell", routes.cell);
     app.use("/scribe", routes.scribe);
+    app.use("signup", routes.singUp);
     app.use("/intelligence", routes.intelligence);
     app.use("/democreator", routes.demoCreator);
     app.use("/video", routes.video);
