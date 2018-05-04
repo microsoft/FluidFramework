@@ -9,6 +9,7 @@ import * as fs from "fs";
 import * as morgan from "morgan";
 import { Provider } from "nconf";
 import * as passport from "passport";
+import * as passportOpenIdConnect from "passport-openidconnect";
 import * as path from "path";
 import * as redis from "redis";
 import * as favicon from "serve-favicon";
@@ -19,8 +20,6 @@ import { ITenantManager } from "../api-core";
 import * as utils from "../utils";
 import * as alfredRoutes from "./routes";
 import { IAlfredTenant } from "./tenant";
-
-const passportOpenIdConnect = require("passport-openidconnect");
 
 // Base endpoint to expose static files at
 const staticFilesEndpoint = "/public";

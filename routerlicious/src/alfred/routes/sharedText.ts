@@ -1,3 +1,4 @@
+import * as ensureAuth from "connect-ensure-login";
 import { Router } from "express";
 import { Provider } from "nconf";
 import * as path from "path";
@@ -21,12 +22,13 @@ export function create(
     appTenants: IAlfredTenant[]): Router {
 
     const router: Router = Router();
+    const ensureLoggedIn = ensureAuth.ensureLoggedIn;
     const documentsCollectionName = config.get("mongo:collectionNames:documents");
 
     /**
      * Loads count number of latest commits.
      */
-    router.get("/:tenantId?/:id/commits", (request, response, next) => {
+    router.get("/:tenantId?/:id/commits", ensureLoggedIn(), (request, response, next) => {
         const tenantId = request.params.tenantId || appTenants[0].id;
 
         const versionsP = storage.getVersions(tenantManager, tenantId, request.params.id, 30);
@@ -50,7 +52,7 @@ export function create(
     /**
      * Loading of a specific version of shared text.
      */
-    router.get("/:tenantId?/:id/commit", async (request, response, next) => {
+    router.get("/:tenantId?/:id/commit", ensureLoggedIn(), async (request, response, next) => {
         const tenantId = request.params.tenantId || appTenants[0].id;
 
         const disableCache = "disableCache" in request.query;
@@ -89,7 +91,7 @@ export function create(
         });
     });
 
-    router.post("/:tenantId?/:id/fork", (request, response, next) => {
+    router.post("/:tenantId?/:id/fork", ensureLoggedIn(), (request, response, next) => {
         const tenantId = request.params.tenantId || appTenants[0].id;
 
         const forkP = storage.createFork(
@@ -111,7 +113,7 @@ export function create(
     /**
      * Loading of a specific shared text.
      */
-    router.get("/:tenantId?/:id", async (request, response, next) => {
+    router.get("/:tenantId?/:id", ensureLoggedIn(), async (request, response, next) => {
         const disableCache = "disableCache" in request.query;
         const direct = "direct" in request.query;
 

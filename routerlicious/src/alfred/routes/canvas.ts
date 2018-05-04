@@ -1,3 +1,4 @@
+import * as ensureAuth from "connect-ensure-login";
 import { Router } from "express";
 import { Provider } from "nconf";
 import { ITenantManager } from "../../api-core";
@@ -8,11 +9,12 @@ import { defaultPartials } from "./partials";
 
 export function create(config: Provider, tenantManager: ITenantManager, appTenants: IAlfredTenant[]): Router {
     const router: Router = Router();
+    const ensureLoggedIn = ensureAuth.ensureLoggedIn;
 
     /**
      * Loading of a specific collaborative map
      */
-    router.get("/:tenantId?/:id", async (request, response, next) => {
+    router.get("/:tenantId?/:id", ensureLoggedIn(), async (request, response, next) => {
         const tenantId = request.params.tenantId || appTenants[0].id;
 
         const workerConfigP = utils.getConfig(config.get("worker"), tenantManager, tenantId);

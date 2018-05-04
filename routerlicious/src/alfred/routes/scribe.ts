@@ -1,3 +1,4 @@
+import * as ensureAuth from "connect-ensure-login";
 import { Router } from "express";
 import * as moniker from "moniker";
 import { Provider } from "nconf";
@@ -12,6 +13,7 @@ const defaultTemplate = "/public/literature/resume.txt";
 
 export function create(config: Provider, tenantManager: ITenantManager, appTenants: IAlfredTenant[]) {
     const router: Router = Router();
+    const ensureLoggedIn = ensureAuth.ensureLoggedIn;
 
     function handleResponse(
         response,
@@ -49,14 +51,14 @@ export function create(config: Provider, tenantManager: ITenantManager, appTenan
     /**
      * Script entry point root
      */
-    router.get("/", (request, response, next) => {
+    router.get("/", ensureLoggedIn(), (request, response, next) => {
         handleResponse(response);
     });
 
     /**
      * Script entry point root
      */
-    router.get("/demo", (request, response, next) => {
+    router.get("/demo", ensureLoggedIn(), (request, response, next) => {
         const speed = Number.parseFloat(request.query.speed) || defaultSpeed;
         const authors = Number.parseFloat(request.query.authors) || defaultAuthors;
         const text = request.query.text || defaultTemplate;

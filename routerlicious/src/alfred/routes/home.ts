@@ -1,12 +1,12 @@
+import * as ensureAuth from "connect-ensure-login";
 import { Router } from "express";
 import { Provider } from "nconf";
 import * as passport from "passport";
 import { defaultPartials } from "./partials";
 
-let ensureLoggedIn = require("connect-ensure-login").ensureLoggedIn;
-
 export function create(config: Provider): Router {
     const router: Router = Router();
+    const ensureLoggedIn = ensureAuth.ensureLoggedIn;
 
     /**
      * Route to retrieve the home page for the app
@@ -32,7 +32,7 @@ export function create(config: Provider): Router {
         "/auth/callback",
         passport.authenticate("openidconnect", {
             failureRedirect: "/login",
-            successRedirect: "/",
+            successReturnToOrRedirect: "/",
         },
     ));
 
