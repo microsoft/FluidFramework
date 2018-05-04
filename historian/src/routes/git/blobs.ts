@@ -24,7 +24,7 @@ export function create(store: nconf.Provider, tenantService: ITenantService, cac
         return service.getBlob(sha, useCache);
     }
 
-    router.post("/repos/:tenantId/git/blobs", (request, response, next) => {
+    router.post("/repos/:ignored?/:tenantId/git/blobs", (request, response, next) => {
         const blobP = createBlob(request.params.tenantId, request.get("Authorization"), request.body);
         utils.handleResponse(
             blobP,
@@ -36,7 +36,7 @@ export function create(store: nconf.Provider, tenantService: ITenantService, cac
     /**
      * Retrieves the given blob from the repository
      */
-    router.get("/repos/:tenantId/git/blobs/:sha", (request, response, next) => {
+    router.get("/repos/:ignored?/:tenantId/git/blobs/:sha", (request, response, next) => {
         const useCache = !("disableCache" in request.query);
         const blobP = getBlob(request.params.tenantId, request.get("Authorization"), request.params.sha, useCache);
         utils.handleResponse(

@@ -15,7 +15,7 @@ export function create(store: nconf.Provider, tenantService: ITenantService, cac
         return service.getContent(path, ref);
     }
 
-    router.get("/repos/:tenantId/contents/*", (request, response, next) => {
+    router.get("/repos/:ignored?/:tenantId/contents/*", (request, response, next) => {
         const contentP = getContent(
             request.params.tenantId,
             request.get("Authorization"),

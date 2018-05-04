@@ -16,7 +16,7 @@ export function create(store: nconf.Provider, tenantService: ITenantService, cac
         return service.getCommits(sha, count);
     }
 
-    router.get("/repos/:tenantId/commits", (request, response, next) => {
+    router.get("/repos/:ignored?/:tenantId/commits", (request, response, next) => {
         const commitsP = getCommits(
             request.params.tenantId,
             request.get("Authorization"),

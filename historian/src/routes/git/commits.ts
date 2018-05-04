@@ -24,7 +24,7 @@ export function create(store: nconf.Provider, tenantService: ITenantService, cac
         return service.getCommit(sha, useCache);
     }
 
-    router.post("/repos/:tenantId/git/commits", (request, response, next) => {
+    router.post("/repos/:ignored?/:tenantId/git/commits", (request, response, next) => {
         const commitP = createCommit(request.params.tenantId, request.get("Authorization"), request.body);
 
         utils.handleResponse(
@@ -34,7 +34,7 @@ export function create(store: nconf.Provider, tenantService: ITenantService, cac
             201);
     });
 
-    router.get("/repos/:tenantId/git/commits/:sha", (request, response, next) => {
+    router.get("/repos/:ignored?/:tenantId/git/commits/:sha", (request, response, next) => {
         const useCache = !("disableCache" in request.query);
         const commitP = getCommit(request.params.tenantId, request.get("Authorization"), request.params.sha, useCache);
 

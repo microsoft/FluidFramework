@@ -20,7 +20,7 @@ export function create(store: nconf.Provider, tenantService: ITenantService, cac
         return service.getTag(tag);
     }
 
-    router.post("/repos/:tenantId/git/tags", (request, response, next) => {
+    router.post("/repos/:ignored?/:tenantId/git/tags", (request, response, next) => {
         const tagP = createTag(request.params.tenantId, request.get("Authorization"), request.body);
         utils.handleResponse(
             tagP,
@@ -29,7 +29,7 @@ export function create(store: nconf.Provider, tenantService: ITenantService, cac
             201);
     });
 
-    router.get("/repos/:tenantId/git/tags/*", (request, response, next) => {
+    router.get("/repos/:ignored?/:tenantId/git/tags/*", (request, response, next) => {
         const tagP = getTag(request.params.tenantId, request.get("Authorization"), request.params[0]);
         utils.handleResponse(
             tagP,

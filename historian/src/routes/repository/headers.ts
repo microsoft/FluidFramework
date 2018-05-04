@@ -16,7 +16,7 @@ export function create(store: nconf.Provider, tenantService: ITenantService, cac
         return await service.getHeader(sha, useCache);
     }
 
-    router.get("/repos/:tenantId/headers/:sha", (request, response, next) => {
+    router.get("/repos/:ignored?/:tenantId/headers/:sha", (request, response, next) => {
         const useCache = !("disableCache" in request.query);
         const headerP = getHeader(request.params.tenantId, request.get("Authorization"), request.params.sha, useCache);
         utils.handleResponse(headerP, response, useCache);

@@ -25,7 +25,7 @@ export function create(store: nconf.Provider, tenantService: ITenantService, cac
         return service.getTree(sha, recursive, useCache);
     }
 
-    router.post("/repos/:tenantId/git/trees", (request, response, next) => {
+    router.post("/repos/:ignored?/:tenantId/git/trees", (request, response, next) => {
         const treeP = createTree(request.params.tenantId, request.get("Authorization"), request.body);
         utils.handleResponse(
             treeP,
@@ -34,7 +34,7 @@ export function create(store: nconf.Provider, tenantService: ITenantService, cac
             201);
     });
 
-    router.get("/repos/:tenantId/git/trees/:sha", (request, response, next) => {
+    router.get("/repos/:ignored?/:tenantId/git/trees/:sha", (request, response, next) => {
         const useCache = !("disableCache" in request.query);
         const treeP = getTree(
             request.params.tenantId,

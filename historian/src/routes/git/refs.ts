@@ -39,7 +39,7 @@ export function create(store: nconf.Provider, tenantService: ITenantService, cac
         return service.deleteRef(ref);
     }
 
-    router.get("/repos/:tenantId/git/refs", (request, response, next) => {
+    router.get("/repos/:ignored?/:tenantId/git/refs", (request, response, next) => {
         const refsP = getRefs(request.params.tenantId, request.get("Authorization"));
         utils.handleResponse(
             refsP,
@@ -47,7 +47,7 @@ export function create(store: nconf.Provider, tenantService: ITenantService, cac
             false);
     });
 
-    router.get("/repos/:tenantId/git/refs/*", (request, response, next) => {
+    router.get("/repos/:ignored?/:tenantId/git/refs/*", (request, response, next) => {
         const refP = getRef(request.params.tenantId, request.get("Authorization"), request.params[0]);
         utils.handleResponse(
             refP,
@@ -55,7 +55,7 @@ export function create(store: nconf.Provider, tenantService: ITenantService, cac
             false);
     });
 
-    router.post("/repos/:tenantId/git/refs", (request, response, next) => {
+    router.post("/repos/:ignored?/:tenantId/git/refs", (request, response, next) => {
         const refP = createRef(request.params.tenantId, request.get("Authorization"), request.body);
         utils.handleResponse(
             refP,
@@ -64,7 +64,7 @@ export function create(store: nconf.Provider, tenantService: ITenantService, cac
             201);
     });
 
-    router.patch("/repos/:tenantId/git/refs/*", (request, response, next) => {
+    router.patch("/repos/:ignored?/:tenantId/git/refs/*", (request, response, next) => {
         const refP = updateRef(
             request.params.tenantId,
             request.get("Authorization"),
@@ -76,7 +76,7 @@ export function create(store: nconf.Provider, tenantService: ITenantService, cac
             false);
     });
 
-    router.delete("/repos/:tenantId/git/refs/*", (request, response, next) => {
+    router.delete("/repos/:ignored?/:tenantId/git/refs/*", (request, response, next) => {
         const refP = deleteRef(request.params.tenantId, request.get("Authorization"), request.params[0]);
         utils.handleResponse(
             refP,
