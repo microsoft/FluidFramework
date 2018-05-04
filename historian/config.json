@@ -6,6 +6,7 @@
         "level": "info",
         "timestamp": true
     },
+    "riddler": "http://riddler:5000",
     "requestSizeLimit": "1gb",
     "redis": {
         "host": "redis",

@@ -7,8 +7,6 @@ import * as winston from "winston";
 import * as app from "./app";
 import * as services from "./services";
 
-// tslint:disable-next-line:no-var-requires
-const packageDetails = require("../package.json");
 const provider = nconf.argv().env("__" as any).file(path.join(__dirname, "../config.json")).use("memory");
 
 /**
@@ -38,18 +36,15 @@ winston.configure({
 };
 
 // Create services
+const riddlerEndpoint = provider.get("riddler");
+const riddler = new services.RiddlerService(riddlerEndpoint);
+
 const redisConfig = provider.get("redis");
 const redisClient = redis.createClient(redisConfig.port, redisConfig.host);
-
-// Look up in Riddler where to go and then how to access?
-// Currently everything is /repos/:owner/:repo/
-// We might want to go /repos/:tenantId/    -> this will lead to getting the owner/repo/auth from Riddler for
-//                                             the storage provider
-// Then I don't think I need any fancy parsing. And historian APIs just consider the tenantId and owner to be vague
 const cache = new services.RedisCache(redisClient);
-// `Historian/${packageDetails.version}`,
+
 // Create the historian app
-const historian = app.create(provider, cache);
+const historian = app.create(provider, riddler, cache);
 
 /**
  * Get port from environment and store in Express.

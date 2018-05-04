@@ -1,13 +1,32 @@
+import * as git from "@prague/gitresources";
 import { Router } from "express";
 import * as nconf from "nconf";
-import { StorageProvider } from "../../services";
+import { ICache, ITenantService } from "../../services";
 import * as utils from "../utils";
 
-export function create(store: nconf.Provider, provider: StorageProvider): Router {
+export function create(store: nconf.Provider, tenantService: ITenantService, cache: ICache): Router {
     const router: Router = Router();
 
-    router.post(provider.translatePath("/repos/:owner?/:repo/git/trees"), (request, response, next) => {
-        const treeP = provider.gitService.createTree(request.params.owner, request.params.repo, request.body);
+    async function createTree(
+        tenantId: string,
+        authorization: string,
+        params: git.ICreateTreeParams): Promise<git.ITree> {
+        const service = await utils.createGitService(tenantId, authorization, tenantService, cache);
+        return service.createTree(params);
+    }
+
+    async function getTree(
+        tenantId: string,
+        authorization: string,
+        sha: string,
+        recursive: boolean,
+        useCache: boolean): Promise<git.ITree> {
+        const service = await utils.createGitService(tenantId, authorization, tenantService, cache);
+        return service.getTree(sha, recursive, useCache);
+    }
+
+    router.post("/repos/:tenantId/git/trees", (request, response, next) => {
+        const treeP = createTree(request.params.tenantId, request.get("Authorization"), request.body);
         utils.handleResponse(
             treeP,
             response,
@@ -15,11 +34,11 @@ export function create(store: nconf.Provider, provider: StorageProvider): Router
             201);
     });
 
-    router.get(provider.translatePath("/repos/:owner?/:repo/git/trees/:sha"), (request, response, next) => {
+    router.get("/repos/:tenantId/git/trees/:sha", (request, response, next) => {
         const useCache = !("disableCache" in request.query);
-        const treeP = provider.gitService.getTree(
-            request.params.owner,
-            request.params.repo,
+        const treeP = getTree(
+            request.params.tenantId,
+            request.get("Authorization"),
             request.params.sha,
             request.query.recursive === "1",
             useCache);
