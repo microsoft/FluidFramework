@@ -5,7 +5,6 @@ import * as clientServices from "../services-client";
 
 export class Tenant implements api.ITenant {
     public static async Load(config: api.ITenantConfig): Promise<Tenant> {
-        console.log(`Tenant config from DB: ${JSON.stringify(config)}`);
         const historian = new clientServices.Historian(config.storage.url, true, false);
         const gitManager = await getOrCreateRepository(
             historian,
