@@ -40,6 +40,13 @@ data:
             "bucket": "snapshots",
             "restJsonSize": "50mb"
         },
+        "login": {
+            "enabled": true,
+            "microsoft": {
+                "clientId": "3d642166-9884-4463-8248-78961b8c1300",
+                "secret": "IefegJIsumWtD1Of/9AIUWvm6ryR624vgMtKRmcNEsQ="
+            }
+        },
         "deli": {
             "topics": {
                 "receive": "{{ .Values.kafka.topics.rawdeltas }}",
