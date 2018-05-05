@@ -1,4 +1,3 @@
-import * as ensureAuth from "connect-ensure-login";
 import { Router } from "express";
 import * as moniker from "moniker";
 import { Provider } from "nconf";
@@ -11,9 +10,9 @@ const defaultSpeed = 50;
 const defaultAuthors = 1;
 const defaultTemplate = "/public/literature/resume.txt";
 
-export function create(config: Provider, tenantManager: ITenantManager, appTenants: IAlfredTenant[]) {
+export function create(config: Provider, tenantManager: ITenantManager,
+                       appTenants: IAlfredTenant[], ensureLoggedIn: any) {
     const router: Router = Router();
-    const ensureLoggedIn = ensureAuth.ensureLoggedIn;
 
     function handleResponse(
         response,

@@ -1,12 +1,10 @@
-import * as ensureAuth from "connect-ensure-login";
 import { Router } from "express";
 import * as moniker from "moniker";
 import { Provider } from "nconf";
 import { defaultPartials } from "./partials";
 
-export function create(config: Provider): Router {
+export function create(config: Provider, ensureLoggedIn: any): Router {
     const router: Router = Router();
-    const ensureLoggedIn = ensureAuth.ensureLoggedIn;
 
     /**
      * Loading the demo creator page.

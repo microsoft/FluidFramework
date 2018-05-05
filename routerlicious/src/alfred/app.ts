@@ -70,19 +70,25 @@ export function create(
     mongoManager: utils.MongoManager,
     producer: utils.IProducer) {
 
-    // Create a redis session store.
-    const redisStore = connectRedis(expressSession);
-    const redisHost = config.get("redis:host");
-    const redisPort = config.get("redis:port");
-    const redisPass = config.get("redis:pass");
-    const options: any = { auth_pass: redisPass };
-    if (config.get("redis:tls")) {
-        options.tls = {
-            servername: redisHost,
-        };
+    // Authentication is disabled for local run and test. Only use redis when authentication is enabled.
+    let sessionStore: any;
+    if (config.get("login:enabled")) {
+        // Create a redis session store.
+        const redisStore = connectRedis(expressSession);
+        const redisHost = config.get("redis:host");
+        const redisPort = config.get("redis:port");
+        const redisPass = config.get("redis:pass");
+        const options: any = { auth_pass: redisPass };
+        if (config.get("redis:tls")) {
+            options.tls = {
+                servername: redisHost,
+            };
+        }
+        const redisClient = redis.createClient(redisPort, redisHost, options);
+        sessionStore = new redisStore({ client: redisClient });
+    } else {
+        sessionStore = new expressSession.MemoryStore();
     }
-    const redisClient = redis.createClient(redisPort, redisHost, options);
-    const sessionStore = new redisStore({ client: redisClient });
 
     // Maximum REST request size
     const requestSize = config.get("alfred:restJsonSize");

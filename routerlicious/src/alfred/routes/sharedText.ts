@@ -1,4 +1,3 @@
-import * as ensureAuth from "connect-ensure-login";
 import { Router } from "express";
 import { Provider } from "nconf";
 import * as path from "path";
@@ -19,10 +18,10 @@ export function create(
     tenantManager: ITenantManager,
     mongoManager: utils.MongoManager,
     producer: utils.IProducer,
-    appTenants: IAlfredTenant[]): Router {
+    appTenants: IAlfredTenant[],
+    ensureLoggedIn: any): Router {
 
     const router: Router = Router();
-    const ensureLoggedIn = ensureAuth.ensureLoggedIn;
     const documentsCollectionName = config.get("mongo:collectionNames:documents");
 
     /**
