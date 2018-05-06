@@ -3,18 +3,18 @@ import * as jwt from "jsonwebtoken";
 
 // For local development
 // const routerlicious = "http://localhost:3000";
-// const historian = "http://localhost:3001/prague/prague";
-// const tenantId = "git";
+// const historian = "http://localhost:3001";
+// const tenantId = "prague";
 // const secret = "43cfc3fbf04a97c0921fd23ff10f9e4b";
 const routerlicious = "https://alfred.wu2.prague.office-int.com";
-const historian = "https://historian.wu2.prague.office-int.com/prague/jolly-agnesi";
+const historian = "https://historian.wu2.prague.office-int.com";
 const tenantId = "jolly-agnesi";
 const secret = "29b90e6eaee0fc50fb508bbb81eef641";
 
 const documentId = "test-flowview-05022018-1";
 
 // Register endpoint connection
-prague.socketStorage.registerAsDefault(routerlicious, historian);
+prague.socketStorage.registerAsDefault(routerlicious, historian, tenantId);
 
 async function run(id: string): Promise<void> {
     const token = jwt.sign(
