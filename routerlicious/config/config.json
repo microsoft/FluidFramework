@@ -151,12 +151,12 @@
     },
     "tenantConfig": [
         {
-            "_id": "git",
+            "_id": "prague",
             "key": "43cfc3fbf04a97c0921fd23ff10f9e4b",
             "storage": {
                 "url": "http://gitrest:3000",
                 "owner": "prague",
-                "repository": "git"
+                "repository": "prague"
             },
             "isDefault": true
         },

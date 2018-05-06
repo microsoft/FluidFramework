@@ -19,33 +19,7 @@ data:
             "timestamp": false
         },
         "requestSizeLimit": "1gb",
-        "storageProviders": [
-                {
-                    "type": "git",
-                    "url": "http://{{ template "gitrest.fullname" . }}",
-                    "name": "git",
-                    "isDefault": true,
-                    "defaultOwner": "prague"
-                },
-                {
-                    "type": "cobalt",
-                    "url": "http://{{ template "cobalt.fullname" . }}",
-                    "name": "cobalt",
-                    "isDefault": false,
-                    "defaultOwner": "prague"
-                },
-                {
-                    "type": "git",
-                    "url": "https://api.github.com",
-                    "credentials": {
-                        "user": "praguegit",
-                        "password": "8d043006d0a2704d4dd9972f848f1982026672a1"
-                    },
-                    "name": "github",
-                    "isDefault": false,
-                    "defaultOwner": "kurtb"
-                }
-        ],
+        "riddler": "{{ .Values.historian.riddler }}"
         "redis": {
             "host": "{{ .Values.historian.redis }}",
             "port": 6379
