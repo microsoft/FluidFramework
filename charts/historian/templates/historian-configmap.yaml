@@ -19,7 +19,7 @@ data:
             "timestamp": false
         },
         "requestSizeLimit": "1gb",
-        "riddler": "{{ .Values.historian.riddler }}"
+        "riddler": "{{ .Values.historian.riddler }}",
         "redis": {
             "host": "{{ .Values.historian.redis }}",
             "port": 6379
