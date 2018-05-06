@@ -22,6 +22,7 @@
     "nconf": "^0.8.4",
     "redis": "^2.8.0",
     "request": "^2.85.0",
+    "request-promise-native": "^1.0.5",
     "split": "^1.0.0",
     "winston": "^2.4.2"
   },
@@ -35,6 +36,7 @@
     "@types/nconf": "0.0.34",
     "@types/redis": "^2.8.6",
     "@types/request": "^2.47.0",
+    "@types/request-promise-native": "^1.0.14",
     "@types/supertest": "^2.0.4",
     "@types/winston": "^2.3.9",
     "async": "^2.5.0",

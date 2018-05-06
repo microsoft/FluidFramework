@@ -1,10 +1,9 @@
 import { Router } from "express";
 import * as nconf from "nconf";
-import { StorageProvider } from "../services";
+import { ICache, ITenantService } from "../services";
 import * as blobs from "./git/blobs";
 import * as commits from "./git/commits";
 import * as refs from "./git/refs";
-import * as repos from "./git/repos";
 import * as tags from "./git/tags";
 import * as trees from "./git/trees";
 import * as repositoryCommits from "./repository/commits";
@@ -16,7 +15,6 @@ export interface IRoutes {
         blobs: Router;
         commits: Router;
         refs: Router;
-        repos: Router;
         tags: Router;
         trees: Router;
     };
@@ -27,23 +25,19 @@ export interface IRoutes {
     };
 }
 
-export function create(
-    store: nconf.Provider,
-    provider: StorageProvider): IRoutes {
-
+export function create(store: nconf.Provider, tenantService: ITenantService, cache: ICache): IRoutes {
     return {
         git: {
-            blobs: blobs.create(store, provider),
-            commits: commits.create(store, provider),
-            refs: refs.create(store, provider),
-            repos: repos.create(store, provider),
-            tags: tags.create(store, provider),
-            trees: trees.create(store, provider),
+            blobs: blobs.create(store, tenantService, cache),
+            commits: commits.create(store, tenantService, cache),
+            refs: refs.create(store, tenantService, cache),
+            tags: tags.create(store, tenantService, cache),
+            trees: trees.create(store, tenantService, cache),
         },
         repository: {
-            commits: repositoryCommits.create(store, provider),
-            contents: contents.create(store, provider),
-            headers: headers.create(store, provider),
+            commits: repositoryCommits.create(store, tenantService, cache),
+            contents: contents.create(store, tenantService, cache),
+            headers: headers.create(store, tenantService, cache),
         },
     };
 }

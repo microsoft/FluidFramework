@@ -8,7 +8,7 @@ import * as nconf from "nconf";
 import split = require("split");
 import * as winston from "winston";
 import * as routes from "./routes";
-import { StorageProvider } from "./services";
+import { ICache, ITenantService } from "./services";
 
 /**
  * Basic stream logging interface for libraries that require a stream to pipe output to
@@ -17,7 +17,7 @@ const stream = split().on("data", (message) => {
   winston.info(message);
 });
 
-export function create(config: nconf.Provider, storageProviders: StorageProvider[]) {
+export function create(config: nconf.Provider, tenantService: ITenantService, cache: ICache) {
     // Express app configuration
     const app: Express = express();
 
@@ -31,19 +31,15 @@ export function create(config: nconf.Provider, storageProviders: StorageProvider
     app.use(compression());
     app.use(cors());
 
-    // Create routes for each storage provider
-    for (const storageProvider of storageProviders) {
-        const apiRoutes = routes.create(config, storageProvider);
-        app.use(apiRoutes.git.blobs);
-        app.use(apiRoutes.git.refs);
-        app.use(apiRoutes.git.repos);
-        app.use(apiRoutes.git.tags);
-        app.use(apiRoutes.git.trees);
-        app.use(apiRoutes.git.commits);
-        app.use(apiRoutes.repository.commits);
-        app.use(apiRoutes.repository.contents);
-        app.use(apiRoutes.repository.headers);
-    }
+    const apiRoutes = routes.create(config, tenantService, cache);
+    app.use(apiRoutes.git.blobs);
+    app.use(apiRoutes.git.refs);
+    app.use(apiRoutes.git.tags);
+    app.use(apiRoutes.git.trees);
+    app.use(apiRoutes.git.commits);
+    app.use(apiRoutes.repository.commits);
+    app.use(apiRoutes.repository.contents);
+    app.use(apiRoutes.repository.headers);
 
     // catch 404 and forward to error handler
     app.use((req, res, next) => {

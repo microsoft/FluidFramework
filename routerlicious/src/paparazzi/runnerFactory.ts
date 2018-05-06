@@ -25,7 +25,7 @@ export class PaparazziResourcesFactory implements utils.IResourcesFactory<Papara
 
         // Database connection
         const authEndpoint = config.get("auth:endpoint");
-        const tenantManager = new TenantManager(authEndpoint);
+        const tenantManager = new TenantManager(authEndpoint, config.get("worker:blobStorageUrl"));
 
         return new PaparazziResources(
             alfredUrl,

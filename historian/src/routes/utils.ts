@@ -1,4 +1,5 @@
 import { Response } from "express";
+import { ICache, ITenantService, RestGitService } from "../services";
 
 /**
  * Helper function to handle a promise that should be returned to the user
@@ -21,4 +22,16 @@ export function handleResponse<T>(
         (error) => {
             response.status(400).json(error);
         });
+}
+
+export async function createGitService(
+    tenantId: string,
+    token: string,
+    tenantService: ITenantService,
+    cache: ICache): Promise<RestGitService> {
+
+    const details = await tenantService.getTenant(tenantId, token);
+    const service = new RestGitService(details.storage, cache);
+
+    return service;
 }

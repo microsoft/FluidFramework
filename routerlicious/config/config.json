@@ -135,7 +135,7 @@
         "alfredUrl": "http://alfred:3000",
         "serverUrl": "http://localhost:3000",
         "url": "http://localhost:4000",
-        "blobStorageUrl": "http://localhost:3001",
+        "blobStorageUrl": "http://historian:3000",
         "scriptUrl": "http://localhost:9000/agents/",
         "repository": "prague",
         "storageBucket": "snapshots",
@@ -154,9 +154,9 @@
             "_id": "git",
             "key": "43cfc3fbf04a97c0921fd23ff10f9e4b",
             "storage": {
-                "url": "http://historian:3000",
+                "url": "http://gitrest:3000",
                 "owner": "prague",
-                "repository": "prague"
+                "repository": "git"
             },
             "isDefault": true
         },
@@ -164,7 +164,7 @@
             "_id": "github",
             "key": "0bea3f87c186991a69245a29dc3f61d2",
             "storage": {
-                "url": "http://historian:3000/github",
+                "url": "https://api.github.com",
                 "owner": "kurtb",
                 "repository": "praguedocs",
                 "direct": "https://api.github.com",
@@ -178,9 +178,9 @@
             "_id": "cobalt",
             "key": "0e3c439e9ba63d85936c7e7e9c79478c",
             "storage": {
-                "url": "http://historian:3000/cobalt",
+                "url": "http://cobalt",
                 "owner": "prague",
-                "repository": "prague"
+                "repository": "cobalt"
             }
         }
     ],
