@@ -252,9 +252,6 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
     protected onConnect(pending: api.IObjectMessage[]) {
         debug(`Map ${this.id} is now connected`);
 
-        const something = Object.create(null);
-        this.valueTypes.get("kolo").name = something.anything;
-
         // Filter the nonAck and pending mesages into a map set and a content set.
         const mapMessages: api.IObjectMessage[] = [];
         const contentMessages: api.IObjectMessage[] = [];
