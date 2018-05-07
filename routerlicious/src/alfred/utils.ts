@@ -14,18 +14,15 @@ export async function getConfig(
 
     // Make a copy of the config to avoid destructive modifications to the original
     const updatedConfig = _.cloneDeep(config);
-
-    const tenant = await tenantManager.getTenant(tenantId);
-    updatedConfig.owner = tenant.storage.owner;
-    updatedConfig.repository = tenant.storage.repository;
+    updatedConfig.tenantId = tenantId;
 
     if (direct) {
+        const tenant = await tenantManager.getTenant(tenantId);
         updatedConfig.credentials = tenant.storage.credentials;
         updatedConfig.blobStorageUrl = `${tenant.storage.direct}/${tenant.storage.owner}/${tenant.storage.repository}`;
         updatedConfig.historianApi = false;
     } else {
-        const url = `${tenant.storage.url}/${tenant.storage.owner}/${tenant.storage.repository}`;
-        updatedConfig.blobStorageUrl = url.replace("historian:3000", "localhost:3001");
+        updatedConfig.blobStorageUrl = updatedConfig.blobStorageUrl.replace("historian:3000", "localhost:3001");
         updatedConfig.historianApi = true;
     }
 

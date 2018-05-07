@@ -146,6 +146,20 @@ export class SharedString extends CollaborativeMap {
         this.submitIfAttached(removeMessage);
     }
 
+    public removeNest(nestStart: MergeTree.Marker, nestEnd: MergeTree.Marker) {
+        let start = this.client.mergeTree.getOffset(nestStart,
+            MergeTree.UniversalSequenceNumber, this.client.getClientId());
+        let end = nestEnd.cachedLength + this.client.mergeTree.getOffset(nestEnd,
+            MergeTree.UniversalSequenceNumber, this.client.getClientId());
+        const removeMessage: MergeTree.IMergeTreeRemoveMsg = {
+            pos1: start,
+            pos2: end,
+            type: MergeTree.MergeTreeDeltaType.REMOVE,
+        };
+        this.client.removeSegmentLocal(start, end);
+        this.submitIfAttached(removeMessage);
+    }
+
     public removeText(start: number, end: number) {
         const removeMessage: MergeTree.IMergeTreeRemoveMsg = {
             pos1: start,
@@ -174,6 +188,36 @@ export class SharedString extends CollaborativeMap {
         let segmentGroup = this.client.localTransaction(groupOp);
         this.submitIfAttached(groupOp);
         return segmentGroup;
+    }
+
+    public annotateMarkerNotifyConsensus(marker: MergeTree.Marker, props: MergeTree.PropertySet,
+        callback: (m: MergeTree.Marker) => void) {
+        let id = marker.getId();
+        let annotateMessage: MergeTree.IMergeTreeAnnotateMsg = {
+            combiningOp: { name: "consensus"},
+            relativePos1: { id, before: true },
+            relativePos2: { id },
+            props,
+            type: MergeTree.MergeTreeDeltaType.ANNOTATE,
+        };
+        this.client.annotateMarkerNotifyConsensus(marker, props, callback);
+        this.submitIfAttached(annotateMessage);
+    }
+
+    public annotateMarker(props: MergeTree.PropertySet, marker: MergeTree.Marker, op?: MergeTree.ICombiningOp) {
+        let id = marker.getId();
+        let annotateMessage: MergeTree.IMergeTreeAnnotateMsg = {
+            relativePos1: { id, before: true },
+            relativePos2: { id },
+            props,
+            type: MergeTree.MergeTreeDeltaType.ANNOTATE,
+        };
+
+        if (op) {
+            annotateMessage.combiningOp = op;
+        }
+        this.client.annotateMarker(props, marker, op);
+        this.submitIfAttached(annotateMessage);
     }
 
     public annotateRange(props: MergeTree.PropertySet, start: number, end: number, op?: MergeTree.ICombiningOp) {

@@ -28,48 +28,10 @@ data:
                     "orgs": "orgCollection"
                 }
             },
-            "endpoints": {
-                "tenantsUrl": "{{ .Values.endpoints.tenantsUrl }}"
-            },
             "riddlerUrl": "{{ .Values.endpoints.riddlerUrl }}",
             "gitUrl": "{{ .Values.endpoints.gitUrl }}",
             "cobaltUrl": "{{ .Values.endpoints.cobaltUrl }}",
-            "port": 3000,
-            "tenantConfig": [
-                {
-                    "name": "git",
-                    "storage": {
-                        "url": "{{ .Values.endpoints.historianUrl }}",
-                        "publicUrl": "{{ .Values.endpoints.historianUrl }}",
-                        "owner": "prague",
-                        "repository": "prague"
-                    },
-                    "isDefault": true
-                },
-                {
-                    "name": "github",
-                    "storage": {
-                        "url": "{{ .Values.endpoints.historianUrl }}/github",
-                        "publicUrl": "{{ .Values.endpoints.historianUrl }}/github",
-                        "owner": "",
-                        "repository": "",
-                        "direct": "https://api.github.com",
-                        "credentials": {
-                            "user": "",
-                            "password": ""
-                        }
-                    }
-                },
-                {
-                    "name": "cobalt",
-                    "storage": {
-                        "url": "{{ .Values.endpoints.historianUrl }}/cobalt",
-                        "publicUrl": "{{ .Values.endpoints.historianUrl }}/cobalt",
-                        "owner": "prague",
-                        "repository": "prague"
-                    }
-                }
-            ]
+            "port": 3000
         },
         "aad": {
             "creds": {

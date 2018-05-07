@@ -178,17 +178,26 @@ data:
                 "_id": "git",
                 "key": "43cfc3fbf04a97c0921fd23ff10f9e4b",
                 "storage": {
-                    "url": "{{ .Values.historian.externalUrl }}",
+                    "url": "{{ .Values.gitrest.url }}",
                     "owner": "prague",
                     "repository": "prague"
                 },
                 "isDefault": true
             },
             {
+                "_id": "prague",
+                "key": "43cfc3fbf04a97c0921fd23ff10f9e4b",
+                "storage": {
+                    "url": "{{ .Values.gitrest.url }}",
+                    "owner": "prague",
+                    "repository": "prague"
+                }
+            },
+            {
                 "_id": "github",
                 "key": "0bea3f87c186991a69245a29dc3f61d2",
                 "storage": {
-                    "url": "{{ .Values.historian.externalUrl }}/github",
+                    "url": "https://api.github.com",
                     "owner": "kurtb",
                     "repository": "praguedocs",
                     "direct": "https://api.github.com",
@@ -202,7 +211,7 @@ data:
                 "_id": "cobalt",
                 "key": "0e3c439e9ba63d85936c7e7e9c79478c",
                 "storage": {
-                    "url": "{{ .Values.historian.externalUrl }}/cobalt",
+                    "url": "{{ .Values.cobalt.url }}",
                     "owner": "prague",
                     "repository": "prague"
                 }

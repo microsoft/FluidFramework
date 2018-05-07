@@ -1,14 +1,13 @@
 import * as React from "react";
+import { ITenant } from "../../definitions";
 import { TenantManager } from "./TenantManager";
 
 export interface ITenantsProps {
-    data: any;
-    endpoint: string;
-    tenantConfig: any;
+    data: ITenant[];
 }
 
 export interface ITenantsState {
-    data: any;
+    data: ITenant[];
 }
 
 export class Tenants extends React.Component<ITenantsProps, ITenantsState> {
@@ -19,12 +18,11 @@ export class Tenants extends React.Component<ITenantsProps, ITenantsState> {
         };
     }
 
-    render() {
-        const data = this.state.data.list;
+    public render() {
         return (
           <div>
             <h2 className="tenant-list-header">List of Registered Tenants</h2>
-            <TenantManager data={data} endpoint={this.props.endpoint} tenantConfig={this.props.tenantConfig}/>
+            <TenantManager data={this.state.data} />
           </div>
         );
     }

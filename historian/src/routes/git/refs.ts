@@ -1,31 +1,62 @@
+import * as git from "@prague/gitresources";
 import { Router } from "express";
 import * as nconf from "nconf";
-import { StorageProvider } from "../../services";
+import { ICache, ITenantService } from "../../services";
 import * as utils from "../utils";
 
-export function create(store: nconf.Provider, provider: StorageProvider): Router {
+export function create(store: nconf.Provider, tenantService: ITenantService, cache: ICache): Router {
     const router: Router = Router();
 
-    router.get(provider.translatePath("/repos/:owner?/:repo/git/refs"), (request, response, next) => {
-        const refsP = provider.gitService.getRefs(request.params.owner, request.params.repo);
+    async function getRefs(tenantId: string, authorization: string): Promise<git.IRef[]> {
+        const service = await utils.createGitService(tenantId, authorization, tenantService, cache);
+        return service.getRefs();
+    }
+
+    async function getRef(tenantId: string, authorization: string, ref: string): Promise<git.IRef> {
+        const service = await utils.createGitService(tenantId, authorization, tenantService, cache);
+        return service.getRef(ref);
+    }
+
+    async function createRef(tenantId: string, authorization: string, params: git.ICreateRefParams): Promise<git.IRef> {
+        const service = await utils.createGitService(tenantId, authorization, tenantService, cache);
+        return service.createRef(params);
+    }
+
+    async function updateRef(
+        tenantId: string,
+        authorization: string,
+        ref: string,
+        params: git.IPatchRefParams): Promise<git.IRef> {
+        const service = await utils.createGitService(tenantId, authorization, tenantService, cache);
+        return service.updateRef(ref, params);
+    }
+
+    async function deleteRef(
+        tenantId: string,
+        authorization: string,
+        ref: string): Promise<void> {
+        const service = await utils.createGitService(tenantId, authorization, tenantService, cache);
+        return service.deleteRef(ref);
+    }
+
+    router.get("/repos/:ignored?/:tenantId/git/refs", (request, response, next) => {
+        const refsP = getRefs(request.params.tenantId, request.get("Authorization"));
         utils.handleResponse(
             refsP,
             response,
             false);
     });
 
-    router.get(provider.translatePath("/repos/:owner?/:repo/git/refs/*"), (request, response, next) => {
-        const refP = provider.gitService.getRef(request.params.owner, request.params.repo, request.params[0]);
+    router.get("/repos/:ignored?/:tenantId/git/refs/*", (request, response, next) => {
+        const refP = getRef(request.params.tenantId, request.get("Authorization"), request.params[0]);
         utils.handleResponse(
             refP,
             response,
             false);
     });
 
-    router.post(provider.translatePath("/repos/:owner?/:repo/git/refs"), (request, response, next) => {
-        // tslint:disable-next-line
-        console.log(`Post ref: ${request.body}`);
-        const refP = provider.gitService.createRef(request.params.owner, request.params.repo, request.body);
+    router.post("/repos/:ignored?/:tenantId/git/refs", (request, response, next) => {
+        const refP = createRef(request.params.tenantId, request.get("Authorization"), request.body);
         utils.handleResponse(
             refP,
             response,
@@ -33,19 +64,20 @@ export function create(store: nconf.Provider, provider: StorageProvider): Router
             201);
     });
 
-    router.patch(provider.translatePath("/repos/:owner?/:repo/git/refs/*"), (request, response, next) => {
-        const refP = provider.gitService.updateRef(
-            request.params.owner,
-            request.params.repo,
-            request.params[0], request.body);
+    router.patch("/repos/:ignored?/:tenantId/git/refs/*", (request, response, next) => {
+        const refP = updateRef(
+            request.params.tenantId,
+            request.get("Authorization"),
+            request.params[0],
+            request.body);
         utils.handleResponse(
             refP,
             response,
             false);
     });
 
-    router.delete(provider.translatePath("/repos/:owner?/:repo/git/refs/*"), (request, response, next) => {
-        const refP = provider.gitService.deleteRef(request.params.owner, request.params.repo, request.params[0]);
+    router.delete("/repos/:ignored?/:tenantId/git/refs/*", (request, response, next) => {
+        const refP = deleteRef(request.params.tenantId, request.get("Authorization"), request.params[0]);
         utils.handleResponse(
             refP,
             response,

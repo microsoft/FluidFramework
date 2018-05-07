@@ -1464,9 +1464,19 @@ function layoutCell(
         cellLayoutInfo.startPos = getOffset(layoutInfo.flowView, <MergeTree.Marker>nextTable);
         cellLayoutInfo.stackIndex = layoutInfo.stackIndex + 1;
     }
-    cellView.renderOutput = renderFlow(cellLayoutInfo, targetTranslation, defer);
-    if (transferDeferredHeight && (cellView.renderOutput.deferredHeight > 0)) {
-        layoutInfo.deferUntilHeight = cellView.renderOutput.deferredHeight;
+    if (!cellView.emptyCell) {
+        cellView.renderOutput = renderFlow(cellLayoutInfo, targetTranslation, defer);
+        if (transferDeferredHeight && (cellView.renderOutput.deferredHeight > 0)) {
+            layoutInfo.deferUntilHeight = cellView.renderOutput.deferredHeight;
+        }
+    } else {
+        cellView.viewport.vskip(layoutInfo.docContext.cellVspace);
+        // cellView.viewport.vskip(layoutInfo.docContext.pgVspace);
+        cellView.viewport.vskip(layoutInfo.docContext.defaultLineDivHeight);
+        cellView.renderOutput = { deferredHeight: 0, overlayMarkers: [],
+            viewportEndPos: cellLayoutInfo.startPos + 3,
+            viewportStartPos: cellLayoutInfo.startPos,
+        };
     }
     cellView.renderedHeight = cellLayoutInfo.viewport.getLineTop();
     cellView.svgElm = createSVGWrapper(cellRect.width, cellView.renderedHeight);
@@ -4350,7 +4360,7 @@ export class FlowView extends ui.Component {
             console.log("did not find pg to clear");
         }
         let markers = this.client.getModifiedMarkersForOp();
-        if (markers.length>0) {
+        if (markers.length > 0) {
             this.updateTableInfo(changePos);
         }
     }

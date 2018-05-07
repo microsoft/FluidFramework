@@ -17,7 +17,7 @@ ui.throttle("resize", "throttled-resize");
 export async function initialize(id: string, version: resources.ICommit, token: string, config: any) {
     const host = new ui.BrowserContainerHost();
 
-    socketStorage.registerAsDefault(document.location.origin, config.blobStorageUrl);
+    socketStorage.registerAsDefault(document.location.origin, config.blobStorageUrl, config.tenantId);
 
     // Bootstrap worker service.
     agent.registerWorker(config, "maps"); // This appears to need to be "canvas"

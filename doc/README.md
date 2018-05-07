@@ -7,12 +7,13 @@
 The simplest way to get up and running with Prague is to install our npm module and then run against our production service. From there you can choose whether to webpack, browserify, etc...
 
 To get started simply
-* Navigate to our production npm repository https://offnet.visualstudio.com/officenet/_packaging?feed=prague&_a=feed. 
+* Navigate to our production npm repository https://offnet.visualstudio.com/officenet/_packaging?feed=prague&_a=feed
 * Click the "Connect to feed" link
 * Choose "npm"
+* Select the @Release view (this will give versions of the library that work with the production servies)
 * And then follow the steps provided. This involves adding a new line to your project's .npmrc as well as storing credentials to access the private repo on your machine.
 
-The [threejs](./api/examples/threejs) example is setup using the above approach.
+The [sequence, flowview, and threejs](./api/examples) examples are all setup using the above approach.
 
 #### Projects
 
@@ -22,17 +23,41 @@ The core Prague project. This contains the client side code you need to run Prag
 You can choose to run against our production endpoints or run the service yourself locally. See the [Routerlicious README](../routerlicious) for more information
 
 If using WebPack you will need to update your config to exclude certain node modules. An example webpack config is given
-below showing how to exclude fs from node. We are working to break these dependencies.
+below showing how to exclude these modules. We are working to break these dependencies. The example also shows how
+to get source map support working for files in @prague/routerlicious.
 
-```
+```javascript
+const path = require('path');
+
 module.exports = {
-    entry: './dist/index.js',
+    entry: './src/index.ts',
+    devtool: 'source-map',
+    module: {
+        rules: [
+            {
+                test: /\.tsx?$/,
+                use: 'ts-loader',
+                exclude: /node_modules/
+            },
+            {
+                test: /\.js$/,
+                use: ["source-map-loader"],
+                enforce: "pre"
+            }
+        ]
+    },
+    resolve: {
+        extensions: [ '.tsx', '.ts', '.js' ]
+    },
     output: {
         filename: 'bundle.js',
         path: path.resolve(__dirname, 'dist')
     },
     node: {
-        fs: 'empty'
+        fs: 'empty',
+        dgram: 'empty',
+        net: 'empty',
+        tls: 'empty'
     }
 };
 ```

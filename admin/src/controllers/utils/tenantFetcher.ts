@@ -1,13 +1,11 @@
 import * as request from "request-promise-native";
+import { ITenantInput } from "../../definitions";
 
-export async function addTenant(url: string, tenant: any): Promise<any> {
+export async function addTenant(url: string, tenant: ITenantInput): Promise<any> {
     const newTenant = await request.post(
         `${url}/api/tenants`,
         {
-            body: {
-                name: tenant.name,
-                storage: tenant.storage,
-            },
+            body: tenant,
             headers: {
                 "Accept": "application/json",
                 "Content-Type": "application/json",

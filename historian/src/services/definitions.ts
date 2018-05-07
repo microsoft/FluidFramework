@@ -13,6 +13,14 @@ export interface ICache {
     set<T>(key: string, value: T): Promise<void>;
 }
 
+export interface ITenantService {
+    /**
+     * Retrieves the storage provider details for the given tenant.
+     * If the provided token is invalid will return a broken promise.
+     */
+    getTenant(tenantId: string, token: string): Promise<ITenant>;
+}
+
 /**
  * Credentials used to access a storage provider
  */
@@ -22,25 +30,25 @@ export interface ICredentials {
     password: string;
 }
 
-/**
- * Interface representing a git storage provider
- */
-export interface IStorageProvider {
-    // The type of provider
-    type: "git" | "cobalt";
-
-    // URL to the provider
+export interface IStorage {
+    // URL to the storage provider
     url: string;
 
-    // Optional credentials needed to access the given URL
-    credentials?: ICredentials;
+    // Direct access URL to the storage provider
+    direct: string;
 
-    // Name for the provider
-    name: string;
+    // Storage provider owner
+    owner: string;
 
-    // Whether or not this should be the default provider
-    isDefault: boolean;
+    // Storage provider repository
+    repository: string;
 
-    // When an owner is not specified (for back compat) this field provides the owner to use
-    defaultOwner: string;
+    // Access credentials to the storage provider
+    credentials: ICredentials;
+}
+
+export interface ITenant {
+    id: string;
+
+    storage: IStorage;
 }

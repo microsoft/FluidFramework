@@ -6,10 +6,7 @@ import * as redis from "redis";
 import * as winston from "winston";
 import * as app from "./app";
 import * as services from "./services";
-import { IStorageProvider, StorageProvider } from "./services";
 
-// tslint:disable-next-line:no-var-requires
-const packageDetails = require("../package.json");
 const provider = nconf.argv().env("__" as any).file(path.join(__dirname, "../config.json")).use("memory");
 
 /**
@@ -39,23 +36,15 @@ winston.configure({
 };
 
 // Create services
+const riddlerEndpoint = provider.get("riddler");
+const riddler = new services.RiddlerService(riddlerEndpoint);
+
 const redisConfig = provider.get("redis");
 const redisClient = redis.createClient(redisConfig.port, redisConfig.host);
-
-const storageProvidersConfig = provider.get("storageProviders") as IStorageProvider[];
-const storageProviders = storageProvidersConfig.map((storageProviderConfig) => {
-  const cache = new services.RedisCache(redisClient, storageProviderConfig.name);
-  const restService = new services.RestGitService(
-    storageProviderConfig.url,
-    storageProviderConfig.credentials,
-    cache,
-    `Historian/${packageDetails.version}`,
-    storageProviderConfig.defaultOwner);
-  return new StorageProvider(restService, storageProviderConfig);
-});
+const cache = new services.RedisCache(redisClient);
 
 // Create the historian app
-const historian = app.create(provider, storageProviders);
+const historian = app.create(provider, riddler, cache);
 
 /**
  * Get port from environment and store in Express.

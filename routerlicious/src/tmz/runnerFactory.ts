@@ -70,7 +70,7 @@ export class TmzResourcesFactory implements utils.IResourcesFactory<TmzResources
         let uploader = createUploader("minio", minioConfig);
 
         const authEndpoint = config.get("auth:endpoint");
-        const tenantManager = new services.TenantManager(authEndpoint);
+        const tenantManager = new services.TenantManager(authEndpoint, config.get("worker:blobStorageUrl"));
 
         return new TmzResources(
             io,

@@ -12,14 +12,11 @@ import * as utils from "../utils";
 // TODO can likely consolidate the runner and the worker service
 
 class DocumentServiceFactory implements agent.IDocumentServiceFactory {
-    constructor(private serverUrl, private tenantManager: ITenantManager) {
+    constructor(private serverUrl: string, private historianUrl: string) {
     }
 
     public async getService(tenantId: string): Promise<IDocumentService> {
-        const details = await this.tenantManager.getTenant(tenantId);
-        const url = `${details.storage.url}/${details.storage.owner}/${details.storage.repository}`;
-        const services = socketStorage.createDocumentService(this.serverUrl, url);
-
+        const services = socketStorage.createDocumentService(this.serverUrl, this.historianUrl, tenantId);
         return services;
     }
 }
@@ -31,10 +28,10 @@ export class PaparazziRunner implements utils.IRunner {
     constructor(
         alfredUrl: string,
         tmzUrl: string,
-        workerConfig: string,
+        workerConfig: any,
         tenantManager: ITenantManager) {
 
-        const factory = new DocumentServiceFactory(alfredUrl, tenantManager);
+        const factory = new DocumentServiceFactory(alfredUrl, workerConfig.blobStorageUrl);
         this.workerService = new agent.WorkerService(
             alfredUrl,
             tmzUrl,

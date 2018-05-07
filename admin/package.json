@@ -7,7 +7,7 @@
     "build": "concurrently \"npm run tslint\" \"npm run tsc && npm run webpack\" \"npm run less\"",
     "webpack": "webpack --config webpack.config.js",
     "tsc": "tsc",
-    "tslint": "tslint 'src/**/*.ts'",
+    "tslint": "tslint 'src/**/*.ts*'",
     "less": "lessc src/stylesheets/style.less public/stylesheets/dist/style.css",
     "start": "docker-compose up",
     "start:debug": "docker-compose -f docker-compose.yml -f docker-compose.debug.yml up",

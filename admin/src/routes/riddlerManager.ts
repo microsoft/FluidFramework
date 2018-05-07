@@ -1,27 +1,5 @@
 import * as request from "request-promise-native";
-
-export interface ITenantStorage {
-    // Historian backed URL to the storage provider
-    url: string;
-
-    // Direct access URL to the storage provider
-    direct: string;
-
-    // Storage provider owner
-    owner: string;
-
-    // Storage provider repository
-    repository: string;
-
-    // Access credentials to the storage provider
-    credentials: {
-        // User accessing the storage provider
-        user: string;
-
-        // Password for the storage provider
-        password: string;
-    };
-}
+import { ITenantStorage } from "../definitions";
 
 export interface ITenantConfig {
     id: string;
@@ -63,7 +41,7 @@ export class RiddlerManager {
         return tenant;
     }
 
-    public async updateTenantStorage(tenantId: string, storage: any): Promise<void> {
+    public async updateTenantStorage(tenantId: string, storage: ITenantStorage): Promise<void> {
         await request.put(
             `${this.endpoint}/api/tenants/${tenantId}/storage`,
             {

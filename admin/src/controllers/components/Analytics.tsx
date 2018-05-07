@@ -1,8 +1,8 @@
 import * as React from "react";
-import Iframe from "react-iframe"
+import Iframe from "react-iframe";
 
 export class Analytics extends React.Component<{}, {}> {
-    render() {
+    public render() {
         return (
             <div>
                 <h2 className="analytics-header">Analytics Dashboard</h2>

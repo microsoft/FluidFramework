@@ -1,13 +1,12 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-
+import { ITenant, IUser } from "../definitions";
 import { Content } from "./components/Content";
 
-export async function load(user: any, adminData: any, endpoints: any, tenantConfig: any) {
+export async function load(user: IUser, adminData: ITenant[]) {
     $("document").ready(() => {
         ReactDOM.render(
-            <Content data={adminData} user={user} endpoints={endpoints} tenantConfig={tenantConfig} />,
-            document.getElementById("adminportal")
-        );
+            <Content data={adminData} user={user} />,
+            document.getElementById("adminportal"));
     });
 }

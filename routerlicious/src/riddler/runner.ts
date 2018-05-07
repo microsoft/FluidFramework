@@ -11,14 +11,15 @@ export class RiddlerRunner implements utils.IRunner {
     constructor(
         private collectionName: string,
         private port: string | number,
-        private mongoManager: utils.MongoManager) {
+        private mongoManager: utils.MongoManager,
+        private loggerFormat: string) {
     }
 
     public start(): Promise<void> {
         this.runningDeferred = new Deferred<void>();
 
         // Create the HTTP server and attach alfred to it
-        const riddler = app.create(this.collectionName, this.mongoManager);
+        const riddler = app.create(this.collectionName, this.mongoManager, this.loggerFormat);
         riddler.set("port", this.port);
 
         this.server = http.createServer(riddler);

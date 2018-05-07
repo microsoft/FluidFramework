@@ -1,25 +1,32 @@
-import { ICommitHash, ICreateCommitParams } from "@prague/gitresources";
+import { ICommit, ICreateCommitParams } from "@prague/gitresources";
 import { Router } from "express";
 import * as nconf from "nconf";
-import { StorageProvider } from "../../services";
+import { ICache, ITenantService } from "../../services";
 import * as utils from "../utils";
 
-export function create(store: nconf.Provider, provider: StorageProvider): Router {
+export function create(store: nconf.Provider, tenantService: ITenantService, cache: ICache): Router {
     const router: Router = Router();
 
-    router.post(provider.translatePath("/repos/:owner?/:repo/git/commits"), (request, response, next) => {
-        // TODO the input params for parent commits used to be an array of objects rather than the correct
-        // array of strings. To maintain backwards compatibility we support both inputs.
-        const createCommitParams = request.body as ICreateCommitParams;
-        if (createCommitParams.parents &&
-            createCommitParams.parents.length > 0 &&
-            typeof(createCommitParams.parents[0]) !== "string") {
-            createCommitParams.parents = createCommitParams.parents.map((value) => {
-                return (value as any as ICommitHash).sha;
-            });
-        }
+    async function createCommit(
+        tenantId: string,
+        authorization: string,
+        params: ICreateCommitParams): Promise<ICommit> {
+        const service = await utils.createGitService(tenantId, authorization, tenantService, cache);
+        return service.createCommit(params);
+    }
 
-        const commitP = provider.gitService.createCommit(request.params.owner, request.params.repo, request.body);
+    async function getCommit(
+        tenantId: string,
+        authorization: string,
+        sha: string,
+        useCache: boolean): Promise<ICommit> {
+        const service = await utils.createGitService(tenantId, authorization, tenantService, cache);
+        return service.getCommit(sha, useCache);
+    }
+
+    router.post("/repos/:ignored?/:tenantId/git/commits", (request, response, next) => {
+        const commitP = createCommit(request.params.tenantId, request.get("Authorization"), request.body);
+
         utils.handleResponse(
             commitP,
             response,
@@ -27,13 +34,10 @@ export function create(store: nconf.Provider, provider: StorageProvider): Router
             201);
     });
 
-    router.get(provider.translatePath("/repos/:owner?/:repo/git/commits/:sha"), (request, response, next) => {
+    router.get("/repos/:ignored?/:tenantId/git/commits/:sha", (request, response, next) => {
         const useCache = !("disableCache" in request.query);
-        const commitP = provider.gitService.getCommit(
-            request.params.owner,
-            request.params.repo,
-            request.params.sha,
-            useCache);
+        const commitP = getCommit(request.params.tenantId, request.get("Authorization"), request.params.sha, useCache);
+
         utils.handleResponse(commitP, response, useCache);
     });
 

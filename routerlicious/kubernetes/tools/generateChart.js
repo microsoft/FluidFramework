@@ -73,6 +73,12 @@ riddler:
 historian:
   externalUrl: https://historian.wu2.prague.office-int.com
 
+gitrest:
+  url: http://smelly-wolf-gitrest
+
+cobalt:
+  url: http://smelly-wolf-cobalt
+
 zookeeper:
   local: false
   url: left-numbat-zookeeper:2181
