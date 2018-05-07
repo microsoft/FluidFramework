@@ -11,15 +11,15 @@ export interface IMenuWrapProps {
 }
 
 export class MenuWrap extends React.Component<IMenuWrapProps, IMenuWrapState> {
-    constructor (props: IMenuWrapProps) {
+    constructor(props: IMenuWrapProps) {
       super(props);
       this.state = {
-        hidden: false
+        hidden: false,
       };
     }
 
     // TODO: Clean up this method later.
-    componentWillReceiveProps(nextProps) {
+    public componentWillReceiveProps(nextProps) {
       const sideChanged = this.props.children.props.right !== nextProps.children.props.right;
 
       if (sideChanged) {
@@ -31,19 +31,19 @@ export class MenuWrap extends React.Component<IMenuWrapProps, IMenuWrapState> {
       }
     }
 
-    show() {
+    public show() {
       this.setState({hidden : false});
     }
 
-    hide() {
+    public hide() {
         this.setState({hidden : true});
     }
 
-    render() {
+    public render() {
       let style;
 
       if (this.state.hidden) {
-        style = {display: 'none'};
+        style = {display: "none"};
       }
 
       return (

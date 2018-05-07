@@ -1,13 +1,14 @@
-import { Form, Popconfirm, Table } from 'antd';
+import { Form, Popconfirm, Table } from "antd";
 import "antd/lib/popconfirm/style/css";
 import "antd/lib/table/style/css";
 import * as React from "react";
+import { ITenant } from "../../definitions";
 import * as utils from "../utils";
-import { CreateTenantModal } from "./TenantCreateModal"
-import { TenantInfoModal } from "./TenantInfoModal"
+import { CreateTenantModal } from "./TenantCreateModal";
+import { TenantInfoModal } from "./TenantInfoModal";
 
 export interface ITableState {
-    dataSource: any[];
+    dataSource: ITenant[];
     count: number;
     modalVisible: boolean;
     modalConfirmLoading: boolean;
@@ -16,78 +17,81 @@ export interface ITableState {
 }
 
 export interface ITableProps {
-    data: any[];
-    endpoint: string;
-    tenantConfig: any;
+    data: ITenant[];
 }
 
-export class TenantManager extends React.Component<ITableProps,ITableState > {
-    columns: any;
-    form: any;
+export class TenantManager extends React.Component<ITableProps, ITableState > {
+    public columns: any;
+    public form: any;
+
     constructor(props: ITableProps) {
       super(props);
 
-      this.columns = [{
-        title: 'Name',
-        dataIndex: 'name',
-      },
-      {
-        title: 'Storage',
-        dataIndex: 'provider',
-      },
-      {
-        title: 'Operation',
-        dataIndex: 'operation',
-        render: (text, record) => {
-          return (
-            <div>
-              <a onClick={() => this.showInfo(record)}>View</a>
-              <Popconfirm title="Sure to delete?" onConfirm={() => this.onDelete(record._id)}>
-              <span> | </span>
-              <a>Delete</a>
-              </Popconfirm>
-            </div>
-          );
+      this.columns = [
+        {
+          dataIndex: "name",
+          title: "Name",
         },
-      }];
+        {
+          dataIndex: "provider",
+          title: "Storage",
+        },
+        {
+          dataIndex: "operation",
+          render: (text, record: ITenant) => {
+            return (
+              <div>
+                <a onClick={() => this.showInfo(record)}>View</a>
+                <Popconfirm title="Sure to delete?" onConfirm={() => this.onDelete(record.id)}>
+                <span> | </span>
+                <a>Delete</a>
+                </Popconfirm>
+              </div>
+            );
+          },
+          title: "Operation",
+        }];
+
       this.state = {
-        dataSource: this.props.data,
         count: this.props.data.length,
-        modalVisible: false,
-        modalConfirmLoading: false,
-        infoVisible: false,
         currentInfo: null,
+        dataSource: this.props.data,
+        infoVisible: false,
+        modalConfirmLoading: false,
+        modalVisible: false,
       };
     }
-    onDelete = (id) => {
-      utils.deleteTenant(this.props.endpoint, id).then((res) => {
+
+    public onDelete = (id) => {
+      utils.deleteTenant(document.location.origin, id).then((res) => {
         const dataSource = [...this.state.dataSource];
         this.setState(
             {
-                dataSource: dataSource.filter(item => item._id !== id)
+                dataSource: dataSource.filter((item) => item.id !== id),
             });
       }, (err) => {
         console.error(err);
       });
     }
 
-    showModal = () => {
+    public showModal = () => {
         this.setState({ modalVisible: true });
     }
 
-    showInfo = (record: any) => {
+    public showInfo = (record: any) => {
       this.setState({ infoVisible: true, currentInfo: record });
     }
 
-    hideInfo = () => {
+    public hideInfo = () => {
       this.setState({ infoVisible: false });
     }
 
-    handleCancel = () => {
+    public handleCancel = () => {
         this.setState({ modalVisible: false });
     }
 
-    handleCreate = () => {
+    public handleCreate = () => {
+        console.log("Begin create");
         const form = this.form;
         form.validateFields((err, tenant) => {
           if (err) {
@@ -98,35 +102,32 @@ export class TenantManager extends React.Component<ITableProps,ITableState > {
             modalConfirmLoading: true,
           });
 
-          const newTenant = utils.generateTenant(tenant, this.props.tenantConfig);
-          if (newTenant === null) {
-            console.log(`No valid tenant can be generated!`);
-          } else {
-            utils.addTenant(this.props.endpoint, newTenant).then((res) => {
+          utils.addTenant(document.location.origin, tenant).then(
+            (res) => {
               form.resetFields();
               this.setState({
-                modalVisible: false,
                 modalConfirmLoading: false,
+                modalVisible: false,
               });
               this.addNewTenant(res);
-            }, (err) => {
-              console.error(err);
+            },
+            (addTenantError) => {
+              console.error(addTenantError);
             });
-          }
         });
     }
 
-    saveFormRef = (form) => {
+    public saveFormRef = (form) => {
         this.form = form;
     }
 
-    render() {
+    public render() {
       const { dataSource } = this.state;
       const columns = this.columns;
       const TenantCreateModal = Form.create()(CreateTenantModal);
       return (
         <div>
-          <Table bordered dataSource={dataSource} columns={columns} rowKey="_id" />
+          <Table bordered dataSource={dataSource} columns={columns} rowKey="id" />
           <nav className="add-buttons">
                 <a onClick={this.showModal}>
                 Add new tenant
@@ -139,7 +140,6 @@ export class TenantManager extends React.Component<ITableProps,ITableState > {
             onCreate={this.handleCreate}
             confirmLoading={this.state.modalConfirmLoading}
             githubSelected={false}
-            endpoint={this.props.endpoint}
           />
           <TenantInfoModal
             visible={this.state.infoVisible}
@@ -150,18 +150,11 @@ export class TenantManager extends React.Component<ITableProps,ITableState > {
       );
     }
 
-    private addNewTenant(tenant: any) {
+    private addNewTenant(tenant: ITenant) {
         const { count, dataSource } = this.state;
-        const newData = {
-          _id: tenant._id,
-          name: tenant.name,
-          key: tenant.key,
-          provider: tenant.provider,
-          storage: tenant.storage,
-        };
         this.setState({
-          dataSource: [...dataSource, newData],
           count: count + 1,
+          dataSource: [...dataSource, tenant],
         });
     }
   }

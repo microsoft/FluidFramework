@@ -17,9 +17,7 @@
         <script>
             var userData = {{{ user }}};
             var adminData = {{{ data }}};
-            var endpoints = {{{ endpoints }}};
-            var tenantConfig = {{{ tenantConfigs }}};
-            controller.admin.load(userData, adminData, endpoints, tenantConfig);
+            controller.admin.load(userData, adminData);
         </script>
     {{/scripts}}
 

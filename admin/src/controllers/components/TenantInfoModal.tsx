@@ -1,4 +1,4 @@
-import { Button, Modal } from 'antd';
+import { Button, Modal } from "antd";
 import * as React from "react";
 
 export interface ITenantInfoProps {
@@ -11,10 +11,11 @@ export class TenantInfoModal extends React.Component<ITenantInfoProps, {}> {
     constructor(props: ITenantInfoProps) {
         super(props);
     }
-    render() {
+
+    public render() {
         const { visible, record, onOk } = this.props;
         const name = !record ? "" : record.name;
-        const id = !record ? "" : record._id;
+        const id = !record ? "" : record.id;
         const key = !record ? "" : record.key;
         return (
           <div>
@@ -31,7 +32,9 @@ export class TenantInfoModal extends React.Component<ITenantInfoProps, {}> {
             >
               <p><b>Id:</b> {id}</p>
               <p><b>Key:</b> {key}</p>
-              <a href="https://github.com/Microsoft/Prague/blob/master/admin/INSTRUCTION.md" target="_blank">Getting started with Prague API</a>
+              <a href="https://github.com/Microsoft/Prague/blob/master/admin/INSTRUCTION.md" target="_blank">
+                Getting started with Prague API
+              </a>
             </Modal>
           </div>
         );

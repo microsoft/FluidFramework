@@ -8,7 +8,8 @@ export class Logout extends React.Component<ILogoutProps, {}> {
     constructor(props: ILogoutProps) {
         super(props);
     }
-    render() {
+
+    public render() {
         return (
             <div className="logout-button">
                 <span className="logout-text">{this.props.name}</span>

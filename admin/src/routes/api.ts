@@ -1,5 +1,6 @@
 import { Response, Router } from "express";
 import * as core from "../db";
+import { ITenantInput } from "../definitions";
 import { TenantManager } from "./tenantManager";
 
 export function create(config: any, mongoManager: core.MongoManager, userCollectionName: string,
@@ -18,7 +19,8 @@ export function create(config: any, mongoManager: core.MongoManager, userCollect
      * Creates a new tenant
      */
     router.post("/tenants", (request, response) => {
-        const tenantP = manager.addTenant(request.user.oid, request.body.name, request.body.storage);
+        const tenantInput = request.body as ITenantInput;
+        const tenantP = manager.addTenant(request.user.oid, tenantInput);
         returnResponse(tenantP, response);
     });
 
