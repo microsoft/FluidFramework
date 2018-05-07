@@ -38,8 +38,7 @@ function displayError(parentElement: JQuery, error: string) {
 
 export async function onLoad(
     id: string,
-    repository: string,
-    owner: string,
+    tenantId: string,
     endPoints: any,
     pageInk: boolean,
     disableCache: boolean,
@@ -50,7 +49,7 @@ export async function onLoad(
 
         const host = new ui.ui.BrowserContainerHost();
 
-        prague.socketStorage.registerAsDefault(endPoints.delta, endPoints.storage, owner, repository);
+        prague.socketStorage.registerAsDefault(endPoints.delta, endPoints.storage, tenantId);
         console.log(`collabDoc loading ${id} - ${performanceNow()}`);
         prague.api.load(id, { blockUpdateMarkers: true, token }).then(async (collabDoc) => {
             console.log(`collabDoc loaded ${id} - ${performanceNow()}`);
@@ -133,7 +132,7 @@ export async function onLoad(
                 theFlow.loadFinished(clockStart);
                 console.log(collabDoc.getUser());
                 const tokenPart = token ? `${token.substring(0, 50)}...` : null;
-                $("#doctoken").text(`(id: ${collabDoc.getUser().user}, token: ${tokenPart})`);
+                $("#doctoken").text(`(id: ${collabDoc.getUser().user.name}, token: ${tokenPart})`);
             });
         }, (err) => {
             displayError($("#textViews"), err.body);

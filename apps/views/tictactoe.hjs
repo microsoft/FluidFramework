@@ -13,7 +13,7 @@
         <script src="{{#hfurl}}/public/scripts/dist/index.js{{/hfurl}}"></script>
         <script>
             var endpoints = {{{ endpoints }}};
-            controller.tictactoe.load("{{ id }}", "{{ repository }}", "{{ owner }}", endpoints, "{{ token }}");
+            controller.tictactoe.load("{{ id }}", "{{ tenantId }}", endpoints, "{{ token }}");
         </script>
     {{/scripts}}
 {{/layout}}

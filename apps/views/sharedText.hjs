@@ -16,8 +16,7 @@
             console.log(`Starting load at - ${performance.now()}`);
             controller.sharedText.onLoad(
                 "{{ id }}",
-                "{{ repository }}",
-                "{{ owner }}",
+                "{{ tenantId }}",
                 endpoints,
                 {{ pageInk }},
                 {{ disableCache }},

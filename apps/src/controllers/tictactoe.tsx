@@ -22,13 +22,13 @@ function displayError(parentElement: JQuery, error: string) {
     parentElement.append(idElement);
 }
 
-export async function load(id: string, repository: string,  owner: string, endPoints: any, token?: string) {
+export async function load(id: string, tenantId: string, endPoints: any, token?: string) {
     $("document").ready(() => {
-        prague.socketStorage.registerAsDefault(endPoints.delta, endPoints.storage, owner, repository);
+        prague.socketStorage.registerAsDefault(endPoints.delta, endPoints.storage, tenantId);
         loadDocument(id, token).then(async (doc) => {
             // tslint:disable-next-line
             window["doc"] = doc;
-            const playerName = doc.getUser().user;
+            const playerName = doc.getUser().user.name;
             let playerId: number;
 
             const rootView = await doc.getRoot().getView();
@@ -69,7 +69,7 @@ export async function load(id: string, repository: string,  owner: string, endPo
                 console.log(`${playerId} can join the game!`);
                 const player = {
                     id: playerId,
-                    name: doc.getUser().user,
+                    name: doc.getUser().user.name,
                 };
                 ReactDOM.render(
                     <TicTacToe player={player} gameMap={gameMap} gameView={gameView}/>,

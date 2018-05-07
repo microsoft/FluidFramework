@@ -62,8 +62,8 @@ function startPlaying(gameMap: types.IMap, gameView: types.IMapView, playerId: n
 }
 
 // A stateless function that joins a document and starts listening to messages.
-export function start(id: string, repository: string,  owner: string, endPoints: any) {
-    prague.socketStorage.registerAsDefault(endPoints.delta, endPoints.storage, owner, repository);
+export function start(id: string, tenantId: string, endPoints: any) {
+    prague.socketStorage.registerAsDefault(endPoints.delta, endPoints.storage, tenantId);
     setTimeout(() => {
         console.log(`Robot started after 3 seconds!`);
         loadDocument(id).then(async (doc) => {

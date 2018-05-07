@@ -10,10 +10,8 @@
         },
         "port": 3000,
         "tenantInfo": {
-            "id": "trusting-haibt",
-            "secretKey": "95f734db4295cd7fda4e6bf92d7a0852",
-            "repository": "prague",
-            "owner": "prague",
+            "id": "vigilant-chebyshev",
+            "secretKey": "3ab095d8eec0e0859d0cc1b85ac136b3",
             "endpoints": {
                 "delta": "https://alfred.wu2.prague.office-int.com",
                 "storage": "https://historian.wu2.prague.office-int.com"
@@ -43,7 +41,6 @@
             "url": "https://tmz.wu2.prague.office-int.com",
             "blobStorageUrl": "https://historian.wu2.prague.office-int.com",
             "scriptUrl": "https://minio.wu2.prague.office-int.com/agents/",
-            "repository": "prague",
             "storageBucket": "snapshots",
             "intervalMSec": 5000,
             "onlyServer": false,
