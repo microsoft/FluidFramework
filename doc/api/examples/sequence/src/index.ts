@@ -8,10 +8,10 @@ import * as jwt from "jsonwebtoken";
 // const secret = "43cfc3fbf04a97c0921fd23ff10f9e4b";
 const routerlicious = "https://alfred.wu2.prague.office-int.com";
 const historian = "https://historian.wu2.prague.office-int.com";
-const tenantId = "jolly-agnesi";
-const secret = "29b90e6eaee0fc50fb508bbb81eef641";
+const tenantId = "gallant-hugle";
+const secret = "03302d4ebfb6f44b662d00313aff5a46";
 
-const documentId = "test-sequence-0502-1";
+const documentId = "test-sequence-0507-1";
 
 // Register endpoint connection
 prague.socketStorage.registerAsDefault(routerlicious, historian, tenantId);

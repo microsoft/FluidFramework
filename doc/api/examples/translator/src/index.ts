@@ -13,8 +13,8 @@ import { Builder, parseString } from "xml2js";
 // const secret = "43cfc3fbf04a97c0921fd23ff10f9e4b";
 const routerlicious = "https://alfred.wu2.prague.office-int.com";
 const historian = "https://historian.wu2.prague.office-int.com";
-const tenantId = "jolly-agnesi";
-const secret = "29b90e6eaee0fc50fb508bbb81eef641";
+const tenantId = "gallant-hugle";
+const secret = "03302d4ebfb6f44b662d00313aff5a46";
 
 // Replace the subscriptionKey string value with your valid subscription key.
 const subscriptionKey = "bd099a1e38724333b253fcff7523f76a";
