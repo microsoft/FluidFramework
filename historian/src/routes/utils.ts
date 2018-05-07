@@ -26,9 +26,25 @@ export function handleResponse<T>(
 
 export async function createGitService(
     tenantId: string,
-    token: string,
+    authorization: string,
     tenantService: ITenantService,
     cache: ICache): Promise<RestGitService> {
+
+    let token: string = null;
+    if (authorization) {
+        const base64TokenMatch = authorization.match(/Basic (.+)/);
+        if (!base64TokenMatch) {
+            return Promise.reject("Malformed authorization token");
+        }
+        const encoded = new Buffer(base64TokenMatch[1], "base64").toString();
+
+        const tokenMatch = encoded.match(/(.+):(.+)/);
+        if (!tokenMatch || tenantId !== tokenMatch[1]) {
+            return Promise.reject("Malformed authorization token");
+        }
+
+        token = tokenMatch[2];
+    }
 
     const details = await tenantService.getTenant(tenantId, token);
     const service = new RestGitService(details.storage, cache);
