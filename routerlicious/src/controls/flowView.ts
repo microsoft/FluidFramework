@@ -222,6 +222,12 @@ let commands: ICmd[] = [
     },
     {
         exec: (f) => {
+            f.tableSummary();
+        },
+        key: "table summary",
+    },
+    {
+        exec: (f) => {
             f.showAdjacentBookmark();
         },
         key: "previous bookmark",
@@ -3963,6 +3969,21 @@ export class FlowView extends ui.Component {
                 Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
             }
             Table.insertRow(this.sharedString, rowMarker.row, tableMarker.table);
+            this.localQueueRender(this.cursor.pos);
+        }
+    }
+
+    public tableSummary() {
+        let stack =
+            this.sharedString.client.mergeTree.getStackContext(this.cursor.pos,
+                this.sharedString.client.getClientId(), ["table", "cell", "row"]);
+        if (stack.table && (!stack.table.empty())) {
+            let tableMarker = <Table.ITableMarker>stack.table.top();
+            let tableMarkerPos = getOffset(this, tableMarker);
+            if (!tableMarker.table) {
+                Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
+            }
+            Table.succinctPrintTable(tableMarker, tableMarkerPos, this.sharedString);
             this.localQueueRender(this.cursor.pos);
         }
     }

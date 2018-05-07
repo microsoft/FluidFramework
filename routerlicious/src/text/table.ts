@@ -211,7 +211,7 @@ export function deleteColumn(sharedString: SharedString, cell: Cell, row: Row,
             if (cell.columnId === columnId) {
                 let clientId = sharedString.client.longClientId;
                 sharedString.annotateMarkerNotifyConsensus(cell.marker, { moribund: clientId }, (m) => {
-                    // sharedString.removeNest(cell.marker,cell.endMarker);
+                    sharedString.removeNest(cell.marker, cell.endMarker);
                 });
             }
         }
@@ -522,7 +522,7 @@ export class Cell {
     public prevLive: Cell;
     public columnId: string;
     // TODO: update on typing in cell
-    public emptyCell=false;
+    public emptyCell = false;
 
     constructor(public marker: ICellMarker, public endMarker: ICellMarker) {
     }
@@ -655,6 +655,72 @@ export function parseColumns(sharedString: SharedString, pos: number, table: Tab
     sharedString.client.mergeTree.mapRange({ leaf: addColumn },
         MergeTree.UniversalSequenceNumber, sharedString.client.getClientId(), undefined, pos);
     return nextPos;
+}
+
+
+export function succinctPrintTable(tableMarker: ITableMarker, tableMarkerPos: number, sharedString: SharedString) {
+    let id = tableMarker.getId();
+    let endId = endPrefix + id;
+    let mergeTree = sharedString.client.mergeTree;
+    let endTableMarker = <MergeTree.Marker>mergeTree.getSegmentFromId(endId);
+    let endTablePos = endTableMarker.cachedLength + getOffset(sharedString, endTableMarker);
+    let lineBuf = "";
+    let lastWasCO = false;
+    function printTableSegment(segment: MergeTree.Segment) {
+        if (segment.getType() === MergeTree.SegmentType.Marker) {
+            let marker = <MergeTree.Marker>segment;
+            let endLine = false;
+            if (marker.hasRangeLabels()) {
+                let rangeLabel = marker.getRangeLabels()[0];
+                if (marker.refType === MergeTree.ReferenceType.NestEnd) {
+                    lineBuf += "E";
+                    if ((rangeLabel === "table") || (rangeLabel === "row")) {
+                        endLine = true;
+                    }
+                }
+                switch (rangeLabel) {
+                    case "table":
+                        lineBuf += "T";
+                        lastWasCO = false;
+                        break;
+                    case "row":
+                        if (marker.refType === MergeTree.ReferenceType.NestBegin) {
+                            if (lastWasCO) {
+                                lineBuf += "\n";
+                                lastWasCO = false;
+                            }
+                        }
+                        lineBuf += "R";
+                        break;
+                    case "cell":
+                        lineBuf += "CL";
+                        break;
+                }
+            } else if (marker.refType === MergeTree.ReferenceType.Simple) {
+                if (marker.properties.columnId) {
+                    lineBuf += "CO";
+                    lastWasCO = true;
+                }
+            } else if (marker.refType === MergeTree.ReferenceType.Tile) {
+                lineBuf += "P";
+            }
+            if (marker.hasProperty("moribund")) {
+                lineBuf += "_";
+            }
+            if (endLine) {
+                lineBuf += " \n";
+            } else {
+                lineBuf += " ";
+            }
+        } else {
+            let textSegment = <MergeTree.TextSegment>segment;
+            lineBuf += textSegment.text;
+        }
+        return true;
+    }
+    mergeTree.mapRange({ leaf: printTableSegment }, MergeTree.UniversalSequenceNumber, sharedString.client.getClientId(),
+        undefined, tableMarkerPos, endTablePos);
+    console.log(lineBuf);
 }
 
 export function parseTable(
