@@ -9,9 +9,8 @@ function renderView(request, response, docId: string, config: any) {
         {
             endpoints: JSON.stringify(config.tenantInfo.endpoints),
             id: docId,
-            owner: config.tenantInfo.owner,
             partials: defaultPartials,
-            repository: config.tenantInfo.repository,
+            tenantId: config.tenantInfo.id,
             title: docId,
             token: request.query.token,
         },

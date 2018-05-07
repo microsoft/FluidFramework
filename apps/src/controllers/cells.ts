@@ -121,9 +121,9 @@ function randomizeCell(cell: types.ICell, element1: JQuery, element2: JQuery) {
     }, 3000);
 }
 
-export async function load(id: string, repository: string, owner: string, endPoints: any, token?: string,
+export async function load(id: string, tenantId: string, endPoints: any, token?: string,
                            workerConfig?: any) {
-    prague.socketStorage.registerAsDefault(endPoints.delta, endPoints.storage, owner, repository);
+    prague.socketStorage.registerAsDefault(endPoints.delta, endPoints.storage, tenantId);
     $("document").ready(() => {
         // Only register to work if the config is present.
         if (workerConfig) {
@@ -141,7 +141,7 @@ export async function load(id: string, repository: string, owner: string, endPoi
             }
 
             // Display the user id.
-            displayUserId($("#cellViews"), doc.getUser().user);
+            displayUserId($("#cellViews"), doc.getUser().user.name);
             console.log(doc.getUser());
 
             // Display the initial value and then listen for updates

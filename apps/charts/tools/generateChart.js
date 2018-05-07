@@ -42,8 +42,8 @@ service:
   host: www.wu2.prague.office-int.com
   sslCert: wu2-tls-certificate
 
-tenantId: trusting-haibt
-secretKey: 95f734db4295cd7fda4e6bf92d7a0852
+tenantId: vigilant-chebyshev
+secretKey: 3ab095d8eec0e0859d0cc1b85ac136b3
 
 resources:
   limits:

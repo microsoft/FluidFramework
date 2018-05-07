@@ -13,7 +13,7 @@
         <script src="{{#hfurl}}/public/scripts/dist/index.js{{/hfurl}}"></script>
         <script>
             var endpoints = {{{ endpoints }}};
-            controller.snake.load("{{ id }}", "{{ repository }}", "{{ owner }}", endpoints, "{{ token }}");
+            controller.snake.load("{{ id }}", "{{ tenantId }}", endpoints, "{{ token }}");
         </script>
     {{/scripts}}
 {{/layout}}

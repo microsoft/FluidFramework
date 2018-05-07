@@ -10,9 +10,8 @@ function renderView(request, response, docId: string, config: any) {
         {
             endpoints: JSON.stringify(config.tenantInfo.endpoints),
             id: docId,
-            owner: config.tenantInfo.owner,
             partials: defaultPartials,
-            repository: config.tenantInfo.repository,
+            tenantId: config.tenantInfo.id,
             title: docId,
             token: request.query.token,
         },
@@ -34,7 +33,7 @@ export function create(config: any): Router {
         renderView(request, response, docId, config);
         // Start a bot for single players.
         if (request.query.player === "single") {
-            bot.start(docId, config.tenantInfo.repository, config.tenantInfo.owner, config.tenantInfo.endpoints);
+            bot.start(docId, config.tenantInfo.tenantId, config.tenantInfo.endpoints);
         }
     });
 
