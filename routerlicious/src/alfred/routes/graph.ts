@@ -6,13 +6,14 @@ import { IAlfredTenant } from "../tenant";
 import * as utils from "../utils";
 import { defaultPartials } from "./partials";
 
-export function create(config: Provider, tenantManager: ITenantManager, appTenants: IAlfredTenant[]): Router {
+export function create(config: Provider, tenantManager: ITenantManager,
+                       appTenants: IAlfredTenant[], ensureLoggedIn: any): Router {
     const router: Router = Router();
 
     /**
      * Loading of a graph demo
      */
-    router.get("/:tenantId?/:id", async (request, response, next) => {
+    router.get("/:tenantId?/:id", ensureLoggedIn(), async (request, response, next) => {
         const tenantId = request.params.tenantId || appTenants[0].id;
 
         const workerConfigP = utils.getConfig(config.get("worker"), tenantManager, tenantId);

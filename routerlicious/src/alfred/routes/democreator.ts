@@ -3,13 +3,13 @@ import * as moniker from "moniker";
 import { Provider } from "nconf";
 import { defaultPartials } from "./partials";
 
-export function create(config: Provider): Router {
+export function create(config: Provider, ensureLoggedIn: any): Router {
     const router: Router = Router();
 
     /**
      * Loading the demo creator page.
      */
-    router.get("/", (request, response, next) => {
+    router.get("/", ensureLoggedIn(), (request, response, next) => {
         response.render(
             "demos/dec2017",
             {
@@ -28,7 +28,7 @@ export function create(config: Provider): Router {
     /**
      * Loading the demo creator page.
      */
-    router.get("/retreat", (request, response, next) => {
+    router.get("/retreat", ensureLoggedIn(), (request, response, next) => {
         response.render(
             "demos/retreat",
             {

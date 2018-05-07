@@ -10,7 +10,8 @@ const defaultSpeed = 50;
 const defaultAuthors = 1;
 const defaultTemplate = "/public/literature/resume.txt";
 
-export function create(config: Provider, tenantManager: ITenantManager, appTenants: IAlfredTenant[]) {
+export function create(config: Provider, tenantManager: ITenantManager,
+                       appTenants: IAlfredTenant[], ensureLoggedIn: any) {
     const router: Router = Router();
 
     function handleResponse(
@@ -49,14 +50,14 @@ export function create(config: Provider, tenantManager: ITenantManager, appTenan
     /**
      * Script entry point root
      */
-    router.get("/", (request, response, next) => {
+    router.get("/", ensureLoggedIn(), (request, response, next) => {
         handleResponse(response);
     });
 
     /**
      * Script entry point root
      */
-    router.get("/demo", (request, response, next) => {
+    router.get("/demo", ensureLoggedIn(), (request, response, next) => {
         const speed = Number.parseFloat(request.query.speed) || defaultSpeed;
         const authors = Number.parseFloat(request.query.authors) || defaultAuthors;
         const text = request.query.text || defaultTemplate;
