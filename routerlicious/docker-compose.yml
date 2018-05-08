@@ -60,7 +60,7 @@ services:
             - NODE_ENV=development
         restart: always
     historian:
-        image: prague.azurecr.io/historian:2322
+        image: prague.azurecr.io/historian:2357
         ports:
             - "3001:3000"
         environment:

@@ -81,7 +81,7 @@ export interface IDeltaStorageService {
     /**
      * Retrieves all the delta operations within the inclusive sequence number range
      */
-    get(tenantId: string, id: string, from?: number, to?: number): Promise<ISequencedDocumentMessage[]>;
+    get(tenantId: string, id: string, token: string, from?: number, to?: number): Promise<ISequencedDocumentMessage[]>;
 }
 
 export interface ISnapshotTree {
