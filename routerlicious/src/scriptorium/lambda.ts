@@ -305,7 +305,8 @@ export class ScriptoriumLambda implements IPartitionLambda {
     private async processMongoBatch(batch: Batch<IMongoTarget, core.ISequencedOperationMessage>): Promise<void> {
         // Serialize the current batch to Mongo
         await batch.map(async (id, work) => {
-            winston.verbose(`Inserting to mongodb ${id}@${work[0].operation.sequenceNumber}:${work.length}`);
+            // tslint:disable-next-line:max-line-length
+            winston.verbose(`Inserting to mongodb ${id.documentId}/${id.tenantId}@${work[0].operation.sequenceNumber}:${work.length}`);
             return this.collection.insertMany(work, false)
                 .catch((error) => {
                     // Duplicate key errors are ignored since a replay may cause us to insert twice into Mongo.

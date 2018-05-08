@@ -1,8 +1,6 @@
 import * as socketStorage from ".";
 import * as api from "../api";
 import { IDocumentService } from "../api-core";
-import { GitManager } from "../git-storage";
-import { Historian } from "../services-client";
 
 export function createDocumentService(
     deltaUrl: string,
@@ -12,11 +10,12 @@ export function createDocumentService(
     historianApi = true,
     credentials?): IDocumentService {
 
-    const endpoint = `${gitUrl}/repos/${tenantId}`;
-    const historian = new Historian(endpoint, historianApi, disableCache, credentials);
-    const gitManager = new GitManager(historian);
-    const deltaStorage = new socketStorage.DeltaStorageService(deltaUrl);
-    const service = new socketStorage.DocumentService(deltaUrl, deltaStorage, gitManager);
+    const service = new socketStorage.DocumentService(
+        deltaUrl,
+        gitUrl,
+        disableCache,
+        historianApi,
+        credentials);
 
     return service;
 }

@@ -46,6 +46,11 @@ export interface IHistorian extends IGitService {
 
 }
 
+export interface ICredentials {
+    user: string;
+    password: string;
+}
+
 /**
  * Implementation of the IHistorian interface that calls out to a REST interface
  */
@@ -56,7 +61,7 @@ export class Historian implements IHistorian {
         public endpoint: string,
         private historianApi: boolean,
         private disableCache: boolean,
-        credentials?) {
+        credentials?: ICredentials) {
 
         if (credentials) {
             this.authorization =

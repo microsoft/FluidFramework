@@ -46,7 +46,7 @@ export class TestDocumentService implements api.IDocumentService {
         tenantId: string,
         id: string,
         token: string): Promise<api.IDocumentDeltaStorageService> {
-        return new DocumentDeltaStorageService(tenantId, id, this.deltaStorage);
+        return new DocumentDeltaStorageService(tenantId, id, token, this.deltaStorage);
     }
 
     public async connectToDeltaStream(
