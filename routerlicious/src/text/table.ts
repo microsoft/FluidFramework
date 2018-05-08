@@ -549,6 +549,7 @@ function parseCell(cellStartPos: number, sharedString: SharedString, columnOffse
     let endCellMarker = getEndCellMarker(mergeTree, cellMarker);
     if (!endCellMarker) {
         console.log(`ut-oh: no end for ${cellMarker.toString()}`);
+        return undefined;
     }
     let endCellPos = getOffset(sharedString, endCellMarker);
     cellMarker.cell = new Cell(cellMarker, endCellMarker);
@@ -619,6 +620,10 @@ function parseRow(rowStartPos: number, sharedString: SharedString, fontInfo?: Pa
     let id = rowMarker.getId();
     let endId = endPrefix + id;
     let endRowMarker = <MergeTree.Marker>mergeTree.getSegmentFromId(endId);
+    if (!endRowMarker) {
+        console.log(`row parse error: ${rowStartPos}`);
+        return undefined;
+    }
     let endRowPos = getOffset(sharedString, endRowMarker);
     rowMarker.row = new Row(rowMarker, endRowMarker);
     let nextPos = rowStartPos + rowMarker.cachedLength;
@@ -626,6 +631,9 @@ function parseRow(rowStartPos: number, sharedString: SharedString, fontInfo?: Pa
     let prevLive: Cell;
     while (nextPos < endRowPos) {
         let cellMarker = parseCell(nextPos, sharedString, columnOffset, fontInfo);
+        if (!cellMarker) {
+            return undefined;
+        }
         if (!cellIsMoribund(cellMarker)) {
             rowMarker.row.minContentWidth += cellMarker.cell.minContentWidth;
             rowMarker.row.cells.push(cellMarker.cell);
@@ -666,10 +674,11 @@ export function succinctPrintTable(tableMarker: ITableMarker, tableMarkerPos: nu
     let endTablePos = endTableMarker.cachedLength + getOffset(sharedString, endTableMarker);
     let lineBuf = "";
     let lastWasCO = false;
-    function printTableSegment(segment: MergeTree.Segment) {
+    function printTableSegment(segment: MergeTree.Segment, segpos: number) {
         if (segment.getType() === MergeTree.SegmentType.Marker) {
             let marker = <MergeTree.Marker>segment;
             let endLine = false;
+            lineBuf+=`@${segpos}:`;
             if (marker.hasRangeLabels()) {
                 let rangeLabel = marker.getRangeLabels()[0];
                 if (marker.refType === MergeTree.ReferenceType.NestEnd) {
@@ -738,6 +747,11 @@ export function parseTable(
     let rowIndex = 0;
     while (nextPos < endTablePos) {
         let rowMarker = parseRow(nextPos, sharedString, fontInfo);
+        if (!rowMarker) {
+            console.log("PARSE ERROR!");
+            succinctPrintTable(tableMarker, tableMarkerPos, sharedString);
+            return undefined;
+        }
         let rowView = rowMarker.row;
         rowView.table = table;
         rowView.pos = nextPos;
@@ -766,6 +780,7 @@ export function parseTable(
         rowView.endPos = endRowPos;
         nextPos = endRowPos + rowMarker.row.endRowMarker.cachedLength;
     }
+    succinctPrintTable(tableMarker, tableMarkerPos, sharedString);
     return table;
 }
 

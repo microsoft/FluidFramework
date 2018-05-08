@@ -2225,6 +2225,16 @@ export class Client {
         // TODO: error reporting
     }
 
+    checkNest(op: ops.IMergeTreeRemoveMsg, msg: API.ISequencedObjectMessage, clid: number) {
+        let beginMarker = this.mergeTree.getSegmentFromId(op.checkNest.id1);
+        let endMarker = this.mergeTree.getSegmentFromId(op.checkNest.id2);
+        let beginPos = this.mergeTree.getOffset(beginMarker, msg.referenceSequenceNumber, clid);
+        let endPos = endMarker.cachedLength + this.mergeTree.getOffset(endMarker, msg.referenceSequenceNumber, clid);
+        if ((beginPos!==op.pos1)||(endPos!==op.pos2)) {
+            console.log(`remove nest mismatch ${beginPos} ${op.pos1} ${endPos} ${op.pos2}`);
+        }
+    }
+
     applyOp(op: ops.IMergeTreeOp, msg: API.ISequencedObjectMessage) {
         let clid = this.getOrAddShortClientId(msg.clientId);
         switch (op.type) {
@@ -2281,6 +2291,9 @@ export class Client {
                     // cut 
                     this.copy(op.pos1, op.pos2, op.register, msg.referenceSequenceNumber,
                         clid, msg.clientId);
+                }
+                if (op.checkNest) {
+                    this.checkNest(op, msg, clid);
                 }
                 this.removeSegmentRemote(op.pos1, op.pos2, msg.sequenceNumber, msg.referenceSequenceNumber,
                     clid);

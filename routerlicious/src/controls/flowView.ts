@@ -1513,6 +1513,9 @@ function renderTable(
     if (!tableView) {
         tableView = Table.parseTable(table, tablePos, flowView.sharedString, makeFontInfo(docContext));
     }
+    if (!tableView) {
+        return;
+    }
     // let docContext = buildDocumentContext(viewportDiv);
     let viewportWidth = parseInt(layoutInfo.viewport.div.style.width, 10);
 
