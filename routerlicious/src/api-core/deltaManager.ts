@@ -38,6 +38,7 @@ class DeltaQueue<T> extends EventEmitter implements IDeltaQueue {
 
         this.q.error = (error) => {
             debug(`Queue processing error`, error);
+            this.emit("error", error);
             this.q.pause();
         };
     }
@@ -151,6 +152,12 @@ class DeltaConnection extends EventEmitter {
             connection.submit(op);
             callback();
         });
+
+        // Emit error on any outbound queue error
+        this._outbound.on("error", (error) => {
+            console.log(`Error in _outbound queue: ${error}`);
+            this.emit("error", error);
+        });
     }
 
     /**
@@ -171,7 +178,7 @@ class DeltaConnection extends EventEmitter {
  * Helper class that manages incoming delta messages. This class ensures that collaborative objects receive delta
  * messages in order regardless of possible network conditions or timings causing out of order delivery.
  */
-export class DeltaManager implements IDeltaManager {
+export class DeltaManager extends EventEmitter implements IDeltaManager {
     private pending: protocol.ISequencedDocumentMessage[] = [];
     private fetching = false;
 
@@ -227,6 +234,7 @@ export class DeltaManager implements IDeltaManager {
         private deltaStorage: storage.IDocumentDeltaStorageService,
         private service: storage.IDocumentService,
         private handler: IDeltaHandlerStrategy) {
+        super();
 
         // The MSN starts at the base the manager is initialized to
         this.minSequenceNumber = this.baseSequenceNumber;
@@ -334,6 +342,17 @@ export class DeltaManager implements IDeltaManager {
 
         this.connection.on("disconnect", (reason) => {
             this.handler.disconnect(reason);
+        });
+
+        this.connection.on("error", (error) => {
+            console.log(`Error in DeltaConnection queue: ${error}`);
+            this.emit("error", error);
+        });
+
+        // Emit error on any inbound queue error
+        this._inbound.on("error", (error) => {
+            console.log(`Error in _inbound queue: ${error}`);
+            this.emit("error", error);
         });
 
         return this.connection.details;
