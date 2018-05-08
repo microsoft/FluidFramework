@@ -447,7 +447,7 @@ export class Document extends EventEmitter {
             });
 
         this._deltaManager.on("error", (error) => {
-            console.log(`Error in document.ts: ${error}`);
+            this.emit("error", error);
         });
     }
 

@@ -39,6 +39,10 @@ export class PaparazziRunner implements utils.IRunner {
             workerConfig,
             "paparazzi",
             this.initLoadModule(alfredUrl));
+
+        this.workerService.on("error", (error) => {
+            winston.error(`Error in paparazzi: ${error}`);
+        });
     }
 
     public start(): Promise<void> {

@@ -1,4 +1,5 @@
 import * as queue from "async/queue";
+import { EventEmitter } from "events";
 import * as request from "request";
 import * as url from "url";
 import { core, MergeTree, socketIoClient as io, socketStorage, utils } from "../client-api";
@@ -44,7 +45,7 @@ export interface IDocumentServiceFactory {
 /**
  * The WorkerService manages the Socket.IO connection and work sent to it.
  */
-export class WorkerService implements core.IWorkerService {
+export class WorkerService extends EventEmitter implements core.IWorkerService {
     private socket;
     private documentMap: { [docId: string]: { [work: string]: IWork} } = {};
     private workTypeMap: { [workType: string]: boolean} = {};
@@ -61,6 +62,7 @@ export class WorkerService implements core.IWorkerService {
         private config: any,
         private clientType: string,
         private moduleLoader: (id: string) => Promise<any>) {
+        super();
 
         this.socket = io(this.workerUrl, { transports: ["websocket"] });
         for (let workType of config.permission[this.clientType]) {
@@ -316,7 +318,11 @@ export class WorkerService implements core.IWorkerService {
                 console.log(`Starting work ${workType} for tenant ${tenantId} : document ${fullId}`);
                 this.documentMap[fullId][workType] = worker;
                 if (workType !== "intel") {
-                    worker.start().catch((err) => {
+                    worker.start().then(() => {
+                        worker.on("error", (error) => {
+                            this.emit("error", error);
+                        });
+                    }, (err) => {
                         console.log(`Error starting ${workType} for document ${fullId}: ${err}`);
                     });
                 } else {
@@ -328,6 +334,9 @@ export class WorkerService implements core.IWorkerService {
                             console.log(`Registering ${this.runtimeModules[name].name} for document ${fullId}`);
                             intelWork.registerNewService(this.runtimeModules[name].code);
                         }
+                        intelWork.on("error", (error) => {
+                            this.emit("error", error);
+                        });
                     }, (err) => {
                         console.log(`Error starting ${workType} for document ${fullId}: ${err}`);
                     });
