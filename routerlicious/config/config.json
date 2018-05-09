@@ -150,10 +150,10 @@
         "onlyServer": false,
         "permission": {
             "paparazzi": ["snapshot", "spell", "intel", "translation"],
-            "canvas": ["ping"],
-            "cell": ["ping", "snapshot"],
-            "maps": ["ping", "snapshot"],
-            "sharedText": ["ping"]
+            "canvas": [],
+            "cell": ["snapshot"],
+            "maps": ["snapshot"],
+            "sharedText": []
         }
     },
     "tenantConfig": [

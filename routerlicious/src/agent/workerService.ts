@@ -3,6 +3,7 @@ import { EventEmitter } from "events";
 import * as request from "request";
 import * as url from "url";
 import { core, MergeTree, socketIoClient as io, socketStorage, utils } from "../client-api";
+import { AgentLoader, IAgent } from "./agentLoader";
 import { IntelWork } from "./intelWork";
 import { PingWork } from "./pingWork";
 import { SnapshotWork } from "./snapshotWork";
@@ -10,31 +11,21 @@ import { SpellcheckerWork } from "./spellcheckerWork";
 import { TranslationWork } from "./translationWork";
 import { IWork } from "./work";
 
-// Interface for a remote module.
-interface IModule {
-
-    name: string;
-
-    code: any;
-};
-
-// Interface for uploaded module names
-interface IAgents {
-    names: string[];
-};
-
 // Interface for queueing work
-export interface IWorkQueue {
+interface IWorkQueue {
     token: string;
-
     tenantId: string;
-
     documentId: string;
-
     workType: string;
-
     response: any;
+    clientDetail: socketStorage.IWorker;
+};
 
+// Interface for queueing agent loading/unloading
+interface IAgentQueue {
+    name: string;
+    action: string;
+    response: any;
     clientDetail: socketStorage.IWorker;
 };
 
@@ -50,10 +41,10 @@ export class WorkerService extends EventEmitter implements core.IWorkerService {
     private documentMap: { [docId: string]: { [work: string]: IWork} } = {};
     private workTypeMap: { [workType: string]: boolean} = {};
     private dict = new MergeTree.TST<number>();
-    private workQueue: any;
+    private agentLoader: AgentLoader;
 
-    // List of modules added during the lifetime of this object.
-    private runtimeModules: { [name: string]: IModule } = {};
+    private workQueue: any;
+    private agentQueue: any;
 
     constructor(
         private serverUrl: string,
@@ -61,7 +52,7 @@ export class WorkerService extends EventEmitter implements core.IWorkerService {
         private serviceFactory: IDocumentServiceFactory,
         private config: any,
         private clientType: string,
-        private moduleLoader: (id: string) => Promise<any>) {
+        private agentModuleLoader: (id: string) => Promise<any>) {
         super();
 
         this.socket = io(this.workerUrl, { transports: ["websocket"] });
@@ -73,7 +64,7 @@ export class WorkerService extends EventEmitter implements core.IWorkerService {
             this.loadDict();
         }
 
-        // async queue to process work one by one.
+        // async queue to process work.
         this.workQueue = queue( async (work: IWorkQueue, callback) => {
             this.processDocumentWork(work.tenantId, work.documentId, work.token, work.workType).then(() => {
                 work.response(null, work.clientDetail);
@@ -83,7 +74,19 @@ export class WorkerService extends EventEmitter implements core.IWorkerService {
             });
         }, 1);
 
-        // Will need to take in the list of endpoints
+        // async queue to process agent loading.
+        this.agentQueue = queue( async (agent: IAgentQueue, callback) => {
+            this.processAgentWork(agent.name, agent.action).then(() => {
+                agent.response(null, agent.clientDetail);
+                callback();
+            }, (err) => {
+                callback();
+            });
+        }, 1);
+
+        // Initialize Agent Loader
+        const agentServer = this.clientType === "paparazzi" ? this.config.alfredUrl : this.serverUrl;
+        this.agentLoader = new AgentLoader(this.agentModuleLoader, agentServer);
     }
 
     /**
@@ -91,8 +94,8 @@ export class WorkerService extends EventEmitter implements core.IWorkerService {
      * But will reject should an error occur so that the caller can reconnect.
      */
     public connect(type: string): Promise<void> {
-        // Generate random id since moniker does not work in client side.
-        const clientId = type + Math.floor(Math.random() * 100000);
+        // Generates a random client id
+        const clientId = type + Math.floor(Math.random() * 1000000);
         const clientDetail: socketStorage.IWorker = {
             clientId,
             type,
@@ -100,28 +103,26 @@ export class WorkerService extends EventEmitter implements core.IWorkerService {
 
         const deferred = new utils.Deferred<void>();
         // Subscribes to TMZ. Starts listening to messages if TMZ acked the subscribtion.
-        // Otherwise just resolve. On any error, reject and caller will be responsible reconnecting.
+        // Otherwise just resolve. On any error, reject and caller will be responsible for reconnecting.
         this.socket.emit(
             "workerObject",
             clientDetail,
-            (error, ack) => {
+            async (error, ack) => {
                 if (error) {
                     deferred.reject(error);
                 } else if (ack === "Acked") {
                     // Check whether worker is ready to load a new agent.
-                    this.socket.on("AgentObject", (cId: string, moduleName: string, action: string, response) => {
-                        // TODO: Need some rule here to deny a new agent loading.
-                        if (action === "add") {
-                            console.log(`Received request to load module: ${moduleName}!`);
-                            this.loadNewModule( { name: moduleName, code: null } );
-                            response(null, clientDetail);
-                        } else if (action === "remove") {
-                            console.log(`Received request to unload module: ${moduleName}!`);
-                            this.unloadModule( { name: moduleName, code: null } );
-                            response(null, clientDetail);
-                        }
+                    this.socket.on("AgentObject", (cId: string, agentName: string, action: string, response) => {
+                        const work: IAgentQueue = {
+                            action,
+                            clientDetail,
+                            name: agentName,
+                            response,
+                        };
+                        this.agentQueue.push(work);
                     });
-                    // Check whether worker is ready to work.
+
+                    // Check whether worker is allowed to run a requested work.
                     this.socket.on(
                         "ReadyObject",
                         (cId: string, tenantId: string, documentId: string, workType: string, response) => {
@@ -151,6 +152,7 @@ export class WorkerService extends EventEmitter implements core.IWorkerService {
                             };
                             this.workQueue.push(work);
                         });
+
                     // Stop working on an object.
                     this.socket.on(
                         "RevokeObject",
@@ -158,6 +160,7 @@ export class WorkerService extends EventEmitter implements core.IWorkerService {
                         this.revokeDocumentWork(tenantId, documentId, workType);
                         response(null, clientDetail);
                     });
+
                     // Periodically sends heartbeat to manager.
                     setInterval(() => {
                         this.socket.emit(
@@ -171,10 +174,8 @@ export class WorkerService extends EventEmitter implements core.IWorkerService {
                             });
                     }, this.config.intervalMSec);
 
-                    // TMZ is responsible for creating module storage. So we are loading here to avoid race condition.
-                    const agentServer = this.clientType === "paparazzi" ? this.config.alfredUrl : this.serverUrl;
-                    let tryCounter = 0;
-                    this.loadUploadedModules(agentServer, tryCounter);
+                    // Load agents here since TMZ is ready now.
+                    await this.agentLoader.loadUploadedAgents();
                 } else {
                     deferred.resolve();
                 }
@@ -193,7 +194,7 @@ export class WorkerService extends EventEmitter implements core.IWorkerService {
     }
 
     public close(): Promise<void> {
-        // TODO need to be able to iterate over tracked documents and close them
+        // TODO (mdaumi) need to be able to iterate over tracked documents and close them
         this.socket.close();
         return Promise.resolve();
     }
@@ -212,37 +213,6 @@ export class WorkerService extends EventEmitter implements core.IWorkerService {
                 this.loadDict();
             }, 100);
         });
-    }
-
-    private loadNewModule(newModule: IModule) {
-        this.moduleLoader(newModule.name).then((loadedCode) => {
-            console.log(`Success loading module ${newModule.name} in worker!`);
-
-            // Update the loaded module code.
-            newModule.code = loadedCode;
-
-            // Register the module for all active documents.
-            for (const docId of Object.keys(this.documentMap)) {
-                for (const workType of Object.keys(this.documentMap[docId])) {
-                    if (workType === "intel") {
-                        const intelWork = this.documentMap[docId][workType] as IntelWork;
-                        console.log(`Registering new loaded ${newModule.name} to document ${docId}`);
-                        intelWork.registerNewService(newModule.code);
-                    }
-                }
-            }
-            // Push the module for all future documents.
-            this.runtimeModules[newModule.name] = newModule;
-        }, (error) =>  {
-            console.log(`${newModule.name}: ${error}`);
-        });
-    }
-
-    // Unload the module for all future documents.
-    private unloadModule(module: IModule) {
-        if (module.name in this.runtimeModules) {
-            delete this.runtimeModules[module.name];
-        }
     }
 
     private async processDocumentWork(tenantId: string, documentId: string, token: string, workType: string) {
@@ -309,38 +279,30 @@ export class WorkerService extends EventEmitter implements core.IWorkerService {
     private startTask(tenantId: string, documentId: string, workType: string, worker: IWork) {
         const fullId = this.getFullId(tenantId, documentId);
 
-        if (worker !== undefined) {
+        if (worker) {
             if (!(fullId in this.documentMap)) {
                 let emptyMap: { [work: string]: IWork } = {};
                 this.documentMap[fullId] = emptyMap;
             }
             if (!(workType in this.documentMap[fullId])) {
-                console.log(`Starting work ${workType} for tenant ${tenantId} : document ${fullId}`);
-                this.documentMap[fullId][workType] = worker;
-                if (workType !== "intel") {
-                    worker.start().then(() => {
-                        worker.on("error", (error) => {
-                            this.emit("error", error);
-                        });
-                    }, (err) => {
-                        console.log(`Error starting ${workType} for document ${fullId}: ${err}`);
+                console.log(`Starting work ${workType} for document ${fullId}`);
+
+                worker.start().then(() => {
+                    console.log(`Started work ${workType} for document ${fullId}`);
+                    this.documentMap[fullId][workType] = worker;
+
+                    // Register existing intel agents to this document
+                    if (workType === "intel") {
+                        this.registerAgentsToNewDocument(fullId, workType);
+                    }
+
+                    // Lsiten to errors
+                    worker.on("error", (error) => {
+                        this.emit("error", error);
                     });
-                } else {
-                    // register all runtime added modules one by one.
-                    const intelWork = this.documentMap[fullId][workType] as IntelWork;
-                    intelWork.start().then(() => {
-                        // tslint:disable-next-line
-                        for (let name in this.runtimeModules) {
-                            console.log(`Registering ${this.runtimeModules[name].name} for document ${fullId}`);
-                            intelWork.registerNewService(this.runtimeModules[name].code);
-                        }
-                        intelWork.on("error", (error) => {
-                            this.emit("error", error);
-                        });
-                    }, (err) => {
-                        console.log(`Error starting ${workType} for document ${fullId}: ${err}`);
-                    });
-                }
+                }, (err) => {
+                    console.log(`Error starting ${workType} for document ${fullId}: ${err}`);
+                });
             }
         }
     }
@@ -358,6 +320,41 @@ export class WorkerService extends EventEmitter implements core.IWorkerService {
         }
     }
 
+    private async processAgentWork(agentName: string, action: string) {
+        if (action === "add") {
+            console.log(`Received request to load agent ${agentName}!`);
+            const agent = await this.agentLoader.loadNewAgent(agentName);
+            this.registerAgentToExistingDocuments(agent);
+        } else if (action === "remove") {
+            console.log(`Received request to unload agent ${agentName}!`);
+            this.agentLoader.unloadAgent(agentName);
+        }
+    }
+
+    // Register a new agent to all active documents.
+    private registerAgentToExistingDocuments(agent: IAgent) {
+        for (const docId of Object.keys(this.documentMap)) {
+            for (const workType of Object.keys(this.documentMap[docId])) {
+                if (workType === "intel") {
+                    const intelWork = this.documentMap[docId][workType] as IntelWork;
+                    intelWork.registerNewService(agent.code);
+                    console.log(`Registered newly loaded ${agent.name} to document ${docId}`);
+                }
+            }
+        }
+    }
+
+    // Register all agents to a new document.
+    private registerAgentsToNewDocument(fullId: string, workType: string) {
+        const intelWork = this.documentMap[fullId][workType] as IntelWork;
+        const agents = this.agentLoader.getAgents();
+        // tslint:disable-next-line
+        for (const name in agents) {
+            console.log(`Registering ${name} to document ${fullId}`);
+            intelWork.registerNewService(agents[name].code);
+        }
+    }
+
     private downloadRawText(textUrl: string): Promise<string> {
         return new Promise<string>((resolve, reject) => {
             request.get(url.resolve(this.serverUrl, textUrl), (error, response, body: string) => {
@@ -371,46 +368,4 @@ export class WorkerService extends EventEmitter implements core.IWorkerService {
             });
         });
     }
-
-    private loadUploadedModules(agentServer: string, tryCounter: number) {
-        ++tryCounter;
-        this.loadUploadedModuleNames(agentServer).then((moduleNames: any) => {
-            const modules = JSON.parse(moduleNames) as IAgents;
-            for (const moduleName of modules.names) {
-                // paparazzi just loads zipped module.
-                if (this.clientType === "paparazzi" && moduleName.indexOf(".zip") !== -1) {
-                    console.log(`Loading ${moduleName}`);
-                    this.loadNewModule( { name: moduleName, code: null } );
-                }
-                // Anything else just loads .js file.
-                if (this.clientType !== "paparazzi" && moduleName.indexOf(".js") !== -1) {
-                    console.log(`Loading ${moduleName}`);
-                    this.loadNewModule( { name: moduleName, code: null } );
-                }
-            }
-        }, (err) => {
-            console.log(`Error loading uploaded modules: ${err}`);
-            // In case alfred is not ready, try to reconnect a few times.
-            if (tryCounter <= 5) {
-                setTimeout(() => {
-                    this.loadUploadedModules(agentServer, tryCounter);
-                }, 10000);
-            }
-        });
-    }
-
-    private loadUploadedModuleNames(agentServer: string): Promise<any> {
-        return new Promise<any>((resolve, reject) => {
-            request.get(url.resolve(agentServer, `agent`), (error, response, body) => {
-                if (error) {
-                    reject(error);
-                } else if (response.statusCode !== 200) {
-                    reject(response.statusCode);
-                } else {
-                    resolve(body);
-                }
-            });
-        });
-    }
-
 }
