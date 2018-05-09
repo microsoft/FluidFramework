@@ -1472,14 +1472,25 @@ function layoutCell(
     }
     if (!cellView.emptyCell) {
         cellView.renderOutput = renderFlow(cellLayoutInfo, targetTranslation, defer);
+        if (cellView.additionalCellMarkers) {
+            for (let cellMarker of cellView.additionalCellMarkers) {
+                cellLayoutInfo.endMarker = cellMarker.cell.endMarker;
+                let auxRenderOutput = renderFlow(cellLayoutInfo, targetTranslation, defer);
+                cellView.renderOutput.deferredHeight += auxRenderOutput.deferredHeight;
+                cellView.renderOutput.overlayMarkers =
+                    cellView.renderOutput.overlayMarkers.concat(auxRenderOutput.overlayMarkers);
+                cellView.renderOutput.viewportEndPos = auxRenderOutput.viewportEndPos;
+            }
+        }
+        cellView.viewport.vskip(layoutInfo.docContext.cellVspace);
         if (transferDeferredHeight && (cellView.renderOutput.deferredHeight > 0)) {
             layoutInfo.deferUntilHeight = cellView.renderOutput.deferredHeight;
         }
     } else {
-        cellView.viewport.vskip(layoutInfo.docContext.cellVspace);
-        // cellView.viewport.vskip(layoutInfo.docContext.pgVspace);
         cellView.viewport.vskip(layoutInfo.docContext.defaultLineDivHeight);
-        cellView.renderOutput = { deferredHeight: 0, overlayMarkers: [],
+        cellView.viewport.vskip(layoutInfo.docContext.cellVspace);
+        cellView.renderOutput = {
+            deferredHeight: 0, overlayMarkers: [],
             viewportEndPos: cellLayoutInfo.startPos + 3,
             viewportStartPos: cellLayoutInfo.startPos,
         };
@@ -2146,7 +2157,6 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
                     if (segoff.segment.getType() === MergeTree.SegmentType.Marker) {
                         let marker = <MergeTree.Marker>segoff.segment;
                         if (marker.hasRangeLabel("cell") && (marker.refType & MergeTree.ReferenceType.NestEnd)) {
-                            layoutContext.viewport.vskip(layoutContext.docContext.cellVspace);
                             break;
                         }
                     }

@@ -1820,7 +1820,7 @@ export class RegisterCollection {
 
 export interface IConsensusInfo {
     marker: Marker;
-    callback: (m:Marker)=>void;
+    callback: (m: Marker) => void;
 }
 
 export class Client {
@@ -2230,7 +2230,7 @@ export class Client {
         let endMarker = this.mergeTree.getSegmentFromId(op.checkNest.id2);
         let beginPos = this.mergeTree.getOffset(beginMarker, msg.referenceSequenceNumber, clid);
         let endPos = endMarker.cachedLength + this.mergeTree.getOffset(endMarker, msg.referenceSequenceNumber, clid);
-        if ((beginPos!==op.pos1)||(endPos!==op.pos2)) {
+        if ((beginPos !== op.pos1) || (endPos !== op.pos2)) {
             console.log(`remove nest mismatch ${beginPos} ${op.pos1} ${endPos} ${op.pos2}`);
         }
     }
@@ -2356,7 +2356,7 @@ export class Client {
                 if (op.type !== ops.MergeTreeDeltaType.ANNOTATE) {
                     this.ackPendingSegment(operationMessage.sequenceNumber);
                 } else {
-                    if (op.combiningOp && (op.combiningOp.name==="consensus")) {
+                    if (op.combiningOp && (op.combiningOp.name === "consensus")) {
                         this.updateConsensusProperty(op, operationMessage);
                     }
                 }
@@ -2458,15 +2458,15 @@ export class Client {
         if (consensusInfo) {
             consensusInfo.marker.addProperties(op.props, op.combiningOp, msg.sequenceNumber);
         }
-        this.mergeTree.addMinSeqListener(msg.sequenceNumber, (minSeq)=> consensusInfo.callback(consensusInfo.marker));
+        this.mergeTree.addMinSeqListener(msg.sequenceNumber, (minSeq) => consensusInfo.callback(consensusInfo.marker));
     }
-    
+
     // marker must have an id
     annotateMarkerNotifyConsensus(marker: Marker, props: Properties.PropertySet, callback: (m: Marker) => void) {
-        let combiningOp = <ops.ICombiningOp> {
+        let combiningOp = <ops.ICombiningOp>{
             name: "consensus"
         };
-        let consensusInfo = <IConsensusInfo> {
+        let consensusInfo = <IConsensusInfo>{
             callback,
             marker,
         };
@@ -3114,6 +3114,7 @@ export class MergeTree {
     markerModifiedHandler: IMarkerModifiedAction;
     transactionSegmentGroup: SegmentGroup;
     minSeqListeners: Collections.Heap<MinListener>;
+    minSeqPending = false;
     // for diagnostics
     getLongClientId: (id: number) => string;
     getUserInfo: (id: number) => IAuthenticatedUser;
@@ -3940,18 +3941,23 @@ export class MergeTree {
         this.minSeqListeners.add({ minRequired, onMinGE });
     }
 
+    notifyMinSeqListeners() {
+        this.minSeqPending=false;
+        while ((this.minSeqListeners.count() > 0) &&
+            (this.minSeqListeners.peek().minRequired <= this.collabWindow.minSeq)) {
+            let minListener = this.minSeqListeners.get();
+            minListener.onMinGE(this.collabWindow.minSeq);
+        }
+    }
+
     setMinSeq(minSeq: number) {
         if (minSeq > this.collabWindow.minSeq) {
             this.collabWindow.minSeq = minSeq;
             if (MergeTree.options.zamboniSegments) {
                 this.zamboniSegments();
             }
-            if (this.minSeqListeners) {
-                while ((this.minSeqListeners.count() > 0) &&
-                    (this.minSeqListeners.peek().minRequired <= minSeq)) {
-                    let minListener = this.minSeqListeners.get();
-                    minListener.onMinGE(minSeq);
-                }
+            if (this.minSeqListeners && this.minSeqListeners.count()) {
+                this.minSeqPending = true;
             }
         }
     }

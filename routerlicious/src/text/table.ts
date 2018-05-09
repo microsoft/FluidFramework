@@ -523,8 +523,14 @@ export class Cell {
     public columnId: string;
     // TODO: update on typing in cell
     public emptyCell = false;
-
+    public additionalCellMarkers: ICellMarker[];
     constructor(public marker: ICellMarker, public endMarker: ICellMarker) {
+    }
+    public addAuxMarker(marker: ICellMarker) {
+        if (!this.additionalCellMarkers) {
+            this.additionalCellMarkers = [];
+        }
+        this.additionalCellMarkers.push(marker);
     }
 }
 
@@ -674,11 +680,15 @@ export function succinctPrintTable(tableMarker: ITableMarker, tableMarkerPos: nu
     let endTablePos = endTableMarker.cachedLength + getOffset(sharedString, endTableMarker);
     let lineBuf = "";
     let lastWasCO = false;
+    let reqPos = true;
     function printTableSegment(segment: MergeTree.Segment, segpos: number) {
         if (segment.getType() === MergeTree.SegmentType.Marker) {
             let marker = <MergeTree.Marker>segment;
             let endLine = false;
-            lineBuf+=`@${segpos}:`;
+            if (reqPos) {
+                lineBuf += `${segpos}:`;
+                reqPos=false;
+            }
             if (marker.hasRangeLabels()) {
                 let rangeLabel = marker.getRangeLabels()[0];
                 if (marker.refType === MergeTree.ReferenceType.NestEnd) {
@@ -718,12 +728,14 @@ export function succinctPrintTable(tableMarker: ITableMarker, tableMarkerPos: nu
             }
             if (endLine) {
                 lineBuf += " \n";
+                reqPos=true;
             } else {
                 lineBuf += " ";
             }
         } else {
             let textSegment = <MergeTree.TextSegment>segment;
             lineBuf += textSegment.text;
+            reqPos=true;
         }
         return true;
     }
