@@ -1,43 +1,65 @@
 const path = require('path');
+// const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
+const webpack = require('webpack');
+
+// Aliasing: https://webpack.js.org/configuration/resolve/
 
 module.exports = {
     entry: {
       api: "./dist/client-api/index.js",
       ui: "./dist/client-ui/index.js",
       agent: "./dist/agent/index.js",
-      controllers: "./dist/alfred/controllers/index.js"
+      index: "./dist/alfred/controllers/index.js"
     },
-    // entry: __dirname + '/src/client-api/index.ts',
+    // target: 'umd',
+    // entry: {
+    //     api: "./src/client-api/index.ts",
+    //     ui: "./src/client-ui/index.ts",
+    //     agent: "./src/agent/index.ts",
+    //     controllers: "./src/alfred/controllers/index.ts"
+    // },
+    devtool: "source-map",
     output: {
         path: path.resolve(__dirname, "public/scripts/dist"),
-        filename: '[name].js'
+        filename: '[name].js',
+        library: '[name]'
     },
     devtool: "source-map",
     resolve: {
         extensions: [".ts", ".tsx", ".js", ".json"]
     },
-    // module: {
-    //     loader:
-    //       // Compile .tsx?
-    //       {
-    //         test: /\.(ts|tsx)$/,
-    //         include: paths.appSrc,
-    //         use: [
-    //           {
-    //             loader: require.resolve('ts-loader'),
-    //             options: {
-    //               // disable type checker - we will use it in fork plugin
-    //               transpileOnly: true,
-    //             },
-    //           },
-    //         ],
-    //       }
-    // },
+    module: {
+        rules: [
+            {
+                test: /\.(ts|tsx)$/,
+                use: "ts-loader",
+                exclude: "/node_modules/"
+            }
+        ]
+    },
     node: {
         dgram: 'empty',
         fs: 'empty',
         net: 'empty',
         tls: 'empty',
         child_process: 'empty',
-      },
+    },
+    // entry: {
+    //     client-api: 
+    // }
+    // plugins: [
+    //     new webpack.ProvidePlugin({
+    //         "client-api": "global:prague",
+    //     }),
+    //     new UglifyJsPlugin({
+    //         cache: false,
+    //         parallel: true,
+    //     })
+    // ],
+    // minimizer: [
+    //     new UglifyJsPlugin({
+    //         cache: false,
+    //        parallel: false
+    //     })
+    // ]
 };
