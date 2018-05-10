@@ -21,7 +21,7 @@
     "build:dts": "dts-bundle --main dist/client-api/index.d.ts --name prague --baseDir ./dist --out ../public/scripts/dist/prague.d.ts",
     "build:full": "npm run build && npm run browserify:all:min",
     "build:watch": "watch 'npm run tsc && npm run browserify' src",
-    "less": "lessc src/stylesheets/style.less public/stylesheets/dist/style.css",
+    "less": "lessc src/stylesheets/style.less public/stylesheets/dist/style.css && lessc src/stylesheets/map.less public/stylesheets/dist/map.css",
     "alfred": "node dist/alfred/www.js",
     "alfred:debug": "node --inspect=0.0.0.0:5858 dist/alfred/www.js",
     "alfred:watch": "nodemon --exitcrash dist/alfred/www.js -w dist",
