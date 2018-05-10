@@ -219,10 +219,10 @@ function combine(first: number[], second: number[], combine: (a, b) => number): 
     return result;
 }
 
-async function setMetrics(doc: api.Document) {
+async function setMetrics(doc: api.Document, token: string) {
 
     // And also load a canvas document where we will place the metrics
-    const metricsDoc = await api.load(`${doc.id}-metrics`);
+    const metricsDoc = await api.load(`${doc.id}-metrics`, { token });
     const root = await metricsDoc.getRoot().getView();
 
     const components = metricsDoc.createMap();
@@ -252,6 +252,7 @@ export async function typeFile(
     fileText: string,
     intervalTime: number,
     writers: number,
+    metricsToken: string,
     scribeCallback: ScribeMetricsCallback): Promise<IScribeMetrics> {
 
         let metricsArray: IScribeMetrics[] = [];
@@ -274,7 +275,7 @@ export async function typeFile(
             writers,
         };
 
-        await setMetrics(doc);
+        await setMetrics(doc, metricsToken);
 
         let m: IScribeMetrics = {
             ackProgress: undefined,

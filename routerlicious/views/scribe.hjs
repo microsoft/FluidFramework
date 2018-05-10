@@ -101,6 +101,8 @@
             controller.scribe.initialize(
                 config,
                 "{{ id }}",
+                "{{ token }}",
+                "{{ metricsToken }}",
                 "{{ template }}",
                 "{{ speed }}",
                 "{{ authors }}",

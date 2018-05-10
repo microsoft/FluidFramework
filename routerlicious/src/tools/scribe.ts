@@ -53,16 +53,20 @@ fs.readFile(commander.file, "utf8", async (error, data: string) => {
             });
     }
 
-    await scribe.create(sharedStringId, data, debug);
+    // TODO - replace null token parameter with generated token
+    await scribe.create(sharedStringId, null, data, debug);
     scribe.togglePlay();
 
     setTimeout(() => {
         let lastReported = 0;
+
+        // TODO - replace null token parameter with generated metrics document token
         const typeP = scribe.type(
             commander.interval,
             data,
             Number(commander.authors),
             Number(commander.processes),
+            null,
             (metrics) => {
                 if (commander.progress) {
                     bar.update(metrics.ackProgress, {
