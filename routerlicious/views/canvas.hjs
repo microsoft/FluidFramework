@@ -8,13 +8,13 @@
 
     {{$scripts}}
         <script src="//charts.azureedge.net/release/0.1.215074.1/microsoft-charts.min.js"></script>
-        <script src="{{#hfurl}}/public/scripts/dist/index.js{{/hfurl}}"></script>
+        <script src="{{#hfurl}}/public/scripts/dist/controller.js{{/hfurl}}"></script>
 
         <script>
             var config = {{{ config }}};
             var version = {{{ version }}};
             var token = "{{ token }}";
-            controller.canvas.initialize("{{ documentId }}", version, token, config);
+            prague_controller.canvas.initialize("{{ documentId }}", version, token, config);
         </script>
     {{/scripts}}
 {{/layout}}

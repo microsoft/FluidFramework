@@ -10,12 +10,12 @@
     {{/content}}
 
     {{$scripts}}
-        <script src="{{#hfurl}}/public/scripts/dist/index.js{{/hfurl}}"></script>
+        <script src="{{#hfurl}}/public/scripts/dist/controller.js{{/hfurl}}"></script>
         <script>
             var config = {{{ config }}};
             var version = {{{ version }}};
             var token = "{{ token }}";
-            controller.cell.load("{{ documentId }}", version, token, config);
+            prague_controller.cell.load("{{ documentId }}", version, token, config);
         </script>
     {{/scripts}}
 {{/layout}}
