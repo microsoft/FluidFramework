@@ -27,6 +27,8 @@ export function create(config: Provider, tenantManager: ITenantManager,
         workerConfigP.then(
             (workerConfig) => {
                 const token = utils.getToken(tenantId, id, appTenants);
+                const metricsToken = utils.getToken(tenantId, `${id}-metrics`, appTenants);
+
                 response.render(
                     "scribe",
                     {
@@ -35,6 +37,7 @@ export function create(config: Provider, tenantManager: ITenantManager,
                         fileLoad: !id,
                         id,
                         languages,
+                        metricsToken,
                         partials: defaultPartials,
                         speed,
                         template,

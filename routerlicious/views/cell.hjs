@@ -1,6 +1,6 @@
 {{<layout}}
     {{$styles}}
-        <link href="{{#hfurl}}/public/stylesheets/dist/style.css{{/hfurl}}" rel="stylesheet" />
+        <link href="{{#hfurl}}/public/stylesheets/dist/map.css{{/hfurl}}" rel="stylesheet" />
     {{/styles}}
 
     {{$content}}

@@ -101,6 +101,8 @@ function addLink(element: HTMLDivElement, link: string) {
 export function initialize(
     config: any,
     id: string,
+    token: string,
+    metricsToken: string,
     template: string,
     speed: number,
     authors: number,
@@ -154,7 +156,7 @@ export function initialize(
 
         intervalTime = Number.parseInt(intervalElement.value);
         authorCount = Number.parseInt(authorElement.value);
-        const scribeP = scribe.create(id, text);
+        const scribeP = scribe.create(id, token, text);
 
         scribeP.then(() => {
             const linkList = document.getElementById("link-list") as HTMLDivElement;
@@ -203,6 +205,7 @@ export function initialize(
                 text,
                 authorCount,
                 1,
+                metricsToken,
                 (metrics) => updateMetrics(metrics, ackProgressBar, typingProgressBar));
 
             // Output the total time once typing is finished
