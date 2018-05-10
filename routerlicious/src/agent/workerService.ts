@@ -175,7 +175,11 @@ export class WorkerService extends EventEmitter implements core.IWorkerService {
                     }, this.config.intervalMSec);
 
                     // Load agents here since TMZ is ready now.
-                    await this.agentLoader.loadUploadedAgents();
+                    this.agentLoader.loadUploadedAgents().then(() => {
+                        console.log(`Load all uploaded agents`);
+                    }, (err) => {
+                        console.log(`Could not load agent: ${err}`);
+                    });
                 } else {
                     deferred.resolve();
                 }
