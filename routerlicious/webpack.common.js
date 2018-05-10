@@ -1,7 +1,6 @@
 const path = require('path');
 const webpack = require('webpack');
 
-console.log("common");
 module.exports = {
     entry: {
         api: "./src/client-api/index.ts",

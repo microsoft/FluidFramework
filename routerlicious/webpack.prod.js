@@ -3,7 +3,6 @@ const merge = require('webpack-merge');
 const path = require('path');
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 
-console.log("prod");
 module.exports = merge(common, {
     devtool: "inline-source-map",
     plugins: [
