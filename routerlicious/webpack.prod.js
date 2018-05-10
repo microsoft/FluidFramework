@@ -3,16 +3,20 @@ const merge = require('webpack-merge');
 const path = require('path');
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 
+// Uglify Fails
 module.exports = merge(common, {
     devtool: "inline-source-map",
     plugins: [
         new UglifyJsPlugin({
             test: /\.ts($|\?)/i,
+            exclude: "api.min.js",
             parallel: true,
             sourceMap: false,
             uglifyOptions: {
                 mangle: false,
-                compress: false,
+                compress: {
+                    inline: false
+                },
                 warnings: true,
             }
         }),
@@ -22,4 +26,4 @@ module.exports = merge(common, {
         filename: '[name].min.js',
         library: "prague_[name]"
     },
-}) 
+});

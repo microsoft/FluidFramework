@@ -9,4 +9,4 @@ module.exports = merge(common, {
         filename: '[name].js',
         library: "prague_[name]"
     },
-})
+});
