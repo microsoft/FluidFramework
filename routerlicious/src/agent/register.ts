@@ -23,6 +23,11 @@ export function registerWorker(config: any, clientType: string) {
             initLoadModule(config),
         );
 
+        // Report any service error.
+        workerService.on("error", (error) => {
+            console.log(error);
+        });
+
         let workerP = workerService.connect("Client");
         workerP.catch((error) => {
             console.log(`Error connecting to worker`);
