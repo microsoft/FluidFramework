@@ -1,27 +1,7 @@
-import * as queue from "async/queue";
 import { EventEmitter } from "events";
 import { core, socketIoClient as io, socketStorage, utils } from "../client-api";
 import { IWork } from "./work";
 import { WorkManager } from "./workManager";
-
-// Interface for queueing work
-interface IWorkQueue {
-    action: string;
-    tenantId: string;
-    documentId: string;
-    workType: string;
-    response: any;
-    clientDetail: socketStorage.IWorker;
-    token?: string;
-};
-
-// Interface for queueing agent loading/unloading
-interface IAgentQueue {
-    name: string;
-    action: string;
-    response: any;
-    clientDetail: socketStorage.IWorker;
-};
 
 export interface IDocumentServiceFactory {
     getService(tenantId: string): Promise<core.IDocumentService>;
@@ -35,10 +15,6 @@ export class WorkerService extends EventEmitter implements core.IWorkerService {
     private socket;
     private documentMap: { [docId: string]: { [work: string]: IWork} } = {};
     private workTypeMap: { [workType: string]: boolean} = {};
-
-    private workQueue: any;
-    private agentQueue: any;
-
     private workManager: WorkManager;
     private loadAgents: boolean;
 
@@ -65,28 +41,6 @@ export class WorkerService extends EventEmitter implements core.IWorkerService {
         this.workManager.on("error", (error) => {
             this.emit("error", error);
         });
-
-        // async queues to process document/agent. Emit errors to caller.
-        this.workQueue = queue( async (work: IWorkQueue, callback) => {
-            this.workManager.processDocumentWork(work.tenantId, work.documentId, work.token,
-                                                 work.workType, work.action).then(() => {
-                work.response(null, work.clientDetail);
-                callback();
-            }, (err) => {
-                this.emit("error", err);
-                callback();
-            });
-        }, 1);
-
-        this.agentQueue = queue( async (agent: IAgentQueue, callback) => {
-            this.workManager.processAgentWork(agent.name, agent.action).then(() => {
-                agent.response(null, agent.clientDetail);
-                callback();
-            }, (err) => {
-                this.emit("error", err);
-                callback();
-            });
-        }, 1);
     }
 
     /**
@@ -112,18 +66,15 @@ export class WorkerService extends EventEmitter implements core.IWorkerService {
                 if (error) {
                     deferred.reject(error);
                 } else if (ack === "Acked") {
-                    // Load an agent only when you are allowed.
-                    if (this.loadAgents) {
-                        this.socket.on("AgentObject", (cId: string, agentName: string, action: string, response) => {
-                            const work: IAgentQueue = {
-                                action,
-                                clientDetail,
-                                name: agentName,
-                                response,
-                            };
-                            this.agentQueue.push(work);
-                        });
-                    }
+                    // Agent loading request.
+                    this.socket.on("AgentObject", (cId: string, agentName: string, action: string, response) => {
+                        if (this.loadAgents) {
+                            this.workManager.processAgentWork(agentName, action).catch((err) => {
+                                this.emit("error", err);
+                            });
+                        }
+                        response(null, clientDetail);
+                    });
 
                     // Check whether worker is allowed to run a requested work.
                     this.socket.on(
@@ -145,31 +96,22 @@ export class WorkerService extends EventEmitter implements core.IWorkerService {
                          token: string,
                          workType: string,
                          response) => {
-                            const work: IWorkQueue = {
-                                action: "start",
-                                clientDetail,
-                                documentId,
-                                response,
-                                tenantId,
-                                token,
-                                workType,
-                            };
-                            this.workQueue.push(work);
+                             this.workManager.processDocumentWork(tenantId, documentId, workType, "start", token)
+                             .catch((err) => {
+                                 this.emit("error", err);
+                                });
+                             response(null, clientDetail);
                         });
 
                     // Stop working on an object.
                     this.socket.on(
                         "RevokeObject",
                         (cId: string, tenantId: string, documentId: string, workType: string, response) => {
-                            const work: IWorkQueue = {
-                                action: "stop",
-                                clientDetail,
-                                documentId,
-                                response,
-                                tenantId,
-                                workType,
-                            };
-                            this.workQueue.push(work);
+                            this.workManager.processDocumentWork(tenantId, documentId, workType, "stop")
+                            .catch((err) => {
+                                this.emit("error", err);
+                               });
+                            response(null, clientDetail);
                     });
 
                     // Periodically sends heartbeat to manager.

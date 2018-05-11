@@ -26,9 +26,7 @@ export class SpellcheckerWork extends BaseWork implements IWork {
             { blockUpdateMarkers: true, localMinSeq: 0, encrypted: undefined, token: this.token },
             this.service);
         const eventHandler = (op: core.ISequencedDocumentMessage, object: core.ICollaborativeObject) => {
-            if (op.type === core.ObjectOperation) {
-                this.spellCheck(object);
-            } else if (op.type === core.AttachObject) {
+            if (op.type === core.ObjectOperation || op.type === core.AttachObject) {
                 this.spellCheck(object);
             }
         };

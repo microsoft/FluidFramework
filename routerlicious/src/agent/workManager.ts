@@ -51,8 +51,8 @@ export class WorkManager extends EventEmitter {
         }
     }
 
-    public async processDocumentWork(tenantId: string, documentId: string, token: string,
-                                     workType: string, action: string) {
+    public async processDocumentWork(tenantId: string, documentId: string, workType: string,
+                                     action: string, token?: string) {
         if (action === "start") {
             await this.startDocumentWork(tenantId, documentId, token, workType);
         } else {
