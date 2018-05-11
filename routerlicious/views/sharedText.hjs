@@ -15,7 +15,7 @@
             var connect = {{{ connect }}};
             var token = "{{ token }}";
             console.log(`Starting load at - ${performance.now()}`);
-            prague_controller.sharedText.load(
+            controller.sharedText.load(
                 "{{ documentId }}",
                 version,
                 token,

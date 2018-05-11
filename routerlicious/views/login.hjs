@@ -38,7 +38,7 @@
         <script src="{{#hfurl}}/public/scripts/dist/controller.js{{/hfurl}}"></script>
         <script>
             var config = {{{ config }}};
-            prague_controller.login.load(config);
+            controller.login.load(config);
         </script>
     {{/scripts}}
 {{/layout}}

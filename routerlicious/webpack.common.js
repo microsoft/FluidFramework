@@ -26,12 +26,12 @@ module.exports = {
     },
     externals: {
         jquery: '$',
-        "../client-api": "prague_api",
-        "../../client-api": "prague_api",
-        "../client-ui": "prague_ui",
-        "../../client-ui": "prague_ui",
-        "../agent": "prague_agent",
-        "../../agent": "prague_agent",
+        "../client-api": "api",
+        "../../client-api": "api",
+        "../client-ui": "ui",
+        "../../client-ui": "ui",
+        "../agent": "agent",
+        "../../agent": "agent",
     },
     module: {
         rules: [

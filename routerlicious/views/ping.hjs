@@ -16,7 +16,7 @@
     {{$scripts}}
         <script src="{{#hfurl}}/public/scripts/dist/controller.js{{/hfurl}}"></script>
         <script>
-            prague_controller.ping.load();
+            controller.ping.load();
         </script>
     {{/scripts}}
 {{/layout}}
