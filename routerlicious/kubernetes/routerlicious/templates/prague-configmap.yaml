@@ -175,16 +175,6 @@ data:
         },
         "tenantConfig": [
             {
-                "_id": "git",
-                "key": "43cfc3fbf04a97c0921fd23ff10f9e4b",
-                "storage": {
-                    "url": "{{ .Values.gitrest.url }}",
-                    "owner": "prague",
-                    "repository": "prague"
-                },
-                "isDefault": true
-            },
-            {
                 "_id": "prague",
                 "key": "43cfc3fbf04a97c0921fd23ff10f9e4b",
                 "storage": {
