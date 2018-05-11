@@ -8,6 +8,11 @@ module.exports = {
         agent: "./src/agent/index.ts",
         controller: "./src/alfred/controllers/index.ts",
     },
+    output: {
+        path: path.resolve(__dirname, "public/scripts/dist"),
+        filename: '______.js', // Overwriten in prod/dev config
+        library: "[name]"
+    },
     devtool: 'source-map',    
     resolve: {
         extensions: [".ts", ".tsx", ".js", ".json"]
@@ -47,4 +52,7 @@ module.exports = {
             }
         ]
     },
+    stats: {
+        timings: true,
+    }
 };
