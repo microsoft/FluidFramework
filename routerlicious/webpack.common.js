@@ -6,9 +6,9 @@ module.exports = {
         api: "./src/client-api/index.ts",
         ui: "./src/client-ui/index.ts",
         agent: "./src/agent/index.ts",
-        controller: "./src/alfred/controllers/index.ts"
+        controller: "./src/alfred/controllers/index.ts",
     },
-
+    devtool: 'source-map',    
     resolve: {
         extensions: [".ts", ".tsx", ".js", ".json"]
     },
