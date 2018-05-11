@@ -26,22 +26,29 @@ export class WorkManager extends EventEmitter {
                 private documentMap: { [docId: string]: { [work: string]: IWork} },
                 private agentModuleLoader: (id: string) => Promise<any>,
                 private clientType: string,
-                private loadDictionary: boolean) {
+                private loadDictionary: boolean,
+                private loadAgents: boolean) {
         super();
+
+        // Load dictionary if you are allowed.
         if (this.loadDictionary) {
             this.loadDict();
         }
-        // Agent Loader to load runtime uploaded agents.
-        const agentServer = this.clientType === "paparazzi" ? this.config.alfredUrl : this.serverUrl;
-        this.agentLoader = new AgentLoader(this.agentModuleLoader, agentServer);
 
-        // Start loading all uploaded agents.
-        this.agentLoader.loadUploadedAgents(this.clientType).then(() => {
-            console.log(`Loaded all uploaded agents`);
-        }, (err) => {
-            console.log(`Could not load agent: ${err}`);
-            this.emit("error", err);
-        });
+        // Load agents if you are allowed.
+        if (this.loadAgents) {
+            // Agent Loader to load runtime uploaded agents.
+            const agentServer = this.clientType === "paparazzi" ? this.config.alfredUrl : this.serverUrl;
+            this.agentLoader = new AgentLoader(this.agentModuleLoader, agentServer);
+
+            // Start loading all uploaded agents.
+            this.agentLoader.loadUploadedAgents(this.clientType).then(() => {
+                console.log(`Loaded all uploaded agents`);
+            }, (err) => {
+                console.log(`Could not load agent: ${err}`);
+                this.emit("error", err);
+            });
+        }
     }
 
     public async processDocumentWork(tenantId: string, documentId: string, token: string,

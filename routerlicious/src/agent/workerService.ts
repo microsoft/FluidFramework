@@ -40,6 +40,7 @@ export class WorkerService extends EventEmitter implements core.IWorkerService {
     private agentQueue: any;
 
     private workManager: WorkManager;
+    private loadAgents: boolean;
 
     constructor(
         private serverUrl: string,
@@ -54,12 +55,13 @@ export class WorkerService extends EventEmitter implements core.IWorkerService {
         for (let workType of config.permission[this.clientType]) {
             this.workTypeMap[workType] = true;
         }
-        // Load dictionary only if you are allowed to spellcheck.
+        // Load dictionary and agents if allowed.
         const loadDictionary = ("spell" in this.workTypeMap);
+        this.loadAgents = ("intel" in this.workTypeMap);
 
         // Set up work manager.
         this.workManager = new WorkManager(this.serviceFactory, this.config, this.serverUrl, this.documentMap,
-                                           this.agentModuleLoader, this.clientType, loadDictionary);
+                                           this.agentModuleLoader, this.clientType, loadDictionary, this.loadAgents);
         this.workManager.on("error", (error) => {
             this.emit("error", error);
         });
@@ -110,16 +112,18 @@ export class WorkerService extends EventEmitter implements core.IWorkerService {
                 if (error) {
                     deferred.reject(error);
                 } else if (ack === "Acked") {
-                    // Check whether worker is ready to load a new agent.
-                    this.socket.on("AgentObject", (cId: string, agentName: string, action: string, response) => {
-                        const work: IAgentQueue = {
-                            action,
-                            clientDetail,
-                            name: agentName,
-                            response,
-                        };
-                        this.agentQueue.push(work);
-                    });
+                    // Load an agent only when you are allowed.
+                    if (this.loadAgents) {
+                        this.socket.on("AgentObject", (cId: string, agentName: string, action: string, response) => {
+                            const work: IAgentQueue = {
+                                action,
+                                clientDetail,
+                                name: agentName,
+                                response,
+                            };
+                            this.agentQueue.push(work);
+                        });
+                    }
 
                     // Check whether worker is allowed to run a requested work.
                     this.socket.on(
