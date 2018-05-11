@@ -3,9 +3,9 @@ import * as agent from "../../agent";
 import { api, socketStorage } from "../../client-api";
 import { controls, ui } from "../../client-ui";
 
-async function loadDocument(id: string, version: resources.ICommit): Promise<api.Document> {
+async function loadDocument(id: string, version: resources.ICommit, token: string): Promise<api.Document> {
     console.log("Loading in root document...");
-    const document = await api.load(id, { encrypted: false /* api.isUserLoggedIn() */ }, version);
+    const document = await api.load(id, { encrypted: false /* api.isUserLoggedIn() */, token }, version);
 
     console.log("Document loaded");
     return document;
@@ -19,7 +19,7 @@ export async function initialize(id: string, version: resources.ICommit, token: 
     // Bootstrap worker service.
     agent.registerWorker(config, "maps");
 
-    const doc = await loadDocument(id, version);
+    const doc = await loadDocument(id, version, token);
     const root = doc.getRoot();
 
     const element = document.createElement("div");
