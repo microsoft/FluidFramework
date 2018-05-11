@@ -7,7 +7,7 @@
     {{/content}}
 
     {{$scripts}}
-        <script src="{{#hfurl}}/public/scripts/dist/controller.js{{/hfurl}}"></script>
+        <script src="{{#hfurl}}/public/scripts/dist/controller.min.js{{/hfurl}}"></script>
         <script>
             var config = {{{ config }}};
             var version = {{{ version }}};

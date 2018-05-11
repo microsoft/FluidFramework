@@ -1,6 +1,5 @@
 import * as socketStorage from ".";
-import * as api from "../api";
-import { IDocumentService } from "../api-core";
+import { api, core } from "../client-api";
 import { GitManager } from "../git-storage";
 import { Historian } from "../services-client";
 
@@ -10,7 +9,7 @@ export function createDocumentService(
     tenantId: string,
     disableCache = false,
     historianApi = true,
-    credentials?): IDocumentService {
+    credentials?): core.IDocumentService {
 
     const endpoint = `${gitUrl}/repos/${tenantId}`;
     const historian = new Historian(endpoint, historianApi, disableCache, credentials);
