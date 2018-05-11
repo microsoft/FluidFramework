@@ -8,4 +8,9 @@ export interface IWork {
      * Stops the work
      */
     stop(): Promise<void>;
+
+    /**
+     * Error event
+     */
+    on(event: "error", listener: (error: string) => void): this;
 }

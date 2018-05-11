@@ -445,6 +445,10 @@ export class Document extends EventEmitter {
                     this.processRemoteMessage(message, context);
                 },
             });
+
+        this._deltaManager.on("error", (error) => {
+            this.emit("error", error);
+        });
     }
 
     public get options(): Object {

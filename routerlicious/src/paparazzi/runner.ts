@@ -39,6 +39,11 @@ export class PaparazziRunner implements utils.IRunner {
             workerConfig,
             "paparazzi",
             this.initLoadModule(alfredUrl));
+
+        // Report any service error.
+        this.workerService.on("error", (error) => {
+            winston.error(error);
+        });
     }
 
     public start(): Promise<void> {
@@ -68,6 +73,8 @@ export class PaparazziRunner implements utils.IRunner {
                       import(`../../../../../tmp/intel_modules/${moduleName}/${moduleName}`).then((loadedModule) => {
                             winston.info(`${moduleName} loaded!`);
                             resolve(loadedModule);
+                        }, (err) => {
+                            reject(err);
                         });
                     } else {    // Otherwise load the module from db, write it locally, and import it.
                         request

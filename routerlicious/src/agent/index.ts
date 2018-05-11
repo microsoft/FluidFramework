@@ -10,6 +10,7 @@ export * from "./rateLimiter"
 export * from "./intelWork"
 export * from "./metricClient"
 export * from "./pingWork"
+export * from "./agentLoader"
 
 import * as constants from "./constants";
 export { constants };
