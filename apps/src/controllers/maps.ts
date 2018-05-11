@@ -128,9 +128,9 @@ async function randomizeMap(map: types.IMap) {
     }, 1000);
 }
 
-export async function load(id: string, repository: string,  owner: string, endPoints: any, token?: string,
+export async function load(id: string, tenantId: string, endPoints: any, token?: string,
                            workerConfig?: any) {
-    prague.socketStorage.registerAsDefault(endPoints.delta, endPoints.storage, owner, repository);
+    prague.socketStorage.registerAsDefault(endPoints.delta, endPoints.storage, tenantId);
     $(document).ready(() => {
         // Only register to work if the config is present.
         if (workerConfig) {
@@ -143,7 +143,7 @@ export async function load(id: string, repository: string,  owner: string, endPo
             const root = doc.getRoot();
 
             // Display the user id.
-            displayUserId($("#mapViews"), doc.getUser().user);
+            displayUserId($("#mapViews"), doc.getUser().user.name);
             console.log(doc.getUser());
 
             // Display the initial values and then listen for updates

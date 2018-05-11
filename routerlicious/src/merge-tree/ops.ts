@@ -83,6 +83,7 @@ export interface IMergeTreeRemoveMsg extends IMergeTreeDelta {
     pos2?: number;
     relativePos2?: IRelativePosition;
     register?: string;
+    checkNest?: { id1: string, id2: string};
 }
 
 export interface ICombiningOp {

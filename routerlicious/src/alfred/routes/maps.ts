@@ -1,4 +1,3 @@
-// Load environment varaibles and pass to the controller.
 import { Router } from "express";
 import { Provider } from "nconf";
 import { ITenantManager } from "../../api-core";
@@ -7,13 +6,14 @@ import { IAlfredTenant } from "../tenant";
 import * as utils from "../utils";
 import { defaultPartials } from "./partials";
 
-export function create(config: Provider, tenantManager: ITenantManager, appTenants: IAlfredTenant[]): Router {
+export function create(config: Provider, tenantManager: ITenantManager,
+                       appTenants: IAlfredTenant[], ensureLoggedIn: any): Router {
     const router: Router = Router();
 
     /**
      * Loads count number of latest commits.
      */
-    router.get("/:tenantId?/:id/commits", (request, response, next) => {
+    router.get("/:tenantId?/:id/commits", ensureLoggedIn(), (request, response, next) => {
         const tenantId = request.params.tenantId || appTenants[0].id;
         const versionsP = storage.getVersions(tenantManager, tenantId, request.params.id, 30);
 
@@ -36,7 +36,7 @@ export function create(config: Provider, tenantManager: ITenantManager, appTenan
     /**
      * Loading of a specific version of shared text.
      */
-    router.get("/:tenantId?/:id/commit", async (request, response, next) => {
+    router.get("/:tenantId?/:id/commit", ensureLoggedIn(), async (request, response, next) => {
         const tenantId = request.params.tenantId || appTenants[0].id;
 
         const targetVersionSha = request.query.version;
@@ -70,7 +70,7 @@ export function create(config: Provider, tenantManager: ITenantManager, appTenan
     /**
      * Loading of a specific collaborative map
      */
-    router.get("/:tenantId?/:id", async (request, response, next) => {
+    router.get("/:tenantId?/:id", ensureLoggedIn(), async (request, response, next) => {
         const tenantId = request.params.tenantId || appTenants[0].id;
 
         const workerConfigP = utils.getConfig(config.get("worker"), tenantManager, tenantId);

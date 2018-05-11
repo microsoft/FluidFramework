@@ -42,13 +42,13 @@ async function setMaps(gameMap: types.IMap, doc: api.Document): Promise<void> {
     };
 }
 
-export async function load(id: string, repository: string,  owner: string, endPoints: any, token?: string) {
+export async function load(id: string, tenantId: string, endPoints: any, token?: string) {
     $("document").ready(() => {
-        socketStorage.registerAsDefault(endPoints.delta, endPoints.storage, owner, repository);
+        socketStorage.registerAsDefault(endPoints.delta, endPoints.storage, tenantId);
         loadDocument(id, token).then(async (doc: api.Document) => {
             // tslint:disable-next-line
             window["doc"] = doc;
-            const playerName = doc.getUser().user;
+            const playerName = doc.getUser().user.name;
             let playerId: number;
             // Set up Collaborative Types and Player Numbers
             const rootView = await doc.getRoot().getView();

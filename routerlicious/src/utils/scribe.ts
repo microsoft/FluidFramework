@@ -51,13 +51,20 @@ async function setChunkMap(chunks: string[]) {
     }
 }
 
-async function conductor(text, intervalTime, writers, processes, callback ): Promise<author.IScribeMetrics> {
+async function conductor(
+    text,
+    intervalTime,
+    writers,
+    processes,
+    metricsToken: string,
+    callback): Promise<author.IScribeMetrics> {
+
     let process = 0;
     let docId = "";
     let chunks = author.normalizeText(text).split("\n");
 
     if (processes === 1) {
-        return await author.typeFile(document, sharedString, text, intervalTime, writers, callback);
+        return await author.typeFile(document, sharedString, text, intervalTime, writers, metricsToken, callback);
     }
 
     let interval = setInterval(() => {
@@ -69,9 +76,14 @@ async function conductor(text, intervalTime, writers, processes, callback ): Pro
     }, 500);
 }
 
-export async function create(id: string, text: string, debug = false): Promise<void> {
+export async function create(
+    id: string,
+    token: string,
+    text: string,
+    debug = false): Promise<void> {
+
     // Load the shared string extension we will type into
-    document = await api.load(id);
+    document = await api.load(id, { token });
     const root = await document.getRoot().getView();
 
     root.set("presence", document.createMap());
@@ -99,9 +111,10 @@ export async function type(
     text: string,
     writers: number,
     processes: number,
+    metricsToken: string,
     callback: author.ScribeMetricsCallback): Promise<author.IScribeMetrics> {
 
-    return conductor(text, intervalTime, writers, processes, callback);
+    return conductor(text, intervalTime, writers, processes, metricsToken, callback);
 }
 
 /**

@@ -1,10 +1,15 @@
 import * as jwt from "jsonwebtoken";
 
+export interface IUser {
+    id: string;
+    name: string;
+}
+
 export interface ITokenClaims {
     documentId: string;
     permission: string;
     tenantId: string;
-    user: string;
+    user: IUser;
 }
 
 /**
@@ -28,7 +33,10 @@ export function generateToken(request: any, tenantId: string, signingKey: string
         documentId: request.params.id,
         permission: "read:write",
         tenantId,
-        user: request.user.displayName,
+        user: {
+            id: request.user.upn,
+            name: request.user.displayName,
+        },
     };
 
     return jwt.sign(claims, signingKey);

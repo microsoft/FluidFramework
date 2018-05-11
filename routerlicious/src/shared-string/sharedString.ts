@@ -151,7 +151,9 @@ export class SharedString extends CollaborativeMap {
             MergeTree.UniversalSequenceNumber, this.client.getClientId());
         let end = nestEnd.cachedLength + this.client.mergeTree.getOffset(nestEnd,
             MergeTree.UniversalSequenceNumber, this.client.getClientId());
+        console.log(`removing nest ${nestStart.getId()} from [${start},${end})`);
         const removeMessage: MergeTree.IMergeTreeRemoveMsg = {
+            checkNest: {id1: nestStart.getId(), id2: nestEnd.getId()},
             pos1: start,
             pos2: end,
             type: MergeTree.MergeTreeDeltaType.REMOVE,
@@ -362,6 +364,9 @@ export class SharedString extends CollaborativeMap {
 
     protected processContent(message: api.ISequencedObjectMessage) {
         this.client.applyMsg(message);
+        if (this.client.mergeTree.minSeqPending) {
+            this.client.mergeTree.notifyMinSeqListeners();
+        }
     }
 
     protected processMinSequenceNumberChangedContent(value: number) {

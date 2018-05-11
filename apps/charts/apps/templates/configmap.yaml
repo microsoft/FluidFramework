@@ -24,8 +24,6 @@ data:
             "tenantInfo": {
                 "id": "{{ .Values.tenantId }}",
                 "secretKey": "{{ .Values.secretKey }}",
-                "repository": "prague",
-                "owner": "prague",
                 "endpoints": {
                     "delta": "{{ .Values.endpoints.delta }}",
                     "storage": "{{ .Values.endpoints.storage }}"
@@ -55,7 +53,6 @@ data:
                 "url": "{{ .Values.endpoints.tmzUrl }}",
                 "blobStorageUrl": "{{ .Values.endpoints.blobStorageUrl }}",
                 "scriptUrl": "{{ .Values.endpoints.scriptUrl }}",
-                "repository": "prague",
                 "storageBucket": "snapshots",
                 "intervalMSec": 5000,
                 "onlyServer": false,

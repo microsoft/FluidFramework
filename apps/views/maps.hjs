@@ -14,7 +14,7 @@
         <script>
             var endpoints = {{{ endpoints }}};
             var workerConfig = {{{ workerConfig }}};
-            controller.maps.load("{{ id }}", "{{ repository }}", "{{ owner }}", endpoints, "{{ token }}", workerConfig);
+            controller.maps.load("{{ id }}", "{{ tenantId }}", endpoints, "{{ token }}", workerConfig);
         </script>
     {{/scripts}}
 {{/layout}}
