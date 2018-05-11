@@ -49,12 +49,11 @@ export function register(
         async function connectDocument(message: socketStorage.IConnect): Promise<socketStorage.IConnected> {
             const profiler = winston.startTimer();
 
-            // TODO I may need to keep the default tenant ID empty
-            // For backwards compatibility fill in tenant and token if they don't exist
-            message.tenantId = message.tenantId ? message.tenantId : defaultTenant.id;
-            const token = message.token
-                ? message.token
-                : utils.generateToken(defaultTenant.id, message.id, defaultTenant.key);
+            if (!message.token) {
+                return Promise.reject("Must provide an authorization token");
+            }
+
+            const token = message.token;
 
             // Validate token signature and claims
             const claims = jwt.decode(token) as utils.ITokenClaims;

@@ -105,6 +105,10 @@ interface IDistributedObjectState {
     connection: DeltaConnection;
 }
 
+interface ITokenClaims {
+    tenantId: string;
+}
+
 /**
  * Document details extracted from the header
  */
@@ -204,11 +208,20 @@ export class Document extends EventEmitter {
             return Promise.reject("Must specify a version if connect is set to false");
         }
 
+        if (!options.token) {
+            return Promise.reject("Must provide an authorization token");
+        }
+
         debug(`Document loading ${id} - ${performanceNow()}`);
 
         const token = options.token;
-        // TODO can remove default tenant once we require the token
-        const tenantId = token ? (jwt.decode(token) as any).tenantId : "git";
+        const claims = jwt.decode(token) as ITokenClaims;
+
+        if (!claims.tenantId) {
+            return Promise.reject("Must provide a tenant ID claim in authorization token");
+        }
+
+        const tenantId = claims.tenantId;
         const storageP = service.connectToStorage(tenantId, id, token);
         const deltaStorageP = service.connectToDeltaStorage(tenantId, id, token);
 
