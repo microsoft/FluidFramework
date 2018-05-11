@@ -14,10 +14,10 @@
     {{/content}}
 
     {{$scripts}}
-        <script src="{{#hfurl}}/public/scripts/dist/index.js{{/hfurl}}"></script>
+        <script src="{{#hfurl}}/public/scripts/dist/controller.js{{/hfurl}}"></script>
         <script>
             var versions = {{{ versions }}};
-            controller.commits.load("{{ type }}","{{ documentId }}", versions);
+            prague_controller.commits.load("{{ type }}","{{ documentId }}", versions);
         </script>
     {{/scripts}}
 {{/layout}}
