@@ -1,3 +1,6 @@
+[![Build Status](https://offnet.visualstudio.com/_apis/public/build/definitions/0a22f611-6a4a-4416-a1bb-53ed7284aa21/3/badge)](https://offnet.visualstudio.com/_apis/public/build/definitions/0a22f611-6a4a-4416-a1bb-53ed7284aa21/3/badge)
+
+
 # Routerlicious
 
 Routerlicious handles the receiving of delta operations and is responsible for the ordering and assignment of a
