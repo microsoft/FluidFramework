@@ -1,3 +1,5 @@
+[![GitRest Build Status](https://offnet.visualstudio.com/_apis/public/build/definitions/0a22f611-6a4a-4416-a1bb-53ed7284aa21/8/badge)](https://offnet.visualstudio.com/officenet/_build/index?definitionId=8)
+
 # GIT REST
 
 Provides a REST API to a GitHub repository. It's API is based off of GitHub's REST APIs.

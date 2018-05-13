@@ -4,7 +4,7 @@
 
 Prague is investigating and prototyping key design questions around interactive documents and MUIs.
 
-We're currently in the middle of [Sprint 4](./doc/sprints/sprint4/readme.md) and focused on self-hosting.
+We're currently in the middle of [Sprint 5](./doc/sprints/sprint5/readme.md) and focused on self-hosting.
 
 ## Source Code Overview
 
@@ -25,6 +25,22 @@ We're currently in the middle of [Sprint 4](./doc/sprints/sprint4/readme.md) and
 [Intelligence](./intelligence) contains a starter container for developing Python based intelligent services.
 
 [legacy](./legacy) folder contains a set of legacy prototypes around a collaborative canvas. As well as MUIs that load within the browser or within an enlightened host.
+
+## Build Status
+
+|Project|Status|
+|-------|------|
+|[Routerlicious](./routerlicious)|[![Routerlicious Build Status](https://offnet.visualstudio.com/_apis/public/build/definitions/0a22f611-6a4a-4416-a1bb-53ed7284aa21/3/badge)](https://offnet.visualstudio.com/officenet/_build/index?definitionId=3)|
+|[API](./routerlicious)|[![API Build Status](https://offnet.visualstudio.com/_apis/public/build/definitions/0a22f611-6a4a-4416-a1bb-53ed7284aa21/10/badge)](https://offnet.visualstudio.com/officenet/_build/index?definitionId=10)|
+|[Admin](./admin)|[![Admin Build Status](https://offnet.visualstudio.com/_apis/public/build/definitions/0a22f611-6a4a-4416-a1bb-53ed7284aa21/17/badge)](https://offnet.visualstudio.com/officenet/_build/index?definitionId=17)|
+|[Historian](./historian)|[![Historian Build Status](https://offnet.visualstudio.com/_apis/public/build/definitions/0a22f611-6a4a-4416-a1bb-53ed7284aa21/7/badge)](https://offnet.visualstudio.com/officenet/_build/index?definitionId=7)|
+|[Historian Chart](./charts/historian)|[![Historian Chart Build Status](https://offnet.visualstudio.com/_apis/public/build/definitions/0a22f611-6a4a-4416-a1bb-53ed7284aa21/13/badge)](https://offnet.visualstudio.com/officenet/_build/index?definitionId=13)|
+|[Cobalt](https://offnet.visualstudio.com/officenet/_git/cobalt-netcore)|[![Gitresources Build Status](https://offnet.visualstudio.com/_apis/public/build/definitions/0a22f611-6a4a-4416-a1bb-53ed7284aa21/12/badge)](https://offnet.visualstudio.com/officenet/_build/index?definitionId=12)|
+|[GitSSH](./gitssh)|[![GitSSH Build Status](https://offnet.visualstudio.com/_apis/public/build/definitions/0a22f611-6a4a-4416-a1bb-53ed7284aa21/5/badge)](https://offnet.visualstudio.com/officenet/_build/index?definitionId=5)|
+|[GitRest](./gitrest)|[![GitRest Build Status](https://offnet.visualstudio.com/_apis/public/build/definitions/0a22f611-6a4a-4416-a1bb-53ed7284aa21/8/badge)](https://offnet.visualstudio.com/officenet/_build/index?definitionId=8)|
+|[Apps](./apps)|[![Apps Build Status](https://offnet.visualstudio.com/_apis/public/build/definitions/0a22f611-6a4a-4416-a1bb-53ed7284aa21/16/badge)](https://offnet.visualstudio.com/officenet/_build/index?definitionId=16)|
+|[Gitresources](./gitresources)|[![Gitresources Build Status](https://offnet.visualstudio.com/_apis/public/build/definitions/0a22f611-6a4a-4416-a1bb-53ed7284aa21/9/badge)](https://offnet.visualstudio.com/officenet/_build/index?definitionId=9)|
+
 
 ## Demo Videos
 

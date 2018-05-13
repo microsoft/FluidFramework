@@ -1,5 +1,3 @@
-[![Build Status](https://offnet.visualstudio.com/_apis/public/build/definitions/0a22f611-6a4a-4416-a1bb-53ed7284aa21/3/badge)](https://offnet.visualstudio.com/officenet/_build/index?definitionId=3)
-
 # Routerlicious
 
 Routerlicious handles the receiving of delta operations and is responsible for the ordering and assignment of a
@@ -15,6 +13,22 @@ the interfaces. For instance connections are handled with socket.io. And cross m
 via Redis.
 
 The services follow the [twelve factor](https://12factor.net) methodology and are considered [cattle and not pets](http://cloudscaling.com/blog/cloud-computing/the-history-of-pets-vs-cattle/).
+
+## Build and Deployment Status
+
+|Environment|Status|
+|-----------|------|
+|Service|[![Service Build Status](https://offnet.visualstudio.com/_apis/public/build/definitions/0a22f611-6a4a-4416-a1bb-53ed7284aa21/3/badge)](https://offnet.visualstudio.com/officenet/_build/index?definitionId=3)|
+|API|[![API Build Status](https://offnet.visualstudio.com/_apis/public/build/definitions/0a22f611-6a4a-4416-a1bb-53ed7284aa21/10/badge)](https://offnet.visualstudio.com/officenet/_build/index?definitionId=10)|
+
+Deployment Status
+
+|Environment|Status|
+|-----------|------|
+|[WestUS2 Production](https://alfred.wu2.prague.office-int.com/)|[![WestUS2 Production](https://offnet.vsrm.visualstudio.com/_apis/public/Release/badge/0a22f611-6a4a-4416-a1bb-53ed7284aa21/4/5)](https://offnet.visualstudio.com/officenet/_release?definitionId=4&definitionEnvironmentId=5&_a=environment-summary)|
+|[WestUS2 PPE](https://alfred.wu2-ppe.prague.office-int.com/)|[![WestUS2 PPE](https://offnet.vsrm.visualstudio.com/_apis/public/Release/badge/0a22f611-6a4a-4416-a1bb-53ed7284aa21/4/8)](https://offnet.visualstudio.com/officenet/_release?definitionId=4&definitionEnvironmentId=8&_a=environment-summary)|
+|[EastUS Production](https://alfred.eu.prague.office-int.com/)|[![EastUS Production](https://offnet.vsrm.visualstudio.com/_apis/public/Release/badge/0a22f611-6a4a-4416-a1bb-53ed7284aa21/4/11)](https://offnet.visualstudio.com/officenet/_release?definitionId=4&definitionEnvironmentId=11&_a=environment-summary)|
+
 
 ## Building and Running
 
