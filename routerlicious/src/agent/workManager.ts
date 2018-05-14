@@ -167,6 +167,9 @@ export class WorkManager extends EventEmitter {
         if (workType === "intel") {
             this.registerAgentsToNewDocument(fullId, workType);
         }
+        worker.on("error", (error) => {
+            this.emit("error", error);
+        });
     }
 
     // Register a new agent to all active documents.
