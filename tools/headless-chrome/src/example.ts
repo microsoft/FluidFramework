@@ -1,15 +1,37 @@
 import * as puppeteer from "puppeteer";
 
+async function testPage(page: puppeteer.Page, matchText: string[]): Promise<number[]> {
+    const perfMatches: number[] = [];
+
+    let entry = 0;
+    const testFn = (msg: puppeteer.ConsoleMessage) => {
+        const text = msg.text();
+
+        // console.log(text);
+
+        // Already found all our matches
+        if (entry === matchText.length) {
+            return;
+        }
+
+        const regEx = new RegExp(`${matchText[entry]} (.+): (\\d+.\\d+) `);
+        const matches = text.match(regEx);
+        if (matches) {
+            entry++;
+            perfMatches.push(Number.parseFloat(matches[2]));
+        }
+    };
+
+    page.on("console", testFn);
+    await page.goto('http://localhost:3000/sharedText/chilly-shoe', { waitUntil: "networkidle0" });
+    page.removeListener("console", testFn);
+
+    return perfMatches;
+}
+
 async function run() {
     const browser = await puppeteer.launch();
     const page = await browser.newPage();
-
-    page.on("console", (msg) => {
-        console.log(msg.text());
-        // for (let i = 0; i < msg.args().length; ++i) {
-        //     console.log(`${i}: ${msg.args()[i]}`);
-        // }
-    });
 
     // Load the root page in order to set localStorage
     await page.goto('http://localhost:3000');
@@ -17,10 +39,20 @@ async function run() {
         localStorage.debug = "routerlicious:*";
     });
 
-    // Then navigate to our desired page
-    await page.goto('http://localhost:3000/sharedText/chilly-shoe', { waitUntil: "networkidle0" });
-    await page.screenshot({path: 'output/example.png'});
+    const matchText = [
+        "Document loading",
+        "Connected to",
+        "Document loaded"];
 
+    for (let i = 0; i < 5; i++) {
+        const matches = await testPage(page, matchText);
+        console.log("----");
+        console.log("");
+        matchText.forEach((value, index) => {
+            console.log(`${value} ${matches[index]}`);
+        });
+    }
+    
     await browser.close();
 }
 

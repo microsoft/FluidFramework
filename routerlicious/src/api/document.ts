@@ -105,10 +105,6 @@ interface IDistributedObjectState {
     connection: DeltaConnection;
 }
 
-interface ITokenClaims {
-    tenantId: string;
-}
-
 /**
  * Document details extracted from the header
  */
@@ -193,7 +189,7 @@ export class Document extends EventEmitter {
         version: resources.ICommit,
         connect: boolean): Promise<Document> {
 
-        debug(`Document loading ${id} - ${performanceNow()}`);
+        debug(`Document loading ${id}: ${performanceNow()} `);
 
         // Verify an extensions registry was provided
         if (!registry) {
@@ -210,18 +206,9 @@ export class Document extends EventEmitter {
             return Promise.reject("Must specify a version if connect is set to false");
         }
 
-        if (!options.token) {
-            return Promise.reject("Must provide an authorization token");
-        }
-
         const token = options.token;
-        const claims = jwt.decode(token) as ITokenClaims;
-
-        if (!claims.tenantId) {
-            return Promise.reject("Must provide a tenant ID claim in authorization token");
-        }
-
-        const tenantId = claims.tenantId;
+        // TODO can remove default tenant once we require the token
+        const tenantId = token ? (jwt.decode(token) as any).tenantId : "git";
         const storageP = service.connectToStorage(tenantId, id, token);
         const deltaStorageP = service.connectToDeltaStorage(tenantId, id, token);
 
@@ -243,13 +230,9 @@ export class Document extends EventEmitter {
                 : [];
         });
 
-        // Wait on header, pending deltas (probably not necessary), delta storage and storage
-        const [header, deltaStorage, storage] =
-            await Promise.all([headerP, deltaStorageP, storageP]);
-        debug(`Connected to ${id} - ${performanceNow()}`);
-
-        // I really just need the header for perf - since we should able to show/interact with something
-        // once the header arrives by definition.
+        const [header, pendingDeltas, deltaStorage, storage] =
+            await Promise.all([headerP, pendingDeltasP, deltaStorageP, storageP]);
+        debug(`Connected to ${id}: ${performanceNow()} `);
 
         const documentServices = connect ? service : new NullServices(service, header.attributes.branch);
         const document = new Document(
@@ -258,14 +241,13 @@ export class Document extends EventEmitter {
             version,
             deltaStorage,
             storage,
+            pendingDeltas,
             registry,
             documentServices,
             options,
             token,
             header);
-
-        // TODO I shouldn't require connecting before returning the document
-        const connectP = document.connect(token, "Document loading");
+        await document.connect(token, "Document loading");
 
         // Make a reservation for the root object
         document.reserveDistributedObject("root");
@@ -281,9 +263,6 @@ export class Document extends EventEmitter {
             services.deltaConnection.setBaseMapping(
                 distributedObject.sequenceNumber,
                 header.attributes.minimumSequenceNumber);
-
-            // TODO do I need two messages back from loadInternal - one that indicates it's ready and another
-            // that indicates it's fully loaded? In this case we just mark being ready?
             const value = await document.loadInternal(
                 distributedObject,
                 services,
@@ -293,40 +272,32 @@ export class Document extends EventEmitter {
 
         // Begin connection to the document once we have began to load all documents. This will make sure to send
         // them the onDisconnect and onConnected messages
-
-        // NOTE - waiting on objectsLoaded (assuming it means header) seems good. And then I will need to process
-        // all tardis messages. Although I guess I could skip this. But it would mean the maps, etc... would
-        // be running ahead of the string.
         await Promise.all(objectsLoaded);
+
+        // Process all pending tardis messages
         await Document.flushAndPause(document, header.transformedMessages);
 
-        // Notify collab objects of tardis completion. at this point everyone is caught up.
-        // TODO this I should hold off on and expose as some kind of loaded event - but not wait to return the doc
-        // on it
+        // Notify collab objects of tardis completion
         const loadComplete = header.distributedObjects.map(async (distributedObject) => {
             const object = await document.get(distributedObject.id);
             return object.loadComplete();
         });
         await Promise.all(loadComplete);
 
-        // Process all pending deltas - another thing I should wait on
-        // TODO need to pump in the pending deltas to the delta manager - or should it just do it during startup?
-        // If it does it during startup that does help simplify
-        const pendingDeltas = await pendingDeltasP;
+        // Process all pending deltas
         await Document.flushAndPause(document, pendingDeltas);
 
         // Start the delta manager back up
         document._deltaManager.start();
 
         // If it's a new document we create the root map object - otherwise we wait for it to become available
-        // TODO this is valid - we need the root map ready to go prior
         if (!document.connectDetails.existing) {
             document.createAttached("root", mapExtension.MapExtension.Type);
         } else {
             await document.get("root");
         }
 
-        debug(`Document loaded ${id} - ${performanceNow()}`);
+        debug(`Document loaded ${id}: ${performanceNow()} `);
 
         // And return the new object
         return document;
@@ -434,6 +405,7 @@ export class Document extends EventEmitter {
         private version: resources.ICommit,
         private deltaStorage: IDocumentDeltaStorageService,
         private storageService: IDocumentStorageService,
+        pendingDeltas: ISequencedDocumentMessage[],
         private registry: Registry<ICollaborativeObjectExtension>,
         private service: IDocumentService,
         private opts: Object,
@@ -446,13 +418,13 @@ export class Document extends EventEmitter {
         if (this.header.attributes.branch !== this.id) {
             setParentBranch(header.transformedMessages, this.header.attributes.branch);
         }
+        const pendingMessages = header.transformedMessages.concat(pendingDeltas);
 
-        // TODO should have the DeltaManager pre-load everything
         this._deltaManager = new DeltaManager(
             tenantId,
             this.id,
             header.attributes.minimumSequenceNumber,
-            header.transformedMessages,
+            pendingMessages,
             this.deltaStorage,
             this.service,
             {
