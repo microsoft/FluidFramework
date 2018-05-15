@@ -18,7 +18,6 @@ import * as scribe from "./scribe";
 import * as sharedText from "./sharedText";
 import * as signUp from "./signUp";
 import * as templates from "./templates";
-import * as video from "./video";
 import * as youtubeVideo from "./youtubeVideo";
 
 export interface IRoutes {
@@ -33,7 +32,6 @@ export interface IRoutes {
     maps: Router;
     scribe: Router;
     sharedText: Router;
-    video: Router;
     youtubeVideo: Router;
     graph: Router;
     templates: Router;
@@ -66,7 +64,6 @@ export function create(
         sharedText: sharedText.create(config, tenantManager, mongoManager, producer, appTenants, ensureLoggedIn),
         singUp: signUp.create(config),
         templates: templates.create(config),
-        video: video.create(config, tenantManager, appTenants, ensureLoggedIn),
         youtubeVideo: youtubeVideo.create(config, tenantManager, appTenants, ensureLoggedIn),
     };
 }

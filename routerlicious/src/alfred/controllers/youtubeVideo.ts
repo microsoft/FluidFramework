@@ -22,7 +22,9 @@ export async function initialize(id: string, version: resources.ICommit, token: 
     const doc = await loadDocument(id, version, token);
     const root = doc.getRoot();
 
-    const element = document.createElement("div");
+    const element = document.getElementById("player-div") as HTMLDivElement;
+
+    // const element = document.createElement("div");
     const canvas = new controls.YouTubeVideoCanvas(element, doc, root);
     host.attach(canvas);
 }

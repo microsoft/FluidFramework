@@ -7,9 +7,6 @@ export { cell };
 import * as graph from "./graph";
 export { graph };
 
-import * as video from "./video";
-export { video };
-
 import * as youtubeVideo from "./youtubeVideo";
 export { youtubeVideo };
 
