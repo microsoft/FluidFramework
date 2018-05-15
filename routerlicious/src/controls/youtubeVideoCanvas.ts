@@ -59,9 +59,6 @@ export class YouTubeVideoCanvas extends ui.Component {
 
         this.videoMapView = await this.videoMap.getView();
 
-        /**
-         *  Set start variables
-         */
         let playing: number = 0;
         let currentPlaybackTime: number = 0;
 
@@ -130,7 +127,7 @@ export class YouTubeVideoCanvas extends ui.Component {
                     this.player.loadVideoById(incomingState.src);
                 }
 
-                // is incomingState very similar to my own state?
+                // Is incomingState very similar to local state
                 if (Math.abs(incomingState.lastChangeUTC - Date.now()) / 1000 < 2 &&
                     Math.abs(this.player.getCurrentTime() - incomingPlaybackTime) < 2 &&
                     incomingState.playing === (this.player.getPlayerState() === 1)
