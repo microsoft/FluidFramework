@@ -1,0 +1,19 @@
+{{<layout}}
+    {{$styles}}
+        <link href="{{#hfurl}}/public/stylesheets/dist/style.css{{/hfurl}}" rel="stylesheet" />
+    {{/styles}}
+
+    {{$content}}
+    {{/content}}
+
+    {{$scripts}}
+        <script src="{{#hfurl}}/public/scripts/dist/controller.js{{/hfurl}}"></script>
+
+        <script>
+            var config = {{{ config }}};
+            var version = {{{ version }}};
+            var token = "{{ token }}";
+            prague_controller.video.initialize("{{ documentId }}", version, token, config);
+        </script>
+    {{/scripts}}
+{{/layout}}
