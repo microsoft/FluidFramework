@@ -131,7 +131,13 @@ export class DeltaConnection implements IDeltaConnection {
         return this.document.submitObjectMessage({ address: this.objectId, contents: message });
     }
 
-    private translateToObjectMessage(documentMessage: ISequencedDocumentMessage): ISequencedObjectMessage {
+    // NOTE - do not call directly
+    // This is marked public only temporarily as we update the snapshot format for shared string to include
+    // the set of tardis'd messages.
+    public translateToObjectMessage(
+        documentMessage: ISequencedDocumentMessage,
+        updateState = false): ISequencedObjectMessage {
+
         assert(this.baseMappingIsSet());
         assert(this.handler);
 
@@ -156,6 +162,14 @@ export class DeltaConnection implements IDeltaConnection {
             type: message.type,
             user: documentMessage.user,
         };
+
+        // TODO remove this when making method private
+        if (updateState) {
+            this.sequenceNumber = sequencedObjectMessage.sequenceNumber;
+            this.rangeTracker.add(documentMessage.sequenceNumber, sequencedObjectMessage.sequenceNumber);
+            this.minSequenceNumber = sequencedObjectMessage.minimumSequenceNumber;
+        }
+
         return sequencedObjectMessage;
     }
 }

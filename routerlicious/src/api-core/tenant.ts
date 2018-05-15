@@ -1,5 +1,17 @@
 import { GitManager } from "../git-storage";
 
+export interface ITenantUser {
+    id: string;
+}
+
+// Find a home for this
+export interface ITokenClaims {
+    documentId: string;
+    permission: string;
+    tenantId: string;
+    user: ITenantUser;
+}
+
 export interface ITenantStorage {
     // Historian backed URL to the storage provider
     url: string;

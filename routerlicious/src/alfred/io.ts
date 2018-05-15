@@ -56,7 +56,7 @@ export function register(
             const token = message.token;
 
             // Validate token signature and claims
-            const claims = jwt.decode(token) as utils.ITokenClaims;
+            const claims = jwt.decode(token) as api.ITokenClaims;
             if (claims.documentId !== message.id || claims.tenantId !== message.tenantId) {
                 return Promise.reject("Invalid claims");
             }

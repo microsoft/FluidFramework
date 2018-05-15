@@ -11,12 +11,14 @@ export class StreamExtension implements api.ICollaborativeObjectExtension {
         document: api.IDocument,
         id: string,
         sequenceNumber: number,
+        minimumSequenceNumber: number,
+        messages: api.ISequencedObjectMessage[],
         services: api.IDistributedObjectServices,
         version: resources.ICommit,
         headerOrigin: string): Promise<api.ICollaborativeObject> {
 
         const stream = new Stream(document, id, sequenceNumber);
-        await stream.load(sequenceNumber, version, headerOrigin, services);
+        await stream.load(sequenceNumber, minimumSequenceNumber, version, messages, headerOrigin, services);
 
         return stream;
     }

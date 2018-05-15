@@ -186,7 +186,7 @@ export class Document extends EventEmitter {
         registry: Registry<ICollaborativeObjectExtension>,
         service: IDocumentService,
         options: any,
-        version: resources.ICommit,
+        specifiedVersion: resources.ICommit,
         connect: boolean): Promise<Document> {
 
         debug(`Document loading ${id}: ${performanceNow()} `);
@@ -202,38 +202,45 @@ export class Document extends EventEmitter {
         }
 
         // Connect to the document
-        if (!connect && !version) {
+        if (!connect && !specifiedVersion) {
             return Promise.reject("Must specify a version if connect is set to false");
         }
 
+        // Verify a token was provided
+        if (!options.token) {
+            return Promise.reject("Must provide a token");
+        }
+
         const token = options.token;
-        // TODO can remove default tenant once we require the token
-        const tenantId = token ? (jwt.decode(token) as any).tenantId : "git";
+        const claims = jwt.decode(token) as api.ITokenClaims;
+        const tenantId = claims.tenantId;
         const storageP = service.connectToStorage(tenantId, id, token);
         const deltaStorageP = service.connectToDeltaStorage(tenantId, id, token);
 
         // If a version is specified we will load it directly - otherwise will query historian for the latest
         // version and then load it
-        if (version === undefined) {
-            const versions = await storageP.then((storage) => storage.getVersions(id, 1));
-            version = versions.length > 0 ? versions[1] : null;
-        }
+        const versionP = specifiedVersion
+            ? Promise.resolve(specifiedVersion)
+            : storageP.then(async (storage) => {
+                const versions = await storage.getVersions(id, 1);
+                return versions.length > 0 ? versions[1] : null;
+            });
 
         // Kick off async operations to load the document state
         // ...get the header which provides access to the 'first page' of the document
-        const headerP = storageP.then((storage) => this.getHeader(id, storage, version));
+        const headerP = Promise.all([storageP, versionP])
+            .then(([storage, version]) => this.getHeader(id, storage, version));
 
-        // ...load in all deltas later than the sequence number specified in the header
-        const pendingDeltasP = headerP.then((header) => {
-            return connect
-                ? deltaStorageP.then((deltaStorage) => deltaStorage.get(header ? header.attributes.sequenceNumber : 0))
-                : [];
-        });
-
-        const [header, pendingDeltas, deltaStorage, storage] =
-            await Promise.all([headerP, pendingDeltasP, deltaStorageP, storageP]);
+        // TODO do I really need to wait on all of these things?
+        // - header seems like a yes, since I need it in general, but can I defer getting it with connectig?
+        // - pending deltas I should just do out of band (or push to delta manager)
+        // - deltaStorage - same deal should go with other things
+        // - version seems potentially needed in order to kick off loads. Having the header assumes having the version
+        const [version, storage, header, deltaStorage] =
+            await Promise.all([versionP, storageP, headerP, deltaStorageP]);
         debug(`Connected to ${id}: ${performanceNow()} `);
 
+        // TODO I should be able to connect at the same time as loading in the header, etc...
         const documentServices = connect ? service : new NullServices(service, header.attributes.branch);
         const document = new Document(
             tenantId,
@@ -241,56 +248,76 @@ export class Document extends EventEmitter {
             version,
             deltaStorage,
             storage,
-            pendingDeltas,
             registry,
             documentServices,
             options,
             token,
             header);
+
+        // Do I actually need to be connected yet??? Probably not and can defer
+        // This seems bad in general because it requires a connection to see the document
         await document.connect(token, "Document loading");
+        debug(`document.connect ${id}: ${performanceNow()} `);
 
-        // Make a reservation for the root object
+        // Do I still need a reservation system? I should just prevent objects from taking dependencies on other
+        // objects. Although at the same time knowing that other things exist seems like a good thing to have up front
+
+        // Make a reservation for the root object as well as all distributed objects in the snapshot
+        const transformedMap = new Map<string, api.ISequencedDocumentMessage[]>([["root", []]]);
         document.reserveDistributedObject("root");
-
-        // Make reservations for all distributed objects in the snapshot
         for (const object of header.distributedObjects) {
             document.reserveDistributedObject(object.id);
+            transformedMap.set(object.id, []);
         }
 
-        // Load in distributed objects stored within the document
+        // Filter messages per distributed data type
+        for (const transformedMessage of header.transformedMessages) {
+            if (transformedMessage.type === api.ObjectOperation) {
+                const envelope = transformedMessage.contents as IEnvelope;
+                transformedMap.get(envelope.address).push(transformedMessage);
+            }
+        }
+
         const objectsLoaded = header.distributedObjects.map(async (distributedObject) => {
             const services = document.getObjectServices(distributedObject.id);
+
+            // Start the base mapping at the MSN
             services.deltaConnection.setBaseMapping(
                 distributedObject.sequenceNumber,
                 header.attributes.minimumSequenceNumber);
+
+            // Run the transformed messages through the delta connection in order to update their offsets
+            // Then pass these to the loadInternal call. Moving forward we will want to update the snapshot
+            // to include the range maps. And then make the objects responsible for storing any messages they
+            // need to transform.
+            const transformedMessages = transformedMap.get(distributedObject.id);
+            const transformedObjectMessages = transformedMessages.map((message) => {
+                return services.deltaConnection.translateToObjectMessage(message, true);
+            });
+
+            // Pass the transformedMessages - but the object really should be storing this
             const value = await document.loadInternal(
                 distributedObject,
+                transformedObjectMessages,
                 services,
+                services.deltaConnection.baseSequenceNumber,
                 header.attributes.branch);
+
             document.fulfillDistributedObject(value, services);
         });
 
         // Begin connection to the document once we have began to load all documents. This will make sure to send
         // them the onDisconnect and onConnected messages
         await Promise.all(objectsLoaded);
+        debug(`objectsLoaded ${id}: ${performanceNow()} `);
 
-        // Process all pending tardis messages
-        await Document.flushAndPause(document, header.transformedMessages);
-
-        // Notify collab objects of tardis completion
-        const loadComplete = header.distributedObjects.map(async (distributedObject) => {
-            const object = await document.get(distributedObject.id);
-            return object.loadComplete();
-        });
-        await Promise.all(loadComplete);
-
-        // Process all pending deltas
-        await Document.flushAndPause(document, pendingDeltas);
-
+        // Starting is good
         // Start the delta manager back up
         document._deltaManager.start();
 
+        // Waiting on the root is also good
         // If it's a new document we create the root map object - otherwise we wait for it to become available
+        // This I don't think I can get rid of
         if (!document.connectDetails.existing) {
             document.createAttached("root", mapExtension.MapExtension.Type);
         } else {
@@ -301,14 +328,6 @@ export class Document extends EventEmitter {
 
         // And return the new object
         return document;
-    }
-
-    private static async flushAndPause(document: Document, messages: ISequencedDocumentMessage[]): Promise<void> {
-        document._deltaManager.start();
-        if (messages.length > 0) {
-            const sequenceNumber = messages[messages.length - 1].sequenceNumber;
-            await document._deltaManager.flushAndPause(sequenceNumber);
-        }
     }
 
     private static async getHeader(
@@ -405,7 +424,6 @@ export class Document extends EventEmitter {
         private version: resources.ICommit,
         private deltaStorage: IDocumentDeltaStorageService,
         private storageService: IDocumentStorageService,
-        pendingDeltas: ISequencedDocumentMessage[],
         private registry: Registry<ICollaborativeObjectExtension>,
         private service: IDocumentService,
         private opts: Object,
@@ -418,13 +436,11 @@ export class Document extends EventEmitter {
         if (this.header.attributes.branch !== this.id) {
             setParentBranch(header.transformedMessages, this.header.attributes.branch);
         }
-        const pendingMessages = header.transformedMessages.concat(pendingDeltas);
 
         this._deltaManager = new DeltaManager(
             tenantId,
             this.id,
-            header.attributes.minimumSequenceNumber,
-            pendingMessages,
+            header.attributes.sequenceNumber,
             this.deltaStorage,
             this.service,
             {
@@ -812,14 +828,18 @@ export class Document extends EventEmitter {
      */
     private loadInternal(
         distributedObject: IDistributedObject,
+        transformedMessages: api.ISequencedObjectMessage[],
         services: IAttachedServices,
+        sequenceNumber: number,
         originBranch: string): Promise<ICollaborativeObject> {
 
         const extension = this.registry.getExtension(distributedObject.type);
         const value = extension.load(
             this,
             distributedObject.id,
+            sequenceNumber,
             distributedObject.sequenceNumber,
+            transformedMessages,
             services,
             this.version,
             originBranch);
@@ -871,7 +891,7 @@ export class Document extends EventEmitter {
 
             const origin = message.origin ? message.origin.id : this.id;
             this.reserveDistributedObject(distributedObject.id);
-            const value = await this.loadInternal(distributedObject, services, origin);
+            const value = await this.loadInternal(distributedObject, [], services, 0, origin);
 
             return {
                 services,

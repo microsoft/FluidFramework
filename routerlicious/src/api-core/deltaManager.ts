@@ -223,7 +223,6 @@ export class DeltaManager implements IDeltaManager {
         private tenantId: string,
         private id: string,
         private baseSequenceNumber: number,
-        pendingMessages: protocol.ISequencedDocumentMessage[],
         private deltaStorage: storage.IDocumentDeltaStorageService,
         private service: storage.IDocumentService,
         private handler: IDeltaHandlerStrategy) {
@@ -254,8 +253,7 @@ export class DeltaManager implements IDeltaManager {
         // Both queues start
         this._inbound.pause();
 
-        // Prime the DeltaManager with the initial set of provided messages
-        this.enqueueMessages(pendingMessages);
+        this.fetchMissingDeltas(baseSequenceNumber);
     }
 
     /**

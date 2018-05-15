@@ -147,12 +147,11 @@ export class Cell extends api.CollaborativeObject implements ICell {
         return message;
     }
 
-    public async loadComplete(): Promise<void> {
-        return;
-    }
-
     protected async loadCore(
+        sequenceNumber: number,
+        minimumSequenceNumber: number,
         version: resources.ICommit,
+        messages: api.IObjectMessage[],
         headerOrigin: string,
         storage: api.IObjectStorageService): Promise<void> {
 

@@ -44,7 +44,10 @@ export class Stream extends CollaborativeMap implements IStream {
     }
 
     protected async loadContent(
+        sequenceNumber: number,
+        minimumSequenceNumber: number,
         version: resources.ICommit,
+        messages: api.IObjectMessage[],
         headerOrigin: string,
         storage: api.IObjectStorageService): Promise<void> {
 

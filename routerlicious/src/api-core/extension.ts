@@ -32,6 +32,8 @@ export interface ICollaborativeObjectExtension extends IExtension {
         document: IDocument,
         id: string,
         sequenceNumber: number,
+        minimumSequenceNumber: number,
+        messages: ISequencedObjectMessage[],
         services: IDistributedObjectServices,
         version: resources.ICommit,
         headerOrigin: string): Promise<types.ICollaborativeObject>;

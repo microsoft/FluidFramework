@@ -54,14 +54,22 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
      */
     public async load(
         sequenceNumber: number,
+        minimumSequenceNumber: number,
         version: ICommit,
+        messages: ISequencedObjectMessage[],
         headerOrigin: string,
         services: IDistributedObjectServices): Promise<void> {
 
         this._sequenceNumber = sequenceNumber;
         this.services = services;
 
-        await this.loadCore(version, headerOrigin, services.objectStorage);
+        await this.loadCore(
+            sequenceNumber,
+            minimumSequenceNumber,
+            version,
+            messages,
+            headerOrigin,
+            services.objectStorage);
         this.attachDeltaHandler();
     }
 
@@ -117,13 +125,14 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
      */
     public abstract transform(message: IObjectMessage, sequenceNumber: number): IObjectMessage;
 
-    public abstract loadComplete(): Promise<void>;
-
     /**
      * Allows the distributed data type to perform custom loading
      */
     protected abstract loadCore(
+        sequenceNumber: number,
+        minimumSequenceNumber: number,
         version: ICommit,
+        messages: ISequencedObjectMessage[],
         headerOrigin: string,
         services: IObjectStorageService): Promise<void>;
 

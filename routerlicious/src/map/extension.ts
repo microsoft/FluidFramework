@@ -21,13 +21,15 @@ export class MapExtension implements api.ICollaborativeObjectExtension {
         document: api.IDocument,
         id: string,
         sequenceNumber: number,
+        minimumSequenceNumber: number,
+        messages: api.ISequencedObjectMessage[],
         services: api.IDistributedObjectServices,
         version: resources.ICommit,
         headerOrigin: string): Promise<IMap> {
 
         const map = new CollaborativeMap(id, document, MapExtension.Type);
         this.registerValueTypes(map, defaultValueTypes);
-        await map.load(sequenceNumber, version, headerOrigin, services);
+        await map.load(sequenceNumber, minimumSequenceNumber, version, messages, headerOrigin, services);
 
         return map;
     }

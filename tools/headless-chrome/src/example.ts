@@ -7,7 +7,7 @@ async function testPage(page: puppeteer.Page, matchText: string[]): Promise<numb
     const testFn = (msg: puppeteer.ConsoleMessage) => {
         const text = msg.text();
 
-        // console.log(text);
+        console.log(text);
 
         // Already found all our matches
         if (entry === matchText.length) {
@@ -42,17 +42,32 @@ async function run() {
     const matchText = [
         "Document loading",
         "Connected to",
+        "document.connect",
+        "objectsLoaded-min",
+        "objectsLoaded-max",
+        "objectsLoaded",
+        "flushAndPause",
+        "loadComplete",
         "Document loaded"];
+    const sums = [0, 0, 0, 0, 0, 0, 0, 0, 0];
 
-    for (let i = 0; i < 5; i++) {
+    const iterations = 1;
+    for (let i = 0; i < iterations; i++) {
         const matches = await testPage(page, matchText);
-        console.log("----");
-        console.log("");
+        console.log(`Iteration ${i + 1}`);
         matchText.forEach((value, index) => {
             console.log(`${value} ${matches[index]}`);
+            sums[index] += matches[index];
         });
+        console.log("----");
     }
-    
+
+    console.log("Final");
+    console.log("");
+    matchText.forEach((value, index) => {
+        console.log(`${value} ${sums[index] / iterations}`);
+    });
+
     await browser.close();
 }
 
