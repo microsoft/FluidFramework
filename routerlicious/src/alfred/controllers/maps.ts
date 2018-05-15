@@ -65,6 +65,15 @@ async function displayValues(map: types.IMap, container: JQuery, doc: api.Docume
  */
 async function displayMap(parentElement: JQuery, key: string, map: types.IMap, parent: types.IMap, doc: api.Document) {
     const header = key !== null ? $(`<h2>${key}: ${map.id}</h2>`) : $(`<h2>${map.id}</h2>`);
+
+    if (key !== null) {
+        const hideMap = $("<button style='float:right;margin-right:20px;'></button");
+        hideMap.text("x");
+        hideMap.click(() => {
+            parentElement.addClass("hidden");
+        });
+        header.append(hideMap);
+    }
     parentElement.append(header);
 
     const container = $(`<div></div>`);
