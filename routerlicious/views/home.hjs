@@ -29,7 +29,6 @@
 
             <h2>Example Apps</h2>
             <ul class="list-unstyled">
-                <li><a href="/video/video">Collaborative Video</a></li>
                 <li><a href="/youtubeVideo/youtubeVideo">Youtube Video</a></li>
                 <li><a href="/graph/graph">Graph</a></li>
             </ul>
