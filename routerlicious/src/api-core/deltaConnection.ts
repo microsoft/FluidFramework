@@ -12,7 +12,8 @@ export class DeltaConnection implements IDeltaConnection {
     private rangeTracker: RangeTracker;
 
     // These are both defined in Object space
-    private sequenceNumber: number;
+    // tslint:disable-next-line:variable-name
+    private _sequenceNumber: number;
     private minSequenceNumber: number;
     private handler: IDeltaHandler;
 
@@ -28,12 +29,8 @@ export class DeltaConnection implements IDeltaConnection {
         return this.minSequenceNumber;
     }
 
-    /**
-     * The lowest sequence number tracked by this map. Will normally be the document minimum
-     * sequence number but may be higher in the case of an attach after the MSN.
-     */
-    public get baseSequenceNumber(): number {
-        return this.rangeTracker.base;
+    public get sequenceNumber(): number {
+        return this._sequenceNumber;
     }
 
     // tslint:disable:variable-name
@@ -52,7 +49,7 @@ export class DeltaConnection implements IDeltaConnection {
         assert(!this.baseMappingIsSet());
         assert(sequenceNumber >= 0);
 
-        this.sequenceNumber = sequenceNumber;
+        this._sequenceNumber = sequenceNumber;
         this.minSequenceNumber = sequenceNumber;
         this.rangeTracker = new RangeTracker(documentSequenceNumber, sequenceNumber);
     }
@@ -79,6 +76,9 @@ export class DeltaConnection implements IDeltaConnection {
     }
 
     public async prepare(message: ISequencedDocumentMessage): Promise<IMessageContext> {
+        assert(this.baseMappingIsSet());
+        assert(this.handler);
+
         const objectMessage = this.translateToObjectMessage(message);
         const handlerContext = await this.handler.prepare(objectMessage);
 
@@ -93,7 +93,7 @@ export class DeltaConnection implements IDeltaConnection {
         assert(this.handler);
 
         // update internal fields
-        this.sequenceNumber = context.objectMessage.sequenceNumber;
+        this._sequenceNumber = context.objectMessage.sequenceNumber;
         this.rangeTracker.add(message.sequenceNumber, context.objectMessage.sequenceNumber);
         this.minSequenceNumber = context.objectMessage.minimumSequenceNumber;
 
@@ -139,7 +139,6 @@ export class DeltaConnection implements IDeltaConnection {
         updateState = false): ISequencedObjectMessage {
 
         assert(this.baseMappingIsSet());
-        assert(this.handler);
 
         const envelope = documentMessage.contents as IEnvelope;
         const message = envelope.contents as IObjectMessage;
@@ -157,7 +156,7 @@ export class DeltaConnection implements IDeltaConnection {
             minimumSequenceNumber: minSequenceNumber,
             origin: documentMessage.origin,
             referenceSequenceNumber: message.referenceSequenceNumber,
-            sequenceNumber: this.sequenceNumber + 1,
+            sequenceNumber: this._sequenceNumber + 1,
             traces: documentMessage.traces,
             type: message.type,
             user: documentMessage.user,
@@ -165,7 +164,7 @@ export class DeltaConnection implements IDeltaConnection {
 
         // TODO remove this when making method private
         if (updateState) {
-            this.sequenceNumber = sequencedObjectMessage.sequenceNumber;
+            this._sequenceNumber = sequencedObjectMessage.sequenceNumber;
             this.rangeTracker.add(documentMessage.sequenceNumber, sequencedObjectMessage.sequenceNumber);
             this.minSequenceNumber = sequencedObjectMessage.minimumSequenceNumber;
         }

@@ -39,6 +39,7 @@ export class SharedString extends CollaborativeMap {
     public client: MergeTree.Client;
     public intervalCollections: IMapView;
     private isLoaded = false;
+    private collabStarted = false;
     private pendingMinSequenceNumber: number = 0;
     // Deferred that triggers once the object is loaded
     private loadedDeferred = new Deferred<void>();
@@ -384,11 +385,15 @@ export class SharedString extends CollaborativeMap {
 
     protected attachContent() {
         this.client.startCollaboration(this.document.clientId, this.document.getUser(), 0);
+        this.collabStarted = true;
     }
 
     protected onConnectContent(pending: api.IObjectMessage[]) {
         // Update merge tree collaboration information with new client ID and then resend pending ops
-        this.client.updateCollaboration(this.document.clientId);
+        if (this.collabStarted) {
+            this.client.updateCollaboration(this.document.clientId);
+        }
+
         this.sendNACKed();
 
         return;
@@ -403,6 +408,8 @@ export class SharedString extends CollaborativeMap {
     }
 
     private loadHeader(
+        sequenceNumber: number,
+        minimumSequenceNumber: number,
         header: string,
         collaborative: boolean,
         originBranch: string,
@@ -441,6 +448,7 @@ export class SharedString extends CollaborativeMap {
             console.log(`******************     Start ${this.id} collab - ${performanceNow()}`);
             // TODO currently only assumes two levels of branching
             const branchId = originBranch === this.document.id ? 0 : 1;
+            this.collabStarted = true;
             this.client.startCollaboration(
                 this.document.clientId, this.document.getUser(), minimumSequenceNumber, branchId);
         }
@@ -479,7 +487,7 @@ export class SharedString extends CollaborativeMap {
             assert.equal(minimumSequenceNumber, MergeTree.Snapshot.EmptyChunk.chunkSequenceNumber);
         }
 
-        this.loadHeader(header, collaborative, originBranch, services);
+        this.loadHeader(sequenceNumber, minimumSequenceNumber, header, collaborative, originBranch, services);
         this.loadBody(
             sequenceNumber,
             minimumSequenceNumber,

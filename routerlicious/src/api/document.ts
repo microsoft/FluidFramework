@@ -300,7 +300,7 @@ export class Document extends EventEmitter {
                 distributedObject,
                 transformedObjectMessages,
                 services,
-                services.deltaConnection.baseSequenceNumber,
+                services.deltaConnection.sequenceNumber,
                 header.attributes.branch);
 
             document.fulfillDistributedObject(value, services);
@@ -378,6 +378,7 @@ export class Document extends EventEmitter {
 
     // tslint:disable:variable-name
     private _deltaManager: DeltaManager;
+    private _existing: boolean;
     // tslint:enable:variable-name
 
     private lastMinSequenceNumber;
@@ -404,7 +405,7 @@ export class Document extends EventEmitter {
      * Flag indicating whether the document already existed at the time of load
      */
     public get existing(): boolean {
-        return this.connectDetails ? this.connectDetails.existing : null;
+        return this._existing;
     }
 
     /**
@@ -436,6 +437,8 @@ export class Document extends EventEmitter {
         if (this.header.attributes.branch !== this.id) {
             setParentBranch(header.transformedMessages, this.header.attributes.branch);
         }
+
+        this._existing = version ? true : undefined;
 
         this._deltaManager = new DeltaManager(
             tenantId,
@@ -639,6 +642,7 @@ export class Document extends EventEmitter {
         this._deltaManager.connect(token).then(
             (details) => {
                 this.setConnectionState(ConnectionState.Connecting, "Connected on Socket.IO channel", details.clientId);
+                this._existing = this._existing !== undefined ? this._existing : details.existing;
                 this.connectDetails = details;
                 this.connecting.resolve();
                 this.connecting = null;
