@@ -337,10 +337,6 @@ function addNodeReferences(mergeTree: MergeTree, node: MergeNode,
                 if (markerLocalId) {
                     mergeTree.mapLocalIdToSegment(markerLocalId, marker);
                 }
-                if (marker.properties && marker.properties[reservedMarkerNestIdKey]) {
-                    let nestId = marker.properties[reservedMarkerNestIdKey];
-                    mergeTree.addMarkerToNest(nestId, marker);
-                }
                 if (marker.refType & ops.ReferenceType.Tile) {
                     addTile(marker, rightmostTiles);
                     addTileIfNotPresent(marker, leftmostTiles);
@@ -2642,7 +2638,7 @@ export class Client {
             clockStart = clock();
         }
 
-        this.mergeTree.insertMarker(pos, refSeq, clientId, seq, behaviors, props, undefined, pairId);
+        this.mergeTree.insertMarker(pos, refSeq, clientId, seq, behaviors, props);
 
         if (this.measureOps) {
             this.localTime += elapsedMicroseconds(clockStart);
@@ -2659,7 +2655,7 @@ export class Client {
             clockStart = clock();
         }
 
-        this.mergeTree.insertMarker(pos, refSeq, clientId, seq, marker.refType, props, undefined, marker.pairId);
+        this.mergeTree.insertMarker(pos, refSeq, clientId, seq, marker.refType, props);
         this.mergeTree.getCollabWindow().currentSeq = seq;
 
         if (this.measureOps) {
@@ -3104,11 +3100,6 @@ export class MergeTree {
     // if we need to have pointers to non-markers, we can change to point at local refs
     idToSegment = Properties.createMap<Segment>();
     localIdToSegment = Properties.createMap<Segment>();
-    // scoped to single group op
-    tempNestIdToMarker = <Marker[]>[];
-    // scoped to mergeTree lifetime, but local
-    nestIdToMarkerPair = <Marker[][]>[];
-    nestCount = 0;
     clientIdToBranchId: number[] = [];
     localBranchId = 0;
     markerModifiedHandler: IMarkerModifiedAction;
@@ -3143,31 +3134,6 @@ export class MergeTree {
         }
         block.ordinal = "";
         return block;
-    }
-
-    addMarkerToTempPair(pairId: number, nestMarker: Marker) {
-        // TODO: verify ref type 
-        let storedMarker = this.tempNestIdToMarker[pairId];
-        if (!storedMarker) {
-            storedMarker = nestMarker;
-        } else {
-            nestMarker.nestBuddy = storedMarker;
-            storedMarker.nestBuddy = nestMarker;
-            let permNestId = this.nestCount++;
-            nestMarker.addProperties({ [reservedMarkerNestIdKey]: permNestId });
-            storedMarker.addProperties({ [reservedMarkerNestIdKey]: permNestId });
-        }
-    }
-
-    addMarkerToNest(nestId: number, nestMarker: Marker) {
-        let markers = this.nestIdToMarkerPair[nestId];
-        if (!markers) {
-            markers = [nestMarker];
-        } else {
-            markers.push(nestMarker);
-            nestMarker.nestBuddy = markers[0];
-            markers[0].nestBuddy = nestMarker;
-        }
     }
 
     private initialTextNode(text: string) {
@@ -3942,7 +3908,7 @@ export class MergeTree {
     }
 
     notifyMinSeqListeners() {
-        this.minSeqPending=false;
+        this.minSeqPending = false;
         while ((this.minSeqListeners.count() > 0) &&
             (this.minSeqListeners.peek().minRequired <= this.collabWindow.minSeq)) {
             let minListener = this.minSeqListeners.get();
@@ -4235,8 +4201,6 @@ export class MergeTree {
         let marker: Marker;
         if (relativePos.id) {
             marker = <Marker>this.getSegmentFromId(relativePos.id);
-        } else {
-            marker = <Marker>this.getSegmentFromLocalId(relativePos.localId);
         }
         if (marker) {
             pos = this.getOffset(marker, refseq, clientId);
@@ -4268,19 +4232,12 @@ export class MergeTree {
     }
 
     insertMarker(pos: number, refSeq: number, clientId: number, seq: number,
-        behaviors: ops.ReferenceType, props?: Properties.PropertySet, localId?: string, pairId?: number) {
+        behaviors: ops.ReferenceType, props?: Properties.PropertySet) {
         let marker = Marker.make(behaviors, props, seq, clientId);
 
         let markerId = marker.getId();
         if (markerId) {
             this.mapIdToSegment(markerId, marker);
-        }
-        let markerLocalId = marker.getLocalId();
-        if (markerLocalId) {
-            this.mapLocalIdToSegment(markerLocalId, marker);
-        }
-        if (pairId !== undefined) {
-            this.addMarkerToTempPair(pairId, marker);
         }
         this.insert(pos, refSeq, clientId, seq, marker, (block, pos, refSeq, clientId, seq, marker) =>
             this.blockInsert(block, pos, refSeq, clientId, seq, marker));

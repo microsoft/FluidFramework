@@ -12,6 +12,7 @@ import {
     Interval, SharedIntervalCollection,
     SharedIntervalCollectionValueType,
 } from "./intervalCollection";
+import { IRelativePosition } from "../merge-tree";
 
 function textsToSegments(texts: MergeTree.IPropertyString[]) {
     let segments: MergeTree.Segment[] = [];
@@ -56,20 +57,33 @@ export class SharedString extends CollaborativeMap {
         this.client = new MergeTree.Client("", document.options);
     }
 
+    public insertMarkerRelative(relativePos1: IRelativePosition, refType, props?: MergeTree.PropertySet) {
+        const insertMessage: MergeTree.IMergeTreeInsertMsg = {
+            marker: { refType },
+            props,
+            relativePos1,
+            type: MergeTree.MergeTreeDeltaType.INSERT,
+        };
+
+        let pos = this.client.mergeTree.posFromRelativePos(relativePos1);
+        this.client.insertMarkerLocal(pos, refType, props);
+        this.submitIfAttached(insertMessage);
+
+    }
+
     public insertMarker(
         pos: number,
         refType: MergeTree.ReferenceType,
-        props?: MergeTree.PropertySet,
-        pairId?: number) {
+        props?: MergeTree.PropertySet) {
 
         const insertMessage: MergeTree.IMergeTreeInsertMsg = {
-            marker: { pairId, refType },
+            marker: { refType },
             pos1: pos,
             props,
             type: MergeTree.MergeTreeDeltaType.INSERT,
         };
 
-        this.client.insertMarkerLocal(pos, refType, props, pairId);
+        this.client.insertMarkerLocal(pos, refType, props);
         this.submitIfAttached(insertMessage);
     }
 

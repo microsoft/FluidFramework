@@ -19,7 +19,6 @@ export enum IntervalType {
 
 export interface IMarkerDef {
     refType?: ReferenceType;
-    pairId?: number;
 }
 
 export interface IComponentDef {
@@ -44,10 +43,6 @@ export interface IMergeTreeDelta {
  * A position specified relative to a segment.
  */
 export interface IRelativePosition {
-    /**
-     * Obsolescent: Local string identifier specifying a segment (for local operations).
-     */
-    localId?: string;
     /**
      * String identifier specifying a segment.
      */
