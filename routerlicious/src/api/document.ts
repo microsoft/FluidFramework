@@ -49,6 +49,7 @@ import {
 
 import * as stream from "../stream";
 import { debug } from "./debug";
+import { ErrorTrackingService } from "./errorTrackingService";
 import { NullDeltaConnection } from "./nullDeltaConnection";
 
 const rootMapId = "root";
@@ -174,6 +175,10 @@ class NullServices implements api.IDocumentService {
 
     public branch(tenantId: string, id: string, token: string): Promise<string> {
         return this.service.branch(tenantId, id, token);
+    }
+
+    public errorTrackingEnabled() {
+        return false;
     }
 }
 
@@ -976,5 +981,15 @@ export async function load(
     registry: Registry<ICollaborativeObjectExtension> = defaultRegistry,
     service: IDocumentService = defaultDocumentService): Promise<Document> {
 
-    return Document.Load(id, registry, service, options, version, connect);
+    if (service.errorTrackingEnabled()) {
+        const deferred = new Deferred<Document>();
+        const errorTracker = new ErrorTrackingService();
+        errorTracker.track(() => {
+            const documentP = Document.Load(id, registry, service, options, version, connect);
+            deferred.resolve(documentP);
+        });
+        return deferred.promise;
+    } else {
+        return Document.Load(id, registry, service, options, version, connect);
+    }
 }

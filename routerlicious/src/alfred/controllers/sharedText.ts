@@ -81,6 +81,7 @@ async function loadDocument(
         document.location.origin,
         config.blobStorageUrl,
         config.tenantId,
+        true,
         disableCache,
         config.historianApi,
         config.credentials);
