@@ -1,6 +1,5 @@
 // tslint:disable:whitespace align no-bitwise ordered-imports
 import * as assert from "assert";
-import performanceNow = require("performance-now");
 import * as resources from "gitresources";
 import * as api from "../api-core";
 import { Deferred } from "../core-utils";
@@ -339,9 +338,7 @@ export class SharedString extends CollaborativeMap {
         headerOrigin: string,
         storage: api.IObjectStorageService): Promise<void> {
 
-        console.log(`******************     Loading header ${this.id} ${performanceNow()}`);
         const header = await storage.read("header");
-        console.log(`******************     Loading header done ${this.id} ${performanceNow()}`);
 
         return this.initialize(sequenceNumber, minimumSequenceNumber, messages, header, true, headerOrigin, storage);
     }
@@ -435,9 +432,7 @@ export class SharedString extends CollaborativeMap {
 
         // If loading from a snapshot load in the body
         if (header) {
-            console.log(`******************     Loading ${this.id} body - ${performanceNow()}`);
             const chunk = await MergeTree.Snapshot.loadChunk(services, "body");
-            console.log(`******************     Loaded ${this.id} body - ${performanceNow()}`);
             for (let segSpec of chunk.segmentTexts) {
                 this.client.mergeTree.appendSegment(segSpec);
             }
@@ -445,7 +440,6 @@ export class SharedString extends CollaborativeMap {
 
         // This should happen if we have collab services
         if (collaborative) {
-            console.log(`******************     Start ${this.id} collab - ${performanceNow()}`);
             // TODO currently only assumes two levels of branching
             const branchId = originBranch === this.document.id ? 0 : 1;
             this.collabStarted = true;
@@ -460,18 +454,13 @@ export class SharedString extends CollaborativeMap {
 
         // Do we want to break the dependence on the interval collection
         // Register the filter callback on the reference collections
-        console.log(`******************     getting interval collection ${this.id} ${performanceNow()}`);
         let intervalCollections = await this.get("intervalCollections") as IMap;
-        console.log(`******************     got interval collection ${this.id} ${performanceNow()}`);
 
         this.intervalCollections = await intervalCollections.getView();
-        console.log(`******************     Got interval collection view ${this.id} ${performanceNow()}`);
         intervalCollections.on("valueChanged", (ev: IValueChanged) => {
             let intervalCollection = this.intervalCollections.get<SharedIntervalCollection>(ev.key);
             intervalCollection.initialize(this, ev.key);
         });
-
-        console.log(`******************     Load ${this.id} finished - ${performanceNow()}`);
     }
 
     private async initialize(

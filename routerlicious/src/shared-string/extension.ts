@@ -2,8 +2,6 @@ import * as resources from "gitresources";
 import * as api from "../api-core";
 import { SharedString } from "./sharedString";
 
-import performanceNow = require("performance-now");
-
 export class CollaboritiveStringExtension implements api.ICollaborativeObjectExtension {
     public static Type = "https://graph.microsoft.com/types/mergeTree";
 
@@ -20,10 +18,8 @@ export class CollaboritiveStringExtension implements api.ICollaborativeObjectExt
         headerOrigin: string): Promise<api.ICollaborativeObject> {
 
         let collaborativeString = new SharedString(document, id, sequenceNumber, services);
-        console.log(`******************     SharedString Loading ${id} ${performanceNow()}`);
         await collaborativeString.load(
             sequenceNumber, minimumSequenceNumber, version, messages, headerOrigin, services);
-        console.log(`******************     SharedString Loading Done ${id} ${performanceNow()}`);
         return collaborativeString;
     }
 

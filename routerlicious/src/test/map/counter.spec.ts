@@ -2,6 +2,7 @@ import * as assert from "assert";
 import * as api from "../../api";
 import { IMap } from "../../data-types";
 import { Counter, CounterValueType } from "../../map";
+import { generateToken } from "../../utils";
 import * as testUtils from "../testUtils";
 
 describe("Routerlicious", () => {
@@ -12,8 +13,13 @@ describe("Routerlicious", () => {
             let testCounter: Counter;
 
             beforeEach(async () => {
+                const tenantId = "test";
+                const documentId = "testDocument";
+                const secret = "test";
+
                 testUtils.registerAsTest("", "", "");
-                testDocument = await api.load("testDocument");
+                const token = generateToken(tenantId, documentId, secret);
+                testDocument = await api.load(documentId, { token });
                 testMap = testDocument.createMap();
                 testCounter = testMap.set("defaultCounter", undefined, CounterValueType.Name);
             });
