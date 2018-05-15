@@ -127,7 +127,11 @@ export async function load(
 }
 
 function loadFull(id: string, version: resources.ICommit, config: any, token?: string) {
-    socketStorage.registerAsDefault(document.location.origin, config.blobStorageUrl, config.tenantId);
+    socketStorage.registerAsDefault(
+        document.location.origin,
+        config.blobStorageUrl,
+        config.tenantId,
+        config.trackError);
 
     $(document).ready(() => {
         // Bootstrap worker service.
@@ -148,7 +152,11 @@ function loadFull(id: string, version: resources.ICommit, config: any, token?: s
 }
 
 function loadCommit(id: string, version: resources.ICommit, config: any) {
-    socketStorage.registerAsDefault(document.location.origin, config.blobStorageUrl, config.tenantId);
+    socketStorage.registerAsDefault(
+        document.location.origin,
+        config.blobStorageUrl,
+        config.tenantId,
+        config.trackError);
 
     $(document).ready(() => {
         api.load(id, { encrypted: false /* api.isUserLoggedIn() */ }, version, false).then(async (doc) => {

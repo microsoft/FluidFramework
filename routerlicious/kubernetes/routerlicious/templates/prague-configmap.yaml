@@ -136,6 +136,9 @@ data:
             "host": "{{ .Values.redis.url }}",
             "port": 6379
         },
+        "error": {
+            "track": true
+        },
         "worker": {
             "intelligence": {
                 "resume": {
