@@ -1,6 +1,5 @@
 import * as assert from "assert";
 import { EventEmitter } from "events";
-import { ICommit } from "gitresources";
 import { ValueType } from "../map/definitions";
 import { debug } from "./debug";
 import { ConnectionState, IDistributedObjectServices, IDocument, IObjectStorageService } from "./document";
@@ -55,7 +54,6 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
     public async load(
         sequenceNumber: number,
         minimumSequenceNumber: number,
-        version: ICommit,
         messages: ISequencedObjectMessage[],
         headerOrigin: string,
         services: IDistributedObjectServices): Promise<void> {
@@ -66,7 +64,6 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
         await this.loadCore(
             sequenceNumber,
             minimumSequenceNumber,
-            version,
             messages,
             headerOrigin,
             services.objectStorage);
@@ -131,7 +128,6 @@ export abstract class CollaborativeObject extends EventEmitter implements IColla
     protected abstract loadCore(
         sequenceNumber: number,
         minimumSequenceNumber: number,
-        version: ICommit,
         messages: ISequencedObjectMessage[],
         headerOrigin: string,
         services: IObjectStorageService): Promise<void>;

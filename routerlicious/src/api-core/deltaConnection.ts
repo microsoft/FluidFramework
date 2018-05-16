@@ -1,174 +1,81 @@
-import * as assert from "assert";
-import { RangeTracker } from "../core-utils";
-import { ConnectionState, IDeltaConnection, IDeltaHandler, IDocument } from "./document";
-import { IEnvelope, IObjectMessage, ISequencedDocumentMessage, ISequencedObjectMessage } from "./protocol";
+import { EventEmitter } from "events";
+import * as protocol from "./protocol";
+import * as storage from "./storage";
 
-export interface IMessageContext {
-    objectMessage: ISequencedObjectMessage;
-    handlerContext: any;
+export interface IConnectionDetails {
+    clientId: string;
+    existing: boolean;
+    parentBranch: string;
+    user: protocol.IAuthenticatedUser;
 }
 
-export class DeltaConnection implements IDeltaConnection {
-    private rangeTracker: RangeTracker;
-
-    // These are both defined in Object space
-    // tslint:disable-next-line:variable-name
-    private _sequenceNumber: number;
-    private minSequenceNumber: number;
-    private handler: IDeltaHandler;
-
-    public get clientId(): string {
-        return this._clientId;
+export class DeltaConnection extends EventEmitter {
+    public static async Connect(tenantId: string, id: string, token: string, service: storage.IDocumentService) {
+        const connection = await service.connectToDeltaStream(tenantId, id, token);
+        return new DeltaConnection(connection);
     }
 
-    public get state(): ConnectionState {
-        return this._state;
+    public get details(): IConnectionDetails {
+        return this._details;
     }
 
-    public get minimumSequenceNumber(): number {
-        return this.minSequenceNumber;
+    public get nacked(): boolean {
+        return this._nacked;
     }
 
-    public get sequenceNumber(): number {
-        return this._sequenceNumber;
+    public get connected(): boolean {
+        return this._connected;
     }
 
     // tslint:disable:variable-name
-    constructor(
-        public objectId: string,
-        private document: IDocument,
-        private _clientId: string,
-        private _state: ConnectionState) {
-    }
+    private _details: IConnectionDetails;
+    private _nacked = false;
+    private _connected = true;
     // tslint:enable:variable-name
 
-    /**
-     * Sets the base mapping from a local sequence number to the document sequence number that matches it
-     */
-    public setBaseMapping(sequenceNumber: number, documentSequenceNumber: number) {
-        assert(!this.baseMappingIsSet());
-        assert(sequenceNumber >= 0);
+    private constructor(private connection: storage.IDocumentDeltaConnection) {
+        super();
 
-        this._sequenceNumber = sequenceNumber;
-        this.minSequenceNumber = sequenceNumber;
-        this.rangeTracker = new RangeTracker(documentSequenceNumber, sequenceNumber);
-    }
-
-    public attach(handler: IDeltaHandler) {
-        assert(!this.handler);
-        this.handler = handler;
-    }
-
-    public setConnectionState(state: ConnectionState.Disconnected, reason: string): void;
-    public setConnectionState(state: ConnectionState.Connecting, clientId: string): void;
-    public setConnectionState(state: ConnectionState.Connected, clientId: string): void;
-    public setConnectionState(state: ConnectionState, context: string) {
-        this._state = state;
-        this._clientId = state !== ConnectionState.Disconnected ? context : null;
-        this.handler.setConnectionState(state as any, context);
-    }
-
-    /**
-     * Returns whether or not setBaseMapping has been called
-     */
-    public baseMappingIsSet(): boolean {
-        return !!this.rangeTracker;
-    }
-
-    public async prepare(message: ISequencedDocumentMessage): Promise<IMessageContext> {
-        assert(this.baseMappingIsSet());
-        assert(this.handler);
-
-        const objectMessage = this.translateToObjectMessage(message);
-        const handlerContext = await this.handler.prepare(objectMessage);
-
-        return {
-            handlerContext,
-            objectMessage,
-        };
-    }
-
-    public process(message: ISequencedDocumentMessage, context: IMessageContext) {
-        assert(this.baseMappingIsSet());
-        assert(this.handler);
-
-        // update internal fields
-        this._sequenceNumber = context.objectMessage.sequenceNumber;
-        this.rangeTracker.add(message.sequenceNumber, context.objectMessage.sequenceNumber);
-        this.minSequenceNumber = context.objectMessage.minimumSequenceNumber;
-
-        this.handler.process(context.objectMessage, context.handlerContext);
-    }
-
-    public transformDocumentSequenceNumber(value: number) {
-        assert(this.baseMappingIsSet());
-        return this.rangeTracker.get(value);
-    }
-
-    public updateMinSequenceNumber(value: number) {
-        assert(this.baseMappingIsSet());
-        assert(this.handler);
-
-        // The MSN may still be below the creation time for the object - don't update in this case
-        if (value < this.rangeTracker.base) {
-            return;
-        }
-
-        const newMinSequenceNumber = this.rangeTracker.get(value);
-        this.rangeTracker.updateBase(value);
-
-        // Notify clients when then number changed
-        if (newMinSequenceNumber !== this.minimumSequenceNumber) {
-            this.minSequenceNumber = newMinSequenceNumber;
-            this.handler.minSequenceNumberChanged(this.minSequenceNumber);
-        }
-    }
-
-    /**
-     * Send new messages to the server
-     */
-    public submit(message: IObjectMessage): Promise<void> {
-        return this.document.submitObjectMessage({ address: this.objectId, contents: message });
-    }
-
-    // NOTE - do not call directly
-    // This is marked public only temporarily as we update the snapshot format for shared string to include
-    // the set of tardis'd messages.
-    public translateToObjectMessage(
-        documentMessage: ISequencedDocumentMessage,
-        updateState = false): ISequencedObjectMessage {
-
-        assert(this.baseMappingIsSet());
-
-        const envelope = documentMessage.contents as IEnvelope;
-        const message = envelope.contents as IObjectMessage;
-
-        // Take the max between our base and the new MSN. In the case of a new document our MSN may be greater.
-        // We do not need to add to the rangeTracker in this case since by definition the MSN must be strictly less
-        // than the sequence number
-        const minSequenceNumber = this.rangeTracker.get(
-            Math.max(this.rangeTracker.base, documentMessage.minimumSequenceNumber));
-
-        const sequencedObjectMessage: ISequencedObjectMessage = {
-            clientId: documentMessage.clientId,
-            clientSequenceNumber: message.clientSequenceNumber,
-            contents: message.contents,
-            minimumSequenceNumber: minSequenceNumber,
-            origin: documentMessage.origin,
-            referenceSequenceNumber: message.referenceSequenceNumber,
-            sequenceNumber: this._sequenceNumber + 1,
-            traces: documentMessage.traces,
-            type: message.type,
-            user: documentMessage.user,
+        this._details = {
+            clientId: connection.clientId,
+            existing: connection.existing,
+            parentBranch: connection.parentBranch,
+            user: connection.user,
         };
 
-        // TODO remove this when making method private
-        if (updateState) {
-            this._sequenceNumber = sequencedObjectMessage.sequenceNumber;
-            this.rangeTracker.add(documentMessage.sequenceNumber, sequencedObjectMessage.sequenceNumber);
-            this.minSequenceNumber = sequencedObjectMessage.minimumSequenceNumber;
-        }
+        // listen for new messages
+        connection.on("op", (documentId: string, messages: protocol.ISequencedDocumentMessage[]) => {
+            this.emit("op", documentId, messages);
+        });
 
-        return sequencedObjectMessage;
+        connection.on("nack", (documentId: string, message: protocol.INack[]) => {
+            // Mark nacked and also pause any outbound communication
+            this._nacked = true;
+            const target = message[0].sequenceNumber;
+            this.emit("nack", target);
+        });
+
+        connection.on("disconnect", (reason) => {
+            this._connected = false;
+            this.emit("disconnect", reason);
+        });
+
+        // Listen for socket.io latency messages
+        connection.on("pong", (latency: number) => {
+            this.emit("pong", latency);
+        });
+    }
+
+    /**
+     * Closes the delta connection. This disconnects the socket and clears any listeners
+     */
+    public close() {
+        this._connected = false;
+        this.connection.disconnect();
+        this.removeAllListeners();
+    }
+
+    public submit(message: protocol.IDocumentMessage): void {
+        this.connection.submit(message);
     }
 }

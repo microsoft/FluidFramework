@@ -1,4 +1,3 @@
-import * as resources from "gitresources";
 import * as api from "../api-core";
 import { ICell } from "../data-types";
 import { Cell } from "./cell";
@@ -18,11 +17,10 @@ export class CellExtension implements api.ICollaborativeObjectExtension {
         minimumSequenceNumber: number,
         messages: api.ISequencedObjectMessage[],
         services: api.IDistributedObjectServices,
-        version: resources.ICommit,
         headerOrigin: string): Promise<ICell> {
 
         const cell = new Cell(id, document);
-        await cell.load(sequenceNumber, minimumSequenceNumber, version, messages, headerOrigin, services);
+        await cell.load(sequenceNumber, minimumSequenceNumber, messages, headerOrigin, services);
         return cell;
     }
 

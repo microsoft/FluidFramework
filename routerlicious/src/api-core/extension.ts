@@ -1,4 +1,3 @@
-import * as resources from "gitresources";
 import { IDistributedObjectServices, IDocument } from "./document";
 import { ISequencedObjectMessage } from "./protocol";
 import * as types from "./types";
@@ -35,7 +34,6 @@ export interface ICollaborativeObjectExtension extends IExtension {
         minimumSequenceNumber: number,
         messages: ISequencedObjectMessage[],
         services: IDistributedObjectServices,
-        version: resources.ICommit,
         headerOrigin: string): Promise<types.ICollaborativeObject>;
 
     /**

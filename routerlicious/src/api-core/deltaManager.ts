@@ -1,61 +1,15 @@
 import * as assert from "assert";
-import * as queue from "async/queue";
 import { EventEmitter } from "events";
 import cloneDeep = require("lodash/cloneDeep");
 import { Deferred } from "../core-utils";
 import { debug } from "./debug";
+import { DeltaConnection, IConnectionDetails } from "./deltaConnection";
+import { DeltaQueue } from "./deltaQueue";
 import { IDeltaManager, IDeltaQueue } from "./document";
 import * as protocol from "./protocol";
 import * as storage from "./storage";
 
-export interface IConnectionDetails {
-    clientId: string;
-    existing: boolean;
-    parentBranch: string;
-    user: protocol.IAuthenticatedUser;
-}
-
-class DeltaQueue<T> extends EventEmitter implements IDeltaQueue {
-    private q: async.AsyncQueue<T>;
-
-    public get paused(): boolean {
-        return this.q.paused;
-    }
-
-    public get length(): number {
-        return this.q.length();
-    }
-
-    constructor(worker: async.AsyncWorker<T, void>) {
-        super();
-        this.q = queue<T, void>((task, callback) => {
-            this.emit("pre-op", task);
-            worker(task, (error) => {
-                this.emit("op", task);
-                callback(error);
-            });
-        });
-
-        this.q.error = (error) => {
-            debug(`Queue processing error`, error);
-            this.q.pause();
-        };
-    }
-
-    public push(task: T) {
-        this.q.push(task);
-    }
-
-    public pause() {
-        this.q.pause();
-        this.emit("pause");
-    }
-
-    public resume() {
-        this.q.resume();
-        this.emit("resume");
-    }
-}
+const MaxReconnectDelay = 8000;
 
 /**
  * Interface used to define a strategy for handling incoming delta messages
@@ -71,107 +25,13 @@ export interface IDeltaHandlerStrategy {
      * Processes the message. The return value from prepare is passed in the context parameter.
      */
     process: (message: protocol.ISequencedDocumentMessage, context: any) => void;
-
-    /**
-     * Called when the connection to the manager is dropped
-     */
-    disconnect: (message: string) => void;
-
-    /**
-     * Called when the connection has been nacked
-     */
-    nack: (target: number) => void;
-}
-
-class DeltaConnection extends EventEmitter {
-    public static async Connect(tenantId: string, id: string, token: string, service: storage.IDocumentService) {
-        const connection = await service.connectToDeltaStream(tenantId, id, token);
-        return new DeltaConnection(connection);
-    }
-
-    public get details(): IConnectionDetails {
-        return this._details;
-    }
-
-    public get nacked(): boolean {
-        return this._nacked;
-    }
-
-    public get connected(): boolean {
-        return this._connected;
-    }
-
-    public get outbound(): IDeltaQueue {
-        return this._outbound;
-    }
-
-    // tslint:disable:variable-name
-    private _details: IConnectionDetails;
-    private _nacked = false;
-    private _connected = true;
-    private _outbound: DeltaQueue<protocol.IDocumentMessage>;
-    // tslint:enable:variable-name
-
-    private constructor(private connection: storage.IDocumentDeltaConnection) {
-        super();
-
-        this._details = {
-            clientId: connection.clientId,
-            existing: connection.existing,
-            parentBranch: connection.parentBranch,
-            user: connection.user,
-        };
-
-        // listen for new messages
-        connection.on("op", (documentId: string, messages: protocol.ISequencedDocumentMessage[]) => {
-            this.emit("op", documentId, messages);
-        });
-
-        connection.on("nack", (documentId: string, message: protocol.INack[]) => {
-            // Mark nacked and also pause any outbound communication
-            this._nacked = true;
-            this._outbound.pause();
-
-            const target = message[0].sequenceNumber;
-            this.emit("nack", target);
-        });
-
-        connection.on("disconnect", (reason) => {
-            this._connected = false;
-            this.emit("disconnect", reason);
-        });
-
-        // Listen for socket.io latency messages
-        connection.on("pong", (latency: number) => {
-            // debug(`PONG ${this.details.clientId} ${latency}`);
-        });
-
-        // Queue for outbound message processing
-        this._outbound = new DeltaQueue<protocol.IDocumentMessage>((op, callback) => {
-            connection.submit(op);
-            callback();
-        });
-    }
-
-    /**
-     * Closes the delta connection. This disconnects the socket and clears any listeners
-     */
-    public close() {
-        this._connected = false;
-        this.connection.disconnect();
-        this.removeAllListeners();
-    }
-
-    public submit(message: protocol.IDocumentMessage): void {
-        this._outbound.push(message);
-    }
 }
 
 /**
- * Helper class that manages incoming delta messages. This class ensures that collaborative objects receive delta
+ * Manages the flow of both inbound and outbound messages. This class ensures that collaborative objects receive delta
  * messages in order regardless of possible network conditions or timings causing out of order delivery.
  */
-export class DeltaManager implements IDeltaManager {
+export class DeltaManager extends EventEmitter implements IDeltaManager {
     private pending: protocol.ISequencedDocumentMessage[] = [];
     private fetching = false;
 
@@ -184,7 +44,6 @@ export class DeltaManager implements IDeltaManager {
 
     // The minimum sequence number and last sequence number received from the server
     private minSequenceNumber = 0;
-    private clientSequenceNumber = 0;
 
     private heartbeatTimer: any;
 
@@ -193,22 +52,26 @@ export class DeltaManager implements IDeltaManager {
     // * largestSequenceNumber is the largest seen sequence number
     private lastQueuedSequenceNumber: number;
     private largestSequenceNumber: number;
-
-    private pauseDeferred: Deferred<void>;
-    private pauseAtOffset: number;
+    private baseSequenceNumber: number;
 
     // tslint:disable:variable-name
     private _inbound: DeltaQueue<protocol.IDocumentMessage>;
+    private _outbound: DeltaQueue<protocol.IDocumentMessage>;
     // tslint:enable:variable-name
 
+    private connecting: Deferred<IConnectionDetails>;
     private connection: DeltaConnection;
+    private clientSequenceNumber = 0;
+
+    private handler: IDeltaHandlerStrategy;
+    private deltaStorageP: Promise<storage.IDocumentDeltaStorageService>;
 
     public get inbound(): IDeltaQueue {
         return this._inbound;
     }
 
     public get outbound(): IDeltaQueue {
-        return this.connection.outbound;
+        return this._outbound;
     }
 
     public get referenceSequenceNumber(): number {
@@ -219,30 +82,13 @@ export class DeltaManager implements IDeltaManager {
         return this.minSequenceNumber;
     }
 
-    constructor(
-        private tenantId: string,
-        private id: string,
-        private baseSequenceNumber: number,
-        private deltaStorage: storage.IDocumentDeltaStorageService,
-        private service: storage.IDocumentService,
-        private handler: IDeltaHandlerStrategy) {
+    constructor(private id: string, private tenantId: string, private service: storage.IDocumentService) {
+        super();
 
-        // The MSN starts at the base the manager is initialized to
-        this.minSequenceNumber = this.baseSequenceNumber;
-        this.lastQueuedSequenceNumber = this.baseSequenceNumber;
-        this.largestSequenceNumber = this.baseSequenceNumber;
-
-        // Queue for inbound message processing
+        // Inbound message queue
         this._inbound = new DeltaQueue<protocol.ISequencedDocumentMessage>((op, callback) => {
-            // Handle the op
             this.processMessage(op).then(
                 () => {
-                    if (this.pauseDeferred && this.pauseAtOffset === this.baseSequenceNumber) {
-                        this.pauseDeferred.resolve();
-                        this.pauseDeferred = undefined;
-                        this.pauseAtOffset = undefined;
-                        this._inbound.pause();
-                    }
                     callback();
                 },
                 (error) => {
@@ -250,31 +96,40 @@ export class DeltaManager implements IDeltaManager {
                 });
         });
 
-        // Both queues start
-        this._inbound.pause();
+        this._inbound.on("error", (error) => {
+            this.emit("error", error);
+        });
 
-        this.fetchMissingDeltas(baseSequenceNumber);
+        // Outbound message queue
+        this._outbound = new DeltaQueue<protocol.IDocumentMessage>((message, callback) => {
+            this.connection.submit(message);
+            callback();
+        });
+
+        this._outbound.on("error", (error) => {
+            this.emit("error", error);
+        });
+
+        // Require the user to start the processing
+        this._inbound.pause();
+        this._outbound.pause();
     }
 
     /**
-     * Flushes all pending tasks and returns a promise for when they are completed. The queue is marked as paused
-     * upon return.
+     * Sets the sequence number from which inbound messages should be returned
      */
-    public flushAndPause(sequenceNumber = this.largestSequenceNumber): Promise<void> {
-        // If the queue is caught up we can simply pause it and return. Otherwise we need to indicate when in the
-        // stream to perform the pause
-        if (sequenceNumber <= this.baseSequenceNumber) {
-            this._inbound.pause();
-            return;
-        } else {
-            this.pauseAtOffset = sequenceNumber;
-            this.pauseDeferred = new Deferred<void>();
-            return this.pauseDeferred.promise;
-        }
-    }
+    public attachOpHandler(sequenceNumber: number, handler: IDeltaHandlerStrategy) {
+        // The MSN starts at the base the manager is initialized to
+        this.baseSequenceNumber = sequenceNumber;
+        this.minSequenceNumber = this.baseSequenceNumber;
+        this.lastQueuedSequenceNumber = this.baseSequenceNumber;
+        this.largestSequenceNumber = this.baseSequenceNumber;
+        this.handler = handler;
 
-    public start() {
-        this._inbound.resume();
+        // We are ready to process inbound messages
+        this._inbound.systemResume();
+
+        this.fetchMissingDeltas(sequenceNumber);
     }
 
     /**
@@ -293,7 +148,7 @@ export class DeltaManager implements IDeltaManager {
 
         this.readonly = false;
         this.stopSequenceNumberUpdate();
-        this.connection.submit(message);
+        this._outbound.push(message);
     }
 
     /**
@@ -309,32 +164,66 @@ export class DeltaManager implements IDeltaManager {
         };
 
         this.readonly = false;
-        this.connection.submit(message);
+        this._outbound.push(message);
     }
 
-    public async connect(token: string): Promise<IConnectionDetails> {
+    public async connect(reason: string, token: string): Promise<IConnectionDetails> {
         // Free up and clear any previous connection
         if (this.connection) {
             this.connection.close();
             this.connection = null;
         }
 
-        this.connection = await DeltaConnection.Connect(this.tenantId, this.id, token, this.service);
-        this.clientSequenceNumber = 0;
+        if (this.connecting) {
+            return this.connecting.promise;
+        }
 
-        this.connection.on("op", (documentId: string, messages: protocol.ISequencedDocumentMessage[]) => {
-            this.enqueueMessages(cloneDeep(messages));
-        });
+        // Connect to the delta storage endpoint
+        this.deltaStorageP = this.service.connectToDeltaStorage(this.tenantId, this.id, token);
 
-        this.connection.on("nack", (target: number) => {
-            this.handler.nack(target);
-        });
+        const reconnectDelay = 1000;
+        this.connecting = new Deferred<IConnectionDetails>();
+        this.connectCore(token, reason, reconnectDelay);
 
-        this.connection.on("disconnect", (reason) => {
-            this.handler.disconnect(reason);
-        });
+        return this.connecting.promise;
+    }
 
-        return this.connection.details;
+    private connectCore(token: string, reason: string, delay: number) {
+        DeltaConnection.Connect(this.tenantId, this.id, token, this.service).then(
+            (connection) => {
+                this._outbound.systemResume();
+
+                this.clientSequenceNumber = 0;
+                this.connecting.resolve(connection.details);
+                this.connecting = null;
+
+                connection.on("op", (documentId: string, messages: protocol.ISequencedDocumentMessage[]) => {
+                    this.enqueueMessages(cloneDeep(messages));
+                });
+
+                connection.on("nack", (target: number) => {
+                    this._outbound.systemPause();
+                    this._outbound.clear();
+                    this.emit("disconnect", true);
+                    this.connectCore(token, "Reconnecting", 1000);
+                });
+
+                connection.on("disconnect", (disconnectReason) => {
+                    this._outbound.systemPause();
+                    this._outbound.clear();
+                    this.emit("disconnect", false);
+                    this.connectCore(token, "Reconnecting", 1000);
+                });
+
+                // Notify of the connection
+                this.emit("connect", connection.details);
+            },
+            (error) => {
+                delay = Math.min(delay, MaxReconnectDelay);
+                reason = `Connection failed - trying again in ${delay}ms`;
+                debug(reason, error);
+                setTimeout(() => this.connectCore(token, reason, delay * 2), delay);
+            });
     }
 
     private enqueueMessages(messages: protocol.ISequencedDocumentMessage[]) {
@@ -395,16 +284,25 @@ export class DeltaManager implements IDeltaManager {
         }
 
         this.fetching = true;
-        this.deltaStorage.get(from, to).then(
-            (messages) => {
-                this.fetching = false;
-                this.catchUp(messages);
+
+        this.deltaStorageP.then(
+            (deltaStorage) => {
+                deltaStorage.get(from, to).then(
+                    (messages) => {
+                        this.fetching = false;
+                        this.catchUp(messages);
+                    },
+                    (error) => {
+                        // Retry on failure
+                        debug(error);
+                        this.fetching = false;
+                        this.fetchMissingDeltas(from, to);
+                    });
             },
             (error) => {
-                // Retry on failure
-                debug(error);
-                this.fetching = false;
-                this.fetchMissingDeltas(from, to);
+                // Could not get delta storage promise. For now we assume this is not possible and so simply
+                // emit the error.
+                this.emit("error", error);
             });
     }
 

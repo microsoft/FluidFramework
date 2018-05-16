@@ -1,4 +1,3 @@
-import * as resources from "gitresources";
 import * as api from "../api-core";
 import { IMap, IMapView, IValueChanged, IValueOperation, IValueType, SerializeFilter } from "../data-types";
 import { debug } from "./debug";
@@ -271,7 +270,6 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
     protected async loadCore(
         sequenceNumber: number,
         minimumSequenceNumber: number,
-        version: resources.ICommit,
         messages: api.ISequencedObjectMessage[],
         headerOrigin: string,
         storage: api.IObjectStorageService) {
@@ -287,7 +285,6 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
         await this.loadContent(
             sequenceNumber,
             minimumSequenceNumber,
-            version,
             contentMessages,
             headerOrigin,
             contentStorage);
@@ -304,7 +301,6 @@ export class CollaborativeMap extends api.CollaborativeObject implements IMap {
     protected async loadContent(
         sequenceNumber: number,
         minimumSequenceNumber: number,
-        version: resources.ICommit,
         messages: api.ISequencedObjectMessage[],
         headerOrigin: string,
         services: api.IObjectStorageService): Promise<void> {

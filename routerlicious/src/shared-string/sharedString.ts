@@ -1,6 +1,5 @@
 // tslint:disable:whitespace align no-bitwise ordered-imports
 import * as assert from "assert";
-import * as resources from "gitresources";
 import * as api from "../api-core";
 import { Deferred } from "../core-utils";
 import { IMap, IMapView, IValueChanged } from "../data-types";
@@ -333,7 +332,6 @@ export class SharedString extends CollaborativeMap {
     protected async loadContent(
         sequenceNumber: number,
         minimumSequenceNumber: number,
-        version: resources.ICommit,
         messages: api.ISequencedObjectMessage[],
         headerOrigin: string,
         storage: api.IObjectStorageService): Promise<void> {

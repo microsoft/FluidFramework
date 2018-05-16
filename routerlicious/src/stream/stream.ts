@@ -1,4 +1,3 @@
-import * as resources from "gitresources";
 import * as api from "../api-core";
 import { IDelta, IInkLayer, IStream } from "../data-types";
 import { CollaborativeMap } from "../map";
@@ -46,7 +45,6 @@ export class Stream extends CollaborativeMap implements IStream {
     protected async loadContent(
         sequenceNumber: number,
         minimumSequenceNumber: number,
-        version: resources.ICommit,
         messages: api.IObjectMessage[],
         headerOrigin: string,
         storage: api.IObjectStorageService): Promise<void> {

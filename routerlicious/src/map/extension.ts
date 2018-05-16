@@ -1,4 +1,3 @@
-import * as resources from "gitresources";
 import * as api from "../api-core";
 import { IMap, IValueType } from "../data-types";
 import { CollaborativeMap } from "./map";
@@ -24,12 +23,11 @@ export class MapExtension implements api.ICollaborativeObjectExtension {
         minimumSequenceNumber: number,
         messages: api.ISequencedObjectMessage[],
         services: api.IDistributedObjectServices,
-        version: resources.ICommit,
         headerOrigin: string): Promise<IMap> {
 
         const map = new CollaborativeMap(id, document, MapExtension.Type);
         this.registerValueTypes(map, defaultValueTypes);
-        await map.load(sequenceNumber, minimumSequenceNumber, version, messages, headerOrigin, services);
+        await map.load(sequenceNumber, minimumSequenceNumber, messages, headerOrigin, services);
 
         return map;
     }

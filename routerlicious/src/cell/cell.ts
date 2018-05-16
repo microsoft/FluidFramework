@@ -1,4 +1,3 @@
-import * as resources from "gitresources";
 import hasIn = require("lodash/hasIn");
 import * as api from "../api-core";
 import { ICell } from "../data-types";
@@ -150,7 +149,6 @@ export class Cell extends api.CollaborativeObject implements ICell {
     protected async loadCore(
         sequenceNumber: number,
         minimumSequenceNumber: number,
-        version: resources.ICommit,
         messages: api.IObjectMessage[],
         headerOrigin: string,
         storage: api.IObjectStorageService): Promise<void> {

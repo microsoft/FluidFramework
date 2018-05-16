@@ -1,4 +1,3 @@
-import * as resources from "gitresources";
 import * as api from "../api-core";
 import { Stream } from "./stream";
 
@@ -14,11 +13,10 @@ export class StreamExtension implements api.ICollaborativeObjectExtension {
         minimumSequenceNumber: number,
         messages: api.ISequencedObjectMessage[],
         services: api.IDistributedObjectServices,
-        version: resources.ICommit,
         headerOrigin: string): Promise<api.ICollaborativeObject> {
 
         const stream = new Stream(document, id, sequenceNumber);
-        await stream.load(sequenceNumber, minimumSequenceNumber, version, messages, headerOrigin, services);
+        await stream.load(sequenceNumber, minimumSequenceNumber, messages, headerOrigin, services);
 
         return stream;
     }
