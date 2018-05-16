@@ -1,7 +1,10 @@
 const path = require('path');
 const webpack = require('webpack');
+const SpeedMeasurePlugin = require("speed-measure-webpack-plugin");
 
-module.exports = {
+const smp = new SpeedMeasurePlugin();
+
+module.exports = smp.wrap({
     entry: {
         api: "./src/client-api/index.ts",
         ui: "./src/client-ui/index.ts",
@@ -10,7 +13,7 @@ module.exports = {
     },
     output: {
         path: path.resolve(__dirname, "public/scripts/dist"),
-        filename: '______.js', // Overwriten in prod/dev config
+        filename: '[name].js', // Overwriten in prod/dev config
         library: "[name]"
     },
     devtool: 'source-map',    
@@ -42,7 +45,8 @@ module.exports = {
                     options: {
                         compilerOptions: {
                             declaration: false,
-                        }
+                        },
+                        transpileOnly: true,
                     }
                 }],
                 exclude: [
@@ -55,4 +59,4 @@ module.exports = {
     stats: {
         timings: true,
     }
-};
+});
