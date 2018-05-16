@@ -4,7 +4,7 @@ import * as api from "../../api-core";
 export class TestDocumentDeltaConnection implements api.IDocumentDeltaConnection {
     public existing: boolean;
     public parentBranch: string;
-    public user: api.IAuthenticatedUser;
+    public user: api.ITenantUser;
     public clientId: string;
     public documentId: string;
     public encrypted: boolean;

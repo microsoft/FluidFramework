@@ -10,6 +10,7 @@ import * as protocol from "./protocol";
 import * as storage from "./storage";
 
 const MaxReconnectDelay = 8000;
+const InitialReconnectDelay = 1000;
 
 /**
  * Interface used to define a strategy for handling incoming delta messages
@@ -80,6 +81,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
 
     public get minimumSequenceNumber(): number {
         return this.minSequenceNumber;
+    }
+
+    public get clientId(): string {
+        return this.connection ? this.connection.details.clientId : "disconnected";
     }
 
     constructor(private id: string, private tenantId: string, private service: storage.IDocumentService) {
@@ -168,12 +173,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
     }
 
     public async connect(reason: string, token: string): Promise<IConnectionDetails> {
-        // Free up and clear any previous connection
-        if (this.connection) {
-            this.connection.close();
-            this.connection = null;
-        }
-
         if (this.connecting) {
             return this.connecting.promise;
         }
@@ -181,9 +180,8 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
         // Connect to the delta storage endpoint
         this.deltaStorageP = this.service.connectToDeltaStorage(this.tenantId, this.id, token);
 
-        const reconnectDelay = 1000;
         this.connecting = new Deferred<IConnectionDetails>();
-        this.connectCore(token, reason, reconnectDelay);
+        this.connectCore(token, reason, InitialReconnectDelay);
 
         return this.connecting.promise;
     }
@@ -191,28 +189,39 @@ export class DeltaManager extends EventEmitter implements IDeltaManager {
     private connectCore(token: string, reason: string, delay: number) {
         DeltaConnection.Connect(this.tenantId, this.id, token, this.service).then(
             (connection) => {
+                this.connection = connection;
+
                 this._outbound.systemResume();
 
                 this.clientSequenceNumber = 0;
-                this.connecting.resolve(connection.details);
-                this.connecting = null;
+
+                // If first connection resolve the promise with the details
+                if (this.connecting) {
+                    this.connecting.resolve(connection.details);
+                    this.connecting = null;
+                }
 
                 connection.on("op", (documentId: string, messages: protocol.ISequencedDocumentMessage[]) => {
-                    this.enqueueMessages(cloneDeep(messages));
+                    // Need to buffer messages we receive before having the point set
+                    if (this.handler) {
+                        this.enqueueMessages(cloneDeep(messages));
+                    }
                 });
 
                 connection.on("nack", (target: number) => {
                     this._outbound.systemPause();
                     this._outbound.clear();
+
                     this.emit("disconnect", true);
-                    this.connectCore(token, "Reconnecting", 1000);
+                    this.connectCore(token, "Reconnecting", InitialReconnectDelay);
                 });
 
                 connection.on("disconnect", (disconnectReason) => {
                     this._outbound.systemPause();
                     this._outbound.clear();
+
                     this.emit("disconnect", false);
-                    this.connectCore(token, "Reconnecting", 1000);
+                    this.connectCore(token, "Reconnecting", InitialReconnectDelay);
                 });
 
                 // Notify of the connection

@@ -1,5 +1,6 @@
 import * as resources from "gitresources";
-import { IAuthenticatedUser, IDocumentMessage, ISequencedDocumentMessage } from "./protocol";
+import { IDocumentMessage, ISequencedDocumentMessage } from "./protocol";
+import { ITenantUser } from "./tenant";
 
 export interface IDocumentAttributes {
     /**
@@ -164,7 +165,7 @@ export interface IDocumentDeltaConnection {
     /**
      * The identity of the logged-in user
      */
-    user: IAuthenticatedUser;
+    user: ITenantUser;
 
     /**
      * Subscribe to events emitted by the document

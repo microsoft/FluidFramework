@@ -16,7 +16,9 @@ interface IDocumentUser {
 
     documentId: string;
 
-    user: api.IAuthenticatedUser;
+    user: api.ITenantUser;
+
+    permission: string;
 }
 
 export function register(
@@ -62,13 +64,6 @@ export function register(
             }
             await tenantManager.verifyToken(claims.tenantId, token);
 
-            // Craft the user details
-            const authedUser: api.IAuthenticatedUser = {
-                permission: claims.permission,
-                tenantid: claims.tenantId,
-                user: claims.user,
-            };
-
             connectionProfiler.done(`Client has requested to load ${message.id}`);
             const documentDetails = await storage.getOrCreateDocument(
                 mongoManager,
@@ -86,8 +81,9 @@ export function register(
                 clientId,
                 {
                     documentId: message.id,
+                    permission: claims.permission,
                     tenantId: message.tenantId,
-                    user: authedUser,
+                    user: claims.user,
                 });
 
             // Broadcast the client connection message
@@ -104,7 +100,7 @@ export function register(
                 tenantId: message.tenantId,
                 timestamp: Date.now(),
                 type: core.RawOperationType,
-                user: authedUser,
+                user: claims.user,
             };
             sendAndTrack(rawMessage);
 
@@ -117,7 +113,7 @@ export function register(
                 clientId,
                 existing: documentDetails.existing,
                 parentBranch,
-                user: authedUser,
+                user: claims.user,
             };
             profiler.done(`Loaded ${message.id}`);
 

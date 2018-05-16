@@ -7,7 +7,7 @@ async function testPage(page: puppeteer.Page, matchText: string[]): Promise<numb
     const testFn = (msg: puppeteer.ConsoleMessage) => {
         const text = msg.text();
 
-        // console.log(text);
+        console.log(text);
 
         // Already found all our matches
         if (entry === matchText.length) {
@@ -23,7 +23,7 @@ async function testPage(page: puppeteer.Page, matchText: string[]): Promise<numb
     };
 
     page.on("console", testFn);
-    await page.goto('http://localhost:3000/sharedText/dull-leg', { waitUntil: "networkidle0" });
+    await page.goto('http://localhost:3000/sharedText/painstaking-fang', { waitUntil: "networkidle0" });
     page.removeListener("console", testFn);
 
     return perfMatches;
@@ -41,9 +41,6 @@ async function run() {
 
     const matchText = [
         "Document loading",
-        "Connected to",
-        "document.connect",
-        "objectsLoaded",
         "Document loaded",
         "fully loaded"];
     const sums = matchText.map(() => 0);

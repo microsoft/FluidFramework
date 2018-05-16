@@ -2492,11 +2492,11 @@ export class Cursor {
         this.blinkTimer = setTimeout(this.blinker, 20);
     }
 
-    private getUserDisplayString(user: core.IAuthenticatedUser): string {
+    private getUserDisplayString(user: core.ITenantUser): string {
         // TODO - callback to client code to provide mapping from user -> display
         // this would allow a user ID to be put on the wire which can then be mapped
         // back to an email, name, etc...
-        return user.user.id;
+        return user.id;
     }
 }
 
@@ -2529,7 +2529,7 @@ export interface ILocalPresenceInfo {
     xformPos?: number;
     markXformPos?: number;
     clientId: number;
-    user: core.IAuthenticatedUser;
+    user: core.ITenantUser;
     cursor?: Cursor;
     fresh: boolean;
 }
@@ -4436,7 +4436,7 @@ export class FlowView extends ui.Component {
 
     private remotePresenceFromEdit(
         longClientId: string,
-        userInfo: core.IAuthenticatedUser,
+        userInfo: core.ITenantUser,
         refseq: number,
         oldpos: number,
         posAdjust = 0) {
@@ -4450,7 +4450,7 @@ export class FlowView extends ui.Component {
         this.remotePresenceToLocal(longClientId, userInfo, remotePosInfo);
     }
 
-    private remotePresenceToLocal(longClientId: string, user: core.IAuthenticatedUser, remotePresenceInfo: IRemotePresenceInfo, posAdjust = 0) {
+    private remotePresenceToLocal(longClientId: string, user: core.ITenantUser, remotePresenceInfo: IRemotePresenceInfo, posAdjust = 0) {
         const clientId = this.client.getOrAddShortClientId(longClientId);
 
         let segoff = this.client.mergeTree.getContainingSegment(remotePresenceInfo.origPos,
