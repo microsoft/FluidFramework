@@ -229,5 +229,9 @@ export function initialize(
     });
 
     // Mark socket storage as our default provider
-    socketStorage.registerAsDefault(document.location.origin, config.blobStorageUrl, config.tenantId);
+    socketStorage.registerAsDefault(
+        document.location.origin,
+        config.blobStorageUrl,
+        config.tenantId,
+        config.trackError);
 }

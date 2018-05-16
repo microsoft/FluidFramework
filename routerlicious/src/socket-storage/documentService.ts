@@ -17,6 +17,7 @@ export class DocumentService implements api.IDocumentService {
     constructor(
         private deltaUrl: string,
         private gitUrl: string,
+        private errorTracking: boolean,
         private disableCache: boolean,
         private historianApi: boolean,
         private directCredentials: ICredentials) {
@@ -94,5 +95,9 @@ export class DocumentService implements api.IDocumentService {
         });
 
         return forkId;
+    }
+
+    public errorTrackingEnabled() {
+        return this.errorTracking;
     }
 }

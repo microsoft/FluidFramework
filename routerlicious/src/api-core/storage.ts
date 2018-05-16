@@ -202,4 +202,9 @@ export interface IDocumentService {
      * Creates a branch of the document with the given ID. Returns the new ID.
      */
     branch(tenantId: string, id: string, token: string): Promise<string>;
+
+    /**
+     * Error tracking enabled or not.
+     */
+    errorTrackingEnabled(): boolean;
 }

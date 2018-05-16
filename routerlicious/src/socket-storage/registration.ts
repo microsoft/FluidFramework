@@ -6,6 +6,7 @@ export function createDocumentService(
     deltaUrl: string,
     gitUrl: string,
     tenantId: string,
+    errorTracking = true,
     disableCache = false,
     historianApi = true,
     credentials?): IDocumentService {
@@ -13,6 +14,7 @@ export function createDocumentService(
     const service = new socketStorage.DocumentService(
         deltaUrl,
         gitUrl,
+        errorTracking,
         disableCache,
         historianApi,
         credentials);
@@ -24,6 +26,7 @@ export function registerAsDefault(
     deltaUrl: string,
     gitUrl: string,
     tenantId: string,
+    errorTracking = true,
     disableCache = false,
     historianApi = true,
     credentials?) {
@@ -32,6 +35,7 @@ export function registerAsDefault(
         deltaUrl,
         gitUrl,
         tenantId,
+        errorTracking,
         disableCache,
         historianApi,
         credentials);

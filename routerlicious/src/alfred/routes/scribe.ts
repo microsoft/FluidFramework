@@ -23,7 +23,7 @@ export function create(config: Provider, tenantManager: ITenantManager,
         template?: string,
         tenantId = appTenants[0].id) {
 
-        const workerConfigP = utils.getConfig(config.get("worker"), tenantManager, tenantId);
+        const workerConfigP = utils.getConfig(config.get("worker"), tenantManager, tenantId, config.get("error:track"));
         workerConfigP.then(
             (workerConfig) => {
                 const token = utils.getToken(tenantId, id, appTenants);

@@ -114,7 +114,7 @@ export class ServiceGraphLambdaFactory extends EventEmitter implements IPartitio
         if (!defaultTenant) {
             return Promise.reject("Could not find tenant information");
         }
-        socketStorage.registerAsDefault(alfred, defaultTenant.url, defaultTenant._id);
+        socketStorage.registerAsDefault(alfred, defaultTenant.url, defaultTenant._id, false);
 
         const document = await api.load("__system__graph");
         const root = await document.getRoot().getView();
