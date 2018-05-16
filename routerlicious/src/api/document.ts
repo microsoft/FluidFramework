@@ -49,7 +49,7 @@ import {
 
 import * as stream from "../stream";
 import { debug } from "./debug";
-import { ErrorTrackingService } from "./errorTrackingService";
+import { BrowserErrorTrackingService } from "./errorTrackingService";
 import { NullDeltaConnection } from "./nullDeltaConnection";
 
 const rootMapId = "root";
@@ -983,7 +983,7 @@ export async function load(
 
     if (service.errorTrackingEnabled()) {
         const deferred = new Deferred<Document>();
-        const errorTracker = new ErrorTrackingService();
+        const errorTracker = new BrowserErrorTrackingService();
         errorTracker.track(() => {
             const documentP = Document.Load(id, registry, service, options, version, connect);
             deferred.resolve(documentP);

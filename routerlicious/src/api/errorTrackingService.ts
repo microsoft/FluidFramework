@@ -1,9 +1,9 @@
 import * as raven from "raven-js";
-import { IErrorTrackingService } from "../api-core";
+import { IErrorTrackingService } from "../core-utils";
 
 const sentryDSN = "https://7235bc222189462ca65fa1a38591f96b@sentry.wu2.prague.office-int.com/2";
 
-export class ErrorTrackingService implements IErrorTrackingService {
+export class BrowserErrorTrackingService implements IErrorTrackingService {
 
     private ravenContext: raven.RavenStatic;
 
