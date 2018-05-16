@@ -3248,10 +3248,6 @@ export class FlowView extends ui.Component {
                     if (endId) {
                         let id = Table.idFromEndId(endId);
                         beginMarker = <Table.ICellMarker>this.sharedString.client.mergeTree.getSegmentFromId(id);
-                    } else {
-                        endId = cellMarker.getLocalId();
-                        let localId = Table.idFromEndId(endId);
-                        beginMarker = <Table.ICellMarker>this.sharedString.client.mergeTree.getSegmentFromLocalId(localId);
                     }
                     if (beginMarker && Table.cellIsMoribund(beginMarker)) {
                         this.tryMoveCell(this.cursor.pos, true);

@@ -539,14 +539,9 @@ export class Cell {
 }
 
 function getEndCellMarker(mergeTree: MergeTree.MergeTree, cellMarker: ICellMarker) {
-    let localId = cellMarker.getLocalId();
-    if (localId) {
-        return <ICellMarker>mergeTree.getSegmentFromLocalId(endPrefix + localId);
-    } else {
-        let gloId = cellMarker.getId();
-        if (gloId) {
-            return <ICellMarker>mergeTree.getSegmentFromId(endPrefix + gloId);
-        }
+    let gloId = cellMarker.getId();
+    if (gloId) {
+        return <ICellMarker>mergeTree.getSegmentFromId(endPrefix + gloId);
     }
 }
 
